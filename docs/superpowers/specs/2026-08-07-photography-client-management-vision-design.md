@@ -109,12 +109,24 @@ Internal identifiers may appear in server-side logs and the audit log's foreign 
 ### 3.1 CRM
 
 - `Contact` — a person; role-agnostic
-- `Lead` — inquiry, source, requested date, pipeline stage, lost reason
-- `Job` — the shoot: type (wedding, portrait, other), dates, venue, status
+- `Lead` — inquiry, source, pipeline stage, lost reason
+- `LeadDate` — a requested shooting day: `date`, `kind`, `label`, `is_primary`, `sort_order`
+- `Job` — the booking: type (wedding, portrait, other), `booked_at`, `archived_at`
+- `Shoot` — one shooting occasion: `date`, `call_time`, `end_time`, `kind`, `label`, venue, `status`, `is_primary`, `sort_order`
 - `JobContact` — pivot carrying role: primary, partner, payer, planner, vendor
-- `CrewAssignment` — staff user ↔ job ↔ role
+- `CrewAssignment` — staff user ↔ **shoot** ↔ role
 
 A wedding has many people attached to it with different roles: the couple books, a parent may pay, a planner needs the timeline, guests view the gallery. Modeling one `Job` with many typed contacts — rather than a `Client` with a date field — is what lets portrait and wedding work share a schema.
+
+**Booking and shoot are different units.** One booking routinely spans an engagement shoot, the wedding day, the reception, and an after-wedding shoot, separated by as much as a year. `Job` is the commercial unit — contract, quote, payment plan, contacts. `Shoot` is the production unit — a date, a place, a crew, and its own pipeline. A portrait booking is the degenerate case: one job, one shoot.
+
+`Job` therefore carries no status column. A booking whose engagement shoot is delivered while the wedding day is unshot has no single pipeline state, and inventing one produces a status that is wrong for most of a wedding's eighteen-month life. Booking-level state is derived from the shoots (§7).
+
+**Exactly one shoot per job is primary**, enforced by a partial unique index (`unique (job_id) where is_primary`). `LeadDate` carries the same invariant one table earlier. The primary shoot is the headline occasion — the wedding day — and is what booking-level automations and payment schedules anchor to.
+
+Conversion copies rather than synthesises: each `LeadDate` becomes a `Shoot`, carrying `date`, `kind`, `label`, `is_primary`, and `sort_order` across unchanged. Because a lead already names every day the client wants, and does so before anyone signs anything, the requested dates and the booked dates are the same list in two lifecycle stages rather than two independently maintained records. Date-availability checks at intake union `lead_dates` (leads not lost) with `shoots`, so the dates checked are the dates later booked.
+
+`is_primary` is set at intake, not derived. The public inquiry form has one required main date and an optional repeater for additional shoots; the main field's row is the primary one, and staff can change it. A derivation rule — earliest date, or the row whose kind matches the job type — would be wrong for exactly the case that motivates the model, since the engagement shoot is the earliest date and is never the headline.
 
 ### 3.2 Sales
 
@@ -131,7 +143,9 @@ A wedding has many people attached to it with different roles: the couple books,
 - `FormTemplate` — JSON schema of typed questions per shoot type
 - `FormInstance` — job-scoped, with `sent_at` / `opened_at` / `completed_at` and a reminder schedule
 - `FormAnswer` — one row per field, versioned so post-submit edits retain history
-- `TimelineEntry`, `ShotListItem` — specialized forms; the timeline exports to PDF and ICS for crew
+- `TimelineEntry`, `ShotListItem` — **shoot-scoped** specialized forms; the timeline exports to PDF and ICS for crew
+
+A running order belongs to a shooting day, not to a booking. The wedding day has a timeline; the engagement shoot has a shot list and no timeline at all.
 
 **Conversation (bidirectional, client may initiate)**
 - `Thread` — job-scoped, subject, status (open / awaiting_client / resolved), `last_activity_at`
@@ -147,8 +161,10 @@ A client "simple question" creates a thread from the portal. Email notifications
 This is a separate table and model rather than an `is_internal` flag on `Message`. With a flag, every query needs a correct `where` clause and one missing scope leaks private commentary into the portal. With separate models, portal-facing route groups have no binding to `InternalNote` at all, and a test asserts no portal response schema references it.
 
 **Tasks**
-- `Task` — job-scoped, `audience` (internal or client), assignee, due date, status, source (manual, template, automation)
-- `TaskTemplate` — a set applied on job creation by shoot type, with due dates relative to the shoot date (`-30d`, `+14d`)
+- `Task` — job-scoped with a nullable `shoot_id`, `audience` (internal or client), assignee, due date, status, source (manual, template, automation)
+- `TaskTemplate` — a set applied on **shoot** creation by shoot kind, with due dates relative to that shoot's date (`-30d`, `+14d`)
+
+`shoot_id` is nullable because the two kinds genuinely differ: "sign the contract" belongs to the booking, "pack the second body for the reception" belongs to a day. A template set applied per shoot means a four-shoot wedding gets four rounds of prep tasks on four schedules, which is the actual work.
 
 Client-facing tasks render in the portal as a checklist — sign contract, complete timeline form, pay second installment — created and completed by domain events, so the client's to-do list is derived state rather than manual bookkeeping.
 
@@ -156,9 +172,9 @@ Client-facing tasks render in the portal as a checklist — sign contract, compl
 
 ### 3.4 Media
 
-- `Gallery` — job-scoped; name, cover, access policy, `expires_at`
+- `Gallery` — job-scoped with a nullable `shoot_id`; name, cover, access policy, `expires_at`, `requires_settled_balance`
 - `GalleryVersion` — immutable published set
-- `Asset` — original S3 key, checksum, EXIF, capture time, original filename
+- `Asset` — **shoot-scoped**; original S3 key, checksum, EXIF, capture time, original filename
 - `AssetDerivative` — size variant, S3 key, dimensions, bytes
 - `GallerySection` — getting ready, ceremony, reception, and so on
 - `Favorite` — per viewer identity
@@ -167,6 +183,14 @@ Client-facing tasks render in the portal as a checklist — sign contract, compl
 - `ZipBuild` — async artifact with expiry
 
 Galleries are versioned, never mutated. When a photographer re-uploads corrected edits after 300 downloads have happened, an in-place mutation would invalidate the download audit and detach client favorites from what they actually favorited. Publishing creates `v2`; favorites and history stay pinned to the version they referenced, while clients always land on the latest.
+
+**Gallery grouping is the client's choice, expressed by one nullable column.** `Gallery.shoot_id` set means a gallery for that shoot; null means a gallery for the booking. A client wanting one gallery per shoot gets four rows with `shoot_id` set; a client wanting everything together gets one row with it null; a client wanting the engagement shoot separate and the rest combined gets one of each. The column is a label and an upload default, not a membership rule — assets are assigned to gallery versions explicitly, so a gallery covering exactly two of four shoots needs no schema at all and uses `GallerySection` to group internally.
+
+What a separate gallery actually buys is separate access control and separate delivery timing: the engagement gallery ships in March with its own password, its own expiry, and its own audience, months before the wedding gallery exists. That is why the split lives on `Gallery` rather than being expressed only through sections.
+
+`Asset.shoot_id` is where the real association lives, because a card dump belongs to one shooting day. Composing a gallery is then a query over a shoot rather than manual sorting of 1500 files, and "every frame from the reception" stays answerable however the client chose to group their galleries.
+
+`requires_settled_balance` makes §7's payment gate per-gallery. Blocking the engagement gallery in March because the wedding balance is outstanding would be absurd; blocking the final wedding gallery is the point.
 
 ### 3.5 Access
 
@@ -255,7 +279,7 @@ admin browser ──presigned multipart──▶ S3 (originals bucket, quarantin
   apps/studio ──dispatch──▶ Horizon queue: media.ingest
       ├─ verify checksum and size; reject non-image MIME
       ├─ extract EXIF (capture time, camera, lens) → default sort order
-      ├─ perceptual hash → duplicate detection within the gallery
+      ├─ perceptual hash → duplicate detection within the shoot
       ├─ derivatives via libvips: thumb 400 / web 1600 / preview 2560
       ├─ blurhash placeholder (instant paint, no layout shift)
       └─ move original from quarantine to permanent prefix; write Asset + AssetDerivative
@@ -302,22 +326,46 @@ No plugin in v1. Selection export produces a plain filename list and optional `.
 
 ### Two state machines
 
-`Lead.stage` is a sales funnel: `new → contacted → quote_sent → contract_sent → booked`, with `lost(reason)` reachable from any stage. Date-availability checks on intake flag conflicts against existing jobs.
+`Lead.stage` is a sales funnel: `new → contacted → quote_sent → contract_sent → booked`, with `lost(reason)` reachable from any stage. Date-availability checks on intake flag conflicts across both `lead_dates` and `shoots`.
 
-`Job.status` is a forward-only production pipeline: `booked → prep → shot → culling → editing → ready → delivered → archived`. Each transition emits a domain event. A job is created by conversion when the contract is signed and the deposit is paid.
+`Shoot.status` is a forward-only production pipeline: `booked → prep → shot → culling → editing → ready → delivered → archived`. Each transition emits a domain event.
 
 Keeping these separate avoids a fourteen-state enum in which half the transitions are illegal.
+
+**Conversion** happens when the contract is signed and the deposit is paid. It creates the `Job` and copies every `LeadDate` into a `Shoot`, carrying `date`, `kind`, `label`, `is_primary`, and `sort_order` across. The dates the client asked for are the dates that get booked; nothing is retyped, and the availability check that ran at intake was run against the same values.
+
+**The pipeline is per shoot, not per booking.** The four shoots of a wedding run their pipelines independently and months apart — the engagement shoot reaches `delivered` while the wedding day is still `booked`.
+
+Booking-level state is therefore derived rather than stored:
+
+```sql
+select distinct on (j.id) j.id, s.status, s.date
+from jobs j
+join shoots s on s.job_id = j.id
+where s.status not in ('delivered', 'archived')
+order by j.id, s.date;
+```
+
+A booking sits in the column of its **earliest incomplete shoot**, sorted within that column by that shoot's date, and leaves the board when every shoot is delivered. The board shows one expandable card per booking — client and money context stay visible — with its shoots as sub-rows.
+
+That a card can move backwards is correct, not a defect. When the engagement shoot is delivered, the wedding day becomes earliest-incomplete and the booking returns to `booked`. The column answers "what is the next thing this booking needs", which is the question the board exists to answer.
+
+Nothing about this is denormalised. There is no rollup column to drift, no event needed to maintain it, and no reconciliation job — the board is a query.
 
 ### Automation engine
 
 An `AutomationRule` is data, not a code path: trigger plus conditions plus actions.
 
-- **Triggers:** domain events, or date offsets relative to the shoot date evaluated by a daily scheduler
+- **Triggers:** domain events, or date offsets relative to a `Shoot.date` evaluated by a daily scheduler
 - **Actions:** send templated email, create a form instance, create a task, advance a stage, notify staff
 - **Auditing:** every firing writes an `AutomationRun` row recording rule, target, and outcome — without it, "why did the client get that email twice" is unanswerable
-- **Guard:** an idempotency key per (rule, target) so a double scheduler run cannot double-send
+- **Guard:** an idempotency key per (rule, shoot) so a double scheduler run cannot double-send
 
-Seeded rules: inquiry auto-reply · stale-lead nudges at 3 and 7 days · booking confirmation and welcome packet · timeline form at −30 d · payment reminder at −14 d · crew brief at −1 d · delivery email on publish · review request at +14 d · archive at +90 d.
+Each rule declares whether it anchors to **its own shoot** or to the **primary shoot**. Per-shoot rules fire once per shooting day: a four-shoot wedding gets four crew briefs at −1 d, which is right, because there are four days to brief for. Booking-level rules anchor to the primary shoot and fire once: one payment reminder at −14 d, not four.
+
+Getting this wrong is the difference between a client receiving one balance reminder and four, so the anchor is a required field on the rule rather than a default.
+
+Seeded rules, with anchors: inquiry auto-reply · stale-lead nudges at 3 and 7 days · booking confirmation and welcome packet · timeline form at −30 d *(per shoot)* · payment reminder at −14 d *(primary)* · crew brief at −1 d *(per shoot)* · delivery email on publish · review request at +14 d *(primary)* · archive at +90 d after the last shoot is delivered *(booking)*.
 
 No visual rule builder in v1. Rules are seeded from config and become editable once the five rules actually used are known.
 
@@ -327,7 +375,7 @@ Each `PaymentInstallment` becomes a Stripe Invoice. Stripe owns the hosted payme
 
 Webhooks (`invoice.paid`, `invoice.payment_failed`) reconcile back to the installment and emit `InstallmentPaid`, which completes the client task and optionally unlocks the gallery. Webhook handling is idempotent by Stripe event ID. Stripe, not the local record, is the source of truth for payment state.
 
-An optional configurable gate blocks final gallery download until the balance is settled.
+An optional gate blocks gallery download until the balance is settled. It is set per gallery via `Gallery.requires_settled_balance`, defaulting to off. Payment plans run against the booking, so a booking-wide gate would hold back an engagement gallery in March over a balance not due until September.
 
 ### Contracts
 
@@ -351,6 +399,12 @@ A `ContractTemplate` with merge fields renders to PDF via headless Chrome (Goten
 | Load | k6 against the gallery read path, targeting p95 under 400 ms for gallery HTML with images served from CDN, simulating 80 concurrent guests on publish day. |
 
 Test-driven development throughout, and especially for access-control rules, where a test that passes by accident is worse than no test.
+
+### Dates and times
+
+All timestamps are stored in UTC and `Europe/Berlin` is a display concern — with one deliberate exception. `Shoot.date` and `LeadDate.date` are SQL `date` columns, not `timestamptz`, and `Shoot.call_time` and `end_time` are `time` columns beside them.
+
+A wedding happens on a calendar date in a place, not at an instant. Storing a bare date as a timestamp means picking a time to represent midnight, and a UTC round-trip on that value moves the date by a day on one side of a DST boundary. Every consumer here — board sorting, availability conflicts, automation offsets, the `−1 d` crew brief — wants calendar arithmetic. A `date` column has no instant to misplace.
 
 ### Error handling
 
@@ -386,9 +440,9 @@ A public inquiry form is deferred rather than abandoned. When it returns it brin
 
 | Phase | Scope | Milestone |
 |---|---|---|
-| **P1 CRM core** | Monorepo and CI, base schema with tenant seams, surface gating, staff auth (password + TOTP), Inertia admin surface with shadcn-vue, contacts, leads, jobs, pipeline board, manual lead entry with availability check, crew assignment, internal notes, tasks and templates, calendar/ICS | Replaces spreadsheets; in daily use |
+| **P1 CRM core** | Monorepo and CI, base schema with tenant seams, surface gating, staff auth (password + TOTP), Inertia admin surface with shadcn-vue, contacts, leads with multiple requested dates, jobs and shoots, lead-to-booking conversion, derived pipeline board, manual lead entry with availability check across lead dates and shoots, per-shoot crew assignment, internal notes, tasks and templates, calendar/ICS | Replaces spreadsheets; in daily use |
 | **P2 Sales** | Client auth (magic-link login form), Inertia portal surface, packages, quotes, contract templates with PDF rendering and simple e-signature, payment plans, Stripe Invoicing and webhooks | Replaces the booking half of the incumbent |
-| **P3 Gallery** | Guest auth, the `api` surface, `packages/contracts` and OpenAPI generation, Media context, presigned multipart ingest, libvips derivative pipeline, gallery versioning, Astro gallery, password/PIN/email gates, ZIP builds, download audit, proofing with favorites and comments | Replaces WeTransfer and the incumbent gallery |
+| **P3 Gallery** | Guest auth, the `api` surface, `packages/contracts` and OpenAPI generation, Media context with shoot-scoped assets and per-shoot or per-booking galleries, presigned multipart ingest, libvips derivative pipeline, gallery versioning, Astro gallery, password/PIN/email gates, ZIP builds, download audit, proofing with favorites and comments | Replaces WeTransfer and the incumbent gallery |
 | **P4 Engagement** | Form templates, instances and answers, timeline builder, shot lists, client threads, notification service, automation engine with seeded rules | Incumbent subscription can be cancelled |
 | **P5 Migration** | Import historical clients, jobs and contracts; backfill or link legacy galleries; cutover runbook; parallel-run period | Subscription ends |
 
