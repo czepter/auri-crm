@@ -1,171 +1,167 @@
 # Clickdummy — Design-Only Mockups
 
 **Date:** 2026-08-07
-**Status:** Approved.
+**Status:** Approved. Revised after adversarial review — screen count cut from 37 to 12, shared data file removed, Tailwind mechanism corrected.
 **Parent:** [Product Vision](2026-08-07-photography-client-management-vision-design.md)
-**Scope:** 37 linked static HTML screens covering the admin, portal, and gallery surfaces. Design-only — no build step, no backend, no state.
+**Scope:** 12 linked static HTML screens across the admin, portal, and gallery surfaces. Design-only — no build step, no backend, no state.
 
 ---
 
 ## 1. Purpose
 
-Validate layout, flow, and information architecture across all three surfaces before P1 implementation begins. The mockups are a throwaway artifact: nothing in `mockups/` is intended to survive into `apps/studio`. What survives is the design decisions they settle and the vision edits they provoke.
+Settle the layout and information-architecture questions the vision leaves open, before P1 implementation begins. The mockups are throwaway: nothing in `mockups/` is intended to survive into `apps/studio`. What survives is the decisions they settle.
 
-They exist to answer questions that a written spec cannot: whether the pipeline board is legible at a realistic lead count, whether the portal reads as studio-branded rather than as an internal tool, whether German copy fits the columns and buttons, and whether the gallery's three-gate download flow feels defensible or obstructive to a guest.
+### The selection rule
+
+A mockup set has no compiler. Every consistency guarantee is manual, so its true cost scales with screen count **times** review rounds, not with screen count. Twelve screens reviewed three times is affordable; thirty-seven is not.
+
+A screen earns its place only if it satisfies both tests:
+
+1. **It has an open question.** Login forms, TOTP prompts, contact lists, calendars, settings pages, and confirmation screens are solved patterns. Mocking them produces no decision — it just draws a CRUD form in HTML that gets drawn again in Vue weeks later.
+2. **Static HTML can express what it asks the reviewer to judge.** If the property under review is friction or scale, static screens cannot represent it, and a confident wrong answer is worse than no answer. See §5.
+
+Roughly twenty candidate screens failed test 1 and were cut. Two failed test 2 and were kept with their scope explicitly narrowed.
 
 ### Non-goals
 
-Responsive breakpoints beyond Tailwind defaults · admin mobile layouts (staff work at desks) · dark mode outside the gallery · accessibility audit · component API design · P4 automation rule builder · any working behavior.
+Responsive breakpoints beyond Tailwind defaults · admin mobile layouts (staff work at desks) · dark mode outside the gallery · accessibility audit · component API design · working behavior of any kind · every screen not listed in §3.
 
 ---
 
 ## 2. Medium and structure
 
-Static HTML with Tailwind via CDN. No npm, no build, no server. `index.html` opens by double-click.
+Static HTML with the Tailwind browser build via CDN. No npm, no build, no server. `index.html` opens by double-click.
 
 ```
 mockups/
-├── index.html              screen map — all 37 screens grouped by surface, each with a review note
+├── index.html              screen map — 12 screens grouped by surface, each with its review question
 ├── _shared/
-│   ├── layout.js           chrome: admin sidebar+topbar, portal header, gallery header, screenmap footer
-│   ├── tokens.css          shadcn CSS variables — three themes
-│   └── data.js             the shared sample cast
-├── admin/                  21 screens
-├── portal/                 9 screens
-└── gallery/                7 screens
+│   ├── layout.js           chrome: admin sidebar+topbar, portal header, gallery header, per-screen footer
+│   └── tokens.css          shadcn token block, three themes
+├── admin/                  5 screens
+├── portal/                 2 screens
+└── gallery/                5 screens
 ```
 
-### Shared chrome
+### Tailwind and tokens — verified behavior
 
-Sidebar, topbars, and the per-screen footer strip live once in `_shared/layout.js` as template strings, injected on load. Review churn is the dominant cost of a clickdummy, and full duplication taxes exactly that — renaming one nav label must not be a 30-file edit.
+The Play CDN is Tailwind **v4**, loaded as `@tailwindcss/browser@4`. It is themed through the CSS-first `@theme` directive inside `<style type="text/tailwindcss">`, not through a JS config object. shadcn's current token set is OKLCH values on `:root` mapped into Tailwind via `@theme inline`, which means **shadcn's token block pastes in verbatim**. The themes here are the real ones, not approximations of them.
 
-Two constraints drive the mechanism:
+`@tailwindcss/browser` installs a `MutationObserver` on `document.documentElement` with `childList: true, subtree: true` and rebuilds on added nodes. Injected chrome is therefore picked up normally, and `layout.js` can run on `DOMContentLoaded` with no ordering contortion. (An earlier draft of this spec claimed the opposite and designed a blocking-head-script mechanism around it. That claim was wrong.)
 
-1. **`<script src>`, not `fetch`.** A local file's origin is opaque, so `file://` blocks XHR and `fetch` under the same-origin policy. Script tags were never same-origin restricted, so chrome ships as template strings in a script rather than as fetched partials.
-2. **Injection runs before Tailwind.** The Tailwind CDN build compiles classes in-browser by scanning the DOM. Chrome injected on `DOMContentLoaded` would arrive after that scan and get no CSS. Injection therefore happens in a blocking script in `<head>`.
+Chrome ships as template strings in `layout.js` loaded by `<script src>` rather than as partials loaded by `fetch`, because a local file's origin is opaque and `file://` blocks `fetch` under the same-origin policy. Script tags carry no such restriction.
+
+### No shared data file
+
+Sample data is hardcoded into each screen. A `_shared/data.js` was specified in the previous draft and removed: static HTML has no templating, and §5 forbids the JavaScript that would read it, so the file could never have been used. At twelve screens, hand-consistency is affordable — which is itself part of why the count is twelve.
 
 ### Theming
 
-Three CSS-variable blocks in `tokens.css`, switched by `data-theme` on `<html>` — the same mechanism `apps/studio` will use, so the token names transfer even though the files do not.
+Three token blocks in `tokens.css`, switched by `data-theme` on `<html>` — the same mechanism `apps/studio` will use.
 
 | Theme | Surface | Character |
 |---|---|---|
 | `admin` | staff | Dense. Tight radii, 13px base, compact table rows, muted neutrals. Reads as a tool. |
 | `portal` | clients | Spacious. Generous whitespace, serif display face, studio accent, larger touch targets. |
-| `gallery` | guests | Near-black. Chrome recedes; photos carry the page. |
+| `gallery` | guests | Near-black. Chrome recedes; photographs carry the page. |
 
 ### Placeholder branding
 
-**Atelier Nordlicht**, Hamburg — wedding and portrait. Accent is a desaturated terracotta; serif display face, Inter for UI. A warm neutral was chosen because a saturated brand color fights every wedding photograph placed behind it, and the portal and gallery are mostly photograph.
+**Atelier Nordlicht**, Hamburg — wedding and portrait. Desaturated terracotta accent, serif display face, Inter for UI. A warm neutral was chosen because a saturated brand color fights every wedding photograph placed behind it, and the portal and gallery are mostly photograph.
 
 ### Sample data
 
-One consistent cast across all 37 screens: the Meier–Kowalski wedding at Gut Basthorst on 14.06.2026, one portrait session, and three open leads at different pipeline stages. Clicked through in order the mockups then tell one story rather than reading as 37 unrelated screenshots.
+One consistent cast: the Meier–Kowalski wedding at Gut Basthorst on 14.06.2026, one portrait session, and several open leads at different pipeline stages. Clicked through in order the mockups tell one story rather than reading as twelve unrelated screenshots.
 
 ### Language
 
-German throughout, UI copy and sample data both. German compound nouns run roughly 30% longer than their English equivalents and break column and button widths that looked fine in English — surfacing that in mockups is cheaper than surfacing it during implementation.
+German throughout, UI copy and sample data both. German compound nouns run roughly 30% longer than their English equivalents and break column and button widths that looked fine in English — surfacing that now is cheaper than surfacing it during implementation.
 
 ### Photography
 
-Real wedding and portrait images hotlinked from the Unsplash CDN with size parameters, so grids, mixed aspect ratios, and lightbox behavior are honest. Requires internet to view; no image files in the repo.
+Wedding and portrait images hotlinked from the Unsplash CDN with size parameters, so mixed aspect ratios and lightbox framing are honest. Requires internet to view; no image files in the repo.
 
 ---
 
 ## 3. Screen inventory
 
-### Admin — `APP_SURFACE=admin`, theme `admin` (21)
+### Admin — theme `admin` (5)
 
-| # | Screen | Exercises |
+| # | Screen | Open question it settles |
 |---|---|---|
-| 1 | Anmeldung — Passwort | §4 staff auth |
-| 2 | Zwei-Faktor — TOTP | §4 mandatory MFA |
-| 3 | Übersicht — Dashboard | Today's shoots, needs-attention tray, overdue installments |
-| 4 | Anfragen — Pipeline-Board | §7 `Lead.stage` kanban, 5 columns |
-| 5 | Anfrage-Detail | Source, requested date, availability conflict flag, convert action |
-| 5a | Anfrage anlegen | Manual entry with inline availability check against existing jobs |
-| 6 | Aufträge — Liste | §7 `Job.status` filters |
-| 7 | Auftrag — Übersicht | Forward-only status pipeline, dates, venue |
-| 8 | Auftrag — Beteiligte & Team | §3.1 `JobContact` roles, `CrewAssignment` |
-| 9 | Auftrag — Aufgaben | §3.3 internal vs. client audience split |
-| 10 | Auftrag — Notizen | §3.3 `InternalNote`, visibly staff-only |
-| 11 | Auftrag — Zahlungen | §7 installments, Stripe state |
-| 12 | Auftrag — Galerie | §3.4 versions, publish state |
-| 13 | Kontakte — Liste | §3.1 role-agnostic `Contact` |
-| 14 | Kontakt-Detail | Cross-job history |
-| 15 | Kalender | Shoots plus ICS export |
-| 16 | Medien-Upload | §6 presigned multipart progress and "Prüfung erforderlich" tray |
-| 17 | Pakete & Angebote | §3.2 catalog |
-| 18 | Angebot erstellen | Line items, price snapshot, send |
-| 19 | Einstellungen | Studio details, templates, and the seeded automation rules as a read-only list — §7 defers the rule builder |
-| 20 | Protokoll — Audit-Log | §4 append-only |
+| 1 | Übersicht — Dashboard | What does a photographer need on opening the app? Today's shoots, overdue installments, and the "Prüfung erforderlich" tray compete for the same space — which wins. |
+| 2 | Anfragen — Pipeline-Board | Does a 5-column `Lead.stage` board stay legible at realistic density (11 leads), and what fits on a card without a hover state. |
+| 3 | Anfrage anlegen | Manual lead entry, now P1's only capture path. Where the availability conflict against existing jobs appears, and how hard it interrupts. |
+| 4 | Auftrag — Detail | The densest screen in the system: forward-only status pipeline, dates, venue, typed contacts, crew, and tab affordances for tasks, notes, payments, and gallery. Whether tabs are the right split at all. |
+| 5 | Medien-Upload | Presigned multipart progress across ~1200 files with 3 failures. Whether a partially-failed 30 GB upload is legible or panic-inducing. |
 
-### Portal — `APP_SURFACE=portal`, theme `portal` (9)
+### Portal — theme `portal` (2)
 
-| # | Screen | Exercises |
+| # | Screen | Open question it settles |
 |---|---|---|
-| 21 | Anmeldung — E-Mail-Formular | §4 self-service magic link |
-| 22 | Link gesendet | Response identical for known and unknown email |
-| 23 | Startseite — Checkliste | §3.3 derived client task list |
-| 24 | Vertrag — Ansicht | §7 rendered PDF in-page |
-| 25 | Vertrag — unterschreiben | Typed full name plus explicit consent checkbox |
-| 26 | Vertrag — bestätigt | Countersigned PDF, SHA-256 hash shown |
-| 27 | Zahlungen | Installments, Stripe hosted-page handoff |
-| 28 | Fragebogen | §3.3 `FormInstance`, timeline questions |
-| 29 | Nachrichten | §3.3 `Thread`, unread state |
+| 6 | Startseite — Checkliste | Does the portal read as studio-branded rather than as an internal tool? Plus whether a derived task checklist feels like service or like homework. |
+| 7 | Vertrag — unterschreiben | The trust moment. Typed full name plus explicit consent checkbox, alongside the rendered PDF. Whether a simple electronic signature looks credible enough that a client completes it without emailing to ask. |
 
-### Gallery — Astro, theme `gallery` (7)
+### Gallery — theme `gallery` (5)
 
-| # | Screen | Exercises |
+| # | Screen | Open question it settles |
 |---|---|---|
-| 30 | Galerie — Passwort | §5 view gate, uniform failure copy |
-| 31 | Galerie — Raster | Sections, mixed aspect ratios, blurhash placeholders |
-| 32 | Lightbox | Favorite and comment |
-| 33 | Download — PIN | §5 download gate, separate from the view gate |
-| 34 | Download — E-Mail | Purpose statement and retention period (DSGVO) |
-| 35 | Download — versendet | Split ZIP parts listed |
-| 36 | Favoriten | Selection view, Lightroom export hint |
+| 8 | Galerie — Passwort | First impression for eighty guests, and whether uniform-failure copy (§5 of the vision) can be written without sounding broken. |
+| 9 | Galerie — Raster | Section navigation and mixed portrait/landscape runs. **Scope-limited** — see §5. |
+| 10 | Lightbox | Favorite and comment affordances without chrome overwhelming the photograph. |
+| 11 | Download — PIN | The moment a guest discovers a *second* secret exists. Layout and copy only — **not** friction; see §5. |
+| 12 | Download — E-Mail | DSGVO purpose statement and retention period at the point of collection, without the form reading as a data grab. |
 
-The unglamorous screens — audit log, needs-attention tray, ZIP parts — are deliberately included. They are where the vision's claims either hold up visually or fail to.
+**Cut and why:** login, TOTP, link-sent confirmation, contacts list, contact detail, calendar, settings, audit log, packages, quote builder, job sub-tabs as separate screens, portal payments, questionnaire, messages, download-sent, favorites view. All solved patterns with no open design question — they fail test 1 of §1.
 
 ---
 
 ## 4. Interaction rules
 
-No state and no JavaScript behavior beyond chrome injection and `<a>` navigation. These rules keep that constraint from producing misleading screens.
+No state and no JavaScript behavior beyond chrome injection and `<a>` navigation.
 
-**Screens depict one moment.** Everything stateful renders in its most informative state rather than empty: the pipeline board carries 11 leads across 5 columns, the upload screen sits mid-transfer with 3 failures in the tray, the gallery grid runs a mixed portrait and landscape sequence. Empty states get their own screens only where the vision makes a claim about them — a fully completed portal checklist qualifies; an empty needs-attention tray does not.
+**Screens depict one moment**, in the most informative state rather than empty: the board carries 11 leads across 5 columns, the upload sits mid-transfer with 3 failures, the grid runs a mixed portrait and landscape sequence.
 
-**Multi-step flows become multiple linked screens.** Password → PIN → email → sent is four files, each linking forward. The link is the fake; each screen is honest.
+**Forms are inert.** Inputs render pre-filled with plausible values; buttons link forward. No validation and no error states, except the two the vision makes a security claim about — wrong gallery password (uniform failure) and rate-limited PIN entry (lockout). With no state to toggle, each renders as a second labeled variant block further down the same page, so the copy can be reviewed side by side with the resting state.
 
-**Forms are inert.** Inputs render pre-filled with plausible values and buttons link forward. No validation and no error states, except where the vision makes a security claim about the response — wrong gallery password (§5, uniform failure) and rate-limited PIN entry (§5, lockout) each get a screen.
+**Every screen carries a footer strip** with its number, its surface, and links back to the screen map plus previous and next in flow order.
 
-**Every screen carries a footer strip** with its number, its surface, and links back to the screen map plus previous and next in flow order. Reviewing 37 files without that is where clickdummies die.
-
-**`index.html` is the spine.** All 37 screens as labeled thumbnails grouped by surface, each with a one-line note on what it is asking the reviewer to judge.
+**`index.html` is the spine** — twelve labeled entries grouped by surface, each carrying the open question from §3 so review comments land on the decision rather than on the styling.
 
 ---
 
-## 5. Build order
+## 5. What these screens cannot answer
 
-`_shared/` first — tokens, chrome, the sample cast. Then one vertical slice as pattern-setter: admin login → dashboard → pipeline → job detail.
+Two of the twelve review properties that static HTML structurally cannot represent. Both screens are kept, with their claims narrowed rather than quietly overstated.
 
-**That slice is reviewed before the remaining 33 screens are produced.** Every later screen inherits its table, card, and form conventions, and correcting those across 37 files afterwards is the failure mode this ordering exists to avoid.
+**Screen 11 — the download gate flow is not friction-testable here.** Friction is time and effort, and clicking `<a href>`s erases both. The real sequence is: find the password in a WhatsApp thread, type it, press download, discover a second secret exists, ask the couple for the PIN, wait, type an email, leave the site, wait for mail, return. A static click-through takes three seconds and will report "fine" for something that may be genuinely hostile. These screens judge layout and copy only. Whether three gates are one too many is a question for a real user on a real phone, and it stays open after this exercise.
 
-Then the admin bulk, then portal, then gallery. Gallery goes last because it depends least on conventions established elsewhere and most on the photographs.
+**Screen 9 — the grid is not scale-testable here.** The real risk is whether 1500 images read well. A static page holding 1500 hotlinked images is unopenable and would be rate-limited long before it loaded. The screen shows roughly 40 and judges section navigation, aspect-ratio mixing, and placeholder behavior. Scroll performance, virtualization, and pagination remain P3 questions.
 
----
-
-## 6. Vision edits provoked
-
-Recorded here rather than acted on. Each is applied to the vision document only once the mockups confirm it.
-
-**Public inquiry form dropped from initial scope.** Lead creation is manual (staff-entered) at the start. §9 justified deploying the `api` surface in P1 specifically because the public inquiry endpoint must be internet-facing while admin is network-restricted. With no public form, that consumer disappears: P1 becomes the admin container alone, and the `api` surface slips to P3 alongside the Astro gallery. Simpler, and one fewer container to operate.
-
-A consequence worth carrying forward whenever the public form does return: it would be the only surface in the system that is anonymous *and* writes to the database. Every other write path sits behind a gate. It is therefore the one place needing spam defense — honeypot, timing check, per-IP rate limit — and the only genuine cross-origin case, since it would post from `www.studio.tld` to `api.studio.tld`.
+Naming these is the point: a mockup that quietly fails to test its property is worse than one that never claimed to.
 
 ---
 
-## 7. Deliverable
+## 6. Build order
+
+`_shared/` first — tokens and chrome. Then screens 1, 2, and 4 as the pattern-setter, since they establish every table, card, badge, and form convention the rest inherit.
+
+**Those three are reviewed before the remaining nine are produced.** At twelve screens a single mid-course correction is cheap; the previous 37-screen plan had one review gate covering 33 screens, where convention errors surface at screen 30.
+
+Then the remaining admin screens, then portal, then gallery. Gallery last: it depends least on conventions established elsewhere and most on the photographs.
+
+---
+
+## 7. Vision changes already applied
+
+Recorded here for traceability; both are live in the parent document as of this spec.
+
+**Lead capture is manual in P1.** No public inquiry form. §9 of the vision previously justified deploying the `api` surface in P1 specifically because a public inquiry endpoint must be internet-facing while admin is network-restricted. With no public form that consumer disappears, so **P1 deploys the admin container alone** and the `api` surface moves to P3 alongside the Astro gallery. One fewer container to operate, and one fewer internet-facing attack surface during the phase with the least hardening.
+
+**The public form is deferred, not abandoned.** The vision now records why it deserves its own phase: it would be the only surface in the system that is anonymous *and* writes to the database — the only place needing honeypot, timing check, and per-IP rate limiting — and the only genuine cross-origin case, posting from the marketing site to `api.studio.tld`.
+
+---
+
+## 8. Deliverable
 
 `mockups/` committed to this repository. Opened by double-clicking `index.html`. No server, no npm, no build step.
