@@ -151,6 +151,92 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2378706B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E"); }
 .card:hover .go { opacity:1; }
 
+/* ---------- dashboard (screen 1) ---------- */
+
+.dsub { font:400 13px/1 var(--font); color:var(--muted); margin-top:var(--s1); }
+.dlab { font:600 12.5px/1 var(--font); letter-spacing:.02em; text-transform:uppercase; color:var(--faint); margin-bottom:var(--s3); }
+.dsec { margin-top:var(--s6); }
+.dsec:first-of-type { margin-top:var(--s5); }
+
+/* the day's lead shoot gets more air and bigger type than a board card — it's the screen's hero */
+.card.hero { padding:var(--s4); max-width:560px; }
+.card.hero .kick { font-size:11px; }
+.card.hero .who { font-size:18px; }
+.card.hero .meta span { font-size:13.5px; }
+
+.qrow { display:flex; align-items:baseline; gap:var(--s3); margin-top:var(--s3); padding:0 var(--s3);
+        font:400 13px/1.4 var(--font); color:var(--muted); }
+.qrow b { color:var(--ink); font-weight:600; }
+
+.dgrid { display:grid; grid-template-columns:3fr 2fr; gap:var(--s6); margin-top:var(--s6); }
+
+/* a bordered list container reusing the same card hairline, not a new border type */
+.panel { border:1px solid var(--line); border-radius:var(--r); overflow:hidden; }
+
+.trow { display:flex; align-items:center; gap:var(--s3); padding:var(--s3); color:inherit; text-decoration:none;
+        border-top:1px solid var(--line); transition:background .12s ease-out; }
+.trow:first-child { border-top:none; }
+.trow:hover { background:var(--hover); }
+.trow .tfile { font:500 13px/1.3 var(--font); color:var(--ink); }
+.trow .treason { font:400 12.5px/1.3 var(--font); color:var(--muted); }
+.trow .tretry { margin-left:auto; font:500 12.5px/1 var(--font); color:var(--faint); }
+.trow .tclient { font:600 13px/1.3 var(--font); flex:1; min-width:0; }
+
+/* ---------- job detail (screen 4): header meta, forward-only stepper, contact/crew rows, tab previews ---------- */
+
+/* header info line reuses .meta's icon-label pattern, laid out horizontally instead of stacked */
+.meta.row { flex-direction:row; gap:var(--s5); margin:var(--s3) 0 0; }
+.meta .g { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A39B96' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='9' cy='8' r='3'/%3E%3Cpath d='M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6'/%3E%3Ccircle cx='17.5' cy='9' r='2.3'/%3E%3Cpath d='M15.8 14.2c2.6.5 4.7 2.7 5.2 5.8'/%3E%3C/svg%3E"); }
+
+/* Job.status pipeline: forward-only, so the only affordance is a chevron pointing one way — no back arrow exists anywhere in this component */
+.stepper { display:flex; align-items:center; gap:var(--s2); margin:var(--s4) 0 var(--s5); flex-wrap:wrap; }
+.stepper .step { display:flex; align-items:center; gap:6px; font:500 12.5px/1 var(--font); color:var(--faint); padding:7px 11px; border-radius:var(--r-sm); }
+.stepper .step .dot { width:7px; height:7px; border-radius:50%; background:var(--faint); flex:none; }
+.stepper .step.done { color:var(--muted); }
+.stepper .step.done .dot { background:var(--muted); }
+.stepper .step.now { color:var(--accent); font-weight:600; background:var(--accent-bg); }
+.stepper .step.now .dot { background:var(--accent); }
+.stepper .chev { width:12px; height:12px; color:var(--faint); flex:none; }
+
+/* two-up layout for the Übersicht tab's content panels */
+.jobgrid { display:grid; grid-template-columns:1fr 1fr; gap:var(--s6); margin-bottom:var(--s6); }
+
+/* a .card used as a static content panel rather than a link — no hover affordance to imply clickability */
+.card.static { cursor:default; }
+.card.static:hover { background:var(--bg); border-color:var(--line); }
+
+.cardhead { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--s4); }
+.cardhead .txtbtn { padding:0; }
+
+/* typed contact rows and crew rows — a labeled list, not the overlapping .stack, since roles need room to read */
+.plist { display:flex; flex-direction:column; gap:var(--s4); }
+.prow { display:flex; align-items:center; gap:var(--s3); }
+.pavatar { width:32px; height:32px; border-radius:50%; object-fit:cover; background:var(--hover); flex:none; }
+.pinfo { flex:1; min-width:0; }
+.pname { font:600 13px/1.3 var(--font); }
+.psub { font:400 12px/1.3 var(--font); color:var(--muted); margin-top:1px; }
+.proles { display:flex; gap:4px; flex:none; }
+.role { display:inline-flex; align-items:center; padding:3px 8px; border-radius:var(--r-sm); background:var(--hover);
+        font:500 11px/1.4 var(--font); color:var(--muted); white-space:nowrap; }
+
+/* Aufgaben and Zahlungen previews, compressed into the Übersicht tab rather than built as full tab panels */
+.tlist, .paylist { display:flex; flex-direction:column; gap:var(--s4); }
+.taskrow, .payrow { display:flex; align-items:center; gap:var(--s3); font:400 12.5px/1.3 var(--font); }
+.ttext, .payname { flex:1; color:var(--ink); }
+.payname { font-weight:500; }
+.tdate, .paydate { color:var(--faint); font-size:12px; flex:none; }
+.taskrow .val, .payrow .val { flex:none; min-width:58px; text-align:right; }
+
+/* Task.audience is a real field (vision §3.3) — this badge renders it, it never stands in for InternalNote,
+   which stays a separate model with no portal-facing route at all */
+.taudience, .paystatus { flex:none; padding:3px 8px; border-radius:var(--r-sm); font:600 10px/1.5 var(--font);
+                          letter-spacing:.04em; text-transform:uppercase; }
+.taudience.client { background:var(--accent-bg); color:var(--accent); }
+.taudience.internal { background:var(--hover); color:var(--muted); }
+.paystatus.paid { background:var(--ok-bg); color:var(--ok); }
+.paystatus.due { background:var(--accent-bg); color:var(--accent); }
+.paystatus.upcoming { background:var(--hover); color:var(--muted); }
+
 /* ---------- clickdummy footer strip (not part of the product) ---------- */
 
 .dummybar { position:fixed; left:0; right:0; bottom:0; display:flex; align-items:center; gap:var(--s4);
