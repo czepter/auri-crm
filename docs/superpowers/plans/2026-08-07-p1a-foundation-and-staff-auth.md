@@ -14,6 +14,7 @@
 - Node 24, pnpm 10. pnpm is the only package manager; do not create `package-lock.json` or `yarn.lock`.
 - PostgreSQL 18. No MySQL-specific SQL, no SQLite in tests — tests run against real Postgres.
 - Every application table carries a `tenant_id` UUID column, NOT NULL, defaulting to the constant in `config('tenancy.tenant_id')`. This seam is dormant in P1 but present from the first migration.
+- Every application table carries a unique `char(24)` `public_id` holding a CUID2. The `bigint` primary key is internal only: it carries foreign keys and joins, and never appears in an API response, a URL, an email, or a filename. Models expose `public_id` and hide `id`; route-model binding resolves on `public_id`.
 - No cross-context database joins. Contexts reference each other by ID.
 - Staff MFA is mandatory, not opt-in. A staff user without confirmed TOTP may reach only the enrollment endpoints.
 - Every API route group declares its required audience in middleware. Rejection happens in middleware, before controller dispatch.
@@ -40,6 +41,7 @@ client-management-portal/
 │   │   │   ├── Models/User.php                   staff user
 │   │   │   ├── Models/AuditLog.php               append-only log model
 │   │   │   ├── Concerns/BelongsToTenant.php      tenant column + global scope
+│   │   │   ├── Concerns/HasPublicId.php          cuid2 generation, hides id, route key
 │   │   │   ├── Support/AuditLogger.php           the only writer of audit rows
 │   │   │   ├── Http/Middleware/EnsureAudience.php        guard-based audience gate
 │   │   │   ├── Http/Middleware/RequireConfirmedMfa.php   blocks un-enrolled staff
@@ -64,7 +66,7 @@ client-management-portal/
         └── src/schema.d.ts               generated TypeScript types
 ```
 
-Responsibility boundaries worth naming: `AuditLogger` is the single writer of audit rows so that retention and redaction have one place to live. `EnsureAudience` knows about guards and nothing else. Controllers under `Http/Controllers/Staff/` are split by concern (session, enrollment, challenge) rather than gathered into one `AuthController`, because the MFA challenge has a different authentication state than the other two and merging them makes that state machine hard to read.
+Responsibility boundaries worth naming: `AuditLogger` is the single writer of audit rows so that retention and redaction have one place to live. `EnsureAudience` knows about guards and nothing else. `HasPublicId` owns every part of the internal/external identifier split — generation, hiding, and route binding — so that adding the trait is sufficient and there is nothing a model author must remember separately. Controllers under `Http/Controllers/Staff/` are split by concern (session, enrollment, challenge) rather than gathered into one `AuthController`, because the MFA challenge has a different authentication state than the other two and merging them makes that state machine hard to read.
 
 ---
 
@@ -442,17 +444,21 @@ git commit -m "feat(api): scaffold Laravel 11 on Postgres with a health endpoint
 
 ---
 
-### Task 3: Tenant seam
+### Task 3: Schema conventions — tenant seam and public identifiers
 
 **Files:**
 - Create: `apps/api/config/tenancy.php`
 - Create: `apps/api/app/Concerns/BelongsToTenant.php`
+- Create: `apps/api/app/Concerns/HasPublicId.php`
 - Create: `apps/api/tests/Feature/TenantSeamTest.php`
+- Create: `apps/api/tests/Feature/PublicIdTest.php`
 - Modify: `apps/api/app/Providers/AppServiceProvider.php`, `apps/api/.env.example`
 
 **Interfaces:**
 - Consumes: the Laravel app from Task 2
-- Produces: `Blueprint::tenantId()` macro for migrations; `App\Concerns\BelongsToTenant` trait applying a global scope on `tenant_id` and auto-filling it on create; `config('tenancy.tenant_id')`
+- Produces: `Blueprint::tenantId()` and `Blueprint::publicId()` macros for migrations; `App\Concerns\BelongsToTenant` applying a global scope on `tenant_id` and auto-filling it on create; `App\Concerns\HasPublicId` generating a CUID2 on create, hiding `id`, resolving route binding on `public_id`, and exposing `Model::findByPublicId(string $publicId): ?static`; `config('tenancy.tenant_id')`
+
+Both macros are schema conventions registered in the same provider and exercised by the same probe table, so they ship together — a reviewer approving one and rejecting the other would leave the migration helpers half-defined.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -468,6 +474,7 @@ beforeEach(function () {
     Schema::create('seam_probes', function (Blueprint $table) {
         $table->id();
         $table->tenantId();
+        $table->publicId();
         $table->string('label');
     });
 });
@@ -498,6 +505,7 @@ Add the probe model at the bottom of the same file:
 class TenantProbe extends \Illuminate\Database\Eloquent\Model
 {
     use \App\Concerns\BelongsToTenant;
+    use \App\Concerns\HasPublicId;
 
     protected $table = 'seam_probes';
     public $timestamps = false;
@@ -505,9 +513,77 @@ class TenantProbe extends \Illuminate\Database\Eloquent\Model
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+`apps/api/tests/Feature/PublicIdTest.php`:
 
-Run: `docker compose run --rm php ./vendor/bin/pest --filter=TenantSeam`
+```php
+<?php
+
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use Tests\Feature\TenantProbe;
+
+beforeEach(function () {
+    Schema::create('seam_probes', function (Blueprint $table) {
+        $table->id();
+        $table->tenantId();
+        $table->publicId();
+        $table->string('label');
+    });
+});
+
+afterEach(fn () => Schema::dropIfExists('seam_probes'));
+
+it('generates a 24 character cuid2 on create', function () {
+    $probe = TenantProbe::create(['label' => 'first']);
+
+    expect($probe->public_id)->toBeString()->toHaveLength(24)
+        ->and($probe->public_id)->toMatch('/^[a-z][a-z0-9]{23}$/');
+});
+
+it('generates distinct identifiers that are not sequential', function () {
+    $ids = collect(range(1, 20))
+        ->map(fn (int $n) => TenantProbe::create(['label' => "probe-{$n}"])->public_id);
+
+    expect($ids->unique())->toHaveCount(20)
+        ->and($ids->sort()->values()->all())->not->toBe($ids->values()->all());
+});
+
+it('hides the internal primary key when serialising', function () {
+    $probe = TenantProbe::create(['label' => 'first']);
+
+    expect($probe->toArray())->not->toHaveKey('id')
+        ->and($probe->toArray())->toHaveKey('public_id');
+});
+
+it('resolves route binding on the public id', function () {
+    $probe = TenantProbe::create(['label' => 'first']);
+
+    expect($probe->getRouteKeyName())->toBe('public_id')
+        ->and($probe->getRouteKey())->toBe($probe->public_id);
+});
+
+it('finds a record by its public id', function () {
+    $probe = TenantProbe::create(['label' => 'first']);
+
+    expect(TenantProbe::findByPublicId($probe->public_id)?->id)->toBe($probe->id)
+        ->and(TenantProbe::findByPublicId('nonexistentnonexistent01'))->toBeNull();
+});
+
+it('keeps the public id stable across updates', function () {
+    $probe = TenantProbe::create(['label' => 'first']);
+    $original = $probe->public_id;
+
+    $probe->update(['label' => 'second']);
+
+    expect($probe->fresh()->public_id)->toBe($original);
+});
+```
+
+The two test files share the `TenantProbe` model, so declare it once — in `TenantSeamTest.php` under a `Tests\Feature` namespace declaration at the top of the file — and import it in `PublicIdTest.php` as shown.
+
+- [ ] **Step 2: Run the tests to verify they fail**
+
+Run: `docker compose run --rm php ./vendor/bin/pest --filter="TenantSeam|PublicId"`
 Expected: FAIL — `Call to undefined method Blueprint::tenantId()`.
 
 - [ ] **Step 3: Add the config**
@@ -542,10 +618,67 @@ public function boot(): void
 
         return $column;
     });
+
+    Blueprint::macro('publicId', function () {
+        /** @var Blueprint $this */
+        return $this->char('public_id', 24)->unique();
+    });
 }
 ```
 
-- [ ] **Step 5: Implement the trait**
+`char(24)` rather than `string`: CUID2 output is fixed width at the default length, and a fixed-width column keeps the unique index compact.
+
+- [ ] **Step 5: Implement the traits**
+
+Install the CUID2 library first:
+
+```bash
+docker run --rm -v "$PWD":/app -w /app/apps/api composer:2 require visus/cuid2 --no-interaction
+```
+
+`apps/api/app/Concerns/HasPublicId.php`:
+
+```php
+<?php
+
+namespace App\Concerns;
+
+use Illuminate\Database\Eloquent\Model;
+use Visus\Cuid2\Cuid2;
+
+/**
+ * Splits internal and external identity. The bigint primary key stays inside
+ * the database — it carries foreign keys and joins. The CUID2 in public_id is
+ * the only identifier that crosses the API boundary, so sequential integers
+ * are never enumerable by a client or guest.
+ */
+trait HasPublicId
+{
+    public static function bootHasPublicId(): void
+    {
+        static::creating(function (Model $model) {
+            $model->public_id ??= (string) new Cuid2;
+        });
+    }
+
+    public function initializeHasPublicId(): void
+    {
+        $this->hidden = array_values(array_unique([...$this->hidden, 'id']));
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'public_id';
+    }
+
+    public static function findByPublicId(string $publicId): ?static
+    {
+        return static::query()->where('public_id', $publicId)->first();
+    }
+}
+```
+
+`initializeHasPublicId()` runs per model instance, which is what makes `$hidden` additive rather than overwriting whatever the model already hides — `User` hides its password through the same array.
 
 `apps/api/app/Concerns/BelongsToTenant.php`:
 
@@ -572,16 +705,16 @@ trait BelongsToTenant
 }
 ```
 
-- [ ] **Step 6: Run the test to verify it passes**
+- [ ] **Step 6: Run the tests to verify they pass**
 
-Run: `docker compose run --rm php ./vendor/bin/pest --filter=TenantSeam`
-Expected: PASS, 2 tests.
+Run: `docker compose run --rm php ./vendor/bin/pest --filter="TenantSeam|PublicId"`
+Expected: PASS, 8 tests (2 tenant, 6 public id).
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add apps/api/config/tenancy.php apps/api/app/Concerns/BelongsToTenant.php apps/api/app/Providers/AppServiceProvider.php apps/api/tests/Feature/TenantSeamTest.php apps/api/.env.example
-git commit -m "feat(api): add dormant tenant seam with blueprint macro and global scope"
+git add apps/api/config/tenancy.php apps/api/app/Concerns apps/api/app/Providers/AppServiceProvider.php apps/api/tests/Feature/TenantSeamTest.php apps/api/tests/Feature/PublicIdTest.php apps/api/composer.json apps/api/composer.lock apps/api/.env.example
+git commit -m "feat(api): add tenant seam and CUID2 public identifiers"
 ```
 
 ---
@@ -596,8 +729,8 @@ git commit -m "feat(api): add dormant tenant seam with blueprint macro and globa
 - Create: `apps/api/tests/Feature/StaffUserTest.php`
 
 **Interfaces:**
-- Consumes: `BelongsToTenant` (Task 3)
-- Produces: `App\Models\User` with `role: StaffRole`, `mfa_secret: ?string` (encrypted), `mfa_confirmed_at: ?CarbonImmutable`, and `hasConfirmedMfa(): bool`; `User::factory()->withMfa()` state
+- Consumes: `BelongsToTenant` and `HasPublicId` (Task 3)
+- Produces: `App\Models\User` with `public_id: string`, `role: StaffRole`, `mfa_secret: ?string` (encrypted), `mfa_confirmed_at: ?CarbonImmutable`, and `hasConfirmedMfa(): bool`; `User::factory()->withMfa()` state
 
 - [ ] **Step 1: Write the failing test**
 
@@ -612,12 +745,23 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-it('creates a staff user with a role and a tenant', function () {
+it('creates a staff user with a role, a tenant, and a public id', function () {
     $user = User::factory()->create(['role' => StaffRole::Photographer]);
 
     expect($user->role)->toBe(StaffRole::Photographer)
         ->and($user->tenant_id)->toBe(config('tenancy.tenant_id'))
+        ->and($user->public_id)->toHaveLength(24)
         ->and($user->hasConfirmedMfa())->toBeFalse();
+});
+
+it('hides the internal key and the credential fields when serialising', function () {
+    $user = User::factory()->withMfa()->create();
+
+    expect(array_keys($user->toArray()))
+        ->not->toContain('id')
+        ->not->toContain('password')
+        ->not->toContain('mfa_secret')
+        ->not->toContain('mfa_recovery_codes');
 });
 
 it('reports confirmed mfa once a secret is confirmed', function () {
@@ -678,6 +822,7 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->tenantId();
+            $table->publicId();
             $table->string('name');
             $table->string('email');
             $table->string('password');
@@ -721,6 +866,7 @@ Also delete the default `..._create_password_reset_tokens_table` entries if they
 namespace App\Models;
 
 use App\Concerns\BelongsToTenant;
+use App\Concerns\HasPublicId;
 use App\Enums\StaffRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -730,6 +876,7 @@ class User extends Authenticatable
 {
     use BelongsToTenant;
     use HasFactory;
+    use HasPublicId;
     use Notifiable;
 
     protected $fillable = ['name', 'email', 'password', 'role'];
@@ -782,7 +929,7 @@ public function withMfa(): static
 - [ ] **Step 7: Run the tests to verify they pass**
 
 Run: `docker compose run --rm php ./vendor/bin/pest --filter=StaffUser`
-Expected: PASS, 3 tests.
+Expected: PASS, 4 tests.
 
 - [ ] **Step 8: Commit**
 
@@ -885,6 +1032,7 @@ return new class extends Migration
         Schema::create('audit_logs', function (Blueprint $table) {
             $table->id();
             $table->tenantId();
+            $table->publicId();
             $table->string('event')->index();
             $table->foreignId('actor_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('subject')->nullable()->index();
@@ -914,12 +1062,14 @@ return new class extends Migration
 namespace App\Models;
 
 use App\Concerns\BelongsToTenant;
+use App\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
 use RuntimeException;
 
 class AuditLog extends Model
 {
     use BelongsToTenant;
+    use HasPublicId;
 
     public const UPDATED_AT = null;
 
@@ -1064,9 +1214,12 @@ it('logs in a user without mfa and exposes the profile', function () {
         'password' => 'correct-horse',
     ])->assertOk()->assertJson(['mfa_required' => false]);
 
-    $this->getJson('/api/staff/me')
+    $profile = $this->getJson('/api/staff/me')
         ->assertOk()
         ->assertJsonPath('email', 'owner@studio.test');
+
+    // The API exposes the CUID2, never the internal primary key.
+    expect($profile->json('id'))->toBeString()->toHaveLength(24);
 });
 
 it('does not establish a session when mfa is confirmed', function () {
@@ -1256,7 +1409,7 @@ class SessionController extends Controller
         $user = $request->user('staff');
 
         return response()->json([
-            'id' => $user->id,
+            'id' => $user->public_id,
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->role->value,
@@ -1841,20 +1994,97 @@ git commit -m "feat(api): gate routes by audience and assert coverage with a mat
 
 ---
 
-### Task 9: OpenAPI generation and the contracts package
+### Task 9: Response hygiene, OpenAPI generation, and the contracts package
 
 **Files:**
 - Create: `packages/contracts/package.json`
 - Create: `packages/contracts/openapi.json` (generated, committed)
 - Create: `packages/contracts/src/index.ts`
+- Create: `apps/api/app/Http/Resources/StaffProfileResource.php`
+- Create: `apps/api/tests/Feature/NoInternalIdsTest.php`
 - Create: `apps/api/config/scramble.php`
-- Modify: `.github/workflows/ci.yml`
+- Modify: `apps/api/app/Http/Controllers/Staff/SessionController.php`, `.github/workflows/ci.yml`
 
 **Interfaces:**
-- Consumes: the routes from Tasks 6 through 8
-- Produces: `@studio/contracts` exporting `paths` and `components` types from `src/schema.d.ts`; the npm script `pnpm --filter @studio/contracts generate`; a CI check failing when the committed spec is stale
+- Consumes: the routes from Tasks 6 through 8, `HasPublicId` (Task 3)
+- Produces: `@studio/contracts` exporting `paths` and `components` types from `src/schema.d.ts` plus a named `StaffProfile` whose `id` is a string; the npm script `pnpm --filter @studio/contracts generate`; a CI check failing when the committed spec is stale; a test failing when any endpoint emits an integer `id`
 
-- [ ] **Step 1: Publish the spec from the API**
+- [ ] **Step 1: Write the failing response-hygiene test**
+
+`apps/api/tests/Feature/NoInternalIdsTest.php`:
+
+```php
+<?php
+
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use PragmaRX\Google2FA\Google2FA;
+
+uses(RefreshDatabase::class);
+
+/**
+ * Walks a decoded response body and returns the paths of any key that looks
+ * like an identifier but holds an integer. Returning a model directly instead
+ * of through a resource is the ordinary way the internal key escapes, and it
+ * should fail here rather than in review.
+ */
+function integerIdPaths(mixed $node, string $path = '$'): array
+{
+    if (! is_array($node)) {
+        return [];
+    }
+
+    $found = [];
+
+    foreach ($node as $key => $value) {
+        $childPath = $path.'.'.$key;
+
+        if (is_string($key) && (str_ends_with($key, 'id') || str_ends_with($key, 'ids')) && is_int($value)) {
+            $found[] = $childPath;
+        }
+
+        $found = [...$found, ...integerIdPaths($value, $childPath)];
+    }
+
+    return $found;
+}
+
+it('never returns an integer identifier from an authenticated staff endpoint', function (string $uri) {
+    $secret = (new Google2FA)->generateSecretKey();
+    $user = User::factory()->withMfa()->create(['mfa_secret' => $secret]);
+
+    $this->actingAs($user, 'staff');
+
+    $response = $this->getJson($uri)->assertOk();
+
+    expect(integerIdPaths($response->json()))->toBe([]);
+})->with(['/api/staff/me', '/api/staff/dashboard']);
+
+it('never returns an integer identifier from the login endpoints', function () {
+    $user = User::factory()->create(['email' => 'owner@studio.test', 'password' => 'password']);
+
+    $login = $this->postJson('/api/staff/auth/login', [
+        'email' => 'owner@studio.test',
+        'password' => 'password',
+    ])->assertOk();
+
+    expect(integerIdPaths($login->json()))->toBe([]);
+});
+
+it('detects an integer id when one is present', function () {
+    expect(integerIdPaths(['data' => ['id' => 7, 'name' => 'x']]))->toBe(['$.data.id']);
+    expect(integerIdPaths(['data' => ['id' => 'abc', 'name' => 'x']]))->toBe([]);
+});
+```
+
+The third case tests the detector itself. A guard that silently matches nothing is worse than no guard, and this is the cheapest way to know it works.
+
+- [ ] **Step 2: Run the test to verify the detector works and the endpoints are clean**
+
+Run: `docker compose run --rm php ./vendor/bin/pest --filter=NoInternalIds`
+Expected: PASS, 4 tests — Task 6 already returns `public_id` from `/api/staff/me`, so this locks in behaviour that exists rather than driving new code. If it fails, an endpoint added since Task 6 is leaking; fix that endpoint before continuing.
+
+- [ ] **Step 3: Publish the spec from the API**
 
 Generate the Scramble config and restrict it to the API prefix:
 
@@ -1864,7 +2094,7 @@ docker compose run --rm php php artisan vendor:publish --provider="Dedoc\Scrambl
 
 In `apps/api/config/scramble.php`, set `'api_path' => 'api'` and `'export_path' => '../../packages/contracts/openapi.json'`.
 
-- [ ] **Step 2: Create the contracts package**
+- [ ] **Step 4: Create the contracts package**
 
 `packages/contracts/package.json`:
 
@@ -1913,7 +2143,7 @@ export type StaffProfile = components['schemas']['StaffProfile']
 }
 ```
 
-- [ ] **Step 3: Annotate the profile response so the schema has a name**
+- [ ] **Step 5: Annotate the profile response so the schema has a name**
 
 Scramble infers response shapes from return types. Give the profile a dedicated resource so the generated schema is named `StaffProfile` rather than an inline object.
 
@@ -1929,11 +2159,11 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class StaffProfileResource extends JsonResource
 {
-    /** @return array{id: int, name: string, email: string, role: string, mfa_confirmed: bool} */
+    /** @return array{id: string, name: string, email: string, role: string, mfa_confirmed: bool} */
     public function toArray(Request $request): array
     {
         return [
-            'id' => $this->id,
+            'id' => $this->public_id,
             'name' => $this->name,
             'email' => $this->email,
             'role' => $this->role->value,
@@ -1945,7 +2175,7 @@ class StaffProfileResource extends JsonResource
 
 In `SessionController::show()`, return `StaffProfileResource::make($request->user('staff'))->response()`. The existing `LoginTest` assertion on `email` still passes because `JsonResource` wrapping is disabled by default in Laravel 11 only if `JsonResource::withoutWrapping()` is called — add that call to `AppServiceProvider::boot()` so responses stay unwrapped and the Task 6 tests remain green.
 
-- [ ] **Step 4: Generate and verify**
+- [ ] **Step 6: Generate and verify**
 
 ```bash
 docker compose run --rm php php artisan scramble:export
@@ -1954,9 +2184,14 @@ pnpm --filter @studio/contracts generate
 pnpm --filter @studio/contracts test
 ```
 
-Expected: `openapi.json` contains `/api/staff/me`, `src/schema.d.ts` is written, and `tsc --noEmit` exits 0.
+Expected: `openapi.json` contains `/api/staff/me`, `src/schema.d.ts` is written with `StaffProfile.id` typed as `string`, and `tsc --noEmit` exits 0.
 
-- [ ] **Step 5: Add the staleness gate to CI**
+Then re-run the PHP suite to confirm the resource swap did not change any response shape:
+
+Run: `docker compose run --rm php ./vendor/bin/pest`
+Expected: PASS — in particular `LoginTest` and `NoInternalIdsTest` are unchanged.
+
+- [ ] **Step 7: Add the staleness gate to CI**
 
 In the `api` job of `.github/workflows/ci.yml`, after the Pest step:
 
@@ -1976,11 +2211,11 @@ In the `api` job of `.github/workflows/ci.yml`, after the Pest step:
             || { echo "OpenAPI spec is stale. Run 'php artisan scramble:export' and commit."; exit 1; }
 ```
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add packages/contracts apps/api/config/scramble.php apps/api/app/Http/Resources apps/api/app/Http/Controllers/Staff/SessionController.php apps/api/app/Providers/AppServiceProvider.php .github/workflows/ci.yml pnpm-lock.yaml
-git commit -m "feat(contracts): generate OpenAPI types and fail CI on a stale spec"
+git add packages/contracts apps/api/config/scramble.php apps/api/app/Http/Resources apps/api/app/Http/Controllers/Staff/SessionController.php apps/api/app/Providers/AppServiceProvider.php apps/api/tests/Feature/NoInternalIdsTest.php .github/workflows/ci.yml pnpm-lock.yaml
+git commit -m "feat(contracts): generate OpenAPI types, guard against internal id leaks"
 ```
 
 ---
@@ -2420,6 +2655,7 @@ git commit -m "feat(admin): add Nuxt admin shell with password and TOTP sign-in"
 - [ ] A staff user can sign in at `http://localhost:3000`, is forced through TOTP enrollment on first login, and lands on the dashboard
 - [ ] `audit_logs` contains rows for login success, failure, throttling, MFA enrollment, MFA failure, and logout
 - [ ] Every non-public API route carries an `audience:` declaration, enforced by the matrix test
+- [ ] `users` and `audit_logs` both carry a unique `public_id`, and no endpoint emits an integer identifier — enforced by `NoInternalIdsTest`
 - [ ] `packages/contracts/openapi.json` is current, and CI fails if it goes stale
 - [ ] `apps/api/docs/database-grants.md` records the `audit_logs` privilege revocation as a deployment step
 

@@ -69,6 +69,19 @@ One CI pipeline with per-app jobs: lint → test → build → deploy changed ap
 
 Five bounded contexts, implemented as Laravel modules with separate namespaces. No cross-context database joins — contexts reference each other by ID and communicate through domain events.
 
+### 3.0 Identifier convention
+
+Every table has two identifiers. An auto-incrementing `bigint` primary key stays internal and carries all foreign keys and joins. A unique `char(24)` `public_id` holding a CUID2 is the only identifier that crosses the API boundary, appears in URLs, or is stored by a frontend.
+
+Sequential integers would otherwise be enumerable in exactly the places that matter most here — a guest who can see `/gallery/41` can try `/gallery/42`, and a client who can see their own job ID learns roughly how many clients the studio has. CUID2 was chosen over ULID because ULIDs encode their creation timestamp in the first 48 bits, which would publish when each record was created.
+
+Because the risk in this design is not the scheme but the discipline it demands, two mechanical guards are requirements rather than conventions:
+
+1. The shared `HasPublicId` trait adds `id` to the model's hidden attributes and overrides `getRouteKeyName()` to return `public_id`, so route-model binding cannot silently bind on the integer.
+2. A test walks every implemented endpoint's JSON response and fails if any key named `id` holds an integer. Returning a model directly instead of through a resource is the ordinary way this leaks, and it should fail in CI rather than in review.
+
+Internal identifiers may appear in server-side logs and the audit log's foreign keys. They must never appear in an API response, a URL, an email, or a filename.
+
 ### 3.1 CRM
 
 - `Contact` — a person; role-agnostic
