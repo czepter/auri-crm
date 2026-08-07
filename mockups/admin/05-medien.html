@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="admin">
+<head>
+<meta charset="utf-8">
+<title>05 · Medien — Nordlicht</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/admin-extra.css">
+<script src="../_shared/layout.js"></script>
+</head>
+<body data-nav="medien" data-screen="5" data-depth="2">
+
+<!-- Ingest per vision §6. Assets are shoot-scoped, so the header names the shoot and not
+     just the project — a card dump belongs to one shooting day.
+
+     The bytes never touch Laravel: the browser uploads straight to the object store with
+     presigned multipart URLs, and the studio app only issues those URLs and reacts to the
+     completion callback. The copy is written to say that, because "wird hochgeladen zu
+     Nordlicht" would set the wrong expectation about what closing the tab costs.
+
+     The point of the screen is the tray. §6 requires failures to surface for a human with
+     filename and reason instead of dying in a log, so the three rejected files sit above
+     the fold in their own block with the reason spelled out and a way to act on each. The
+     rest of the screen exists to make that tray readable: 3 failures out of 1.204 files is
+     a normal Sunday, not a broken upload, and the layout has to say so — hence the counts
+     stay whole ("3 von 1.204"), the resume note is visible without scrolling the list, and
+     terracotta appears twice only. -->
+
+<div class="app">
+  <div data-sidebar></div>
+
+  <main class="main">
+    <div class="hrow">
+      <div>
+        <div class="kick">Medien · Import</div>
+        <h1>Hochzeitstag — Meier &amp; Kowalski</h1>
+      </div>
+      <a class="txtbtn" href="04-auftrag.html"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Zum Projekt</a>
+      <a class="btn" href="#"><svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg>Übertragung pausieren</a>
+    </div>
+
+    <div class="meta row">
+      <span class="d">Shooting 14.06.2026 · Gut Basthorst</span>
+      <span class="v">Galerie „Hochzeitstag" · Entwurf</span>
+      <span class="g">2 Karten · Christian Bergmann</span>
+    </div>
+
+    <div class="card static" style="margin:var(--s5) 0 0">
+      <div class="cardhead">
+        <span class="kick">Übertragung läuft</span>
+        <span class="chip now">61 %</span>
+      </div>
+
+      <span class="bar big"><i style="width:61%"></i></span>
+
+      <div class="bklist" style="margin-top:var(--s4)">
+        <div class="bkrow"><span>Dateien</span><span><b class="big">731</b> <em>von 1.204</em></span></div>
+        <div class="bkrow"><span>Übertragen</span><span class="big">18,4 GB <em>von 30,2 GB</em></span></div>
+
+        <div class="bkrow"><span>Tempo</span><span>12,4 MB/s <em>· 12 Dateien parallel</em></span></div>
+        <div class="bkrow"><span>Restzeit</span><span>ca. 16 Min. <em>· Beginn 21:38 Uhr</em></span></div>
+
+        <div class="bkrow"><span>Verarbeitet</span><span>612 <em>· Ableitungen fertig</em></span></div>
+        <div class="bkrow"><span>Zurückgewiesen</span><span><i>3</i> <em>· siehe unten</em></span></div>
+      </div>
+
+      <div class="hint" style="margin-top:var(--s4)">Die Dateien gehen direkt aus diesem Browser an den Objektspeicher (Multipart-Upload über vorsignierte URLs). Nordlicht vergibt nur die Teil-URLs und nimmt die Fertigmeldungen entgegen — die Bilder laufen nicht über den Server.</div>
+    </div>
+
+    <!-- the tray: never a log line, always a named file with a reason (§6) -->
+    <div class="dsec">
+      <div class="dlab warn">Prüfung erforderlich · 3 von 1.204 Dateien</div>
+      <div class="panel">
+
+        <div class="trow">
+          <span class="tfile">IMG_5107.jpg</span>
+          <span class="treason">Prüfsumme weicht ab — SHA-256 des Uploads passt nicht zur gemeldeten Datei. Übertragung vermutlich abgebrochen.</span>
+          <a class="tretry" href="#">Erneut übertragen</a>
+        </div>
+
+        <div class="trow">
+          <span class="tfile">MVI_2043.mov</span>
+          <span class="treason">Dateityp nicht übernommen — video/quicktime. Die Galerie führt nur Bilddateien.</span>
+          <a class="tretry" href="#">Aus der Liste entfernen</a>
+        </div>
+
+        <div class="trow">
+          <span class="tfile">IMG_4877.jpg</span>
+          <span class="treason">Duplikat im selben Shooting — bildgleich zu IMG_4876.jpg (Wahrnehmungs-Hash).</span>
+          <a class="tretry" href="#">Trotzdem übernehmen</a>
+        </div>
+
+      </div>
+      <div class="hint" style="margin-top:var(--s3)">Zurückgewiesene Dateien bleiben stehen, bis jemand entscheidet. Nichts wird still verworfen.</div>
+    </div>
+
+    <div class="split" style="margin-top:var(--s6)">
+
+      <!-- ---------------- left: the files themselves ---------------- -->
+      <div class="stackcol">
+
+        <div class="card static">
+          <div class="cardhead">
+            <span class="kick">Dateien</span>
+            <span class="chip next">731 fertig · 12 laufen · 458 warten</span>
+          </div>
+
+          <div class="flist">
+
+            <div class="frow"><span class="fname">IMG_4788.jpg</span><span class="fsize">24,8 MB</span><span class="chip done">Bereit</span></div>
+            <div class="frow"><span class="fname">IMG_4789.jpg</span><span class="fsize">25,1 MB</span><span class="chip done">Bereit</span></div>
+            <div class="frow"><span class="fname">IMG_4790.jpg</span><span class="fsize">23,9 MB</span><span class="chip done">Bereit</span></div>
+
+            <div class="frow"><span class="fname">IMG_4876.jpg</span><span class="fsize">26,4 MB</span><span class="chip done">Bereit</span></div>
+            <div class="frow"><span class="fname">IMG_4877.jpg</span><span class="fsize">26,4 MB</span><span class="chip fail">Duplikat</span></div>
+
+            <div class="frow"><span class="fname">IMG_5104.jpg</span><span class="fsize">25,7 MB</span><span class="chip done">Bereit</span></div>
+            <div class="frow"><span class="fname">IMG_5107.jpg</span><span class="fsize">25,3 MB</span><span class="chip fail">Prüfsumme</span></div>
+
+            <div class="frow"><span class="fname">IMG_5318.jpg</span><span class="fsize">24,2 MB</span><span class="chip now">88 %</span><span class="bar"><i style="width:88%"></i></span></div>
+            <div class="frow"><span class="fname">IMG_5319.jpg</span><span class="fsize">25,9 MB</span><span class="chip now">62 %</span><span class="bar"><i style="width:62%"></i></span></div>
+            <div class="frow"><span class="fname">IMG_5320.jpg</span><span class="fsize">26,1 MB</span><span class="chip now">41 %</span><span class="bar"><i style="width:41%"></i></span></div>
+            <div class="frow"><span class="fname">IMG_5321.jpg</span><span class="fsize">24,6 MB</span><span class="chip now">9 %</span><span class="bar"><i style="width:9%"></i></span></div>
+
+            <div class="frow"><span class="fname">MVI_2043.mov</span><span class="fsize">1,8 GB</span><span class="chip fail">Abgelehnt</span></div>
+
+            <div class="frow queued"><span class="fname">IMG_5322.jpg</span><span class="fsize">25,4 MB</span><span class="chip next">Wartet</span></div>
+            <div class="frow queued"><span class="fname">IMG_5323.jpg</span><span class="fsize">24,9 MB</span><span class="chip next">Wartet</span></div>
+            <div class="frow queued"><span class="fname">IMG_5324.jpg</span><span class="fsize">25,6 MB</span><span class="chip next">Wartet</span></div>
+            <div class="frow queued"><span class="fname">IMG_5325.jpg</span><span class="fsize">26,0 MB</span><span class="chip next">Wartet</span></div>
+
+          </div>
+
+          <a class="blkfoot" href="#">Alle 1.204 Dateien anzeigen →</a>
+        </div>
+
+      </div>
+
+      <!-- ---------------- right: what happens after the bytes land ---------------- -->
+      <div class="stackcol">
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Aufbereitung</span><span class="chip now">84 %</span></div>
+          <span class="bar"><i style="width:84%"></i></span>
+          <div class="kv" style="margin-top:var(--s4)">
+            <div class="kvrow"><span>thumb 400</span><span><b>612</b> von 728</span></div>
+            <div class="kvrow"><span>web 1600</span><span><b>612</b> von 728</span></div>
+            <div class="kvrow"><span>preview 2560</span><span><b>604</b> von 728</span></div>
+            <div class="kvrow"><span>Blurhash</span><span><b>612</b> von 728</span></div>
+            <div class="kvrow"><span>Aufnahmezeit</span><span>aus EXIF</span></div>
+          </div>
+          <div class="hint" style="margin-top:var(--s4)">„Übertragen" ist noch nicht „bereit": erst mit allen drei Größen und dem Platzhalter erscheint ein Bild in der Galerie. Die Aufbereitung läuft im Hintergrund weiter, auch wenn dieses Fenster geschlossen wird.</div>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Abbruch &amp; Fortsetzen</span></div>
+          <div class="hint">Jede Datei wird über ihre SHA-256-Prüfsumme erkannt. Ein abgebrochener Import lässt sich jederzeit mit demselben Ordner fortsetzen — bereits übertragene Bilder werden übersprungen, nichts wird doppelt angelegt.</div>
+          <div class="kv" style="margin-top:var(--s4)">
+            <div class="kvrow"><span>Quelle</span><span>SD 01 · 2 von 2</span></div>
+            <div class="kvrow"><span>Ordner</span><span>/HZ_Meier/14-06</span></div>
+            <div class="kvrow"><span>Zuletzt</span><span>vor 3 Sek.</span></div>
+          </div>
+          <a class="blkfoot" href="#">Ordner erneut prüfen →</a>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Ziel</span></div>
+          <div class="kv">
+            <div class="kvrow"><span>Projekt</span><span>Meier &amp; Kowalski</span></div>
+            <div class="kvrow"><span>Shooting</span><span>Hochzeitstag</span></div>
+            <div class="kvrow"><span>Galerie</span><span>Hochzeitstag · Entwurf</span></div>
+            <div class="kvrow"><span>Sortierung</span><span>Aufnahmezeit</span></div>
+          </div>
+          <div class="hint" style="margin-top:var(--s4)">Die Galerie bleibt Entwurf, bis sie veröffentlicht wird. Bis dahin sieht niemand außerhalb des Studios die Bilder.</div>
+          <a class="blkfoot" href="04-auftrag.html">Galerie im Projekt →</a>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="gallery">
+<head>
+<meta charset="utf-8">
+<title>09 · Galerie — Raster</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/gallery.css">
+<script src="../_shared/layout.js"></script>
+</head>
+<body data-screen="9" data-depth="2">
+
+<!-- Past gate 1. The guest holds a gallery session and sees web-size images
+     (vision §5). Four GallerySections, a sticky jump-nav, and a masonry column
+     layout so portrait and landscape keep their real proportions rather than
+     being cropped to a shared row height.
+
+     Two tiles render the blurhash placeholder from §6 — the frame the browser
+     paints before the photograph arrives, which is why the grid never jumps.
+
+     Scope, per §5: forty tiles judge section navigation, format mixing and
+     placeholder behaviour. They say nothing about whether 1500 images scroll
+     well. That stays a P3 question and the note at the bottom says so. -->
+
+<div class="gwrap">
+
+  <header class="ghead" id="alle">
+    <a class="gmark" href="../index.html">Atelier Nordlicht</a>
+    <div class="gwho"><b>Lena &amp; Jonas</b> · 14.06.2026 · Gut Basthorst · 412 Bilder</div>
+    <a class="btn" href="11-pin.html">
+      <svg viewBox="0 0 24 24"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5"/><path d="M4 19h16"/></svg>
+      Bilder herunterladen</a>
+  </header>
+
+  <nav class="jump">
+    <a class="on" href="#alle">Alle <i>412</i></a>
+    <a href="#getting-ready">Getting Ready <i>86</i></a>
+    <a href="#trauung">Trauung <i>124</i></a>
+    <a href="#empfang">Empfang <i>98</i></a>
+    <a href="#feier">Feier <i>104</i></a>
+    <a class="sp" href="#">Favoriten <i>12</i></a>
+  </nav>
+
+  <section class="sec" id="getting-ready">
+    <div class="sech"><h2>Getting Ready</h2><span>86 Bilder · 09:40 – 13:20 · Gut Basthorst, Kavaliershaus</span></div>
+    <div class="grid">
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=600&amp;h=750&amp;fit=crop&amp;q=70" width="600" height="750" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=700&amp;h=467&amp;fit=crop&amp;q=70" width="700" height="467" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=600&amp;h=900&amp;fit=crop&amp;q=70" width="600" height="900" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1525328437458-0c4d4db7cab4?w=600&amp;h=600&amp;fit=crop&amp;q=70" width="600" height="600" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=700&amp;h=467&amp;fit=crop&amp;q=70" width="700" height="467" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <span class="tile ph tall" title="Platzhalter — Bild noch nicht geladen"><i></i></span>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=600&amp;h=750&amp;fit=crop&amp;q=70" width="600" height="750" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=700&amp;h=394&amp;fit=crop&amp;q=70" width="700" height="394" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600&amp;h=900&amp;fit=crop&amp;q=70" width="600" height="900" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=700&amp;h=467&amp;fit=crop&amp;q=70" width="700" height="467" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+    </div>
+    <p class="legend">Die unscharfe Kachel ist kein Fehler: Fläche und Farbe stehen sofort,
+    das Foto tauscht sich an derselben Stelle ein. Das Raster springt dabei nicht.</p>
+  </section>
+
+  <section class="sec" id="trauung">
+    <div class="sech"><h2>Trauung</h2><span>124 Bilder · 14:00 – 15:10 · Gutskapelle</span></div>
+    <div class="grid">
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=700&amp;h=467&amp;fit=crop&amp;q=70" width="700" height="467" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=600&amp;h=900&amp;fit=crop&amp;q=70" width="600" height="900" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1460978812857-470ed1c77af0?w=600&amp;h=600&amp;fit=crop&amp;q=70" width="600" height="600" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&amp;h=750&amp;fit=crop&amp;q=70" width="600" height="750" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1525328437458-0c4d4db7cab4?w=700&amp;h=467&amp;fit=crop&amp;q=70" width="700" height="467" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=700&amp;h=394&amp;fit=crop&amp;q=70" width="700" height="394" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&amp;h=900&amp;fit=crop&amp;q=70" width="600" height="900" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=700&amp;h=467&amp;fit=crop&amp;q=70" width="700" height="467" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600&amp;h=750&amp;fit=crop&amp;q=70" width="600" height="750" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=600&amp;h=900&amp;fit=crop&amp;q=70" width="600" height="900" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=700&amp;h=467&amp;fit=crop&amp;q=70" width="700" height="467" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1460978812857-470ed1c77af0?w=600&amp;h=750&amp;fit=crop&amp;q=70" width="600" height="750" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+    </div>
+  </section>
+
+  <section class="sec" id="empfang">
+    <div class="sech"><h2>Empfang</h2><span>98 Bilder · 15:30 – 18:00 · Gutshof und Parterre</span></div>
+    <div class="grid">
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=700&amp;h=467&amp;fit=crop&amp;q=70" width="700" height="467" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&amp;h=900&amp;fit=crop&amp;q=70" width="600" height="900" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <span class="tile ph" title="Platzhalter — Bild noch nicht geladen"><i></i></span>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600&amp;h=600&amp;fit=crop&amp;q=70" width="600" height="600" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1525328437458-0c4d4db7cab4?w=600&amp;h=750&amp;fit=crop&amp;q=70" width="600" height="750" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=700&amp;h=394&amp;fit=crop&amp;q=70" width="700" height="394" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=700&amp;h=467&amp;fit=crop&amp;q=70" width="700" height="467" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=600&amp;h=900&amp;fit=crop&amp;q=70" width="600" height="900" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&amp;h=750&amp;fit=crop&amp;q=70" width="600" height="750" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=700&amp;h=467&amp;fit=crop&amp;q=70" width="700" height="467" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+    </div>
+  </section>
+
+  <section class="sec" id="feier">
+    <div class="sech"><h2>Feier</h2><span>104 Bilder · 18:30 – 02:00 · Scheune</span></div>
+    <div class="grid">
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=600&amp;h=900&amp;fit=crop&amp;q=70" width="600" height="900" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=700&amp;h=467&amp;fit=crop&amp;q=70" width="700" height="467" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1460978812857-470ed1c77af0?w=700&amp;h=394&amp;fit=crop&amp;q=70" width="700" height="394" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&amp;h=600&amp;fit=crop&amp;q=70" width="600" height="600" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&amp;h=750&amp;fit=crop&amp;q=70" width="600" height="750" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=700&amp;h=467&amp;fit=crop&amp;q=70" width="700" height="467" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1525328437458-0c4d4db7cab4?w=600&amp;h=900&amp;fit=crop&amp;q=70" width="600" height="900" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=600&amp;h=750&amp;fit=crop&amp;q=70" width="600" height="750" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+      <a class="tile" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=700&amp;h=467&amp;fit=crop&amp;q=70" width="700" height="467" alt="" loading="lazy" onerror="this.removeAttribute('src')"></a>
+    </div>
+  </section>
+
+  <p class="legend" style="margin-top:32px">Alle Bilder in Web-Auflösung. Für den Download
+  brauchen Sie zusätzlich den PIN, den Lena und Jonas haben. Die Galerie ist bis zum
+  14.06.2027 online.</p>
+
+  <div class="scope" style="max-width:640px">
+    <b>Was dieser Screen nicht beantwortet</b>
+    Hier hängen 40 Kacheln, die echte Galerie hat 412 und die nächste vielleicht 1500.
+    Beurteilbar sind damit Abschnitts-Navigation, das Mischen von Hoch- und Querformat
+    und das Verhalten der Platzhalter. Scroll-Performance, Virtualisierung und
+    Paginierung sind es nicht — eine statische Seite mit 1500 Hotlinks lässt sich gar
+    nicht öffnen. Diese Fragen bleiben offen und gehören nach P3.
+  </div>
+
+</div>
+
+</body>
+</html>

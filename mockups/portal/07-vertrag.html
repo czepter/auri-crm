@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="portal">
+<head>
+<meta charset="utf-8">
+<title>07 · Vertrag unterschreiben — Atelier Nordlicht</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/portal.css">
+<script src="../_shared/layout.js"></script>
+</head>
+<body data-screen="7" data-depth="2">
+
+<!-- Portal surface — no data-sidebar, no data-nav (see screen 6).
+
+     THE MOMENT THIS SCREEN DEPICTS is 04.02.2026, the day Lena signs. Screen 4
+     and screen 6 both show the contract already signed on that date, so this is
+     the same document a few minutes earlier. §4 of the design spec: one moment,
+     in its most informative state — and an unsigned contract is the only state
+     of this screen that has anything to review.
+
+     READING vs SIGNING, resolved by geometry rather than by a modal:
+     the contract lives in its own bounded scroll region so the page itself stays
+     short, and the signing rail is position:sticky so it is on screen at every
+     scroll depth of the document. Reading and signing are simultaneous, not
+     sequential. Explicitly NOT done: a modal (hides the document at the exact
+     moment the client wants to check a clause), and a scroll-gated button
+     (theatre — it proves scrolling, not reading, and would need JS).
+
+     EVIDENTIARY FRAMING (vision §7): this is a *simple* electronic signature
+     under eIDAS — admissible in the EU and standard for photography contracts,
+     but not qualified and without its presumption of authenticity. The audit
+     trail is what gives it weight. So the four recorded fields are printed above
+     the button at full size, and the legal status is stated in the client's own
+     words rather than buried. The open question is whether the client signs
+     without emailing to ask if it counts; a client who can see what is recorded
+     has already been answered. -->
+
+<header class="phead">
+  <div class="pbar">
+    <a class="pmark" href="../index.html"><i></i>Atelier Nordlicht <em>Fotografie · Hamburg</em></a>
+    <div class="pme">
+      <span>Angemeldet als <b>Lena Meier</b></span>
+      <a href="#"><svg viewBox="0 0 24 24"><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/><path d="M12 20H6a2 2 0 01-2-2V6a2 2 0 012-2h6"/></svg>Abmelden</a>
+    </div>
+  </div>
+</header>
+
+<main class="pwrap wide">
+
+  <div class="kick">Vertrag</div>
+  <h1>Ihr Fotografievertrag</h1>
+  <div class="phsub">
+    Atelier Nordlicht · Lena Meier &amp; Jonas Kowalski · Hochzeit am 14.06.2026
+  </div>
+  <p class="plead">
+    Lesen Sie den Vertrag in Ruhe durch — er bleibt beim Unterschreiben geöffnet.
+    Rechts stehen die Zahlen, auf die es ankommt, und der Signaturblock. Wenn etwas
+    unklar ist, rufen Sie uns an, bevor Sie unterschreiben.
+  </p>
+
+  <!-- The commercial facts sit above the split, full width: the brief is that they are
+       readable without scrolling the document, and a strip here needs no scrolling at all.
+       It also keeps the sticky rail short enough to fit one viewport. Component is the
+       admin's .bklist from screen 4, widened — same component, more air. -->
+  <div class="card static factstrip">
+    <div class="bklist">
+      <div class="bkrow"><span>Gesamtbetrag</span><span class="big">5.880 € <em>inkl. USt.</em></span></div>
+      <div class="bkrow"><span>Anzahlung</span><span>1.800 € <em>· bezahlt</em></span></div>
+      <div class="bkrow"><span>2. Rate</span><span>1.800 € <em>· 15.05.2026</em></span></div>
+      <div class="bkrow"><span>Restbetrag</span><span>2.280 € <em>· 28.06.2026</em></span></div>
+      <div class="bkrow"><span>Vertragsvorlage</span><span>Hochzeit v3 <em>· 4 Shootings</em></span></div>
+    </div>
+  </div>
+
+  <div class="split" style="margin-top:var(--s4)">
+
+    <!-- ---------------- left: the rendered document, in its own scroll region ---------------- -->
+
+    <div>
+      <div class="pdoc">
+      <div class="pdochead">
+        <span class="kick">Fotografievertrag · Vorlage Hochzeit v3</span>
+        <a class="txtbtn" href="#">
+          <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4 19h16"/></svg>
+          PDF herunterladen
+        </a>
+      </div>
+
+      <div class="pdocscroll">
+        <div class="pdocbody">
+
+          <h2>Vertrag über fotografische Leistungen</h2>
+
+          <p class="party">
+            zwischen <b>Atelier Nordlicht</b>, Inh. Christian Bergmann, Elbchaussee 12,
+            22765 Hamburg — nachfolgend „Fotograf" —
+          </p>
+          <p class="party">
+            und <b>Lena Meier</b> und <b>Jonas Kowalski</b>, Susannenstraße 8,
+            20357 Hamburg — nachfolgend „Auftraggeber" —
+          </p>
+
+          <div class="rule"></div>
+
+          <h3>§ 1 Vertragsgegenstand und Leistungsumfang</h3>
+          <p>(1) Der Fotograf übernimmt die fotografische Begleitung der Hochzeit des Auftraggebers
+             am Sonntag, den 14. Juni 2026, auf Gut Basthorst, Basthorster Hauptstraße 1,
+             21493 Basthorst.</p>
+          <p>(2) Der vereinbarte Leistungsumfang umfasst vier Termine: Verlobungsshooting am
+             22.03.2026 (2 Stunden), standesamtliche Trauung am 08.05.2026 (1,5 Stunden),
+             Hochzeitstag am 14.06.2026 von 09:00 bis 23:00 Uhr — ab 13:00 Uhr mit zweiter
+             Fotografin — sowie ein After-Wedding-Shooting am 05.07.2026 (3 Stunden).</p>
+          <p>(3) Der Fotograf schuldet eine fotografische Reportage, nicht die Anfertigung
+             einzelner, im Voraus bestimmter Motive. Die Auswahl und Bearbeitung der Aufnahmen
+             obliegt dem Fotografen nach künstlerischem Ermessen.</p>
+          <p>(4) Als Lieferumfang werden mindestens 400 bearbeitete Aufnahmen des Hochzeitstages
+             vereinbart. Die Übergabe erfolgt über eine passwortgeschützte Online-Galerie
+             innerhalb von sechs Wochen nach dem jeweiligen Termin. Eine Vorauswahl
+             („Sneak Peek") von etwa 20 Bildern wird innerhalb von fünf Werktagen bereitgestellt.</p>
+          <p>(5) Fahrtkosten innerhalb von 100 km ab Hamburg sowie die Anfahrt zu allen vier
+             Terminen sind im Honorar enthalten.</p>
+
+          <h3>§ 2 Honorar und Zahlungsplan</h3>
+          <p>(1) Das Gesamthonorar beträgt <b>5.880,00 €</b> inklusive 19 % Umsatzsteuer.</p>
+          <p>(2) Das Honorar ist in drei Raten zahlbar:</p>
+          <p>a) Anzahlung in Höhe von 1.800,00 € mit Vertragsschluss;<br>
+             b) zweite Rate in Höhe von 1.800,00 € zum 15.05.2026;<br>
+             c) Restbetrag in Höhe von 2.280,00 € zum 28.06.2026.</p>
+          <p>(3) Die Anzahlung sichert den Haupttermin verbindlich und wird auf das Gesamthonorar
+             angerechnet. Sie wird bei einem Rücktritt des Auftraggebers nach § 4 nicht erstattet.</p>
+          <p>(4) Rechnungen sind ohne Abzug innerhalb von 14 Tagen ab Zugang fällig. Leistungen,
+             die über den in § 1 vereinbarten Umfang hinausgehen — insbesondere Überstunden am
+             Hochzeitstag — werden mit 180,00 € je angefangener Stunde berechnet und nach dem
+             Termin gesondert abgerechnet.</p>
+
+          <h3>§ 3 Nutzungsrechte</h3>
+          <p>(1) Der Auftraggeber erhält an allen gelieferten Aufnahmen ein einfaches, räumlich
+             und zeitlich unbeschränktes Nutzungsrecht für private Zwecke. Dies umfasst Abzüge,
+             Fotobücher, die Veröffentlichung in sozialen Netzwerken sowie die Weitergabe an
+             Familie und Gäste.</p>
+          <p>(2) Eine kommerzielle Nutzung sowie die Weitergabe an Dritte zu gewerblichen Zwecken
+             — etwa an Dienstleister, Locations oder Verlage — bedarf der vorherigen Zustimmung
+             des Fotografen in Textform.</p>
+          <p>(3) Das Urheberrecht verbleibt beim Fotografen. Eine Bearbeitung der gelieferten
+             Aufnahmen, die den Bildcharakter verändert — insbesondere nachträgliche Filter oder
+             Farbveränderungen — ist nicht gestattet; ein Beschnitt für Druck- oder
+             Anzeigeformate bleibt zulässig.</p>
+          <p>(4) Bei einer Veröffentlichung im Internet ist eine Urhebernennung
+             („Atelier Nordlicht") erwünscht, jedoch keine Bedingung der Nutzung.</p>
+          <p>(5) Der Fotograf ist berechtigt, ausgewählte Aufnahmen zur Eigenwerbung zu verwenden
+             (Website, Portfolio, soziale Netzwerke, Printmaterial, Wettbewerbe). Der Auftraggeber
+             kann dieser Nutzung jederzeit in Textform ganz oder für einzelne Aufnahmen
+             widersprechen; bereits erschienene Druckerzeugnisse bleiben davon unberührt.</p>
+
+          <h3>§ 4 Rücktritt, Verschiebung und Ausfall</h3>
+          <p>(1) Der Auftraggeber kann jederzeit in Textform vom Vertrag zurücktreten. Die
+             Anzahlung verfällt in diesem Fall.</p>
+          <p>(2) Bei einem Rücktritt später als 90 Tage vor dem Haupttermin werden 50 %, später
+             als 30 Tage vor dem Haupttermin 80 % des Gesamthonorars fällig, soweit der Fotograf
+             den Termin nicht anderweitig vergeben kann. Dem Auftraggeber bleibt der Nachweis
+             eines geringeren Schadens vorbehalten.</p>
+          <p>(3) Wird der Haupttermin verschoben, wird ein Ersatztermin vereinbart, sofern der
+             Fotograf an diesem verfügbar ist. Bereits geleistete Zahlungen werden vollständig
+             angerechnet. Ist der Fotograf am Ersatztermin nicht verfügbar, gilt Absatz 2.</p>
+          <p>(4) Ist der Fotograf durch Krankheit, Unfall oder höhere Gewalt an der Leistung
+             gehindert, bemüht er sich nach Kräften um einen gleichwertigen Ersatzfotografen.
+             Kommt eine Vertretung nicht zustande, beschränkt sich die Haftung auf die
+             Rückerstattung bereits geleisteter Zahlungen; weitergehende Ansprüche sind
+             ausgeschlossen, soweit den Fotografen kein Vorsatz oder grobe Fahrlässigkeit trifft.</p>
+          <p>(5) Bei Verlust oder Beschädigung des Bildmaterials nach der Aufnahme haftet der
+             Fotograf bis zur Höhe des Gesamthonorars. Das Material wird bis zur Auslieferung auf
+             zwei getrennten Datenträgern vorgehalten.</p>
+
+          <h3>§ 5 Speicherung und Datenschutz</h3>
+          <p>(1) Die Online-Galerie steht für zwölf Monate ab Bereitstellung zur Verfügung. Die
+             bearbeiteten Aufnahmen werden für die Dauer von zwei Jahren nach dem Haupttermin
+             archiviert, unbearbeitete Rohdaten für sechs Monate.</p>
+          <p>(2) Die Verarbeitung personenbezogener Daten erfolgt zur Durchführung dieses
+             Vertrages nach Art. 6 Abs. 1 lit. b DSGVO. Einzelheiten regelt die
+             Datenschutzerklärung des Fotografen.</p>
+
+          <h3>§ 6 Schlussbestimmungen</h3>
+          <p>(1) Änderungen und Ergänzungen dieses Vertrages bedürfen der Textform. Mündliche
+             Nebenabreden bestehen nicht.</p>
+          <p>(2) Sollte eine Bestimmung dieses Vertrages unwirksam sein, bleibt die Wirksamkeit
+             der übrigen Bestimmungen unberührt.</p>
+          <p>(3) Gerichtsstand ist Hamburg, soweit der Auftraggeber Kaufmann ist oder keinen
+             allgemeinen Gerichtsstand im Inland hat.</p>
+
+          <div class="docsig">
+            Hier wird nach dem Unterschreiben der Signaturblock eingefügt:<br>
+            Name, Zeitpunkt, IP-Adresse, Browser und Prüfsumme dieses Dokuments.
+          </div>
+
+        </div>
+      </div>
+      </div>
+
+      <!-- deliberately NOT in the rail: it is secondary, and a rail that outgrows
+           one viewport pushes its own sign button off screen -->
+      <div class="card static" style="margin-top:var(--s4)">
+        <div class="cardhead"><span class="kick">Noch eine Frage?</span></div>
+        <div class="chkwhy" style="margin-top:0">
+          Rufen Sie Christian an — <b>040 8817 2240</b>. Vor der Unterschrift sind Änderungen
+          am Vertrag unkompliziert, danach brauchen sie einen Nachtrag.
+          <a class="blkfoot" href="#">Oder Frage im Portal stellen →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------------- right: the facts, then the signing block — sticky ---------------- -->
+
+    <div><div class="prail">
+
+      <div class="card static sig">
+        <div class="cardhead"><span class="kick">Unterschreiben</span></div>
+
+        <label class="field">
+          <span>Ihr vollständiger Name</span>
+          <input type="text" value="Lena Meier">
+          <em>Bitte genau so, wie er oben im Vertrag steht.</em>
+        </label>
+
+        <label class="consent">
+          <input type="checkbox" checked>
+          <span>Ich habe den Vertrag gelesen und unterzeichne ihn hiermit rechtsverbindlich
+                für Lena Meier und Jonas Kowalski.</span>
+        </label>
+
+        <div class="audit">
+          <div class="kick">Das wird dabei aufgezeichnet</div>
+          <div class="kv">
+            <div class="kvrow"><span>Zeitpunkt</span><span>04.02.2026, 14:32 Uhr</span></div>
+            <div class="kvrow"><span>IP-Adresse</span><span>84.132.207.19</span></div>
+            <div class="kvrow"><span>Browser</span><span>Safari 18 · macOS</span></div>
+            <div class="kvrow"><span>Prüfsumme</span><span><code>SHA-256 · 3f9a…c1d7</code></span></div>
+          </div>
+        </div>
+
+        <p class="legal">
+          Das ist eine <b>einfache elektronische Signatur</b> nach eIDAS — in der EU als
+          Beweismittel zugelassen und bei Fotografieverträgen üblich, aber <b>keine
+          qualifizierte</b> Signatur und ohne deren Echtheitsvermutung. Ihr Gewicht kommt aus
+          den vier Angaben oben, die unveränderlich mit dem Vertrag gespeichert werden.
+        </p>
+
+        <a class="btn warm wide" href="06-startseite.html" style="margin-top:var(--s4)">
+          <svg viewBox="0 0 24 24"><path d="M3 20h18"/><path d="M4.5 16.5c3-1 4-6.5 6-9.5s3.5 5 5.5 6 3.5-1 3.5-1"/></svg>
+          Vertrag unterschreiben
+        </a>
+
+        <p class="legal" style="margin-top:var(--s3)">
+          Danach sofort als PDF an lena.meier@example.de — und dauerhaft in Ihrem Portal.
+        </p>
+      </div>
+
+    </div></div>
+  </div>
+
+</main>
+
+<div class="pfoot" style="max-width:1060px">
+  <span>© 2026 Atelier Nordlicht</span>
+  <a href="#">Impressum</a>
+  <a href="#">Datenschutz</a>
+  <a href="#">Abmelden</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,183 @@
+/* ------------------------------------------------------------------
+   Atelier Nordlicht — portal surface (screens 6 and 7)
+   Loaded AFTER tokens.css. Adds nothing tokens.css already has.
+
+   The portal theme in tokens.css is a spacing scale and a radius: air is
+   the only difference, no separate component set. This file adds the
+   three things that are genuinely absent from the admin and therefore
+   from tokens.css:
+
+     1. portal chrome — there is no admin sidebar here, so the client gets
+        a wordmark header and a centred readable column instead;
+     2. a size step — the admin is read at a desk, the portal at arm's
+        length on whatever device the client has open. tokens.css fixes
+        four type sizes for density; these push them up one notch;
+     3. two components the admin never needed — a bounded document viewer
+        and a signing block.
+
+   Borders stay rationed: everything below reuses the one card hairline
+   (--line / --line-hover). No shadows. No new colours — the terracotta
+   is the one already in --accent, used here as the studio's colour on a
+   greeting and a signature button rather than only as an alert.
+   ------------------------------------------------------------------ */
+
+/* ---------- one size step up from the admin ---------- */
+
+body   { font-size:15px; line-height:1.55; }
+h1     { font-size:30px; }
+.kick  { font-size:11px; letter-spacing:.1em; }
+.chip  { font-size:10.5px; padding:4px 9px; }
+.kvrow { font-size:13.5px; }
+
+/* ---------- chrome: wordmark, signed-in contact, sign-out ---------- */
+
+.phead { border-bottom:1px solid var(--line); }
+.pbar  { display:flex; align-items:center; gap:var(--s4); max-width:1060px; margin:0 auto;
+         padding:var(--s4) var(--s5); }
+
+.pmark { display:flex; align-items:baseline; gap:9px; color:var(--ink); text-decoration:none;
+         font:700 19px/1.1 var(--font); letter-spacing:-.035em; }
+.pmark i { width:7px; height:7px; border-radius:50%; background:var(--accent); flex:none; }
+.pmark em { font:500 11px/1 var(--font); font-style:normal; letter-spacing:.09em;
+            text-transform:uppercase; color:var(--faint); }
+
+.pme   { margin-left:auto; display:flex; align-items:center; gap:var(--s4);
+         font:400 13px/1 var(--font); color:var(--muted); }
+.pme b { font-weight:600; color:var(--ink); }
+.pme a { display:inline-flex; align-items:center; gap:6px; color:var(--muted); text-decoration:none; }
+.pme a:hover { color:var(--ink); }
+.pme svg { width:15px; height:15px; }
+
+/* ---------- the readable column ---------- */
+
+.pwrap { max-width:740px; margin:0 auto; padding:var(--s6) var(--s5) var(--s7); }
+.pwrap.wide { max-width:1060px; }
+
+.pfoot { max-width:740px; margin:0 auto; padding:0 var(--s5) var(--s6);
+         display:flex; flex-wrap:wrap; gap:var(--s4);
+         font:400 12.5px/1 var(--font); color:var(--faint); }
+.pfoot a { color:var(--faint); text-decoration:none; }
+.pfoot a:hover { color:var(--muted); }
+
+/* a photograph rather than a page title — the studio's work is the branding.
+   Fails to a warm accent-bg block when the CDN is unreachable. */
+.phero { aspect-ratio:16/6; border-radius:var(--r); overflow:hidden;
+         background:var(--accent-bg); margin-bottom:var(--s6); }
+.phero img { display:block; width:100%; height:100%; object-fit:cover; }
+
+.pgreet { font:500 15px/1 var(--font); color:var(--accent); margin-bottom:var(--s3); }
+.phsub  { font:400 15px/1.45 var(--font); color:var(--muted); margin-top:var(--s2); }
+.plead  { font:400 16px/1.6 var(--font); color:var(--muted); max-width:56ch; margin:var(--s4) 0 0; }
+
+.psec  { margin-top:var(--s7); }
+.psech { display:flex; align-items:baseline; gap:var(--s3); margin-bottom:var(--s4); }
+.psech h2 { font:600 17px/1.2 var(--font); letter-spacing:-.025em; margin:0; }
+.psech span { font:400 13px/1.3 var(--font); color:var(--muted); }
+
+/* ---------- derived checklist (vision §3.3) ---------- */
+/* Two weights, and the weights are the framing: an open item is a card with
+   room to say why it exists and a verb to finish it; a done item is one
+   quiet line. Nothing carries a completion ratio, a deadline countdown or
+   the terracotta the admin puts on the same overdue facts. */
+
+.chk { display:flex; flex-direction:column; gap:var(--s3); }
+.chkrow { display:flex; gap:var(--s4); padding:var(--s4); }
+.chkdot { width:8px; height:8px; border-radius:50%; background:var(--accent); flex:none; margin-top:9px; }
+.chkbody { flex:1; min-width:0; }
+.chkname { font:600 15.5px/1.35 var(--font); letter-spacing:-.015em; }
+.chkwhy  { font:400 14px/1.55 var(--font); color:var(--muted); margin-top:5px; max-width:50ch; }
+.chkmeta { font:400 12.5px/1 var(--font); color:var(--faint); margin-top:var(--s3); }
+.chkact  { align-self:center; flex:none; }
+
+.done { display:flex; flex-direction:column; gap:12px; }
+.donerow { display:flex; align-items:center; gap:var(--s3); font:400 13.5px/1.4 var(--font); color:var(--muted); }
+.donerow svg { width:15px; height:15px; color:var(--ok); }
+.donerow b { font-weight:500; color:var(--ink); }
+.donerow .when { margin-left:auto; font-size:12.5px; color:var(--faint); white-space:nowrap; }
+.donerow a { color:var(--muted); text-decoration:none; white-space:nowrap; }
+.donerow a:hover { color:var(--ink); }
+
+/* ---------- shoots: the client-facing side of the admin shoot list ---------- */
+/* .sess / .srow / .sdate / .sname / .chip come from tokens.css unchanged —
+   only the sizes move, because galleries are per shoot on both surfaces. */
+
+.sess  { gap:var(--s3); }
+.srow  { padding:var(--s4); }
+.sdate { width:66px; font-size:13px; }
+.sdate em { font-size:11.5px; }
+.sname { font-size:15px; }
+.sname span { font-size:13px; }
+.srow .txtbtn { padding:0; flex:none; }
+
+.psplit { display:grid; grid-template-columns:1fr 1fr; gap:var(--s5) var(--s6); }
+.card.static.pcard { padding:var(--s5); }
+
+/* ---------- screen 7: read a long document AND reach the signing action ---------- */
+/* Resolved by geometry, not by a modal and not by a scroll-gated button:
+   the contract gets its own bounded scroll region so the page itself stays
+   short, and the signing rail is sticky so it is on screen at every scroll
+   depth. Reading and signing are simultaneous rather than sequential. */
+
+/* stretch, not start: the rail's grid cell has to be as tall as the document
+   column, otherwise position:sticky below has no range to travel in */
+.split { grid-template-columns:minmax(0,1fr) 352px; align-items:stretch; }
+
+.pdoc     { border:1px solid var(--line); border-radius:var(--r); overflow:hidden; }
+.pdochead { display:flex; align-items:center; gap:var(--s4); padding:var(--s4) var(--s5);
+            border-bottom:1px solid var(--line); }
+.pdochead .kick { margin:0; }
+.pdochead .txtbtn { margin-left:auto; padding:0; }
+.pdocscroll { max-height:74vh; overflow-y:auto; padding:var(--s6) var(--s5) var(--s7); background:#FDFCFB; }
+.pdocbody { max-width:58ch; margin:0 auto; font:400 14.5px/1.7 var(--font); }
+.pdocbody h2 { font:700 19px/1.35 var(--font); letter-spacing:-.02em; text-align:center; margin:0 0 var(--s5); }
+.pdocbody h3 { font:600 14px/1.4 var(--font); letter-spacing:.01em; margin:var(--s5) 0 var(--s3); }
+.pdocbody p  { margin:0 0 var(--s3); }
+.pdocbody .party { color:var(--muted); text-align:center; margin-bottom:var(--s3); }
+.pdocbody .party b { color:var(--ink); font-weight:600; }
+.pdocbody .rule { height:1px; background:var(--line); margin:var(--s5) 0; }
+/* where the signature block gets appended after signing — flat fill, no new stroke */
+.docsig { margin-top:var(--s6); padding:var(--s5); border-radius:var(--r); background:var(--hover);
+          text-align:center; font:400 13px/1.5 var(--font); color:var(--faint); }
+
+/* The rail must stay short enough to fit one viewport, or sticky makes the sign
+   button unreachable instead of reachable — which is why the secondary "call us"
+   note lives under the document rather than up here. The max-height is the net:
+   on a short screen the rail scrolls itself rather than hiding its own button. */
+/* the admin's booking-facts grid, widened into a strip — same component, more air */
+.card.static.factstrip { padding:var(--s4) var(--s5); margin-top:var(--s6); }
+.factstrip .bklist { grid-template-columns:repeat(5,minmax(0,1fr)); gap:var(--s4); }
+
+.prail { position:sticky; top:var(--s4); display:flex; flex-direction:column; gap:var(--s4);
+         max-height:calc(100vh - var(--s4) - 44px); overflow-y:auto; }
+.card.sig .cardhead { margin-bottom:var(--s3); }
+.card.sig .field { margin-bottom:var(--s3); }
+
+/* ---------- signing block ---------- */
+
+.card.sig, .card.static.sig:hover { padding:var(--s4); border-color:var(--line-hover); }
+
+.field { display:block; margin-bottom:var(--s4); }
+.field > span { display:block; font:600 10px/1 var(--font); letter-spacing:.09em;
+                text-transform:uppercase; color:var(--faint); margin-bottom:8px; }
+.field input { width:100%; padding:12px var(--s3); border:1px solid var(--line-hover); border-radius:var(--r);
+               background:var(--bg); color:var(--ink); font:500 16px/1.2 var(--font); }
+.field em { display:block; font:400 12.5px/1.45 var(--font); font-style:normal; color:var(--faint); margin-top:7px; }
+
+.consent { display:flex; align-items:flex-start; gap:var(--s3); font:400 13.5px/1.5 var(--font); }
+.consent input { width:17px; height:17px; flex:none; margin:2px 0 0; accent-color:var(--accent); }
+
+/* what gets recorded sits above the button, not in a footnote — a client who
+   can read the audit trail is the one who does not email to ask if it counts.
+   Reuses .kv/.kvrow; only the label column widens for "Dokument-Prüfsumme". */
+.audit { margin:var(--s3) 0; padding:var(--s3); border-radius:var(--r); background:var(--hover); }
+.audit .kick { margin-bottom:var(--s3); }
+.audit .kvrow { font-size:12.5px; }
+.audit .kvrow span:first-child { min-width:96px; }
+.audit .kvrow span:last-child { white-space:nowrap; }
+.audit .kvrow code { font:500 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+.legal { font:400 12.5px/1.6 var(--font); color:var(--muted); margin:var(--s4) 0 0; }
+.legal b { font-weight:600; color:var(--ink); }
+
+.btn.wide { margin-left:0; width:100%; justify-content:center; padding:14px 16px; font-size:14.5px; }
+.btn.warm { background:var(--accent); }

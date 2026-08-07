@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="portal">
+<head>
+<meta charset="utf-8">
+<title>06 · Startseite — Atelier Nordlicht</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/portal.css">
+<script src="../_shared/layout.js"></script>
+</head>
+<body data-screen="6" data-depth="2">
+
+<!-- Portal surface. No data-sidebar and no data-nav: there is no admin nav here,
+     and layout.js only injects the sidebar into [data-sidebar]. The header below
+     is the portal's own chrome, written inline.
+
+     Signed in as Lena Meier. Portal access is a person's, not a project's
+     (vision §3.1) — the header names the contact, and this page is one of the
+     projects the project_contacts ⋈ portal_visible join returns for her.
+
+     ---------------------------------------------------------------------------
+     CHECKLIST FRAMING DECISION — "service", not "homework"
+
+     The open question is whether a derived checklist reads as service or as
+     homework. Homework is a list of unticked boxes with a completion ratio, a
+     red deadline, and no explanation. Four decisions push the other way, and
+     they are decisions of tone and ordering rather than of layout:
+
+     1. SCALE IS STATED IN PROSE, NOT AS A RATIO. The lead says "zwei Punkte",
+        not "4 von 6 erledigt". A ratio invites the client to measure how far
+        behind they are; a small number invites them to finish it.
+     2. EVERY OPEN ITEM SAYS WHY IT EXISTS, for them. Not "Fragebogen offen" but
+        what it buys them on the day. A demand without a reason is homework.
+     3. THE DONE ITEMS STAY VISIBLE, QUIET, AND SECOND. Removing them would
+        leave only debts on screen; giving them equal weight would make the page
+        a ledger. One line each, below the open ones, is reassurance.
+     4. NO TERRACOTTA ON THE OVERDUE FACTS. The admin marks "seit 6 Tagen offen"
+        with .age.warn in accent, because staff need to see what to chase. The
+        same fact is stated here in --faint. The studio chases; the client is not
+        chased in their own portal. This is the one place where the two surfaces
+        deliberately render the same derived state at different temperatures.
+
+     Each open item carries a verb, because §3.3 makes these tasks completed by
+     domain events — the client can actually close them from here, which is what
+     separates a checklist from a status report.
+     --------------------------------------------------------------------------- -->
+
+<header class="phead">
+  <div class="pbar">
+    <a class="pmark" href="../index.html"><i></i>Atelier Nordlicht <em>Fotografie · Hamburg</em></a>
+    <div class="pme">
+      <span>Angemeldet als <b>Lena Meier</b></span>
+      <a href="#"><svg viewBox="0 0 24 24"><path d="M15 17l5-5-5-5"/><path d="M20 12H9"/><path d="M12 20H6a2 2 0 01-2-2V6a2 2 0 012-2h6"/></svg>Abmelden</a>
+    </div>
+  </div>
+</header>
+
+<main class="pwrap">
+
+  <div class="phero">
+    <img src="https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=1600&q=75"
+         alt="Brautpaar im Abendlicht" onerror="this.removeAttribute('src')">
+  </div>
+
+  <div class="pgreet">Hallo Lena,</div>
+  <div class="kick">Ihre Hochzeit</div>
+  <h1>Lena Meier &amp; Jonas Kowalski</h1>
+
+  <div class="stage">
+    <span class="now"><span class="dot"></span>noch 5 Tage</span>
+    <span class="next">Sonntag, 14. Juni 2026 · Gut Basthorst</span>
+  </div>
+
+  <p class="plead">
+    In fünf Tagen sind wir bei Ihnen auf Gut Basthorst. Hier finden Sie alles zu Ihrer
+    Hochzeit an einem Ort — Ihre Shootings, Ihre Galerien, Ihren Vertrag. Zwei Punkte
+    sind bis dahin noch offen; beide sind in wenigen Minuten erledigt.
+  </p>
+
+  <!-- ---------------- derived checklist: open first, small, explained ---------------- -->
+
+  <section class="psec">
+    <div class="psech">
+      <h2>Vor dem 14. Juni</h2>
+      <span>zwei Punkte</span>
+    </div>
+
+    <div class="chk">
+
+      <div class="card static chkrow">
+        <span class="chkdot"></span>
+        <div class="chkbody">
+          <div class="chkname">Familienkonstellation</div>
+          <div class="chkwhy">
+            Wer gehört zu wem, und wer sollte auf den Gruppenfotos besser nicht nebeneinander
+            stehen. Damit wir am Abend niemanden suchen und niemanden übersehen.
+          </div>
+          <div class="chkmeta">Seit 6 Tagen offen · etwa 5 Minuten</div>
+        </div>
+        <a class="btn chkact" href="#">Fragebogen ausfüllen</a>
+      </div>
+
+      <div class="card static chkrow">
+        <span class="chkdot"></span>
+        <div class="chkbody">
+          <div class="chkname">2. Rate · 1.800 €</div>
+          <div class="chkwhy">
+            Die zweite von drei Raten Ihres Vertrags. Danach bleibt der Restbetrag von
+            2.280 €, fällig am 28.06. — nach dem Hochzeitstag.
+          </div>
+          <div class="chkmeta">Fällig am 15.05.2026 · Rechnung R-2026-0118</div>
+        </div>
+        <a class="btn chkact" href="#">Jetzt bezahlen</a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ---------------- done: visible, quiet, second ---------------- -->
+
+  <section class="psec">
+    <div class="psech">
+      <h2>Schon erledigt</h2>
+      <span>vier Punkte</span>
+    </div>
+
+    <div class="done">
+      <div class="donerow">
+        <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        <b>Vertrag unterschrieben</b>
+        <span class="when">04.02.2026</span>
+        <a href="07-vertrag.html">Vertrag ansehen →</a>
+      </div>
+      <div class="donerow">
+        <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        <b>Anzahlung bezahlt</b> · 1.800 €
+        <span class="when">04.02.2026</span>
+        <a href="#">Beleg →</a>
+      </div>
+      <div class="donerow">
+        <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        <b>Ablaufplan zurückgeschickt</b> · 9 Stationen
+        <span class="when">04.06.2026</span>
+        <a href="#">Ansehen →</a>
+      </div>
+      <div class="donerow">
+        <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        <b>Wunschliste Gruppenfotos zurückgeschickt</b> · 6 Gruppen
+        <span class="when">28.05.2026</span>
+        <a href="#">Ansehen →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---------------- shoots: galleries are per shoot, on both surfaces ---------------- -->
+
+  <section class="psec">
+    <div class="psech">
+      <h2>Ihre Shootings</h2>
+      <span>vier Termine · zwei bereits geliefert</span>
+    </div>
+
+    <div class="sess">
+
+      <div class="srow">
+        <div class="stop">
+          <div class="sdate">22.03.<em>Sonntag</em></div>
+          <div class="sname">Verlobungsshooting<span>Jenischpark · 68 Bilder</span></div>
+          <span class="chip done">Geliefert</span>
+          <a class="txtbtn" href="../gallery/09-raster.html">Galerie öffnen →</a>
+        </div>
+      </div>
+
+      <div class="srow">
+        <div class="stop">
+          <div class="sdate">08.05.<em>Freitag</em></div>
+          <div class="sname">Standesamt<span>Rathaus Altona · 41 Bilder</span></div>
+          <span class="chip done">Geliefert</span>
+          <a class="txtbtn" href="../gallery/09-raster.html">Galerie öffnen →</a>
+        </div>
+      </div>
+
+      <div class="srow open">
+        <div class="stop">
+          <div class="sdate">14.06.<em>Sonntag</em></div>
+          <div class="sname">Hochzeitstag<span>Gut Basthorst · 4 Orte · 09:00–23:00 Uhr</span></div>
+          <span class="chip now">Als Nächstes</span>
+          <a class="txtbtn" href="#">Ablaufplan ansehen →</a>
+        </div>
+      </div>
+
+      <div class="srow">
+        <div class="stop">
+          <div class="sdate">05.07.<em>Sonntag</em></div>
+          <div class="sname">After-Wedding-Shooting<span>Ort noch offen · 3 Stunden</span></div>
+          <span class="chip next">Gebucht</span>
+          <a class="txtbtn" href="#">Ort vorschlagen →</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ---------------- quiet: who is coming, and how to reach the studio ---------------- -->
+
+  <section class="psec">
+    <div class="card static pcard">
+      <div class="psplit">
+
+        <div>
+          <div class="kick">Ihr Fotograf</div>
+          <div class="plist" style="margin-top:var(--s4)">
+            <div class="prow">
+              <img class="pavatar" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&q=70"
+                   alt="Christian Bergmann" onerror="this.removeAttribute('src')">
+              <div class="pinfo">
+                <div class="pname">Christian Bergmann</div>
+                <div class="psub">Begleitet alle vier Shootings</div>
+              </div>
+            </div>
+            <div class="prow">
+              <img class="pavatar" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&q=70"
+                   alt="Nina Voss" onerror="this.removeAttribute('src')">
+              <div class="pinfo">
+                <div class="pname">Nina Voss</div>
+                <div class="psub">Zweite Fotografin am 14.06.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="kick">Atelier Nordlicht</div>
+          <div class="kv" style="margin-top:var(--s4)">
+            <div class="kvrow"><span>Telefon</span><span>040 8817 2240</span></div>
+            <div class="kvrow"><span>E-Mail</span><span>hallo@atelier-nordlicht.de</span></div>
+            <div class="kvrow"><span>Atelier</span><span>Elbchaussee 12, Hamburg</span></div>
+          </div>
+          <a class="blkfoot" href="#">Frage stellen →</a>
+          <div class="chkmeta" style="margin-top:var(--s2)">
+            Antwort in der Regel am selben Werktag.
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="pfoot">
+  <span>© 2026 Atelier Nordlicht</span>
+  <a href="#">Impressum</a>
+  <a href="#">Datenschutz</a>
+  <a href="#">Abmelden</a>
+</div>
+
+</body>
+</html>

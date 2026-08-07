@@ -1,0 +1,162 @@
+/* ------------------------------------------------------------------
+   Atelier Nordlicht — gallery surface (screens 08–12)
+   Loaded AFTER tokens.css. Adds only what the guest surface needs and
+   builds everything from the existing custom properties; the dark
+   ground itself comes from [data-theme="gallery"] in tokens.css.
+   ------------------------------------------------------------------ */
+
+/* the footer strip is painted for light surfaces — background:var(--ink),
+   which on this theme is cream, under cream text. Repaint it, keep it. */
+.dummybar { background:#161211; color:var(--ink); border-top:1px solid var(--line); }
+.dummybar a { color:var(--ink); }
+
+/* ---------- shell: no sidebar here, one wordmark and the photographs ---------- */
+
+.gwrap { max-width:1300px; margin:0 auto; padding:var(--s5) var(--s5) var(--s6); }
+.ghead { display:flex; align-items:center; gap:var(--s5); padding-bottom:var(--s4); }
+.gmark { font:700 13px/1 var(--font); letter-spacing:.18em; text-transform:uppercase;
+         color:var(--ink); text-decoration:none; white-space:nowrap; }
+.gwho  { font:400 13px/1.4 var(--font); color:var(--muted); }
+.gwho b { color:var(--ink); font-weight:600; }
+
+/* ---------- gate pages (08, 11, 12) ---------- */
+
+.gpage { max-width:430px; margin:0 auto; padding:56px var(--s5) var(--s6); }
+.gpage.wide { max-width:560px; }
+.gcenter { text-align:center; }
+.gtitle { font:600 27px/1.2 var(--font); letter-spacing:-.035em; margin:0; }
+.gsub   { font:400 14px/1.6 var(--font); color:var(--muted); margin:var(--s2) 0 0; }
+.glead  { font:400 14px/1.65 var(--font); color:var(--muted); margin:var(--s4) 0 0; }
+.glead b { color:var(--ink); font-weight:600; }
+
+.field { display:block; margin-top:var(--s5); text-align:left; }
+.field > span { display:block; font:600 10px/1 var(--font); letter-spacing:.09em;
+                text-transform:uppercase; color:var(--faint); margin-bottom:8px; }
+.field input { width:100%; padding:13px 14px; border-radius:var(--r); border:1px solid var(--line-hover);
+               background:var(--hover); color:var(--ink); font:400 15px/1.2 var(--font); }
+.field input::placeholder { color:var(--faint); }
+.field input.pin { text-align:center; letter-spacing:.55em; text-indent:.55em;
+                   font-size:21px; font-variant-numeric:tabular-nums; }
+.hint { font:400 12.5px/1.55 var(--font); color:var(--muted); margin:9px 0 0; }
+.hint.small { font-size:12px; color:var(--faint); }
+
+.btn.wide { margin:var(--s4) 0 0; width:100%; justify-content:center; padding:13px 14px; font-size:14px; }
+.txtbtn.mid { justify-content:center; width:100%; }
+
+/* uniform failure / lockout notice — warm, not alarming: it is the resting
+   state of a security control, not a crash */
+.err { margin-top:var(--s4); padding:12px 14px; border-radius:var(--r);
+       background:var(--accent-bg); border:1px solid #40251A;
+       font:400 13px/1.55 var(--font); color:#E7B190; text-align:left; }
+.err b { display:block; color:var(--accent); font:600 13px/1.5 var(--font); margin-bottom:4px; }
+.err + .err { margin-top:var(--s2); }
+
+/* ---------- the §4 variant block: a second labelled state on the same page ---------- */
+
+.variant { margin-top:var(--s7); padding-top:var(--s5); border-top:1px solid var(--line); text-align:left; }
+.vlab { font:600 10px/1 var(--font); letter-spacing:.09em; text-transform:uppercase; color:var(--accent); }
+.vnote { font:400 12.5px/1.6 var(--font); color:var(--muted); margin:8px 0 var(--s5); }
+
+/* ---------- §5 scope limits: what this screen cannot answer ---------- */
+
+.scope { margin-top:var(--s6); padding:var(--s4); border:1px dashed var(--line-hover); border-radius:var(--r);
+         font:400 12.5px/1.6 var(--font); color:var(--muted); text-align:left; }
+.scope b { display:block; font:600 10px/1 var(--font); letter-spacing:.09em; text-transform:uppercase;
+           color:var(--faint); margin-bottom:8px; }
+
+/* ---------- 09: section jump-nav + photo grid ---------- */
+
+.jump { position:sticky; top:0; z-index:5; display:flex; align-items:baseline; flex-wrap:wrap; gap:var(--s5);
+        padding:var(--s3) 0 var(--s4); background:var(--bg); border-bottom:1px solid var(--line); }
+.jump a { font:500 13px/1.4 var(--font); color:var(--muted); text-decoration:none; }
+.jump a.on, .jump a:hover { color:var(--ink); }
+.jump a i { font-style:normal; font-weight:400; font-size:12px; color:var(--faint); margin-left:5px; }
+.jump .sp { margin-left:auto; }
+
+.sec { padding-top:var(--s6); }
+.sech { display:flex; align-items:baseline; gap:var(--s3); margin-bottom:var(--s4); }
+.sech h2 { margin:0; font:600 16px/1 var(--font); letter-spacing:-.02em; }
+.sech span { font:400 12.5px/1 var(--font); color:var(--faint); }
+
+/* CSS columns, not a justified row layout: portrait and landscape keep their real
+   proportions instead of being cropped to a common row height */
+.grid { columns:4; column-gap:6px; }
+.tile { display:block; break-inside:avoid; margin:0 0 6px; border-radius:4px; overflow:hidden;
+        background:var(--hover); }
+/* width/height attributes reserve the box, so a failed hotlink leaves a neutral
+   block of the right shape instead of collapsing the column */
+.tile img { display:block; width:100%; height:auto; background:var(--hover);
+            transition:opacity .15s ease-out; }
+.tile:hover img { opacity:.82; }
+
+/* blurhash placeholder: the frame the browser paints before the photograph arrives */
+.ph i { display:block; width:100%; aspect-ratio:3/2; transform:scale(1.06); filter:blur(9px);
+        background:radial-gradient(58% 66% at 22% 26%, #7C6853 0, transparent 62%),
+                   radial-gradient(52% 58% at 78% 32%, #9A8064 0, transparent 58%),
+                   radial-gradient(70% 62% at 52% 92%, #221B17 0, transparent 62%),
+                   linear-gradient(158deg, #4C3F35, #201A17); }
+.ph.tall i { aspect-ratio:2/3; }
+
+.legend { font:400 12px/1.55 var(--font); color:var(--faint); margin-top:var(--s4); }
+
+/* ---------- 10: lightbox — chrome sits back until the pointer arrives ---------- */
+
+.lb { min-height:calc(100vh - 34px); display:flex; flex-direction:column; }
+.recede { opacity:.55; transition:opacity .2s ease-out; }
+.lb:hover .recede { opacity:1; }
+
+.lbtop { display:flex; align-items:center; gap:var(--s4); padding:var(--s4) var(--s5) 0; }
+.lbpos { margin:0 auto; font:500 12.5px/1 var(--font); color:var(--muted); font-variant-numeric:tabular-nums; }
+
+.stage { flex:1; display:flex; align-items:center; justify-content:center; gap:var(--s4);
+         padding:var(--s5) var(--s4); min-height:0; }
+.stage img { max-height:56vh; max-width:min(100%,880px); object-fit:contain; background:var(--hover); }
+.arrow { width:38px; height:38px; flex:none; display:flex; align-items:center; justify-content:center;
+         border-radius:50%; border:1px solid var(--line); color:var(--muted); text-decoration:none; }
+.arrow:hover { color:var(--ink); border-color:var(--line-hover); background:var(--hover); }
+.arrow svg { width:17px; height:17px; }
+
+.acts { display:flex; align-items:center; justify-content:center; gap:var(--s6); }
+.act { display:inline-flex; align-items:center; gap:8px; font:500 12.5px/1 var(--font);
+       color:var(--muted); text-decoration:none; }
+.act:hover { color:var(--ink); }
+.act svg { width:16px; height:16px; }
+.act.on { color:var(--accent); }
+.act.on svg { fill:var(--accent); stroke:var(--accent); }
+
+.cmts { max-width:520px; margin:var(--s5) auto 0; display:flex; flex-direction:column; gap:var(--s4); }
+.cmt { display:flex; gap:var(--s3); }
+.cmt img { width:26px; height:26px; border-radius:50%; object-fit:cover; background:var(--hover); flex:none; }
+.cmt b { font:600 12.5px/1.3 var(--font); }
+.cmt em { font-style:normal; font-weight:400; font-size:11.5px; color:var(--faint); margin-left:7px; }
+.cmt p { margin:3px 0 0; font:400 12.5px/1.5 var(--font); color:var(--muted); }
+
+.strip { display:flex; justify-content:center; gap:4px; padding:var(--s4) var(--s5) var(--s5); }
+.strip a { flex:none; }
+.strip img { width:58px; height:42px; object-fit:cover; border-radius:3px; background:var(--hover);
+             opacity:.38; transition:opacity .15s ease-out; }
+.strip a:hover img { opacity:.7; }
+.strip a.on img { opacity:1; box-shadow:0 0 0 1px var(--accent); }
+
+/* ---------- 12: purpose statement, what the guest gets, ZIP parts ---------- */
+
+.note { margin-top:var(--s5); padding:var(--s4); border:1px solid var(--line); border-radius:var(--r);
+        background:var(--hover); }
+.note h3 { margin:0 0 var(--s3); font:600 12.5px/1 var(--font); }
+.note dl { margin:0; display:flex; flex-direction:column; gap:var(--s4); }
+.note dt { font:600 10px/1 var(--font); letter-spacing:.09em; text-transform:uppercase; color:var(--faint); }
+.note dd { margin:6px 0 0; font:400 12.5px/1.6 var(--font); color:var(--muted); }
+.note dd b { color:var(--ink); font-weight:600; }
+
+.facts { list-style:none; margin:var(--s5) 0 0; padding:0; display:flex; flex-direction:column; gap:var(--s4); }
+.facts li { padding-left:24px; font:400 12.5px/1.6 var(--font); color:var(--muted);
+            background-repeat:no-repeat; background-position:0 2px; background-size:15px 15px;
+            background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23D4713F' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6L9 17l-5-5'/%3E%3C/svg%3E"); }
+.facts li b { display:block; color:var(--ink); font:600 13px/1.5 var(--font); }
+
+.parts { display:flex; flex-direction:column; gap:5px; margin-top:var(--s3); }
+.parts div { display:flex; gap:var(--s3); font:400 12.5px/1.5 var(--font); color:var(--muted);
+             font-variant-numeric:tabular-nums; }
+.parts span { margin-left:auto; color:var(--faint); }
+
+@media (max-width:900px) { .grid { columns:2; } }

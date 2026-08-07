@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="gallery">
+<head>
+<meta charset="utf-8">
+<title>10 · Lightbox</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/gallery.css">
+<script src="../_shared/layout.js"></script>
+</head>
+<body data-screen="10" data-depth="2">
+
+<!-- One asset, full width of the dark ground. The open question is whether
+     Favorite and AssetComment (vision §3.4) can sit on the page without
+     overwhelming the photograph.
+
+     The answer this screen proposes: every piece of chrome — header, arrows,
+     actions, filmstrip — rests at 55% opacity and comes up only when the pointer
+     enters the frame. Pure CSS (.lb:hover .recede), no script. Someone who is
+     only looking sees close to nothing but the photograph; someone who wants to
+     act finds everything where they expected it. -->
+
+<div class="lb">
+
+  <header class="lbtop recede">
+    <a class="txtbtn" href="09-raster.html">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      Zurück zum Raster</a>
+    <div class="lbpos">Trauung · 23 von 124</div>
+    <a class="txtbtn" href="09-raster.html">
+      Schließen
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+  </header>
+
+  <div class="stage">
+    <a class="arrow recede" href="10-lightbox.html" title="Vorheriges Bild">
+      <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></a>
+
+    <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=1400&amp;q=75"
+         alt="Trauung, Gutskapelle" onerror="this.removeAttribute('src');this.style.width='880px';this.style.height='587px'">
+
+    <a class="arrow recede" href="10-lightbox.html" title="Nächstes Bild">
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></a>
+  </div>
+
+  <div class="acts recede">
+    <a class="act on" href="#" title="Favorit entfernen">
+      <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg>
+      Favorit</a>
+    <a class="act" href="#">
+      <svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>
+      2 Kommentare</a>
+    <a class="act" href="#">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="5.5" r="1.6"/><circle cx="12" cy="18.5" r="1.6"/></svg>
+      Bild teilen</a>
+  </div>
+
+  <div class="cmts recede">
+    <div class="cmt">
+      <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&amp;h=60&amp;fit=crop&amp;q=70" alt="" onerror="this.removeAttribute('src')">
+      <div>
+        <b>Lena Meier<em>vor 2 Tagen</em></b>
+        <p>Das ist der Moment, in dem meine Mutter angefangen hat zu weinen. Bitte unbedingt
+        ins Album.</p>
+      </div>
+    </div>
+    <div class="cmt">
+      <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&amp;h=60&amp;fit=crop&amp;q=70" alt="" onerror="this.removeAttribute('src')">
+      <div>
+        <b>Jonas Kowalski<em>vor 2 Tagen</em></b>
+        <p>Einverstanden. Gibt es davon noch eine Aufnahme ohne den Fotografen links im Bild?</p>
+      </div>
+    </div>
+
+    <label class="field" style="margin-top:0">
+      <input type="text" placeholder="Kommentar zu diesem Bild schreiben …">
+    </label>
+  </div>
+
+  <div class="strip recede">
+    <a href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=180&amp;h=130&amp;fit=crop&amp;q=60" alt="" onerror="this.removeAttribute('src')"></a>
+    <a href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=180&amp;h=130&amp;fit=crop&amp;q=60" alt="" onerror="this.removeAttribute('src')"></a>
+    <a href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=180&amp;h=130&amp;fit=crop&amp;q=60" alt="" onerror="this.removeAttribute('src')"></a>
+    <a href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=180&amp;h=130&amp;fit=crop&amp;q=60" alt="" onerror="this.removeAttribute('src')"></a>
+    <a class="on" href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=180&amp;h=130&amp;fit=crop&amp;q=60" alt="" onerror="this.removeAttribute('src')"></a>
+    <a href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=180&amp;h=130&amp;fit=crop&amp;q=60" alt="" onerror="this.removeAttribute('src')"></a>
+    <a href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=180&amp;h=130&amp;fit=crop&amp;q=60" alt="" onerror="this.removeAttribute('src')"></a>
+    <a href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=180&amp;h=130&amp;fit=crop&amp;q=60" alt="" onerror="this.removeAttribute('src')"></a>
+    <a href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1460978812857-470ed1c77af0?w=180&amp;h=130&amp;fit=crop&amp;q=60" alt="" onerror="this.removeAttribute('src')"></a>
+    <a href="10-lightbox.html"><img src="https://images.unsplash.com/photo-1525328437458-0c4d4db7cab4?w=180&amp;h=130&amp;fit=crop&amp;q=60" alt="" onerror="this.removeAttribute('src')"></a>
+  </div>
+
+</div>
+
+</body>
+</html>
