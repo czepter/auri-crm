@@ -12,6 +12,8 @@
   --muted:#78706B;
   --faint:#ABA49F;
   --hover:#F6F3F1;
+  --line:#EDE9E6;
+  --line-hover:#E3DCD7;
   --accent:#B44E22;
   --accent-bg:#FBF0EA;
   --ok:#3F6B4A;
@@ -40,6 +42,8 @@
   --muted:#8B817B;
   --faint:#615953;
   --hover:#1A1614;
+  --line:#241F1C;
+  --line-hover:#332C28;
   --accent:#D4713F;
   --accent-bg:#26170F;
 }
@@ -106,9 +110,10 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 
 /* ---------- lead card ---------- */
 
-.card { display:block; padding:var(--s3); border-radius:var(--r); color:inherit; text-decoration:none;
-        transition:background .12s ease-out; position:relative; }
-.card:hover { background:var(--hover); }
+.card { display:block; padding:var(--s3); border:1px solid var(--line); border-radius:var(--r);
+        color:inherit; text-decoration:none; position:relative;
+        transition:background .12s ease-out, border-color .12s ease-out; }
+.card:hover { background:var(--hover); border-color:var(--line-hover); }
 
 .kick { font:600 10px/1 var(--font); letter-spacing:.09em; text-transform:uppercase; color:var(--faint); margin-bottom:5px; }
 .who { font:600 13.5px/1.35 var(--font); letter-spacing:-.015em; padding-right:18px; }

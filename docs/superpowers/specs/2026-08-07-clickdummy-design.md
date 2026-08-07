@@ -55,7 +55,7 @@ Settled through iteration against two reference interfaces, then simplified.
 
 **Ground is pure white.** Every other neutral is warmed toward the accent so the palette coheres without tinting the page: ink `#14100E`, muted `#78706B`, faint `#ABA49F`, hover `#F6F3F1`, accent `#B44E22` with `#FBF0EA` behind it.
 
-**Borders are rationed to one.** The 2px ring on stacked crew avatars is the only stroke in the admin surface, and it is load-bearing — without it overlapping faces merge. It swaps to the hover colour on hover so it never reads as decoration. Sidebar, header, columns and cards are separated by space and weight alone: a 48px gutter between sidebar and content, 32px between board columns, 6px between sibling cards, all from one scale (4/6/10/16/24/32/48).
+**Borders are rationed, not banned.** Two survive. Cards carry a 1px `#EDE9E6` hairline that darkens on hover — a borderless version was built and rejected: with no stroke, five columns of cards on white hung entirely on the gutter and read as one field. The 2px ring on stacked crew avatars is the second, and it is load-bearing, since without it overlapping faces merge. Everything else separates by space and weight alone: a 48px gutter between sidebar and content, 32px between board columns, 6px between sibling cards, all from one scale (4/6/10/16/24/32/48). No shadows anywhere.
 
 **One icon system.** 1.75 stroke, round caps, `currentColor` wherever it can inherit. 17px in the sidebar, 15px on buttons, 13px inside cards. Sidebar icons are inline SVG so they inherit the active state; card and button icons are CSS `background-image` data URIs so repeated markup stays text-only, which matters when these become Vue components.
 
