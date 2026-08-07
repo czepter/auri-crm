@@ -173,10 +173,35 @@ Quote          lead_id, derived_from_package_id (nullable, provenance only)
                status            draft → sent → accepted | declined | superseded
                valid_until       date
                sent_at, accepted_at, accepted_by_contact_id, accepted_ip
-               net, tax_rate, tax_amount, gross     snapshot, minor units, EUR
+               discount_label    nullable, e.g. "Winterrabatt"
+               discount_percent  numeric(5,2) nullable — display only
+               discount_amount   bigint default 0 — resolved, authoritative
+               subtotal_net, net, tax_rate, tax_amount, gross
+                                 snapshot, minor units, EUR
 QuoteItem      quote_id, label, description, quantity,
-               unit_price (nullable), line_net, sort_order
+               unit_price (nullable), sort_order
+               discount_percent  numeric(5,2) nullable — display only
+               discount_amount   bigint default 0 — resolved, authoritative
+               line_net
 ```
+
+**Discounts exist at both levels, absolute or relative, and always resolve to an amount.** A line may be discounted and the quote as a whole may be discounted; both store `discount_percent` for the label the client reads ("10 % Rabatt") and `discount_amount` for the arithmetic. The amount is authoritative in every case — an absolute discount leaves `discount_percent` null, and a relative one sets both. Nothing downstream ever multiplies by a percentage, which is what keeps the total on the rendered Angebot equal to the total in the database to the cent.
+
+Order of operations, which matters because VAT is charged on what the client actually pays:
+
+```
+line_net      = quantity × unit_price − line.discount_amount
+subtotal_net  = Σ line_net
+net           = subtotal_net − quote.discount_amount
+tax_amount    = round(net × tax_rate)          half up, once, on the total
+gross         = net + tax_amount
+```
+
+The discount comes off the net and VAT is computed after it, never before. Rounding happens once on the total rather than per line, so a twelve-line quote cannot drift a few cents away from its own sum.
+
+Two constraints, because this is a money path: `net >= 0`, so a discount can never exceed what is being discounted, and a line discount is only valid where `unit_price` is not null — an *Enthaltene Leistung* has no price to reduce.
+
+While a quote is `draft`, a percentage recomputes its amount on every edit. On send, everything freezes with the rest of the snapshot. Changing a sent quote means issuing a new one, so there is no path where a stored percentage and a stored amount can disagree.
 
 **Expiry is derived, not stored.** A quote is expired when `valid_until < today`; there is no `expired` status and no nightly job to set one. Acceptance re-checks validity server-side, so a stale link cannot be used to accept last spring's price.
 
@@ -194,7 +219,7 @@ QuoteItem      quote_id, label, description, quantity,
 
 **Packages do not touch shoots.** `PackageItem` has no `shoot_kind`, and accepting a quote creates no shoots and changes none. The shoots a client requested at inquiry stay exactly as requested, and staff reconcile coverage against the accepted quote by reading both. Stated plainly, the cost: a client who requested a fourth shoot the accepted package does not cover is caught by a human noticing, not by the system. Automating that check means teaching the catalog about shoot kinds, and it is worth doing only once the catalog has stabilised enough to be worth teaching.
 
-**Not built:** client-selectable options or add-ons in the portal (staff send one offer, tailored), discount and coupon rules, multi-currency, and any recomputation of totals after send — a sent quote is immutable, and changing it means issuing a new one.
+**Not built:** client-selectable options or add-ons in the portal (staff send one offer, tailored), coupon codes and automatic discount rules (discounts are a number staff type, not a rules engine), multi-currency, and any recomputation of totals after send — a sent quote is immutable, and changing it means issuing a new one.
 
 ### 3.3 Engagement
 
