@@ -2,11 +2,17 @@
 <html lang="de" data-theme="admin">
 <head>
 <meta charset="utf-8">
-<title>04 · Auftrag — Nordlicht</title>
+<title>04 · Projekt — Nordlicht</title>
 <link rel="stylesheet" href="../_shared/tokens.css">
 <script src="../_shared/layout.js"></script>
 </head>
 <body data-nav="auftraege" data-screen="4" data-depth="2">
+
+<!-- This screen is the Project (vision §3.1) — the relationship spanning inquiry to archive.
+     It contains a Lead (the pursuit, now converted), a Job (the commitment: contract and
+     payment plan), and four Shoots. Neither Project nor Job carries a pipeline status;
+     the header states the derived board position — the earliest incomplete shoot.
+     IA rule: the overview is self-sufficient, tabs hold depth only. -->
 
 <div class="app">
   <div data-sidebar></div>
@@ -14,141 +20,259 @@
   <main class="main">
     <div class="hrow">
       <div>
-        <div class="kick">Hochzeit</div>
+        <div class="kick">Projekt · Hochzeit</div>
         <h1>Lena Meier &amp; Jonas Kowalski</h1>
       </div>
       <a class="txtbtn" href="#"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Bearbeiten</a>
-      <a class="btn" href="05-medien.html"><svg viewBox="0 0 24 24"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>Medien hochladen</a>
+      <a class="btn" href="#"><svg viewBox="0 0 24 24"><path d="M4 4h16v13H8l-4 4z"/><path d="M8 9h8M8 13h5"/></svg>Ablauf senden</a>
     </div>
 
     <div class="meta row">
-      <span class="d">14.06.2026 · 12 Std.</span>
-      <span class="v">Gut Basthorst</span>
+      <span class="d">Haupttermin 14.06.2026 · in 5 Tagen</span>
+      <span class="v">4 Termine · 03.2026 – 07.2026</span>
       <span class="g">80 Gäste</span>
     </div>
 
-    <div class="stepper">
-      <div class="step done"><span class="dot"></span>Gebucht</div>
-      <svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
-      <div class="step now"><span class="dot"></span>Vorbereitung</div>
-      <svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
-      <div class="step"><span class="dot"></span>Shooting</div>
-      <svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
-      <div class="step"><span class="dot"></span>Sichtung</div>
-      <svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
-      <div class="step"><span class="dot"></span>Bearbeitung</div>
-      <svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
-      <div class="step"><span class="dot"></span>Bereit</div>
-      <svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
-      <div class="step"><span class="dot"></span>Geliefert</div>
-      <svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
-      <div class="step"><span class="dot"></span>Archiviert</div>
+    <div class="stage">
+      <span class="now"><span class="dot"></span>Vorbereitung</span>
+      <span class="next">frühester offener Termin · 2 von 4 geliefert</span>
+      <a class="adv" href="#">Als fotografiert markieren →</a>
     </div>
 
     <div class="tabs">
       <a class="on" href="04-auftrag.html">Übersicht</a>
-      <a href="#">Aufgaben</a>
+      <a href="#">Termine</a>
+      <a href="#">Fragebögen</a>
+      <a href="#">Kommunikation</a>
+      <a href="#">Angebot &amp; Vertrag</a>
+      <a href="#">Galerien</a>
       <a href="#">Notizen</a>
-      <a href="#">Zahlungen</a>
-      <a href="#">Galerie</a>
     </div>
 
-    <div class="jobgrid">
-      <div class="card static">
-        <div class="cardhead"><span class="kick">Kontakte</span></div>
-        <div class="plist">
-          <div class="prow">
-            <div class="pinfo">
-              <div class="pname">Lena Meier</div>
-              <div class="psub">lena.meier@example.com</div>
-            </div>
-            <div class="proles"><span class="role">Primär</span></div>
-          </div>
-          <div class="prow">
-            <div class="pinfo">
-              <div class="pname">Jonas Kowalski</div>
-              <div class="psub">jonas.kowalski@example.com</div>
-            </div>
-            <div class="proles"><span class="role">Partner</span><span class="role">Zahlungspflichtig</span></div>
-          </div>
-          <div class="prow">
-            <div class="pinfo">
-              <div class="pname">Sophie Rehder</div>
-              <div class="psub">sophie@rehder-hochzeiten.de</div>
-            </div>
-            <div class="proles"><span class="role">Planerin</span></div>
-          </div>
-        </div>
-      </div>
+    <div class="card static" style="margin-bottom:var(--s5)">
+      <div class="cardhead"><span class="kick">Buchung</span><span class="chip done">Portal sichtbar</span></div>
+      <div class="bklist">
+        <div class="bkrow"><span>Kontakt</span><span>Lena Meier <em>· 0170 5512480</em></span></div>
+        <div class="bkrow"><span>Aktueller Wert</span><span class="big">5.880 € <i>+ 480 €</i></span></div>
 
-      <div class="card static">
-        <div class="cardhead"><span class="kick">Crew</span></div>
-        <div class="plist">
-          <div class="prow">
-            <img class="pavatar" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&q=70" onerror="this.removeAttribute('src')">
-            <div class="pinfo">
-              <div class="pname">Christian Bergmann</div>
-            </div>
-            <div class="proles"><span class="role">Fotograf</span></div>
-          </div>
-          <div class="prow">
-            <img class="pavatar" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=70" onerror="this.removeAttribute('src')">
-            <div class="pinfo">
-              <div class="pname">Nina Voss</div>
-            </div>
-            <div class="proles"><span class="role">Second Shooter</span></div>
-          </div>
-        </div>
+        <div class="bkrow"><span>Typ</span><span>Hochzeit <em>· 4 Termine</em></span></div>
+        <div class="bkrow"><span>Angebot</span><span>AN-2026-0042 <em>· 5.400 € angenommen 03.02.</em></span></div>
+
+        <div class="bkrow"><span>Quelle</span><span>Empfehlung <em>· Fam. Osterhoff, 2024</em></span></div>
+        <div class="bkrow"><span>Offen</span><span>4.080 € <em>· 2 Raten</em></span></div>
+
+        <div class="bkrow"><span>Haupttermin</span><span>14.06.2026 <em>· Hochzeitstag</em></span></div>
+        <div class="bkrow"><span>Vertrag</span><span>signiert 04.02.2026 <em>· Hochzeit v3</em></span></div>
+
+        <div class="bkrow"><span>Verantwortlich</span><span>Christian Bergmann <em>· Fotograf</em></span></div>
+        <div class="bkrow"><span>Gebucht am</span><span>04.02.2026 <em>· Anzahlung bezahlt</em></span></div>
       </div>
     </div>
 
-    <div class="jobgrid">
-      <div class="card static">
-        <div class="cardhead"><span class="kick">Nächste Aufgaben</span><a class="txtbtn" href="#">Alle ansehen</a></div>
-        <div class="tlist">
-          <div class="taskrow">
-            <span class="taudience client">Kunde</span>
-            <span class="ttext">Timeline-Formular ausfüllen</span>
-            <span class="tdate">fällig 15.05.</span>
+    <div class="split">
+
+      <!-- ---------------- left: the project as it happens ---------------- -->
+      <div class="stackcol">
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Termine</span><span class="chip next">2 offen</span></div>
+          <div class="sess">
+
+            <div class="srow">
+              <div class="stop">
+                <div class="sdate">22.03.<em>Sonntag</em></div>
+                <div class="sname">Verlobungsshooting<span>Jenischpark · 2 Std. · 68 Bilder</span></div>
+                <span class="chip done">Geliefert</span>
+                <span class="stack"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&q=70" onerror="this.removeAttribute('src')"></span>
+              </div>
+            </div>
+
+            <div class="srow">
+              <div class="stop">
+                <div class="sdate">08.05.<em>Freitag</em></div>
+                <div class="sname">Standesamt<span>Rathaus Altona · 1,5 Std. · 41 Bilder</span></div>
+                <span class="chip done">Geliefert</span>
+                <span class="stack"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&q=70" onerror="this.removeAttribute('src')"></span>
+              </div>
+            </div>
+
+            <div class="srow open">
+              <div class="stop">
+                <div class="sdate">14.06.<em>Sonntag</em></div>
+                <div class="sname">Hochzeitstag<span class="prim">Haupttermin</span><span>4 Orte · 09:00–23:00</span></div>
+                <span class="chip now">Vorbereitung</span>
+                <span class="stack">
+                  <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&q=70" onerror="this.removeAttribute('src')">
+                  <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&q=70" onerror="this.removeAttribute('src')">
+                </span>
+              </div>
+
+              <div class="tl" style="margin-top:var(--s3);padding-top:var(--s3);border-top:1px solid var(--line)">
+                <div class="tlrow">
+                  <div class="tltime">08:30</div><div class="tlrail"><span class="dot"></span></div>
+                  <div class="tlbody"><div class="tlname">Antritt Christian</div><div class="tlwhere">Hotel Louis C. Jacob, Elbchaussee 401</div></div>
+                </div>
+                <div class="tlrow">
+                  <div class="tltime">09:00</div><div class="tlrail"><span class="dot"></span></div>
+                  <div class="tlbody"><div class="tlname">Getting Ready — Braut</div><div class="tlwhere">Hotel Louis C. Jacob · Suite 12</div><div class="tlwho">Christian · Ringe &amp; Kleid vorab</div></div>
+                </div>
+                <div class="tlrow move">
+                  <div class="tltime">11:45</div><div class="tlrail"><span class="dot"></span></div>
+                  <div class="tlbody"><div class="tlname">Fahrt · 25 Min.</div></div>
+                </div>
+                <div class="tlrow">
+                  <div class="tltime">12:30</div><div class="tlrail"><span class="dot"></span></div>
+                  <div class="tlbody"><div class="tlname">First Look</div><div class="tlwhere">Jenischpark, Nordseite</div><div class="tlwho">Nina Antritt 13:00 vor Ort</div></div>
+                </div>
+                <div class="tlrow">
+                  <div class="tltime">14:00</div><div class="tlrail"><span class="dot"></span></div>
+                  <div class="tlbody"><div class="tlname">Trauung</div><div class="tlwhere">St. Johannis Altona</div><div class="tlwho">Christian &amp; Nina · Fotografieren erlaubt</div></div>
+                </div>
+                <div class="tlrow move">
+                  <div class="tltime">15:15</div><div class="tlrail"><span class="dot"></span></div>
+                  <div class="tlbody"><div class="tlname">Fahrt · 40 Min.</div></div>
+                </div>
+                <div class="tlrow">
+                  <div class="tltime">16:00</div><div class="tlrail"><span class="dot"></span></div>
+                  <div class="tlbody"><div class="tlname">Empfang &amp; Gruppenfotos</div><div class="tlwhere">Gut Basthorst</div><div class="tlwho">6 Gruppen laut Wunschliste</div></div>
+                </div>
+                <div class="tlrow">
+                  <div class="tltime">21:00</div><div class="tlrail"><span class="dot"></span></div>
+                  <div class="tlbody"><div class="tlname">Eröffnungstanz</div><div class="tlwhere">Gut Basthorst · Festscheune</div></div>
+                </div>
+                <div class="tlrow">
+                  <div class="tltime">23:00</div><div class="tlrail"><span class="dot"></span></div>
+                  <div class="tlbody"><div class="tlname">Ende der Begleitung</div><div class="tlwho">Nina bis 20:00</div></div>
+                </div>
+              </div>
+              <a class="blkfoot" href="#">Ablauf bearbeiten · PDF &amp; ICS →</a>
+            </div>
+
+            <div class="srow">
+              <div class="stop">
+                <div class="sdate">05.07.<em>Sonntag</em></div>
+                <div class="sname">After-Wedding-Shooting<span>Ort noch offen · 3 Std.</span></div>
+                <span class="chip next">Gebucht</span>
+                <span class="stack"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&q=70" onerror="this.removeAttribute('src')"></span>
+              </div>
+            </div>
+
           </div>
-          <div class="taskrow">
-            <span class="taudience internal">Intern</span>
-            <span class="ttext">Zweite Kamera für Nina reservieren</span>
-            <span class="tdate">bis 20.05.</span>
-          </div>
-          <div class="taskrow">
-            <span class="taudience client">Kunde</span>
-            <span class="ttext">Zweite Rate bezahlen</span>
-            <span class="tdate">fällig 15.05.</span>
-          </div>
+          <a class="blkfoot" href="#">Termin hinzufügen →</a>
         </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Fragebögen</span><span class="chip next">2 von 3 zurück</span></div>
+          <div class="qz">
+            <div class="qzrow"><span class="nm">Ablaufplan Hochzeitstag</span><span class="chip done">Zurück</span></div>
+            <div class="qzrow"><span class="nm">Wunschliste Gruppenfotos</span><span class="chip done">Zurück</span></div>
+            <div class="qzrow"><span class="nm">Familienkonstellation</span><span class="age warn">seit 6 Tagen offen</span></div>
+          </div>
+          <a class="blkfoot" href="#">Erinnerung senden →</a>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Kommunikation</span><span class="chip now">1 ungelesen</span></div>
+          <div class="msg">
+            <div class="msgrow">
+              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&q=70" onerror="this.removeAttribute('src')">
+              <div class="msgtxt">
+                <div class="msgwho">Lena Meier <em>vor 2 Tagen</em></div>
+                <div class="msgbody">Können wir die Gruppenfotos vorziehen? Meine Großmutter möchte gegen 18 Uhr fahren.</div>
+              </div>
+            </div>
+            <div class="msgrow">
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&q=70" onerror="this.removeAttribute('src')">
+              <div class="msgtxt">
+                <div class="msgwho">Christian <em>vor 5 Tagen</em></div>
+                <div class="msgbody">Ablaufplan ist angekommen, danke! Eine Rückfrage zur Trauung habe ich noch.</div>
+              </div>
+            </div>
+          </div>
+          <a class="blkfoot" href="#">Antworten →</a>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Aufgaben</span></div>
+          <div class="tlist">
+            <div class="taskrow"><span class="ttext">Familienkonstellation nachfassen</span><span class="tdate">heute</span><span class="taudience client">Kunde</span></div>
+            <div class="taskrow"><span class="ttext">Zweite Rate fällig stellen</span><span class="tdate">15.05.</span><span class="taudience client">Kunde</span></div>
+            <div class="taskrow"><span class="ttext">Crew-Briefing verschicken</span><span class="tdate">13.06.</span><span class="taudience internal">Intern</span></div>
+          </div>
+          <a class="blkfoot" href="#">Alle Aufgaben →</a>
+        </div>
+
       </div>
 
-      <div class="card static">
-        <div class="cardhead"><span class="kick">Zahlungen</span><a class="txtbtn" href="#">Alle ansehen</a></div>
-        <div class="paylist">
-          <div class="payrow">
-            <span class="payname">Anzahlung</span>
-            <span class="paydate">bezahlt 03.02.2026</span>
-            <span class="val">1.800 €</span>
-            <span class="paystatus paid">Bezahlt</span>
+      <!-- ---------------- right: facts and status ---------------- -->
+      <div class="stackcol">
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Zahlungen</span><span class="chip now">4.080 € offen</span></div>
+          <div class="paylist">
+            <div class="payrow"><span class="payname">Anzahlung</span><span class="val">1.800 €</span><span class="paystatus paid">Bezahlt</span></div>
+            <div class="payrow"><span class="payname">2. Rate</span><span class="val">1.800 €</span><span class="paystatus due">15.05.</span></div>
+            <div class="payrow"><span class="payname">Restbetrag</span><span class="val">2.280 €</span><span class="paystatus upcoming">28.06.</span></div>
           </div>
-          <div class="payrow">
-            <span class="payname">2. Rate</span>
-            <span class="paydate">fällig 15.05.2026</span>
-            <span class="val">1.800 €</span>
-            <span class="paystatus due">Offen</span>
-          </div>
-          <div class="payrow">
-            <span class="payname">Restzahlung</span>
-            <span class="paydate">fällig 07.06.2026</span>
-            <span class="val">1.800 €</span>
-            <span class="paystatus upcoming">Geplant</span>
-          </div>
+          <a class="blkfoot" href="#">Zahlungsplan →</a>
         </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Galerien</span></div>
+          <div class="qz">
+            <div class="qzrow"><span class="nm">Verlobung</span><span class="chip done">Live</span></div>
+            <div class="qzrow"><span class="nm">Standesamt</span><span class="chip done">Live</span></div>
+            <div class="qzrow"><span class="nm">Hochzeitstag</span><span class="chip next">—</span></div>
+          </div>
+          <a class="blkfoot" href="05-medien.html">Medien hochladen →</a>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Aus der Anfrage</span></div>
+          <div class="kv">
+            <div class="kvrow"><span>Angefragt</span><span>02.02.2026</span></div>
+            <div class="kvrow"><span>Quelle</span><span>Empfehlung</span></div>
+          </div>
+          <div class="msgbody" style="margin-top:12px">„Wir heiraten kirchlich und feiern auf dem Land. Uns sind ungestellte Reportagebilder wichtiger als klassische Portraits."</div>
+          <a class="blkfoot" href="02-anfragen.html">Zur Anfrage →</a>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Kontakte</span></div>
+          <div class="plist">
+            <div class="prow">
+              <div class="pinfo"><div class="pname">Lena Meier</div><div class="psub">0170 5512480 · Portal aktiv</div></div>
+              <div class="proles"><span class="role">Primär</span></div>
+            </div>
+            <div class="prow">
+              <div class="pinfo"><div class="pname">Jonas Kowalski</div><div class="psub">0176 3390021 · Portal aktiv</div></div>
+              <div class="proles"><span class="role">Zahlt</span></div>
+            </div>
+            <div class="prow">
+              <div class="pinfo"><div class="pname">Sophie Rehder</div><div class="psub">0151 2277104 · kein Portal</div></div>
+              <div class="proles"><span class="role">Planerin</span></div>
+            </div>
+          </div>
+          <a class="blkfoot" href="#">Zugriff verwalten →</a>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Crew</span></div>
+          <div class="plist">
+            <div class="prow">
+              <img class="pavatar" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&q=70" onerror="this.removeAttribute('src')">
+              <div class="pinfo"><div class="pname">Christian Bergmann</div><div class="psub">Fotograf · alle 4 Termine</div></div>
+            </div>
+            <div class="prow">
+              <img class="pavatar" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=70" onerror="this.removeAttribute('src')">
+              <div class="pinfo"><div class="pname">Nina Voss</div><div class="psub">Second Shooter · nur 14.06.</div></div>
+            </div>
+          </div>
+          <a class="blkfoot" href="#">Crew je Termin →</a>
+        </div>
+
       </div>
     </div>
-
   </main>
 </div>
 

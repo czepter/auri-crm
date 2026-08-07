@@ -63,6 +63,18 @@ Settled through iteration against two reference interfaces, then simplified.
 
 **Radius** 8px on cards, buttons and nav items; 5px on count chips.
 
+### Vocabulary, tracked against the vision
+
+The mockups follow the vision's domain names, and both moved after screens 2 and 4 were first built. `Job` split into three: **`Project`** is the relationship from inquiry to archive and is what screen 4 shows; **`Lead`** is the pursuit and is what screen 2's board columns are; **`Job`** is the commitment and appears on screen 4 as the *Buchung* block. **`Shoot`** is one shooting occasion — the thing an earlier draft of this spec called a session — and hangs off `Project`, carrying its own crew, timeline and pipeline.
+
+Three consequences the screens now render:
+
+- **Six board columns, not five.** `Lead.stage` gained `quote_accepted`, on the reasoning that "they said yes, send the contract" is the one funnel moment where the studio is the bottleneck. Screen 2's fourth column is that stage, and the card sitting in it flags an unsent contract.
+- **No project-level pipeline status.** Neither `Project` nor `Job` carries one, because a project whose engagement shoot is delivered while the wedding is unshot has no single state. Screen 4's header states the *derived* position instead — the earliest incomplete shoot — which is exactly the board query in §7.
+- **The rejected screen-1 hero returns as a rotation.** The expanded shoot on screen 4 is the next incomplete one, so it advances by itself rather than going stale, which was the failure that killed screen 1's hero card.
+
+Screen 4 shows an accepted quote by its document number (`AN-2026-0042`) alongside the current value, because §3.2.1 makes quotes immutable after send and revisions new rows — so the gap between quoted and current is real information, not a rounding error.
+
 ### Card anatomy
 
 The lead card carries exactly what a lead is triaged on, one fact per line, each with its own icon so a column scans down consistent positions: shoot type as an uppercase kicker, names, date and coverage duration paired on one line, venue, source. The value row closes it with amount, age, and assigned crew.
@@ -110,9 +122,9 @@ Wedding and portrait images hotlinked from the Unsplash CDN with size parameters
 | # | Screen | Open question it settles |
 |---|---|---|
 | 1 | Übersicht — Dashboard | **Built last, see §6.** What does a photographer actually owe someone on an ordinary desk day? A first attempt failed by rendering three blocks this spec had asserted without grounding. |
-| 2 | Anfragen — Pipeline-Board | Does a 5-column `Lead.stage` board stay legible at realistic density (11 leads), and what fits on a card without a hover state. |
+| 2 | Anfragen — Pipeline-Board | Does a 6-column `Lead.stage` board stay legible at realistic density, and what fits on a card without a hover state. |
 | 3 | Anfrage anlegen | Manual lead entry, now P1's only capture path. Where the availability conflict against existing jobs appears, and how hard it interrupts. |
-| 4 | Auftrag — Detail | The densest screen in the system: forward-only status pipeline, dates, venue, typed contacts, crew, and tab affordances for tasks, notes, payments, and gallery. Whether tabs are the right split at all. |
+| 4 | Projekt — Detail | The densest screen in the system. A project with four shoots, a booking, and an accepted quote. Whether the overview carries enough that tabs can be pure drill-down. |
 | 5 | Medien-Upload | Presigned multipart progress across ~1200 files with 3 failures. Whether a partially-failed 30 GB upload is legible or panic-inducing. |
 
 ### Portal — theme `portal` (2)

@@ -98,7 +98,8 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 
 /* ---------- board ---------- */
 
-.board { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:var(--s6); flex:1; }
+/* six Lead.stage columns (§7): new, contacted, quote_sent, quote_accepted, contract_sent, booked */
+.board { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:var(--s5); flex:1; }
 .col { min-width:0; display:flex; flex-direction:column; gap:var(--s2); }
 
 /* column header: three pieces separated by alignment, not punctuation */
@@ -188,18 +189,90 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 .meta.row { flex-direction:row; gap:var(--s5); margin:var(--s3) 0 0; }
 .meta .g { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A39B96' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='9' cy='8' r='3'/%3E%3Cpath d='M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6'/%3E%3Ccircle cx='17.5' cy='9' r='2.3'/%3E%3Cpath d='M15.8 14.2c2.6.5 4.7 2.7 5.2 5.8'/%3E%3C/svg%3E"); }
 
-/* Job.status pipeline: forward-only, so the only affordance is a chevron pointing one way — no back arrow exists anywhere in this component */
-.stepper { display:flex; align-items:center; gap:var(--s2); margin:var(--s4) 0 var(--s5); flex-wrap:wrap; }
-.stepper .step { display:flex; align-items:center; gap:6px; font:500 12.5px/1 var(--font); color:var(--faint); padding:7px 11px; border-radius:var(--r-sm); }
-.stepper .step .dot { width:7px; height:7px; border-radius:50%; background:var(--faint); flex:none; }
-.stepper .step.done { color:var(--muted); }
-.stepper .step.done .dot { background:var(--muted); }
-.stepper .step.now { color:var(--accent); font-weight:600; background:var(--accent-bg); }
-.stepper .step.now .dot { background:var(--accent); }
-.stepper .chev { width:12px; height:12px; color:var(--faint); flex:none; }
+/* Job.status is forward-only. Eight chrome steps said one word, so this states the
+   current stage and offers the single transition that advances it — nothing else. */
+.stage { display:flex; align-items:center; gap:var(--s3); margin:var(--s4) 0 0; }
+.stage .now { display:inline-flex; align-items:center; gap:7px; padding:6px 11px; border-radius:var(--r-sm);
+              background:var(--accent-bg); color:var(--accent); font:600 12px/1 var(--font); }
+.stage .now .dot { width:7px; height:7px; border-radius:50%; background:var(--accent); flex:none; }
+.stage .next { font:400 12px/1 var(--font); color:var(--faint); }
+.stage .adv { font:500 12px/1 var(--font); color:var(--muted); text-decoration:none; }
+.stage .adv:hover { color:var(--ink); }
 
-/* two-up layout for the Übersicht tab's content panels */
-.jobgrid { display:grid; grid-template-columns:1fr 1fr; gap:var(--s6); margin-bottom:var(--s6); }
+/* overview is self-sufficient: narrative left, facts right. Tabs hold depth only. */
+.split { display:grid; grid-template-columns:minmax(0,1fr) 296px; gap:var(--s6); align-items:start; }
+.stackcol { display:flex; flex-direction:column; gap:var(--s5); }
+
+/* a block's footer link into its tab — the drill-down affordance */
+.blkfoot { margin-top:var(--s4); font:500 12px/1 var(--font); color:var(--muted); text-decoration:none; display:inline-block; }
+.blkfoot:hover { color:var(--ink); }
+.card.static .blkfoot { display:block; }
+
+/* Ablauf des Tages — the timeline. A wedding is 2–4 locations, not one venue. */
+.tl { display:flex; flex-direction:column; }
+.tlrow { display:grid; grid-template-columns:52px 15px 1fr; gap:var(--s3); align-items:start; }
+.tltime { font:600 12px/1.5 var(--font); font-variant-numeric:tabular-nums; padding-top:9px; }
+.tlrail { position:relative; padding-top:13px; }
+.tlrail .dot { width:7px; height:7px; border-radius:50%; background:var(--faint); margin:0 auto; position:relative; z-index:1; }
+.tlrail::before { content:''; position:absolute; left:50%; top:0; bottom:-4px; width:1px; background:var(--line); transform:translateX(-.5px); }
+.tlrow:first-child .tlrail::before { top:13px; }
+.tlrow:last-child .tlrail::before { bottom:auto; height:13px; }
+.tlrow.move .dot { background:var(--line); border:1px solid var(--faint); width:6px; height:6px; }
+.tlbody { padding:8px 0 8px; min-width:0; }
+.tlname { font:600 13px/1.35 var(--font); letter-spacing:-.01em; }
+.tlwhere { font:400 12.5px/1.35 var(--font); color:var(--muted); margin-top:2px; }
+.tlwho { font:400 11.5px/1.35 var(--font); color:var(--faint); margin-top:3px; }
+.tlrow.move .tlname { font-weight:400; font-size:12px; color:var(--faint); }
+
+/* ---------- booking facts: label over value, two columns, no tiles ---------- */
+.bklist { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--s4) var(--s6); }
+.bkrow > span:first-child { display:block; font:600 10px/1 var(--font); letter-spacing:.09em;
+                            text-transform:uppercase; color:var(--faint); margin-bottom:5px; }
+.bkrow > span:last-child { display:block; font:500 13px/1.4 var(--font); font-variant-numeric:tabular-nums; }
+.bkrow em { font-style:normal; color:var(--muted); font-weight:400; }
+.bkrow i { font-style:normal; color:var(--accent); font-weight:600; }
+.bkrow .big { font-weight:700; font-size:15px; letter-spacing:-.025em; }
+
+/* ---------- Shoot list: one row per shooting occasion, next one expanded ---------- */
+.chip { font:600 10px/1.5 var(--font); letter-spacing:.04em; text-transform:uppercase;
+        padding:3px 8px; border-radius:var(--r-sm); flex:none; }
+.chip.done { background:var(--ok-bg); color:var(--ok); }
+.chip.now  { background:var(--accent-bg); color:var(--accent); }
+.chip.next { background:var(--hover); color:var(--muted); }
+
+.sess { display:flex; flex-direction:column; gap:var(--s2); }
+.srow { border:1px solid var(--line); border-radius:var(--r); padding:var(--s3); }
+.srow.open { border-color:#E0D6CF; background:#FDFAF8; }
+.stop { display:flex; align-items:center; gap:var(--s3); }
+.sdate { font:600 12px/1.2 var(--font); font-variant-numeric:tabular-nums; width:54px; flex:none; }
+.sdate em { display:block; font:400 10.5px/1.3 var(--font); color:var(--faint); font-style:normal; margin-top:2px; }
+.sname { flex:1; min-width:0; font:600 13px/1.3 var(--font); letter-spacing:-.01em; }
+.sname span { display:block; font:400 11.5px/1.35 var(--font); color:var(--muted); font-weight:400;
+              letter-spacing:0; margin-top:2px; }
+.sname .prim { display:inline-block; margin-left:6px; font:600 9px/1.5 var(--font); letter-spacing:.08em;
+               text-transform:uppercase; color:var(--accent); vertical-align:1px; }
+.srow .stack { margin-left:0; }
+.srow.open .stack img { border-color:#FDFAF8; }
+
+/* right-rail key/value facts */
+.kv { display:flex; flex-direction:column; gap:9px; }
+.kvrow { display:flex; align-items:baseline; gap:var(--s3); font:400 12.5px/1.35 var(--font); }
+.kvrow span:first-child { color:var(--muted); flex:none; min-width:78px; }
+.kvrow span:last-child { color:var(--ink); text-align:right; margin-left:auto; }
+.kvrow b { font-weight:600; font-variant-numeric:tabular-nums; }
+
+/* questionnaire + message summaries */
+.qz { display:flex; flex-direction:column; gap:11px; }
+.qzrow { display:flex; align-items:center; gap:var(--s3); font:400 12.5px/1.3 var(--font); }
+.qzrow .nm { flex:1; color:var(--ink); }
+.msg { display:flex; flex-direction:column; gap:11px; }
+.msgrow { display:flex; gap:var(--s3); }
+.msgrow img { width:26px; height:26px; border-radius:50%; object-fit:cover; background:var(--hover); flex:none; }
+.msgtxt { min-width:0; }
+.msgwho { font:600 12px/1.3 var(--font); }
+.msgwho em { font-style:normal; font-weight:400; color:var(--faint); margin-left:6px; }
+.msgbody { font:400 12.5px/1.4 var(--font); color:var(--muted); margin-top:1px;
+           overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
 
 /* a .card used as a static content panel rather than a link — no hover affordance to imply clickability */
 .card.static { cursor:default; }

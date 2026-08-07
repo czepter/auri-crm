@@ -25,7 +25,7 @@ const ICON = {
 const NAV = [
   { key:'uebersicht', label:'Übersicht',      href:'01-uebersicht.html' },
   { key:'anfragen',   label:'Anfragen',       href:'02-anfragen.html', count:11 },
-  { key:'auftraege',  label:'Aufträge',       href:'04-auftrag.html',  count:24 },
+  { key:'auftraege',  label:'Projekte',       href:'04-auftrag.html',  count:24 },
   { key:'kontakte',   label:'Kontakte' },
   { key:'kalender',   label:'Kalender' },
   { lab:'Produktion' },
@@ -41,7 +41,7 @@ const SCREENS = [
   { n:1,  t:'Übersicht',            href:'admin/01-uebersicht.html',  s:'Admin' },
   { n:2,  t:'Anfragen',             href:'admin/02-anfragen.html',    s:'Admin' },
   { n:3,  t:'Anfrage anlegen',      href:'admin/03-anfrage-neu.html', s:'Admin' },
-  { n:4,  t:'Auftrag',              href:'admin/04-auftrag.html',     s:'Admin' },
+  { n:4,  t:'Projekt',              href:'admin/04-auftrag.html',     s:'Admin' },
   { n:5,  t:'Medien-Upload',        href:'admin/05-medien.html',      s:'Admin' },
   { n:6,  t:'Startseite',           href:'portal/06-startseite.html', s:'Portal' },
   { n:7,  t:'Vertrag unterschreiben',href:'portal/07-vertrag.html',   s:'Portal' },
