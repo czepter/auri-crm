@@ -195,7 +195,7 @@ A download PIN of 4–6 digits is only 10,000–1,000,000 combinations and is br
 
 1. Rate-limit password and PIN attempts per IP **and** per gallery — roughly five attempts, then exponential backoff; lock PIN entry and alert the photographer after about twenty failures.
 2. Return a uniform failure response with consistent timing. Never let the response distinguish a wrong password from a nonexistent gallery.
-3. Email-delivered download URLs are signed, short-TTL (24 h), single-consumption where practical, and not derivable from the gallery URL.
+3. Email-delivered download URLs are signed, expire after 24 h, and are not derivable from the gallery URL. Each link permits a bounded number of retrievals (default 3) rather than one, since a single-use link breaks on a failed 30 GB transfer; exhausting the count requires requesting a fresh link by email.
 4. Full-resolution originals are only ever served through signed URLs minted after gate checks. Guests default to web size, and the guest tier must be structurally incapable of requesting full size — enforced from stored policy, never from a request parameter.
 5. Emails collected at the download gate carry an explicit purpose statement and a retention period, with photographer-accessible export and deletion for DSGVO requests.
 
