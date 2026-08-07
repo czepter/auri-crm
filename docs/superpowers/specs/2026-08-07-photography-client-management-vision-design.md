@@ -150,7 +150,7 @@ Domains share a parent so cookie-based sessions work without CORS token juggling
 | Audience | Surface | Credential | Session |
 |---|---|---|---|
 | `staff` | admin | Password + TOTP (mandatory) | Sanctum stateful cookie; 12 h idle, 7 d absolute |
-| `client` | portal | Magic link, email-bound, single-use, 15 min TTL | 30 d refresh cookie, revocable; expires 90 d after delivery |
+| `client` | portal | Login form → magic link, email-bound, single-use, 15 min TTL | 30 d refresh cookie, revocable; expires 90 d after delivery |
 | `guest` | gallery | Gallery password | 7 d gallery-scoped cookie, revoked on password rotation |
 | `service` | Astro SSR → API | Read-only key, gallery-metadata scope | Cannot mint sessions, cannot read full-resolution keys |
 
@@ -165,7 +165,7 @@ Authorization uses Laravel policies over job ownership and crew assignment. A se
 ### Security requirements
 
 1. Every API route group declares its required audience in middleware, verified by an explicit test matrix of every route group × every audience.
-2. Magic links are single-use and bound to the email they were sent to; consuming one invalidates all outstanding links for that address. Store and compare hashes — never log link values.
+2. Magic links are self-service: the portal shows a login form where the client enters their email and receives a fresh link on demand. An expired link is therefore a re-request, not a support ticket, and a shared couple's inbox works unchanged since identity is email-bound, not person-bound. Links are single-use; consuming one invalidates all outstanding links for that address. The form responds identically for known and unknown emails (no account enumeration), and link requests are rate-limited per address and per IP. Store and compare hashes — never log link values.
 3. Staff MFA is mandatory. The admin surface is additionally restricted at the network edge (IP allowlist or VPN) where practical, since it can export every client's data.
 4. Session revocation is global and immediate. One "revoke all access" action per job kills client sessions, guest sessions, outstanding magic links, and unconsumed download links — the real scenario is a link forwarded to the wrong person.
 5. All authentication events — success, failure, lockout, revocation, PIN rotation, download-link consumption — write to an append-only audit log that staff cannot edit and that outlives the record it describes.
