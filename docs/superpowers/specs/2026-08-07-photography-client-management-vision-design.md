@@ -97,7 +97,7 @@ Five bounded contexts, implemented as Laravel modules with separate namespaces. 
 
 Every table has two identifiers. An auto-incrementing `bigint` primary key stays internal and carries all foreign keys and joins. A unique `char(24)` `public_id` holding a CUID2 is the only identifier that leaves the server — in an API response, an Inertia prop, a URL, an email, or a filename.
 
-Sequential integers would otherwise be enumerable in exactly the places that matter most here — a guest who can see `/gallery/41` can try `/gallery/42`, and a client who can see their own job ID learns roughly how many clients the studio has. CUID2 was chosen over ULID because ULIDs encode their creation timestamp in the first 48 bits, which would publish when each record was created.
+Sequential integers would otherwise be enumerable in exactly the places that matter most here — a guest who can see `/gallery/41` can try `/gallery/42`, and a client who can see their own project ID learns roughly how many clients the studio has. CUID2 was chosen over ULID because ULIDs encode their creation timestamp in the first 48 bits, which would publish when each record was created.
 
 Because the risk in this design is not the scheme but the discipline it demands, two mechanical guards are requirements rather than conventions:
 
@@ -109,31 +109,37 @@ Internal identifiers may appear in server-side logs and the audit log's foreign 
 ### 3.1 CRM
 
 - `Contact` — a person; role-agnostic
-- `Lead` — inquiry, source, pipeline stage, lost reason
-- `LeadDate` — a requested shooting day: `date`, `kind`, `label`, `is_primary`, `sort_order`
-- `Job` — the booking: type (wedding, portrait, other), `booked_at`, `archived_at`
+- `Project` — the relationship, from inquiry to archive; owns contacts, conversation, client access, and shoots
+- `Lead` — the pursuit: `source`, `stage`, `lost_reason`, inquiry text. One per project, created at inquiry
+- `Job` — the commitment: `type` (wedding, portrait, other), `booked_at`, `archived_at`. At most one per project, created at conversion
 - `Shoot` — one shooting occasion: `date`, `call_time`, `end_time`, `kind`, `label`, venue, `status`, `is_primary`, `sort_order`
-- `JobContact` — pivot carrying role: primary, partner, payer, planner, vendor
+- `ProjectContact` — pivot carrying role: primary, partner, payer, planner, vendor
 - `CrewAssignment` — staff user ↔ **shoot** ↔ role
 
-A wedding has many people attached to it with different roles: the couple books, a parent may pay, a planner needs the timeline, guests view the gallery. Modeling one `Job` with many typed contacts — rather than a `Client` with a date field — is what lets portrait and wedding work share a schema.
+A wedding has many people attached to it with different roles: the couple books, a parent may pay, a planner needs the timeline, guests view the gallery. Modeling one `Project` with many typed contacts — rather than a `Client` with a date field — is what lets portrait and wedding work share a schema.
 
-**Booking and shoot are different units.** One booking routinely spans an engagement shoot, the wedding day, the reception, and an after-wedding shoot, separated by as much as a year. `Job` is the commercial unit — contract, quote, payment plan, contacts. `Shoot` is the production unit — a date, a place, a crew, and its own pipeline. A portrait booking is the degenerate case: one job, one shoot.
+**Three entities, because the client relationship outlives both the pursuit and the booking.** `Lead` is the pursuit, `Job` is the commitment, `Project` is the relationship that spans them. The conversation, the client's portal login, the contacts, and the requested dates all begin at "hello" and continue to archive; anchoring them to `Lead` loses them at booking, and anchoring them to `Job` means they do not exist for the weeks when the client is actually deciding.
 
-`Job` therefore carries no status column. A booking whose engagement shoot is delivered while the wedding day is unshot has no single pipeline state, and inventing one produces a status that is wrong for most of a wedding's eighteen-month life. Booking-level state is derived from the shoots (§7).
+The cost is real and worth naming: `Lead` is thin, and "show me this client" hops `Project → Lead` to read the funnel stage. The alternative — collapsing `Lead` into `Job` so one row spans inquiry to archive — trades that hop for a table named `Job` that mostly holds unbooked inquiries. Three explicit entities keep each name honest.
 
-**Exactly one shoot per job is primary**, enforced by a partial unique index (`unique (job_id) where is_primary`). `LeadDate` carries the same invariant one table earlier. The primary shoot is the headline occasion — the wedding day — and is what booking-level automations and payment schedules anchor to.
+**Booking and shoot are different units.** One project routinely spans an engagement shoot, the wedding day, the reception, and an after-wedding shoot, separated by as much as a year. `Shoot` is the production unit — a date, a place, a crew, and its own pipeline. A portrait project is the degenerate case: one shoot.
 
-Conversion copies rather than synthesises: each `LeadDate` becomes a `Shoot`, carrying `date`, `kind`, `label`, `is_primary`, and `sort_order` across unchanged. Because a lead already names every day the client wants, and does so before anyone signs anything, the requested dates and the booked dates are the same list in two lifecycle stages rather than two independently maintained records. Date-availability checks at intake union `lead_dates` (leads not lost) with `shoots`, so the dates checked are the dates later booked.
+Neither `Project` nor `Job` carries a pipeline status. A project whose engagement shoot is delivered while the wedding day is unshot has no single pipeline state, and inventing one produces a status that is wrong for most of a wedding's eighteen-month life. Board state is derived from the shoots (§7).
 
-`is_primary` is set at intake, not derived. The public inquiry form has one required main date and an optional repeater for additional shoots; the main field's row is the primary one, and staff can change it. A derivation rule — earliest date, or the row whose kind matches the job type — would be wrong for exactly the case that motivates the model, since the engagement shoot is the earliest date and is never the headline.
+**Shoots hang off `Project`, not `Job`**, so a requested date and a booked date are the same row in two states rather than two records kept in sync. `Shoot.status` therefore begins at `requested`; conversion moves a project's shoots to `booked`. Date-availability checks scan `shoots.date` for projects that are not lost — one indexed scan, and the row checked at intake is the row later booked.
+
+**Exactly one shoot per project is primary**, enforced by a partial unique index (`unique (project_id) where is_primary`). The primary shoot is the headline occasion — the wedding day — and is what project-level automations and payment schedules anchor to.
+
+`is_primary` is set at intake, not derived. The inquiry form has one required main date and an optional repeater for additional shoots; the main field's row is the primary one, and staff can change it. A derivation rule — earliest date, or the row whose kind matches the project type — would be wrong for exactly the case that motivates the model, since the engagement shoot is the earliest date and is never the headline.
 
 ### 3.2 Sales
 
 - `Package`, `PackageItem` — catalog
-- `Quote` — line items, price snapshot at time of send
-- `Contract` — rendered PDF, template version, merge data, `signed_at`, `signer_ip`, `user_agent`, `document_sha256`
-- `PaymentPlan`, `PaymentInstallment` — due date, amount, Stripe references, status
+- `Quote` — **lead-scoped**; line items, price snapshot at time of send
+- `Contract` — **job-scoped**; rendered PDF, template version, merge data, `signed_at`, `signer_ip`, `user_agent`, `document_sha256`
+- `PaymentPlan`, `PaymentInstallment` — **job-scoped**; due date, amount, Stripe references, status
+
+A quote is an artifact of the pursuit and belongs to the `Lead`; a lost lead keeps its quotes as the record of what was offered. A contract and its payment plan are artifacts of the commitment and belong to the `Job`, which does not exist until there is one.
 
 **Snapshot rule:** quotes and contracts store price and terms snapshots; they never join live to `Package`. Changing a package price next year must not alter last year's contract.
 
@@ -141,14 +147,14 @@ Conversion copies rather than synthesises: each `LeadDate` becomes a `Shoot`, ca
 
 **Structured forms (studio → client)**
 - `FormTemplate` — JSON schema of typed questions per shoot type
-- `FormInstance` — job-scoped, with `sent_at` / `opened_at` / `completed_at` and a reminder schedule
+- `FormInstance` — project-scoped, with `sent_at` / `opened_at` / `completed_at` and a reminder schedule
 - `FormAnswer` — one row per field, versioned so post-submit edits retain history
 - `TimelineEntry`, `ShotListItem` — **shoot-scoped** specialized forms; the timeline exports to PDF and ICS for crew
 
-A running order belongs to a shooting day, not to a booking. The wedding day has a timeline; the engagement shoot has a shot list and no timeline at all.
+A running order belongs to a shooting day, not to a project. The wedding day has a timeline; the engagement shoot has a shot list and no timeline at all.
 
 **Conversation (bidirectional, client may initiate)**
-- `Thread` — job-scoped, subject, status (open / awaiting_client / resolved), `last_activity_at`
+- `Thread` — project-scoped, subject, status (open / awaiting_client / resolved), `last_activity_at`
 - `Message` — polymorphic author (staff `User` or `ClientAccess`), sanitized markdown body
 - `MessageAttachment` — S3-backed, allowlisted MIME types, size-capped
 - `ThreadParticipant` — per-participant `last_read_at`, driving unread badges on both sides
@@ -156,15 +162,17 @@ A running order belongs to a shooting day, not to a booking. The wedding day has
 A client "simple question" creates a thread from the portal. Email notifications link back to the portal; inbound email replies are deliberately not parsed.
 
 **Internal notes (staff only)**
-- `InternalNote` — attaches to `Job`, `Lead`, `Contact`, or `Thread`; author, body, pinned flag
+- `InternalNote` — attaches to `Project`, `Lead`, `Job`, `Contact`, or `Thread`; author, body, pinned flag
 
 This is a separate table and model rather than an `is_internal` flag on `Message`. With a flag, every query needs a correct `where` clause and one missing scope leaks private commentary into the portal. With separate models, portal-facing route groups have no binding to `InternalNote` at all, and a test asserts no portal response schema references it.
 
 **Tasks**
-- `Task` — job-scoped with a nullable `shoot_id`, `audience` (internal or client), assignee, due date, status, source (manual, template, automation)
-- `TaskTemplate` — a set applied on **shoot** creation by shoot kind, with due dates relative to that shoot's date (`-30d`, `+14d`)
+- `Task` — project-scoped with a nullable `shoot_id`, `audience` (internal or client), assignee, due date, status, source (manual, template, automation)
+- `TaskTemplate` — a set applied when a shoot enters `booked`, selected by shoot kind, with due dates relative to that shoot's date (`-30d`, `+14d`)
 
-`shoot_id` is nullable because the two kinds genuinely differ: "sign the contract" belongs to the booking, "pack the second body for the reception" belongs to a day. A template set applied per shoot means a four-shoot wedding gets four rounds of prep tasks on four schedules, which is the actual work.
+Templates fire on the transition into `booked`, not on shoot creation. Shoots exist from inquiry in the `requested` state, and generating a prep checklist for an inquiry that may never convert would fill the task list with work for weddings that are not happening. A shoot added to an already-booked project gets its templates the moment it is booked, by the same rule.
+
+`shoot_id` is nullable because the two kinds genuinely differ: "sign the contract" belongs to the project, "pack the second body for the reception" belongs to a day. A template set applied per shoot means a four-shoot wedding gets four rounds of prep tasks on four schedules, which is the actual work.
 
 Client-facing tasks render in the portal as a checklist — sign contract, complete timeline form, pay second installment — created and completed by domain events, so the client's to-do list is derived state rather than manual bookkeeping.
 
@@ -172,7 +180,7 @@ Client-facing tasks render in the portal as a checklist — sign contract, compl
 
 ### 3.4 Media
 
-- `Gallery` — job-scoped with a nullable `shoot_id`; name, cover, access policy, `expires_at`, `requires_settled_balance`
+- `Gallery` — project-scoped with a nullable `shoot_id`; name, cover, access policy, `expires_at`, `requires_settled_balance`
 - `GalleryVersion` — immutable published set
 - `Asset` — **shoot-scoped**; original S3 key, checksum, EXIF, capture time, original filename
 - `AssetDerivative` — size variant, S3 key, dimensions, bytes
@@ -184,7 +192,7 @@ Client-facing tasks render in the portal as a checklist — sign contract, compl
 
 Galleries are versioned, never mutated. When a photographer re-uploads corrected edits after 300 downloads have happened, an in-place mutation would invalidate the download audit and detach client favorites from what they actually favorited. Publishing creates `v2`; favorites and history stay pinned to the version they referenced, while clients always land on the latest.
 
-**Gallery grouping is the client's choice, expressed by one nullable column.** `Gallery.shoot_id` set means a gallery for that shoot; null means a gallery for the booking. A client wanting one gallery per shoot gets four rows with `shoot_id` set; a client wanting everything together gets one row with it null; a client wanting the engagement shoot separate and the rest combined gets one of each. The column is a label and an upload default, not a membership rule — assets are assigned to gallery versions explicitly, so a gallery covering exactly two of four shoots needs no schema at all and uses `GallerySection` to group internally.
+**Gallery grouping is the client's choice, expressed by one nullable column.** `Gallery.shoot_id` set means a gallery for that shoot; null means a gallery for the whole project. A client wanting one gallery per shoot gets four rows with `shoot_id` set; a client wanting everything together gets one row with it null; a client wanting the engagement shoot separate and the rest combined gets one of each. The column is a label and an upload default, not a membership rule — assets are assigned to gallery versions explicitly, so a gallery covering exactly two of four shoots needs no schema at all and uses `GallerySection` to group internally.
 
 What a separate gallery actually buys is separate access control and separate delivery timing: the engagement gallery ships in March with its own password, its own expiry, and its own audience, months before the wedding gallery exists. That is why the split lives on `Gallery` rather than being expressed only through sections.
 
@@ -195,14 +203,16 @@ What a separate gallery actually buys is separate access control and separate de
 ### 3.5 Access
 
 - `User` — staff
-- `ClientAccess` — job-scoped, email-bound magic-link identity
+- `ClientAccess` — project-scoped, email-bound magic-link identity; spans inquiry to archive
 - `GuestIdentity` — email, `verified_at`, `consent_source`, `retention_until`; deduped per gallery, reusable if the person returns
 - `DownloadRequest` — gallery version, scope, requester, token hash, `expires_at`, `consumed_at`, IP
 - `AuditLog` — append-only
 
 ### 3.6 Cross-context events
 
-`ContractSigned`, `GalleryPublished`, `InstallmentPaid`, `InstallmentOverdue`, and similar. Listeners send mail, advance pipeline stages, and unlock galleries. CRM stays ignorant of Media internals, which is what allows Media to scale or split out later.
+`ProjectBooked`, `ContractSigned`, `ShootDelivered`, `GalleryPublished`, `InstallmentPaid`, `InstallmentOverdue`, and similar. Listeners send mail, advance pipeline stages, and unlock galleries. CRM stays ignorant of Media internals, which is what allows Media to scale or split out later.
+
+`ProjectBooked` is the conversion event: it carries the new `Job` and the shoots that moved from `requested` to `booked`, which is what task templates and date-offset automations subscribe to.
 
 ---
 
@@ -234,7 +244,7 @@ Authorization uses Laravel policies over job ownership and crew assignment. A se
 1. Every route group declares its required audience in middleware, verified by an explicit test matrix of every route group × every audience. A second test boots the application once per `APP_SURFACE` value and asserts that no other surface's routes are registered — the surface gate is a claim about the route table, so it is tested against the route table.
 2. Magic links are self-service: the portal shows a login form where the client enters their email and receives a fresh link on demand. An expired link is therefore a re-request, not a support ticket, and a shared couple's inbox works unchanged since identity is email-bound, not person-bound. Links are single-use; consuming one invalidates all outstanding links for that address. The form responds identically for known and unknown emails (no account enumeration), and link requests are rate-limited per address and per IP. Store and compare hashes — never log link values.
 3. Staff MFA is mandatory. The admin surface is additionally restricted at the network edge (IP allowlist or VPN) where practical, since it can export every client's data.
-4. Session revocation is global and immediate. One "revoke all access" action per job kills client sessions, guest sessions, outstanding magic links, and unconsumed download links — the real scenario is a link forwarded to the wrong person.
+4. Session revocation is global and immediate. One "revoke all access" action per project kills client sessions, guest sessions, outstanding magic links, and unconsumed download links — the real scenario is a link forwarded to the wrong person.
 5. All authentication events — success, failure, lockout, revocation, PIN rotation, download-link consumption — write to an append-only audit log that staff cannot edit and that outlives the record it describes.
 6. Guest capabilities are derived server-side from stored gallery policy. Size, scope, and expiry are never read from client input.
 
@@ -294,9 +304,11 @@ libvips is chosen over Imagick for roughly 4–8× the throughput at a fraction 
 ### Storage and tiering
 
 ```
-originals/{job_uuid}/{asset_uuid}.jpg      hot 90 d → infrequent access → archive at delivery + 18 mo
-derivatives/{asset_uuid}/{size}.webp|jpg   hot always, small
-zips/{gallery_version}/{scope}-{size}.zip  lifecycle delete after 14 d
+originals/{project_public_id}/{shoot_public_id}/{asset_public_id}.jpg
+                                             hot 90 d → infrequent access → archive at delivery + 18 mo
+derivatives/{asset_public_id}/{size}.webp|jpg  hot always, small
+zips/{gallery_version_public_id}/{scope}-{size}.zip
+                                             lifecycle delete after 14 d
 ```
 
 Object storage is zero-egress (Cloudflare R2 or Backblaze B2 behind Bunny). Egress, not storage, is the dominant cost — one wedding gallery shared with eighty guests can move more bytes in a weekend than its originals occupy. With zero-egress storage the yearly bill is storage-shaped; on conventional S3 it is traffic-shaped and unpredictable.
@@ -326,29 +338,32 @@ No plugin in v1. Selection export produces a plain filename list and optional `.
 
 ### Two state machines
 
-`Lead.stage` is a sales funnel: `new → contacted → quote_sent → contract_sent → booked`, with `lost(reason)` reachable from any stage. Date-availability checks on intake flag conflicts across both `lead_dates` and `shoots`.
+`Lead.stage` is a sales funnel: `new → contacted → quote_sent → contract_sent → booked`, with `lost(reason)` reachable from any stage. Date-availability checks at intake scan `shoots.date` for projects whose lead is not lost.
 
-`Shoot.status` is a forward-only production pipeline: `booked → prep → shot → culling → editing → ready → delivered → archived`. Each transition emits a domain event.
+`Shoot.status` is a forward-only production pipeline: `requested → booked → prep → shot → culling → editing → ready → delivered → archived`. Each transition emits a domain event.
 
 Keeping these separate avoids a fourteen-state enum in which half the transitions are illegal.
 
-**Conversion** happens when the contract is signed and the deposit is paid. It creates the `Job` and copies every `LeadDate` into a `Shoot`, carrying `date`, `kind`, `label`, `is_primary`, and `sort_order` across. The dates the client asked for are the dates that get booked; nothing is retyped, and the availability check that ran at intake was run against the same values.
+**Conversion** happens when the contract is signed and the deposit is paid. It creates the `Job` under the existing `Project` and moves that project's shoots from `requested` to `booked`. Nothing is copied and nothing is retyped: a shoot is created at inquiry with the date the client asked for, and booking changes its state rather than producing a second record. The availability check that ran at intake ran against the row that is now booked.
 
-**The pipeline is per shoot, not per booking.** The four shoots of a wedding run their pipelines independently and months apart — the engagement shoot reaches `delivered` while the wedding day is still `booked`.
+**The pipeline is per shoot, not per project.** The four shoots of a wedding run their pipelines independently and months apart — the engagement shoot reaches `delivered` while the wedding day is still `booked`.
 
-Booking-level state is therefore derived rather than stored:
+Board state is therefore derived rather than stored:
 
 ```sql
-select distinct on (j.id) j.id, s.status, s.date
-from jobs j
-join shoots s on s.job_id = j.id
+select distinct on (p.id) p.id, s.status, s.date
+from projects p
+join jobs j on j.project_id = p.id          -- unbooked projects excluded here
+join shoots s on s.project_id = p.id
 where s.status not in ('delivered', 'archived')
-order by j.id, s.date;
+order by p.id, s.date;
 ```
 
-A booking sits in the column of its **earliest incomplete shoot**, sorted within that column by that shoot's date, and leaves the board when every shoot is delivered. The board shows one expandable card per booking — client and money context stay visible — with its shoots as sub-rows.
+The join to `jobs` is what keeps `requested` shoots off the production board: a project that has not converted has no job to join to. One clause, one place, rather than a `where` guard repeated at every site that reads shoots.
 
-That a card can move backwards is correct, not a defect. When the engagement shoot is delivered, the wedding day becomes earliest-incomplete and the booking returns to `booked`. The column answers "what is the next thing this booking needs", which is the question the board exists to answer.
+A project sits in the column of its **earliest incomplete shoot**, sorted within that column by that shoot's date, and leaves the board when every shoot is delivered. The board shows one expandable card per project — client and money context stay visible — with its shoots as sub-rows.
+
+That a card can move backwards is correct, not a defect. When the engagement shoot is delivered, the wedding day becomes earliest-incomplete and the project returns to `booked`. The column answers "what is the next thing this project needs", which is the question the board exists to answer.
 
 Nothing about this is denormalised. There is no rollup column to drift, no event needed to maintain it, and no reconciliation job — the board is a query.
 
@@ -375,7 +390,7 @@ Each `PaymentInstallment` becomes a Stripe Invoice. Stripe owns the hosted payme
 
 Webhooks (`invoice.paid`, `invoice.payment_failed`) reconcile back to the installment and emit `InstallmentPaid`, which completes the client task and optionally unlocks the gallery. Webhook handling is idempotent by Stripe event ID. Stripe, not the local record, is the source of truth for payment state.
 
-An optional gate blocks gallery download until the balance is settled. It is set per gallery via `Gallery.requires_settled_balance`, defaulting to off. Payment plans run against the booking, so a booking-wide gate would hold back an engagement gallery in March over a balance not due until September.
+An optional gate blocks gallery download until the balance is settled. It is set per gallery via `Gallery.requires_settled_balance`, defaulting to off. Payment plans run against the `Job`, so a project-wide gate would hold back an engagement gallery in March over a balance not due until September.
 
 ### Contracts
 
@@ -402,7 +417,7 @@ Test-driven development throughout, and especially for access-control rules, whe
 
 ### Dates and times
 
-All timestamps are stored in UTC and `Europe/Berlin` is a display concern — with one deliberate exception. `Shoot.date` and `LeadDate.date` are SQL `date` columns, not `timestamptz`, and `Shoot.call_time` and `end_time` are `time` columns beside them.
+All timestamps are stored in UTC and `Europe/Berlin` is a display concern — with one deliberate exception. `Shoot.date` is a SQL `date` column, not `timestamptz`, and `Shoot.call_time` and `end_time` are `time` columns beside them.
 
 A wedding happens on a calendar date in a place, not at an instant. Storing a bare date as a timestamp means picking a time to represent midnight, and a UTC round-trip on that value moves the date by a day on one side of a DST boundary. Every consumer here — board sorting, availability conflicts, automation offsets, the `−1 d` crew brief — wants calendar arithmetic. A `date` column has no instant to misplace.
 
@@ -416,7 +431,7 @@ Sentry across both applications, tagged by surface so admin, portal, and api err
 
 ### Data protection (DSGVO)
 
-EU-region processing throughout, with a data processing agreement for every processor (storage, mail, Stripe, Sentry). Documented retention per entity — guest emails shortest, contracts at statutory retention. Subject access export and deletion exist as admin actions rather than manual SQL. A `ModelRelease` record per job tracks whether images may be used for marketing. The guest gallery ships functional cookies only, with no third-party analytics, so it needs no consent banner.
+EU-region processing throughout, with a data processing agreement for every processor (storage, mail, Stripe, Sentry). Documented retention per entity — guest emails shortest, contracts at statutory retention. Subject access export and deletion exist as admin actions rather than manual SQL. A `ModelRelease` record per project tracks whether images may be used for marketing. The guest gallery ships functional cookies only, with no third-party analytics, so it needs no consent banner.
 
 ### Backup and recovery
 
@@ -440,7 +455,7 @@ A public inquiry form is deferred rather than abandoned. When it returns it brin
 
 | Phase | Scope | Milestone |
 |---|---|---|
-| **P1 CRM core** | Monorepo and CI, base schema with tenant seams, surface gating, staff auth (password + TOTP), Inertia admin surface with shadcn-vue, contacts, leads with multiple requested dates, jobs and shoots, lead-to-booking conversion, derived pipeline board, manual lead entry with availability check across lead dates and shoots, per-shoot crew assignment, internal notes, tasks and templates, calendar/ICS | Replaces spreadsheets; in daily use |
+| **P1 CRM core** | Monorepo and CI, base schema with tenant seams, surface gating, staff auth (password + TOTP), Inertia admin surface with shadcn-vue, contacts, projects with leads and multiple requested shoots, conversion to job, derived pipeline board, manual lead entry with availability check over shoot dates, per-shoot crew assignment, internal notes, tasks and templates, calendar/ICS | Replaces spreadsheets; in daily use |
 | **P2 Sales** | Client auth (magic-link login form), Inertia portal surface, packages, quotes, contract templates with PDF rendering and simple e-signature, payment plans, Stripe Invoicing and webhooks | Replaces the booking half of the incumbent |
 | **P3 Gallery** | Guest auth, the `api` surface, `packages/contracts` and OpenAPI generation, Media context with shoot-scoped assets and per-shoot or per-booking galleries, presigned multipart ingest, libvips derivative pipeline, gallery versioning, Astro gallery, password/PIN/email gates, ZIP builds, download audit, proofing with favorites and comments | Replaces WeTransfer and the incumbent gallery |
 | **P4 Engagement** | Form templates, instances and answers, timeline builder, shot lists, client threads, notification service, automation engine with seeded rules | Incumbent subscription can be cancelled |
