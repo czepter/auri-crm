@@ -25,43 +25,67 @@ Print or product store · album designer · accounting and bookkeeping (CSV/DATE
 
 ## 2. Architecture
 
-Chosen approach: **Laravel API with three purpose-built frontends, one monorepo, one deploy target per app.**
+Chosen approach: **one Laravel application serving the staff and client surfaces through Inertia, a separate Astro application serving the guest gallery, in one monorepo.** One image, one surface per deploy.
 
 ### Applications
 
 | App | Stack | Deploy target | Audience |
 |---|---|---|---|
-| `apps/api` | Laravel 11, Postgres, Horizon, S3-compatible storage | Container; web and queue workers scaled separately | — |
-| `apps/admin` | Nuxt 4 (SSR) | Private host, MFA and network-restricted | Staff |
-| `apps/portal` | Nuxt 4 (SSR) | Public | Booked clients |
+| `apps/studio` | Laravel 11, Inertia, Vue 3, shadcn-vue, Postgres, Horizon, S3-compatible storage | Three containers from one image — `APP_SURFACE=admin` (private, MFA and network-restricted), `APP_SURFACE=portal` (public), `APP_SURFACE=api` (public JSON, gallery-facing); queue workers scaled separately and load no routes at all | Staff, booked clients, and the gallery |
 | `apps/gallery` | Astro (SSR + aggressive CDN caching) | Public edge | Clients and wedding guests |
-| `packages/contracts` | Generated OpenAPI spec + TypeScript client, shared enums | In-repo package, never published | Consumed by the three frontends |
+| `packages/contracts` | Generated OpenAPI spec + TypeScript client | In-repo package, never published | Consumed by the gallery only |
 
 ```
 client-management-portal/          single git repo
 ├── docs/superpowers/specs/        vision and per-phase specs
 ├── apps/
-│   ├── api/
-│   ├── admin/
-│   ├── portal/
+│   ├── studio/
+│   │   ├── routes/                exactly one is loaded, chosen by APP_SURFACE
+│   │   │   ├── admin.php          staff, Inertia
+│   │   │   ├── portal.php         clients, Inertia
+│   │   │   └── api.php            gallery-facing JSON
+│   │   ├── resources/
+│   │   │   ├── views/             app-admin.blade.php, app-portal.blade.php
+│   │   │   └── js/
+│   │   │       ├── admin/         Vite entrypoint and pages
+│   │   │       ├── portal/        Vite entrypoint and pages
+│   │   │       ├── ui/            shadcn-vue primitives, shared
+│   │   │       └── types/         generated.d.ts
+│   │   └── components.json        shadcn-vue registry
 │   └── gallery/
 └── packages/
     └── contracts/                 build artifact, regenerated in CI
 ```
 
-Blast radius, CSP, and rate limits remain per-app properties because deploys stay separate — that isolation is a deploy property, not a repository property. A monorepo keeps it while removing the coordination machinery a solo developer would otherwise pay for on every cross-cutting change: no private registry, no version-bump choreography, no multi-repo pull requests to add one field.
+### Surface separation
+
+The three surfaces share a codebase but never share a process. `bootstrap/app.php` reads `config('surface.name')` and loads exactly one route file. The admin container does not merely deny portal routes — it has never registered them. Reaching client-portal code from the admin surface requires a deploy misconfiguration rather than a middleware typo, and the difference matters because middleware typos are the failure mode that actually occurs.
+
+Session cookie name, session domain, CSP, rate limits, Vite entrypoint, and root Blade view are all per-surface. Blast radius, network restriction, and release cadence therefore remain per-surface properties, exactly as they were when these were separate applications — that isolation is a deploy property, not a repository property. Three containers of one small image cost less than the coordination machinery three codebases would demand.
 
 ### Rationale
 
-Laravel supplies queues (Horizon), scheduling, mail, policies, PDF tooling, and Stripe integration as inherited infrastructure rather than assembled parts — roughly six months of plumbing that a Node backend would require building. The cost is two languages and no compile-time type sharing, bounded to a single OpenAPI → TypeScript codegen step.
+Laravel supplies queues (Horizon), scheduling, mail, policies, PDF tooling, and Stripe integration as inherited infrastructure rather than assembled parts — roughly six months of plumbing that a Node backend would require building.
 
-Astro serves the gallery because gallery pages are read-heavy and image-dominated; shipping near-zero JavaScript matters when guests load a 1500-image gallery on venue wifi. Admin and portal are split into separate Nuxt apps because they have different authentication models, threat models, and release cadences; merging them saves setup once and creates a shared session surface permanently.
+Inertia serves admin and portal because both are authenticated, non-indexed, forms-over-data surfaces. That is precisely the profile where a standalone SPA charges the most and returns the least: a JSON resource layer, CORS configuration, stateful-cookie negotiation, and a codegen step, all to render pages that no search engine will ever see and no anonymous visitor will ever load. Inertia deletes that boundary. Controllers return typed props; there is no API to version.
+
+Astro keeps the gallery because that surface has the opposite profile — anonymous, read-heavy, image-dominated, and CDN-cached. Shipping near-zero JavaScript matters when guests load a 1500-image gallery on venue wifi, and Inertia page responses do not edge-cache the way static Astro HTML does. The gallery is consequently the only remaining consumer of the JSON API.
+
+**What this costs.** Optimistic and offline-first interactions are off the table, and every navigation is a server round trip; Inertia partial reloads narrow this but do not remove it. Admin and portal now share a deployable artifact, so a bug in shared domain code reaches both — mitigated by separate processes, separate guards, and separate route files, not by repository layout.
 
 ### Contract discipline
 
-The PHP-to-TypeScript boundary still crosses languages, so the type checker alone cannot be the contract. CI regenerates the OpenAPI document from API routes and the TypeScript client in `packages/contracts` on every run; a breaking API change fails the frontends' typecheck in the same pull request that introduced it. No publishing, no pinning, no drift window.
+Two boundaries, each mechanically enforced in CI.
+
+**PHP → TypeScript (admin and portal).** Controllers pass `spatie/laravel-data` objects as Inertia props rather than arrays. `spatie/typescript-transformer` generates `resources/js/types/generated.d.ts` from those classes, and Vue pages type their props against it. Renaming a field in PHP fails `vue-tsc` in the same pull request. CI regenerates and fails on a stale committed file.
+
+**PHP → OpenAPI → TypeScript (gallery).** CI regenerates the OpenAPI document from the API routes and the TypeScript client in `packages/contracts` on every run; a breaking change fails the gallery's typecheck in the pull request that introduced it. No publishing, no pinning, no drift window.
 
 One CI pipeline with per-app jobs: lint → test → build → deploy changed apps on tag.
+
+### Component system
+
+shadcn-vue is copied into the repository rather than installed, so `resources/js/ui` holds one copy of the primitives and both surfaces import it. The two surfaces diverge through Tailwind CSS-variable themes only — admin dense and utilitarian, portal spacious and studio-branded. A single registry means an accessibility fix to a dialog lands in both surfaces at once; a token swap means the client never sees an interface that looks like an internal tool.
 
 ---
 
@@ -71,16 +95,16 @@ Five bounded contexts, implemented as Laravel modules with separate namespaces. 
 
 ### 3.0 Identifier convention
 
-Every table has two identifiers. An auto-incrementing `bigint` primary key stays internal and carries all foreign keys and joins. A unique `char(24)` `public_id` holding a CUID2 is the only identifier that crosses the API boundary, appears in URLs, or is stored by a frontend.
+Every table has two identifiers. An auto-incrementing `bigint` primary key stays internal and carries all foreign keys and joins. A unique `char(24)` `public_id` holding a CUID2 is the only identifier that leaves the server — in an API response, an Inertia prop, a URL, an email, or a filename.
 
 Sequential integers would otherwise be enumerable in exactly the places that matter most here — a guest who can see `/gallery/41` can try `/gallery/42`, and a client who can see their own job ID learns roughly how many clients the studio has. CUID2 was chosen over ULID because ULIDs encode their creation timestamp in the first 48 bits, which would publish when each record was created.
 
 Because the risk in this design is not the scheme but the discipline it demands, two mechanical guards are requirements rather than conventions:
 
 1. The shared `HasPublicId` trait adds `id` to the model's hidden attributes and overrides `getRouteKeyName()` to return `public_id`, so route-model binding cannot silently bind on the integer.
-2. A test walks every implemented endpoint's JSON response and fails if any key named `id` holds an integer. Returning a model directly instead of through a resource is the ordinary way this leaks, and it should fail in CI rather than in review.
+2. A test walks every implemented endpoint's response body — JSON resources on the `api` surface and Inertia page props on `admin` and `portal`, both of which serialize as JSON — and fails if any key named `id` holds an integer. Passing a model straight into `Inertia::render` instead of wrapping it in a Data object is the ordinary way this leaks, and it should fail in CI rather than in review.
 
-Internal identifiers may appear in server-side logs and the audit log's foreign keys. They must never appear in an API response, a URL, an email, or a filename.
+Internal identifiers may appear in server-side logs and the audit log's foreign keys. They must never appear in an API response, an Inertia prop, a URL, an email, or a filename.
 
 ### 3.1 CRM
 
@@ -160,16 +184,20 @@ Galleries are versioned, never mutated. When a photographer re-uploads corrected
 
 ## 4. Identity and authentication
 
-Domains share a parent so cookie-based sessions work without CORS token juggling: `api.studio.tld`, `admin.studio.tld`, `my.studio.tld`, `gallery.studio.tld`.
+One host per surface: `admin.studio.tld`, `my.studio.tld`, `api.studio.tld`, `gallery.studio.tld`.
+
+Admin and portal are Inertia surfaces served by Laravel itself, so they use ordinary session guards. Sanctum's stateful-SPA mode, the CSRF-cookie handshake, and cross-origin configuration disappear from both — Inertia's `XSRF-TOKEN` handling is the whole story. Sanctum survives only on `api.studio.tld`, where the gallery's guest tokens and service key live.
 
 | Audience | Surface | Credential | Session |
 |---|---|---|---|
-| `staff` | admin | Password + TOTP (mandatory) | Sanctum stateful cookie; 12 h idle, 7 d absolute |
-| `client` | portal | Login form → magic link, email-bound, single-use, 15 min TTL | 30 d refresh cookie, revocable; expires 90 d after delivery |
-| `guest` | gallery | Gallery password | 7 d gallery-scoped cookie, revoked on password rotation |
+| `staff` | admin (Inertia) | Password + TOTP (mandatory) | Laravel session cookie `studio_admin_session`, host-scoped; 12 h idle, 7 d absolute |
+| `client` | portal (Inertia) | Login form → magic link, email-bound, single-use, 15 min TTL | Laravel session cookie `studio_portal_session`, host-scoped; 30 d, revocable; expires 90 d after delivery |
+| `guest` | gallery (Astro → API) | Gallery password | Sanctum guest token, 7 d gallery-scoped, revoked on password rotation |
 | `service` | Astro SSR → API | Read-only key, gallery-metadata scope | Cannot mint sessions, cannot read full-resolution keys |
 
-The control that prevents cross-tier leaks is an **audience claim asserted at route-group middleware**, not per-controller checks. A `guest` token reaching a `client` or `staff` route is rejected before controller dispatch. Policies are too deep in the stack to serve as a first line of defense.
+Cross-tier leaks are prevented at **two independent layers**. First, the surface itself: a `staff` route does not exist in the portal or api container, so there is nothing for a client or guest credential to reach. Second, within a surface, the required guard is declared at route-group middleware rather than in per-controller checks, so a wrong-audience credential is rejected before controller dispatch. Policies are too deep in the stack to serve as a first line of defense; they are the fine grain, not the gate.
+
+Because the cookies are host-scoped and named differently, a portal session is not merely rejected on the admin host — it is never transmitted to it.
 
 The Astro SSR server is a confused-deputy risk: it calls the API on behalf of anonymous visitors. It forwards the visitor's own guest token and holds nothing stronger than a read-only metadata key, so a template bug cannot become full data exposure.
 
@@ -179,7 +207,7 @@ Authorization uses Laravel policies over job ownership and crew assignment. A se
 
 ### Security requirements
 
-1. Every API route group declares its required audience in middleware, verified by an explicit test matrix of every route group × every audience.
+1. Every route group declares its required audience in middleware, verified by an explicit test matrix of every route group × every audience. A second test boots the application once per `APP_SURFACE` value and asserts that no other surface's routes are registered — the surface gate is a claim about the route table, so it is tested against the route table.
 2. Magic links are self-service: the portal shows a login form where the client enters their email and receives a fresh link on demand. An expired link is therefore a re-request, not a support ticket, and a shared couple's inbox works unchanged since identity is email-bound, not person-bound. Links are single-use; consuming one invalidates all outstanding links for that address. The form responds identically for known and unknown emails (no account enumeration), and link requests are rate-limited per address and per IP. Store and compare hashes — never log link values.
 3. Staff MFA is mandatory. The admin surface is additionally restricted at the network edge (IP allowlist or VPN) where practical, since it can export every client's data.
 4. Session revocation is global and immediate. One "revoke all access" action per job kills client sessions, guest sessions, outstanding magic links, and unconsumed download links — the real scenario is a link forwarded to the wrong person.
@@ -224,7 +252,7 @@ A download PIN of 4–6 digits is only 10,000–1,000,000 combinations and is br
 admin browser ──presigned multipart──▶ S3 (originals bucket, quarantine prefix)
       │ completion callback
       ▼
-  apps/api ──dispatch──▶ Horizon queue: media.ingest
+  apps/studio ──dispatch──▶ Horizon queue: media.ingest
       ├─ verify checksum and size; reject non-image MIME
       ├─ extract EXIF (capture time, camera, lens) → default sort order
       ├─ perceptual hash → duplicate detection within the gallery
@@ -313,11 +341,13 @@ A `ContractTemplate` with merge fields renders to PDF via headless Chrome (Goten
 
 ### Testing
 
-| App | Strategy |
+| Target | Strategy |
 |---|---|
-| `apps/api` | Pest; feature tests over real HTTP and Postgres. Audience matrix test covering every implemented route group × every token audience, growing as audiences ship. Policy tests per role. Stripe webhook fixtures replayed. Queue jobs tested against small image fixtures, asserting idempotency on re-run. |
-| `packages/contracts` | Regenerated every CI run from API routes; the generated TypeScript client must typecheck against all three frontends, so a breaking API change fails in the pull request that made it. |
-| Frontends | Vitest for logic, Playwright for journeys. Required end-to-end coverage: inquiry → booked; contract signing; gallery password → PIN → email → download; and a negative test proving a guest cannot obtain full resolution. |
+| `apps/studio` (PHP) | Pest; feature tests over real HTTP and Postgres. Audience matrix test covering every implemented route group × every credential audience, growing as audiences ship. Policy tests per role. Stripe webhook fixtures replayed. Queue jobs tested against small image fixtures, asserting idempotency on re-run. |
+| Surface isolation | The application is booted once per `APP_SURFACE` value and the registered route list asserted to contain that surface's routes and no other's. This is the test that makes the surface gate a guarantee rather than a convention. |
+| Inertia prop types | `spatie/typescript-transformer` regenerates `generated.d.ts` every CI run; a stale committed file fails the build. `vue-tsc` then typechecks every admin and portal page against it, so renaming a field in a PHP Data object fails in the pull request that renamed it. |
+| `packages/contracts` | Regenerated every CI run from the `api` surface's routes; the generated TypeScript client must typecheck against the gallery, so a breaking API change fails in the pull request that made it. |
+| Vue and Astro | Vitest for logic, Playwright for journeys. Playwright drives the Laravel server directly for admin and portal — there is no separate frontend server to orchestrate. Required end-to-end coverage: inquiry → booked; contract signing; gallery password → PIN → email → download; and a negative test proving a guest cannot obtain full resolution. |
 | Load | k6 against the gallery read path, targeting p95 under 400 ms for gallery HTML with images served from CDN, simulating 80 concurrent guests on publish day. |
 
 Test-driven development throughout, and especially for access-control rules, where a test that passes by accident is worse than no test.
@@ -328,7 +358,7 @@ Ingest failures retry with exponential backoff and then surface in the admin "ne
 
 ### Observability
 
-Sentry across all four applications. Structured JSON logs carrying one `X-Request-Id` minted at the edge and propagated through Astro and Nuxt SSR into API calls and queued jobs — this is what turns "the client says download failed" into a single query. Horizon queue-depth and failure-rate alerts, per-surface uptime checks, a storage and egress cost dashboard, and business metrics (leads, conversion rate, days to delivery).
+Sentry across both applications, tagged by surface so admin, portal, and api errors are separable. Structured JSON logs carrying one `X-Request-Id` minted at the edge, propagated through Astro SSR into API calls and onward into queued jobs — this is what turns "the client says download failed" into a single query. Admin and portal need no propagation step, since the request that renders the page is the request that runs the query. Horizon queue-depth and failure-rate alerts, per-surface uptime checks, a storage and egress cost dashboard, and business metrics (leads, conversion rate, days to delivery).
 
 ### Data protection (DSGVO)
 
@@ -350,13 +380,13 @@ Every table carries a `tenant_id` holding a single constant value. Storage prefi
 
 Each phase gets its own spec, its own implementation plan, and its own build cycle. Nothing is built directly from this document.
 
-There is no standalone foundation phase. Rails ship with the first phase that needs them: the monorepo, CI, base schema, and **staff** auth arrive with P1; **client** auth and the portal shell arrive with P2 (contract signing needs them); **guest** auth arrives with P3. The audience matrix test grows with each phase and never covers hypothetical audiences.
+There is no standalone foundation phase. Rails ship with the first phase that needs them: the monorepo, CI, base schema, the surface mechanism, and **staff** auth arrive with P1, which deploys the `admin` surface plus a minimal `api` surface — the public inquiry endpoint has to be reachable from the open internet and admin is network-restricted, so the two cannot share a container. **Client** auth and the `portal` surface arrive with P2 (contract signing needs them). **Guest** auth and `packages/contracts` arrive with P3, when the Astro gallery becomes the first TypeScript consumer of the JSON API; before that the `api` surface has no generated client because it has no typed consumer. The audience matrix test grows with each phase and never covers hypothetical audiences.
 
 | Phase | Scope | Milestone |
 |---|---|---|
-| **P1 CRM core** | Monorepo and CI, base schema with tenant seams, staff auth (password + TOTP), admin shell, contacts, leads, jobs, pipeline board, public inquiry form, availability check, crew assignment, internal notes, tasks and templates, calendar/ICS | Replaces spreadsheets; in daily use |
-| **P2 Sales** | Client auth (magic-link login form), portal shell, packages, quotes, contract templates with PDF rendering and simple e-signature, payment plans, Stripe Invoicing and webhooks | Replaces the booking half of the incumbent |
-| **P3 Gallery** | Guest auth, Media context, presigned multipart ingest, libvips derivative pipeline, gallery versioning, Astro gallery, password/PIN/email gates, ZIP builds, download audit, proofing with favorites and comments | Replaces WeTransfer and the incumbent gallery |
+| **P1 CRM core** | Monorepo and CI, base schema with tenant seams, surface gating, staff auth (password + TOTP), Inertia admin surface with shadcn-vue, contacts, leads, jobs, pipeline board, public inquiry endpoint on the `api` surface, availability check, crew assignment, internal notes, tasks and templates, calendar/ICS | Replaces spreadsheets; in daily use |
+| **P2 Sales** | Client auth (magic-link login form), Inertia portal surface, packages, quotes, contract templates with PDF rendering and simple e-signature, payment plans, Stripe Invoicing and webhooks | Replaces the booking half of the incumbent |
+| **P3 Gallery** | Guest auth, `packages/contracts` and OpenAPI generation, Media context, presigned multipart ingest, libvips derivative pipeline, gallery versioning, Astro gallery, password/PIN/email gates, ZIP builds, download audit, proofing with favorites and comments | Replaces WeTransfer and the incumbent gallery |
 | **P4 Engagement** | Form templates, instances and answers, timeline builder, shot lists, client threads, notification service, automation engine with seeded rules | Incumbent subscription can be cancelled |
 | **P5 Migration** | Import historical clients, jobs and contracts; backfill or link legacy galleries; cutover runbook; parallel-run period | Subscription ends |
 
