@@ -19,35 +19,37 @@
 
 ### Non-goals
 
-Print or product store · album designer · accounting and bookkeeping (CSV/DATEV export only) · Lightroom plugin · IMAP/email inbox sync · AI culling or tagging · native mobile apps (responsive web only) · qualified eIDAS signatures · multi-currency · public marketing site.
+Print or product store · album designer · accounting and bookkeeping (CSV/DATEV export only) · Lightroom plugin · IMAP/email inbox sync · AI culling or tagging · native mobile apps (responsive web only) · qualified eIDAS signatures · multi-currency · public marketing site · SaaS productization (tenant seams are kept because they are cheap; launching as a product is a separate business decision).
 
 ---
 
 ## 2. Architecture
 
-Chosen approach: **Laravel API with three purpose-built frontends, one repository per deployable.**
+Chosen approach: **Laravel API with three purpose-built frontends, one monorepo, one deploy target per app.**
 
-### Repositories
+### Applications
 
-| Repo | Stack | Deploy target | Audience |
+| App | Stack | Deploy target | Audience |
 |---|---|---|---|
-| `studio-api` | Laravel 11, Postgres, Horizon, S3-compatible storage | Container; web and queue workers scaled separately | — |
-| `studio-admin` | Nuxt 4 (SSR) | Private host, MFA and network-restricted | Staff |
-| `studio-portal` | Nuxt 4 (SSR) | Public | Booked clients |
-| `studio-gallery` | Astro (SSR + aggressive CDN caching) | Public edge | Clients and wedding guests |
-| `studio-contracts` | OpenAPI spec, generated TypeScript client, shared enums | Private npm registry | Consumed by the three frontends |
-
-Workspace layout — the parent directory holds the repos as ignored subdirectories and owns the documentation:
+| `apps/api` | Laravel 11, Postgres, Horizon, S3-compatible storage | Container; web and queue workers scaled separately | — |
+| `apps/admin` | Nuxt 4 (SSR) | Private host, MFA and network-restricted | Staff |
+| `apps/portal` | Nuxt 4 (SSR) | Public | Booked clients |
+| `apps/gallery` | Astro (SSR + aggressive CDN caching) | Public edge | Clients and wedding guests |
+| `packages/contracts` | Generated OpenAPI spec + TypeScript client, shared enums | In-repo package, never published | Consumed by the three frontends |
 
 ```
-client-management-portal/          git repo: docs + workspace tooling
+client-management-portal/          single git repo
 ├── docs/superpowers/specs/        vision and per-phase specs
-├── studio-api/                    own repo
-├── studio-admin/                  own repo
-├── studio-portal/                 own repo
-├── studio-gallery/                own repo
-└── studio-contracts/              own repo
+├── apps/
+│   ├── api/
+│   ├── admin/
+│   ├── portal/
+│   └── gallery/
+└── packages/
+    └── contracts/                 build artifact, regenerated in CI
 ```
+
+Blast radius, CSP, and rate limits remain per-app properties because deploys stay separate — that isolation is a deploy property, not a repository property. A monorepo keeps it while removing the coordination machinery a solo developer would otherwise pay for on every cross-cutting change: no private registry, no version-bump choreography, no multi-repo pull requests to add one field.
 
 ### Rationale
 
@@ -57,9 +59,9 @@ Astro serves the gallery because gallery pages are read-heavy and image-dominate
 
 ### Contract discipline
 
-Polyrepo's real risk is contract drift. `studio-api` CI generates an OpenAPI document from its routes, diffs it against the committed spec in `studio-contracts`, and fails the build on undeclared change. The published TypeScript client is a pinned dependency the frontends bump deliberately.
+The PHP-to-TypeScript boundary still crosses languages, so the type checker alone cannot be the contract. CI regenerates the OpenAPI document from API routes and the TypeScript client in `packages/contracts` on every run; a breaking API change fails the frontends' typecheck in the same pull request that introduced it. No publishing, no pinning, no drift window.
 
-Per-repo CI: lint → test → build → publish artifact → deploy on tag.
+One CI pipeline with per-app jobs: lint → test → build → deploy changed apps on tag.
 
 ---
 
@@ -209,7 +211,7 @@ A download PIN of 4–6 digits is only 10,000–1,000,000 combinations and is br
 admin browser ──presigned multipart──▶ S3 (originals bucket, quarantine prefix)
       │ completion callback
       ▼
-  studio-api ──dispatch──▶ Horizon queue: media.ingest
+  apps/api ──dispatch──▶ Horizon queue: media.ingest
       ├─ verify checksum and size; reject non-image MIME
       ├─ extract EXIF (capture time, camera, lens) → default sort order
       ├─ perceptual hash → duplicate detection within the gallery
@@ -298,10 +300,10 @@ A `ContractTemplate` with merge fields renders to PDF via headless Chrome (Goten
 
 ### Testing
 
-| Repo | Strategy |
+| App | Strategy |
 |---|---|
-| `studio-api` | Pest; feature tests over real HTTP and Postgres. Audience matrix test covering every route group × every token audience. Policy tests per role. Stripe webhook fixtures replayed. Queue jobs tested against small image fixtures, asserting idempotency on re-run. |
-| `studio-contracts` | CI generates OpenAPI from routes, diffs against the committed spec, fails on undeclared change; the generated TypeScript client must typecheck. |
+| `apps/api` | Pest; feature tests over real HTTP and Postgres. Audience matrix test covering every implemented route group × every token audience, growing as audiences ship. Policy tests per role. Stripe webhook fixtures replayed. Queue jobs tested against small image fixtures, asserting idempotency on re-run. |
+| `packages/contracts` | Regenerated every CI run from API routes; the generated TypeScript client must typecheck against all three frontends, so a breaking API change fails in the pull request that made it. |
 | Frontends | Vitest for logic, Playwright for journeys. Required end-to-end coverage: inquiry → booked; contract signing; gallery password → PIN → email → download; and a negative test proving a guest cannot obtain full resolution. |
 | Load | k6 against the gallery read path, targeting p95 under 400 ms for gallery HTML with images served from CDN, simulating 80 concurrent guests on publish day. |
 
@@ -335,19 +337,19 @@ Every table carries a `tenant_id` holding a single constant value. Storage prefi
 
 Each phase gets its own spec, its own implementation plan, and its own build cycle. Nothing is built directly from this document.
 
+There is no standalone foundation phase. Rails ship with the first phase that needs them: the monorepo, CI, base schema, and **staff** auth arrive with P1; **client** auth and the portal shell arrive with P2 (contract signing needs them); **guest** auth arrives with P3. The audience matrix test grows with each phase and never covers hypothetical audiences.
+
 | Phase | Scope | Milestone |
 |---|---|---|
-| **P0 Foundation** | `studio-api` skeleton, base schema with tenant seams, three-audience auth with the audience matrix test, `studio-contracts` and codegen, CI/CD across five repos, admin shell | Rails only; nothing user-visible |
-| **P1 Gallery** | Media context, presigned multipart ingest, libvips derivative pipeline, gallery versioning, Astro gallery, password/PIN/email gates, ZIP builds, download audit, proofing with favorites and comments | Replaces WeTransfer and the incumbent gallery |
-| **P2 CRM core** | Contacts, leads, jobs, pipeline board, public inquiry form, availability check, crew assignment, internal notes, tasks and templates, calendar/ICS | Replaces spreadsheets |
-| **P3 Sales** | Packages, quotes, contract templates with PDF rendering and simple e-signature, payment plans, Stripe Invoicing and webhooks | Replaces the booking half of the incumbent |
+| **P1 CRM core** | Monorepo and CI, base schema with tenant seams, staff auth (password + TOTP), admin shell, contacts, leads, jobs, pipeline board, public inquiry form, availability check, crew assignment, internal notes, tasks and templates, calendar/ICS | Replaces spreadsheets; in daily use |
+| **P2 Sales** | Client auth (magic-link login form), portal shell, packages, quotes, contract templates with PDF rendering and simple e-signature, payment plans, Stripe Invoicing and webhooks | Replaces the booking half of the incumbent |
+| **P3 Gallery** | Guest auth, Media context, presigned multipart ingest, libvips derivative pipeline, gallery versioning, Astro gallery, password/PIN/email gates, ZIP builds, download audit, proofing with favorites and comments | Replaces WeTransfer and the incumbent gallery |
 | **P4 Engagement** | Form templates, instances and answers, timeline builder, shot lists, client threads, notification service, automation engine with seeded rules | Incumbent subscription can be cancelled |
 | **P5 Migration** | Import historical clients, jobs and contracts; backfill or link legacy galleries; cutover runbook; parallel-run period | Subscription ends |
-| **P6 SaaS** | Activate tenant seams, signup and onboarding, per-tenant branding and domains, subscription billing | Second business line |
 
-**Why the gallery precedes the CRM:** the gallery holds all the technical unknowns — vips throughput, zip streaming at 30 GB, the interaction between signed URLs and CDN caching, and real egress costs. Discovering those in month six, after a CRM has been built on assumptions about them, is the expensive ordering. The CRM has no unknowns; it is forms over data. Since the incumbent subscription runs throughout the migration either way, "which phase teaches us most" is a better optimizer than "which phase saves money soonest."
+**Why the CRM precedes the gallery:** the sharpest daily pain is spreadsheets, email, and copy-paste — CRM pain — while the incumbent's gallery is its best-solved feature and keeps running throughout. The CRM is also the lowest-risk phase (forms over data, no technical unknowns), which matters for a side-build: if the project stalls after P1, it still leaves a working spreadsheet replacement in daily use rather than a half-tuned media pipeline. The gallery's genuine unknowns — vips throughput, zip streaming at 30 GB, signed URLs versus CDN caching, real egress costs — are deferred knowingly as the price of shipping usable value early, and P3's spec begins with a short technical spike to retire them before committing to the phase plan.
 
-The alternative ordering — CRM first — is defensible if daily administrative pain outweighs delivery pain. It trades away early risk discovery.
+**SaaS is not a phase.** The tenant seams below stay because they are cheap; turning them on — signup, onboarding, per-tenant branding, subscription billing, support, and vendor-grade compliance — is a separate business decision to be made on its own merits, outside this document's scope.
 
 ---
 
