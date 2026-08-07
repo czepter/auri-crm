@@ -108,8 +108,8 @@ Internal identifiers may appear in server-side logs and the audit log's foreign 
 
 ### 3.1 CRM
 
-- `Contact` — a person; role-agnostic
-- `Project` — the relationship, from inquiry to archive; owns contacts, conversation, client access, and shoots
+- `Contact` — a person; role-agnostic. `email` is nullable and unique per tenant where present
+- `Project` — the relationship, from inquiry to archive; owns contacts, conversation, and shoots. `portal_visible` controls whether it appears in the client portal
 - `Lead` — the pursuit: `source`, `stage`, `lost_reason`, inquiry text. One per project, created at inquiry
 - `Job` — the commitment: `type` (wedding, portrait, other), `booked_at`, `archived_at`. At most one per project, created at conversion
 - `Shoot` — one shooting occasion: `date`, `call_time`, `end_time`, `kind`, `label`, venue, `status`, `is_primary`, `sort_order`
@@ -117,6 +117,19 @@ Internal identifiers may appear in server-side logs and the audit log's foreign 
 - `CrewAssignment` — staff user ↔ **shoot** ↔ role
 
 A wedding has many people attached to it with different roles: the couple books, a parent may pay, a planner needs the timeline, guests view the gallery. Modeling one `Project` with many typed contacts — rather than a `Client` with a date field — is what lets portrait and wedding work share a schema.
+
+**Portal access is a person's, not a project's.** `ClientAccess` is contact-scoped (§3.5), so a repeat client — a portrait sitting in 2025, a wedding in 2027 — signs in once and switches projects, and each partner signs in as themselves rather than sharing one project identity. What a signed-in contact may see is derived rather than stored:
+
+```sql
+select p.* from projects p
+join project_contacts pc on pc.project_id = p.id
+where pc.contact_id = :authenticated_contact
+  and p.portal_visible;
+```
+
+`portal_visible` defaults to false. A raw inquiry must not surface in a portal the moment it arrives; `ProjectBooked` flips it true, staff can flip it earlier to share a quote, and flipping it back retires a finished project from the portal without destroying anyone's login.
+
+`Contact.email` is nullable and carries a partial unique index (`unique (tenant_id, email) where email is not null`). A couple sharing one inbox is one contact holding that address; a partner with their own address is a second contact; a contact with no address — a venue coordinator recorded for reference — simply has no portal access, which is honest, since there is no way to send them a link. The alternative, letting an address repeat, makes a magic link resolve to more than one person and leaves "who signed this contract" without an answer.
 
 **Three entities, because the client relationship outlives both the pursuit and the booking.** `Lead` is the pursuit, `Job` is the commitment, `Project` is the relationship that spans them. The conversation, the client's portal login, the contacts, and the requested dates all begin at "hello" and continue to archive; anchoring them to `Lead` loses them at booking, and anchoring them to `Job` means they do not exist for the weeks when the client is actually deciding.
 
@@ -155,11 +168,13 @@ A running order belongs to a shooting day, not to a project. The wedding day has
 
 **Conversation (bidirectional, client may initiate)**
 - `Thread` — project-scoped, subject, status (open / awaiting_client / resolved), `last_activity_at`
-- `Message` — polymorphic author (staff `User` or `ClientAccess`), sanitized markdown body
+- `Message` — polymorphic author (staff `User` or `Contact`), sanitized markdown body
 - `MessageAttachment` — S3-backed, allowlisted MIME types, size-capped
-- `ThreadParticipant` — per-participant `last_read_at`, driving unread badges on both sides
+- `ThreadParticipant` — polymorphic (`User` or `Contact`) with per-participant `last_read_at`, driving unread badges on both sides
 
 A client "simple question" creates a thread from the portal. Email notifications link back to the portal; inbound email replies are deliberately not parsed.
+
+Authorship is a `Contact`, not a `ClientAccess`. `ClientAccess` is a credential — it can be revoked and reissued, and it may not exist at all for a contact who never signed in. A message is written by a person and must still name them a year after their login was revoked, so the author points at the person and the credential stays out of the domain record entirely.
 
 **Internal notes (staff only)**
 - `InternalNote` — attaches to `Project`, `Lead`, `Job`, `Contact`, or `Thread`; author, body, pinned flag
@@ -203,7 +218,7 @@ What a separate gallery actually buys is separate access control and separate de
 ### 3.5 Access
 
 - `User` — staff
-- `ClientAccess` — project-scoped, email-bound magic-link identity; spans inquiry to archive
+- `ClientAccess` — **contact-scoped**, email-bound magic-link identity; one per person, not one per project
 - `GuestIdentity` — email, `verified_at`, `consent_source`, `retention_until`; deduped per gallery, reusable if the person returns
 - `DownloadRequest` — gallery version, scope, requester, token hash, `expires_at`, `consumed_at`, IP
 - `AuditLog` — append-only
@@ -212,7 +227,7 @@ What a separate gallery actually buys is separate access control and separate de
 
 `ProjectBooked`, `ContractSigned`, `ShootDelivered`, `GalleryPublished`, `InstallmentPaid`, `InstallmentOverdue`, and similar. Listeners send mail, advance pipeline stages, and unlock galleries. CRM stays ignorant of Media internals, which is what allows Media to scale or split out later.
 
-`ProjectBooked` is the conversion event: it carries the new `Job` and the shoots that moved from `requested` to `booked`, which is what task templates and date-offset automations subscribe to.
+`ProjectBooked` is the conversion event: it carries the new `Job` and the shoots that moved from `requested` to `booked`. Task templates and date-offset automations subscribe to it, and it sets `Project.portal_visible` if staff have not already.
 
 ---
 
@@ -225,7 +240,7 @@ Admin and portal are Inertia surfaces served by Laravel itself, so they use ordi
 | Audience | Surface | Credential | Session |
 |---|---|---|---|
 | `staff` | admin (Inertia) | Password + TOTP (mandatory) | Laravel session cookie `studio_admin_session`, host-scoped; 12 h idle, 7 d absolute |
-| `client` | portal (Inertia) | Login form → magic link, email-bound, single-use, 15 min TTL | Laravel session cookie `studio_portal_session`, host-scoped; 30 d, revocable; expires 90 d after delivery |
+| `client` | portal (Inertia) | Login form → magic link, bound to one `Contact` by email, single-use, 15 min TTL | Laravel session cookie `studio_portal_session`, host-scoped; 30 d, revocable; expires 90 d after the last visible project is archived |
 | `guest` | gallery (Astro → API) | Gallery password | Sanctum guest token, 7 d gallery-scoped, revoked on password rotation |
 | `service` | Astro SSR → API | Read-only key, gallery-metadata scope | Cannot mint sessions, cannot read full-resolution keys |
 
@@ -235,16 +250,18 @@ Because the cookies are host-scoped and named differently, a portal session is n
 
 The Astro SSR server is a confused-deputy risk: it calls the API on behalf of anonymous visitors. It forwards the visitor's own guest token and holds nothing stronger than a read-only metadata key, so a template bug cannot become full data exposure.
 
-Authorization uses Laravel policies over job ownership and crew assignment. A second shooter sees assigned jobs, not the whole book; an editor sees media, not payments. Roles are coarse; policies are the fine grain.
+Staff authorization uses Laravel policies over project ownership and crew assignment. A second shooter sees assigned shoots, not the whole book; an editor sees media, not payments. Roles are coarse; policies are the fine grain.
 
 **Rejected:** social login, client passwords (magic links are simpler and harder to phish at this scale), shared studio accounts (they destroy the audit trail).
 
 ### Security requirements
 
 1. Every route group declares its required audience in middleware, verified by an explicit test matrix of every route group × every audience. A second test boots the application once per `APP_SURFACE` value and asserts that no other surface's routes are registered — the surface gate is a claim about the route table, so it is tested against the route table.
-2. Magic links are self-service: the portal shows a login form where the client enters their email and receives a fresh link on demand. An expired link is therefore a re-request, not a support ticket, and a shared couple's inbox works unchanged since identity is email-bound, not person-bound. Links are single-use; consuming one invalidates all outstanding links for that address. The form responds identically for known and unknown emails (no account enumeration), and link requests are rate-limited per address and per IP. Store and compare hashes — never log link values.
+2. Magic links are self-service: the portal shows a login form where the client enters their email and receives a fresh link on demand. An expired link is therefore a re-request, not a support ticket. A link resolves to exactly one `Contact`, guaranteed by the partial unique index on `(tenant_id, email)` — a couple sharing an inbox shares one contact record, and a partner wanting their own sign-in provides their own address. Links are single-use; consuming one invalidates all outstanding links for that address. The form responds identically for known and unknown emails (no account enumeration), and link requests are rate-limited per address and per IP. Store and compare hashes — never log link values.
+
+   A signed-in contact sees the projects they are attached to and that are marked `portal_visible`, evaluated per request from `project_contacts`. The session carries an identity, never a project list — otherwise removing someone from a project would leave their existing session still holding it.
 3. Staff MFA is mandatory. The admin surface is additionally restricted at the network edge (IP allowlist or VPN) where practical, since it can export every client's data.
-4. Session revocation is global and immediate. One "revoke all access" action per project kills client sessions, guest sessions, outstanding magic links, and unconsumed download links — the real scenario is a link forwarded to the wrong person.
+4. Revocation is immediate, and it comes in two forms that are not interchangeable. **Hiding a project** (`portal_visible = false`) removes it from every participant's portal at the next request, along with its galleries, magic links, and unconsumed download links; sessions survive, because a planner cut from one project must not be signed out of another. **Revoking a contact's access** deletes their `ClientAccess`, kills their sessions everywhere, and invalidates every outstanding link for that address — this is the control for a link that reached the wrong person. Both write to the audit log, and the admin UI must not present them as one button, since staff reaching for the second one are handling an incident.
 5. All authentication events — success, failure, lockout, revocation, PIN rotation, download-link consumption — write to an append-only audit log that staff cannot edit and that outlives the record it describes.
 6. Guest capabilities are derived server-side from stored gallery policy. Size, scope, and expiry are never read from client input.
 
@@ -456,7 +473,7 @@ A public inquiry form is deferred rather than abandoned. When it returns it brin
 | Phase | Scope | Milestone |
 |---|---|---|
 | **P1 CRM core** | Monorepo and CI, base schema with tenant seams, surface gating, staff auth (password + TOTP), Inertia admin surface with shadcn-vue, contacts, projects with leads and multiple requested shoots, conversion to job, derived pipeline board, manual lead entry with availability check over shoot dates, per-shoot crew assignment, internal notes, tasks and templates, calendar/ICS | Replaces spreadsheets; in daily use |
-| **P2 Sales** | Client auth (magic-link login form), Inertia portal surface, packages, quotes, contract templates with PDF rendering and simple e-signature, payment plans, Stripe Invoicing and webhooks | Replaces the booking half of the incumbent |
+| **P2 Sales** | Contact-scoped client auth (magic-link login form), Inertia portal surface with a project switcher, packages, quotes, contract templates with PDF rendering and simple e-signature, payment plans, Stripe Invoicing and webhooks | Replaces the booking half of the incumbent |
 | **P3 Gallery** | Guest auth, the `api` surface, `packages/contracts` and OpenAPI generation, Media context with shoot-scoped assets and per-shoot or per-booking galleries, presigned multipart ingest, libvips derivative pipeline, gallery versioning, Astro gallery, password/PIN/email gates, ZIP builds, download audit, proofing with favorites and comments | Replaces WeTransfer and the incumbent gallery |
 | **P4 Engagement** | Form templates, instances and answers, timeline builder, shot lists, client threads, notification service, automation engine with seeded rules | Incumbent subscription can be cancelled |
 | **P5 Migration** | Import historical clients, jobs and contracts; backfill or link legacy galleries; cutover runbook; parallel-run period | Subscription ends |
