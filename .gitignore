@@ -1,0 +1,9 @@
+# Sub-repositories have their own git history
+/studio-api/
+/studio-admin/
+/studio-portal/
+/studio-gallery/
+/studio-contracts/
+
+.DS_Store
+node_modules/
