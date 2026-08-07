@@ -147,14 +147,54 @@ Neither `Project` nor `Job` carries a pipeline status. A project whose engagemen
 
 ### 3.2 Sales
 
-- `Package`, `PackageItem` — catalog
-- `Quote` — **lead-scoped**; line items, price snapshot at time of send
+- `Package`, `PackageItem` — the catalog; a starting point, never a live dependency
+- `Quote` (Angebot) — **lead-scoped**; the offer actually made to this client
+- `QuoteItem` — one line of that offer, priced or included
 - `Contract` — **job-scoped**; rendered PDF, template version, merge data, `signed_at`, `signer_ip`, `user_agent`, `document_sha256`
 - `PaymentPlan`, `PaymentInstallment` — **job-scoped**; due date, amount, Stripe references, status
 
 A quote is an artifact of the pursuit and belongs to the `Lead`; a lost lead keeps its quotes as the record of what was offered. A contract and its payment plan are artifacts of the commitment and belong to the `Job`, which does not exist until there is one.
 
 **Snapshot rule:** quotes and contracts store price and terms snapshots; they never join live to `Package`. Changing a package price next year must not alter last year's contract.
+
+### 3.2.1 Packages and the Angebot
+
+**A quote is derived from a package, then extended to the client.** Staff pick a catalog package, which copies its items into the quote, and then edit freely — add the second shooter, drop the album, extend coverage by two hours. From the moment of copying there is no link back: `Quote.derived_from_package_id` records provenance for reporting ("which package do people start from") and is never read for pricing. Every wedding is quoted slightly differently, so a catalog that must express every variation as a configurable option becomes a configurator nobody maintains. A template plus free editing costs one copy step and no rules.
+
+**`QuoteItem.unit_price` is nullable, and that is what makes the German Angebot shape work.** A priced line contributes to the total. A null-priced line is an *Enthaltene Leistung* — listed so the client sees it, not separately charged. Selling a flat-rate package is therefore one priced line at €2,400 plus a dozen inclusions at null, and selling an itemised quote is the same table with prices on every row. No second concept.
+
+```
+Package        name, public description, internal notes, is_active,
+               default_validity_days, sort_order
+PackageItem    label, description, quantity, unit_price (nullable), sort_order
+
+Quote          lead_id, derived_from_package_id (nullable, provenance only)
+               number            Angebotsnummer, e.g. AN-2026-0042
+               status            draft → sent → accepted | declined | superseded
+               valid_until       date
+               sent_at, accepted_at, accepted_by_contact_id, accepted_ip
+               net, tax_rate, tax_amount, gross     snapshot, minor units, EUR
+QuoteItem      quote_id, label, description, quantity,
+               unit_price (nullable), line_net, sort_order
+```
+
+**Expiry is derived, not stored.** A quote is expired when `valid_until < today`; there is no `expired` status and no nightly job to set one. Acceptance re-checks validity server-side, so a stale link cannot be used to accept last spring's price.
+
+**Revisions are new rows.** "Can we drop the album?" produces a second `Quote`; the first becomes `superseded`. The offer history is the row history, which is what answers "what did we actually offer them in March". No versioning machinery, no `supersedes_id` — creation order is enough.
+
+**Portal visibility follows status.** The client sees exactly one quote: the `sent` one while a decision is pending, then the `accepted` one as the standing record of what was agreed, with its inclusions listed. Drafts, declined, and superseded quotes never leave the admin surface.
+
+**Money is stored in minor units** (`bigint` cents, EUR only per §1's non-goals). Stripe's API speaks minor units, so this removes a conversion at the single boundary where money leaves the system — the boundary where a rounding bug would be a charging bug.
+
+**VAT is snapshot display, not tax logic.** A tenant setting carries `vat_mode` (`standard` or `small_business`) and `vat_rate`, defaulting to 19%. The quote stores the rate it was sent under alongside the computed tax and gross. Under `small_business` the rate is zero and the rendered Angebot carries the required §19 UStG note. What is actually charged remains Stripe's concern — this is what the document must show, which is a different problem, and the one that has to be right at the moment the client reads it.
+
+**`Quote.number` is a business document number and deliberately sequential** (`AN-{year}-{counter}` per tenant), which sits in tension with §3.0's rule against enumerable identifiers. The tension resolves by separating the two: the quote's URL and every API reference use its `public_id` CUID2, while `number` exists only on the rendered document and in staff search. A sequential Angebotsnummer discloses roughly how many quotes the studio has issued this year — a disclosure every German business makes on every document it sends, and not the same risk class as a guessable URL.
+
+**Acceptance hands off to the contract.** Accepting records `accepted_at`, `accepted_by_contact_id`, and `accepted_ip`, and advances `Lead.stage` to `quote_accepted`. `Contract` is then rendered from the accepted quote and carries `quote_id`, so the signed document and the accepted offer are traceable to each other. Acceptance is not a signature and is not treated as one; its evidentiary weight comes later, from §7's signing flow.
+
+**Packages do not touch shoots.** `PackageItem` has no `shoot_kind`, and accepting a quote creates no shoots and changes none. The shoots a client requested at inquiry stay exactly as requested, and staff reconcile coverage against the accepted quote by reading both. Stated plainly, the cost: a client who requested a fourth shoot the accepted package does not cover is caught by a human noticing, not by the system. Automating that check means teaching the catalog about shoot kinds, and it is worth doing only once the catalog has stabilised enough to be worth teaching.
+
+**Not built:** client-selectable options or add-ons in the portal (staff send one offer, tailored), discount and coupon rules, multi-currency, and any recomputation of totals after send — a sent quote is immutable, and changing it means issuing a new one.
 
 ### 3.3 Engagement
 
@@ -355,7 +395,7 @@ No plugin in v1. Selection export produces a plain filename list and optional `.
 
 ### Two state machines
 
-`Lead.stage` is a sales funnel: `new → contacted → quote_sent → contract_sent → booked`, with `lost(reason)` reachable from any stage. Date-availability checks at intake scan `shoots.date` for projects whose lead is not lost.
+`Lead.stage` is a sales funnel: `new → contacted → quote_sent → quote_accepted → contract_sent → booked`, with `lost(reason)` reachable from any stage. `quote_accepted` exists as its own stage because "they said yes, send the contract" is a distinct thing for staff to act on, and folding it into `quote_sent` hides the one moment in the funnel where the studio is the bottleneck. Date-availability checks at intake scan `shoots.date` for projects whose lead is not lost.
 
 `Shoot.status` is a forward-only production pipeline: `requested → booked → prep → shot → culling → editing → ready → delivered → archived`. Each transition emits a domain event.
 
@@ -473,7 +513,7 @@ A public inquiry form is deferred rather than abandoned. When it returns it brin
 | Phase | Scope | Milestone |
 |---|---|---|
 | **P1 CRM core** | Monorepo and CI, base schema with tenant seams, surface gating, staff auth (password + TOTP), Inertia admin surface with shadcn-vue, contacts, projects with leads and multiple requested shoots, conversion to job, derived pipeline board, manual lead entry with availability check over shoot dates, per-shoot crew assignment, internal notes, tasks and templates, calendar/ICS | Replaces spreadsheets; in daily use |
-| **P2 Sales** | Contact-scoped client auth (magic-link login form), Inertia portal surface with a project switcher, packages, quotes, contract templates with PDF rendering and simple e-signature, payment plans, Stripe Invoicing and webhooks | Replaces the booking half of the incumbent |
+| **P2 Sales** | Contact-scoped client auth (magic-link login form), Inertia portal surface with a project switcher, package catalog, Angebot derived from a package and customised, quote acceptance in the portal, VAT snapshot and §19 UStG handling, contract templates with PDF rendering and simple e-signature, payment plans, Stripe Invoicing and webhooks | Replaces the booking half of the incumbent |
 | **P3 Gallery** | Guest auth, the `api` surface, `packages/contracts` and OpenAPI generation, Media context with shoot-scoped assets and per-shoot or per-booking galleries, presigned multipart ingest, libvips derivative pipeline, gallery versioning, Astro gallery, password/PIN/email gates, ZIP builds, download audit, proofing with favorites and comments | Replaces WeTransfer and the incumbent gallery |
 | **P4 Engagement** | Form templates, instances and answers, timeline builder, shot lists, client threads, notification service, automation engine with seeded rules | Incumbent subscription can be cancelled |
 | **P5 Migration** | Import historical clients, jobs and contracts; backfill or link legacy galleries; cutover runbook; parallel-run period | Subscription ends |
