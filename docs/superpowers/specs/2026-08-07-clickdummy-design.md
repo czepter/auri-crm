@@ -1,7 +1,7 @@
 # Clickdummy — Design-Only Mockups
 
 **Date:** 2026-08-07
-**Status:** Approved. Revised after adversarial review — screen count cut from 37 to 12, shared data file removed, Tailwind mechanism corrected.
+**Status:** Approved, build started. Revised after adversarial review (37 screens → 12, shared data file removed) and again after the visual direction was settled (Tailwind dropped for plain CSS).
 **Parent:** [Product Vision](2026-08-07-photography-client-management-vision-design.md)
 **Scope:** 12 linked static HTML screens across the admin, portal, and gallery surfaces. Design-only — no build step, no backend, no state.
 
@@ -24,32 +24,52 @@ Roughly twenty candidate screens failed test 1 and were cut. Two failed test 2 a
 
 ### Non-goals
 
-Responsive breakpoints beyond Tailwind defaults · admin mobile layouts (staff work at desks) · dark mode outside the gallery · accessibility audit · component API design · working behavior of any kind · every screen not listed in §3.
+Responsive breakpoints beyond what the flex and grid layouts give for free · admin mobile layouts (staff work at desks) · dark mode outside the gallery · accessibility audit · component API design · working behavior of any kind · every screen not listed in §3.
 
 ---
 
 ## 2. Medium and structure
 
-Static HTML with the Tailwind browser build via CDN. No npm, no build, no server. `index.html` opens by double-click.
+Static HTML and plain CSS. No framework, no npm, no build, no server. `index.html` opens by double-click.
 
 ```
 mockups/
 ├── index.html              screen map — 12 screens grouped by surface, each with its review question
 ├── _shared/
-│   ├── layout.js           chrome: admin sidebar+topbar, portal header, gallery header, per-screen footer
-│   └── tokens.css          shadcn token block, three themes
+│   ├── layout.js           sidebar, per-screen footer strip, screen order
+│   └── tokens.css          design system, three themes
 ├── admin/                  5 screens
 ├── portal/                 2 screens
 └── gallery/                5 screens
 ```
 
-### Tailwind and tokens — verified behavior
+### Why no framework
 
-The Play CDN is Tailwind **v4**, loaded as `@tailwindcss/browser@4`. It is themed through the CSS-first `@theme` directive inside `<style type="text/tailwindcss">`, not through a JS config object. shadcn's current token set is OKLCH values on `:root` mapped into Tailwind via `@theme inline`, which means **shadcn's token block pastes in verbatim**. The themes here are the real ones, not approximations of them.
+An earlier draft specified the Tailwind v4 browser CDN, on the reasoning that shadcn's OKLCH token block would paste in verbatim and the themes would therefore be the real ones. That reasoning stopped applying once the visual direction was settled: the design uses its own tokens, its own typeface, a one-border rule, and CSS-background icons, none of which come from shadcn. Tailwind was left buying a CDN dependency and a class-translation step for nothing. `tokens.css` is ~200 lines of plain CSS with custom properties, works offline, and is what the approved screens were designed in.
 
-`@tailwindcss/browser` installs a `MutationObserver` on `document.documentElement` with `childList: true, subtree: true` and rebuilds on added nodes. Injected chrome is therefore picked up normally, and `layout.js` can run on `DOMContentLoaded` with no ordering contortion. (An earlier draft of this spec claimed the opposite and designed a blocking-head-script mechanism around it. That claim was wrong.)
+Chrome ships as template strings in `layout.js` loaded by `<script src>` rather than as partials loaded by `fetch`, because a local file's origin is opaque and `file://` blocks `fetch` under the same-origin policy. Script tags carry no such restriction. Screens declare `data-nav`, `data-screen` and `data-depth` on `<body>`; `layout.js` reads those to render the sidebar with the right item active and the footer strip with the right neighbours.
 
-Chrome ships as template strings in `layout.js` loaded by `<script src>` rather than as partials loaded by `fetch`, because a local file's origin is opaque and `file://` blocks `fetch` under the same-origin policy. Script tags carry no such restriction.
+### The design system
+
+Settled through iteration against two reference interfaces, then simplified.
+
+**Ground is pure white.** Every other neutral is warmed toward the accent so the palette coheres without tinting the page: ink `#14100E`, muted `#78706B`, faint `#ABA49F`, hover `#F6F3F1`, accent `#B44E22` with `#FBF0EA` behind it.
+
+**Borders are rationed to one.** The 2px ring on stacked crew avatars is the only stroke in the admin surface, and it is load-bearing — without it overlapping faces merge. It swaps to the hover colour on hover so it never reads as decoration. Sidebar, header, columns and cards are separated by space and weight alone: a 48px gutter between sidebar and content, 32px between board columns, 6px between sibling cards, all from one scale (4/6/10/16/24/32/48).
+
+**One icon system.** 1.75 stroke, round caps, `currentColor` wherever it can inherit. 17px in the sidebar, 15px on buttons, 13px inside cards. Sidebar icons are inline SVG so they inherit the active state; card and button icons are CSS `background-image` data URIs so repeated markup stays text-only, which matters when these become Vue components.
+
+**Instrument Sans throughout**, 400/500/600/700. Four sizes: 24 title, 13.5 card name, 13 body, 12.5 meta. Money and counts use `tabular-nums` so sums align across columns.
+
+**Radius** 8px on cards, buttons and nav items; 5px on count chips.
+
+### Card anatomy
+
+The lead card carries exactly what a lead is triaged on, one fact per line, each with its own icon so a column scans down consistent positions: shoot type as an uppercase kicker, names, date and coverage duration paired on one line, venue, source. The value row closes it with amount, age, and assigned crew.
+
+Guest count was tried on the card and removed — it drives crew size, but staffing is decided after opening the lead, so on the board it was a number nobody acted on and it cost every wedding card a line. It belongs on screen 3 and 4.
+
+Age turns terracotta past the stale threshold (vision §7 nudges at 3 and 7 days), so the board shows what needs chasing without a separate view. The stage-advance arrow appears on hover only rather than sitting on every card.
 
 ### No shared data file
 
@@ -57,17 +77,17 @@ Sample data is hardcoded into each screen. A `_shared/data.js` was specified in 
 
 ### Theming
 
-Three token blocks in `tokens.css`, switched by `data-theme` on `<html>` — the same mechanism `apps/studio` will use.
+Three token blocks in `tokens.css`, switched by `data-theme` on `<html>` — the same mechanism `apps/studio` will use. The surfaces share every component; they diverge only through the variables.
 
-| Theme | Surface | Character |
+| Theme | Surface | Overrides |
 |---|---|---|
-| `admin` | staff | Dense. Tight radii, 13px base, compact table rows, muted neutrals. Reads as a tool. |
-| `portal` | clients | Spacious. Generous whitespace, serif display face, studio accent, larger touch targets. |
-| `gallery` | guests | Near-black. Chrome recedes; photographs carry the page. |
+| `admin` | staff | The base. Dense spacing scale, 14px body, white ground. |
+| `portal` | clients | Same components, larger spacing scale (10→14, 24→32, 48→64) and 10px radius. Air is the only difference — no separate component set. |
+| `gallery` | guests | Inverted ground `#0E0C0B`, ink `#F2EDE9`, accent lifted to `#D4713F` for contrast on dark. Chrome recedes; photographs carry the page. |
 
 ### Placeholder branding
 
-**Atelier Nordlicht**, Hamburg — wedding and portrait. Desaturated terracotta accent, serif display face, Inter for UI. A warm neutral was chosen because a saturated brand color fights every wedding photograph placed behind it, and the portal and gallery are mostly photograph.
+**Atelier Nordlicht**, Hamburg — wedding and portrait. Terracotta `#B44E22`, Instrument Sans throughout. A desaturated warm accent was chosen because a saturated brand colour fights every wedding photograph placed behind it, and the portal and gallery are mostly photograph.
 
 ### Sample data
 

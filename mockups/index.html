@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="admin">
+<head>
+<meta charset="utf-8">
+<title>Clickdummy — Atelier Nordlicht</title>
+<link rel="stylesheet" href="_shared/tokens.css">
+<style>
+  .wrap { max-width:880px; margin:0 auto; padding:var(--s7) var(--s5) var(--s7); }
+  .lede { color:var(--muted); font-size:15px; line-height:1.6; margin:var(--s3) 0 var(--s7); max-width:62ch; }
+  .grouplab { font:600 12.5px/1 var(--font); letter-spacing:.02em; text-transform:uppercase;
+              color:var(--ink); margin:var(--s6) 0 var(--s3); }
+  .row { display:flex; align-items:baseline; gap:var(--s4); padding:var(--s3); border-radius:var(--r);
+         color:inherit; text-decoration:none; transition:background .12s ease-out; }
+  .row:hover { background:var(--hover); }
+  .row .no { font:500 11.5px/1.5 var(--font); color:var(--faint); font-variant-numeric:tabular-nums; width:22px; flex:none; }
+  .row .t { font:600 14px/1.4 var(--font); letter-spacing:-.015em; width:210px; flex:none; }
+  .row .q { font:400 13px/1.45 var(--font); color:var(--muted); }
+  .row.todo { pointer-events:none; }
+  .row.todo .t, .row.todo .q { color:var(--faint); }
+  .row.todo .t::after { content:' · offen'; font-weight:400; font-size:11.5px; letter-spacing:.04em; }
+  .note { color:var(--muted); font-size:13px; line-height:1.6; margin-top:var(--s7); max-width:62ch; }
+</style>
+</head>
+<body data-depth="1">
+
+<div class="wrap">
+  <h1>Clickdummy — Atelier Nordlicht</h1>
+  <p class="lede">
+    Zwölf Screens über drei Oberflächen. Jeder Screen stellt genau eine offene Frage —
+    die Frage steht neben dem Titel. Statische HTML-Dateien, kein Zustand, keine Logik:
+    Formulare sind ausgefüllt, Buttons führen weiter.
+  </p>
+
+  <div class="grouplab">Admin — Studio</div>
+  <a class="row todo" href="admin/01-uebersicht.html"><span class="no">01</span><span class="t">Übersicht</span><span class="q">Was braucht ein Fotograf beim Öffnen? Heutige Termine, überfällige Raten und der Prüfungs-Tray konkurrieren um denselben Platz.</span></a>
+  <a class="row"      href="admin/02-anfragen.html"><span class="no">02</span><span class="t">Anfragen</span><span class="q">Bleibt ein Board mit fünf Spalten bei realistischer Dichte lesbar, und was passt auf eine Karte ohne Hover?</span></a>
+  <a class="row todo" href="admin/03-anfrage-neu.html"><span class="no">03</span><span class="t">Anfrage anlegen</span><span class="q">Manuelle Erfassung — einziger Erfassungsweg in P1. Wo erscheint der Terminkonflikt, und wie hart unterbricht er?</span></a>
+  <a class="row todo" href="admin/04-auftrag.html"><span class="no">04</span><span class="t">Auftrag</span><span class="q">Der dichteste Screen im System. Sind Tabs überhaupt die richtige Aufteilung?</span></a>
+  <a class="row todo" href="admin/05-medien.html"><span class="no">05</span><span class="t">Medien-Upload</span><span class="q">1200 Dateien, drei Fehler. Ist ein teilweise fehlgeschlagener 30-GB-Upload lesbar oder panikauslösend?</span></a>
+
+  <div class="grouplab">Portal — Kunden</div>
+  <a class="row todo" href="portal/06-startseite.html"><span class="no">06</span><span class="t">Startseite</span><span class="q">Wirkt das Portal nach Studio oder nach internem Werkzeug? Und fühlt sich die Checkliste nach Service oder nach Hausaufgabe an?</span></a>
+  <a class="row todo" href="portal/07-vertrag.html"><span class="no">07</span><span class="t">Vertrag unterschreiben</span><span class="q">Der Vertrauensmoment. Wirkt die einfache elektronische Signatur glaubwürdig genug, dass niemand nachfragt?</span></a>
+
+  <div class="grouplab">Galerie — Gäste</div>
+  <a class="row todo" href="gallery/08-passwort.html"><span class="no">08</span><span class="t">Galerie — Passwort</span><span class="q">Erster Eindruck für achtzig Gäste. Lässt sich eine einheitliche Fehlermeldung formulieren, ohne kaputt zu klingen?</span></a>
+  <a class="row todo" href="gallery/09-raster.html"><span class="no">09</span><span class="t">Galerie — Raster</span><span class="q">Abschnitte und gemischte Formate. Eingeschränkt: 40 statt 1500 Bilder — Skalierung bleibt eine P3-Frage.</span></a>
+  <a class="row todo" href="gallery/10-lightbox.html"><span class="no">10</span><span class="t">Lightbox</span><span class="q">Favorit und Kommentar, ohne dass die Bedienelemente das Bild erdrücken.</span></a>
+  <a class="row todo" href="gallery/11-pin.html"><span class="no">11</span><span class="t">Download — PIN</span><span class="q">Der Moment, in dem ein Gast merkt, dass es ein zweites Geheimnis gibt. Nur Layout und Text — Reibung ist hier nicht messbar.</span></a>
+  <a class="row todo" href="gallery/12-email.html"><span class="no">12</span><span class="t">Download — E-Mail</span><span class="q">Zweckbindung und Speicherdauer an der Stelle der Erhebung, ohne dass das Formular nach Datensammeln aussieht.</span></a>
+
+  <p class="note">
+    Zwei Fragen kann dieser Clickdummy bauartbedingt nicht beantworten und behauptet es auch nicht:
+    ob drei Galerie-Hürden eine zu viel sind (Reibung ist Zeit und Aufwand, und ein Klick auf einen Link löscht beides),
+    und ob ein Raster mit 1500 Bildern noch flüssig scrollt.
+    Beides bleibt offen für ein echtes Gerät beziehungsweise für P3.
+  </p>
+</div>
+
+</body>
+</html>
