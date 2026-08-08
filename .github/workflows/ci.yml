@@ -28,14 +28,9 @@ jobs:
           php-version: "8.3"
           extensions: pdo_pgsql, bcmath, gd, intl
           coverage: none
-      - name: Skip when the app is not scaffolded yet
-        id: guard
-        run: test -f apps/studio/composer.json && echo "ready=true" >> "$GITHUB_OUTPUT" || echo "ready=false" >> "$GITHUB_OUTPUT"
-      - if: steps.guard.outputs.ready == 'true'
-        working-directory: apps/studio
+      - working-directory: apps/studio
         run: composer install --no-interaction --prefer-dist
-      - if: steps.guard.outputs.ready == 'true'
-        working-directory: apps/studio
+      - working-directory: apps/studio
         env:
           DB_CONNECTION: pgsql
           DB_HOST: 127.0.0.1
