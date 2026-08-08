@@ -22,5 +22,17 @@ class E2eSeeder extends Seeder
                 'role' => StaffRole::Owner,
             ],
         );
+
+        User::updateOrCreate(
+            ['email' => 'e2e-mfa@studio.test'],
+            [
+                'name' => 'E2E MFA',
+                'password' => 'correct-horse',
+                'role' => StaffRole::Owner,
+                'mfa_secret' => 'JBSWY3DPEHPK3PXP',
+                'mfa_confirmed_at' => now(),
+                'mfa_recovery_codes' => [],
+            ],
+        );
     }
 }

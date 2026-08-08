@@ -17,6 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo('/');
+
+        $middleware->alias([
+            'mfa' => \App\Http\Middleware\RequireConfirmedMfa::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
