@@ -4,84 +4,94 @@
 <meta charset="utf-8">
 <title>01 · Übersicht — Nordlicht</title>
 <link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/admin-extra.css">
 <script src="../_shared/layout.js"></script>
 </head>
 <body data-nav="uebersicht" data-screen="1" data-depth="2">
 
-<!-- Layout decision: today's shoot wins the top slot and the only enlarged card — everything
-     else on the board can wait an hour, a wedding call time cannot. The needs-attention tray
-     ranks second (wider column, reads first below the fold) because ingest failures are the
-     one thing the vision says must never sit unnoticed; overdue installments sits narrower
-     and last, since no payment here is tied to today. -->
+<!-- Rebuilt LAST, after the other eleven — the first attempt died as a status report
+     (hero = today's shoot, i.e. a day nobody is at a desk; blocks restating sidebar
+     counts; nothing to act on). Design decisions this version encodes:
+
+     FOUR CRM DOMAINS, not urgency buckets: Anfragen & Angebote, Nächste Shootings,
+     Zahlungen, Nach der Lieferung. Urgency orders rows only *within* a block.
+     Betrieb (rejected uploads etc.) is deliberately absent — it lives on screen 05.
+     Titles speak sidebar language, not consultant nouns (no "Akquise").
+
+     KPI ROW on top. Block-less metrics (acceptance rate) need a home, and the row
+     can grow without rebuilding blocks. Ø-Lieferzeit stays banned — lagging averages
+     are monthly-review numbers, not daily tiles.
+
+     EVERY ROW IS A FIRING RULE from §7's automation engine; the verb is the remedy
+     stored on the rule. The dashboard shows ONLY what the machine cannot do itself:
+     (1) automation exhausted — nudges sent, still silent → personal call
+     (2) judgment needed — decide conflict, draft quote, send contract
+     (3) occasions kept deliberately personal — thanking a referrer
+     What a seed rule does by itself (payment reminder -14d, review request +14d,
+     Stripe dunning) never appears as a task. Hence "Stripe mahnt seit 9 Tagen
+     erfolglos → Anrufen", not "Mahnen" — dunning is Stripe's job.
+
+     CHIPS STATE, BUTTONS ACT: the action is a stroked .abtn, never a filled chip.
+     The row navigates to the project; the button performs the one named action. -->
 
 <div class="app">
   <div data-sidebar></div>
 
   <main class="main">
     <div class="hrow">
-      <h1>Übersicht</h1>
+      <div>
+        <div class="kick">Dienstag, 9. Juni 2026</div>
+        <h1>Übersicht</h1>
+      </div>
+      <a class="txtbtn" href="#" style="margin-left:auto"><svg viewBox="0 0 24 24"><path d="M4 4h16v13H8l-4 4z"/><path d="M8 9h8M8 13h5"/></svg>3 unbeantwortet</a>
+      <a class="btn" href="03-anfrage-neu.html"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Anfrage anlegen</a>
     </div>
-    <div class="dsub">Sonntag, 14.06.2026</div>
 
-    <section class="dsec">
-      <div class="dlab">Heute</div>
+    <div class="kpis">
+      <div class="kpi"><b>48.750 €</b>Pipeline · 11 Anfragen <em>· 3 neu diese Woche</em></div>
+      <div class="kpi"><b><i>2.900 €</i></b>überfällig <em>· 5.880 € erwartet bis 30.06.</em></div>
+      <div class="kpi"><b>So 14.06.</b>nächstes Shooting <em>· 2 Punkte offen</em></div>
+      <div class="kpi"><b>62 %</b>Angebote angenommen <em>· letzte 12 Monate</em></div>
+    </div>
 
-      <a class="card hero" href="04-auftrag.html"><span class="go"></span>
-        <div class="kick">Hochzeit</div>
-        <div class="who">Lena Meier &amp; Jonas Kowalski</div>
-        <div class="meta">
-          <span class="d">Antritt 09:00 Uhr · 12 Std.</span>
-          <span class="v">Gut Basthorst, Basthorst</span>
-        </div>
-        <div class="foot">
-          <span class="stack">
-            <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=60&q=70" onerror="this.removeAttribute('src')">
-            <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&q=70" onerror="this.removeAttribute('src')">
-            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&q=70" onerror="this.removeAttribute('src')">
-          </span>
-        </div>
-      </a>
+    <div class="doms">
 
-      <div class="qrow"><b>08:00</b> Portrait · Fam. Reimers · Studio</div>
-    </section>
+      <div class="dom">
+        <div class="dh"><b>Anfragen &amp; Angebote</b><span class="n">4 Posten</span></div>
+        <a class="dr" href="02-anfragen.html"><span class="who">Reuter &amp; Sölter</span><span class="what">Angebot still, <i>läuft 20.06. ab</i> · 2 Nudges ohne Reaktion</span><span class="abtn hot">Anrufen</span></a>
+        <a class="dr" href="02-anfragen.html"><span class="who">Vehse &amp; Rieck</span><span class="what">8 Tage still · 2 Nudges ohne Reaktion</span><span class="abtn hot">Anrufen</span></a>
+        <a class="dr" href="02-anfragen.html"><span class="who">Duhnkrack &amp; W.</span><span class="what">angenommen 04.06. — <i>Vertrag fehlt</i></span><span class="abtn hot">Vertrag senden</span></a>
+        <a class="dr" href="02-anfragen.html"><span class="who">Ahlers &amp; Sobotta</span><span class="what">Vertrag 4 Tage unsigniert</span><span class="abtn">Anrufen</span></a>
+        <a class="blkfoot" href="02-anfragen.html">Board — 3 neue Anfragen diese Woche →</a>
+      </div>
 
-    <div class="dgrid">
-      <section>
-        <div class="dlab">Prüfung erforderlich</div>
-        <div class="panel">
-          <a class="trow" href="05-medien.html">
-            <span class="tfile">IMG_4821.CR3</span>
-            <span class="treason">Prüfsumme stimmt nicht überein</span>
-            <span class="tretry">Erneut versuchen</span>
-          </a>
-          <a class="trow" href="05-medien.html">
-            <span class="tfile">Clip_0007.MOV</span>
-            <span class="treason">Format nicht unterstützt</span>
-            <span class="tretry">Erneut versuchen</span>
-          </a>
-          <a class="trow" href="05-medien.html">
-            <span class="tfile">DSC_1190.JPG</span>
-            <span class="treason">Duplikat erkannt</span>
-            <span class="tretry">Erneut versuchen</span>
-          </a>
-        </div>
-      </section>
+      <div class="dom">
+        <div class="dh"><b>Nächste Shootings</b><span class="n">3 diesen Monat</span></div>
+        <a class="nextshoot" href="04-auftrag.html">
+          <span class="top"><b>Hochzeitstag · Meier &amp; Kowalski</b><span class="chip now" style="margin-left:auto">So 14.06.</span></span>
+          <span class="sub">Antritt 08:30 Louis C. Jacob · 4 Orte · Christian + Nina ab 13:00</span>
+          <span class="ready"><i>✓ Ablauf</i><i>✓ Crew</i><i class="no">✗ Familienliste</i><i class="no">✗ Briefing</i></span>
+        </a>
+        <a class="dr" href="04-auftrag.html"><span class="who">Meier &amp; Kowalski</span><span class="what">Familienliste: 2 Nudges ohne Reaktion · <i>Shooting in 5 T.</i></span><span class="abtn hot">Anrufen</span></a>
+        <a class="dr" href="04-auftrag.html"><span class="who">Meier &amp; Kowalski</span><span class="what">Crew-Briefing <i>bis 13.06.</i></span><span class="abtn">Erstellen</span></a>
+        <a class="dr" href="03-anfrage-neu.html"><span class="who">Steffens &amp; Falk</span><span class="what">Terminkonflikt 14.06. ungeklärt</span><span class="abtn">Entscheiden</span></a>
+        <a class="blkfoot" href="#">Kalender — Portrait Vogt 18.06., After-Wedding 05.07. →</a>
+      </div>
 
-      <section>
-        <div class="dlab">Überfällige Raten</div>
-        <div class="panel">
-          <a class="trow" href="04-auftrag.html">
-            <span class="tclient">Sievers–Brandt</span>
-            <span class="val">1.100 €</span>
-            <span class="age warn">9 Tage überfällig</span>
-          </a>
-          <a class="trow" href="04-auftrag.html">
-            <span class="tclient">Katrin Rehder</span>
-            <span class="val">480 €</span>
-            <span class="age warn">3 Tage überfällig</span>
-          </a>
-        </div>
-      </section>
+      <div class="dom">
+        <div class="dh"><b>Zahlungen</b><span class="n">2 Posten</span></div>
+        <a class="dr" href="04-auftrag.html"><span class="who">Sievers–Brandt</span><span class="what">Stripe mahnt <i>seit 9 Tagen</i> erfolglos · 1.100 €</span><span class="abtn hot">Anrufen</span></a>
+        <a class="dr" href="04-auftrag.html"><span class="who">Meier &amp; Kowalski</span><span class="what">2. Rate 1.800 € — <i>nie fällig gestellt</i></span><span class="abtn hot">Fällig stellen</span></a>
+        <a class="blkfoot" href="#">Erwartet bis 30.06.: 5.880 € aus 3 Raten →</a>
+      </div>
+
+      <div class="dom">
+        <div class="dh"><b>Nach der Lieferung</b><span class="n">2 Anlässe</span></div>
+        <a class="dr" href="#"><span class="who">Familie Osterhoff</span><span class="what">hat Steffens &amp; Falk empfohlen — bewusst persönlich</span><span class="abtn">Bedanken</span></a>
+        <a class="dr" href="#"><span class="who">Hensel Hochzeit '25</span><span class="what">Galerie läuft <i>am 30.06. ab</i> — Album nie angeboten</span><span class="abtn">Album anbieten</span></a>
+        <a class="blkfoot" href="#">Review-Bitten laufen automatisch · 2 Antworten diese Woche →</a>
+      </div>
+
     </div>
   </main>
 </div>
