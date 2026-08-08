@@ -56,3 +56,53 @@ jobs:
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm build
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: studio_test
+          POSTGRES_USER: studio
+          POSTGRES_PASSWORD: studio
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U studio"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: pdo_pgsql, bcmath, gd, intl
+          coverage: none
+      - working-directory: apps/studio
+        run: composer install --no-interaction --prefer-dist
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @studio/app build
+      - working-directory: apps/studio
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: studio_test
+          DB_USERNAME: studio
+          DB_PASSWORD: studio
+          APP_SURFACE: admin
+        run: |
+          cp .env.example .env
+          sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' .env
+          php artisan key:generate
+          php artisan migrate --force
+      - run: pnpm --filter @studio/app exec playwright install --with-deps chromium
+      - working-directory: apps/studio
+        env:
+          APP_SURFACE: admin
+        run: pnpm exec playwright test
