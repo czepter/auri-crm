@@ -2,7 +2,8 @@ import { defineConfig } from '@playwright/test'
 
 // CI installs PHP natively; locally there is no host PHP, so the server runs
 // in the compose container that publishes port 8000.
-const serve = 'php artisan serve --host=0.0.0.0 --port=8000'
+const serve =
+  'sh -c "php artisan db:seed --class=E2eSeeder --force && php artisan serve --host=0.0.0.0 --port=8000"'
 
 export default defineConfig({
   testDir: './tests/e2e',
