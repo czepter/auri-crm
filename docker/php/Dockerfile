@@ -1,4 +1,4 @@
-FROM php:8.3-cli
+FROM php:8.5-cli
 
 # Matches the extension list CI installs via shivammathur/setup-php
 # (pdo_pgsql, bcmath, gd, intl) so a test that passes here passes there.
