@@ -103,7 +103,6 @@ const PROJECT_TABS = [
   { key:'kommunikation',label:'Kommunikation',    href:'04-kommunikation.html' },
   { key:'angebot',      label:'Angebot & Vertrag',href:'04-angebot.html' },
   { key:'galerien',     label:'Galerien',         href:'04-galerien.html' },
-  { key:'notizen',      label:'Notizen',          href:'04-notizen.html' },
 ]
 
 function projectHead (active) {
