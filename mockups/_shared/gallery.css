@@ -100,11 +100,16 @@
 .lbtop { display:flex; align-items:center; gap:var(--s4); padding:var(--s4) var(--s5) 0; }
 .lbpos { margin:0 auto; font:500 12.5px/1 var(--font); color:var(--muted); font-variant-numeric:tabular-nums; }
 
-.stage { flex:1; display:flex; align-items:center; justify-content:center; gap:var(--s4);
-         padding:var(--s5) var(--s4); min-height:0; }
-.stage img { max-height:56vh; max-width:min(100%,880px); object-fit:contain; background:var(--hover); }
-.arrow { width:38px; height:38px; flex:none; display:flex; align-items:center; justify-content:center;
-         border-radius:50%; border:1px solid var(--line); color:var(--muted); text-decoration:none; }
+/* the photograph owns the column: arrows float over it instead of costing width,
+   and the height cap leaves room only for header and filmstrip */
+.stage { position:relative; flex:1; display:flex; align-items:center; justify-content:center;
+         padding:var(--s4); min-height:0; }
+.stage img { max-height:calc(100vh - 190px); max-width:100%; object-fit:contain; background:var(--hover); }
+.arrow { position:absolute; top:50%; transform:translateY(-50%); width:40px; height:40px;
+         display:flex; align-items:center; justify-content:center; border-radius:50%;
+         border:1px solid var(--line); background:rgba(14,12,11,.55); color:var(--muted); text-decoration:none; }
+.arrow:first-of-type { left:var(--s4); }
+.arrow:last-of-type { right:var(--s4); }
 .arrow:hover { color:var(--ink); border-color:var(--line-hover); background:var(--hover); }
 .arrow svg { width:17px; height:17px; }
 
@@ -133,7 +138,7 @@
 
 .strip { display:flex; justify-content:center; gap:4px; padding:var(--s4) var(--s5) var(--s5); }
 .strip a { flex:none; }
-.strip img { width:58px; height:42px; object-fit:cover; border-radius:3px; background:var(--hover);
+.strip img { width:48px; height:34px; object-fit:cover; border-radius:3px; background:var(--hover);
              opacity:.38; transition:opacity .15s ease-out; }
 .strip a:hover img { opacity:.7; }
 .strip a.on img { opacity:1; box-shadow:0 0 0 1px var(--accent); }
