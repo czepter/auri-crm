@@ -31,49 +31,57 @@
       <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
   </header>
 
-  <div class="stage">
-    <a class="arrow recede" href="10-lightbox.html" title="Vorheriges Bild">
-      <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></a>
+  <div class="lbsplit">
 
-    <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=1400&amp;q=75"
-         alt="Trauung, Gutskapelle" onerror="this.removeAttribute('src');this.style.width='880px';this.style.height='587px'">
+    <div class="stage">
+      <a class="arrow recede" href="10-lightbox.html" title="Vorheriges Bild">
+        <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></a>
 
-    <a class="arrow recede" href="10-lightbox.html" title="Nächstes Bild">
-      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></a>
-  </div>
+      <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=1400&amp;q=75"
+           alt="Trauung, Gutskapelle" onerror="this.removeAttribute('src');this.style.width='880px';this.style.height='587px'">
 
-  <div class="acts recede">
-    <a class="act on" href="#" title="Favorit entfernen">
-      <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg>
-      Favorit</a>
-    <a class="act" href="#">
-      <svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>
-      2 Kommentare</a>
-    <a class="act" href="#">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="5.5" r="1.6"/><circle cx="12" cy="18.5" r="1.6"/></svg>
-      Bild teilen</a>
-  </div>
-
-  <div class="cmts recede">
-    <div class="cmt">
-      <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&amp;h=60&amp;fit=crop&amp;q=70" alt="" onerror="this.removeAttribute('src')">
-      <div>
-        <b>Lena Meier<em>vor 2 Tagen</em></b>
-        <p>Das ist der Moment, in dem meine Mutter angefangen hat zu weinen. Bitte unbedingt
-        ins Album.</p>
-      </div>
-    </div>
-    <div class="cmt">
-      <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&amp;h=60&amp;fit=crop&amp;q=70" alt="" onerror="this.removeAttribute('src')">
-      <div>
-        <b>Jonas Kowalski<em>vor 2 Tagen</em></b>
-        <p>Einverstanden. Gibt es davon noch eine Aufnahme ohne den Fotografen links im Bild?</p>
-      </div>
+      <a class="arrow recede" href="10-lightbox.html" title="Nächstes Bild">
+        <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></a>
     </div>
 
-    <label class="field" style="margin-top:0">
-      <input type="text" placeholder="Kommentar zu diesem Bild schreiben …">
-    </label>
+    <aside class="lbrail">
+      <div class="acts">
+        <a class="act on" href="#" title="Favorit entfernen">
+          <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg>
+          Favorit</a>
+        <a class="act" href="#">
+          <svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>
+          2 Kommentare</a>
+        <a class="act" href="#">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="5.5" r="1.6"/><circle cx="12" cy="18.5" r="1.6"/></svg>
+          Teilen</a>
+      </div>
+
+      <div class="cmts">
+        <div class="cmt">
+          <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=60&amp;h=60&amp;fit=crop&amp;q=70" alt="" onerror="this.removeAttribute('src')">
+          <div>
+            <b>Lena Meier<em>vor 2 Tagen</em></b>
+            <p>Das ist der Moment, in dem meine Mutter angefangen hat zu weinen. Bitte unbedingt
+            ins Album.</p>
+          </div>
+        </div>
+        <div class="cmt">
+          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=60&amp;h=60&amp;fit=crop&amp;q=70" alt="" onerror="this.removeAttribute('src')">
+          <div>
+            <b>Jonas Kowalski<em>vor 2 Tagen</em></b>
+            <p>Einverstanden. Gibt es davon noch eine Aufnahme ohne den Fotografen links im Bild?</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="lbwrite">
+        <label class="field">
+          <input type="text" placeholder="Kommentar zu diesem Bild schreiben …">
+        </label>
+      </div>
+    </aside>
+
   </div>
 
   <div class="strip recede">
