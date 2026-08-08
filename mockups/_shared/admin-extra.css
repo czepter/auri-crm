@@ -210,3 +210,12 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 .note .head .pin { margin-left:auto; font:600 10px/1.5 var(--font); letter-spacing:.06em;
                    text-transform:uppercase; color:var(--accent); }
 .note p { margin:0; font:400 13px/1.5 var(--font); color:var(--ink); }
+
+/* ---------- Galerien tab: three peer cards, cover as the card's face ---------- */
+.cols3 { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--s4); align-items:start; }
+.galface { display:block; width:calc(100% + 2*var(--s3)); height:150px;
+           margin:calc(-1*var(--s3)) calc(-1*var(--s3)) var(--s3);
+           object-fit:cover; border-radius:calc(var(--r) - 1px) calc(var(--r) - 1px) 0 0;
+           background:var(--hover); }
+.galface.empty { display:flex; align-items:center; justify-content:center;
+                 font:500 11.5px/1 var(--font); color:var(--faint); }
