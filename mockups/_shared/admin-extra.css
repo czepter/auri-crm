@@ -245,3 +245,6 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 /* add-question palette: one stroked button per type */
 .qpal { display:flex; flex-wrap:wrap; gap:var(--s2); }
 .qpal .abtn { opacity:1; font-size:11.5px; padding:6px 11px; }
+
+/* two equal columns for peer cards — the 296px rail is for facts, not content */
+.cols2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--s4); align-items:start; }

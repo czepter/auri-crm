@@ -10,10 +10,14 @@
 <body data-nav="auftraege" data-screen="4" data-depth="2">
 
 <!-- Depth behind Fragebögen: returned forms show their answers (FormAnswer rows),
-     the open one shows its reminder history, and a draft shows the instance being
-     personalised before send. Instances follow the quote mechanic (§3.2.1):
-     the template is copied onto the project, then edited freely — no live link
-     back, which is why sent questionnaires keep their question set. -->
+     the open one shows its reminder history, a draft shows the instance being
+     personalised before send, and a new questionnaire starts from a template
+     copy or completely blank. Instances follow the quote mechanic (§3.2.1):
+     copied onto the project, then edited freely, no live link back — which is
+     why sent questionnaires keep their question set.
+
+     Four peer cards in two equal columns; the 296px rail is for facts, not
+     content. Action-needing cards (draft, open) sit in the first column. -->
 
 <div class="app">
   <div data-sidebar></div>
@@ -23,32 +27,11 @@
 
     <div class="hrow" style="margin-bottom:var(--s4)">
       <span class="kick">4 Fragebögen · 2 zurück, 1 offen, 1 Entwurf</span>
-      <a class="btn" href="#" style="margin-left:auto"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Fragebogen senden</a>
+      <a class="btn" href="#" style="margin-left:auto"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Neuer Fragebogen</a>
     </div>
 
-    <div class="split">
-      <div class="stackcol">
+    <div class="cols2">
 
-        <div class="card static">
-          <div class="cardhead"><span class="kick">Ablaufplan Hochzeitstag</span><span class="chip done">Zurück 28.05.</span></div>
-          <div class="qa">
-            <div><div class="q">Wann beginnt das Getting Ready, und wo?</div><div class="a">Ab 9 Uhr im Louis C. Jacob, Suite 12. Jonas zieht sich bei seinen Eltern an.</div></div>
-            <div><div class="q">Gibt es einen First Look vor der Trauung?</div><div class="a">Ja — im Jenischpark, bevor wir zur Kirche fahren. Bitte ungestört, nur ihr zwei.</div></div>
-            <div><div class="q">Darf während der Zeremonie fotografiert werden?</div><div class="a">Ja, Pastorin Behrens ist einverstanden. Bitte ohne Blitz.</div></div>
-            <div><div class="q">Wann endet die Begleitung?</div><div class="a">Nach dem Eröffnungstanz gegen 21 Uhr wäre das Wichtigste durch — 23 Uhr Ende ist gebucht.</div></div>
-          </div>
-          <a class="blkfoot" href="04-shootings.html">In den Ablauf übernommen →</a>
-        </div>
-
-        <div class="card static">
-          <div class="cardhead"><span class="kick">Wunschliste Gruppenfotos</span><span class="chip done">Zurück 01.06.</span></div>
-          <div class="qa">
-            <div><div class="q">Welche Gruppen sollen fotografiert werden?</div><div class="a">1. Beide Familien komplett · 2. Lenas Familie · 3. Jonas' Familie · 4. Trauzeugen · 5. Studienfreunde · 6. Kollegen</div></div>
-            <div><div class="q">Gibt es Konstellationen, die wir vermeiden sollten?</div><div class="a none">Nicht beantwortet</div></div>
-          </div>
-        </div>
-
-      </div>
       <div class="stackcol">
 
         <div class="card static">
@@ -100,8 +83,45 @@
           </div>
         </div>
 
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Neuer Fragebogen</span></div>
+          <span class="lab" style="display:block;margin-bottom:var(--s2)">Aus Vorlage</span>
+          <div class="qpal">
+            <a class="abtn" href="#">Ablaufplan</a>
+            <a class="abtn" href="#">Wunschliste Gruppenfotos</a>
+            <a class="abtn" href="#">Familienkonstellation</a>
+          </div>
+          <span class="lab" style="display:block;margin:var(--s4) 0 var(--s2)">Oder ohne Vorlage</span>
+          <div class="qpal">
+            <a class="abtn hot" href="#">Leer beginnen</a>
+          </div>
+        </div>
 
       </div>
+
+      <div class="stackcol">
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Ablaufplan Hochzeitstag</span><span class="chip done">Zurück 28.05.</span></div>
+          <div class="qa">
+            <div><div class="q">Wann beginnt das Getting Ready, und wo?</div><div class="a">Ab 9 Uhr im Louis C. Jacob, Suite 12. Jonas zieht sich bei seinen Eltern an.</div></div>
+            <div><div class="q">Gibt es einen First Look vor der Trauung?</div><div class="a">Ja — im Jenischpark, bevor wir zur Kirche fahren. Bitte ungestört, nur ihr zwei.</div></div>
+            <div><div class="q">Darf während der Zeremonie fotografiert werden?</div><div class="a">Ja, Pastorin Behrens ist einverstanden. Bitte ohne Blitz.</div></div>
+            <div><div class="q">Wann endet die Begleitung?</div><div class="a">Nach dem Eröffnungstanz gegen 21 Uhr wäre das Wichtigste durch — 23 Uhr Ende ist gebucht.</div></div>
+          </div>
+          <a class="blkfoot" href="04-shootings.html">In den Ablauf übernommen →</a>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Wunschliste Gruppenfotos</span><span class="chip done">Zurück 01.06.</span></div>
+          <div class="qa">
+            <div><div class="q">Welche Gruppen sollen fotografiert werden?</div><div class="a">1. Beide Familien komplett · 2. Lenas Familie · 3. Jonas' Familie · 4. Trauzeugen · 5. Studienfreunde · 6. Kollegen</div></div>
+            <div><div class="q">Gibt es Konstellationen, die wir vermeiden sollten?</div><div class="a none">Nicht beantwortet</div></div>
+          </div>
+        </div>
+
+      </div>
+
     </div>
   </main>
 </div>
