@@ -169,12 +169,6 @@ h1     { font-size:30px; }
 /* what gets recorded sits above the button, not in a footnote — a client who
    can read the audit trail is the one who does not email to ask if it counts.
    Reuses .kv/.kvrow; only the label column widens for "Dokument-Prüfsumme". */
-.audit { margin:var(--s3) 0; padding:var(--s3); border-radius:var(--r); background:var(--hover); }
-.audit .kick { margin-bottom:var(--s3); }
-.audit .kvrow { font-size:12.5px; }
-.audit .kvrow span:first-child { min-width:96px; }
-.audit .kvrow span:last-child { white-space:nowrap; }
-.audit .kvrow code { font:500 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
 
 .legal { font:400 12.5px/1.6 var(--font); color:var(--muted); margin:var(--s4) 0 0; }
 .legal b { font-weight:600; color:var(--ink); }

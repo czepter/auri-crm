@@ -25,18 +25,22 @@
      moment the client wants to check a clause), and a scroll-gated button
      (theatre — it proves scrolling, not reading, and would need JS).
 
-     EVIDENTIARY FRAMING (vision §7): the four recorded fields — time, IP,
-     browser, document checksum — are printed above the button at full size,
-     because a client who can see what is kept has already been answered and
-     does not need to email and ask whether this counts.
+     EVIDENTIARY FRAMING (vision §7): §7 requires that time, IP, browser and
+     document checksum are RECORDED. It never required showing them to the
+     client, and two attempts at showing them both failed the same way.
 
-     What is NOT printed: the eIDAS classification. §7's paragraph about simple
-     versus qualified signatures is engineering rationale for why those four
-     fields are requirements. It is not copy. Telling a couple their signature
-     lacks a presumption of authenticity, in the second before they sign,
-     manufactures the exact doubt this screen exists to remove — and nothing
-     obliges the studio to volunteer that comparison. The fields are framed as
-     what they are for both sides: a receipt. -->
+     Printing the eIDAS classification told a couple their signature lacks a
+     presumption of authenticity in the second before they sign. Replacing it
+     with "so ist auch in Jahren noch belegbar…" was no better: proof, years,
+     immutability — the sentence is about a future dispute, and raising a
+     dispute is what plants the worry.
+
+     The forensic block went with it. An IP address and a SHA-256 next to a
+     wedding contract are what make the moment feel legalistic. Credibility
+     on this screen comes from the document reading as real and the process
+     staying calm. What remains is what the client actually wants to know:
+     they get their copy immediately. The audit trail is a backend
+     requirement, not a UI feature. -->
 
 <header class="phead">
   <div class="pbar">
@@ -230,28 +234,14 @@
                 für Lena Meier und Jonas Kowalski.</span>
         </label>
 
-        <div class="audit">
-          <div class="kick">Wird mit der Unterschrift festgehalten</div>
-          <div class="kv">
-            <div class="kvrow"><span>Zeitpunkt</span><span>04.02.2026, 14:32 Uhr</span></div>
-            <div class="kvrow"><span>IP-Adresse</span><span>84.132.207.19</span></div>
-            <div class="kvrow"><span>Browser</span><span>Safari 18 · macOS</span></div>
-            <div class="kvrow"><span>Prüfsumme</span><span><code>SHA-256 · 3f9a…c1d7</code></span></div>
-          </div>
-        </div>
-
-        <p class="legal">
-          So ist auch in Jahren noch belegbar, wer wann genau diese Fassung unterschrieben
-          hat — für Sie wie für uns. Ändern lässt sich daran nichts mehr.
-        </p>
-
-        <a class="btn warm wide" href="06-startseite.html" style="margin-top:var(--s4)">
+        <a class="btn warm wide" href="06-startseite.html" style="margin-top:var(--s5)">
           <svg viewBox="0 0 24 24"><path d="M3 20h18"/><path d="M4.5 16.5c3-1 4-6.5 6-9.5s3.5 5 5.5 6 3.5-1 3.5-1"/></svg>
           Vertrag unterschreiben
         </a>
 
         <p class="legal" style="margin-top:var(--s3)">
-          Danach sofort als PDF an lena.meier@example.de — und dauerhaft in Ihrem Portal.
+          Sie bekommen den Vertrag sofort als PDF — an lena.meier@example.de
+          und in Ihr Portal.
         </p>
       </div>
 
