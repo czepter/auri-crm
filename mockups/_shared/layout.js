@@ -93,12 +93,54 @@ function dummybar (n, depth) {
   </div>`
 }
 
+/* project chrome for screen 04's detail tabs — header, stage line, tab row.
+   Declared once here so a tab rename is a one-file change across seven pages. */
+const PROJECT_TABS = [
+  { key:'uebersicht',   label:'Übersicht',        href:'04-auftrag.html' },
+  { key:'shootings',    label:'Shootings',        href:'04-shootings.html' },
+  { key:'frageboegen',  label:'Fragebögen',       href:'04-frageboegen.html' },
+  { key:'kommunikation',label:'Kommunikation',    href:'04-kommunikation.html' },
+  { key:'angebot',      label:'Angebot & Vertrag',href:'04-angebot.html' },
+  { key:'galerien',     label:'Galerien',         href:'04-galerien.html' },
+  { key:'notizen',      label:'Notizen',          href:'04-notizen.html' },
+]
+
+function projectHead (active) {
+  const tabs = PROJECT_TABS.map(t =>
+    `<a class="${t.key === active ? 'on' : ''}" href="${t.href}">${t.label}</a>`).join('\n      ')
+  return `
+    <div class="hrow">
+      <div>
+        <div class="kick">Projekt · Hochzeit</div>
+        <h1>Lena Meier &amp; Jonas Kowalski</h1>
+      </div>
+      <a class="txtbtn" href="#"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Bearbeiten</a>
+      <a class="btn" href="#"><svg viewBox="0 0 24 24"><path d="M4 4h16v13H8l-4 4z"/><path d="M8 9h8M8 13h5"/></svg>Ablauf senden</a>
+    </div>
+    <div class="meta row">
+      <span class="d">Haupttermin 14.06.2026 · in 5 Tagen</span>
+      <span class="v">4 Shootings · 03.2026 – 07.2026</span>
+      <span class="g">80 Gäste</span>
+    </div>
+    <div class="stage">
+      <span class="now"><span class="dot"></span>Vorbereitung</span>
+      <span class="next">frühestes offenes Shooting · 2 von 4 geliefert</span>
+      <a class="adv" href="#">Als fotografiert markieren →</a>
+    </div>
+    <div class="tabs">
+      ${tabs}
+    </div>`
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const body = document.body
   const depth = body.dataset.depth ? Number(body.dataset.depth) : 2
 
   const mount = document.querySelector('[data-sidebar]')
   if (mount) mount.outerHTML = adminSidebar(body.dataset.nav)
+
+  const ph = document.querySelector('[data-projecthead]')
+  if (ph) ph.outerHTML = projectHead(ph.dataset.projecthead)
 
   if (body.dataset.screen) body.insertAdjacentHTML('beforeend', dummybar(body.dataset.screen, depth))
 })

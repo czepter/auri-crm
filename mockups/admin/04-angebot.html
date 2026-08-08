@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="admin">
+<head>
+<meta charset="utf-8">
+<title>04 · Angebot &amp; Vertrag — Nordlicht</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/admin-extra.css">
+<script src="../_shared/layout.js"></script>
+</head>
+<body data-nav="auftraege" data-screen="4" data-depth="2">
+
+<!-- Depth behind Angebot & Vertrag. The accepted quote renders §3.2.1 faithfully:
+     priced lines and null-priced Enthaltene Leistungen in ONE table, VAT computed
+     once on the net, the document number sequential (AN-…) while URLs stay CUID2.
+     The quote is an immutable snapshot — the album added after signing is therefore
+     a Nachtrag on the Job, not an edit to the quote. Showing both, clearly split,
+     is the point of this page. -->
+
+<div class="app">
+  <div data-sidebar></div>
+
+  <main class="main">
+    <div data-projecthead="angebot"></div>
+
+    <div class="split">
+      <div class="stackcol">
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Angebot AN-2026-0042</span><span class="chip done">Angenommen 03.02.2026</span></div>
+          <table class="qt">
+            <tr><td>Hochzeitsreportage Ganztag<div class="d">bis 14 Std. am Hochzeitstag, Bearbeitung, Online-Galerie</div></td><td>4.400,00 €</td></tr>
+            <tr><td>Second Shooter<div class="d">Nina Voss · 13–20 Uhr</div></td><td>600,00 €</td></tr>
+            <tr><td>Verlobungsshooting<div class="d">2 Std., ein Ort</div></td><td>400,00 €</td></tr>
+            <tr class="incl"><td>Standesamtliche Trauung<div class="d">Enthaltene Leistung</div></td><td>inklusive</td></tr>
+            <tr class="incl"><td>After-Wedding-Shooting<div class="d">Enthaltene Leistung</div></td><td>inklusive</td></tr>
+            <tr class="incl"><td>USB-Box in Holz<div class="d">Enthaltene Leistung</div></td><td>inklusive</td></tr>
+            <tr class="sum"><td>Netto</td><td>4.537,82 €</td></tr>
+            <tr class="tax"><td>USt. 19 %</td><td>862,18 €</td></tr>
+            <tr class="total"><td>Gesamt</td><td>5.400,00 €</td></tr>
+          </table>
+          <a class="blkfoot" href="#">Angebots-PDF ansehen →</a>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Nachtrag · 12.05.2026</span><span class="chip next">Nach Buchung</span></div>
+          <table class="qt">
+            <tr><td>Album 30 × 30 cm<div class="d">Leinen, 60 Seiten · auf Kundenwunsch ergänzt</div></td><td>480,00 €</td></tr>
+          </table>
+          <span class="hint">Ein angenommenes Angebot ist unveränderlich — Ergänzungen nach Vertragsschluss sind Nachträge am Auftrag und landen in der Schlussrate.</span>
+        </div>
+
+      </div>
+      <div class="stackcol">
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Vertrag</span><span class="chip done">Signiert</span></div>
+          <div class="kv">
+            <div class="kvrow"><span>Vorlage</span><span>Hochzeit v3</span></div>
+            <div class="kvrow"><span>Versendet</span><span>03.02.2026</span></div>
+            <div class="kvrow"><span>Signiert</span><span>04.02.2026, 14:32 · Lena Meier</span></div>
+            <div class="kvrow"><span>Prüfsumme</span><span>SHA-256 · 3f9a…c1d7</span></div>
+          </div>
+          <a class="blkfoot" href="#">Signiertes PDF ansehen →</a>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Historie</span></div>
+          <div class="qz">
+            <div class="qzrow"><span class="nm">AN-2026-0042 · 5.400 €</span><span class="chip done">Angenommen</span></div>
+            <div class="qzrow"><span class="nm">AN-2026-0037 · 5.900 €</span><span class="chip next">Ersetzt</span></div>
+          </div>
+          <span class="hint">„Können wir das Album erstmal weglassen?" — Revision = neues Angebot, das alte wird ersetzt. Die Historie ist die Zeilenfolge.</span>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Zahlungsplan</span><span class="chip now">4.080 € offen</span></div>
+          <div class="paylist">
+            <div class="payrow"><span class="payname">Anzahlung</span><span class="val">1.800 €</span><span class="paystatus paid">Bezahlt</span></div>
+            <div class="payrow"><span class="payname">2. Rate</span><span class="val">1.800 €</span><span class="paystatus due">15.05.</span></div>
+            <div class="payrow"><span class="payname">Rest + Nachtrag</span><span class="val">2.280 €</span><span class="paystatus upcoming">28.06.</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

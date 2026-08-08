@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="admin">
+<head>
+<meta charset="utf-8">
+<title>04 · Galerien — Nordlicht</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/admin-extra.css">
+<script src="../_shared/layout.js"></script>
+</head>
+<body data-nav="auftraege" data-screen="4" data-depth="2">
+
+<!-- Depth behind Galerien: one gallery per shoot (§3.4), versioned and never
+     mutated. Both gates shown per gallery and independently rotatable — view
+     password and download PIN are different secrets for different audiences.
+     Download counts come from DownloadEvent, which is append-only. -->
+
+<div class="app">
+  <div data-sidebar></div>
+
+  <main class="main">
+    <div data-projecthead="galerien"></div>
+
+    <div class="hrow" style="margin-bottom:var(--s4)">
+      <span class="kick">3 Galerien · eine je Shooting</span>
+      <a class="btn" href="05-medien.html" style="margin-left:auto"><svg viewBox="0 0 24 24"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>Medien hochladen</a>
+    </div>
+
+    <div class="split">
+      <div class="stackcol">
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Verlobung</span><span class="chip done">Live</span></div>
+          <div class="gal"><div class="galrow">
+            <img class="galcover" src="https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=160&q=70" onerror="this.outerHTML='<div class=&quot;galcover empty&quot;>ohne Bild</div>'">
+            <div class="galbody">
+              <div class="galmeta">68 Bilder · Version 2 · online bis 03.2027</div>
+              <div class="galflags">
+                <span class="gf">Passwort</span><span class="gf">Download-PIN</span>
+              </div>
+            </div>
+          </div></div>
+          <div class="kv" style="margin-top:var(--s3)">
+            <div class="kvrow"><span>Version 2</span><span>publiziert 21.04. — 3 korrigierte Bilder</span></div>
+            <div class="kvrow"><span>Version 1</span><span>publiziert 09.04. · Favoriten bleiben an v1 gepinnt</span></div>
+            <div class="kvrow"><span>Downloads</span><span>14 · zuletzt 02.06.</span></div>
+            <div class="kvrow"><span>Favoriten</span><span>22 von Lena, 9 von Jonas</span></div>
+          </div>
+          <a class="blkfoot" href="../gallery/09-raster.html">Als Gast ansehen →</a>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Standesamt</span><span class="chip done">Live</span></div>
+          <div class="gal"><div class="galrow">
+            <img class="galcover" src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=160&q=70" onerror="this.outerHTML='<div class=&quot;galcover empty&quot;>ohne Bild</div>'">
+            <div class="galbody">
+              <div class="galmeta">41 Bilder · Version 1 · online bis 05.2027</div>
+              <div class="galflags">
+                <span class="gf open">ohne Passwort</span><span class="gf">Download-PIN</span>
+              </div>
+            </div>
+          </div></div>
+          <div class="flag" style="margin-top:var(--s3)">Ohne Passwort auf Kundenwunsch — der Link ging an die Standesamt-Gäste. Web-Auflösung, PIN bleibt.</div>
+          <div class="formfoot">
+            <a class="btn" href="#">Passwort setzen</a>
+            <a class="txtbtn" href="#">PIN rotieren</a>
+          </div>
+        </div>
+
+      </div>
+      <div class="stackcol">
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Hochzeitstag</span><span class="chip next">Entwurf</span></div>
+          <div class="gal"><div class="galrow">
+            <div class="galcover empty">leer</div>
+            <div class="galbody">
+              <div class="galmeta">angelegt 04.02. · noch keine Medien</div>
+              <div class="galflags"><span class="gf">Passwort gesetzt</span></div>
+            </div>
+          </div></div>
+          <div class="kv" style="margin-top:var(--s3)">
+            <div class="kvrow"><span>Zieltermin</span><span>Lieferung bis 26.07. laut Vertrag</span></div>
+            <div class="kvrow"><span>Freigabe</span><span>optional an Restzahlung gekoppelt</span></div>
+          </div>
+          <a class="blkfoot" href="05-medien.html">Medien hochladen →</a>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Zugriff</span></div>
+          <div class="kv">
+            <div class="kvrow"><span>Anzeigen</span><span>Passwort je Galerie</span></div>
+            <div class="kvrow"><span>Download</span><span>PIN, unabhängig rotierbar</span></div>
+            <div class="kvrow"><span>Gäste</span><span>Web-Auflösung, nie Originale</span></div>
+          </div>
+          <span class="hint">Das Paar teilt das Passwort mit achtzig Gästen, die PIN mit niemandem — deshalb sind es zwei Geheimnisse, und deshalb wirft eine PIN-Rotation niemanden aus der Galerie.</span>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

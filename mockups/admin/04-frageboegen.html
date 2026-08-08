@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="admin">
+<head>
+<meta charset="utf-8">
+<title>04 · Fragebögen — Nordlicht</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/admin-extra.css">
+<script src="../_shared/layout.js"></script>
+</head>
+<body data-nav="auftraege" data-screen="4" data-depth="2">
+
+<!-- Depth behind Fragebögen: returned forms show their answers (FormAnswer rows),
+     the open one shows its reminder history — automation first, then the human
+     escalation, consistent with screen 01's rule: the dashboard verb appears
+     only once the machine is exhausted. -->
+
+<div class="app">
+  <div data-sidebar></div>
+
+  <main class="main">
+    <div data-projecthead="frageboegen"></div>
+
+    <div class="hrow" style="margin-bottom:var(--s4)">
+      <span class="kick">3 Fragebögen · 2 zurück, 1 offen</span>
+      <a class="btn" href="#" style="margin-left:auto"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Fragebogen senden</a>
+    </div>
+
+    <div class="split">
+      <div class="stackcol">
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Ablaufplan Hochzeitstag</span><span class="chip done">Zurück 28.05.</span></div>
+          <div class="qa">
+            <div><div class="q">Wann beginnt das Getting Ready, und wo?</div><div class="a">Ab 9 Uhr im Louis C. Jacob, Suite 12. Jonas zieht sich bei seinen Eltern an.</div></div>
+            <div><div class="q">Gibt es einen First Look vor der Trauung?</div><div class="a">Ja — im Jenischpark, bevor wir zur Kirche fahren. Bitte ungestört, nur ihr zwei.</div></div>
+            <div><div class="q">Darf während der Zeremonie fotografiert werden?</div><div class="a">Ja, Pastorin Behrens ist einverstanden. Bitte ohne Blitz.</div></div>
+            <div><div class="q">Wann endet die Begleitung?</div><div class="a">Nach dem Eröffnungstanz gegen 21 Uhr wäre das Wichtigste durch — 23 Uhr Ende ist gebucht.</div></div>
+          </div>
+          <a class="blkfoot" href="04-shootings.html">In den Ablauf übernommen →</a>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Wunschliste Gruppenfotos</span><span class="chip done">Zurück 01.06.</span></div>
+          <div class="qa">
+            <div><div class="q">Welche Gruppen sollen fotografiert werden?</div><div class="a">1. Beide Familien komplett · 2. Lenas Familie · 3. Jonas' Familie · 4. Trauzeugen · 5. Studienfreunde · 6. Kollegen</div></div>
+            <div><div class="q">Gibt es Konstellationen, die wir vermeiden sollten?</div><div class="a none">Nicht beantwortet</div></div>
+          </div>
+        </div>
+
+      </div>
+      <div class="stackcol">
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Familienkonstellation</span><span class="chip now">Offen seit 6 Tagen</span></div>
+          <div class="kv">
+            <div class="kvrow"><span>Gesendet</span><span>03.06. an Lena</span></div>
+            <div class="kvrow"><span>Geöffnet</span><span>04.06., nicht ausgefüllt</span></div>
+            <div class="kvrow"><span>Nudge 1</span><span>automatisch, 06.06.</span></div>
+            <div class="kvrow"><span>Nudge 2</span><span>automatisch, 08.06.</span></div>
+          </div>
+          <div class="flag" style="margin-top:var(--s3)">Automation erschöpft · Shooting in 5 Tagen — ohne Liste fehlen die Namen für die Gruppenfotos.</div>
+          <div class="formfoot">
+            <a class="btn" href="#">Anrufen</a>
+            <a class="txtbtn" href="04-kommunikation.html">Nachricht schreiben</a>
+          </div>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Warum diese drei</span></div>
+          <div class="msgbody">Fragebögen entstehen aus Vorlagen je Projekttyp (§3.3). „Hochzeit" seedet Ablaufplan (−30 T.), Wunschliste (−21 T.) und Familienkonstellation (−14 T.) relativ zum Haupttermin.</div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>
