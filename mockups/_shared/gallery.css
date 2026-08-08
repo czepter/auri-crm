@@ -90,7 +90,6 @@
                    linear-gradient(158deg, #4C3F35, #201A17); }
 .ph.tall i { aspect-ratio:2/3; }
 
-.legend { font:400 12px/1.55 var(--font); color:var(--faint); margin-top:var(--s4); }
 
 /* ---------- 10: lightbox — chrome sits back until the pointer arrives ---------- */
 
