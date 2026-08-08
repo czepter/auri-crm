@@ -15,7 +15,7 @@ services:
     ports:
       # Published so the Playwright suite on the host can reach `artisan serve`
       # running inside this container.
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -27,7 +27,7 @@ services:
       POSTGRES_USER: studio
       POSTGRES_PASSWORD: studio
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql
     healthcheck:
@@ -39,7 +39,7 @@ services:
   mailpit:
     image: axllent/mailpit
     ports:
-      - "8025:8025"
+      - "127.0.0.1:8025:8025"
 
 volumes:
   pgdata:
