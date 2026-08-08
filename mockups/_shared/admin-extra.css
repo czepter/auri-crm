@@ -12,9 +12,7 @@
 
 /* labels sit above their field, never inside it as a placeholder — a
    filled form must still say what each value is */
-/* capture form is one column at a readable width — five fields do not need a grid */
-.narrow { max-width:560px; }
-.fgrid { display:grid; grid-template-columns:minmax(0,1fr); gap:var(--s4); }
+.fgrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--s4) var(--s5); }
 .fld { display:flex; flex-direction:column; gap:6px; min-width:0; }
 .fld.wide { grid-column:1 / -1; }
 .fld > label { font:600 10px/1 var(--font); letter-spacing:.09em; text-transform:uppercase; color:var(--faint); }
@@ -39,10 +37,16 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 
 .hint { font:400 11.5px/1.45 var(--font); color:var(--faint); }
 
+/* ---------- additional-shoot repeater (screen 03) ---------- */
 
+.rep { display:flex; flex-direction:column; gap:var(--s2); }
+.reprow { display:grid; grid-template-columns:minmax(0,1.1fr) 116px minmax(0,1.3fr) 15px;
           gap:var(--s3); align-items:center; }
+.reprow.rhead span { font:600 10px/1 var(--font); letter-spacing:.09em;
                      text-transform:uppercase; color:var(--faint); }
+.rmv { width:15px; height:15px; opacity:.5; background-repeat:no-repeat; background-size:15px 15px;
        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2378706B' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E"); }
+.rmv:hover { opacity:1; }
 
 .formfoot { display:flex; align-items:center; gap:var(--s4); margin-top:var(--s5); }
 .formfoot .btn { margin-left:0; }

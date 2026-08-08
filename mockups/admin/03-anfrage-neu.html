@@ -9,25 +9,28 @@
 </head>
 <body data-nav="anfragen" data-screen="3" data-depth="2">
 
-<!-- Capture, not qualification. Five fields, because that is what exists at the
-     moment an inquiry arrives: a name, an address, a subject, a date, and the
-     text the client actually wrote. Everything else — package, venue, guest
-     count, further shoots, budget — is read out of that text later, on the
-     project. A form that asks for it now is a form that gets abandoned
-     mid-phone-call, and half-entered leads are worse than terse ones.
+<!-- Manual entry is P1's only capture path (design spec §7 — the public form is deferred),
+     so this form is where every Project, Lead, Contact and Shoot in the system is born.
 
-     The date field is the primary shoot (Shoot.is_primary). No repeater here:
-     vision §3.1's "optional repeater for additional shoots" was written for the
-     public inquiry form, which is deferred. Taken by phone there is one date
-     worth asking for, and further shoots are added on the project.
+     DECISION — the availability conflict warns, it does not block.
 
-     CONFLICT DECISION: it warns, it never blocks. The check answers "is somebody
-     already on this day", which is not the question "may this be saved". The
-     studio breaks that rule deliberately — a second shooter leads the smaller
-     job, two half-days fit one Saturday, the colliding date may still move or be
-     lost. A blocking form also teaches staff to type a wrong date to get past
-     it, which corrupts the shoots.date column the check reads. The flag renders
-     under the field it concerns and travels with the lead onto the board. -->
+     The check is the one from vision §7: scan shoots.date for projects whose lead is not
+     lost. It answers "is somebody already on this day", which is not the same question as
+     "may this be saved". Blocking submit would throw away an inquiry that is arriving by
+     phone right now, in order to enforce a rule the studio breaks on purpose: a second
+     shooter can lead the smaller job, two half-days fit one Saturday, and the colliding
+     date may itself still move or be lost. A blocked form also pushes staff to enter a
+     wrong date to get past it, which corrupts the very column the check reads.
+
+     So: terracotta .flag, rendered inline directly under the shoot field it concerns —
+     not a toast, not a dialog, not a summary at the bottom. It names the colliding
+     project, its state, and who is already assigned, and links straight to it so the
+     decision can be made with the facts instead of against a warning. Submit stays
+     enabled. The flag is not dismissed at save either: the lead card on screen 2 carries
+     the same component, so the conflict travels with the lead until a human resolves it.
+
+     Refused alternative: a "Konflikt bestätigen" checkbox gating the button. It buys one
+     click of ceremony and no information, and every user learns to tick it blind. -->
 
 <div class="app">
   <div data-sidebar></div>
@@ -35,60 +38,212 @@
   <main class="main">
     <div class="hrow">
       <div>
-        <div class="kick">Neue Anfrage</div>
+        <div class="kick">Anfragen</div>
         <h1>Anfrage anlegen</h1>
       </div>
-      <a class="txtbtn" href="02-anfragen.html">Abbrechen</a>
+      <a class="txtbtn" href="02-anfragen.html" style="margin-left:auto"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>Zurück zum Board</a>
     </div>
 
-    <div class="narrow">
+    <div class="meta row">
+      <span class="q">Telefonisch aufgenommen · Christian</span>
+      <span class="d">Eingegangen 03.03.2026</span>
+    </div>
 
-      <div class="fgrid">
-        <label class="fld wide">
-          <span>Name</span>
-          <input class="inp" type="text" value="Annika Steffens &amp; Ruben Falk">
-        </label>
+    <div class="split" style="margin-top:var(--s5)">
 
-        <label class="fld wide">
-          <span>E-Mail <em>optional</em></span>
-          <input class="inp" type="email" value="annika.steffens@example.de">
-          <span class="hint">Ohne Adresse kein Portal-Zugang und keine automatische Eingangsbestätigung.</span>
-        </label>
+      <!-- ---------------- left: the form ---------------- -->
+      <div class="stackcol">
 
-        <label class="fld wide">
-          <span>Betreff</span>
-          <input class="inp" type="text" value="Hochzeit am 14.06.2026 — Anfrage Fotograf">
-        </label>
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Kontakt</span></div>
+          <div class="fgrid">
 
-        <label class="fld wide">
-          <span>Datum</span>
-          <input class="inp num" type="text" value="14.06.2026">
-        </label>
+            <div class="fld">
+              <label for="f-name">Name</label>
+              <input class="inp" id="f-name" type="text" value="Annika Steffens">
+            </div>
+
+            <div class="fld">
+              <label for="f-partner">Partner/in <em>optional</em></label>
+              <input class="inp" id="f-partner" type="text" value="Ruben Falk">
+            </div>
+
+            <div class="fld">
+              <label for="f-mail">E-Mail <em>optional</em></label>
+              <input class="inp" id="f-mail" type="email" value="a.steffens@posteo.de">
+              <span class="hint">Ohne E-Mail lässt sich die Anfrage anlegen, aber kein Portalzugang und keine automatische Antwort verschicken.</span>
+            </div>
+
+            <div class="fld">
+              <label for="f-tel">Telefon</label>
+              <input class="inp num" id="f-tel" type="tel" value="0171 3948820">
+            </div>
+
+          </div>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Anlass</span></div>
+          <div class="fgrid">
+
+            <div class="fld">
+              <label for="f-typ">Projekttyp</label>
+              <select class="inp" id="f-typ">
+                <option selected>Hochzeit</option>
+                <option>Portrait</option>
+                <option>Sonstige</option>
+              </select>
+            </div>
+
+            <div class="fld">
+              <label for="f-quelle">Quelle der Anfrage</label>
+              <select class="inp" id="f-quelle">
+                <option>Empfehlung</option>
+                <option>Website</option>
+                <option>Instagram</option>
+                <option selected>Hochzeitsmesse</option>
+              </select>
+            </div>
+
+            <div class="fld">
+              <label for="f-gaeste">Gäste <em>Schätzung</em></label>
+              <input class="inp num" id="f-gaeste" type="text" value="110">
+            </div>
+
+            <div class="fld">
+              <label for="f-dauer">Gewünschte Begleitung</label>
+              <select class="inp" id="f-dauer">
+                <option>4 Stunden</option>
+                <option>8 Stunden</option>
+                <option selected>Ganztags</option>
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- One required main date, plus a repeater. is_primary is set here rather than
+             derived (vision §3.1): the Verlobungsshooting is the earliest date and is
+             never the headline, so "earliest wins" would pick the wrong row every time. -->
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Termine</span><span class="chip next">3 Shootings</span></div>
+
+          <div class="fgrid" style="margin-bottom:var(--s4)">
+            <div class="fld lead">
+              <label for="f-haupt">Haupttermin</label>
+              <input class="inp num" id="f-haupt" type="text" value="14.06.2026">
+            </div>
+            <div class="fld">
+              <label for="f-hauptort">Ort <em>optional</em></label>
+              <input class="inp" id="f-hauptort" type="text" value="Gut Wulksfelde, Tangstedt">
+            </div>
+            <div class="fld wide">
+              <span class="hint">Der Haupttermin ist das Shooting, an dem Zahlungsplan, Vertragsfristen und alle projektweiten Erinnerungen hängen. Später änderbar.</span>
+            </div>
+          </div>
+
+          <!-- the conflict, inline, against the shoot date it concerns -->
+          <div class="flag" style="margin:0">
+            14.06.2026 ist belegt · Meier &amp; Kowalski, gebucht seit 04.02.2026 · Christian und Nina ganztags eingeplant
+          </div>
+          <a class="txtbtn" href="04-auftrag.html" style="margin-bottom:var(--s3)"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>Belegtes Projekt ansehen</a>
+
+          <div class="rep">
+            <div class="reprow rhead">
+              <span>Weiteres Shooting</span><span>Datum</span><span>Ort · optional</span><span></span>
+            </div>
+
+            <div class="reprow">
+              <select class="inp" aria-label="Anlass, zweites Shooting">
+                <option selected>Verlobungsshooting</option>
+                <option>Standesamt</option>
+                <option>After-Wedding-Shooting</option>
+                <option>Sonstiges</option>
+              </select>
+              <input class="inp num" type="text" value="25.04.2026" aria-label="Datum, zweites Shooting">
+              <input class="inp" type="text" value="Planten un Blomen" aria-label="Ort, zweites Shooting">
+              <a class="rmv" href="#" aria-label="Shooting entfernen" title="Entfernen"></a>
+            </div>
+
+            <div class="reprow">
+              <select class="inp" aria-label="Anlass, drittes Shooting">
+                <option>Verlobungsshooting</option>
+                <option>Standesamt</option>
+                <option selected>After-Wedding-Shooting</option>
+                <option>Sonstiges</option>
+              </select>
+              <input class="inp num" type="text" value="12.09.2026" aria-label="Datum, drittes Shooting">
+              <input class="inp" type="text" value="" placeholder="noch offen" aria-label="Ort, drittes Shooting">
+              <a class="rmv" href="#" aria-label="Shooting entfernen" title="Entfernen"></a>
+            </div>
+          </div>
+
+          <a class="blkfoot" href="#">+ weiteres Shooting hinzufügen</a>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Anfragetext</span></div>
+          <div class="fld">
+            <label for="f-text">Was die Kunden erzählt haben</label>
+            <textarea class="inp" id="f-text" style="min-height:176px">Freie Trauung auf Gut Wulksfelde, Feier bis in die Nacht in der Reithalle. Rund 110 Gäste. Beide arbeiten in der Pflege und haben den Termin über die Dienstpläne gelegt — der Samstag steht fest, verschieben geht nicht.
+
+Sie kennen uns von den Hamburger Hochzeitstagen und mögen die ruhigen Reportagebilder. Wichtig sind ihnen die Eltern und die Großmutter der Braut, klassische Gruppenaufstellungen eher nicht. Gefragt wurde nach zweiter Fotografin und nach einem Verlobungsshooting im Frühjahr.</textarea>
+            <span class="hint">Wird als Lead.inquiry_text gespeichert und erscheint unverändert auf der Projektseite.</span>
+          </div>
+        </div>
+
+        <div class="formfoot">
+          <a class="btn" href="02-anfragen.html"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>Anfrage anlegen</a>
+          <a class="txtbtn" href="#">Anlegen und Angebot schreiben</a>
+          <a class="txtbtn" href="02-anfragen.html" style="margin-left:auto">Abbrechen</a>
+        </div>
+
       </div>
 
-      <div class="flag">Haupttermin belegt — Meier &amp; Kowalski, Gut Basthorst · Christian, Nina</div>
-      <span class="hint">Speichern ist trotzdem möglich.</span>
+      <!-- ---------------- right: what the check found, what happens next ---------------- -->
+      <div class="stackcol">
 
-      <label class="fld wide" style="margin-top:var(--s5)">
-        <span>Anfragetext</span>
-        <textarea class="inp" rows="9">Hallo liebes Team von Atelier Nordlicht,
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Verfügbarkeit</span><span class="chip fail">1 Konflikt</span></div>
+          <div class="qz">
+            <div class="qzrow"><span class="nm">14.06.2026 <em style="font-style:normal;color:var(--faint)">Sonntag</em></span><span class="chip fail">Belegt</span></div>
+            <div class="qzrow"><span class="nm">25.04.2026 <em style="font-style:normal;color:var(--faint)">Samstag</em></span><span class="chip done">Frei</span></div>
+            <div class="qzrow"><span class="nm">12.09.2026 <em style="font-style:normal;color:var(--faint)">Samstag</em></span><span class="chip done">Frei</span></div>
+          </div>
+          <div class="hint" style="margin-top:var(--s4)">Geprüft wird gegen alle Shooting-Termine offener und gebuchter Projekte. Verlorene Anfragen zählen nicht.</div>
+          <a class="blkfoot" href="#">Kalender 06.2026 öffnen →</a>
+        </div>
 
-wir heiraten am 14. Juni 2026 auf Gut Basthorst und suchen noch eine Fotografin oder einen Fotografen für den ganzen Tag. Wir sind ungefähr 70 Gäste, die freie Trauung ist um 15 Uhr im Garten geplant, danach Sektempfang und abends Feier in der Scheune.
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Belegt am 14.06.</span></div>
+          <div class="plist">
+            <div class="prow">
+              <div class="pinfo"><div class="pname">Meier &amp; Kowalski</div><div class="psub">Hochzeitstag · 09:00–23:00 · Gut Basthorst</div></div>
+            </div>
+            <div class="prow">
+              <img class="pavatar" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&q=70" onerror="this.removeAttribute('src')">
+              <div class="pinfo"><div class="pname">Christian Bergmann</div><div class="psub">Fotograf · ganztags</div></div>
+            </div>
+            <div class="prow">
+              <img class="pavatar" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&q=70" onerror="this.removeAttribute('src')">
+              <div class="pinfo"><div class="pname">Nina Voss</div><div class="psub">Second Shooter · bis 20:00</div></div>
+            </div>
+          </div>
+          <a class="blkfoot" href="04-auftrag.html">Zum Projekt Meier &amp; Kowalski →</a>
+        </div>
 
-Uns gefallen eure Reportagebilder sehr — gestellte Gruppenfotos möchten wir eher wenige. Ein Verlobungsshooting im Frühjahr wäre auch schön, falls ihr so etwas anbietet.
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Nach dem Speichern</span></div>
+          <div class="kv">
+            <div class="kvrow"><span>Projekt</span><span>wird angelegt</span></div>
+            <div class="kvrow"><span>Anfrage</span><span>Spalte <b>Neu</b></span></div>
+            <div class="kvrow"><span>Shootings</span><span><b>3</b> · angefragt</span></div>
+            <div class="kvrow"><span>Portal</span><span>noch verborgen</span></div>
+          </div>
+          <div class="hint" style="margin-top:var(--s4)">Die automatische Eingangsbestätigung geht an a.steffens@posteo.de. Erinnerungen zum Nachfassen folgen nach 3 und 7 Tagen ohne Reaktion.</div>
+        </div>
 
-Könnt ihr uns ein Angebot schicken? Gefunden haben wir euch über Freunde, die letztes Jahr bei euch waren.
-
-Viele Grüße
-Annika Steffens</textarea>
-        <span class="hint">Wird vollständig gespeichert. Ort, Gästezahl, Paket und weitere Shootings später im Projekt ergänzen.</span>
-      </label>
-
-      <div class="formfoot">
-        <a class="btn" href="02-anfragen.html">Anfrage anlegen</a>
-        <a class="txtbtn" href="02-anfragen.html">Abbrechen</a>
       </div>
-
     </div>
   </main>
 </div>
