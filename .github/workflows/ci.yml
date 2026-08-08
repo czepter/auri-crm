@@ -43,6 +43,12 @@ jobs:
           php artisan key:generate
           php artisan migrate --force
           ./vendor/bin/pest
+      - name: Assert the generated TypeScript types are current
+        working-directory: apps/studio
+        run: |
+          php artisan typescript:transform
+          git diff --exit-code -- resources/js/types/generated.d.ts \
+            || { echo "Generated types are stale. Run 'php artisan typescript:transform' and commit."; exit 1; }
 
   web:
     runs-on: ubuntu-latest

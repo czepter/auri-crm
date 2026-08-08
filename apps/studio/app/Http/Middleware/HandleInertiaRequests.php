@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Data\StaffProfileData;
 use App\Support\Surface;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -19,8 +20,13 @@ class HandleInertiaRequests extends Middleware
 
     public function share(Request $request): array
     {
+        $user = $request->user('staff');
+
         return [
             ...parent::share($request),
+            'auth' => [
+                'user' => $user === null ? null : StaffProfileData::fromModel($user),
+            ],
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
             ],

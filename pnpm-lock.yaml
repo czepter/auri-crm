@@ -35,6 +35,9 @@ importers:
         specifier: ^3.5.13
         version: 3.5.41(typescript@5.9.3)
     devDependencies:
+      '@inertiajs/core':
+        specifier: ^2.3.27
+        version: 2.3.27
       '@playwright/test':
         specifier: ^1.49.0
         version: 1.62.1
