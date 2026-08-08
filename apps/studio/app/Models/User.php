@@ -2,47 +2,50 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Concerns\BelongsToTenant;
+use App\Concerns\HasPublicId;
+use App\Enums\StaffRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use BelongsToTenant;
+    use HasFactory;
+    use HasPublicId;
+    use Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
+     * The MFA columns are fillable so factory states and seeders can set them.
+     * They are never mass-assigned from request input: every controller that
+     * changes them uses forceFill() with an explicit array.
      */
     protected $fillable = [
         'name',
         'email',
         'password',
+        'role',
+        'mfa_secret',
+        'mfa_confirmed_at',
+        'mfa_recovery_codes',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    protected $hidden = ['password', 'remember_token', 'mfa_secret', 'mfa_recovery_codes'];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'role' => StaffRole::class,
+            'mfa_secret' => 'encrypted',
+            'mfa_recovery_codes' => 'encrypted:array',
+            'mfa_confirmed_at' => 'immutable_datetime',
         ];
+    }
+
+    public function hasConfirmedMfa(): bool
+    {
+        return $this->mfa_confirmed_at !== null;
     }
 }
