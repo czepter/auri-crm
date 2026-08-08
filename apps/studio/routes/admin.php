@@ -17,7 +17,7 @@ Route::middleware('guest:staff')->group(function () {
     Route::post('/auth/mfa', [MfaChallengeController::class, 'store']);
 });
 
-Route::middleware('auth:staff')->group(function () {
+Route::middleware('audience:staff')->group(function () {
     Route::post('/logout', [SessionController::class, 'destroy']);
 
     Route::get('/auth/mfa/enroll', [MfaEnrollmentController::class, 'create']);
