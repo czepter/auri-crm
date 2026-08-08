@@ -54,15 +54,8 @@
 /* ---------- the §4 variant block: a second labelled state on the same page ---------- */
 
 .variant { margin-top:var(--s7); padding-top:var(--s5); border-top:1px solid var(--line); text-align:left; }
-.vlab { font:600 10px/1 var(--font); letter-spacing:.09em; text-transform:uppercase; color:var(--accent); }
-.vnote { font:400 12.5px/1.6 var(--font); color:var(--muted); margin:8px 0 var(--s5); }
-
-/* ---------- §5 scope limits: what this screen cannot answer ---------- */
-
-.scope { margin-top:var(--s6); padding:var(--s4); border:1px dashed var(--line-hover); border-radius:var(--r);
-         font:400 12.5px/1.6 var(--font); color:var(--muted); text-align:left; }
-.scope b { display:block; font:600 10px/1 var(--font); letter-spacing:.09em; text-transform:uppercase;
-           color:var(--faint); margin-bottom:8px; }
+.vlab { display:block; font:600 10px/1 var(--font); letter-spacing:.09em; text-transform:uppercase;
+        color:var(--accent); margin-bottom:var(--s5); }
 
 /* ---------- 09: section jump-nav + photo grid ---------- */
 

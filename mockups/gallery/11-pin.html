@@ -22,7 +22,12 @@
 
      Scope, per §5 of the design spec: layout and copy only. Friction is time and
      effort and an <a href> costs neither, so this screen cannot say whether three
-     gates are one too many. The note at the bottom says so on the page. -->
+     gates are one too many. That caveat lives on the index, not on the page.
+
+     The guest is told WHO holds the code, not WHY two secrets exist. The rotation
+     argument (one password known to eighty people leaks; rotating the download PIN
+     alone avoids reissuing the view password) is the reason the model is correct —
+     it is not something a guest needs in order to ask the couple for four digits. -->
 
 <div class="gpage wide gcenter">
 
@@ -35,11 +40,6 @@
   Zum <b>Herunterladen</b> kommt ein zweiter, vierstelliger Code dazu. Den haben nur
   Lena und Jonas. Eine kurze Nachricht an die beiden genügt.</p>
 
-  <p class="glead">Das ist Absicht und kein Misstrauen: Ein Passwort, das achtzig Menschen
-  kennen, wandert irgendwann weiter. Tauschen Lena und Jonas dann den Download-Code aus,
-  bleibt die Galerie für alle offen — nur das Herunterladen wird einmal neu freigegeben.
-  Wäre es ein einziges Passwort, müssten achtzig Gäste ein neues bekommen.</p>
-
   <label class="field">
     <span>Download-Code</span>
     <input class="pin" type="text" inputmode="numeric" value="4821" autocomplete="off">
@@ -48,18 +48,10 @@
   <a class="btn wide" href="12-email.html">Weiter</a>
   <a class="txtbtn mid" href="09-raster.html">Zurück zur Galerie</a>
 
-  <p class="hint small">Fünf Versuche, danach wird die Wartezeit zwischen den Eingaben
-  länger. Das Ansehen der Galerie ist davon nicht betroffen.</p>
-
   <!-- ── variant: rate-limited, then locked ──────────────────────────────── -->
 
   <div class="variant">
     <div class="vlab">Variante · Gesperrt nach zu vielen Versuchen</div>
-    <p class="vnote">Ein vierstelliger Code hat 10.000 Kombinationen und ist ungebremst in
-    Sekunden durchprobiert — Drosselung ist deshalb Pflicht, nicht Kür (Vision §5). Nach
-    etwa fünf Fehlversuchen wachsen die Wartezeiten, nach etwa zwanzig sperrt die Eingabe
-    und das Atelier bekommt eine Meldung. Der Text muss dabei zwei Dinge gleichzeitig
-    tun: die Sperre erklären und dem Gast sagen, dass er nichts kaputt gemacht hat.</p>
 
     <div class="gcenter">
       <div class="kick">Download · Schritt 1 von 2</div>
@@ -84,15 +76,6 @@
       <span class="btn wide" style="opacity:.35">Weiter</span>
       <a class="txtbtn mid" href="09-raster.html">Zurück zur Galerie</a>
     </div>
-  </div>
-
-  <div class="scope">
-    <b>Was dieser Screen nicht beantwortet</b>
-    Ob drei Hürden — Passwort, Code, E-Mail — eine zu viel sind. Reibung ist Zeit und
-    Aufwand: in Wirklichkeit heißt dieser Schritt, das Brautpaar anzuschreiben und auf
-    Antwort zu warten, im Klickdummy heißt er einen Link anzuklicken. Der Prototyp wird
-    hier immer „geht doch“ sagen. Beurteilbar sind nur Aufbau und Formulierung; die
-    Frage nach der Reibung bleibt offen und braucht einen echten Gast am echten Telefon.
   </div>
 
 </div>

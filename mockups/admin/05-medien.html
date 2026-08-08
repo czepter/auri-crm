@@ -10,12 +10,20 @@
 <body data-nav="medien" data-screen="5" data-depth="2">
 
 <!-- Ingest per vision §6. Assets are shoot-scoped, so the header names the shoot and not
-     just the project — a card dump belongs to one shooting day.
+     just the project — an import belongs to one shooting day.
+
+     No SD-card model: the studio drags a folder in. Cards are offloaded and culled in
+     Lightroom long before anything reaches this screen, so "Karte 2 von 2" was inventing
+     a step the workflow does not have. The folder is the source, and it is the only thing
+     the resume path can key on anyway.
 
      The bytes never touch Laravel: the browser uploads straight to the object store with
      presigned multipart URLs, and the studio app only issues those URLs and reacts to the
-     completion callback. The copy is written to say that, because "wird hochgeladen zu
-     Nordlicht" would set the wrong expectation about what closing the tab costs.
+     completion callback. That architecture is deliberately NOT on screen — the photographer
+     gains nothing from "vorsignierte URLs" at 21:38. What the architecture *causes* is on
+     screen instead: the transfer lives in this tab, so closing it pauses the import, while
+     derivative processing continues server-side. Those two facts differ, and the earlier
+     copy stated only the second one — a photographer could reasonably have closed the tab.
 
      The point of the screen is the tray. §6 requires failures to surface for a human with
      filename and reason instead of dying in a log, so the three rejected files sit above
@@ -41,7 +49,7 @@
     <div class="meta row">
       <span class="d">Shooting 14.06.2026 · Gut Basthorst</span>
       <span class="v">Galerie „Hochzeitstag" · Entwurf</span>
-      <span class="g">2 Karten · Christian Bergmann</span>
+      <span class="g">Christian Bergmann</span>
     </div>
 
     <div class="card static" style="margin:var(--s5) 0 0">
@@ -63,7 +71,7 @@
         <div class="bkrow"><span>Zurückgewiesen</span><span><i>3</i> <em>· siehe unten</em></span></div>
       </div>
 
-      <div class="hint" style="margin-top:var(--s4)">Die Dateien gehen direkt aus diesem Browser an den Objektspeicher (Multipart-Upload über vorsignierte URLs). Nordlicht vergibt nur die Teil-URLs und nimmt die Fertigmeldungen entgegen — die Bilder laufen nicht über den Server.</div>
+      <div class="hint" style="margin-top:var(--s4)">Die Übertragung läuft in diesem Fenster. Wird es geschlossen, pausiert sie — fortsetzen lässt sie sich jederzeit mit demselben Ordner.</div>
     </div>
 
     <!-- the tray: never a log line, always a named file with a reason (§6) -->
@@ -73,7 +81,7 @@
 
         <div class="trow">
           <span class="tfile">IMG_5107.jpg</span>
-          <span class="treason">Prüfsumme weicht ab — SHA-256 des Uploads passt nicht zur gemeldeten Datei. Übertragung vermutlich abgebrochen.</span>
+          <span class="treason">Prüfsumme weicht ab — die übertragene Datei ist unvollständig. Übertragung vermutlich abgebrochen.</span>
           <a class="tretry" href="#">Erneut übertragen</a>
         </div>
 
@@ -85,7 +93,7 @@
 
         <div class="trow">
           <span class="tfile">IMG_4877.jpg</span>
-          <span class="treason">Duplikat im selben Shooting — bildgleich zu IMG_4876.jpg (Wahrnehmungs-Hash).</span>
+          <span class="treason">Duplikat im selben Shooting — bildgleich zu IMG_4876.jpg.</span>
           <a class="tretry" href="#">Trotzdem übernehmen</a>
         </div>
 
@@ -153,9 +161,8 @@
 
         <div class="card static">
           <div class="cardhead"><span class="kick">Abbruch &amp; Fortsetzen</span></div>
-          <div class="hint">Jede Datei wird über ihre SHA-256-Prüfsumme erkannt. Ein abgebrochener Import lässt sich jederzeit mit demselben Ordner fortsetzen — bereits übertragene Bilder werden übersprungen, nichts wird doppelt angelegt.</div>
+          <div class="hint">Ein abgebrochener Import lässt sich jederzeit mit demselben Ordner fortsetzen — bereits übertragene Bilder werden erkannt und übersprungen, nichts wird doppelt angelegt.</div>
           <div class="kv" style="margin-top:var(--s4)">
-            <div class="kvrow"><span>Quelle</span><span>SD 01 · 2 von 2</span></div>
             <div class="kvrow"><span>Ordner</span><span>/HZ_Meier/14-06</span></div>
             <div class="kvrow"><span>Zuletzt</span><span>vor 3 Sek.</span></div>
           </div>
