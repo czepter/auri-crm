@@ -276,7 +276,7 @@ Galleries are versioned, never mutated. When a photographer re-uploads corrected
 
 What a separate gallery actually buys is separate access control and separate delivery timing: the engagement gallery ships in March with its own password, its own expiry, and its own audience, months before the wedding gallery exists. That is why the split lives on `Gallery` rather than being expressed only through sections.
 
-`Asset.shoot_id` is where the real association lives, because a card dump belongs to one shooting day. Composing a gallery is then a query over a shoot rather than manual sorting of 1500 files, and "every frame from the reception" stays answerable however the client chose to group their galleries.
+`Asset.shoot_id` is where the real association lives, because an import belongs to one shooting day. Composing a gallery is then a query over a shoot rather than manual sorting of 1500 files, and "every frame from the reception" stays answerable however the client chose to group their galleries.
 
 `requires_settled_balance` makes §7's payment gate per-gallery. Blocking the engagement gallery in March because the wedding balance is outstanding would be absurd; blocking the final wedding gallery is the point.
 
