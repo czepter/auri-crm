@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  studio:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: studio_test
+          POSTGRES_USER: studio
+          POSTGRES_PASSWORD: studio
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U studio"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: pdo_pgsql, bcmath, gd, intl
+          coverage: none
+      - name: Skip when the app is not scaffolded yet
+        id: guard
+        run: test -f apps/studio/composer.json && echo "ready=true" >> "$GITHUB_OUTPUT" || echo "ready=false" >> "$GITHUB_OUTPUT"
+      - if: steps.guard.outputs.ready == 'true'
+        working-directory: apps/studio
+        run: composer install --no-interaction --prefer-dist
+      - if: steps.guard.outputs.ready == 'true'
+        working-directory: apps/studio
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: studio_test
+          DB_USERNAME: studio
+          DB_PASSWORD: studio
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan migrate --force
+          ./vendor/bin/pest
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 10 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build
