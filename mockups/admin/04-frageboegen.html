@@ -10,9 +10,10 @@
 <body data-nav="auftraege" data-screen="4" data-depth="2">
 
 <!-- Depth behind Fragebögen: returned forms show their answers (FormAnswer rows),
-     the open one shows its reminder history — automation first, then the human
-     escalation, consistent with screen 01's rule: the dashboard verb appears
-     only once the machine is exhausted. -->
+     the open one shows its reminder history, and a draft shows the instance being
+     personalised before send. Instances follow the quote mechanic (§3.2.1):
+     the template is copied onto the project, then edited freely — no live link
+     back, which is why sent questionnaires keep their question set. -->
 
 <div class="app">
   <div data-sidebar></div>
@@ -21,7 +22,7 @@
     <div data-projecthead="frageboegen"></div>
 
     <div class="hrow" style="margin-bottom:var(--s4)">
-      <span class="kick">3 Fragebögen · 2 zurück, 1 offen</span>
+      <span class="kick">4 Fragebögen · 2 zurück, 1 offen, 1 Entwurf</span>
       <a class="btn" href="#" style="margin-left:auto"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Fragebogen senden</a>
     </div>
 
@@ -49,6 +50,41 @@
 
       </div>
       <div class="stackcol">
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">After-Wedding · Ablauf &amp; Wünsche</span><span class="chip next">Entwurf</span></div>
+          <div class="qb">
+            <div class="qbrow">
+              <span class="grip"></span>
+              <div class="qbody">
+                <div class="qlabel">Wohin soll es gehen — Strand, Stadt oder Natur?</div>
+                <div class="qmeta"><span class="qtype">Auswahl</span><span class="qreq">Pflicht</span></div>
+              </div>
+              <a class="abtn" href="#">Bearbeiten</a>
+            </div>
+            <div class="qbrow">
+              <span class="grip"></span>
+              <div class="qbody">
+                <div class="qlabel">Welche Uhrzeit passt euch — Sonnenaufgang oder Abendlicht?</div>
+                <div class="qmeta"><span class="qtype">Auswahl</span></div>
+              </div>
+              <a class="abtn" href="#">Bearbeiten</a>
+            </div>
+            <div class="qbrow">
+              <span class="grip"></span>
+              <div class="qbody">
+                <div class="qlabel">Sollen die Bilder vom Hochzeitstag eine Rolle spielen — gleiche Orte, gleiche Posen?</div>
+                <div class="qmeta"><span class="qtype">Freitext</span><span class="rp">für dieses Projekt ergänzt</span></div>
+              </div>
+              <a class="abtn" href="#">Bearbeiten</a>
+            </div>
+          </div>
+          <div class="formfoot">
+            <a class="btn" href="#">Senden</a>
+            <a class="txtbtn" href="#">Frage hinzufügen</a>
+          </div>
+          <span class="hint">Aus Vorlage „Ablaufplan" übernommen und für dieses Projekt angepasst.</span>
+        </div>
 
         <div class="card static">
           <div class="cardhead"><span class="kick">Familienkonstellation</span><span class="chip now">Offen seit 6 Tagen</span></div>
