@@ -52,6 +52,7 @@ const SCREENS = [
   { n:10, t:'Lightbox',             href:'gallery/10-lightbox.html',  s:'Galerie' },
   { n:11, t:'Download — PIN',       href:'gallery/11-pin.html',       s:'Galerie' },
   { n:12, t:'Download — E-Mail',    href:'gallery/12-email.html',     s:'Galerie' },
+  { n:13, t:'Fragebogen-Vorlage',   href:'admin/13-fragebogen-builder.html', s:'Admin' },
 ]
 
 function adminSidebar (active) {
@@ -84,7 +85,7 @@ function dummybar (n, depth) {
     : `<span class="off">${label}</span>`
 
   return `<div class="dummybar">
-    <span class="no">${String(cur.n).padStart(2,'0')} / 12 · ${cur.s}</span>
+    <span class="no">${String(cur.n).padStart(2,'0')} / ${SCREENS.length} · ${cur.s}</span>
     <b>${cur.t}</b>
     <span class="sp"></span>
     ${link(prev, '← zurück')}

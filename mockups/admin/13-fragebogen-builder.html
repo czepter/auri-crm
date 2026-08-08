@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="admin">
+<head>
+<meta charset="utf-8">
+<title>13 · Fragebogen-Vorlage — Nordlicht</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/admin-extra.css">
+<script src="../_shared/layout.js"></script>
+</head>
+<body data-nav="einst" data-screen="13" data-depth="2">
+
+<!-- FormTemplate editor (vision §3.3): typed questions per project type, edited
+     at template level under Einstellungen. Projects get FormInstances of this —
+     answers are versioned on the instance, so editing the template never
+     rewrites what a client already submitted; instances sent earlier keep the
+     question set they were sent with.
+
+     The row is the unit staff reorder, so a question's whole identity sits on
+     one line: grip, label, type, required flag, options preview. Row actions
+     appear on hover, same pattern as the board's advance arrow. -->
+
+<div class="app">
+  <div data-sidebar></div>
+
+  <main class="main">
+    <div class="hrow">
+      <div>
+        <div class="kick">Einstellungen · Fragebogen-Vorlagen</div>
+        <h1>Familienkonstellation</h1>
+      </div>
+      <a class="txtbtn" href="#">Vorschau</a>
+      <a class="btn" href="#">Speichern</a>
+    </div>
+
+    <div class="meta row">
+      <span class="q">Projekttyp Hochzeit</span>
+      <span class="d">zuletzt geändert 12.03.2026 · Christian</span>
+    </div>
+
+    <div class="split" style="margin-top:var(--s5)">
+
+      <div class="stackcol">
+
+        <div class="qb">
+
+          <div class="qbrow">
+            <span class="grip"></span>
+            <div class="qbody">
+              <div class="qlabel">Wer gehört auf Lenas Seite zur engsten Familie?</div>
+              <div class="qmeta"><span class="qtype">Namensliste</span><span class="qreq">Pflicht</span><span class="qopts">Name + Beziehung je Zeile</span></div>
+            </div>
+            <a class="abtn" href="#">Bearbeiten</a>
+          </div>
+
+          <div class="qbrow">
+            <span class="grip"></span>
+            <div class="qbody">
+              <div class="qlabel">Wer gehört auf Jonas' Seite zur engsten Familie?</div>
+              <div class="qmeta"><span class="qtype">Namensliste</span><span class="qreq">Pflicht</span><span class="qopts">Name + Beziehung je Zeile</span></div>
+            </div>
+            <a class="abtn" href="#">Bearbeiten</a>
+          </div>
+
+          <div class="qbrow">
+            <span class="grip"></span>
+            <div class="qbody">
+              <div class="qlabel">Gibt es Familienkonstellationen, die wir kennen sollten — getrennte Eltern, verstorbene Angehörige, angespannte Verhältnisse?</div>
+              <div class="qmeta"><span class="qtype">Freitext</span><span class="qopts">optional · nur für das Team sichtbar</span></div>
+            </div>
+            <a class="abtn" href="#">Bearbeiten</a>
+          </div>
+
+          <div class="qbrow">
+            <span class="grip"></span>
+            <div class="qbody">
+              <div class="qlabel">Wer sollte auf Gruppenfotos nicht nebeneinander stehen?</div>
+              <div class="qmeta"><span class="qtype">Freitext</span><span class="qopts">optional · nur für das Team sichtbar</span></div>
+            </div>
+            <a class="abtn" href="#">Bearbeiten</a>
+          </div>
+
+          <div class="qbrow">
+            <span class="grip"></span>
+            <div class="qbody">
+              <div class="qlabel">Gibt es Gäste, die früher gehen — und vorher aufs Bild müssen?</div>
+              <div class="qmeta"><span class="qtype">Freitext</span><span class="qopts">optional</span></div>
+            </div>
+            <a class="abtn" href="#">Bearbeiten</a>
+          </div>
+
+          <div class="qbrow">
+            <span class="grip"></span>
+            <div class="qbody">
+              <div class="qlabel">Dürfen die Gruppenfotos in die Galerie für alle Gäste?</div>
+              <div class="qmeta"><span class="qtype">Ja / Nein</span><span class="qreq">Pflicht</span></div>
+            </div>
+            <a class="abtn" href="#">Bearbeiten</a>
+          </div>
+
+        </div>
+
+        <div style="margin-top:var(--s4)">
+          <span class="lab" style="display:block;margin-bottom:var(--s2)">Frage hinzufügen</span>
+          <div class="qpal">
+            <a class="abtn" href="#">Freitext</a>
+            <a class="abtn" href="#">Kurzantwort</a>
+            <a class="abtn" href="#">Ja / Nein</a>
+            <a class="abtn" href="#">Auswahl</a>
+            <a class="abtn" href="#">Datum</a>
+            <a class="abtn" href="#">Uhrzeit</a>
+            <a class="abtn" href="#">Namensliste</a>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="stackcol">
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Vorlage</span><span class="chip done">Aktiv</span></div>
+          <div class="kv">
+            <div class="kvrow"><span>Name</span><span>Familienkonstellation</span></div>
+            <div class="kvrow"><span>Projekttyp</span><span>Hochzeit</span></div>
+            <div class="kvrow"><span>Fragen</span><span>6 · 3 Pflicht</span></div>
+          </div>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Versand</span></div>
+          <div class="kv">
+            <div class="kvrow"><span>Automatisch</span><span>14 Tage vor dem Haupttermin</span></div>
+            <div class="kvrow"><span>Erinnert</span><span>nach 3 und 5 Tagen</span></div>
+            <div class="kvrow"><span>Danach</span><span>Anruf-Hinweis auf der Übersicht</span></div>
+          </div>
+          <a class="blkfoot" href="#">Versand ändern →</a>
+        </div>
+
+        <div class="card static">
+          <div class="cardhead"><span class="kick">Im Einsatz</span></div>
+          <div class="qz">
+            <div class="qzrow"><span class="nm">Meier &amp; Kowalski</span><span class="age warn">offen seit 6 Tagen</span></div>
+            <div class="qzrow"><span class="nm">Duhnkrack &amp; Wiechmann</span><span class="chip next">geplant 05.09.</span></div>
+            <div class="qzrow"><span class="nm">Struckmeyer</span><span class="chip next">geplant 25.07.</span></div>
+          </div>
+          <span class="hint">Bereits versendete Fragebögen behalten ihren Fragenstand — Änderungen hier gelten ab dem nächsten Versand.</span>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>
