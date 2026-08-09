@@ -3,9 +3,11 @@
 namespace App\Providers;
 
 use App\Catalog\Models\Package;
+use App\Contracts\Events\ContractSigned;
 use App\Contracts\Models\ContractTemplate;
 use App\Crm\Events\ProjectBooked;
 use App\Crm\Listeners\ApplyTemplatesOnBooking;
+use App\Crm\Listeners\BookProjectOnContractAndDeposit;
 use App\Crm\Models\Contact;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
@@ -13,6 +15,7 @@ use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
+use App\Payments\Events\InstallmentPaid;
 use App\Policies\ContactPolicy;
 use App\Policies\ContractTemplatePolicy;
 use App\Policies\InternalNotePolicy;
@@ -62,6 +65,11 @@ class AppServiceProvider extends ServiceProvider
         // Registered by hand: auto-discovery only scans app/Listeners, and the
         // CRM keeps its listeners beside the events they answer to.
         Event::listen(ProjectBooked::class, ApplyTemplatesOnBooking::class);
+
+        // P-05b: one listener, two triggers, converging on the same
+        // BookProject the manual button calls — see the class docblock.
+        Event::listen(ContractSigned::class, [BookProjectOnContractAndDeposit::class, 'handleContractSigned']);
+        Event::listen(InstallmentPaid::class, [BookProjectOnContractAndDeposit::class, 'handleInstallmentPaid']);
 
         // The Gate resolves users from the *default* guard, which ships as
         // `web`, while every staff session lives on `staff`. Left alone, every

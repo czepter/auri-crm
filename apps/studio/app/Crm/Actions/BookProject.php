@@ -27,14 +27,23 @@ class BookProject
 {
     public function __construct(private readonly AdvanceShootStatus $advance) {}
 
-    /** Null when the project already has a job — the no-op writes nothing and fires nothing. */
+    /**
+     * Null when the project already has a job — the no-op writes nothing and
+     * fires nothing.
+     *
+     * $actor is never inferred from the ambient session: the manual button
+     * (ProjectController::book) already names it explicitly, and P-05b's
+     * listener relies on null staying null even when it runs inside a
+     * staff-authenticated request (e.g. the same request in which a staff
+     * member marked an installment paid by hand) — a signature is a trigger
+     * with no staff member behind it, and inferring one from whoever happened
+     * to be logged in would misattribute the booking.
+     */
     public function __invoke(
         Project $project,
         ?User $actor = null,
         BookedVia $via = BookedVia::Manual,
     ): ?Job {
-        $actor ??= auth('staff')->user();
-
         // Idempotency guards job creation, not the trigger. P-05b adds a second
         // entry point, and two triggers racing on one project is a live failure
         // mode rather than a theoretical one.
