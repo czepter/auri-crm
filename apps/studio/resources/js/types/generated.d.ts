@@ -235,6 +235,10 @@ discountType: string | null,
 discountValue: number | null,
 discountAmount: number,
 net: number,
+vatMode: string | null,
+vatRate: number | null,
+vatNote: string | null,
+vatAmount: number | null,
 items: App.Quotes.Data.QuoteItemData[],
 };
 export type QuoteItemData = {

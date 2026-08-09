@@ -10,8 +10,11 @@ use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
+use App\Quotes\Support\DiscountCalculator;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 
 uses(RefreshDatabase::class);
 
@@ -459,4 +462,125 @@ it('always equals an independent recomputation from the raw inputs, across many 
         expect($quote->fresh()->net)->toBe($expectedNet)
             ->and($quote->fresh()->net)->toBeGreaterThanOrEqual(0);
     }
+});
+
+// --- Q-04: VAT snapshot --------------------------------------------------
+
+describe('Q-04: VAT snapshot', function () {
+    beforeEach(function () {
+        // Redis is shared infrastructure across the whole test run (see
+        // StudioSettingsResolver's own docblock and StudioSettingsResolverTest)
+        // — flushed here for the same reason, so a value cached by an earlier
+        // test file never leaks into what these tests read.
+        Cache::store('redis')->flush();
+    });
+
+    it('leaves a draft quote\'s VAT columns null until something snapshots them', function () {
+        $quote = Quote::factory()->create();
+
+        expect($quote->vat_mode)->toBeNull()
+            ->and($quote->vat_rate)->toBeNull()
+            ->and($quote->vat_note)->toBeNull()
+            ->and($quote->vat_amount)->toBeNull();
+    });
+
+    it('snapshots the standard rate, computing vat_amount off the already-rounded net via DiscountCalculator', function () {
+        app(StudioSettingsResolver::class)->set('vat_mode', 'standard');
+        app(StudioSettingsResolver::class)->set('vat_rate', 1900); // 19.00%
+
+        $quote = Quote::factory()->create();
+        QuoteItem::factory()->for($quote)->create(['quantity' => 1, 'unit_price' => 453782]);
+        $quote->recalculateTotal();
+        $quote->refresh();
+        expect($quote->net)->toBe(453782);
+
+        $quote->snapshotVat(app(StudioSettingsResolver::class));
+        $quote->refresh();
+
+        expect($quote->vat_mode)->toBe('standard')
+            ->and($quote->vat_rate)->toBe(1900)
+            ->and($quote->vat_note)->toBeNull()
+            ->and($quote->vat_amount)->toBe(DiscountCalculator::resolve(453782, DiscountType::Percentage, 1900));
+    });
+
+    it('produces a vat_amount matching a hand calculation, rounded half up off the net', function () {
+        // 4.537,82 € net at 19.00%: 453782 × 1900 = 862.186.580,
+        // + half the basis-point divisor (5.000), /10000 rounded down
+        // (DiscountCalculator's round-half-up) = 86.219 (862,19 €).
+        app(StudioSettingsResolver::class)->set('vat_mode', 'standard');
+        app(StudioSettingsResolver::class)->set('vat_rate', 1900);
+
+        $quote = Quote::factory()->create(['net' => 453782]);
+        $quote->snapshotVat(app(StudioSettingsResolver::class));
+
+        expect($quote->fresh()->vat_amount)->toBe(86219);
+    });
+
+    it('snapshots small_business as zero VAT charged, printing the note instead of a rate', function () {
+        app(StudioSettingsResolver::class)->set('vat_mode', 'small_business');
+        app(StudioSettingsResolver::class)->set('vat_note', 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.');
+
+        $quote = Quote::factory()->create(['net' => 100000]);
+        $quote->snapshotVat(app(StudioSettingsResolver::class));
+        $quote->refresh();
+
+        expect($quote->vat_mode)->toBe('small_business')
+            ->and($quote->vat_rate)->toBe(0)
+            ->and($quote->vat_amount)->toBe(0)
+            ->and($quote->vat_note)->toBe('Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.');
+    });
+
+    it('ignores studio_settings.vat_rate entirely under small_business, matching effectiveVatRate()', function () {
+        // T-03's own rule: vat_rate is never zeroed by a mode switch, so a
+        // studio holds e.g. 19% on file while small_business is active. The
+        // snapshot must still charge nothing.
+        app(StudioSettingsResolver::class)->set('vat_rate', 1900);
+        app(StudioSettingsResolver::class)->set('vat_mode', 'small_business');
+
+        $quote = Quote::factory()->create(['net' => 100000]);
+        $quote->snapshotVat(app(StudioSettingsResolver::class));
+
+        expect($quote->fresh()->vat_rate)->toBe(0)
+            ->and($quote->fresh()->vat_amount)->toBe(0);
+    });
+
+    it('leaves an already-snapshotted quote entirely unaffected when the tenant later changes its VAT mode', function () {
+        app(StudioSettingsResolver::class)->set('vat_mode', 'standard');
+        app(StudioSettingsResolver::class)->set('vat_rate', 1900);
+
+        $quote = Quote::factory()->create(['net' => 500000]);
+        $quote->snapshotVat(app(StudioSettingsResolver::class));
+
+        $before = $quote->fresh()->only(['vat_mode', 'vat_rate', 'vat_note', 'vat_amount']);
+
+        // The studio switches to small_business after the quote already
+        // carries its own snapshot — Q-04's whole point, and the reason
+        // nothing here re-reads StudioSettingsResolver.
+        app(StudioSettingsResolver::class)->set('vat_mode', 'small_business');
+
+        expect($quote->fresh()->only(['vat_mode', 'vat_rate', 'vat_note', 'vat_amount']))->toBe($before);
+    });
+
+    it('sends a quote\'s own VAT snapshot columns to the screen once populated, and null for a draft', function () {
+        $project = Project::factory()->create();
+        $draft = Quote::factory()->for($project)->create();
+
+        $sent = Quote::factory()->for($project)->create(['net' => 100000]);
+        app(StudioSettingsResolver::class)->set('vat_mode', 'standard');
+        app(StudioSettingsResolver::class)->set('vat_rate', 1900);
+        $sent->snapshotVat(app(StudioSettingsResolver::class));
+
+        $props = $this->actingAs(quoteOwner(), 'staff')
+            ->get("/auftraege/{$project->public_id}/angebote")
+            ->assertOk()
+            ->viewData('page')['props'];
+
+        $quotes = collect($props['quotes'])->keyBy('id');
+
+        expect($quotes[$draft->public_id]['vatMode'])->toBeNull()
+            ->and($quotes[$draft->public_id]['vatAmount'])->toBeNull()
+            ->and($quotes[$sent->public_id]['vatMode'])->toBe('standard')
+            ->and($quotes[$sent->public_id]['vatRate'])->toBe(1900)
+            ->and($quotes[$sent->public_id]['vatAmount'])->toBe($sent->fresh()->vat_amount);
+    });
 });
