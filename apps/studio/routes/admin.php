@@ -22,6 +22,7 @@ use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
 use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\SessionController;
+use App\Quotes\Http\Controllers\QuoteController;
 use Illuminate\Support\Facades\Route;
 
 // A full authentication bypass for local inspection — no password, no MFA
@@ -83,6 +84,8 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/kontakte', [ContactController::class, 'index'])->name('contacts.index');
         Route::get('/kontakte/{contact}', [ContactController::class, 'edit'])->name('contacts.edit');
         Route::patch('/kontakte/{contact}', [ContactController::class, 'update'])->name('contacts.update');
+        Route::post('/kontakte/{contact}/portal-zugang/widerruf', [ContactController::class, 'revokePortalAccess'])
+            ->name('contacts.portal-access.revoke');
         Route::get('/verfuegbarkeit', AvailabilityController::class)->name('availability.show');
 
         // /pakete/neu stays above /pakete/{package} for the same reason
@@ -129,6 +132,15 @@ Route::middleware('audience:staff')->group(function () {
             ->name('projects.shoots');
         Route::post('/auftraege/{project}/buchung', [ProjectController::class, 'book'])
             ->name('projects.book');
+        Route::post('/auftraege/{project}/portal-sichtbarkeit', [ProjectController::class, 'togglePortalVisibility'])
+            ->name('projects.portal-visibility.toggle');
+
+        Route::get('/auftraege/{project}/angebote', [ProjectController::class, 'quotes'])
+            ->name('projects.quotes');
+
+        Route::post('/auftraege/{project}/angebote', [QuoteController::class, 'store'])
+            ->name('quotes.store');
+        Route::patch('/angebote/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
 
         Route::get('/auftraege/{project}/vertrag', [ContractController::class, 'show'])
             ->name('projects.contract');

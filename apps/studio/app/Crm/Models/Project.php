@@ -9,6 +9,7 @@ use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
 use App\Enums\Capability;
 use App\Models\User;
+use App\Quotes\Models\Quote;
 use Database\Factories\Crm\ProjectFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -110,6 +111,11 @@ class Project extends Model
     public function shoots(): HasMany
     {
         return $this->hasMany(Shoot::class)->orderBy('sort_order');
+    }
+
+    public function quotes(): HasMany
+    {
+        return $this->hasMany(Quote::class)->latest();
     }
 
     /** The headline occasion — the wedding day, not the engagement shoot. */

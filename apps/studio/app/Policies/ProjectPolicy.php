@@ -60,6 +60,17 @@ class ProjectPolicy
         return $user->role->allows(Capability::ManageNotes) && $this->view($user, $project);
     }
 
+    /** Flip portal_visible for this one project (A-04) — never a contact. */
+    public function manageVisibility(User $user, Project $project): bool
+    {
+        return $user->role->allows(Capability::ManagePortalAccess) && $this->view($user, $project);
+    }
+
+    public function manageQuotes(User $user, Project $project): bool
+    {
+        return $user->role->allows(Capability::ManageQuotes) && $this->view($user, $project);
+    }
+
     /** Generate a rendered contract for this project (M-01). */
     public function manageContracts(User $user, Project $project): bool
     {

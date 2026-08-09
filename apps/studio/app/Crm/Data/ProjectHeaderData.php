@@ -36,6 +36,9 @@ class ProjectHeaderData extends Data
         public bool $canManageCrew,
         public bool $canManageTasks,
         public bool $canManageNotes,
+        public bool $portalVisible,
+        public bool $canManagePortalVisibility,
+        public bool $canManageQuotes,
         public bool $canManageContracts,
         public array $tabs,
     ) {}
@@ -61,13 +64,21 @@ class ProjectHeaderData extends Data
             canManageCrew: $user?->can('manageCrew', $project) ?? false,
             canManageTasks: $user?->can('manageTasks', $project) ?? false,
             canManageNotes: $user?->can('manageNotes', $project) ?? false,
+            portalVisible: $project->portal_visible,
+            canManagePortalVisibility: $user?->can('manageVisibility', $project) ?? false,
+            canManageQuotes: $user?->can('manageQuotes', $project) ?? false,
             canManageContracts: $user?->can('manageContracts', $project) ?? false,
-            // Angebot is Q-*, Zahlungen is M-03, Fragebögen and Kommunikation
-            // are E-* in P4, Galerien is G-05 in P3. Each appends a line here
-            // on the sprint it lands. Vertrag is M-01.
+            // Zahlungen is M-03, Fragebögen and Kommunikation are E-* in P4,
+            // Galerien is G-05 in P3. Each appends a line here on the sprint
+            // it lands.
+            //
+            // Q-02 landed the quote half of "Angebot & Vertrag" under one
+            // combined tab; M-01 splits Vertrag into its own tab now that it
+            // has a screen of its own.
             tabs: [
                 ['key' => 'overview', 'label' => 'Übersicht', 'href' => "/auftraege/{$project->public_id}"],
                 ['key' => 'shoots', 'label' => 'Shootings', 'href' => "/auftraege/{$project->public_id}/shootings"],
+                ['key' => 'quotes', 'label' => 'Angebot', 'href' => "/auftraege/{$project->public_id}/angebote"],
                 ['key' => 'contract', 'label' => 'Vertrag', 'href' => "/auftraege/{$project->public_id}/vertrag"],
             ],
         );

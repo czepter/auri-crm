@@ -11,6 +11,8 @@ use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\User;
+use App\Quotes\Models\Quote;
+use App\Quotes\Models\QuoteItem;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -82,6 +84,22 @@ it('never puts an integer identifier into the package catalog', function () {
 
     $editProps = $this->get("/pakete/{$package->public_id}")->assertOk()->viewData('page')['props'];
     expect(integerIdPaths($editProps))->toBe([]);
+});
+
+it('never puts an integer identifier into a project\'s quotes page', function () {
+    // Populated on purpose, per the note above the project test: an empty
+    // quote proves nothing, since the key that escapes belongs to an item.
+    $user = User::factory()->withMfa()->create();
+    $project = Project::factory()->create();
+    $quote = Quote::factory()->for($project)->create();
+    QuoteItem::factory()->for($quote)->create();
+
+    $props = $this->actingAs($user, 'staff')
+        ->get("/auftraege/{$project->public_id}/angebote")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect(integerIdPaths($props))->toBe([]);
 });
 
 it('never puts an integer identifier into the contract template screens', function () {

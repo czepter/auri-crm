@@ -21,4 +21,10 @@ class ContactPolicy
     {
         return $user->role->allows(Capability::ManageContacts);
     }
+
+    /** Cut this one contact's portal access off entirely (A-04) — never a project. */
+    public function revokePortalAccess(User $user, Contact $contact): bool
+    {
+        return $user->role->allows(Capability::ManagePortalAccess);
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Crm\Http\Controllers;
 
+use App\Catalog\Models\Package;
 use App\Crm\Actions\BookProject;
 use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Data\InternalNoteData;
@@ -13,6 +14,8 @@ use App\Crm\Models\Project;
 use App\Data\StaffProfileData;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Quotes\Data\QuoteData;
+use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -66,6 +69,21 @@ class ProjectController extends Controller
         ]);
     }
 
+    public function quotes(Project $project): Response
+    {
+        $this->authorize('view', $project);
+
+        return Inertia::render('Projects/Quotes', [
+            'header' => $this->header($project),
+            'quotes' => QuoteData::collect(
+                $project->quotes()->with('items')->get()
+            ),
+            'packages' => Package::active()->orderBy('name')->get()
+                ->map(fn (Package $package) => ['value' => $package->public_id, 'label' => $package->name])
+                ->all(),
+        ]);
+    }
+
     public function book(Project $project, BookProject $book): RedirectResponse
     {
         $this->authorize('book', $project);
@@ -74,6 +92,27 @@ class ProjectController extends Controller
         // here: two staff members pressing the button is not an error, it is a
         // race, and the second press should leave the screen consistent.
         $book($project, auth('staff')->user());
+
+        return back();
+    }
+
+    /**
+     * Hide or show one project in the portal. Scoped to this project alone —
+     * every contact on it, and every other project any of them is on, is
+     * untouched (A-04). Revoking a contact's access entirely is a separate
+     * action on ContactController, on purpose.
+     */
+    public function togglePortalVisibility(Project $project): RedirectResponse
+    {
+        $this->authorize('manageVisibility', $project);
+
+        $project->update(['portal_visible' => ! $project->portal_visible]);
+
+        AuditLogger::record(
+            event: $project->portal_visible ? 'project.portal_shown' : 'project.portal_hidden',
+            actor: auth('staff')->user(),
+            subject: $project->public_id,
+        );
 
         return back();
     }

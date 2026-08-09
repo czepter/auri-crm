@@ -72,6 +72,8 @@ enum StaffRole: string
                 Capability::ManageTasks,
                 Capability::ManageNotes,
                 Capability::ManagePackages,
+                Capability::ManagePortalAccess,
+                Capability::ManageQuotes,
                 Capability::ManageContracts,
             ],
 
@@ -84,6 +86,7 @@ enum StaffRole: string
                 Capability::ManageTasks,
                 Capability::ManageNotes,
                 Capability::ManagePackages,
+                Capability::ManageQuotes,
                 Capability::ManageContracts,
             ],
 
@@ -92,6 +95,7 @@ enum StaffRole: string
                 Capability::ManageTasks,
                 Capability::ManageNotes,
                 Capability::ManagePackages,
+                Capability::ManageQuotes,
             ],
         };
     }
