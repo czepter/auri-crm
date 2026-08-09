@@ -29,7 +29,9 @@ use App\Policies\ProjectPolicy;
 use App\Policies\ShootPolicy;
 use App\Policies\TaskPolicy;
 use App\Policies\TaskTemplatePolicy;
+use App\Support\PersonalAccessToken;
 use App\Support\Surface;
+use Dedoc\Scramble\Scramble;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Console\ServeCommand;
@@ -37,6 +39,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -45,6 +48,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // G-01: Scramble's own docs UI and docs.json routes register
+        // themselves on every surface regardless of Surface::registerRoutes()
+        // — a package boots the same way in every process. Surface's own
+        // rule is that a surface carries a route by putting it in that
+        // surface's file, enforced by absence rather than by middleware (see
+        // config/surface.php); a vendor package registering its own routes
+        // behind our back is exactly the hole that rule exists to not have.
+        // The committed packages/contracts/openapi.json is this app's only
+        // exposure of the document — see the `scramble:export` CI step.
+        Scramble::ignoreDefaultRoutes();
+
         // E-07: the transport registry. A new channel is added here, never
         // wired to a domain event directly — see NotificationService's own
         // docblock.
@@ -71,6 +85,10 @@ class AppServiceProvider extends ServiceProvider
             /** @var Blueprint $this */
             return $this->char('public_id', 24)->unique();
         });
+
+        // G-01: the api surface's tokens carry this app's own tenant_id and
+        // public_id — see App\Support\PersonalAccessToken's own docblock.
+        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
 
         // Registered by hand: auto-discovery only scans app/Listeners, and the
         // CRM keeps its listeners beside the events they answer to.
@@ -100,6 +118,10 @@ class AppServiceProvider extends ServiceProvider
 
         if (Surface::current() === Surface::PORTAL) {
             Auth::shouldUse('portal');
+        }
+
+        if (Surface::current() === Surface::API) {
+            Auth::shouldUse('api');
         }
 
         // `artisan serve` forwards only a whitelist of variables to the PHP

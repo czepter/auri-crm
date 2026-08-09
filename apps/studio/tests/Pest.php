@@ -100,9 +100,11 @@ function useSurface(string $surface): void
     Route::setRoutes(new RouteCollection);
     Surface::registerRoutes();
 
-    if ($surface !== Surface::API) {
-        Auth::shouldUse($surface === Surface::PORTAL ? 'portal' : 'staff');
-    }
+    Auth::shouldUse(match ($surface) {
+        Surface::PORTAL => 'portal',
+        Surface::API => 'api',
+        default => 'staff',
+    });
 }
 
 /**
