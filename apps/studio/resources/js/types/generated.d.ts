@@ -58,10 +58,12 @@ role: string,
 roleLabel: string,
 };
 export type DateConflictData = {
-projectId: string,
-projectName: string,
+source: string,
+projectId: string | null,
+projectName: string | null,
 venue: string | null,
-kind: string,
+kind: string | null,
+label: string | null,
 };
 export type InternalNoteData = {
 id: string,
@@ -232,10 +234,13 @@ namespace Quotes {
 namespace Data {
 export type QuoteData = {
 id: string,
+predecessorId: string | null,
 status: string,
 statusLabel: string,
 currency: string,
 validUntil: string | null,
+number: string | null,
+sentAt: string | null,
 total: number,
 discountType: string | null,
 discountValue: number | null,
@@ -278,6 +283,12 @@ startingCounter: number,
 canSetStartingCounter: boolean,
 nextNumberPreview: string,
 };
+export type StudioClosureData = {
+id: string,
+label: string,
+startsOn: string,
+endsOn: string,
+};
 export type StudioSettingsData = {
 id: string,
 displayName: string | null,
@@ -301,6 +312,11 @@ bankBic: string | null,
 vatMode: string,
 vatRate: number,
 vatNote: string | null,
+quoteValidityDays: number,
+paymentTermDays: number,
+depositPercentage: number,
+widerrufIncluded: boolean,
+widerrufText: string | null,
 timezone: string,
 locale: string,
 workingDays: number[],

@@ -7,6 +7,7 @@ use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\User;
+use App\Settings\Models\StudioClosure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 
@@ -139,6 +140,40 @@ it('resolves every conflict on the board in a bounded number of queries', functi
 
     // A per-card conflict lookup would put this well above 20.
     expect($count)->toBeLessThan(20);
+});
+
+it('flags a card whose date falls inside a studio closure, naming it', function () {
+    leadOn('2026-12-26', name: 'Meier & Kowalski');
+    StudioClosure::factory()->spanning('2026-12-24', '2026-12-31')->create(['label' => 'Weihnachtspause']);
+
+    $card = boardProps()['columns'][0]['cards'][0];
+
+    expect($card['conflicts'])->toHaveCount(1)
+        ->and($card['conflicts'][0]['source'])->toBe('closure')
+        ->and($card['conflicts'][0]['label'])->toBe('Weihnachtspause');
+});
+
+it('issues no more queries for eleven cards spanning several closures than it did before this story', function () {
+    foreach (range(1, 11) as $i) {
+        leadOn(sprintf('2026-%02d-14', $i), name: "Projekt {$i}");
+    }
+
+    DB::enableQueryLog();
+    boardProps();
+    $withoutClosures = count(DB::getRawQueryLog());
+    DB::flushQueryLog();
+    DB::disableQueryLog();
+
+    StudioClosure::factory()->spanning('2026-01-01', '2026-01-31')->create(['label' => 'Winterpause']);
+    StudioClosure::factory()->spanning('2026-07-01', '2026-07-15')->create(['label' => 'Sommerpause']);
+    StudioClosure::factory()->spanning('2026-12-24', '2026-12-31')->create(['label' => 'Weihnachtspause']);
+
+    DB::enableQueryLog();
+    boardProps();
+    $withClosures = count(DB::getRawQueryLog());
+    DB::disableQueryLog();
+
+    expect($withClosures)->toBe($withoutClosures);
 });
 
 it('advances a lead from the board', function () {

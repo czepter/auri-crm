@@ -33,11 +33,13 @@ runs:
 | `studio.representative` | Authorised representative.                    |
 | `studio.website`     | |
 | `studio.logoPath`    | The logo's stored path on the `local` disk (T-02, `StudioSettingsResolver::logoPath()`) — a filesystem path, not yet a URL. No template embeds it as an `<img>` today; wiring a Gotenberg-reachable URL is a follow-up, not something T-02 half-built. |
+| `settings.widerrufText` | The configured Widerrufsbelehrung (T-05, Dokumente pane) when the studio has it switched on — an empty string, never the stored text, when it is switched off. |
 
-All `studio.*` fields read through `App\Settings\Support\StudioSettingsResolver`
-(T-02) — the same tenant settings row the Studio-Profil admin screen edits —
-rather than `APP_NAME` or anything ad hoc, which is what M-01 originally
-shipped with because this story hadn't landed yet.
+All `studio.*` and `settings.*` fields read through
+`App\Settings\Support\StudioSettingsResolver` (T-02/T-05) — the same tenant
+settings row the Studio-Profil and Dokumente admin panes edit — rather than
+`APP_NAME` or anything ad hoc, which is what M-01 originally shipped with
+because this story hadn't landed yet.
 
 Add a path by extending `RenderContractJob::mergeData()` and this table in
 the same commit — the resolver has no knowledge of what a template is

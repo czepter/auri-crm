@@ -3,6 +3,8 @@
 namespace App\Crm\Support;
 
 use App\Crm\Models\Shoot;
+use App\Settings\Support\StudioSettingsResolver;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -15,6 +17,8 @@ use Illuminate\Support\Collection;
  */
 class ShootCalendar
 {
+    public function __construct(private readonly StudioSettingsResolver $settings) {}
+
     /**
      * A shoot's call time is a clock reading at the venue, and every venue is
      * in Germany.
@@ -105,9 +109,11 @@ class ShootCalendar
         $start = $this->atVenue($date, substr((string) $shoot->call_time, 0, 8));
 
         // A shooting day that runs past midnight would otherwise end before it
-        // starts; the end simply moves to the next day.
+        // starts; the end simply moves to the next day. ->copy() matters here:
+        // Carbon::addMinutes() mutates in place, and without it $end would be
+        // the same object as $start rather than a value derived from it.
         $end = $shoot->end_time === null
-            ? $start->addHours(2)
+            ? $start->copy()->addMinutes($this->settings->defaultShootDurationMinutes())
             : $this->atVenue($date, substr((string) $shoot->end_time, 0, 8));
 
         if ($end <= $start) {
@@ -120,9 +126,9 @@ class ShootCalendar
         ];
     }
 
-    private function atVenue(string $date, string $time): \Illuminate\Support\Carbon
+    private function atVenue(string $date, string $time): Carbon
     {
-        return \Illuminate\Support\Carbon::createFromFormat(
+        return Carbon::createFromFormat(
             'Y-m-d H:i:s',
             $date.' '.$time,
             self::VENUE_TIMEZONE,

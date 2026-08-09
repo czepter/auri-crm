@@ -2,19 +2,27 @@
 
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
+use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Quotes\Actions\ReviseQuote;
 use App\Quotes\Actions\SeedQuoteFromPackage;
+use App\Quotes\Actions\SendQuote;
 use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Events\QuoteRevised;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
+use App\Quotes\Notifications\QuoteSent;
 use App\Quotes\Support\DiscountCalculator;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Notification;
 
 uses(RefreshDatabase::class);
 
@@ -184,6 +192,56 @@ it('refuses to seed from a deactivated package', function () {
         ->assertSessionHasErrors();
 
     expect($project->quotes()->count())->toBe(0);
+});
+
+// --- T-05: quote validity falls back to the tenant's document default ---
+
+describe('T-05: quote validity default', function () {
+    beforeEach(function () {
+        // Redis is shared infrastructure across the whole test run (see
+        // StudioSettingsResolver's own docblock) — flushed here for the same
+        // reason the Q-04 describe block above does.
+        Cache::store('redis')->flush();
+    });
+
+    it('takes its validity from the tenant setting when created without a package and no explicit valid_until', function () {
+        app(StudioSettingsResolver::class)->set('quote_validity_days', 21);
+        $project = Project::factory()->create();
+
+        $this->actingAs(quoteOwner(), 'staff')
+            ->post("/auftraege/{$project->public_id}/angebote", [])
+            ->assertRedirect();
+
+        $quote = $project->quotes()->sole();
+
+        expect($quote->valid_until->format('Y-m-d'))->toBe(now()->addDays(21)->format('Y-m-d'));
+    });
+
+    it('leaves an explicit valid_until alone rather than overriding it with the default', function () {
+        app(StudioSettingsResolver::class)->set('quote_validity_days', 21);
+        $project = Project::factory()->create();
+
+        $this->actingAs(quoteOwner(), 'staff')
+            ->post("/auftraege/{$project->public_id}/angebote", ['valid_until' => '2026-12-31'])
+            ->assertRedirect();
+
+        expect($project->quotes()->sole()->valid_until->format('Y-m-d'))->toBe('2026-12-31');
+    });
+
+    it('moves no existing quote\'s valid_until when the default changes afterwards', function () {
+        app(StudioSettingsResolver::class)->set('quote_validity_days', 14);
+        $project = Project::factory()->create();
+
+        $this->actingAs(quoteOwner(), 'staff')
+            ->post("/auftraege/{$project->public_id}/angebote", []);
+
+        $quote = $project->quotes()->sole();
+        $originalValidUntil = $quote->valid_until->format('Y-m-d');
+
+        app(StudioSettingsResolver::class)->set('quote_validity_days', 60);
+
+        expect($quote->fresh()->valid_until->format('Y-m-d'))->toBe($originalValidUntil);
+    });
 });
 
 it('replaces a draft quote\'s items wholesale on update, recalculates the total, and logs it', function () {
@@ -582,5 +640,226 @@ describe('Q-04: VAT snapshot', function () {
             ->and($quotes[$sent->public_id]['vatMode'])->toBe('standard')
             ->and($quotes[$sent->public_id]['vatRate'])->toBe(1900)
             ->and($quotes[$sent->public_id]['vatAmount'])->toBe($sent->fresh()->vat_amount);
+    });
+});
+
+// --- Q-06: sending a quote -------------------------------------------------
+
+describe('Q-06: sending a quote', function () {
+    beforeEach(function () {
+        // Same reasoning as the Q-04 describe block above: Redis is shared
+        // across the whole test run, and SendQuote calls snapshotVat().
+        Cache::store('redis')->flush();
+    });
+
+    it('allocates a number, snapshots VAT, sets sent_at, and freezes the already-computed amounts', function () {
+        $quote = Quote::factory()->create();
+        QuoteItem::factory()->for($quote)->create(['quantity' => 1, 'unit_price' => 453782]);
+        $quote->recalculateTotal();
+
+        $sent = app(SendQuote::class)($quote->fresh());
+
+        expect($sent->status)->toBe(QuoteStatus::Sent)
+            ->and($sent->sent_at)->not->toBeNull()
+            ->and($sent->number)->toBe('AN-'.now('UTC')->year.'-1')
+            ->and($sent->vat_mode)->toBe('standard')
+            ->and($sent->vat_rate)->toBe(1900)
+            ->and($sent->net)->toBe(453782);
+    });
+
+    it('draws the number from T-04\'s existing allocator sequence, incrementing across separate sends', function () {
+        $first = Quote::factory()->create();
+        $second = Quote::factory()->create();
+
+        app(SendQuote::class)($first);
+        app(SendQuote::class)($second);
+
+        expect($first->fresh()->number)->toBe('AN-'.now('UTC')->year.'-1')
+            ->and($second->fresh()->number)->toBe('AN-'.now('UTC')->year.'-2');
+    });
+
+    it('refuses to send a quote that is already sent or superseded', function (QuoteStatus $status) {
+        $quote = Quote::factory()->create(['status' => $status]);
+
+        expect(fn () => app(SendQuote::class)($quote))->toThrow(DomainException::class);
+    })->with([QuoteStatus::Sent, QuoteStatus::Superseded]);
+
+    it('logs the send with the allocated number', function () {
+        $user = quoteOwner();
+        $quote = Quote::factory()->create();
+
+        app(SendQuote::class)($quote, $user);
+
+        $row = AuditLog::where('event', 'quote.sent')->sole();
+
+        expect($row->actor_id)->toBe($user->id)
+            ->and($row->subject)->toBe($quote->public_id)
+            ->and($row->context['number'])->toBe($quote->fresh()->number);
+    });
+
+    it('mails the project\'s primary contact synchronously', function () {
+        Notification::fake();
+        $project = Project::factory()->create();
+        $contact = Contact::factory()->create(['email' => 'lena@example.test']);
+        $project->attachContact($contact, ProjectContactRole::Primary);
+        $quote = Quote::factory()->for($project)->create();
+
+        app(SendQuote::class)($quote);
+
+        Notification::assertSentOnDemand(QuoteSent::class);
+    });
+
+    it('sends no mail when the project has no contactable primary contact', function () {
+        Notification::fake();
+        $quote = Quote::factory()->create();
+
+        app(SendQuote::class)($quote);
+
+        Notification::assertNothingSent();
+    });
+
+    it('is reachable through the controller, authorized the same as every other quote mutation', function () {
+        $user = quoteOwner();
+        $project = Project::factory()->create();
+        $quote = Quote::factory()->for($project)->create();
+        QuoteItem::factory()->for($quote)->create();
+
+        $this->actingAs($user, 'staff')
+            ->post("/angebote/{$quote->public_id}/versenden")
+            ->assertRedirect();
+
+        expect($quote->fresh()->status)->toBe(QuoteStatus::Sent);
+    });
+});
+
+// --- Q-06: a sent quote is immutable at the model level --------------------
+
+describe('Q-06: a sent quote is immutable at the model level', function () {
+    it('refuses a raw Eloquent write to a snapshotted column on a sent quote', function () {
+        $quote = Quote::factory()->create(['status' => QuoteStatus::Sent, 'number' => 'AN-2026-1', 'sent_at' => now()]);
+
+        expect(fn () => $quote->update(['net' => 1]))->toThrow(RuntimeException::class);
+        expect(fn () => $quote->update(['valid_until' => '2099-01-01']))->toThrow(RuntimeException::class);
+        expect(fn () => $quote->update(['vat_rate' => 0]))->toThrow(RuntimeException::class);
+        expect(fn () => $quote->update(['discount_value' => 500]))->toThrow(RuntimeException::class);
+    });
+
+    it('leaves the row unchanged in the database after a refused write', function () {
+        $quote = Quote::factory()->create(['status' => QuoteStatus::Sent, 'net' => 100000]);
+
+        try {
+            $quote->update(['net' => 1]);
+        } catch (RuntimeException) {
+            // expected — asserted below by re-reading the row
+        }
+
+        expect($quote->fresh()->net)->toBe(100000);
+    });
+
+    it('allows the one write ReviseQuote performs — status alone, sent to superseded', function () {
+        $quote = Quote::factory()->create(['status' => QuoteStatus::Sent]);
+
+        $quote->update(['status' => QuoteStatus::Superseded]);
+
+        expect($quote->fresh()->status)->toBe(QuoteStatus::Superseded);
+    });
+
+    it('refuses a status change bundled with any other column, even on a sent quote', function () {
+        $quote = Quote::factory()->create(['status' => QuoteStatus::Sent, 'net' => 100000]);
+
+        expect(fn () => $quote->update(['status' => QuoteStatus::Superseded, 'net' => 1]))
+            ->toThrow(RuntimeException::class);
+    });
+
+    it('refuses every write on a superseded quote, including status', function () {
+        $quote = Quote::factory()->create(['status' => QuoteStatus::Superseded]);
+
+        expect(fn () => $quote->update(['status' => QuoteStatus::Sent]))->toThrow(RuntimeException::class);
+        expect(fn () => $quote->update(['net' => 1]))->toThrow(RuntimeException::class);
+    });
+
+    it('still lets a draft quote be edited normally, unaffected by the guard', function () {
+        $quote = Quote::factory()->create();
+
+        $quote->update(['valid_until' => '2027-06-01']);
+
+        expect($quote->fresh()->valid_until->format('Y-m-d'))->toBe('2027-06-01');
+    });
+});
+
+// --- Q-06: revising a sent quote --------------------------------------------
+
+describe('Q-06: revising a sent quote', function () {
+    it('creates a new row carrying the predecessor\'s id, copying its items, discount and validity', function () {
+        $project = Project::factory()->create();
+        $predecessor = Quote::factory()->for($project)->create([
+            'status' => QuoteStatus::Sent,
+            'valid_until' => '2026-12-31',
+            'discount_type' => DiscountType::Percentage,
+            'discount_value' => 500,
+        ]);
+        QuoteItem::factory()->for($predecessor)->create(['title' => 'Hochzeitsreportage', 'quantity' => 1, 'unit_price' => 440000]);
+
+        $revision = app(ReviseQuote::class)($predecessor);
+
+        expect($revision->id)->not->toBe($predecessor->id)
+            ->and($revision->predecessor_id)->toBe($predecessor->id)
+            ->and($revision->status)->toBe(QuoteStatus::Draft)
+            ->and($revision->valid_until->format('Y-m-d'))->toBe('2026-12-31')
+            ->and($revision->discount_type)->toBe(DiscountType::Percentage)
+            ->and($revision->discount_value)->toBe(500)
+            ->and($revision->items)->toHaveCount(1)
+            ->and($revision->items->first()->title)->toBe('Hochzeitsreportage')
+            ->and($revision->total)->toBe(440000);
+    });
+
+    it('supersedes the predecessor in the same transaction as the revision insert', function () {
+        $predecessor = Quote::factory()->create(['status' => QuoteStatus::Sent]);
+
+        $revision = app(ReviseQuote::class)($predecessor);
+
+        expect($predecessor->fresh()->status)->toBe(QuoteStatus::Superseded)
+            ->and($revision->fresh()->predecessor->public_id)->toBe($predecessor->public_id);
+    });
+
+    it('rolls back both the revision insert and the supersede if anything fails mid-transaction', function () {
+        // QuoteRevised fires last, inside ReviseQuote's own transaction —
+        // after the revision row and the predecessor's status update have
+        // both already been written on this connection — the only cheap
+        // place to prove the rollback is real, the same trick
+        // CaptureInquiryTest uses for LeadCaptured.
+        Event::listen(QuoteRevised::class, fn () => throw new RuntimeException('boom'));
+
+        $predecessor = Quote::factory()->create(['status' => QuoteStatus::Sent]);
+
+        expect(fn () => app(ReviseQuote::class)($predecessor))->toThrow(RuntimeException::class);
+
+        expect(Quote::count())->toBe(1)
+            ->and($predecessor->fresh()->status)->toBe(QuoteStatus::Sent);
+    });
+
+    it('refuses to revise a quote that is not sent', function (QuoteStatus $status) {
+        $quote = Quote::factory()->create(['status' => $status]);
+
+        expect(fn () => app(ReviseQuote::class)($quote))->toThrow(DomainException::class);
+    })->with([QuoteStatus::Draft, QuoteStatus::Superseded]);
+
+    it('leaves the predecessor reachable and reading as superseded on the project\'s quotes screen', function () {
+        $project = Project::factory()->create();
+        $predecessor = Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent, 'number' => 'AN-2026-37']);
+        QuoteItem::factory()->for($predecessor)->create();
+        $revision = app(ReviseQuote::class)($predecessor);
+
+        $props = $this->actingAs(quoteOwner(), 'staff')
+            ->get("/auftraege/{$project->public_id}/angebote")
+            ->assertOk()
+            ->viewData('page')['props'];
+
+        $quotes = collect($props['quotes'])->keyBy('id');
+
+        expect($quotes)->toHaveCount(2)
+            ->and($quotes[$predecessor->public_id]['status'])->toBe('superseded')
+            ->and($quotes[$predecessor->public_id]['statusLabel'])->toBe('Ersetzt')
+            ->and($quotes[$revision->fresh()->public_id]['predecessorId'])->toBe($predecessor->public_id);
     });
 });

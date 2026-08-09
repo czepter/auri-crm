@@ -74,6 +74,19 @@ function save(quoteId: string) {
     }))
     .patch(`/angebote/${quoteId}`, { preserveScroll: true })
 }
+
+// Q-06: one Send per quote, keyed the same way editForms is — a project can
+// hold several drafts at once, each sent independently.
+const sendForms = Object.fromEntries(props.quotes.map((quote) => [quote.id, useForm({})]))
+
+function send(quoteId: string) {
+  sendForms[quoteId].post(`/angebote/${quoteId}/versenden`, { preserveScroll: true })
+}
+
+/** draft/sent/accepted/superseded/expired -> the mockup's own three chip states (tokens.css). */
+function chipClass(status: string): string {
+  return ({ sent: 'now', accepted: 'done' } as Record<string, string>)[status] ?? 'next'
+}
 </script>
 
 <template>
@@ -113,13 +126,15 @@ function save(quoteId: string) {
     </div>
 
     <!-- Depth behind the Angebot & Vertrag tab: only the quote half exists so
-         far. The card and table follow mockup 04-angebot's own vocabulary —
-         only draft is reachable, so there is no tax breakdown, PDF link,
-         Vertrag card, history or payment plan yet. -->
+         far — no tax breakdown beyond Q-04's own VAT row, no PDF link,
+         Vertrag card, Nachtrag or payment plan yet (all Q-07 and later). A
+         superseded quote renders in this same loop rather than being hidden
+         or 404ing: Project::quotes() already returns every quote, and this
+         card is what "stays reachable and reads as superseded" means here. -->
     <div v-for="quote in quotes" :key="quote.id" class="card static" style="margin-bottom: var(--s4)">
       <div class="cardhead">
-        <span class="kick">{{ $t('quotes.title') }}</span>
-        <span class="chip next">{{ quote.statusLabel }}</span>
+        <span class="kick">{{ quote.number ? `${$t('quotes.title')} ${quote.number}` : $t('quotes.title') }}</span>
+        <span :class="['chip', chipClass(quote.status)]">{{ quote.statusLabel }}</span>
       </div>
 
       <table class="qt">
@@ -173,7 +188,11 @@ function save(quoteId: string) {
         </template>
       </table>
 
-      <template v-if="header.canManageQuotes">
+      <!-- Editing and sending both stay behind canManageQuotes, and both
+           stay behind status === 'draft' — the UI half of Q-06's
+           immutability rule, Quote::booted()'s guard being the half that
+           still holds even if this condition were ever wrong or bypassed. -->
+      <template v-if="header.canManageQuotes && quote.status === 'draft'">
         <div class="dsec">
           <div class="dlab">{{ $t('quotes.items') }}</div>
           <QuoteItemsEditor v-model="editForms[quote.id].items" />
@@ -212,6 +231,9 @@ function save(quoteId: string) {
             <div class="formfoot" style="margin-top: 0">
               <button class="btn" type="submit" :disabled="editForms[quote.id].processing">
                 {{ $t('common.save') }}
+              </button>
+              <button class="btn" type="button" :disabled="sendForms[quote.id].processing" @click="send(quote.id)">
+                {{ $t('quotes.send') }}
               </button>
             </div>
           </div>

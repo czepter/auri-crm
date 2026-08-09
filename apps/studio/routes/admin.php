@@ -25,6 +25,7 @@ use App\Http\Controllers\Staff\SessionController;
 use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
 use App\Settings\Http\Controllers\NumberRangeController;
+use App\Settings\Http\Controllers\StudioClosureController;
 use App\Settings\Http\Controllers\StudioSettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -123,12 +124,24 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');
         Route::get('/einstellungen/logo', [StudioSettingsController::class, 'logo'])->name('settings.logo');
         Route::patch('/einstellungen/ust', [StudioSettingsController::class, 'updateVat'])->name('settings.vat.update');
+        Route::patch('/einstellungen/dokumente', [StudioSettingsController::class, 'updateDocuments'])->name('settings.documents.update');
         Route::patch('/einstellungen/allgemein', [StudioSettingsController::class, 'updateGeneral'])->name('settings.general.update');
 
         Route::get('/einstellungen/nummernkreise', [NumberRangeController::class, 'index'])
             ->name('number-ranges.index');
         Route::patch('/einstellungen/nummernkreise/{numberRange}', [NumberRangeController::class, 'update'])
             ->name('number-ranges.update');
+
+        Route::get('/einstellungen/verfuegbarkeit', [StudioClosureController::class, 'index'])
+            ->name('availability.edit');
+        Route::patch('/einstellungen/verfuegbarkeit/dauer', [StudioClosureController::class, 'updateDuration'])
+            ->name('availability.duration.update');
+        Route::post('/einstellungen/verfuegbarkeit/schliesszeiten', [StudioClosureController::class, 'store'])
+            ->name('studio-closures.store');
+        Route::patch('/einstellungen/verfuegbarkeit/schliesszeiten/{studioClosure}', [StudioClosureController::class, 'update'])
+            ->name('studio-closures.update');
+        Route::delete('/einstellungen/verfuegbarkeit/schliesszeiten/{studioClosure}', [StudioClosureController::class, 'destroy'])
+            ->name('studio-closures.destroy');
 
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.
@@ -155,6 +168,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/auftraege/{project}/angebote', [QuoteController::class, 'store'])
             ->name('quotes.store');
         Route::patch('/angebote/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
+        Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
 
         Route::get('/auftraege/{project}/vertrag', [ContractController::class, 'show'])
             ->name('projects.contract');

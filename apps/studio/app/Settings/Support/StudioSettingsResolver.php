@@ -64,6 +64,17 @@ class StudioSettingsResolver
     }
 
     /**
+     * T-09: the length ShootCalendar gives a shoot whose end_time is unset,
+     * replacing the hardcoded addHours(2) that used to sit in that class
+     * directly. Minutes, not hours — a shorter session needs finer
+     * granularity than that constant offered.
+     */
+    public function defaultShootDurationMinutes(): int
+    {
+        return $this->row()->default_shoot_duration_minutes;
+    }
+
+    /**
      * What a document should actually use — zero under small_business
      * regardless of what vat_rate holds, so a mode switch never leaves a
      * stale 19% behind. This is T-03's whole point: Q-04 calls this, not
@@ -72,6 +83,45 @@ class StudioSettingsResolver
     public function effectiveVatRate(): int
     {
         return $this->vatMode() === 'small_business' ? 0 : $this->vatRate();
+    }
+
+    /**
+     * A quote's validity in days, used the moment a quote is created with no
+     * explicit valid_until and no validity of its own to carry forward — see
+     * App\Quotes\Http\Controllers\QuoteController::store(). Package carries
+     * no default_validity_days column today (App\Catalog\Models\Package), so
+     * this is the only fallback there is, not a second one behind a
+     * package's own value.
+     */
+    public function quoteValidityDays(): int
+    {
+        return $this->row()->quote_validity_days;
+    }
+
+    /** Zahlungsziel in days — T-07's overdue scan reads this once it ships. */
+    public function paymentTermDays(): int
+    {
+        return $this->row()->payment_term_days;
+    }
+
+    /**
+     * Basis points (0-10000), same convention as vatRate() above — pre-fills
+     * a new PaymentPlan's deposit installment, never re-read once one exists.
+     */
+    public function depositPercentage(): int
+    {
+        return $this->row()->deposit_percentage;
+    }
+
+    /** Whether a rendered contract's `settings.widerrufText` merge field carries any text at all. */
+    public function widerrufIncluded(): bool
+    {
+        return $this->row()->widerruf_included;
+    }
+
+    public function widerrufText(): ?string
+    {
+        return $this->row()->widerruf_text;
     }
 
     /**
