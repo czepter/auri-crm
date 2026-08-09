@@ -364,9 +364,9 @@
     "depositPercentageHint": "Prozent der Gesamtsumme — füllt einen neuen Zahlungsplan vor.",
     "widerrufLabel": "Widerrufsbelehrung",
     "widerrufIncludedLabel": "In Verträgen aufnehmen",
-    "widerrufIncludedHint": "Steuert das Textfeld unten in Vertragsvorlagen — ausgeschaltet rendert es leer.",
+    "widerrufIncludedHint": "Ausgeschaltet erscheint kein Widerrufshinweis im Vertrag.",
     "widerrufTextLabel": "Text",
-    "widerrufTextHint": "Erscheint dort, wo eine Vertragsvorlage das Merkmal einsetzt. Wortlaut frei."
+    "widerrufTextHint": "Freier Wortlaut."
   },
   "portal": {
     "signInTitle": "Kundenbereich",
