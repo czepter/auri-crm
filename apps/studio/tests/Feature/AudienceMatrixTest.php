@@ -29,7 +29,13 @@ const PUBLIC_ROUTES = [
         'passwort/neu/{token}',
         'passwort/neu',
     ],
-    'api' => ['api/health'],
+    // Stripe is the only caller of the webhook, and it authenticates itself
+    // by the request signature (Stripe-Signature, verified against
+    // config('services.stripe.webhook_secret')) rather than by a session an
+    // `audience:` middleware could gate — there is no staff or portal user
+    // on this request to hold one. See StripeWebhookController's own doc
+    // comment.
+    'api' => ['api/health', 'api/stripe/webhook'],
 
     // The client's way in. Public by necessity — the only person who needs it
     // is one who cannot sign in — and the token in the path is the whole
