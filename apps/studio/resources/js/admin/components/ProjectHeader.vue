@@ -24,7 +24,13 @@ function book() {
 <template>
   <div class="hrow">
     <div>
-      <div class="kick">{{ $t('project.kicker', { type: header.type }) }}</div>
+      <!-- A Project exists from the moment an inquiry lands (vision §3.1), but
+           calling an unbooked one "Projekt" while the board calls it an
+           Anfrage is the same screen-to-screen disagreement the derived
+           position exists to prevent. The word follows the commitment. -->
+      <div class="kick">
+        {{ $t(header.isBooked ? 'project.kicker' : 'project.kickerLead', { type: header.type }) }}
+      </div>
       <h1>{{ header.names }}</h1>
     </div>
 

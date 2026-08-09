@@ -16,35 +16,50 @@ use Illuminate\Support\Collection;
  * the disagreement that deriving it rather than storing it was meant to
  * prevent.
  *
- * The least-advanced uncancelled shoot speaks for the project: a project is
- * only as far along as its furthest-behind shoot, so a delivered engagement
- * session beside a booked wedding reads "Gebucht" — the honest answer to what
- * this project still owes the client.
+ * Once the project is in production, the least-advanced uncancelled shoot
+ * speaks for it: a project is only as far along as its furthest-behind shoot,
+ * so a delivered engagement session beside a booked wedding reads "Gebucht" —
+ * the honest answer to what this project still owes the client.
+ *
+ * Before that, the funnel speaks. The Job is the seam, because the Job is the
+ * commitment: production has not started until one exists.
+ *
+ * C-06 originally wrote the fallback as "when no uncancelled shoot exists",
+ * and that was unreachable. Intake creates the primary shoot at `requested`
+ * and it stays there for the project's whole pre-booking life, so every
+ * unbooked project reported "Angefragt" whatever the funnel was doing — and
+ * contradicted the board, which reads the stage directly. `requested` is not a
+ * pipeline position; it means the pipeline has not begun.
  */
 class DeriveProjectPosition
 {
     public function __invoke(Project $project): ProjectPositionData
     {
-        $shoot = $this->leastAdvanced($project->shoots()->uncancelled()->get());
+        $lead = $project->lead;
 
-        if ($shoot !== null) {
-            return new ProjectPositionData(
-                source: 'shoot',
-                value: $shoot->status->value,
-                label: $shoot->status->label(),
-            );
+        // A lost lead outranks everything. The shoots of a dead pursuit are not
+        // a position the studio is working through.
+        if ($lead?->isLost()) {
+            return new ProjectPositionData(source: 'lost', value: 'lost', label: 'Verloren');
         }
 
-        // No uncancelled shoot: before the first is created, or after every one
-        // is cancelled. The funnel answers instead.
-        $lead = $project->lead;
+        if ($project->job()->exists()) {
+            $shoot = $this->leastAdvanced($project->shoots()->uncancelled()->get());
+
+            if ($shoot !== null) {
+                return new ProjectPositionData(
+                    source: 'shoot',
+                    value: $shoot->status->value,
+                    label: $shoot->status->label(),
+                );
+            }
+
+            // Booked, but every shoot cancelled. The funnel below still reads
+            // "Gebucht", which remains the truthful answer.
+        }
 
         if ($lead === null) {
             return new ProjectPositionData(source: 'none', value: null, label: '—');
-        }
-
-        if ($lead->isLost()) {
-            return new ProjectPositionData(source: 'lost', value: 'lost', label: 'Verloren');
         }
 
         return new ProjectPositionData(

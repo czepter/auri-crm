@@ -29,6 +29,9 @@ function props(string $path): array
 }
 
 it('renders the project overview with a derived header', function () {
+    // Booked, because the shoots only speak for a project in production —
+    // before that the header reads the funnel.
+    Job::factory()->for($this->project)->create();
     Shoot::factory()->for($this->project)->primary()->atStatus(ShootStatus::Prep)->create();
 
     $header = props("/auftraege/{$this->project->public_id}")['header'];
@@ -44,6 +47,20 @@ it('shows only the tabs whose feature exists', function () {
     $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
 
     expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots']);
+});
+
+it('agrees with the board about an unbooked project', function () {
+    // Reported from the screen: the header said "Angefragt" while the board
+    // said "Angebot angenommen" for the same project. Intake creates the
+    // primary shoot at `requested` and it stays there until booking, so
+    // reading the shoots made every unbooked project say the same word.
+    Lead::factory()->for($this->project)->atStage(LeadStage::QuoteAccepted)->create();
+    Shoot::factory()->for($this->project)->primary()->create();
+
+    $position = props("/auftraege/{$this->project->public_id}")['header']['position'];
+
+    expect($position['label'])->toBe('Angebot angenommen')
+        ->and($position['source'])->toBe('lead');
 });
 
 it('reads the lead stage in the header when no uncancelled shoot exists', function () {

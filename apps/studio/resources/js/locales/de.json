@@ -75,6 +75,7 @@
   },
   "project": {
     "kicker": "Projekt · {type}",
+    "kickerLead": "Anfrage · {type}",
     "mainDate": "Haupttermin {date}",
     "primary": "Haupttermin",
     "book": "Als gebucht markieren",
