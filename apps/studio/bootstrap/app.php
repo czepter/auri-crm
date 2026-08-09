@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     // here explicitly; nothing in that directory is auto-discovered.
     ->withCommands([
         \App\Payments\Console\Commands\DetectOverdueInstallmentsCommand::class,
+        \App\Gallery\Console\Commands\ImportLegacyGalleriesCommand::class,
     ])
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
