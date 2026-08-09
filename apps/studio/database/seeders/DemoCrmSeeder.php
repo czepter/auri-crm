@@ -122,9 +122,13 @@ class DemoCrmSeeder extends Seeder
 
         // The primary shoot already exists from the cast; this is the wedding
         // day itself, so it only gains the detail the project screen shows.
+        // Anchored to today rather than to the mockup's 2026 dates: the
+        // Übersicht leads with the next shooting day, and a demo whose every
+        // shoot is in the past shows an empty screen that looks like a bug.
         $wedding = $project->primaryShoot;
         $wedding->update([
             'label' => 'Hochzeitstag',
+            'date' => now()->addDays(5)->format('Y-m-d'),
             'call_time' => '09:00',
             'end_time' => '23:00',
         ]);
@@ -133,7 +137,7 @@ class DemoCrmSeeder extends Seeder
             'project_id' => $project->id,
             'kind' => ShootKind::Engagement,
             'label' => 'Verlobungsshooting',
-            'date' => '2026-03-22',
+            'date' => now()->subDays(140)->format('Y-m-d'),
             'call_time' => '14:00',
             'end_time' => '16:00',
             'venue_name' => 'Jenischpark',
@@ -145,7 +149,7 @@ class DemoCrmSeeder extends Seeder
             'project_id' => $project->id,
             'kind' => ShootKind::Reception,
             'label' => 'Standesamt',
-            'date' => '2026-05-08',
+            'date' => now()->subDays(37)->format('Y-m-d'),
             'call_time' => '11:00',
             'end_time' => '12:30',
             'venue_name' => 'Rathaus Altona',
@@ -159,7 +163,7 @@ class DemoCrmSeeder extends Seeder
             'project_id' => $project->id,
             'kind' => ShootKind::Portrait,
             'label' => 'After-Wedding-Shooting',
-            'date' => '2026-07-05',
+            'date' => now()->addDays(26)->format('Y-m-d'),
             'sort_order' => 3,
         ]);
 

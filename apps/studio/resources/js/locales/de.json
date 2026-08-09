@@ -124,6 +124,17 @@
     "title": "Übersicht",
     "signedInAs": "Angemeldet als {name}",
     "openLeads": "Offene Anfragen",
-    "activeJobs": "Laufende Aufträge"
+    "activeJobs": "Laufende Aufträge",
+    "newThisWeek": "{count} neu diese Woche",
+    "nextShoot": "nächstes Shooting",
+    "openPoints": "1 Punkt offen | {count} Punkte offen",
+    "nextShoots": "Nächste Shootings",
+    "inProduction": "1 in Produktion | {count} in Produktion",
+    "crewCount": "1 Person | {count} Personen",
+    "overdue": "überfällig seit {date}",
+    "done": "Erledigt",
+    "noDetails": "Ort und Uhrzeit noch offen",
+    "nothingDue": "Nichts offen.",
+    "moreTasks": "{count} offene Aufgaben insgesamt · je Projekt die dringendste"
   }
 }

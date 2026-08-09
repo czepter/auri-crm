@@ -23,10 +23,7 @@ beforeEach(function () {
     $this->project = Project::factory()->create();
 });
 
-function props(string $path): array
-{
-    return test()->get($path)->assertOk()->viewData('page')['props'];
-}
+// props() lives in tests/Pest.php — see the note there.
 
 it('renders the project overview with a derived header', function () {
     // Booked, because the shoots only speak for a project in production —

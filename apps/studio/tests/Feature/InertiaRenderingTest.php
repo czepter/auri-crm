@@ -28,7 +28,7 @@ it('names a page component that exists on disk', function (string $path, string 
 
     expect(resource_path("js/admin/pages/{$component}.vue"))->toBeFile();
 })->with([
-    ['/', 'Dashboard'],
+    ['/', 'Uebersicht'],
     ['/anfragen', 'Leads/Board'],
     ['/kontakte', 'Contacts/Index'],
     ['/auftraege/{project}', 'Projects/Show'],

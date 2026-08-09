@@ -62,6 +62,15 @@ expect()->extend('toBeOne', function () {
  * Pest happens to load them in the right order.
  */
 /**
+ * The Inertia page props of a GET, for the suites that assert what a screen was
+ * handed rather than how it renders.
+ */
+function props(string $path): array
+{
+    return test()->get($path)->assertOk()->viewData('page')['props'];
+}
+
+/**
  * Registers one surface's routes in isolation and returns them. Two suites
  * need it — the audience matrix and the internal-note reach test — which is
  * exactly the case the note above says belongs here rather than in whichever

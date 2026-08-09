@@ -10,6 +10,7 @@ use App\Crm\Http\Controllers\LeadBoardController;
 use App\Crm\Http\Controllers\LeadStageController;
 use App\Crm\Http\Controllers\ProjectController;
 use App\Crm\Http\Controllers\ShootController;
+use App\Crm\Http\Controllers\TaskController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
 use App\Http\Controllers\Staff\MfaChallengeController;
@@ -85,6 +86,12 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::post('/shootings/{shoot}/crew', [CrewController::class, 'store'])->name('crew.store');
         Route::delete('/crew/{assignment}', [CrewController::class, 'destroy'])->name('crew.destroy');
+
+        Route::post('/auftraege/{project}/aufgaben', [TaskController::class, 'store'])
+            ->name('tasks.store');
+        Route::post('/aufgaben/{task}/erledigt', [TaskController::class, 'complete'])
+            ->name('tasks.complete');
+        Route::delete('/aufgaben/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 
         Route::post('/auftraege/{project}/notizen', [InternalNoteController::class, 'store'])
             ->name('notes.store');
