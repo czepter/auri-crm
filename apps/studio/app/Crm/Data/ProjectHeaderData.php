@@ -41,6 +41,7 @@ class ProjectHeaderData extends Data
         public bool $canManageQuotes,
         public bool $canManageContracts,
         public bool $canManagePaymentPlan,
+        public bool $canManageForms,
         public array $tabs,
     ) {}
 
@@ -70,19 +71,23 @@ class ProjectHeaderData extends Data
             canManageQuotes: $user?->can('manageQuotes', $project) ?? false,
             canManageContracts: $user?->can('manageContracts', $project) ?? false,
             canManagePaymentPlan: $user?->can('managePaymentPlan', $project) ?? false,
-            // Fragebögen, Kommunikation (E-* in P4) and Galerien (G-05 in P3)
-            // each append a line here on the sprint they land. Zahlungen
-            // (M-03) does not: mockup 04-auftrag's own comment keeps it and
+            canManageForms: $user?->can('manageForms', $project) ?? false,
+            // Kommunikation (E-06) and Galerien (G-05, already in P3) each
+            // append a line here on the sprint they land. Zahlungen (M-03)
+            // does not: mockup 04-auftrag's own comment keeps it and
             // Aufgaben as "previews, compressed into the Übersicht tab rather
             // than built as full tab panels" (mockups/_shared/admin-extra.css)
             // — so it lives on the overview screen instead, never as a tab.
             //
             // Q-02 landed the quote half of "Angebot & Vertrag" under one
             // combined tab; M-01 splits Vertrag into its own tab now that it
-            // has a screen of its own.
+            // has a screen of its own. Fragebögen (E-02) sits between
+            // Shootings and Angebot, matching mockup 04's own tab order
+            // (mockups/_shared/layout.js's PROJECT_TABS).
             tabs: [
                 ['key' => 'overview', 'label' => 'Übersicht', 'href' => "/auftraege/{$project->public_id}"],
                 ['key' => 'shoots', 'label' => 'Shootings', 'href' => "/auftraege/{$project->public_id}/shootings"],
+                ['key' => 'forms', 'label' => 'Fragebögen', 'href' => "/auftraege/{$project->public_id}/frageboegen"],
                 ['key' => 'quotes', 'label' => 'Angebot', 'href' => "/auftraege/{$project->public_id}/angebote"],
                 ['key' => 'contract', 'label' => 'Vertrag', 'href' => "/auftraege/{$project->public_id}/vertrag"],
             ],

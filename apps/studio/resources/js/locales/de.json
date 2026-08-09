@@ -513,6 +513,16 @@
     "done": "Fertig",
     "save": "Speichern"
   },
+  "formInstances": {
+    "title": "Fragebögen",
+    "empty": "Noch keine Fragebögen.",
+    "nameField": "Name",
+    "create": "Neuer Fragebogen",
+    "fromTemplate": "Aus Vorlage",
+    "orBlank": "Oder ohne Vorlage",
+    "startBlank": "Leer beginnen",
+    "seededFrom": "Aus Vorlage „{name}“ übernommen und für dieses Projekt angepasst."
+  },
   "portalSettings": {
     "title": "Portal",
     "maintenanceSection": "Wartung",

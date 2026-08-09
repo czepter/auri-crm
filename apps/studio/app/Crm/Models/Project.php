@@ -125,6 +125,12 @@ class Project extends Model
         return $this->hasMany(Quote::class)->latest();
     }
 
+    /** Every questionnaire personalised for this project (E-02), newest first. */
+    public function formInstances(): HasMany
+    {
+        return $this->hasMany(FormInstance::class)->latest();
+    }
+
     /**
      * The one the portal shows: the most recently sent quote, whatever its
      * status now reads. Ordered on sent_at rather than created_at — a

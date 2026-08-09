@@ -71,6 +71,17 @@ class ProjectPolicy
         return $user->role->allows(Capability::ManageQuotes) && $this->view($user, $project);
     }
 
+    /**
+     * Seed and personalise this project's questionnaires (E-02). Reuses
+     * Capability::ManageFormTemplates rather than a new capability:
+     * personalising a project's copy is the same domain of work as authoring
+     * the template it may have started from, done by the same roles.
+     */
+    public function manageForms(User $user, Project $project): bool
+    {
+        return $user->role->allows(Capability::ManageFormTemplates) && $this->view($user, $project);
+    }
+
     /** Generate a rendered contract for this project (M-01). */
     public function manageContracts(User $user, Project $project): bool
     {

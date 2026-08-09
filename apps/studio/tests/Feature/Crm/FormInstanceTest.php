@@ -1,0 +1,220 @@
+<?php
+
+use App\Crm\Actions\SeedFormInstanceFromTemplate;
+use App\Crm\Enums\FormFieldType;
+use App\Crm\Models\FormField;
+use App\Crm\Models\FormInstance;
+use App\Crm\Models\FormInstanceField;
+use App\Crm\Models\FormTemplate;
+use App\Crm\Models\Project;
+use App\Enums\StaffRole;
+use App\Models\AuditLog;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
+
+// --- SeedFormInstanceFromTemplate: the deep, disconnected copy ---------
+
+it('seeds an instance\'s fields from a template\'s current fields, matching them exactly', function () {
+    $template = FormTemplate::factory()->create(['name' => 'Ablaufplan']);
+    FormField::factory()->for($template, 'formTemplate')->required()->create([
+        'label' => 'Wann beginnt das Getting Ready?',
+        'sort_order' => 0,
+    ]);
+    FormField::factory()->for($template, 'formTemplate')->select(['Ja', 'Nein'])->create([
+        'label' => 'Darf während der Zeremonie fotografiert werden?',
+        'sort_order' => 1,
+    ]);
+    $instance = FormInstance::factory()->create();
+
+    app(SeedFormInstanceFromTemplate::class)($instance, $template);
+
+    expect($instance->fields)->toHaveCount(2)
+        ->and($instance->fields->first()->label)->toBe('Wann beginnt das Getting Ready?')
+        ->and($instance->fields->first()->required)->toBeTrue()
+        ->and($instance->fields->last()->type)->toBe(FormFieldType::Select)
+        ->and($instance->fields->last()->options)->toBe(['Ja', 'Nein']);
+});
+
+it('leaves an instance already seeded from a template untouched when the template is edited afterwards', function () {
+    // The acceptance criterion, proven directly: FormTemplate::copyFields()
+    // hands back a disconnected copy with no id and no form_template_id, so
+    // nothing written into the instance can be reached by a later write to
+    // the template — the whole reason FormInstance exists rather than a
+    // project holding a live reference to the template it started from.
+    $template = FormTemplate::factory()->create(['name' => 'Familienkonstellation']);
+    $originalField = FormField::factory()->for($template, 'formTemplate')->create([
+        'label' => 'Wer gehört zur engsten Familie?',
+        'required' => false,
+    ]);
+    $instance = FormInstance::factory()->create();
+
+    app(SeedFormInstanceFromTemplate::class)($instance, $template);
+
+    $seededLabel = $instance->fields->sole()->label;
+    $seededRequired = $instance->fields->sole()->required;
+
+    // Edit the template: rename it, relabel and re-require its field, then
+    // add a second question and delete the template outright.
+    $template->update(['name' => 'Umbenannt']);
+    $originalField->update(['label' => 'Retitled', 'required' => true]);
+    FormField::factory()->for($template, 'formTemplate')->create(['label' => 'Neue Frage']);
+
+    $instance->refresh();
+
+    expect($instance->fields)->toHaveCount(1)
+        ->and($instance->fields->sole()->label)->toBe($seededLabel)
+        ->and($instance->fields->sole()->required)->toBe($seededRequired)
+        ->and($instance->fields->sole()->label)->not->toBe('Retitled');
+
+    $template->delete();
+    $instance->refresh();
+
+    expect($instance->fields)->toHaveCount(1)
+        ->and($instance->fields->sole()->label)->toBe($seededLabel);
+});
+
+it('seeds nothing from a template with no fields', function () {
+    $template = FormTemplate::factory()->create();
+    $instance = FormInstance::factory()->create();
+
+    app(SeedFormInstanceFromTemplate::class)($instance, $template);
+
+    expect($instance->fields)->toHaveCount(0);
+});
+
+// --- FormInstanceController: creating and personalising -----------------
+
+it('creates a blank form instance for a project', function () {
+    $user = staffMember();
+    $project = Project::factory()->create();
+
+    $this->actingAs($user, 'staff')
+        ->post("/auftraege/{$project->public_id}/frageboegen", [])
+        ->assertRedirect();
+
+    $instance = $project->formInstances()->sole();
+
+    expect($instance->name)->toBe('Neuer Fragebogen')
+        ->and($instance->source_template_name)->toBeNull()
+        ->and($instance->fields)->toHaveCount(0);
+
+    $row = AuditLog::where('event', 'form_instance.created')->sole();
+    expect($row->actor_id)->toBe($user->id)
+        ->and($row->subject)->toBe($instance->public_id);
+});
+
+it('creates a form instance seeded from a template via the store action', function () {
+    $project = Project::factory()->create();
+    $template = FormTemplate::factory()->create(['name' => 'Ablaufplan']);
+    FormField::factory()->for($template, 'formTemplate')->create(['label' => 'Frage 1']);
+    FormField::factory()->for($template, 'formTemplate')->create(['label' => 'Frage 2']);
+
+    $this->actingAs(staffMember(), 'staff')
+        ->post("/auftraege/{$project->public_id}/frageboegen", ['template' => $template->public_id])
+        ->assertRedirect();
+
+    $instance = $project->formInstances()->sole();
+
+    expect($instance->name)->toBe('Ablaufplan')
+        ->and($instance->source_template_name)->toBe('Ablaufplan')
+        ->and($instance->fields)->toHaveCount(2);
+});
+
+it('rejects an inactive template as a seed source', function () {
+    $project = Project::factory()->create();
+    $template = FormTemplate::factory()->inactive()->create();
+
+    $this->actingAs(staffMember(), 'staff')
+        ->post("/auftraege/{$project->public_id}/frageboegen", ['template' => $template->public_id])
+        ->assertInvalid(['template']);
+
+    expect($project->formInstances()->count())->toBe(0);
+});
+
+it('personalises an instance\'s fields and name, wholesale replacing what was there, without touching its source template', function () {
+    $user = staffMember();
+    $project = Project::factory()->create();
+    $template = FormTemplate::factory()->create(['name' => 'Ablaufplan']);
+    $templateField = FormField::factory()->for($template, 'formTemplate')->create(['label' => 'Unveränderte Vorlagenfrage']);
+
+    $instance = FormInstance::factory()->for($project)->create(['name' => 'Ablaufplan', 'source_template_name' => 'Ablaufplan']);
+    app(SeedFormInstanceFromTemplate::class)($instance, $template);
+    $seededFieldId = $instance->fields->sole()->id;
+
+    $this->actingAs($user, 'staff')->patch("/frageboegen/{$instance->public_id}", [
+        'name' => 'After-Wedding · Ablauf & Wünsche',
+        'fields' => [
+            ['label' => 'Wohin soll es gehen?', 'type' => 'select', 'required' => true, 'options' => ['Strand', 'Stadt']],
+            ['label' => 'Freitextfrage nur für dieses Projekt', 'type' => 'text', 'required' => false, 'options' => null],
+        ],
+    ])->assertRedirect();
+
+    $instance->refresh();
+
+    expect($instance->name)->toBe('After-Wedding · Ablauf & Wünsche')
+        ->and($instance->fields)->toHaveCount(2)
+        ->and($instance->fields->pluck('sort_order')->all())->toBe([0, 1])
+        ->and($instance->fields->first()->options)->toBe(['Strand', 'Stadt'])
+        ->and(FormInstanceField::find($seededFieldId))->toBeNull();
+
+    // The source template — name and its own field — is untouched.
+    expect($template->fresh()->name)->toBe('Ablaufplan')
+        ->and($templateField->fresh()->label)->toBe('Unveränderte Vorlagenfrage');
+
+    $row = AuditLog::where('event', 'form_instance.updated')->sole();
+    expect($row->subject)->toBe($instance->public_id);
+});
+
+it('opens the project forms screen to whoever can view the project, regardless of ManageFormTemplates', function (StaffRole $role, int $status) {
+    // The screen itself only gates on Project::view — the same rule every
+    // other project tab uses (ProjectController::quotes(), ::shoots()) — so
+    // SecondShooter and Assistant, who hold no ViewAllProjects capability
+    // and are not crewed on this uncrewed project, get 403 here just as they
+    // would on /shootings or /angebote. canManageForms is what the screen
+    // itself uses to decide whether to render the editing controls.
+    $project = Project::factory()->create();
+
+    $this->actingAs(staffMember($role), 'staff')
+        ->get("/auftraege/{$project->public_id}/frageboegen")
+        ->assertStatus($status);
+})->with([
+    [StaffRole::Owner, 200],
+    [StaffRole::Photographer, 200],
+    [StaffRole::Editor, 200],
+    [StaffRole::SecondShooter, 403],
+    [StaffRole::Assistant, 403],
+]);
+
+it('lists a project\'s form instances with their fields on the project screen', function () {
+    $project = Project::factory()->create();
+    $template = FormTemplate::factory()->create(['name' => 'Wunschliste Gruppenfotos']);
+    $instance = FormInstance::factory()->for($project)->create(['name' => 'Wunschliste Gruppenfotos', 'source_template_name' => 'Wunschliste Gruppenfotos']);
+    app(SeedFormInstanceFromTemplate::class)($instance, $template);
+    FormField::factory()->for($template, 'formTemplate')->create();
+
+    $props = $this->actingAs(staffMember(), 'staff')
+        ->get("/auftraege/{$project->public_id}/frageboegen")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect(collect($props['formInstances'])->pluck('name'))->toContain('Wunschliste Gruppenfotos')
+        ->and(collect($props['formTemplates'])->pluck('label'))->toContain('Wunschliste Gruppenfotos');
+});
+
+it('carries no integer identifier in the props', function () {
+    $project = Project::factory()->create();
+    $instance = FormInstance::factory()->for($project)->create();
+    $field = FormInstanceField::factory()->for($instance, 'formInstance')->create();
+
+    $props = $this->actingAs(staffMember(), 'staff')
+        ->get("/auftraege/{$project->public_id}/frageboegen")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect(integerIdPaths($props))->toBe([]);
+
+    // Not a dead assertion — proves the fixture actually reached the props.
+    expect(collect($props['formInstances'])->pluck('id'))->toContain($instance->public_id);
+    expect(collect($props['formInstances'])->flatMap(fn ($i) => collect($i['fields'])->pluck('id')))->toContain($field->public_id);
+});

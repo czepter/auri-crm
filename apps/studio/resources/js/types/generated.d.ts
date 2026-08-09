@@ -67,6 +67,21 @@ typeLabel: string,
 required: boolean,
 options: string[] | null,
 };
+export type FormInstanceData = {
+id: string,
+name: string,
+sourceTemplateName: string | null,
+updatedAt: string,
+fields: App.Crm.Data.FormInstanceFieldData[],
+};
+export type FormInstanceFieldData = {
+id: string,
+label: string,
+type: string,
+typeLabel: string,
+required: boolean,
+options: string[] | null,
+};
 export type FormTemplateData = {
 id: string,
 name: string,
@@ -144,6 +159,7 @@ canManagePortalVisibility: boolean,
 canManageQuotes: boolean,
 canManageContracts: boolean,
 canManagePaymentPlan: boolean,
+canManageForms: boolean,
 tabs: {
 key: string,
 label: string,
