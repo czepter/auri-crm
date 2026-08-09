@@ -13,6 +13,11 @@
 
 pest()->extend(Tests\TestCase::class)
  // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    // No feature test asserts a built asset — they assert the Inertia component
+    // and the root view. Resolving the real manifest would make the PHP suite
+    // depend on `pnpm build` having run first. The manifest stays proven by the
+    // `web` job and by Playwright, which run against a real build.
+    ->beforeEach(fn () => $this->withoutVite())
     ->in('Feature');
 
 /*
