@@ -74,6 +74,17 @@ class Project extends Model
         return $this->hasOne(Lead::class);
     }
 
+    /** Absent until the project is booked — its existence is the commitment. */
+    public function job(): HasOne
+    {
+        return $this->hasOne(Job::class);
+    }
+
+    public function notes(): HasMany
+    {
+        return $this->hasMany(InternalNote::class)->latest();
+    }
+
     public function shoots(): HasMany
     {
         return $this->hasMany(Shoot::class)->orderBy('sort_order');
