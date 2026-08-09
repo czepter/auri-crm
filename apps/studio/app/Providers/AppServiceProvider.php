@@ -4,17 +4,18 @@ namespace App\Providers;
 
 use App\Catalog\Models\Package;
 use App\Contracts\Events\ContractSigned;
-use App\Contracts\Models\ContractTemplate;
 use App\Crm\Events\ProjectBooked;
 use App\Crm\Listeners\ApplyTemplatesOnBooking;
 use App\Crm\Listeners\BookProjectOnContractAndDeposit;
 use App\Crm\Models\Contact;
+use App\Crm\Models\FormTemplate;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
+use App\Documents\Models\DocumentTemplate;
 use App\Gallery\Listeners\RecomputeGalleryBalanceSettled;
 use App\Gallery\Models\Gallery;
 use App\Notifications\NotificationService;
@@ -22,7 +23,8 @@ use App\Notifications\Transports\InAppTransport;
 use App\Notifications\Transports\MailTransport;
 use App\Payments\Events\InstallmentPaid;
 use App\Policies\ContactPolicy;
-use App\Policies\ContractTemplatePolicy;
+use App\Policies\DocumentTemplatePolicy;
+use App\Policies\FormTemplatePolicy;
 use App\Policies\GalleryPolicy;
 use App\Policies\InternalNotePolicy;
 use App\Policies\LeadPolicy;
@@ -31,8 +33,10 @@ use App\Policies\ProjectPolicy;
 use App\Policies\ShootPolicy;
 use App\Policies\TaskPolicy;
 use App\Policies\TaskTemplatePolicy;
+use App\Support\PersonalAccessToken;
 use App\Support\Surface;
 use Aws\S3\S3Client;
+use Dedoc\Scramble\Scramble;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Console\ServeCommand;
@@ -41,6 +45,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Sanctum\Sanctum;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -49,6 +54,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // G-01: Scramble's own docs UI and docs.json routes register
+        // themselves on every surface regardless of Surface::registerRoutes()
+        // — a package boots the same way in every process. Surface's own
+        // rule is that a surface carries a route by putting it in that
+        // surface's file, enforced by absence rather than by middleware (see
+        // config/surface.php); a vendor package registering its own routes
+        // behind our back is exactly the hole that rule exists to not have.
+        // The committed packages/contracts/openapi.json is this app's only
+        // exposure of the document — see the `scramble:export` CI step.
+        Scramble::ignoreDefaultRoutes();
+
         // E-07: the transport registry. A new channel is added here, never
         // wired to a domain event directly — see NotificationService's own
         // docblock.
@@ -84,6 +100,10 @@ class AppServiceProvider extends ServiceProvider
             return $this->char('public_id', 24)->unique();
         });
 
+        // G-01: the api surface's tokens carry this app's own tenant_id and
+        // public_id — see App\Support\PersonalAccessToken's own docblock.
+        Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
         // Registered by hand: auto-discovery only scans app/Listeners, and the
         // CRM keeps its listeners beside the events they answer to.
         Event::listen(ProjectBooked::class, ApplyTemplatesOnBooking::class);
@@ -112,6 +132,10 @@ class AppServiceProvider extends ServiceProvider
 
         if (Surface::current() === Surface::PORTAL) {
             Auth::shouldUse('portal');
+        }
+
+        if (Surface::current() === Surface::API) {
+            Auth::shouldUse('api');
         }
 
         // `artisan serve` forwards only a whitelist of variables to the PHP
@@ -148,9 +172,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Lead::class, LeadPolicy::class);
         Gate::policy(Contact::class, ContactPolicy::class);
         Gate::policy(Package::class, PackagePolicy::class);
-        Gate::policy(ContractTemplate::class, ContractTemplatePolicy::class);
+        Gate::policy(DocumentTemplate::class, DocumentTemplatePolicy::class);
         Gate::policy(TaskTemplate::class, TaskTemplatePolicy::class);
         Gate::policy(Gallery::class, GalleryPolicy::class);
+        Gate::policy(FormTemplate::class, FormTemplatePolicy::class);
 
         // Filling a non-fillable attribute is silent by default, which turns a
         // factory state like withMfa() into a no-op that fails a test three tasks

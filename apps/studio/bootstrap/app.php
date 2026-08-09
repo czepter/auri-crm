@@ -1,11 +1,14 @@
 <?php
 
+use App\Gallery\Console\Commands\ImportLegacyGalleriesCommand;
 use App\Http\Middleware\EnsureAudience;
 use App\Http\Middleware\EnsurePortalCapability;
 use App\Http\Middleware\EnsurePortalMaintenanceClosure;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RequireConfirmedMfa;
 use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
+use App\Migration\Console\Commands\CutoverRestoreCommand;
+use App\Migration\Console\Commands\CutoverSnapshotCommand;
 use App\Migration\Console\Commands\ImportHistoricalDataCommand;
 use App\Payments\Console\Commands\DetectOverdueInstallmentsCommand;
 use App\Support\Surface;
@@ -29,6 +32,9 @@ return Application::configure(basePath: dirname(__DIR__))
         DetectOverdueInstallmentsCommand::class,
         ImportHistoricalDataCommand::class,
         ReapIncompleteMultipartUploads::class,
+        ImportLegacyGalleriesCommand::class,
+        CutoverSnapshotCommand::class,
+        CutoverRestoreCommand::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         // G-01a's one lifecycle rule (issue #50) — see the command's own

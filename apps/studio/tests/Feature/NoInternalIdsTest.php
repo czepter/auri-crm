@@ -2,7 +2,6 @@
 
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
-use App\Contracts\Models\ContractTemplate;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
@@ -10,6 +9,8 @@ use App\Crm\Models\InternalNote;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\TimelineEntry;
+use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
 use App\Models\User;
 use App\Payments\Models\PaymentInstallment;
@@ -18,8 +19,10 @@ use App\Quotes\Actions\ReviseQuote;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
+use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 // renderedContract() lives in tests/Pest.php — see the note there.
@@ -61,12 +64,13 @@ it('never puts an integer identifier into any crm page', function (string $path)
 
 it('never puts an integer identifier into a project page', function (string $suffix) {
     // Populated on purpose: an empty project proves nothing, since the keys
-    // that escape belong to the shoots, the crew, the notes, the job and —
-    // M-03 — the payment plan and its installments.
+    // that escape belong to the shoots, the crew, the timeline (E-04), the
+    // notes, the job and — M-03 — the payment plan and its installments.
     $user = User::factory()->withMfa()->create();
     $project = Project::factory()->create();
     $shoot = Shoot::factory()->for($project)->primary()->create();
     CrewAssignment::factory()->for($shoot)->create();
+    TimelineEntry::factory()->for($shoot)->create();
     InternalNote::factory()->for($project)->create();
     $job = Job::factory()->for($project)->create();
     $plan = PaymentPlan::factory()->for($job)->create(['total' => 200]);
@@ -138,14 +142,14 @@ it('never puts an integer identifier into the settings screen', function () {
     expect(integerIdPaths($props))->toBe([]);
 });
 
-it('never puts an integer identifier into the contract template screens', function () {
+it('never puts an integer identifier into the document template screens', function () {
     $user = User::factory()->withMfa()->create();
-    $template = ContractTemplate::factory()->create();
+    $template = DocumentTemplate::factory()->create();
 
-    $listProps = $this->actingAs($user, 'staff')->get('/vertragsvorlagen')->assertOk()->viewData('page')['props'];
+    $listProps = $this->actingAs($user, 'staff')->get('/dokumentvorlagen')->assertOk()->viewData('page')['props'];
     expect(integerIdPaths($listProps))->toBe([]);
 
-    $editProps = $this->get("/vertragsvorlagen/{$template->public_id}")->assertOk()->viewData('page')['props'];
+    $editProps = $this->get("/dokumentvorlagen/{$template->public_id}")->assertOk()->viewData('page')['props'];
     expect(integerIdPaths($editProps))->toBe([]);
 });
 
@@ -156,7 +160,7 @@ it('never puts an integer identifier into a project\'s contract tab', function (
     $project = Project::factory()->create();
     Job::factory()->for($project)->create();
     renderedContract($project);
-    ContractTemplate::factory()->create();
+    DocumentTemplate::factory()->create();
 
     $props = $this->actingAs($user, 'staff')
         ->get("/auftraege/{$project->public_id}/vertrag")
@@ -193,8 +197,8 @@ it('never puts an integer identifier into the portal contract screen once signed
     // first: StudioSettingsResolver caches the row (T-01), and a row already
     // cached by an earlier test in the same suite run would otherwise still
     // read as off.
-    \Illuminate\Support\Facades\Cache::store('redis')->flush();
-    \App\Settings\Models\StudioSettings::query()->update(['portal_sign_contracts_enabled' => true]);
+    Cache::store('redis')->flush();
+    StudioSettings::query()->update(['portal_sign_contracts_enabled' => true]);
 
     $project = Project::factory()->create(['portal_visible' => true]);
     renderedContract($project);
@@ -231,12 +235,49 @@ it('never puts an integer identifier into a portal project screen', function () 
     expect(integerIdPaths($props))->toBe([]);
 });
 
+it('never puts an integer identifier into a project\'s messages tab', function () {
+    // Populated on purpose, per the note above the project test: an empty
+    // thread proves nothing, since the key that escapes belongs to a message.
+    $user = User::factory()->withMfa()->create();
+    $project = Project::factory()->create();
+    $contact = Contact::factory()->create();
+    app(App\Engagement\Actions\StartThread::class)($project, $contact, 'Thema', 'Nachricht.');
+
+    $props = $this->actingAs($user, 'staff')
+        ->get("/auftraege/{$project->public_id}/nachrichten")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect(integerIdPaths($props))->toBe([]);
+});
+
+it('never puts an integer identifier into the portal messages screen', function () {
+    useSurface(Surface::PORTAL);
+    // T-08's "messaging" switch defaults to off — this test exercises the
+    // thread screen itself, so the switch is on, the same way the sign and
+    // accept tests above turn their own switches on.
+    \Illuminate\Support\Facades\Cache::store('redis')->flush();
+    \App\Settings\Models\StudioSettings::query()->update(['portal_messaging_enabled' => true]);
+
+    $contact = Contact::factory()->create();
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $project->attachContact($contact, ProjectContactRole::Primary);
+    app(App\Engagement\Actions\StartThread::class)($project, $contact, 'Thema', 'Nachricht.');
+
+    $props = $this->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}/nachrichten")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect(integerIdPaths($props))->toBe([]);
+});
+
 it('never puts an integer identifier into the portal quote screen once accepted, and the accept route takes only a public id', function () {
     useSurface(Surface::PORTAL);
     // T-08's "accept quotes online" switch defaults to off — this test
     // exercises the accept action itself, so the switch is on for it.
-    \Illuminate\Support\Facades\Cache::store('redis')->flush();
-    \App\Settings\Models\StudioSettings::query()->update(['portal_accept_quotes_enabled' => true]);
+    Cache::store('redis')->flush();
+    StudioSettings::query()->update(['portal_accept_quotes_enabled' => true]);
 
     $project = Project::factory()->create(['portal_visible' => true]);
     $quote = Quote::factory()->for($project)->create([

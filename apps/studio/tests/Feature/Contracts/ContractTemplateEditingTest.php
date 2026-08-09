@@ -3,10 +3,12 @@
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
 use App\Contracts\Models\Contract;
-use App\Contracts\Models\ContractTemplate;
-use App\Contracts\Support\GotenbergClient;
 use App\Crm\Models\Project;
+use App\Documents\Models\DocumentTemplate;
+use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Documents\Support\DocumentRenderer;
 use App\Settings\Support\StudioSettingsResolver;
+use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -17,13 +19,16 @@ it('leaves an already-rendered contract byte-for-byte untouched after its templa
     Storage::fake('local');
     Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-original-bytes', 200)]);
 
-    $template = ContractTemplate::factory()->create(['body' => '<p>{{ project.name }}</p>']);
+    $template = DocumentTemplate::factory()->create(['body' => '<p>{{ project.name }}</p>']);
     $contract = Contract::factory()
         ->for(Project::factory())
         ->for($template, 'template')
         ->create();
 
-    (new RenderContractJob($contract))->handle(app(GotenbergClient::class), app(StudioSettingsResolver::class));
+    (new RenderContractJob($contract))->handle(
+        app(GotenbergClient::class), app(StudioSettingsResolver::class),
+        app(DocumentMergeDataBuilder::class), app(DocumentRenderer::class),
+    );
     $contract->refresh();
 
     expect($contract->status)->toBe(ContractStatus::Rendered);
@@ -48,7 +53,7 @@ it('leaves an already-rendered contract byte-for-byte untouched after its templa
 it('does not call Gotenberg or the queue when editing a template', function () {
     Http::fake();
 
-    $template = ContractTemplate::factory()->create();
+    $template = DocumentTemplate::factory()->create();
 
     $template->newVersion(['name' => 'Neu', 'body' => '<p>Neu</p>']);
 

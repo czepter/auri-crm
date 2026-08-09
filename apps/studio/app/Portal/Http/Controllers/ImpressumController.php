@@ -9,7 +9,7 @@ use Inertia\Response;
 
 /**
  * T-08: § 5 TMG. Reads the same legal-entity fields RenderContractJob's
- * `studio.*` merge fields already read (T-02, docs/contracts.md) — never a
+ * `studio.*` merge fields already read (T-02, docs/documents.md) — never a
  * second, independently-maintained copy of a studio's own particulars.
  *
  * Public and reachable regardless of auth state or the maintenance closure

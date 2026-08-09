@@ -15,7 +15,7 @@ use RuntimeException;
 /**
  * The evidence, not a flag: a typed name plus explicit consent plus the
  * SHA-256 of the exact bytes Storage served for one Contract, at one moment,
- * from one IP and browser, against one named ContractTemplate version.
+ * from one IP and browser, against one named DocumentTemplate version.
  *
  * Append-only in the same shape as App\Models\AuditLog — signing is one
  * transaction (see App\Contracts\Actions\SignContract) and there is no
