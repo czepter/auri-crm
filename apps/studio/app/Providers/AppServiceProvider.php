@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use App\Catalog\Models\Package;
 use App\Contracts\Events\ContractSigned;
-use App\Contracts\Models\ContractTemplate;
 use App\Crm\Events\ProjectBooked;
 use App\Crm\Listeners\ApplyTemplatesOnBooking;
 use App\Crm\Listeners\BookProjectOnContractAndDeposit;
@@ -15,9 +14,10 @@ use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
+use App\Documents\Models\DocumentTemplate;
 use App\Payments\Events\InstallmentPaid;
 use App\Policies\ContactPolicy;
-use App\Policies\ContractTemplatePolicy;
+use App\Policies\DocumentTemplatePolicy;
 use App\Policies\InternalNotePolicy;
 use App\Policies\LeadPolicy;
 use App\Policies\PackagePolicy;
@@ -121,7 +121,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Lead::class, LeadPolicy::class);
         Gate::policy(Contact::class, ContactPolicy::class);
         Gate::policy(Package::class, PackagePolicy::class);
-        Gate::policy(ContractTemplate::class, ContractTemplatePolicy::class);
+        Gate::policy(DocumentTemplate::class, DocumentTemplatePolicy::class);
         Gate::policy(TaskTemplate::class, TaskTemplatePolicy::class);
 
         // Filling a non-fillable attribute is silent by default, which turns a

@@ -6,6 +6,7 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Contracts\Enums\ContractStatus;
 use App\Crm\Models\Project;
+use App\Documents\Models\DocumentTemplate;
 use App\Models\User;
 use Database\Factories\Contracts\ContractFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -15,13 +16,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
- * One render of one exact ContractTemplate version, for one project.
+ * One render of one exact App\Documents\Models\DocumentTemplate version
+ * (type contract, T-12), for one project.
  *
  * contract_template_id names a specific row, not "whichever version is
  * current" — RenderContractJob resolves merge fields against real project
  * data at the moment it runs and bakes the result into the PDF this row
  * points at. Editing the template afterwards can never move that pointer or
- * touch the file it already wrote (see ContractTemplate::newVersion()).
+ * touch the file it already wrote (see DocumentTemplate::newVersion()). The
+ * column keeps its M-01 name even though it now points at document_templates
+ * — see the T-12 migration that moved that table's data.
  */
 class Contract extends Model
 {
@@ -51,7 +55,7 @@ class Contract extends Model
 
     public function template(): BelongsTo
     {
-        return $this->belongsTo(ContractTemplate::class, 'contract_template_id');
+        return $this->belongsTo(DocumentTemplate::class, 'contract_template_id');
     }
 
     public function requestedBy(): BelongsTo
