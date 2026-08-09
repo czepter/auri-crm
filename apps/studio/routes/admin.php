@@ -24,6 +24,7 @@ use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\SessionController;
 use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
+use App\Settings\Http\Controllers\NumberRangeController;
 use App\Settings\Http\Controllers\StudioSettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -122,6 +123,11 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');
         Route::get('/einstellungen/logo', [StudioSettingsController::class, 'logo'])->name('settings.logo');
         Route::patch('/einstellungen/ust', [StudioSettingsController::class, 'updateVat'])->name('settings.vat.update');
+
+        Route::get('/einstellungen/nummernkreise', [NumberRangeController::class, 'index'])
+            ->name('number-ranges.index');
+        Route::patch('/einstellungen/nummernkreise/{numberRange}', [NumberRangeController::class, 'update'])
+            ->name('number-ranges.update');
 
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.

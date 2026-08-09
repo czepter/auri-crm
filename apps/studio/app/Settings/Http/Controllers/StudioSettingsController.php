@@ -2,7 +2,7 @@
 
 namespace App\Settings\Http\Controllers;
 
-use App\Enums\Capability;
+use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Rules\ValidIban;
@@ -25,6 +25,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class StudioSettingsController extends Controller
 {
+    use AuthorizesStaffSettings;
+
     public function edit(StudioSettingsResolver $settings): Response
     {
         $this->authorizeSettings();
@@ -154,25 +156,6 @@ class StudioSettingsController extends Controller
             vatMode: $settings->vatMode(),
             vatRate: $settings->vatRate(),
             vatNote: $settings->vatNote(),
-        );
-    }
-
-    /**
-     * A 404, not a 403 — T-01's issue asks for the same audience-shaped
-     * "does not exist" response EnsureAudience already gives a client who
-     * reaches for a staff route, deliberately different from every other
-     * capability-gated controller in this codebase (ContractTemplatePolicy,
-     * InvitationController's authorizeStaffManagement, both 403). Those
-     * routes benefit a denied role by existing openly — a photographer who
-     * cannot manage contracts still learns the screen is there. Nobody
-     * without ManageSettings has a reason to learn the studio's bank details
-     * live behind this one at all.
-     */
-    private function authorizeSettings(): void
-    {
-        abort_unless(
-            auth('staff')->user()?->role->allows(Capability::ManageSettings) ?? false,
-            404,
         );
     }
 }

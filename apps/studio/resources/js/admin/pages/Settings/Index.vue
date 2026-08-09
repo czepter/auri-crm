@@ -52,11 +52,12 @@ const vatForm = useForm({
 
 const activeForm = computed(() => (pane.value === 'vat' ? vatForm : form))
 
-// Every other future group (Nummernkreise, Dokumente, ...) later stories
-// land — rendered disabled with the "bald" chip screen 4's Vertrag tab
-// already uses for a superseded quote, per T-00's mockup. Zahlungsdaten &
-// USt is T-03's own pane now, so it drops out of this list.
-const comingSoon = ['navNumbering', 'navDocuments', 'navPayments', 'navPortal', 'navNotifications', 'navGeneral'] as const
+// Every other future group (Dokumente, Zahlungen, ...) later stories land —
+// rendered disabled with the "bald" chip screen 4's Vertrag tab already uses
+// for a superseded quote, per T-00's mockup. Zahlungsdaten & USt is T-03's
+// own pane and Nummernkreise is T-04's own route, so both drop out of this
+// list.
+const comingSoon = ['navDocuments', 'navPayments', 'navPortal', 'navNotifications', 'navGeneral'] as const
 
 function onLogoChange(event: Event) {
   form.logo = (event.target as HTMLInputElement).files?.[0] ?? null
@@ -110,6 +111,7 @@ function submitVat() {
         <a class="nav" :class="{ on: pane === 'vat' }" href="#" @click.prevent="pane = 'vat'">
           {{ $t('settings.navVat') }}
         </a>
+        <a class="nav" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
         <a
           v-for="key in comingSoon"
           :key="key"
