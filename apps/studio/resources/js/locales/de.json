@@ -60,6 +60,16 @@
     "stale": "{count} Tage still",
     "empty": "Keine Anfragen."
   },
+  "contacts": {
+    "title": "Kontakte",
+    "name": "Name",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "projects": "Projekte",
+    "none": "—",
+    "editTitle": "Kontakt bearbeiten",
+    "empty": "Noch keine Kontakte."
+  },
   "dashboard": {
     "title": "Übersicht",
     "signedInAs": "Angemeldet als {name}",

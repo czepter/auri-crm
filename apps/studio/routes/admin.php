@@ -1,6 +1,7 @@
 <?php
 
 use App\Crm\Http\Controllers\AvailabilityController;
+use App\Crm\Http\Controllers\ContactController;
 use App\Crm\Http\Controllers\ContactSearchController;
 use App\Crm\Http\Controllers\InquiryCaptureController;
 use App\Crm\Http\Controllers\LeadBoardController;
@@ -38,6 +39,9 @@ Route::middleware('audience:staff')->group(function () {
         // /kontakte/suche stays above any /kontakte/{contact} route, or Laravel
         // binds "suche" as a contact public id and answers 404.
         Route::get('/kontakte/suche', ContactSearchController::class)->name('contacts.search');
+        Route::get('/kontakte', [ContactController::class, 'index'])->name('contacts.index');
+        Route::get('/kontakte/{contact}', [ContactController::class, 'edit'])->name('contacts.edit');
+        Route::patch('/kontakte/{contact}', [ContactController::class, 'update'])->name('contacts.update');
         Route::get('/verfuegbarkeit', AvailabilityController::class)->name('availability.show');
 
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason

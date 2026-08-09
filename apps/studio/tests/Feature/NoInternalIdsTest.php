@@ -30,6 +30,14 @@ it('exposes the signed-in user as a public id', function () {
         ->and($props['auth']['user'])->not->toHaveKey('mfa_secret');
 });
 
+it('never puts an integer identifier into any crm page', function (string $path) {
+    $user = User::factory()->withMfa()->create();
+
+    $props = $this->actingAs($user, 'staff')->get($path)->assertOk()->viewData('page')['props'];
+
+    expect(integerIdPaths($props))->toBe([]);
+})->with(['/anfragen', '/anfragen/neu', '/kontakte']);
+
 it('detects an integer id when one is present', function () {
     expect(integerIdPaths(['data' => ['id' => 7, 'name' => 'x']]))->toBe(['$.data.id']);
     expect(integerIdPaths(['data' => ['id' => 'abc', 'name' => 'x']]))->toBe([]);
