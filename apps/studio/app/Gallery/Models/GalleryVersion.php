@@ -46,6 +46,12 @@ class GalleryVersion extends Model
         return $this->hasMany(ZipBuild::class);
     }
 
+    /** G-09: every guest mark against this version's assets, whichever guest made it. */
+    public function assetFavorites(): HasMany
+    {
+        return $this->hasMany(AssetFavorite::class);
+    }
+
     protected static function newFactory(): Factory
     {
         return GalleryVersionFactory::new();

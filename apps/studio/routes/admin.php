@@ -7,6 +7,7 @@ use App\Crm\Http\Controllers\CalendarController;
 use App\Crm\Http\Controllers\ContactController;
 use App\Crm\Http\Controllers\ContactSearchController;
 use App\Crm\Http\Controllers\CrewController;
+use App\Crm\Http\Controllers\FormInstanceController;
 use App\Crm\Http\Controllers\FormTemplateController;
 use App\Crm\Http\Controllers\InquiryCaptureController;
 use App\Crm\Http\Controllers\InternalNoteController;
@@ -240,6 +241,21 @@ Route::middleware('audience:staff')->group(function () {
             ->name('quotes.store');
         Route::patch('/angebote/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
         Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
+
+        // E-02: a project's own questionnaires, seeded from a FormTemplate
+        // or started blank, then personalised freely — see FormInstance's
+        // own doc comment.
+        Route::get('/auftraege/{project}/frageboegen', [ProjectController::class, 'forms'])
+            ->name('projects.forms');
+        Route::post('/auftraege/{project}/frageboegen', [FormInstanceController::class, 'store'])
+            ->name('form-instances.store');
+        Route::patch('/frageboegen/{formInstance}', [FormInstanceController::class, 'update'])
+            ->name('form-instances.update');
+        // E-03: recording the answer to one question — kept off /frageboegen
+        // itself, since answering a field never touches the field set update()
+        // wholesale-replaces above.
+        Route::patch('/frageboegen-felder/{formInstanceField}/antwort', [FormInstanceController::class, 'answer'])
+            ->name('form-instance-fields.answer');
 
         Route::get('/auftraege/{project}/vertrag', [ContractController::class, 'show'])
             ->name('projects.contract');

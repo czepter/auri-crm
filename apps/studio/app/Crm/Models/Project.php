@@ -126,6 +126,12 @@ class Project extends Model
         return $this->hasMany(Quote::class)->latest();
     }
 
+    /** Every questionnaire personalised for this project (E-02), newest first. */
+    public function formInstances(): HasMany
+    {
+        return $this->hasMany(FormInstance::class)->latest();
+    }
+
     /**
      * E-06's conversations, newest first. The Kommunikation tab and the
      * portal's own thread screen both read latestThread() below rather than

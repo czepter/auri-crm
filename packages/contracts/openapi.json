@@ -10,6 +10,301 @@
         }
     ],
     "paths": {
+        "/gallery-versions/{galleryVersion}/favorites": {
+            "get": {
+                "operationId": "gallery-versions.favorites.index",
+                "summary": "The current guest's favorited asset keys within one version",
+                "tags": [
+                    "AssetFavorite"
+                ],
+                "parameters": [
+                    {
+                        "name": "galleryVersion",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery version public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "favorited": {
+                                            "type": "array",
+                                            "items": {}
+                                        }
+                                    },
+                                    "required": [
+                                        "favorited"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/gallery-versions/{galleryVersion}/favorites/{key}": {
+            "post": {
+                "operationId": "gallery-versions.favorites.toggle",
+                "tags": [
+                    "AssetFavorite"
+                ],
+                "parameters": [
+                    {
+                        "name": "galleryVersion",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery version public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "guest_id": {
+                                        "type": "string",
+                                        "maxLength": 64
+                                    }
+                                },
+                                "required": [
+                                    "guest_id"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "favorited": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "favorited"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/gallery-versions/{galleryVersion}/images/{key}": {
+            "get": {
+                "operationId": "gallery-versions.images.show",
+                "tags": [
+                    "GalleryImage"
+                ],
+                "parameters": [
+                    {
+                        "name": "galleryVersion",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery version public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Cache-Control": {
+                                "schema": {
+                                    "type": "string",
+                                    "const": "public, max-age=31536000, immutable"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/galleries/{gallery}": {
+            "get": {
+                "operationId": "galleries.show",
+                "tags": [
+                    "GalleryRead"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "gallery": {
+                                            "type": "object",
+                                            "properties": {
+                                                "public_id": {
+                                                    "type": "string"
+                                                },
+                                                "title": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "version": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "public_id": {
+                                                            "type": "string"
+                                                        },
+                                                        "version": {
+                                                            "type": "integer"
+                                                        },
+                                                        "published_at": {
+                                                            "type": "string",
+                                                            "format": "date-time"
+                                                        },
+                                                        "assets": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "object",
+                                                                "properties": {
+                                                                    "key": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "width": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    },
+                                                                    "height": {
+                                                                        "type": [
+                                                                            "string",
+                                                                            "null"
+                                                                        ]
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "key",
+                                                                    "width",
+                                                                    "height"
+                                                                ]
+                                                            }
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "public_id",
+                                                        "version",
+                                                        "published_at",
+                                                        "assets"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "public_id",
+                                                "title",
+                                                "version"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "gallery"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/whoami": {
             "get": {
                 "operationId": "whoami",
@@ -96,6 +391,59 @@
                     },
                     "400": {
                         "description": ""
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "responses": {
+            "ModelNotFoundException": {
+                "description": "Not found",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Error overview."
+                                }
+                            },
+                            "required": [
+                                "message"
+                            ]
+                        }
+                    }
+                }
+            },
+            "ValidationException": {
+                "description": "Validation error",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Errors overview."
+                                },
+                                "errors": {
+                                    "type": "object",
+                                    "description": "A detailed description of each field that failed validation.",
+                                    "additionalProperties": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "required": [
+                                "message",
+                                "errors"
+                            ]
+                        }
                     }
                 }
             }

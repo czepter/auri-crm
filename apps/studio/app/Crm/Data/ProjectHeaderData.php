@@ -42,6 +42,7 @@ class ProjectHeaderData extends Data
         public bool $canManageQuotes,
         public bool $canManageContracts,
         public bool $canManagePaymentPlan,
+        public bool $canManageForms,
         public array $tabs,
     ) {}
 
@@ -72,8 +73,9 @@ class ProjectHeaderData extends Data
             canManageQuotes: $user?->can('manageQuotes', $project) ?? false,
             canManageContracts: $user?->can('manageContracts', $project) ?? false,
             canManagePaymentPlan: $user?->can('managePaymentPlan', $project) ?? false,
-            // Fragebögen and Galerien (G-05 in P3) each append a line here on
-            // the sprint they land. Zahlungen (M-03) does not: mockup
+            canManageForms: $user?->can('manageForms', $project) ?? false,
+            // Galerien (G-05, already in P3) appends a line here on the
+            // sprint it lands. Zahlungen (M-03) does not: mockup
             // 04-auftrag's own comment keeps it and Aufgaben as "previews,
             // compressed into the Übersicht tab rather than built as full
             // tab panels" (mockups/_shared/admin-extra.css) — so it lives on
@@ -81,16 +83,15 @@ class ProjectHeaderData extends Data
             //
             // Q-02 landed the quote half of "Angebot & Vertrag" under one
             // combined tab; M-01 splits Vertrag into its own tab now that it
-            // has a screen of its own.
-            //
-            // E-06's Kommunikation sits between Shootings and Angebot, the
-            // same relative position mockup 04-auftrag's PROJECT_TABS gives
-            // it ahead of the still-unbuilt Fragebögen and combined
-            // "Angebot & Vertrag" slots.
+            // has a screen of its own. E-06's Kommunikation and E-02's
+            // Fragebögen both sit between Shootings and Angebot, matching
+            // mockup 04's own tab order (mockups/_shared/layout.js's
+            // PROJECT_TABS).
             tabs: [
                 ['key' => 'overview', 'label' => 'Übersicht', 'href' => "/auftraege/{$project->public_id}"],
                 ['key' => 'shoots', 'label' => 'Shootings', 'href' => "/auftraege/{$project->public_id}/shootings"],
                 ['key' => 'messages', 'label' => 'Kommunikation', 'href' => "/auftraege/{$project->public_id}/nachrichten"],
+                ['key' => 'forms', 'label' => 'Fragebögen', 'href' => "/auftraege/{$project->public_id}/frageboegen"],
                 ['key' => 'quotes', 'label' => 'Angebot', 'href' => "/auftraege/{$project->public_id}/angebote"],
                 ['key' => 'contract', 'label' => 'Vertrag', 'href' => "/auftraege/{$project->public_id}/vertrag"],
             ],
