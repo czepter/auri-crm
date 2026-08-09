@@ -8,6 +8,7 @@ use App\Contracts\Models\Contract;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
 use App\Enums\Capability;
+use App\Engagement\Models\Thread;
 use App\Models\User;
 use App\Quotes\Models\Quote;
 use Database\Factories\Crm\ProjectFactory;
@@ -116,6 +117,22 @@ class Project extends Model
     public function quotes(): HasMany
     {
         return $this->hasMany(Quote::class)->latest();
+    }
+
+    /**
+     * E-06's conversations, newest first. The Kommunikation tab and the
+     * portal's own thread screen both read latestThread() below rather than
+     * this whole list — there is no screen yet that shows more than one.
+     */
+    public function threads(): HasMany
+    {
+        return $this->hasMany(Thread::class)->latest();
+    }
+
+    /** The one a screen shows: the most recently started conversation. */
+    public function latestThread(): HasOne
+    {
+        return $this->hasOne(Thread::class)->latestOfMany();
     }
 
     /**

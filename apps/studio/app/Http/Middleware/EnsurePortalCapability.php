@@ -26,6 +26,7 @@ class EnsurePortalCapability
             'accept_quotes' => $settings->acceptQuotesEnabled(),
             'sign_contracts' => $settings->signContractsEnabled(),
             'payment_status' => $settings->paymentStatusEnabled(),
+            'messaging' => $settings->messagingEnabled(),
             default => throw new InvalidArgumentException("Unknown portal capability \"{$capability}\"."),
         };
 

@@ -486,7 +486,7 @@ class StudioSettingsResolver
         return $this->row()->portal_payment_status_enabled;
     }
 
-    /** Gates a message thread once E-06 exists. Nothing reads this yet. */
+    /** Gates E-06's message thread in full — see EnsurePortalCapability's own note. */
     public function messagingEnabled(): bool
     {
         return $this->row()->portal_messaging_enabled;

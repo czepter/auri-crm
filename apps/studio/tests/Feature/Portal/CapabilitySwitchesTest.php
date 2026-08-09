@@ -182,6 +182,49 @@ it('hides the accept-quote affordance on the quote screen while the switch is of
     expect($props['canAccept'])->toBeFalse();
 });
 
+it('404s the messages route the same way a route that does not exist would, while the switch is off', function () {
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $contact = Contact::factory()->create();
+    $project->attachContact($contact, ProjectContactRole::Primary);
+
+    $missing = $this->actingAs($contact, 'portal')->get('/this-route-does-not-exist-xyz');
+
+    $get = $this->actingAs($contact, 'portal')->get("/projekte/{$project->public_id}/nachrichten");
+    $post = $this->post("/projekte/{$project->public_id}/nachrichten", ['subject' => 'Thema', 'body' => 'Hallo?']);
+
+    $get->assertNotFound();
+    $post->assertNotFound();
+    expect($get->status())->toBe($missing->status());
+    expect(App\Engagement\Models\Thread::count())->toBe(0);
+});
+
+it('hides the messages link on the project overview while the switch is off', function () {
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $contact = Contact::factory()->create();
+    $project->attachContact($contact, ProjectContactRole::Primary);
+
+    $props = $this->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect($props['project']['messagingEnabled'])->toBeFalse();
+});
+
+it('lets a client start a thread once the studio switches messaging on', function () {
+    StudioSettings::query()->update(['portal_messaging_enabled' => true]);
+
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $contact = Contact::factory()->create();
+    $project->attachContact($contact, ProjectContactRole::Primary);
+
+    $this->actingAs($contact, 'portal')
+        ->post("/projekte/{$project->public_id}/nachrichten", ['subject' => 'Thema', 'body' => 'Hallo!'])
+        ->assertRedirect();
+
+    expect(App\Engagement\Models\Thread::where('project_id', $project->id)->count())->toBe(1);
+});
+
 it('accepts once the studio switches accept-quotes on', function () {
     StudioSettings::query()->update(['portal_accept_quotes_enabled' => true]);
 

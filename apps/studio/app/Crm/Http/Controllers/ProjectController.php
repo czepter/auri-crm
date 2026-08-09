@@ -12,6 +12,7 @@ use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\CrewRole;
 use App\Crm\Models\Project;
 use App\Data\StaffProfileData;
+use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Payments\Data\PaymentPlanData;
@@ -88,6 +89,23 @@ class ProjectController extends Controller
             'packages' => Package::active()->orderBy('name')->get()
                 ->map(fn (Package $package) => ['value' => $package->public_id, 'label' => $package->name])
                 ->all(),
+        ]);
+    }
+
+    /**
+     * E-06's Kommunikation tab. Always the project's latest thread — there is
+     * no screen yet that lists more than one, and no admin action starts a
+     * new one; only the client does, from the portal (StartThread).
+     */
+    public function messages(Project $project): Response
+    {
+        $this->authorize('view', $project);
+
+        $thread = $project->latestThread()->with('messages.contact', 'messages.author')->first();
+
+        return Inertia::render('Projects/Messages', [
+            'header' => $this->header($project),
+            'thread' => $thread === null ? null : ThreadData::fromModel($thread),
         ]);
     }
 

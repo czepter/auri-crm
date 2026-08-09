@@ -43,6 +43,14 @@ enum Capability: string
 
     case ManageNotes = 'manage_notes';
 
+    /**
+     * Reply on a project's Thread (E-06). Ordinary studio work, the same
+     * shape as ManageNotes — the client started the conversation, and
+     * whoever may already write the studio's own notes on this project may
+     * also answer them.
+     */
+    case ManageMessages = 'manage_messages';
+
     /** Invite staff and reach the studio's own settings. */
     case ManageStaff = 'manage_staff';
 
