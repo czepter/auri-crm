@@ -15,6 +15,8 @@ class TaskController extends Controller
 {
     public function store(Request $request, Project $project): RedirectResponse
     {
+        $this->authorize('manageTasks', $project);
+
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'audience' => ['required', Rule::enum(TaskAudience::class)],
@@ -40,6 +42,8 @@ class TaskController extends Controller
      */
     public function complete(Task $task): RedirectResponse
     {
+        $this->authorize('update', $task);
+
         $done = ! $task->isDone();
 
         $task->forceFill([
@@ -59,6 +63,8 @@ class TaskController extends Controller
 
     public function destroy(Task $task): RedirectResponse
     {
+        $this->authorize('update', $task);
+
         $task->delete();
 
         return back();

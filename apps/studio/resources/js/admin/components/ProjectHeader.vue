@@ -34,7 +34,7 @@ function book() {
       <h1>{{ header.names }}</h1>
     </div>
 
-    <button v-if="!header.isBooked" class="btn" type="button" @click="book">
+    <button v-if="!header.isBooked && header.canBook" class="btn" type="button" @click="book">
       <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" /></svg>
       {{ $t('project.book') }}
     </button>

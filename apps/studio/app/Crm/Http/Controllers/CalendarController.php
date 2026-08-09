@@ -3,6 +3,7 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Crm\Data\ShootData;
+use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\ShootCalendar;
 use App\Http\Controllers\Controller;
@@ -21,6 +22,9 @@ class CalendarController extends Controller
 
         $shoots = Shoot::query()
             ->with(['project', 'crew.user'])
+            // A crew role's calendar is the days they are on, not the studio's
+            // whole diary.
+            ->whereIn('shoots.project_id', Project::query()->visibleTo($user)->select('projects.id'))
             ->uncancelled()
             ->whereNotNull('date')
             ->whereDate('date', '>=', now()->startOfDay())

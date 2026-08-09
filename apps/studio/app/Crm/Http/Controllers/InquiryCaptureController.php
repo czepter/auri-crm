@@ -8,6 +8,7 @@ use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\HasLabel;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\ProjectType;
+use App\Crm\Models\Lead;
 use App\Http\Controllers\Controller;
 use BackedEnum;
 use Illuminate\Http\RedirectResponse;
@@ -18,6 +19,8 @@ class InquiryCaptureController extends Controller
 {
     public function create(): Response
     {
+        $this->authorize('create', Lead::class);
+
         return Inertia::render('Leads/Create', [
             'types' => self::options(ProjectType::cases()),
             'sources' => self::options(LeadSource::cases()),
@@ -27,6 +30,8 @@ class InquiryCaptureController extends Controller
 
     public function store(CaptureInquiryData $data, CaptureInquiry $capture): RedirectResponse
     {
+        $this->authorize('create', Lead::class);
+
         $capture($data, auth('staff')->user());
 
         return redirect('/anfragen');
