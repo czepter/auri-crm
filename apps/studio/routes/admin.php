@@ -11,10 +11,19 @@ use App\Crm\Http\Controllers\LeadStageController;
 use App\Crm\Http\Controllers\ProjectController;
 use App\Crm\Http\Controllers\ShootController;
 use App\Http\Controllers\Staff\DashboardController;
+use App\Http\Controllers\Staff\DevLoginController;
 use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
 use App\Http\Controllers\Staff\SessionController;
 use Illuminate\Support\Facades\Route;
+
+// A full authentication bypass for local inspection — no password, no MFA
+// challenge. Registered only here, so in every other environment the URL has
+// no controller behind it at all. DevLoginController aborts on the same
+// condition, and the login page hides its button on it. See that class.
+if (app()->environment('local')) {
+    Route::post('/dev-login', DevLoginController::class)->name('dev.login');
+}
 
 // Staff surface. Session-authenticated, Inertia-rendered, never public.
 Route::middleware('guest:staff')->group(function () {
