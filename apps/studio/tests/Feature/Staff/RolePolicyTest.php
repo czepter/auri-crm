@@ -223,6 +223,14 @@ it('tells the sidebar only what this role may reach', function () {
         ->toContain('manage_tasks');
 });
 
+it('opens the package catalog to every staff role', function (StaffRole $role) {
+    // Defining or retiring an offering is ordinary studio work and it is
+    // reversible — the same shape as the funnel. AuditLogger records who
+    // changed a package, which is the accountability a gate would only
+    // have prevented being asked for.
+    $this->actingAs(staff($role), 'staff')->get('/pakete')->assertOk();
+})->with(StaffRole::cases());
+
 it('gives every role a capability set that is a subset of the owner', function () {
     // A role that could do something the owner cannot would be a hole in the
     // model rather than a feature.

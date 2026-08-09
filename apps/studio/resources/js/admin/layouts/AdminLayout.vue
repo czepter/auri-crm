@@ -49,6 +49,13 @@ const items = computed(() => [
     icon: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M16.5 5.5a3.2 3.2 0 010 5.6M17.5 14.8c2 .7 3.5 2.6 3.5 5.2"/>',
   },
   {
+    key: 'pakete',
+    label: 'Pakete',
+    href: '/pakete',
+    needs: 'manage_packages',
+    icon: '<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
+  },
+  {
     key: 'team',
     label: 'Team',
     href: '/team',

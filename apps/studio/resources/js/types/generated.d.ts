@@ -1,4 +1,23 @@
 declare namespace App {
+namespace Catalog {
+namespace Data {
+export type PackageData = {
+id: string,
+name: string,
+description: string | null,
+isActive: boolean,
+itemCount: number,
+items: App.Catalog.Data.PackageItemData[],
+};
+export type PackageItemData = {
+id: string,
+title: string,
+description: string | null,
+quantity: number,
+unitPrice: number | null,
+};
+}
+}
 namespace Crm {
 namespace Data {
 export type ContactSuggestionData = {
@@ -150,7 +169,7 @@ mfaConfirmed: boolean,
 };
 }
 namespace Enums {
-export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_staff';
+export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_staff' | 'manage_packages';
 export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' | 'assistant';
 }
 }
