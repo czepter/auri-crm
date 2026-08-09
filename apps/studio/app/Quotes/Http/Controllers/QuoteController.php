@@ -6,6 +6,7 @@ use App\Catalog\Models\Package;
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
 use App\Quotes\Actions\SeedQuoteFromPackage;
+use App\Quotes\Actions\SendQuote;
 use App\Quotes\Models\Quote;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
@@ -107,6 +108,20 @@ class QuoteController extends Controller
             actor: auth('staff')->user(),
             subject: $quote->public_id,
         );
+
+        return back();
+    }
+
+    /**
+     * Q-06's state change: allocates the number, snapshots the VAT and the
+     * already-computed amounts, and sends the client mail — all of
+     * SendQuote::__invoke(), audit logging included, so nothing repeats here.
+     */
+    public function send(Quote $quote, SendQuote $send): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+
+        $send($quote, auth('staff')->user());
 
         return back();
     }

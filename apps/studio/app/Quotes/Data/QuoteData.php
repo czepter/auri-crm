@@ -12,10 +12,13 @@ class QuoteData extends Data
     /** @param list<QuoteItemData> $items */
     public function __construct(
         public string $id,
+        public ?string $predecessorId,
         public string $status,
         public string $statusLabel,
         public string $currency,
         public ?string $validUntil,
+        public ?string $number,
+        public ?string $sentAt,
         public int $total,
         public ?string $discountType,
         public ?int $discountValue,
@@ -37,10 +40,16 @@ class QuoteData extends Data
     {
         return new self(
             id: $quote->public_id,
+            // The predecessor is a Quote row too, referenced here the same
+            // way every other cross-model FK this Data layer exposes is —
+            // by public_id, never the raw predecessor_id column.
+            predecessorId: $quote->predecessor?->public_id,
             status: $quote->status->value,
             statusLabel: $quote->status->label(),
             currency: $quote->currency,
             validUntil: $quote->valid_until?->format('Y-m-d'),
+            number: $quote->number,
+            sentAt: $quote->sent_at?->toIso8601String(),
             total: $quote->total,
             discountType: $quote->discount_type?->value,
             discountValue: $quote->discount_value,
