@@ -20,38 +20,27 @@ function advance() {
 </script>
 
 <template>
-  <article class="group rounded-lg border p-3 transition hover:border-foreground/30">
-    <p class="text-[11px] uppercase tracking-wide text-muted-foreground">{{ card.type }}</p>
-    <h3 class="text-sm font-medium">
-      <!-- The card's id is the project's, so the board is the way into the
-           project screen rather than a dead end beside it. -->
-      <Link :href="`/auftraege/${card.id}`" class="underline-offset-2 hover:underline">
-        {{ card.names }}
-      </Link>
-    </h3>
+  <!-- The card's id is the project's, so the board is the way into the project
+       screen rather than a dead end beside it. -->
+  <Link class="card" :href="`/auftraege/${card.id}`">
+    <div class="kick">{{ card.type }}</div>
+    <h3 class="who">{{ card.names }}</h3>
 
-    <div class="mt-2 space-y-0.5 text-xs text-muted-foreground">
-      <p class="tabular-nums">
+    <div class="meta">
+      <span class="d">
         {{ dateLabel ?? $t('board.openDate') }}
         <template v-if="dateLabel"> · {{ $t('board.shootCount', card.shootCount) }}</template>
-      </p>
-      <p v-if="card.venue">{{ card.venue }}</p>
-      <p>{{ card.source }}</p>
+      </span>
+      <span v-if="card.venue" class="v">{{ card.venue }}</span>
+      <span class="q">{{ card.source }}</span>
     </div>
 
-    <p
-      v-for="conflict in card.conflicts"
-      :key="conflict.projectId"
-      class="mt-2 rounded border border-destructive/30 bg-destructive/5 px-2 py-1 text-xs"
-    >
+    <div v-for="conflict in card.conflicts" :key="conflict.projectId" class="flag">
       {{ $t('board.conflict', { project: conflict.projectName }) }}
-    </p>
+    </div>
 
-    <div class="mt-3 flex items-center justify-between">
-      <span
-        class="text-xs tabular-nums"
-        :class="stale ? 'text-destructive' : 'text-muted-foreground'"
-      >
+    <div class="foot">
+      <span class="age" :class="{ warn: stale }">
         {{
           card.daysInStage === 0
             ? $t('board.today')
@@ -60,17 +49,16 @@ function advance() {
               : $t('board.daysInStage', card.daysInStage)
         }}
       </span>
-
-      <!-- Hover only, per the clickdummy's card anatomy: the stage-advance
-           control does not sit on every card. -->
-      <button
-        v-if="nextStage"
-        type="button"
-        class="text-xs underline opacity-0 transition group-hover:opacity-100 focus:opacity-100"
-        @click="advance"
-      >
-        {{ $t('board.advance') }}
-      </button>
     </div>
-  </article>
+
+    <!-- Hover only, per the clickdummy's card anatomy: the stage-advance
+         control does not sit on every card. -->
+    <button
+      v-if="nextStage"
+      type="button"
+      class="go"
+      :aria-label="$t('board.advance')"
+      @click.prevent.stop="advance"
+    />
+  </Link>
 </template>

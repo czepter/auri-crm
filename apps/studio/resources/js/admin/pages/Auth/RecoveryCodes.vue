@@ -1,25 +1,35 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3'
-import { Button } from '@/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
 
 defineProps<{ codes: string[] }>()
 </script>
 
 <template>
-  <main class="flex min-h-screen items-center justify-center p-6">
-    <Card class="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>{{ $t('auth.recoveryTitle') }}</CardTitle>
-        <CardDescription>{{ $t('auth.recoveryHint') }}</CardDescription>
-      </CardHeader>
-      <CardContent class="space-y-4">
-        <ul class="grid grid-cols-2 gap-2 rounded-md bg-muted p-3 font-mono text-sm">
-          <li v-for="code in codes" :key="code">{{ code }}</li>
-        </ul>
+  <div class="authwrap">
+    <div class="authcard" style="max-width: 420px">
+      <span class="brand">Nordlicht</span>
+      <h1>{{ $t('auth.recoveryTitle') }}</h1>
+      <p class="hint" style="margin-bottom: var(--s5)">{{ $t('auth.recoveryHint') }}</p>
 
-        <Button class="w-full" @click="router.visit('/')">{{ $t('auth.recoveryContinue') }}</Button>
-      </CardContent>
-    </Card>
-  </main>
+      <ul
+        class="panel"
+        style="
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: var(--s2) var(--s4);
+          padding: var(--s4);
+          margin: 0 0 var(--s5);
+          list-style: none;
+          font-family: ui-monospace, monospace;
+          font-size: 13px;
+        "
+      >
+        <li v-for="code in codes" :key="code">{{ code }}</li>
+      </ul>
+
+      <button class="btn" type="button" style="width: 100%; justify-content: center" @click="router.visit('/')">
+        {{ $t('auth.recoveryContinue') }}
+      </button>
+    </div>
+  </div>
 </template>

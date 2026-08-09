@@ -2,11 +2,6 @@
 import { useForm } from '@inertiajs/vue3'
 import { toDataURL } from 'qrcode'
 import { ref, watchEffect } from 'vue'
-import { Alert, AlertDescription } from '@/ui/alert'
-import { Button } from '@/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
-import { Input } from '@/ui/input'
-import { Label } from '@/ui/label'
 
 const props = defineProps<{ secret: string; otpauthUri: string }>()
 
@@ -26,50 +21,54 @@ function submit() {
 </script>
 
 <template>
-  <main class="flex min-h-screen items-center justify-center p-6">
-    <Card class="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>{{ $t('auth.mfaEnrollTitle') }}</CardTitle>
-        <CardDescription>{{ $t('auth.mfaEnrollRequired') }}</CardDescription>
-      </CardHeader>
-      <CardContent class="space-y-4">
-        <p class="text-sm text-muted-foreground">{{ $t('auth.mfaEnrollHint') }}</p>
+  <div class="authwrap">
+    <div class="authcard" style="max-width: 400px">
+      <span class="brand">Nordlicht</span>
+      <h1>{{ $t('auth.mfaEnrollTitle') }}</h1>
+      <p class="hint">{{ $t('auth.mfaEnrollRequired') }}</p>
+      <p class="hint" style="margin: var(--s3) 0 var(--s4)">{{ $t('auth.mfaEnrollHint') }}</p>
 
-        <img
-          v-if="qrCodeDataUrl"
-          :src="qrCodeDataUrl"
-          :alt="$t('auth.mfaQrAlt')"
-          class="mx-auto h-[220px] w-[220px] rounded-md border"
-        />
+      <img
+        v-if="qrCodeDataUrl"
+        :src="qrCodeDataUrl"
+        :alt="$t('auth.mfaQrAlt')"
+        style="display: block; margin: 0 auto var(--s4); width: 220px; height: 220px; border: 1px solid var(--line); border-radius: var(--r)"
+      />
 
-        <details class="text-sm text-muted-foreground">
-          <summary class="cursor-pointer underline underline-offset-4">
-            {{ $t('auth.mfaSecretLabel') }}
-          </summary>
-          <code class="mt-2 block rounded-md bg-muted px-3 py-2 font-mono text-sm tracking-widest">
-            {{ secret }}
-          </code>
-        </details>
+      <details style="margin-bottom: var(--s5)">
+        <summary class="txtbtn" style="padding: 0; cursor: pointer">
+          {{ $t('auth.mfaSecretLabel') }}
+        </summary>
+        <code
+          class="panel"
+          style="display: block; margin-top: var(--s2); padding: 9px 11px; font-family: ui-monospace, monospace; font-size: 13px; letter-spacing: .12em"
+        >
+          {{ secret }}
+        </code>
+      </details>
 
-        <form class="space-y-4" @submit.prevent="submit">
-          <Alert v-if="form.errors.code" variant="destructive">
-            <AlertDescription>{{ form.errors.code }}</AlertDescription>
-          </Alert>
+      <form @submit.prevent="submit">
+        <p v-if="form.errors.code" class="flag" style="margin-bottom: var(--s4)">
+          {{ form.errors.code }}
+        </p>
 
-          <div class="space-y-2">
-            <Label for="code">{{ $t('auth.mfaCode') }}</Label>
-            <Input
-              id="code"
-              v-model="form.code"
-              inputmode="numeric"
-              autocomplete="one-time-code"
-              required
-            />
-          </div>
+        <div class="fld grp">
+          <label for="code">{{ $t('auth.mfaCode') }}</label>
+          <input
+            id="code"
+            v-model="form.code"
+            class="inp num"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            required
+          />
+        </div>
 
-          <Button type="submit" class="w-full" :disabled="form.processing">{{ $t('auth.mfaConfirm') }}</Button>
-        </form>
-      </CardContent>
-    </Card>
-  </main>
+        <button class="btn" type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
+          {{ $t('auth.mfaConfirm') }}
+        </button>
+      </form>
+    </div>
+  </div>
 </template>

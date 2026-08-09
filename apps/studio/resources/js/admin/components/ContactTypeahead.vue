@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { Input } from '@/ui/input'
+import { computed, ref, watch } from 'vue'
 
 // The ordering enforced here IS the anti-duplicate mechanism, not a
 // convenience: portal access in P2 hangs off Contact, so a repeat client must
@@ -13,6 +12,17 @@ const emit = defineEmits<{ createNew: [term: string] }>()
 const term = ref('')
 const results = ref<App.Crm.Data.ContactSuggestionData[]>([])
 const searched = ref(false)
+
+const initials = computed(() =>
+  (model.value?.name ?? '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase(),
+)
 
 let timer: ReturnType<typeof setTimeout> | undefined
 
@@ -41,48 +51,48 @@ function choose(contact: App.Crm.Data.ContactSuggestionData) {
 </script>
 
 <template>
-  <div v-if="model" class="flex items-center gap-3 rounded-md border p-3">
-    <div class="flex-1">
-      <div class="text-sm font-medium">
+  <div v-if="model" class="picked">
+    <span class="av">{{ initials }}</span>
+    <div>
+      <div class="nm">
         {{ model.name }}
-        <span v-if="model.projectCount" class="ml-1 text-xs text-muted-foreground">
+        <span v-if="model.projectCount" class="rp">
           {{ $t('leads.contactProjects', { count: model.projectCount + 1 }) }}
         </span>
       </div>
-      <div class="text-xs text-muted-foreground">
-        {{ [model.email, model.phone].filter(Boolean).join(' · ') }}
-      </div>
+      <div class="em">{{ [model.email, model.phone].filter(Boolean).join(' · ') }}</div>
     </div>
-    <button type="button" class="text-sm underline" @click="model = null">
+    <button type="button" class="chg" @click="model = null">
       {{ $t('leads.contactChange') }}
     </button>
   </div>
 
   <div v-else>
-    <Input v-model="term" type="search" :placeholder="$t('common.search')" />
+    <div class="ta">
+      <input v-model="term" class="inp" type="search" :placeholder="$t('common.search')" style="border: none" />
 
-    <ul v-if="searched" class="mt-1 divide-y rounded-md border">
-      <li v-for="contact in results" :key="contact.id">
+      <div v-if="searched" class="list">
         <button
+          v-for="contact in results"
+          :key="contact.id"
           type="button"
-          class="w-full px-3 py-2 text-left text-sm hover:bg-muted"
+          class="row"
           @click="choose(contact)"
         >
-          <span class="font-medium">{{ contact.name }}</span>
-          <span class="ml-2 text-xs text-muted-foreground">{{ contact.email }}</span>
+          <span class="av">{{ contact.name.slice(0, 1).toUpperCase() }}</span>
+          <span>
+            <span class="nm">{{ contact.name }}</span>
+            <span class="em">{{ contact.email }}</span>
+          </span>
         </button>
-      </li>
-      <li>
-        <button
-          type="button"
-          class="w-full px-3 py-2 text-left text-sm hover:bg-muted"
-          @click="emit('createNew', term)"
-        >
-          {{ $t('leads.contactCreate', { term }) }}
-        </button>
-      </li>
-    </ul>
 
-    <p class="mt-1 text-xs text-muted-foreground">{{ $t('leads.contactSearchHint') }}</p>
+        <button type="button" class="row new" @click="emit('createNew', term)">
+          <span class="av plus">+</span>
+          <span class="nm">{{ $t('leads.contactCreate', { term }) }}</span>
+        </button>
+      </div>
+    </div>
+
+    <p class="hint" style="margin-top: 6px">{{ $t('leads.contactSearchHint') }}</p>
   </div>
 </template>

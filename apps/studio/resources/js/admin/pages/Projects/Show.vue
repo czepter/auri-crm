@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { router, useForm } from '@inertiajs/vue3'
+import { Link, router, useForm } from '@inertiajs/vue3'
+import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectHeader from '@/admin/components/ProjectHeader.vue'
 import CrewStack from '@/admin/components/CrewStack.vue'
-import { Button } from '@/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/ui/card'
+import { chipClass, dayAndMonth, weekday } from '@/admin/lib/shoots'
 
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
@@ -15,10 +15,6 @@ const props = defineProps<{
 const composer = useForm({ body: '' })
 const editing = ref<string | null>(null)
 const draft = ref('')
-
-function shortDate(date: string | null) {
-  return date ? new Date(date).toLocaleDateString('de-DE') : null
-}
 
 function write() {
   composer.post(`/auftraege/${props.header.id}/notizen`, {
@@ -45,88 +41,130 @@ function remove(id: string) {
 </script>
 
 <template>
-  <main class="mx-auto max-w-4xl space-y-6 p-6">
+  <AdminLayout active="anfragen">
     <ProjectHeader :header="header" active="overview" />
 
-    <!-- The overview is self-sufficient; the tabs hold depth only. Shootings
-         read here and are edited on their own tab. -->
-    <Card>
-      <CardHeader><CardTitle class="text-sm font-medium">{{ $t('project.shoots') }}</CardTitle></CardHeader>
-      <CardContent class="space-y-2">
-        <div
-          v-for="shoot in shoots"
-          :key="shoot.id"
-          class="flex items-center gap-3 border-t py-2 text-sm first:border-t-0"
-          :class="shoot.isCancelled && 'text-muted-foreground line-through'"
-        >
-          <span class="w-20 shrink-0 tabular-nums">
-            {{ shortDate(shoot.date) ?? $t('board.openDate') }}
-          </span>
-          <span class="min-w-0 flex-1 truncate">
-            {{ shoot.label ?? shoot.kind }}
-            <span v-if="shoot.isPrimary" class="text-xs text-muted-foreground">
-              · {{ $t('project.primary') }}
-            </span>
-          </span>
-          <CrewStack :crew="shoot.crew" />
-          <span class="shrink-0 rounded border px-1.5 py-0.5 text-xs">{{ shoot.statusLabel }}</span>
-        </div>
-
-        <p v-if="!shoots.length" class="text-sm text-muted-foreground">
-          {{ $t('project.noShoots') }}
-        </p>
-      </CardContent>
-    </Card>
-
-    <!-- Its own model, never a flag on a client-visible message. Nothing here
-         has a portal route, and nothing here may ever acquire one. -->
-    <Card>
-      <CardHeader class="flex-row items-center justify-between">
-        <CardTitle class="text-sm font-medium">{{ $t('project.notes') }}</CardTitle>
-        <span class="rounded border px-1.5 py-0.5 text-xs text-muted-foreground">
-          {{ $t('project.notesInternalOnly') }}
-        </span>
-      </CardHeader>
-      <CardContent class="space-y-4">
-        <article v-for="note in notes" :key="note.id" class="space-y-1 border-t pt-3 first:border-t-0 first:pt-0">
-          <div class="flex items-baseline gap-2 text-xs text-muted-foreground">
-            <b class="font-medium text-foreground">{{ note.author }}</b>
-            <span class="tabular-nums">{{ shortDate(note.writtenAt) }}</span>
-            <button type="button" class="ml-auto underline" @click="edit(note)">
-              {{ $t('project.noteEdit') }}
-            </button>
-            <button type="button" class="underline" @click="remove(note.id)">
-              {{ $t('project.noteDelete') }}
-            </button>
+    <!-- The overview is self-sufficient: narrative left, facts right. Tabs
+         hold depth only. -->
+    <div class="split">
+      <div class="stackcol">
+        <div class="card static">
+          <div class="cardhead">
+            <span class="kick">{{ $t('project.shoots') }}</span>
+            <span class="chip next">{{ $t('board.shootCount', header.shootCount) }}</span>
           </div>
 
-          <textarea
-            v-if="editing === note.id"
-            v-model="draft"
-            rows="3"
-            class="w-full rounded-md border p-2 text-sm"
-            @keydown.escape="editing = null"
-          />
-          <p v-else class="text-sm">{{ note.body }}</p>
+          <div class="sess">
+            <div
+              v-for="shoot in shoots"
+              :key="shoot.id"
+              class="srow"
+              :class="{ cancelled: shoot.isCancelled }"
+            >
+              <div class="stop">
+                <div class="sdate">
+                  {{ dayAndMonth(shoot.date) ?? '—' }}
+                  <em>{{ weekday(shoot.date) ?? $t('board.openDate') }}</em>
+                </div>
+                <div class="sname">
+                  {{ shoot.label ?? shoot.kind }}
+                  <span v-if="shoot.isPrimary" class="prim">{{ $t('project.primary') }}</span>
+                  <span>{{ [shoot.venue, shoot.callTime && `${shoot.callTime}–${shoot.endTime ?? ''}`].filter(Boolean).join(' · ') || '—' }}</span>
+                </div>
+                <CrewStack :crew="shoot.crew" />
+                <span class="chip" :class="chipClass(shoot, header.position.value)">
+                  {{ shoot.statusLabel }}
+                </span>
+              </div>
+            </div>
 
-          <Button v-if="editing === note.id" size="sm" @click="save(note.id)">
-            {{ $t('common.save') }}
-          </Button>
-        </article>
+            <p v-if="!shoots.length" class="hint">{{ $t('project.noShoots') }}</p>
+          </div>
 
-        <form class="space-y-2" @submit.prevent="write">
-          <textarea
-            v-model="composer.body"
-            rows="2"
-            class="w-full rounded-md border p-2 text-sm"
-            :placeholder="$t('project.notePlaceholder')"
-          />
-          <p v-if="composer.errors.body" class="text-xs text-destructive">
-            {{ composer.errors.body }}
-          </p>
-          <Button type="submit" :disabled="composer.processing">{{ $t('common.save') }}</Button>
-        </form>
-      </CardContent>
-    </Card>
-  </main>
+          <Link class="blkfoot" :href="`/auftraege/${header.id}/shootings`">
+            {{ $t('project.toShoots') }}
+          </Link>
+        </div>
+
+        <!-- Its own model, never a flag on a client-visible message. Nothing
+             here has a portal route, and nothing here may acquire one. -->
+        <div class="card static">
+          <div class="cardhead">
+            <span class="kick">{{ $t('project.notes') }}</span>
+            <span class="chip next">{{ $t('project.notesInternalOnly') }}</span>
+          </div>
+
+          <div v-for="note in notes" :key="note.id" class="note">
+            <div class="head">
+              <b>{{ note.author }}</b>
+              <span>{{ new Date(note.writtenAt).toLocaleDateString('de-DE') }}</span>
+              <span class="acts">
+                <button type="button" class="abtn" @click="edit(note)">
+                  {{ $t('project.noteEdit') }}
+                </button>
+                <button type="button" class="abtn" @click="remove(note.id)">
+                  {{ $t('project.noteDelete') }}
+                </button>
+              </span>
+            </div>
+
+            <textarea
+              v-if="editing === note.id"
+              v-model="draft"
+              class="inp"
+              rows="3"
+              @keydown.escape="editing = null"
+            />
+            <p v-else>{{ note.body }}</p>
+
+            <div v-if="editing === note.id" class="formfoot">
+              <button class="btn" type="button" @click="save(note.id)">{{ $t('common.save') }}</button>
+            </div>
+          </div>
+
+          <form class="composer" @submit.prevent="write">
+            <textarea
+              v-model="composer.body"
+              class="inp"
+              rows="2"
+              :placeholder="$t('project.notePlaceholder')"
+            />
+            <p v-if="composer.errors.body" class="err">{{ composer.errors.body }}</p>
+            <div class="formfoot" style="margin-top: 0">
+              <button class="btn" type="submit" :disabled="composer.processing">
+                {{ $t('common.save') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ---------------- right: facts ---------------- -->
+      <div class="stackcol">
+        <div class="card static">
+          <div class="cardhead"><span class="kick">{{ $t('project.booking') }}</span></div>
+          <div class="kv">
+            <div class="kvrow">
+              <span>{{ $t('project.type') }}</span><span>{{ header.type }}</span>
+            </div>
+            <div class="kvrow">
+              <span>{{ $t('project.mainDateLabel') }}</span>
+              <span :class="{ tbd: !header.primaryDate }">
+                {{ header.primaryDate ? new Date(header.primaryDate).toLocaleDateString('de-DE') : $t('board.openDate') }}
+              </span>
+            </div>
+            <div class="kvrow">
+              <span>{{ $t('project.position') }}</span><span><b>{{ header.position.label }}</b></span>
+            </div>
+            <div class="kvrow">
+              <span>{{ $t('project.bookedState') }}</span>
+              <span :class="{ tbd: !header.isBooked }">
+                {{ header.isBooked ? $t('project.booked') : $t('project.notBooked') }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </AdminLayout>
 </template>

@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { router, usePage } from '@inertiajs/vue3'
 import { computed } from 'vue'
-import { Button } from '@/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/ui/card'
+import { Link, usePage } from '@inertiajs/vue3'
+import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 
 defineProps<{ leads: number; jobs: number }>()
 
@@ -11,23 +10,26 @@ const user = computed(() => usePage().props.auth.user!)
 </script>
 
 <template>
-  <main class="mx-auto max-w-4xl space-y-6 p-6">
-    <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-semibold tracking-tight">{{ $t('dashboard.title') }}</h1>
-      <Button variant="secondary" @click="router.post('/logout')">{{ $t('common.signOut') }}</Button>
+  <AdminLayout active="uebersicht">
+    <div class="hrow">
+      <div>
+        <h1>{{ $t('dashboard.title') }}</h1>
+        <div class="dsub">{{ $t('dashboard.signedInAs', { name: user.name }) }}</div>
+      </div>
     </div>
 
-    <p class="text-sm text-muted-foreground">{{ $t('dashboard.signedInAs', { name: user.name }) }}</p>
-
-    <div class="grid gap-4 sm:grid-cols-2">
-      <Card>
-        <CardHeader><CardTitle class="text-sm font-medium">{{ $t('dashboard.openLeads') }}</CardTitle></CardHeader>
-        <CardContent class="text-3xl font-semibold tabular-nums">{{ leads }}</CardContent>
-      </Card>
-      <Card>
-        <CardHeader><CardTitle class="text-sm font-medium">{{ $t('dashboard.activeJobs') }}</CardTitle></CardHeader>
-        <CardContent class="text-3xl font-semibold tabular-nums">{{ jobs }}</CardContent>
-      </Card>
+    <!-- The Übersicht fills progressively: S-01 owns its columns in sprint 4,
+         and only the numbers with a data source behind them appear now. Two
+         real counts beat four tiles where half are invented. -->
+    <div class="kpis" style="grid-template-columns: repeat(2, 1fr); max-width: 460px">
+      <Link class="kpi" href="/anfragen">
+        <b>{{ leads }}</b>
+        {{ $t('dashboard.openLeads') }}
+      </Link>
+      <div class="kpi">
+        <b>{{ jobs }}</b>
+        {{ $t('dashboard.activeJobs') }}
+      </div>
     </div>
-  </main>
+  </AdminLayout>
 </template>

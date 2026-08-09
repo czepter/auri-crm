@@ -1,10 +1,5 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
-import { Alert, AlertDescription } from '@/ui/alert'
-import { Button } from '@/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
-import { Input } from '@/ui/input'
-import { Label } from '@/ui/label'
 
 const form = useForm({ code: '' })
 
@@ -14,32 +9,34 @@ function submit() {
 </script>
 
 <template>
-  <main class="flex min-h-screen items-center justify-center p-6">
-    <Card class="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>{{ $t('auth.mfaTitle') }}</CardTitle>
-        <CardDescription>{{ $t('auth.mfaHint') }}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form class="space-y-4" @submit.prevent="submit">
-          <Alert v-if="form.errors.code" variant="destructive">
-            <AlertDescription>{{ form.errors.code }}</AlertDescription>
-          </Alert>
+  <div class="authwrap">
+    <div class="authcard">
+      <span class="brand">Nordlicht</span>
+      <h1>{{ $t('auth.mfaTitle') }}</h1>
+      <p class="hint" style="margin-bottom: var(--s5)">{{ $t('auth.mfaHint') }}</p>
 
-          <div class="space-y-2">
-            <Label for="code">{{ $t('auth.mfaCode') }}</Label>
-            <Input
-              id="code"
-              v-model="form.code"
-              inputmode="numeric"
-              autocomplete="one-time-code"
-              required
-            />
-          </div>
+      <form @submit.prevent="submit">
+        <p v-if="form.errors.code" class="flag" style="margin-bottom: var(--s4)">
+          {{ form.errors.code }}
+        </p>
 
-          <Button type="submit" class="w-full" :disabled="form.processing">{{ $t('auth.mfaConfirm') }}</Button>
-        </form>
-      </CardContent>
-    </Card>
-  </main>
+        <div class="fld grp">
+          <label for="code">{{ $t('auth.mfaCode') }}</label>
+          <input
+            id="code"
+            v-model="form.code"
+            class="inp num"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            required
+          />
+        </div>
+
+        <button class="btn" type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
+          {{ $t('auth.mfaConfirm') }}
+        </button>
+      </form>
+    </div>
+  </div>
 </template>
