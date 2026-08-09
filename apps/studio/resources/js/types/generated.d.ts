@@ -304,6 +304,11 @@ bankBic: string | null,
 vatMode: string,
 vatRate: number,
 vatNote: string | null,
+quoteValidityDays: number,
+paymentTermDays: number,
+depositPercentage: number,
+widerrufIncluded: boolean,
+widerrufText: string | null,
 };
 }
 }

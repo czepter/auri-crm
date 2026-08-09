@@ -42,5 +42,10 @@ class StudioSettingsData extends Data
         public string $vatMode,
         public int $vatRate,
         public ?string $vatNote,
+        public int $quoteValidityDays,
+        public int $paymentTermDays,
+        public int $depositPercentage,
+        public bool $widerrufIncluded,
+        public ?string $widerrufText,
     ) {}
 }

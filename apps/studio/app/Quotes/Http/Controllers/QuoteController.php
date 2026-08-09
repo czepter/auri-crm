@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Actions\SendQuote;
 use App\Quotes\Models\Quote;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ use Illuminate\Validation\Rule;
 
 class QuoteController extends Controller
 {
-    public function store(Request $request, Project $project, SeedQuoteFromPackage $seed): RedirectResponse
+    public function store(Request $request, Project $project, SeedQuoteFromPackage $seed, StudioSettingsResolver $settings): RedirectResponse
     {
         $this->authorize('manageQuotes', $project);
 
@@ -28,8 +29,16 @@ class QuoteController extends Controller
             'package' => ['nullable', 'string', Rule::exists('packages', 'public_id')->where('is_active', true)],
         ]);
 
+        // T-05's fallback: Package carries no default_validity_days column
+        // today (App\Catalog\Models\Package), so a quote with no explicit
+        // valid_until — seeded from a package or not — takes it from the
+        // tenant's own default. Read once, at creation, and never again: a
+        // later change to the setting is not this quote's concern (see
+        // StudioSettingsResolver::quoteValidityDays()).
+        $validUntil = $validated['valid_until'] ?? now()->addDays($settings->quoteValidityDays())->toDateString();
+
         $quote = $project->quotes()->create([
-            'valid_until' => $validated['valid_until'] ?? null,
+            'valid_until' => $validUntil,
         ]);
 
         if (! empty($validated['package'])) {

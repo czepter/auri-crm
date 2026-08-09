@@ -194,6 +194,56 @@ it('refuses to seed from a deactivated package', function () {
     expect($project->quotes()->count())->toBe(0);
 });
 
+// --- T-05: quote validity falls back to the tenant's document default ---
+
+describe('T-05: quote validity default', function () {
+    beforeEach(function () {
+        // Redis is shared infrastructure across the whole test run (see
+        // StudioSettingsResolver's own docblock) — flushed here for the same
+        // reason the Q-04 describe block above does.
+        Cache::store('redis')->flush();
+    });
+
+    it('takes its validity from the tenant setting when created without a package and no explicit valid_until', function () {
+        app(StudioSettingsResolver::class)->set('quote_validity_days', 21);
+        $project = Project::factory()->create();
+
+        $this->actingAs(quoteOwner(), 'staff')
+            ->post("/auftraege/{$project->public_id}/angebote", [])
+            ->assertRedirect();
+
+        $quote = $project->quotes()->sole();
+
+        expect($quote->valid_until->format('Y-m-d'))->toBe(now()->addDays(21)->format('Y-m-d'));
+    });
+
+    it('leaves an explicit valid_until alone rather than overriding it with the default', function () {
+        app(StudioSettingsResolver::class)->set('quote_validity_days', 21);
+        $project = Project::factory()->create();
+
+        $this->actingAs(quoteOwner(), 'staff')
+            ->post("/auftraege/{$project->public_id}/angebote", ['valid_until' => '2026-12-31'])
+            ->assertRedirect();
+
+        expect($project->quotes()->sole()->valid_until->format('Y-m-d'))->toBe('2026-12-31');
+    });
+
+    it('moves no existing quote\'s valid_until when the default changes afterwards', function () {
+        app(StudioSettingsResolver::class)->set('quote_validity_days', 14);
+        $project = Project::factory()->create();
+
+        $this->actingAs(quoteOwner(), 'staff')
+            ->post("/auftraege/{$project->public_id}/angebote", []);
+
+        $quote = $project->quotes()->sole();
+        $originalValidUntil = $quote->valid_until->format('Y-m-d');
+
+        app(StudioSettingsResolver::class)->set('quote_validity_days', 60);
+
+        expect($quote->fresh()->valid_until->format('Y-m-d'))->toBe($originalValidUntil);
+    });
+});
+
 it('replaces a draft quote\'s items wholesale on update, recalculates the total, and logs it', function () {
     $user = quoteOwner();
     $quote = Quote::factory()->create();
