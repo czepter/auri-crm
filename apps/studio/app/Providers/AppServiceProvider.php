@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Automation\Listeners\FireAutomationRulesForEvent;
 use App\Catalog\Models\Package;
 use App\Contracts\Events\ContractSigned;
 use App\Crm\Events\ProjectBooked;
@@ -124,6 +125,11 @@ class AppServiceProvider extends ServiceProvider
         // write — nothing gates on it yet, since delivery/download flows are
         // future stories.
         Event::listen(InstallmentPaid::class, RecomputeGalleryBalanceSettled::class);
+
+        // E-08: one wildcard subscription rather than one Event::listen()
+        // per event class — an AutomationRule's own event_class column is
+        // what names the subscription. See the listener's own docblock.
+        Event::listen('*', FireAutomationRulesForEvent::class);
 
         // The Gate resolves users from the *default* guard, which ships as
         // `web`, while every staff session lives on `staff`. Left alone, every
