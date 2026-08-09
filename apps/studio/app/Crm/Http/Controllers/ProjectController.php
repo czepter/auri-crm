@@ -102,7 +102,7 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Forms', [
             'header' => $this->header($project),
             'formInstances' => FormInstanceData::collect(
-                $project->formInstances()->with('fields')->get()
+                $project->formInstances()->with('fields.currentAnswer')->get()
             ),
             'formTemplates' => FormTemplate::active()->orderBy('name')->get()
                 ->map(fn (FormTemplate $template) => ['value' => $template->public_id, 'label' => $template->name])
