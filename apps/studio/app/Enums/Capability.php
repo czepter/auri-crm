@@ -52,4 +52,12 @@ enum Capability: string
      * the same shape as ManageLeads.
      */
     case ManagePackages = 'manage_packages';
+
+    /**
+     * Hide a project from the portal, or cut a contact's portal access off
+     * entirely. Two distinct, deliberately separate actions (A-04) sharing
+     * one capability: whoever may manage a contact's access to the studio
+     * also decides whether one of their projects is ready to show.
+     */
+    case ManagePortalAccess = 'manage_portal_access';
 }

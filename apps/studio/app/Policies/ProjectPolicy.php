@@ -59,4 +59,10 @@ class ProjectPolicy
     {
         return $user->role->allows(Capability::ManageNotes) && $this->view($user, $project);
     }
+
+    /** Flip portal_visible for this one project (A-04) — never a contact. */
+    public function manageVisibility(User $user, Project $project): bool
+    {
+        return $user->role->allows(Capability::ManagePortalAccess) && $this->view($user, $project);
+    }
 }

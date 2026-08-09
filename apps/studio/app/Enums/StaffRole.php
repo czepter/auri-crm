@@ -72,6 +72,7 @@ enum StaffRole: string
                 Capability::ManageTasks,
                 Capability::ManageNotes,
                 Capability::ManagePackages,
+                Capability::ManagePortalAccess,
             ],
 
             // Post-production: sees the work and moves it through culling,
