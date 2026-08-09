@@ -3,14 +3,17 @@
 Redis-backed, supervised by [Horizon](https://laravel.com/docs/horizon), one
 named queue per workload:
 
-| Queue     | Supervisor          | Timeout | Carries                                    |
-|-----------|----------------------|---------|---------------------------------------------|
-| `default` | `supervisor-default` | 60s     | Anything without a more specific home yet.  |
-| `mail`    | `supervisor-mail`    | 30s     | Outbound notifications and transactional mail. |
-| `render`  | `supervisor-render`  | 300s    | Document rendering (Gotenberg, M-01) and other slow external calls. |
+| Queue          | Supervisor                 | Timeout | Carries                                    |
+|----------------|-----------------------------|---------|---------------------------------------------|
+| `default`      | `supervisor-default`       | 60s     | Anything without a more specific home yet.  |
+| `mail`         | `supervisor-mail`          | 30s     | Outbound notifications and transactional mail. |
+| `render`       | `supervisor-render`        | 300s    | Document rendering (Gotenberg, M-01) and other slow external calls. |
+| `media.ingest` | `supervisor-media-ingest`  | 20s     | Deriving thumbnails/previews from an uploaded original (G-01a). |
+| `media.zip`    | `supervisor-media-zip`     | 2400s   | Building a gallery's ZIP download, streamed through the application (G-01a; G-10, #59). |
 
-Nothing dispatches onto `mail` or `render` yet — M-00 ships the runtime, not
-the work. Dispatch onto the queue that matches what the job does:
+Nothing dispatches onto `mail`, `render`, `media.ingest` or `media.zip` yet —
+each story ships the queue seam ahead of the job that will use it. Dispatch
+onto the queue that matches what the job does:
 
 ```php
 SomeJob::dispatch($thing)->onQueue('render');
@@ -23,7 +26,8 @@ has no per-queue granularity, only Horizon's supervisors do.
 ## Running it
 
 `docker compose up` starts a `worker` container running `php artisan horizon`
-alongside `php`, `postgres`, `redis` and `mailpit`. The dashboard is mounted
+alongside `php`, `postgres`, `redis`, `mailpit` and `minio` (G-01a's local
+S3-compatible service — see docs/media.md). The dashboard is mounted
 on the admin surface at `/horizon`, behind the `ManageStaff` capability (see
 `App\Providers\HorizonServiceProvider` and
 `InvitationController::authorizeStaffManagement()` for the sibling check) —
