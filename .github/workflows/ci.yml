@@ -86,6 +86,11 @@ jobs:
               - 'apps/studio/artisan'
               - 'apps/studio/.env.example'
               - 'apps/studio/resources/js/types/generated.d.ts'
+              # G-01: the committed OpenAPI document is derived from the api
+              # surface's routes, so a hand-edit here — without the route
+              # change that should have produced it — needs the same
+              # drift check a php-only change already gets below.
+              - 'packages/contracts/**'
             web: &web
               - *ci
               - 'apps/studio/resources/**'
@@ -171,6 +176,25 @@ jobs:
           php artisan typescript:transform
           git diff --exit-code -- resources/js/types/generated.d.ts \
             || { echo "Generated types are stale. Run 'php artisan typescript:transform' and commit."; exit 1; }
+      # G-01: packages/contracts/openapi.json is generated, never hand-edited
+      # — Dedoc Scramble introspects the api surface's routes directly, so
+      # regenerating it here and diffing against what's committed is the same
+      # drift check the TypeScript types get above, for the same reason: a
+      # contract nothing regenerated is a contract nobody can trust.
+      - name: Assert the OpenAPI contract is current
+        working-directory: apps/studio
+        env:
+          APP_SURFACE: api
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: studio_test
+          DB_USERNAME: studio
+          DB_PASSWORD: studio
+        run: |
+          php artisan scramble:export --path=../../packages/contracts/openapi.json
+          git diff --exit-code -- ../../packages/contracts/openapi.json \
+            || { echo "packages/contracts/openapi.json is stale. Run 'php artisan scramble:export --path=../../packages/contracts/openapi.json' in apps/studio and commit."; exit 1; }
 
   web:
     needs: changes

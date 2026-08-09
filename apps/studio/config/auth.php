@@ -1,5 +1,8 @@
 <?php
 
+use App\Crm\Models\Contact;
+use App\Models\User;
+
 return [
 
     /*
@@ -52,6 +55,17 @@ return [
             'driver' => 'session',
             'provider' => 'contacts',
         ],
+
+        // G-01. The api surface's audience: no session, no cookie — a bearer
+        // token minted on a Contact (App\Support\PersonalAccessToken), the
+        // same guest identity the portal already grants magic-link access
+        // to, read here off the Authorization header instead. No `provider`:
+        // Sanctum resolves the token holder off its own tokenable relation,
+        // not off a guard-configured model.
+        'api' => [
+            'driver' => 'sanctum',
+            'provider' => null,
+        ],
     ],
 
     /*
@@ -74,12 +88,12 @@ return [
     'providers' => [
         'contacts' => [
             'driver' => 'eloquent',
-            'model' => App\Crm\Models\Contact::class,
+            'model' => Contact::class,
         ],
 
         'users' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\User::class),
+            'model' => env('AUTH_MODEL', User::class),
         ],
 
         // 'users' => [
