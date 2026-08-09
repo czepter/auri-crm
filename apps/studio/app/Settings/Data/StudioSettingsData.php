@@ -16,5 +16,8 @@ class StudioSettingsData extends Data
     public function __construct(
         public string $id,
         public ?string $displayName,
+        public string $vatMode,
+        public int $vatRate,
+        public ?string $vatNote,
     ) {}
 }

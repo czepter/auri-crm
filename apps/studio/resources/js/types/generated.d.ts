@@ -237,6 +237,9 @@ namespace Data {
 export type StudioSettingsData = {
 id: string,
 displayName: string | null,
+vatMode: string,
+vatRate: number,
+vatNote: string | null,
 };
 }
 }
