@@ -5,6 +5,7 @@ namespace App\Crm\Http\Controllers;
 use App\Crm\Data\ContactSuggestionData;
 use App\Crm\Models\Contact;
 use App\Http\Controllers\Controller;
+use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -31,8 +32,12 @@ class ContactController extends Controller
     {
         $this->authorize('update', $contact);
 
+        $user = auth('staff')->user();
+
         return Inertia::render('Contacts/Edit', [
             'contact' => ContactSuggestionData::fromModel($contact->loadCount('projects')),
+            'portalAccessRevokedAt' => $contact->portal_access_revoked_at?->toIso8601String(),
+            'canRevokePortalAccess' => $user?->can('revokePortalAccess', $contact) ?? false,
         ]);
     }
 
@@ -57,5 +62,27 @@ class ContactController extends Controller
         $contact->update($validated);
 
         return redirect('/kontakte');
+    }
+
+    /**
+     * Cut this one contact's portal access off entirely — every unconsumed
+     * magic link and any session already open elsewhere. Never deletes the
+     * project_contacts row and never touches any other contact (A-04).
+     * Hiding a project from the portal is a separate action on
+     * ProjectController, on purpose.
+     */
+    public function revokePortalAccess(Contact $contact): RedirectResponse
+    {
+        $this->authorize('revokePortalAccess', $contact);
+
+        $contact->revokePortalAccess();
+
+        AuditLogger::record(
+            event: 'contact.portal_access_revoked',
+            actor: auth('staff')->user(),
+            subject: $contact->public_id,
+        );
+
+        return back();
     }
 }

@@ -36,6 +36,8 @@ class ProjectHeaderData extends Data
         public bool $canManageCrew,
         public bool $canManageTasks,
         public bool $canManageNotes,
+        public bool $portalVisible,
+        public bool $canManagePortalVisibility,
         public bool $canManageQuotes,
         public array $tabs,
     ) {}
@@ -60,6 +62,8 @@ class ProjectHeaderData extends Data
             canManageCrew: $user?->can('manageCrew', $project) ?? false,
             canManageTasks: $user?->can('manageTasks', $project) ?? false,
             canManageNotes: $user?->can('manageNotes', $project) ?? false,
+            portalVisible: $project->portal_visible,
+            canManagePortalVisibility: $user?->can('manageVisibility', $project) ?? false,
             canManageQuotes: $user?->can('manageQuotes', $project) ?? false,
             // Angebot and Vertrag are Q-*/M-* in P2, Zahlungen is M-03,
             // Fragebögen and Kommunikation are E-* in P4, Galerien is G-05 in
