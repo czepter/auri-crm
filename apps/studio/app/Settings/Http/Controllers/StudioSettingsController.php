@@ -11,6 +11,7 @@ use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -19,9 +20,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * The section shell T-00 mocked as screen 14. Studio-Profil — legal entity,
  * brand, bank, T-02's three fieldsets on the one route T-01 scaffolded —
  * with enough save and dirty-state plumbing already in place from that
- * story. Zahlungsdaten & USt and every group below it render as disabled
- * "bald" nav entries: AdminLayout's own sidebar already rules out a link
- * with nothing behind it, and the same call applies one level down.
+ * story. Zahlungsdaten & USt is T-03's own pane, Allgemein (timezone,
+ * locale, working days) is T-13's; every remaining group renders as a
+ * disabled "bald" nav entry: AdminLayout's own sidebar already rules out a
+ * link with nothing behind it, and the same call applies one level down.
  */
 class StudioSettingsController extends Controller
 {
@@ -129,6 +131,99 @@ class StudioSettingsController extends Controller
         return redirect('/einstellungen');
     }
 
+    /**
+     * T-05's own save action, same reasoning as updateVat() above: the
+     * Dokumente pane is its own form with its own "Speichern" button.
+     *
+     * deposit_percentage arrives already in basis points, same boundary
+     * vat_rate crosses in updateVat().
+     */
+    public function updateDocuments(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        $validated = $request->validate([
+            'quote_validity_days' => ['required', 'integer', 'min:0', 'max:3650'],
+            'payment_term_days' => ['required', 'integer', 'min:0', 'max:3650'],
+            'deposit_percentage' => ['required', 'integer', 'min:0', 'max:10000'],
+            'widerruf_included' => ['required', 'boolean'],
+            'widerruf_text' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $actor = auth('staff')->user();
+        $settings->set('quote_validity_days', $validated['quote_validity_days'], $actor);
+        $settings->set('payment_term_days', $validated['payment_term_days'], $actor);
+        $settings->set('deposit_percentage', $validated['deposit_percentage'], $actor);
+        $settings->set('widerruf_included', $validated['widerruf_included'], $actor);
+        $settings->set('widerruf_text', $validated['widerruf_text'] ?? null, $actor);
+
+        return redirect('/einstellungen');
+    }
+
+    /**
+     * T-13's own save action, same reasoning as updateVat() above: Allgemein
+     * is its own form with its own "Speichern" button, so an unrelated
+     * pane's validation error never blocks this one's save.
+     *
+     * timezone and locale are nullable — clearing either back to blank
+     * returns the tenant to config('app.timezone')/config('app.locale'),
+     * per StudioSettingsResolver's fallback contract. working_days is not:
+     * an empty selection would leave TaskTemplate::dueFor() nothing to
+     * roll onto, so at least one day is required here rather than only
+     * guarded defensively in the resolver.
+     */
+    public function updateGeneral(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        $validated = $request->validate([
+            'timezone' => ['nullable', 'timezone'],
+            'locale' => ['nullable', Rule::in(['de', 'de_DE', 'de_AT', 'de_CH'])],
+            'working_days' => ['required', 'array', 'min:1'],
+            'working_days.*' => ['integer', 'between:1,7', 'distinct'],
+        ]);
+
+        $actor = auth('staff')->user();
+        $settings->set('timezone', $validated['timezone'] ?? null, $actor);
+        $settings->set('locale', $validated['locale'] ?? null, $actor);
+        $settings->set('working_days', array_values($validated['working_days']), $actor);
+
+        return redirect('/einstellungen');
+    }
+
+    /**
+     * T-06's own pane and save action, same reasoning as updateVat() above:
+     * E-Mail is its own form with its own "Speichern" button.
+     *
+     * mail_from_name and mail_from_address travel the form already resolved
+     * with the env fallback (StudioSettingsResolver::mailFromName()/
+     * mailFromAddress()), the same pre-filled shape timezone/locale use on
+     * the Allgemein pane — so an unmodified save simply re-confirms the
+     * fallback rather than leaving the field looking empty.
+     */
+    public function updateMail(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        $validated = $request->validate([
+            'mail_from_name' => ['nullable', 'string', 'max:255'],
+            'mail_from_address' => ['nullable', 'string', 'max:255', 'email'],
+            'mail_reply_to' => ['nullable', 'string', 'max:255', 'email'],
+            'mail_bcc' => ['nullable', 'string', 'max:255', 'email'],
+            'mail_signature' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $actor = auth('staff')->user();
+        foreach ($validated as $key => $value) {
+            $settings->set($key, $value, $actor);
+        }
+
+        // The pane lives inside this same shell (client-side switching, no
+        // route of its own to GET back to) — same target every other
+        // non-profile pane on this controller redirects to.
+        return redirect('/einstellungen');
+    }
+
     private function toData(StudioSettingsResolver $settings): StudioSettingsData
     {
         $attrs = $settings->attributes();
@@ -156,6 +251,19 @@ class StudioSettingsController extends Controller
             vatMode: $settings->vatMode(),
             vatRate: $settings->vatRate(),
             vatNote: $settings->vatNote(),
+            quoteValidityDays: $settings->quoteValidityDays(),
+            paymentTermDays: $settings->paymentTermDays(),
+            depositPercentage: $settings->depositPercentage(),
+            widerrufIncluded: $settings->widerrufIncluded(),
+            widerrufText: $settings->widerrufText(),
+            timezone: $settings->timezone(),
+            locale: $settings->locale(),
+            workingDays: $settings->workingDays(),
+            mailFromName: $settings->mailFromName(),
+            mailFromAddress: $settings->mailFromAddress(),
+            mailReplyTo: $settings->mailReplyTo(),
+            mailSignature: $settings->mailSignature(),
+            mailBcc: $settings->mailBcc(),
         );
     }
 }

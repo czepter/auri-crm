@@ -1,6 +1,14 @@
 <?php
 
+use App\Http\Middleware\EnsureAudience;
+use App\Http\Middleware\EnsurePortalCapability;
+use App\Http\Middleware\EnsurePortalMaintenanceClosure;
+use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RequireConfirmedMfa;
 use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
+use App\Migration\Console\Commands\ImportHistoricalDataCommand;
+use App\Payments\Console\Commands\DetectOverdueInstallmentsCommand;
+use App\Support\Surface;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -10,13 +18,16 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
-        then: fn () => \App\Support\Surface::registerRoutes(),
+        then: fn () => Surface::registerRoutes(),
     )
-    // withRouting's `commands` above only loads routes/console.php's closure
-    // commands, so a class-based command needs stating by hand here rather
-    // than relying on the app/Console/Commands auto-discovery this skeleton
-    // never enabled.
+    // Domain commands live beside the feature they belong to (App\Payments\
+    // Console\Commands, matching Actions/Events/Http\Controllers everywhere
+    // else in this codebase) rather than in the conventional app/Console/
+    // Commands, which this codebase has never used — so each has to be named
+    // here explicitly; nothing in that directory is auto-discovered.
     ->withCommands([
+        DetectOverdueInstallmentsCommand::class,
+        ImportHistoricalDataCommand::class,
         ReapIncompleteMultipartUploads::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
@@ -30,15 +41,17 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
-            \App\Http\Middleware\HandleInertiaRequests::class,
+            HandleInertiaRequests::class,
         ]);
 
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo('/');
 
         $middleware->alias([
-            'mfa' => \App\Http\Middleware\RequireConfirmedMfa::class,
-            'audience' => \App\Http\Middleware\EnsureAudience::class,
+            'mfa' => RequireConfirmedMfa::class,
+            'audience' => EnsureAudience::class,
+            'portal.maintenance' => EnsurePortalMaintenanceClosure::class,
+            'portal.capability' => EnsurePortalCapability::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

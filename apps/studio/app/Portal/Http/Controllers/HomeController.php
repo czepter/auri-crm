@@ -4,6 +4,7 @@ namespace App\Portal\Http\Controllers;
 
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -22,7 +23,7 @@ use Inertia\Response;
  */
 class HomeController extends Controller
 {
-    public function __invoke(): Response|RedirectResponse
+    public function __invoke(StudioSettingsResolver $settings): Response|RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -34,6 +35,9 @@ class HomeController extends Controller
 
         return Inertia::render('Home', [
             'contact' => ['name' => $contact->name],
+            // T-08: the portal home's own welcome text — nowhere else reads
+            // this column.
+            'welcomeText' => $settings->portalWelcomeText(),
             'projects' => $projects->map(fn (Project $project) => [
                 'id' => $project->public_id,
                 'name' => $project->name,

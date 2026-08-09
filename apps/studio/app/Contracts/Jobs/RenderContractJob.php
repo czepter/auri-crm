@@ -119,6 +119,13 @@ class RenderContractJob implements ShouldQueue
                 // this story's to half-build.
                 'logoPath' => $settings->logoPath() ?? '',
             ],
+            'settings' => [
+                // T-05: the Widerruf line is a decision, not a preference —
+                // whichever way the studio reads §312g BGB, this renders the
+                // configured text when included and nothing at all when it
+                // is switched off, never a stale fallback string.
+                'widerrufText' => $settings->widerrufIncluded() ? ($settings->widerrufText() ?? '') : '',
+            ],
         ];
     }
 

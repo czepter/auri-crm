@@ -3,15 +3,23 @@
 namespace App\Providers;
 
 use App\Catalog\Models\Package;
+use App\Contracts\Events\ContractSigned;
 use App\Contracts\Models\ContractTemplate;
 use App\Crm\Events\ProjectBooked;
 use App\Crm\Listeners\ApplyTemplatesOnBooking;
+use App\Crm\Listeners\BookProjectOnContractAndDeposit;
 use App\Crm\Models\Contact;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
+use App\Crm\Models\TaskTemplate;
+use App\Gallery\Listeners\RecomputeGalleryBalanceSettled;
+use App\Notifications\NotificationService;
+use App\Notifications\Transports\InAppTransport;
+use App\Notifications\Transports\MailTransport;
+use App\Payments\Events\InstallmentPaid;
 use App\Policies\ContactPolicy;
 use App\Policies\ContractTemplatePolicy;
 use App\Policies\InternalNotePolicy;
@@ -20,6 +28,7 @@ use App\Policies\PackagePolicy;
 use App\Policies\ProjectPolicy;
 use App\Policies\ShootPolicy;
 use App\Policies\TaskPolicy;
+use App\Policies\TaskTemplatePolicy;
 use App\Support\Surface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
@@ -36,7 +45,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // E-07: the transport registry. A new channel is added here, never
+        // wired to a domain event directly — see NotificationService's own
+        // docblock.
+        $this->app->singleton(NotificationService::class, fn ($app) => new NotificationService([
+            $app->make(MailTransport::class),
+            $app->make(InAppTransport::class),
+        ]));
     }
 
     /**
@@ -60,6 +75,16 @@ class AppServiceProvider extends ServiceProvider
         // Registered by hand: auto-discovery only scans app/Listeners, and the
         // CRM keeps its listeners beside the events they answer to.
         Event::listen(ProjectBooked::class, ApplyTemplatesOnBooking::class);
+
+        // P-05b: one listener, two triggers, converging on the same
+        // BookProject the manual button calls — see the class docblock.
+        Event::listen(ContractSigned::class, [BookProjectOnContractAndDeposit::class, 'handleContractSigned']);
+        Event::listen(InstallmentPaid::class, [BookProjectOnContractAndDeposit::class, 'handleInstallmentPaid']);
+
+        // G-05: keeps Gallery::$balance_settled current. Inert beyond that
+        // write — nothing gates on it yet, since delivery/download flows are
+        // future stories.
+        Event::listen(InstallmentPaid::class, RecomputeGalleryBalanceSettled::class);
 
         // The Gate resolves users from the *default* guard, which ships as
         // `web`, while every staff session lives on `staff`. Left alone, every
@@ -112,6 +137,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Contact::class, ContactPolicy::class);
         Gate::policy(Package::class, PackagePolicy::class);
         Gate::policy(ContractTemplate::class, ContractTemplatePolicy::class);
+        Gate::policy(TaskTemplate::class, TaskTemplatePolicy::class);
 
         // Filling a non-fillable attribute is silent by default, which turns a
         // factory state like withMfa() into a no-op that fails a test three tasks

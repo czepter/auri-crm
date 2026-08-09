@@ -9,14 +9,16 @@ defineProps<{ conflicts: App.Crm.Data.DateConflictData[] }>()
 <template>
   <div
     v-for="conflict in conflicts"
-    :key="conflict.projectId"
+    :key="conflict.projectId ?? conflict.label ?? undefined"
     class="flag"
   >
     {{
-      $t('leads.conflict', {
-        project: conflict.projectName,
-        venue: conflict.venue ? `, ${conflict.venue}` : '',
-      })
+      conflict.source === 'closure'
+        ? $t('leads.conflictClosure', { label: conflict.label })
+        : $t('leads.conflict', {
+            project: conflict.projectName,
+            venue: conflict.venue ? `, ${conflict.venue}` : '',
+          })
     }}
   </div>
 </template>

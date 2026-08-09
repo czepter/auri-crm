@@ -83,7 +83,7 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Quotes', [
             'header' => $this->header($project),
             'quotes' => QuoteData::collect(
-                $project->quotes()->with('items')->get()
+                $project->quotes()->with(['items', 'predecessor'])->get()
             ),
             'packages' => Package::active()->orderBy('name')->get()
                 ->map(fn (Package $package) => ['value' => $package->public_id, 'label' => $package->name])

@@ -2,9 +2,12 @@
 
 namespace App\Crm\Actions;
 
+use App\Crm\Enums\ShootKind;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\TaskTemplate;
+use App\Settings\Support\StudioSettingsResolver;
+use Carbon\CarbonImmutable;
 
 /**
  * Turns the studio's standing templates into the tasks a booked project owes.
@@ -20,6 +23,8 @@ use App\Crm\Models\TaskTemplate;
  */
 class ApplyTaskTemplates
 {
+    public function __construct(private readonly StudioSettingsResolver $settings) {}
+
     public function __invoke(Project $project): void
     {
         $templates = TaskTemplate::query()->active()->orderBy('sort_order')->get();
@@ -38,6 +43,30 @@ class ApplyTaskTemplates
         }
     }
 
+    /**
+     * T-14's settings screen: what the active set would produce for a shoot
+     * on the given date, without booking anything. Built on an unsaved Shoot
+     * so it walks through the exact same appliesTo()/dueFor() calls __invoke()
+     * uses on a real one — the settings screen and a real booking can never
+     * disagree about what a date produces, because there is only one place
+     * that computes it.
+     *
+     * @return list<array{title: string, dueOn: ?string}>
+     */
+    public function preview(CarbonImmutable $date, ?ShootKind $kind = null): array
+    {
+        $shoot = new Shoot(['date' => $date, 'kind' => $kind]);
+
+        return TaskTemplate::query()->active()->orderBy('sort_order')->get()
+            ->filter(fn (TaskTemplate $template) => $template->appliesTo($shoot))
+            ->map(fn (TaskTemplate $template) => [
+                'title' => $template->title,
+                'dueOn' => $template->dueFor($shoot, $this->settings)?->format('Y-m-d'),
+            ])
+            ->values()
+            ->all();
+    }
+
     private function applyOne(Project $project, Shoot $shoot, TaskTemplate $template): void
     {
         // updateOrCreate rather than create: re-applying must not duplicate,
@@ -48,7 +77,7 @@ class ApplyTaskTemplates
             [
                 'title' => $template->title,
                 'audience' => $template->audience,
-                'due_on' => $template->dueFor($shoot)?->format('Y-m-d'),
+                'due_on' => $template->dueFor($shoot, $this->settings)?->format('Y-m-d'),
             ],
         );
     }

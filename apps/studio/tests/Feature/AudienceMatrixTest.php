@@ -29,12 +29,21 @@ const PUBLIC_ROUTES = [
         'passwort/neu/{token}',
         'passwort/neu',
     ],
-    'api' => ['api/health'],
+    // Stripe is the only caller of the webhook, and it authenticates itself
+    // by the request signature (Stripe-Signature, verified against
+    // config('services.stripe.webhook_secret')) rather than by a session an
+    // `audience:` middleware could gate — there is no staff or portal user
+    // on this request to hold one. See StripeWebhookController's own doc
+    // comment.
+    'api' => ['api/health', 'api/stripe/webhook'],
 
     // The client's way in. Public by necessity — the only person who needs it
     // is one who cannot sign in — and the token in the path is the whole
-    // credential, spent the moment it works.
-    'portal' => ['anmelden', 'zugang/{token}'],
+    // credential, spent the moment it works. branding/logo and impressum are
+    // T-08's: a brand mark is not a secret, and a legal notice has to be
+    // reachable from any page a client can see, including one it has not
+    // signed into yet.
+    'portal' => ['anmelden', 'zugang/{token}', 'branding/logo', 'impressum'],
 ];
 
 // routesForSurface() lives in tests/Pest.php — see the note there.

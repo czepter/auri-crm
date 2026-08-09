@@ -33,7 +33,7 @@ class PaymentPlan extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['job_id', 'total'];
+    protected $fillable = ['job_id', 'total', 'reference'];
 
     public function job(): BelongsTo
     {

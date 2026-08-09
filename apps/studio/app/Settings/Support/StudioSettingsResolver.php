@@ -64,6 +64,17 @@ class StudioSettingsResolver
     }
 
     /**
+     * T-09: the length ShootCalendar gives a shoot whose end_time is unset,
+     * replacing the hardcoded addHours(2) that used to sit in that class
+     * directly. Minutes, not hours — a shorter session needs finer
+     * granularity than that constant offered.
+     */
+    public function defaultShootDurationMinutes(): int
+    {
+        return $this->row()->default_shoot_duration_minutes;
+    }
+
+    /**
      * What a document should actually use — zero under small_business
      * regardless of what vat_rate holds, so a mode switch never leaves a
      * stale 19% behind. This is T-03's whole point: Q-04 calls this, not
@@ -72,6 +83,87 @@ class StudioSettingsResolver
     public function effectiveVatRate(): int
     {
         return $this->vatMode() === 'small_business' ? 0 : $this->vatRate();
+    }
+
+    /**
+     * A quote's validity in days, used the moment a quote is created with no
+     * explicit valid_until and no validity of its own to carry forward — see
+     * App\Quotes\Http\Controllers\QuoteController::store(). Package carries
+     * no default_validity_days column today (App\Catalog\Models\Package), so
+     * this is the only fallback there is, not a second one behind a
+     * package's own value.
+     */
+    public function quoteValidityDays(): int
+    {
+        return $this->row()->quote_validity_days;
+    }
+
+    /** Zahlungsziel in days — T-07's overdue scan reads this once it ships. */
+    public function paymentTermDays(): int
+    {
+        return $this->row()->payment_term_days;
+    }
+
+    /**
+     * Basis points (0-10000), same convention as vatRate() above — pre-fills
+     * a new PaymentPlan's deposit installment, never re-read once one exists.
+     */
+    public function depositPercentage(): int
+    {
+        return $this->row()->deposit_percentage;
+    }
+
+    /** Whether a rendered contract's `settings.widerrufText` merge field carries any text at all. */
+    public function widerrufIncluded(): bool
+    {
+        return $this->row()->widerruf_included;
+    }
+
+    public function widerrufText(): ?string
+    {
+        return $this->row()->widerruf_text;
+    }
+
+    /**
+     * IANA identifier (e.g. "Europe/Vienna") — the tenant value once T-13's
+     * Allgemein pane has set one, config('app.timezone') as the fallback
+     * until then. The environment stays the fallback, never the source: a
+     * studio that has not opened this pane yet sees exactly what it saw
+     * before this story existed.
+     */
+    public function timezone(): string
+    {
+        return $this->row()->timezone ?? config('app.timezone');
+    }
+
+    /**
+     * Carbon's formatting locale for the three DACH variants T-02's own
+     * country select already offers (de_DE/de_AT/de_CH) — never
+     * config('app.locale')'s translation locale, which stays 'de' and
+     * env-independent on purpose (see config/app.php). Same fallback shape
+     * as timezone() above: the tenant value once set, the environment
+     * otherwise.
+     */
+    public function locale(): string
+    {
+        return $this->row()->locale ?? config('app.locale');
+    }
+
+    /**
+     * ISO weekday integers (1 Monday .. 7 Sunday) the studio works —
+     * TaskTemplate::dueFor() rolls a due date forward off any day not in
+     * this set. Guards an empty array (should never reach the database
+     * past StudioSettingsController's validation, but dueFor() loops on
+     * this set, and an empty one loops forever) by treating it the same as
+     * "every day", rather than letting a corrupt row hang a request.
+     *
+     * @return list<int>
+     */
+    public function workingDays(): array
+    {
+        $days = $this->row()->working_days;
+
+        return empty($days) ? [1, 2, 3, 4, 5, 6, 7] : $days;
     }
 
     /**
@@ -166,6 +258,238 @@ class StudioSettingsResolver
             context: ['key' => $key, 'old' => $old, 'new' => $value],
             subject: $row->public_id,
         );
+    }
+
+    // --- T-07: Stripe as an optional capability, and the provider-independent defaults ---
+
+    public function stripeEnabled(): bool
+    {
+        return $this->row()->payments_stripe_enabled;
+    }
+
+    /** 'test' or 'live' — which of the two key pairs setPaymentSettings() below writes is active right now. */
+    public function stripeMode(): string
+    {
+        return $this->row()->payments_stripe_mode;
+    }
+
+    /**
+     * Whether a key pair exists for the given mode — the settings screen's
+     * own "already configured" indicator, so the write-only key fields can
+     * say that much without ever echoing a value back. Never used to decide
+     * whether Stripe may actually be called; that is activeStripeSecretKey()'s
+     * job, for M-04/M-05.
+     */
+    public function hasStripeKeys(string $mode): bool
+    {
+        $row = $this->row();
+
+        return $mode === 'live'
+            ? $row->payments_stripe_live_publishable_key !== null && $row->payments_stripe_live_secret_key !== null
+            : $row->payments_stripe_test_publishable_key !== null && $row->payments_stripe_test_secret_key !== null;
+    }
+
+    /**
+     * The secret key for whichever mode is active — decrypted by the
+     * model's own `encrypted` cast, the one seam M-04/M-05 are expected to
+     * call rather than reading the column themselves. Nothing in this
+     * story ever prints this value anywhere; see StudioSettingsAdminTest's
+     * "the Stripe secret key never appears in any response body" coverage.
+     */
+    public function activeStripeSecretKey(): ?string
+    {
+        $row = $this->row();
+
+        return $this->stripeMode() === 'live'
+            ? $row->payments_stripe_live_secret_key
+            : $row->payments_stripe_test_secret_key;
+    }
+
+    public function activeStripePublishableKey(): ?string
+    {
+        $row = $this->row();
+
+        return $this->stripeMode() === 'live'
+            ? $row->payments_stripe_live_publishable_key
+            : $row->payments_stripe_test_publishable_key;
+    }
+
+    // Deposit percentage and Zahlungsziel — the other two provider-independent
+    // defaults T-07's own issue named — are already T-05's depositPercentage()
+    // and paymentTermDays() above (studio_settings.deposit_percentage and
+    // .payment_term_days, the Dokumente pane): T-05 landed first, so T-07
+    // reads those two through T-05's columns rather than declaring a second,
+    // redundant pair. remindersEnabled() below is the one default T-05 did
+    // not cover.
+
+    public function remindersEnabled(): bool
+    {
+        return $this->row()->payments_reminders_enabled;
+    }
+
+    /**
+     * T-07's own pane, saved in one submit like Studio-Profil (T-02) and
+     * unlike Zahlungsdaten & USt's own endpoint — nothing here needs the
+     * "own fieldset, own button" separation those two have, because every
+     * field on this pane lives or dies with the same "Zahlungen" save.
+     *
+     * The four key columns are written only when a NEW, non-empty value is
+     * given — the write-only form (never echoing a stored key back) has no
+     * other way to say "leave this pair alone", and an empty string arriving
+     * from an untouched field must never null out a key that already works.
+     * Audited by column name only: a key's value never rides along into
+     * AuditLog, the same "never leaves the cast that decrypts it" rule that
+     * keeps it out of every Inertia prop and API response.
+     *
+     * @param  array{
+     *     payments_stripe_enabled: bool,
+     *     payments_stripe_mode: string,
+     *     payments_reminders_enabled: bool,
+     *     payments_stripe_test_publishable_key?: ?string,
+     *     payments_stripe_test_secret_key?: ?string,
+     *     payments_stripe_live_publishable_key?: ?string,
+     *     payments_stripe_live_secret_key?: ?string,
+     * }  $attributes
+     */
+    public function setPaymentSettings(array $attributes, ?User $actor = null): void
+    {
+        $row = StudioSettings::query()->firstOrFail();
+
+        $plainKeys = [
+            'payments_stripe_enabled', 'payments_stripe_mode', 'payments_reminders_enabled',
+        ];
+        $keyColumns = [
+            'payments_stripe_test_publishable_key', 'payments_stripe_test_secret_key',
+            'payments_stripe_live_publishable_key', 'payments_stripe_live_secret_key',
+        ];
+
+        $updates = [];
+        $changedNames = [];
+        $plainChanges = [];
+
+        foreach ($plainKeys as $key) {
+            if ($attributes[$key] !== $row->{$key}) {
+                $plainChanges[$key] = [$row->{$key}, $attributes[$key]];
+                $updates[$key] = $attributes[$key];
+                $changedNames[] = $key;
+            }
+        }
+
+        foreach ($keyColumns as $column) {
+            if (! empty($attributes[$column] ?? null)) {
+                $updates[$column] = $attributes[$column];
+                $changedNames[] = $column;
+            }
+        }
+
+        if ($updates === []) {
+            return;
+        }
+
+        $row->update($updates);
+
+        Cache::store('redis')->forget($this->cacheKey());
+
+        AuditLogger::record(
+            event: 'studio_settings.updated',
+            actor: $actor,
+            context: ['keys' => $changedNames, 'changes' => $plainChanges],
+            subject: $row->public_id,
+        );
+    }
+
+    // --- T-06: mail identity — who a tenant's outgoing mail leaves under ---
+
+    /**
+     * config('mail.from.name')'s per-tenant replacement — the same fallback
+     * shape as timezone()/locale() above: the tenant value once T-06's
+     * E-Mail pane has set one, the environment default otherwise.
+     */
+    public function mailFromName(): string
+    {
+        return $this->row()->mail_from_name ?: config('mail.from.name');
+    }
+
+    public function mailFromAddress(): string
+    {
+        return $this->row()->mail_from_address ?: config('mail.from.address');
+    }
+
+    /** Null when unset — a reply then goes to mailFromAddress(), the mailer's own default. */
+    public function mailReplyTo(): ?string
+    {
+        return $this->row()->mail_reply_to;
+    }
+
+    /** Appended as its own line on every outgoing notification mail this story wires up. */
+    public function mailSignature(): ?string
+    {
+        return $this->row()->mail_signature;
+    }
+
+    /** Null leaves outgoing mail unBCC'd — the studio's own inbox is opt-in. */
+    public function mailBcc(): ?string
+    {
+        return $this->row()->mail_bcc;
+    }
+
+    // --- T-08: the portal's own settings — a maintenance closure, home
+    // branding text, two external legal links, and four client capability
+    // switches. See the migration's own doc comment for why each defaults
+    // where it does.
+
+    /** Whole-portal temporary closure — never a substitute for A-04's own hide/revoke actions. */
+    public function maintenanceEnabled(): bool
+    {
+        return $this->row()->portal_maintenance_enabled;
+    }
+
+    /** Free text shown instead of the portal while closed; EnsurePortalMaintenanceClosure falls back to a default if blank. */
+    public function maintenanceMessage(): ?string
+    {
+        return $this->row()->portal_maintenance_message;
+    }
+
+    /** Shown once, on the portal home only — HomeController reads this, nowhere else does. */
+    public function portalWelcomeText(): ?string
+    {
+        return $this->row()->portal_welcome_text;
+    }
+
+    /** External link — no local Datenschutzerklärung page exists or is planned here. */
+    public function legalDatenschutzUrl(): ?string
+    {
+        return $this->row()->portal_legal_datenschutz_url;
+    }
+
+    /** External link — no local AGB page exists or is planned here. */
+    public function legalAgbUrl(): ?string
+    {
+        return $this->row()->portal_legal_agb_url;
+    }
+
+    /** Gates Q-07's accept action. */
+    public function acceptQuotesEnabled(): bool
+    {
+        return $this->row()->portal_accept_quotes_enabled;
+    }
+
+    /** Gates M-02's sign action — the contract itself stays viewable either way. */
+    public function signContractsEnabled(): bool
+    {
+        return $this->row()->portal_sign_contracts_enabled;
+    }
+
+    /** Gates T-07's payment screen in full. */
+    public function paymentStatusEnabled(): bool
+    {
+        return $this->row()->portal_payment_status_enabled;
+    }
+
+    /** Gates a message thread once E-06 exists. Nothing reads this yet. */
+    public function messagingEnabled(): bool
+    {
+        return $this->row()->portal_messaging_enabled;
     }
 
     private function row(): StudioSettings

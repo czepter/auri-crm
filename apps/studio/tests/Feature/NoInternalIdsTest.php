@@ -14,6 +14,8 @@ use App\Enums\StaffRole;
 use App\Models\User;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
+use App\Quotes\Actions\ReviseQuote;
+use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Support\Surface;
@@ -108,6 +110,26 @@ it('never puts an integer identifier into a project\'s quotes page', function ()
     expect(integerIdPaths($props))->toBe([]);
 });
 
+it('never puts an integer identifier into a project\'s quotes page once a quote has been sent and revised', function () {
+    // Q-06: predecessorId is the one new cross-model reference this story's
+    // QuoteData adds — a quote referencing another quote — and it has to
+    // cross the same public_id boundary every other FK in this Data layer
+    // does. Populated on purpose: predecessor_id stays null on every quote
+    // NoInternalIdsTest already exercises, so only a revised pair proves it.
+    $user = User::factory()->withMfa()->create();
+    $project = Project::factory()->create();
+    $predecessor = Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent, 'number' => 'AN-2026-1']);
+    QuoteItem::factory()->for($predecessor)->create();
+    app(ReviseQuote::class)($predecessor);
+
+    $props = $this->actingAs($user, 'staff')
+        ->get("/auftraege/{$project->public_id}/angebote")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect(integerIdPaths($props))->toBe([]);
+});
+
 it('never puts an integer identifier into the settings screen', function () {
     $user = User::factory()->withMfa()->create(['role' => StaffRole::Owner]);
 
@@ -166,6 +188,13 @@ it('never puts an integer identifier into the portal switcher', function () {
 it('never puts an integer identifier into the portal contract screen once signed, and the sign route takes only a public id', function () {
     useSurface(Surface::PORTAL);
     Storage::fake('local');
+    // T-08's "sign contracts" switch defaults to off — this test exercises
+    // the sign action itself, so the switch is on for it. Cache::flush()
+    // first: StudioSettingsResolver caches the row (T-01), and a row already
+    // cached by an earlier test in the same suite run would otherwise still
+    // read as off.
+    \Illuminate\Support\Facades\Cache::store('redis')->flush();
+    \App\Settings\Models\StudioSettings::query()->update(['portal_sign_contracts_enabled' => true]);
 
     $project = Project::factory()->create(['portal_visible' => true]);
     renderedContract($project);
@@ -196,6 +225,37 @@ it('never puts an integer identifier into a portal project screen', function () 
 
     $props = $this->actingAs($contact, 'portal')
         ->get("/projekte/{$project->public_id}")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect(integerIdPaths($props))->toBe([]);
+});
+
+it('never puts an integer identifier into the portal quote screen once accepted, and the accept route takes only a public id', function () {
+    useSurface(Surface::PORTAL);
+    // T-08's "accept quotes online" switch defaults to off — this test
+    // exercises the accept action itself, so the switch is on for it.
+    \Illuminate\Support\Facades\Cache::store('redis')->flush();
+    \App\Settings\Models\StudioSettings::query()->update(['portal_accept_quotes_enabled' => true]);
+
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $quote = Quote::factory()->for($project)->create([
+        'status' => QuoteStatus::Sent,
+        'number' => 'AN-2026-1',
+        'sent_at' => now(),
+    ]);
+    QuoteItem::factory()->for($quote)->create();
+    $contact = Contact::factory()->create();
+    $project->attachContact($contact, ProjectContactRole::Primary);
+
+    // The URL itself names the project by public id, never by its integer
+    // primary key — this is the request that writes the acceptance.
+    $this->actingAs($contact, 'portal')
+        ->post("/projekte/{$project->public_id}/angebot/annehmen")
+        ->assertRedirect();
+
+    $props = $this->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}/angebot")
         ->assertOk()
         ->viewData('page')['props'];
 

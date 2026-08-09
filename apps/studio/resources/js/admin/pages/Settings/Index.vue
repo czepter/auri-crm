@@ -8,9 +8,21 @@ const props = defineProps<{ settings: App.Settings.Data.StudioSettingsData }>()
 
 // Which pane of the section shell is showing — client-side only, the same
 // second-level tab set the mockup draws as two static variants of one
-// screen. Nothing here is routed: both forms already save through their own
+// screen. Nothing here is routed: every form already saves through its own
 // endpoint, so switching panes has no request to make.
-const pane = ref<'profile' | 'vat'>('profile')
+const pane = ref<'profile' | 'vat' | 'documents' | 'email' | 'general'>('profile')
+
+// Mo..So, ISO weekday order — matches the integers StudioSettingsController
+// validates working_days.* against and TaskTemplate::dueFor() rolls over.
+const weekdays = [
+  { value: 1, key: 'settings.dayMon' },
+  { value: 2, key: 'settings.dayTue' },
+  { value: 3, key: 'settings.dayWed' },
+  { value: 4, key: 'settings.dayThu' },
+  { value: 5, key: 'settings.dayFri' },
+  { value: 6, key: 'settings.daySat' },
+  { value: 7, key: 'settings.daySun' },
+] as const
 
 // isDirty is Inertia's own useForm computed, comparing current values to the
 // defaults the form was built with — not a bespoke computed re-implementing
@@ -50,14 +62,77 @@ const vatForm = useForm({
   vat_note: props.settings.vatNote ?? '',
 })
 
-const activeForm = computed(() => (pane.value === 'vat' ? vatForm : form))
+// T-05's own pane — the values every new quote, payment plan and contract
+// render starts from. deposit_percentage travels the form as a percent
+// string, same euro/percent boundary vat_rate crosses above.
+const documentsForm = useForm({
+  quote_validity_days: props.settings.quoteValidityDays,
+  payment_term_days: props.settings.paymentTermDays,
+  deposit_percentage: basisPointsToPercent(props.settings.depositPercentage),
+  widerruf_included: props.settings.widerrufIncluded,
+  widerruf_text: props.settings.widerrufText ?? '',
+})
 
-// Every other future group (Dokumente, Zahlungen, ...) later stories land —
-// rendered disabled with the "bald" chip screen 4's Vertrag tab already uses
-// for a superseded quote, per T-00's mockup. Zahlungsdaten & USt is T-03's
-// own pane and Nummernkreise is T-04's own route, so both drop out of this
-// list.
-const comingSoon = ['navDocuments', 'navPayments', 'navPortal', 'navNotifications', 'navGeneral'] as const
+// working_days travels the form as the array of ISO weekday integers
+// StudioSettingsController validates directly — no bitmask, no translation
+// at the wire boundary, same as every other field here.
+const generalForm = useForm({
+  timezone: props.settings.timezone,
+  locale: props.settings.locale,
+  working_days: [...props.settings.workingDays] as number[],
+})
+
+// T-06's own pane. mail_from_name/mail_from_address arrive already resolved
+// with the env fallback (StudioSettingsResolver::mailFromName()/
+// mailFromAddress()), the same pre-filled shape timezone/locale use above —
+// an unmodified save simply re-confirms the fallback. The footer itself is
+// not a field here: it is T-02's legal particulars, composed at send time
+// from the same StudioSettingsResolver::attributes() Studio-Profil already
+// edits, never a second copy on this pane.
+const mailForm = useForm({
+  mail_from_name: props.settings.mailFromName,
+  mail_from_address: props.settings.mailFromAddress,
+  mail_reply_to: props.settings.mailReplyTo ?? '',
+  mail_bcc: props.settings.mailBcc ?? '',
+  mail_signature: props.settings.mailSignature ?? '',
+})
+
+const activeForm = computed(() => {
+  if (pane.value === 'vat') return vatForm
+  if (pane.value === 'documents') return documentsForm
+  if (pane.value === 'email') return mailForm
+  if (pane.value === 'general') return generalForm
+  return form
+})
+
+const formId = computed(() => {
+  if (pane.value === 'vat') return 'vat-form'
+  if (pane.value === 'documents') return 'documents-form'
+  if (pane.value === 'email') return 'mail-form'
+  if (pane.value === 'general') return 'general-form'
+  return 'settings-form'
+})
+
+const paneTitle = computed(() => {
+  if (pane.value === 'vat') return 'settings.vatTitle'
+  if (pane.value === 'documents') return 'settings.documentsTitle'
+  if (pane.value === 'email') return 'settings.mailTitle'
+  if (pane.value === 'general') return 'settings.generalTitle'
+  return 'settings.profileTitle'
+})
+
+// The last group, Benachrichtigungen — rendered disabled with the "bald"
+// chip screen 4's Vertrag tab already uses for a superseded quote, per
+// T-00's mockup. Every other group named across this section's stories
+// (Zahlungsdaten & USt, Nummernkreise, Verfügbarkeit, Dokumente, E-Mail,
+// Allgemein, Zahlungen, Aufgabenvorlagen, Portal) is live, so only this one
+// remains.
+const comingSoon = ['navNotifications'] as const
+
+function toggleWorkingDay(day: number) {
+  const days = generalForm.working_days
+  generalForm.working_days = days.includes(day) ? days.filter((d) => d !== day) : [...days, day].sort()
+}
 
 function onLogoChange(event: Event) {
   form.logo = (event.target as HTMLInputElement).files?.[0] ?? null
@@ -81,6 +156,38 @@ function submitVat() {
     }))
     .patch('/einstellungen/ust', { preserveScroll: true })
 }
+
+function submitDocuments() {
+  documentsForm
+    .transform((data) => ({
+      ...data,
+      deposit_percentage: percentToBasisPoints(data.deposit_percentage),
+      widerruf_text: data.widerruf_text || null,
+    }))
+    .patch('/einstellungen/dokumente', { preserveScroll: true })
+}
+
+function submitGeneral() {
+  generalForm
+    .transform((data) => ({
+      timezone: data.timezone || null,
+      locale: data.locale || null,
+      working_days: data.working_days,
+    }))
+    .patch('/einstellungen/allgemein', { preserveScroll: true })
+}
+
+function submitMail() {
+  mailForm
+    .transform((data) => ({
+      mail_from_name: data.mail_from_name || null,
+      mail_from_address: data.mail_from_address || null,
+      mail_reply_to: data.mail_reply_to || null,
+      mail_bcc: data.mail_bcc || null,
+      mail_signature: data.mail_signature || null,
+    }))
+    .patch('/einstellungen/email', { preserveScroll: true })
+}
 </script>
 
 <template>
@@ -88,13 +195,13 @@ function submitVat() {
     <div class="hrow">
       <div>
         <div class="kick">{{ $t('settings.kicker') }}</div>
-        <h1>{{ pane === 'vat' ? $t('settings.vatTitle') : $t('settings.profileTitle') }}</h1>
+        <h1>{{ $t(paneTitle) }}</h1>
       </div>
       <span v-if="activeForm.isDirty" class="chip now">{{ $t('settings.unsaved') }}</span>
       <button
         class="btn"
         type="submit"
-        :form="pane === 'vat' ? 'vat-form' : 'settings-form'"
+        :form="formId"
         :disabled="!activeForm.isDirty || activeForm.processing"
         :style="!activeForm.isDirty ? 'opacity:.4' : undefined"
       >
@@ -112,6 +219,16 @@ function submitVat() {
           {{ $t('settings.navVat') }}
         </a>
         <a class="nav" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
+        <a class="nav" :class="{ on: pane === 'documents' }" href="#" @click.prevent="pane = 'documents'">
+          {{ $t('settings.navDocuments') }}
+        </a>
+        <a class="nav" :class="{ on: pane === 'email' }" href="#" @click.prevent="pane = 'email'">
+          {{ $t('settings.navMail') }}
+        </a>
+        <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
+        <a class="nav" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
+        <a class="nav" href="/einstellungen/aufgabenvorlagen">{{ $t('settings.navTaskTemplates') }}</a>
+        <a class="nav" href="/einstellungen/portal">{{ $t('settings.navPortal') }}</a>
         <a
           v-for="key in comingSoon"
           :key="key"
@@ -121,6 +238,9 @@ function submitVat() {
         >
           {{ $t(`settings.${key}`) }}
           <span class="chip next" style="margin-left: auto">{{ $t('settings.soon') }}</span>
+        </a>
+        <a class="nav" :class="{ on: pane === 'general' }" href="#" @click.prevent="pane = 'general'">
+          {{ $t('settings.navGeneral') }}
         </a>
       </nav>
 
@@ -288,7 +408,7 @@ function submitVat() {
         </div>
       </form>
 
-      <form v-else id="vat-form" style="flex: 1; min-width: 0; max-width: 460px" @submit.prevent="submitVat">
+      <form v-else-if="pane === 'vat'" id="vat-form" style="flex: 1; min-width: 0; max-width: 460px" @submit.prevent="submitVat">
         <div class="dsec" style="margin-top: 0">
           <div class="dlab">{{ $t('settings.vatModeLabel') }}</div>
           <div class="grp">
@@ -336,6 +456,165 @@ function submitVat() {
             <p v-else class="hint" style="margin: 0">{{ $t('settings.vatPreviewEmpty') }}</p>
           </div>
           <span class="hint" style="display: block; margin-top: var(--s3)">{{ $t('settings.vatPreviewHint') }}</span>
+        </div>
+      </form>
+
+      <form v-else-if="pane === 'documents'" id="documents-form" style="flex: 1; min-width: 0; max-width: 460px" @submit.prevent="submitDocuments">
+        <div class="dsec" style="margin-top: 0">
+          <div class="dlab">{{ $t('settings.documentsQuoteLabel') }}</div>
+          <div class="grp">
+            <div class="fld" style="max-width: 160px">
+              <label for="d-gueltigkeit">{{ $t('settings.quoteValidityLabel') }}</label>
+              <input id="d-gueltigkeit" v-model.number="documentsForm.quote_validity_days" class="inp num" type="number" min="0" />
+              <span class="hint">{{ $t('settings.quoteValidityHint') }}</span>
+              <p v-if="documentsForm.errors.quote_validity_days" class="err">{{ documentsForm.errors.quote_validity_days }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">{{ $t('settings.documentsPaymentLabel') }}</div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="d-zahlungsziel">{{ $t('settings.paymentTermLabel') }}</label>
+                <input id="d-zahlungsziel" v-model.number="documentsForm.payment_term_days" class="inp num" type="number" min="0" />
+                <span class="hint">{{ $t('settings.paymentTermHint') }}</span>
+                <p v-if="documentsForm.errors.payment_term_days" class="err">{{ documentsForm.errors.payment_term_days }}</p>
+              </div>
+              <div class="fld">
+                <label for="d-anzahlung">{{ $t('settings.depositPercentageLabel') }}</label>
+                <input id="d-anzahlung" v-model="documentsForm.deposit_percentage" class="inp num" type="text" inputmode="decimal" />
+                <span class="hint">{{ $t('settings.depositPercentageHint') }}</span>
+                <p v-if="documentsForm.errors.deposit_percentage" class="err">{{ documentsForm.errors.deposit_percentage }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">{{ $t('settings.widerrufLabel') }}</div>
+          <div class="grp">
+            <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
+              <input v-model="documentsForm.widerruf_included" type="checkbox" />
+              {{ $t('settings.widerrufIncludedLabel') }}
+            </label>
+            <span class="hint">{{ $t('settings.widerrufIncludedHint') }}</span>
+          </div>
+          <div class="grp">
+            <div class="fld">
+              <label for="d-widerruf-text">{{ $t('settings.widerrufTextLabel') }}</label>
+              <textarea
+                id="d-widerruf-text"
+                v-model="documentsForm.widerruf_text"
+                class="inp"
+                rows="5"
+                :disabled="!documentsForm.widerruf_included"
+              ></textarea>
+              <span class="hint">{{ $t('settings.widerrufTextHint') }}</span>
+              <p v-if="documentsForm.errors.widerruf_text" class="err">{{ documentsForm.errors.widerruf_text }}</p>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <form v-else-if="pane === 'email'" id="mail-form" style="flex: 1; min-width: 0; max-width: 460px" @submit.prevent="submitMail">
+        <div class="dsec" style="margin-top: 0">
+          <div class="dlab">{{ $t('settings.mailSenderLabel') }}</div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="m-absendername">{{ $t('settings.mailFromNameLabel') }}</label>
+                <input id="m-absendername" v-model="mailForm.mail_from_name" class="inp" type="text" />
+                <p v-if="mailForm.errors.mail_from_name" class="err">{{ mailForm.errors.mail_from_name }}</p>
+              </div>
+              <div class="fld">
+                <label for="m-absenderadresse">{{ $t('settings.mailFromAddressLabel') }}</label>
+                <input id="m-absenderadresse" v-model="mailForm.mail_from_address" class="inp" type="email" />
+                <p v-if="mailForm.errors.mail_from_address" class="err">{{ mailForm.errors.mail_from_address }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">{{ $t('settings.mailReplyLabel') }}</div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="m-antwortan">{{ $t('settings.mailReplyToLabel') }} <em>{{ $t('settings.optional') }}</em></label>
+                <input id="m-antwortan" v-model="mailForm.mail_reply_to" class="inp" type="email" />
+                <span class="hint">{{ $t('settings.mailReplyToHint') }}</span>
+                <p v-if="mailForm.errors.mail_reply_to" class="err">{{ mailForm.errors.mail_reply_to }}</p>
+              </div>
+              <div class="fld">
+                <label for="m-bcc">{{ $t('settings.mailBccLabel') }} <em>{{ $t('settings.optional') }}</em></label>
+                <input id="m-bcc" v-model="mailForm.mail_bcc" class="inp" type="email" />
+                <span class="hint">{{ $t('settings.mailBccHint') }}</span>
+                <p v-if="mailForm.errors.mail_bcc" class="err">{{ mailForm.errors.mail_bcc }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">{{ $t('settings.mailSignatureLabel') }}</div>
+          <div class="grp">
+            <div class="fld">
+              <label for="m-signatur">{{ $t('settings.mailSignatureFieldLabel') }} <em>{{ $t('settings.optional') }}</em></label>
+              <textarea id="m-signatur" v-model="mailForm.mail_signature" class="inp" rows="4"></textarea>
+              <span class="hint">{{ $t('settings.mailSignatureHint') }}</span>
+              <p v-if="mailForm.errors.mail_signature" class="err">{{ mailForm.errors.mail_signature }}</p>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <form v-else id="general-form" style="flex: 1; min-width: 0; max-width: 460px" @submit.prevent="submitGeneral">
+        <div class="dsec" style="margin-top: 0">
+          <div class="dlab">{{ $t('settings.timezoneLocaleLabel') }}</div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="g-zeitzone">{{ $t('settings.timezoneLabel') }}</label>
+                <input id="g-zeitzone" v-model="generalForm.timezone" class="inp" type="text" placeholder="Europe/Berlin" />
+                <span class="hint">{{ $t('settings.timezoneHint') }}</span>
+                <p v-if="generalForm.errors.timezone" class="err">{{ generalForm.errors.timezone }}</p>
+              </div>
+              <div class="fld">
+                <label for="g-sprache">{{ $t('settings.localeLabel') }}</label>
+                <select id="g-sprache" v-model="generalForm.locale" class="inp">
+                  <option value="de">{{ $t('settings.localeDe') }}</option>
+                  <option value="de_DE">{{ $t('settings.localeDeDe') }}</option>
+                  <option value="de_AT">{{ $t('settings.localeDeAt') }}</option>
+                  <option value="de_CH">{{ $t('settings.localeDeCh') }}</option>
+                </select>
+                <p v-if="generalForm.errors.locale" class="err">{{ generalForm.errors.locale }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">{{ $t('settings.workingDaysLabel') }}</div>
+          <div class="grp">
+            <div style="display: flex; flex-wrap: wrap; gap: var(--s4)">
+              <label
+                v-for="day in weekdays"
+                :key="day.value"
+                style="display: flex; align-items: center; gap: 8px; font: 400 13px/1.4 var(--font)"
+              >
+                <input
+                  type="checkbox"
+                  :checked="generalForm.working_days.includes(day.value)"
+                  @change="toggleWorkingDay(day.value)"
+                />
+                {{ $t(day.key) }}
+              </label>
+            </div>
+            <span class="hint">{{ $t('settings.workingDaysHint') }}</span>
+            <p v-if="generalForm.errors.working_days" class="err">{{ generalForm.errors.working_days }}</p>
+          </div>
         </div>
       </form>
     </div>
