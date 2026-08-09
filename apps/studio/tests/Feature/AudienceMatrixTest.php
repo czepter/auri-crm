@@ -35,7 +35,12 @@ const PUBLIC_ROUTES = [
     // `audience:` middleware could gate — there is no staff or portal user
     // on this request to hold one. See StripeWebhookController's own doc
     // comment.
-    'api' => ['api/health', 'api/stripe/webhook'],
+    // G-08's own scope note: a gallery guest holds no `audience:api` token
+    // yet — G-06 (#57) is the story that decides how one is earned (a PIN,
+    // an emailed link, a session) and wraps these two routes with that
+    // check. Until it lands, both are deliberately reachable by public_id
+    // alone, same as every other still-open gate in this phase.
+    'api' => ['api/health', 'api/stripe/webhook', 'api/galleries/{gallery}', 'api/gallery-versions/{galleryVersion}/images/{key}'],
 
     // The client's way in. Public by necessity — the only person who needs it
     // is one who cannot sign in — and the token in the path is the whole

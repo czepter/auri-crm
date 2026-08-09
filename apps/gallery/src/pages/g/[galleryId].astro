@@ -1,0 +1,95 @@
+---
+import { FORMATS, imageUrl, srcSet, type GalleryAsset } from '../../lib/images'
+import '../../styles/tokens.css'
+import '../../styles/gallery.css'
+
+// G-08: never cached. Which GalleryVersion counts as "current" can change
+// the moment a studio owner republishes (Gallery::publish(), G-05), so a
+// guest's browser — and anything sitting between it and this process — must
+// ask again on every load rather than serve an old version's markup. The
+// images this page points at are the opposite: see GalleryImageController.
+Astro.response.headers.set('Cache-Control', 'no-store')
+
+const apiBase = process.env.API_URL ?? 'http://localhost:8000'
+const { galleryId } = Astro.params
+
+interface GalleryReadResponse {
+  gallery: {
+    public_id: string
+    title: string
+    version: {
+      public_id: string
+      version: number
+      published_at: string
+      assets: GalleryAsset[]
+    }
+  }
+}
+
+const response = await fetch(`${apiBase}/api/galleries/${galleryId}`, {
+  headers: { Accept: 'application/json' },
+})
+
+if (!response.ok) {
+  Astro.response.status = response.status === 404 ? 404 : 502
+}
+
+const body: GalleryReadResponse | null = response.ok ? await response.json() : null
+const gallery = body?.gallery ?? null
+
+// (SIZES matches .grid's four fixed columns in gallery.css — a masonry, no
+// responsive breakpoints exist in the mockup this screen matches, so none
+// are invented here either.)
+const SIZES = '(min-width: 1300px) 308px, 25vw'
+const FALLBACK_WIDTH = 800
+---
+
+<html lang="de" data-theme="gallery">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{gallery ? gallery.title : 'Galerie'}</title>
+  </head>
+  <body>
+    {
+      gallery ? (
+        <div class="gwrap">
+          <header class="ghead">
+            <div class="gwho">
+              <b>{gallery.title}</b> · {gallery.version.assets.length} Bilder
+            </div>
+          </header>
+
+          <div class="grid">
+            {gallery.version.assets.map((asset) => (
+              <span class="tile">
+                <picture>
+                  {FORMATS.filter((f) => f !== 'jpeg').map((format) => (
+                    <source
+                      type={`image/${format}`}
+                      srcset={srcSet(apiBase, gallery.version.public_id, asset.key, format)}
+                      sizes={SIZES}
+                    />
+                  ))}
+                  <img
+                    src={imageUrl(apiBase, gallery.version.public_id, asset.key, FALLBACK_WIDTH, 'jpeg')}
+                    srcset={srcSet(apiBase, gallery.version.public_id, asset.key, 'jpeg')}
+                    sizes={SIZES}
+                    width={asset.width ?? undefined}
+                    height={asset.height ?? undefined}
+                    alt=""
+                    loading="lazy"
+                  />
+                </picture>
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div class="gwrap">
+          <p class="gsub">Diese Galerie ist nicht erreichbar.</p>
+        </div>
+      )
+    }
+  </body>
+</html>
