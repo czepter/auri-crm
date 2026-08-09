@@ -28,6 +28,7 @@ use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
 use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\SessionController;
+use App\Gallery\Http\Controllers\GalleryLightroomExportController;
 use App\Media\Http\Controllers\MediaIngestController;
 use App\Media\Http\Controllers\MultipartUploadController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
@@ -279,6 +280,14 @@ Route::middleware('audience:staff')->group(function () {
             ->name('galleries.uploads.complete');
         Route::delete('/uploads/{multipartUpload}', [MultipartUploadController::class, 'destroy'])
             ->name('galleries.uploads.destroy');
+
+        // G-12: the studio side of proofing — every favorited asset in the
+        // gallery's current version, as a Lightroom-importable filename
+        // list. No admin gallery-detail screen exists yet to hang a button
+        // on (see the controller's own doc comment), so this is reachable by
+        // URL only until one does.
+        Route::get('/galerien/{gallery}/lightroom-export', GalleryLightroomExportController::class)
+            ->name('galleries.lightroom-export');
 
         // No GET here: the Zahlungen card lives on the project overview
         // itself (ProjectController::show), not a tab of its own — see the

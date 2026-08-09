@@ -86,12 +86,17 @@ const FALLBACK_WIDTH = 800
           </div>
 
           {
-            // G-09, mockup 10 — structure and vocabulary match exactly, minus
-            // the comments rail: AssetComment is cut to G-12 (issue #61),
-            // so .lbrail carries only the favorite toggle .acts already
-            // ships without it. Rendered once, server-side, from the same
-            // asset list the grid above already has — lightbox.ts only ever
-            // shows or hides it and swaps which asset the stage points at.
+            // G-12, mockup 10 — structure and vocabulary match, with two
+            // deliberate gaps: no "Teilen" (share) act, a feature no story
+            // has built, and no name/avatar on a comment (`.cmt b`/`.cmt
+            // img` in the mockup) — a gallery guest carries no account and
+            // this app collects no name for one (favorites.ts's own doc
+            // comment), so every comment renders as "Gast" rather than
+            // inventing an identity nothing captures. Rendered once,
+            // server-side, from the same asset list the grid above already
+            // has — lightbox.ts only ever shows or hides it and swaps which
+            // asset the stage points at, and fetches/posts comments per
+            // asset as it opens.
           }
           <div class="lb" id="lightbox">
             <header class="lbtop recede">
@@ -125,6 +130,18 @@ const FALLBACK_WIDTH = 800
                     <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
                     <span data-lb-favorite-label>Favorit</span>
                   </button>
+                  <span class="act">
+                    <svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" /></svg>
+                    <span data-lb-comment-count>0 Kommentare</span>
+                  </span>
+                </div>
+
+                <div class="cmts" data-lb-comments></div>
+
+                <div class="lbwrite">
+                  <label class="field">
+                    <input type="text" data-lb-comment-input placeholder="Kommentar zu diesem Bild schreiben …" />
+                  </label>
                 </div>
               </aside>
             </div>

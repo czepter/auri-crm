@@ -1,7 +1,10 @@
 <?php
 
+use App\Enums\StaffRole;
 use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
+use App\Models\User;
+use App\Notifications\Models\InAppNotification;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -110,4 +113,27 @@ it('returns an empty list for a guest_id-less read rather than every guest\'s fa
     $this->getJson("/api/gallery-versions/{$version->public_id}/favorites")
         ->assertOk()
         ->assertJson(['favorited' => []]);
+});
+
+it('notifies every staff user of the tenant through the unread stream when a favorite is added', function () {
+    $version = publishedVersionWithAssets();
+    $staff = User::factory()->create(['role' => StaffRole::Owner]);
+
+    $this->postJson(
+        "/api/gallery-versions/{$version->public_id}/favorites/galleries/g1/a.jpg",
+        ['guest_id' => 'guest-1'],
+    )->assertOk()->assertJson(['favorited' => true]);
+
+    expect(InAppNotification::where('notifiable_type', $staff->getMorphClass())->where('notifiable_id', $staff->id)->count())->toBe(1);
+});
+
+it('does not notify the studio when a favorite is removed', function () {
+    $version = publishedVersionWithAssets();
+    $staff = User::factory()->create(['role' => StaffRole::Owner]);
+    $path = "/api/gallery-versions/{$version->public_id}/favorites/galleries/g1/a.jpg";
+
+    $this->postJson($path, ['guest_id' => 'guest-1'])->assertOk()->assertJson(['favorited' => true]);
+    $this->postJson($path, ['guest_id' => 'guest-1'])->assertOk()->assertJson(['favorited' => false]);
+
+    expect(InAppNotification::where('notifiable_type', $staff->getMorphClass())->where('notifiable_id', $staff->id)->count())->toBe(1);
 });
