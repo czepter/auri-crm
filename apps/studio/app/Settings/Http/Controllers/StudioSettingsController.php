@@ -129,6 +129,35 @@ class StudioSettingsController extends Controller
         return redirect('/einstellungen');
     }
 
+    /**
+     * T-05's own save action, same reasoning as updateVat() above: the
+     * Dokumente pane is its own form with its own "Speichern" button.
+     *
+     * deposit_percentage arrives already in basis points, same boundary
+     * vat_rate crosses in updateVat().
+     */
+    public function updateDocuments(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        $validated = $request->validate([
+            'quote_validity_days' => ['required', 'integer', 'min:0', 'max:3650'],
+            'payment_term_days' => ['required', 'integer', 'min:0', 'max:3650'],
+            'deposit_percentage' => ['required', 'integer', 'min:0', 'max:10000'],
+            'widerruf_included' => ['required', 'boolean'],
+            'widerruf_text' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $actor = auth('staff')->user();
+        $settings->set('quote_validity_days', $validated['quote_validity_days'], $actor);
+        $settings->set('payment_term_days', $validated['payment_term_days'], $actor);
+        $settings->set('deposit_percentage', $validated['deposit_percentage'], $actor);
+        $settings->set('widerruf_included', $validated['widerruf_included'], $actor);
+        $settings->set('widerruf_text', $validated['widerruf_text'] ?? null, $actor);
+
+        return redirect('/einstellungen');
+    }
+
     private function toData(StudioSettingsResolver $settings): StudioSettingsData
     {
         $attrs = $settings->attributes();
@@ -156,6 +185,11 @@ class StudioSettingsController extends Controller
             vatMode: $settings->vatMode(),
             vatRate: $settings->vatRate(),
             vatNote: $settings->vatNote(),
+            quoteValidityDays: $settings->quoteValidityDays(),
+            paymentTermDays: $settings->paymentTermDays(),
+            depositPercentage: $settings->depositPercentage(),
+            widerrufIncluded: $settings->widerrufIncluded(),
+            widerrufText: $settings->widerrufText(),
         );
     }
 }
