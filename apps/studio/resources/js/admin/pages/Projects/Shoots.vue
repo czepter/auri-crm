@@ -82,13 +82,13 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
       <span class="kick" style="margin-bottom: 0">
         {{ $t('board.shootCount', header.shootCount) }}
       </span>
-      <button class="btn" type="button" @click="adding = !adding">
+      <button v-if="header.canManageShoots" class="btn" type="button" @click="adding = !adding">
         <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         {{ $t('project.addShoot') }}
       </button>
     </div>
 
-    <div v-if="adding" class="card static" style="margin-bottom: var(--s4)">
+    <div v-if="adding && header.canManageShoots" class="card static" style="margin-bottom: var(--s4)">
       <div class="cardhead"><span class="kick">{{ $t('project.addShoot') }}</span></div>
 
       <form class="fgrid" @submit.prevent="create">
@@ -188,6 +188,7 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
               </div>
               <div class="proles">
                 <select
+                  v-if="header.canManageCrew"
                   class="inp sm"
                   :value="member.role"
                   :aria-label="$t('project.crewRole', { name: member.name })"
@@ -197,15 +198,16 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
                     {{ role.label }}
                   </option>
                 </select>
-                <button type="button" class="abtn" @click="unassign(member)">
+                <button v-if="header.canManageCrew" type="button" class="abtn" @click="unassign(member)">
                   {{ $t('project.unassign') }}
                 </button>
               </div>
             </div>
           </div>
 
-          <div class="formfoot" style="margin-top: var(--s3); gap: var(--s3)">
+          <div v-if="header.canManageShoots || header.canManageCrew" class="formfoot" style="margin-top: var(--s3); gap: var(--s3)">
             <select
+              v-if="header.canManageShoots"
               class="inp sm"
               style="width: auto"
               :disabled="!shoot.forwardStatuses.length"
@@ -219,6 +221,7 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
             </select>
 
             <select
+              v-if="header.canManageCrew"
               class="inp sm"
               style="width: auto"
               :aria-label="$t('project.assignCrew')"
@@ -230,11 +233,11 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
               </option>
             </select>
 
-            <button v-if="!shoot.isPrimary" type="button" class="abtn" @click="designatePrimary(shoot)">
+            <button v-if="!shoot.isPrimary && header.canManageShoots" type="button" class="abtn" @click="designatePrimary(shoot)">
               {{ $t('project.makePrimary') }}
             </button>
 
-            <button type="button" class="abtn hot" @click="cancel(shoot)">
+            <button v-if="header.canManageShoots" type="button" class="abtn hot" @click="cancel(shoot)">
               {{ $t('project.cancel') }}
             </button>
           </div>

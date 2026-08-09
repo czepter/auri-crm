@@ -32,6 +32,7 @@ it('names a page component that exists on disk', function (string $path, string 
     ['/anfragen', 'Leads/Board'],
     ['/kontakte', 'Contacts/Index'],
     ['/kalender', 'Kalender'],
+    ['/team', 'Staff/Index'],
     ['/auftraege/{project}', 'Projects/Show'],
     ['/auftraege/{project}/shootings', 'Projects/Shoots'],
 ]);

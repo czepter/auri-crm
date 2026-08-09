@@ -1,0 +1,48 @@
+<?php
+
+namespace App\Enums;
+
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
+
+/**
+ * What a staff role is allowed to do, named once.
+ *
+ * Deliberately a vocabulary rather than a set of booleans scattered through
+ * policies: P6's I-01 expresses API token scopes as exactly these values, so a
+ * token can never do something no staff role can. Adding a capability here is
+ * the only way to grow either surface.
+ *
+ * These are capabilities, not routes. Whether a given row is *yours* — the
+ * shoots a second shooter is assigned to — is a question the policies answer
+ * on top of these, because it depends on the record and not on the role.
+ */
+#[TypeScript]
+enum Capability: string
+{
+    /** The sales funnel: the board, the capture form, stage transitions. */
+    case ManageLeads = 'manage_leads';
+
+    case ManageContacts = 'manage_contacts';
+
+    /** See every project, rather than only the ones you are crewed on. */
+    case ViewAllProjects = 'view_all_projects';
+
+    /**
+     * Commit the studio: turn a pursuit into a Job. The narrowest capability
+     * in the list, and the reason S-06 exists — P-05a shipped this action open
+     * to every role in sprint 3.
+     */
+    case BookProject = 'book_project';
+
+    /** Add, advance, cancel and re-designate shoots. */
+    case ManageShoots = 'manage_shoots';
+
+    case ManageCrew = 'manage_crew';
+
+    case ManageTasks = 'manage_tasks';
+
+    case ManageNotes = 'manage_notes';
+
+    /** Invite staff and reach the studio's own settings. */
+    case ManageStaff = 'manage_staff';
+}

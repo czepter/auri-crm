@@ -16,6 +16,8 @@ class LeadStageController extends Controller
 {
     public function update(Request $request, Lead $lead, AdvanceLeadStage $advance): RedirectResponse
     {
+        $this->authorize('update', $lead);
+
         $validated = $request->validate([
             'stage' => ['required', Rule::enum(LeadStage::class)],
         ]);

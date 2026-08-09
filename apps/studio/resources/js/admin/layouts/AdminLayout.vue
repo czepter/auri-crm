@@ -17,10 +17,15 @@ const initials = computed(() => {
   return picked.map((word) => word[0]).join('').toUpperCase()
 })
 
+const can = computed(() => page.props.auth.can ?? [])
+
 // Mockup 01's sidebar lists twelve destinations. Only the ones with a screen
 // behind them appear, which is the ruling C-06 applies to its tabs and S-01 to
 // the Übersicht — an item that goes nowhere teaches staff to distrust the nav.
 // Each remaining entry arrives with its own story.
+//
+// From S-06 the same rule covers authority: a nav item this role would be
+// refused is absent rather than rendered into a 403.
 const items = computed(() => [
   {
     key: 'uebersicht',
@@ -33,13 +38,22 @@ const items = computed(() => [
     label: 'Anfragen',
     href: '/anfragen',
     count: nav.value?.leads,
+    needs: 'manage_leads',
     icon: '<path d="M3 12h5l2 3h4l2-3h5"/><path d="M5.5 5h13l2.5 7v7H3v-7z"/>',
   },
   {
     key: 'kontakte',
     label: 'Kontakte',
     href: '/kontakte',
+    needs: 'manage_contacts',
     icon: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M16.5 5.5a3.2 3.2 0 010 5.6M17.5 14.8c2 .7 3.5 2.6 3.5 5.2"/>',
+  },
+  {
+    key: 'team',
+    label: 'Team',
+    href: '/team',
+    needs: 'manage_staff',
+    icon: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M19 8v6M22 11h-6"/>',
   },
   {
     key: 'kalender',
@@ -47,7 +61,7 @@ const items = computed(() => [
     href: '/kalender',
     icon: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/>',
   },
-])
+].filter((item) => !item.needs || can.value.includes(item.needs as App.Enums.Capability)))
 </script>
 
 <template>

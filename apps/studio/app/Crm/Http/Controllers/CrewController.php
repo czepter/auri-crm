@@ -15,6 +15,8 @@ class CrewController extends Controller
 {
     public function store(Request $request, Shoot $shoot): RedirectResponse
     {
+        $this->authorize('assignCrew', $shoot);
+
         $validated = $request->validate([
             // The public id, never the key — the form only ever held CUID2s.
             'user' => ['required', 'string', Rule::exists('users', 'public_id')],
@@ -37,6 +39,8 @@ class CrewController extends Controller
 
     public function destroy(CrewAssignment $assignment): RedirectResponse
     {
+        $this->authorize('assignCrew', $assignment->shoot);
+
         $assignment->delete();
 
         return back();

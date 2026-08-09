@@ -23,6 +23,8 @@ class ProjectController extends Controller
 
     public function show(Project $project): Response
     {
+        $this->authorize('view', $project);
+
         return Inertia::render('Projects/Show', [
             'header' => $this->header($project),
             'shoots' => ShootData::collect($this->shootsOf($project)),
@@ -50,6 +52,8 @@ class ProjectController extends Controller
 
     public function shoots(Project $project): Response
     {
+        $this->authorize('view', $project);
+
         return Inertia::render('Projects/Shoots', [
             'header' => $this->header($project),
             'shoots' => ShootData::collect($this->shootsOf($project)),
@@ -64,6 +68,8 @@ class ProjectController extends Controller
 
     public function book(Project $project, BookProject $book): RedirectResponse
     {
+        $this->authorize('book', $project);
+
         // Already booked is a no-op inside the action rather than a failure
         // here: two staff members pressing the button is not an error, it is a
         // race, and the second press should leave the screen consistent.

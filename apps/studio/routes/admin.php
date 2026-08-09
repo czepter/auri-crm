@@ -14,8 +14,10 @@ use App\Crm\Http\Controllers\ShootController;
 use App\Crm\Http\Controllers\TaskController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
+use App\Http\Controllers\Staff\InvitationController;
 use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
+use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\SessionController;
 use Illuminate\Support\Facades\Route;
 
@@ -44,6 +46,19 @@ Route::middleware('guest:staff')->group(function () {
     // pending-user session key, not by the staff guard.
     Route::get('/auth/mfa', [MfaChallengeController::class, 'create']);
     Route::post('/auth/mfa', [MfaChallengeController::class, 'store']);
+
+    // Reached by someone with no account yet, so necessarily outside the
+    // audience — the token in the path is what authorises them, and accepting
+    // lands on MFA enrollment like every other staff account.
+    Route::get('/einladung/{token}', [InvitationController::class, 'create'])->name('invitations.accept');
+    Route::post('/einladung/{token}', [InvitationController::class, 'accept']);
+
+    // Reset proves control of an inbox and nothing more: it signs nobody in
+    // and never touches the second factor.
+    Route::get('/passwort/vergessen', [PasswordResetController::class, 'request'])->name('password.request');
+    Route::post('/passwort/vergessen', [PasswordResetController::class, 'email']);
+    Route::get('/passwort/neu/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
+    Route::post('/passwort/neu', [PasswordResetController::class, 'update'])->name('password.update');
 });
 
 Route::middleware('audience:staff')->group(function () {
@@ -66,6 +81,11 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/kontakte/{contact}', [ContactController::class, 'edit'])->name('contacts.edit');
         Route::patch('/kontakte/{contact}', [ContactController::class, 'update'])->name('contacts.update');
         Route::get('/verfuegbarkeit', AvailabilityController::class)->name('availability.show');
+
+        Route::get('/team', [InvitationController::class, 'index'])->name('staff.index');
+        Route::post('/team/einladungen', [InvitationController::class, 'store'])->name('staff.invite');
+        Route::delete('/team/einladungen/{invitation}', [InvitationController::class, 'destroy'])
+            ->name('staff.invitation.destroy');
 
         Route::get('/kalender', [CalendarController::class, 'index'])->name('calendar.index');
         Route::post('/kalender/abo', [CalendarController::class, 'regenerate'])

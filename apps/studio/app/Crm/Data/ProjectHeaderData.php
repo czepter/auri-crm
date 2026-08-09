@@ -29,11 +29,19 @@ class ProjectHeaderData extends Data
         public ?string $primaryDate,
         public int $shootCount,
         public bool $isBooked,
+        // Decided on the server and sent as a fact, so a control this person
+        // may not use never reaches the markup at all.
+        public bool $canBook,
+        public bool $canManageShoots,
+        public bool $canManageCrew,
+        public bool $canManageTasks,
+        public bool $canManageNotes,
         public array $tabs,
     ) {}
 
     public static function fromProject(Project $project, ProjectPositionData $position): self
     {
+        $user = auth('staff')->user();
         return new self(
             id: $project->public_id,
             name: $project->name,
@@ -46,6 +54,11 @@ class ProjectHeaderData extends Data
             primaryDate: $project->primaryShoot?->date?->format('Y-m-d'),
             shootCount: $project->shoots->reject->isCancelled()->count(),
             isBooked: $project->job !== null,
+            canBook: $user?->can('book', $project) ?? false,
+            canManageShoots: $user?->can('manageShoots', $project) ?? false,
+            canManageCrew: $user?->can('manageCrew', $project) ?? false,
+            canManageTasks: $user?->can('manageTasks', $project) ?? false,
+            canManageNotes: $user?->can('manageNotes', $project) ?? false,
             // Angebot and Vertrag are Q-*/M-* in P2, Zahlungen is M-03,
             // Fragebögen and Kommunikation are E-* in P4, Galerien is G-05 in
             // P3. Each appends a line here on the sprint it lands.

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { router, useForm } from '@inertiajs/vue3'
+import { Link, router, useForm } from '@inertiajs/vue3'
 
 // Only ever true in local. The server decides; the button cannot talk itself
 // into existence.
@@ -53,6 +53,10 @@ function submit() {
           {{ $t('auth.signIn') }}
         </button>
       </form>
+
+      <p style="margin-top: var(--s4); text-align: center">
+        <Link class="txtbtn" href="/passwort/vergessen">{{ $t('auth.forgot') }}</Link>
+      </p>
 
       <div v-if="devLogin" style="margin-top: var(--s5); padding-top: var(--s4); border-top: 1px solid var(--line)">
         <button

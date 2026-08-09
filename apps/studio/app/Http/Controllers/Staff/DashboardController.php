@@ -6,9 +6,11 @@ use App\Crm\Actions\ReadProductionBoard;
 use App\Crm\Data\NextShootData;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Models\Lead;
+use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,14 +27,16 @@ class DashboardController extends Controller
 {
     public function __invoke(ReadProductionBoard $board): Response
     {
+        $viewer = auth('staff')->user();
+
         return Inertia::render('Uebersicht', [
             'today' => now()->format('Y-m-d'),
             'openLeads' => Lead::query()->open()->count(),
             'newLeadsThisWeek' => Lead::query()->open()->where('created_at', '>=', now()->subWeek())->count(),
-            'nextShoot' => $this->nextShoot(),
-            'production' => $board(),
-            'tasks' => $this->tasks(),
-            'openTasks' => Task::query()->open()->count(),
+            'nextShoot' => $this->nextShoot($viewer),
+            'production' => $board($viewer),
+            'tasks' => $this->tasks($viewer),
+            'openTasks' => Task::query()->open()->whereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id'))->count(),
         ]);
     }
 
@@ -41,12 +45,13 @@ class DashboardController extends Controller
      * cancelled, and only for a project that is actually booked — an unbooked
      * date is a request, not a commitment.
      */
-    private function nextShoot(): ?NextShootData
+    private function nextShoot(User $viewer): ?NextShootData
     {
         $shoot = Shoot::query()
             ->join('jobs', 'jobs.project_id', '=', 'shoots.project_id')
             ->select('shoots.*')
             ->with(['project', 'crew.user', 'tasks'])
+            ->whereIn('shoots.project_id', Project::query()->visibleTo($viewer)->select('projects.id'))
             ->uncancelled()
             ->whereNotNull('date')
             ->whereDate('date', '>=', now()->startOfDay())
@@ -66,11 +71,12 @@ class DashboardController extends Controller
      *
      * Undated tasks sort last: they are owed, but not owed on any given day.
      */
-    private function tasks()
+    private function tasks(User $viewer)
     {
         return TaskRowData::collect(
             Task::query()
                 ->open()
+                ->whereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id'))
                 ->byDueDate()
                 ->with('project')
                 ->get()

@@ -115,12 +115,12 @@ function remove(id: string) {
         <div class="card static">
           <div class="cardhead">
             <span class="kick">{{ $t('project.tasks') }}</span>
-            <button type="button" class="abtn" @click="addingTask = !addingTask">
+            <button v-if="header.canManageTasks" type="button" class="abtn" @click="addingTask = !addingTask">
               {{ $t('project.taskAdd') }}
             </button>
           </div>
 
-          <form v-if="addingTask" class="fgrid" style="margin-bottom: var(--s4)" @submit.prevent="createTask">
+          <form v-if="addingTask && header.canManageTasks" class="fgrid" style="margin-bottom: var(--s4)" @submit.prevent="createTask">
             <div class="fld wide">
               <label for="task_title">{{ $t('project.taskTitle') }}</label>
               <input id="task_title" v-model="taskForm.title" class="inp" type="text" />
@@ -160,6 +160,7 @@ function remove(id: string) {
               <!-- Completion is a toggle, not a delete: what was owed and when
                    it was done is the record. -->
               <button
+                v-if="header.canManageTasks"
                 type="button"
                 class="abtn"
                 :aria-label="$t(task.isDone ? 'project.taskReopen' : 'project.taskComplete')"
@@ -193,7 +194,7 @@ function remove(id: string) {
             <div class="head">
               <b>{{ note.author }}</b>
               <span>{{ new Date(note.writtenAt).toLocaleDateString('de-DE') }}</span>
-              <span class="acts">
+              <span v-if="header.canManageNotes" class="acts">
                 <button type="button" class="abtn" @click="edit(note)">
                   {{ $t('project.noteEdit') }}
                 </button>
@@ -217,7 +218,7 @@ function remove(id: string) {
             </div>
           </div>
 
-          <form class="composer" @submit.prevent="write">
+          <form v-if="header.canManageNotes" class="composer" @submit.prevent="write">
             <textarea
               v-model="composer.body"
               class="inp"

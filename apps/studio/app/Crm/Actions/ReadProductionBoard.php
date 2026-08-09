@@ -4,7 +4,9 @@ namespace App\Crm\Actions;
 
 use App\Crm\Data\ProductionRowData;
 use App\Crm\Enums\ShootStatus;
+use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -26,12 +28,24 @@ use Illuminate\Support\Facades\DB;
  */
 class ReadProductionBoard
 {
-    /** @return Collection<int, ProductionRowData> */
-    public function __invoke(): Collection
+    /**
+     * Scoped to what the viewer may see. A crew role's board is their own
+     * shoots — refusing the whole screen would be the wrong shape, since they
+     * do have work on it.
+     *
+     * @return Collection<int, ProductionRowData>
+     */
+    public function __invoke(?User $viewer = null): Collection
     {
+        $viewer ??= auth('staff')->user();
+
         return Shoot::query()
             ->select(DB::raw('distinct on (shoots.project_id) shoots.*'))
             ->join('jobs', 'jobs.project_id', '=', 'shoots.project_id')
+            ->when($viewer !== null, fn ($query) => $query->whereIn(
+                'shoots.project_id',
+                Project::query()->visibleTo($viewer)->select('projects.id'),
+            ))
             ->with(['project', 'crew'])
             ->withCount(['tasks as open_tasks' => fn ($query) => $query->open()])
             ->uncancelled()

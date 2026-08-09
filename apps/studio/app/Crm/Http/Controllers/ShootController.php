@@ -19,6 +19,8 @@ class ShootController extends Controller
 {
     public function store(Request $request, Project $project): RedirectResponse
     {
+        $this->authorize('manageShoots', $project);
+
         $validated = $request->validate([
             'kind' => ['required', Rule::enum(ShootKind::class)],
             'label' => ['nullable', 'string', 'max:255'],
@@ -38,6 +40,8 @@ class ShootController extends Controller
 
     public function advance(Request $request, Shoot $shoot, AdvanceShootStatus $advance): RedirectResponse
     {
+        $this->authorize('update', $shoot);
+
         $validated = $request->validate([
             'status' => ['required', Rule::enum(ShootStatus::class)],
         ]);
@@ -51,6 +55,8 @@ class ShootController extends Controller
 
     public function cancel(Request $request, Shoot $shoot, AdvanceShootStatus $advance): RedirectResponse
     {
+        $this->authorize('update', $shoot);
+
         $validated = $request->validate([
             'reason' => ['required', 'string', 'max:255'],
         ]);
@@ -64,6 +70,8 @@ class ShootController extends Controller
 
     public function designatePrimary(Shoot $shoot, DesignatePrimaryShoot $designate): RedirectResponse
     {
+        $this->authorize('update', $shoot);
+
         return $this->attempt('shoot', fn () => $designate($shoot, auth('staff')->user()));
     }
 

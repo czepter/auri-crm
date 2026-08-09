@@ -15,6 +15,8 @@ class ContactController extends Controller
 {
     public function index(): Response
     {
+        $this->authorize('viewAny', Contact::class);
+
         $contacts = Contact::query()
             ->withCount('projects')
             ->orderBy('name')
@@ -27,6 +29,8 @@ class ContactController extends Controller
 
     public function edit(Contact $contact): Response
     {
+        $this->authorize('update', $contact);
+
         return Inertia::render('Contacts/Edit', [
             'contact' => ContactSuggestionData::fromModel($contact->loadCount('projects')),
         ]);
@@ -34,6 +38,8 @@ class ContactController extends Controller
 
     public function update(Request $request, Contact $contact): RedirectResponse
     {
+        $this->authorize('update', $contact);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => [

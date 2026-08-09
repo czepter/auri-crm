@@ -14,6 +14,8 @@ class LeadBoardController extends Controller
 {
     public function __invoke(CheckDateAvailability $availability): Response
     {
+        $this->authorize('viewAny', Lead::class);
+
         $leads = Lead::query()
             ->open()
             ->with(['project.contacts', 'project.shoots', 'project.primaryShoot'])

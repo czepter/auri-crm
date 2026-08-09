@@ -79,6 +79,11 @@ position: App.Crm.Data.ProjectPositionData,
 primaryDate: string | null,
 shootCount: number,
 isBooked: boolean,
+canBook: boolean,
+canManageShoots: boolean,
+canManageCrew: boolean,
+canManageTasks: boolean,
+canManageNotes: boolean,
 tabs: {
 key: string,
 label: string,
@@ -145,6 +150,7 @@ mfaConfirmed: boolean,
 };
 }
 namespace Enums {
+export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_staff';
 export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' | 'assistant';
 }
 }

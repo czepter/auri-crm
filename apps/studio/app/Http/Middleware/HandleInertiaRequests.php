@@ -28,6 +28,12 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $user === null ? null : StaffProfileData::fromModel($user),
+                // What this person may do, so a screen can leave out what they
+                // cannot reach rather than render it and hide it. A control
+                // that exists in the markup is a control someone can find.
+                'can' => $user === null
+                    ? []
+                    : array_map(fn ($capability) => $capability->value, $user->role->capabilities()),
             ],
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),

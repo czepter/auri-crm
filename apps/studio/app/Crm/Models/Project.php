@@ -6,6 +6,10 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
+use App\Enums\Capability;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Database\Factories\Crm\ProjectFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -99,6 +103,38 @@ class Project extends Model
     public function primaryShoot(): HasOne
     {
         return $this->hasOne(Shoot::class)->where('is_primary', true);
+    }
+
+    /**
+     * Is this person on the crew of any of the project's shoots? The one fact
+     * a crew role's whole visibility hangs off.
+     *
+     * Cancelled shoots count: someone who was crewed on a day that got called
+     * off still has a reason to see why, and hiding the project the moment it
+     * is cancelled is how staff conclude the system is lying to them.
+     */
+    public function isCrewedBy(User $user): bool
+    {
+        return CrewAssignment::query()
+            ->whereIn('shoot_id', $this->shoots()->select('id'))
+            ->where('user_id', $user->id)
+            ->exists();
+    }
+
+    /** Projects this person may see, for the reads that list many at once. */
+    public function scopeVisibleTo(Builder $query, User $user): void
+    {
+        if ($user->role->allows(Capability::ViewAllProjects)) {
+            return;
+        }
+
+        $query->whereExists(
+            CrewAssignment::query()
+                ->join('shoots', 'shoots.id', '=', 'crew_assignments.shoot_id')
+                ->whereColumn('shoots.project_id', 'projects.id')
+                ->where('crew_assignments.user_id', $user->id)
+                ->select(DB::raw(1))
+        );
     }
 
     public function primaryContact(): ?Contact

@@ -19,6 +19,8 @@ class InternalNoteController extends Controller
 {
     public function store(Request $request, Project $project): RedirectResponse
     {
+        $this->authorize('manageNotes', $project);
+
         $project->notes()->create([
             'author_id' => auth('staff')->id(),
             'body' => $this->validated($request),
@@ -29,6 +31,8 @@ class InternalNoteController extends Controller
 
     public function update(Request $request, InternalNote $note): RedirectResponse
     {
+        $this->authorize('update', $note);
+
         $note->update(['body' => $this->validated($request)]);
 
         return back();
@@ -36,6 +40,8 @@ class InternalNoteController extends Controller
 
     public function destroy(InternalNote $note): RedirectResponse
     {
+        $this->authorize('update', $note);
+
         $note->delete();
 
         return back();

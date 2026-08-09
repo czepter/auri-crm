@@ -15,7 +15,20 @@ const PUBLIC_ROUTES = [
     // The ICS feed is public because a calendar app cannot hold a session. Its
     // credential is the token in the path, and it opens exactly one person's
     // own shooting schedule.
-    'admin' => ['login', 'auth/mfa', 'kalender/{token}/shootings.ics'],
+    // The invitation and reset flows are necessarily reachable without a
+    // session: the first is used by someone who has no account yet, and the
+    // second by someone locked out of the one they have. Both are authorised
+    // by a token in the path, and neither grants access on its own — an
+    // invited account lands on MFA enrollment, and a reset signs nobody in.
+    'admin' => [
+        'login',
+        'auth/mfa',
+        'kalender/{token}/shootings.ics',
+        'einladung/{token}',
+        'passwort/vergessen',
+        'passwort/neu/{token}',
+        'passwort/neu',
+    ],
     'api' => ['api/health'],
 ];
 
