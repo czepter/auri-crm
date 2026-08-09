@@ -1,14 +1,24 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
+import { toDataURL } from 'qrcode'
+import { ref, watchEffect } from 'vue'
 import { Alert, AlertDescription } from '@/ui/alert'
 import { Button } from '@/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 
-defineProps<{ secret: string; otpauthUri: string }>()
+const props = defineProps<{ secret: string; otpauthUri: string }>()
 
 const form = useForm({ code: '' })
+const qrCodeDataUrl = ref('')
+
+// Rendered client-side so the secret embedded in the otpauth URI never
+// leaves the browser — a server-side QR image API would send it over the
+// network to a third party.
+watchEffect(async () => {
+  qrCodeDataUrl.value = await toDataURL(props.otpauthUri, { width: 220, margin: 1 })
+})
 
 function submit() {
   form.post('/auth/mfa/confirm', { onFinish: () => form.reset('code') })
@@ -24,16 +34,22 @@ function submit() {
       </CardHeader>
       <CardContent class="space-y-4">
         <p class="text-sm text-muted-foreground">
-          Add this key to your authenticator app, then enter the six-digit code it shows.
+          Scan this code with your authenticator app, then enter the six-digit code it shows.
         </p>
 
-        <code class="block rounded-md bg-muted px-3 py-2 font-mono text-sm tracking-widest">
-          {{ secret }}
-        </code>
+        <img
+          v-if="qrCodeDataUrl"
+          :src="qrCodeDataUrl"
+          alt="Scan with your authenticator app"
+          class="mx-auto h-[220px] w-[220px] rounded-md border"
+        />
 
-        <a class="text-sm underline underline-offset-4" :href="otpauthUri">
-          Open in an authenticator app
-        </a>
+        <details class="text-sm text-muted-foreground">
+          <summary class="cursor-pointer underline underline-offset-4">Can't scan it?</summary>
+          <code class="mt-2 block rounded-md bg-muted px-3 py-2 font-mono text-sm tracking-widest">
+            {{ secret }}
+          </code>
+        </details>
 
         <form class="space-y-4" @submit.prevent="submit">
           <Alert v-if="form.errors.code" variant="destructive">
