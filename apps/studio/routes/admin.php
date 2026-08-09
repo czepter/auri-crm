@@ -8,6 +8,7 @@ use App\Crm\Http\Controllers\CalendarController;
 use App\Crm\Http\Controllers\ContactController;
 use App\Crm\Http\Controllers\ContactSearchController;
 use App\Crm\Http\Controllers\CrewController;
+use App\Crm\Http\Controllers\FormTemplateController;
 use App\Crm\Http\Controllers\InquiryCaptureController;
 use App\Crm\Http\Controllers\InternalNoteController;
 use App\Crm\Http\Controllers\LeadBoardController;
@@ -164,6 +165,22 @@ Route::middleware('audience:staff')->group(function () {
             ->name('task-templates.update');
         Route::delete('/einstellungen/aufgabenvorlagen/{taskTemplate}', [TaskTemplateController::class, 'destroy'])
             ->name('task-templates.destroy');
+
+        // E-01: FormTemplate builder — a questionnaire's questions, built
+        // once and reused across projects. /neu stays above /{formTemplate}
+        // for the same reason /pakete/neu does.
+        Route::get('/einstellungen/fragebogen-vorlagen', [FormTemplateController::class, 'index'])
+            ->name('form-templates.index');
+        Route::get('/einstellungen/fragebogen-vorlagen/neu', [FormTemplateController::class, 'create'])
+            ->name('form-templates.create');
+        Route::post('/einstellungen/fragebogen-vorlagen', [FormTemplateController::class, 'store'])
+            ->name('form-templates.store');
+        Route::get('/einstellungen/fragebogen-vorlagen/{formTemplate}', [FormTemplateController::class, 'edit'])
+            ->name('form-templates.edit');
+        Route::patch('/einstellungen/fragebogen-vorlagen/{formTemplate}', [FormTemplateController::class, 'update'])
+            ->name('form-templates.update');
+        Route::delete('/einstellungen/fragebogen-vorlagen/{formTemplate}', [FormTemplateController::class, 'destroy'])
+            ->name('form-templates.destroy');
 
         Route::get('/einstellungen/portal', [PortalSettingsController::class, 'edit'])
             ->name('settings.portal.edit');
