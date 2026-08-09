@@ -40,6 +40,7 @@ class ProjectHeaderData extends Data
         public bool $canManagePortalVisibility,
         public bool $canManageQuotes,
         public bool $canManageContracts,
+        public bool $canManagePaymentPlan,
         public array $tabs,
     ) {}
 
@@ -68,9 +69,13 @@ class ProjectHeaderData extends Data
             canManagePortalVisibility: $user?->can('manageVisibility', $project) ?? false,
             canManageQuotes: $user?->can('manageQuotes', $project) ?? false,
             canManageContracts: $user?->can('manageContracts', $project) ?? false,
-            // Zahlungen is M-03, Fragebögen and Kommunikation are E-* in P4,
-            // Galerien is G-05 in P3. Each appends a line here on the sprint
-            // it lands.
+            canManagePaymentPlan: $user?->can('managePaymentPlan', $project) ?? false,
+            // Fragebögen, Kommunikation (E-* in P4) and Galerien (G-05 in P3)
+            // each append a line here on the sprint they land. Zahlungen
+            // (M-03) does not: mockup 04-auftrag's own comment keeps it and
+            // Aufgaben as "previews, compressed into the Übersicht tab rather
+            // than built as full tab panels" (mockups/_shared/admin-extra.css)
+            // — so it lives on the overview screen instead, never as a tab.
             //
             // Q-02 landed the quote half of "Angebot & Vertrag" under one
             // combined tab; M-01 splits Vertrag into its own tab now that it

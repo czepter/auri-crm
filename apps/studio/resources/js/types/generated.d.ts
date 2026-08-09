@@ -129,6 +129,7 @@ portalVisible: boolean,
 canManagePortalVisibility: boolean,
 canManageQuotes: boolean,
 canManageContracts: boolean,
+canManagePaymentPlan: boolean,
 tabs: {
 key: string,
 label: string,
@@ -197,6 +198,29 @@ mfaConfirmed: boolean,
 namespace Enums {
 export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings';
 export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' | 'assistant';
+}
+namespace Payments {
+namespace Data {
+export type PaymentInstallmentData = {
+id: string,
+amount: number,
+dueOn: string,
+status: string,
+statusLabel: string,
+sortOrder: number,
+label: string,
+};
+export type PaymentPlanData = {
+id: string,
+total: number,
+openTotal: number,
+isEditable: boolean,
+installments: App.Payments.Data.PaymentInstallmentData[],
+};
+}
+namespace Enums {
+export type PaymentInstallmentStatus = 'scheduled' | 'paid' | 'invoiced';
+}
 }
 namespace Quotes {
 namespace Data {

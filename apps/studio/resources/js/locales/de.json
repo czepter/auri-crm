@@ -260,6 +260,22 @@
     "net": "Netto",
     "empty": "Noch kein Angebot."
   },
+  "payments": {
+    "title": "Zahlungen",
+    "open": "{amount} offen",
+    "empty": "Noch kein Zahlungsplan.",
+    "create": "Zahlungsplan anlegen",
+    "total": "Gesamtbetrag (€)",
+    "installments": "Raten",
+    "addInstallment": "Rate hinzufügen",
+    "dueOn": "Fällig am",
+    "amount": "Betrag (€)",
+    "status": "Status",
+    "statusScheduled": "Geplant",
+    "statusPaid": "Bezahlt",
+    "notEditable": "Der Zahlungsplan ist nicht mehr bearbeitbar.",
+    "sumMismatch": "Die Raten ergeben nicht den Gesamtbetrag."
+  },
   "contractTemplates": {
     "title": "Vertragsvorlagen",
     "create": "Neue Vorlage",
