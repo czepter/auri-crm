@@ -5,8 +5,58 @@ on:
     branches: [main]
   pull_request:
 
+# Supersede in-flight runs for the same PR/branch. Pushes to main are never
+# cancelled so every commit on the default branch keeps a verdict.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      php: ${{ steps.filter.outputs.php }}
+      web: ${{ steps.filter.outputs.web }}
+      e2e: ${{ steps.filter.outputs.e2e }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            ci: &ci
+              - '.github/workflows/ci.yml'
+            php: &php
+              - *ci
+              - 'apps/studio/app/**'
+              - 'apps/studio/bootstrap/**'
+              - 'apps/studio/config/**'
+              - 'apps/studio/database/**'
+              - 'apps/studio/routes/**'
+              - 'apps/studio/tests/**'
+              - 'apps/studio/composer.json'
+              - 'apps/studio/composer.lock'
+              - 'apps/studio/phpunit.xml'
+              - 'apps/studio/artisan'
+              - 'apps/studio/.env.example'
+              - 'apps/studio/resources/js/types/generated.d.ts'
+            web: &web
+              - *ci
+              - 'apps/studio/resources/**'
+              - 'apps/studio/public/**'
+              - 'apps/studio/*.ts'
+              - 'apps/studio/*.json'
+              - 'packages/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+            e2e:
+              - *php
+              - *web
+
   studio:
+    needs: changes
+    if: needs.changes.outputs.php == 'true'
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -51,6 +101,8 @@ jobs:
             || { echo "Generated types are stale. Run 'php artisan typescript:transform' and commit."; exit 1; }
 
   web:
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -64,6 +116,8 @@ jobs:
       - run: pnpm build
 
   e2e:
+    needs: changes
+    if: needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     services:
       postgres:
