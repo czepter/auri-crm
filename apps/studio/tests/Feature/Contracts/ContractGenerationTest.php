@@ -3,7 +3,7 @@
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
 use App\Contracts\Models\Contract;
-use App\Contracts\Models\ContractTemplate;
+use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,7 +15,7 @@ it('creates a pending contract and dispatches the render job onto the render que
     Queue::fake();
 
     $project = contractProject();
-    $template = ContractTemplate::factory()->create();
+    $template = DocumentTemplate::factory()->create();
     $staff = staffMember(StaffRole::Owner);
 
     $this->actingAs($staff, 'staff')
@@ -36,7 +36,7 @@ it('refuses generation for a role without ManageContracts', function () {
     Queue::fake();
 
     $project = contractProject();
-    $template = ContractTemplate::factory()->create();
+    $template = DocumentTemplate::factory()->create();
 
     $this->actingAs(staffMember(StaffRole::SecondShooter), 'staff')
         ->post("/auftraege/{$project->public_id}/vertraege", ['template' => $template->public_id])
@@ -47,7 +47,7 @@ it('refuses generation for a role without ManageContracts', function () {
 
 it('404s generation against a superseded template version', function () {
     $project = contractProject();
-    $template = ContractTemplate::factory()->create();
+    $template = DocumentTemplate::factory()->create();
     $template->newVersion(['name' => $template->name, 'body' => '<p>v2</p>']);
 
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')

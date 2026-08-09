@@ -28,7 +28,7 @@ return new class extends Migration
             $table->string('name');
 
             // The merge-field syntax `{{ project.name }}` is documented in
-            // docs/contracts.md and resolved by MergeFieldResolver — never
+            // docs/documents.md and resolved by MergeFieldResolver — never
             // here, and never by a controller. See RenderContractJob.
             $table->longText('body');
 

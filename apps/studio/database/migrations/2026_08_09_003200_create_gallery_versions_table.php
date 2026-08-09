@@ -17,7 +17,7 @@ return new class extends Migration
 
             // Starts at 1 and only ever goes up per gallery — Gallery::publish()
             // reads max(version)+1 inside a transaction, the same shape
-            // ContractTemplate::newVersion() uses for its own family.
+            // DocumentTemplate::newVersion() uses for its own family.
             $table->unsignedInteger('version');
 
             // A snapshot of Gallery's draft columns at the moment publish()

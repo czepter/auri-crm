@@ -7,7 +7,7 @@ use App\Enums\Capability;
 use App\Models\User;
 
 /**
- * Task templates are tenant-wide, like ContractTemplate — no per-project
+ * Task templates are tenant-wide, like DocumentTemplate — no per-project
  * ownership to check, only the capability. T-14's own exception (design
  * §3 D4): ManageTasks, not ManageSettings, because editing what a booked
  * shoot owes is the same work as managing tasks, done in the settings room

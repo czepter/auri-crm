@@ -289,17 +289,22 @@
     "markPaidSubmit": "Bestätigen",
     "settledVia": "Bezahlt via {method}, am {date}"
   },
-  "contractTemplates": {
-    "title": "Vertragsvorlagen",
+  "documentTemplates": {
+    "title": "Dokumentvorlagen",
     "create": "Neue Vorlage",
     "createTitle": "Vorlage anlegen",
     "editTitle": "Vorlage bearbeiten",
-    "editHint": "Speichern legt eine neue Version an — die aktuell verwendete Fassung bleibt für bereits erzeugte Verträge unverändert erhalten.",
+    "editHint": "Speichern legt eine neue Version an — bereits erzeugte Dokumente bleiben unverändert.",
     "name": "Name",
-    "body": "Vertragstext",
-    "bodyHint": "HTML mit Platzhaltern in doppelten geschweiften Klammern, z. B. project.name — siehe docs/contracts.md.",
+    "body": "Text",
+    "bodyHint": "HTML mit Platzhaltern in doppelten geschweiften Klammern, z. B. project.name — siehe docs/documents.md.",
     "version": "v{version}",
-    "empty": "Noch keine Vertragsvorlagen."
+    "type": "Dokumenttyp",
+    "shootKind": "Shooting-Art",
+    "shootKindAny": "Jede Art",
+    "allTypes": "Alle",
+    "preview": "Vorschau",
+    "empty": "Noch keine Dokumentvorlagen."
   },
   "settings": {
     "kicker": "Einstellungen",

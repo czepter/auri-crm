@@ -2,13 +2,13 @@
 
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
-use App\Contracts\Models\ContractTemplate;
 use App\Crm\Enums\BookedVia;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
+use App\Documents\Models\DocumentTemplate;
 use App\Migration\Actions\CommitHistoricalImport;
 use App\Migration\Actions\PlanHistoricalImport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -82,7 +82,7 @@ it('commits a clean plan into real, linked records', function () {
         ->and($contract->status)->toBe(ContractStatus::Rendered)
         ->and($contract->rendered_at->toDateString())->toBe('2024-04-20');
 
-    $template = ContractTemplate::findOrFail($contract->contract_template_id);
+    $template = DocumentTemplate::findOrFail($contract->contract_template_id);
     expect($template->name)->toBe('Historischer Import (X-01)')
         ->and($template->is_current)->toBeFalse();
 });

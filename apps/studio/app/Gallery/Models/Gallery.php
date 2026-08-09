@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\DB;
+use LogicException;
 
 /**
  * A delivery gallery's draft state, plus the family every GalleryVersion
@@ -35,12 +36,14 @@ class Gallery extends Model
     protected $fillable = [
         'project_id', 'shoot_id', 'title', 'assets',
         'requires_settled_balance', 'balance_settled',
+        'is_external', 'external_url',
     ];
 
     protected $attributes = [
         'assets' => '[]',
         'requires_settled_balance' => false,
         'balance_settled' => false,
+        'is_external' => false,
     ];
 
     protected function casts(): array
@@ -49,6 +52,7 @@ class Gallery extends Model
             'assets' => 'array',
             'requires_settled_balance' => 'boolean',
             'balance_settled' => 'boolean',
+            'is_external' => 'boolean',
         ];
     }
 
@@ -76,13 +80,21 @@ class Gallery extends Model
     /**
      * Snapshots title/assets into a brand new GalleryVersion and leaves every
      * earlier one untouched — no update, no delete. The transaction only
-     * wraps the read-then-insert (the same shape ContractTemplate::
+     * wraps the read-then-insert (the same shape DocumentTemplate::
      * newVersion() uses for its own family), so two concurrent publishes
      * either serialize on it or one loses the unique (tenant_id, gallery_id,
      * version) index, never both landing "version 2".
+     *
+     * An external gallery (X-02) owns no assets of its own to snapshot —
+     * publishing one would only ever produce an empty GalleryVersion, so
+     * this refuses rather than writing a meaningless row.
      */
     public function publish(): GalleryVersion
     {
+        if ($this->is_external) {
+            throw new LogicException('Cannot publish an external gallery — it links to assets hosted elsewhere and owns no version history.');
+        }
+
         return DB::transaction(function () {
             $next = 1 + (int) $this->versions()->max('version');
 

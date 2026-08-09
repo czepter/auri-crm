@@ -56,9 +56,9 @@ const items = computed(() => [
     icon: '<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
   },
   {
-    key: 'vertragsvorlagen',
-    label: 'Vertragsvorlagen',
-    href: '/vertragsvorlagen',
+    key: 'dokumentvorlagen',
+    label: 'Dokumentvorlagen',
+    href: '/dokumentvorlagen',
     needs: 'manage_contracts',
     icon: '<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4"/><path d="M9 13h6M9 17h6"/>',
   },
