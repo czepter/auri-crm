@@ -75,7 +75,7 @@ it('rejects confirmation with an invalid code', function () {
 
     $this->from('/auth/mfa/enroll')
         ->post('/auth/mfa/confirm', ['code' => '000000'])
-        ->assertSessionHasErrors(['code' => 'That code is not valid.']);
+        ->assertSessionHasErrors(['code' => __('auth.mfa_invalid')]);
 
     expect($user->fresh()->hasConfirmedMfa())->toBeFalse();
 });
@@ -112,7 +112,7 @@ it('rejects an invalid totp code and leaves the session unauthenticated', functi
 
     $this->from('/auth/mfa')
         ->post('/auth/mfa', ['code' => '000000'])
-        ->assertSessionHasErrors(['code' => 'That code is not valid.']);
+        ->assertSessionHasErrors(['code' => __('auth.mfa_invalid')]);
 
     $this->assertGuest('staff');
     expect(AuditLog::where('event', 'staff.mfa.failed')->count())->toBe(1);
@@ -135,9 +135,17 @@ it('throttles repeated code guesses', function () {
             ->assertSessionHasErrors('code');
     }
 
+    // A valid code is refused once throttled. Asserted on the throttle line
+    // rather than the invalid-code line, without pinning the countdown the
+    // message interpolates.
     $this->from('/auth/mfa')
         ->post('/auth/mfa', ['code' => (new Google2FA)->getCurrentOtp($secret)])
-        ->assertSessionHasErrors(['code' => 'Too many attempts. Try again later.']);
+        ->assertSessionHasErrors('code');
+
+    $message = session('errors')->first('code');
+
+    expect($message)->toStartWith('Zu viele Anmeldeversuche.')
+        ->and($message)->not->toBe(__('auth.mfa_invalid'));
 
     $this->assertGuest('staff');
 });

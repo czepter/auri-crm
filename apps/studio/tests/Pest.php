@@ -41,7 +41,33 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Walks a decoded response body and returns the paths of any key that looks
+ * like an identifier but holds an integer. Passing a model straight into
+ * Inertia::render instead of wrapping it in a Data object is the ordinary way
+ * the internal key escapes, and it should fail here rather than in review.
+ *
+ * Lives in Pest.php rather than in a test file: three suites use it now, and a
+ * global function declared inside one test file is only visible to another if
+ * Pest happens to load them in the right order.
+ */
+function integerIdPaths(mixed $node, string $path = '$'): array
 {
-    // ..
+    if (! is_array($node)) {
+        return [];
+    }
+
+    $found = [];
+
+    foreach ($node as $key => $value) {
+        $childPath = $path.'.'.$key;
+
+        if (is_string($key) && (str_ends_with($key, 'id') || str_ends_with($key, 'ids')) && is_int($value)) {
+            $found[] = $childPath;
+        }
+
+        $found = [...$found, ...integerIdPaths($value, $childPath)];
+    }
+
+    return $found;
 }

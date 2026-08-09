@@ -1,0 +1,79 @@
+{
+  "common": {
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "signOut": "Abmelden",
+    "search": "Suchen"
+  },
+  "auth": {
+    "signIn": "Anmelden",
+    "signInTitle": "Anmelden",
+    "signInHint": "Mit dem Studio-Konto anmelden.",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "mfaTitle": "Bestätigung in zwei Schritten",
+    "mfaHint": "Den 6-stelligen Code aus der Authenticator-App eingeben.",
+    "mfaCode": "6-stelliger Code",
+    "mfaConfirm": "Bestätigen",
+    "mfaEnrollTitle": "Zwei-Faktor-Authentisierung einrichten",
+    "mfaEnrollHint": "Den QR-Code mit der Authenticator-App scannen und den angezeigten sechsstelligen Code eingeben.",
+    "mfaEnrollRequired": "Für jedes Studio-Konto erforderlich.",
+    "mfaQrAlt": "QR-Code für die Authenticator-App",
+    "mfaSecretLabel": "QR-Code lässt sich nicht scannen?",
+    "recoveryTitle": "Wiederherstellungscodes",
+    "recoveryHint": "Diese Codes werden nur ein einziges Mal angezeigt. Jetzt sicher aufbewahren.",
+    "recoveryContinue": "Weiter zur Übersicht"
+  },
+  "leads": {
+    "createKicker": "Neue Anfrage",
+    "createTitle": "Anfrage erfassen",
+    "contact": "Kontakt",
+    "contactChange": "ändern",
+    "contactSearchHint": "Erst suchen, dann tippen — sonst entsteht ein zweiter Kontakt für dieselbe Person.",
+    "contactCreate": "„{term}“ als neuen Kontakt anlegen",
+    "contactProjects": "{count}. Projekt",
+    "name": "Name",
+    "partner": "Partner/in",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "noEmailHint": "Ohne E-Mail: kein Portal-Zugang und keine Eingangsbestätigung. Anlegen geht trotzdem.",
+    "projectName": "Projektname",
+    "projectNameHint": "Vorgeschlagen aus Kontakt und Typ. Überschreibbar.",
+    "type": "Typ",
+    "source": "Quelle",
+    "capturedVia": "Eingangskanal",
+    "mainDate": "Haupttermin",
+    "conflict": "Belegt — {project}{venue}. Speichern ist trotzdem möglich; der Hinweis bleibt an der Anfrage.",
+    "inquiryText": "Anfragetext",
+    "inquiryTextHint": "Ort, Gästezahl, weitere Shootings und Paket später im Projekt.",
+    "submit": "Anfrage anlegen"
+  },
+  "board": {
+    "title": "Anfragen",
+    "create": "Anfrage anlegen",
+    "shootCount": "1 Shooting | {count} Shootings",
+    "openDate": "Termin offen",
+    "advance": "Weiter",
+    "conflict": "Haupttermin belegt — {project}",
+    "daysInStage": "gestern | vor {count} Tagen",
+    "today": "heute",
+    "stale": "{count} Tage still",
+    "empty": "Keine Anfragen."
+  },
+  "contacts": {
+    "title": "Kontakte",
+    "name": "Name",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "projects": "Projekte",
+    "none": "—",
+    "editTitle": "Kontakt bearbeiten",
+    "empty": "Noch keine Kontakte."
+  },
+  "dashboard": {
+    "title": "Übersicht",
+    "signedInAs": "Angemeldet als {name}",
+    "openLeads": "Offene Anfragen",
+    "activeJobs": "Laufende Aufträge"
+  }
+}

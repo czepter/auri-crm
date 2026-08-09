@@ -29,23 +29,23 @@ function submit() {
   <main class="flex min-h-screen items-center justify-center p-6">
     <Card class="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Set up two-factor authentication</CardTitle>
-        <CardDescription>Required for every staff account.</CardDescription>
+        <CardTitle>{{ $t('auth.mfaEnrollTitle') }}</CardTitle>
+        <CardDescription>{{ $t('auth.mfaEnrollRequired') }}</CardDescription>
       </CardHeader>
       <CardContent class="space-y-4">
-        <p class="text-sm text-muted-foreground">
-          Scan this code with your authenticator app, then enter the six-digit code it shows.
-        </p>
+        <p class="text-sm text-muted-foreground">{{ $t('auth.mfaEnrollHint') }}</p>
 
         <img
           v-if="qrCodeDataUrl"
           :src="qrCodeDataUrl"
-          alt="Scan with your authenticator app"
+          :alt="$t('auth.mfaQrAlt')"
           class="mx-auto h-[220px] w-[220px] rounded-md border"
         />
 
         <details class="text-sm text-muted-foreground">
-          <summary class="cursor-pointer underline underline-offset-4">Can't scan it?</summary>
+          <summary class="cursor-pointer underline underline-offset-4">
+            {{ $t('auth.mfaSecretLabel') }}
+          </summary>
           <code class="mt-2 block rounded-md bg-muted px-3 py-2 font-mono text-sm tracking-widest">
             {{ secret }}
           </code>
@@ -57,7 +57,7 @@ function submit() {
           </Alert>
 
           <div class="space-y-2">
-            <Label for="code">Authentication code</Label>
+            <Label for="code">{{ $t('auth.mfaCode') }}</Label>
             <Input
               id="code"
               v-model="form.code"
@@ -67,7 +67,7 @@ function submit() {
             />
           </div>
 
-          <Button type="submit" class="w-full" :disabled="form.processing">Confirm</Button>
+          <Button type="submit" class="w-full" :disabled="form.processing">{{ $t('auth.mfaConfirm') }}</Button>
         </form>
       </CardContent>
     </Card>

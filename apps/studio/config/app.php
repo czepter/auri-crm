@@ -78,11 +78,21 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    // Not env-driven. German is the only locale the studio ships, so an
+    // APP_LOCALE knob is a setting whose every other value produces a broken
+    // screen — and one deployment quietly holding "en" would render an
+    // untranslated admin surface with nothing failing to say so.
+    //
+    // The fallback is German too: an untranslated key should surface as a
+    // missing German string rather than silently rendering English into a
+    // German page.
+    'locale' => 'de',
 
-    'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
+    'fallback_locale' => 'de',
 
-    'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
+    // Factories and seeders produce German names, addresses and phone numbers,
+    // so column widths are exercised against the language the UI is in.
+    'faker_locale' => 'de_DE',
 
     /*
     |--------------------------------------------------------------------------

@@ -17,8 +17,8 @@ function submit() {
   <main class="flex min-h-screen items-center justify-center p-6">
     <Card class="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Two-factor authentication</CardTitle>
-        <CardDescription>Enter the code from your authenticator app.</CardDescription>
+        <CardTitle>{{ $t('auth.mfaTitle') }}</CardTitle>
+        <CardDescription>{{ $t('auth.mfaHint') }}</CardDescription>
       </CardHeader>
       <CardContent>
         <form class="space-y-4" @submit.prevent="submit">
@@ -27,7 +27,7 @@ function submit() {
           </Alert>
 
           <div class="space-y-2">
-            <Label for="code">Authentication code</Label>
+            <Label for="code">{{ $t('auth.mfaCode') }}</Label>
             <Input
               id="code"
               v-model="form.code"
@@ -37,7 +37,7 @@ function submit() {
             />
           </div>
 
-          <Button type="submit" class="w-full" :disabled="form.processing">Verify</Button>
+          <Button type="submit" class="w-full" :disabled="form.processing">{{ $t('auth.mfaConfirm') }}</Button>
         </form>
       </CardContent>
     </Card>

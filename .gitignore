@@ -2,6 +2,10 @@
 node_modules/
 .superpowers/
 
+# Per-worktree Docker host ports (APP_PORT, POSTGRES_PORT). Machine-local:
+# several worktrees run their own stack and cannot share a host port.
+/.env
+
 # PHP
 apps/studio/vendor/
 apps/studio/.env

@@ -10,17 +10,15 @@ defineProps<{ codes: string[] }>()
   <main class="flex min-h-screen items-center justify-center p-6">
     <Card class="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Recovery codes</CardTitle>
-        <CardDescription>
-          Store these somewhere safe. They are shown once and each works a single time.
-        </CardDescription>
+        <CardTitle>{{ $t('auth.recoveryTitle') }}</CardTitle>
+        <CardDescription>{{ $t('auth.recoveryHint') }}</CardDescription>
       </CardHeader>
       <CardContent class="space-y-4">
         <ul class="grid grid-cols-2 gap-2 rounded-md bg-muted p-3 font-mono text-sm">
           <li v-for="code in codes" :key="code">{{ code }}</li>
         </ul>
 
-        <Button class="w-full" @click="router.visit('/')">I have saved these</Button>
+        <Button class="w-full" @click="router.visit('/')">{{ $t('auth.recoveryContinue') }}</Button>
       </CardContent>
     </Card>
   </main>
