@@ -1,5 +1,6 @@
 <?php
 
+use App\Automation\Console\Commands\SweepDateOffsetAutomationRulesCommand;
 use App\Gallery\Console\Commands\ImportLegacyGalleriesCommand;
 use App\Http\Middleware\EnsureAudience;
 use App\Http\Middleware\EnsureGalleryGate;
@@ -36,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ImportLegacyGalleriesCommand::class,
         CutoverSnapshotCommand::class,
         CutoverRestoreCommand::class,
+        SweepDateOffsetAutomationRulesCommand::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         // G-01a's one lifecycle rule (issue #50) — see the command's own
@@ -45,6 +47,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // the worker process); this is the seam it will hang off once one
         // does.
         $schedule->command(ReapIncompleteMultipartUploads::class)->daily();
+
+        // E-08's date-offset half — see the command's own docblock. Same
+        // "no production schedule:run yet" gap as the reaper above.
+        $schedule->command(SweepDateOffsetAutomationRulesCommand::class)->daily();
     })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
