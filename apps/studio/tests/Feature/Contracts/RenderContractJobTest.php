@@ -5,6 +5,7 @@ use App\Contracts\Jobs\RenderContractJob;
 use App\Contracts\Models\Contract;
 use App\Contracts\Models\ContractTemplate;
 use App\Contracts\Support\GotenbergClient;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Http\Client\RequestException;
@@ -43,7 +44,7 @@ it('resolves merge fields from the project at render time and stores the artifac
     $project = contractProject();
     $contract = Contract::factory()->for($project)->for($template, 'template')->create();
 
-    (new RenderContractJob($contract))->handle(app(GotenbergClient::class));
+    (new RenderContractJob($contract))->handle(app(GotenbergClient::class), app(StudioSettingsResolver::class));
 
     Http::assertSent(function (HttpRequest $request) {
         $body = (string) $request->body();
@@ -63,13 +64,43 @@ it('resolves merge fields from the project at render time and stores the artifac
     expect(Storage::disk('local')->get($contract->artifact_path))->toBe('%PDF-fake-bytes');
 });
 
+it('resolves studio.* merge fields from T-02\'s settings row, including the one stored logo path', function () {
+    Storage::fake('local');
+    Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-fake-bytes', 200)]);
+
+    $owner = staffMember();
+    $settings = new StudioSettingsResolver;
+    $settings->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
+    $settings->set('city', 'Hamburg', $owner);
+    $settings->setLogo(\Illuminate\Http\UploadedFile::fake()->image('logo.png'), $owner);
+
+    $template = ContractTemplate::factory()->create([
+        'body' => '<p>{{ studio.name }}, {{ studio.city }} — Logo: {{ studio.logoPath }}</p>',
+    ]);
+    $contract = Contract::factory()->for(contractProject())->for($template, 'template')->create();
+
+    (new RenderContractJob($contract))->handle(app(GotenbergClient::class), app(StudioSettingsResolver::class));
+
+    $expectedLogoPath = (new StudioSettingsResolver)->logoPath();
+    expect($expectedLogoPath)->not->toBeNull();
+
+    Http::assertSent(function (HttpRequest $request) use ($expectedLogoPath) {
+        $body = (string) $request->body();
+
+        return str_contains($body, 'Atelier Nordlicht Fotografie GmbH')
+            && str_contains($body, 'Hamburg')
+            && str_contains($body, $expectedLogoPath)
+            && ! str_contains($body, '{{');
+    });
+});
+
 it('marks the contract failed and keeps the exception when Gotenberg errors', function () {
     Storage::fake('local');
     Http::fake(['*/forms/chromium/convert/html' => Http::response('boom', 500)]);
 
     $contract = Contract::factory()->for(contractProject())->create();
 
-    expect(fn () => (new RenderContractJob($contract))->handle(app(GotenbergClient::class)))
+    expect(fn () => (new RenderContractJob($contract))->handle(app(GotenbergClient::class), app(StudioSettingsResolver::class)))
         ->toThrow(RequestException::class);
 
     $contract->refresh();
@@ -83,14 +114,14 @@ it('never re-renders an already-rendered contract', function () {
     Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-first', 200)]);
 
     $contract = Contract::factory()->for(contractProject())->create();
-    (new RenderContractJob($contract))->handle(app(GotenbergClient::class));
+    (new RenderContractJob($contract))->handle(app(GotenbergClient::class), app(StudioSettingsResolver::class));
 
     Http::assertSentCount(1);
 
     // A second attempt at the same, now-rendered contract — a retried job, or
     // two dispatches racing — must never call Gotenberg again.
     Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-second', 200)]);
-    (new RenderContractJob($contract->fresh()))->handle(app(GotenbergClient::class));
+    (new RenderContractJob($contract->fresh()))->handle(app(GotenbergClient::class), app(StudioSettingsResolver::class));
 
     Http::assertNothingSent();
 });

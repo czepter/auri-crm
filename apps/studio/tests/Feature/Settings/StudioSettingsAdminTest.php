@@ -4,7 +4,9 @@ use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Settings\Models\StudioSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -19,18 +21,165 @@ it('renders the settings shell for an owner', function () {
         ->viewData('page')['props'];
 
     expect($props['settings']['id'])->toBe(StudioSettings::query()->sole()->public_id)
-        ->and($props['settings'])->toHaveKey('displayName');
+        ->and($props['settings'])->toHaveKey('displayName')
+        ->and($props['settings'])->toHaveKey('legalName')
+        ->and($props['settings'])->toHaveKey('bankIban')
+        ->and($props['settings']['logoUrl'])->toBeNull();
 });
 
 it('updates the display name, redirects, and leaves an audit row naming the owner', function () {
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
-        ->patch('/einstellungen', ['display_name' => 'Atelier Nordlicht'])
+        ->patch('/einstellungen', ['display_name' => 'Atelier Nordlicht', 'tax_number' => '22/123/45678'])
         ->assertRedirect('/einstellungen');
 
     expect(StudioSettings::query()->sole()->display_name)->toBe('Atelier Nordlicht')
-        ->and(AuditLog::where('event', 'studio_settings.updated')->sole()->actor_id)->toBe($owner->id);
+        ->and(AuditLog::where('event', 'studio_settings.updated')->where('context->key', 'display_name')->sole()->actor_id)->toBe($owner->id);
+});
+
+it('saves the full legal-entity, brand and bank fieldset in one submit', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')->patch('/einstellungen', [
+        'display_name' => 'Atelier Nordlicht',
+        'legal_name' => 'Atelier Nordlicht Fotografie GmbH',
+        'legal_form' => 'GmbH',
+        'street' => 'Elbchaussee 112',
+        'postcode' => '22763',
+        'city' => 'Hamburg',
+        'country' => 'Deutschland',
+        'tax_number' => '22/123/45678',
+        'vat_id' => 'DE284957312',
+        'register_number' => 'HRB 142 887',
+        'register_court' => 'Amtsgericht Hamburg',
+        'representative' => 'Christian Nordlicht',
+        'website' => 'https://atelier-nordlicht.de',
+        'accent_color' => '#B44E22',
+    ])->assertRedirect('/einstellungen');
+
+    $row = StudioSettings::query()->sole();
+
+    expect($row->legal_name)->toBe('Atelier Nordlicht Fotografie GmbH')
+        ->and($row->legal_form)->toBe('GmbH')
+        ->and($row->street)->toBe('Elbchaussee 112')
+        ->and($row->postcode)->toBe('22763')
+        ->and($row->city)->toBe('Hamburg')
+        ->and($row->country)->toBe('Deutschland')
+        ->and($row->tax_number)->toBe('22/123/45678')
+        ->and($row->vat_id)->toBe('DE284957312')
+        ->and($row->register_number)->toBe('HRB 142 887')
+        ->and($row->register_court)->toBe('Amtsgericht Hamburg')
+        ->and($row->representative)->toBe('Christian Nordlicht')
+        ->and($row->website)->toBe('https://atelier-nordlicht.de')
+        ->and($row->accent_color)->toBe('#B44E22');
+});
+
+it('rejects saving with neither Steuernummer nor USt-IdNr present', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    $response = $this->actingAs($owner, 'staff')
+        ->from('/einstellungen')
+        ->patch('/einstellungen', ['tax_number' => '', 'vat_id' => '']);
+
+    $response->assertRedirect('/einstellungen')
+        ->assertSessionHasErrors(['tax_number', 'vat_id']);
+
+    expect(StudioSettings::query()->sole()->tax_number)->toBeNull();
+});
+
+it('accepts saving with only the USt-IdNr present', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen', ['vat_id' => 'DE284957312'])
+        ->assertSessionHasNoErrors();
+
+    expect(StudioSettings::query()->sole()->vat_id)->toBe('DE284957312');
+});
+
+it('rejects an IBAN with a transposed digit pair on save, with a field-level message', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    $response = $this->actingAs($owner, 'staff')
+        ->from('/einstellungen')
+        ->patch('/einstellungen', [
+            'tax_number' => '22/123/45678',
+            'bank_account_holder' => 'Atelier Nordlicht Fotografie GmbH',
+            'bank_iban' => 'DE89 3704 0044 0532 1030 00', // transposed pair, see ValidIbanTest
+            'bank_bic' => 'COBADEFFXXX',
+        ]);
+
+    $response->assertRedirect('/einstellungen')->assertSessionHasErrors(['bank_iban']);
+
+    expect(StudioSettings::query()->sole()->bank_iban)->toBeNull();
+});
+
+it('accepts and stores a checksum-valid IBAN', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen', [
+            'tax_number' => '22/123/45678',
+            'bank_account_holder' => 'Atelier Nordlicht Fotografie GmbH',
+            'bank_iban' => 'DE89 3704 0044 0532 0130 00',
+            'bank_bic' => 'COBADEFFXXX',
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect(StudioSettings::query()->sole()->bank_iban)->toBe('DE89 3704 0044 0532 0130 00');
+});
+
+it('leaves bank details optional today — nothing in this codebase offers clients a transfer option yet (T-07)', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen', ['tax_number' => '22/123/45678'])
+        ->assertSessionHasNoErrors();
+});
+
+it('stores an uploaded logo once and serves it from one route, with an audit row', function () {
+    Storage::fake('local');
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen', [
+            'tax_number' => '22/123/45678',
+            'logo' => UploadedFile::fake()->image('logo.png'),
+        ])
+        ->assertSessionHasNoErrors();
+
+    $row = StudioSettings::query()->sole();
+    expect($row->logo_path)->not->toBeNull();
+    Storage::disk('local')->assertExists($row->logo_path);
+
+    expect(AuditLog::where('event', 'studio_settings.updated')->where('context->key', 'logo_path')->sole()->actor_id)
+        ->toBe($owner->id);
+
+    $props = $this->get('/einstellungen')->assertOk()->viewData('page')['props'];
+    expect($props['settings']['logoUrl'])->not->toBeNull();
+
+    $this->get($props['settings']['logoUrl'])->assertOk();
+});
+
+it('replaces the logo on a second upload rather than keeping both', function () {
+    Storage::fake('local');
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')->patch('/einstellungen', [
+        'tax_number' => '22/123/45678',
+        'logo' => UploadedFile::fake()->image('first.png'),
+    ]);
+    $firstPath = StudioSettings::query()->sole()->logo_path;
+
+    $this->actingAs($owner, 'staff')->patch('/einstellungen', [
+        'tax_number' => '22/123/45678',
+        'logo' => UploadedFile::fake()->image('second.png'),
+    ]);
+    $secondPath = StudioSettings::query()->sole()->logo_path;
+
+    Storage::disk('local')->assertExists($secondPath);
+    expect($firstPath)->toBe($secondPath); // fixed filename per tenant — overwritten, not duplicated
 });
 
 it('opens the settings screen to the owner, and gives every other role the same response as a route that does not exist', function (StaffRole $role, int $status) {

@@ -6,6 +6,7 @@ use App\Contracts\Models\Contract;
 use App\Contracts\Models\ContractTemplate;
 use App\Contracts\Support\GotenbergClient;
 use App\Crm\Models\Project;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -22,7 +23,7 @@ it('leaves an already-rendered contract byte-for-byte untouched after its templa
         ->for($template, 'template')
         ->create();
 
-    (new RenderContractJob($contract))->handle(app(GotenbergClient::class));
+    (new RenderContractJob($contract))->handle(app(GotenbergClient::class), app(StudioSettingsResolver::class));
     $contract->refresh();
 
     expect($contract->status)->toBe(ContractStatus::Rendered);
