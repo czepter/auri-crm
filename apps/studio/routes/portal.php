@@ -2,6 +2,7 @@
 
 use App\Portal\Http\Controllers\HomeController;
 use App\Portal\Http\Controllers\MagicLinkController;
+use App\Portal\Http\Controllers\ProjectController;
 use Illuminate\Support\Facades\Route;
 
 // Client surface. A different audience from the studio's, on its own session
@@ -23,5 +24,16 @@ Route::middleware('guest:portal')->group(function () {
 Route::middleware('audience:portal')->group(function () {
     Route::post('/abmelden', [MagicLinkController::class, 'destroy'])->name('portal.logout');
 
+    // The switcher. Zero visible projects is an empty state here rather than
+    // an error, and exactly one skips the picker by redirecting straight to
+    // it — see HomeController.
     Route::get('/', HomeController::class)->name('portal.home');
+
+    // Direct entry. Bound on the public id and re-asking the same visibility
+    // scope HomeController asks — see ProjectController — so a project the
+    // contact is not on, or one the studio has not made portal_visible, is a
+    // 404 here exactly as it is absent from the switcher. Never a 403: the
+    // difference between "not yours" and "does not exist" is not this
+    // surface's to give away.
+    Route::get('/projekte/{project}', ProjectController::class)->name('portal.projects.show');
 });

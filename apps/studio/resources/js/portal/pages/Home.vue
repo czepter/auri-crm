@@ -1,30 +1,13 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3'
-
-type Shoot = {
-  id: string
-  title: string
-  date: string | null
-  callTime: string | null
-  venue: string | null
-  status: string
-}
+import { Link, router } from '@inertiajs/vue3'
 
 defineProps<{
   contact: { name: string }
-  projects: { id: string; name: string; type: string; shoots: Shoot[] }[]
+  // A single-project contact never reaches this page — HomeController
+  // redirects straight to their project — so this list is either empty or
+  // has more than one entry to switch between.
+  projects: { id: string; name: string; type: string }[]
 }>()
-
-function longDate(date: string | null) {
-  return date
-    ? new Date(date).toLocaleDateString('de-DE', {
-        weekday: 'long',
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-      })
-    : null
-}
 </script>
 
 <template>
@@ -46,45 +29,34 @@ function longDate(date: string | null) {
   </header>
 
   <main class="pwrap">
-    <h1>{{ $t('portal.greeting', { name: contact.name.split(' ')[0] }) }}</h1>
+    <div class="pgreet">{{ $t('portal.greeting', { name: contact.name.split(' ')[0] }) }}</div>
+    <h1 v-if="projects.length">{{ $t('portal.chooseProject') }}</h1>
 
-    <!-- Mockup 06 fills this page with a questionnaire, a contract and a
-         gallery. None of those exist yet — they arrive with Q-*, M-* and G-*
-         — so the page shows what the studio can actually stand behind and
-         says nothing it cannot. -->
-    <section v-for="project in projects" :key="project.id" class="dsec">
-      <div class="kick">{{ project.type }}</div>
-      <h2 style="font: 600 19px/1.3 var(--font); letter-spacing: -.02em; margin: 0 0 var(--s4)">
-        {{ project.name }}
-      </h2>
+    <div v-if="projects.length" class="switcher">
+      <Link v-for="project in projects" :key="project.id" :href="`/projekte/${project.id}`" class="card">
+        <div class="kick">{{ project.type }}</div>
+        <div class="who">{{ project.name }}</div>
+        <span class="go" />
+      </Link>
+    </div>
 
-      <div class="sess">
-        <div v-for="shoot in project.shoots" :key="shoot.id" class="srow">
-          <div class="stop">
-            <div class="sname">
-              {{ shoot.title }}
-              <span>
-                {{
-                  [longDate(shoot.date) ?? $t('portal.dateOpen'), shoot.callTime, shoot.venue]
-                    .filter(Boolean)
-                    .join(' · ')
-                }}
-              </span>
-            </div>
-            <!-- Stated, never coloured as a warning: the studio chases, and
-                 the client is not chased in their own portal. -->
-            <span class="chip next">{{ shoot.status }}</span>
-          </div>
-        </div>
-
-        <p v-if="!project.shoots.length" class="hint">{{ $t('portal.noShoots') }}</p>
-      </div>
-    </section>
-
-    <p v-if="!projects.length" class="hint">{{ $t('portal.nothingShared') }}</p>
+    <p v-else class="hint">{{ $t('portal.nothingShared') }}</p>
   </main>
 
   <footer class="pfoot">
     <span>Atelier Nordlicht · Hamburg</span>
   </footer>
 </template>
+
+<style scoped>
+/* No mockup draws a multi-project picker yet — 06-startseite is one
+   contact's one project. Composed from the same tokens as everything else
+   here (var(--s3), the shared .card/.kick/.who/.go vocabulary): a vertical
+   stack with the gap the rest of the portal already uses, nothing invented. */
+.switcher {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  margin-top: var(--s5);
+}
+</style>

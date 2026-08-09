@@ -200,6 +200,10 @@
     "signedInAs": "Angemeldet als",
     "signOut": "Abmelden",
     "greeting": "Hallo {name}",
+    "chooseProject": "Wählen Sie eines Ihrer Projekte.",
+    "allProjects": "Alle Projekte",
+    "shootsTitle": "Ihre Shootings",
+    "shootCount": "ein Termin | {count} Termine",
     "dateOpen": "Termin noch offen",
     "noShoots": "Noch keine Termine hinterlegt.",
     "nothingShared": "Aktuell ist nichts freigegeben."
