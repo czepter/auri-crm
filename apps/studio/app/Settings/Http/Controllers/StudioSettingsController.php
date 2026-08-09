@@ -148,6 +148,11 @@ class StudioSettingsController extends Controller
             'deposit_percentage' => ['required', 'integer', 'min:0', 'max:10000'],
             'widerruf_included' => ['required', 'boolean'],
             'widerruf_text' => ['nullable', 'string', 'max:5000'],
+            // T-12: the shared PDF shell App\Documents\Support\DocumentRenderer
+            // wraps a Contract or Quote's resolved body in — this pane's the
+            // one place either is set, rather than pasted into each template.
+            'document_letterhead_html' => ['nullable', 'string', 'max:20000'],
+            'document_footer_html' => ['nullable', 'string', 'max:20000'],
         ]);
 
         $actor = auth('staff')->user();
@@ -156,6 +161,8 @@ class StudioSettingsController extends Controller
         $settings->set('deposit_percentage', $validated['deposit_percentage'], $actor);
         $settings->set('widerruf_included', $validated['widerruf_included'], $actor);
         $settings->set('widerruf_text', $validated['widerruf_text'] ?? null, $actor);
+        $settings->set('document_letterhead_html', $validated['document_letterhead_html'] ?? null, $actor);
+        $settings->set('document_footer_html', $validated['document_footer_html'] ?? null, $actor);
 
         return redirect('/einstellungen');
     }
@@ -256,6 +263,8 @@ class StudioSettingsController extends Controller
             depositPercentage: $settings->depositPercentage(),
             widerrufIncluded: $settings->widerrufIncluded(),
             widerrufText: $settings->widerrufText(),
+            documentLetterheadHtml: $settings->documentLetterheadHtml(),
+            documentFooterHtml: $settings->documentFooterHtml(),
             timezone: $settings->timezone(),
             locale: $settings->locale(),
             workingDays: $settings->workingDays(),

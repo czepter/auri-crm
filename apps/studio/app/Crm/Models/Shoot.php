@@ -110,6 +110,11 @@ class Shoot extends Model
         return $this->hasMany(TimelineEntry::class)->orderBy('time')->orderBy('sort_order');
     }
 
+    public function shotListItems(): HasMany
+    {
+        return $this->hasMany(ShotListItem::class);
+    }
+
     /** Null rather than an empty string, so a caller can test it directly. */
     public function venue(): ?string
     {

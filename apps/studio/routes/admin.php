@@ -2,7 +2,6 @@
 
 use App\Catalog\Http\Controllers\PackageController;
 use App\Contracts\Http\Controllers\ContractController;
-use App\Contracts\Http\Controllers\ContractTemplateController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
 use App\Crm\Http\Controllers\ContactController;
@@ -14,9 +13,11 @@ use App\Crm\Http\Controllers\LeadBoardController;
 use App\Crm\Http\Controllers\LeadStageController;
 use App\Crm\Http\Controllers\ProjectController;
 use App\Crm\Http\Controllers\ShootController;
+use App\Crm\Http\Controllers\ShotListItemController;
 use App\Crm\Http\Controllers\TaskController;
 use App\Crm\Http\Controllers\TaskTemplateController;
 use App\Crm\Http\Controllers\TimelineController;
+use App\Documents\Http\Controllers\DocumentTemplateController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
 use App\Http\Controllers\Staff\InvitationController;
@@ -106,15 +107,19 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/pakete/{package}', [PackageController::class, 'update'])->name('packages.update');
         Route::post('/pakete/{package}/status', [PackageController::class, 'toggle'])->name('packages.toggle');
 
-        // /vertragsvorlagen/neu stays above /vertragsvorlagen/{contractTemplate}
-        // for the same reason /pakete/neu does.
-        Route::get('/vertragsvorlagen', [ContractTemplateController::class, 'index'])->name('contract-templates.index');
-        Route::get('/vertragsvorlagen/neu', [ContractTemplateController::class, 'create'])->name('contract-templates.create');
-        Route::post('/vertragsvorlagen', [ContractTemplateController::class, 'store'])->name('contract-templates.store');
-        Route::get('/vertragsvorlagen/{contractTemplate}', [ContractTemplateController::class, 'edit'])
-            ->name('contract-templates.edit');
-        Route::patch('/vertragsvorlagen/{contractTemplate}', [ContractTemplateController::class, 'update'])
-            ->name('contract-templates.update');
+        // /dokumentvorlagen/neu and /dokumentvorlagen/vorschau stay above
+        // /dokumentvorlagen/{documentTemplate} for the same reason /pakete/neu
+        // does. T-12 generalises M-01's /vertragsvorlagen into one screen
+        // family covering every App\Documents\Enums\DocumentTemplateType.
+        Route::get('/dokumentvorlagen', [DocumentTemplateController::class, 'index'])->name('document-templates.index');
+        Route::get('/dokumentvorlagen/neu', [DocumentTemplateController::class, 'create'])->name('document-templates.create');
+        Route::post('/dokumentvorlagen', [DocumentTemplateController::class, 'store'])->name('document-templates.store');
+        Route::post('/dokumentvorlagen/vorschau', [DocumentTemplateController::class, 'preview'])
+            ->name('document-templates.preview');
+        Route::get('/dokumentvorlagen/{documentTemplate}', [DocumentTemplateController::class, 'edit'])
+            ->name('document-templates.edit');
+        Route::patch('/dokumentvorlagen/{documentTemplate}', [DocumentTemplateController::class, 'update'])
+            ->name('document-templates.update');
 
         Route::get('/team', [InvitationController::class, 'index'])->name('staff.index');
         Route::post('/team/einladungen', [InvitationController::class, 'store'])->name('staff.invite');
@@ -242,6 +247,13 @@ Route::middleware('audience:staff')->group(function () {
             ->name('timeline.pdf');
         Route::get('/shootings/{shoot}/ablauf.ics', [TimelineController::class, 'ics'])
             ->name('timeline.ics');
+
+        Route::post('/shootings/{shoot}/checkliste', [ShotListItemController::class, 'store'])
+            ->name('shot-list-items.store');
+        Route::post('/checkliste/{item}/erledigt', [ShotListItemController::class, 'toggle'])
+            ->name('shot-list-items.toggle');
+        Route::delete('/checkliste/{item}', [ShotListItemController::class, 'destroy'])
+            ->name('shot-list-items.destroy');
 
         Route::post('/auftraege/{project}/aufgaben', [TaskController::class, 'store'])
             ->name('tasks.store');
