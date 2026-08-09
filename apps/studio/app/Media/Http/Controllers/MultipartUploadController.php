@@ -6,6 +6,7 @@ use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use App\Media\Actions\StartOrResumeMultipartUpload;
 use App\Media\Enums\MultipartUploadStatus;
+use App\Media\Jobs\ProcessIngestedAsset;
 use App\Media\Models\MultipartUpload;
 use App\Media\Services\MultipartUploadGateway;
 use Illuminate\Http\JsonResponse;
@@ -91,7 +92,10 @@ class MultipartUploadController extends Controller
     /**
      * Assembles the finished object from whatever the bucket's own ListParts
      * reports — never from anything the browser claims it sent — and marks
-     * the session done.
+     * the session done. Dispatching ProcessIngestedAsset (G-03) onto
+     * media.ingest here, rather than from wherever handles the S3 event, is
+     * what promotes the object G-02 just landed in quarantine into a gallery
+     * asset — see App\Media\Actions\IngestCompletedUpload.
      */
     public function complete(MultipartUpload $multipartUpload): JsonResponse
     {
@@ -105,6 +109,8 @@ class MultipartUploadController extends Controller
             'status' => MultipartUploadStatus::Completed,
             'completed_at' => now(),
         ])->save();
+
+        ProcessIngestedAsset::dispatch($multipartUpload)->onQueue('media.ingest');
 
         return response()->json(['status' => $multipartUpload->status]);
     }

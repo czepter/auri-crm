@@ -145,7 +145,7 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: "8.5"
-          extensions: pdo_pgsql, bcmath, gd, intl, pcntl
+          extensions: pdo_pgsql, bcmath, gd, intl, pcntl, exif
           coverage: none
       # X-03's db:cutover-snapshot/db:cutover-restore shell out to pg_dump/
       # pg_restore, and CutoverRehearsalTest exercises them for real — the
@@ -159,6 +159,15 @@ jobs:
           echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
           sudo apt-get update
           sudo apt-get install -y postgresql-client-18
+      # G-03 (#52): App\Media\Support\LibvipsDerivativePipeline shells out to
+      # vipsthumbnail/vipsheader — a CLI tool, not a PHP extension, so it's
+      # never in setup-php's list above. Same pattern as postgresql-client
+      # just above: this runner's apt repos carry it directly, no PPA needed.
+      # libheif-plugin-aomenc: the runner's libheif1 has no AV1 encoder linked
+      # in by default — heifsave fails "Unsupported compression" on every
+      # AVIF write without it.
+      - name: Install libvips-tools for derivative generation
+        run: sudo apt-get install -y libvips-tools libheif-plugin-aomenc
       - working-directory: apps/studio
         run: composer install --no-interaction --prefer-dist
       - working-directory: apps/studio

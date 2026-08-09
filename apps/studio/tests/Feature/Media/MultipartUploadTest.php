@@ -4,6 +4,7 @@ use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
 use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
 use App\Media\Enums\MultipartUploadStatus;
+use App\Media\Jobs\ProcessIngestedAsset;
 use App\Media\Models\MultipartUpload;
 use Aws\Command;
 use Aws\MockHandler;
@@ -11,6 +12,7 @@ use Aws\Result;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 
 uses(RefreshDatabase::class);
 
@@ -182,7 +184,15 @@ it('refuses to upload a part into a session that is no longer in progress', func
         ->assertStatus(409);
 });
 
-it('completes an upload by assembling the parts list from ListParts, never from the browser', function () {
+it('completes an upload by assembling the parts list from ListParts, never from the browser, and hands it to G-03 ingest', function () {
+    // Faked rather than left to actually run: QUEUE_CONNECTION is `sync` in
+    // tests, and App\Media\Jobs\ProcessIngestedAsset would otherwise execute
+    // inline against this same mocked S3Client — consuming MockHandler
+    // results this test never queued and failing for a reason that has
+    // nothing to do with what it asserts. G-03's own suite exercises the job
+    // and the action it delegates to.
+    Queue::fake();
+
     $upload = MultipartUpload::factory()->create();
     $handler = new MockHandler([
         new Result(['Parts' => [
@@ -206,6 +216,10 @@ it('completes an upload by assembling the parts list from ListParts, never from 
         ['PartNumber' => 1, 'ETag' => '"etag-1"'],
         ['PartNumber' => 2, 'ETag' => '"etag-2"'],
     ]);
+
+    Queue::assertPushedOn('media.ingest', ProcessIngestedAsset::class, function ($job) use ($upload) {
+        return $job->multipartUpload->is($upload);
+    });
 });
 
 it('refuses to complete an upload twice', function () {
