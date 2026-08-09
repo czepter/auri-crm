@@ -24,7 +24,8 @@
     "recoveryHint": "Diese Codes werden nur ein einziges Mal angezeigt. Jetzt sicher aufbewahren.",
     "recoveryContinue": "Weiter zur Übersicht",
     "devLogin": "Dev-Login",
-    "devLoginHint": "Nur lokal. Überspringt Passwort und Zwei-Faktor-Bestätigung."
+    "devLoginHint": "Nur lokal. Überspringt Passwort und Zwei-Faktor-Bestätigung.",
+    "forgot": "Passwort vergessen?"
   },
   "leads": {
     "createKicker": "Neue Anfrage",
@@ -157,5 +158,38 @@
     "noDetails": "Ort und Uhrzeit noch offen",
     "nothingDue": "Nichts offen.",
     "moreTasks": "{count} offene Aufgaben insgesamt · je Projekt die dringendste"
+  },
+  "invite": {
+    "title": "Willkommen, {name}",
+    "hint": "{email} · {role}. Zum Einrichten ein Passwort wählen.",
+    "password": "Passwort",
+    "passwordConfirm": "Passwort wiederholen",
+    "mfaNext": "Danach folgt die Einrichtung der Bestätigung in zwei Schritten. Ohne sie ist das Konto nicht nutzbar.",
+    "submit": "Zugang einrichten"
+  },
+  "reset": {
+    "requestTitle": "Passwort zurücksetzen",
+    "requestHint": "Wir schicken einen Link an die hinterlegte Adresse.",
+    "send": "Link anfordern",
+    "backToLogin": "Zurück zur Anmeldung",
+    "newTitle": "Neues Passwort",
+    "newHint": "Das ändert nur das Passwort. Die Bestätigung in zwei Schritten bleibt zum Anmelden erforderlich.",
+    "password": "Neues Passwort",
+    "submit": "Passwort speichern"
+  },
+  "team": {
+    "title": "Team",
+    "invite": "Einladen",
+    "name": "Name",
+    "role": "Rolle",
+    "roleHint": "Bestimmt, was die Person im Studio erreichen kann.",
+    "send": "Einladung senden",
+    "pending": "Offene Einladungen",
+    "members": "Im Studio",
+    "expires": "gültig bis {date}",
+    "revoke": "Zurückziehen",
+    "revokeConfirm": "Einladung für {email} zurückziehen? Der Link hört sofort auf zu funktionieren.",
+    "mfaOn": "Zwei Faktoren",
+    "mfaPending": "Einrichtung offen"
   }
 }

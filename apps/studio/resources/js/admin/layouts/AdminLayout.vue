@@ -49,6 +49,13 @@ const items = computed(() => [
     icon: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M16.5 5.5a3.2 3.2 0 010 5.6M17.5 14.8c2 .7 3.5 2.6 3.5 5.2"/>',
   },
   {
+    key: 'team',
+    label: 'Team',
+    href: '/team',
+    needs: 'manage_staff',
+    icon: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M19 8v6M22 11h-6"/>',
+  },
+  {
     key: 'kalender',
     label: 'Kalender',
     href: '/kalender',

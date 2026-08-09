@@ -1,0 +1,156 @@
+<?php
+
+namespace App\Http\Controllers\Staff;
+
+use App\Enums\Capability;
+use App\Enums\StaffRole;
+use App\Http\Controllers\Controller;
+use App\Models\StaffInvitation;
+use App\Models\User;
+use App\Notifications\StaffInvited;
+use App\Support\AuditLogger;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class InvitationController extends Controller
+{
+    /** The studio's people, and who is still pending. */
+    public function index(): Response
+    {
+        $this->authorizeStaffManagement();
+
+        return Inertia::render('Staff/Index', [
+            'staff' => User::query()->orderBy('name')->get()->map(fn (User $user) => [
+                'id' => $user->public_id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role->value,
+                'roleLabel' => $user->role->label(),
+                'mfaConfirmed' => $user->hasConfirmedMfa(),
+            ]),
+            'invitations' => StaffInvitation::query()->pending()->orderBy('email')->get()
+                ->map(fn (StaffInvitation $invitation) => [
+                    'id' => $invitation->public_id,
+                    'email' => $invitation->email,
+                    'name' => $invitation->name,
+                    'roleLabel' => $invitation->role->label(),
+                    'expiresOn' => $invitation->expires_at->format('Y-m-d'),
+                ]),
+            'roles' => collect(StaffRole::cases())
+                ->map(fn (StaffRole $role) => ['value' => $role->value, 'label' => $role->label()])
+                ->all(),
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $this->authorizeStaffManagement();
+
+        $validated = $request->validate([
+            'email' => [
+                'required', 'email', 'max:255',
+                Rule::unique('users', 'email')->where('tenant_id', config('tenancy.tenant_id')),
+            ],
+            'name' => ['required', 'string', 'max:255'],
+            'role' => ['required', Rule::enum(StaffRole::class)],
+        ]);
+
+        // The raw token exists here and in the link, and nowhere else.
+        $token = bin2hex(random_bytes(32));
+
+        // updateOrCreate on the address: re-inviting replaces the live
+        // invitation rather than leaving an older link that still opens.
+        $invitation = StaffInvitation::updateOrCreate(
+            ['email' => $validated['email']],
+            [
+                'name' => $validated['name'],
+                'role' => $validated['role'],
+                'token_hash' => StaffInvitation::hash($token),
+                'expires_at' => now()->addDays(StaffInvitation::VALID_FOR_DAYS),
+                'invited_by_id' => auth('staff')->id(),
+                'accepted_at' => null,
+            ],
+        );
+
+        Notification::route('mail', $invitation->email)
+            ->notify(new StaffInvited($invitation, url("/einladung/{$token}")));
+
+        // The token is deliberately absent from the audit row: an audit log
+        // that records live credentials is a second place to steal them from.
+        AuditLogger::record(
+            event: 'staff.invited',
+            actor: auth('staff')->user(),
+            context: ['email' => $invitation->email, 'role' => $invitation->role->value],
+            subject: $invitation->public_id,
+        );
+
+        return back();
+    }
+
+    public function destroy(StaffInvitation $invitation): RedirectResponse
+    {
+        $this->authorizeStaffManagement();
+
+        $invitation->delete();
+
+        AuditLogger::record('staff.invitation_revoked', auth('staff')->user(), [], $invitation->public_id);
+
+        return back();
+    }
+
+    /** The invited person's screen. Reached with the token, by someone with no account yet. */
+    public function create(string $token): Response|RedirectResponse
+    {
+        $invitation = StaffInvitation::forToken($token);
+
+        if ($invitation === null) {
+            return redirect('/login')->with('status', __('auth.invitation_invalid'));
+        }
+
+        return Inertia::render('Auth/AcceptInvitation', [
+            'name' => $invitation->name,
+            'email' => $invitation->email,
+            'roleLabel' => $invitation->role->label(),
+            'token' => $token,
+        ]);
+    }
+
+    public function accept(Request $request, string $token): RedirectResponse
+    {
+        $invitation = StaffInvitation::forToken($token);
+
+        if ($invitation === null) {
+            return redirect('/login')->with('status', __('auth.invitation_invalid'));
+        }
+
+        $validated = $request->validate([
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ]);
+
+        $user = $invitation->accept($validated['password']);
+
+        Auth::guard('staff')->login($user);
+        $request->session()->regenerate();
+
+        AuditLogger::record('staff.invitation_accepted', $user, [], $invitation->public_id);
+
+        // The account has no MFA yet, so RequireConfirmedMfa sends them
+        // straight to enrollment — an invited user is not usable until TOTP is
+        // set up, which is what F-08 requires and what this story inherits.
+        return redirect('/');
+    }
+
+    private function authorizeStaffManagement(): void
+    {
+        abort_unless(
+            auth('staff')->user()?->role->allows(Capability::ManageStaff) ?? false,
+            403,
+        );
+    }
+}
