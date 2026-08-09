@@ -125,6 +125,23 @@ class StudioSettingsResolver
     }
 
     /**
+     * T-12: the PDF shell App\Documents\Support\DocumentRenderer wraps a
+     * Contract or Quote's resolved body in, above it. Null renders as no
+     * letterhead at all — the same "unset is a valid, working state"
+     * convention widerrufText() above already carries.
+     */
+    public function documentLetterheadHtml(): ?string
+    {
+        return $this->row()->document_letterhead_html;
+    }
+
+    /** The same shell's footer, below the resolved body. */
+    public function documentFooterHtml(): ?string
+    {
+        return $this->row()->document_footer_html;
+    }
+
+    /**
      * IANA identifier (e.g. "Europe/Vienna") — the tenant value once T-13's
      * Allgemein pane has set one, config('app.timezone') as the fallback
      * until then. The environment stays the fallback, never the source: a
@@ -182,7 +199,7 @@ class StudioSettingsResolver
      * T-02's legal-entity, brand and bank columns, keyed by column name —
      * the one place outside this class permitted to see them, and only as
      * plain values. The Studio-Profil edit screen and RenderContractJob's
-     * `studio.*` merge fields (docs/contracts.md) both read through this
+     * `studio.*` merge fields (docs/documents.md) both read through this
      * rather than through row() itself, which stays private.
      *
      * @return array<string, mixed>
@@ -203,7 +220,7 @@ class StudioSettingsResolver
      * replaces the same tenant's file and removes whatever it replaces,
      * rather than accumulating a second one under a second name. Uses the
      * `local` disk the exact way RenderContractJob stores a rendered
-     * contract (Storage::disk('local'), see docs/contracts.md), not a
+     * contract (Storage::disk('local'), see docs/documents.md), not a
      * second filesystem convention invented for branding alone.
      */
     public function setLogo(UploadedFile $file, ?User $actor = null): void

@@ -29,12 +29,6 @@ templateVersion: number,
 renderedAt: string | null,
 downloadUrl: string | null,
 };
-export type ContractTemplateData = {
-id: string,
-name: string,
-body: string,
-version: number,
-};
 }
 namespace Enums {
 export type ContractStatus = 'pending' | 'rendered' | 'failed';
@@ -64,6 +58,24 @@ projectName: string | null,
 venue: string | null,
 kind: string | null,
 label: string | null,
+};
+export type FormFieldData = {
+id: string,
+label: string,
+type: string,
+typeLabel: string,
+required: boolean,
+options: string[] | null,
+};
+export type FormTemplateData = {
+id: string,
+name: string,
+projectType: string | null,
+projectTypeLabel: string | null,
+isActive: boolean,
+fieldCount: number,
+updatedAt: string,
+fields: App.Crm.Data.FormFieldData[],
 };
 export type InternalNoteData = {
 id: string,
@@ -127,7 +139,6 @@ canManageShoots: boolean,
 canManageCrew: boolean,
 canManageTasks: boolean,
 canManageNotes: boolean,
-canManageMessages: boolean,
 portalVisible: boolean,
 canManagePortalVisibility: boolean,
 canManageQuotes: boolean,
@@ -162,6 +173,9 @@ forwardStatuses: {
 value: string,
 label: string,
 }[],
+timeline: App.Crm.Data.TimelineEntryData[],
+pdfUrl: string,
+icsUrl: string,
 };
 export type TaskRowData = {
 id: string,
@@ -186,11 +200,20 @@ shootKindLabel: string | null,
 isActive: boolean,
 sortOrder: number,
 };
+export type TimelineEntryData = {
+id: string,
+time: string,
+title: string,
+location: string | null,
+note: string | null,
+isTransit: boolean,
+};
 }
 namespace Enums {
 export type BookedVia = 'manual' | 'contract';
 export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'other';
 export type CrewRole = 'lead_photographer' | 'second_shooter' | 'assistant';
+export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list';
 export type LeadSource = 'referral' | 'website' | 'instagram' | 'wedding_fair' | 'other';
 export type LeadStage = 'new' | 'contacted' | 'quote_sent' | 'quote_accepted' | 'contract_sent' | 'booked';
 export type ProjectContactRole = 'primary' | 'partner' | 'payer' | 'planner' | 'vendor';
@@ -209,24 +232,25 @@ role: string,
 mfaConfirmed: boolean,
 };
 }
-namespace Engagement {
+namespace Documents {
 namespace Data {
-export type MessageData = {
+export type DocumentTemplateData = {
 id: string,
-author: string,
-fromStaff: boolean,
+name: string,
 body: string,
-sentAt: string,
+version: number,
+type: string,
+typeLabel: string,
+shootKind: string | null,
+shootKindLabel: string | null,
 };
-export type ThreadData = {
-id: string,
-subject: string,
-messages: App.Engagement.Data.MessageData[],
-};
+}
+namespace Enums {
+export type DocumentTemplateType = 'contract' | 'quote' | 'mail';
 }
 }
 namespace Enums {
-export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_messages' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings';
+export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings' | 'manage_form_templates';
 export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' | 'assistant';
 }
 namespace Numbering {
@@ -373,6 +397,8 @@ paymentTermDays: number,
 depositPercentage: number,
 widerrufIncluded: boolean,
 widerrufText: string | null,
+documentLetterheadHtml: string | null,
+documentFooterHtml: string | null,
 timezone: string,
 locale: string,
 workingDays: number[],

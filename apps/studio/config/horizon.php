@@ -100,6 +100,8 @@ return [
         'redis:default' => 60,
         'redis:mail' => 60,
         'redis:render' => 120,
+        'redis:media.ingest' => 30,
+        'redis:media.zip' => 300,
     ],
 
     /*
@@ -252,6 +254,46 @@ return [
             'timeout' => 300,
             'nice' => 0,
         ],
+
+        // G-01a: media processing gets its own two supervisors rather than
+        // sharing 'default' or 'render', because the two jobs it carries have
+        // nothing in common workload-wise. A thumbnail is a few seconds of
+        // CPU; a gallery ZIP build streams every original in it through the
+        // application (G-10, #59, rules out server-side copy) and can run for
+        // tens of minutes. One shared timeout would either kill a legitimate
+        // ZIP build mid-stream or let a stuck thumbnail job hold a worker for
+        // 40 minutes it will never need.
+        'supervisor-media-ingest' => [
+            'connection' => 'redis',
+            'queue' => ['media.ingest'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'time',
+            'maxProcesses' => 1,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 128,
+            'tries' => 3,
+            'timeout' => 20,
+            'nice' => 0,
+        ],
+
+        // 40 minutes: the longest-running workload this application has.
+        // tries=1 on purpose — a ZIP build that fails partway through is
+        // retried by whoever asked for it, not silently re-run by Horizon
+        // against a bucket state that may have moved on.
+        'supervisor-media-zip' => [
+            'connection' => 'redis',
+            'queue' => ['media.zip'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'time',
+            'maxProcesses' => 1,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 128,
+            'tries' => 1,
+            'timeout' => 2400,
+            'nice' => 0,
+        ],
     ],
 
     'environments' => [
@@ -271,6 +313,16 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+            'supervisor-media-ingest' => [
+                'maxProcesses' => 4,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
+            'supervisor-media-zip' => [
+                'maxProcesses' => 2,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
         ],
 
         'local' => [
@@ -281,6 +333,12 @@ return [
                 'maxProcesses' => 1,
             ],
             'supervisor-render' => [
+                'maxProcesses' => 1,
+            ],
+            'supervisor-media-ingest' => [
+                'maxProcesses' => 1,
+            ],
+            'supervisor-media-zip' => [
                 'maxProcesses' => 1,
             ],
         ],

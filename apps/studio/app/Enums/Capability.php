@@ -94,4 +94,11 @@ enum Capability: string
      * role that needs partial access.
      */
     case ManageSettings = 'manage_settings';
+
+    /**
+     * Author FormTemplates — the questionnaires a project's client fills in
+     * (E-01). Shaped after ManageContracts: what a client sees and answers,
+     * not the open-to-everyone catalog/task shape.
+     */
+    case ManageFormTemplates = 'manage_form_templates';
 }

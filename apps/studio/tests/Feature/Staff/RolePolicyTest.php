@@ -234,7 +234,7 @@ it('opens the package catalog to every staff role', function (StaffRole $role) {
 it('opens contract templates to the roles ManageShoots already trusts, and refuses the crew roles', function (StaffRole $role, int $status) {
     // Narrower than the catalog on purpose — a contract is what a client
     // signs (Capability::ManageContracts's own doc comment).
-    $this->actingAs(staff($role), 'staff')->get('/vertragsvorlagen')->assertStatus($status);
+    $this->actingAs(staff($role), 'staff')->get('/dokumentvorlagen')->assertStatus($status);
 })->with([
     [StaffRole::Owner, 200],
     [StaffRole::Photographer, 200],

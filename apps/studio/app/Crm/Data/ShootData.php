@@ -20,6 +20,7 @@ class ShootData extends Data
     /**
      * @param  list<CrewMemberData>  $crew
      * @param  list<array{value: string, label: string}>  $forwardStatuses
+     * @param  list<TimelineEntryData>  $timeline
      */
     public function __construct(
         public string $id,
@@ -36,6 +37,9 @@ class ShootData extends Data
         public ?string $cancelledReason,
         public array $crew,
         public array $forwardStatuses,
+        public array $timeline,
+        public string $pdfUrl,
+        public string $icsUrl,
     ) {}
 
     public static function fromShoot(Shoot $shoot): self
@@ -63,6 +67,9 @@ class ShootData extends Data
                 ->map(fn (ShootStatus $status) => ['value' => $status->value, 'label' => $status->label()])
                 ->values()
                 ->all(),
+            timeline: $shoot->timeline->map(TimelineEntryData::fromEntry(...))->all(),
+            pdfUrl: "/shootings/{$shoot->public_id}/ablauf.pdf",
+            icsUrl: "/shootings/{$shoot->public_id}/ablauf.ics",
         );
     }
 }
