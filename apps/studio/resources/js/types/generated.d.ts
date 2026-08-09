@@ -195,7 +195,7 @@ mfaConfirmed: boolean,
 };
 }
 namespace Enums {
-export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts';
+export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings';
 export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' | 'assistant';
 }
 namespace Quotes {
@@ -230,6 +230,14 @@ netTotal: number,
 namespace Enums {
 export type DiscountType = 'percentage' | 'amount';
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'superseded' | 'expired';
+}
+}
+namespace Settings {
+namespace Data {
+export type StudioSettingsData = {
+id: string,
+displayName: string | null,
+};
 }
 }
 }

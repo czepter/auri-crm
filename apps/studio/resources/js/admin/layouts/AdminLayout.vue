@@ -75,6 +75,13 @@ const items = computed(() => [
     href: '/kalender',
     icon: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/>',
   },
+  {
+    key: 'einstellungen',
+    label: 'Einstellungen',
+    href: '/einstellungen',
+    needs: 'manage_settings',
+    icon: '<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/>',
+  },
 ].filter((item) => !item.needs || can.value.includes(item.needs as App.Enums.Capability)))
 </script>
 

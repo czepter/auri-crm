@@ -23,6 +23,7 @@ use App\Http\Controllers\Staff\MfaEnrollmentController;
 use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\SessionController;
 use App\Quotes\Http\Controllers\QuoteController;
+use App\Settings\Http\Controllers\StudioSettingsController;
 use Illuminate\Support\Facades\Route;
 
 // A full authentication bypass for local inspection — no password, no MFA
@@ -115,6 +116,9 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/kalender', [CalendarController::class, 'index'])->name('calendar.index');
         Route::post('/kalender/abo', [CalendarController::class, 'regenerate'])
             ->name('calendar.regenerate');
+
+        Route::get('/einstellungen', [StudioSettingsController::class, 'edit'])->name('settings.edit');
+        Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');
 
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.

@@ -10,6 +10,7 @@ use App\Crm\Models\InternalNote;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Enums\StaffRole;
 use App\Models\User;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
@@ -98,6 +99,14 @@ it('never puts an integer identifier into a project\'s quotes page', function ()
         ->get("/auftraege/{$project->public_id}/angebote")
         ->assertOk()
         ->viewData('page')['props'];
+
+    expect(integerIdPaths($props))->toBe([]);
+});
+
+it('never puts an integer identifier into the settings screen', function () {
+    $user = User::factory()->withMfa()->create(['role' => StaffRole::Owner]);
+
+    $props = $this->actingAs($user, 'staff')->get('/einstellungen')->assertOk()->viewData('page')['props'];
 
     expect(integerIdPaths($props))->toBe([]);
 });

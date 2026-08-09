@@ -117,6 +117,20 @@ jobs:
           --health-interval 2s
           --health-timeout 3s
           --health-retries 30
+      # T-01's cross-process cache test is the first to need this: it proves
+      # a setting changed by one StudioSettingsResolver instance is visible
+      # to a completely fresh one through the redis cache store, which means
+      # nothing unless a real Redis sits behind it. .env.example's own
+      # REDIS_HOST (127.0.0.1) already matches where a service container
+      # publishes to on the runner, so no env override is needed below.
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
