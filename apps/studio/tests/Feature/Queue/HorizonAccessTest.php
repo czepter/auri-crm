@@ -1,22 +1,14 @@
 <?php
 
 use App\Enums\StaffRole;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-/**
- * Owner is the only StaffRole whose capabilities() include ManageStaff (see
- * StaffRole::capabilities()) — the same fact InvitationController's own
- * "/team" tests lean on. Passed explicitly below anyway, so which role is
- * being asserted is visible at the call site.
- */
-function staffMember(StaffRole $role): User
-{
-    return User::factory()->withMfa()->create(['role' => $role]);
-}
-
+// Owner is the only StaffRole whose capabilities() include ManageStaff (see
+// StaffRole::capabilities()) — the same fact InvitationController's own
+// "/team" tests lean on. Passed explicitly below anyway, so which role is
+// being asserted is visible at the call site.
 it('lets a ManageStaff session reach horizon', function () {
     $owner = staffMember(StaffRole::Owner);
 
