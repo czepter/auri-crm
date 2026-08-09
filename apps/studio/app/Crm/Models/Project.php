@@ -85,6 +85,11 @@ class Project extends Model
         return $this->hasMany(InternalNote::class)->latest();
     }
 
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
+
     public function shoots(): HasMany
     {
         return $this->hasMany(Shoot::class)->orderBy('sort_order');
