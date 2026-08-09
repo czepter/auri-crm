@@ -398,6 +398,65 @@ class StudioSettingsResolver
         );
     }
 
+    // --- T-08: the portal's own settings — a maintenance closure, home
+    // branding text, two external legal links, and four client capability
+    // switches. See the migration's own doc comment for why each defaults
+    // where it does.
+
+    /** Whole-portal temporary closure — never a substitute for A-04's own hide/revoke actions. */
+    public function maintenanceEnabled(): bool
+    {
+        return $this->row()->portal_maintenance_enabled;
+    }
+
+    /** Free text shown instead of the portal while closed; EnsurePortalMaintenanceClosure falls back to a default if blank. */
+    public function maintenanceMessage(): ?string
+    {
+        return $this->row()->portal_maintenance_message;
+    }
+
+    /** Shown once, on the portal home only — HomeController reads this, nowhere else does. */
+    public function portalWelcomeText(): ?string
+    {
+        return $this->row()->portal_welcome_text;
+    }
+
+    /** External link — no local Datenschutzerklärung page exists or is planned here. */
+    public function legalDatenschutzUrl(): ?string
+    {
+        return $this->row()->portal_legal_datenschutz_url;
+    }
+
+    /** External link — no local AGB page exists or is planned here. */
+    public function legalAgbUrl(): ?string
+    {
+        return $this->row()->portal_legal_agb_url;
+    }
+
+    /** Gates Q-07's accept action once it exists. Nothing reads this yet — Q-07 is not merged. */
+    public function acceptQuotesEnabled(): bool
+    {
+        return $this->row()->portal_accept_quotes_enabled;
+    }
+
+    /** Gates M-02's sign action — the contract itself stays viewable either way. */
+    public function signContractsEnabled(): bool
+    {
+        return $this->row()->portal_sign_contracts_enabled;
+    }
+
+    /** Gates T-07's payment screen in full. */
+    public function paymentStatusEnabled(): bool
+    {
+        return $this->row()->portal_payment_status_enabled;
+    }
+
+    /** Gates a message thread once E-06 exists. Nothing reads this yet. */
+    public function messagingEnabled(): bool
+    {
+        return $this->row()->portal_messaging_enabled;
+    }
+
     private function row(): StudioSettings
     {
         return Cache::store('redis')->remember(

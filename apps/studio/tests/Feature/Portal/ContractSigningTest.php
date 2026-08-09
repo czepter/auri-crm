@@ -4,15 +4,28 @@ use App\Contracts\Models\ContractSignature;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
+use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
 // renderedContract() lives in tests/Pest.php — see the note there.
 
-beforeEach(fn () => useSurface(Surface::PORTAL));
+// T-08's "sign contracts" switch defaults to off (see
+// tests/Feature/Portal/CapabilitySwitchesTest.php for that default and the
+// 404 it produces while off) — every test below exercises the sign action
+// itself, so the switch is on for all of them. Cache::flush() first: this
+// writes straight to the row via the model, bypassing the resolver's own
+// cache-busting set() (T-01), so a row already cached by an earlier test in
+// the same suite run would otherwise still read as off.
+beforeEach(function () {
+    useSurface(Surface::PORTAL);
+    Cache::store('redis')->flush();
+    StudioSettings::query()->update(['portal_sign_contracts_enabled' => true]);
+});
 
 it('signs the rendered contract when the consent box is explicitly checked', function () {
     Storage::fake('local');

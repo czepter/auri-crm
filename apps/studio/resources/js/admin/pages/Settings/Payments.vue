@@ -6,11 +6,11 @@ import { basisPointsToPercent } from '@/admin/lib/money'
 
 const props = defineProps<{ settings: App.Settings.Data.PaymentSettingsData }>()
 
-// Every other future group (Portal, ...) — the same disabled "bald" list
-// Settings/Index.vue and Numbering.vue both render. Zahlungsdaten & USt is
-// T-03's own pane, Nummernkreise is T-04's, Dokumente is T-05's and Zahlungen
-// is this pane, so all four drop out of this list.
-const comingSoon = ['navPortal', 'navNotifications'] as const
+// Every other future group — the same disabled "bald" list Settings/Index.vue
+// and Numbering.vue both render. Zahlungsdaten & USt is T-03's own pane,
+// Nummernkreise is T-04's, Dokumente is T-05's, Zahlungen is this pane and
+// Portal is T-08's own route, so all five drop out of this list.
+const comingSoon = ['navNotifications'] as const
 
 // Keys are write-only (T-07): the server never echoes a stored value back,
 // so this form always starts with them blank. Submitting blank leaves the
@@ -60,6 +60,7 @@ function submit() {
         <a class="nav" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
         <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
         <a class="nav on" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
+        <a class="nav" href="/einstellungen/portal">{{ $t('settings.navPortal') }}</a>
         <a
           v-for="key in comingSoon"
           :key="key"

@@ -22,7 +22,10 @@ use Illuminate\Database\Eloquent\Model;
  * T-07's own issue also named; T-05 landed first, so T-07 reads those two
  * through T-05's columns rather than declaring a second pair. The
  * payments_* columns below are T-07's own remainder: Stripe as an optional
- * capability, and the reminder default T-05 did not cover.
+ * capability, and the reminder default T-05 did not cover. The portal_*
+ * columns are T-08's: a maintenance closure switch, a home-only welcome
+ * text, two external legal links, and four client capability switches — see
+ * that migration's own doc comment for why each defaults where it does.
  */
 class StudioSettings extends Model
 {
@@ -43,6 +46,10 @@ class StudioSettings extends Model
         'payments_stripe_test_publishable_key', 'payments_stripe_test_secret_key',
         'payments_stripe_live_publishable_key', 'payments_stripe_live_secret_key',
         'payments_reminders_enabled',
+        'portal_maintenance_enabled', 'portal_maintenance_message',
+        'portal_welcome_text', 'portal_legal_datenschutz_url', 'portal_legal_agb_url',
+        'portal_accept_quotes_enabled', 'portal_sign_contracts_enabled',
+        'portal_payment_status_enabled', 'portal_messaging_enabled',
     ];
 
     // Defence in depth beside StudioSettingsResolver never exposing these
@@ -67,6 +74,11 @@ class StudioSettings extends Model
             'payments_stripe_live_publishable_key' => 'encrypted',
             'payments_stripe_live_secret_key' => 'encrypted',
             'payments_reminders_enabled' => 'boolean',
+            'portal_maintenance_enabled' => 'boolean',
+            'portal_accept_quotes_enabled' => 'boolean',
+            'portal_sign_contracts_enabled' => 'boolean',
+            'portal_payment_status_enabled' => 'boolean',
+            'portal_messaging_enabled' => 'boolean',
         ];
     }
 }

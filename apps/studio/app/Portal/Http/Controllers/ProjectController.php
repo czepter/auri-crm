@@ -3,6 +3,7 @@
 namespace App\Portal\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Settings\Support\StudioSettingsResolver;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,7 +23,7 @@ use Inertia\Response;
  */
 class ProjectController extends Controller
 {
-    public function __invoke(string $project): Response
+    public function __invoke(string $project, StudioSettingsResolver $settings): Response
     {
         $contact = auth('portal')->user();
 
@@ -63,10 +64,12 @@ class ProjectController extends Controller
                 // M-01. False before any contract has ever been generated —
                 // the link only ever appears once there is something behind it.
                 'hasContract' => $found->latestContract !== null,
-                // T-07. False before a Job exists, or before staff have
-                // created a payment plan for it — the same "nothing to show
-                // yet" gate hasContract already uses for the contract link.
-                'hasPaymentPlan' => $found->job?->paymentPlan !== null,
+                // T-07, gated by T-08's own switch (default off): the link
+                // is the affordance half of "see payment status", and it
+                // must not appear when the switch is off any more than the
+                // route behind it should answer — see PaymentController's
+                // own `portal.capability:payment_status` middleware.
+                'hasPaymentPlan' => $found->job?->paymentPlan !== null && $settings->paymentStatusEnabled(),
             ],
         ]);
     }

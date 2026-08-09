@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { Link, router } from '@inertiajs/vue3'
+import { Link } from '@inertiajs/vue3'
+import PortalFooter from '@/portal/components/PortalFooter.vue'
+import PortalHeader from '@/portal/components/PortalHeader.vue'
 
 defineProps<{
   contact: { name: string }
+  // T-08: the portal home's own welcome text (studio_settings.portal_welcome_text) —
+  // null until a studio sets one, shown nowhere else.
+  welcomeText: string | null
   // A single-project contact never reaches this page — HomeController
   // redirects straight to their project — so this list is either empty or
   // has more than one entry to switch between.
@@ -11,25 +16,11 @@ defineProps<{
 </script>
 
 <template>
-  <header class="phead">
-    <div class="pbar">
-      <span class="pmark"><i />Atelier Nordlicht <em>Fotografie · Hamburg</em></span>
-      <div class="pme">
-        <span>{{ $t('portal.signedInAs') }} <b>{{ contact.name }}</b></span>
-        <button type="button" @click="router.post('/abmelden')">
-          <svg viewBox="0 0 24 24">
-            <path d="M15 17l5-5-5-5" />
-            <path d="M20 12H9" />
-            <path d="M12 20H6a2 2 0 01-2-2V6a2 2 0 012-2h6" />
-          </svg>
-          {{ $t('portal.signOut') }}
-        </button>
-      </div>
-    </div>
-  </header>
+  <PortalHeader :contact="contact" />
 
   <main class="pwrap">
     <div class="pgreet">{{ $t('portal.greeting', { name: contact.name.split(' ')[0] }) }}</div>
+    <p v-if="welcomeText" class="plead">{{ welcomeText }}</p>
     <h1 v-if="projects.length">{{ $t('portal.chooseProject') }}</h1>
 
     <div v-if="projects.length" class="switcher">
@@ -43,9 +34,7 @@ defineProps<{
     <p v-else class="hint">{{ $t('portal.nothingShared') }}</p>
   </main>
 
-  <footer class="pfoot">
-    <span>Atelier Nordlicht · Hamburg</span>
-  </footer>
+  <PortalFooter />
 </template>
 
 <style scoped>

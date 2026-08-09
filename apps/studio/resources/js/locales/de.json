@@ -432,6 +432,30 @@
     "remindersEnabled": "Zahlungserinnerungen versenden",
     "defaultsReadOnlyHint": "Anzahlung und Zahlungsziel werden unter Dokumente gepflegt:"
   },
+  "portalSettings": {
+    "title": "Portal",
+    "maintenanceSection": "Wartung",
+    "maintenanceEnabledLabel": "Portal vorübergehend schließen",
+    "maintenanceEnabledHint": "Zeigt allen Kundinnen und Kunden nur den Schließungshinweis, keine Projektdaten.",
+    "maintenanceMessageLabel": "Hinweistext",
+    "maintenanceMessageHint": "Erscheint anstelle des Portals. Kein Hinweis auf entzogenen Zugang, nur auf die Schließung.",
+    "homeSection": "Startseite",
+    "welcomeTextLabel": "Willkommenstext",
+    "welcomeTextHint": "Erscheint oben auf der Portal-Startseite.",
+    "legalSection": "Rechtliches",
+    "datenschutzUrlLabel": "Datenschutzerklärung",
+    "agbUrlLabel": "AGB",
+    "legalUrlHint": "Link auf eine bestehende Seite.",
+    "capabilitiesSection": "Freigaben",
+    "acceptQuotesEnabledLabel": "Angebote online annehmen",
+    "acceptQuotesEnabledHint": "Ausgeschaltet bleibt die Annahme im Portal ausgeblendet.",
+    "signContractsEnabledLabel": "Verträge online unterschreiben",
+    "signContractsEnabledHint": "Ausgeschaltet bleibt die Unterschrift im Portal ausgeblendet.",
+    "paymentStatusEnabledLabel": "Zahlungsstatus einsehen",
+    "paymentStatusEnabledHint": "Ausgeschaltet bleibt die Zahlungsübersicht im Portal ausgeblendet.",
+    "messagingEnabledLabel": "Nachrichten an das Studio",
+    "messagingEnabledHint": "Noch ohne Funktion dahinter — greift, sobald verfügbar."
+  },
   "portal": {
     "signInTitle": "Kundenbereich",
     "signInHint": "Adresse eintragen — wir schicken einen Link. Kein Passwort nötig.",
@@ -474,6 +498,12 @@
     "transferBic": "BIC",
     "transferReference": "Verwendungszweck",
     "payNowTitle": "Jetzt zahlen",
-    "payNowComingSoon": "Die Online-Zahlung per Karte folgt in Kürze — bitte bis dahin überweisen."
+    "payNowComingSoon": "Die Online-Zahlung per Karte folgt in Kürze — bitte bis dahin überweisen.",
+    "maintenanceTitle": "Portal vorübergehend geschlossen",
+    "maintenanceDefaultMessage": "Das Portal ist gerade nicht erreichbar. Schauen Sie bald wieder vorbei.",
+    "impressumTitle": "Impressum",
+    "footerImpressum": "Impressum",
+    "footerDatenschutz": "Datenschutz",
+    "footerAgb": "AGB"
   }
 }

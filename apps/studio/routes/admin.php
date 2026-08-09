@@ -27,6 +27,7 @@ use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
 use App\Settings\Http\Controllers\NumberRangeController;
 use App\Settings\Http\Controllers\PaymentSettingsController;
+use App\Settings\Http\Controllers\PortalSettingsController;
 use App\Settings\Http\Controllers\StudioClosureController;
 use App\Settings\Http\Controllers\StudioSettingsController;
 use Illuminate\Support\Facades\Route;
@@ -149,6 +150,11 @@ Route::middleware('audience:staff')->group(function () {
             ->name('settings.payments.edit');
         Route::patch('/einstellungen/zahlungen', [PaymentSettingsController::class, 'update'])
             ->name('settings.payments.update');
+
+        Route::get('/einstellungen/portal', [PortalSettingsController::class, 'edit'])
+            ->name('settings.portal.edit');
+        Route::patch('/einstellungen/portal', [PortalSettingsController::class, 'update'])
+            ->name('settings.portal.update');
 
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.

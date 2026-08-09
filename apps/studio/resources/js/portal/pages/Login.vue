@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
+import PortalFooter from '@/portal/components/PortalFooter.vue'
 
 const form = useForm({ email: '' })
 const status = computed(() => usePage().props.flash.status)
@@ -43,4 +44,7 @@ function submit() {
       </button>
     </form>
   </div>
+
+  <!-- § 5 TMG: reachable from the one screen a client can see before signing in. -->
+  <PortalFooter />
 </template>

@@ -29,6 +29,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'mfa' => \App\Http\Middleware\RequireConfirmedMfa::class,
             'audience' => \App\Http\Middleware\EnsureAudience::class,
+            'portal.maintenance' => \App\Http\Middleware\EnsurePortalMaintenanceClosure::class,
+            'portal.capability' => \App\Http\Middleware\EnsurePortalCapability::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
