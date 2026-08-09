@@ -60,6 +60,12 @@ class ProjectPolicy
         return $user->role->allows(Capability::ManageNotes) && $this->view($user, $project);
     }
 
+    /** Reply on this project's Thread (E-06) — never originate one; see StartThread. */
+    public function manageMessages(User $user, Project $project): bool
+    {
+        return $user->role->allows(Capability::ManageMessages) && $this->view($user, $project);
+    }
+
     /** Flip portal_visible for this one project (A-04) — never a contact. */
     public function manageVisibility(User $user, Project $project): bool
     {

@@ -503,10 +503,31 @@ class StudioSettingsResolver
         return $this->row()->portal_payment_status_enabled;
     }
 
-    /** Gates a message thread once E-06 exists. Nothing reads this yet. */
+    /** Gates E-06's message thread in full — see EnsurePortalCapability's own note. */
     public function messagingEnabled(): bool
     {
         return $this->row()->portal_messaging_enabled;
+    }
+
+    // --- T-11: quiet hours — App\Notifications\Support\QuietHours is the
+    // only reader of these three, the same "raw values here, logic in the
+    // domain class" split T-13's workingDays()/TaskTemplate::dueFor() already
+    // draws.
+
+    public function quietHoursEnabled(): bool
+    {
+        return $this->row()->quiet_hours_enabled;
+    }
+
+    /** "HH:MM:SS", tenant-local — null whenever quietHoursEnabled() is false. */
+    public function quietHoursStart(): ?string
+    {
+        return $this->row()->quiet_hours_start;
+    }
+
+    public function quietHoursEnd(): ?string
+    {
+        return $this->row()->quiet_hours_end;
     }
 
     private function row(): StudioSettings

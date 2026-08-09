@@ -38,11 +38,26 @@
 
 /* portal — same bones, more air. The theme is a spacing scale and a radius,
    not a separate component set, which is what lets both surfaces share every
-   rule below. The gallery theme joins this when P3 gives it a screen. */
+   rule below. */
 [data-theme="portal"] {
   --hover:#F8F5F3;
   --s3:14px; --s4:20px; --s5:32px; --s6:44px; --s7:64px;
   --r:10px;
+}
+
+/* gallery — chrome recedes, photographs carry the page. Ported from
+   mockups/_shared/tokens.css for G-06's gate screens (resources/css/
+   gallery.css carries the component vocabulary this unlocks). */
+[data-theme="gallery"] {
+  --bg:#0E0C0B;
+  --ink:#F2EDE9;
+  --muted:#8B817B;
+  --faint:#615953;
+  --hover:#1A1614;
+  --line:#241F1C;
+  --line-hover:#332C28;
+  --accent:#D4713F;
+  --accent-bg:#26170F;
 }
 
 * { box-sizing:border-box; }

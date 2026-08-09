@@ -20,6 +20,7 @@ use App\Crm\Http\Controllers\TaskController;
 use App\Crm\Http\Controllers\TaskTemplateController;
 use App\Crm\Http\Controllers\TimelineController;
 use App\Documents\Http\Controllers\DocumentTemplateController;
+use App\Engagement\Http\Controllers\ThreadController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
 use App\Http\Controllers\Staff\InvitationController;
@@ -27,9 +28,12 @@ use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
 use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\SessionController;
+use App\Media\Http\Controllers\MediaIngestController;
+use App\Media\Http\Controllers\MultipartUploadController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
 use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
+use App\Settings\Http\Controllers\NotificationSettingsController;
 use App\Settings\Http\Controllers\NumberRangeController;
 use App\Settings\Http\Controllers\PaymentSettingsController;
 use App\Settings\Http\Controllers\PortalSettingsController;
@@ -194,6 +198,14 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen/portal', [PortalSettingsController::class, 'update'])
             ->name('settings.portal.update');
 
+        // T-11: quiet hours only — see NotificationSettingsController's own
+        // doc comment for why no per-event toggle grid ships in this route
+        // group yet.
+        Route::get('/einstellungen/benachrichtigungen', [NotificationSettingsController::class, 'edit'])
+            ->name('settings.notifications.edit');
+        Route::patch('/einstellungen/benachrichtigungen', [NotificationSettingsController::class, 'update'])
+            ->name('settings.notifications.update');
+
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.
         Route::get('/anfragen/neu', [InquiryCaptureController::class, 'create'])->name('leads.create');
@@ -212,6 +224,15 @@ Route::middleware('audience:staff')->group(function () {
             ->name('projects.book');
         Route::post('/auftraege/{project}/portal-sichtbarkeit', [ProjectController::class, 'togglePortalVisibility'])
             ->name('projects.portal-visibility.toggle');
+
+        // E-06. The client is the only one who can start a thread (see
+        // StartThread, reached from routes/portal.php) — this GET reads
+        // whatever the client has already opened, and the POST beside it is
+        // staff's reply on it, never an origination of its own.
+        Route::get('/auftraege/{project}/nachrichten', [ProjectController::class, 'messages'])
+            ->name('projects.messages');
+        Route::post('/auftraege/{project}/nachrichten', [ThreadController::class, 'reply'])
+            ->name('threads.reply');
 
         Route::get('/auftraege/{project}/angebote', [ProjectController::class, 'quotes'])
             ->name('projects.quotes');
@@ -237,6 +258,22 @@ Route::middleware('audience:staff')->group(function () {
             ->name('contracts.store');
         Route::get('/vertraege/{contract}/pdf', [ContractController::class, 'download'])
             ->name('contracts.download');
+
+        // G-02: app-proxied multipart ingest into a gallery's quarantine
+        // prefix. galleries.uploads.* is a JSON API for the browser's own
+        // chunked uploader (resources/js/admin/lib/multipartUpload.ts), not
+        // Inertia — see MultipartUploadController.
+        Route::get('/galerien/{gallery}/medien', [MediaIngestController::class, 'show'])
+            ->name('galleries.media');
+        Route::post('/galerien/{gallery}/uploads', [MultipartUploadController::class, 'store'])
+            ->name('galleries.uploads.store');
+        Route::put('/uploads/{multipartUpload}/teile/{partNumber}', [MultipartUploadController::class, 'uploadPart'])
+            ->whereNumber('partNumber')
+            ->name('galleries.uploads.parts.store');
+        Route::post('/uploads/{multipartUpload}/abschluss', [MultipartUploadController::class, 'complete'])
+            ->name('galleries.uploads.complete');
+        Route::delete('/uploads/{multipartUpload}', [MultipartUploadController::class, 'destroy'])
+            ->name('galleries.uploads.destroy');
 
         // No GET here: the Zahlungen card lives on the project overview
         // itself (ProjectController::show), not a tab of its own — see the

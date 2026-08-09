@@ -3,6 +3,7 @@
 namespace App\Quotes\Actions;
 
 use App\Models\User;
+use App\Notifications\NotificationService;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
 use App\Quotes\Enums\QuoteStatus;
@@ -12,7 +13,6 @@ use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use DomainException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Notification;
 
 /**
  * The state change this whole sprint hangs off, and the first caller of two
@@ -27,6 +27,7 @@ class SendQuote
     public function __construct(
         private readonly AllocateDocumentNumber $allocate,
         private readonly StudioSettingsResolver $settings,
+        private readonly NotificationService $notifications,
     ) {}
 
     public function __invoke(Quote $quote, ?User $actor = null): Quote
@@ -78,6 +79,12 @@ class SendQuote
      * Silent when there is nothing to send to: ProjectFactory attaches no
      * contact by default, and an inquiry-stage project may genuinely have
      * none yet — neither is an error a quote-send should fail on.
+     *
+     * E-07/T-11: through NotificationService, addressed to the Contact
+     * itself rather than Notification::route('mail', ...) — the on-demand
+     * shape this used before Contact carried Notifiable. Naming the Contact
+     * is what lets T-11's preferences and quiet hours apply; an on-demand
+     * address carries no identity either could key on.
      */
     private function mail(Quote $quote): void
     {
@@ -87,6 +94,6 @@ class SendQuote
             return;
         }
 
-        Notification::route('mail', $contact->email)->notify(new QuoteSent($quote));
+        $this->notifications->send($contact, new QuoteSent($quote));
     }
 }

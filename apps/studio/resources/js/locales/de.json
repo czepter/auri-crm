@@ -163,7 +163,12 @@
     "contractNone": "Noch kein Vertrag erzeugt.",
     "contractNoTemplates": "Noch keine Vertragsvorlage angelegt.",
     "contractDownload": "PDF herunterladen",
-    "contractPending": "Wird gerade erstellt …"
+    "contractPending": "Wird gerade erstellt …",
+    "messagesSubject": "Thema: {subject}",
+    "messagesEmpty": "Noch keine Nachrichten.",
+    "messagesNone": "Der Kunde hat noch kein Gespräch begonnen.",
+    "messagesReplyPlaceholder": "Antwort schreiben …",
+    "messagesSend": "Senden"
   },
   "calendar": {
     "title": "Kalender",
@@ -484,6 +489,15 @@
     "previewEmpty": "Keine passende Vorlage aktiv.",
     "previewDue": "fällig am"
   },
+  "notificationSettings": {
+    "title": "Benachrichtigungen",
+    "quietHoursSection": "Ruhezeiten",
+    "quietHoursEnabledLabel": "Ruhezeiten aktivieren",
+    "quietHoursEnabledHint": "Mails in diesem Fenster werden erst danach zugestellt.",
+    "quietHoursStartLabel": "Von",
+    "quietHoursEndLabel": "Bis",
+    "quietHoursHint": "Gilt studioweit, in der unter Allgemein hinterlegten Zeitzone."
+  },
   "formTemplates": {
     "kicker": "Einstellungen · Fragebogen-Vorlagen",
     "title": "Fragebogen-Vorlagen",
@@ -545,7 +559,7 @@
     "paymentStatusEnabledLabel": "Zahlungsstatus einsehen",
     "paymentStatusEnabledHint": "Ausgeschaltet bleibt die Zahlungsübersicht im Portal ausgeblendet.",
     "messagingEnabledLabel": "Nachrichten an das Studio",
-    "messagingEnabledHint": "Noch ohne Funktion dahinter — greift, sobald verfügbar."
+    "messagingEnabledHint": "Ausgeschaltet bleibt die Kommunikation im Portal ausgeblendet."
   },
   "portal": {
     "signInTitle": "Kundenbereich",
@@ -583,6 +597,13 @@
     "quoteExpired": "Die Gültigkeit dieses Angebots ist abgelaufen.",
     "quoteAccept": "Angebot annehmen",
     "quoteAccepted": "Angenommen am {date}.",
+    "messagesLinkTitle": "Nachrichten",
+    "messagesKicker": "Nachrichten",
+    "messagesTitle": "Neue Nachricht",
+    "messagesNone": "Noch keine Nachrichten. Schreiben Sie uns.",
+    "messagesSubjectPlaceholder": "Worum geht's?",
+    "messagesBodyPlaceholder": "Ihre Nachricht …",
+    "messagesSend": "Senden",
     "paymentsLinkTitle": "Zahlungen",
     "paymentsKicker": "Zahlungen",
     "paymentsTitle": "Ihre Zahlungen",
@@ -605,6 +626,53 @@
     "impressumTitle": "Impressum",
     "footerImpressum": "Impressum",
     "footerDatenschutz": "Datenschutz",
-    "footerAgb": "AGB"
+    "footerAgb": "AGB",
+    "unsubscribeKicker": "Abmeldung",
+    "unsubscribeTitle": "Benachrichtigungen abbestellen",
+    "unsubscribeHint": "Keine weiteren Angebots- und Status-Mails mehr erhalten.",
+    "unsubscribeConfirm": "Abmelden",
+    "unsubscribeDone": "Abgemeldet."
+  },
+  "gallery": {
+    "passwordLabel": "Galerie-Passwort",
+    "passwordOpen": "Galerie öffnen",
+    "passwordWrong": "Dieser Link und dieses Passwort gehören nicht zusammen.",
+    "unlockedTitle": "Galerie freigeschaltet",
+    "unlockedHint": "Die Bilderübersicht folgt in einer späteren Version.",
+    "downloadLink": "Bilder herunterladen",
+    "pinKicker": "Download · Schritt 1 von 2",
+    "pinTitle": "Es gibt noch einen Code",
+    "pinLead": "Zum Ansehen reicht das Galerie-Passwort — das haben alle Gäste. Zum Herunterladen kommt ein zweiter, vierstelliger Code dazu. Den haben nur Sie.",
+    "pinLabel": "Download-Code",
+    "pinContinue": "Weiter",
+    "pinWrong": "Dieser Code stimmt nicht.",
+    "backToGallery": "Zurück zur Galerie",
+    "emailKicker": "Download · Schritt 2 von 2",
+    "emailTitle": "Wohin dürfen wir den Link schicken?",
+    "emailLabel": "E-Mail-Adresse",
+    "emailRequest": "Download-Link anfordern",
+    "emailLinkSent": "Bestätigungslink verschickt — meist nach ein bis zwei Minuten da.",
+    "emailLinkDead": "Dieser Bestätigungslink funktioniert nicht mehr.",
+    "readyTitle": "Alles bereit",
+    "readyHint": "Der Download selbst folgt in einer späteren Version."
+  },
+  "media": {
+    "kicker": "Medien · Import",
+    "backToProject": "Zum Projekt",
+    "pickFiles": "Dateien auswählen",
+    "transferring": "Übertragung läuft",
+    "filesLabel": "Dateien",
+    "of": "von",
+    "target": "Ziel",
+    "project": "Projekt",
+    "shoot": "Shooting",
+    "gallery": "Galerie",
+    "ready": "Bereit",
+    "queued": "Wartet",
+    "uploading": "Läuft",
+    "failed": "Fehler",
+    "retry": "Erneut übertragen",
+    "empty": "Noch keine Dateien ausgewählt.",
+    "resumeHint": "Ein abgebrochener Import lässt sich jederzeit mit denselben Dateien fortsetzen — bereits übertragene Teile werden erkannt und übersprungen."
   }
 }
