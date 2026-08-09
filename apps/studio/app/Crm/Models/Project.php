@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Visus\Cuid2\Cuid2;
 
@@ -71,6 +72,17 @@ class Project extends Model
     public function lead(): HasOne
     {
         return $this->hasOne(Lead::class);
+    }
+
+    public function shoots(): HasMany
+    {
+        return $this->hasMany(Shoot::class)->orderBy('sort_order');
+    }
+
+    /** The headline occasion — the wedding day, not the engagement shoot. */
+    public function primaryShoot(): HasOne
+    {
+        return $this->hasOne(Shoot::class)->where('is_primary', true);
     }
 
     public function primaryContact(): ?Contact
