@@ -5,6 +5,15 @@ on:
     branches: [main, dev]
   pull_request:
 
+# The default GITHUB_TOKEN grants contents:read only, and dorny/paths-filter
+# asks the API which files a pull request touches — without pull-requests:read
+# it fails with "Resource not accessible by integration", the changes job dies,
+# and every test job silently skips on its `needs` output. A green checkmark
+# over an untested pull request is worse than a red one.
+permissions:
+  contents: read
+  pull-requests: read
+
 # Supersede in-flight runs for the same PR/branch. Pushes to the integration
 # branches are never cancelled so every commit there keeps a verdict.
 concurrency:
