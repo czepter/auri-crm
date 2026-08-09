@@ -1,0 +1,48 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    working_dir: /app/apps/studio
+    volumes:
+      - .:/app
+      - composer-cache:/tmp/composer
+    environment:
+      COMPOSER_HOME: /tmp/composer
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: studio
+      DB_USERNAME: studio
+      DB_PASSWORD: studio
+    ports:
+      # Published so the Playwright suite on the host can reach `artisan serve`
+      # running inside this container.
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: studio
+      POSTGRES_USER: studio
+      POSTGRES_PASSWORD: studio
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U studio -d studio"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "127.0.0.1:8025:8025"
+
+volumes:
+  pgdata:
+  composer-cache:

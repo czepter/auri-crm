@@ -1,0 +1,10 @@
+@import "./app.css";
+
+/*
+ * Admin is an internal tool used all day: tighter radii and a denser rhythm.
+ * The portal overrides the same tokens in the other direction in P2, which is
+ * why the primitives themselves never fork.
+ */
+:root {
+  --radius: 0.375rem;
+}

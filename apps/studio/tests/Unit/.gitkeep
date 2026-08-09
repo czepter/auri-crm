@@ -1,0 +1,4 @@
+Keeps tests/Unit in version control. phpunit.xml declares it as a testsuite,
+and Pest exits 2 with "Test directory not found" when it is absent — which is
+every fresh clone, every CI checkout and every new git worktree, since git does
+not track empty directories.

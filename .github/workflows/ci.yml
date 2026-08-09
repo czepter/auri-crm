@@ -1,0 +1,221 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+# The default GITHUB_TOKEN grants contents:read only, and dorny/paths-filter
+# asks the API which files a pull request touches — without pull-requests:read
+# it fails with "Resource not accessible by integration", the changes job dies,
+# and every test job silently skips on its `needs` output. A green checkmark
+# over an untested pull request is worse than a red one.
+permissions:
+  contents: read
+  pull-requests: read
+
+# Supersede in-flight runs for the same PR/branch. Pushes to the integration
+# branches are never cancelled so every commit there keeps a verdict.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  # Enforces the branching model documented in docs/branching.md:
+  # feature/bugfix -> dev -> main. Deliberately has no `needs`, so it reports
+  # a verdict even while the test jobs are still running.
+  branch-rules:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the pull request base and head branches
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+        run: |
+          case "$BASE" in
+            main)
+              case "$HEAD" in
+                dev | hotfix/* | release/*) ;;
+                *)
+                  echo "::error::main only accepts dev, hotfix/* or release/*, but this pull request comes from '$HEAD'. Retarget it at dev."
+                  exit 1
+                  ;;
+              esac
+              ;;
+            dev)
+              case "$HEAD" in
+                feat/* | feature/* | fix/* | bugfix/* | hotfix/* | chore/* | docs/* | refactor/* | ci/* | test/*) ;;
+                *)
+                  echo "::error::Branches merged into dev must be named <type>/<slug>, one of feat feature fix bugfix hotfix chore docs refactor ci test. Got '$HEAD'."
+                  exit 1
+                  ;;
+              esac
+              ;;
+            *)
+              echo "Base branch '$BASE' is not an integration branch; stacked branches are unrestricted."
+              ;;
+          esac
+          echo "OK: $HEAD -> $BASE"
+
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      php: ${{ steps.filter.outputs.php }}
+      web: ${{ steps.filter.outputs.web }}
+      e2e: ${{ steps.filter.outputs.e2e }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            ci: &ci
+              - '.github/workflows/ci.yml'
+            php: &php
+              - *ci
+              - 'apps/studio/app/**'
+              - 'apps/studio/bootstrap/**'
+              - 'apps/studio/config/**'
+              - 'apps/studio/database/**'
+              - 'apps/studio/routes/**'
+              - 'apps/studio/tests/**'
+              - 'apps/studio/composer.json'
+              - 'apps/studio/composer.lock'
+              - 'apps/studio/phpunit.xml'
+              - 'apps/studio/artisan'
+              - 'apps/studio/.env.example'
+              - 'apps/studio/resources/js/types/generated.d.ts'
+            web: &web
+              - *ci
+              - 'apps/studio/resources/**'
+              - 'apps/studio/public/**'
+              - 'apps/studio/*.ts'
+              - 'apps/studio/*.json'
+              - 'packages/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+            e2e:
+              - *php
+              - *web
+
+  studio:
+    needs: changes
+    if: needs.changes.outputs.php == 'true'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: studio_test
+          POSTGRES_USER: studio
+          POSTGRES_PASSWORD: studio
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U studio"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: pdo_pgsql, bcmath, gd, intl
+          coverage: none
+      - working-directory: apps/studio
+        run: composer install --no-interaction --prefer-dist
+      - working-directory: apps/studio
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: studio_test
+          DB_USERNAME: studio
+          DB_PASSWORD: studio
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan migrate --force
+          ./vendor/bin/pest
+      - name: Assert the generated TypeScript types are current
+        working-directory: apps/studio
+        run: |
+          php artisan typescript:transform
+          git diff --exit-code -- resources/js/types/generated.d.ts \
+            || { echo "Generated types are stale. Run 'php artisan typescript:transform' and commit."; exit 1; }
+
+  web:
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # No version here on purpose. package.json's packageManager field pins
+      # the exact pnpm build, and action-setup errors out when a second source
+      # also names one rather than picking a winner.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build
+
+  e2e:
+    needs: changes
+    if: needs.changes.outputs.e2e == 'true'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: studio_test
+          POSTGRES_USER: studio
+          POSTGRES_PASSWORD: studio
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U studio"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          extensions: pdo_pgsql, bcmath, gd, intl
+          coverage: none
+      - working-directory: apps/studio
+        run: composer install --no-interaction --prefer-dist
+      # No version here on purpose. package.json's packageManager field pins
+      # the exact pnpm build, and action-setup errors out when a second source
+      # also names one rather than picking a winner.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @studio/app build
+      # Every database setting goes into .env rather than into this step's env.
+      # Playwright starts `artisan serve` as a subprocess of a later step, and
+      # that subprocess reads .env — so step-level DB_* variables reached the
+      # migration but not the server, which then looked for a database named
+      # by .env.example and got "does not exist". One source of truth, written
+      # once, read by every process in the job.
+      - working-directory: apps/studio
+        run: |
+          cp .env.example .env
+          sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=pgsql/' .env
+          sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' .env
+          sed -i 's/^DB_PORT=.*/DB_PORT=5432/' .env
+          sed -i 's/^DB_DATABASE=.*/DB_DATABASE=studio_test/' .env
+          sed -i 's/^DB_USERNAME=.*/DB_USERNAME=studio/' .env
+          sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=studio/' .env
+          php artisan key:generate
+          php artisan migrate --force
+      - run: pnpm --filter @studio/app exec playwright install --with-deps chromium
+      - working-directory: apps/studio
+        env:
+          APP_SURFACE: admin
+        run: pnpm exec playwright test
