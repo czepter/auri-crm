@@ -3,15 +3,9 @@
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
 use App\Models\AuditLog;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
-
-function staffMember(): User
-{
-    return User::factory()->withMfa()->create();
-}
 
 it('lists active and inactive packages with their item count', function () {
     $active = Package::factory()->has(PackageItem::factory()->count(2), 'items')->create(['name' => 'Hochzeit Basis']);
