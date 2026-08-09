@@ -24,9 +24,9 @@ use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\SessionController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
 use App\Payments\Http\Controllers\PaymentPlanController;
-use App\Settings\Http\Controllers\PaymentSettingsController;
 use App\Quotes\Http\Controllers\QuoteController;
 use App\Settings\Http\Controllers\NumberRangeController;
+use App\Settings\Http\Controllers\PaymentSettingsController;
 use App\Settings\Http\Controllers\StudioSettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -125,6 +125,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');
         Route::get('/einstellungen/logo', [StudioSettingsController::class, 'logo'])->name('settings.logo');
         Route::patch('/einstellungen/ust', [StudioSettingsController::class, 'updateVat'])->name('settings.vat.update');
+        Route::patch('/einstellungen/dokumente', [StudioSettingsController::class, 'updateDocuments'])->name('settings.documents.update');
 
         Route::get('/einstellungen/nummernkreise', [NumberRangeController::class, 'index'])
             ->name('number-ranges.index');
@@ -161,6 +162,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/auftraege/{project}/angebote', [QuoteController::class, 'store'])
             ->name('quotes.store');
         Route::patch('/angebote/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
+        Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
 
         Route::get('/auftraege/{project}/vertrag', [ContractController::class, 'show'])
             ->name('projects.contract');

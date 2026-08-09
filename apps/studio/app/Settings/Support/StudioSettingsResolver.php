@@ -75,6 +75,45 @@ class StudioSettingsResolver
     }
 
     /**
+     * A quote's validity in days, used the moment a quote is created with no
+     * explicit valid_until and no validity of its own to carry forward — see
+     * App\Quotes\Http\Controllers\QuoteController::store(). Package carries
+     * no default_validity_days column today (App\Catalog\Models\Package), so
+     * this is the only fallback there is, not a second one behind a
+     * package's own value.
+     */
+    public function quoteValidityDays(): int
+    {
+        return $this->row()->quote_validity_days;
+    }
+
+    /** Zahlungsziel in days — T-07's overdue scan reads this once it ships. */
+    public function paymentTermDays(): int
+    {
+        return $this->row()->payment_term_days;
+    }
+
+    /**
+     * Basis points (0-10000), same convention as vatRate() above — pre-fills
+     * a new PaymentPlan's deposit installment, never re-read once one exists.
+     */
+    public function depositPercentage(): int
+    {
+        return $this->row()->deposit_percentage;
+    }
+
+    /** Whether a rendered contract's `settings.widerrufText` merge field carries any text at all. */
+    public function widerrufIncluded(): bool
+    {
+        return $this->row()->widerruf_included;
+    }
+
+    public function widerrufText(): ?string
+    {
+        return $this->row()->widerruf_text;
+    }
+
+    /**
      * The stored path of the logo — the ONE file both RenderContractJob's
      * `studio.logoPath` merge field and a future portal-branding read are
      * meant to resolve against (T-02's acceptance criterion). Never a second
@@ -222,17 +261,13 @@ class StudioSettingsResolver
             : $row->payments_stripe_test_publishable_key;
     }
 
-    /** Basis points (0-10000) — the plan's own default Anzahlung, before a staff member overrides it per job. */
-    public function depositPercent(): int
-    {
-        return $this->row()->payments_deposit_percent;
-    }
-
-    /** Days from issue to due date — provider-independent, read regardless of whether Stripe is on. */
-    public function zahlungszielDays(): int
-    {
-        return $this->row()->payments_zahlungsziel_days;
-    }
+    // Deposit percentage and Zahlungsziel — the other two provider-independent
+    // defaults T-07's own issue named — are already T-05's depositPercentage()
+    // and paymentTermDays() above (studio_settings.deposit_percentage and
+    // .payment_term_days, the Dokumente pane): T-05 landed first, so T-07
+    // reads those two through T-05's columns rather than declaring a second,
+    // redundant pair. remindersEnabled() below is the one default T-05 did
+    // not cover.
 
     public function remindersEnabled(): bool
     {
@@ -256,8 +291,6 @@ class StudioSettingsResolver
      * @param  array{
      *     payments_stripe_enabled: bool,
      *     payments_stripe_mode: string,
-     *     payments_deposit_percent: int,
-     *     payments_zahlungsziel_days: int,
      *     payments_reminders_enabled: bool,
      *     payments_stripe_test_publishable_key?: ?string,
      *     payments_stripe_test_secret_key?: ?string,
@@ -270,8 +303,7 @@ class StudioSettingsResolver
         $row = StudioSettings::query()->firstOrFail();
 
         $plainKeys = [
-            'payments_stripe_enabled', 'payments_stripe_mode',
-            'payments_deposit_percent', 'payments_zahlungsziel_days', 'payments_reminders_enabled',
+            'payments_stripe_enabled', 'payments_stripe_mode', 'payments_reminders_enabled',
         ];
         $keyColumns = [
             'payments_stripe_test_publishable_key', 'payments_stripe_test_secret_key',

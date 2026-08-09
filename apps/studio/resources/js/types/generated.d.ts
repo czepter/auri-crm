@@ -238,10 +238,13 @@ namespace Quotes {
 namespace Data {
 export type QuoteData = {
 id: string,
+predecessorId: string | null,
 status: string,
 statusLabel: string,
 currency: string,
 validUntil: string | null,
+number: string | null,
+sentAt: string | null,
 total: number,
 discountType: string | null,
 discountValue: number | null,
@@ -290,9 +293,9 @@ stripeEnabled: boolean,
 stripeMode: string,
 hasStripeTestKeys: boolean,
 hasStripeLiveKeys: boolean,
+remindersEnabled: boolean,
 depositPercent: number,
 zahlungszielDays: number,
-remindersEnabled: boolean,
 };
 export type StudioSettingsData = {
 id: string,
@@ -317,6 +320,11 @@ bankBic: string | null,
 vatMode: string,
 vatRate: number,
 vatNote: string | null,
+quoteValidityDays: number,
+paymentTermDays: number,
+depositPercentage: number,
+widerrufIncluded: boolean,
+widerrufText: string | null,
 };
 }
 }

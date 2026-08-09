@@ -8,9 +8,9 @@ const props = defineProps<{ settings: App.Settings.Data.StudioSettingsData }>()
 
 // Which pane of the section shell is showing — client-side only, the same
 // second-level tab set the mockup draws as two static variants of one
-// screen. Nothing here is routed: both forms already save through their own
+// screen. Nothing here is routed: every form already saves through its own
 // endpoint, so switching panes has no request to make.
-const pane = ref<'profile' | 'vat'>('profile')
+const pane = ref<'profile' | 'vat' | 'documents'>('profile')
 
 // isDirty is Inertia's own useForm computed, comparing current values to the
 // defaults the form was built with — not a bespoke computed re-implementing
@@ -50,14 +50,41 @@ const vatForm = useForm({
   vat_note: props.settings.vatNote ?? '',
 })
 
-const activeForm = computed(() => (pane.value === 'vat' ? vatForm : form))
+// T-05's own pane — the values every new quote, payment plan and contract
+// render starts from. deposit_percentage travels the form as a percent
+// string, same euro/percent boundary vat_rate crosses above.
+const documentsForm = useForm({
+  quote_validity_days: props.settings.quoteValidityDays,
+  payment_term_days: props.settings.paymentTermDays,
+  deposit_percentage: basisPointsToPercent(props.settings.depositPercentage),
+  widerruf_included: props.settings.widerrufIncluded,
+  widerruf_text: props.settings.widerrufText ?? '',
+})
 
-// Every other future group (Dokumente, ...) later stories land — rendered
+const activeForm = computed(() => {
+  if (pane.value === 'vat') return vatForm
+  if (pane.value === 'documents') return documentsForm
+  return form
+})
+
+const formId = computed(() => {
+  if (pane.value === 'vat') return 'vat-form'
+  if (pane.value === 'documents') return 'documents-form'
+  return 'settings-form'
+})
+
+const paneTitle = computed(() => {
+  if (pane.value === 'vat') return 'settings.vatTitle'
+  if (pane.value === 'documents') return 'settings.documentsTitle'
+  return 'settings.profileTitle'
+})
+
+// Every other future group (Portal, ...) later stories land — rendered
 // disabled with the "bald" chip screen 4's Vertrag tab already uses for a
 // superseded quote, per T-00's mockup. Zahlungsdaten & USt is T-03's own
-// pane, Nummernkreise is T-04's own route and Zahlungen is T-07's, so all
-// three drop out of this list.
-const comingSoon = ['navDocuments', 'navPortal', 'navNotifications', 'navGeneral'] as const
+// pane, Nummernkreise is T-04's own route, Dokumente is T-05's own pane and
+// Zahlungen is T-07's own route, so all four drop out of this list.
+const comingSoon = ['navPortal', 'navNotifications', 'navGeneral'] as const
 
 function onLogoChange(event: Event) {
   form.logo = (event.target as HTMLInputElement).files?.[0] ?? null
@@ -81,6 +108,16 @@ function submitVat() {
     }))
     .patch('/einstellungen/ust', { preserveScroll: true })
 }
+
+function submitDocuments() {
+  documentsForm
+    .transform((data) => ({
+      ...data,
+      deposit_percentage: percentToBasisPoints(data.deposit_percentage),
+      widerruf_text: data.widerruf_text || null,
+    }))
+    .patch('/einstellungen/dokumente', { preserveScroll: true })
+}
 </script>
 
 <template>
@@ -88,13 +125,13 @@ function submitVat() {
     <div class="hrow">
       <div>
         <div class="kick">{{ $t('settings.kicker') }}</div>
-        <h1>{{ pane === 'vat' ? $t('settings.vatTitle') : $t('settings.profileTitle') }}</h1>
+        <h1>{{ $t(paneTitle) }}</h1>
       </div>
       <span v-if="activeForm.isDirty" class="chip now">{{ $t('settings.unsaved') }}</span>
       <button
         class="btn"
         type="submit"
-        :form="pane === 'vat' ? 'vat-form' : 'settings-form'"
+        :form="formId"
         :disabled="!activeForm.isDirty || activeForm.processing"
         :style="!activeForm.isDirty ? 'opacity:.4' : undefined"
       >
@@ -112,6 +149,9 @@ function submitVat() {
           {{ $t('settings.navVat') }}
         </a>
         <a class="nav" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
+        <a class="nav" :class="{ on: pane === 'documents' }" href="#" @click.prevent="pane = 'documents'">
+          {{ $t('settings.navDocuments') }}
+        </a>
         <a class="nav" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
         <a
           v-for="key in comingSoon"
@@ -289,7 +329,7 @@ function submitVat() {
         </div>
       </form>
 
-      <form v-else id="vat-form" style="flex: 1; min-width: 0; max-width: 460px" @submit.prevent="submitVat">
+      <form v-else-if="pane === 'vat'" id="vat-form" style="flex: 1; min-width: 0; max-width: 460px" @submit.prevent="submitVat">
         <div class="dsec" style="margin-top: 0">
           <div class="dlab">{{ $t('settings.vatModeLabel') }}</div>
           <div class="grp">
@@ -337,6 +377,65 @@ function submitVat() {
             <p v-else class="hint" style="margin: 0">{{ $t('settings.vatPreviewEmpty') }}</p>
           </div>
           <span class="hint" style="display: block; margin-top: var(--s3)">{{ $t('settings.vatPreviewHint') }}</span>
+        </div>
+      </form>
+
+      <form v-else id="documents-form" style="flex: 1; min-width: 0; max-width: 460px" @submit.prevent="submitDocuments">
+        <div class="dsec" style="margin-top: 0">
+          <div class="dlab">{{ $t('settings.documentsQuoteLabel') }}</div>
+          <div class="grp">
+            <div class="fld" style="max-width: 160px">
+              <label for="d-gueltigkeit">{{ $t('settings.quoteValidityLabel') }}</label>
+              <input id="d-gueltigkeit" v-model.number="documentsForm.quote_validity_days" class="inp num" type="number" min="0" />
+              <span class="hint">{{ $t('settings.quoteValidityHint') }}</span>
+              <p v-if="documentsForm.errors.quote_validity_days" class="err">{{ documentsForm.errors.quote_validity_days }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">{{ $t('settings.documentsPaymentLabel') }}</div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="d-zahlungsziel">{{ $t('settings.paymentTermLabel') }}</label>
+                <input id="d-zahlungsziel" v-model.number="documentsForm.payment_term_days" class="inp num" type="number" min="0" />
+                <span class="hint">{{ $t('settings.paymentTermHint') }}</span>
+                <p v-if="documentsForm.errors.payment_term_days" class="err">{{ documentsForm.errors.payment_term_days }}</p>
+              </div>
+              <div class="fld">
+                <label for="d-anzahlung">{{ $t('settings.depositPercentageLabel') }}</label>
+                <input id="d-anzahlung" v-model="documentsForm.deposit_percentage" class="inp num" type="text" inputmode="decimal" />
+                <span class="hint">{{ $t('settings.depositPercentageHint') }}</span>
+                <p v-if="documentsForm.errors.deposit_percentage" class="err">{{ documentsForm.errors.deposit_percentage }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">{{ $t('settings.widerrufLabel') }}</div>
+          <div class="grp">
+            <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
+              <input v-model="documentsForm.widerruf_included" type="checkbox" />
+              {{ $t('settings.widerrufIncludedLabel') }}
+            </label>
+            <span class="hint">{{ $t('settings.widerrufIncludedHint') }}</span>
+          </div>
+          <div class="grp">
+            <div class="fld">
+              <label for="d-widerruf-text">{{ $t('settings.widerrufTextLabel') }}</label>
+              <textarea
+                id="d-widerruf-text"
+                v-model="documentsForm.widerruf_text"
+                class="inp"
+                rows="5"
+                :disabled="!documentsForm.widerruf_included"
+              ></textarea>
+              <span class="hint">{{ $t('settings.widerrufTextHint') }}</span>
+              <p v-if="documentsForm.errors.widerruf_text" class="err">{{ documentsForm.errors.widerruf_text }}</p>
+            </div>
+          </div>
         </div>
       </form>
     </div>

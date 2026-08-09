@@ -13,10 +13,15 @@ use Inertia\Response;
 
 /**
  * T-07's "Zahlungen" pane — Stripe as an optional capability plus the
- * provider-independent deposit, Zahlungsziel and reminder defaults. Sits
- * beside StudioSettingsController and NumberRangeController under the same
- * /einstellungen shell and the same ManageSettings gate (see
- * AuthorizesStaffSettings for why that gate is a 404, not a 403).
+ * reminders default. Deposit percentage and Zahlungsziel, the other two
+ * provider-independent defaults T-07's own issue named, are edited on T-05's
+ * Dokumente pane instead (studio_settings.deposit_percentage and
+ * .payment_term_days) — T-05 landed first, so this pane reads them there
+ * rather than growing a second, conflicting editable copy; see
+ * PaymentSettingsData. Sits beside StudioSettingsController and
+ * NumberRangeController under the same /einstellungen shell and the same
+ * ManageSettings gate (see AuthorizesStaffSettings for why that gate is a
+ * 404, not a 403).
  *
  * One form, one save — like Studio-Profil (T-02), unlike Zahlungsdaten &
  * USt's own split endpoint: nothing on this pane needs a fieldset-level save
@@ -42,8 +47,6 @@ class PaymentSettingsController extends Controller
         $validated = $request->validate([
             'payments_stripe_enabled' => ['required', 'boolean'],
             'payments_stripe_mode' => ['required', 'in:test,live'],
-            'payments_deposit_percent' => ['required', 'integer', 'min:0', 'max:10000'],
-            'payments_zahlungsziel_days' => ['required', 'integer', 'min:0', 'max:365'],
             'payments_reminders_enabled' => ['required', 'boolean'],
             // Write-only: absent or blank leaves the stored pair alone. Never
             // echoed back — see StudioSettingsResolver::setPaymentSettings().

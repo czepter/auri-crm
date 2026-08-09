@@ -2,14 +2,15 @@
 import { computed } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { basisPointsToPercent } from '@/admin/lib/money'
 
 const props = defineProps<{ settings: App.Settings.Data.PaymentSettingsData }>()
 
-// Every other future group (Dokumente, Portal, ...) — the same disabled
-// "bald" list Settings/Index.vue and Numbering.vue both render. Zahlungen
-// drops out of this list here, the same way Nummernkreise dropped out once
-// T-04 gave it a real route.
-const comingSoon = ['navDocuments', 'navPortal', 'navNotifications', 'navGeneral'] as const
+// Every other future group (Portal, ...) — the same disabled "bald" list
+// Settings/Index.vue and Numbering.vue both render. Zahlungsdaten & USt is
+// T-03's own pane, Nummernkreise is T-04's, Dokumente is T-05's and Zahlungen
+// is this pane, so all four drop out of this list.
+const comingSoon = ['navPortal', 'navNotifications', 'navGeneral'] as const
 
 // Keys are write-only (T-07): the server never echoes a stored value back,
 // so this form always starts with them blank. Submitting blank leaves the
@@ -17,8 +18,6 @@ const comingSoon = ['navDocuments', 'navPortal', 'navNotifications', 'navGeneral
 const form = useForm({
   payments_stripe_enabled: props.settings.stripeEnabled,
   payments_stripe_mode: props.settings.stripeMode,
-  payments_deposit_percent: (props.settings.depositPercent / 100).toFixed(2),
-  payments_zahlungsziel_days: props.settings.zahlungszielDays,
   payments_reminders_enabled: props.settings.remindersEnabled,
   payments_stripe_test_publishable_key: '',
   payments_stripe_test_secret_key: '',
@@ -31,12 +30,7 @@ const hasActiveKeys = computed(() =>
 )
 
 function submit() {
-  form
-    .transform((data) => ({
-      ...data,
-      payments_deposit_percent: Math.round(parseFloat(data.payments_deposit_percent || '0') * 100),
-    }))
-    .patch('/einstellungen/zahlungen', { preserveScroll: true })
+  form.patch('/einstellungen/zahlungen', { preserveScroll: true })
 }
 </script>
 
@@ -176,36 +170,35 @@ function submit() {
         <div class="dsec">
           <div class="dlab">{{ $t('paymentSettings.defaultsSection') }}</div>
           <div class="grp">
-            <div class="two">
-              <div class="fld">
-                <label for="ps-deposit">{{ $t('paymentSettings.depositPercent') }}</label>
-                <input
-                  id="ps-deposit"
-                  v-model="form.payments_deposit_percent"
-                  class="inp num"
-                  type="text"
-                  inputmode="decimal"
-                />
-                <p v-if="form.errors.payments_deposit_percent" class="err">{{ form.errors.payments_deposit_percent }}</p>
-              </div>
-              <div class="fld">
-                <label for="ps-zahlungsziel">{{ $t('paymentSettings.zahlungszielDays') }}</label>
-                <input
-                  id="ps-zahlungsziel"
-                  v-model.number="form.payments_zahlungsziel_days"
-                  class="inp num"
-                  type="number"
-                  min="0"
-                />
-                <p v-if="form.errors.payments_zahlungsziel_days" class="err">{{ form.errors.payments_zahlungsziel_days }}</p>
-              </div>
-            </div>
-          </div>
-          <div class="grp">
             <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
               <input v-model="form.payments_reminders_enabled" type="checkbox" />
               {{ $t('paymentSettings.remindersEnabled') }}
             </label>
+          </div>
+
+          <!-- Deposit percentage and Zahlungsziel are T-05's own Dokumente
+               fields (studio_settings.deposit_percentage / payment_term_days)
+               — read-only here for context, edited there, never a second
+               writable copy. -->
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label>{{ $t('paymentSettings.depositPercent') }}</label>
+                <div class="inp num" style="background: var(--hover); pointer-events: none">
+                  {{ basisPointsToPercent(settings.depositPercent) }} %
+                </div>
+              </div>
+              <div class="fld">
+                <label>{{ $t('paymentSettings.zahlungszielDays') }}</label>
+                <div class="inp num" style="background: var(--hover); pointer-events: none">
+                  {{ settings.zahlungszielDays }}
+                </div>
+              </div>
+            </div>
+            <span class="hint">
+              {{ $t('paymentSettings.defaultsReadOnlyHint') }}
+              <a href="/einstellungen">{{ $t('settings.navDocuments') }}</a>
+            </span>
           </div>
         </div>
       </form>

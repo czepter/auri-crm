@@ -12,10 +12,14 @@ use Illuminate\Database\Eloquent\Model;
  * the web and worker processes share, and what turns a write into an audit
  * row. display_name is T-01's scaffolding column; vat_mode, vat_rate and
  * vat_note are T-03's (Zahlungsdaten & USt — Q-04 reads these once it
- * ships); the studio-profile columns are T-02's; the payments_* columns
- * are T-07's — Stripe as an optional capability plus the deposit,
- * Zahlungsziel and reminder defaults every PaymentPlan reads regardless of
- * whether Stripe is ever switched on.
+ * ships); the studio-profile columns are T-02's. quote_validity_days,
+ * payment_term_days, deposit_percentage, widerruf_included and widerruf_text
+ * are T-05's Dokumente pane — the values every new quote, payment plan and
+ * contract render starts from, including the deposit and Zahlungsziel
+ * defaults T-07's own issue also named; T-05 landed first, so T-07 reads
+ * those two through T-05's columns rather than declaring a second pair. The
+ * payments_* columns below are T-07's own remainder: Stripe as an optional
+ * capability, and the reminder default T-05 did not cover.
  */
 class StudioSettings extends Model
 {
@@ -29,10 +33,11 @@ class StudioSettings extends Model
         'website', 'accent_color', 'logo_path',
         'bank_account_holder', 'bank_iban', 'bank_bic',
         'vat_mode', 'vat_rate', 'vat_note',
+        'quote_validity_days', 'payment_term_days', 'deposit_percentage', 'widerruf_included', 'widerruf_text',
         'payments_stripe_enabled', 'payments_stripe_mode',
         'payments_stripe_test_publishable_key', 'payments_stripe_test_secret_key',
         'payments_stripe_live_publishable_key', 'payments_stripe_live_secret_key',
-        'payments_deposit_percent', 'payments_zahlungsziel_days', 'payments_reminders_enabled',
+        'payments_reminders_enabled',
     ];
 
     // Defence in depth beside StudioSettingsResolver never exposing these
@@ -47,13 +52,12 @@ class StudioSettings extends Model
     protected function casts(): array
     {
         return [
+            'widerruf_included' => 'boolean',
             'payments_stripe_enabled' => 'boolean',
             'payments_stripe_test_publishable_key' => 'encrypted',
             'payments_stripe_test_secret_key' => 'encrypted',
             'payments_stripe_live_publishable_key' => 'encrypted',
             'payments_stripe_live_secret_key' => 'encrypted',
-            'payments_deposit_percent' => 'integer',
-            'payments_zahlungsziel_days' => 'integer',
             'payments_reminders_enabled' => 'boolean',
         ];
     }

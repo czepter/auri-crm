@@ -14,6 +14,8 @@ use App\Enums\StaffRole;
 use App\Models\User;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
+use App\Quotes\Actions\ReviseQuote;
+use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Support\Surface;
@@ -99,6 +101,26 @@ it('never puts an integer identifier into a project\'s quotes page', function ()
     $project = Project::factory()->create();
     $quote = Quote::factory()->for($project)->create();
     QuoteItem::factory()->for($quote)->create();
+
+    $props = $this->actingAs($user, 'staff')
+        ->get("/auftraege/{$project->public_id}/angebote")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect(integerIdPaths($props))->toBe([]);
+});
+
+it('never puts an integer identifier into a project\'s quotes page once a quote has been sent and revised', function () {
+    // Q-06: predecessorId is the one new cross-model reference this story's
+    // QuoteData adds — a quote referencing another quote — and it has to
+    // cross the same public_id boundary every other FK in this Data layer
+    // does. Populated on purpose: predecessor_id stays null on every quote
+    // NoInternalIdsTest already exercises, so only a revised pair proves it.
+    $user = User::factory()->withMfa()->create();
+    $project = Project::factory()->create();
+    $predecessor = Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent, 'number' => 'AN-2026-1']);
+    QuoteItem::factory()->for($predecessor)->create();
+    app(ReviseQuote::class)($predecessor);
 
     $props = $this->actingAs($user, 'staff')
         ->get("/auftraege/{$project->public_id}/angebote")
