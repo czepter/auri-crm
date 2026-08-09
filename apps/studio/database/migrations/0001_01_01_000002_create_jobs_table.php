@@ -8,10 +8,16 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * The queue table is queue_jobs rather than the framework's jobs: P-05a
+     * gives that name to the domain Job, the studio's commitment to shoot, and
+     * a queue table is infrastructure that yields to the product. Renamed here
+     * rather than in a later migration because nothing has shipped — see
+     * config/queue.php, which carries the matching default.
      */
     public function up(): void
     {
-        Schema::create('jobs', function (Blueprint $table) {
+        Schema::create('queue_jobs', function (Blueprint $table) {
             $table->id();
             $table->string('queue')->index();
             $table->longText('payload');
@@ -50,7 +56,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('jobs');
+        Schema::dropIfExists('queue_jobs');
         Schema::dropIfExists('job_batches');
         Schema::dropIfExists('failed_jobs');
     }

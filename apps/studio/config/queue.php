@@ -37,7 +37,10 @@ return [
         'database' => [
             'driver' => 'database',
             'connection' => env('DB_QUEUE_CONNECTION'),
-            'table' => env('DB_QUEUE_TABLE', 'jobs'),
+            // queue_jobs, not the framework default of jobs: P-05a gives that
+            // name to the domain Job — the studio's commitment to shoot — and
+            // the queue is infrastructure that yields to it.
+            'table' => env('DB_QUEUE_TABLE', 'queue_jobs'),
             'queue' => env('DB_QUEUE', 'default'),
             'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
             'after_commit' => false,

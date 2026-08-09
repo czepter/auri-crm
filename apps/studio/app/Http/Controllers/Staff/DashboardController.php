@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Http\Controllers\Controller;
 use Inertia\Inertia;
@@ -13,9 +14,7 @@ class DashboardController extends Controller
     {
         return Inertia::render('Dashboard', [
             'leads' => Lead::query()->open()->count(),
-            // Job arrives with conversion in sprint 4; zero is the honest
-            // answer until it exists.
-            'jobs' => 0,
+            'jobs' => Job::query()->count(),
         ]);
     }
 }
