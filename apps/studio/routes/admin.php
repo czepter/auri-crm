@@ -32,6 +32,7 @@ use App\Media\Http\Controllers\MultipartUploadController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
 use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
+use App\Settings\Http\Controllers\NotificationSettingsController;
 use App\Settings\Http\Controllers\NumberRangeController;
 use App\Settings\Http\Controllers\PaymentSettingsController;
 use App\Settings\Http\Controllers\PortalSettingsController;
@@ -195,6 +196,14 @@ Route::middleware('audience:staff')->group(function () {
             ->name('settings.portal.edit');
         Route::patch('/einstellungen/portal', [PortalSettingsController::class, 'update'])
             ->name('settings.portal.update');
+
+        // T-11: quiet hours only — see NotificationSettingsController's own
+        // doc comment for why no per-event toggle grid ships in this route
+        // group yet.
+        Route::get('/einstellungen/benachrichtigungen', [NotificationSettingsController::class, 'edit'])
+            ->name('settings.notifications.edit');
+        Route::patch('/einstellungen/benachrichtigungen', [NotificationSettingsController::class, 'update'])
+            ->name('settings.notifications.update');
 
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.

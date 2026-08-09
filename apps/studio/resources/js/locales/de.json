@@ -489,6 +489,15 @@
     "previewEmpty": "Keine passende Vorlage aktiv.",
     "previewDue": "fällig am"
   },
+  "notificationSettings": {
+    "title": "Benachrichtigungen",
+    "quietHoursSection": "Ruhezeiten",
+    "quietHoursEnabledLabel": "Ruhezeiten aktivieren",
+    "quietHoursEnabledHint": "Mails in diesem Fenster werden erst danach zugestellt.",
+    "quietHoursStartLabel": "Von",
+    "quietHoursEndLabel": "Bis",
+    "quietHoursHint": "Gilt studioweit, in der unter Allgemein hinterlegten Zeitzone."
+  },
   "formTemplates": {
     "kicker": "Einstellungen · Fragebogen-Vorlagen",
     "title": "Fragebogen-Vorlagen",
@@ -607,7 +616,12 @@
     "impressumTitle": "Impressum",
     "footerImpressum": "Impressum",
     "footerDatenschutz": "Datenschutz",
-    "footerAgb": "AGB"
+    "footerAgb": "AGB",
+    "unsubscribeKicker": "Abmeldung",
+    "unsubscribeTitle": "Benachrichtigungen abbestellen",
+    "unsubscribeHint": "Keine weiteren Angebots- und Status-Mails mehr erhalten.",
+    "unsubscribeConfirm": "Abmelden",
+    "unsubscribeDone": "Abgemeldet."
   },
   "media": {
     "kicker": "Medien · Import",

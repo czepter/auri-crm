@@ -42,8 +42,10 @@ const PUBLIC_ROUTES = [
     // credential, spent the moment it works. branding/logo and impressum are
     // T-08's: a brand mark is not a secret, and a legal notice has to be
     // reachable from any page a client can see, including one it has not
-    // signed into yet.
-    'portal' => ['anmelden', 'zugang/{token}', 'branding/logo', 'impressum'],
+    // signed into yet. abmelden/{contact} is T-11's unsubscribe: reached from
+    // a mail already delivered, with the contact's own public_id as the whole
+    // credential, same shape as zugang/{token}.
+    'portal' => ['anmelden', 'zugang/{token}', 'branding/logo', 'impressum', 'abmelden/{contact}'],
 ];
 
 // routesForSurface() lives in tests/Pest.php — see the note there.
