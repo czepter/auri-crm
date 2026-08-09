@@ -97,6 +97,10 @@ jobs:
               - 'apps/studio/public/**'
               - 'apps/studio/*.ts'
               - 'apps/studio/*.json'
+              # G-08: the Astro gallery viewer, its own workspace package —
+              # `pnpm -r --if-present <script>` (package.json's own lint/
+              # test/build) already picks it up once pnpm sees it change.
+              - 'apps/gallery/**'
               - 'packages/**'
               - 'package.json'
               - 'pnpm-lock.yaml'
