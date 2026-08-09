@@ -28,6 +28,23 @@ it('registers the admin routes only on the admin surface', function () {
         ->and(urisForSurface('api'))->not->toContain('login');
 });
 
+it('registers the portal routes only on the portal surface', function () {
+    // The seam that matters most for the second audience: a staff route does
+    // not exist in the client's process at all, so no policy has to hold it.
+    expect(urisForSurface('portal'))->toContain('anmelden')
+        ->and(urisForSurface('admin'))->not->toContain('anmelden')
+        ->and(urisForSurface('portal'))->not->toContain('login')
+        ->and(urisForSurface('portal'))->not->toContain('anfragen');
+});
+
+it('gives each surface its own session cookie', function () {
+    // Two audiences sharing a cookie name on one host is how a browser comes
+    // to offer a staff session to the client portal.
+    expect(App\Support\Surface::COOKIES)->toHaveCount(count(App\Support\Surface::ALL))
+        ->and(array_unique(array_values(App\Support\Surface::COOKIES)))
+        ->toHaveCount(count(App\Support\Surface::ALL));
+});
+
 it('registers the api routes only on the api surface', function () {
     expect(urisForSurface('api'))->toContain('api/health')
         ->and(urisForSurface('admin'))->not->toContain('api/health');

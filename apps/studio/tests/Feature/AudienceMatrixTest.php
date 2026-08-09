@@ -30,6 +30,11 @@ const PUBLIC_ROUTES = [
         'passwort/neu',
     ],
     'api' => ['api/health'],
+
+    // The client's way in. Public by necessity — the only person who needs it
+    // is one who cannot sign in — and the token in the path is the whole
+    // credential, spent the moment it works.
+    'portal' => ['anmelden', 'zugang/{token}'],
 ];
 
 // routesForSurface() lives in tests/Pest.php — see the note there.

@@ -13,9 +13,24 @@ class Surface
 {
     public const ADMIN = 'admin';
     public const API = 'api';
+    public const PORTAL = 'portal';
 
-    /** P2 appends 'portal' here alongside routes/portal.php. */
-    public const ALL = [self::ADMIN, self::API];
+    public const ALL = [self::ADMIN, self::API, self::PORTAL];
+
+    /**
+     * The session cookie each surface signs its clients with.
+     *
+     * Distinct names rather than one shared cookie: a staff session and a
+     * client session must never be interchangeable, and two audiences sharing
+     * a cookie name on one host is how one becomes the other. The guard would
+     * still refuse, but only after the browser had already offered the wrong
+     * credential to the wrong audience.
+     */
+    public const COOKIES = [
+        self::ADMIN => 'studio_admin_session',
+        self::API => 'studio_api_session',
+        self::PORTAL => 'studio_portal_session',
+    ];
 
     public static function current(): string
     {

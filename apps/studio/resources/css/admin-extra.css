@@ -10,42 +10,6 @@
    carried here as dead rules. They come across with their stories.
    ------------------------------------------------------------------ */
 
-/* ---------- form controls ---------- */
-
-/* labels sit above their field, never inside it as a placeholder — a
-   filled form must still say what each value is */
-.fgrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--s4) var(--s5); }
-.fld { display:flex; flex-direction:column; gap:6px; min-width:0; }
-.fld.wide { grid-column:1 / -1; }
-.fld > label { font:600 10px/1 var(--font); letter-spacing:.09em; text-transform:uppercase; color:var(--faint); }
-.fld > label em { font:400 10px/1 var(--font); font-style:normal; letter-spacing:.02em;
-                  text-transform:none; color:var(--faint); margin-left:6px; }
-
-.inp { width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:var(--r);
-       background:var(--bg); color:var(--ink); font:400 13px/1.35 var(--font);
-       appearance:none; -webkit-appearance:none; transition:border-color .12s ease-out; }
-.inp:hover { border-color:var(--line-hover); }
-.inp:focus { outline:none; border-color:var(--accent); }
-.inp::placeholder { color:var(--faint); }
-.inp.num { font-variant-numeric:tabular-nums; }
-textarea.inp { min-height:104px; line-height:1.5; resize:vertical; }
-select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
-             background-position:right 10px center; background-size:13px 13px;
-             background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2378706B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
-
-/* a compact select for the controls that sit inside a row rather than a form */
-select.inp.sm { padding:5px 26px 5px 8px; font-size:12px; background-size:12px 12px; }
-
-/* the main date is the field the whole intake hangs off (Shoot.is_primary,
-   vision §3.1), so it is the one control that gets extra weight */
-.fld.lead .inp { padding:12px 13px; font:600 15px/1.2 var(--font); letter-spacing:-.01em; }
-
-.hint { font:400 11.5px/1.45 var(--font); color:var(--faint); }
-.err { font:400 11.5px/1.45 var(--font); color:var(--accent); }
-
-.formfoot { display:flex; align-items:center; gap:var(--s4); margin-top:var(--s5); }
-.formfoot .btn { margin-left:0; }
-
 /* ---------- capture form: contact typeahead ---------- */
 /* the typeahead is not decoration. ClientAccess hangs off Contact, so a repeat
    client must resolve to the same row — searching before typing is the ordering
