@@ -36,6 +36,7 @@ class ProjectHeaderData extends Data
         public bool $canManageCrew,
         public bool $canManageTasks,
         public bool $canManageNotes,
+        public bool $canManageQuotes,
         public array $tabs,
     ) {}
 
@@ -59,12 +60,17 @@ class ProjectHeaderData extends Data
             canManageCrew: $user?->can('manageCrew', $project) ?? false,
             canManageTasks: $user?->can('manageTasks', $project) ?? false,
             canManageNotes: $user?->can('manageNotes', $project) ?? false,
+            canManageQuotes: $user?->can('manageQuotes', $project) ?? false,
             // Angebot and Vertrag are Q-*/M-* in P2, Zahlungen is M-03,
             // Fragebögen and Kommunikation are E-* in P4, Galerien is G-05 in
             // P3. Each appends a line here on the sprint it lands.
+            //
+            // Q-02 lands the quote half of "Angebot & Vertrag" — the label
+            // stays the mockup's whole tab name; Vertrag is still ahead.
             tabs: [
                 ['key' => 'overview', 'label' => 'Übersicht', 'href' => "/auftraege/{$project->public_id}"],
                 ['key' => 'shoots', 'label' => 'Shootings', 'href' => "/auftraege/{$project->public_id}/shootings"],
+                ['key' => 'quotes', 'label' => 'Angebot & Vertrag', 'href' => "/auftraege/{$project->public_id}/angebote"],
             ],
         );
     }
