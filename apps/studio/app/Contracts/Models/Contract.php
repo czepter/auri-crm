@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * One render of one exact ContractTemplate version, for one project.
@@ -56,6 +57,12 @@ class Contract extends Model
     public function requestedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'requested_by_id');
+    }
+
+    /** Null until App\Contracts\Actions\SignContract writes the one row this Contract will ever have. */
+    public function signature(): HasOne
+    {
+        return $this->hasOne(ContractSignature::class);
     }
 
     protected static function newFactory(): Factory

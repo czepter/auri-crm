@@ -293,6 +293,13 @@
     "contractTemplate": "Fotografievertrag · Vorlage {name} v{version}",
     "contractDownload": "PDF herunterladen",
     "contractPending": "Der Vertrag wird gerade erstellt — diese Seite aktualisiert sich von selbst.",
-    "contractNone": "Für dieses Projekt liegt noch kein Vertrag vor."
+    "contractNone": "Für dieses Projekt liegt noch kein Vertrag vor.",
+    "signTitle": "Unterschreiben",
+    "signName": "Ihr vollständiger Name",
+    "signNameHint": "Bitte genau so, wie er oben im Vertrag steht.",
+    "signConsent": "Ich habe den Vertrag gelesen und unterzeichne ihn hiermit rechtsverbindlich.",
+    "signSubmit": "Vertrag unterschreiben",
+    "signLegal": "Sie bekommen den Vertrag sofort als PDF — in Ihr Portal.",
+    "signedConfirmation": "Unterschrieben von {name}."
   }
 }
