@@ -5,6 +5,15 @@ on:
     branches: [main, dev]
   pull_request:
 
+# The default GITHUB_TOKEN grants contents:read only, and dorny/paths-filter
+# asks the API which files a pull request touches — without pull-requests:read
+# it fails with "Resource not accessible by integration", the changes job dies,
+# and every test job silently skips on its `needs` output. A green checkmark
+# over an untested pull request is worse than a red one.
+permissions:
+  contents: read
+  pull-requests: read
+
 # Supersede in-flight runs for the same PR/branch. Pushes to the integration
 # branches are never cancelled so every commit there keeps a verdict.
 concurrency:
@@ -143,8 +152,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # No version here on purpose. package.json's packageManager field pins
+      # the exact pnpm build, and action-setup errors out when a second source
+      # also names one rather than picking a winner.
       - uses: pnpm/action-setup@v4
-        with: { version: 10 }
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: pnpm }
       - run: pnpm install --frozen-lockfile
@@ -178,24 +189,29 @@ jobs:
           coverage: none
       - working-directory: apps/studio
         run: composer install --no-interaction --prefer-dist
+      # No version here on purpose. package.json's packageManager field pins
+      # the exact pnpm build, and action-setup errors out when a second source
+      # also names one rather than picking a winner.
       - uses: pnpm/action-setup@v4
-        with: { version: 10 }
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @studio/app build
+      # Every database setting goes into .env rather than into this step's env.
+      # Playwright starts `artisan serve` as a subprocess of a later step, and
+      # that subprocess reads .env — so step-level DB_* variables reached the
+      # migration but not the server, which then looked for a database named
+      # by .env.example and got "does not exist". One source of truth, written
+      # once, read by every process in the job.
       - working-directory: apps/studio
-        env:
-          DB_CONNECTION: pgsql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 5432
-          DB_DATABASE: studio_test
-          DB_USERNAME: studio
-          DB_PASSWORD: studio
-          APP_SURFACE: admin
         run: |
           cp .env.example .env
+          sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=pgsql/' .env
           sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' .env
+          sed -i 's/^DB_PORT=.*/DB_PORT=5432/' .env
+          sed -i 's/^DB_DATABASE=.*/DB_DATABASE=studio_test/' .env
+          sed -i 's/^DB_USERNAME=.*/DB_USERNAME=studio/' .env
+          sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=studio/' .env
           php artisan key:generate
           php artisan migrate --force
       - run: pnpm --filter @studio/app exec playwright install --with-deps chromium
