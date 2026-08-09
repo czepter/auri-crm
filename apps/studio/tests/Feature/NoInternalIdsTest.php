@@ -12,6 +12,8 @@ use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Enums\StaffRole;
 use App\Models\User;
+use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\PaymentPlan;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Support\Surface;
@@ -57,13 +59,16 @@ it('never puts an integer identifier into any crm page', function (string $path)
 
 it('never puts an integer identifier into a project page', function (string $suffix) {
     // Populated on purpose: an empty project proves nothing, since the keys
-    // that escape belong to the shoots, the crew, the notes and the job.
+    // that escape belong to the shoots, the crew, the notes, the job and —
+    // M-03 — the payment plan and its installments.
     $user = User::factory()->withMfa()->create();
     $project = Project::factory()->create();
     $shoot = Shoot::factory()->for($project)->primary()->create();
     CrewAssignment::factory()->for($shoot)->create();
     InternalNote::factory()->for($project)->create();
-    Job::factory()->for($project)->create();
+    $job = Job::factory()->for($project)->create();
+    $plan = PaymentPlan::factory()->for($job)->create(['total' => 200]);
+    PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 200, 'sort_order' => 0]);
 
     $props = $this->actingAs($user, 'staff')
         ->get("/auftraege/{$project->public_id}{$suffix}")

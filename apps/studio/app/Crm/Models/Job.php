@@ -6,11 +6,13 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Enums\BookedVia;
 use App\Models\User;
+use App\Payments\Models\PaymentPlan;
 use Database\Factories\Crm\JobFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * The commitment: this project is booked, by whom and through which trigger.
@@ -42,6 +44,12 @@ class Job extends Model
     public function bookedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'booked_by_id');
+    }
+
+    /** Absent until CreatePaymentPlan writes it (M-03) — one plan per job, at most. */
+    public function paymentPlan(): HasOne
+    {
+        return $this->hasOne(PaymentPlan::class);
     }
 
     protected static function newFactory(): Factory

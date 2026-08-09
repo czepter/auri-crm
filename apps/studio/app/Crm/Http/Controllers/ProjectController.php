@@ -14,6 +14,7 @@ use App\Crm\Models\Project;
 use App\Data\StaffProfileData;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Data\QuoteData;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
@@ -31,6 +32,12 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Show', [
             'header' => $this->header($project),
             'shoots' => ShootData::collect($this->shootsOf($project)),
+            // Absent until CreatePaymentPlan writes one — "a project without
+            // a Job has no plan" (M-03), and neither does a booked Job before
+            // anyone has created its plan.
+            'paymentPlan' => $project->job?->paymentPlan
+                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments'))
+                : null,
             'notes' => InternalNoteData::collect(
                 $project->notes()->with('author')->get()->map(InternalNoteData::fromNote(...))
             ),

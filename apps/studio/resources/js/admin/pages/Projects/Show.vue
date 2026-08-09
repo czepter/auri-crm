@@ -5,13 +5,17 @@ import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectHeader from '@/admin/components/ProjectHeader.vue'
 import CrewStack from '@/admin/components/CrewStack.vue'
+import PaymentInstallmentsEditor, { type PaymentInstallmentRow } from '@/admin/components/PaymentInstallmentsEditor.vue'
 import { chipClass, dayAndMonth, weekday } from '@/admin/lib/shoots'
+import { installmentChipClass } from '@/admin/lib/payments'
+import { centsToEuros, eurosToCents, formatEuros } from '@/admin/lib/money'
 
 const { t } = useI18n()
 
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
   shoots: App.Crm.Data.ShootData[]
+  paymentPlan: App.Payments.Data.PaymentPlanData | null
   notes: App.Crm.Data.InternalNoteData[]
   tasks: App.Crm.Data.TaskRowData[]
   shootOptions: { value: string; label: string }[]
@@ -77,6 +81,67 @@ function togglePortalVisibility() {
   if (confirm(t(confirmKey))) {
     router.post(`/auftraege/${props.header.id}/portal-sichtbarkeit`, {}, { preserveScroll: true })
   }
+}
+
+// --- Zahlungen: create a plan when the job has none yet ------------------
+// Amounts are never entered by hand here — CreatePaymentPlan splits the
+// total evenly across the due dates given (App\Payments\Support\PaymentInstallmentSplitter),
+// with any remainder cent landing on the last one. Editing individual
+// amounts afterwards is what the edit form below is for.
+const creatingPlan = ref(false)
+const createPlanForm = useForm({
+  total: '',
+  dueDates: [''] as string[],
+})
+
+function addDueDate() {
+  createPlanForm.dueDates = [...createPlanForm.dueDates, '']
+}
+
+function removeDueDate(index: number) {
+  createPlanForm.dueDates = createPlanForm.dueDates.filter((_, i) => i !== index)
+}
+
+function createPlan() {
+  createPlanForm
+    .transform((data) => ({
+      total: eurosToCents(data.total) ?? 0,
+      installments: data.dueDates.map((dueOn: string) => ({ due_on: dueOn })),
+    }))
+    .post(`/auftraege/${props.header.id}/zahlungsplan`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        createPlanForm.reset()
+        creatingPlan.value = false
+      },
+    })
+}
+
+// --- Zahlungen: the editable schedule once a plan exists ------------------
+const editPlanForm = props.paymentPlan
+  ? useForm({
+      total: centsToEuros(props.paymentPlan.total),
+      installments: props.paymentPlan.installments.map(
+        (installment): PaymentInstallmentRow => ({
+          dueOn: installment.dueOn,
+          amount: centsToEuros(installment.amount),
+          status: installment.status as 'scheduled' | 'paid',
+        }),
+      ),
+    })
+  : null
+
+function savePlan() {
+  editPlanForm
+    ?.transform((data) => ({
+      total: eurosToCents(data.total) ?? 0,
+      installments: data.installments.map((installment: PaymentInstallmentRow) => ({
+        due_on: installment.dueOn,
+        amount: eurosToCents(installment.amount) ?? 0,
+        status: installment.status,
+      })),
+    }))
+    .patch(`/zahlungsplaene/${props.paymentPlan?.id}`, { preserveScroll: true })
 }
 </script>
 
@@ -292,6 +357,110 @@ function togglePortalVisibility() {
           >
             {{ header.portalVisible ? $t('project.portalVisibilityHide') : $t('project.portalVisibilityShow') }}
           </button>
+        </div>
+
+        <!-- Zahlungen: a preview compressed into the Übersicht tab, mockup
+             04-auftrag's own vocabulary (.paylist/.payrow/.paystatus) — no
+             Zahlungen tab of its own, see the note on ProjectHeaderData.
+             A project without a Job has no plan (M-03), so this waits for
+             one to exist. -->
+        <div v-if="header.isBooked" class="card static">
+          <div class="cardhead">
+            <span class="kick">{{ $t('payments.title') }}</span>
+            <span v-if="paymentPlan" class="chip now">{{ $t('payments.open', { amount: formatEuros(paymentPlan.openTotal) }) }}</span>
+          </div>
+
+          <template v-if="paymentPlan">
+            <div class="paylist">
+              <div v-for="installment in paymentPlan.installments" :key="installment.id" class="payrow">
+                <span class="payname">{{ installment.label }}</span>
+                <span class="val">{{ formatEuros(installment.amount) }}</span>
+                <span class="paystatus" :class="installmentChipClass(installment)">
+                  {{ installment.status === 'paid' ? $t('payments.statusPaid') : dayAndMonth(installment.dueOn) }}
+                </span>
+              </div>
+            </div>
+
+            <template v-if="header.canManagePaymentPlan && paymentPlan.isEditable && editPlanForm">
+              <div class="dsec">
+                <div class="dlab">{{ $t('payments.installments') }}</div>
+                <PaymentInstallmentsEditor v-model="editPlanForm.installments" />
+              </div>
+
+              <form class="fgrid" @submit.prevent="savePlan">
+                <div class="fld">
+                  <label for="plan-total">{{ $t('payments.total') }}</label>
+                  <input id="plan-total" v-model="editPlanForm.total" class="inp num" type="text" inputmode="decimal" required />
+                </div>
+                <p v-if="editPlanForm.errors.installments" class="err">{{ editPlanForm.errors.installments }}</p>
+                <div class="fld wide">
+                  <div class="formfoot" style="margin-top: 0">
+                    <button class="btn" type="submit" :disabled="editPlanForm.processing">
+                      {{ $t('common.save') }}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </template>
+            <p v-else-if="header.canManagePaymentPlan" class="hint">{{ $t('payments.notEditable') }}</p>
+          </template>
+
+          <template v-else>
+            <p class="hint">{{ $t('payments.empty') }}</p>
+
+            <button
+              v-if="header.canManagePaymentPlan && !creatingPlan"
+              type="button"
+              class="abtn"
+              @click="creatingPlan = true"
+            >
+              {{ $t('payments.create') }}
+            </button>
+
+            <form v-if="header.canManagePaymentPlan && creatingPlan" class="fgrid" @submit.prevent="createPlan">
+              <div class="fld">
+                <label for="plan-create-total">{{ $t('payments.total') }}</label>
+                <input
+                  id="plan-create-total"
+                  v-model="createPlanForm.total"
+                  class="inp num"
+                  type="text"
+                  inputmode="decimal"
+                  required
+                />
+              </div>
+              <div class="fld wide">
+                <label>{{ $t('payments.dueOn') }}</label>
+                <div
+                  v-for="(dueDate, index) in createPlanForm.dueDates"
+                  :key="index"
+                  class="hrow"
+                  style="gap: var(--s3); margin-top: var(--s2)"
+                >
+                  <input v-model="createPlanForm.dueDates[index]" class="inp" type="date" required style="max-width: 200px" />
+                  <button
+                    v-if="createPlanForm.dueDates.length > 1"
+                    type="button"
+                    class="abtn hot"
+                    @click="removeDueDate(index)"
+                  >
+                    {{ $t('common.remove') }}
+                  </button>
+                </div>
+                <button type="button" class="abtn" style="margin-top: var(--s2)" @click="addDueDate">
+                  {{ $t('payments.addInstallment') }}
+                </button>
+              </div>
+              <div class="fld wide">
+                <div class="formfoot" style="margin-top: 0">
+                  <button class="btn" type="submit" :disabled="createPlanForm.processing">
+                    {{ $t('common.save') }}
+                  </button>
+                  <button class="txtbtn" type="button" @click="creatingPlan = false">{{ $t('common.cancel') }}</button>
+                </div>
+              </div>
+            </form>
+          </template>
         </div>
       </div>
     </div>
