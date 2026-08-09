@@ -5,11 +5,14 @@ namespace App\Crm\Http\Controllers;
 use App\Catalog\Models\Package;
 use App\Crm\Actions\BookProject;
 use App\Crm\Actions\DeriveProjectPosition;
+use App\Crm\Data\FormInstanceData;
 use App\Crm\Data\InternalNoteData;
 use App\Crm\Data\ProjectHeaderData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\CrewRole;
+use App\Crm\Enums\FormFieldType;
+use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Project;
 use App\Data\StaffProfileData;
 use App\Engagement\Data\ThreadData;
@@ -88,6 +91,24 @@ class ProjectController extends Controller
             ),
             'packages' => Package::active()->orderBy('name')->get()
                 ->map(fn (Package $package) => ['value' => $package->public_id, 'label' => $package->name])
+                ->all(),
+        ]);
+    }
+
+    public function forms(Project $project): Response
+    {
+        $this->authorize('view', $project);
+
+        return Inertia::render('Projects/Forms', [
+            'header' => $this->header($project),
+            'formInstances' => FormInstanceData::collect(
+                $project->formInstances()->with('fields')->get()
+            ),
+            'formTemplates' => FormTemplate::active()->orderBy('name')->get()
+                ->map(fn (FormTemplate $template) => ['value' => $template->public_id, 'label' => $template->name])
+                ->all(),
+            'fieldTypes' => collect(FormFieldType::cases())
+                ->map(fn (FormFieldType $type) => ['value' => $type->value, 'label' => $type->label()])
                 ->all(),
         ]);
     }
