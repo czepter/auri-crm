@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-09
 **Status:** Approved, implementation not started.
-**Parent:** [Product Vision](2026-08-07-photography-client-management-vision-design.md) · [Clickdummy](2026-08-07-clickdummy-design.md) · [Backlog](../../backlog.md)
+**Parent:** [Product Vision](2026-08-07-photography-client-management-vision-design.md) · [Clickdummy](2026-08-07-clickdummy-design.md) · [Roadmap-Board](https://github.com/users/czepter/projects/2)
 **Predecessor:** [P1a — Foundation & Staff Auth](../plans/2026-08-07-p1a-foundation-and-staff-auth.md), complete 2026-08-08
 **Branch:** `feat/p1b-crm-core`, based on `feat/p1a-foundation` at `0bde280`
 
@@ -286,7 +286,7 @@ Tasks 1 and 2 are the only pair that can run in parallel — 1 touches `resource
 
 Named so it does not creep in: project detail (C-06) · internal notes (C-07) · additional shoots beyond the primary · `Shoot.status` transitions (P-03) · `Job` and conversion (P-05) · the production board (P-04) · crew assignment (S-02) · tasks and templates (S-03) · calendar and ICS (S-04) · staff invitations and password reset (S-05) · role-based policies (S-06) · the board's *Liste* and *Kalender* tabs and its filter control · everything in P2.
 
-Each has a home in [`../../backlog.md`](../../backlog.md).
+Each has a home in [Roadmap-Board](https://github.com/users/czepter/projects/2).
 
 ---
 
