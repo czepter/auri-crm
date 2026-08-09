@@ -223,3 +223,30 @@ it('never puts an integer identifier into a portal project screen', function () 
 
     expect(integerIdPaths($props))->toBe([]);
 });
+
+it('never puts an integer identifier into the portal quote screen once accepted, and the accept route takes only a public id', function () {
+    useSurface(Surface::PORTAL);
+
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $quote = Quote::factory()->for($project)->create([
+        'status' => QuoteStatus::Sent,
+        'number' => 'AN-2026-1',
+        'sent_at' => now(),
+    ]);
+    QuoteItem::factory()->for($quote)->create();
+    $contact = Contact::factory()->create();
+    $project->attachContact($contact, ProjectContactRole::Primary);
+
+    // The URL itself names the project by public id, never by its integer
+    // primary key — this is the request that writes the acceptance.
+    $this->actingAs($contact, 'portal')
+        ->post("/projekte/{$project->public_id}/angebot/annehmen")
+        ->assertRedirect();
+
+    $props = $this->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}/angebot")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect(integerIdPaths($props))->toBe([]);
+});

@@ -6,6 +6,7 @@ use App\Portal\Http\Controllers\MagicLinkController;
 use App\Portal\Http\Controllers\PaymentCheckoutController;
 use App\Portal\Http\Controllers\PaymentController;
 use App\Portal\Http\Controllers\ProjectController;
+use App\Portal\Http\Controllers\QuoteController;
 use Illuminate\Support\Facades\Route;
 
 // Client surface. A different audience from the studio's, on its own session
@@ -51,6 +52,16 @@ Route::middleware('audience:portal')->group(function () {
     // contract — see App\Contracts\Actions\SignContract.
     Route::post('/projekte/{project}/vertrag/unterschreiben', [ContractController::class, 'sign'])
         ->name('portal.contracts.sign');
+
+    // Q-07. Reads Project::latestQuote() — Q-06's own frozen snapshot, never
+    // re-derived — see App\Portal\Http\Controllers\QuoteController.
+    Route::get('/projekte/{project}/angebot', [QuoteController::class, 'show'])
+        ->name('portal.quotes.show');
+
+    // The accept action. Re-checks validity against the row this request
+    // fetches, not against whatever the last GET rendered — see AcceptQuote.
+    Route::post('/projekte/{project}/angebot/annehmen', [QuoteController::class, 'accept'])
+        ->name('portal.quotes.accept');
 
     // T-07. Read-only apart from M-04's own confirm step on return from
     // Stripe — nothing here ever CREATES a Stripe object, see App\Portal\
