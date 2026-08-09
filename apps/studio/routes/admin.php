@@ -14,6 +14,7 @@ use App\Crm\Http\Controllers\LeadBoardController;
 use App\Crm\Http\Controllers\LeadStageController;
 use App\Crm\Http\Controllers\ProjectController;
 use App\Crm\Http\Controllers\ShootController;
+use App\Crm\Http\Controllers\ShotListItemController;
 use App\Crm\Http\Controllers\TaskController;
 use App\Crm\Http\Controllers\TaskTemplateController;
 use App\Http\Controllers\Staff\DashboardController;
@@ -228,6 +229,13 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::post('/shootings/{shoot}/crew', [CrewController::class, 'store'])->name('crew.store');
         Route::delete('/crew/{assignment}', [CrewController::class, 'destroy'])->name('crew.destroy');
+
+        Route::post('/shootings/{shoot}/checkliste', [ShotListItemController::class, 'store'])
+            ->name('shot-list-items.store');
+        Route::post('/checkliste/{item}/erledigt', [ShotListItemController::class, 'toggle'])
+            ->name('shot-list-items.toggle');
+        Route::delete('/checkliste/{item}', [ShotListItemController::class, 'destroy'])
+            ->name('shot-list-items.destroy');
 
         Route::post('/auftraege/{project}/aufgaben', [TaskController::class, 'store'])
             ->name('tasks.store');
