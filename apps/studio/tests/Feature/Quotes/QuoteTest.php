@@ -706,7 +706,10 @@ describe('Q-06: sending a quote', function () {
 
         app(SendQuote::class)($quote);
 
-        Notification::assertSentOnDemand(QuoteSent::class);
+        // T-11: through NotificationService, addressed to the Contact
+        // itself — see QuoteSent's own docblock — so client preferences and
+        // quiet hours have an identity to key on, not an on-demand route.
+        Notification::assertSentTo($contact, QuoteSent::class);
     });
 
     it('sends no mail when the project has no contactable primary contact', function () {

@@ -9,6 +9,7 @@ use App\Portal\Http\Controllers\PaymentCheckoutController;
 use App\Portal\Http\Controllers\PaymentController;
 use App\Portal\Http\Controllers\ProjectController;
 use App\Portal\Http\Controllers\QuoteController;
+use App\Portal\Http\Controllers\UnsubscribeController;
 use Illuminate\Support\Facades\Route;
 
 // Client surface. A different audience from the studio's, on its own session
@@ -109,3 +110,11 @@ Route::get('/branding/logo', [BrandingController::class, 'logo'])->name('portal.
 // § 5 TMG. Public and reachable regardless of the maintenance closure above —
 // see ImpressumController and EnsurePortalMaintenanceClosure's own note.
 Route::get('/impressum', ImpressumController::class)->name('portal.impressum');
+
+// T-11's unsubscribe. Public and reachable regardless of the maintenance
+// closure above — the same reasoning as branding and Impressum: a client
+// following a link out of a mail already delivered has no reason to first
+// clear a closure screen — with the contact's own public_id as the whole
+// credential, same as every other token-in-the-path route this file names.
+Route::get('/abmelden/{contact}', [UnsubscribeController::class, 'show'])->name('portal.unsubscribe.show');
+Route::post('/abmelden/{contact}', [UnsubscribeController::class, 'store'])->name('portal.unsubscribe.store');

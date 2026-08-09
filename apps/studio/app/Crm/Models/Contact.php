@@ -5,12 +5,13 @@ namespace App\Crm\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use Database\Factories\Crm\ContactFactory;
-use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Auth\Authenticatable as AuthenticatableTrait;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Notifications\Notifiable;
 
 /**
  * A person, role-agnostic. One row per address: a household sharing an inbox
@@ -20,6 +21,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * Contacts outlive projects. Portal access in P2 hangs off this model rather
  * than off Project, so a repeat client — a portrait sitting one year, a
  * wedding the next — signs in once and switches between them.
+ *
+ * T-11: Notifiable — routeNotificationForMail()'s default reads $this->email,
+ * exactly the column this model already carries, so a client-facing send can
+ * name a Contact as its notifiable (App\Quotes\Notifications\QuoteSent) and
+ * still reach the same inbox an on-demand route would have. Adopted here
+ * rather than left on-demand everywhere, because client preferences
+ * (App\Notifications\Support\NotificationPreferences) key on an identity an
+ * on-demand address does not carry.
  */
 class Contact extends Model implements Authenticatable
 {
@@ -27,6 +36,7 @@ class Contact extends Model implements Authenticatable
     use BelongsToTenant;
     use HasFactory;
     use HasPublicId;
+    use Notifiable;
 
     protected $fillable = ['name', 'email', 'phone'];
 

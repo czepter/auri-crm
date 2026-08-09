@@ -9,9 +9,9 @@ const props = defineProps<{
 
 // Every other future group (Zahlungsdaten & USt, Dokumente, ...) — the same
 // disabled "bald" list every settings screen carries its own copy of, per
-// Settings/Index.vue and Settings/Numbering.vue. Portal is T-08's own route,
-// so it drops out of this list.
-const comingSoon = ['navDocuments', 'navNotifications', 'navGeneral'] as const
+// Settings/Index.vue and Settings/Numbering.vue. Portal is T-08's own route
+// and Benachrichtigungen is T-11's, so both drop out of this list.
+const comingSoon = ['navDocuments', 'navGeneral'] as const
 
 const durationForm = useForm({
   default_shoot_duration_minutes: props.defaultShootDurationMinutes,
@@ -65,6 +65,7 @@ function addClosure() {
         <a class="nav" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
         <a class="nav" href="/einstellungen/aufgabenvorlagen">{{ $t('settings.navTaskTemplates') }}</a>
         <a class="nav" href="/einstellungen/portal">{{ $t('settings.navPortal') }}</a>
+        <a class="nav" href="/einstellungen/benachrichtigungen">{{ $t('settings.navNotifications') }}</a>
         <a
           v-for="key in comingSoon"
           :key="key"

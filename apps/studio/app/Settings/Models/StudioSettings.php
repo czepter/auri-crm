@@ -28,7 +28,9 @@ use Illuminate\Database\Eloquent\Model;
  * bottom. The portal_* columns are T-08's: a maintenance closure switch, a
  * home-only welcome text, two external legal links, and four client
  * capability switches — see that migration's own doc comment for why each
- * defaults where it does.
+ * defaults where it does. quiet_hours_enabled, quiet_hours_start and
+ * quiet_hours_end are T-11's — App\Notifications\Support\QuietHours is the
+ * only reader.
  */
 class StudioSettings extends Model
 {
@@ -54,6 +56,7 @@ class StudioSettings extends Model
         'portal_welcome_text', 'portal_legal_datenschutz_url', 'portal_legal_agb_url',
         'portal_accept_quotes_enabled', 'portal_sign_contracts_enabled',
         'portal_payment_status_enabled', 'portal_messaging_enabled',
+        'quiet_hours_enabled', 'quiet_hours_start', 'quiet_hours_end',
     ];
 
     // Defence in depth beside StudioSettingsResolver never exposing these
@@ -83,6 +86,7 @@ class StudioSettings extends Model
             'portal_sign_contracts_enabled' => 'boolean',
             'portal_payment_status_enabled' => 'boolean',
             'portal_messaging_enabled' => 'boolean',
+            'quiet_hours_enabled' => 'boolean',
         ];
     }
 }

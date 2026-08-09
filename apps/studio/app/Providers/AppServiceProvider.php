@@ -17,6 +17,8 @@ use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
 use App\Gallery\Listeners\RecomputeGalleryBalanceSettled;
 use App\Notifications\NotificationService;
+use App\Notifications\Support\NotificationPreferences;
+use App\Notifications\Support\QuietHours;
 use App\Notifications\Transports\InAppTransport;
 use App\Notifications\Transports\MailTransport;
 use App\Payments\Events\InstallmentPaid;
@@ -47,11 +49,16 @@ class AppServiceProvider extends ServiceProvider
     {
         // E-07: the transport registry. A new channel is added here, never
         // wired to a domain event directly — see NotificationService's own
-        // docblock.
-        $this->app->singleton(NotificationService::class, fn ($app) => new NotificationService([
-            $app->make(MailTransport::class),
-            $app->make(InAppTransport::class),
-        ]));
+        // docblock. NotificationPreferences and QuietHours are T-11's own
+        // gates, autowired the same as any other constructor dependency.
+        $this->app->singleton(NotificationService::class, fn ($app) => new NotificationService(
+            [
+                $app->make(MailTransport::class),
+                $app->make(InAppTransport::class),
+            ],
+            $app->make(NotificationPreferences::class),
+            $app->make(QuietHours::class),
+        ));
     }
 
     /**
