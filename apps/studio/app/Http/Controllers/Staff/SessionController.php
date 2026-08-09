@@ -37,7 +37,9 @@ class SessionController extends Controller
             AuditLogger::record('staff.login.throttled', null, ['email' => $credentials['email']]);
 
             throw ValidationException::withMessages([
-                'email' => __('Too many attempts. Try again later.'),
+                'email' => __('auth.throttle', [
+                    'seconds' => RateLimiter::availableIn($key),
+                ]),
             ]);
         }
 
@@ -54,8 +56,12 @@ class SessionController extends Controller
             RateLimiter::hit($key, self::DECAY_SECONDS);
             AuditLogger::record('staff.login.failed', null, ['email' => $credentials['email']]);
 
+            // auth.failed, not a literal: the sentence is identical for an
+            // unknown address and a wrong password, and keying it here keeps
+            // that single uniform message in one file rather than inline where
+            // a future edit could accidentally make the two cases differ.
             throw ValidationException::withMessages([
-                'email' => __('These credentials do not match our records.'),
+                'email' => __('auth.failed'),
             ]);
         }
 

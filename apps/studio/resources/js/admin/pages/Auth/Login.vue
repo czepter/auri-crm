@@ -17,8 +17,8 @@ function submit() {
   <main class="flex min-h-screen items-center justify-center p-6">
     <Card class="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Sign in</CardTitle>
-        <CardDescription>Staff access to the studio.</CardDescription>
+        <CardTitle>{{ $t('auth.signInTitle') }}</CardTitle>
+        <CardDescription>{{ $t('auth.signInHint') }}</CardDescription>
       </CardHeader>
       <CardContent>
         <form class="space-y-4" @submit.prevent="submit">
@@ -27,7 +27,7 @@ function submit() {
           </Alert>
 
           <div class="space-y-2">
-            <Label for="email">Email</Label>
+            <Label for="email">{{ $t('auth.email') }}</Label>
             <Input
               id="email"
               v-model="form.email"
@@ -38,7 +38,7 @@ function submit() {
           </div>
 
           <div class="space-y-2">
-            <Label for="password">Password</Label>
+            <Label for="password">{{ $t('auth.password') }}</Label>
             <Input
               id="password"
               v-model="form.password"
@@ -48,7 +48,7 @@ function submit() {
             />
           </div>
 
-          <Button type="submit" class="w-full" :disabled="form.processing">Sign in</Button>
+          <Button type="submit" class="w-full" :disabled="form.processing">{{ $t('auth.signIn') }}</Button>
         </form>
       </CardContent>
     </Card>

@@ -13,19 +13,19 @@ const user = computed(() => usePage().props.auth.user!)
 <template>
   <main class="mx-auto max-w-4xl space-y-6 p-6">
     <div class="flex items-center justify-between">
-      <h1 class="text-2xl font-semibold tracking-tight">Dashboard</h1>
-      <Button variant="secondary" @click="router.post('/logout')">Sign out</Button>
+      <h1 class="text-2xl font-semibold tracking-tight">{{ $t('dashboard.title') }}</h1>
+      <Button variant="secondary" @click="router.post('/logout')">{{ $t('common.signOut') }}</Button>
     </div>
 
-    <p class="text-sm text-muted-foreground">Signed in as {{ user.name }}</p>
+    <p class="text-sm text-muted-foreground">{{ $t('dashboard.signedInAs', { name: user.name }) }}</p>
 
     <div class="grid gap-4 sm:grid-cols-2">
       <Card>
-        <CardHeader><CardTitle class="text-sm font-medium">Open leads</CardTitle></CardHeader>
+        <CardHeader><CardTitle class="text-sm font-medium">{{ $t('dashboard.openLeads') }}</CardTitle></CardHeader>
         <CardContent class="text-3xl font-semibold tabular-nums">{{ leads }}</CardContent>
       </Card>
       <Card>
-        <CardHeader><CardTitle class="text-sm font-medium">Active jobs</CardTitle></CardHeader>
+        <CardHeader><CardTitle class="text-sm font-medium">{{ $t('dashboard.activeJobs') }}</CardTitle></CardHeader>
         <CardContent class="text-3xl font-semibold tabular-nums">{{ jobs }}</CardContent>
       </Card>
     </div>

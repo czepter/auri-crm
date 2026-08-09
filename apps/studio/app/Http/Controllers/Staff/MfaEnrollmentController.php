@@ -51,7 +51,7 @@ class MfaEnrollmentController extends Controller
         if (! $this->google2fa->verifyKey($user->mfa_secret, $data['code'])) {
             AuditLogger::record('staff.mfa.enrollment_failed', $user);
 
-            throw ValidationException::withMessages(['code' => __('That code is not valid.')]);
+            throw ValidationException::withMessages(['code' => __('auth.mfa_invalid')]);
         }
 
         $recoveryCodes = collect(range(1, 8))

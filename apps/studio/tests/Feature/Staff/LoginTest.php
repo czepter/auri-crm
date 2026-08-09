@@ -33,14 +33,14 @@ it('returns an identical error for a wrong password and an unknown account', fun
     $this->from('/login')
         ->post('/login', ['email' => 'owner@studio.test', 'password' => 'nope'])
         ->assertRedirect('/login')
-        ->assertSessionHasErrors(['email' => 'These credentials do not match our records.']);
+        ->assertSessionHasErrors(['email' => __('auth.failed')]);
 
     RateLimiter::clear('staff-login|127.0.0.1');
 
     $this->from('/login')
         ->post('/login', ['email' => 'ghost@studio.test', 'password' => 'nope'])
         ->assertRedirect('/login')
-        ->assertSessionHasErrors(['email' => 'These credentials do not match our records.']);
+        ->assertSessionHasErrors(['email' => __('auth.failed')]);
 });
 
 it('throttles repeated failures from one address', function () {
@@ -54,10 +54,18 @@ it('throttles repeated failures from one address', function () {
     }
 
     // The correct password is now refused too: the limit is on the address.
+    // The throttle message interpolates the remaining seconds, so this asserts
+    // it is the throttle line rather than the ordinary failure line, without
+    // pinning the countdown.
     $this->from('/login')->post('/login', [
         'email' => 'owner@studio.test',
         'password' => 'correct-horse',
-    ])->assertSessionHasErrors(['email' => 'Too many attempts. Try again later.']);
+    ])->assertSessionHasErrors('email');
+
+    $message = session('errors')->first('email');
+
+    expect($message)->toStartWith('Zu viele Anmeldeversuche.')
+        ->and($message)->not->toBe(__('auth.failed'));
 
     $this->assertGuest('staff');
     expect(AuditLog::where('event', 'staff.login.throttled')->count())->toBe(1);

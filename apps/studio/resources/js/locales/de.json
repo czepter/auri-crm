@@ -1,0 +1,33 @@
+{
+  "common": {
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "signOut": "Abmelden",
+    "search": "Suchen"
+  },
+  "auth": {
+    "signIn": "Anmelden",
+    "signInTitle": "Anmelden",
+    "signInHint": "Mit dem Studio-Konto anmelden.",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "mfaTitle": "Bestätigung in zwei Schritten",
+    "mfaHint": "Den 6-stelligen Code aus der Authenticator-App eingeben.",
+    "mfaCode": "6-stelliger Code",
+    "mfaConfirm": "Bestätigen",
+    "mfaEnrollTitle": "Zwei-Faktor-Authentisierung einrichten",
+    "mfaEnrollHint": "Den QR-Code mit der Authenticator-App scannen und den angezeigten sechsstelligen Code eingeben.",
+    "mfaEnrollRequired": "Für jedes Studio-Konto erforderlich.",
+    "mfaQrAlt": "QR-Code für die Authenticator-App",
+    "mfaSecretLabel": "QR-Code lässt sich nicht scannen?",
+    "recoveryTitle": "Wiederherstellungscodes",
+    "recoveryHint": "Diese Codes werden nur ein einziges Mal angezeigt. Jetzt sicher aufbewahren.",
+    "recoveryContinue": "Weiter zur Übersicht"
+  },
+  "dashboard": {
+    "title": "Übersicht",
+    "signedInAs": "Angemeldet als {name}",
+    "openLeads": "Offene Anfragen",
+    "activeJobs": "Laufende Aufträge"
+  }
+}

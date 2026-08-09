@@ -46,7 +46,7 @@ class MfaChallengeController extends Controller
             AuditLogger::record('staff.mfa.throttled', null);
 
             throw ValidationException::withMessages([
-                'code' => __('Too many attempts. Try again later.'),
+                'code' => __('auth.throttle', ['seconds' => RateLimiter::availableIn($key)]),
             ]);
         }
 
@@ -56,7 +56,7 @@ class MfaChallengeController extends Controller
             RateLimiter::hit($key, self::DECAY_SECONDS);
             AuditLogger::record('staff.mfa.failed', $user);
 
-            throw ValidationException::withMessages(['code' => __('That code is not valid.')]);
+            throw ValidationException::withMessages(['code' => __('auth.mfa_invalid')]);
         }
 
         RateLimiter::clear($key);

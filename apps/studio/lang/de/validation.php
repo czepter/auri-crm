@@ -1,0 +1,88 @@
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Validation Language Lines
+    |--------------------------------------------------------------------------
+    |
+    | Only the rules this application actually uses are translated. A rule that
+    | appears here and is never used is a string nobody proofreads; when a new
+    | rule is introduced, its line is added with it.
+    |
+    */
+
+    'accepted' => 'Das Feld :attribute muss akzeptiert werden.',
+    'after' => 'Das Feld :attribute muss ein Datum nach dem :date sein.',
+    'after_or_equal' => 'Das Feld :attribute muss ein Datum nach dem :date oder gleich diesem sein.',
+    'before' => 'Das Feld :attribute muss ein Datum vor dem :date sein.',
+    'boolean' => 'Das Feld :attribute muss wahr oder falsch sein.',
+    'confirmed' => 'Die Bestätigung für :attribute stimmt nicht überein.',
+    'current_password' => 'Das angegebene Passwort ist nicht korrekt.',
+    'date' => 'Das Feld :attribute muss ein gültiges Datum sein.',
+    'date_format' => 'Das Feld :attribute entspricht nicht dem Format :format.',
+    'email' => 'Das Feld :attribute muss eine gültige E-Mail-Adresse sein.',
+    'enum' => 'Der gewählte Wert für :attribute ist ungültig.',
+    'exists' => 'Der gewählte Wert für :attribute ist ungültig.',
+    'in' => 'Der gewählte Wert für :attribute ist ungültig.',
+    'integer' => 'Das Feld :attribute muss eine ganze Zahl sein.',
+    'max' => [
+        'array' => 'Das Feld :attribute darf höchstens :max Einträge haben.',
+        'file' => 'Das Feld :attribute darf höchstens :max Kilobyte groß sein.',
+        'numeric' => 'Das Feld :attribute darf höchstens :max sein.',
+        'string' => 'Das Feld :attribute darf höchstens :max Zeichen lang sein.',
+    ],
+    'min' => [
+        'array' => 'Das Feld :attribute muss mindestens :min Einträge haben.',
+        'file' => 'Das Feld :attribute muss mindestens :min Kilobyte groß sein.',
+        'numeric' => 'Das Feld :attribute muss mindestens :min sein.',
+        'string' => 'Das Feld :attribute muss mindestens :min Zeichen lang sein.',
+    ],
+    'numeric' => 'Das Feld :attribute muss eine Zahl sein.',
+    'prohibited' => 'Das Feld :attribute ist unzulässig.',
+    'prohibited_unless' => 'Das Feld :attribute ist unzulässig.',
+    'required' => 'Das Feld :attribute muss ausgefüllt werden.',
+    'required_without' => 'Das Feld :attribute muss ausgefüllt werden, wenn :values fehlt.',
+    'size' => [
+        'array' => 'Das Feld :attribute muss genau :size Einträge haben.',
+        'file' => 'Das Feld :attribute muss genau :size Kilobyte groß sein.',
+        'numeric' => 'Das Feld :attribute muss genau :size sein.',
+        'string' => 'Das Feld :attribute muss genau :size Zeichen lang sein.',
+    ],
+    'string' => 'Das Feld :attribute muss eine Zeichenkette sein.',
+    'unique' => ':attribute ist bereits vergeben.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Validation Attributes
+    |--------------------------------------------------------------------------
+    |
+    | The field names as they appear on screen, so an error message reads the
+    | way the label above the field does.
+    |
+    */
+
+    'attributes' => [
+        'captured_via' => 'Eingangskanal',
+        'code' => 'Code',
+        'contact_email' => 'E-Mail',
+        'contact_id' => 'Kontakt',
+        'contact_name' => 'Name',
+        'contact_phone' => 'Telefon',
+        'date' => 'Haupttermin',
+        'datum' => 'Datum',
+        'email' => 'E-Mail',
+        'inquiry_text' => 'Anfragetext',
+        'name' => 'Name',
+        'partner_name' => 'Partner/in',
+        'password' => 'Passwort',
+        'phone' => 'Telefon',
+        'project_name' => 'Projektname',
+        'reason' => 'Grund',
+        'source' => 'Quelle',
+        'stage' => 'Status',
+        'type' => 'Typ',
+    ],
+
+];
