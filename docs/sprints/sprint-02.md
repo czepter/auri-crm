@@ -50,20 +50,31 @@ Tasks 1 and 2 are the only pair that can run in parallel — 1 touches `resource
 
 Copied from the spec so the sprint can be closed without re-reading it.
 
-- [ ] `docker compose run --rm php ./vendor/bin/pest` passes with zero skipped tests
-- [ ] `pnpm lint && pnpm test && pnpm build` passes at the workspace root
-- [ ] `pnpm --filter @studio/app test:e2e` passes: capture an inquiry, land on the board, find it in `Neu`
-- [ ] CI green on all three jobs
-- [ ] Every new table carries `tenant_id` and `public_id` from its first migration
-- [ ] `NoInternalIdsTest` covers the board, the capture response, contact search and the availability response
-- [ ] `AudienceMatrixTest` covers every new route group
-- [ ] `generated.d.ts` is current and the CI staleness gate is green
-- [ ] Each partial unique index has a test that expects a violation: duplicate email, second `is_primary` shoot, second `primary` contact
-- [ ] Capture with a live date conflict **succeeds**, and the conflict is visible on the resulting board card
-- [ ] Moving the colliding project's date clears the flag on both screens with **no write** to the lead
-- [ ] The board renders its conflict flags in a bounded number of queries, asserted by a query-count test
-- [ ] A validation failure renders a German message, and every user-visible string in the admin pages resolves through the catalog
-- [ ] The "create new contact" path is unreachable until a search has run
+- [x] `docker compose run --rm php ./vendor/bin/pest` passes with zero skipped tests — 141 passed, 412 assertions
+- [x] `pnpm lint && pnpm test && pnpm build` passes at the workspace root
+- [x] `pnpm --filter @studio/app test:e2e` passes: capture an inquiry, land on the board, find it in `Neu` — 6 passed
+- [x] CI green on all jobs
+- [x] Every new table carries `tenant_id` and `public_id` from its first migration
+- [x] `NoInternalIdsTest` covers the board, the capture response, contact search and the availability response
+- [x] `AudienceMatrixTest` covers every new route group
+- [x] `generated.d.ts` is current and the CI staleness gate is green
+- [x] Each partial unique index has a test that expects a violation: duplicate email, second `is_primary` shoot, second `primary` contact
+- [x] Capture with a live date conflict **succeeds**, and the conflict is visible on the resulting board card
+- [x] Moving the colliding project's date clears the flag on both screens with **no write** to the lead
+- [x] The board renders its conflict flags in a bounded number of queries, asserted by a query-count test
+- [x] A validation failure renders a German message, and every user-visible string in the admin pages resolves through the catalog
+- [x] The "create new contact" path is unreachable until a search has run
+
+### Found while building, fixed outside the plan
+
+The plan assumed the suite ran on a clean checkout. It did not — CI had never executed, because the repository had no remote until this sprint. Four defects surfaced on the first real run and were fixed on `ci/p1a-clean-checkout` (PR #2), which merged into P1a before it went to `dev`:
+
+1. `dorny/paths-filter` had no `pull-requests: read`, so the `changes` job died and every test job **skipped** on its outputs — a pull request that looked processed and was never tested.
+2. `tests/Unit` is empty, so git never tracked it, and Pest exited 2 before running anything.
+3. The Inertia root view calls `@vite`, whose manifest is gitignored build output the `studio` job never builds — ten page tests 500'd.
+4. `pnpm/action-setup` got a version from both the workflow and `packageManager` and refused to choose.
+
+Two more were local-only: the php image had neither `composer` nor `unzip`, so the `docker compose run --rm php composer install` every sprint document prescribes had never worked; and both host ports were hardcoded, so a second worktree could not start its stack.
 
 ---
 
