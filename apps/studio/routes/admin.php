@@ -1,5 +1,7 @@
 <?php
 
+use App\Crm\Http\Controllers\AvailabilityController;
+use App\Crm\Http\Controllers\ContactSearchController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
@@ -26,5 +28,13 @@ Route::middleware('audience:staff')->group(function () {
 
     Route::middleware('mfa')->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
+
+        // German paths, English route names: the UI reads in one language and
+        // the code reads in the other, and neither has to translate the other.
+        //
+        // /kontakte/suche stays above any /kontakte/{contact} route, or Laravel
+        // binds "suche" as a contact public id and answers 404.
+        Route::get('/kontakte/suche', ContactSearchController::class)->name('contacts.search');
+        Route::get('/verfuegbarkeit', AvailabilityController::class)->name('availability.show');
     });
 });
