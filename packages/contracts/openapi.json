@@ -6,7 +6,7 @@
     },
     "servers": [
         {
-            "url": "http://localhost/api"
+            "url": "http://localhost:8000/api"
         }
     ],
     "paths": {
@@ -23,7 +23,7 @@
                         "required": true,
                         "description": "The gallery version public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     },
                     {
@@ -95,7 +95,7 @@
                         "required": true,
                         "description": "The gallery public id",
                         "schema": {
-                            "type": "string"
+                            "type": "integer"
                         }
                     }
                 ],
@@ -114,10 +114,7 @@
                                                     "type": "string"
                                                 },
                                                 "title": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
+                                                    "type": "string"
                                                 },
                                                 "version": {
                                                     "type": "object",
@@ -126,11 +123,10 @@
                                                             "type": "string"
                                                         },
                                                         "version": {
-                                                            "type": "integer"
+                                                            "type": "string"
                                                         },
                                                         "published_at": {
-                                                            "type": "string",
-                                                            "format": "date-time"
+                                                            "type": "string"
                                                         },
                                                         "assets": {
                                                             "type": "array",
@@ -141,16 +137,10 @@
                                                                         "type": "string"
                                                                     },
                                                                     "width": {
-                                                                        "type": [
-                                                                            "string",
-                                                                            "null"
-                                                                        ]
+                                                                        "type": "string"
                                                                     },
                                                                     "height": {
-                                                                        "type": [
-                                                                            "string",
-                                                                            "null"
-                                                                        ]
+                                                                        "type": "string"
                                                                     }
                                                                 },
                                                                 "required": [
