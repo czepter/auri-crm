@@ -80,7 +80,7 @@ class Gallery extends Model
     /**
      * Snapshots title/assets into a brand new GalleryVersion and leaves every
      * earlier one untouched — no update, no delete. The transaction only
-     * wraps the read-then-insert (the same shape ContractTemplate::
+     * wraps the read-then-insert (the same shape DocumentTemplate::
      * newVersion() uses for its own family), so two concurrent publishes
      * either serialize on it or one loses the unique (tenant_id, gallery_id,
      * version) index, never both landing "version 2".

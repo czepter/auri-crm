@@ -3,11 +3,12 @@
 namespace App\Migration\Actions;
 
 use App\Contracts\Models\Contract;
-use App\Contracts\Models\ContractTemplate;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
+use App\Documents\Enums\DocumentTemplateType;
+use App\Documents\Models\DocumentTemplate;
 use App\Migration\Support\ImportPlan;
 use Illuminate\Support\Facades\DB;
 use Visus\Cuid2\Cuid2;
@@ -112,19 +113,20 @@ class CommitHistoricalImport
 
     /**
      * Contract.contract_template_id is a mandatory FK: every ordinary row
-     * names the exact ContractTemplate version RenderContractJob rendered it
-     * from (M-01). A historical row was never rendered by this app at all,
-     * so every import shares one placeholder template instead of forcing the
-     * studio to fabricate one — created once per tenant and left
-     * is_current = false, so the settings screen that offers a template to
-     * render a fresh contract from (M-01) never lists it.
+     * names the exact DocumentTemplate version RenderContractJob rendered it
+     * from (M-01, generalised by T-12). A historical row was never rendered
+     * by this app at all, so every import shares one placeholder template
+     * instead of forcing the studio to fabricate one — created once per
+     * tenant and left is_current = false, so the settings screen that offers
+     * a template to render a fresh contract from (M-01) never lists it.
      */
-    private function historicalImportTemplate(): ContractTemplate
+    private function historicalImportTemplate(): DocumentTemplate
     {
-        return ContractTemplate::query()->where('name', self::HISTORICAL_TEMPLATE_NAME)->first()
-            ?? ContractTemplate::create([
+        return DocumentTemplate::query()->where('name', self::HISTORICAL_TEMPLATE_NAME)->first()
+            ?? DocumentTemplate::create([
                 'family_id' => (string) new Cuid2,
                 'version' => 1,
+                'type' => DocumentTemplateType::Contract,
                 'name' => self::HISTORICAL_TEMPLATE_NAME,
                 'body' => '<p>Historisch importiertes Dokument — kein Rendering durch dieses System.</p>',
                 'is_current' => false,
