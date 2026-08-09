@@ -15,6 +15,7 @@ use App\Crm\Http\Controllers\LeadStageController;
 use App\Crm\Http\Controllers\ProjectController;
 use App\Crm\Http\Controllers\ShootController;
 use App\Crm\Http\Controllers\TaskController;
+use App\Crm\Http\Controllers\TaskTemplateController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
 use App\Http\Controllers\Staff\InvitationController;
@@ -150,6 +151,18 @@ Route::middleware('audience:staff')->group(function () {
             ->name('settings.payments.edit');
         Route::patch('/einstellungen/zahlungen', [PaymentSettingsController::class, 'update'])
             ->name('settings.payments.update');
+
+        // T-14: its own controller and gate (ManageTasks, not ManageSettings —
+        // see TaskTemplateController's doc comment), sitting in the settings
+        // section the same way Numbering and Availability do.
+        Route::get('/einstellungen/aufgabenvorlagen', [TaskTemplateController::class, 'index'])
+            ->name('task-templates.index');
+        Route::post('/einstellungen/aufgabenvorlagen', [TaskTemplateController::class, 'store'])
+            ->name('task-templates.store');
+        Route::patch('/einstellungen/aufgabenvorlagen/{taskTemplate}', [TaskTemplateController::class, 'update'])
+            ->name('task-templates.update');
+        Route::delete('/einstellungen/aufgabenvorlagen/{taskTemplate}', [TaskTemplateController::class, 'destroy'])
+            ->name('task-templates.destroy');
 
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.

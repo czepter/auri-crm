@@ -10,6 +10,7 @@ use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
 use App\Models\User;
 use App\Settings\Support\StudioSettingsResolver;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 
@@ -149,6 +150,27 @@ it('rolls forward only as far as the next configured working day, even when a si
     app(ApplyTaskTemplates::class)($project);
 
     expect(Task::sole()->due_on->format('Y-m-d'))->toBe('2026-06-14');
+});
+
+it('previews the same due dates the real booking action produces for the same shoot date (T-14)', function () {
+    // The story's own acceptance check: the settings preview must reuse
+    // dueFor()/appliesTo() rather than a second copy of the offset math, so
+    // it can never drift from what a real booking produces.
+    TaskTemplate::factory()->offset(-1)->create(['title' => 'Crew-Briefing verschicken']);
+    TaskTemplate::factory()->offset(-7)->forKind(ShootKind::Wedding)->create(['title' => 'Familienliste einholen']);
+    TaskTemplate::factory()->offset(14)->forKind(ShootKind::Engagement)->create(['title' => 'Nicht anwendbar']);
+
+    $preview = app(ApplyTaskTemplates::class)->preview(CarbonImmutable::parse('2026-06-14'), ShootKind::Wedding);
+
+    $project = Project::factory()->create();
+    Shoot::factory()->for($project)->on('2026-06-14')->create(['kind' => ShootKind::Wedding]);
+    app(BookProject::class)($project, User::factory()->create());
+
+    $actual = Task::query()->orderBy('title')->get()
+        ->map(fn (Task $task) => ['title' => $task->title, 'dueOn' => $task->due_on?->format('Y-m-d')])
+        ->values()->all();
+
+    expect(collect($preview)->sortBy('title')->values()->all())->toBe($actual);
 });
 
 it('leaves a due date that already lands on a working day untouched', function () {
