@@ -12,7 +12,9 @@ use Illuminate\Database\Eloquent\Model;
  * the web and worker processes share, and what turns a write into an audit
  * row. display_name is T-01's scaffolding column; vat_mode, vat_rate and
  * vat_note are T-03's (Zahlungsdaten & USt — Q-04 reads these once it
- * ships); the rest below is T-02's Studio-Profil.
+ * ships); default_shoot_duration_minutes is T-09's (Verfügbarkeit —
+ * ShootCalendar reads it instead of a hardcoded addHours(2)); the rest below
+ * is T-02's Studio-Profil.
  */
 class StudioSettings extends Model
 {
@@ -26,5 +28,6 @@ class StudioSettings extends Model
         'website', 'accent_color', 'logo_path',
         'bank_account_holder', 'bank_iban', 'bank_bic',
         'vat_mode', 'vat_rate', 'vat_note',
+        'default_shoot_duration_minutes',
     ];
 }
