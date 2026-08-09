@@ -2,6 +2,7 @@
 
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\ContactSearchController;
+use App\Crm\Http\Controllers\InquiryCaptureController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
@@ -36,5 +37,8 @@ Route::middleware('audience:staff')->group(function () {
         // binds "suche" as a contact public id and answers 404.
         Route::get('/kontakte/suche', ContactSearchController::class)->name('contacts.search');
         Route::get('/verfuegbarkeit', AvailabilityController::class)->name('availability.show');
+
+        Route::get('/anfragen/neu', [InquiryCaptureController::class, 'create'])->name('leads.create');
+        Route::post('/anfragen', [InquiryCaptureController::class, 'store'])->name('leads.store');
     });
 });

@@ -1,0 +1,46 @@
+<?php
+
+namespace App\Crm\Http\Controllers;
+
+use App\Crm\Actions\CaptureInquiry;
+use App\Crm\Data\CaptureInquiryData;
+use App\Crm\Enums\CaptureChannel;
+use App\Crm\Enums\HasLabel;
+use App\Crm\Enums\LeadSource;
+use App\Crm\Enums\ProjectType;
+use App\Http\Controllers\Controller;
+use BackedEnum;
+use Illuminate\Http\RedirectResponse;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class InquiryCaptureController extends Controller
+{
+    public function create(): Response
+    {
+        return Inertia::render('Leads/Create', [
+            'types' => self::options(ProjectType::cases()),
+            'sources' => self::options(LeadSource::cases()),
+            'channels' => self::options(CaptureChannel::cases()),
+        ]);
+    }
+
+    public function store(CaptureInquiryData $data, CaptureInquiry $capture): RedirectResponse
+    {
+        $capture($data, auth('staff')->user());
+
+        return redirect('/anfragen');
+    }
+
+    /**
+     * @param  array<int, BackedEnum&HasLabel>  $cases
+     * @return array<int, array{value: string, label: string}>
+     */
+    private static function options(array $cases): array
+    {
+        return array_map(
+            fn (BackedEnum&HasLabel $case) => ['value' => $case->value, 'label' => $case->label()],
+            $cases,
+        );
+    }
+}

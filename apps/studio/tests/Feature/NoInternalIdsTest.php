@@ -5,32 +5,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-/**
- * Walks a decoded response body and returns the paths of any key that looks
- * like an identifier but holds an integer. Passing a model straight into
- * Inertia::render instead of wrapping it in a Data object is the ordinary way
- * the internal key escapes, and it should fail here rather than in review.
- */
-function integerIdPaths(mixed $node, string $path = '$'): array
-{
-    if (! is_array($node)) {
-        return [];
-    }
-
-    $found = [];
-
-    foreach ($node as $key => $value) {
-        $childPath = $path.'.'.$key;
-
-        if (is_string($key) && (str_ends_with($key, 'id') || str_ends_with($key, 'ids')) && is_int($value)) {
-            $found[] = $childPath;
-        }
-
-        $found = [...$found, ...integerIdPaths($value, $childPath)];
-    }
-
-    return $found;
-}
+// integerIdPaths() lives in tests/Pest.php — see the note there.
 
 it('never puts an integer identifier into an authenticated inertia page prop', function () {
     $user = User::factory()->withMfa()->create();
