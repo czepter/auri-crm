@@ -1,6 +1,7 @@
 <?php
 
 use App\Crm\Http\Controllers\AvailabilityController;
+use App\Crm\Http\Controllers\CalendarController;
 use App\Crm\Http\Controllers\ContactController;
 use App\Crm\Http\Controllers\ContactSearchController;
 use App\Crm\Http\Controllers\CrewController;
@@ -10,6 +11,7 @@ use App\Crm\Http\Controllers\LeadBoardController;
 use App\Crm\Http\Controllers\LeadStageController;
 use App\Crm\Http\Controllers\ProjectController;
 use App\Crm\Http\Controllers\ShootController;
+use App\Crm\Http\Controllers\TaskController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
 use App\Http\Controllers\Staff\MfaChallengeController;
@@ -24,6 +26,14 @@ use Illuminate\Support\Facades\Route;
 if (app()->environment('local')) {
     Route::post('/dev-login', DevLoginController::class)->name('dev.login');
 }
+
+// The calendar subscription feed. Public by necessity — a calendar app cannot
+// hold a session — and authenticated by the token in the path, which opens
+// exactly one person's own shooting schedule and nothing else. Listed in the
+// audience matrix's PUBLIC_ROUTES, so it stays a decision rather than an
+// omission.
+Route::get('/kalender/{token}/shootings.ics', [CalendarController::class, 'feed'])
+    ->name('calendar.feed');
 
 // Staff surface. Session-authenticated, Inertia-rendered, never public.
 Route::middleware('guest:staff')->group(function () {
@@ -57,6 +67,10 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/kontakte/{contact}', [ContactController::class, 'update'])->name('contacts.update');
         Route::get('/verfuegbarkeit', AvailabilityController::class)->name('availability.show');
 
+        Route::get('/kalender', [CalendarController::class, 'index'])->name('calendar.index');
+        Route::post('/kalender/abo', [CalendarController::class, 'regenerate'])
+            ->name('calendar.regenerate');
+
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.
         Route::get('/anfragen/neu', [InquiryCaptureController::class, 'create'])->name('leads.create');
@@ -85,6 +99,12 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::post('/shootings/{shoot}/crew', [CrewController::class, 'store'])->name('crew.store');
         Route::delete('/crew/{assignment}', [CrewController::class, 'destroy'])->name('crew.destroy');
+
+        Route::post('/auftraege/{project}/aufgaben', [TaskController::class, 'store'])
+            ->name('tasks.store');
+        Route::post('/aufgaben/{task}/erledigt', [TaskController::class, 'complete'])
+            ->name('tasks.complete');
+        Route::delete('/aufgaben/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 
         Route::post('/auftraege/{project}/notizen', [InternalNoteController::class, 'store'])
             ->name('notes.store');

@@ -40,6 +40,36 @@ stage: string,
 daysInStage: number,
 conflicts: App.Crm.Data.DateConflictData[],
 };
+export type NextShootData = {
+projectId: string,
+projectName: string,
+shootId: string,
+title: string,
+date: string,
+callTime: string | null,
+endTime: string | null,
+venue: string | null,
+crew: string,
+readiness: {
+label: string,
+done: boolean,
+}[],
+};
+export type ProductionRowData = {
+projectId: string,
+projectName: string,
+shootId: string,
+shootLabel: string | null,
+kind: string,
+date: string | null,
+callTime: string | null,
+venue: string | null,
+status: string,
+statusLabel: string,
+daysInStatus: number,
+crewCount: number,
+openTasks: number,
+};
 export type ProjectHeaderData = {
 id: string,
 name: string,
@@ -79,6 +109,18 @@ value: string,
 label: string,
 }[],
 };
+export type TaskRowData = {
+id: string,
+projectId: string,
+projectName: string,
+title: string,
+dueOn: string | null,
+isOverdue: boolean,
+isDone: boolean,
+shootLabel: string | null,
+audience: string,
+audienceLabel: string,
+};
 }
 namespace Enums {
 export type BookedVia = 'manual' | 'contract';
@@ -90,6 +132,7 @@ export type ProjectContactRole = 'primary' | 'partner' | 'payer' | 'planner' | '
 export type ProjectType = 'wedding' | 'portrait' | 'other';
 export type ShootKind = 'engagement' | 'wedding' | 'reception' | 'portrait' | 'other';
 export type ShootStatus = 'requested' | 'booked' | 'prep' | 'shot' | 'culling' | 'editing' | 'ready' | 'delivered' | 'archived';
+export type TaskAudience = 'internal' | 'client';
 }
 }
 namespace Data {

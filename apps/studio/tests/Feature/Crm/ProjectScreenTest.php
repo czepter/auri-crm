@@ -4,12 +4,14 @@ use App\Crm\Enums\CrewRole;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\Task;
 use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Database\QueryException;
@@ -23,10 +25,7 @@ beforeEach(function () {
     $this->project = Project::factory()->create();
 });
 
-function props(string $path): array
-{
-    return test()->get($path)->assertOk()->viewData('page')['props'];
-}
+// props() lives in tests/Pest.php — see the note there.
 
 it('renders the project overview with a derived header', function () {
     // Booked, because the shoots only speak for a project in production —
@@ -217,6 +216,55 @@ it('writes, edits and deletes an internal note', function () {
 
     $this->delete("/notizen/{$note->public_id}")->assertRedirect();
     expect(InternalNote::count())->toBe(0);
+});
+
+it('renders the tasks card with the audience the field carries', function () {
+    $shoot = Shoot::factory()->for($this->project)->create(['label' => 'Hochzeitstag']);
+    Task::factory()->for($this->project)->create([
+        'shoot_id' => $shoot->id,
+        'title' => 'Familienliste einholen',
+        'audience' => TaskAudience::Client,
+        'due_on' => now()->subDay()->format('Y-m-d'),
+    ]);
+
+    $tasks = props("/auftraege/{$this->project->public_id}")['tasks'];
+
+    expect($tasks[0]['title'])->toBe('Familienliste einholen')
+        ->and($tasks[0]['audienceLabel'])->toBe('Kunde')
+        ->and($tasks[0]['shootLabel'])->toBe('Hochzeitstag')
+        ->and($tasks[0]['isOverdue'])->toBeTrue();
+});
+
+it('sorts open tasks above finished ones', function () {
+    Task::factory()->for($this->project)->done()->create(['title' => 'Erledigt']);
+    Task::factory()->for($this->project)->due(now()->addDays(30)->format('Y-m-d'))->create(['title' => 'Offen']);
+
+    $tasks = props("/auftraege/{$this->project->public_id}")['tasks'];
+
+    expect(collect($tasks)->pluck('title')->all())->toBe(['Offen', 'Erledigt']);
+});
+
+it('never calls a finished task overdue', function () {
+    Task::factory()->for($this->project)->done()->due(now()->subYear()->format('Y-m-d'))->create();
+
+    expect(props("/auftraege/{$this->project->public_id}")['tasks'][0]['isOverdue'])->toBeFalse();
+});
+
+it('adds a task by hand against one shoot', function () {
+    $shoot = Shoot::factory()->for($this->project)->create();
+
+    $this->post("/auftraege/{$this->project->public_id}/aufgaben", [
+        'title' => 'Ablauf bestätigen',
+        'audience' => TaskAudience::Client->value,
+        'due_on' => '2026-06-01',
+        'shoot' => $shoot->public_id,
+    ])->assertRedirect();
+
+    $task = Task::sole();
+
+    expect($task->title)->toBe('Ablauf bestätigen')
+        ->and($task->shoot_id)->toBe($shoot->id)
+        ->and($task->task_template_id)->toBeNull();
 });
 
 it('rejects an empty note', function () {

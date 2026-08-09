@@ -10,11 +10,34 @@ const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
   shoots: App.Crm.Data.ShootData[]
   notes: App.Crm.Data.InternalNoteData[]
+  tasks: App.Crm.Data.TaskRowData[]
+  shootOptions: { value: string; label: string }[]
 }>()
 
 const composer = useForm({ body: '' })
 const editing = ref<string | null>(null)
 const draft = ref('')
+
+function shortDate(date: string | null) {
+  return date ? new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) : null
+}
+
+const addingTask = ref(false)
+const taskForm = useForm({ title: '', due_on: '', audience: 'internal', shoot: '' })
+
+function createTask() {
+  taskForm.post(`/auftraege/${props.header.id}/aufgaben`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      taskForm.reset()
+      addingTask.value = false
+    },
+  })
+}
+
+function toggleTask(task: App.Crm.Data.TaskRowData) {
+  router.post(`/aufgaben/${task.id}/erledigt`, {}, { preserveScroll: true })
+}
 
 function write() {
   composer.post(`/auftraege/${props.header.id}/notizen`, {
@@ -84,6 +107,78 @@ function remove(id: string) {
           <Link class="blkfoot" :href="`/auftraege/${header.id}/shootings`">
             {{ $t('project.toShoots') }}
           </Link>
+        </div>
+
+        <!-- Task.audience is a real field (vision §3.3), rendered as its own
+             badge. It never stands in for InternalNote below, which is a
+             separate model with no portal route at all. -->
+        <div class="card static">
+          <div class="cardhead">
+            <span class="kick">{{ $t('project.tasks') }}</span>
+            <button type="button" class="abtn" @click="addingTask = !addingTask">
+              {{ $t('project.taskAdd') }}
+            </button>
+          </div>
+
+          <form v-if="addingTask" class="fgrid" style="margin-bottom: var(--s4)" @submit.prevent="createTask">
+            <div class="fld wide">
+              <label for="task_title">{{ $t('project.taskTitle') }}</label>
+              <input id="task_title" v-model="taskForm.title" class="inp" type="text" />
+              <p v-if="taskForm.errors.title" class="err">{{ taskForm.errors.title }}</p>
+            </div>
+            <div class="fld">
+              <label for="task_due">{{ $t('project.taskDue') }}<em>{{ $t('project.optional') }}</em></label>
+              <input id="task_due" v-model="taskForm.due_on" class="inp" type="date" />
+            </div>
+            <div class="fld">
+              <label for="task_audience">{{ $t('project.taskAudience') }}</label>
+              <select id="task_audience" v-model="taskForm.audience" class="inp">
+                <option value="internal">Intern</option>
+                <option value="client">Kunde</option>
+              </select>
+            </div>
+            <div class="fld wide" v-if="shootOptions.length">
+              <label for="task_shoot">{{ $t('project.taskShoot') }}<em>{{ $t('project.optional') }}</em></label>
+              <select id="task_shoot" v-model="taskForm.shoot" class="inp">
+                <option value="">{{ $t('project.taskNoShoot') }}</option>
+                <option v-for="option in shootOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+            </div>
+            <div class="fld wide">
+              <div class="formfoot" style="margin-top: 0">
+                <button class="btn" type="submit" :disabled="taskForm.processing">
+                  {{ $t('common.save') }}
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <div class="tlist">
+            <div v-for="task in tasks" :key="task.id" class="taskrow">
+              <!-- Completion is a toggle, not a delete: what was owed and when
+                   it was done is the record. -->
+              <button
+                type="button"
+                class="abtn"
+                :aria-label="$t(task.isDone ? 'project.taskReopen' : 'project.taskComplete')"
+                @click="toggleTask(task)"
+              >
+                {{ task.isDone ? '✓' : '○' }}
+              </button>
+              <span class="ttext" :style="task.isDone ? 'color: var(--faint); text-decoration: line-through' : ''">
+                {{ task.title }}
+                <template v-if="task.shootLabel"> · {{ task.shootLabel }}</template>
+              </span>
+              <span class="tdate" :style="task.isOverdue ? 'color: var(--accent)' : ''">
+                {{ task.dueOn ? shortDate(task.dueOn) : '—' }}
+              </span>
+              <span class="taudience" :class="task.audience">{{ task.audienceLabel }}</span>
+            </div>
+          </div>
+
+          <p v-if="!tasks.length" class="hint">{{ $t('project.noTasks') }}</p>
         </div>
 
         <!-- Its own model, never a flag on a client-visible message. Nothing

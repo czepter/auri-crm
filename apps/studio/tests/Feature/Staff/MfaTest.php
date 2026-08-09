@@ -88,7 +88,7 @@ it('allows the dashboard once mfa is confirmed', function () {
     $this->post('/auth/mfa/confirm', ['code' => (new Google2FA)->getCurrentOtp($secret)]);
 
     $this->get('/')->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->component('Dashboard'));
+        ->assertInertia(fn (Assert $page) => $page->component('Uebersicht'));
 });
 
 it('completes login with a valid totp code', function () {

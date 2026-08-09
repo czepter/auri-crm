@@ -7,6 +7,7 @@ use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Data\InternalNoteData;
 use App\Crm\Data\ProjectHeaderData;
 use App\Crm\Data\ShootData;
+use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\CrewRole;
 use App\Crm\Models\Project;
 use App\Data\StaffProfileData;
@@ -28,6 +29,22 @@ class ProjectController extends Controller
             'notes' => InternalNoteData::collect(
                 $project->notes()->with('author')->get()->map(InternalNoteData::fromNote(...))
             ),
+            // Open first and by due date, then the done ones: a card whose top
+            // row is something already finished buries the work.
+            'tasks' => TaskRowData::collect(
+                $project->tasks()
+                    ->with(['project', 'shoot'])
+                    ->orderByRaw('completed_at is not null')
+                    ->byDueDate()
+                    ->get()
+                    ->map(TaskRowData::fromTask(...))
+            ),
+            'shootOptions' => $project->shoots()->uncancelled()->get()
+                ->map(fn ($shoot) => [
+                    'value' => $shoot->public_id,
+                    'label' => $shoot->label ?? $shoot->kind->label(),
+                ])
+                ->all(),
         ]);
     }
 

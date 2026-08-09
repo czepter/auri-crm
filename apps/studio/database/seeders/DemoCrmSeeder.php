@@ -11,12 +11,14 @@ use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\TaskTemplate;
 use App\Enums\StaffRole;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -54,6 +56,10 @@ class DemoCrmSeeder extends Seeder
     public function run(): void
     {
         $staff = User::query()->first() ?? User::factory()->create();
+
+        // Before the cast, so booking the wedding below produces its tasks
+        // through the listener rather than having them written in by hand.
+        $this->seedTaskTemplates();
 
         foreach (self::CAST as [$name, $partner, $type, $date, $stage, $daysAgo, $source, $venue, $city]) {
             $projectType = ProjectType::from($type);
@@ -100,6 +106,25 @@ class DemoCrmSeeder extends Seeder
     }
 
     /**
+     * The studio's standing list. Three is enough to show the two things that
+     * matter: an offset before the day, one after it, and a template that only
+     * applies to weddings.
+     */
+    private function seedTaskTemplates(): void
+    {
+        foreach ([
+            ['Ablauf bestätigen', TaskAudience::Client, -14, null],
+            ['Familienliste einholen', TaskAudience::Client, -7, ShootKind::Wedding],
+            ['Crew-Briefing verschicken', TaskAudience::Internal, -1, null],
+        ] as [$title, $audience, $offset, $kind]) {
+            TaskTemplate::updateOrCreate(
+                ['title' => $title],
+                ['audience' => $audience, 'day_offset' => $offset, 'shoot_kind' => $kind],
+            );
+        }
+    }
+
+    /**
      * Mockup 04's wedding, in full: four occasions in three different pipeline
      * positions, a crew that differs per shoot, and the notes the studio wrote
      * to itself.
@@ -122,9 +147,13 @@ class DemoCrmSeeder extends Seeder
 
         // The primary shoot already exists from the cast; this is the wedding
         // day itself, so it only gains the detail the project screen shows.
+        // Anchored to today rather than to the mockup's 2026 dates: the
+        // Übersicht leads with the next shooting day, and a demo whose every
+        // shoot is in the past shows an empty screen that looks like a bug.
         $wedding = $project->primaryShoot;
         $wedding->update([
             'label' => 'Hochzeitstag',
+            'date' => now()->addDays(5)->format('Y-m-d'),
             'call_time' => '09:00',
             'end_time' => '23:00',
         ]);
@@ -133,7 +162,7 @@ class DemoCrmSeeder extends Seeder
             'project_id' => $project->id,
             'kind' => ShootKind::Engagement,
             'label' => 'Verlobungsshooting',
-            'date' => '2026-03-22',
+            'date' => now()->subDays(140)->format('Y-m-d'),
             'call_time' => '14:00',
             'end_time' => '16:00',
             'venue_name' => 'Jenischpark',
@@ -145,7 +174,7 @@ class DemoCrmSeeder extends Seeder
             'project_id' => $project->id,
             'kind' => ShootKind::Reception,
             'label' => 'Standesamt',
-            'date' => '2026-05-08',
+            'date' => now()->subDays(37)->format('Y-m-d'),
             'call_time' => '11:00',
             'end_time' => '12:30',
             'venue_name' => 'Rathaus Altona',
@@ -159,7 +188,7 @@ class DemoCrmSeeder extends Seeder
             'project_id' => $project->id,
             'kind' => ShootKind::Portrait,
             'label' => 'After-Wedding-Shooting',
-            'date' => '2026-07-05',
+            'date' => now()->addDays(26)->format('Y-m-d'),
             'sort_order' => 3,
         ]);
 

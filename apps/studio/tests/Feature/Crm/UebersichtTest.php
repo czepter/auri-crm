@@ -1,0 +1,142 @@
+<?php
+
+use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\TaskAudience;
+use App\Crm\Models\CrewAssignment;
+use App\Crm\Models\Job;
+use App\Crm\Models\Project;
+use App\Crm\Models\Shoot;
+use App\Crm\Models\Task;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->staff = User::factory()->withMfa()->create();
+    $this->actingAs($this->staff, 'staff');
+});
+
+it('leads with the next shooting day of a booked project', function () {
+    $project = Project::factory()->create(['name' => 'Meier & Kowalski']);
+    Job::factory()->for($project)->create();
+    $shoot = Shoot::factory()->for($project)
+        ->on(now()->addDays(5)->format('Y-m-d'))
+        ->atStatus(ShootStatus::Prep)
+        ->create(['label' => 'Hochzeitstag', 'call_time' => '09:00']);
+    CrewAssignment::factory()->for($shoot)->create();
+
+    $next = props('/')['nextShoot'];
+
+    expect($next['title'])->toBe('Hochzeitstag')
+        ->and($next['projectName'])->toBe('Meier & Kowalski')
+        ->and($next['callTime'])->toBe('09:00');
+});
+
+it('never leads with a shoot whose project is not booked', function () {
+    // An unbooked date is a request, not a commitment.
+    $project = Project::factory()->create();
+    Shoot::factory()->for($project)->on(now()->addDay()->format('Y-m-d'))->create();
+
+    expect(props('/')['nextShoot'])->toBeNull();
+});
+
+it('never leads with a day already past', function () {
+    $project = Project::factory()->create();
+    Job::factory()->for($project)->create();
+    Shoot::factory()->for($project)->on(now()->subDay()->format('Y-m-d'))->create();
+
+    expect(props('/')['nextShoot'])->toBeNull();
+});
+
+it('states readiness from real facts rather than invented labels', function () {
+    $project = Project::factory()->create();
+    Job::factory()->for($project)->create();
+    $shoot = Shoot::factory()->for($project)->on(now()->addDays(3)->format('Y-m-d'))->create();
+    Task::factory()->for($project)->create(['shoot_id' => $shoot->id, 'title' => 'Crew-Briefing']);
+
+    $readiness = props('/')['nextShoot']['readiness'];
+
+    // Crew is unassigned and the briefing is open, so both read as not done.
+    expect(collect($readiness)->pluck('label')->all())->toBe(['Crew', 'Crew-Briefing'])
+        ->and(collect($readiness)->every(fn ($mark) => $mark['done'] === false))->toBeTrue();
+});
+
+it('lists what is owed, overdue first by date', function () {
+    // Three projects, because the worklist carries one row each — the
+    // ordering is what this asserts, not the grouping.
+    Task::factory()->due(now()->subDays(2)->format('Y-m-d'))->create(['title' => 'Spät']);
+    Task::factory()->due(now()->addDays(9)->format('Y-m-d'))->create(['title' => 'Später']);
+    Task::factory()->done()->create(['title' => 'Erledigt']);
+
+    $tasks = props('/')['tasks'];
+
+    expect(collect($tasks)->pluck('title')->all())->toBe(['Spät', 'Später'])
+        ->and($tasks[0]['isOverdue'])->toBeTrue()
+        ->and($tasks[1]['isOverdue'])->toBeFalse();
+});
+
+it('lets one project take at most one row', function () {
+    // A project with nine overdue tasks would otherwise be the whole screen,
+    // and a worklist showing one client is a worklist nobody reads.
+    $loud = Project::factory()->create(['name' => 'Laut']);
+    Task::factory()->for($loud)->count(9)->due(now()->subDays(3)->format('Y-m-d'))->create();
+
+    $quiet = Project::factory()->create(['name' => 'Leise']);
+    Task::factory()->for($quiet)->due(now()->subDay()->format('Y-m-d'))->create();
+
+    $props = props('/');
+
+    expect(collect($props['tasks'])->pluck('projectName')->all())->toBe(['Laut', 'Leise'])
+        ->and($props['openTasks'])->toBe(10);
+});
+
+it('does not call a task due today overdue', function () {
+    // Today is the day's work, not a failure.
+    Task::factory()->due(now()->format('Y-m-d'))->create();
+
+    expect(props('/')['tasks'][0]['isOverdue'])->toBeFalse();
+});
+
+it('carries the production board, one row per booked project', function () {
+    $project = Project::factory()->create();
+    Job::factory()->for($project)->create();
+    Shoot::factory()->for($project)->atStatus(ShootStatus::Delivered)->create();
+    Shoot::factory()->for($project)->atStatus(ShootStatus::Culling)->create();
+
+    $production = props('/')['production'];
+
+    expect($production)->toHaveCount(1)
+        ->and($production[0]['status'])->toBe('culling');
+});
+
+it('shows no column for a domain with no data source', function () {
+    // Quotes are Q-*, Stripe is M-04, galleries are G-*. A block with nothing
+    // behind it would have to invent its contents.
+    $props = props('/');
+
+    expect($props)->not->toHaveKey('payments')
+        ->and($props)->not->toHaveKey('quotes')
+        ->and($props)->not->toHaveKey('afterDelivery');
+});
+
+it('completes and reopens a task from the worklist', function () {
+    $task = Task::factory()->create();
+
+    $this->post("/aufgaben/{$task->public_id}/erledigt")->assertRedirect();
+    expect($task->fresh()->isDone())->toBeTrue()
+        ->and($task->fresh()->completed_by_id)->toBe($this->staff->id);
+
+    $this->post("/aufgaben/{$task->public_id}/erledigt")->assertRedirect();
+    expect($task->fresh()->isDone())->toBeFalse();
+});
+
+it('never puts an integer identifier into the übersicht', function () {
+    $project = Project::factory()->create();
+    Job::factory()->for($project)->create();
+    $shoot = Shoot::factory()->for($project)->on(now()->addDay()->format('Y-m-d'))->create();
+    CrewAssignment::factory()->for($shoot)->create();
+    Task::factory()->for($project)->create(['shoot_id' => $shoot->id, 'audience' => TaskAudience::Client]);
+
+    expect(integerIdPaths(props('/')))->toBe([]);
+});

@@ -1,0 +1,55 @@
+<?php
+
+namespace App\Crm\Actions;
+
+use App\Crm\Models\Project;
+use App\Crm\Models\Shoot;
+use App\Crm\Models\TaskTemplate;
+
+/**
+ * Turns the studio's standing templates into the tasks a booked project owes.
+ *
+ * Offsets are relative to each shoot's own date rather than the project's: a
+ * project with an engagement session and a wedding needs its "confirm timeline"
+ * task against the shoot it belongs to. E-08 solves the same anchoring problem
+ * generally, and this is the shape it will grow out of.
+ *
+ * Idempotent by the unique index on (task_template_id, shoot_id) rather than by
+ * a check here. P-05b adds a second booking trigger and E-08 will re-apply
+ * templates, so the guarantee belongs where both paths meet it.
+ */
+class ApplyTaskTemplates
+{
+    public function __invoke(Project $project): void
+    {
+        $templates = TaskTemplate::query()->active()->orderBy('sort_order')->get();
+
+        if ($templates->isEmpty()) {
+            return;
+        }
+
+        // Cancelled shoots owe nothing: the occasion is not happening.
+        $shoots = $project->shoots()->uncancelled()->get();
+
+        foreach ($shoots as $shoot) {
+            foreach ($templates->filter(fn (TaskTemplate $t) => $t->appliesTo($shoot)) as $template) {
+                $this->applyOne($project, $shoot, $template);
+            }
+        }
+    }
+
+    private function applyOne(Project $project, Shoot $shoot, TaskTemplate $template): void
+    {
+        // updateOrCreate rather than create: re-applying must not duplicate,
+        // and must not silently reset a due date somebody moved by hand — so
+        // only the columns the template owns are written on the way in.
+        $project->tasks()->updateOrCreate(
+            ['task_template_id' => $template->id, 'shoot_id' => $shoot->id],
+            [
+                'title' => $template->title,
+                'audience' => $template->audience,
+                'due_on' => $template->dueFor($shoot)?->format('Y-m-d'),
+            ],
+        );
+    }
+}

@@ -99,6 +99,11 @@ class Shoot extends Model
         return $this->hasMany(CrewAssignment::class);
     }
 
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
+    }
+
     /** Null rather than an empty string, so a caller can test it directly. */
     public function venue(): ?string
     {

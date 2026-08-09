@@ -4,8 +4,10 @@ namespace App\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
+use App\Crm\Models\CrewAssignment;
 use App\Enums\StaffRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -31,7 +33,16 @@ class User extends Authenticatable
         'mfa_recovery_codes',
     ];
 
-    protected $hidden = ['password', 'remember_token', 'mfa_secret', 'mfa_recovery_codes'];
+    // calendar_token is a live credential — anyone holding it can read this
+    // person's shooting schedule — so it never rides along in a serialised
+    // model. The one screen that shows it builds the URL explicitly.
+    protected $hidden = [
+        'password',
+        'remember_token',
+        'mfa_secret',
+        'mfa_recovery_codes',
+        'calendar_token',
+    ];
 
     protected function casts(): array
     {
@@ -47,6 +58,32 @@ class User extends Authenticatable
     public function hasConfirmedMfa(): bool
     {
         return $this->mfa_confirmed_at !== null;
+    }
+
+    public function crewAssignments(): HasMany
+    {
+        return $this->hasMany(CrewAssignment::class);
+    }
+
+    /**
+     * The calendar subscription secret, minted on first use so an account that
+     * never subscribes never carries a live credential.
+     */
+    public function calendarToken(): string
+    {
+        if ($this->calendar_token === null) {
+            $this->forceFill(['calendar_token' => bin2hex(random_bytes(32))])->save();
+        }
+
+        return $this->calendar_token;
+    }
+
+    /** Revocation: any subscribed device stops receiving the feed at once. */
+    public function regenerateCalendarToken(): string
+    {
+        $this->forceFill(['calendar_token' => null])->save();
+
+        return $this->calendarToken();
     }
 
     /**
