@@ -29,12 +29,6 @@ templateVersion: number,
 renderedAt: string | null,
 downloadUrl: string | null,
 };
-export type ContractTemplateData = {
-id: string,
-name: string,
-body: string,
-version: number,
-};
 }
 namespace Enums {
 export type ContractStatus = 'pending' | 'rendered' | 'failed';
@@ -179,6 +173,9 @@ forwardStatuses: {
 value: string,
 label: string,
 }[],
+timeline: App.Crm.Data.TimelineEntryData[],
+pdfUrl: string,
+icsUrl: string,
 };
 export type TaskRowData = {
 id: string,
@@ -203,6 +200,14 @@ shootKindLabel: string | null,
 isActive: boolean,
 sortOrder: number,
 };
+export type TimelineEntryData = {
+id: string,
+time: string,
+title: string,
+location: string | null,
+note: string | null,
+isTransit: boolean,
+};
 }
 namespace Enums {
 export type BookedVia = 'manual' | 'contract';
@@ -226,6 +231,23 @@ email: string,
 role: string,
 mfaConfirmed: boolean,
 };
+}
+namespace Documents {
+namespace Data {
+export type DocumentTemplateData = {
+id: string,
+name: string,
+body: string,
+version: number,
+type: string,
+typeLabel: string,
+shootKind: string | null,
+shootKindLabel: string | null,
+};
+}
+namespace Enums {
+export type DocumentTemplateType = 'contract' | 'quote' | 'mail';
+}
 }
 namespace Enums {
 export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings' | 'manage_form_templates';
@@ -375,6 +397,8 @@ paymentTermDays: number,
 depositPercentage: number,
 widerrufIncluded: boolean,
 widerrufText: string | null,
+documentLetterheadHtml: string | null,
+documentFooterHtml: string | null,
 timezone: string,
 locale: string,
 workingDays: number[],

@@ -18,7 +18,9 @@ it('seeds sensible document defaults on the migration itself', function () {
         ->and($settings->paymentTermDays())->toBe(14)
         ->and($settings->depositPercentage())->toBe(3000)
         ->and($settings->widerrufIncluded())->toBeTrue()
-        ->and($settings->widerrufText())->not->toBeNull();
+        ->and($settings->widerrufText())->not->toBeNull()
+        ->and($settings->documentLetterheadHtml())->toBeNull()
+        ->and($settings->documentFooterHtml())->toBeNull();
 });
 
 it('writes each document default through set(), busts the cache, and audits the actor', function () {
@@ -29,6 +31,8 @@ it('writes each document default through set(), busts the cache, and audits the 
     (new StudioSettingsResolver)->set('deposit_percentage', 5000, $owner);
     (new StudioSettingsResolver)->set('widerruf_included', false, $owner);
     (new StudioSettingsResolver)->set('widerruf_text', 'Custom Widerrufstext.', $owner);
+    (new StudioSettingsResolver)->set('document_letterhead_html', '<header>Nordlicht</header>', $owner);
+    (new StudioSettingsResolver)->set('document_footer_html', '<footer>Seite 1</footer>', $owner);
 
     $fresh = new StudioSettingsResolver;
 
@@ -36,5 +40,7 @@ it('writes each document default through set(), busts the cache, and audits the 
         ->and($fresh->paymentTermDays())->toBe(21)
         ->and($fresh->depositPercentage())->toBe(5000)
         ->and($fresh->widerrufIncluded())->toBeFalse()
-        ->and($fresh->widerrufText())->toBe('Custom Widerrufstext.');
+        ->and($fresh->widerrufText())->toBe('Custom Widerrufstext.')
+        ->and($fresh->documentLetterheadHtml())->toBe('<header>Nordlicht</header>')
+        ->and($fresh->documentFooterHtml())->toBe('<footer>Seite 1</footer>');
 });

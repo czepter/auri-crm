@@ -7,6 +7,7 @@ use App\Enums\StaffRole;
 use App\Http\Controllers\Controller;
 use App\Models\StaffInvitation;
 use App\Models\User;
+use App\Notifications\NotificationService;
 use App\Notifications\StaffInvited;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
@@ -49,7 +50,7 @@ class InvitationController extends Controller
         ]);
     }
 
-    public function store(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    public function store(Request $request, StudioSettingsResolver $settings, NotificationService $notifications): RedirectResponse
     {
         $this->authorizeStaffManagement();
 
@@ -79,8 +80,13 @@ class InvitationController extends Controller
             ],
         );
 
-        Notification::route('mail', $invitation->email)
-            ->notify(new StaffInvited($invitation, url("/einladung/{$token}"), $settings));
+        // E-07: every send in this app goes through NotificationService —
+        // see its own docblock. StaffInvited names only ['mail'] in via(),
+        // so this still leaves exactly one email, same as ->notify() did.
+        $notifications->send(
+            Notification::route('mail', $invitation->email),
+            new StaffInvited($invitation, url("/einladung/{$token}"), $settings),
+        );
 
         // The token is deliberately absent from the audit row: an audit log
         // that records live credentials is a second place to steal them from.

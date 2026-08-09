@@ -4,7 +4,7 @@ import PortalHeader from '@/portal/components/PortalHeader.vue'
 
 // § 5 TMG. Reads straight through StudioSettingsResolver's T-02 columns —
 // the same particulars RenderContractJob's `studio.*` merge fields already
-// read (docs/contracts.md) — never a second, independently-maintained copy.
+// read (docs/documents.md) — never a second, independently-maintained copy.
 // Labels reuse the `settings.*` strings T-02's own admin form already
 // carries (Firmierung, Straße & Hausnummer, ...) rather than a duplicate
 // set: one JSON file, one i18n instance, shared by both the admin and

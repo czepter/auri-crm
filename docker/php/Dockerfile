@@ -13,6 +13,11 @@ COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 # named explicitly. Horizon's master supervisor traps SIGTERM/SIGUSR2 through
 # it to pause and terminate workers gracefully — without it the process can
 # still boot but only ever dies hard.
+#
+# postgresql-client is the odd one out here too: nothing above it needs
+# pg_dump/pg_restore to compile, only db:cutover-snapshot and
+# db:cutover-restore (X-03) to run — the client tools, not libpq-dev's
+# headers, are what those two Process calls actually shell out to.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         git \
         unzip \
@@ -21,6 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libpng-dev \
         libjpeg62-turbo-dev \
         libfreetype6-dev \
+        postgresql-client \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" pdo_pgsql bcmath gd intl pcntl \
     && rm -rf /var/lib/apt/lists/*
