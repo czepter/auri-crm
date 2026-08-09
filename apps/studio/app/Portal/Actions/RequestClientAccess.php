@@ -5,6 +5,7 @@ namespace App\Portal\Actions;
 use App\Crm\Models\Contact;
 use App\Portal\Models\ClientAccess;
 use App\Portal\Notifications\ClientAccessLink;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
@@ -44,6 +45,8 @@ class RequestClientAccess
      */
     private const FLOOR_MS = 250;
 
+    public function __construct(private readonly StudioSettingsResolver $settings) {}
+
     public function __invoke(string $email, ?string $ip): void
     {
         $startedAt = microtime(true);
@@ -76,7 +79,7 @@ class RequestClientAccess
         ]);
 
         Notification::route('mail', $contact->email)
-            ->notify(new ClientAccessLink($contact, url("/zugang/{$token}")));
+            ->notify(new ClientAccessLink($contact, url("/zugang/{$token}"), $this->settings));
 
         // One row per issued link. The token is not in it: an audit log that
         // records live credentials is a second place to steal them from.

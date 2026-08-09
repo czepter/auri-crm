@@ -398,6 +398,41 @@ class StudioSettingsResolver
         );
     }
 
+    // --- T-06: mail identity — who a tenant's outgoing mail leaves under ---
+
+    /**
+     * config('mail.from.name')'s per-tenant replacement — the same fallback
+     * shape as timezone()/locale() above: the tenant value once T-06's
+     * E-Mail pane has set one, the environment default otherwise.
+     */
+    public function mailFromName(): string
+    {
+        return $this->row()->mail_from_name ?: config('mail.from.name');
+    }
+
+    public function mailFromAddress(): string
+    {
+        return $this->row()->mail_from_address ?: config('mail.from.address');
+    }
+
+    /** Null when unset — a reply then goes to mailFromAddress(), the mailer's own default. */
+    public function mailReplyTo(): ?string
+    {
+        return $this->row()->mail_reply_to;
+    }
+
+    /** Appended as its own line on every outgoing notification mail this story wires up. */
+    public function mailSignature(): ?string
+    {
+        return $this->row()->mail_signature;
+    }
+
+    /** Null leaves outgoing mail unBCC'd — the studio's own inbox is opt-in. */
+    public function mailBcc(): ?string
+    {
+        return $this->row()->mail_bcc;
+    }
+
     // --- T-08: the portal's own settings — a maintenance closure, home
     // branding text, two external legal links, and four client capability
     // switches. See the migration's own doc comment for why each defaults
@@ -433,7 +468,7 @@ class StudioSettingsResolver
         return $this->row()->portal_legal_agb_url;
     }
 
-    /** Gates Q-07's accept action once it exists. Nothing reads this yet — Q-07 is not merged. */
+    /** Gates Q-07's accept action. */
     public function acceptQuotesEnabled(): bool
     {
         return $this->row()->portal_accept_quotes_enabled;
