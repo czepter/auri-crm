@@ -218,3 +218,67 @@ it('carries no integer identifier in the props', function () {
     expect(collect($props['formInstances'])->pluck('id'))->toContain($instance->public_id);
     expect(collect($props['formInstances'])->flatMap(fn ($i) => collect($i['fields'])->pluck('id')))->toContain($field->public_id);
 });
+
+// --- FormInstanceController::answer — E-03's FormAnswer, over HTTP --------
+
+it('records an answer via the controller and audit-logs it', function () {
+    $user = staffMember();
+    $project = Project::factory()->create();
+    $instance = FormInstance::factory()->for($project)->create();
+    $field = FormInstanceField::factory()->for($instance, 'formInstance')->create();
+
+    $this->actingAs($user, 'staff')
+        ->patch("/frageboegen-felder/{$field->public_id}/antwort", ['value' => 'Strand'])
+        ->assertRedirect();
+
+    expect($field->currentAnswer->value)->toBe('Strand');
+
+    $row = AuditLog::where('event', 'form_instance_field.answered')->sole();
+    expect($row->actor_id)->toBe($user->id)
+        ->and($row->subject)->toBe($field->public_id);
+});
+
+it('editing an already-answered field over HTTP keeps the previous answer retrievable, not overwritten', function () {
+    $project = Project::factory()->create();
+    $instance = FormInstance::factory()->for($project)->create();
+    $field = FormInstanceField::factory()->for($instance, 'formInstance')->create();
+    $this->actingAs(staffMember(), 'staff')
+        ->patch("/frageboegen-felder/{$field->public_id}/antwort", ['value' => 'Strand']);
+    $v1 = $field->currentAnswer;
+
+    $this->actingAs(staffMember(), 'staff')
+        ->patch("/frageboegen-felder/{$field->public_id}/antwort", ['value' => 'Stadt'])
+        ->assertRedirect();
+
+    expect($field->currentAnswer()->first()->value)->toBe('Stadt')
+        ->and($field->answers()->count())->toBe(2)
+        ->and($v1->fresh()->value)->toBe('Strand');
+});
+
+it('exposes the current answer to the props once the field has been answered', function () {
+    $project = Project::factory()->create();
+    $instance = FormInstance::factory()->for($project)->create();
+    $field = FormInstanceField::factory()->for($instance, 'formInstance')->create();
+    $field->answer('Strand');
+
+    $props = $this->actingAs(staffMember(), 'staff')
+        ->get("/auftraege/{$project->public_id}/frageboegen")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    $fieldProp = collect($props['formInstances'])->sole()['fields'][0];
+    expect($fieldProp['currentAnswer'])->toBe('Strand')
+        ->and($fieldProp['answeredAt'])->not->toBeNull();
+});
+
+it('rejects answering a field to a staff member without ManageFormTemplates', function () {
+    $project = Project::factory()->create();
+    $instance = FormInstance::factory()->for($project)->create();
+    $field = FormInstanceField::factory()->for($instance, 'formInstance')->create();
+
+    $this->actingAs(staffMember(StaffRole::SecondShooter), 'staff')
+        ->patch("/frageboegen-felder/{$field->public_id}/antwort", ['value' => 'Strand'])
+        ->assertForbidden();
+
+    expect($field->answers()->count())->toBe(0);
+});

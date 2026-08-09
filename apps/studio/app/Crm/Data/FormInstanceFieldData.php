@@ -17,6 +17,8 @@ class FormInstanceFieldData extends Data
         public string $typeLabel,
         public bool $required,
         public ?array $options,
+        public ?string $currentAnswer,
+        public ?string $answeredAt,
     ) {}
 
     public static function fromModel(FormInstanceField $field): self
@@ -28,6 +30,8 @@ class FormInstanceFieldData extends Data
             typeLabel: $field->type->label(),
             required: $field->required,
             options: $field->options,
+            currentAnswer: $field->currentAnswer?->value,
+            answeredAt: $field->currentAnswer?->created_at->toIso8601String(),
         );
     }
 }

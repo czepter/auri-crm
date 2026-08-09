@@ -81,6 +81,8 @@ type: string,
 typeLabel: string,
 required: boolean,
 options: string[] | null,
+currentAnswer: string | null,
+answeredAt: string | null,
 };
 export type FormTemplateData = {
 id: string,
