@@ -2,6 +2,7 @@
 
 use App\Gallery\Console\Commands\ImportLegacyGalleriesCommand;
 use App\Http\Middleware\EnsureAudience;
+use App\Http\Middleware\EnsureGalleryGate;
 use App\Http\Middleware\EnsurePortalCapability;
 use App\Http\Middleware\EnsurePortalMaintenanceClosure;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -58,6 +59,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'audience' => EnsureAudience::class,
             'portal.maintenance' => EnsurePortalMaintenanceClosure::class,
             'portal.capability' => EnsurePortalCapability::class,
+            'gallery.gate' => EnsureGalleryGate::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
