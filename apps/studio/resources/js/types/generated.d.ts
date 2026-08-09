@@ -232,10 +232,13 @@ namespace Quotes {
 namespace Data {
 export type QuoteData = {
 id: string,
+predecessorId: string | null,
 status: string,
 statusLabel: string,
 currency: string,
 validUntil: string | null,
+number: string | null,
+sentAt: string | null,
 total: number,
 discountType: string | null,
 discountValue: number | null,

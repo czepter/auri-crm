@@ -154,6 +154,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/auftraege/{project}/angebote', [QuoteController::class, 'store'])
             ->name('quotes.store');
         Route::patch('/angebote/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
+        Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
 
         Route::get('/auftraege/{project}/vertrag', [ContractController::class, 'show'])
             ->name('projects.contract');

@@ -15,13 +15,18 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use RuntimeException;
 
 /**
  * What a project is offered, priced line by line, in minor units throughout.
  *
- * Only QuoteStatus::Draft is reachable through anything this story builds —
- * see that enum — so a quote here is mutated in place rather than replaced.
- * Q-07's "supersede" story is what makes a quote immutable once sent.
+ * Draft is mutable in place. Q-06's SendQuote is the only writer that ever
+ * moves a quote past it — sent_at, number and the Q-04/Q-03 snapshot columns
+ * all land in that one transaction — and from the moment status reads sent,
+ * booted()'s guard below refuses every further write except the one
+ * transition ReviseQuote makes: sent -> superseded, the predecessor half of
+ * "a revision is a new row" (see App\Quotes\Actions\ReviseQuote).
  */
 class Quote extends Model
 {
@@ -29,17 +34,57 @@ class Quote extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['project_id', 'status', 'currency', 'valid_until', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount'];
+    protected $fillable = ['project_id', 'predecessor_id', 'status', 'currency', 'valid_until', 'sent_at', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount'];
 
-    protected $attributes = ['status' => 'draft', 'currency' => 'EUR', 'total' => 0];
+    // Mirrors every column default in memory (the same reason Project's own
+    // $attributes gives for portal_visible): without net and discount_amount
+    // here, a freshly created()d instance reports them as null until it is
+    // reloaded, even though the row itself already holds the column
+    // defaults — and Q-06's SendQuote can run against a quote that was never
+    // re-fetched after creation.
+    protected $attributes = ['status' => 'draft', 'currency' => 'EUR', 'total' => 0, 'discount_amount' => 0, 'net' => 0];
 
     protected function casts(): array
     {
         return [
             'status' => QuoteStatus::class,
             'valid_until' => 'date',
+            'sent_at' => 'immutable_datetime',
             'discount_type' => DiscountType::class,
         ];
+    }
+
+    /**
+     * Refuses a write to an already-sent or already-superseded quote, rather
+     * than trusting the UI to hide the form that would have produced one —
+     * Q-06's acceptance criterion, proven directly against a raw model
+     * write. `updating` (not `saving`) is deliberate: it never fires on the
+     * INSERT that creates a quote, so SendQuote's own writes — made while
+     * the row still reads draft in the database — go through untouched, the
+     * same shape App\Quotes\Models\QuoteItem's own booted() guard uses.
+     *
+     * A sent quote allows exactly one further write: status alone, to
+     * superseded — what ReviseQuote's predecessor half performs. A
+     * superseded quote allows nothing more, ever.
+     */
+    protected static function booted(): void
+    {
+        static::updating(function (self $quote) {
+            $original = $quote->getRawOriginal('status');
+
+            if (! in_array($original, [QuoteStatus::Sent->value, QuoteStatus::Superseded->value], true)) {
+                return;
+            }
+
+            $allowed = $original === QuoteStatus::Sent->value ? ['status'] : [];
+            $blocked = array_diff(array_keys($quote->getDirty()), $allowed);
+
+            if ($blocked !== []) {
+                throw new RuntimeException(
+                    "Quote {$quote->public_id} is {$original} and immutable: cannot modify [".implode(', ', $blocked).'].'
+                );
+            }
+        });
     }
 
     public function project(): BelongsTo
@@ -50,6 +95,18 @@ class Quote extends Model
     public function items(): HasMany
     {
         return $this->hasMany(QuoteItem::class)->orderBy('sort_order');
+    }
+
+    /** The quote this one revises, if any — App\Quotes\Actions\ReviseQuote's own new row. */
+    public function predecessor(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'predecessor_id');
+    }
+
+    /** The revision that superseded this quote, if any. */
+    public function revision(): HasOne
+    {
+        return $this->hasOne(self::class, 'predecessor_id');
     }
 
     /**
@@ -82,8 +139,10 @@ class Quote extends Model
     /**
      * Freezes vat_mode, vat_rate, vat_note and vat_amount onto this quote
      * from the tenant's current settings and this quote's own already-
-     * rounded net. Q-06's only intended caller, at send time — nothing here
-     * runs today (same "ships unwired" shape Q-05's allocator shipped in).
+     * rounded net. App\Quotes\Actions\SendQuote is the only caller, and
+     * calls this before flipping status to sent — the quote's own row still
+     * reads draft in the database at that point, so booted()'s immutability
+     * guard above has nothing to say about it yet.
      *
      * Once these four columns are populated, QuoteData::fromModel() reads
      * them straight off the row and never falls through to

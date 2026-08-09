@@ -259,6 +259,7 @@
     "discount": "Rabatt",
     "net": "Netto",
     "vat": "USt. {rate} %",
+    "send": "Angebot versenden",
     "empty": "Noch kein Angebot."
   },
   "payments": {
