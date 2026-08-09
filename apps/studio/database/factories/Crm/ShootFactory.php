@@ -36,4 +36,21 @@ class ShootFactory extends Factory
     {
         return $this->state(fn () => ['date' => $date]);
     }
+
+    /** Places a shoot mid-pipeline, optionally stale, without transitioning it. */
+    public function atStatus(ShootStatus $status, int $daysAgo = 0): static
+    {
+        return $this->state(fn () => [
+            'status' => $status,
+            'status_entered_at' => now()->subDays($daysAgo),
+        ]);
+    }
+
+    public function cancelled(string $reason): static
+    {
+        return $this->state(fn () => [
+            'cancelled_at' => now(),
+            'cancelled_reason' => $reason,
+        ]);
+    }
 }
