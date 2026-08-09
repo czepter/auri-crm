@@ -1,5 +1,6 @@
 <?php
 
+use App\Automation\Console\Commands\SeedDefaultAutomationRulesCommand;
 use App\Automation\Console\Commands\SweepDateOffsetAutomationRulesCommand;
 use App\Gallery\Console\Commands\ImportLegacyGalleriesCommand;
 use App\Http\Middleware\EnsureAudience;
@@ -38,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
         CutoverSnapshotCommand::class,
         CutoverRestoreCommand::class,
         SweepDateOffsetAutomationRulesCommand::class,
+        SeedDefaultAutomationRulesCommand::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         // G-01a's one lifecycle rule (issue #50) — see the command's own

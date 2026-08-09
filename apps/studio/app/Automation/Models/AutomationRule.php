@@ -38,6 +38,7 @@ class AutomationRule extends Model
     use HasPublicId;
 
     protected $fillable = [
+        'key',
         'name',
         'trigger_type',
         'event_class',
