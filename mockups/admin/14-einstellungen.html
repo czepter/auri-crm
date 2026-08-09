@@ -234,22 +234,22 @@
             </div>
             <div class="grp">
               <div class="fld" style="max-width:160px">
-                <label for="v-satz">Steuersatz <em>bei Standard</em></label>
-                <input class="inp num" id="v-satz" type="text" value="19" disabled style="opacity:.5">
-                <span class="hint">Prozent, netto. Ohne Wirkung im §19-Modus.</span>
+                <label for="v-satz">Steuersatz</label>
+                <input class="inp num" id="v-satz" type="text" value="19">
+                <span class="hint">Prozent, netto.</span>
               </div>
             </div>
           </div>
 
           <div class="dsec">
-            <div class="dlab">Vorschau · Rechnungshinweis</div>
-            <div class="card static">
-              <div class="cardhead"><span class="kick">Erscheint auf jedem Beleg</span></div>
-              <p style="margin:0; font:400 13px/1.5 var(--font); color:var(--ink)">
-                Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.
-              </p>
+            <div class="dlab">Rechnungshinweis</div>
+            <div class="grp">
+              <div class="fld">
+                <label for="v-hinweis">Hinweistext <em>optional</em></label>
+                <textarea class="inp" id="v-hinweis" rows="3">Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.</textarea>
+                <span class="hint">Steht unter der Summe auf Angebot, Vertrag und Rechnung. Wortlaut frei — leer lassen, wenn kein Hinweis nötig ist.</span>
+              </div>
             </div>
-            <span class="hint" style="display:block; margin-top:var(--s3)">Live-Vorschau des Hinweistexts — folgt dem Modus oben, ohne zu speichern.</span>
           </div>
 
         </div>
