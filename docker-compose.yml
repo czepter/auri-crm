@@ -14,6 +14,7 @@ services:
       DB_DATABASE: studio
       DB_USERNAME: studio
       DB_PASSWORD: studio
+      REDIS_HOST: redis
     ports:
       # Published so the Playwright suite on the host can reach `artisan serve`
       # running inside this container. The host port is a variable because
@@ -23,6 +24,38 @@ services:
       - "127.0.0.1:${APP_PORT:-8000}:8000"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Runs Horizon rather than `queue:work` directly: one process supervises
+  # every named-queue worker (default/mail/render, config/horizon.php) and
+  # gives them the dashboard mounted on the admin surface. A queue that only
+  # runs when someone remembers to start it locally is an outage waiting for
+  # the first real contract, so this is a service here the same as in
+  # whatever ends up running this stack in production — see docs/queue.md.
+  worker:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    working_dir: /app/apps/studio
+    volumes:
+      - .:/app
+      - composer-cache:/tmp/composer
+    environment:
+      COMPOSER_HOME: /tmp/composer
+      APP_SURFACE: admin
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: studio
+      DB_USERNAME: studio
+      DB_PASSWORD: studio
+      REDIS_HOST: redis
+    command: php artisan horizon
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   postgres:
@@ -41,6 +74,18 @@ services:
       timeout: 3s
       retries: 30
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6380}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
   mailpit:
     image: axllent/mailpit
     ports:
@@ -48,4 +93,5 @@ services:
 
 volumes:
   pgdata:
+  redisdata:
   composer-cache:

@@ -226,6 +226,24 @@
     "itemPrice": "Preis (€)",
     "itemPriceHint": "Leer lassen für „enthaltene Leistung“ ohne eigenen Preis."
   },
+  "quotes": {
+    "title": "Angebot",
+    "create": "Neues Angebot",
+    "validUntil": "Gültig bis",
+    "fromPackage": "Aus Paket",
+    "blank": "Leeres Angebot",
+    "included": "Enthaltene Leistung",
+    "includedPrice": "inklusive",
+    "total": "Gesamt",
+    "items": "Positionen",
+    "addItem": "Position hinzufügen",
+    "itemTitle": "Titel",
+    "itemDescription": "Beschreibung",
+    "itemQuantity": "Menge",
+    "itemPrice": "Preis (€)",
+    "itemPriceHint": "Leer lassen für „Enthaltene Leistung“ ohne eigenen Preis.",
+    "empty": "Noch kein Angebot."
+  },
   "portal": {
     "signInTitle": "Kundenbereich",
     "signInHint": "Adresse eintragen — wir schicken einen Link. Kein Passwort nötig.",

@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\StaffRole;
+use App\Models\User;
 use App\Support\Surface;
 use Illuminate\Routing\RouteCollection;
 use Illuminate\Support\Facades\Route;
@@ -108,6 +110,17 @@ function routesForSurface(string $surface): array
     Surface::registerRoutes();
 
     return collect(Route::getRoutes()->getRoutes())->all();
+}
+
+/**
+ * A staff user, optionally holding a specific role. Lives here rather than in
+ * whichever test file happened to declare it first — Catalog and Queue both
+ * need one now, and a global function declared inside one test file collides
+ * the moment a second file declares the same name.
+ */
+function staffMember(?StaffRole $role = null): User
+{
+    return User::factory()->withMfa()->create($role ? ['role' => $role] : []);
 }
 
 function integerIdPaths(mixed $node, string $path = '$'): array

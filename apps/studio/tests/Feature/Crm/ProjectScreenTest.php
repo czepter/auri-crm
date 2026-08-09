@@ -45,7 +45,7 @@ it('shows only the tabs whose feature exists', function () {
     // never as an empty shell.
     $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
 
-    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots']);
+    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots', 'quotes']);
 });
 
 it('agrees with the board about an unbooked project', function () {

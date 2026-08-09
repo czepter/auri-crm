@@ -2,6 +2,7 @@
 
 use App\Support\Surface;
 use Illuminate\Routing\RouteCollection;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -40,9 +41,9 @@ it('registers the portal routes only on the portal surface', function () {
 it('gives each surface its own session cookie', function () {
     // Two audiences sharing a cookie name on one host is how a browser comes
     // to offer a staff session to the client portal.
-    expect(App\Support\Surface::COOKIES)->toHaveCount(count(App\Support\Surface::ALL))
-        ->and(array_unique(array_values(App\Support\Surface::COOKIES)))
-        ->toHaveCount(count(App\Support\Surface::ALL));
+    expect(Surface::COOKIES)->toHaveCount(count(Surface::ALL))
+        ->and(array_unique(array_values(Surface::COOKIES)))
+        ->toHaveCount(count(Surface::ALL));
 });
 
 it('registers the api routes only on the api surface', function () {
@@ -79,4 +80,32 @@ it('boots with only the admin surface routes registered by the real application 
 
     expect($uris)->toContain('login')
         ->and($uris)->not->toContain('api/health');
+});
+
+it('mounts horizon on the real admin-surface bootstrap', function () {
+    // Same reasoning as the test above: against the route table the real
+    // bootstrap left in place, not urisForSurface()'s destructive
+    // re-registration, which never touches a package's own
+    // ServiceProvider::boot() and so could never catch a regression there.
+    $uris = collect(Route::getRoutes()->getRoutes())->map(fn ($route) => $route->uri())->all();
+
+    // The dashboard's catch-all route, not literally "horizon" — its API
+    // routes (horizon/api/stats and friends) are gated the same way but
+    // aren't the surface signal this test is after.
+    expect($uris)->toContain('horizon/{view?}');
+});
+
+it('never registers horizon outside the admin surface, at a real application boot', function () {
+    // urisForSurface('portal') can't answer this: it re-registers only
+    // routes/{surface}.php into a fresh collection and never reboots
+    // Horizon's own ServiceProvider, so it would report Horizon absent
+    // whether or not bootstrap/providers.php actually scoped it. Only a
+    // separate process, booted with APP_SURFACE=portal from cold, exercises
+    // the real conditional.
+    $result = Process::env(['APP_SURFACE' => 'portal'])
+        ->path(base_path())
+        ->run([PHP_BINARY, 'artisan', 'route:list', '--path=horizon']);
+
+    expect($result->successful())->toBeTrue()
+        ->and($result->output())->not->toContain('horizon');
 });

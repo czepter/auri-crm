@@ -20,6 +20,7 @@ use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
 use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\SessionController;
+use App\Quotes\Http\Controllers\QuoteController;
 use Illuminate\Support\Facades\Route;
 
 // A full authentication bypass for local inspection — no password, no MFA
@@ -121,6 +122,13 @@ Route::middleware('audience:staff')->group(function () {
             ->name('projects.book');
         Route::post('/auftraege/{project}/portal-sichtbarkeit', [ProjectController::class, 'togglePortalVisibility'])
             ->name('projects.portal-visibility.toggle');
+
+        Route::get('/auftraege/{project}/angebote', [ProjectController::class, 'quotes'])
+            ->name('projects.quotes');
+
+        Route::post('/auftraege/{project}/angebote', [QuoteController::class, 'store'])
+            ->name('quotes.store');
+        Route::patch('/angebote/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
 
         Route::post('/auftraege/{project}/shootings', [ShootController::class, 'store'])
             ->name('shoots.store');

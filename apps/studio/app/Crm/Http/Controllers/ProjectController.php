@@ -2,6 +2,7 @@
 
 namespace App\Crm\Http\Controllers;
 
+use App\Catalog\Models\Package;
 use App\Crm\Actions\BookProject;
 use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Data\InternalNoteData;
@@ -13,6 +14,7 @@ use App\Crm\Models\Project;
 use App\Data\StaffProfileData;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Quotes\Data\QuoteData;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -63,6 +65,21 @@ class ProjectController extends Controller
             'staff' => StaffProfileData::collect(User::query()->orderBy('name')->get()),
             'crewRoles' => collect(CrewRole::cases())
                 ->map(fn (CrewRole $role) => ['value' => $role->value, 'label' => $role->label()])
+                ->all(),
+        ]);
+    }
+
+    public function quotes(Project $project): Response
+    {
+        $this->authorize('view', $project);
+
+        return Inertia::render('Projects/Quotes', [
+            'header' => $this->header($project),
+            'quotes' => QuoteData::collect(
+                $project->quotes()->with('items')->get()
+            ),
+            'packages' => Package::active()->orderBy('name')->get()
+                ->map(fn (Package $package) => ['value' => $package->public_id, 'label' => $package->name])
                 ->all(),
         ]);
     }
