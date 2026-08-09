@@ -29,6 +29,9 @@ class StudioSettingsController extends Controller
             'settings' => new StudioSettingsData(
                 id: $settings->publicId(),
                 displayName: $settings->displayName(),
+                vatMode: $settings->vatMode(),
+                vatRate: $settings->vatRate(),
+                vatNote: $settings->vatNote(),
             ),
         ]);
     }
@@ -42,6 +45,34 @@ class StudioSettingsController extends Controller
         ]);
 
         $settings->set('display_name', $validated['display_name'] ?: null, auth('staff')->user());
+
+        return redirect('/einstellungen');
+    }
+
+    /**
+     * T-03's own save action, separate from update() above: Studio-Profil
+     * and Zahlungsdaten & USt are two forms in the mockup, each with its own
+     * "Speichern" button, and giving them one shared endpoint would make an
+     * unrelated field's validation error block the other form's save.
+     *
+     * vat_rate arrives already in basis points (see
+     * resources/js/admin/lib/money.ts) — the same "never a float" boundary
+     * App\Quotes\Enums\DiscountType documents for discount percentages.
+     */
+    public function updateVat(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        $validated = $request->validate([
+            'vat_mode' => ['required', 'in:standard,small_business'],
+            'vat_rate' => ['required', 'integer', 'min:0', 'max:10000'],
+            'vat_note' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $actor = auth('staff')->user();
+        $settings->set('vat_mode', $validated['vat_mode'], $actor);
+        $settings->set('vat_rate', $validated['vat_rate'], $actor);
+        $settings->set('vat_note', $validated['vat_note'] ?? null, $actor);
 
         return redirect('/einstellungen');
     }

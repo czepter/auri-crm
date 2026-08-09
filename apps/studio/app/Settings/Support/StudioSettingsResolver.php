@@ -38,6 +38,39 @@ class StudioSettingsResolver
         return $this->row()->public_id;
     }
 
+    /** 'standard' or 'small_business' — see the studio_settings table's check constraint for the domain. */
+    public function vatMode(): string
+    {
+        return $this->row()->vat_mode;
+    }
+
+    /**
+     * The standard-mode rate, in basis points (1900 = 19.00%) — never zero
+     * out this value on a small_business switch, or switching back to
+     * standard has nothing to restore. Q-04 wants effectiveVatRate()
+     * instead of this for anything it actually prints.
+     */
+    public function vatRate(): int
+    {
+        return $this->row()->vat_rate;
+    }
+
+    public function vatNote(): ?string
+    {
+        return $this->row()->vat_note;
+    }
+
+    /**
+     * What a document should actually use — zero under small_business
+     * regardless of what vat_rate holds, so a mode switch never leaves a
+     * stale 19% behind. This is T-03's whole point: Q-04 calls this, not
+     * vatRate(), the moment it prints a total.
+     */
+    public function effectiveVatRate(): int
+    {
+        return $this->vatMode() === 'small_business' ? 0 : $this->vatRate();
+    }
+
     /**
      * Writes one column, busts the cache both processes read through, and
      * leaves an audit row naming the actor and both values — T-01's issue,
