@@ -27,6 +27,32 @@ const form = useForm({
   venue_city: '',
 })
 
+// E-04: which shoot's Ablauf is open for editing, at most one at a time.
+const editingTimeline = ref<string | null>(null)
+const timelineForm = useForm({
+  time: '',
+  title: '',
+  location: '',
+  note: '',
+  is_transit: false,
+})
+
+function toggleTimelineEdit(shoot: App.Crm.Data.ShootData) {
+  editingTimeline.value = editingTimeline.value === shoot.id ? null : shoot.id
+  timelineForm.reset()
+}
+
+function addTimelineEntry(shoot: App.Crm.Data.ShootData) {
+  timelineForm.post(`/shootings/${shoot.id}/ablauf`, {
+    preserveScroll: true,
+    onSuccess: () => timelineForm.reset(),
+  })
+}
+
+function removeTimelineEntry(entry: App.Crm.Data.TimelineEntryData) {
+  router.delete(`/ablauf/${entry.id}`, { preserveScroll: true })
+}
+
 const kinds = [
   { value: 'engagement', label: 'Verlobung' },
   { value: 'wedding', label: 'Hochzeit' },
@@ -240,6 +266,83 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
             <button v-if="header.canManageShoots" type="button" class="abtn hot" @click="cancel(shoot)">
               {{ $t('project.cancel') }}
             </button>
+          </div>
+
+          <!-- E-04: the day-of schedule. Read-only structure matches mockup
+               04's .tl block exactly — editing and export sit in their own
+               formfoot below it, the same grammar the crew section above
+               already uses. -->
+          <div
+            v-if="shoot.timeline.length"
+            class="tl"
+            style="margin-top: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--line)"
+          >
+            <div v-for="entry in shoot.timeline" :key="entry.id" class="tlrow" :class="{ move: entry.isTransit }">
+              <div class="tltime">{{ entry.time }}</div>
+              <div class="tlrail"><span class="dot"></span></div>
+              <div class="tlbody">
+                <div class="tlname">{{ entry.title }}</div>
+                <div v-if="entry.location" class="tlwhere">{{ entry.location }}</div>
+                <div v-if="entry.note" class="tlwho">{{ entry.note }}</div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="shoot.date" class="formfoot" style="margin-top: var(--s3)">
+            <button v-if="header.canManageShoots" type="button" class="txtbtn" @click="toggleTimelineEdit(shoot)">
+              {{ $t(editingTimeline === shoot.id ? 'project.timelineDone' : 'project.timelineEdit') }}
+            </button>
+            <a class="txtbtn" :href="shoot.pdfUrl" download>{{ $t('project.timelinePdf') }}</a>
+            <a class="txtbtn" :href="shoot.icsUrl" download>{{ $t('project.timelineIcs') }}</a>
+          </div>
+
+          <div v-if="shoot.date && editingTimeline === shoot.id && header.canManageShoots" class="card static" style="margin-top: var(--s3)">
+            <form class="fgrid" @submit.prevent="addTimelineEntry(shoot)">
+              <div class="fld">
+                <label for="tl-time">{{ $t('project.timelineTime') }}</label>
+                <input id="tl-time" v-model="timelineForm.time" class="inp num" type="time" required />
+              </div>
+              <div class="fld wide">
+                <label for="tl-title">{{ $t('project.timelineTitle') }}</label>
+                <input id="tl-title" v-model="timelineForm.title" class="inp" type="text" required />
+              </div>
+              <div class="fld">
+                <label for="tl-location">
+                  {{ $t('project.timelineLocation') }}<em>{{ $t('project.optional') }}</em>
+                </label>
+                <input id="tl-location" v-model="timelineForm.location" class="inp" type="text" />
+              </div>
+              <div class="fld">
+                <label for="tl-note">
+                  {{ $t('project.timelineNote') }}<em>{{ $t('project.optional') }}</em>
+                </label>
+                <input id="tl-note" v-model="timelineForm.note" class="inp" type="text" />
+              </div>
+              <div class="fld wide">
+                <label style="flex-direction: row; align-items: center; gap: 6px">
+                  <input v-model="timelineForm.is_transit" type="checkbox" />
+                  {{ $t('project.timelineTransit') }}
+                </label>
+              </div>
+
+              <div class="fld wide">
+                <div class="formfoot" style="margin-top: 0">
+                  <button class="btn" type="submit" :disabled="timelineForm.processing">
+                    {{ $t('common.save') }}
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            <div v-if="shoot.timeline.length" style="margin-top: var(--s4); display: flex; flex-direction: column; gap: var(--s2)">
+              <div v-for="entry in shoot.timeline" :key="entry.id" class="hrow">
+                <span>{{ entry.time }} · {{ entry.title }}</span>
+                <button type="button" class="abtn hot" style="margin-left: auto" @click="removeTimelineEntry(entry)">
+                  {{ $t('project.timelineRemove') }}
+                </button>
+              </div>
+            </div>
+            <p v-else class="hint">{{ $t('project.timelineEmpty') }}</p>
           </div>
         </template>
       </section>

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * A person, role-agnostic. One row per address: a household sharing an inbox
@@ -29,11 +30,19 @@ use Illuminate\Notifications\Notifiable;
  * rather than left on-demand everywhere, because client preferences
  * (App\Notifications\Support\NotificationPreferences) key on an identity an
  * on-demand address does not carry.
+ *
+ * G-01 gives it a second, independent way to prove that same identity:
+ * HasApiTokens, for the api surface's guest tokens (Sanctum bearer tokens,
+ * scoped to whichever contact created them) rather than the portal's session
+ * cookie. Neither grants the other — a magic link never mints a token, and a
+ * token never opens a portal session — they just happen to authenticate the
+ * same row.
  */
 class Contact extends Model implements Authenticatable
 {
     use AuthenticatableTrait;
     use BelongsToTenant;
+    use HasApiTokens;
     use HasFactory;
     use HasPublicId;
     use Notifiable;

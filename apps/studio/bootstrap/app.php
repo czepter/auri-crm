@@ -1,13 +1,18 @@
 <?php
 
+use App\Gallery\Console\Commands\ImportLegacyGalleriesCommand;
 use App\Http\Middleware\EnsureAudience;
 use App\Http\Middleware\EnsurePortalCapability;
 use App\Http\Middleware\EnsurePortalMaintenanceClosure;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RequireConfirmedMfa;
+use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
+use App\Migration\Console\Commands\CutoverRestoreCommand;
+use App\Migration\Console\Commands\CutoverSnapshotCommand;
 use App\Migration\Console\Commands\ImportHistoricalDataCommand;
 use App\Payments\Console\Commands\DetectOverdueInstallmentsCommand;
 use App\Support\Surface;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -26,7 +31,20 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
         DetectOverdueInstallmentsCommand::class,
         ImportHistoricalDataCommand::class,
+        ReapIncompleteMultipartUploads::class,
+        ImportLegacyGalleriesCommand::class,
+        CutoverSnapshotCommand::class,
+        CutoverRestoreCommand::class,
     ])
+    ->withSchedule(function (Schedule $schedule) {
+        // G-01a's one lifecycle rule (issue #50) — see the command's own
+        // docblock for why this is a schedule entry rather than a bucket
+        // lifecycle policy. No production deploy configuration exists yet to
+        // run `schedule:run` from (same gap docs/queue.md already flags for
+        // the worker process); this is the seam it will hang off once one
+        // does.
+        $schedule->command(ReapIncompleteMultipartUploads::class)->daily();
+    })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
             HandleInertiaRequests::class,

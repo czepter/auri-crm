@@ -104,6 +104,12 @@ class Shoot extends Model
         return $this->hasMany(Task::class);
     }
 
+    /** Ordered so every reader — the screen, the PDF, the ICS feed — walks the day the same way. */
+    public function timeline(): HasMany
+    {
+        return $this->hasMany(TimelineEntry::class)->orderBy('time')->orderBy('sort_order');
+    }
+
     public function shotListItems(): HasMany
     {
         return $this->hasMany(ShotListItem::class);

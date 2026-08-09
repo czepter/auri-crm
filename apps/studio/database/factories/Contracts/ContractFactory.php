@@ -4,8 +4,8 @@ namespace Database\Factories\Contracts;
 
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
-use App\Contracts\Models\ContractTemplate;
 use App\Crm\Models\Project;
+use App\Documents\Models\DocumentTemplate;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -19,7 +19,7 @@ class ContractFactory extends Factory
     {
         return [
             'project_id' => Project::factory(),
-            'contract_template_id' => ContractTemplate::factory(),
+            'contract_template_id' => DocumentTemplate::factory(),
             'status' => ContractStatus::Pending,
         ];
     }

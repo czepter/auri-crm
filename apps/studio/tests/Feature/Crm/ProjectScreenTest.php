@@ -42,10 +42,10 @@ it('renders the project overview with a derived header', function () {
 
 it('shows only the tabs whose feature exists', function () {
     // Mockup 04 shows seven. A tab appears when the feature behind it lands,
-    // never as an empty shell. Vertrag is M-01.
+    // never as an empty shell. Vertrag is M-01, Kommunikation is E-06.
     $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
 
-    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots', 'quotes', 'contract']);
+    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots', 'messages', 'quotes', 'contract']);
 });
 
 it('agrees with the board about an unbooked project', function () {
