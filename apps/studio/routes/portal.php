@@ -9,6 +9,7 @@ use App\Portal\Http\Controllers\PaymentCheckoutController;
 use App\Portal\Http\Controllers\PaymentController;
 use App\Portal\Http\Controllers\ProjectController;
 use App\Portal\Http\Controllers\QuoteController;
+use App\Portal\Http\Controllers\ThreadController;
 use Illuminate\Support\Facades\Route;
 
 // Client surface. A different audience from the studio's, on its own session
@@ -81,6 +82,18 @@ Route::middleware('portal.maintenance')->group(function () {
         Route::post('/projekte/{project}/angebot/annehmen', [QuoteController::class, 'accept'])
             ->middleware('portal.capability:accept_quotes')
             ->name('portal.quotes.accept');
+
+        // E-06, gated by T-08's own "messaging" switch (default off) — the
+        // whole thread, GET and POST alike, the same full-screen shape
+        // payment_status above takes rather than gating only a submit the
+        // way accept_quotes/sign_contracts do. See EnsurePortalCapability
+        // and StudioSettingsResolver::messagingEnabled().
+        Route::get('/projekte/{project}/nachrichten', [ThreadController::class, 'show'])
+            ->middleware('portal.capability:messaging')
+            ->name('portal.threads.show');
+        Route::post('/projekte/{project}/nachrichten', [ThreadController::class, 'store'])
+            ->middleware('portal.capability:messaging')
+            ->name('portal.threads.store');
 
         // T-07. Read-only apart from M-04's own confirm step on return from
         // Stripe — nothing here ever CREATES a Stripe object, see

@@ -163,7 +163,12 @@
     "contractNone": "Noch kein Vertrag erzeugt.",
     "contractNoTemplates": "Noch keine Vertragsvorlage angelegt.",
     "contractDownload": "PDF herunterladen",
-    "contractPending": "Wird gerade erstellt …"
+    "contractPending": "Wird gerade erstellt …",
+    "messagesSubject": "Thema: {subject}",
+    "messagesEmpty": "Noch keine Nachrichten.",
+    "messagesNone": "Der Kunde hat noch kein Gespräch begonnen.",
+    "messagesReplyPlaceholder": "Antwort schreiben …",
+    "messagesSend": "Senden"
   },
   "calendar": {
     "title": "Kalender",
@@ -535,7 +540,7 @@
     "paymentStatusEnabledLabel": "Zahlungsstatus einsehen",
     "paymentStatusEnabledHint": "Ausgeschaltet bleibt die Zahlungsübersicht im Portal ausgeblendet.",
     "messagingEnabledLabel": "Nachrichten an das Studio",
-    "messagingEnabledHint": "Noch ohne Funktion dahinter — greift, sobald verfügbar."
+    "messagingEnabledHint": "Ausgeschaltet bleibt die Kommunikation im Portal ausgeblendet."
   },
   "portal": {
     "signInTitle": "Kundenbereich",
@@ -573,6 +578,13 @@
     "quoteExpired": "Die Gültigkeit dieses Angebots ist abgelaufen.",
     "quoteAccept": "Angebot annehmen",
     "quoteAccepted": "Angenommen am {date}.",
+    "messagesLinkTitle": "Nachrichten",
+    "messagesKicker": "Nachrichten",
+    "messagesTitle": "Neue Nachricht",
+    "messagesNone": "Noch keine Nachrichten. Schreiben Sie uns.",
+    "messagesSubjectPlaceholder": "Worum geht's?",
+    "messagesBodyPlaceholder": "Ihre Nachricht …",
+    "messagesSend": "Senden",
     "paymentsLinkTitle": "Zahlungen",
     "paymentsKicker": "Zahlungen",
     "paymentsTitle": "Ihre Zahlungen",

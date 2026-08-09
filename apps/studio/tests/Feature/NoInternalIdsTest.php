@@ -235,6 +235,43 @@ it('never puts an integer identifier into a portal project screen', function () 
     expect(integerIdPaths($props))->toBe([]);
 });
 
+it('never puts an integer identifier into a project\'s messages tab', function () {
+    // Populated on purpose, per the note above the project test: an empty
+    // thread proves nothing, since the key that escapes belongs to a message.
+    $user = User::factory()->withMfa()->create();
+    $project = Project::factory()->create();
+    $contact = Contact::factory()->create();
+    app(App\Engagement\Actions\StartThread::class)($project, $contact, 'Thema', 'Nachricht.');
+
+    $props = $this->actingAs($user, 'staff')
+        ->get("/auftraege/{$project->public_id}/nachrichten")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect(integerIdPaths($props))->toBe([]);
+});
+
+it('never puts an integer identifier into the portal messages screen', function () {
+    useSurface(Surface::PORTAL);
+    // T-08's "messaging" switch defaults to off — this test exercises the
+    // thread screen itself, so the switch is on, the same way the sign and
+    // accept tests above turn their own switches on.
+    \Illuminate\Support\Facades\Cache::store('redis')->flush();
+    \App\Settings\Models\StudioSettings::query()->update(['portal_messaging_enabled' => true]);
+
+    $contact = Contact::factory()->create();
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $project->attachContact($contact, ProjectContactRole::Primary);
+    app(App\Engagement\Actions\StartThread::class)($project, $contact, 'Thema', 'Nachricht.');
+
+    $props = $this->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}/nachrichten")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect(integerIdPaths($props))->toBe([]);
+});
+
 it('never puts an integer identifier into the portal quote screen once accepted, and the accept route takes only a public id', function () {
     useSurface(Surface::PORTAL);
     // T-08's "accept quotes online" switch defaults to off — this test

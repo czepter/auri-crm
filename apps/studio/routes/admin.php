@@ -19,6 +19,7 @@ use App\Crm\Http\Controllers\TaskController;
 use App\Crm\Http\Controllers\TaskTemplateController;
 use App\Crm\Http\Controllers\TimelineController;
 use App\Documents\Http\Controllers\DocumentTemplateController;
+use App\Engagement\Http\Controllers\ThreadController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
 use App\Http\Controllers\Staff\InvitationController;
@@ -211,6 +212,15 @@ Route::middleware('audience:staff')->group(function () {
             ->name('projects.book');
         Route::post('/auftraege/{project}/portal-sichtbarkeit', [ProjectController::class, 'togglePortalVisibility'])
             ->name('projects.portal-visibility.toggle');
+
+        // E-06. The client is the only one who can start a thread (see
+        // StartThread, reached from routes/portal.php) — this GET reads
+        // whatever the client has already opened, and the POST beside it is
+        // staff's reply on it, never an origination of its own.
+        Route::get('/auftraege/{project}/nachrichten', [ProjectController::class, 'messages'])
+            ->name('projects.messages');
+        Route::post('/auftraege/{project}/nachrichten', [ThreadController::class, 'reply'])
+            ->name('threads.reply');
 
         Route::get('/auftraege/{project}/angebote', [ProjectController::class, 'quotes'])
             ->name('projects.quotes');
