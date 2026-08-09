@@ -15,6 +15,7 @@
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^3.0",
         "league/flysystem-aws-s3-v3": "^3.29",
+        "maennchen/zipstream-php": "^3.2",
         "pragmarx/google2fa": "^9.0",
         "predis/predis": "^3.5",
         "spatie/laravel-data": "^4.23",
