@@ -352,7 +352,21 @@
     "numberingLockedHint": "Für diesen Zeitraum wurde bereits eine Nummer vergeben — der Startwert ist gesperrt.",
     "numberingChangeWarning": "Präfix und Rücksetzung gelten nur für Dokumente, die noch nicht ausgestellt wurden. Bereits ausgestellte Nummern bleiben unverändert.",
     "numberingPreview": "Nächste Nummer",
-    "numberingSave": "Speichern"
+    "numberingSave": "Speichern",
+    "documentsTitle": "Dokumente",
+    "documentsQuoteLabel": "Angebot",
+    "quoteValidityLabel": "Gültigkeit",
+    "quoteValidityHint": "Tage ab Erstellung — greift, wenn das Angebot keine eigene Gültigkeit trägt.",
+    "documentsPaymentLabel": "Zahlung",
+    "paymentTermLabel": "Zahlungsziel",
+    "paymentTermHint": "Tage ab Rechnungsstellung.",
+    "depositPercentageLabel": "Anzahlung",
+    "depositPercentageHint": "Prozent der Gesamtsumme — füllt einen neuen Zahlungsplan vor.",
+    "widerrufLabel": "Widerrufsbelehrung",
+    "widerrufIncludedLabel": "In Verträgen aufnehmen",
+    "widerrufIncludedHint": "Steuert das Textfeld unten in Vertragsvorlagen — ausgeschaltet rendert es leer.",
+    "widerrufTextLabel": "Text",
+    "widerrufTextHint": "Erscheint dort, wo eine Vertragsvorlage das Merkmal einsetzt. Wortlaut frei."
   },
   "portal": {
     "signInTitle": "Kundenbereich",
