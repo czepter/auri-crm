@@ -10,6 +10,8 @@ use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
 use App\Models\User;
 use App\Support\Surface;
+use Aws\MockHandler;
+use Aws\S3\S3Client;
 use Illuminate\Routing\RouteCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -169,6 +171,30 @@ function renderedContract(?Project $project = null, string $bytes = '%PDF-stored
     $contract->update(['status' => ContractStatus::Rendered, 'artifact_path' => $path, 'rendered_at' => now()]);
 
     return $contract->fresh();
+}
+
+/**
+ * An Aws\S3\S3Client wired to Aws\MockHandler instead of a live bucket — the
+ * boundary ReapIncompleteMultipartUploadsTest's own comment flags as having
+ * "no fake for that boundary exists in this repo yet" at the time G-01a
+ * shipped. G-02's MultipartUploadGateway is the first thing to actually call
+ * the S3 SDK's multipart operations, so this is that fake: bind the return
+ * value with `$this->app->instance(S3Client::class, ...)` before hitting a
+ * route that resolves MultipartUploadGateway.
+ */
+function mockS3Client(MockHandler $handler): S3Client
+{
+    return new S3Client([
+        'version' => 'latest',
+        'region' => 'eu-central-1',
+        'credentials' => ['key' => 'test', 'secret' => 'test'],
+        'handler' => $handler,
+        // Matches config/filesystems.php's `s3` disk — see the comment
+        // there. Without it, ApplyChecksumMiddleware tries to hash (and
+        // therefore seek) the request body before this test's own
+        // non-seekable-stream case ever gets there.
+        'request_checksum_calculation' => 'when_required',
+    ]);
 }
 
 function integerIdPaths(mixed $node, string $path = '$'): array

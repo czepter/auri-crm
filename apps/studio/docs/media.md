@@ -55,13 +55,45 @@ anything left incomplete under the `quarantine/` prefix
 (`ReapIncompleteMultipartUploads::QUARANTINE_PREFIX`) past `--older-than`
 hours (default 24). Scheduled daily in `bootstrap/app.php`'s `withSchedule()`.
 
-G-02 (#51) is what will actually start a multipart upload under
-`quarantine/`; this story ships the cleanup side of that seam ahead of the
-upload flow itself, deliberately — see #50.
-
 No production deploy configuration exists yet to run `schedule:run` from
 (the same gap docs/queue.md flags for the `worker` process); flagged here
 rather than guessed at.
+
+## Ingest: app-proxied multipart upload (G-02)
+
+`App\Media\Http\Controllers\MultipartUploadController` (routes/admin.php,
+`mfa` group) is the only thing the admin browser ever talks to — it never
+receives a storage path, bucket name or presigned URL, in either direction,
+the same rule G-11 (#60) applies to downloads. Every request it handles is
+relayed to the bucket server-side by `App\Media\Services\
+MultipartUploadGateway`, which reaches past Flysystem to the raw
+`Aws\S3\S3Client` for the same reason `ReapIncompleteMultipartUploads`
+already does: Flysystem has no multipart-upload API of its own.
+
+A chunk is streamed straight from the request's own `php://input` resource
+to S3's `UploadPart` — never buffered, never spooled to local disk. That
+resource is never seekable, so it can never be SigV4-hashed and rewound to
+send; `UploadPart` sets `X-Amz-Content-Sha256: UNSIGNED-PAYLOAD` on the
+built request directly (before the signer runs) rather than through the
+SDK's own `v4-unsigned-body` signature option, which S3Client's own
+resolved `signature_version` config blocks a per-command override from
+reaching. `request_checksum_calculation` is set to `when_required` on the
+`s3` disk for the same reason: the SDK's default opt-in trailer checksum
+also hashes (and so seeks) the body up front, and would otherwise defeat
+the same streaming requirement it exists to protect.
+
+`App\Media\Models\MultipartUpload` (tenant-scoped, `HasPublicId`) is what a
+returning tab resumes from — found by fingerprint (filename, size, the
+browser's own `File.lastModified`), never by the storage key or `uploadId`
+it was never given. It carries no record of which parts have landed: the
+bucket is the source of truth for that (`ListParts`), read fresh on every
+resume and again when a session completes, so nothing here can drift from
+what the bucket actually holds. Its `key` sits under `quarantine/` —
+`ReapIncompleteMultipartUploads::QUARANTINE_PREFIX` — exactly what that
+reaper already expects to find and clean up if a session is ever abandoned.
+
+G-03 is what promotes a completed quarantine object into a gallery asset;
+this story only lands bytes there safely.
 
 ## Delivery
 

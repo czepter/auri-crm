@@ -27,6 +27,8 @@ use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
 use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\SessionController;
+use App\Media\Http\Controllers\MediaIngestController;
+use App\Media\Http\Controllers\MultipartUploadController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
 use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
@@ -236,6 +238,22 @@ Route::middleware('audience:staff')->group(function () {
             ->name('contracts.store');
         Route::get('/vertraege/{contract}/pdf', [ContractController::class, 'download'])
             ->name('contracts.download');
+
+        // G-02: app-proxied multipart ingest into a gallery's quarantine
+        // prefix. galleries.uploads.* is a JSON API for the browser's own
+        // chunked uploader (resources/js/admin/lib/multipartUpload.ts), not
+        // Inertia — see MultipartUploadController.
+        Route::get('/galerien/{gallery}/medien', [MediaIngestController::class, 'show'])
+            ->name('galleries.media');
+        Route::post('/galerien/{gallery}/uploads', [MultipartUploadController::class, 'store'])
+            ->name('galleries.uploads.store');
+        Route::put('/uploads/{multipartUpload}/teile/{partNumber}', [MultipartUploadController::class, 'uploadPart'])
+            ->whereNumber('partNumber')
+            ->name('galleries.uploads.parts.store');
+        Route::post('/uploads/{multipartUpload}/abschluss', [MultipartUploadController::class, 'complete'])
+            ->name('galleries.uploads.complete');
+        Route::delete('/uploads/{multipartUpload}', [MultipartUploadController::class, 'destroy'])
+            ->name('galleries.uploads.destroy');
 
         // No GET here: the Zahlungen card lives on the project overview
         // itself (ProjectController::show), not a tab of its own — see the
