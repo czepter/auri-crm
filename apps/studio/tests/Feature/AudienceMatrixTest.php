@@ -71,6 +71,10 @@ const PUBLIC_ROUTES = [
         'galerien/{gallery}', 'galerien/{gallery}/passwort',
         'galerien/{gallery}/download', 'galerien/{gallery}/download/pin',
         'galerien/{gallery}/download/email', 'galerien/{gallery}/download/email/{token}',
+        // G-11's delivery endpoint carries its own two-layer check —
+        // `gallery.gate:download` plus `signed` — neither of which reads as
+        // `audience:` to this test, same as every other gallery route above.
+        'galerien/{gallery}/download/{zipBuildPart}/{guestId}',
     ],
 ];
 

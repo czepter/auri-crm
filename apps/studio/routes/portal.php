@@ -1,5 +1,6 @@
 <?php
 
+use App\Gallery\Http\Controllers\DownloadZipPartController;
 use App\Gallery\Http\Controllers\GalleryDownloadController;
 use App\Gallery\Http\Controllers\GalleryPasswordController;
 use App\Portal\Http\Controllers\BrandingController;
@@ -154,6 +155,19 @@ Route::prefix('galerien/{gallery}')->group(function () {
                 ->name('gallery.download.email.request');
             Route::get('/download/email/{token}', [GalleryDownloadController::class, 'verifyEmail'])
                 ->name('gallery.download.email.verify');
+
+            // G-11 (#60): the delivery endpoint itself. guestId rides in the
+            // path rather than as an ordinary query parameter — Laravel's
+            // `signed` middleware hashes the whole query string a link was
+            // minted with, so binding the requester's identity into the
+            // signed URL this way is what makes it tamper-evident rather
+            // than merely opaque. `signed` and `gallery.gate:download` both
+            // apply: a guest needs the PIN cleared AND a link nobody could
+            // have forged or outlived.
+            Route::get('/download/{zipBuildPart}/{guestId}', DownloadZipPartController::class)
+                ->where('guestId', '[^/]{1,64}')
+                ->middleware('signed')
+                ->name('gallery.download.part');
         });
     });
 });
