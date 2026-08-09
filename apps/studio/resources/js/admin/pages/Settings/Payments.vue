@@ -8,9 +8,10 @@ const props = defineProps<{ settings: App.Settings.Data.PaymentSettingsData }>()
 
 // Every other future group — the same disabled "bald" list Settings/Index.vue
 // and Numbering.vue both render. Zahlungsdaten & USt is T-03's own pane,
-// Nummernkreise is T-04's, Dokumente is T-05's, Zahlungen is this pane and
-// Portal is T-08's own route, so all five drop out of this list.
-const comingSoon = ['navNotifications'] as const
+// Nummernkreise is T-04's, Dokumente is T-05's, Zahlungen is this pane,
+// Portal is T-08's own route and Benachrichtigungen is T-11's, so all six
+// drop out of this list.
+const comingSoon: readonly string[] = []
 
 // Keys are write-only (T-07): the server never echoes a stored value back,
 // so this form always starts with them blank. Submitting blank leaves the
@@ -61,7 +62,9 @@ function submit() {
         <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
         <a class="nav on" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
         <a class="nav" href="/einstellungen/aufgabenvorlagen">{{ $t('settings.navTaskTemplates') }}</a>
+        <a class="nav" href="/einstellungen/fragebogen-vorlagen">{{ $t('settings.navFormTemplates') }}</a>
         <a class="nav" href="/einstellungen/portal">{{ $t('settings.navPortal') }}</a>
+        <a class="nav" href="/einstellungen/benachrichtigungen">{{ $t('settings.navNotifications') }}</a>
         <a
           v-for="key in comingSoon"
           :key="key"

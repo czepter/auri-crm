@@ -4,12 +4,12 @@ namespace App\Contracts\Jobs;
 
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
-use App\Contracts\Support\GotenbergClient;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Settings\Support\StudioSettingsResolver;
+use App\Support\GotenbergClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

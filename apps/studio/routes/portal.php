@@ -11,6 +11,8 @@ use App\Portal\Http\Controllers\PaymentCheckoutController;
 use App\Portal\Http\Controllers\PaymentController;
 use App\Portal\Http\Controllers\ProjectController;
 use App\Portal\Http\Controllers\QuoteController;
+use App\Portal\Http\Controllers\ThreadController;
+use App\Portal\Http\Controllers\UnsubscribeController;
 use Illuminate\Support\Facades\Route;
 
 // Client surface. A different audience from the studio's, on its own session
@@ -84,6 +86,18 @@ Route::middleware('portal.maintenance')->group(function () {
             ->middleware('portal.capability:accept_quotes')
             ->name('portal.quotes.accept');
 
+        // E-06, gated by T-08's own "messaging" switch (default off) — the
+        // whole thread, GET and POST alike, the same full-screen shape
+        // payment_status above takes rather than gating only a submit the
+        // way accept_quotes/sign_contracts do. See EnsurePortalCapability
+        // and StudioSettingsResolver::messagingEnabled().
+        Route::get('/projekte/{project}/nachrichten', [ThreadController::class, 'show'])
+            ->middleware('portal.capability:messaging')
+            ->name('portal.threads.show');
+        Route::post('/projekte/{project}/nachrichten', [ThreadController::class, 'store'])
+            ->middleware('portal.capability:messaging')
+            ->name('portal.threads.store');
+
         // T-07. Read-only apart from M-04's own confirm step on return from
         // Stripe — nothing here ever CREATES a Stripe object, see
         // App\Portal\Http\Controllers\PaymentController. Gated by T-08's own
@@ -143,3 +157,11 @@ Route::prefix('galerien/{gallery}')->group(function () {
         });
     });
 });
+
+// T-11's unsubscribe. Public and reachable regardless of the maintenance
+// closure above — the same reasoning as branding and Impressum: a client
+// following a link out of a mail already delivered has no reason to first
+// clear a closure screen — with the contact's own public_id as the whole
+// credential, same as every other token-in-the-path route this file names.
+Route::get('/abmelden/{contact}', [UnsubscribeController::class, 'show'])->name('portal.unsubscribe.show');
+Route::post('/abmelden/{contact}', [UnsubscribeController::class, 'store'])->name('portal.unsubscribe.store');

@@ -42,9 +42,11 @@ const PUBLIC_ROUTES = [
     // credential, spent the moment it works. branding/logo and impressum are
     // T-08's: a brand mark is not a secret, and a legal notice has to be
     // reachable from any page a client can see, including one it has not
-    // signed into yet.
+    // signed into yet. abmelden/{contact} is T-11's unsubscribe: reached from
+    // a mail already delivered, with the contact's own public_id as the whole
+    // credential, same shape as zugang/{token}.
     'portal' => [
-        'anmelden', 'zugang/{token}', 'branding/logo', 'impressum',
+        'anmelden', 'zugang/{token}', 'branding/logo', 'impressum', 'abmelden/{contact}',
         // G-06's three gates. A gallery guest is neither a staff user nor a
         // portal Contact — there is no `audience:` guard for it, because the
         // gate check itself (`gallery.gate:*`, EnsureGalleryGate) is that

@@ -2,23 +2,29 @@
 
 namespace App\Quotes\Notifications;
 
+use App\Crm\Models\Contact;
 use App\Quotes\Models\Quote;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Number;
 
 /**
- * Tells a client a quote is on its way. Follows App\Portal\Notifications\
- * ClientAccessLink's shape — a plain Notification, on-demand-routed to an
- * email address rather than to a Notifiable model, since Contact carries no
- * Notifiable trait — and its German-language conventions.
+ * Tells a client a quote is on its way. Sent to the Contact itself — Contact
+ * gained the Notifiable trait in T-11 precisely so a client-facing send can
+ * carry a real identity rather than an on-demand address, which is what lets
+ * T-11's preferences apply to it at all.
  *
- * Never queued: App\Quotes\Actions\SendQuote calls ->notify() directly, in
- * the same request that flips the quote to sent, per the issue's own
- * reasoning that a single quote email is not worth the queue M-00 shipped.
+ * Never queued: App\Quotes\Actions\SendQuote sends this in the same request
+ * that flips the quote to sent, per the issue's own reasoning that a single
+ * quote email is not worth the queue M-00 shipped.
  *
  * No link to a portal quote screen — that screen is Q-07's, and does not
  * exist yet.
+ *
+ * T-11: NOT Transactional — a quote is business content about something that
+ * already happened elsewhere (SendQuote's own DB write), not a credential
+ * the client is waiting on this instant, so both a preference and the
+ * one-click unsubscribe this mail's footer links to can hold it.
  */
 class QuoteSent extends Notification
 {
@@ -42,6 +48,21 @@ class QuoteSent extends Notification
             $message->line("Das Angebot ist gültig bis {$this->quote->valid_until->format('d.m.Y')}.");
         }
 
-        return $message->line('Bei Fragen melden Sie sich gerne bei uns.');
+        $message->line('Bei Fragen melden Sie sich gerne bei uns.');
+
+        // T-11: the unsubscribe every non-transactional mail must carry.
+        // Raw url() rather than route('portal.unsubscribe.show', ...) — this
+        // notification is sent from the admin surface's process, which never
+        // registers the portal's own route table (see Surface::registerRoutes()
+        // and how ClientAccessLink/StaffInvited build their own links the
+        // same way, one surface over).
+        if ($notifiable instanceof Contact) {
+            $message->line(
+                'Diese Mail ist keine Pflichtmitteilung. [Abmeldung verwalten]('
+                .url("/abmelden/{$notifiable->public_id}").')'
+            );
+        }
+
+        return $message;
     }
 }

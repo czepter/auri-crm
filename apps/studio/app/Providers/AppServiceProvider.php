@@ -8,6 +8,7 @@ use App\Crm\Events\ProjectBooked;
 use App\Crm\Listeners\ApplyTemplatesOnBooking;
 use App\Crm\Listeners\BookProjectOnContractAndDeposit;
 use App\Crm\Models\Contact;
+use App\Crm\Models\FormTemplate;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
@@ -16,12 +17,17 @@ use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
 use App\Documents\Models\DocumentTemplate;
 use App\Gallery\Listeners\RecomputeGalleryBalanceSettled;
+use App\Gallery\Models\Gallery;
 use App\Notifications\NotificationService;
+use App\Notifications\Support\NotificationPreferences;
+use App\Notifications\Support\QuietHours;
 use App\Notifications\Transports\InAppTransport;
 use App\Notifications\Transports\MailTransport;
 use App\Payments\Events\InstallmentPaid;
 use App\Policies\ContactPolicy;
 use App\Policies\DocumentTemplatePolicy;
+use App\Policies\FormTemplatePolicy;
+use App\Policies\GalleryPolicy;
 use App\Policies\InternalNotePolicy;
 use App\Policies\LeadPolicy;
 use App\Policies\PackagePolicy;
@@ -31,6 +37,7 @@ use App\Policies\TaskPolicy;
 use App\Policies\TaskTemplatePolicy;
 use App\Support\PersonalAccessToken;
 use App\Support\Surface;
+use Aws\S3\S3Client;
 use Dedoc\Scramble\Scramble;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
@@ -38,6 +45,7 @@ use Illuminate\Foundation\Console\ServeCommand;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
 
@@ -61,11 +69,24 @@ class AppServiceProvider extends ServiceProvider
 
         // E-07: the transport registry. A new channel is added here, never
         // wired to a domain event directly — see NotificationService's own
-        // docblock.
-        $this->app->singleton(NotificationService::class, fn ($app) => new NotificationService([
-            $app->make(MailTransport::class),
-            $app->make(InAppTransport::class),
-        ]));
+        // docblock. NotificationPreferences and QuietHours are T-11's own
+        // gates, autowired the same as any other constructor dependency.
+        $this->app->singleton(NotificationService::class, fn ($app) => new NotificationService(
+            [
+                $app->make(MailTransport::class),
+                $app->make(InAppTransport::class),
+            ],
+            $app->make(NotificationPreferences::class),
+            $app->make(QuietHours::class),
+        ));
+
+        // G-02: the one seam App\Media\Services\MultipartUploadGateway uses
+        // to reach past Flysystem, the same boundary
+        // ReapIncompleteMultipartUploads already crosses (Storage::disk('s3')
+        // ->getClient()) — bound here rather than constructed inline so a
+        // test can swap it for an S3Client wired to Aws\MockHandler instead
+        // of a live bucket.
+        $this->app->singleton(S3Client::class, fn () => Storage::disk('s3')->getClient());
     }
 
     /**
@@ -160,6 +181,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Package::class, PackagePolicy::class);
         Gate::policy(DocumentTemplate::class, DocumentTemplatePolicy::class);
         Gate::policy(TaskTemplate::class, TaskTemplatePolicy::class);
+        Gate::policy(Gallery::class, GalleryPolicy::class);
+        Gate::policy(FormTemplate::class, FormTemplatePolicy::class);
 
         // Filling a non-fillable attribute is silent by default, which turns a
         // factory state like withMfa() into a no-op that fails a test three tasks
