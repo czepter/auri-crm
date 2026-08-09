@@ -8,6 +8,7 @@ use App\Crm\Models\Project;
 use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Support\DiscountCalculator;
+use App\Settings\Support\StudioSettingsResolver;
 use Database\Factories\Quotes\QuoteFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -28,7 +29,7 @@ class Quote extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['project_id', 'status', 'currency', 'valid_until', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net'];
+    protected $fillable = ['project_id', 'status', 'currency', 'valid_until', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount'];
 
     protected $attributes = ['status' => 'draft', 'currency' => 'EUR', 'total' => 0];
 
@@ -75,6 +76,38 @@ class Quote extends Model
             'total' => $items->sum(fn (QuoteItem $item) => $item->lineTotal()),
             'discount_amount' => $discountAmount,
             'net' => $subtotal - $discountAmount,
+        ]);
+    }
+
+    /**
+     * Freezes vat_mode, vat_rate, vat_note and vat_amount onto this quote
+     * from the tenant's current settings and this quote's own already-
+     * rounded net. Q-06's only intended caller, at send time — nothing here
+     * runs today (same "ships unwired" shape Q-05's allocator shipped in).
+     *
+     * Once these four columns are populated, QuoteData::fromModel() reads
+     * them straight off the row and never falls through to
+     * StudioSettingsResolver again — that is what makes a later change to
+     * the tenant's VAT mode alter nothing an already-sent quote renders.
+     *
+     * vat_amount reuses DiscountCalculator::resolve() rather than a second
+     * rounding rule: a VAT rate is a percentage of a base exactly like a
+     * discount is, round-half-up, computed off net (Q-03's one rounding),
+     * never off an unrounded intermediate line.
+     */
+    public function snapshotVat(StudioSettingsResolver $settings): void
+    {
+        $mode = $settings->vatMode();
+        $rate = $settings->effectiveVatRate();
+
+        $this->update([
+            'vat_mode' => $mode,
+            'vat_rate' => $rate,
+            // Only small_business prints anything — see the mockup and
+            // QuoteData: standard shows a computed VAT line instead, so it
+            // has no use for the note text.
+            'vat_note' => $mode === 'small_business' ? $settings->vatNote() : null,
+            'vat_amount' => DiscountCalculator::resolve($this->net, DiscountType::Percentage, $rate),
         ]);
     }
 

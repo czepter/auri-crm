@@ -151,6 +151,26 @@ function save(quoteId: string) {
             <td>{{ formatEuros(quote.net) }}</td>
           </tr>
         </template>
+
+        <!-- Q-04: only a quote Q-06 has already sent carries these — a draft's
+             vatMode is always null (see QuoteData), so nothing prints here
+             until that story ships. Vocabulary and order match mockup
+             04-angebot's accepted-quote card: a muted §19 note with no rate
+             shown at all, or a muted rate row followed by the final total
+             including it. -->
+        <tr v-if="quote.vatMode === 'small_business'" class="tax">
+          <td colspan="2">{{ quote.vatNote }}</td>
+        </tr>
+        <template v-else-if="quote.vatMode === 'standard'">
+          <tr class="tax">
+            <td>{{ $t('quotes.vat', { rate: basisPointsToPercent(quote.vatRate) }) }}</td>
+            <td>{{ formatEuros(quote.vatAmount ?? 0) }}</td>
+          </tr>
+          <tr class="total">
+            <td>{{ $t('quotes.total') }}</td>
+            <td>{{ formatEuros(quote.net + (quote.vatAmount ?? 0)) }}</td>
+          </tr>
+        </template>
       </table>
 
       <template v-if="header.canManageQuotes">

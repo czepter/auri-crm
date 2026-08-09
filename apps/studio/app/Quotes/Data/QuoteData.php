@@ -21,6 +21,15 @@ class QuoteData extends Data
         public ?int $discountValue,
         public int $discountAmount,
         public int $net,
+        // Q-04: null on every quote until Q-06 sends it and calls
+        // Quote::snapshotVat() — read straight off the quote's own columns,
+        // never re-derived from the tenant's live settings, so this is the
+        // one place the screen has to look regardless of what the studio's
+        // VAT mode is set to right now.
+        public ?string $vatMode,
+        public ?int $vatRate,
+        public ?string $vatNote,
+        public ?int $vatAmount,
         public array $items,
     ) {}
 
@@ -37,6 +46,10 @@ class QuoteData extends Data
             discountValue: $quote->discount_value,
             discountAmount: $quote->discount_amount,
             net: $quote->net,
+            vatMode: $quote->vat_mode,
+            vatRate: $quote->vat_rate,
+            vatNote: $quote->vat_note,
+            vatAmount: $quote->vat_amount,
             items: $quote->items->map(QuoteItemData::fromModel(...))->all(),
         );
     }

@@ -258,6 +258,7 @@
     "discountValueEuros": "Rabatt (€)",
     "discount": "Rabatt",
     "net": "Netto",
+    "vat": "USt. {rate} %",
     "empty": "Noch kein Angebot."
   },
   "contractTemplates": {
