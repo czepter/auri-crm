@@ -11,12 +11,14 @@ use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\TaskTemplate;
 use App\Enums\StaffRole;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -54,6 +56,10 @@ class DemoCrmSeeder extends Seeder
     public function run(): void
     {
         $staff = User::query()->first() ?? User::factory()->create();
+
+        // Before the cast, so booking the wedding below produces its tasks
+        // through the listener rather than having them written in by hand.
+        $this->seedTaskTemplates();
 
         foreach (self::CAST as [$name, $partner, $type, $date, $stage, $daysAgo, $source, $venue, $city]) {
             $projectType = ProjectType::from($type);
@@ -96,6 +102,25 @@ class DemoCrmSeeder extends Seeder
             if ($stage === 'booked') {
                 $this->buildOutTheWedding($project, $staff);
             }
+        }
+    }
+
+    /**
+     * The studio's standing list. Three is enough to show the two things that
+     * matter: an offset before the day, one after it, and a template that only
+     * applies to weddings.
+     */
+    private function seedTaskTemplates(): void
+    {
+        foreach ([
+            ['Ablauf bestätigen', TaskAudience::Client, -14, null],
+            ['Familienliste einholen', TaskAudience::Client, -7, ShootKind::Wedding],
+            ['Crew-Briefing verschicken', TaskAudience::Internal, -1, null],
+        ] as [$title, $audience, $offset, $kind]) {
+            TaskTemplate::updateOrCreate(
+                ['title' => $title],
+                ['audience' => $audience, 'day_offset' => $offset, 'shoot_kind' => $kind],
+            );
         }
     }
 
