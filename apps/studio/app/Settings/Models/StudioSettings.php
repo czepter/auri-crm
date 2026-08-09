@@ -13,8 +13,9 @@ use Illuminate\Database\Eloquent\Model;
  * row. display_name is T-01's scaffolding column; vat_mode, vat_rate and
  * vat_note are T-03's (Zahlungsdaten & USt — Q-04 reads these once it
  * ships); default_shoot_duration_minutes is T-09's (Verfügbarkeit —
- * ShootCalendar reads it instead of a hardcoded addHours(2)); the rest below
- * is T-02's Studio-Profil. quote_validity_days, payment_term_days,
+ * ShootCalendar reads it instead of a hardcoded addHours(2)); timezone,
+ * locale and working_days are T-13's (Allgemein); the rest below is T-02's
+ * Studio-Profil. quote_validity_days, payment_term_days,
  * deposit_percentage, widerruf_included and widerruf_text are T-05's
  * Dokumente pane — the values every new quote, payment plan and contract
  * render starts from.
@@ -33,10 +34,16 @@ class StudioSettings extends Model
         'vat_mode', 'vat_rate', 'vat_note',
         'default_shoot_duration_minutes',
         'quote_validity_days', 'payment_term_days', 'deposit_percentage', 'widerruf_included', 'widerruf_text',
+        'timezone', 'locale', 'working_days',
     ];
 
     protected function casts(): array
     {
-        return ['widerruf_included' => 'boolean'];
+        return [
+            'widerruf_included' => 'boolean',
+            // ISO weekday integers (1 Monday .. 7 Sunday) — see
+            // StudioSettingsResolver::workingDays().
+            'working_days' => 'array',
+        ];
     }
 }

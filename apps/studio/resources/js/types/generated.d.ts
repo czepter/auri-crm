@@ -317,6 +317,9 @@ paymentTermDays: number,
 depositPercentage: number,
 widerrufIncluded: boolean,
 widerrufText: string | null,
+timezone: string,
+locale: string,
+workingDays: number[],
 };
 }
 }

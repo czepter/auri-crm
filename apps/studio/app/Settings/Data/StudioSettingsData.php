@@ -47,5 +47,9 @@ class StudioSettingsData extends Data
         public int $depositPercentage,
         public bool $widerrufIncluded,
         public ?string $widerrufText,
+        public string $timezone,
+        public string $locale,
+        /** @var list<int> */
+        public array $workingDays,
     ) {}
 }
