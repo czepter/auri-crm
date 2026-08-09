@@ -191,6 +191,39 @@ class StudioSettingsController extends Controller
         return redirect('/einstellungen');
     }
 
+    /**
+     * T-06's own pane and save action, same reasoning as updateVat() above:
+     * E-Mail is its own form with its own "Speichern" button.
+     *
+     * mail_from_name and mail_from_address travel the form already resolved
+     * with the env fallback (StudioSettingsResolver::mailFromName()/
+     * mailFromAddress()), the same pre-filled shape timezone/locale use on
+     * the Allgemein pane — so an unmodified save simply re-confirms the
+     * fallback rather than leaving the field looking empty.
+     */
+    public function updateMail(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        $validated = $request->validate([
+            'mail_from_name' => ['nullable', 'string', 'max:255'],
+            'mail_from_address' => ['nullable', 'string', 'max:255', 'email'],
+            'mail_reply_to' => ['nullable', 'string', 'max:255', 'email'],
+            'mail_bcc' => ['nullable', 'string', 'max:255', 'email'],
+            'mail_signature' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $actor = auth('staff')->user();
+        foreach ($validated as $key => $value) {
+            $settings->set($key, $value, $actor);
+        }
+
+        // The pane lives inside this same shell (client-side switching, no
+        // route of its own to GET back to) — same target every other
+        // non-profile pane on this controller redirects to.
+        return redirect('/einstellungen');
+    }
+
     private function toData(StudioSettingsResolver $settings): StudioSettingsData
     {
         $attrs = $settings->attributes();
@@ -226,6 +259,11 @@ class StudioSettingsController extends Controller
             timezone: $settings->timezone(),
             locale: $settings->locale(),
             workingDays: $settings->workingDays(),
+            mailFromName: $settings->mailFromName(),
+            mailFromAddress: $settings->mailFromAddress(),
+            mailReplyTo: $settings->mailReplyTo(),
+            mailSignature: $settings->mailSignature(),
+            mailBcc: $settings->mailBcc(),
         );
     }
 }

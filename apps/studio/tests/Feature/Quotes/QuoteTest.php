@@ -863,3 +863,69 @@ describe('Q-06: revising a sent quote', function () {
             ->and($quotes[$revision->fresh()->public_id]['predecessorId'])->toBe($predecessor->public_id);
     });
 });
+
+// --- Q-07: a sent quote also allows the accept transition, then refuses everything ---
+
+describe('Q-07: a sent quote allows the accept transition, then refuses everything', function () {
+    it('allows the bundled write App\Quotes\Actions\AcceptQuote performs — status plus the three acceptance columns, sent to accepted', function () {
+        $contact = Contact::factory()->create();
+        $quote = Quote::factory()->create(['status' => QuoteStatus::Sent]);
+
+        $quote->update([
+            'status' => QuoteStatus::Accepted,
+            'accepted_at' => now(),
+            'accepted_ip' => '127.0.0.1',
+            'accepted_by_contact_id' => $contact->id,
+        ]);
+
+        expect($quote->fresh()->status)->toBe(QuoteStatus::Accepted)
+            ->and($quote->fresh()->accepted_by_contact_id)->toBe($contact->id);
+    });
+
+    it('refuses every write on an accepted quote, including status', function () {
+        $quote = Quote::factory()->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now()]);
+
+        expect(fn () => $quote->update(['status' => QuoteStatus::Sent]))->toThrow(RuntimeException::class);
+        expect(fn () => $quote->update(['net' => 1]))->toThrow(RuntimeException::class);
+    });
+
+    it('refuses the accept transition bundled with any other column, even on a sent quote', function () {
+        $quote = Quote::factory()->create(['status' => QuoteStatus::Sent, 'net' => 100000]);
+
+        expect(fn () => $quote->update(['status' => QuoteStatus::Accepted, 'accepted_at' => now(), 'net' => 1]))
+            ->toThrow(RuntimeException::class);
+    });
+});
+
+// --- Q-07: Project::latestQuote() — the one the portal shows ---------------
+
+describe('Q-07: Project::latestQuote()', function () {
+    beforeEach(function () {
+        // Same reasoning as the Q-04/Q-06 describe blocks above: Redis is
+        // shared across the whole test run, and SendQuote calls snapshotVat().
+        Cache::store('redis')->flush();
+    });
+
+    it('is null for a project that has never sent a quote', function () {
+        $project = Project::factory()->create();
+        Quote::factory()->for($project)->create(); // draft, never sent
+
+        expect($project->latestQuote)->toBeNull();
+    });
+
+    it('still points at the superseded predecessor until its own revision is sent', function () {
+        $project = Project::factory()->create();
+        $predecessor = Quote::factory()->for($project)->create([
+            'status' => QuoteStatus::Sent,
+            'number' => 'AN-2026-1',
+            'sent_at' => now(),
+        ]);
+        $revision = app(ReviseQuote::class)($predecessor);
+
+        expect($project->latestQuote->id)->toBe($predecessor->id);
+
+        app(SendQuote::class)($revision);
+
+        expect($project->fresh()->latestQuote->id)->toBe($revision->fresh()->id);
+    });
+});

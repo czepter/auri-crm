@@ -10,7 +10,7 @@ const props = defineProps<{ settings: App.Settings.Data.StudioSettingsData }>()
 // second-level tab set the mockup draws as two static variants of one
 // screen. Nothing here is routed: every form already saves through its own
 // endpoint, so switching panes has no request to make.
-const pane = ref<'profile' | 'vat' | 'documents' | 'general'>('profile')
+const pane = ref<'profile' | 'vat' | 'documents' | 'email' | 'general'>('profile')
 
 // Mo..So, ISO weekday order — matches the integers StudioSettingsController
 // validates working_days.* against and TaskTemplate::dueFor() rolls over.
@@ -82,9 +82,25 @@ const generalForm = useForm({
   working_days: [...props.settings.workingDays] as number[],
 })
 
+// T-06's own pane. mail_from_name/mail_from_address arrive already resolved
+// with the env fallback (StudioSettingsResolver::mailFromName()/
+// mailFromAddress()), the same pre-filled shape timezone/locale use above —
+// an unmodified save simply re-confirms the fallback. The footer itself is
+// not a field here: it is T-02's legal particulars, composed at send time
+// from the same StudioSettingsResolver::attributes() Studio-Profil already
+// edits, never a second copy on this pane.
+const mailForm = useForm({
+  mail_from_name: props.settings.mailFromName,
+  mail_from_address: props.settings.mailFromAddress,
+  mail_reply_to: props.settings.mailReplyTo ?? '',
+  mail_bcc: props.settings.mailBcc ?? '',
+  mail_signature: props.settings.mailSignature ?? '',
+})
+
 const activeForm = computed(() => {
   if (pane.value === 'vat') return vatForm
   if (pane.value === 'documents') return documentsForm
+  if (pane.value === 'email') return mailForm
   if (pane.value === 'general') return generalForm
   return form
 })
@@ -92,6 +108,7 @@ const activeForm = computed(() => {
 const formId = computed(() => {
   if (pane.value === 'vat') return 'vat-form'
   if (pane.value === 'documents') return 'documents-form'
+  if (pane.value === 'email') return 'mail-form'
   if (pane.value === 'general') return 'general-form'
   return 'settings-form'
 })
@@ -99,6 +116,7 @@ const formId = computed(() => {
 const paneTitle = computed(() => {
   if (pane.value === 'vat') return 'settings.vatTitle'
   if (pane.value === 'documents') return 'settings.documentsTitle'
+  if (pane.value === 'email') return 'settings.mailTitle'
   if (pane.value === 'general') return 'settings.generalTitle'
   return 'settings.profileTitle'
 })
@@ -107,8 +125,9 @@ const paneTitle = computed(() => {
 // disabled with the "bald" chip screen 4's Vertrag tab already uses for a
 // superseded quote, per T-00's mockup. Zahlungsdaten & USt is T-03's own
 // pane, Nummernkreise is T-04's own route, Verfügbarkeit is T-09's own
-// route, Dokumente is T-05's own pane, Allgemein is T-13's own pane and
-// Zahlungen is T-07's own route, so all six drop out of this list.
+// route, Dokumente is T-05's own pane, E-Mail is T-06's own pane, Allgemein
+// is T-13's own pane and Zahlungen is T-07's own route, so all seven drop
+// out of this list.
 const comingSoon = ['navPortal', 'navNotifications'] as const
 
 function toggleWorkingDay(day: number) {
@@ -158,6 +177,18 @@ function submitGeneral() {
     }))
     .patch('/einstellungen/allgemein', { preserveScroll: true })
 }
+
+function submitMail() {
+  mailForm
+    .transform((data) => ({
+      mail_from_name: data.mail_from_name || null,
+      mail_from_address: data.mail_from_address || null,
+      mail_reply_to: data.mail_reply_to || null,
+      mail_bcc: data.mail_bcc || null,
+      mail_signature: data.mail_signature || null,
+    }))
+    .patch('/einstellungen/email', { preserveScroll: true })
+}
 </script>
 
 <template>
@@ -191,6 +222,9 @@ function submitGeneral() {
         <a class="nav" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
         <a class="nav" :class="{ on: pane === 'documents' }" href="#" @click.prevent="pane = 'documents'">
           {{ $t('settings.navDocuments') }}
+        </a>
+        <a class="nav" :class="{ on: pane === 'email' }" href="#" @click.prevent="pane = 'email'">
+          {{ $t('settings.navMail') }}
         </a>
         <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
         <a class="nav" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
@@ -479,6 +513,58 @@ function submitGeneral() {
               ></textarea>
               <span class="hint">{{ $t('settings.widerrufTextHint') }}</span>
               <p v-if="documentsForm.errors.widerruf_text" class="err">{{ documentsForm.errors.widerruf_text }}</p>
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <form v-else-if="pane === 'email'" id="mail-form" style="flex: 1; min-width: 0; max-width: 460px" @submit.prevent="submitMail">
+        <div class="dsec" style="margin-top: 0">
+          <div class="dlab">{{ $t('settings.mailSenderLabel') }}</div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="m-absendername">{{ $t('settings.mailFromNameLabel') }}</label>
+                <input id="m-absendername" v-model="mailForm.mail_from_name" class="inp" type="text" />
+                <p v-if="mailForm.errors.mail_from_name" class="err">{{ mailForm.errors.mail_from_name }}</p>
+              </div>
+              <div class="fld">
+                <label for="m-absenderadresse">{{ $t('settings.mailFromAddressLabel') }}</label>
+                <input id="m-absenderadresse" v-model="mailForm.mail_from_address" class="inp" type="email" />
+                <p v-if="mailForm.errors.mail_from_address" class="err">{{ mailForm.errors.mail_from_address }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">{{ $t('settings.mailReplyLabel') }}</div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="m-antwortan">{{ $t('settings.mailReplyToLabel') }} <em>{{ $t('settings.optional') }}</em></label>
+                <input id="m-antwortan" v-model="mailForm.mail_reply_to" class="inp" type="email" />
+                <span class="hint">{{ $t('settings.mailReplyToHint') }}</span>
+                <p v-if="mailForm.errors.mail_reply_to" class="err">{{ mailForm.errors.mail_reply_to }}</p>
+              </div>
+              <div class="fld">
+                <label for="m-bcc">{{ $t('settings.mailBccLabel') }} <em>{{ $t('settings.optional') }}</em></label>
+                <input id="m-bcc" v-model="mailForm.mail_bcc" class="inp" type="email" />
+                <span class="hint">{{ $t('settings.mailBccHint') }}</span>
+                <p v-if="mailForm.errors.mail_bcc" class="err">{{ mailForm.errors.mail_bcc }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">{{ $t('settings.mailSignatureLabel') }}</div>
+          <div class="grp">
+            <div class="fld">
+              <label for="m-signatur">{{ $t('settings.mailSignatureFieldLabel') }} <em>{{ $t('settings.optional') }}</em></label>
+              <textarea id="m-signatur" v-model="mailForm.mail_signature" class="inp" rows="4"></textarea>
+              <span class="hint">{{ $t('settings.mailSignatureHint') }}</span>
+              <p v-if="mailForm.errors.mail_signature" class="err">{{ mailForm.errors.mail_signature }}</p>
             </div>
           </div>
         </div>
