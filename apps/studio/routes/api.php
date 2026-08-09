@@ -1,5 +1,7 @@
 <?php
 
+use App\Gallery\Http\Controllers\GalleryImageController;
+use App\Gallery\Http\Controllers\GalleryReadController;
 use App\Http\Controllers\GuestIdentityController;
 use App\Http\Controllers\HealthController;
 use App\Payments\Http\Controllers\StripeWebhookController;
@@ -8,6 +10,17 @@ use Illuminate\Support\Facades\Route;
 // Public JSON surface. In P1a this carries the health probe only; P1b adds
 // the public inquiry endpoint and P3 adds the gallery read API.
 Route::get('/health', HealthController::class);
+
+// G-08: the Astro gallery viewer's two calls — the currently-published
+// version's metadata, and the image bytes it points at. No `audience:api`
+// guard on either yet: G-06 (#57) is the story that decides how a guest
+// earns the right to see one gallery, and wraps these routes with that
+// check when it lands. Until then this surface assumes reachability, same
+// as every other still-open gate in this phase.
+Route::get('/galleries/{gallery:public_id}', GalleryReadController::class)->name('api.galleries.show');
+Route::get('/gallery-versions/{galleryVersion:public_id}/images/{key}', GalleryImageController::class)
+    ->where('key', '.*')
+    ->name('api.gallery-versions.images.show');
 
 // M-05: the first api-surface consumer of user-facing business logic
 // (everything above is infrastructure). No `auth` middleware — Stripe is the
