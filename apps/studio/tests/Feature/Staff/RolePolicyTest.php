@@ -1,5 +1,6 @@
 <?php
 
+use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\InternalNote;
@@ -10,6 +11,7 @@ use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Enums\Capability;
 use App\Enums\StaffRole;
+use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -64,15 +66,28 @@ it('lets the owner book', function () {
     expect($project->fresh()->job)->not->toBeNull();
 });
 
-it('keeps the funnel to the roles that work it', function (StaffRole $role, int $status) {
-    $this->actingAs(staff($role), 'staff')->get('/anfragen')->assertStatus($status);
-})->with([
-    [StaffRole::Owner, 200],
-    [StaffRole::Photographer, 200],
-    [StaffRole::Editor, 403],
-    [StaffRole::SecondShooter, 403],
-    [StaffRole::Assistant, 403],
-]);
+it('opens the funnel to every staff role', function (StaffRole $role) {
+    // Moving a lead is ordinary studio work and it is reversible. The control
+    // on it is the audit trail, not a gate: locking it would mean whoever just
+    // got off the phone has to find someone else to type it in.
+    $this->actingAs(staff($role), 'staff')->get('/anfragen')->assertOk();
+})->with(StaffRole::cases());
+
+it('records who moved a lead, which is what makes the funnel open', function () {
+    $nina = staff(StaffRole::SecondShooter);
+    $lead = Lead::factory()->atStage(LeadStage::New)->create();
+
+    $this->actingAs($nina, 'staff')
+        ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => LeadStage::Contacted->value])
+        ->assertRedirect();
+
+    $row = AuditLog::where('event', 'lead.stage_changed')->sole();
+
+    expect($lead->fresh()->stage)->toBe(LeadStage::Contacted)
+        ->and($row->actor_id)->toBe($nina->id)
+        ->and($row->context['from'])->toBe('new')
+        ->and($row->context['to'])->toBe('contacted');
+});
 
 it('keeps the address book to the roles that hold the relationship', function (StaffRole $role, int $status) {
     $this->actingAs(staff($role), 'staff')->get('/kontakte')->assertStatus($status);
@@ -122,7 +137,7 @@ it('shows a second shooter only their own projects on the übersicht', function 
         ->not->toContain('Fremdes Projekt');
 });
 
-it('lets an editor move post-production but never the funnel', function () {
+it('lets an editor move post-production but never commit the studio', function () {
     $editor = staff(StaffRole::Editor);
     $project = Project::factory()->create();
     $shoot = Shoot::factory()->for($project)->atStatus(ShootStatus::Culling)->create();
@@ -133,8 +148,8 @@ it('lets an editor move post-production but never the funnel', function () {
 
     expect($shoot->fresh()->status)->toBe(ShootStatus::Editing);
 
-    Lead::factory()->for($project)->create();
-    $this->get('/anfragen')->assertForbidden();
+    // Booking is the line no amount of after-the-fact logging substitutes for.
+    $this->post("/auftraege/{$project->public_id}/buchung")->assertForbidden();
 });
 
 it('refuses a second shooter the shoot controls even on their own project', function () {
@@ -202,7 +217,7 @@ it('tells the sidebar only what this role may reach', function () {
     $this->actingAs(staff(StaffRole::SecondShooter), 'staff');
 
     expect(props('/')['auth']['can'])
-        ->not->toContain('manage_leads')
+        ->toContain('manage_leads')
         ->not->toContain('manage_contacts')
         ->not->toContain('book_project')
         ->toContain('manage_tasks');
