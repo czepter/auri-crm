@@ -27,4 +27,14 @@ class ShootPolicy
     {
         return $this->projects->manageCrew($user, $shoot->project);
     }
+
+    /**
+     * Add, check off and remove shot list items (E-05). Reuses ManageShoots
+     * rather than a new capability: a shot list is shoot planning, exactly as
+     * sensitive as the shoot it lives on.
+     */
+    public function manageShotList(User $user, Shoot $shoot): bool
+    {
+        return $this->projects->manageShoots($user, $shoot->project);
+    }
 }

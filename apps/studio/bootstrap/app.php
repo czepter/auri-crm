@@ -1,5 +1,16 @@
 <?php
 
+use App\Gallery\Console\Commands\ImportLegacyGalleriesCommand;
+use App\Http\Middleware\EnsureAudience;
+use App\Http\Middleware\EnsurePortalCapability;
+use App\Http\Middleware\EnsurePortalMaintenanceClosure;
+use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RequireConfirmedMfa;
+use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
+use App\Migration\Console\Commands\ImportHistoricalDataCommand;
+use App\Payments\Console\Commands\DetectOverdueInstallmentsCommand;
+use App\Support\Surface;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -8,7 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
-        then: fn () => \App\Support\Surface::registerRoutes(),
+        then: fn () => Surface::registerRoutes(),
     )
     // Domain commands live beside the feature they belong to (App\Payments\
     // Console\Commands, matching Actions/Events/Http\Controllers everywhere
@@ -16,22 +27,33 @@ return Application::configure(basePath: dirname(__DIR__))
     // Commands, which this codebase has never used — so each has to be named
     // here explicitly; nothing in that directory is auto-discovered.
     ->withCommands([
-        \App\Payments\Console\Commands\DetectOverdueInstallmentsCommand::class,
-        \App\Gallery\Console\Commands\ImportLegacyGalleriesCommand::class,
+        DetectOverdueInstallmentsCommand::class,
+        ImportHistoricalDataCommand::class,
+        ReapIncompleteMultipartUploads::class,
+        ImportLegacyGalleriesCommand::class,
     ])
+    ->withSchedule(function (Schedule $schedule) {
+        // G-01a's one lifecycle rule (issue #50) — see the command's own
+        // docblock for why this is a schedule entry rather than a bucket
+        // lifecycle policy. No production deploy configuration exists yet to
+        // run `schedule:run` from (same gap docs/queue.md already flags for
+        // the worker process); this is the seam it will hang off once one
+        // does.
+        $schedule->command(ReapIncompleteMultipartUploads::class)->daily();
+    })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
-            \App\Http\Middleware\HandleInertiaRequests::class,
+            HandleInertiaRequests::class,
         ]);
 
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo('/');
 
         $middleware->alias([
-            'mfa' => \App\Http\Middleware\RequireConfirmedMfa::class,
-            'audience' => \App\Http\Middleware\EnsureAudience::class,
-            'portal.maintenance' => \App\Http\Middleware\EnsurePortalMaintenanceClosure::class,
-            'portal.capability' => \App\Http\Middleware\EnsurePortalCapability::class,
+            'mfa' => RequireConfirmedMfa::class,
+            'audience' => EnsureAudience::class,
+            'portal.maintenance' => EnsurePortalMaintenanceClosure::class,
+            'portal.capability' => EnsurePortalCapability::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

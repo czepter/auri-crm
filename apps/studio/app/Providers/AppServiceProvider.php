@@ -16,6 +16,9 @@ use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
 use App\Gallery\Listeners\RecomputeGalleryBalanceSettled;
+use App\Notifications\NotificationService;
+use App\Notifications\Transports\InAppTransport;
+use App\Notifications\Transports\MailTransport;
 use App\Payments\Events\InstallmentPaid;
 use App\Policies\ContactPolicy;
 use App\Policies\ContractTemplatePolicy;
@@ -42,7 +45,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // E-07: the transport registry. A new channel is added here, never
+        // wired to a domain event directly — see NotificationService's own
+        // docblock.
+        $this->app->singleton(NotificationService::class, fn ($app) => new NotificationService([
+            $app->make(MailTransport::class),
+            $app->make(InAppTransport::class),
+        ]));
     }
 
     /**
