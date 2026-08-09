@@ -3,21 +3,22 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
-
         User::factory()->create([
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        // Sample leads so the board has something on it locally. Guarded rather
+        // than merely "not called in production", because db:seed is exactly
+        // the command someone runs against the wrong environment once.
+        if (! app()->isProduction()) {
+            $this->call(DemoCrmSeeder::class);
+        }
     }
 }

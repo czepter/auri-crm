@@ -14,6 +14,18 @@ projectName: string,
 venue: string | null,
 kind: string,
 };
+export type LeadCardData = {
+id: string,
+type: string,
+names: string,
+date: string | null,
+shootCount: number,
+venue: string | null,
+source: string,
+stage: string,
+daysInStage: number,
+conflicts: App.Crm.Data.DateConflictData[],
+};
 }
 namespace Enums {
 export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'other';

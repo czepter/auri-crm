@@ -48,6 +48,18 @@
     "inquiryTextHint": "Ort, Gästezahl, weitere Shootings und Paket später im Projekt.",
     "submit": "Anfrage anlegen"
   },
+  "board": {
+    "title": "Anfragen",
+    "create": "Anfrage anlegen",
+    "shootCount": "1 Shooting | {count} Shootings",
+    "openDate": "Termin offen",
+    "advance": "Weiter",
+    "conflict": "Haupttermin belegt — {project}",
+    "daysInStage": "gestern | vor {count} Tagen",
+    "today": "heute",
+    "stale": "{count} Tage still",
+    "empty": "Keine Anfragen."
+  },
   "dashboard": {
     "title": "Übersicht",
     "signedInAs": "Angemeldet als {name}",

@@ -3,6 +3,8 @@
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\ContactSearchController;
 use App\Crm\Http\Controllers\InquiryCaptureController;
+use App\Crm\Http\Controllers\LeadBoardController;
+use App\Crm\Http\Controllers\LeadStageController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
@@ -38,7 +40,12 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/kontakte/suche', ContactSearchController::class)->name('contacts.search');
         Route::get('/verfuegbarkeit', AvailabilityController::class)->name('availability.show');
 
+        // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
+        // /kontakte/suche stays above /kontakte/{contact}.
         Route::get('/anfragen/neu', [InquiryCaptureController::class, 'create'])->name('leads.create');
+        Route::get('/anfragen', LeadBoardController::class)->name('leads.index');
         Route::post('/anfragen', [InquiryCaptureController::class, 'store'])->name('leads.store');
+        Route::post('/anfragen/{lead}/stufe', [LeadStageController::class, 'update'])
+            ->name('leads.stage.update');
     });
 });

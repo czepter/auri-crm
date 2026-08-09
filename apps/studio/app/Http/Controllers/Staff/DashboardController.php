@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Staff;
 
+use App\Crm\Models\Lead;
 use App\Http\Controllers\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -10,10 +11,10 @@ class DashboardController extends Controller
 {
     public function __invoke(): Response
     {
-        // Real counts arrive in P1b with leads and jobs. The page exists now
-        // so the MFA gate and the audience gate have something to protect.
         return Inertia::render('Dashboard', [
-            'leads' => 0,
+            'leads' => Lead::query()->open()->count(),
+            // Job arrives with conversion in sprint 4; zero is the honest
+            // answer until it exists.
             'jobs' => 0,
         ]);
     }

@@ -9,8 +9,16 @@ import { defineConfig } from '@playwright/test'
 const hostPort = process.env.CI ? '8000' : (process.env.APP_PORT ?? '8000')
 const baseURL = `http://127.0.0.1:${hostPort}`
 
+// migrate:fresh, not just a seed. These specs create leads, so a database that
+// survives between runs accumulates them and assertions start matching two
+// elements on the second run — a suite whose result depends on how often it has
+// been run before is not a suite. E2eSeeder is the single source of e2e
+// fixtures; locally, `php artisan migrate:fresh --seed` brings the demo cast
+// back for browsing.
 const serve =
-  'sh -c "php artisan db:seed --class=E2eSeeder --force && php artisan serve --host=0.0.0.0 --port=8000"'
+  'sh -c "php artisan migrate:fresh --force' +
+  ' && php artisan db:seed --class=E2eSeeder --force' +
+  ' && php artisan serve --host=0.0.0.0 --port=8000"'
 
 export default defineConfig({
   testDir: './tests/e2e',
