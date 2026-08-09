@@ -301,6 +301,9 @@ bankBic: string | null,
 vatMode: string,
 vatRate: number,
 vatNote: string | null,
+timezone: string,
+locale: string,
+workingDays: number[],
 };
 }
 }

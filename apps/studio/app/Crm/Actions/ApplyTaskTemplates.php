@@ -5,6 +5,7 @@ namespace App\Crm\Actions;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\TaskTemplate;
+use App\Settings\Support\StudioSettingsResolver;
 
 /**
  * Turns the studio's standing templates into the tasks a booked project owes.
@@ -20,6 +21,8 @@ use App\Crm\Models\TaskTemplate;
  */
 class ApplyTaskTemplates
 {
+    public function __construct(private readonly StudioSettingsResolver $settings) {}
+
     public function __invoke(Project $project): void
     {
         $templates = TaskTemplate::query()->active()->orderBy('sort_order')->get();
@@ -48,7 +51,7 @@ class ApplyTaskTemplates
             [
                 'title' => $template->title,
                 'audience' => $template->audience,
-                'due_on' => $template->dueFor($shoot)?->format('Y-m-d'),
+                'due_on' => $template->dueFor($shoot, $this->settings)?->format('Y-m-d'),
             ],
         );
     }

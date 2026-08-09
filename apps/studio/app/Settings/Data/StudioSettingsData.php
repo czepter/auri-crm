@@ -42,5 +42,9 @@ class StudioSettingsData extends Data
         public string $vatMode,
         public int $vatRate,
         public ?string $vatNote,
+        public string $timezone,
+        public string $locale,
+        /** @var list<int> */
+        public array $workingDays,
     ) {}
 }

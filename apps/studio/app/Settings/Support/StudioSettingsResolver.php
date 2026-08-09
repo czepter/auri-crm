@@ -75,6 +75,48 @@ class StudioSettingsResolver
     }
 
     /**
+     * IANA identifier (e.g. "Europe/Vienna") — the tenant value once T-13's
+     * Allgemein pane has set one, config('app.timezone') as the fallback
+     * until then. The environment stays the fallback, never the source: a
+     * studio that has not opened this pane yet sees exactly what it saw
+     * before this story existed.
+     */
+    public function timezone(): string
+    {
+        return $this->row()->timezone ?? config('app.timezone');
+    }
+
+    /**
+     * Carbon's formatting locale for the three DACH variants T-02's own
+     * country select already offers (de_DE/de_AT/de_CH) — never
+     * config('app.locale')'s translation locale, which stays 'de' and
+     * env-independent on purpose (see config/app.php). Same fallback shape
+     * as timezone() above: the tenant value once set, the environment
+     * otherwise.
+     */
+    public function locale(): string
+    {
+        return $this->row()->locale ?? config('app.locale');
+    }
+
+    /**
+     * ISO weekday integers (1 Monday .. 7 Sunday) the studio works —
+     * TaskTemplate::dueFor() rolls a due date forward off any day not in
+     * this set. Guards an empty array (should never reach the database
+     * past StudioSettingsController's validation, but dueFor() loops on
+     * this set, and an empty one loops forever) by treating it the same as
+     * "every day", rather than letting a corrupt row hang a request.
+     *
+     * @return list<int>
+     */
+    public function workingDays(): array
+    {
+        $days = $this->row()->working_days;
+
+        return empty($days) ? [1, 2, 3, 4, 5, 6, 7] : $days;
+    }
+
+    /**
      * The stored path of the logo — the ONE file both RenderContractJob's
      * `studio.logoPath` merge field and a future portal-branding read are
      * meant to resolve against (T-02's acceptance criterion). Never a second

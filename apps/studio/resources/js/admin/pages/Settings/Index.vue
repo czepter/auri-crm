@@ -10,7 +10,19 @@ const props = defineProps<{ settings: App.Settings.Data.StudioSettingsData }>()
 // second-level tab set the mockup draws as two static variants of one
 // screen. Nothing here is routed: both forms already save through their own
 // endpoint, so switching panes has no request to make.
-const pane = ref<'profile' | 'vat'>('profile')
+const pane = ref<'profile' | 'vat' | 'general'>('profile')
+
+// Mo..So, ISO weekday order — matches the integers StudioSettingsController
+// validates working_days.* against and TaskTemplate::dueFor() rolls over.
+const weekdays = [
+  { value: 1, key: 'settings.dayMon' },
+  { value: 2, key: 'settings.dayTue' },
+  { value: 3, key: 'settings.dayWed' },
+  { value: 4, key: 'settings.dayThu' },
+  { value: 5, key: 'settings.dayFri' },
+  { value: 6, key: 'settings.daySat' },
+  { value: 7, key: 'settings.daySun' },
+] as const
 
 // isDirty is Inertia's own useForm computed, comparing current values to the
 // defaults the form was built with — not a bespoke computed re-implementing
@@ -50,14 +62,32 @@ const vatForm = useForm({
   vat_note: props.settings.vatNote ?? '',
 })
 
-const activeForm = computed(() => (pane.value === 'vat' ? vatForm : form))
+// working_days travels the form as the array of ISO weekday integers
+// StudioSettingsController validates directly — no bitmask, no translation
+// at the wire boundary, same as every other field here.
+const generalForm = useForm({
+  timezone: props.settings.timezone,
+  locale: props.settings.locale,
+  working_days: [...props.settings.workingDays] as number[],
+})
+
+const activeForm = computed(() => {
+  if (pane.value === 'vat') return vatForm
+  if (pane.value === 'general') return generalForm
+  return form
+})
 
 // Every other future group (Dokumente, Zahlungen, ...) later stories land —
 // rendered disabled with the "bald" chip screen 4's Vertrag tab already uses
 // for a superseded quote, per T-00's mockup. Zahlungsdaten & USt is T-03's
-// own pane and Nummernkreise is T-04's own route, so both drop out of this
-// list.
-const comingSoon = ['navDocuments', 'navPayments', 'navPortal', 'navNotifications', 'navGeneral'] as const
+// own pane, Nummernkreise is T-04's own route and Allgemein is T-13's own
+// pane, so all three drop out of this list.
+const comingSoon = ['navDocuments', 'navPayments', 'navPortal', 'navNotifications'] as const
+
+function toggleWorkingDay(day: number) {
+  const days = generalForm.working_days
+  generalForm.working_days = days.includes(day) ? days.filter((d) => d !== day) : [...days, day].sort()
+}
 
 function onLogoChange(event: Event) {
   form.logo = (event.target as HTMLInputElement).files?.[0] ?? null
@@ -81,6 +111,16 @@ function submitVat() {
     }))
     .patch('/einstellungen/ust', { preserveScroll: true })
 }
+
+function submitGeneral() {
+  generalForm
+    .transform((data) => ({
+      timezone: data.timezone || null,
+      locale: data.locale || null,
+      working_days: data.working_days,
+    }))
+    .patch('/einstellungen/allgemein', { preserveScroll: true })
+}
 </script>
 
 <template>
@@ -88,13 +128,21 @@ function submitVat() {
     <div class="hrow">
       <div>
         <div class="kick">{{ $t('settings.kicker') }}</div>
-        <h1>{{ pane === 'vat' ? $t('settings.vatTitle') : $t('settings.profileTitle') }}</h1>
+        <h1>
+          {{
+            pane === 'vat'
+              ? $t('settings.vatTitle')
+              : pane === 'general'
+                ? $t('settings.generalTitle')
+                : $t('settings.profileTitle')
+          }}
+        </h1>
       </div>
       <span v-if="activeForm.isDirty" class="chip now">{{ $t('settings.unsaved') }}</span>
       <button
         class="btn"
         type="submit"
-        :form="pane === 'vat' ? 'vat-form' : 'settings-form'"
+        :form="pane === 'vat' ? 'vat-form' : pane === 'general' ? 'general-form' : 'settings-form'"
         :disabled="!activeForm.isDirty || activeForm.processing"
         :style="!activeForm.isDirty ? 'opacity:.4' : undefined"
       >
@@ -121,6 +169,9 @@ function submitVat() {
         >
           {{ $t(`settings.${key}`) }}
           <span class="chip next" style="margin-left: auto">{{ $t('settings.soon') }}</span>
+        </a>
+        <a class="nav" :class="{ on: pane === 'general' }" href="#" @click.prevent="pane = 'general'">
+          {{ $t('settings.navGeneral') }}
         </a>
       </nav>
 
@@ -288,7 +339,7 @@ function submitVat() {
         </div>
       </form>
 
-      <form v-else id="vat-form" style="flex: 1; min-width: 0; max-width: 460px" @submit.prevent="submitVat">
+      <form v-else-if="pane === 'vat'" id="vat-form" style="flex: 1; min-width: 0; max-width: 460px" @submit.prevent="submitVat">
         <div class="dsec" style="margin-top: 0">
           <div class="dlab">{{ $t('settings.vatModeLabel') }}</div>
           <div class="grp">
@@ -336,6 +387,54 @@ function submitVat() {
             <p v-else class="hint" style="margin: 0">{{ $t('settings.vatPreviewEmpty') }}</p>
           </div>
           <span class="hint" style="display: block; margin-top: var(--s3)">{{ $t('settings.vatPreviewHint') }}</span>
+        </div>
+      </form>
+
+      <form v-else id="general-form" style="flex: 1; min-width: 0; max-width: 460px" @submit.prevent="submitGeneral">
+        <div class="dsec" style="margin-top: 0">
+          <div class="dlab">{{ $t('settings.timezoneLocaleLabel') }}</div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="g-zeitzone">{{ $t('settings.timezoneLabel') }}</label>
+                <input id="g-zeitzone" v-model="generalForm.timezone" class="inp" type="text" placeholder="Europe/Berlin" />
+                <span class="hint">{{ $t('settings.timezoneHint') }}</span>
+                <p v-if="generalForm.errors.timezone" class="err">{{ generalForm.errors.timezone }}</p>
+              </div>
+              <div class="fld">
+                <label for="g-sprache">{{ $t('settings.localeLabel') }}</label>
+                <select id="g-sprache" v-model="generalForm.locale" class="inp">
+                  <option value="de">{{ $t('settings.localeDe') }}</option>
+                  <option value="de_DE">{{ $t('settings.localeDeDe') }}</option>
+                  <option value="de_AT">{{ $t('settings.localeDeAt') }}</option>
+                  <option value="de_CH">{{ $t('settings.localeDeCh') }}</option>
+                </select>
+                <p v-if="generalForm.errors.locale" class="err">{{ generalForm.errors.locale }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">{{ $t('settings.workingDaysLabel') }}</div>
+          <div class="grp">
+            <div style="display: flex; flex-wrap: wrap; gap: var(--s4)">
+              <label
+                v-for="day in weekdays"
+                :key="day.value"
+                style="display: flex; align-items: center; gap: 8px; font: 400 13px/1.4 var(--font)"
+              >
+                <input
+                  type="checkbox"
+                  :checked="generalForm.working_days.includes(day.value)"
+                  @change="toggleWorkingDay(day.value)"
+                />
+                {{ $t(day.key) }}
+              </label>
+            </div>
+            <span class="hint">{{ $t('settings.workingDaysHint') }}</span>
+            <p v-if="generalForm.errors.working_days" class="err">{{ generalForm.errors.working_days }}</p>
+          </div>
         </div>
       </form>
     </div>
