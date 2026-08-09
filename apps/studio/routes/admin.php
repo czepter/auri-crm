@@ -119,6 +119,7 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::get('/einstellungen', [StudioSettingsController::class, 'edit'])->name('settings.edit');
         Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');
+        Route::get('/einstellungen/logo', [StudioSettingsController::class, 'logo'])->name('settings.logo');
         Route::patch('/einstellungen/ust', [StudioSettingsController::class, 'updateVat'])->name('settings.vat.update');
 
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
