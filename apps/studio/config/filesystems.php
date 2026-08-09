@@ -56,6 +56,18 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+
+            // G-02: the AWS SDK's own opt-in trailer checksum ("when
+            // supported") reads the whole request body up front to hash it,
+            // which requires a seekable stream — exactly what the quarantine
+            // ingest's part upload (php://input) never is, by the story's own
+            // "never buffer a chunk" requirement. "when_required" leaves it
+            // off unless an operation truly needs one, which UploadPart does
+            // not. Also sidesteps relying on trailer-checksum support holding
+            // across every S3-compatible backend this disk has to run on
+            // unmodified (#50's own "anything whose support varies... is
+            // out").
+            'request_checksum_calculation' => 'when_required',
             'throw' => false,
             'report' => false,
         ],

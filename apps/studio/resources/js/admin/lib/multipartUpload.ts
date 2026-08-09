@@ -1,0 +1,145 @@
+/**
+ * G-02: the browser side of app-proxied multipart ingest. Plain fetch, no
+ * upload library — the app has none installed, and a resumable-upload
+ * client is a handful of functions, not a dependency.
+ *
+ * The bytes never go to S3 directly: every request here is to this
+ * application's own /galerien and /uploads routes
+ * (App\Media\Http\Controllers\MultipartUploadController), which relay each
+ * chunk to the bucket server-side.
+ */
+
+/** What identifies "the same upload" to a returning tab — never a storage key, which the browser is never given. */
+export interface FileFingerprint {
+  filename: string
+  file_size: number
+  file_modified_at: number
+}
+
+export function fingerprintOf(file: File): FileFingerprint {
+  return { filename: file.name, file_size: file.size, file_modified_at: file.lastModified }
+}
+
+export interface UploadSession {
+  publicId: string
+  partSize: number
+  /** Part numbers (1-based) the bucket already has, per ListParts — see StartOrResumeMultipartUpload. */
+  donePartNumbers: Set<number>
+}
+
+/** The XSRF-TOKEN cookie Laravel's session middleware sets, copied into the header it looks for on a raw fetch — the same thing axios (and so Inertia's own requests) does automatically. */
+function xsrfHeader(): Record<string, string> {
+  const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/)
+
+  return match ? { 'X-XSRF-TOKEN': decodeURIComponent(match[1]) } : {}
+}
+
+async function asJson<T>(response: Response): Promise<T> {
+  if (!response.ok) {
+    throw new Error(`${response.status} ${response.statusText}`)
+  }
+
+  return response.json() as Promise<T>
+}
+
+/** How many parts $partSize chunks $fileSize bytes into — the last one is whatever remainder is left, same as the server's own fixed part_size. */
+export function partCount(fileSize: number, partSize: number): number {
+  return Math.max(1, Math.ceil(fileSize / partSize))
+}
+
+/** Byte range [start, end) for one 1-based part number, against a fixed part size. */
+export function partRange(partNumber: number, partSize: number, fileSize: number): [number, number] {
+  const start = (partNumber - 1) * partSize
+  return [start, Math.min(start + partSize, fileSize)]
+}
+
+/** Every session action beyond "start or resume" is scoped by the upload's own public id, not by the gallery — routes/admin.php's galleries.uploads.parts/complete/destroy. */
+const UPLOADS_BASE = '/uploads'
+
+/** Starts a fresh session, or resumes the one already in progress for this exact file — see the fingerprint's own doc comment. $createUrl is the gallery-scoped POST route (galleries.uploads.store). */
+export async function startOrResumeUpload(createUrl: string, file: File): Promise<UploadSession> {
+  const response = await fetch(createUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...xsrfHeader() },
+    credentials: 'same-origin',
+    body: JSON.stringify(fingerprintOf(file)),
+  })
+
+  const data = await asJson<{ upload: { public_id: string; part_size: number }; parts: { part_number: number }[] }>(response)
+
+  return {
+    publicId: data.upload.public_id,
+    partSize: data.upload.part_size,
+    donePartNumbers: new Set(data.parts.map((part) => part.part_number)),
+  }
+}
+
+/** Relays one chunk straight from the File's own Blob slice — never read into a JS string or array buffer first, so a 30 GB selection never sits in memory beyond whatever one part costs. */
+async function uploadPart(publicId: string, partNumber: number, chunk: Blob): Promise<void> {
+  const response = await fetch(`${UPLOADS_BASE}/${publicId}/teile/${partNumber}`, {
+    method: 'PUT',
+    headers: xsrfHeader(),
+    credentials: 'same-origin',
+    body: chunk,
+  })
+
+  await asJson(response)
+}
+
+async function completeUpload(publicId: string): Promise<void> {
+  const response = await fetch(`${UPLOADS_BASE}/${publicId}/abschluss`, {
+    method: 'POST',
+    headers: xsrfHeader(),
+    credentials: 'same-origin',
+  })
+
+  await asJson(response)
+}
+
+export async function abortUpload(publicId: string): Promise<void> {
+  await fetch(`${UPLOADS_BASE}/${publicId}`, {
+    method: 'DELETE',
+    headers: xsrfHeader(),
+    credentials: 'same-origin',
+  })
+}
+
+export interface UploadProgress {
+  partsDone: number
+  partsTotal: number
+}
+
+/**
+ * Starts or resumes, uploads every part the bucket does not already have,
+ * then completes — the whole client-side half of the resume story. A
+ * dropped connection or a killed tab simply leaves some parts undone; the
+ * next call with the same File (the browser's own re-picked or re-dropped
+ * folder, mockup 05-medien's "denselben Ordner") asks the bucket again via
+ * startOrResumeUpload and only sends the gap, never re-sending a part
+ * already there.
+ *
+ * ponytail: one part at a time, no parallel chunk uploads. Add bounded
+ * concurrency if a 30 GB transfer over a single stream measures too slow in
+ * practice — nothing here forecloses it, since each part is independent.
+ */
+export async function uploadFile(createUrl: string, file: File, onProgress?: (progress: UploadProgress) => void): Promise<void> {
+  const session = await startOrResumeUpload(createUrl, file)
+  const total = partCount(file.size, session.partSize)
+
+  let done = session.donePartNumbers.size
+  onProgress?.({ partsDone: done, partsTotal: total })
+
+  for (let partNumber = 1; partNumber <= total; partNumber++) {
+    if (session.donePartNumbers.has(partNumber)) {
+      continue
+    }
+
+    const [start, end] = partRange(partNumber, session.partSize, file.size)
+    await uploadPart(session.publicId, partNumber, file.slice(start, end))
+
+    done += 1
+    onProgress?.({ partsDone: done, partsTotal: total })
+  }
+
+  await completeUpload(session.publicId)
+}

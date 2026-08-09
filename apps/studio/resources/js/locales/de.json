@@ -550,5 +550,24 @@
     "footerImpressum": "Impressum",
     "footerDatenschutz": "Datenschutz",
     "footerAgb": "AGB"
+  },
+  "media": {
+    "kicker": "Medien · Import",
+    "backToProject": "Zum Projekt",
+    "pickFiles": "Dateien auswählen",
+    "transferring": "Übertragung läuft",
+    "filesLabel": "Dateien",
+    "of": "von",
+    "target": "Ziel",
+    "project": "Projekt",
+    "shoot": "Shooting",
+    "gallery": "Galerie",
+    "ready": "Bereit",
+    "queued": "Wartet",
+    "uploading": "Läuft",
+    "failed": "Fehler",
+    "retry": "Erneut übertragen",
+    "empty": "Noch keine Dateien ausgewählt.",
+    "resumeHint": "Ein abgebrochener Import lässt sich jederzeit mit denselben Dateien fortsetzen — bereits übertragene Teile werden erkannt und übersprungen."
   }
 }

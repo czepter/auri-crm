@@ -212,6 +212,22 @@ namespace Enums {
 export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings';
 export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' | 'assistant';
 }
+namespace Media {
+namespace Data {
+export type MediaIngestTargetData = {
+galleryId: string,
+galleryTitle: string,
+projectId: string,
+projectName: string,
+shootId: string | null,
+shootLabel: string | null,
+partSize: number,
+};
+}
+namespace Enums {
+export type MultipartUploadStatus = 'in_progress' | 'completed' | 'aborted';
+}
+}
 namespace Numbering {
 namespace Enums {
 export type DocumentType = 'quote' | 'contract' | 'invoice';

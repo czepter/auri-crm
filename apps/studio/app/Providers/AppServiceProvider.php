@@ -16,12 +16,14 @@ use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
 use App\Gallery\Listeners\RecomputeGalleryBalanceSettled;
+use App\Gallery\Models\Gallery;
 use App\Notifications\NotificationService;
 use App\Notifications\Transports\InAppTransport;
 use App\Notifications\Transports\MailTransport;
 use App\Payments\Events\InstallmentPaid;
 use App\Policies\ContactPolicy;
 use App\Policies\ContractTemplatePolicy;
+use App\Policies\GalleryPolicy;
 use App\Policies\InternalNotePolicy;
 use App\Policies\LeadPolicy;
 use App\Policies\PackagePolicy;
@@ -30,12 +32,14 @@ use App\Policies\ShootPolicy;
 use App\Policies\TaskPolicy;
 use App\Policies\TaskTemplatePolicy;
 use App\Support\Surface;
+use Aws\S3\S3Client;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Console\ServeCommand;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -52,6 +56,14 @@ class AppServiceProvider extends ServiceProvider
             $app->make(MailTransport::class),
             $app->make(InAppTransport::class),
         ]));
+
+        // G-02: the one seam App\Media\Services\MultipartUploadGateway uses
+        // to reach past Flysystem, the same boundary
+        // ReapIncompleteMultipartUploads already crosses (Storage::disk('s3')
+        // ->getClient()) — bound here rather than constructed inline so a
+        // test can swap it for an S3Client wired to Aws\MockHandler instead
+        // of a live bucket.
+        $this->app->singleton(S3Client::class, fn () => Storage::disk('s3')->getClient());
     }
 
     /**
@@ -138,6 +150,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Package::class, PackagePolicy::class);
         Gate::policy(ContractTemplate::class, ContractTemplatePolicy::class);
         Gate::policy(TaskTemplate::class, TaskTemplatePolicy::class);
+        Gate::policy(Gallery::class, GalleryPolicy::class);
 
         // Filling a non-fillable attribute is silent by default, which turns a
         // factory state like withMfa() into a no-op that fails a test three tasks
