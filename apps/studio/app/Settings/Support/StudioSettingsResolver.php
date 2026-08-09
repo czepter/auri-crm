@@ -5,7 +5,10 @@ namespace App\Settings\Support;
 use App\Models\User;
 use App\Settings\Models\StudioSettings;
 use App\Support\AuditLogger;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * The tenant-scoped config service Vision §12 asked for and nothing built
@@ -36,6 +39,102 @@ class StudioSettingsResolver
     public function publicId(): string
     {
         return $this->row()->public_id;
+    }
+
+    /** 'standard' or 'small_business' — see the studio_settings table's check constraint for the domain. */
+    public function vatMode(): string
+    {
+        return $this->row()->vat_mode;
+    }
+
+    /**
+     * The standard-mode rate, in basis points (1900 = 19.00%) — never zero
+     * out this value on a small_business switch, or switching back to
+     * standard has nothing to restore. Q-04 wants effectiveVatRate()
+     * instead of this for anything it actually prints.
+     */
+    public function vatRate(): int
+    {
+        return $this->row()->vat_rate;
+    }
+
+    public function vatNote(): ?string
+    {
+        return $this->row()->vat_note;
+    }
+
+    /**
+     * What a document should actually use — zero under small_business
+     * regardless of what vat_rate holds, so a mode switch never leaves a
+     * stale 19% behind. This is T-03's whole point: Q-04 calls this, not
+     * vatRate(), the moment it prints a total.
+     */
+    public function effectiveVatRate(): int
+    {
+        return $this->vatMode() === 'small_business' ? 0 : $this->vatRate();
+    }
+
+    /**
+     * The stored path of the logo — the ONE file both RenderContractJob's
+     * `studio.logoPath` merge field and a future portal-branding read are
+     * meant to resolve against (T-02's acceptance criterion). Never a second
+     * upload for a second context: whoever needs the logo reads it through
+     * here.
+     */
+    public function logoPath(): ?string
+    {
+        return $this->row()->logo_path;
+    }
+
+    /**
+     * T-02's legal-entity, brand and bank columns, keyed by column name —
+     * the one place outside this class permitted to see them, and only as
+     * plain values. The Studio-Profil edit screen and RenderContractJob's
+     * `studio.*` merge fields (docs/contracts.md) both read through this
+     * rather than through row() itself, which stays private.
+     *
+     * @return array<string, mixed>
+     */
+    public function attributes(): array
+    {
+        return Arr::only($this->row()->getAttributes(), [
+            'display_name',
+            'legal_name', 'legal_form', 'street', 'postcode', 'city', 'country',
+            'tax_number', 'vat_id', 'register_number', 'register_court', 'representative',
+            'website', 'accent_color', 'logo_path',
+            'bank_account_holder', 'bank_iban', 'bank_bic',
+        ]);
+    }
+
+    /**
+     * The logo is stored once (T-02's acceptance criterion) — a re-upload
+     * replaces the same tenant's file and removes whatever it replaces,
+     * rather than accumulating a second one under a second name. Uses the
+     * `local` disk the exact way RenderContractJob stores a rendered
+     * contract (Storage::disk('local'), see docs/contracts.md), not a
+     * second filesystem convention invented for branding alone.
+     */
+    public function setLogo(UploadedFile $file, ?User $actor = null): void
+    {
+        $row = StudioSettings::query()->firstOrFail();
+        $old = $row->logo_path;
+
+        $path = $file->storeAs("branding/{$row->tenant_id}", 'logo.'.$file->extension(), 'local');
+
+        if ($old !== null && $old !== $path) {
+            Storage::disk('local')->delete($old);
+        }
+
+        $row->update(['logo_path' => $path]);
+
+        Cache::store('redis')->forget($this->cacheKey());
+
+        AuditLogger::record(
+            event: 'studio_settings.updated',
+            actor: $actor,
+            context: ['key' => 'logo_path', 'old' => $old, 'new' => $path],
+            subject: $row->public_id,
+        );
     }
 
     /**

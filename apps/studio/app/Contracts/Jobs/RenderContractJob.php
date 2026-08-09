@@ -6,6 +6,7 @@ use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
 use App\Contracts\Support\GotenbergClient;
 use App\Contracts\Support\MergeFieldResolver;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -31,7 +32,7 @@ class RenderContractJob implements ShouldQueue
 
     public function __construct(public readonly Contract $contract) {}
 
-    public function handle(GotenbergClient $gotenberg): void
+    public function handle(GotenbergClient $gotenberg, StudioSettingsResolver $settings): void
     {
         $contract = $this->contract->fresh(['project', 'template']);
 
@@ -44,7 +45,7 @@ class RenderContractJob implements ShouldQueue
         }
 
         $html = $this->wrapDocument(
-            MergeFieldResolver::resolve($contract->template->body, $this->mergeData($contract))
+            MergeFieldResolver::resolve($contract->template->body, $this->mergeData($contract, $settings))
         );
 
         try {
@@ -71,12 +72,18 @@ class RenderContractJob implements ShouldQueue
      * docs/contracts.md; MergeFieldResolver reads dot-paths against exactly
      * this shape.
      *
+     * `studio.*` reads through StudioSettingsResolver — T-02's fieldsets —
+     * rather than APP_NAME or anything ad hoc: a contract with none of the
+     * studio's own registered particulars on it was M-01's open TODO before
+     * this story landed, and this closes it.
+     *
      * @return array<string, mixed>
      */
-    private function mergeData(Contract $contract): array
+    private function mergeData(Contract $contract, StudioSettingsResolver $settings): array
     {
         $project = $contract->project;
         $contact = $project->primaryContact();
+        $studio = $settings->attributes();
 
         return [
             'project' => [
@@ -89,6 +96,28 @@ class RenderContractJob implements ShouldQueue
             ],
             'job' => [
                 'bookedAt' => $project->job?->booked_at?->format('d.m.Y') ?? '',
+            ],
+            'studio' => [
+                'name' => $studio['legal_name'] ?: ($studio['display_name'] ?? ''),
+                'legalForm' => $studio['legal_form'] ?? '',
+                'street' => $studio['street'] ?? '',
+                'postcode' => $studio['postcode'] ?? '',
+                'city' => $studio['city'] ?? '',
+                'country' => $studio['country'] ?? '',
+                'taxNumber' => $studio['tax_number'] ?? '',
+                'vatId' => $studio['vat_id'] ?? '',
+                'registerNumber' => $studio['register_number'] ?? '',
+                'registerCourt' => $studio['register_court'] ?? '',
+                'representative' => $studio['representative'] ?? '',
+                'website' => $studio['website'] ?? '',
+                // The stored file path, not a URL — no contract template
+                // embeds it yet (no <img> merge field is in use today), and
+                // building a Gotenberg-reachable URL for one is real,
+                // untested scope. StudioSettingsResolver::logoPath() is the
+                // one place both this and a future portal read already
+                // agree on; wiring an actual <img src> is a follow-up, not
+                // this story's to half-build.
+                'logoPath' => $settings->logoPath() ?? '',
             ],
         ];
     }

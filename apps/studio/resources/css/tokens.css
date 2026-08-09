@@ -303,3 +303,12 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 .proles { display:flex; gap:4px; flex:none; }
 .role { display:inline-flex; align-items:center; padding:3px 8px; border-radius:var(--r-sm); background:var(--hover);
         font:500 11px/1.4 var(--font); color:var(--muted); white-space:nowrap; }
+
+/* .galcover only — the gallery feature itself (.gal, .galrow, .galname, ...)
+   has no built screen yet, so the rest of the mockup's gallery-rail block
+   stays there until one exists. T-02's Studio-Profil (screen 14) reuses just
+   this one square-cover shape for the logo preview, the same 40px swatch the
+   mockup itself borrows it for. */
+.galcover { width:40px; height:40px; flex:none; border-radius:6px; object-fit:cover; background:var(--hover); }
+.galcover.empty { display:flex; align-items:center; justify-content:center; text-align:center;
+                  font:600 8.5px/1.2 var(--font); color:var(--faint); letter-spacing:.02em; padding:4px; }

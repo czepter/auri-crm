@@ -20,6 +20,24 @@ runs:
 | `contact.name`       | The project's primary contact's name.           |
 | `contact.email`      | The project's primary contact's email.          |
 | `job.bookedAt`       | The booking date, `dd.mm.yyyy`, or empty if unbooked. |
+| `studio.name`        | The studio's registered name (`legal_name`), falling back to its display name. |
+| `studio.legalForm`   | e.g. "GmbH", "Einzelunternehmen".               |
+| `studio.street`      | Registered street and number.                   |
+| `studio.postcode`    | |
+| `studio.city`        | |
+| `studio.country`     | |
+| `studio.taxNumber`   | Steuernummer.                                    |
+| `studio.vatId`       | USt-IdNr.                                        |
+| `studio.registerNumber` | Handelsregister number.                       |
+| `studio.registerCourt`  | Registering court (Registergericht).          |
+| `studio.representative` | Authorised representative.                    |
+| `studio.website`     | |
+| `studio.logoPath`    | The logo's stored path on the `local` disk (T-02, `StudioSettingsResolver::logoPath()`) — a filesystem path, not yet a URL. No template embeds it as an `<img>` today; wiring a Gotenberg-reachable URL is a follow-up, not something T-02 half-built. |
+
+All `studio.*` fields read through `App\Settings\Support\StudioSettingsResolver`
+(T-02) — the same tenant settings row the Studio-Profil admin screen edits —
+rather than `APP_NAME` or anything ad hoc, which is what M-01 originally
+shipped with because this story hadn't landed yet.
 
 Add a path by extending `RenderContractJob::mergeData()` and this table in
 the same commit — the resolver has no knowledge of what a template is
