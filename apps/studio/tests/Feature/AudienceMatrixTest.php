@@ -3,8 +3,6 @@
 use App\Models\User;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Routing\RouteCollection;
-use Illuminate\Support\Facades\Route;
 
 uses(RefreshDatabase::class);
 
@@ -18,15 +16,7 @@ const PUBLIC_ROUTES = [
     'api' => ['api/health'],
 ];
 
-function routesForSurface(string $surface): array
-{
-    config(['surface.name' => $surface]);
-
-    Route::setRoutes(new RouteCollection);
-    Surface::registerRoutes();
-
-    return collect(Route::getRoutes()->getRoutes())->all();
-}
+// routesForSurface() lives in tests/Pest.php — see the note there.
 
 it('declares an audience on every non-public route of every surface', function (string $surface) {
     $undeclared = collect(routesForSurface($surface))

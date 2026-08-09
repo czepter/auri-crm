@@ -1,5 +1,10 @@
 <?php
 
+use App\Support\Surface;
+use Illuminate\Routing\RouteCollection;
+use Illuminate\Support\Facades\Route;
+use Tests\TestCase;
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -11,7 +16,7 @@
 |
 */
 
-pest()->extend(Tests\TestCase::class)
+pest()->extend(TestCase::class)
  // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     // No feature test asserts a built asset — they assert the Inertia component
     // and the root view. Resolving the real manifest would make the PHP suite
@@ -56,6 +61,22 @@ expect()->extend('toBeOne', function () {
  * global function declared inside one test file is only visible to another if
  * Pest happens to load them in the right order.
  */
+/**
+ * Registers one surface's routes in isolation and returns them. Two suites
+ * need it — the audience matrix and the internal-note reach test — which is
+ * exactly the case the note above says belongs here rather than in whichever
+ * test file happened to declare it first.
+ */
+function routesForSurface(string $surface): array
+{
+    config(['surface.name' => $surface]);
+
+    Route::setRoutes(new RouteCollection);
+    Surface::registerRoutes();
+
+    return collect(Route::getRoutes()->getRoutes())->all();
+}
+
 function integerIdPaths(mixed $node, string $path = '$'): array
 {
     if (! is_array($node)) {
