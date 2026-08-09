@@ -39,10 +39,14 @@ Route::middleware('audience:portal')->group(function () {
     Route::get('/projekte/{project}', ProjectController::class)->name('portal.projects.show');
 
     // Mockup 07. Reads only the artifact M-01's queued job already stored —
-    // see App\Portal\Http\Controllers\ContractController. Signing (the
-    // mockup's right-hand rail) is M-02's.
+    // see App\Portal\Http\Controllers\ContractController.
     Route::get('/projekte/{project}/vertrag', [ContractController::class, 'show'])
         ->name('portal.contracts.show');
     Route::get('/projekte/{project}/vertrag/pdf', [ContractController::class, 'download'])
         ->name('portal.contracts.download');
+
+    // M-02's signing rail. Writes at most one contract_signatures row per
+    // contract — see App\Contracts\Actions\SignContract.
+    Route::post('/projekte/{project}/vertrag/unterschreiben', [ContractController::class, 'sign'])
+        ->name('portal.contracts.sign');
 });

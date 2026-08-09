@@ -149,6 +149,29 @@ it('never puts an integer identifier into the portal switcher', function () {
     expect(integerIdPaths($props))->toBe([]);
 });
 
+it('never puts an integer identifier into the portal contract screen once signed, and the sign route takes only a public id', function () {
+    useSurface(Surface::PORTAL);
+    Storage::fake('local');
+
+    $project = Project::factory()->create(['portal_visible' => true]);
+    renderedContract($project);
+    $contact = Contact::factory()->create();
+    $project->attachContact($contact, ProjectContactRole::Primary);
+
+    // The URL itself names the project by public id, never by its integer
+    // primary key — this is the request that writes the signature row.
+    $this->actingAs($contact, 'portal')
+        ->post("/projekte/{$project->public_id}/vertrag/unterschreiben", ['typedName' => 'Lena Meier', 'consent' => true])
+        ->assertRedirect();
+
+    $props = $this->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}/vertrag")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect(integerIdPaths($props))->toBe([]);
+});
+
 it('never puts an integer identifier into a portal project screen', function () {
     useSurface(Surface::PORTAL);
 
