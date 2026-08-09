@@ -15,9 +15,10 @@ use Inertia\Response;
  * "does not exist".
  *
  * Mockup 06 fills this screen with a hero photo, a derived checklist and a
- * contract; none of those exist yet — they arrive with Q-*, M-* and G-* — so
- * the screen shows the shoots the studio has chosen to share and says
- * nothing it cannot back.
+ * contract; the hero and checklist don't exist yet — they arrive with G-* and
+ * E-* — so the screen shows the shoots the studio has chosen to share, plus a
+ * link to the contract once M-01 has rendered one, and says nothing it
+ * cannot back.
  */
 class ProjectController extends Controller
 {
@@ -27,7 +28,10 @@ class ProjectController extends Controller
 
         $found = $contact->visibleProjects()
             ->where('projects.public_id', $project)
-            ->with(['shoots' => fn ($query) => $query->uncancelled()->orderByRaw('date is null, date')])
+            ->with([
+                'shoots' => fn ($query) => $query->uncancelled()->orderByRaw('date is null, date'),
+                'latestContract',
+            ])
             ->firstOrFail();
 
         return Inertia::render('Projects/Show', [
@@ -55,6 +59,9 @@ class ProjectController extends Controller
                     // chased in their own portal.
                     'status' => $shoot->status->label(),
                 ]),
+                // M-01. False before any contract has ever been generated —
+                // the link only ever appears once there is something behind it.
+                'hasContract' => $found->latestContract !== null,
             ],
         ]);
     }

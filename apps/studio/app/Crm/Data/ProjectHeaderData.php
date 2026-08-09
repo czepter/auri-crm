@@ -39,12 +39,14 @@ class ProjectHeaderData extends Data
         public bool $portalVisible,
         public bool $canManagePortalVisibility,
         public bool $canManageQuotes,
+        public bool $canManageContracts,
         public array $tabs,
     ) {}
 
     public static function fromProject(Project $project, ProjectPositionData $position): self
     {
         $user = auth('staff')->user();
+
         return new self(
             id: $project->public_id,
             name: $project->name,
@@ -65,16 +67,19 @@ class ProjectHeaderData extends Data
             portalVisible: $project->portal_visible,
             canManagePortalVisibility: $user?->can('manageVisibility', $project) ?? false,
             canManageQuotes: $user?->can('manageQuotes', $project) ?? false,
-            // Angebot and Vertrag are Q-*/M-* in P2, Zahlungen is M-03,
-            // Fragebögen and Kommunikation are E-* in P4, Galerien is G-05 in
-            // P3. Each appends a line here on the sprint it lands.
+            canManageContracts: $user?->can('manageContracts', $project) ?? false,
+            // Zahlungen is M-03, Fragebögen and Kommunikation are E-* in P4,
+            // Galerien is G-05 in P3. Each appends a line here on the sprint
+            // it lands.
             //
-            // Q-02 lands the quote half of "Angebot & Vertrag" — the label
-            // stays the mockup's whole tab name; Vertrag is still ahead.
+            // Q-02 landed the quote half of "Angebot & Vertrag" under one
+            // combined tab; M-01 splits Vertrag into its own tab now that it
+            // has a screen of its own.
             tabs: [
                 ['key' => 'overview', 'label' => 'Übersicht', 'href' => "/auftraege/{$project->public_id}"],
                 ['key' => 'shoots', 'label' => 'Shootings', 'href' => "/auftraege/{$project->public_id}/shootings"],
-                ['key' => 'quotes', 'label' => 'Angebot & Vertrag', 'href' => "/auftraege/{$project->public_id}/angebote"],
+                ['key' => 'quotes', 'label' => 'Angebot', 'href' => "/auftraege/{$project->public_id}/angebote"],
+                ['key' => 'contract', 'label' => 'Vertrag', 'href' => "/auftraege/{$project->public_id}/vertrag"],
             ],
         );
     }

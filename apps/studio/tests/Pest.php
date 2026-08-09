@@ -1,10 +1,19 @@
 <?php
 
+use App\Contracts\Enums\ContractStatus;
+use App\Contracts\Models\Contract;
+use App\Contracts\Models\ContractTemplate;
+use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Models\Contact;
+use App\Crm\Models\Job;
+use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Models\User;
 use App\Support\Surface;
 use Illuminate\Routing\RouteCollection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /*
@@ -85,14 +94,14 @@ function useSurface(string $surface): void
 {
     config([
         'surface.name' => $surface,
-        'session.cookie' => App\Support\Surface::COOKIES[$surface],
+        'session.cookie' => Surface::COOKIES[$surface],
     ]);
 
-    Illuminate\Support\Facades\Route::setRoutes(new Illuminate\Routing\RouteCollection);
-    App\Support\Surface::registerRoutes();
+    Route::setRoutes(new RouteCollection);
+    Surface::registerRoutes();
 
-    if ($surface !== App\Support\Surface::API) {
-        Illuminate\Support\Facades\Auth::shouldUse($surface === App\Support\Surface::PORTAL ? 'portal' : 'staff');
+    if ($surface !== Surface::API) {
+        Auth::shouldUse($surface === Surface::PORTAL ? 'portal' : 'staff');
     }
 }
 
@@ -121,6 +130,43 @@ function routesForSurface(string $surface): array
 function staffMember(?StaffRole $role = null): User
 {
     return User::factory()->withMfa()->create($role ? ['role' => $role] : []);
+}
+
+/**
+ * A booked project with a primary contact — the fixture RenderContractJob's
+ * merge fields resolve against (project.name, contact.name, job.bookedAt).
+ * Lives here rather than in whichever Contracts test file happened to
+ * declare it first: several do now, and a global function declared inside
+ * one test file collides the moment a second file declares the same name.
+ */
+function contractProject(): Project
+{
+    $project = Project::factory()->create(['name' => 'Hochzeit Meier & Kowalski']);
+    $contact = Contact::factory()->create(['name' => 'Lena Meier', 'email' => 'lena@example.test']);
+    $project->attachContact($contact, ProjectContactRole::Primary);
+    Job::factory()->for($project)->create(['booked_at' => '2026-06-14 00:00:00']);
+
+    return $project;
+}
+
+/**
+ * A Contract already in the `rendered` state, with real bytes sitting on the
+ * faked `local` disk at its artifact_path — call Storage::fake('local')
+ * before this. Several Contracts suites need "a rendered contract that
+ * exists" without caring how it got there.
+ */
+function renderedContract(?Project $project = null, string $bytes = '%PDF-stored-bytes'): Contract
+{
+    $contract = Contract::factory()
+        ->for($project ?? Project::factory())
+        ->for(ContractTemplate::factory(), 'template')
+        ->create(['status' => ContractStatus::Pending]);
+
+    $path = "contracts/test/{$contract->public_id}.pdf";
+    Storage::disk('local')->put($path, $bytes);
+    $contract->update(['status' => ContractStatus::Rendered, 'artifact_path' => $path, 'rendered_at' => now()]);
+
+    return $contract->fresh();
 }
 
 function integerIdPaths(mixed $node, string $path = '$'): array

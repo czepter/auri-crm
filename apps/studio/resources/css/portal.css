@@ -62,3 +62,20 @@ h1 { font-size: 30px; }
 .pgate .lede { font: 400 14px/1.5 var(--font); color: var(--muted); margin-bottom: var(--s5); }
 .pgate .sent { border: 1px solid var(--line); border-radius: var(--r); padding: var(--s4);
                font: 400 14px/1.5 var(--font); color: var(--ink); background: var(--hover); }
+
+/* ---------- screen 7: the rendered contract ---------- */
+/* Ported from mockups/_shared/portal.css, the .pdoc family only — M-01 shows
+   the real stored PDF (Storage-served, never re-rendered) inside .pdocscroll
+   rather than reproducing the contract's text as styled paragraphs, so the
+   mockup's .pdocbody typography stays in the mockup. Signing (the mockup's
+   sticky right rail) is M-02's; this screen is the document half only. */
+
+.pdoc     { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.pdochead { display: flex; align-items: center; gap: var(--s4); padding: var(--s4) var(--s5);
+            border-bottom: 1px solid var(--line); }
+.pdochead .kick { margin: 0; }
+.pdochead .txtbtn { margin-left: auto; padding: 0; }
+.pdocscroll { height: 74vh; background: #FDFCFB; }
+.pdocscroll iframe { display: block; width: 100%; height: 100%; border: 0; }
+.pdocwait { padding: var(--s7) var(--s5); text-align: center; color: var(--muted);
+            font: 400 14px/1.5 var(--font); }

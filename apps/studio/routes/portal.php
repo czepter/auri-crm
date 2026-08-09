@@ -1,5 +1,6 @@
 <?php
 
+use App\Portal\Http\Controllers\ContractController;
 use App\Portal\Http\Controllers\HomeController;
 use App\Portal\Http\Controllers\MagicLinkController;
 use App\Portal\Http\Controllers\ProjectController;
@@ -36,4 +37,12 @@ Route::middleware('audience:portal')->group(function () {
     // difference between "not yours" and "does not exist" is not this
     // surface's to give away.
     Route::get('/projekte/{project}', ProjectController::class)->name('portal.projects.show');
+
+    // Mockup 07. Reads only the artifact M-01's queued job already stored —
+    // see App\Portal\Http\Controllers\ContractController. Signing (the
+    // mockup's right-hand rail) is M-02's.
+    Route::get('/projekte/{project}/vertrag', [ContractController::class, 'show'])
+        ->name('portal.contracts.show');
+    Route::get('/projekte/{project}/vertrag/pdf', [ContractController::class, 'download'])
+        ->name('portal.contracts.download');
 });

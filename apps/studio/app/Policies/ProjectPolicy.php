@@ -70,4 +70,10 @@ class ProjectPolicy
     {
         return $user->role->allows(Capability::ManageQuotes) && $this->view($user, $project);
     }
+
+    /** Generate a rendered contract for this project (M-01). */
+    public function manageContracts(User $user, Project $project): bool
+    {
+        return $user->role->allows(Capability::ManageContracts) && $this->view($user, $project);
+    }
 }

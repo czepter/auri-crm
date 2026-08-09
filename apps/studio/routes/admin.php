@@ -1,6 +1,8 @@
 <?php
 
 use App\Catalog\Http\Controllers\PackageController;
+use App\Contracts\Http\Controllers\ContractController;
+use App\Contracts\Http\Controllers\ContractTemplateController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
 use App\Crm\Http\Controllers\ContactController;
@@ -95,6 +97,16 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/pakete/{package}', [PackageController::class, 'update'])->name('packages.update');
         Route::post('/pakete/{package}/status', [PackageController::class, 'toggle'])->name('packages.toggle');
 
+        // /vertragsvorlagen/neu stays above /vertragsvorlagen/{contractTemplate}
+        // for the same reason /pakete/neu does.
+        Route::get('/vertragsvorlagen', [ContractTemplateController::class, 'index'])->name('contract-templates.index');
+        Route::get('/vertragsvorlagen/neu', [ContractTemplateController::class, 'create'])->name('contract-templates.create');
+        Route::post('/vertragsvorlagen', [ContractTemplateController::class, 'store'])->name('contract-templates.store');
+        Route::get('/vertragsvorlagen/{contractTemplate}', [ContractTemplateController::class, 'edit'])
+            ->name('contract-templates.edit');
+        Route::patch('/vertragsvorlagen/{contractTemplate}', [ContractTemplateController::class, 'update'])
+            ->name('contract-templates.update');
+
         Route::get('/team', [InvitationController::class, 'index'])->name('staff.index');
         Route::post('/team/einladungen', [InvitationController::class, 'store'])->name('staff.invite');
         Route::delete('/team/einladungen/{invitation}', [InvitationController::class, 'destroy'])
@@ -129,6 +141,13 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/auftraege/{project}/angebote', [QuoteController::class, 'store'])
             ->name('quotes.store');
         Route::patch('/angebote/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
+
+        Route::get('/auftraege/{project}/vertrag', [ContractController::class, 'show'])
+            ->name('projects.contract');
+        Route::post('/auftraege/{project}/vertraege', [ContractController::class, 'store'])
+            ->name('contracts.store');
+        Route::get('/vertraege/{contract}/pdf', [ContractController::class, 'download'])
+            ->name('contracts.download');
 
         Route::post('/auftraege/{project}/shootings', [ShootController::class, 'store'])
             ->name('shoots.store');
