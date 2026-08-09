@@ -7,8 +7,8 @@ const props = defineProps<{ settings: App.Settings.Data.PortalSettingsData }>()
 // Every other future group — the same disabled "bald" list every settings
 // screen carries its own copy of, per Settings/Index.vue. Portal is this
 // pane now, so it drops out of the list here same as Zahlungen did on
-// Settings/Payments.vue.
-const comingSoon = ['navNotifications'] as const
+// Settings/Payments.vue; Benachrichtigungen is T-11's own route now too.
+const comingSoon: readonly string[] = []
 
 const form = useForm({
   portal_maintenance_enabled: props.settings.maintenanceEnabled,
@@ -62,7 +62,9 @@ function submit() {
         <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
         <a class="nav" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
         <a class="nav" href="/einstellungen/aufgabenvorlagen">{{ $t('settings.navTaskTemplates') }}</a>
+        <a class="nav" href="/einstellungen/fragebogen-vorlagen">{{ $t('settings.navFormTemplates') }}</a>
         <a class="nav on" href="/einstellungen/portal">{{ $t('settings.navPortal') }}</a>
+        <a class="nav" href="/einstellungen/benachrichtigungen">{{ $t('settings.navNotifications') }}</a>
         <a
           v-for="key in comingSoon"
           :key="key"

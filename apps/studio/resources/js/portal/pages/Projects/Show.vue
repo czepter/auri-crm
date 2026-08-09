@@ -15,7 +15,15 @@ type Shoot = {
 defineProps<{
   contact: { name: string }
   showSwitcher: boolean
-  project: { id: string; name: string; type: string; shoots: Shoot[]; hasContract: boolean; hasPaymentPlan: boolean }
+  project: {
+    id: string
+    name: string
+    type: string
+    shoots: Shoot[]
+    hasContract: boolean
+    hasPaymentPlan: boolean
+    messagingEnabled: boolean
+  }
 }>()
 
 function longDate(date: string | null) {
@@ -72,6 +80,16 @@ function longDate(date: string | null) {
 
         <p v-if="!project.shoots.length" class="hint">{{ $t('portal.noShoots') }}</p>
       </div>
+    </section>
+
+    <!-- E-06, gated by T-08's own "messaging" switch (default off) — the
+         affordance half of ThreadController's own
+         `portal.capability:messaging`, the same shape hasContract/
+         hasPaymentPlan already take for their own links below. -->
+    <section v-if="project.messagingEnabled" class="psec">
+      <Link class="blkfoot" :href="`/projekte/${project.id}/nachrichten`">
+        {{ $t('portal.messagesLinkTitle') }} →
+      </Link>
     </section>
 
     <section v-if="project.hasContract" class="psec">

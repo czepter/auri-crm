@@ -70,6 +70,10 @@ class ProjectController extends Controller
                 // route behind it should answer — see PaymentController's
                 // own `portal.capability:payment_status` middleware.
                 'hasPaymentPlan' => $found->job?->paymentPlan !== null && $settings->paymentStatusEnabled(),
+                // E-06, gated by T-08's own "messaging" switch (default off)
+                // the same way — the affordance half of ThreadController's
+                // own `portal.capability:messaging`.
+                'messagingEnabled' => $settings->messagingEnabled(),
             ],
         ]);
     }

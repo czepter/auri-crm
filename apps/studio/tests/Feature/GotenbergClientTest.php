@@ -1,6 +1,6 @@
 <?php
 
-use App\Contracts\Support\GotenbergClient;
+use App\Support\GotenbergClient;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;

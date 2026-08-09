@@ -2,12 +2,12 @@
 
 use App\Catalog\Http\Controllers\PackageController;
 use App\Contracts\Http\Controllers\ContractController;
-use App\Documents\Http\Controllers\DocumentTemplateController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
 use App\Crm\Http\Controllers\ContactController;
 use App\Crm\Http\Controllers\ContactSearchController;
 use App\Crm\Http\Controllers\CrewController;
+use App\Crm\Http\Controllers\FormTemplateController;
 use App\Crm\Http\Controllers\InquiryCaptureController;
 use App\Crm\Http\Controllers\InternalNoteController;
 use App\Crm\Http\Controllers\LeadBoardController;
@@ -17,6 +17,9 @@ use App\Crm\Http\Controllers\ShootController;
 use App\Crm\Http\Controllers\ShotListItemController;
 use App\Crm\Http\Controllers\TaskController;
 use App\Crm\Http\Controllers\TaskTemplateController;
+use App\Crm\Http\Controllers\TimelineController;
+use App\Documents\Http\Controllers\DocumentTemplateController;
+use App\Engagement\Http\Controllers\ThreadController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
 use App\Http\Controllers\Staff\InvitationController;
@@ -24,9 +27,12 @@ use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
 use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\SessionController;
+use App\Media\Http\Controllers\MediaIngestController;
+use App\Media\Http\Controllers\MultipartUploadController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
 use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
+use App\Settings\Http\Controllers\NotificationSettingsController;
 use App\Settings\Http\Controllers\NumberRangeController;
 use App\Settings\Http\Controllers\PaymentSettingsController;
 use App\Settings\Http\Controllers\PortalSettingsController;
@@ -170,10 +176,34 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/einstellungen/aufgabenvorlagen/{taskTemplate}', [TaskTemplateController::class, 'destroy'])
             ->name('task-templates.destroy');
 
+        // E-01: FormTemplate builder — a questionnaire's questions, built
+        // once and reused across projects. /neu stays above /{formTemplate}
+        // for the same reason /pakete/neu does.
+        Route::get('/einstellungen/fragebogen-vorlagen', [FormTemplateController::class, 'index'])
+            ->name('form-templates.index');
+        Route::get('/einstellungen/fragebogen-vorlagen/neu', [FormTemplateController::class, 'create'])
+            ->name('form-templates.create');
+        Route::post('/einstellungen/fragebogen-vorlagen', [FormTemplateController::class, 'store'])
+            ->name('form-templates.store');
+        Route::get('/einstellungen/fragebogen-vorlagen/{formTemplate}', [FormTemplateController::class, 'edit'])
+            ->name('form-templates.edit');
+        Route::patch('/einstellungen/fragebogen-vorlagen/{formTemplate}', [FormTemplateController::class, 'update'])
+            ->name('form-templates.update');
+        Route::delete('/einstellungen/fragebogen-vorlagen/{formTemplate}', [FormTemplateController::class, 'destroy'])
+            ->name('form-templates.destroy');
+
         Route::get('/einstellungen/portal', [PortalSettingsController::class, 'edit'])
             ->name('settings.portal.edit');
         Route::patch('/einstellungen/portal', [PortalSettingsController::class, 'update'])
             ->name('settings.portal.update');
+
+        // T-11: quiet hours only — see NotificationSettingsController's own
+        // doc comment for why no per-event toggle grid ships in this route
+        // group yet.
+        Route::get('/einstellungen/benachrichtigungen', [NotificationSettingsController::class, 'edit'])
+            ->name('settings.notifications.edit');
+        Route::patch('/einstellungen/benachrichtigungen', [NotificationSettingsController::class, 'update'])
+            ->name('settings.notifications.update');
 
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.
@@ -194,6 +224,15 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/auftraege/{project}/portal-sichtbarkeit', [ProjectController::class, 'togglePortalVisibility'])
             ->name('projects.portal-visibility.toggle');
 
+        // E-06. The client is the only one who can start a thread (see
+        // StartThread, reached from routes/portal.php) — this GET reads
+        // whatever the client has already opened, and the POST beside it is
+        // staff's reply on it, never an origination of its own.
+        Route::get('/auftraege/{project}/nachrichten', [ProjectController::class, 'messages'])
+            ->name('projects.messages');
+        Route::post('/auftraege/{project}/nachrichten', [ThreadController::class, 'reply'])
+            ->name('threads.reply');
+
         Route::get('/auftraege/{project}/angebote', [ProjectController::class, 'quotes'])
             ->name('projects.quotes');
 
@@ -208,6 +247,22 @@ Route::middleware('audience:staff')->group(function () {
             ->name('contracts.store');
         Route::get('/vertraege/{contract}/pdf', [ContractController::class, 'download'])
             ->name('contracts.download');
+
+        // G-02: app-proxied multipart ingest into a gallery's quarantine
+        // prefix. galleries.uploads.* is a JSON API for the browser's own
+        // chunked uploader (resources/js/admin/lib/multipartUpload.ts), not
+        // Inertia — see MultipartUploadController.
+        Route::get('/galerien/{gallery}/medien', [MediaIngestController::class, 'show'])
+            ->name('galleries.media');
+        Route::post('/galerien/{gallery}/uploads', [MultipartUploadController::class, 'store'])
+            ->name('galleries.uploads.store');
+        Route::put('/uploads/{multipartUpload}/teile/{partNumber}', [MultipartUploadController::class, 'uploadPart'])
+            ->whereNumber('partNumber')
+            ->name('galleries.uploads.parts.store');
+        Route::post('/uploads/{multipartUpload}/abschluss', [MultipartUploadController::class, 'complete'])
+            ->name('galleries.uploads.complete');
+        Route::delete('/uploads/{multipartUpload}', [MultipartUploadController::class, 'destroy'])
+            ->name('galleries.uploads.destroy');
 
         // No GET here: the Zahlungen card lives on the project overview
         // itself (ProjectController::show), not a tab of its own — see the
@@ -233,6 +288,19 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::post('/shootings/{shoot}/crew', [CrewController::class, 'store'])->name('crew.store');
         Route::delete('/crew/{assignment}', [CrewController::class, 'destroy'])->name('crew.destroy');
+
+        // E-04: the day-of schedule, shoot-scoped for the same reason the
+        // wedding-day timeline is not the engagement session's. Export routes
+        // sit beside the CRUD rather than under a separate controller — both
+        // read the same `timeline` relation, just rendered differently.
+        Route::post('/shootings/{shoot}/ablauf', [TimelineController::class, 'store'])
+            ->name('timeline.store');
+        Route::delete('/ablauf/{entry}', [TimelineController::class, 'destroy'])
+            ->name('timeline.destroy');
+        Route::get('/shootings/{shoot}/ablauf.pdf', [TimelineController::class, 'pdf'])
+            ->name('timeline.pdf');
+        Route::get('/shootings/{shoot}/ablauf.ics', [TimelineController::class, 'ics'])
+            ->name('timeline.ics');
 
         Route::post('/shootings/{shoot}/checkliste', [ShotListItemController::class, 'store'])
             ->name('shot-list-items.store');

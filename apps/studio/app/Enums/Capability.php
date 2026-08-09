@@ -43,6 +43,14 @@ enum Capability: string
 
     case ManageNotes = 'manage_notes';
 
+    /**
+     * Reply on a project's Thread (E-06). Ordinary studio work, the same
+     * shape as ManageNotes — the client started the conversation, and
+     * whoever may already write the studio's own notes on this project may
+     * also answer them.
+     */
+    case ManageMessages = 'manage_messages';
+
     /** Invite staff and reach the studio's own settings. */
     case ManageStaff = 'manage_staff';
 
@@ -86,4 +94,11 @@ enum Capability: string
      * role that needs partial access.
      */
     case ManageSettings = 'manage_settings';
+
+    /**
+     * Author FormTemplates — the questionnaires a project's client fills in
+     * (E-01). Shaped after ManageContracts: what a client sees and answers,
+     * not the open-to-everyone catalog/task shape.
+     */
+    case ManageFormTemplates = 'manage_form_templates';
 }

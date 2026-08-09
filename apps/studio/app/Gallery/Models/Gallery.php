@@ -6,6 +6,7 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Media\Models\MultipartUpload;
 use Database\Factories\Gallery\GalleryFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -75,6 +76,12 @@ class Gallery extends Model
     public function currentVersion(): HasOne
     {
         return $this->hasOne(GalleryVersion::class)->latestOfMany('version');
+    }
+
+    /** Every multipart upload session (G-02) ever started into this gallery's quarantine, whatever its state. */
+    public function multipartUploads(): HasMany
+    {
+        return $this->hasMany(MultipartUpload::class);
     }
 
     /**

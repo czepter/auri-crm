@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Models\StaffInvitation;
+use App\Notifications\Contracts\Transactional;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -12,8 +13,11 @@ use Illuminate\Notifications\Notification;
  * The invitation mail. A notification rather than a Mailable so it needs no
  * blade view, and so E-07's notification service inherits it rather than
  * finding a second delivery path already in place.
+ *
+ * T-11: Transactional — the invited person is waiting on this link right
+ * now, so no preference and no quiet-hours window ever holds it back.
  */
-class StaffInvited extends Notification
+class StaffInvited extends Notification implements Transactional
 {
     use AppliesStudioMailIdentity;
 

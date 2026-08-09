@@ -3,14 +3,15 @@
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
 use App\Contracts\Models\Contract;
-use App\Contracts\Support\GotenbergClient;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\DocumentRenderer;
 use App\Settings\Support\StudioSettingsResolver;
+use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -74,7 +75,7 @@ it('resolves studio.* merge fields from T-02\'s settings row, including the one 
     $settings = new StudioSettingsResolver;
     $settings->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
     $settings->set('city', 'Hamburg', $owner);
-    $settings->setLogo(\Illuminate\Http\UploadedFile::fake()->image('logo.png'), $owner);
+    $settings->setLogo(UploadedFile::fake()->image('logo.png'), $owner);
 
     $template = DocumentTemplate::factory()->create([
         'body' => '<p>{{ studio.name }}, {{ studio.city }} — Logo: {{ studio.logoPath }}</p>',

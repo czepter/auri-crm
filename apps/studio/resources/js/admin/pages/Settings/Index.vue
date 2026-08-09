@@ -121,13 +121,9 @@ const paneTitle = computed(() => {
   return 'settings.profileTitle'
 })
 
-// The last group, Benachrichtigungen — rendered disabled with the "bald"
-// chip screen 4's Vertrag tab already uses for a superseded quote, per
-// T-00's mockup. Every other group named across this section's stories
-// (Zahlungsdaten & USt, Nummernkreise, Verfügbarkeit, Dokumente, E-Mail,
-// Allgemein, Zahlungen, Aufgabenvorlagen, Portal) is live, so only this one
-// remains.
-const comingSoon = ['navNotifications'] as const
+// Every group named across this section's stories is live now that T-11's
+// Benachrichtigungen has its own route — nothing left in this list.
+const comingSoon: readonly string[] = []
 
 function toggleWorkingDay(day: number) {
   const days = generalForm.working_days
@@ -228,7 +224,9 @@ function submitMail() {
         <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
         <a class="nav" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
         <a class="nav" href="/einstellungen/aufgabenvorlagen">{{ $t('settings.navTaskTemplates') }}</a>
+        <a class="nav" href="/einstellungen/fragebogen-vorlagen">{{ $t('settings.navFormTemplates') }}</a>
         <a class="nav" href="/einstellungen/portal">{{ $t('settings.navPortal') }}</a>
+        <a class="nav" href="/einstellungen/benachrichtigungen">{{ $t('settings.navNotifications') }}</a>
         <a
           v-for="key in comingSoon"
           :key="key"
