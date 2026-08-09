@@ -28,7 +28,17 @@
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="DB_CONNECTION" value="pgsql"/>
-        <env name="DB_DATABASE" value="studio_test"/>
+        <!--
+            force, or this line does nothing where it matters most.
+
+            docker-compose.yml sets DB_DATABASE=studio on the php service as a
+            real environment variable, and PHPUnit leaves an already-set
+            variable alone unless told otherwise. Without force the suite ran
+            RefreshDatabase against the development database and dropped it on
+            every run, while studio_test was never so much as migrated.
+        -->
+        <env name="DB_DATABASE" value="studio_test" force="true"/>
+        <server name="DB_DATABASE" value="studio_test" force="true"/>
         <env name="APP_SURFACE" value="admin"/>
     </php>
 </phpunit>

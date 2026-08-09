@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import { ref, watch } from 'vue'
-import { Button } from '@/ui/button'
-import { Input } from '@/ui/input'
-import { Label } from '@/ui/label'
+import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ContactTypeahead from '@/admin/components/ContactTypeahead.vue'
 import ConflictNote from '@/admin/components/ConflictNote.vue'
 
@@ -80,114 +78,115 @@ function submit() {
 </script>
 
 <template>
-  <main class="mx-auto max-w-2xl space-y-6 p-6">
-    <div>
-      <p class="text-xs uppercase tracking-wide text-muted-foreground">
-        {{ $t('leads.createKicker') }}
-      </p>
-      <h1 class="text-2xl font-semibold tracking-tight">{{ $t('leads.createTitle') }}</h1>
+  <AdminLayout active="anfragen">
+    <div style="max-width: 680px">
+      <div class="kick">{{ $t('leads.createKicker') }}</div>
+      <h1>{{ $t('leads.createTitle') }}</h1>
+
+      <form style="margin-top: var(--s5)" @submit.prevent="submit">
+        <div class="grp">
+          <div class="fld">
+            <label>{{ $t('leads.contact') }}</label>
+            <ContactTypeahead v-model="contact" @create-new="startCreating" />
+            <p v-if="form.errors.contact_name" class="err">{{ form.errors.contact_name }}</p>
+          </div>
+        </div>
+
+        <div v-if="creating" class="fgrid grp">
+          <div class="fld">
+            <label for="contact_name">{{ $t('leads.name') }}</label>
+            <input
+              id="contact_name"
+              v-model="form.contact_name"
+              class="inp"
+              type="text"
+              @input="proposeProjectName"
+            />
+          </div>
+          <div class="fld">
+            <label for="partner_name">{{ $t('leads.partner') }}</label>
+            <input id="partner_name" v-model="form.partner_name" class="inp" type="text" />
+          </div>
+          <div class="fld">
+            <label for="contact_email">{{ $t('leads.email') }}</label>
+            <input id="contact_email" v-model="form.contact_email" class="inp" type="email" />
+          </div>
+          <div class="fld">
+            <label for="contact_phone">{{ $t('leads.phone') }}</label>
+            <input id="contact_phone" v-model="form.contact_phone" class="inp" type="tel" />
+          </div>
+          <p class="hint" style="grid-column: 1 / -1">{{ $t('leads.noEmailHint') }}</p>
+        </div>
+
+        <div class="grp">
+          <div class="fld">
+            <label for="project_name">{{ $t('leads.projectName') }}</label>
+            <input
+              id="project_name"
+              v-model="form.project_name"
+              class="inp"
+              type="text"
+              @input="nameTouched = true"
+            />
+            <p class="hint">{{ $t('leads.projectNameHint') }}</p>
+            <p v-if="form.errors.project_name" class="err">{{ form.errors.project_name }}</p>
+          </div>
+        </div>
+
+        <div class="fgrid grp">
+          <div class="fld">
+            <label for="type">{{ $t('leads.type') }}</label>
+            <select id="type" v-model="form.type" class="inp">
+              <option v-for="option in types" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+          <div class="fld">
+            <label for="source">{{ $t('leads.source') }}</label>
+            <select id="source" v-model="form.source" class="inp">
+              <option v-for="option in sources" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+          <div class="fld">
+            <label for="captured_via">{{ $t('leads.capturedVia') }}</label>
+            <select id="captured_via" v-model="form.captured_via" class="inp">
+              <option v-for="option in channels" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- The main date is the field the whole intake hangs off
+             (Shoot.is_primary, vision §3.1), so it is the one control that
+             gets extra weight. Native date input: renders dd.mm.yyyy under
+             de-DE with no picker library and no parsing code. -->
+        <div class="grp">
+          <div class="fld lead">
+            <label for="date">{{ $t('leads.mainDate') }}</label>
+            <input id="date" v-model="form.date" class="inp" type="date" />
+            <ConflictNote :conflicts="conflicts" />
+          </div>
+        </div>
+
+        <div class="grp">
+          <div class="fld">
+            <label for="inquiry_text">{{ $t('leads.inquiryText') }}</label>
+            <textarea id="inquiry_text" v-model="form.inquiry_text" class="inp" rows="8" />
+            <p class="hint">{{ $t('leads.inquiryTextHint') }}</p>
+          </div>
+        </div>
+
+        <div class="formfoot">
+          <button class="btn" type="submit" :disabled="form.processing">
+            {{ $t('leads.submit') }}
+          </button>
+          <a href="/anfragen" class="txtbtn">{{ $t('common.cancel') }}</a>
+        </div>
+      </form>
     </div>
-
-    <form class="space-y-5" @submit.prevent="submit">
-      <div class="space-y-2">
-        <Label>{{ $t('leads.contact') }}</Label>
-        <ContactTypeahead v-model="contact" @create-new="startCreating" />
-        <p v-if="form.errors.contact_name" class="text-sm text-destructive">
-          {{ form.errors.contact_name }}
-        </p>
-      </div>
-
-      <div v-if="creating" class="grid gap-4 sm:grid-cols-2">
-        <div class="space-y-2">
-          <Label for="contact_name">{{ $t('leads.name') }}</Label>
-          <Input id="contact_name" v-model="form.contact_name" @input="proposeProjectName" />
-        </div>
-        <div class="space-y-2">
-          <Label for="partner_name">{{ $t('leads.partner') }}</Label>
-          <Input id="partner_name" v-model="form.partner_name" />
-        </div>
-        <div class="space-y-2">
-          <Label for="contact_email">{{ $t('leads.email') }}</Label>
-          <Input id="contact_email" v-model="form.contact_email" type="email" />
-        </div>
-        <div class="space-y-2">
-          <Label for="contact_phone">{{ $t('leads.phone') }}</Label>
-          <Input id="contact_phone" v-model="form.contact_phone" type="tel" />
-        </div>
-        <p class="text-xs text-muted-foreground sm:col-span-2">{{ $t('leads.noEmailHint') }}</p>
-      </div>
-
-      <div class="space-y-2">
-        <Label for="project_name">{{ $t('leads.projectName') }}</Label>
-        <Input id="project_name" v-model="form.project_name" @input="nameTouched = true" />
-        <p class="text-xs text-muted-foreground">{{ $t('leads.projectNameHint') }}</p>
-        <p v-if="form.errors.project_name" class="text-sm text-destructive">
-          {{ form.errors.project_name }}
-        </p>
-      </div>
-
-      <div class="grid gap-4 sm:grid-cols-3">
-        <div class="space-y-2">
-          <Label for="type">{{ $t('leads.type') }}</Label>
-          <select
-            id="type"
-            v-model="form.type"
-            class="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
-          >
-            <option v-for="option in types" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </option>
-          </select>
-        </div>
-        <div class="space-y-2">
-          <Label for="source">{{ $t('leads.source') }}</Label>
-          <select
-            id="source"
-            v-model="form.source"
-            class="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
-          >
-            <option v-for="option in sources" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </option>
-          </select>
-        </div>
-        <div class="space-y-2">
-          <Label for="captured_via">{{ $t('leads.capturedVia') }}</Label>
-          <select
-            id="captured_via"
-            v-model="form.captured_via"
-            class="h-9 w-full rounded-md border bg-transparent px-3 text-sm"
-          >
-            <option v-for="option in channels" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </option>
-          </select>
-        </div>
-      </div>
-
-      <div class="space-y-2">
-        <Label for="date">{{ $t('leads.mainDate') }}</Label>
-        <!-- Native date input: renders dd.mm.yyyy under de-DE with no picker
-             library and no parsing code. -->
-        <Input id="date" v-model="form.date" type="date" />
-        <ConflictNote :conflicts="conflicts" />
-      </div>
-
-      <div class="space-y-2">
-        <Label for="inquiry_text">{{ $t('leads.inquiryText') }}</Label>
-        <textarea
-          id="inquiry_text"
-          v-model="form.inquiry_text"
-          rows="8"
-          class="w-full rounded-md border bg-transparent p-3 text-sm"
-        />
-        <p class="text-xs text-muted-foreground">{{ $t('leads.inquiryTextHint') }}</p>
-      </div>
-
-      <div class="flex items-center gap-4">
-        <Button type="submit" :disabled="form.processing">{{ $t('leads.submit') }}</Button>
-        <a href="/anfragen" class="text-sm underline">{{ $t('common.cancel') }}</a>
-      </div>
-    </form>
-  </main>
+  </AdminLayout>
 </template>

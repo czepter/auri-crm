@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3'
-import { Alert, AlertDescription } from '@/ui/alert'
-import { Button } from '@/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/ui/card'
-import { Input } from '@/ui/input'
-import { Label } from '@/ui/label'
+import { router, useForm } from '@inertiajs/vue3'
+
+// Only ever true in local. The server decides; the button cannot talk itself
+// into existence.
+defineProps<{ devLogin?: boolean }>()
 
 const form = useForm({ email: '', password: '' })
 
@@ -14,43 +13,60 @@ function submit() {
 </script>
 
 <template>
-  <main class="flex min-h-screen items-center justify-center p-6">
-    <Card class="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>{{ $t('auth.signInTitle') }}</CardTitle>
-        <CardDescription>{{ $t('auth.signInHint') }}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form class="space-y-4" @submit.prevent="submit">
-          <Alert v-if="form.errors.email" variant="destructive">
-            <AlertDescription>{{ form.errors.email }}</AlertDescription>
-          </Alert>
+  <!-- No sidebar: there is no navigation available to someone not signed in. -->
+  <div class="authwrap">
+    <div class="authcard">
+      <span class="brand">Nordlicht</span>
+      <h1>{{ $t('auth.signInTitle') }}</h1>
+      <p class="hint" style="margin-bottom: var(--s5)">{{ $t('auth.signInHint') }}</p>
 
-          <div class="space-y-2">
-            <Label for="email">{{ $t('auth.email') }}</Label>
-            <Input
-              id="email"
-              v-model="form.email"
-              type="email"
-              autocomplete="username"
-              required
-            />
-          </div>
+      <form @submit.prevent="submit">
+        <p v-if="form.errors.email" class="flag" style="margin-bottom: var(--s4)">
+          {{ form.errors.email }}
+        </p>
 
-          <div class="space-y-2">
-            <Label for="password">{{ $t('auth.password') }}</Label>
-            <Input
-              id="password"
-              v-model="form.password"
-              type="password"
-              autocomplete="current-password"
-              required
-            />
-          </div>
+        <div class="fld grp">
+          <label for="email">{{ $t('auth.email') }}</label>
+          <input
+            id="email"
+            v-model="form.email"
+            class="inp"
+            type="email"
+            autocomplete="username"
+            required
+          />
+        </div>
 
-          <Button type="submit" class="w-full" :disabled="form.processing">{{ $t('auth.signIn') }}</Button>
-        </form>
-      </CardContent>
-    </Card>
-  </main>
+        <div class="fld grp">
+          <label for="password">{{ $t('auth.password') }}</label>
+          <input
+            id="password"
+            v-model="form.password"
+            class="inp"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+
+        <button class="btn" type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
+          {{ $t('auth.signIn') }}
+        </button>
+      </form>
+
+      <div v-if="devLogin" style="margin-top: var(--s5); padding-top: var(--s4); border-top: 1px solid var(--line)">
+        <button
+          class="abtn"
+          type="button"
+          style="width: 100%; padding: 9px"
+          @click="router.post('/dev-login')"
+        >
+          {{ $t('auth.devLogin') }}
+        </button>
+        <p class="hint" style="margin-top: var(--s2); text-align: center">
+          {{ $t('auth.devLoginHint') }}
+        </p>
+      </div>
+    </div>
+  </div>
 </template>

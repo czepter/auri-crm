@@ -21,7 +21,11 @@ class SessionController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Auth/Login');
+        // The third of DevLoginController's three guards: false everywhere but
+        // local, so the production bundle renders no path to the bypass.
+        return Inertia::render('Auth/Login', [
+            'devLogin' => app()->environment('local'),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse

@@ -48,4 +48,20 @@ class User extends Authenticatable
     {
         return $this->mfa_confirmed_at !== null;
     }
+
+    /**
+     * What a crew avatar renders. users carries no avatar column and S-02 does
+     * not add one, so the initials are the avatar rather than a fallback for
+     * one that failed to load.
+     */
+    public function initials(): string
+    {
+        $words = preg_split('/\s+/', trim($this->name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $picked = count($words) > 1 ? [$words[0], end($words)] : $words;
+
+        return mb_strtoupper(implode('', array_map(
+            fn (string $word) => mb_substr($word, 0, 1),
+            $picked,
+        )));
+    }
 }

@@ -2,15 +2,22 @@
 
 namespace Database\Seeders;
 
+use App\Crm\Actions\AdvanceShootStatus;
+use App\Crm\Actions\BookProject;
+use App\Crm\Enums\CrewRole;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootKind;
+use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\Contact;
+use App\Crm\Models\CrewAssignment;
+use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Enums\StaffRole;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -81,6 +88,125 @@ class DemoCrmSeeder extends Seeder
             Lead::factory()->for($project)->atStage(LeadStage::from($stage), $daysAgo)->create([
                 'source' => LeadSource::from($source),
                 'captured_by_id' => $staff->id,
+            ]);
+
+            // The one booked project gets mockup 04's full shape, so the
+            // project screen has something to be held next to the screen it
+            // was designed from.
+            if ($stage === 'booked') {
+                $this->buildOutTheWedding($project, $staff);
+            }
+        }
+    }
+
+    /**
+     * Mockup 04's wedding, in full: four occasions in three different pipeline
+     * positions, a crew that differs per shoot, and the notes the studio wrote
+     * to itself.
+     *
+     * Walked through BookProject and AdvanceShootStatus rather than written
+     * with statuses set by hand — same reasoning as the rest of this seeder.
+     * The demo data is produced by the code paths the studio uses, so a broken
+     * guard shows up here rather than only in a test.
+     */
+    private function buildOutTheWedding(Project $project, User $staff): void
+    {
+        $christian = User::updateOrCreate(
+            ['email' => 'christian@nordlicht.test'],
+            ['name' => 'Christian Bergmann', 'password' => 'password', 'role' => StaffRole::Owner],
+        );
+        $nina = User::updateOrCreate(
+            ['email' => 'nina@nordlicht.test'],
+            ['name' => 'Nina Sturm', 'password' => 'password', 'role' => StaffRole::SecondShooter],
+        );
+
+        // The primary shoot already exists from the cast; this is the wedding
+        // day itself, so it only gains the detail the project screen shows.
+        $wedding = $project->primaryShoot;
+        $wedding->update([
+            'label' => 'Hochzeitstag',
+            'call_time' => '09:00',
+            'end_time' => '23:00',
+        ]);
+
+        $engagement = Shoot::create([
+            'project_id' => $project->id,
+            'kind' => ShootKind::Engagement,
+            'label' => 'Verlobungsshooting',
+            'date' => '2026-03-22',
+            'call_time' => '14:00',
+            'end_time' => '16:00',
+            'venue_name' => 'Jenischpark',
+            'venue_city' => 'Hamburg',
+            'sort_order' => 1,
+        ]);
+
+        $registry = Shoot::create([
+            'project_id' => $project->id,
+            'kind' => ShootKind::Reception,
+            'label' => 'Standesamt',
+            'date' => '2026-05-08',
+            'call_time' => '11:00',
+            'end_time' => '12:30',
+            'venue_name' => 'Rathaus Altona',
+            'venue_city' => 'Hamburg',
+            'sort_order' => 2,
+        ]);
+
+        // No venue and no times: "Ort und Uhrzeit noch nicht festgelegt" is a
+        // real state the screen has to render.
+        $afterWedding = Shoot::create([
+            'project_id' => $project->id,
+            'kind' => ShootKind::Portrait,
+            'label' => 'After-Wedding-Shooting',
+            'date' => '2026-07-05',
+            'sort_order' => 3,
+        ]);
+
+        // Booking moves all four to booked in one transaction.
+        app(BookProject::class)($project, $christian);
+
+        // Then the two that have happened walk forward, and the wedding day
+        // sits in prep — so the derived header reads the least-advanced of
+        // them rather than the furthest.
+        $advance = app(AdvanceShootStatus::class);
+
+        foreach ([$engagement, $registry] as $done) {
+            $advance($done->refresh(), ShootStatus::Delivered, $christian);
+        }
+
+        $advance($wedding->refresh(), ShootStatus::Prep, $christian);
+
+        CrewAssignment::create([
+            'shoot_id' => $wedding->id,
+            'user_id' => $christian->id,
+            'role' => CrewRole::LeadPhotographer,
+        ]);
+        CrewAssignment::create([
+            'shoot_id' => $wedding->id,
+            'user_id' => $nina->id,
+            'role' => CrewRole::SecondShooter,
+        ]);
+        CrewAssignment::create([
+            'shoot_id' => $engagement->id,
+            'user_id' => $christian->id,
+            'role' => CrewRole::LeadPhotographer,
+        ]);
+        CrewAssignment::create([
+            'shoot_id' => $afterWedding->id,
+            'user_id' => $nina->id,
+            'role' => CrewRole::Assistant,
+        ]);
+
+        foreach ([
+            [$christian, 'Großmutter (Lenas Seite) reist gegen 18 Uhr ab — Gruppenfotos deshalb direkt an den Anfang des Empfangs gezogen. Im Ablauf schon berücksichtigt, Wunschliste Gruppe 1 zuerst.'],
+            [$nina, 'Location-Check Gut Basthorst: Festscheune hat starkes Gegenlicht ab ca. 20 Uhr durch das Westfenster. Für den Eröffnungstanz Position auf der Ostseite, sonst Silhouetten.'],
+            [$christian, 'Über Empfehlung von Familie Osterhoff gekommen — bei Lieferung eine Karte an die Osterhoffs denken. Paar wünscht ausdrücklich Reportage, wenig Gestelltes.'],
+        ] as [$author, $body]) {
+            InternalNote::create([
+                'project_id' => $project->id,
+                'author_id' => $author->id,
+                'body' => $body,
             ]);
         }
     }

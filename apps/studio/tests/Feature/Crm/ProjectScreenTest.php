@@ -1,0 +1,225 @@
+<?php
+
+use App\Crm\Enums\CrewRole;
+use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\ShootKind;
+use App\Crm\Enums\ShootStatus;
+use App\Crm\Models\CrewAssignment;
+use App\Crm\Models\InternalNote;
+use App\Crm\Models\Job;
+use App\Crm\Models\Lead;
+use App\Crm\Models\Project;
+use App\Crm\Models\Shoot;
+use App\Models\AuditLog;
+use App\Models\User;
+use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    $this->staff = User::factory()->withMfa()->create();
+    $this->actingAs($this->staff, 'staff');
+    $this->project = Project::factory()->create();
+});
+
+function props(string $path): array
+{
+    return test()->get($path)->assertOk()->viewData('page')['props'];
+}
+
+it('renders the project overview with a derived header', function () {
+    // Booked, because the shoots only speak for a project in production —
+    // before that the header reads the funnel.
+    Job::factory()->for($this->project)->create();
+    Shoot::factory()->for($this->project)->primary()->atStatus(ShootStatus::Prep)->create();
+
+    $header = props("/auftraege/{$this->project->public_id}")['header'];
+
+    expect($header['position']['label'])->toBe('Vorbereitung')
+        ->and($header['position']['source'])->toBe('shoot')
+        ->and($header['id'])->toBe($this->project->public_id);
+});
+
+it('shows only the tabs whose feature exists', function () {
+    // Mockup 04 shows seven. A tab appears when the feature behind it lands,
+    // never as an empty shell.
+    $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
+
+    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots']);
+});
+
+it('agrees with the board about an unbooked project', function () {
+    // Reported from the screen: the header said "Angefragt" while the board
+    // said "Angebot angenommen" for the same project. Intake creates the
+    // primary shoot at `requested` and it stays there until booking, so
+    // reading the shoots made every unbooked project say the same word.
+    Lead::factory()->for($this->project)->atStage(LeadStage::QuoteAccepted)->create();
+    Shoot::factory()->for($this->project)->primary()->create();
+
+    $position = props("/auftraege/{$this->project->public_id}")['header']['position'];
+
+    expect($position['label'])->toBe('Angebot angenommen')
+        ->and($position['source'])->toBe('lead');
+});
+
+it('reads the lead stage in the header when no uncancelled shoot exists', function () {
+    Lead::factory()->for($this->project)->atStage(LeadStage::QuoteSent)->create();
+
+    expect(props("/auftraege/{$this->project->public_id}")['header']['position']['label'])
+        ->toBe('Angebot');
+});
+
+it('adds a shoot to a project', function () {
+    $this->post("/auftraege/{$this->project->public_id}/shootings", [
+        'kind' => ShootKind::Engagement->value,
+        'label' => 'Verlobungsshooting',
+        'date' => '2026-03-22',
+        'call_time' => '14:00',
+        'end_time' => '16:00',
+        'venue_name' => 'Jenischpark',
+    ])->assertRedirect();
+
+    $shoot = $this->project->shoots()->sole();
+
+    expect($shoot->kind)->toBe(ShootKind::Engagement)
+        ->and($shoot->status)->toBe(ShootStatus::Requested)
+        ->and($shoot->is_primary)->toBeFalse();
+});
+
+it('takes a second and a third shoot', function () {
+    Shoot::factory()->for($this->project)->primary()->create();
+    Shoot::factory()->for($this->project)->count(2)->create();
+
+    expect($this->project->shoots()->count())->toBe(3);
+});
+
+it('advances a shoot from the screen', function () {
+    $shoot = Shoot::factory()->for($this->project)->atStatus(ShootStatus::Booked)->create();
+
+    $this->post("/shootings/{$shoot->public_id}/status", ['status' => 'shot'])
+        ->assertRedirect();
+
+    expect($shoot->fresh()->status)->toBe(ShootStatus::Shot);
+});
+
+it('renders a refused transition beside the control rather than failing', function () {
+    $shoot = Shoot::factory()->for($this->project)->atStatus(ShootStatus::Delivered)->create();
+
+    $this->from("/auftraege/{$this->project->public_id}/shootings")
+        ->post("/shootings/{$shoot->public_id}/status", ['status' => 'booked'])
+        ->assertSessionHasErrors('status');
+
+    expect($shoot->fresh()->status)->toBe(ShootStatus::Delivered);
+});
+
+it('cancels a shoot with a reason', function () {
+    $shoot = Shoot::factory()->for($this->project)->atStatus(ShootStatus::Prep)->create();
+
+    $this->post("/shootings/{$shoot->public_id}/absage", ['reason' => 'Termin abgesagt'])
+        ->assertRedirect();
+
+    expect($shoot->fresh()->isCancelled())->toBeTrue()
+        ->and($shoot->fresh()->status)->toBe(ShootStatus::Prep);
+});
+
+it('re-designates the primary shoot in one transaction', function () {
+    $incumbent = Shoot::factory()->for($this->project)->primary()->create();
+    $challenger = Shoot::factory()->for($this->project)->create();
+
+    $this->post("/shootings/{$challenger->public_id}/haupttermin")->assertRedirect();
+
+    expect($challenger->fresh()->is_primary)->toBeTrue()
+        ->and($incumbent->fresh()->is_primary)->toBeFalse()
+        ->and(AuditLog::where('event', 'shoot.primary_designated')->count())->toBe(1);
+});
+
+it('violates the index if the incumbent is not cleared first', function () {
+    // The wrong order, written out: this is what DesignatePrimaryShoot's
+    // transaction exists to prevent, and the database is the thing enforcing it.
+    Shoot::factory()->for($this->project)->primary()->create();
+    $challenger = Shoot::factory()->for($this->project)->create();
+
+    $challenger->forceFill(['is_primary' => true])->save();
+})->throws(QueryException::class);
+
+it('assigns crew to a shoot by public id and renders them', function () {
+    $shoot = Shoot::factory()->for($this->project)->create();
+    $photographer = User::factory()->create(['name' => 'Nina Weber']);
+
+    $this->post("/shootings/{$shoot->public_id}/crew", [
+        'user' => $photographer->public_id,
+        'role' => CrewRole::SecondShooter->value,
+    ])->assertRedirect();
+
+    $crew = props("/auftraege/{$this->project->public_id}/shootings")['shoots'][0]['crew'];
+
+    expect($crew)->toHaveCount(1)
+        ->and($crew[0]['initials'])->toBe('NW')
+        ->and($crew[0]['roleLabel'])->toBe('Zweitfotograf');
+});
+
+it('re-roles rather than duplicating someone already on the shoot', function () {
+    $shoot = Shoot::factory()->for($this->project)->create();
+    $user = User::factory()->create();
+    $payload = ['user' => $user->public_id, 'role' => CrewRole::Assistant->value];
+
+    $this->post("/shootings/{$shoot->public_id}/crew", $payload)->assertRedirect();
+    $this->post("/shootings/{$shoot->public_id}/crew", [
+        ...$payload,
+        'role' => CrewRole::LeadPhotographer->value,
+    ])->assertRedirect();
+
+    expect($shoot->crew()->count())->toBe(1)
+        ->and($shoot->crew()->sole()->role)->toBe(CrewRole::LeadPhotographer);
+});
+
+it('removes a crew assignment', function () {
+    $assignment = CrewAssignment::factory()
+        ->for(Shoot::factory()->for($this->project))
+        ->create();
+
+    $this->delete("/crew/{$assignment->public_id}")->assertRedirect();
+
+    expect(CrewAssignment::count())->toBe(0);
+});
+
+it('books the project from the screen', function () {
+    Shoot::factory()->for($this->project)->create();
+
+    $this->post("/auftraege/{$this->project->public_id}/buchung")->assertRedirect();
+
+    expect($this->project->fresh()->job)->not->toBeNull()
+        ->and($this->project->shoots()->sole()->status)->toBe(ShootStatus::Booked);
+});
+
+it('leaves an already booked project alone when the button is pressed twice', function () {
+    $this->post("/auftraege/{$this->project->public_id}/buchung")->assertRedirect();
+    $this->post("/auftraege/{$this->project->public_id}/buchung")->assertRedirect();
+
+    expect(Job::count())->toBe(1)
+        ->and(AuditLog::where('event', 'project.booked')->count())->toBe(1);
+});
+
+it('writes, edits and deletes an internal note', function () {
+    $this->post("/auftraege/{$this->project->public_id}/notizen", ['body' => 'Gegenlicht ab 20 Uhr.'])
+        ->assertRedirect();
+
+    $note = InternalNote::sole();
+    expect($note->author_id)->toBe($this->staff->id);
+
+    $notes = props("/auftraege/{$this->project->public_id}")['notes'];
+    expect($notes[0]['body'])->toBe('Gegenlicht ab 20 Uhr.')
+        ->and($notes[0]['author'])->toBe($this->staff->name);
+
+    $this->patch("/notizen/{$note->public_id}", ['body' => 'Korrigiert.'])->assertRedirect();
+    expect($note->fresh()->body)->toBe('Korrigiert.');
+
+    $this->delete("/notizen/{$note->public_id}")->assertRedirect();
+    expect(InternalNote::count())->toBe(0);
+});
+
+it('rejects an empty note', function () {
+    $this->post("/auftraege/{$this->project->public_id}/notizen", ['body' => ''])
+        ->assertSessionHasErrors('body');
+});

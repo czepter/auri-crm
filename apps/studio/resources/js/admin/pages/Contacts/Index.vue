@@ -1,39 +1,38 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
+import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 
 defineProps<{ contacts: App.Crm.Data.ContactSuggestionData[] }>()
+
+function initials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean)
+  const picked = words.length > 1 ? [words[0], words[words.length - 1]] : words
+
+  return picked.map((word) => word[0]).join('').toUpperCase()
+}
 </script>
 
 <template>
-  <main class="mx-auto max-w-4xl space-y-6 p-6">
-    <h1 class="text-2xl font-semibold tracking-tight">{{ $t('contacts.title') }}</h1>
+  <AdminLayout active="kontakte">
+    <div class="hrow" style="margin-bottom: var(--s5)">
+      <h1>{{ $t('contacts.title') }}</h1>
+    </div>
 
-    <table v-if="contacts.length" class="w-full text-sm">
-      <thead class="text-left text-xs text-muted-foreground">
-        <tr>
-          <th class="py-2 font-medium">{{ $t('contacts.name') }}</th>
-          <th class="py-2 font-medium">{{ $t('contacts.email') }}</th>
-          <th class="py-2 font-medium">{{ $t('contacts.phone') }}</th>
-          <th class="py-2 text-right font-medium">{{ $t('contacts.projects') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="contact in contacts" :key="contact.id" class="border-t">
-          <td class="py-2">
-            <Link
-              :href="`/kontakte/${contact.id}`"
-              class="font-medium underline-offset-2 hover:underline"
-            >
-              {{ contact.name }}
-            </Link>
-          </td>
-          <td class="py-2 text-muted-foreground">{{ contact.email ?? $t('contacts.none') }}</td>
-          <td class="py-2 text-muted-foreground">{{ contact.phone ?? $t('contacts.none') }}</td>
-          <td class="py-2 text-right tabular-nums">{{ contact.projectCount }}</td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- No mockup for this screen. It follows the system: the labelled row
+         grammar from the project screen's contact list, not a data table. -->
+    <div v-if="contacts.length" class="panel">
+      <Link v-for="contact in contacts" :key="contact.id" class="trow" :href="`/kontakte/${contact.id}`">
+        <span class="pavatar">{{ initials(contact.name) }}</span>
+        <span class="pinfo">
+          <span class="pname">{{ contact.name }}</span>
+          <span class="psub">
+            {{ [contact.email, contact.phone].filter(Boolean).join(' · ') || $t('contacts.none') }}
+          </span>
+        </span>
+        <span class="role">{{ $t('contacts.projectCount', contact.projectCount) }}</span>
+      </Link>
+    </div>
 
-    <p v-else class="text-sm text-muted-foreground">{{ $t('contacts.empty') }}</p>
-  </main>
+    <p v-else class="hint">{{ $t('contacts.empty') }}</p>
+  </AdminLayout>
 </template>

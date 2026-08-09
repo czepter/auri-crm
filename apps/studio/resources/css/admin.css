@@ -1,10 +1,9 @@
 @import "./app.css";
+@import "./admin-extra.css";
 
 /*
- * Admin is an internal tool used all day: tighter radii and a denser rhythm.
- * The portal overrides the same tokens in the other direction in P2, which is
- * why the primitives themselves never fork.
+ * The admin surface is the clickdummy's own theme — tokens.css declares its
+ * values under :root with no override needed. The portal overrides the same
+ * tokens in the other direction in P2 via [data-theme="portal"], which is why
+ * the primitives themselves never fork.
  */
-:root {
-  --radius: 0.375rem;
-}
