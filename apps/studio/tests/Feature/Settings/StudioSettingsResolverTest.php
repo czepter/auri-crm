@@ -6,9 +6,11 @@ use App\Settings\Jobs\ReadStudioSettingsJob;
 use App\Settings\Models\StudioSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -97,4 +99,55 @@ it('leaves no audit row for a write that changes nothing', function () {
     $resolver->set('display_name', null, $owner);
 
     expect(AuditLog::where('event', 'studio_settings.updated')->count())->toBe(0);
+});
+
+it('returns T-02\'s legal-entity, brand and bank columns as one plain array', function () {
+    $owner = staffMember(StaffRole::Owner);
+    (new StudioSettingsResolver)->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
+
+    $attributes = (new StudioSettingsResolver)->attributes();
+
+    expect($attributes['legal_name'])->toBe('Atelier Nordlicht Fotografie GmbH')
+        ->and($attributes)->toHaveKeys(['display_name', 'tax_number', 'vat_id', 'bank_iban', 'logo_path']);
+});
+
+it('stores the uploaded logo once and resolves the same path from an independent instance — what a PDF render and a portal read would both consume', function () {
+    Storage::fake('local');
+    $owner = staffMember(StaffRole::Owner);
+
+    (new StudioSettingsResolver)->setLogo(UploadedFile::fake()->image('logo.png'), $owner);
+
+    $fromOneInstance = (new StudioSettingsResolver)->logoPath();
+    $fromAnotherInstance = (new StudioSettingsResolver)->logoPath();
+
+    expect($fromOneInstance)->not->toBeNull()
+        ->and($fromAnotherInstance)->toBe($fromOneInstance);
+
+    Storage::disk('local')->assertExists($fromOneInstance);
+});
+
+it('deletes the previous logo file when a new one replaces it', function () {
+    Storage::fake('local');
+    $owner = staffMember(StaffRole::Owner);
+
+    (new StudioSettingsResolver)->setLogo(UploadedFile::fake()->image('first.png'), $owner);
+    $firstPath = (new StudioSettingsResolver)->logoPath();
+
+    (new StudioSettingsResolver)->setLogo(UploadedFile::fake()->image('second.svg'), $owner);
+    $secondPath = (new StudioSettingsResolver)->logoPath();
+
+    expect($secondPath)->not->toBe($firstPath);
+    Storage::disk('local')->assertMissing($firstPath);
+    Storage::disk('local')->assertExists($secondPath);
+});
+
+it('writes an audit row for a logo upload naming the actor', function () {
+    Storage::fake('local');
+    $owner = staffMember(StaffRole::Owner);
+
+    (new StudioSettingsResolver)->setLogo(UploadedFile::fake()->image('logo.png'), $owner);
+
+    $log = AuditLog::where('event', 'studio_settings.updated')->where('context->key', 'logo_path')->sole();
+    expect($log->actor_id)->toBe($owner->id)
+        ->and($log->context['old'])->toBeNull();
 });
