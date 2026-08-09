@@ -14,6 +14,27 @@ uses(RefreshDatabase::class);
 
 beforeEach(fn () => Cache::store('redis')->flush());
 
+/**
+ * Bank details are required as of T-07 (BankDetailsRequirement::isRequired())
+ * — every test below that saves the form and does not itself exercise the
+ * bank fieldset needs a valid one merged in, or every save in this file
+ * would fail validation on three fields none of these tests are about.
+ *
+ * Named t07ValidBankFields rather than the generic validBankFields: a global
+ * function declared in one test file collides the moment a second file
+ * declares the same name (see tests/Pest.php's own note on this), and
+ * several sibling settings stories are landing test files in this same
+ * directory in parallel.
+ */
+function t07ValidBankFields(): array
+{
+    return [
+        'bank_account_holder' => 'Atelier Nordlicht Fotografie GmbH',
+        'bank_iban' => 'DE89 3704 0044 0532 0130 00',
+        'bank_bic' => 'COBADEFFXXX',
+    ];
+}
+
 it('renders the settings shell for an owner', function () {
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->get('/einstellungen')
@@ -31,7 +52,10 @@ it('updates the display name, redirects, and leaves an audit row naming the owne
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
-        ->patch('/einstellungen', ['display_name' => 'Atelier Nordlicht', 'tax_number' => '22/123/45678'])
+        ->patch('/einstellungen', [
+            'display_name' => 'Atelier Nordlicht', 'tax_number' => '22/123/45678',
+            ...t07ValidBankFields(),
+        ])
         ->assertRedirect('/einstellungen');
 
     expect(StudioSettings::query()->sole()->display_name)->toBe('Atelier Nordlicht')
@@ -56,6 +80,7 @@ it('saves the full legal-entity, brand and bank fieldset in one submit', functio
         'representative' => 'Christian Nordlicht',
         'website' => 'https://atelier-nordlicht.de',
         'accent_color' => '#B44E22',
+        ...t07ValidBankFields(),
     ])->assertRedirect('/einstellungen');
 
     $row = StudioSettings::query()->sole();
@@ -92,7 +117,7 @@ it('accepts saving with only the USt-IdNr present', function () {
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
-        ->patch('/einstellungen', ['vat_id' => 'DE284957312'])
+        ->patch('/einstellungen', ['vat_id' => 'DE284957312', ...t07ValidBankFields()])
         ->assertSessionHasNoErrors();
 
     expect(StudioSettings::query()->sole()->vat_id)->toBe('DE284957312');
@@ -130,12 +155,17 @@ it('accepts and stores a checksum-valid IBAN', function () {
     expect(StudioSettings::query()->sole()->bank_iban)->toBe('DE89 3704 0044 0532 0130 00');
 });
 
-it('leaves bank details optional today — nothing in this codebase offers clients a transfer option yet (T-07)', function () {
+it('requires bank details on save — the portal payment screen always prints them, Stripe enabled or not (T-07)', function () {
     $owner = staffMember(StaffRole::Owner);
 
-    $this->actingAs($owner, 'staff')
-        ->patch('/einstellungen', ['tax_number' => '22/123/45678'])
-        ->assertSessionHasNoErrors();
+    $response = $this->actingAs($owner, 'staff')
+        ->from('/einstellungen')
+        ->patch('/einstellungen', ['tax_number' => '22/123/45678']);
+
+    $response->assertRedirect('/einstellungen')
+        ->assertSessionHasErrors(['bank_account_holder', 'bank_iban', 'bank_bic']);
+
+    expect(StudioSettings::query()->sole()->bank_iban)->toBeNull();
 });
 
 it('stores an uploaded logo once and serves it from one route, with an audit row', function () {
@@ -146,6 +176,7 @@ it('stores an uploaded logo once and serves it from one route, with an audit row
         ->patch('/einstellungen', [
             'tax_number' => '22/123/45678',
             'logo' => UploadedFile::fake()->image('logo.png'),
+            ...t07ValidBankFields(),
         ])
         ->assertSessionHasNoErrors();
 
@@ -169,12 +200,14 @@ it('replaces the logo on a second upload rather than keeping both', function () 
     $this->actingAs($owner, 'staff')->patch('/einstellungen', [
         'tax_number' => '22/123/45678',
         'logo' => UploadedFile::fake()->image('first.png'),
+        ...t07ValidBankFields(),
     ]);
     $firstPath = StudioSettings::query()->sole()->logo_path;
 
     $this->actingAs($owner, 'staff')->patch('/einstellungen', [
         'tax_number' => '22/123/45678',
         'logo' => UploadedFile::fake()->image('second.png'),
+        ...t07ValidBankFields(),
     ]);
     $secondPath = StudioSettings::query()->sole()->logo_path;
 

@@ -6,6 +6,7 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\TaskAudience;
+use App\Settings\Support\StudioSettingsResolver;
 use Database\Factories\Crm\TaskTemplateFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -50,10 +51,34 @@ class TaskTemplate extends Model
      * The due date for one shoot. Null when the shoot has no date yet — a task
      * still worth creating, since the work is owed either way, but there is no
      * honest day to put on it until the shoot has one.
+     *
+     * T-13: an offset that lands on a day the studio does not work
+     * (StudioSettingsResolver::workingDays()) rolls FORWARD, one day at a
+     * time, to the next day that is one — never backward, and never to the
+     * "nearest" one. Forward is the conservative direction for a deadline:
+     * a task that slips a day or two later is merely later, but pulling it
+     * earlier could make it due before whatever it depends on (the shoot
+     * itself, or an earlier task) is even ready. $settings is a parameter
+     * rather than app(StudioSettingsResolver::class) reached for inside
+     * this method, per that class's own rule — a caller's dependency on
+     * the settings store shows up in its own constructor, and
+     * ApplyTaskTemplates is that caller here.
      */
-    public function dueFor(Shoot $shoot): ?CarbonImmutable
+    public function dueFor(Shoot $shoot, StudioSettingsResolver $settings): ?CarbonImmutable
     {
-        return $shoot->date?->addDays($this->day_offset);
+        $date = $shoot->date?->addDays($this->day_offset);
+
+        if ($date === null) {
+            return null;
+        }
+
+        $workingDays = $settings->workingDays();
+
+        while (! in_array($date->dayOfWeekIso, $workingDays, true)) {
+            $date = $date->addDay();
+        }
+
+        return $date;
     }
 
     protected static function newFactory(): Factory

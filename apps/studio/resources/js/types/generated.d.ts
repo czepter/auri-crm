@@ -58,10 +58,12 @@ role: string,
 roleLabel: string,
 };
 export type DateConflictData = {
-projectId: string,
-projectName: string,
+source: string,
+projectId: string | null,
+projectName: string | null,
 venue: string | null,
-kind: string,
+kind: string | null,
+label: string | null,
 };
 export type InternalNoteData = {
 id: string,
@@ -215,17 +217,23 @@ status: string,
 statusLabel: string,
 sortOrder: number,
 label: string,
+settledVia: string | null,
+settledViaLabel: string | null,
+paidOn: string | null,
+paymentReference: string | null,
 };
 export type PaymentPlanData = {
 id: string,
 total: number,
 openTotal: number,
 isEditable: boolean,
+reference: string | null,
 installments: App.Payments.Data.PaymentInstallmentData[],
 };
 }
 namespace Enums {
 export type PaymentInstallmentStatus = 'scheduled' | 'paid' | 'invoiced';
+export type SettledVia = 'stripe' | 'transfer' | 'manual';
 }
 }
 namespace Quotes {
@@ -281,6 +289,22 @@ startingCounter: number,
 canSetStartingCounter: boolean,
 nextNumberPreview: string,
 };
+export type PaymentSettingsData = {
+id: string,
+stripeEnabled: boolean,
+stripeMode: string,
+hasStripeTestKeys: boolean,
+hasStripeLiveKeys: boolean,
+remindersEnabled: boolean,
+depositPercent: number,
+zahlungszielDays: number,
+};
+export type StudioClosureData = {
+id: string,
+label: string,
+startsOn: string,
+endsOn: string,
+};
 export type StudioSettingsData = {
 id: string,
 displayName: string | null,
@@ -309,6 +333,9 @@ paymentTermDays: number,
 depositPercentage: number,
 widerrufIncluded: boolean,
 widerrufText: string | null,
+timezone: string,
+locale: string,
+workingDays: number[],
 };
 }
 }

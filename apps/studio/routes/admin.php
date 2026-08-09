@@ -22,9 +22,12 @@ use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
 use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\SessionController;
+use App\Payments\Http\Controllers\PaymentInstallmentController;
 use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
 use App\Settings\Http\Controllers\NumberRangeController;
+use App\Settings\Http\Controllers\PaymentSettingsController;
+use App\Settings\Http\Controllers\StudioClosureController;
 use App\Settings\Http\Controllers\StudioSettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -124,11 +127,28 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/einstellungen/logo', [StudioSettingsController::class, 'logo'])->name('settings.logo');
         Route::patch('/einstellungen/ust', [StudioSettingsController::class, 'updateVat'])->name('settings.vat.update');
         Route::patch('/einstellungen/dokumente', [StudioSettingsController::class, 'updateDocuments'])->name('settings.documents.update');
+        Route::patch('/einstellungen/allgemein', [StudioSettingsController::class, 'updateGeneral'])->name('settings.general.update');
 
         Route::get('/einstellungen/nummernkreise', [NumberRangeController::class, 'index'])
             ->name('number-ranges.index');
         Route::patch('/einstellungen/nummernkreise/{numberRange}', [NumberRangeController::class, 'update'])
             ->name('number-ranges.update');
+
+        Route::get('/einstellungen/verfuegbarkeit', [StudioClosureController::class, 'index'])
+            ->name('availability.edit');
+        Route::patch('/einstellungen/verfuegbarkeit/dauer', [StudioClosureController::class, 'updateDuration'])
+            ->name('availability.duration.update');
+        Route::post('/einstellungen/verfuegbarkeit/schliesszeiten', [StudioClosureController::class, 'store'])
+            ->name('studio-closures.store');
+        Route::patch('/einstellungen/verfuegbarkeit/schliesszeiten/{studioClosure}', [StudioClosureController::class, 'update'])
+            ->name('studio-closures.update');
+        Route::delete('/einstellungen/verfuegbarkeit/schliesszeiten/{studioClosure}', [StudioClosureController::class, 'destroy'])
+            ->name('studio-closures.destroy');
+
+        Route::get('/einstellungen/zahlungen', [PaymentSettingsController::class, 'edit'])
+            ->name('settings.payments.edit');
+        Route::patch('/einstellungen/zahlungen', [PaymentSettingsController::class, 'update'])
+            ->name('settings.payments.update');
 
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.
@@ -171,6 +191,11 @@ Route::middleware('audience:staff')->group(function () {
             ->name('payment-plans.store');
         Route::patch('/zahlungsplaene/{paymentPlan}', [PaymentPlanController::class, 'update'])
             ->name('payment-plans.update');
+
+        // T-07's staff action: date, method and reference, recorded once —
+        // never a status flipped on its own. See MarkInstallmentPaid.
+        Route::post('/raten/{installment}/bezahlt', [PaymentInstallmentController::class, 'markPaid'])
+            ->name('payment-installments.mark-paid');
 
         Route::post('/auftraege/{project}/shootings', [ShootController::class, 'store'])
             ->name('shoots.store');

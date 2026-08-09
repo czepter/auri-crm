@@ -22,6 +22,14 @@ class PaymentInstallmentData extends Data
         // client to compute, the same reasoning QuoteItemData sends
         // isIncluded and lineTotal already resolved.
         public string $label,
+        // T-07: how, when and under what reference this installment was
+        // actually settled — null until App\Payments\Actions\
+        // MarkInstallmentPaid writes all three together. Never a Stripe key
+        // or anything else T-07 keeps out of a response body.
+        public ?string $settledVia,
+        public ?string $settledViaLabel,
+        public ?string $paidOn,
+        public ?string $paymentReference,
     ) {}
 
     /**
@@ -39,6 +47,10 @@ class PaymentInstallmentData extends Data
             statusLabel: $installment->status->label(),
             sortOrder: $installment->sort_order,
             label: $label,
+            settledVia: $installment->settled_via?->value,
+            settledViaLabel: $installment->settled_via?->label(),
+            paidOn: $installment->paid_on?->format('Y-m-d'),
+            paymentReference: $installment->payment_reference,
         );
     }
 }

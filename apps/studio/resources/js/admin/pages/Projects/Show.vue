@@ -143,6 +143,27 @@ function savePlan() {
     }))
     .patch(`/zahlungsplaene/${props.paymentPlan?.id}`, { preserveScroll: true })
 }
+
+// --- Zahlungen: T-07's staff action, date + method + reference recorded
+// once — never a status flipped on its own (App\Payments\Actions\
+// MarkInstallmentPaid). One open form at a time, keyed by installment id,
+// the same shape the notes composer above uses for `editing`/`draft`.
+const markingPaid = ref<string | null>(null)
+const markPaidForm = useForm({ paid_on: '', method: 'transfer', reference: '' })
+
+function openMarkPaid(installment: App.Payments.Data.PaymentInstallmentData) {
+  markingPaid.value = installment.id
+  markPaidForm.reset()
+  markPaidForm.paid_on = new Date().toISOString().slice(0, 10)
+  markPaidForm.reference = props.paymentPlan?.reference ?? ''
+}
+
+function submitMarkPaid(installmentId: string) {
+  markPaidForm.post(`/raten/${installmentId}/bezahlt`, {
+    preserveScroll: true,
+    onSuccess: () => (markingPaid.value = null),
+  })
+}
 </script>
 
 <template>
@@ -378,6 +399,49 @@ function savePlan() {
                 <span class="paystatus" :class="installmentChipClass(installment)">
                   {{ installment.status === 'paid' ? $t('payments.statusPaid') : dayAndMonth(installment.dueOn) }}
                 </span>
+                <button
+                  v-if="installment.status !== 'paid' && header.canManagePaymentPlan && markingPaid !== installment.id"
+                  type="button"
+                  class="txtbtn"
+                  @click="openMarkPaid(installment)"
+                >
+                  {{ $t('payments.markPaid') }}
+                </button>
+                <span v-else-if="installment.status === 'paid' && installment.settledViaLabel" class="hint">
+                  {{ $t('payments.settledVia', { method: installment.settledViaLabel, date: installment.paidOn }) }}
+                </span>
+
+                <form
+                  v-if="markingPaid === installment.id"
+                  class="fgrid"
+                  style="grid-column: 1 / -1; margin-top: var(--s3)"
+                  @submit.prevent="submitMarkPaid(installment.id)"
+                >
+                  <div class="fld">
+                    <label :for="`mp-date-${installment.id}`">{{ $t('payments.markPaidDate') }}</label>
+                    <input :id="`mp-date-${installment.id}`" v-model="markPaidForm.paid_on" class="inp" type="date" required />
+                  </div>
+                  <div class="fld">
+                    <label :for="`mp-method-${installment.id}`">{{ $t('payments.markPaidMethod') }}</label>
+                    <select :id="`mp-method-${installment.id}`" v-model="markPaidForm.method" class="inp">
+                      <option value="transfer">{{ $t('payments.markPaidMethodTransfer') }}</option>
+                      <option value="stripe">{{ $t('payments.markPaidMethodStripe') }}</option>
+                      <option value="manual">{{ $t('payments.markPaidMethodManual') }}</option>
+                    </select>
+                  </div>
+                  <div class="fld">
+                    <label :for="`mp-ref-${installment.id}`">{{ $t('payments.markPaidReference') }}</label>
+                    <input :id="`mp-ref-${installment.id}`" v-model="markPaidForm.reference" class="inp" type="text" />
+                  </div>
+                  <div class="fld wide">
+                    <div class="formfoot" style="margin-top: 0">
+                      <button class="btn" type="submit" :disabled="markPaidForm.processing">
+                        {{ $t('payments.markPaidSubmit') }}
+                      </button>
+                      <button class="abtn" type="button" @click="markingPaid = null">{{ $t('common.cancel') }}</button>
+                    </div>
+                  </div>
+                </form>
               </div>
             </div>
 
