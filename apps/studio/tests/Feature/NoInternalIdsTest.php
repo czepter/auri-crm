@@ -10,6 +10,7 @@ use App\Crm\Models\InternalNote;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\TimelineEntry;
 use App\Enums\StaffRole;
 use App\Models\User;
 use App\Payments\Models\PaymentInstallment;
@@ -61,12 +62,13 @@ it('never puts an integer identifier into any crm page', function (string $path)
 
 it('never puts an integer identifier into a project page', function (string $suffix) {
     // Populated on purpose: an empty project proves nothing, since the keys
-    // that escape belong to the shoots, the crew, the notes, the job and —
-    // M-03 — the payment plan and its installments.
+    // that escape belong to the shoots, the crew, the timeline (E-04), the
+    // notes, the job and — M-03 — the payment plan and its installments.
     $user = User::factory()->withMfa()->create();
     $project = Project::factory()->create();
     $shoot = Shoot::factory()->for($project)->primary()->create();
     CrewAssignment::factory()->for($shoot)->create();
+    TimelineEntry::factory()->for($shoot)->create();
     InternalNote::factory()->for($project)->create();
     $job = Job::factory()->for($project)->create();
     $plan = PaymentPlan::factory()->for($job)->create(['total' => 200]);

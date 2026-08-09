@@ -161,6 +161,9 @@ forwardStatuses: {
 value: string,
 label: string,
 }[],
+timeline: App.Crm.Data.TimelineEntryData[],
+pdfUrl: string,
+icsUrl: string,
 };
 export type TaskRowData = {
 id: string,
@@ -184,6 +187,14 @@ shootKind: string | null,
 shootKindLabel: string | null,
 isActive: boolean,
 sortOrder: number,
+};
+export type TimelineEntryData = {
+id: string,
+time: string,
+title: string,
+location: string | null,
+note: string | null,
+isTransit: boolean,
 };
 }
 namespace Enums {

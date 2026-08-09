@@ -4,9 +4,9 @@ namespace App\Contracts\Jobs;
 
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
-use App\Contracts\Support\GotenbergClient;
 use App\Contracts\Support\MergeFieldResolver;
 use App\Settings\Support\StudioSettingsResolver;
+use App\Support\GotenbergClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
