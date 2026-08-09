@@ -197,18 +197,21 @@ jobs:
         with: { node-version: 24, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @studio/app build
+      # Every database setting goes into .env rather than into this step's env.
+      # Playwright starts `artisan serve` as a subprocess of a later step, and
+      # that subprocess reads .env — so step-level DB_* variables reached the
+      # migration but not the server, which then looked for a database named
+      # by .env.example and got "does not exist". One source of truth, written
+      # once, read by every process in the job.
       - working-directory: apps/studio
-        env:
-          DB_CONNECTION: pgsql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 5432
-          DB_DATABASE: studio_test
-          DB_USERNAME: studio
-          DB_PASSWORD: studio
-          APP_SURFACE: admin
         run: |
           cp .env.example .env
+          sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=pgsql/' .env
           sed -i 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' .env
+          sed -i 's/^DB_PORT=.*/DB_PORT=5432/' .env
+          sed -i 's/^DB_DATABASE=.*/DB_DATABASE=studio_test/' .env
+          sed -i 's/^DB_USERNAME=.*/DB_USERNAME=studio/' .env
+          sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=studio/' .env
           php artisan key:generate
           php artisan migrate --force
       - run: pnpm --filter @studio/app exec playwright install --with-deps chromium
