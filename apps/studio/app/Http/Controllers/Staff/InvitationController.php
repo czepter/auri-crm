@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\StaffInvitation;
 use App\Models\User;
 use App\Notifications\StaffInvited;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -48,7 +49,7 @@ class InvitationController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, StudioSettingsResolver $settings): RedirectResponse
     {
         $this->authorizeStaffManagement();
 
@@ -79,7 +80,7 @@ class InvitationController extends Controller
         );
 
         Notification::route('mail', $invitation->email)
-            ->notify(new StaffInvited($invitation, url("/einladung/{$token}")));
+            ->notify(new StaffInvited($invitation, url("/einladung/{$token}"), $settings));
 
         // The token is deliberately absent from the audit row: an audit log
         // that records live credentials is a second place to steal them from.

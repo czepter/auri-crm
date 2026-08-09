@@ -12,6 +12,7 @@ use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
+use App\Crm\Models\TaskTemplate;
 use App\Policies\ContactPolicy;
 use App\Policies\ContractTemplatePolicy;
 use App\Policies\InternalNotePolicy;
@@ -20,6 +21,7 @@ use App\Policies\PackagePolicy;
 use App\Policies\ProjectPolicy;
 use App\Policies\ShootPolicy;
 use App\Policies\TaskPolicy;
+use App\Policies\TaskTemplatePolicy;
 use App\Support\Surface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
@@ -112,6 +114,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Contact::class, ContactPolicy::class);
         Gate::policy(Package::class, PackagePolicy::class);
         Gate::policy(ContractTemplate::class, ContractTemplatePolicy::class);
+        Gate::policy(TaskTemplate::class, TaskTemplatePolicy::class);
 
         // Filling a non-fillable attribute is silent by default, which turns a
         // factory state like withMfa() into a no-op that fails a test three tasks

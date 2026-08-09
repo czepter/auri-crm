@@ -60,6 +60,7 @@ function submit() {
         <a class="nav" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
         <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
         <a class="nav on" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
+        <a class="nav" href="/einstellungen/aufgabenvorlagen">{{ $t('settings.navTaskTemplates') }}</a>
         <a
           v-for="key in comingSoon"
           :key="key"
