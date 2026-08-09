@@ -1,5 +1,7 @@
 <?php
 
+use App\Catalog\Models\Package;
+use App\Catalog\Models\PackageItem;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
@@ -63,6 +65,20 @@ it('never puts an integer identifier into a project page', function (string $suf
 
     expect(integerIdPaths($props))->toBe([]);
 })->with(['', '/shootings']);
+
+it('never puts an integer identifier into the package catalog', function () {
+    // Populated on purpose, per the note above the project test: an empty
+    // package proves nothing, since the key that escapes belongs to an item.
+    $user = User::factory()->withMfa()->create();
+    $package = Package::factory()->create();
+    PackageItem::factory()->for($package)->create();
+
+    $listProps = $this->actingAs($user, 'staff')->get('/pakete')->assertOk()->viewData('page')['props'];
+    expect(integerIdPaths($listProps))->toBe([]);
+
+    $editProps = $this->get("/pakete/{$package->public_id}")->assertOk()->viewData('page')['props'];
+    expect(integerIdPaths($editProps))->toBe([]);
+});
 
 it('detects an integer id when one is present', function () {
     expect(integerIdPaths(['data' => ['id' => 7, 'name' => 'x']]))->toBe(['$.data.id']);

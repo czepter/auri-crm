@@ -1,5 +1,6 @@
 <?php
 
+use App\Catalog\Http\Controllers\PackageController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
 use App\Crm\Http\Controllers\ContactController;
@@ -81,6 +82,15 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/kontakte/{contact}', [ContactController::class, 'edit'])->name('contacts.edit');
         Route::patch('/kontakte/{contact}', [ContactController::class, 'update'])->name('contacts.update');
         Route::get('/verfuegbarkeit', AvailabilityController::class)->name('availability.show');
+
+        // /pakete/neu stays above /pakete/{package} for the same reason
+        // /anfragen/neu stays above /anfragen/{lead}/stufe.
+        Route::get('/pakete', [PackageController::class, 'index'])->name('packages.index');
+        Route::get('/pakete/neu', [PackageController::class, 'create'])->name('packages.create');
+        Route::post('/pakete', [PackageController::class, 'store'])->name('packages.store');
+        Route::get('/pakete/{package}', [PackageController::class, 'edit'])->name('packages.edit');
+        Route::patch('/pakete/{package}', [PackageController::class, 'update'])->name('packages.update');
+        Route::post('/pakete/{package}/status', [PackageController::class, 'toggle'])->name('packages.toggle');
 
         Route::get('/team', [InvitationController::class, 'index'])->name('staff.index');
         Route::post('/team/einladungen', [InvitationController::class, 'store'])->name('staff.invite');
