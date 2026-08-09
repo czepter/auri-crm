@@ -1,11 +1,16 @@
 <?php
 
+use App\Catalog\Models\Package;
+use App\Catalog\Models\PackageItem;
+use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\User;
+use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -61,7 +66,51 @@ it('never puts an integer identifier into a project page', function (string $suf
     expect(integerIdPaths($props))->toBe([]);
 })->with(['', '/shootings']);
 
+it('never puts an integer identifier into the package catalog', function () {
+    // Populated on purpose, per the note above the project test: an empty
+    // package proves nothing, since the key that escapes belongs to an item.
+    $user = User::factory()->withMfa()->create();
+    $package = Package::factory()->create();
+    PackageItem::factory()->for($package)->create();
+
+    $listProps = $this->actingAs($user, 'staff')->get('/pakete')->assertOk()->viewData('page')['props'];
+    expect(integerIdPaths($listProps))->toBe([]);
+
+    $editProps = $this->get("/pakete/{$package->public_id}")->assertOk()->viewData('page')['props'];
+    expect(integerIdPaths($editProps))->toBe([]);
+});
+
 it('detects an integer id when one is present', function () {
     expect(integerIdPaths(['data' => ['id' => 7, 'name' => 'x']]))->toBe(['$.data.id']);
     expect(integerIdPaths(['data' => ['id' => 'abc', 'name' => 'x']]))->toBe([]);
+});
+
+it('never puts an integer identifier into the portal switcher', function () {
+    useSurface(Surface::PORTAL);
+
+    $contact = Contact::factory()->create();
+    $first = Project::factory()->create(['portal_visible' => true]);
+    $second = Project::factory()->create(['portal_visible' => true]);
+    $first->attachContact($contact, ProjectContactRole::Primary);
+    $second->attachContact($contact, ProjectContactRole::Primary);
+
+    $props = $this->actingAs($contact, 'portal')->get('/')->assertOk()->viewData('page')['props'];
+
+    expect(integerIdPaths($props))->toBe([]);
+});
+
+it('never puts an integer identifier into a portal project screen', function () {
+    useSurface(Surface::PORTAL);
+
+    $contact = Contact::factory()->create();
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $project->attachContact($contact, ProjectContactRole::Primary);
+    Shoot::factory()->for($project)->primary()->create();
+
+    $props = $this->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect(integerIdPaths($props))->toBe([]);
 });

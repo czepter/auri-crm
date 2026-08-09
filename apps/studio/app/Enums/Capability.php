@@ -45,4 +45,11 @@ enum Capability: string
 
     /** Invite staff and reach the studio's own settings. */
     case ManageStaff = 'manage_staff';
+
+    /**
+     * Define, edit and retire the service catalog a quote starts from (Q-01).
+     * Ordinary studio work, open to every role — the audit log is the control,
+     * the same shape as ManageLeads.
+     */
+    case ManagePackages = 'manage_packages';
 }

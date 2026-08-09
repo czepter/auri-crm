@@ -3,7 +3,8 @@
     "cancel": "Abbrechen",
     "save": "Speichern",
     "signOut": "Abmelden",
-    "search": "Suchen"
+    "search": "Suchen",
+    "remove": "Entfernen"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -192,6 +193,27 @@
     "mfaOn": "Zwei Faktoren",
     "mfaPending": "Einrichtung offen"
   },
+  "packages": {
+    "title": "Pakete",
+    "create": "Neues Paket",
+    "createTitle": "Paket anlegen",
+    "editTitle": "Paket bearbeiten",
+    "name": "Name",
+    "description": "Beschreibung",
+    "itemCount": "keine Leistung | 1 Leistung | {count} Leistungen",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "activate": "Aktivieren",
+    "deactivate": "Deaktivieren",
+    "empty": "Noch keine Pakete.",
+    "items": "Leistungen",
+    "addItem": "Leistung hinzufügen",
+    "itemTitle": "Titel",
+    "itemDescription": "Beschreibung",
+    "itemQuantity": "Menge",
+    "itemPrice": "Preis (€)",
+    "itemPriceHint": "Leer lassen für „enthaltene Leistung“ ohne eigenen Preis."
+  },
   "portal": {
     "signInTitle": "Kundenbereich",
     "signInHint": "Adresse eintragen — wir schicken einen Link. Kein Passwort nötig.",
@@ -200,6 +222,10 @@
     "signedInAs": "Angemeldet als",
     "signOut": "Abmelden",
     "greeting": "Hallo {name}",
+    "chooseProject": "Wählen Sie eines Ihrer Projekte.",
+    "allProjects": "Alle Projekte",
+    "shootsTitle": "Ihre Shootings",
+    "shootCount": "ein Termin | {count} Termine",
     "dateOpen": "Termin noch offen",
     "noShoots": "Noch keine Termine hinterlegt.",
     "nothingShared": "Aktuell ist nichts freigegeben."

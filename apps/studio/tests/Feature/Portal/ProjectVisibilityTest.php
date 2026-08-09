@@ -1,0 +1,163 @@
+<?php
+
+use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Models\Contact;
+use App\Crm\Models\Project;
+use App\Support\Surface;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    // A-03 lives entirely on the client surface, so the process has to be the
+    // one that serves it — route table, guard and cookie together, same as
+    // MagicLinkTest.
+    useSurface(Surface::PORTAL);
+});
+
+/**
+ * The one visibility scope, exercised the same way HomeController and
+ * ProjectController call it: projects joined through project_contacts for
+ * the authenticated contact, where portal_visible. A second, differently
+ * worded rule anywhere in this file would be the bug A-03 exists to prevent.
+ */
+it('gives a contact with zero visible projects an empty state, not an error', function () {
+    $contact = Contact::factory()->create();
+    $this->actingAs($contact, 'portal');
+
+    $response = $this->get('/');
+
+    $response->assertOk();
+    expect($response->viewData('page')['props']['projects'])->toBe([]);
+});
+
+it('sends a single-project contact straight to their project, not a picker', function () {
+    $contact = Contact::factory()->create();
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $project->attachContact($contact, ProjectContactRole::Primary);
+
+    $this->actingAs($contact, 'portal');
+
+    $this->get('/')->assertRedirect("/projekte/{$project->public_id}");
+});
+
+it('lists every visible project in the switcher for a multi-project contact', function () {
+    $contact = Contact::factory()->create();
+    $wedding = Project::factory()->wedding()->create(['portal_visible' => true, 'name' => 'Meier & Kowalski']);
+    $portrait = Project::factory()->create(['portal_visible' => true, 'name' => 'Familie Voss']);
+    $wedding->attachContact($contact, ProjectContactRole::Primary);
+    $portrait->attachContact($contact, ProjectContactRole::Primary);
+
+    $this->actingAs($contact, 'portal');
+
+    $projects = props('/')['projects'];
+
+    expect($projects)->toHaveCount(2)
+        ->and(collect($projects)->pluck('id')->all())
+            ->toEqualCanonicalizing([$wedding->public_id, $portrait->public_id])
+        ->and(collect($projects)->pluck('name')->all())
+            ->toContain('Meier & Kowalski', 'Familie Voss');
+});
+
+it('excludes a project the studio has not made portal_visible from the switcher', function () {
+    $contact = Contact::factory()->create();
+    $visibleA = Project::factory()->create(['portal_visible' => true]);
+    $visibleB = Project::factory()->create(['portal_visible' => true]);
+    $hidden = Project::factory()->create(['portal_visible' => false]);
+    $visibleA->attachContact($contact, ProjectContactRole::Primary);
+    $visibleB->attachContact($contact, ProjectContactRole::Primary);
+    $hidden->attachContact($contact, ProjectContactRole::Primary);
+
+    $this->actingAs($contact, 'portal');
+
+    $ids = collect(props('/')['projects'])->pluck('id')->all();
+
+    expect($ids)->toEqualCanonicalizing([$visibleA->public_id, $visibleB->public_id])
+        ->and($ids)->not->toContain($hidden->public_id);
+});
+
+it('opens a visible project the contact is on', function () {
+    $contact = Contact::factory()->create();
+    $project = Project::factory()->create(['portal_visible' => true, 'name' => 'Meier & Kowalski']);
+    $project->attachContact($contact, ProjectContactRole::Primary);
+
+    $this->actingAs($contact, 'portal');
+
+    $response = $this->get("/projekte/{$project->public_id}");
+
+    $response->assertOk();
+    expect($response->viewData('page')['props']['project']['name'])->toBe('Meier & Kowalski');
+});
+
+it('404s on a project the contact is not on, rather than 403', function () {
+    $contact = Contact::factory()->create();
+    $someoneElses = Project::factory()->create(['portal_visible' => true]);
+
+    $this->actingAs($contact, 'portal');
+
+    $this->get("/projekte/{$someoneElses->public_id}")->assertNotFound();
+});
+
+it('404s on a project the contact is on but the studio has not made visible', function () {
+    $contact = Contact::factory()->create();
+    $project = Project::factory()->create(['portal_visible' => false]);
+    $project->attachContact($contact, ProjectContactRole::Primary);
+
+    $this->actingAs($contact, 'portal');
+
+    $this->get("/projekte/{$project->public_id}")->assertNotFound();
+});
+
+it('404s on an unknown project id', function () {
+    $contact = Contact::factory()->create();
+    $this->actingAs($contact, 'portal');
+
+    $this->get('/projekte/does-not-exist')->assertNotFound();
+});
+
+it('reflects a portal_visible flip on the very next request, without a re-login', function () {
+    $contact = Contact::factory()->create();
+    $projects = Project::factory()->count(3)->create(['portal_visible' => true]);
+    $projects->each(fn (Project $project) => $project->attachContact($contact, ProjectContactRole::Primary));
+
+    $this->actingAs($contact, 'portal');
+
+    expect(props('/')['projects'])->toHaveCount(3);
+
+    $dropped = $projects->first();
+    $dropped->update(['portal_visible' => false]);
+
+    expect(props('/')['projects'])->toHaveCount(2);
+    $this->get("/projekte/{$dropped->public_id}")->assertNotFound();
+});
+
+it('reflects a detached contact on the very next request, without a re-login', function () {
+    $contact = Contact::factory()->create();
+    $projects = Project::factory()->count(3)->create(['portal_visible' => true]);
+    $projects->each(fn (Project $project) => $project->attachContact($contact, ProjectContactRole::Primary));
+
+    $this->actingAs($contact, 'portal');
+
+    expect(props('/')['projects'])->toHaveCount(3);
+
+    $dropped = $projects->first();
+    $dropped->contacts()->detach($contact);
+
+    expect(props('/')['projects'])->toHaveCount(2);
+    $this->get("/projekte/{$dropped->public_id}")->assertNotFound();
+});
+
+it('offers the switcher link on a project screen only when there is more than one visible project', function () {
+    $contact = Contact::factory()->create();
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $project->attachContact($contact, ProjectContactRole::Primary);
+
+    $this->actingAs($contact, 'portal');
+
+    expect(props("/projekte/{$project->public_id}")['showSwitcher'])->toBeFalse();
+
+    $second = Project::factory()->create(['portal_visible' => true]);
+    $second->attachContact($contact, ProjectContactRole::Primary);
+
+    expect(props("/projekte/{$project->public_id}")['showSwitcher'])->toBeTrue();
+});

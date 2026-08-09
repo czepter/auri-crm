@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Catalog\Models\Package;
 use App\Crm\Events\ProjectBooked;
 use App\Crm\Listeners\ApplyTemplatesOnBooking;
 use App\Crm\Models\Contact;
@@ -13,6 +14,7 @@ use App\Crm\Models\Task;
 use App\Policies\ContactPolicy;
 use App\Policies\InternalNotePolicy;
 use App\Policies\LeadPolicy;
+use App\Policies\PackagePolicy;
 use App\Policies\ProjectPolicy;
 use App\Policies\ShootPolicy;
 use App\Policies\TaskPolicy;
@@ -106,6 +108,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(InternalNote::class, InternalNotePolicy::class);
         Gate::policy(Lead::class, LeadPolicy::class);
         Gate::policy(Contact::class, ContactPolicy::class);
+        Gate::policy(Package::class, PackagePolicy::class);
 
         // Filling a non-fillable attribute is silent by default, which turns a
         // factory state like withMfa() into a no-op that fails a test three tasks
