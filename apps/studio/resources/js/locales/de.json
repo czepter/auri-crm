@@ -481,6 +481,9 @@
     "transferBic": "BIC",
     "transferReference": "Verwendungszweck",
     "payNowTitle": "Jetzt zahlen",
-    "payNowComingSoon": "Die Online-Zahlung per Karte folgt in Kürze — bitte bis dahin überweisen."
+    "payNowHint": "Einzelne Rate direkt online mit Karte bezahlen.",
+    "payNowButton": "Jetzt zahlen",
+    "payNowSuccess": "Zahlung eingegangen, danke!",
+    "payNowCancelled": "Zahlung abgebrochen."
   }
 }
