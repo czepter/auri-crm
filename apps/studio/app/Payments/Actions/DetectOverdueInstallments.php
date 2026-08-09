@@ -25,6 +25,12 @@ use App\Payments\Models\PaymentInstallment;
  * not-yet-scoped feature — add a separate scan reading that setting when a
  * story actually asks for repeat reminders rather than a one-time overdue
  * flag.
+ *
+ * M-05 gave the Stripe signal this class's own doc comment above already
+ * asked for: App\Payments\Jobs\ProcessStripeWebhookEvent calls markOverdue()
+ * below directly, for the one installment a checkout.session.
+ * async_payment_failed event names, rather than this class growing a second
+ * emission path — the guard is the same one-way flag either caller hits.
  */
 class DetectOverdueInstallments
 {
@@ -37,11 +43,27 @@ class DetectOverdueInstallments
             ->get();
 
         foreach ($installments as $installment) {
-            $installment->update(['overdue_notified_at' => now('UTC')]);
-
-            InstallmentOverdue::dispatch($installment);
+            $this->markOverdue($installment);
         }
 
         return $installments->count();
+    }
+
+    /**
+     * One installment, guarded the same way the scan above filters its own
+     * query: already paid, already flagged, or moved past `scheduled` some
+     * other way is left untouched, so a Stripe failure signal arriving after
+     * this row already has a different outcome writes nothing and dispatches
+     * nothing.
+     */
+    public function markOverdue(PaymentInstallment $installment): void
+    {
+        if ($installment->status !== PaymentInstallmentStatus::Scheduled || $installment->overdue_notified_at !== null) {
+            return;
+        }
+
+        $installment->update(['overdue_notified_at' => now('UTC')]);
+
+        InstallmentOverdue::dispatch($installment);
     }
 }
