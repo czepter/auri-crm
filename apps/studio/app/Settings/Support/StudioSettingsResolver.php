@@ -398,6 +398,41 @@ class StudioSettingsResolver
         );
     }
 
+    // --- T-06: mail identity — who a tenant's outgoing mail leaves under ---
+
+    /**
+     * config('mail.from.name')'s per-tenant replacement — the same fallback
+     * shape as timezone()/locale() above: the tenant value once T-06's
+     * E-Mail pane has set one, the environment default otherwise.
+     */
+    public function mailFromName(): string
+    {
+        return $this->row()->mail_from_name ?: config('mail.from.name');
+    }
+
+    public function mailFromAddress(): string
+    {
+        return $this->row()->mail_from_address ?: config('mail.from.address');
+    }
+
+    /** Null when unset — a reply then goes to mailFromAddress(), the mailer's own default. */
+    public function mailReplyTo(): ?string
+    {
+        return $this->row()->mail_reply_to;
+    }
+
+    /** Appended as its own line on every outgoing notification mail this story wires up. */
+    public function mailSignature(): ?string
+    {
+        return $this->row()->mail_signature;
+    }
+
+    /** Null leaves outgoing mail unBCC'd — the studio's own inbox is opt-in. */
+    public function mailBcc(): ?string
+    {
+        return $this->row()->mail_bcc;
+    }
+
     private function row(): StudioSettings
     {
         return Cache::store('redis')->remember(

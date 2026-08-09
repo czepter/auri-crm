@@ -51,5 +51,10 @@ class StudioSettingsData extends Data
         public string $locale,
         /** @var list<int> */
         public array $workingDays,
+        public string $mailFromName,
+        public string $mailFromAddress,
+        public ?string $mailReplyTo,
+        public ?string $mailSignature,
+        public ?string $mailBcc,
     ) {}
 }
