@@ -152,8 +152,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # No version here on purpose. package.json's packageManager field pins
+      # the exact pnpm build, and action-setup errors out when a second source
+      # also names one rather than picking a winner.
       - uses: pnpm/action-setup@v4
-        with: { version: 10 }
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: pnpm }
       - run: pnpm install --frozen-lockfile
@@ -187,8 +189,10 @@ jobs:
           coverage: none
       - working-directory: apps/studio
         run: composer install --no-interaction --prefer-dist
+      # No version here on purpose. package.json's packageManager field pins
+      # the exact pnpm build, and action-setup errors out when a second source
+      # also names one rather than picking a winner.
       - uses: pnpm/action-setup@v4
-        with: { version: 10 }
       - uses: actions/setup-node@v4
         with: { node-version: 24, cache: pnpm }
       - run: pnpm install --frozen-lockfile
