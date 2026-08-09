@@ -64,6 +64,17 @@ class StudioSettingsResolver
     }
 
     /**
+     * T-09: the length ShootCalendar gives a shoot whose end_time is unset,
+     * replacing the hardcoded addHours(2) that used to sit in that class
+     * directly. Minutes, not hours — a shorter session needs finer
+     * granularity than that constant offered.
+     */
+    public function defaultShootDurationMinutes(): int
+    {
+        return $this->row()->default_shoot_duration_minutes;
+    }
+
+    /**
      * What a document should actually use — zero under small_business
      * regardless of what vat_rate holds, so a mode switch never leaves a
      * stale 19% behind. This is T-03's whole point: Q-04 calls this, not

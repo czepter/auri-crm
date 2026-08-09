@@ -152,6 +152,7 @@ function submitDocuments() {
         <a class="nav" :class="{ on: pane === 'documents' }" href="#" @click.prevent="pane = 'documents'">
           {{ $t('settings.navDocuments') }}
         </a>
+        <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
         <a
           v-for="key in comingSoon"
           :key="key"

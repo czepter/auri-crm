@@ -48,6 +48,7 @@ function save(rangeId: string) {
       <nav style="width: 196px; flex: none; display: flex; flex-direction: column; gap: 2px">
         <a class="nav" href="/einstellungen">{{ $t('settings.navProfile') }}</a>
         <a class="nav on" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
+        <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
         <a
           v-for="key in comingSoon"
           :key="key"
