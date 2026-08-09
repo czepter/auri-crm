@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectHeader from '@/admin/components/ProjectHeader.vue'
 import CrewStack from '@/admin/components/CrewStack.vue'
 import { chipClass, dayAndMonth, weekday } from '@/admin/lib/shoots'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
@@ -60,6 +63,20 @@ function save(id: string) {
 
 function remove(id: string) {
   router.delete(`/notizen/${id}`, { preserveScroll: true })
+}
+
+// Its own confirm, worded to the one thing this button changes: this
+// project's portal_visible, nothing about the contacts on it. Revoking a
+// contact's access entirely lives on the contact screen instead — a
+// deliberately separate control for a deliberately separate question.
+function togglePortalVisibility() {
+  const confirmKey = props.header.portalVisible
+    ? 'project.portalVisibilityHideConfirm'
+    : 'project.portalVisibilityShowConfirm'
+
+  if (confirm(t(confirmKey))) {
+    router.post(`/auftraege/${props.header.id}/portal-sichtbarkeit`, {}, { preserveScroll: true })
+  }
 }
 </script>
 
@@ -258,7 +275,23 @@ function remove(id: string) {
                 {{ header.isBooked ? $t('project.booked') : $t('project.notBooked') }}
               </span>
             </div>
+            <div class="kvrow">
+              <span>{{ $t('project.portalStatus') }}</span>
+              <span :class="{ tbd: !header.portalVisible }">
+                {{ header.portalVisible ? $t('project.portalVisible') : $t('project.portalHidden') }}
+              </span>
+            </div>
           </div>
+
+          <button
+            v-if="header.canManagePortalVisibility"
+            type="button"
+            class="abtn"
+            style="margin-top: var(--s3)"
+            @click="togglePortalVisibility"
+          >
+            {{ header.portalVisible ? $t('project.portalVisibilityHide') : $t('project.portalVisibilityShow') }}
+          </button>
         </div>
       </div>
     </div>

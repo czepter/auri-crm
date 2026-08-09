@@ -47,12 +47,22 @@ class ClientAccess extends Model
 
     public function isLive(): bool
     {
-        return $this->consumed_at === null && $this->expires_at->isFuture();
+        return $this->consumed_at === null
+            && $this->expires_at->isFuture()
+            && $this->contact?->portal_access_revoked_at === null;
     }
 
+    /**
+     * Revocation lives on the contact, not scattered across every row it
+     * ever issued — a revoked contact's rows go dead by construction of this
+     * query rather than by rewriting them one by one (A-04). Consumed and
+     * expired keep meaning exactly what they already meant.
+     */
     public function scopeLive(Builder $query): void
     {
-        $query->whereNull('consumed_at')->where('expires_at', '>', now());
+        $query->whereNull('consumed_at')
+            ->where('expires_at', '>', now())
+            ->whereHas('contact', fn (Builder $q) => $q->whereNull('portal_access_revoked_at'));
     }
 
     public static function hash(string $token): string

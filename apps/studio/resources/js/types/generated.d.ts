@@ -103,6 +103,8 @@ canManageShoots: boolean,
 canManageCrew: boolean,
 canManageTasks: boolean,
 canManageNotes: boolean,
+portalVisible: boolean,
+canManagePortalVisibility: boolean,
 canManageQuotes: boolean,
 tabs: {
 key: string,
@@ -170,7 +172,7 @@ mfaConfirmed: boolean,
 };
 }
 namespace Enums {
-export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_staff' | 'manage_packages' | 'manage_quotes';
+export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes';
 export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' | 'assistant';
 }
 namespace Quotes {

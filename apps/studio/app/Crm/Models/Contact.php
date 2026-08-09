@@ -30,6 +30,22 @@ class Contact extends Model implements Authenticatable
 
     protected $fillable = ['name', 'email', 'phone'];
 
+    protected function casts(): array
+    {
+        return ['portal_access_revoked_at' => 'immutable_datetime'];
+    }
+
+    /**
+     * Ends this contact's portal access outright — every live magic link and
+     * any session already open elsewhere is denied on the very next request.
+     * Leaves project_contacts untouched: revocation is not the same as never
+     * having been involved (A-04).
+     */
+    public function revokePortalAccess(): void
+    {
+        $this->forceFill(['portal_access_revoked_at' => now()])->save();
+    }
+
     /**
      * Authenticatable so the portal guard has something to hold, and nothing
      * more. There is no password column here and there never will be: a client

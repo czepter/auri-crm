@@ -73,7 +73,12 @@
     "projectCount": "kein Projekt | 1 Projekt | {count} Projekte",
     "none": "—",
     "editTitle": "Kontakt bearbeiten",
-    "empty": "Noch keine Kontakte."
+    "empty": "Noch keine Kontakte.",
+    "portalAccess": "Portal-Zugang",
+    "portalAccessActive": "Aktiv",
+    "portalAccessRevoked": "Widerrufen am {date}",
+    "revokePortalAccess": "Portal-Zugang widerrufen",
+    "revokePortalAccessConfirm": "Portal-Zugang für {name} vollständig widerrufen? Das beendet den Zugriff auf alle Projekte dieses Kontakts im Kundenbereich, auch bereits angemeldete Sitzungen — nicht nur ein Projekt."
   },
   "project": {
     "kicker": "Projekt · {type}",
@@ -130,7 +135,14 @@
     "notesInternalOnly": "Nur intern",
     "notePlaceholder": "Notiz schreiben …",
     "noteEdit": "bearbeiten",
-    "noteDelete": "löschen"
+    "noteDelete": "löschen",
+    "portalStatus": "Portal",
+    "portalVisible": "Sichtbar",
+    "portalHidden": "Ausgeblendet",
+    "portalVisibilityHide": "Aus dem Portal ausblenden",
+    "portalVisibilityShow": "Im Portal zeigen",
+    "portalVisibilityHideConfirm": "Dieses Projekt aus dem Portal ausblenden? Nur dieses Projekt — die Kontakte bleiben bestehen, andere Projekte bleiben sichtbar.",
+    "portalVisibilityShowConfirm": "Dieses Projekt im Portal zeigen? Kontakte auf diesem Projekt sehen es ab dem nächsten Aufruf im Kundenbereich."
   },
   "calendar": {
     "title": "Kalender",
