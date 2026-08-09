@@ -3,6 +3,7 @@
 namespace App\Portal\Actions;
 
 use App\Crm\Models\Contact;
+use App\Notifications\NotificationService;
 use App\Portal\Models\ClientAccess;
 use App\Portal\Notifications\ClientAccessLink;
 use App\Settings\Support\StudioSettingsResolver;
@@ -31,7 +32,9 @@ class RequestClientAccess
      * and a single counter stops only whichever it was written for.
      */
     private const PER_EMAIL = 5;
+
     private const PER_IP = 20;
+
     private const WINDOW_SECONDS = 900;
 
     /**
@@ -45,7 +48,10 @@ class RequestClientAccess
      */
     private const FLOOR_MS = 250;
 
-    public function __construct(private readonly StudioSettingsResolver $settings) {}
+    public function __construct(
+        private readonly StudioSettingsResolver $settings,
+        private readonly NotificationService $notifications,
+    ) {}
 
     public function __invoke(string $email, ?string $ip): void
     {
@@ -78,8 +84,14 @@ class RequestClientAccess
             'requested_ip' => $ip,
         ]);
 
-        Notification::route('mail', $contact->email)
-            ->notify(new ClientAccessLink($contact, url("/zugang/{$token}"), $this->settings));
+        // E-07: every send in this app goes through NotificationService —
+        // see its own docblock. ClientAccessLink names only ['mail'] in
+        // via(), so this still leaves exactly one email, same as ->notify()
+        // did.
+        $this->notifications->send(
+            Notification::route('mail', $contact->email),
+            new ClientAccessLink($contact, url("/zugang/{$token}"), $this->settings),
+        );
 
         // One row per issued link. The token is not in it: an audit log that
         // records live credentials is a second place to steal them from.
