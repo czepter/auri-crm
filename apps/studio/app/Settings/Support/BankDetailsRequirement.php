@@ -3,16 +3,16 @@
 namespace App\Settings\Support;
 
 /**
- * Whether the bank fieldset must be present on save. Bank details only
- * become mandatory once the studio actually offers clients a transfer
- * option — a decision T-07 (not built yet) owns. Named and reusable so that
- * story flips the one return value below rather than rewriting
- * StudioSettingsController's validation rules.
+ * Whether the bank fieldset must be present on save. Bank details are
+ * mandatory as of T-07: the portal payment screen always renders
+ * "Überweisen" with the studio's IBAN, whether or not Stripe is enabled, so
+ * a studio with no bank details on file has nothing correct to show a
+ * client asked to pay by transfer.
  */
 class BankDetailsRequirement
 {
     public static function isRequired(): bool
     {
-        return false;
+        return true;
     }
 }

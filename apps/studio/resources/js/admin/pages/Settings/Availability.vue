@@ -10,7 +10,7 @@ const props = defineProps<{
 // Every other future group (Zahlungsdaten & USt, Dokumente, ...) — the same
 // disabled "bald" list every settings screen carries its own copy of, per
 // Settings/Index.vue and Settings/Numbering.vue.
-const comingSoon = ['navDocuments', 'navPayments', 'navPortal', 'navNotifications', 'navGeneral'] as const
+const comingSoon = ['navDocuments', 'navPortal', 'navNotifications', 'navGeneral'] as const
 
 const durationForm = useForm({
   default_shoot_duration_minutes: props.defaultShootDurationMinutes,
@@ -61,6 +61,7 @@ function addClosure() {
         <a class="nav" href="/einstellungen">{{ $t('settings.navProfile') }}</a>
         <a class="nav" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
         <a class="nav on" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
+        <a class="nav" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
         <a
           v-for="key in comingSoon"
           :key="key"

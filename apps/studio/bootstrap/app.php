@@ -10,6 +10,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         then: fn () => \App\Support\Surface::registerRoutes(),
     )
+    // Domain commands live beside the feature they belong to (App\Payments\
+    // Console\Commands, matching Actions/Events/Http\Controllers everywhere
+    // else in this codebase) rather than in the conventional app/Console/
+    // Commands, which this codebase has never used — so each has to be named
+    // here explicitly; nothing in that directory is auto-discovered.
+    ->withCommands([
+        \App\Payments\Console\Commands\DetectOverdueInstallmentsCommand::class,
+    ])
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,

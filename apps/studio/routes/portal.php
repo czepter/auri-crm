@@ -3,6 +3,7 @@
 use App\Portal\Http\Controllers\ContractController;
 use App\Portal\Http\Controllers\HomeController;
 use App\Portal\Http\Controllers\MagicLinkController;
+use App\Portal\Http\Controllers\PaymentController;
 use App\Portal\Http\Controllers\ProjectController;
 use Illuminate\Support\Facades\Route;
 
@@ -49,4 +50,10 @@ Route::middleware('audience:portal')->group(function () {
     // contract — see App\Contracts\Actions\SignContract.
     Route::post('/projekte/{project}/vertrag/unterschreiben', [ContractController::class, 'sign'])
         ->name('portal.contracts.sign');
+
+    // T-07. Read-only: no mockup was drawn for this screen ("Mockup —"), and
+    // nothing on it ever creates a Stripe object — see App\Portal\Http\
+    // Controllers\PaymentController.
+    Route::get('/projekte/{project}/zahlungen', PaymentController::class)
+        ->name('portal.payments.show');
 });

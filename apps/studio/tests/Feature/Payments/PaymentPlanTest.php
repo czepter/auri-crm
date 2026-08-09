@@ -120,6 +120,15 @@ it('creates a plan whose installments sum exactly to the total, split evenly wit
         ->and($plan->installments()->orderBy('sort_order')->pluck('amount')->all())->toBe([333, 333, 334]);
 });
 
+it('allocates an Invoice-type document number as the plan\'s own reference — T-07\'s Verwendungszweck', function () {
+    Storage::fake('local');
+    $job = signedContractJob();
+
+    $plan = app(CreatePaymentPlan::class)($job, 500, ['2026-09-01']);
+
+    expect($plan->fresh()->reference)->toStartWith('RE-');
+});
+
 it('logs the creation, naming the job and the total', function () {
     Storage::fake('local');
     $job = signedContractJob();

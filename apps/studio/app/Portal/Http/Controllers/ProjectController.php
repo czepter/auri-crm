@@ -31,6 +31,7 @@ class ProjectController extends Controller
             ->with([
                 'shoots' => fn ($query) => $query->uncancelled()->orderByRaw('date is null, date'),
                 'latestContract',
+                'job.paymentPlan',
             ])
             ->firstOrFail();
 
@@ -62,6 +63,10 @@ class ProjectController extends Controller
                 // M-01. False before any contract has ever been generated —
                 // the link only ever appears once there is something behind it.
                 'hasContract' => $found->latestContract !== null,
+                // T-07. False before a Job exists, or before staff have
+                // created a payment plan for it — the same "nothing to show
+                // yet" gate hasContract already uses for the contract link.
+                'hasPaymentPlan' => $found->job?->paymentPlan !== null,
             ],
         ]);
     }

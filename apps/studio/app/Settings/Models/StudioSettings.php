@@ -18,7 +18,11 @@ use Illuminate\Database\Eloquent\Model;
  * Studio-Profil. quote_validity_days, payment_term_days,
  * deposit_percentage, widerruf_included and widerruf_text are T-05's
  * Dokumente pane — the values every new quote, payment plan and contract
- * render starts from.
+ * render starts from, including the deposit and Zahlungsziel defaults
+ * T-07's own issue also named; T-05 landed first, so T-07 reads those two
+ * through T-05's columns rather than declaring a second pair. The
+ * payments_* columns below are T-07's own remainder: Stripe as an optional
+ * capability, and the reminder default T-05 did not cover.
  */
 class StudioSettings extends Model
 {
@@ -35,6 +39,19 @@ class StudioSettings extends Model
         'default_shoot_duration_minutes',
         'quote_validity_days', 'payment_term_days', 'deposit_percentage', 'widerruf_included', 'widerruf_text',
         'timezone', 'locale', 'working_days',
+        'payments_stripe_enabled', 'payments_stripe_mode',
+        'payments_stripe_test_publishable_key', 'payments_stripe_test_secret_key',
+        'payments_stripe_live_publishable_key', 'payments_stripe_live_secret_key',
+        'payments_reminders_enabled',
+    ];
+
+    // Defence in depth beside StudioSettingsResolver never exposing these
+    // past itself (T-01's own rule) — the same belt the four MFA columns
+    // wear on App\Models\User. A secret key must never ride along in a
+    // serialised StudioSettings even by accident.
+    protected $hidden = [
+        'payments_stripe_test_publishable_key', 'payments_stripe_test_secret_key',
+        'payments_stripe_live_publishable_key', 'payments_stripe_live_secret_key',
     ];
 
     protected function casts(): array
@@ -44,6 +61,12 @@ class StudioSettings extends Model
             // ISO weekday integers (1 Monday .. 7 Sunday) — see
             // StudioSettingsResolver::workingDays().
             'working_days' => 'array',
+            'payments_stripe_enabled' => 'boolean',
+            'payments_stripe_test_publishable_key' => 'encrypted',
+            'payments_stripe_test_secret_key' => 'encrypted',
+            'payments_stripe_live_publishable_key' => 'encrypted',
+            'payments_stripe_live_secret_key' => 'encrypted',
+            'payments_reminders_enabled' => 'boolean',
         ];
     }
 }

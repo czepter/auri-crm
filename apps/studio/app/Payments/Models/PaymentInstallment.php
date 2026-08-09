@@ -5,6 +5,7 @@ namespace App\Payments\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Enums\SettledVia;
 use Database\Factories\Payments\PaymentInstallmentFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,7 +26,10 @@ class PaymentInstallment extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['payment_plan_id', 'amount', 'due_on', 'status', 'sort_order'];
+    protected $fillable = [
+        'payment_plan_id', 'amount', 'due_on', 'status', 'sort_order',
+        'settled_via', 'paid_on', 'payment_reference', 'overdue_notified_at',
+    ];
 
     protected $attributes = ['status' => PaymentInstallmentStatus::Scheduled, 'sort_order' => 0];
 
@@ -34,6 +38,9 @@ class PaymentInstallment extends Model
         return [
             'due_on' => 'date',
             'status' => PaymentInstallmentStatus::class,
+            'settled_via' => SettledVia::class,
+            'paid_on' => 'date',
+            'overdue_notified_at' => 'immutable_datetime',
         ];
     }
 

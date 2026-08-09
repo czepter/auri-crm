@@ -103,13 +103,13 @@ const paneTitle = computed(() => {
   return 'settings.profileTitle'
 })
 
-// Every other future group (Zahlungen, ...) later stories land — rendered
+// Every other future group (Portal, ...) later stories land — rendered
 // disabled with the "bald" chip screen 4's Vertrag tab already uses for a
 // superseded quote, per T-00's mockup. Zahlungsdaten & USt is T-03's own
 // pane, Nummernkreise is T-04's own route, Verfügbarkeit is T-09's own
-// route, Dokumente is T-05's own pane and Allgemein is T-13's own pane, so
-// all five drop out of this list.
-const comingSoon = ['navPayments', 'navPortal', 'navNotifications'] as const
+// route, Dokumente is T-05's own pane, Allgemein is T-13's own pane and
+// Zahlungen is T-07's own route, so all six drop out of this list.
+const comingSoon = ['navPortal', 'navNotifications'] as const
 
 function toggleWorkingDay(day: number) {
   const days = generalForm.working_days
@@ -193,6 +193,7 @@ function submitGeneral() {
           {{ $t('settings.navDocuments') }}
         </a>
         <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
+        <a class="nav" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
         <a
           v-for="key in comingSoon"
           :key="key"
