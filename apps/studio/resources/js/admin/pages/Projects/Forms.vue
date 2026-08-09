@@ -54,6 +54,19 @@ function save(instanceId: string) {
     }))
     .patch(`/frageboegen/${instanceId}`, { preserveScroll: true })
 }
+
+// E-03: one answer form per field, keyed by its id — same reason editForms
+// keeps one per instance. FormInstanceField::answer() never overwrites, so
+// re-submitting the same field just appends the next version.
+const answerForms = Object.fromEntries(
+  props.formInstances.flatMap((instance) =>
+    instance.fields.map((field) => [field.id, useForm({ value: field.currentAnswer ?? '' })]),
+  ),
+)
+
+function answer(fieldId: string) {
+  answerForms[fieldId].patch(`/frageboegen-felder/${fieldId}/antwort`, { preserveScroll: true })
+}
 </script>
 
 <template>
@@ -81,6 +94,23 @@ function save(instanceId: string) {
               <button class="btn" type="button" :disabled="editForms[instance.id].processing" @click="save(instance.id)">
                 {{ $t('common.save') }}
               </button>
+            </div>
+
+            <div v-if="instance.fields.length" class="qa" style="margin-top: var(--s4)">
+              <div v-for="field in instance.fields" :key="field.id">
+                <div class="q">{{ field.label }}</div>
+                <div class="fld wide">
+                  <textarea v-model="answerForms[field.id].value" class="inp" rows="2"></textarea>
+                </div>
+                <div class="formfoot" style="margin-top: var(--s2)">
+                  <button class="abtn" type="button" :disabled="answerForms[field.id].processing" @click="answer(field.id)">
+                    {{ $t('formInstances.saveAnswer') }}
+                  </button>
+                  <span v-if="field.answeredAt" class="hint">
+                    {{ $t('formInstances.answeredAt', { date: new Date(field.answeredAt).toLocaleDateString('de-DE') }) }}
+                  </span>
+                </div>
+              </div>
             </div>
           </template>
 

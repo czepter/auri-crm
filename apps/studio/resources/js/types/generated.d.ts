@@ -81,6 +81,8 @@ type: string,
 typeLabel: string,
 required: boolean,
 options: string[] | null,
+currentAnswer: string | null,
+answeredAt: string | null,
 };
 export type FormTemplateData = {
 id: string,
@@ -301,6 +303,9 @@ partSize: number,
 namespace Enums {
 export type AssetStatus = 'ready' | 'failed';
 export type MultipartUploadStatus = 'in_progress' | 'completed' | 'aborted';
+export type ZipBuildScope = 'all';
+export type ZipBuildSize = 'original' | 'web';
+export type ZipBuildStatus = 'building' | 'ready' | 'failed';
 }
 }
 namespace Numbering {

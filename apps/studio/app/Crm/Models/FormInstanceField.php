@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\DB;
 
 /**
  * One question on a FormInstance. Shaped after FormField on purpose — same
@@ -39,6 +42,39 @@ class FormInstanceField extends Model
     public function formInstance(): BelongsTo
     {
         return $this->belongsTo(FormInstance::class);
+    }
+
+    public function answers(): HasMany
+    {
+        return $this->hasMany(FormAnswer::class);
+    }
+
+    /** The latest answer version, or null before this field has ever been answered. */
+    public function currentAnswer(): HasOne
+    {
+        return $this->hasOne(FormAnswer::class)->latestOfMany('version');
+    }
+
+    /**
+     * E-03: records a new answer version and leaves every earlier one
+     * untouched — no update, no delete. Covers both the first submission and
+     * every edit afterwards; there is no separate "draft" to publish, each
+     * call is itself the new current version. Same transaction shape as
+     * Gallery::publish() and DocumentTemplate::newVersion(): the max-version
+     * read and the insert happen together, so two concurrent answers either
+     * serialize on it or one loses the unique (tenant_id, field, version)
+     * index, never both landing the same version number.
+     */
+    public function answer(?string $value): FormAnswer
+    {
+        return DB::transaction(function () use ($value) {
+            $next = 1 + (int) $this->answers()->max('version');
+
+            return $this->answers()->create([
+                'version' => $next,
+                'value' => $value,
+            ]);
+        });
     }
 
     protected static function newFactory(): Factory

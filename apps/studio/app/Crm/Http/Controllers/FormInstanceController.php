@@ -5,6 +5,7 @@ namespace App\Crm\Http\Controllers;
 use App\Crm\Actions\SeedFormInstanceFromTemplate;
 use App\Crm\Enums\FormFieldType;
 use App\Crm\Models\FormInstance;
+use App\Crm\Models\FormInstanceField;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
@@ -87,6 +88,32 @@ class FormInstanceController extends Controller
             actor: auth('staff')->user(),
             context: ['name' => $formInstance->name],
             subject: $formInstance->public_id,
+        );
+
+        return back();
+    }
+
+    /**
+     * E-03: staff recording (or correcting) the answer to one question on an
+     * already-seeded instance. Never updates a FormAnswer in place — always
+     * FormInstanceField::answer(), which appends the next version and leaves
+     * every earlier one exactly as it was.
+     */
+    public function answer(Request $request, FormInstanceField $formInstanceField): RedirectResponse
+    {
+        $this->authorize('manageForms', $formInstanceField->formInstance->project);
+
+        $validated = $request->validate([
+            'value' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $formInstanceField->answer($validated['value'] ?? null);
+
+        AuditLogger::record(
+            event: 'form_instance_field.answered',
+            actor: auth('staff')->user(),
+            context: ['formInstance' => $formInstanceField->formInstance->public_id],
+            subject: $formInstanceField->public_id,
         );
 
         return back();

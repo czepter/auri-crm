@@ -144,6 +144,36 @@ the original left untouched in quarantine for a human to inspect. This is
 what G-04's "needs attention" tray will query — a Failed asset is an expected
 outcome here, not a Horizon failed-job.
 
+## ZIP builds (G-10)
+
+`App\Media\Models\ZipBuild` (tenant-scoped, `HasPublicId`) is one deduped
+archive for a `(gallery_version_id, scope, size)` triple — the migration's
+own unique index is the dedupe mechanism; `App\Media\Actions\RequestZipBuild`
+finds-or-creates against it and only dispatches
+`App\Media\Jobs\BuildZip` (`media.zip`, #59) for a row that isn't already
+Ready or already Building. `scope` has one case today (`all`); `size` is
+`original` (each `Asset`'s own bytes) or `web` (each asset's widest WebP
+derivative from G-03 — the one of its two formats every target platform can
+at least open). A `ZipBuild` has one or more `ZipBuildPart` rows, the
+`Asset`/`AssetDerivative` one-to-many precedent, each one archive volume's
+output object key.
+
+`App\Media\Actions\BuildGalleryZip` does the actual assembly — S3 to S3,
+same "no server-side copy" rule as everywhere else in this doc: each member
+is read from the `s3` disk and written straight into a
+[zipstream-php](https://github.com/maennchen/zipstream-php) archive (STORE,
+not DEFLATE — photos are already compressed; ZIP64 explicitly disabled, the
+interoperability floor across Explorer, Finder, iOS Files and Files by
+Google), whose own output is a callback stream that
+`App\Media\Services\MultipartZipUploader` buffers to fixed 16MiB chunks and
+uploads back to S3 via `MultipartUploadGateway`'s existing `UploadPart` seam
+(G-02) as it fills. Nothing ever holds the whole archive — peak memory stays
+near that 16MiB buffer. `App\Media\Support\ZipVolumePlanner` decides, before
+any of that I/O, how members group into volumes so none would cross 3.9GiB
+(a member already past that size gets a volume of its own rather than being
+split) — pure grouping logic, unit-tested in isolation with a small injected
+threshold rather than a multi-gigabyte fixture.
+
 ## Delivery
 
 Clients never receive a storage path or a presigned URL — the application
