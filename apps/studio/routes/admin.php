@@ -22,6 +22,7 @@ use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
 use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\SessionController;
+use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
 use App\Settings\Http\Controllers\StudioSettingsController;
 use Illuminate\Support\Facades\Route;
@@ -152,6 +153,14 @@ Route::middleware('audience:staff')->group(function () {
             ->name('contracts.store');
         Route::get('/vertraege/{contract}/pdf', [ContractController::class, 'download'])
             ->name('contracts.download');
+
+        // No GET here: the Zahlungen card lives on the project overview
+        // itself (ProjectController::show), not a tab of its own — see the
+        // note in ProjectHeaderData::fromProject.
+        Route::post('/auftraege/{project}/zahlungsplan', [PaymentPlanController::class, 'store'])
+            ->name('payment-plans.store');
+        Route::patch('/zahlungsplaene/{paymentPlan}', [PaymentPlanController::class, 'update'])
+            ->name('payment-plans.update');
 
         Route::post('/auftraege/{project}/shootings', [ShootController::class, 'store'])
             ->name('shoots.store');
