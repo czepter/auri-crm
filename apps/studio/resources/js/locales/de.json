@@ -286,7 +286,18 @@
     "navPayments": "Zahlungen",
     "navPortal": "Portal",
     "navNotifications": "Benachrichtigungen",
-    "navGeneral": "Allgemein"
+    "navGeneral": "Allgemein",
+    "numberingTitle": "Nummernkreise",
+    "numberingPrefix": "Präfix",
+    "numberingResetRule": "Rücksetzung",
+    "numberingResetRuleYearly": "Jährlich",
+    "numberingResetRuleContinuous": "Fortlaufend",
+    "numberingStartingCounter": "Startwert",
+    "numberingStartingCounterHint": "Nur änderbar, solange in diesem Zeitraum noch keine Nummer vergeben wurde.",
+    "numberingLockedHint": "Für diesen Zeitraum wurde bereits eine Nummer vergeben — der Startwert ist gesperrt.",
+    "numberingChangeWarning": "Präfix und Rücksetzung gelten nur für Dokumente, die noch nicht ausgestellt wurden. Bereits ausgestellte Nummern bleiben unverändert.",
+    "numberingPreview": "Nächste Nummer",
+    "numberingSave": "Speichern"
   },
   "portal": {
     "signInTitle": "Kundenbereich",

@@ -198,6 +198,12 @@ namespace Enums {
 export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings';
 export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' | 'assistant';
 }
+namespace Numbering {
+namespace Enums {
+export type DocumentType = 'quote' | 'contract' | 'invoice';
+export type NumberRangeResetRule = 'yearly' | 'continuous';
+}
+}
 namespace Quotes {
 namespace Data {
 export type QuoteData = {
@@ -234,6 +240,16 @@ export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'superseded' | 'expire
 }
 namespace Settings {
 namespace Data {
+export type NumberRangeData = {
+id: string,
+documentType: string,
+documentTypeLabel: string,
+prefix: string,
+resetRule: string,
+startingCounter: number,
+canSetStartingCounter: boolean,
+nextNumberPreview: string,
+};
 export type StudioSettingsData = {
 id: string,
 displayName: string | null,

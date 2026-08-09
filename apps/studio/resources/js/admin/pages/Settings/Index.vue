@@ -10,15 +10,15 @@ const props = defineProps<{ settings: App.Settings.Data.StudioSettingsData }>()
 // would reach for too if either needed a dirty state.
 const form = useForm({ display_name: props.settings.displayName ?? '' })
 
-// Every other future group (Nummernkreise, Dokumente, ...) T-02/T-03 and
-// later stories land — rendered disabled with the "bald" chip screen 4's
-// Vertrag tab already uses for a superseded quote, per T-00's mockup.
-// Zahlungsdaten & USt sits in that list too: T-03 hasn't landed a route
-// behind it yet, so it stays disabled beside the rest until it does, rather
-// than linking to a screen this story cannot build.
+// Every other future group (Dokumente, Zahlungen, ...) T-02/T-03 and later
+// stories land — rendered disabled with the "bald" chip screen 4's Vertrag
+// tab already uses for a superseded quote, per T-00's mockup. Zahlungsdaten &
+// USt sits in that list too: T-03 hasn't landed a route behind it yet, so it
+// stays disabled beside the rest until it does, rather than linking to a
+// screen this story cannot build. Nummernkreise (T-04) has its own live
+// route now, so it moved out of this list into the nav below.
 const comingSoon = [
   'navVat',
-  'navNumbering',
   'navDocuments',
   'navPayments',
   'navPortal',
@@ -54,6 +54,7 @@ function submit() {
     <div style="display: flex; gap: var(--s6); margin-top: var(--s5); align-items: flex-start">
       <nav style="width: 196px; flex: none; display: flex; flex-direction: column; gap: 2px">
         <a class="nav on" href="/einstellungen">{{ $t('settings.navProfile') }}</a>
+        <a class="nav" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
         <a
           v-for="key in comingSoon"
           :key="key"
