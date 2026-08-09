@@ -59,6 +59,24 @@ venue: string | null,
 kind: string | null,
 label: string | null,
 };
+export type FormFieldData = {
+id: string,
+label: string,
+type: string,
+typeLabel: string,
+required: boolean,
+options: string[] | null,
+};
+export type FormTemplateData = {
+id: string,
+name: string,
+projectType: string | null,
+projectTypeLabel: string | null,
+isActive: boolean,
+fieldCount: number,
+updatedAt: string,
+fields: App.Crm.Data.FormFieldData[],
+};
 export type InternalNoteData = {
 id: string,
 body: string,
@@ -195,6 +213,7 @@ namespace Enums {
 export type BookedVia = 'manual' | 'contract';
 export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'other';
 export type CrewRole = 'lead_photographer' | 'second_shooter' | 'assistant';
+export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list';
 export type LeadSource = 'referral' | 'website' | 'instagram' | 'wedding_fair' | 'other';
 export type LeadStage = 'new' | 'contacted' | 'quote_sent' | 'quote_accepted' | 'contract_sent' | 'booked';
 export type ProjectContactRole = 'primary' | 'partner' | 'payer' | 'planner' | 'vendor';
@@ -231,7 +250,7 @@ export type DocumentTemplateType = 'contract' | 'quote' | 'mail';
 }
 }
 namespace Enums {
-export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings';
+export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings' | 'manage_form_templates';
 export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' | 'assistant';
 }
 namespace Numbering {
