@@ -130,6 +130,17 @@
     "noteEdit": "bearbeiten",
     "noteDelete": "löschen"
   },
+  "calendar": {
+    "title": "Kalender",
+    "subscribe": "Kalender abonnieren",
+    "subscribeHint": "Diese Adresse im Kalender des Telefons als Abo eintragen. Sie zeigt die eigenen Shootings mit Antrittszeiten und aktualisiert sich von selbst.",
+    "copy": "kopieren",
+    "copied": "kopiert",
+    "revoke": "Adresse zurückziehen",
+    "revokeConfirm": "Neue Adresse erzeugen? Bereits eingetragene Abos hören sofort auf zu aktualisieren.",
+    "mine": "Eigenes",
+    "empty": "Keine anstehenden Shootings."
+  },
   "dashboard": {
     "title": "Übersicht",
     "signedInAs": "Angemeldet als {name}",

@@ -12,7 +12,10 @@ uses(RefreshDatabase::class);
  * than an omission nobody notices.
  */
 const PUBLIC_ROUTES = [
-    'admin' => ['login', 'auth/mfa'],
+    // The ICS feed is public because a calendar app cannot hold a session. Its
+    // credential is the token in the path, and it opens exactly one person's
+    // own shooting schedule.
+    'admin' => ['login', 'auth/mfa', 'kalender/{token}/shootings.ics'],
     'api' => ['api/health'],
 ];
 
