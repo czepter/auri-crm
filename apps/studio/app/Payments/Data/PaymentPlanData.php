@@ -20,6 +20,10 @@ class PaymentPlanData extends Data
         // data classes already send lineTotal and net.
         public int $openTotal,
         public bool $isEditable,
+        // T-07's Verwendungszweck — the Invoice-type document number
+        // CreatePaymentPlan allocates once, at creation (T-04's numbering).
+        // Null for a plan created before this story's action ran.
+        public ?string $reference,
         public array $installments,
     ) {}
 
@@ -44,6 +48,7 @@ class PaymentPlanData extends Data
             total: $plan->total,
             openTotal: $openTotal,
             isEditable: $plan->isEditable(),
+            reference: $plan->reference,
             installments: $items,
         );
     }

@@ -168,6 +168,151 @@ class StudioSettingsResolver
         );
     }
 
+    // --- T-07: Stripe as an optional capability, and the provider-independent defaults ---
+
+    public function stripeEnabled(): bool
+    {
+        return $this->row()->payments_stripe_enabled;
+    }
+
+    /** 'test' or 'live' — which of the two key pairs setPaymentSettings() below writes is active right now. */
+    public function stripeMode(): string
+    {
+        return $this->row()->payments_stripe_mode;
+    }
+
+    /**
+     * Whether a key pair exists for the given mode — the settings screen's
+     * own "already configured" indicator, so the write-only key fields can
+     * say that much without ever echoing a value back. Never used to decide
+     * whether Stripe may actually be called; that is activeStripeSecretKey()'s
+     * job, for M-04/M-05.
+     */
+    public function hasStripeKeys(string $mode): bool
+    {
+        $row = $this->row();
+
+        return $mode === 'live'
+            ? $row->payments_stripe_live_publishable_key !== null && $row->payments_stripe_live_secret_key !== null
+            : $row->payments_stripe_test_publishable_key !== null && $row->payments_stripe_test_secret_key !== null;
+    }
+
+    /**
+     * The secret key for whichever mode is active — decrypted by the
+     * model's own `encrypted` cast, the one seam M-04/M-05 are expected to
+     * call rather than reading the column themselves. Nothing in this
+     * story ever prints this value anywhere; see StudioSettingsAdminTest's
+     * "the Stripe secret key never appears in any response body" coverage.
+     */
+    public function activeStripeSecretKey(): ?string
+    {
+        $row = $this->row();
+
+        return $this->stripeMode() === 'live'
+            ? $row->payments_stripe_live_secret_key
+            : $row->payments_stripe_test_secret_key;
+    }
+
+    public function activeStripePublishableKey(): ?string
+    {
+        $row = $this->row();
+
+        return $this->stripeMode() === 'live'
+            ? $row->payments_stripe_live_publishable_key
+            : $row->payments_stripe_test_publishable_key;
+    }
+
+    /** Basis points (0-10000) — the plan's own default Anzahlung, before a staff member overrides it per job. */
+    public function depositPercent(): int
+    {
+        return $this->row()->payments_deposit_percent;
+    }
+
+    /** Days from issue to due date — provider-independent, read regardless of whether Stripe is on. */
+    public function zahlungszielDays(): int
+    {
+        return $this->row()->payments_zahlungsziel_days;
+    }
+
+    public function remindersEnabled(): bool
+    {
+        return $this->row()->payments_reminders_enabled;
+    }
+
+    /**
+     * T-07's own pane, saved in one submit like Studio-Profil (T-02) and
+     * unlike Zahlungsdaten & USt's own endpoint — nothing here needs the
+     * "own fieldset, own button" separation those two have, because every
+     * field on this pane lives or dies with the same "Zahlungen" save.
+     *
+     * The four key columns are written only when a NEW, non-empty value is
+     * given — the write-only form (never echoing a stored key back) has no
+     * other way to say "leave this pair alone", and an empty string arriving
+     * from an untouched field must never null out a key that already works.
+     * Audited by column name only: a key's value never rides along into
+     * AuditLog, the same "never leaves the cast that decrypts it" rule that
+     * keeps it out of every Inertia prop and API response.
+     *
+     * @param  array{
+     *     payments_stripe_enabled: bool,
+     *     payments_stripe_mode: string,
+     *     payments_deposit_percent: int,
+     *     payments_zahlungsziel_days: int,
+     *     payments_reminders_enabled: bool,
+     *     payments_stripe_test_publishable_key?: ?string,
+     *     payments_stripe_test_secret_key?: ?string,
+     *     payments_stripe_live_publishable_key?: ?string,
+     *     payments_stripe_live_secret_key?: ?string,
+     * }  $attributes
+     */
+    public function setPaymentSettings(array $attributes, ?User $actor = null): void
+    {
+        $row = StudioSettings::query()->firstOrFail();
+
+        $plainKeys = [
+            'payments_stripe_enabled', 'payments_stripe_mode',
+            'payments_deposit_percent', 'payments_zahlungsziel_days', 'payments_reminders_enabled',
+        ];
+        $keyColumns = [
+            'payments_stripe_test_publishable_key', 'payments_stripe_test_secret_key',
+            'payments_stripe_live_publishable_key', 'payments_stripe_live_secret_key',
+        ];
+
+        $updates = [];
+        $changedNames = [];
+        $plainChanges = [];
+
+        foreach ($plainKeys as $key) {
+            if ($attributes[$key] !== $row->{$key}) {
+                $plainChanges[$key] = [$row->{$key}, $attributes[$key]];
+                $updates[$key] = $attributes[$key];
+                $changedNames[] = $key;
+            }
+        }
+
+        foreach ($keyColumns as $column) {
+            if (! empty($attributes[$column] ?? null)) {
+                $updates[$column] = $attributes[$column];
+                $changedNames[] = $column;
+            }
+        }
+
+        if ($updates === []) {
+            return;
+        }
+
+        $row->update($updates);
+
+        Cache::store('redis')->forget($this->cacheKey());
+
+        AuditLogger::record(
+            event: 'studio_settings.updated',
+            actor: $actor,
+            context: ['keys' => $changedNames, 'changes' => $plainChanges],
+            subject: $row->public_id,
+        );
+    }
+
     private function row(): StudioSettings
     {
         return Cache::store('redis')->remember(

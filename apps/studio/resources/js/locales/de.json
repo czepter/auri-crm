@@ -275,7 +275,16 @@
     "statusScheduled": "Geplant",
     "statusPaid": "Bezahlt",
     "notEditable": "Der Zahlungsplan ist nicht mehr bearbeitbar.",
-    "sumMismatch": "Die Raten ergeben nicht den Gesamtbetrag."
+    "sumMismatch": "Die Raten ergeben nicht den Gesamtbetrag.",
+    "markPaid": "Als bezahlt markieren",
+    "markPaidDate": "Bezahlt am",
+    "markPaidMethod": "Zahlungsart",
+    "markPaidMethodStripe": "Stripe",
+    "markPaidMethodTransfer": "Überweisung",
+    "markPaidMethodManual": "Manuell",
+    "markPaidReference": "Referenz",
+    "markPaidSubmit": "Bestätigen",
+    "settledVia": "Bezahlt via {method}, am {date}"
   },
   "contractTemplates": {
     "title": "Vertragsvorlagen",
@@ -354,6 +363,26 @@
     "numberingPreview": "Nächste Nummer",
     "numberingSave": "Speichern"
   },
+  "paymentSettings": {
+    "title": "Zahlungen",
+    "stripeSection": "Stripe",
+    "stripeEnabled": "Online-Zahlung per Karte (Stripe)",
+    "stripeEnabledHint": "Aktiviert, kann die Kundin oder der Kunde je Zahlung zwischen Überweisung und Kartenzahlung wählen.",
+    "stripeMode": "Modus",
+    "stripeModeTest": "Test",
+    "stripeModeLive": "Live",
+    "stripeTestKeys": "Test-Schlüssel",
+    "stripeLiveKeys": "Live-Schlüssel",
+    "stripePublishableKey": "Publishable Key",
+    "stripeSecretKey": "Secret Key",
+    "stripeKeyConfigured": "Hinterlegt — zum Ändern neuen Wert eingeben.",
+    "stripeKeyMissing": "Noch nicht hinterlegt.",
+    "stripeKeyHint": "Wird verschlüsselt gespeichert und nie wieder angezeigt.",
+    "defaultsSection": "Standardwerte",
+    "depositPercent": "Anzahlung (%)",
+    "zahlungszielDays": "Zahlungsziel (Tage)",
+    "remindersEnabled": "Zahlungserinnerungen versenden"
+  },
   "portal": {
     "signInTitle": "Kundenbereich",
     "signInHint": "Adresse eintragen — wir schicken einen Link. Kein Passwort nötig.",
@@ -382,6 +411,20 @@
     "signConsent": "Ich habe den Vertrag gelesen und unterzeichne ihn hiermit rechtsverbindlich.",
     "signSubmit": "Vertrag unterschreiben",
     "signLegal": "Sie bekommen den Vertrag sofort als PDF — in Ihr Portal.",
-    "signedConfirmation": "Unterschrieben von {name}."
+    "signedConfirmation": "Unterschrieben von {name}.",
+    "paymentsLinkTitle": "Zahlungen",
+    "paymentsKicker": "Zahlungen",
+    "paymentsTitle": "Ihre Zahlungen",
+    "paymentsLead": "Hier sehen Sie, was noch offen ist und wie Sie zahlen können.",
+    "paymentsNone": "Für dieses Projekt liegt noch kein Zahlungsplan vor.",
+    "paymentsOpen": "{amount} offen",
+    "transferTitle": "Überweisen",
+    "transferHint": "Bitte überweisen Sie den Betrag unter Angabe des Verwendungszwecks an folgendes Konto.",
+    "transferAccountHolder": "Kontoinhaber",
+    "transferIban": "IBAN",
+    "transferBic": "BIC",
+    "transferReference": "Verwendungszweck",
+    "payNowTitle": "Jetzt zahlen",
+    "payNowComingSoon": "Die Online-Zahlung per Karte folgt in Kürze — bitte bis dahin überweisen."
   }
 }

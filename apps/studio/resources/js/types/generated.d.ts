@@ -215,17 +215,23 @@ status: string,
 statusLabel: string,
 sortOrder: number,
 label: string,
+settledVia: string | null,
+settledViaLabel: string | null,
+paidOn: string | null,
+paymentReference: string | null,
 };
 export type PaymentPlanData = {
 id: string,
 total: number,
 openTotal: number,
 isEditable: boolean,
+reference: string | null,
 installments: App.Payments.Data.PaymentInstallmentData[],
 };
 }
 namespace Enums {
 export type PaymentInstallmentStatus = 'scheduled' | 'paid' | 'invoiced';
+export type SettledVia = 'stripe' | 'transfer' | 'manual';
 }
 }
 namespace Quotes {
@@ -277,6 +283,16 @@ resetRule: string,
 startingCounter: number,
 canSetStartingCounter: boolean,
 nextNumberPreview: string,
+};
+export type PaymentSettingsData = {
+id: string,
+stripeEnabled: boolean,
+stripeMode: string,
+hasStripeTestKeys: boolean,
+hasStripeLiveKeys: boolean,
+depositPercent: number,
+zahlungszielDays: number,
+remindersEnabled: boolean,
 };
 export type StudioSettingsData = {
 id: string,

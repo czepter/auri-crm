@@ -7,11 +7,11 @@ const props = defineProps<{ ranges: App.Settings.Data.NumberRangeData[] }>()
 // Every other future group (Zahlungsdaten & USt, Dokumente, ...) — the same
 // disabled "bald" list Settings/Index.vue renders, repeated here because
 // each settings screen carries its own copy of the nav rather than a shared
-// partial, matching how Index.vue already does it.
+// partial, matching how Index.vue already does it. Zahlungen is T-07's own
+// route, so it drops out of this list.
 const comingSoon = [
   'navVat',
   'navDocuments',
-  'navPayments',
   'navPortal',
   'navNotifications',
   'navGeneral',
@@ -48,6 +48,7 @@ function save(rangeId: string) {
       <nav style="width: 196px; flex: none; display: flex; flex-direction: column; gap: 2px">
         <a class="nav" href="/einstellungen">{{ $t('settings.navProfile') }}</a>
         <a class="nav on" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
+        <a class="nav" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
         <a
           v-for="key in comingSoon"
           :key="key"
