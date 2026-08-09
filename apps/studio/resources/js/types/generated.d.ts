@@ -129,6 +129,7 @@ portalVisible: boolean,
 canManagePortalVisibility: boolean,
 canManageQuotes: boolean,
 canManageContracts: boolean,
+canManagePaymentPlan: boolean,
 tabs: {
 key: string,
 label: string,
@@ -202,6 +203,29 @@ namespace Numbering {
 namespace Enums {
 export type DocumentType = 'quote' | 'contract' | 'invoice';
 export type NumberRangeResetRule = 'yearly' | 'continuous';
+}
+}
+namespace Payments {
+namespace Data {
+export type PaymentInstallmentData = {
+id: string,
+amount: number,
+dueOn: string,
+status: string,
+statusLabel: string,
+sortOrder: number,
+label: string,
+};
+export type PaymentPlanData = {
+id: string,
+total: number,
+openTotal: number,
+isEditable: boolean,
+installments: App.Payments.Data.PaymentInstallmentData[],
+};
+}
+namespace Enums {
+export type PaymentInstallmentStatus = 'scheduled' | 'paid' | 'invoiced';
 }
 }
 namespace Quotes {
