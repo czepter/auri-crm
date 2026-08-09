@@ -76,4 +76,14 @@ enum Capability: string
      * trusts rather than opening to every crew role the way the catalog does.
      */
     case ManageContracts = 'manage_contracts';
+
+    /**
+     * Read and write the tenant's settings row (T-01) — legal details,
+     * branding, VAT mode and whatever else T-02 and T-03 add to it. One
+     * capability rather than several, the same narrowness as ManageStaff:
+     * the crew today is the owner plus second shooters, and a second
+     * shooter reaches no settings at all. Revisit at the first non-owner
+     * role that needs partial access.
+     */
+    case ManageSettings = 'manage_settings';
 }

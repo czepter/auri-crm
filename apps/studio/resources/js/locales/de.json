@@ -272,6 +272,22 @@
     "version": "v{version}",
     "empty": "Noch keine Vertragsvorlagen."
   },
+  "settings": {
+    "kicker": "Einstellungen",
+    "profileTitle": "Studio-Profil",
+    "unsaved": "Ungespeicherte Änderungen",
+    "brand": "Marke",
+    "displayName": "Anzeigename",
+    "soon": "bald",
+    "navProfile": "Studio-Profil",
+    "navVat": "Zahlungsdaten & USt",
+    "navNumbering": "Nummernkreise",
+    "navDocuments": "Dokumente",
+    "navPayments": "Zahlungen",
+    "navPortal": "Portal",
+    "navNotifications": "Benachrichtigungen",
+    "navGeneral": "Allgemein"
+  },
   "portal": {
     "signInTitle": "Kundenbereich",
     "signInHint": "Adresse eintragen — wir schicken einen Link. Kein Passwort nötig.",
