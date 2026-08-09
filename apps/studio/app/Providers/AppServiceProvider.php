@@ -80,6 +80,14 @@ class AppServiceProvider extends ServiceProvider
         // Production passes the environment normally; this is local only.
         ServeCommand::$passthroughVariables[] = 'APP_SURFACE';
 
+        // Same gap, found by M-00: REDIS_HOST isn't on the whitelist either,
+        // so `dev-server.sh`'s `artisan serve` (started via `docker compose
+        // run`, which does set it) fell back to .env's own 127.0.0.1 and
+        // could never reach the redis service a job dispatched from the
+        // browser needs. DB_HOST has the identical gap, silent only because
+        // .env's own default happens to already say "postgres".
+        ServeCommand::$passthroughVariables[] = 'REDIS_HOST';
+
         // One cookie name per surface. Two audiences sharing a cookie name on
         // one host is how a browser comes to offer a staff session to the
         // client portal — the guard would refuse it, but only after it had
