@@ -3,12 +3,12 @@
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
 use App\Contracts\Models\Contract;
-use App\Contracts\Support\GotenbergClient;
 use App\Crm\Models\Project;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\DocumentRenderer;
 use App\Settings\Support\StudioSettingsResolver;
+use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;

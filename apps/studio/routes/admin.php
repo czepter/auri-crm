@@ -2,7 +2,6 @@
 
 use App\Catalog\Http\Controllers\PackageController;
 use App\Contracts\Http\Controllers\ContractController;
-use App\Documents\Http\Controllers\DocumentTemplateController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
 use App\Crm\Http\Controllers\ContactController;
@@ -17,6 +16,8 @@ use App\Crm\Http\Controllers\ShootController;
 use App\Crm\Http\Controllers\ShotListItemController;
 use App\Crm\Http\Controllers\TaskController;
 use App\Crm\Http\Controllers\TaskTemplateController;
+use App\Crm\Http\Controllers\TimelineController;
+use App\Documents\Http\Controllers\DocumentTemplateController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
 use App\Http\Controllers\Staff\InvitationController;
@@ -233,6 +234,19 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::post('/shootings/{shoot}/crew', [CrewController::class, 'store'])->name('crew.store');
         Route::delete('/crew/{assignment}', [CrewController::class, 'destroy'])->name('crew.destroy');
+
+        // E-04: the day-of schedule, shoot-scoped for the same reason the
+        // wedding-day timeline is not the engagement session's. Export routes
+        // sit beside the CRUD rather than under a separate controller — both
+        // read the same `timeline` relation, just rendered differently.
+        Route::post('/shootings/{shoot}/ablauf', [TimelineController::class, 'store'])
+            ->name('timeline.store');
+        Route::delete('/ablauf/{entry}', [TimelineController::class, 'destroy'])
+            ->name('timeline.destroy');
+        Route::get('/shootings/{shoot}/ablauf.pdf', [TimelineController::class, 'pdf'])
+            ->name('timeline.pdf');
+        Route::get('/shootings/{shoot}/ablauf.ics', [TimelineController::class, 'ics'])
+            ->name('timeline.ics');
 
         Route::post('/shootings/{shoot}/checkliste', [ShotListItemController::class, 'store'])
             ->name('shot-list-items.store');

@@ -21,7 +21,7 @@ class CalendarController extends Controller
         $user = auth('staff')->user();
 
         $shoots = Shoot::query()
-            ->with(['project', 'crew.user'])
+            ->with(['project', 'crew.user', 'timeline'])
             // A crew role's calendar is the days they are on, not the studio's
             // whole diary.
             ->whereIn('shoots.project_id', Project::query()->visibleTo($user)->select('projects.id'))

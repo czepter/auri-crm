@@ -9,6 +9,7 @@ use App\Crm\Models\InternalNote;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\TimelineEntry;
 use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
 use App\Models\User;
@@ -18,8 +19,10 @@ use App\Quotes\Actions\ReviseQuote;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
+use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 // renderedContract() lives in tests/Pest.php — see the note there.
@@ -61,12 +64,13 @@ it('never puts an integer identifier into any crm page', function (string $path)
 
 it('never puts an integer identifier into a project page', function (string $suffix) {
     // Populated on purpose: an empty project proves nothing, since the keys
-    // that escape belong to the shoots, the crew, the notes, the job and —
-    // M-03 — the payment plan and its installments.
+    // that escape belong to the shoots, the crew, the timeline (E-04), the
+    // notes, the job and — M-03 — the payment plan and its installments.
     $user = User::factory()->withMfa()->create();
     $project = Project::factory()->create();
     $shoot = Shoot::factory()->for($project)->primary()->create();
     CrewAssignment::factory()->for($shoot)->create();
+    TimelineEntry::factory()->for($shoot)->create();
     InternalNote::factory()->for($project)->create();
     $job = Job::factory()->for($project)->create();
     $plan = PaymentPlan::factory()->for($job)->create(['total' => 200]);
@@ -193,8 +197,8 @@ it('never puts an integer identifier into the portal contract screen once signed
     // first: StudioSettingsResolver caches the row (T-01), and a row already
     // cached by an earlier test in the same suite run would otherwise still
     // read as off.
-    \Illuminate\Support\Facades\Cache::store('redis')->flush();
-    \App\Settings\Models\StudioSettings::query()->update(['portal_sign_contracts_enabled' => true]);
+    Cache::store('redis')->flush();
+    StudioSettings::query()->update(['portal_sign_contracts_enabled' => true]);
 
     $project = Project::factory()->create(['portal_visible' => true]);
     renderedContract($project);
@@ -235,8 +239,8 @@ it('never puts an integer identifier into the portal quote screen once accepted,
     useSurface(Surface::PORTAL);
     // T-08's "accept quotes online" switch defaults to off — this test
     // exercises the accept action itself, so the switch is on for it.
-    \Illuminate\Support\Facades\Cache::store('redis')->flush();
-    \App\Settings\Models\StudioSettings::query()->update(['portal_accept_quotes_enabled' => true]);
+    Cache::store('redis')->flush();
+    StudioSettings::query()->update(['portal_accept_quotes_enabled' => true]);
 
     $project = Project::factory()->create(['portal_visible' => true]);
     $quote = Quote::factory()->for($project)->create([

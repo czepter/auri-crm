@@ -139,7 +139,7 @@ class ProjectController extends Controller
     private function shootsOf(Project $project)
     {
         return $project->shoots()
-            ->with('crew.user')
+            ->with(['crew.user', 'timeline'])
             ->reorder()
             ->orderByRaw('date is null, date')
             ->orderBy('sort_order')
