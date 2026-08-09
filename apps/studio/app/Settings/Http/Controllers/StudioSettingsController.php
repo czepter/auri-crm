@@ -58,7 +58,10 @@ class StudioSettingsController extends Controller
             'representative' => ['nullable', 'string', 'max:255'],
             'website' => ['nullable', 'string', 'max:255', 'url'],
             'accent_color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'logo' => ['nullable', 'file', 'mimes:png,svg', 'max:2048'],
+            // SVG deliberately excluded: served inline from this app's own
+            // origin (logo(), below), an uploaded SVG can carry a <script>
+            // and execute as this app rather than as an image.
+            'logo' => ['nullable', 'file', 'mimes:png', 'max:2048'],
             'bank_account_holder' => [$bankRule, 'string', 'max:255'],
             'bank_iban' => [$bankRule, 'string', new ValidIban],
             'bank_bic' => [$bankRule, 'string', 'max:11'],
@@ -96,6 +99,34 @@ class StudioSettingsController extends Controller
         return Storage::disk('local')->response($path);
     }
 
+    /**
+     * T-03's own save action, separate from update() above: Studio-Profil
+     * and Zahlungsdaten & USt are two forms in the mockup, each with its own
+     * "Speichern" button, and giving them one shared endpoint would make an
+     * unrelated field's validation error block the other form's save.
+     *
+     * vat_rate arrives already in basis points (see
+     * resources/js/admin/lib/money.ts) — the same "never a float" boundary
+     * App\Quotes\Enums\DiscountType documents for discount percentages.
+     */
+    public function updateVat(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        $validated = $request->validate([
+            'vat_mode' => ['required', 'in:standard,small_business'],
+            'vat_rate' => ['required', 'integer', 'min:0', 'max:10000'],
+            'vat_note' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $actor = auth('staff')->user();
+        $settings->set('vat_mode', $validated['vat_mode'], $actor);
+        $settings->set('vat_rate', $validated['vat_rate'], $actor);
+        $settings->set('vat_note', $validated['vat_note'] ?? null, $actor);
+
+        return redirect('/einstellungen');
+    }
+
     private function toData(StudioSettingsResolver $settings): StudioSettingsData
     {
         $attrs = $settings->attributes();
@@ -120,6 +151,9 @@ class StudioSettingsController extends Controller
             bankAccountHolder: $attrs['bank_account_holder'],
             bankIban: $attrs['bank_iban'],
             bankBic: $attrs['bank_bic'],
+            vatMode: $settings->vatMode(),
+            vatRate: $settings->vatRate(),
+            vatNote: $settings->vatNote(),
         );
     }
 

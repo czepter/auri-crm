@@ -39,5 +39,8 @@ class StudioSettingsData extends Data
         public ?string $bankAccountHolder,
         public ?string $bankIban,
         public ?string $bankBic,
+        public string $vatMode,
+        public int $vatRate,
+        public ?string $vatNote,
     ) {}
 }

@@ -254,6 +254,9 @@ logoUrl: string | null,
 bankAccountHolder: string | null,
 bankIban: string | null,
 bankBic: string | null,
+vatMode: string,
+vatRate: number,
+vatNote: string | null,
 };
 }
 }

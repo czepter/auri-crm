@@ -309,7 +309,22 @@
     "navPayments": "Zahlungen",
     "navPortal": "Portal",
     "navNotifications": "Benachrichtigungen",
-    "navGeneral": "Allgemein"
+    "navGeneral": "Allgemein",
+    "optional": "optional",
+    "vatTitle": "Zahlungsdaten & USt",
+    "vatModeLabel": "Modus",
+    "vatModeStandard": "Standard — USt. wird auf jedem Beleg ausgewiesen",
+    "vatModeSmallBusiness": "§19 UStG — Kleinunternehmer, keine USt. ausgewiesen",
+    "vatModeWarning": "Bereits versendete Angebote behalten den Status und die Werte, mit denen sie versendet wurden.",
+    "vatRateLabel": "Steuersatz",
+    "vatRateHint": "Prozent, netto.",
+    "vatNoteLabel": "Rechnungshinweis",
+    "vatNoteFieldLabel": "Hinweistext",
+    "vatNoteHint": "Steht unter der Summe auf Angebot, Vertrag und Rechnung. Wortlaut frei — leer lassen, wenn kein Hinweis nötig ist.",
+    "vatPreviewLabel": "Vorschau · Rechnungshinweis",
+    "vatPreviewKicker": "Erscheint auf jedem Beleg",
+    "vatPreviewEmpty": "Kein Hinweistext hinterlegt.",
+    "vatPreviewHint": "Live-Vorschau des Hinweistexts — folgt der Eingabe oben, ohne zu speichern."
   },
   "portal": {
     "signInTitle": "Kundenbereich",
