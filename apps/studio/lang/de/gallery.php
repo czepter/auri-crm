@@ -1,0 +1,19 @@
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | G-06's three gates
+    |--------------------------------------------------------------------------
+    */
+
+    'password_wrong' => 'Dieser Link und dieses Passwort gehören nicht zusammen.',
+    'pin_wrong' => 'Dieser Code stimmt nicht.',
+
+    'email_link_sent' => 'Bestätigungslink verschickt — meist nach ein bis zwei Minuten da.',
+
+    // Uniform for expired, already used and never existed — the same reason
+    // portal.link_dead makes no distinction either.
+    'email_link_dead' => 'Dieser Bestätigungslink funktioniert nicht mehr.',
+];

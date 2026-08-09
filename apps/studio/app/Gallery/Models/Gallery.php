@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use LogicException;
 
 /**
@@ -27,6 +28,11 @@ use LogicException;
  * GalleryVersion, and once written that row never changes again; see
  * publish() for why, and G-08 (version-scoped caching) for the story that
  * relies on it.
+ *
+ * G-06's three gates (view password, download PIN, verified email) live here
+ * too, deliberately outside $fillable — the only way to set or clear one is
+ * through its own rotate*() method below, so a version bump can never be
+ * forgotten the way it could be from a plain attribute write.
  */
 class Gallery extends Model
 {
@@ -45,6 +51,10 @@ class Gallery extends Model
         'requires_settled_balance' => false,
         'balance_settled' => false,
         'is_external' => false,
+        'requires_verified_email' => false,
+        'view_password_version' => 1,
+        'download_pin_version' => 1,
+        'email_verification_version' => 1,
     ];
 
     protected function casts(): array
@@ -54,6 +64,12 @@ class Gallery extends Model
             'requires_settled_balance' => 'boolean',
             'balance_settled' => 'boolean',
             'is_external' => 'boolean',
+            // Laravel hashes a plain value assigned here and leaves an
+            // already-hashed one (or null) alone — exactly what rotate*()
+            // below needs, without a manual Hash::make() of its own.
+            'view_password_hash' => 'hashed',
+            'download_pin_hash' => 'hashed',
+            'requires_verified_email' => 'boolean',
         ];
     }
 
@@ -112,6 +128,68 @@ class Gallery extends Model
                 'published_at' => now(),
             ]);
         });
+    }
+
+    public function requiresViewPassword(): bool
+    {
+        return $this->view_password_hash !== null;
+    }
+
+    public function requiresDownloadPin(): bool
+    {
+        return $this->download_pin_hash !== null;
+    }
+
+    public function requiresVerifiedEmail(): bool
+    {
+        return $this->requires_verified_email;
+    }
+
+    public function checkViewPassword(string $password): bool
+    {
+        return $this->view_password_hash !== null && Hash::check($password, $this->view_password_hash);
+    }
+
+    public function checkDownloadPin(string $pin): bool
+    {
+        return $this->download_pin_hash !== null && Hash::check($pin, $this->download_pin_hash);
+    }
+
+    /**
+     * Sets the view password, or clears it given null, and always bumps
+     * view_password_version — the only thing a granted claim is ever checked
+     * against (GalleryAccessSession). Touches nothing else: a guest already
+     * holding a download or email claim keeps it.
+     */
+    public function rotateViewPassword(?string $password): void
+    {
+        $this->forceFill([
+            'view_password_hash' => $password,
+            'view_password_version' => $this->view_password_version + 1,
+        ])->save();
+    }
+
+    /** Same shape as rotateViewPassword(), for the independent download gate. */
+    public function rotateDownloadPin(?string $pin): void
+    {
+        $this->forceFill([
+            'download_pin_hash' => $pin,
+            'download_pin_version' => $this->download_pin_version + 1,
+        ])->save();
+    }
+
+    /**
+     * Toggles whether a download requires a verified email and always bumps
+     * email_verification_version — there is no secret to change here, but the
+     * version is still the whole of what invalidates an already-granted
+     * claim, so this follows the same rule the other two gates do.
+     */
+    public function rotateEmailVerification(bool $required): void
+    {
+        $this->forceFill([
+            'requires_verified_email' => $required,
+            'email_verification_version' => $this->email_verification_version + 1,
+        ])->save();
     }
 
     protected static function newFactory(): Factory
