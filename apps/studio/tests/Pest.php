@@ -71,6 +71,30 @@ function props(string $path): array
 }
 
 /**
+ * Switches the running application onto another surface, for the suites that
+ * exercise one the test process did not boot as.
+ *
+ * Routes are registered at boot, so setting the config alone is too late — the
+ * admin's route table is already in place. This puts the whole seam across:
+ * the route file, the default guard and the session cookie, which is what
+ * makes a request behave as it would in that process.
+ */
+function useSurface(string $surface): void
+{
+    config([
+        'surface.name' => $surface,
+        'session.cookie' => App\Support\Surface::COOKIES[$surface],
+    ]);
+
+    Illuminate\Support\Facades\Route::setRoutes(new Illuminate\Routing\RouteCollection);
+    App\Support\Surface::registerRoutes();
+
+    if ($surface !== App\Support\Surface::API) {
+        Illuminate\Support\Facades\Auth::shouldUse($surface === App\Support\Surface::PORTAL ? 'portal' : 'staff');
+    }
+}
+
+/**
  * Registers one surface's routes in isolation and returns them. Two suites
  * need it — the audience matrix and the internal-note reach test — which is
  * exactly the case the note above says belongs here rather than in whichever

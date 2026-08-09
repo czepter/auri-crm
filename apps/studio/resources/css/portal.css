@@ -1,0 +1,64 @@
+@import "./app.css";
+
+/*
+ * The portal theme layer, ported from mockups/_shared/portal.css.
+ *
+ * tokens.css already carries the portal's own token overrides under
+ * [data-theme="portal"] — more air and a larger radius. This file adds only
+ * what the admin never needed: the wordmark chrome that replaces the sidebar,
+ * a size step for reading at arm's length rather than at a desk, and the
+ * signing block.
+ *
+ * The document viewer and signature components stay in the mockup until M-*
+ * gives them something to sign.
+ */
+
+/* ---------- one size step up from the admin ---------- */
+
+body { font-size: 15px; line-height: 1.55; }
+h1 { font-size: 30px; }
+.kick { font-size: 11px; letter-spacing: .1em; }
+.chip { font-size: 10.5px; padding: 4px 9px; }
+.kvrow { font-size: 13.5px; }
+
+/* ---------- chrome: wordmark, signed-in contact, sign-out ---------- */
+
+.phead { border-bottom: 1px solid var(--line); }
+.pbar { display: flex; align-items: center; gap: var(--s4); max-width: 1060px; margin: 0 auto;
+        padding: var(--s4) var(--s5); }
+
+.pmark { display: flex; align-items: baseline; gap: 9px; color: var(--ink); text-decoration: none;
+         font: 700 19px/1.1 var(--font); letter-spacing: -.035em; }
+.pmark i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+.pmark em { font: 500 11px/1 var(--font); font-style: normal; letter-spacing: .09em;
+            text-transform: uppercase; color: var(--faint); }
+
+.pme { margin-left: auto; display: flex; align-items: center; gap: var(--s4);
+       font: 400 13px/1 var(--font); color: var(--muted); }
+.pme b { font-weight: 600; color: var(--ink); }
+.pme a, .pme button { display: inline-flex; align-items: center; gap: 6px; color: var(--muted);
+                      text-decoration: none; background: none; border: none; cursor: pointer;
+                      font: 400 13px/1 var(--font); padding: 0; }
+.pme a:hover, .pme button:hover { color: var(--ink); }
+.pme svg { width: 15px; height: 15px; }
+
+/* ---------- the readable column ---------- */
+
+.pwrap { max-width: 740px; margin: 0 auto; padding: var(--s6) var(--s5) var(--s7); }
+.pwrap.wide { max-width: 1060px; }
+
+.pfoot { max-width: 740px; margin: 0 auto; padding: 0 var(--s5) var(--s6);
+         display: flex; flex-wrap: wrap; gap: var(--s4);
+         font: 400 12.5px/1 var(--font); color: var(--faint); }
+.pfoot a { color: var(--faint); text-decoration: none; }
+.pfoot a:hover { color: var(--muted); }
+
+/* ---------- the way in ---------- */
+/* No password here, ever: the client proves an inbox and nothing else. The
+   form says the same thing whatever address is typed into it. */
+
+.pgate { max-width: 420px; margin: 0 auto; padding: var(--s7) var(--s5); }
+.pgate h1 { font-size: 24px; margin-bottom: var(--s3); }
+.pgate .lede { font: 400 14px/1.5 var(--font); color: var(--muted); margin-bottom: var(--s5); }
+.pgate .sent { border: 1px solid var(--line); border-radius: var(--r); padding: var(--s4);
+               font: 400 14px/1.5 var(--font); color: var(--ink); background: var(--hover); }

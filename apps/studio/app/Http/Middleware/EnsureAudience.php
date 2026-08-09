@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\Surface;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,9 +22,16 @@ class EnsureAudience
     public function handle(Request $request, Closure $next, string $audience): Response
     {
         if (! Auth::guard($audience)->check()) {
+            // Each audience has its own way in, and sending a client to the
+            // staff login would be both useless and a hint that it exists.
+            $entrance = match ($audience) {
+                Surface::PORTAL => '/anmelden',
+                default => '/login',
+            };
+
             return $request->expectsJson()
                 ? response()->json(['message' => 'Unauthenticated.'], 401)
-                : redirect()->guest('/login');
+                : redirect()->guest($entrance);
         }
 
         Auth::shouldUse($audience);

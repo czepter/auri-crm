@@ -18,6 +18,7 @@ use App\Policies\ShootPolicy;
 use App\Policies\TaskPolicy;
 use App\Support\Surface;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Console\ServeCommand;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
@@ -67,6 +68,26 @@ class AppServiceProvider extends ServiceProvider
         if (Surface::current() === Surface::ADMIN) {
             Auth::shouldUse('staff');
         }
+
+        if (Surface::current() === Surface::PORTAL) {
+            Auth::shouldUse('portal');
+        }
+
+        // `artisan serve` forwards only a whitelist of variables to the PHP
+        // processes it spawns, and APP_SURFACE is not on it — so a portal dev
+        // server would read .env instead and quietly serve the admin routes,
+        // which is exactly the confusion the surface seam exists to prevent.
+        // Production passes the environment normally; this is local only.
+        ServeCommand::$passthroughVariables[] = 'APP_SURFACE';
+
+        // One cookie name per surface. Two audiences sharing a cookie name on
+        // one host is how a browser comes to offer a staff session to the
+        // client portal — the guard would refuse it, but only after it had
+        // already been sent.
+        config([
+            'session.cookie' => Surface::COOKIES[Surface::current()]
+                ?? config('session.cookie'),
+        ]);
 
         // Policies live in app/Policies for App\Models, but the CRM keeps its
         // models in its own namespace, so the pairs are stated rather than

@@ -45,6 +45,13 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // The client audience. A Contact is not a User and must never become
+        // one: separate guard, separate provider, separate session cookie.
+        'portal' => [
+            'driver' => 'session',
+            'provider' => 'contacts',
+        ],
     ],
 
     /*
@@ -65,6 +72,11 @@ return [
     */
 
     'providers' => [
+        'contacts' => [
+            'driver' => 'eloquent',
+            'model' => App\Crm\Models\Contact::class,
+        ],
+
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', App\Models\User::class),

@@ -36,6 +36,15 @@
   --font:'Instrument Sans', system-ui, sans-serif;
 }
 
+/* portal — same bones, more air. The theme is a spacing scale and a radius,
+   not a separate component set, which is what lets both surfaces share every
+   rule below. The gallery theme joins this when P3 gives it a screen. */
+[data-theme="portal"] {
+  --hover:#F8F5F3;
+  --s3:14px; --s4:20px; --s5:32px; --s6:44px; --s7:64px;
+  --r:10px;
+}
+
 * { box-sizing:border-box; }
 
 body {

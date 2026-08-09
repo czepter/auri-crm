@@ -9,7 +9,7 @@ export default defineConfig({
     // One input per surface. The admin bundle never contains portal pages,
     // because each entrypoint globs only its own pages directory.
     laravel({
-      input: ['resources/js/admin/main.ts'],
+      input: ['resources/js/admin/main.ts', 'resources/js/portal/main.ts'],
       refresh: true,
     }),
     vue(),

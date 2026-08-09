@@ -191,5 +191,17 @@
     "revokeConfirm": "Einladung für {email} zurückziehen? Der Link hört sofort auf zu funktionieren.",
     "mfaOn": "Zwei Faktoren",
     "mfaPending": "Einrichtung offen"
+  },
+  "portal": {
+    "signInTitle": "Kundenbereich",
+    "signInHint": "Adresse eintragen — wir schicken einen Link. Kein Passwort nötig.",
+    "email": "E-Mail-Adresse",
+    "sendLink": "Link anfordern",
+    "signedInAs": "Angemeldet als",
+    "signOut": "Abmelden",
+    "greeting": "Hallo {name}",
+    "dateOpen": "Termin noch offen",
+    "noShoots": "Noch keine Termine hinterlegt.",
+    "nothingShared": "Aktuell ist nichts freigegeben."
   }
 }
