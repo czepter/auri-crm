@@ -4,19 +4,20 @@ namespace App\Crm\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
+use App\Contracts\Models\Contract;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
 use App\Enums\Capability;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\DB;
 use Database\Factories\Crm\ProjectFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\DB;
 use Visus\Cuid2\Cuid2;
 
 /**
@@ -92,6 +93,18 @@ class Project extends Model
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
+    }
+
+    /** Every render this project has ever had, newest first. M-01. */
+    public function contracts(): HasMany
+    {
+        return $this->hasMany(Contract::class)->latest();
+    }
+
+    /** The one a screen shows: the most recent render, whatever its status. */
+    public function latestContract(): HasOne
+    {
+        return $this->hasOne(Contract::class)->latestOfMany();
     }
 
     public function shoots(): HasMany

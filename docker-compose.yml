@@ -27,6 +27,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      gotenberg:
+        condition: service_healthy
 
   # Runs Horizon rather than `queue:work` directly: one process supervises
   # every named-queue worker (default/mail/render, config/horizon.php) and
@@ -57,6 +59,24 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      gotenberg:
+        condition: service_healthy
+
+  # HTML-to-PDF, over HTTP (M-01). The only consumer is RenderContractJob,
+  # which runs on the `worker` container's render queue — never the request
+  # thread. Pinned to a major version rather than `:latest`, the same reason
+  # every other image here names one; see GOTENBERG_URL / config/services.php
+  # for how the app finds it, and app/Contracts/Support/GotenbergClient.php
+  # for the one place that calls it.
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    ports:
+      - "127.0.0.1:${GOTENBERG_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:3000/health"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
 
   postgres:
     image: postgres:18-alpine

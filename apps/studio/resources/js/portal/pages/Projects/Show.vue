@@ -13,7 +13,7 @@ type Shoot = {
 defineProps<{
   contact: { name: string }
   showSwitcher: boolean
-  project: { id: string; name: string; type: string; shoots: Shoot[] }
+  project: { id: string; name: string; type: string; shoots: Shoot[]; hasContract: boolean }
 }>()
 
 function longDate(date: string | null) {
@@ -86,6 +86,12 @@ function longDate(date: string | null) {
 
         <p v-if="!project.shoots.length" class="hint">{{ $t('portal.noShoots') }}</p>
       </div>
+    </section>
+
+    <section v-if="project.hasContract" class="psec">
+      <Link class="blkfoot" :href="`/projekte/${project.id}/vertrag`">
+        {{ $t('portal.contractTitle') }} →
+      </Link>
     </section>
   </main>
 

@@ -130,7 +130,15 @@
     "notesInternalOnly": "Nur intern",
     "notePlaceholder": "Notiz schreiben …",
     "noteEdit": "bearbeiten",
-    "noteDelete": "löschen"
+    "noteDelete": "löschen",
+    "contract": "Vertrag",
+    "contractTemplate": "Vorlage",
+    "contractStatus": "Status",
+    "contractGenerate": "Vertrag erzeugen",
+    "contractNone": "Noch kein Vertrag erzeugt.",
+    "contractNoTemplates": "Noch keine Vertragsvorlage angelegt.",
+    "contractDownload": "PDF herunterladen",
+    "contractPending": "Wird gerade erstellt …"
   },
   "calendar": {
     "title": "Kalender",
@@ -214,6 +222,18 @@
     "itemPrice": "Preis (€)",
     "itemPriceHint": "Leer lassen für „enthaltene Leistung“ ohne eigenen Preis."
   },
+  "contractTemplates": {
+    "title": "Vertragsvorlagen",
+    "create": "Neue Vorlage",
+    "createTitle": "Vorlage anlegen",
+    "editTitle": "Vorlage bearbeiten",
+    "editHint": "Speichern legt eine neue Version an — die aktuell verwendete Fassung bleibt für bereits erzeugte Verträge unverändert erhalten.",
+    "name": "Name",
+    "body": "Vertragstext",
+    "bodyHint": "HTML mit Platzhaltern in doppelten geschweiften Klammern, z. B. project.name — siehe docs/contracts.md.",
+    "version": "v{version}",
+    "empty": "Noch keine Vertragsvorlagen."
+  },
   "portal": {
     "signInTitle": "Kundenbereich",
     "signInHint": "Adresse eintragen — wir schicken einen Link. Kein Passwort nötig.",
@@ -228,6 +248,13 @@
     "shootCount": "ein Termin | {count} Termine",
     "dateOpen": "Termin noch offen",
     "noShoots": "Noch keine Termine hinterlegt.",
-    "nothingShared": "Aktuell ist nichts freigegeben."
+    "nothingShared": "Aktuell ist nichts freigegeben.",
+    "contractKicker": "Vertrag",
+    "contractTitle": "Ihr Vertrag",
+    "contractLead": "Hier ist Ihr aktueller Vertrag als PDF. Wenn etwas unklar ist, rufen Sie uns gerne an.",
+    "contractTemplate": "Fotografievertrag · Vorlage {name} v{version}",
+    "contractDownload": "PDF herunterladen",
+    "contractPending": "Der Vertrag wird gerade erstellt — diese Seite aktualisiert sich von selbst.",
+    "contractNone": "Für dieses Projekt liegt noch kein Vertrag vor."
   }
 }

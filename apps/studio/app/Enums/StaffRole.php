@@ -72,6 +72,7 @@ enum StaffRole: string
                 Capability::ManageTasks,
                 Capability::ManageNotes,
                 Capability::ManagePackages,
+                Capability::ManageContracts,
             ],
 
             // Post-production: sees the work and moves it through culling,
@@ -83,6 +84,7 @@ enum StaffRole: string
                 Capability::ManageTasks,
                 Capability::ManageNotes,
                 Capability::ManagePackages,
+                Capability::ManageContracts,
             ],
 
             self::SecondShooter, self::Assistant => [

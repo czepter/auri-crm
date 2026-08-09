@@ -36,12 +36,14 @@ class ProjectHeaderData extends Data
         public bool $canManageCrew,
         public bool $canManageTasks,
         public bool $canManageNotes,
+        public bool $canManageContracts,
         public array $tabs,
     ) {}
 
     public static function fromProject(Project $project, ProjectPositionData $position): self
     {
         $user = auth('staff')->user();
+
         return new self(
             id: $project->public_id,
             name: $project->name,
@@ -59,12 +61,14 @@ class ProjectHeaderData extends Data
             canManageCrew: $user?->can('manageCrew', $project) ?? false,
             canManageTasks: $user?->can('manageTasks', $project) ?? false,
             canManageNotes: $user?->can('manageNotes', $project) ?? false,
-            // Angebot and Vertrag are Q-*/M-* in P2, Zahlungen is M-03,
-            // Fragebögen and Kommunikation are E-* in P4, Galerien is G-05 in
-            // P3. Each appends a line here on the sprint it lands.
+            canManageContracts: $user?->can('manageContracts', $project) ?? false,
+            // Angebot is Q-*, Zahlungen is M-03, Fragebögen and Kommunikation
+            // are E-* in P4, Galerien is G-05 in P3. Each appends a line here
+            // on the sprint it lands. Vertrag is M-01.
             tabs: [
                 ['key' => 'overview', 'label' => 'Übersicht', 'href' => "/auftraege/{$project->public_id}"],
                 ['key' => 'shoots', 'label' => 'Shootings', 'href' => "/auftraege/{$project->public_id}/shootings"],
+                ['key' => 'contract', 'label' => 'Vertrag', 'href' => "/auftraege/{$project->public_id}/vertrag"],
             ],
         );
     }

@@ -231,6 +231,28 @@ it('opens the package catalog to every staff role', function (StaffRole $role) {
     $this->actingAs(staff($role), 'staff')->get('/pakete')->assertOk();
 })->with(StaffRole::cases());
 
+it('opens contract templates to the roles ManageShoots already trusts, and refuses the crew roles', function (StaffRole $role, int $status) {
+    // Narrower than the catalog on purpose — a contract is what a client
+    // signs (Capability::ManageContracts's own doc comment).
+    $this->actingAs(staff($role), 'staff')->get('/vertragsvorlagen')->assertStatus($status);
+})->with([
+    [StaffRole::Owner, 200],
+    [StaffRole::Photographer, 200],
+    [StaffRole::Editor, 200],
+    [StaffRole::SecondShooter, 403],
+    [StaffRole::Assistant, 403],
+]);
+
+it('refuses a second shooter the contract tab of a project they are not crewed on', function () {
+    $nina = staff(StaffRole::SecondShooter);
+    $theirs = Project::factory()->create();
+    Shoot::factory()->for($theirs)->create();
+
+    $this->actingAs($nina, 'staff')
+        ->get("/auftraege/{$theirs->public_id}/vertrag")
+        ->assertForbidden();
+});
+
 it('gives every role a capability set that is a subset of the owner', function () {
     // A role that could do something the owner cannot would be a hole in the
     // model rather than a feature.

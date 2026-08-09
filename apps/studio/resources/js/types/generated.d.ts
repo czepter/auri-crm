@@ -18,6 +18,28 @@ unitPrice: number | null,
 };
 }
 }
+namespace Contracts {
+namespace Data {
+export type ContractData = {
+id: string,
+status: string,
+statusLabel: string,
+templateName: string,
+templateVersion: number,
+renderedAt: string | null,
+downloadUrl: string | null,
+};
+export type ContractTemplateData = {
+id: string,
+name: string,
+body: string,
+version: number,
+};
+}
+namespace Enums {
+export type ContractStatus = 'pending' | 'rendered' | 'failed';
+}
+}
 namespace Crm {
 namespace Data {
 export type ContactSuggestionData = {
@@ -103,6 +125,7 @@ canManageShoots: boolean,
 canManageCrew: boolean,
 canManageTasks: boolean,
 canManageNotes: boolean,
+canManageContracts: boolean,
 tabs: {
 key: string,
 label: string,
@@ -169,7 +192,7 @@ mfaConfirmed: boolean,
 };
 }
 namespace Enums {
-export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_staff' | 'manage_packages';
+export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_staff' | 'manage_packages' | 'manage_contracts';
 export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' | 'assistant';
 }
 }

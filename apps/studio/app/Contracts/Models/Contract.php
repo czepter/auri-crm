@@ -1,0 +1,65 @@
+<?php
+
+namespace App\Contracts\Models;
+
+use App\Concerns\BelongsToTenant;
+use App\Concerns\HasPublicId;
+use App\Contracts\Enums\ContractStatus;
+use App\Crm\Models\Project;
+use App\Models\User;
+use Database\Factories\Contracts\ContractFactory;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+/**
+ * One render of one exact ContractTemplate version, for one project.
+ *
+ * contract_template_id names a specific row, not "whichever version is
+ * current" — RenderContractJob resolves merge fields against real project
+ * data at the moment it runs and bakes the result into the PDF this row
+ * points at. Editing the template afterwards can never move that pointer or
+ * touch the file it already wrote (see ContractTemplate::newVersion()).
+ */
+class Contract extends Model
+{
+    use BelongsToTenant;
+    use HasFactory;
+    use HasPublicId;
+
+    protected $fillable = [
+        'project_id', 'contract_template_id', 'requested_by_id',
+        'status', 'artifact_path', 'rendered_at', 'error',
+    ];
+
+    protected $attributes = ['status' => ContractStatus::Pending];
+
+    protected function casts(): array
+    {
+        return [
+            'status' => ContractStatus::class,
+            'rendered_at' => 'immutable_datetime',
+        ];
+    }
+
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    public function template(): BelongsTo
+    {
+        return $this->belongsTo(ContractTemplate::class, 'contract_template_id');
+    }
+
+    public function requestedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'requested_by_id');
+    }
+
+    protected static function newFactory(): Factory
+    {
+        return ContractFactory::new();
+    }
+}

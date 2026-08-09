@@ -2,6 +2,7 @@
 
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
+use App\Contracts\Models\ContractTemplate;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
@@ -12,6 +13,9 @@ use App\Crm\Models\Shoot;
 use App\Models\User;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
+
+// renderedContract() lives in tests/Pest.php — see the note there.
 
 uses(RefreshDatabase::class);
 
@@ -78,6 +82,34 @@ it('never puts an integer identifier into the package catalog', function () {
 
     $editProps = $this->get("/pakete/{$package->public_id}")->assertOk()->viewData('page')['props'];
     expect(integerIdPaths($editProps))->toBe([]);
+});
+
+it('never puts an integer identifier into the contract template screens', function () {
+    $user = User::factory()->withMfa()->create();
+    $template = ContractTemplate::factory()->create();
+
+    $listProps = $this->actingAs($user, 'staff')->get('/vertragsvorlagen')->assertOk()->viewData('page')['props'];
+    expect(integerIdPaths($listProps))->toBe([]);
+
+    $editProps = $this->get("/vertragsvorlagen/{$template->public_id}")->assertOk()->viewData('page')['props'];
+    expect(integerIdPaths($editProps))->toBe([]);
+});
+
+it('never puts an integer identifier into a project\'s contract tab', function () {
+    Storage::fake('local');
+
+    $user = User::factory()->withMfa()->create();
+    $project = Project::factory()->create();
+    Job::factory()->for($project)->create();
+    renderedContract($project);
+    ContractTemplate::factory()->create();
+
+    $props = $this->actingAs($user, 'staff')
+        ->get("/auftraege/{$project->public_id}/vertrag")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect(integerIdPaths($props))->toBe([]);
 });
 
 it('detects an integer id when one is present', function () {
