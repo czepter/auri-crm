@@ -16,8 +16,11 @@ services:
       DB_PASSWORD: studio
     ports:
       # Published so the Playwright suite on the host can reach `artisan serve`
-      # running inside this container.
-      - "127.0.0.1:8000:8000"
+      # running inside this container. The host port is a variable because
+      # several git worktrees of this repository run their own stack at once
+      # and cannot all bind the same one; set APP_PORT in a root .env per
+      # worktree. The container port never changes, so nothing else moves.
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -29,7 +32,7 @@ services:
       POSTGRES_USER: studio
       POSTGRES_PASSWORD: studio
     ports:
-      - "127.0.0.1:5433:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
     volumes:
       - pgdata:/var/lib/postgresql
     healthcheck:
