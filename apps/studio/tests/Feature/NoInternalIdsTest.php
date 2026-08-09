@@ -2,7 +2,6 @@
 
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
-use App\Contracts\Models\ContractTemplate;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
@@ -10,6 +9,7 @@ use App\Crm\Models\InternalNote;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
 use App\Models\User;
 use App\Payments\Models\PaymentInstallment;
@@ -138,14 +138,14 @@ it('never puts an integer identifier into the settings screen', function () {
     expect(integerIdPaths($props))->toBe([]);
 });
 
-it('never puts an integer identifier into the contract template screens', function () {
+it('never puts an integer identifier into the document template screens', function () {
     $user = User::factory()->withMfa()->create();
-    $template = ContractTemplate::factory()->create();
+    $template = DocumentTemplate::factory()->create();
 
-    $listProps = $this->actingAs($user, 'staff')->get('/vertragsvorlagen')->assertOk()->viewData('page')['props'];
+    $listProps = $this->actingAs($user, 'staff')->get('/dokumentvorlagen')->assertOk()->viewData('page')['props'];
     expect(integerIdPaths($listProps))->toBe([]);
 
-    $editProps = $this->get("/vertragsvorlagen/{$template->public_id}")->assertOk()->viewData('page')['props'];
+    $editProps = $this->get("/dokumentvorlagen/{$template->public_id}")->assertOk()->viewData('page')['props'];
     expect(integerIdPaths($editProps))->toBe([]);
 });
 
@@ -156,7 +156,7 @@ it('never puts an integer identifier into a project\'s contract tab', function (
     $project = Project::factory()->create();
     Job::factory()->for($project)->create();
     renderedContract($project);
-    ContractTemplate::factory()->create();
+    DocumentTemplate::factory()->create();
 
     $props = $this->actingAs($user, 'staff')
         ->get("/auftraege/{$project->public_id}/vertrag")

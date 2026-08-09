@@ -6,10 +6,11 @@ use App\Contracts\Data\ContractData;
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
 use App\Contracts\Models\Contract;
-use App\Contracts\Models\ContractTemplate;
 use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Data\ProjectHeaderData;
 use App\Crm\Models\Project;
+use App\Documents\Enums\DocumentTemplateType;
+use App\Documents\Models\DocumentTemplate;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
@@ -32,13 +33,17 @@ class ContractController extends Controller
     {
         $this->authorize('view', $project);
 
+        $project->load(['contacts', 'shoots', 'primaryShoot', 'job']);
+
         return Inertia::render('Projects/Contract', [
             'header' => ProjectHeaderData::fromProject(
-                $project->load(['contacts', 'shoots', 'primaryShoot', 'job']),
+                $project,
                 (new DeriveProjectPosition)($project),
             ),
-            'templates' => ContractTemplate::current()->orderBy('name')->get()
-                ->map(fn (ContractTemplate $t) => ['value' => $t->public_id, 'label' => "{$t->name} · v{$t->version}"])
+            'templates' => DocumentTemplate::current()->ofType(DocumentTemplateType::Contract)
+                ->forShootKind($project->primaryShoot?->kind?->value)
+                ->orderBy('name')->get()
+                ->map(fn (DocumentTemplate $t) => ['value' => $t->public_id, 'label' => "{$t->name} · v{$t->version}"])
                 ->values(),
             'contract' => $this->contractData($project),
         ]);
@@ -50,7 +55,8 @@ class ContractController extends Controller
 
         $validated = $request->validate(['template' => ['required', 'string']]);
 
-        $template = ContractTemplate::current()->where('public_id', $validated['template'])->firstOrFail();
+        $template = DocumentTemplate::current()->ofType(DocumentTemplateType::Contract)
+            ->where('public_id', $validated['template'])->firstOrFail();
 
         $contract = Contract::create([
             'project_id' => $project->id,

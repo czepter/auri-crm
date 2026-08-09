@@ -2,11 +2,11 @@
 
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
-use App\Contracts\Models\ContractTemplate;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
+use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
 use App\Models\User;
 use App\Support\Surface;
@@ -159,7 +159,7 @@ function renderedContract(?Project $project = null, string $bytes = '%PDF-stored
 {
     $contract = Contract::factory()
         ->for($project ?? Project::factory())
-        ->for(ContractTemplate::factory(), 'template')
+        ->for(DocumentTemplate::factory(), 'template')
         ->create(['status' => ContractStatus::Pending]);
 
     $path = "contracts/test/{$contract->public_id}.pdf";

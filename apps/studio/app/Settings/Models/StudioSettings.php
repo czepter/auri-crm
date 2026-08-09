@@ -44,6 +44,7 @@ class StudioSettings extends Model
         'vat_mode', 'vat_rate', 'vat_note',
         'default_shoot_duration_minutes',
         'quote_validity_days', 'payment_term_days', 'deposit_percentage', 'widerruf_included', 'widerruf_text',
+        'document_letterhead_html', 'document_footer_html',
         'timezone', 'locale', 'working_days',
         'payments_stripe_enabled', 'payments_stripe_mode',
         'payments_stripe_test_publishable_key', 'payments_stripe_test_secret_key',
