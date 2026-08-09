@@ -8,6 +8,7 @@ use App\Contracts\Models\Contract;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
 use App\Enums\Capability;
+use App\Gallery\Models\Gallery;
 use App\Models\User;
 use App\Quotes\Models\Quote;
 use Database\Factories\Crm\ProjectFactory;
@@ -111,6 +112,12 @@ class Project extends Model
     public function shoots(): HasMany
     {
         return $this->hasMany(Shoot::class)->orderBy('sort_order');
+    }
+
+    /** Every delivery gallery this project has, backfilled or linked alike (G-05, X-02). */
+    public function galleries(): HasMany
+    {
+        return $this->hasMany(Gallery::class);
     }
 
     public function quotes(): HasMany
