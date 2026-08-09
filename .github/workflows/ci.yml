@@ -159,8 +159,11 @@ jobs:
       # vipsthumbnail/vipsheader — a CLI tool, not a PHP extension, so it's
       # never in setup-php's list above. Same pattern as postgresql-client
       # just above: this runner's apt repos carry it directly, no PPA needed.
+      # libheif-plugin-aomenc: the runner's libheif1 has no AV1 encoder linked
+      # in by default — heifsave fails "Unsupported compression" on every
+      # AVIF write without it.
       - name: Install libvips-tools for derivative generation
-        run: sudo apt-get install -y libvips-tools
+        run: sudo apt-get install -y libvips-tools libheif-plugin-aomenc
       - working-directory: apps/studio
         run: composer install --no-interaction --prefer-dist
       - working-directory: apps/studio

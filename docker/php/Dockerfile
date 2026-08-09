@@ -19,6 +19,10 @@ COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 # db:cutover-restore (X-03) to run — the client tools, not libpq-dev's
 # headers, are what those two Process calls actually shell out to.
 #
+# libheif-plugin-aomenc: Debian's libheif1 ships with no AV1 encoder linked
+# in — heifsave fails "Unsupported compression" on every AVIF write without
+# it, decode-only formats work fine either way.
+#
 # libvips-tools (G-03, #52) is the odd one out a third way: it's a CLI tool,
 # not a PHP extension, so it never appears in setup-php's list either — CI's
 # `studio` job installs the matching apt package directly, the same pattern
@@ -37,6 +41,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libfreetype6-dev \
         postgresql-client \
         libvips-tools \
+        libheif-plugin-aomenc \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j"$(nproc)" pdo_pgsql bcmath gd intl pcntl exif \
     && rm -rf /var/lib/apt/lists/*
