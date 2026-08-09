@@ -64,6 +64,17 @@ class StudioSettingsResolver
     }
 
     /**
+     * T-09: the length ShootCalendar gives a shoot whose end_time is unset,
+     * replacing the hardcoded addHours(2) that used to sit in that class
+     * directly. Minutes, not hours — a shorter session needs finer
+     * granularity than that constant offered.
+     */
+    public function defaultShootDurationMinutes(): int
+    {
+        return $this->row()->default_shoot_duration_minutes;
+    }
+
+    /**
      * What a document should actually use — zero under small_business
      * regardless of what vat_rate holds, so a mode switch never leaves a
      * stale 19% behind. This is T-03's whole point: Q-04 calls this, not
@@ -111,6 +122,48 @@ class StudioSettingsResolver
     public function widerrufText(): ?string
     {
         return $this->row()->widerruf_text;
+    }
+
+    /**
+     * IANA identifier (e.g. "Europe/Vienna") — the tenant value once T-13's
+     * Allgemein pane has set one, config('app.timezone') as the fallback
+     * until then. The environment stays the fallback, never the source: a
+     * studio that has not opened this pane yet sees exactly what it saw
+     * before this story existed.
+     */
+    public function timezone(): string
+    {
+        return $this->row()->timezone ?? config('app.timezone');
+    }
+
+    /**
+     * Carbon's formatting locale for the three DACH variants T-02's own
+     * country select already offers (de_DE/de_AT/de_CH) — never
+     * config('app.locale')'s translation locale, which stays 'de' and
+     * env-independent on purpose (see config/app.php). Same fallback shape
+     * as timezone() above: the tenant value once set, the environment
+     * otherwise.
+     */
+    public function locale(): string
+    {
+        return $this->row()->locale ?? config('app.locale');
+    }
+
+    /**
+     * ISO weekday integers (1 Monday .. 7 Sunday) the studio works —
+     * TaskTemplate::dueFor() rolls a due date forward off any day not in
+     * this set. Guards an empty array (should never reach the database
+     * past StudioSettingsController's validation, but dueFor() loops on
+     * this set, and an empty one loops forever) by treating it the same as
+     * "every day", rather than letting a corrupt row hang a request.
+     *
+     * @return list<int>
+     */
+    public function workingDays(): array
+    {
+        $days = $this->row()->working_days;
+
+        return empty($days) ? [1, 2, 3, 4, 5, 6, 7] : $days;
     }
 
     /**

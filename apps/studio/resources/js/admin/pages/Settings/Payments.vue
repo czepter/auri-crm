@@ -10,7 +10,7 @@ const props = defineProps<{ settings: App.Settings.Data.PaymentSettingsData }>()
 // Settings/Index.vue and Numbering.vue both render. Zahlungsdaten & USt is
 // T-03's own pane, Nummernkreise is T-04's, Dokumente is T-05's and Zahlungen
 // is this pane, so all four drop out of this list.
-const comingSoon = ['navPortal', 'navNotifications', 'navGeneral'] as const
+const comingSoon = ['navPortal', 'navNotifications'] as const
 
 // Keys are write-only (T-07): the server never echoes a stored value back,
 // so this form always starts with them blank. Submitting blank leaves the
@@ -58,6 +58,7 @@ function submit() {
       <nav style="width: 196px; flex: none; display: flex; flex-direction: column; gap: 2px">
         <a class="nav" href="/einstellungen">{{ $t('settings.navProfile') }}</a>
         <a class="nav" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
+        <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
         <a class="nav on" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
         <a
           v-for="key in comingSoon"

@@ -15,6 +15,7 @@ use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Settings\Models\StudioClosure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 
@@ -129,6 +130,20 @@ it('warns about a conflicting date but saves anyway', function () {
 
     expect(Project::count())->toBe(2)
         ->and(Shoot::where('date', '2026-06-14')->count())->toBe(2);
+});
+
+it('warns about a date inside a studio closure but saves anyway', function () {
+    // T-09: it warns, never blocks — a closure conflict is informational
+    // only, exactly like an existing-shoot conflict already is.
+    StudioClosure::factory()->spanning('2026-06-01', '2026-06-30')->create(['label' => 'Weihnachtspause']);
+
+    $this->actingAs($this->staff, 'staff')
+        ->post('/anfragen', payload(['date' => '2026-06-14']))
+        ->assertRedirect('/anfragen')
+        ->assertSessionHasNoErrors();
+
+    expect(Project::count())->toBe(1)
+        ->and(Shoot::where('date', '2026-06-14')->count())->toBe(1);
 });
 
 it('writes an audit row for the capture', function () {

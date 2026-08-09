@@ -58,10 +58,12 @@ role: string,
 roleLabel: string,
 };
 export type DateConflictData = {
-projectId: string,
-projectName: string,
+source: string,
+projectId: string | null,
+projectName: string | null,
 venue: string | null,
-kind: string,
+kind: string | null,
+label: string | null,
 };
 export type InternalNoteData = {
 id: string,
@@ -297,6 +299,12 @@ remindersEnabled: boolean,
 depositPercent: number,
 zahlungszielDays: number,
 };
+export type StudioClosureData = {
+id: string,
+label: string,
+startsOn: string,
+endsOn: string,
+};
 export type StudioSettingsData = {
 id: string,
 displayName: string | null,
@@ -325,6 +333,9 @@ paymentTermDays: number,
 depositPercentage: number,
 widerrufIncluded: boolean,
 widerrufText: string | null,
+timezone: string,
+locale: string,
+workingDays: number[],
 };
 }
 }
