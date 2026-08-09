@@ -116,6 +116,8 @@ projectName: string,
 title: string,
 dueOn: string | null,
 isOverdue: boolean,
+isDone: boolean,
+shootLabel: string | null,
 audience: string,
 audienceLabel: string,
 };

@@ -20,6 +20,8 @@ class TaskRowData extends Data
         public string $title,
         public ?string $dueOn,
         public bool $isOverdue,
+        public bool $isDone,
+        public ?string $shootLabel,
         public string $audience,
         public string $audienceLabel,
     ) {}
@@ -34,7 +36,13 @@ class TaskRowData extends Data
             dueOn: $task->due_on?->format('Y-m-d'),
             // Today is not late. A task due today is the day's work, and
             // colouring it as overdue is how a worklist stops being read.
-            isOverdue: $task->due_on !== null && $task->due_on->isBefore(now()->startOfDay()),
+            isOverdue: $task->due_on !== null
+                && ! $task->isDone()
+                && $task->due_on->isBefore(now()->startOfDay()),
+            isDone: $task->isDone(),
+            // Which occasion it hangs off, so a project with four shoots can
+            // tell its four briefings apart.
+            shootLabel: $task->shoot?->label ?? $task->shoot?->kind->label(),
             audience: $task->audience->value,
             audienceLabel: $task->audience->label(),
         );
