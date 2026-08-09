@@ -8,6 +8,7 @@ use Database\Factories\Crm\ContactFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * A person, role-agnostic. One row per address: a household sharing an inbox
@@ -25,6 +26,13 @@ class Contact extends Model
     use HasPublicId;
 
     protected $fillable = ['name', 'email', 'phone'];
+
+    public function projects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class, 'project_contacts')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
 
     /**
      * Declared explicitly: Laravel resolves Database\Factories\ContactFactory
