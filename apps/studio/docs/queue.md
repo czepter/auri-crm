@@ -11,9 +11,12 @@ named queue per workload:
 | `media.ingest` | `supervisor-media-ingest`  | 20s     | Deriving thumbnails/previews from an uploaded original (G-01a). |
 | `media.zip`    | `supervisor-media-zip`     | 2400s   | Building a gallery's ZIP download, streamed through the application (G-01a; G-10, #59). |
 
-Nothing dispatches onto `mail`, `render`, `media.ingest` or `media.zip` yet —
-each story ships the queue seam ahead of the job that will use it. Dispatch
-onto the queue that matches what the job does:
+Nothing dispatches onto `mail`, `render` or `media.zip` yet — each story ships
+the queue seam ahead of the job that will use it. `media.ingest` carries
+`App\Media\Jobs\ProcessIngestedAsset` (G-03) — dispatched by
+`MultipartUploadController::complete()` the moment a multipart upload session
+is marked Completed; see docs/media.md's own "Ingest processing (G-03)"
+section. Dispatch onto the queue that matches what the job does:
 
 ```php
 SomeJob::dispatch($thing)->onQueue('render');

@@ -8,6 +8,9 @@ use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
+use App\Gallery\Models\Gallery;
+use App\Media\Enums\MultipartUploadStatus;
+use App\Media\Models\MultipartUpload;
 use App\Models\User;
 use App\Support\Surface;
 use Aws\MockHandler;
@@ -195,6 +198,51 @@ function mockS3Client(MockHandler $handler): S3Client
         // non-seekable-stream case ever gets there.
         'request_checksum_calculation' => 'when_required',
     ]);
+}
+
+/**
+ * A tiny, real (GD-encoded) JPEG — G-03's own guidance is to synthesize
+ * fixture images in the test rather than check in real photos. Deliberately
+ * carries no EXIF: GD cannot write it, so App\Media\Support\ExifFields is
+ * unit-tested against exif_read_data()'s own array shape instead of against
+ * a file this suite would have to fabricate byte-for-byte.
+ */
+function syntheticJpeg(int $width = 300, int $height = 200): string
+{
+    $image = imagecreatetruecolor($width, $height);
+    for ($x = 0; $x < $width; $x++) {
+        for ($y = 0; $y < $height; $y++) {
+            imagesetpixel($image, $x, $y, imagecolorallocate($image, $x % 256, $y % 256, ($x + $y) % 256));
+        }
+    }
+
+    ob_start();
+    imagejpeg($image, quality: 90);
+    $bytes = ob_get_clean();
+    imagedestroy($image);
+
+    return $bytes;
+}
+
+/**
+ * A MultipartUpload already Completed, with $bytes actually sitting at its
+ * quarantine key on the faked `s3` disk — the state G-03's
+ * App\Media\Actions\IngestCompletedUpload expects to find one in once
+ * MultipartUploadController::complete() has run. Call Storage::fake('s3')
+ * before this.
+ */
+function completedUpload(Gallery $gallery, string $bytes, string $filename = 'IMG_0001.jpg'): MultipartUpload
+{
+    $upload = MultipartUpload::factory()->for($gallery)->create([
+        'filename' => $filename,
+        'file_size' => strlen($bytes),
+        'status' => MultipartUploadStatus::Completed,
+        'completed_at' => now(),
+    ]);
+
+    Storage::disk('s3')->put($upload->key, $bytes);
+
+    return $upload;
 }
 
 function integerIdPaths(mixed $node, string $path = '$'): array

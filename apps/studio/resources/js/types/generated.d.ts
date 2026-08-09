@@ -299,6 +299,7 @@ partSize: number,
 };
 }
 namespace Enums {
+export type AssetStatus = 'ready' | 'failed';
 export type MultipartUploadStatus = 'in_progress' | 'completed' | 'aborted';
 }
 }
