@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Link, router, useForm } from '@inertiajs/vue3'
+import { useForm } from '@inertiajs/vue3'
 import { basisPointsToPercent, formatEuros } from '@/admin/lib/money'
+import PortalFooter from '@/portal/components/PortalFooter.vue'
+import PortalHeader from '@/portal/components/PortalHeader.vue'
 
 type QuoteItem = {
   id: string
@@ -35,6 +37,11 @@ const props = defineProps<{
   contact: { name: string }
   showSwitcher: boolean
   project: { id: string; name: string }
+  // T-08's "accept quotes online" switch (default off) — the affordance half
+  // of the same rule EnsurePortalCapability enforces on the accept route
+  // itself. Never hides an already-accepted quote, only the button that
+  // would accept a new one.
+  canAccept: boolean
   quote: Quote | null
 }>()
 
@@ -56,23 +63,7 @@ function accept() {
 </script>
 
 <template>
-  <header class="phead">
-    <div class="pbar">
-      <span class="pmark"><i />Atelier Nordlicht <em>Fotografie · Hamburg</em></span>
-      <div class="pme">
-        <Link v-if="showSwitcher" href="/">{{ $t('portal.allProjects') }}</Link>
-        <span>{{ $t('portal.signedInAs') }} <b>{{ contact.name }}</b></span>
-        <button type="button" @click="router.post('/abmelden')">
-          <svg viewBox="0 0 24 24">
-            <path d="M15 17l5-5-5-5" />
-            <path d="M20 12H9" />
-            <path d="M12 20H6a2 2 0 01-2-2V6a2 2 0 012-2h6" />
-          </svg>
-          {{ $t('portal.signOut') }}
-        </button>
-      </div>
-    </div>
-  </header>
+  <PortalHeader :contact="contact" :show-switcher="showSwitcher" />
 
   <main class="pwrap">
     <div class="kick">{{ $t('portal.quoteKicker') }}</div>
@@ -141,7 +132,10 @@ function accept() {
         <p v-if="quote.expired" class="err" style="margin-top: var(--s4)">{{ $t('portal.quoteExpired') }}</p>
         <p v-if="rejection" class="err" style="margin-top: var(--s4)">{{ rejection }}</p>
 
+        <!-- T-08: the button is the affordance — it never renders once the
+             switch is off, matching the 404 the accept route itself gives. -->
         <button
+          v-if="canAccept"
           class="btn warm wide"
           type="button"
           :disabled="form.processing"
@@ -156,7 +150,5 @@ function accept() {
     <p v-else class="hint">{{ $t('portal.quoteNone') }}</p>
   </main>
 
-  <footer class="pfoot">
-    <span>Atelier Nordlicht · Hamburg</span>
-  </footer>
+  <PortalFooter />
 </template>

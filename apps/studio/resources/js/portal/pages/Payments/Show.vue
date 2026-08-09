@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { Link, router } from '@inertiajs/vue3'
+import { router } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
+import PortalFooter from '@/portal/components/PortalFooter.vue'
+import PortalHeader from '@/portal/components/PortalHeader.vue'
 
 type Installment = {
   id: string
@@ -58,23 +60,7 @@ function longDate(date: string) {
 </script>
 
 <template>
-  <header class="phead">
-    <div class="pbar">
-      <span class="pmark"><i />Atelier Nordlicht <em>Fotografie · Hamburg</em></span>
-      <div class="pme">
-        <Link v-if="showSwitcher" href="/">{{ $t('portal.allProjects') }}</Link>
-        <span>{{ $t('portal.signedInAs') }} <b>{{ contact.name }}</b></span>
-        <button type="button" @click="router.post('/abmelden')">
-          <svg viewBox="0 0 24 24">
-            <path d="M15 17l5-5-5-5" />
-            <path d="M20 12H9" />
-            <path d="M12 20H6a2 2 0 01-2-2V6a2 2 0 012-2h6" />
-          </svg>
-          {{ $t('portal.signOut') }}
-        </button>
-      </div>
-    </div>
-  </header>
+  <PortalHeader :contact="contact" :show-switcher="showSwitcher" />
 
   <main class="pwrap wide">
     <div class="kick">{{ $t('portal.paymentsKicker') }}</div>
@@ -154,7 +140,5 @@ function longDate(date: string) {
     <p v-else class="hint">{{ $t('portal.paymentsNone') }}</p>
   </main>
 
-  <footer class="pfoot">
-    <span>Atelier Nordlicht · Hamburg</span>
-  </footer>
+  <PortalFooter />
 </template>

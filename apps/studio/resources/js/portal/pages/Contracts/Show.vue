@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onBeforeUnmount, watch } from 'vue'
-import { Link, router, useForm } from '@inertiajs/vue3'
+import { router, useForm } from '@inertiajs/vue3'
+import PortalFooter from '@/portal/components/PortalFooter.vue'
+import PortalHeader from '@/portal/components/PortalHeader.vue'
 
 type Signature = {
   typedName: string
@@ -19,6 +21,11 @@ const props = defineProps<{
   contact: { name: string }
   showSwitcher: boolean
   project: { id: string; name: string }
+  // T-08's "sign contracts" switch (default off) — the affordance half of
+  // the same rule EnsurePortalCapability enforces on the sign route itself.
+  // Never hides an already-recorded signature, only the form that would
+  // create a new one.
+  canSign: boolean
   contract: Contract | null
 }>()
 
@@ -58,23 +65,7 @@ function sign() {
 </script>
 
 <template>
-  <header class="phead">
-    <div class="pbar">
-      <span class="pmark"><i />Atelier Nordlicht <em>Fotografie · Hamburg</em></span>
-      <div class="pme">
-        <Link v-if="showSwitcher" href="/">{{ $t('portal.allProjects') }}</Link>
-        <span>{{ $t('portal.signedInAs') }} <b>{{ contact.name }}</b></span>
-        <button type="button" @click="router.post('/abmelden')">
-          <svg viewBox="0 0 24 24">
-            <path d="M15 17l5-5-5-5" />
-            <path d="M20 12H9" />
-            <path d="M12 20H6a2 2 0 01-2-2V6a2 2 0 012-2h6" />
-          </svg>
-          {{ $t('portal.signOut') }}
-        </button>
-      </div>
-    </div>
-  </header>
+  <PortalHeader :contact="contact" :show-switcher="showSwitcher" />
 
   <main class="pwrap wide">
     <div class="kick">{{ $t('portal.contractKicker') }}</div>
@@ -101,7 +92,12 @@ function sign() {
         </div>
       </div>
 
-      <div v-if="contract.downloadUrl">
+      <!-- T-08: the rail itself is the affordance — it never renders at all
+           once there is nothing to show, whether that is because the switch
+           is off (no signature, canSign false) or because signing has
+           already happened (a recorded signature is shown regardless of the
+           switch's current state; it is a fact, not an offered action). -->
+      <div v-if="contract.downloadUrl && (contract.signature || canSign)">
         <div class="prail">
           <div class="card static sig">
             <div class="cardhead"><span class="kick">{{ $t('portal.signTitle') }}</span></div>
@@ -149,7 +145,5 @@ function sign() {
          is modelled or exposed to this page yet; add once a story surfaces it. -->
   </main>
 
-  <footer class="pfoot">
-    <span>Atelier Nordlicht · Hamburg</span>
-  </footer>
+  <PortalFooter />
 </template>

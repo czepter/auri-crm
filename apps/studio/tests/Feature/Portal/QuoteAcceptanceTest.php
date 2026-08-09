@@ -8,12 +8,24 @@ use App\Quotes\Actions\ReviseQuote;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
+use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 
 uses(RefreshDatabase::class);
 
-beforeEach(fn () => useSurface(Surface::PORTAL));
+// T-08's "accept quotes online" switch defaults to off (see
+// tests/Feature/Portal/CapabilitySwitchesTest.php for that default and the
+// 404 it produces while off) — every test below exercises the accept action
+// itself, so the switch is on for all of them. Cache::flush() first:
+// StudioSettingsResolver caches the row (T-01), and a row already cached by
+// an earlier test in the same suite run would otherwise still read as off.
+beforeEach(function () {
+    useSurface(Surface::PORTAL);
+    Cache::store('redis')->flush();
+    StudioSettings::query()->update(['portal_accept_quotes_enabled' => true]);
+});
 
 /** A project, a contact attached to it, and a quote already sent to the client. */
 function sentQuote(Project $project, array $attributes = []): Quote

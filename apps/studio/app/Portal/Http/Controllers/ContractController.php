@@ -5,6 +5,7 @@ namespace App\Portal\Http\Controllers;
 use App\Contracts\Actions\SignContract;
 use App\Contracts\Enums\ContractStatus;
 use App\Http\Controllers\Controller;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -24,7 +25,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ContractController extends Controller
 {
-    public function show(string $project): Response
+    public function show(string $project, StudioSettingsResolver $settings): Response
     {
         $contact = auth('portal')->user();
 
@@ -35,6 +36,11 @@ class ContractController extends Controller
             'contact' => ['name' => $contact->name],
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
             'project' => ['id' => $found->public_id, 'name' => $found->name],
+            // T-08's own switch (default off): the affordance half of "sign
+            // contracts", the sign() route below is the authorisation half
+            // via `portal.capability:sign_contracts`. Never hides an
+            // existing signature — this only gates the form, not the record.
+            'canSign' => $settings->signContractsEnabled(),
             'contract' => $contract === null ? null : [
                 'status' => $contract->status->value,
                 'templateName' => $contract->template->name,

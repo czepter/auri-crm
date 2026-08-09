@@ -1,7 +1,9 @@
 <?php
 
+use App\Portal\Http\Controllers\BrandingController;
 use App\Portal\Http\Controllers\ContractController;
 use App\Portal\Http\Controllers\HomeController;
+use App\Portal\Http\Controllers\ImpressumController;
 use App\Portal\Http\Controllers\MagicLinkController;
 use App\Portal\Http\Controllers\PaymentCheckoutController;
 use App\Portal\Http\Controllers\PaymentController;
@@ -13,64 +15,97 @@ use Illuminate\Support\Facades\Route;
 // cookie and its own guard — a Contact is not a User, and no session
 // established here or there is worth anything on the other.
 
-// The way in. Public by necessity: someone who cannot sign in is the only
-// person who ever needs it. Listed in the audience matrix's PUBLIC_ROUTES, so
-// it stays a decision rather than an omission.
-Route::middleware('guest:portal')->group(function () {
-    Route::get('/anmelden', [MagicLinkController::class, 'create'])->name('portal.login');
-    Route::post('/anmelden', [MagicLinkController::class, 'store'])->name('portal.login.request');
+// T-08's maintenance closure wraps every route below it, signed-in or not —
+// see EnsurePortalMaintenanceClosure. The branding logo and the Impressum
+// sit outside it, further down this file: a portal a studio has closed still
+// needs its logo and its legal notice reachable from the closure screen.
+Route::middleware('portal.maintenance')->group(function () {
+    // The way in. Public by necessity: someone who cannot sign in is the only
+    // person who ever needs it. Listed in the audience matrix's PUBLIC_ROUTES,
+    // so it stays a decision rather than an omission.
+    Route::middleware('guest:portal')->group(function () {
+        Route::get('/anmelden', [MagicLinkController::class, 'create'])->name('portal.login');
+        Route::post('/anmelden', [MagicLinkController::class, 'store'])->name('portal.login.request');
 
-    // The link itself. Single use, fifteen minutes, and the token in the path
-    // is the whole of the credential — so it is spent the moment it works.
-    Route::get('/zugang/{token}', [MagicLinkController::class, 'consume'])->name('portal.access');
+        // The link itself. Single use, fifteen minutes, and the token in the
+        // path is the whole of the credential — so it is spent the moment it
+        // works.
+        Route::get('/zugang/{token}', [MagicLinkController::class, 'consume'])->name('portal.access');
+    });
+
+    Route::middleware('audience:portal')->group(function () {
+        Route::post('/abmelden', [MagicLinkController::class, 'destroy'])->name('portal.logout');
+
+        // The switcher. Zero visible projects is an empty state here rather
+        // than an error, and exactly one skips the picker by redirecting
+        // straight to it — see HomeController.
+        Route::get('/', HomeController::class)->name('portal.home');
+
+        // Direct entry. Bound on the public id and re-asking the same
+        // visibility scope HomeController asks — see ProjectController — so a
+        // project the contact is not on, or one the studio has not made
+        // portal_visible, is a 404 here exactly as it is absent from the
+        // switcher. Never a 403: the difference between "not yours" and
+        // "does not exist" is not this surface's to give away.
+        Route::get('/projekte/{project}', ProjectController::class)->name('portal.projects.show');
+
+        // Mockup 07. Reads only the artifact M-01's queued job already
+        // stored — see App\Portal\Http\Controllers\ContractController.
+        Route::get('/projekte/{project}/vertrag', [ContractController::class, 'show'])
+            ->name('portal.contracts.show');
+        Route::get('/projekte/{project}/vertrag/pdf', [ContractController::class, 'download'])
+            ->name('portal.contracts.download');
+
+        // M-02's signing rail. Writes at most one contract_signatures row per
+        // contract — see App\Contracts\Actions\SignContract. Gated by T-08's
+        // own "sign contracts" switch (default off) — a 404 identical to a
+        // route that does not exist when it is off, regardless of whether
+        // SignContract itself would otherwise allow it.
+        Route::post('/projekte/{project}/vertrag/unterschreiben', [ContractController::class, 'sign'])
+            ->middleware('portal.capability:sign_contracts')
+            ->name('portal.contracts.sign');
+
+        // Q-07. Reads Project::latestQuote() — Q-06's own frozen snapshot,
+        // never re-derived — see App\Portal\Http\Controllers\QuoteController.
+        // The view stays open the same way a contract's view does; only the
+        // accept action below is gated.
+        Route::get('/projekte/{project}/angebot', [QuoteController::class, 'show'])
+            ->name('portal.quotes.show');
+
+        // The accept action. Re-checks validity against the row this request
+        // fetches, not against whatever the last GET rendered — see
+        // AcceptQuote. Gated by T-08's own "accept quotes online" switch
+        // (default off), same 404 rule as the signing route above — Q-07
+        // being fully functional is not itself the studio's consent to
+        // offer it in the portal.
+        Route::post('/projekte/{project}/angebot/annehmen', [QuoteController::class, 'accept'])
+            ->middleware('portal.capability:accept_quotes')
+            ->name('portal.quotes.accept');
+
+        // T-07. Read-only apart from M-04's own confirm step on return from
+        // Stripe — nothing here ever CREATES a Stripe object, see
+        // App\Portal\Http\Controllers\PaymentController. Gated by T-08's own
+        // "see payment status" switch (default off), same 404 rule as above.
+        Route::get('/projekte/{project}/zahlungen', PaymentController::class)
+            ->middleware('portal.capability:payment_status')
+            ->name('portal.payments.show');
+
+        // M-04. The client's own click, and the only route that ever creates
+        // a Stripe object — see App\Payments\Actions\
+        // CreateInstallmentCheckoutSession. Same "see payment status" gate as
+        // the screen it is reached from: nothing about paying an installment
+        // should be reachable once that screen itself is not.
+        Route::post('/projekte/{project}/zahlungen/{installment}/jetzt-zahlen', PaymentCheckoutController::class)
+            ->middleware('portal.capability:payment_status')
+            ->name('portal.payments.checkout');
+    });
 });
 
-Route::middleware('audience:portal')->group(function () {
-    Route::post('/abmelden', [MagicLinkController::class, 'destroy'])->name('portal.logout');
+// The stored logo, public: a brand mark is not a secret, and it has to
+// resolve on the sign-in screen before any contact session exists. Reachable
+// during a maintenance closure too, same reasoning as the Impressum below.
+Route::get('/branding/logo', [BrandingController::class, 'logo'])->name('portal.branding.logo');
 
-    // The switcher. Zero visible projects is an empty state here rather than
-    // an error, and exactly one skips the picker by redirecting straight to
-    // it — see HomeController.
-    Route::get('/', HomeController::class)->name('portal.home');
-
-    // Direct entry. Bound on the public id and re-asking the same visibility
-    // scope HomeController asks — see ProjectController — so a project the
-    // contact is not on, or one the studio has not made portal_visible, is a
-    // 404 here exactly as it is absent from the switcher. Never a 403: the
-    // difference between "not yours" and "does not exist" is not this
-    // surface's to give away.
-    Route::get('/projekte/{project}', ProjectController::class)->name('portal.projects.show');
-
-    // Mockup 07. Reads only the artifact M-01's queued job already stored —
-    // see App\Portal\Http\Controllers\ContractController.
-    Route::get('/projekte/{project}/vertrag', [ContractController::class, 'show'])
-        ->name('portal.contracts.show');
-    Route::get('/projekte/{project}/vertrag/pdf', [ContractController::class, 'download'])
-        ->name('portal.contracts.download');
-
-    // M-02's signing rail. Writes at most one contract_signatures row per
-    // contract — see App\Contracts\Actions\SignContract.
-    Route::post('/projekte/{project}/vertrag/unterschreiben', [ContractController::class, 'sign'])
-        ->name('portal.contracts.sign');
-
-    // Q-07. Reads Project::latestQuote() — Q-06's own frozen snapshot, never
-    // re-derived — see App\Portal\Http\Controllers\QuoteController.
-    Route::get('/projekte/{project}/angebot', [QuoteController::class, 'show'])
-        ->name('portal.quotes.show');
-
-    // The accept action. Re-checks validity against the row this request
-    // fetches, not against whatever the last GET rendered — see AcceptQuote.
-    Route::post('/projekte/{project}/angebot/annehmen', [QuoteController::class, 'accept'])
-        ->name('portal.quotes.accept');
-
-    // T-07. Read-only apart from M-04's own confirm step on return from
-    // Stripe — nothing here ever CREATES a Stripe object, see App\Portal\
-    // Http\Controllers\PaymentController.
-    Route::get('/projekte/{project}/zahlungen', PaymentController::class)
-        ->name('portal.payments.show');
-
-    // M-04. The client's own click, and the only route that ever creates a
-    // Stripe object — see App\Payments\Actions\CreateInstallmentCheckoutSession.
-    Route::post('/projekte/{project}/zahlungen/{installment}/jetzt-zahlen', PaymentCheckoutController::class)
-        ->name('portal.payments.checkout');
-});
+// § 5 TMG. Public and reachable regardless of the maintenance closure above —
+// see ImpressumController and EnsurePortalMaintenanceClosure's own note.
+Route::get('/impressum', ImpressumController::class)->name('portal.impressum');

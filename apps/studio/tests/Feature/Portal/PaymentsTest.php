@@ -20,6 +20,11 @@ beforeEach(function () {
     // below write straight to the row via the model, bypassing the resolver's
     // own cache-busting set(), so the cache needs clearing itself.
     Cache::store('redis')->flush();
+    // T-08's "see payment status" switch defaults to off (see
+    // tests/Feature/Portal/CapabilitySwitchesTest.php for that default and
+    // the 404 it produces while off) — every test below exercises the
+    // payment screen itself, so the switch is on for all of them.
+    StudioSettings::query()->update(['portal_payment_status_enabled' => true]);
 });
 
 function t07PortalProjectWithPlan(): array

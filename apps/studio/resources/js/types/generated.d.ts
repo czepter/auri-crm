@@ -310,6 +310,18 @@ remindersEnabled: boolean,
 depositPercent: number,
 zahlungszielDays: number,
 };
+export type PortalSettingsData = {
+id: string,
+maintenanceEnabled: boolean,
+maintenanceMessage: string | null,
+welcomeText: string | null,
+datenschutzUrl: string | null,
+agbUrl: string | null,
+acceptQuotesEnabled: boolean,
+signContractsEnabled: boolean,
+paymentStatusEnabled: boolean,
+messagingEnabled: boolean,
+};
 export type StudioClosureData = {
 id: string,
 label: string,

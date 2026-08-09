@@ -188,6 +188,13 @@ it('never puts an integer identifier into the portal switcher', function () {
 it('never puts an integer identifier into the portal contract screen once signed, and the sign route takes only a public id', function () {
     useSurface(Surface::PORTAL);
     Storage::fake('local');
+    // T-08's "sign contracts" switch defaults to off — this test exercises
+    // the sign action itself, so the switch is on for it. Cache::flush()
+    // first: StudioSettingsResolver caches the row (T-01), and a row already
+    // cached by an earlier test in the same suite run would otherwise still
+    // read as off.
+    \Illuminate\Support\Facades\Cache::store('redis')->flush();
+    \App\Settings\Models\StudioSettings::query()->update(['portal_sign_contracts_enabled' => true]);
 
     $project = Project::factory()->create(['portal_visible' => true]);
     renderedContract($project);
@@ -226,6 +233,10 @@ it('never puts an integer identifier into a portal project screen', function () 
 
 it('never puts an integer identifier into the portal quote screen once accepted, and the accept route takes only a public id', function () {
     useSurface(Surface::PORTAL);
+    // T-08's "accept quotes online" switch defaults to off — this test
+    // exercises the accept action itself, so the switch is on for it.
+    \Illuminate\Support\Facades\Cache::store('redis')->flush();
+    \App\Settings\Models\StudioSettings::query()->update(['portal_accept_quotes_enabled' => true]);
 
     $project = Project::factory()->create(['portal_visible' => true]);
     $quote = Quote::factory()->for($project)->create([

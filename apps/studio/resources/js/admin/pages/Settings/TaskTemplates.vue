@@ -15,7 +15,7 @@ const props = defineProps<{
 // Verfügbarkeit and Zahlungen have their own live route already, so only the
 // panes still living inside Index.vue (and reachable only from there) stay
 // disabled here.
-const comingSoon = ['navVat', 'navDocuments', 'navPortal', 'navNotifications', 'navGeneral'] as const
+const comingSoon = ['navVat', 'navDocuments', 'navNotifications', 'navGeneral'] as const
 
 // One form per template, keyed by its id — an independent draft per row,
 // matching how Settings/Numbering.vue and Settings/Availability.vue edit
@@ -91,6 +91,7 @@ function runPreview() {
         <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
         <a class="nav" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
         <a class="nav on" href="/einstellungen/aufgabenvorlagen">{{ $t('settings.navTaskTemplates') }}</a>
+        <a class="nav" href="/einstellungen/portal">{{ $t('settings.navPortal') }}</a>
         <a
           v-for="key in comingSoon"
           :key="key"

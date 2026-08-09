@@ -8,11 +8,10 @@ const props = defineProps<{ ranges: App.Settings.Data.NumberRangeData[] }>()
 // disabled "bald" list Settings/Index.vue renders, repeated here because
 // each settings screen carries its own copy of the nav rather than a shared
 // partial, matching how Index.vue already does it. Zahlungen is T-07's own
-// route, so it drops out of this list.
+// route and Portal is T-08's own route, so both drop out of this list.
 const comingSoon = [
   'navVat',
   'navDocuments',
-  'navPortal',
   'navNotifications',
   'navGeneral',
 ] as const
@@ -51,6 +50,7 @@ function save(rangeId: string) {
         <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
         <a class="nav" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
         <a class="nav" href="/einstellungen/aufgabenvorlagen">{{ $t('settings.navTaskTemplates') }}</a>
+        <a class="nav" href="/einstellungen/portal">{{ $t('settings.navPortal') }}</a>
         <a
           v-for="key in comingSoon"
           :key="key"

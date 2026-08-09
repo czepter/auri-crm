@@ -5,6 +5,7 @@ namespace App\Portal\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Quotes\Actions\AcceptQuote;
 use App\Quotes\Data\QuoteData;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -23,7 +24,7 @@ use Inertia\Response;
  */
 class QuoteController extends Controller
 {
-    public function show(string $project): Response
+    public function show(string $project, StudioSettingsResolver $settings): Response
     {
         $contact = auth('portal')->user();
 
@@ -36,6 +37,11 @@ class QuoteController extends Controller
             'contact' => ['name' => $contact->name],
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
             'project' => ['id' => $found->public_id, 'name' => $found->name],
+            // T-08's own switch (default off): the affordance half of "accept
+            // quotes online", the accept() route below is the authorisation
+            // half via `portal.capability:accept_quotes`. Never hides an
+            // already-accepted quote — only the button that would accept one.
+            'canAccept' => $settings->acceptQuotesEnabled(),
             'quote' => $quote === null ? null : [
                 ...QuoteData::fromModel($quote)->toArray(),
                 // Display only — see AcceptQuote for the re-check this

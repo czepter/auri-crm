@@ -33,6 +33,9 @@ beforeEach(function () {
         'payments_stripe_mode' => 'test',
         'payments_stripe_test_publishable_key' => 'pk_test_abc123',
         'payments_stripe_test_secret_key' => 'sk_test_abc123',
+        // T-08's "see payment status" switch defaults to off and now also
+        // gates the checkout route this suite exercises (routes/portal.php).
+        'portal_payment_status_enabled' => true,
     ]);
 });
 
