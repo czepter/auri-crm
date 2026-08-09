@@ -242,6 +242,14 @@
     "itemQuantity": "Menge",
     "itemPrice": "Preis (€)",
     "itemPriceHint": "Leer lassen für „Enthaltene Leistung“ ohne eigenen Preis.",
+    "discountType": "Rabatt",
+    "discountNone": "Kein Rabatt",
+    "discountPercentage": "Prozent",
+    "discountAmount": "Betrag",
+    "discountValuePercent": "Rabatt (%)",
+    "discountValueEuros": "Rabatt (€)",
+    "discount": "Rabatt",
+    "net": "Netto",
     "empty": "Noch kein Angebot."
   },
   "portal": {

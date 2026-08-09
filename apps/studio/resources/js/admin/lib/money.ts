@@ -20,3 +20,19 @@ export function centsToEuros(cents: number | null): string {
 export function formatEuros(cents: number): string {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cents / 100)
 }
+
+/**
+ * A discount percentage is stored server-side as basis points (0–10000, two
+ * decimal places — see App\Quotes\Enums\DiscountType) so the same "never a
+ * float, never rounded until the total" rule that governs money holds for
+ * percentages too. These two are the only place that boundary is crossed.
+ */
+export function percentToBasisPoints(value: string): number | null {
+  const trimmed = value.trim().replace(',', '.')
+
+  return trimmed === '' ? null : Math.round(parseFloat(trimmed) * 100)
+}
+
+export function basisPointsToPercent(bps: number | null): string {
+  return bps === null ? '' : (bps / 100).toFixed(2)
+}

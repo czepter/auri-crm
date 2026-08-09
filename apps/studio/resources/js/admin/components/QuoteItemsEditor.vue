@@ -4,12 +4,17 @@ export type QuoteItemRow = {
   description: string
   quantity: number
   unitPrice: string
+  discountType: '' | 'percentage' | 'amount'
+  discountValue: string
 }
 
 const items = defineModel<QuoteItemRow[]>({ required: true })
 
 function addRow() {
-  items.value = [...items.value, { title: '', description: '', quantity: 1, unitPrice: '' }]
+  items.value = [
+    ...items.value,
+    { title: '', description: '', quantity: 1, unitPrice: '', discountType: '', discountValue: '' },
+  ]
 }
 
 function removeRow(index: number) {
@@ -56,6 +61,26 @@ function removeRow(index: number) {
             type="text"
             inputmode="decimal"
             :placeholder="$t('quotes.itemPriceHint')"
+          />
+        </div>
+        <div class="fld">
+          <label :for="`quote-item-discount-type-${index}`">{{ $t('quotes.discountType') }}</label>
+          <select :id="`quote-item-discount-type-${index}`" v-model="item.discountType" class="inp">
+            <option value="">{{ $t('quotes.discountNone') }}</option>
+            <option value="percentage">{{ $t('quotes.discountPercentage') }}</option>
+            <option value="amount">{{ $t('quotes.discountAmount') }}</option>
+          </select>
+        </div>
+        <div v-if="item.discountType" class="fld">
+          <label :for="`quote-item-discount-value-${index}`">
+            {{ item.discountType === 'percentage' ? $t('quotes.discountValuePercent') : $t('quotes.discountValueEuros') }}
+          </label>
+          <input
+            :id="`quote-item-discount-value-${index}`"
+            v-model="item.discountValue"
+            class="inp num"
+            type="text"
+            inputmode="decimal"
           />
         </div>
       </div>
