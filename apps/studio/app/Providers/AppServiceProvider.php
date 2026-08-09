@@ -15,6 +15,7 @@ use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
+use App\Gallery\Listeners\RecomputeGalleryBalanceSettled;
 use App\Payments\Events\InstallmentPaid;
 use App\Policies\ContactPolicy;
 use App\Policies\ContractTemplatePolicy;
@@ -70,6 +71,11 @@ class AppServiceProvider extends ServiceProvider
         // BookProject the manual button calls — see the class docblock.
         Event::listen(ContractSigned::class, [BookProjectOnContractAndDeposit::class, 'handleContractSigned']);
         Event::listen(InstallmentPaid::class, [BookProjectOnContractAndDeposit::class, 'handleInstallmentPaid']);
+
+        // G-05: keeps Gallery::$balance_settled current. Inert beyond that
+        // write — nothing gates on it yet, since delivery/download flows are
+        // future stories.
+        Event::listen(InstallmentPaid::class, RecomputeGalleryBalanceSettled::class);
 
         // The Gate resolves users from the *default* guard, which ships as
         // `web`, while every staff session lives on `staff`. Left alone, every
