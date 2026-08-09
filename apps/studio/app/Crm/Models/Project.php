@@ -118,6 +118,19 @@ class Project extends Model
         return $this->hasMany(Quote::class)->latest();
     }
 
+    /**
+     * The one the portal shows: the most recently sent quote, whatever its
+     * status now reads. Ordered on sent_at rather than created_at — a
+     * revision (App\Quotes\Actions\ReviseQuote) exists as a draft row the
+     * moment it is created, and this must keep pointing at its still-sent
+     * predecessor until that revision is itself sent, the same instant
+     * Quote::booted()'s guard starts refusing further writes to it.
+     */
+    public function latestQuote(): HasOne
+    {
+        return $this->hasOne(Quote::class)->whereNotNull('sent_at')->latestOfMany('sent_at');
+    }
+
     /** The headline occasion — the wedding day, not the engagement shoot. */
     public function primaryShoot(): HasOne
     {

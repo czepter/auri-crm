@@ -29,6 +29,7 @@ class PaymentInstallment extends Model
     protected $fillable = [
         'payment_plan_id', 'amount', 'due_on', 'status', 'sort_order',
         'settled_via', 'paid_on', 'payment_reference', 'overdue_notified_at',
+        'stripe_checkout_session_id',
     ];
 
     protected $attributes = ['status' => PaymentInstallmentStatus::Scheduled, 'sort_order' => 0];

@@ -23,6 +23,7 @@ class EnsurePortalCapability
         $settings = app(StudioSettingsResolver::class);
 
         $enabled = match ($capability) {
+            'accept_quotes' => $settings->acceptQuotesEnabled(),
             'sign_contracts' => $settings->signContractsEnabled(),
             'payment_status' => $settings->paymentStatusEnabled(),
             default => throw new InvalidArgumentException("Unknown portal capability \"{$capability}\"."),

@@ -53,6 +53,9 @@ h1 { font-size: 30px; }
 .pfoot a { color: var(--faint); text-decoration: none; }
 .pfoot a:hover { color: var(--muted); }
 
+/* Ported from mockups/_shared/portal.css. */
+.plead { font: 400 16px/1.6 var(--font); color: var(--muted); max-width: 56ch; margin: var(--s4) 0 0; }
+
 /* ---------- the way in ---------- */
 /* No password here, ever: the client proves an inbox and nothing else. The
    form says the same thing whatever address is typed into it. */
@@ -107,3 +110,19 @@ h1 { font-size: 30px; }
 
 .btn.wide { margin-left: 0; width: 100%; justify-content: center; padding: 14px 16px; font-size: 14.5px; }
 .btn.warm { background: var(--accent); }
+
+/* ---------- Q-07: the quote screen ---------- */
+/* Ported from mockups/_shared/admin-extra.css, the .qt table only — the same
+   line-item table App\Quotes\Http\Controllers\QuoteController's own admin
+   screen renders, read-only here since nothing on this surface edits a
+   quote. */
+
+.qt { width: 100%; border-collapse: collapse; }
+.qt td { padding: 8px 0; font: 400 13px/1.4 var(--font); vertical-align: top; }
+.qt td:last-child { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.qt .d { font: 400 11.5px/1.4 var(--font); color: var(--muted); }
+.qt tr.incl td { color: var(--muted); }
+.qt tr.incl td:last-child { color: var(--faint); }
+.qt tr.sum td { border-top: 1px solid var(--line); font-weight: 600; padding-top: 10px; }
+.qt tr.tax td { color: var(--muted); padding-top: 2px; padding-bottom: 2px; }
+.qt tr.total td { font-weight: 700; font-size: 14px; padding-top: 8px; }

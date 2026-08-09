@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { router } from '@inertiajs/vue3'
+import { computed, ref } from 'vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 
@@ -19,14 +21,29 @@ type Plan = {
   installments: Installment[]
 }
 
-defineProps<{
+const props = defineProps<{
   contact: { name: string }
   showSwitcher: boolean
   project: { id: string; name: string }
   plan: Plan | null
   stripeEnabled: boolean
+  paymentStatus: 'success' | 'cancelled' | null
   bankDetails: { accountHolder: string | null; iban: string | null; bic: string | null }
 }>()
+
+// M-04: one button per still-open installment — "Jetzt zahlen" pays a
+// specific installment, never the plan as a whole. The click itself never
+// talks to Stripe; it posts to PaymentCheckoutController, which creates (or
+// reuses) the Checkout Session and sends the browser there.
+const openInstallments = computed(() => props.plan?.installments.filter((installment) => installment.status !== 'paid') ?? [])
+const payingId = ref<string | null>(null)
+
+function payNow(installmentId: string) {
+  payingId.value = installmentId
+  router.post(`/projekte/${props.project.id}/zahlungen/${installmentId}/jetzt-zahlen`, {}, {
+    onFinish: () => (payingId.value = null),
+  })
+}
 
 // The one euro/cent boundary this page crosses — see resources/js/admin/lib/
 // money.ts for the admin-side twin of this. Inlined rather than imported: no
@@ -94,11 +111,27 @@ function longDate(date: string) {
         <div v-if="stripeEnabled" class="prail">
           <div class="card static">
             <div class="cardhead"><span class="kick">{{ $t('portal.payNowTitle') }}</span></div>
-            <!-- ponytail: no Stripe Checkout wired up yet — T-07 only names
-                 the seam ("nothing is created in Stripe until the client
-                 clicks pay"). M-04/M-05 build the actual charge; add the
-                 real button here once that action exists. -->
-            <p class="hint">{{ $t('portal.payNowComingSoon') }}</p>
+
+            <p v-if="paymentStatus === 'success'" class="hint">{{ $t('portal.payNowSuccess') }}</p>
+            <p v-else-if="paymentStatus === 'cancelled'" class="hint">{{ $t('portal.payNowCancelled') }}</p>
+
+            <p class="hint">{{ $t('portal.payNowHint') }}</p>
+
+            <div v-if="openInstallments.length" class="sess" style="margin-top: var(--s3)">
+              <div v-for="installment in openInstallments" :key="installment.id" class="srow">
+                <div class="stop">
+                  <div class="sname">{{ installment.label }}<span>{{ formatEuros(installment.amount) }}</span></div>
+                  <button
+                    class="btn warm"
+                    type="button"
+                    :disabled="payingId === installment.id"
+                    @click="payNow(installment.id)"
+                  >
+                    {{ $t('portal.payNowButton') }}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
