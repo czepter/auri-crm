@@ -52,4 +52,12 @@ enum Capability: string
      * the same shape as ManageLeads.
      */
     case ManagePackages = 'manage_packages';
+
+    /**
+     * Create and edit a project's quotes (Q-02). Reversible while a quote is
+     * still a draft — the only state reachable before Q-06/Q-07 — so this
+     * gets the same ordinary-work treatment as ManagePackages rather than a
+     * narrower gate.
+     */
+    case ManageQuotes = 'manage_quotes';
 }

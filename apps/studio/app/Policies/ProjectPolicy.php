@@ -59,4 +59,9 @@ class ProjectPolicy
     {
         return $user->role->allows(Capability::ManageNotes) && $this->view($user, $project);
     }
+
+    public function manageQuotes(User $user, Project $project): bool
+    {
+        return $user->role->allows(Capability::ManageQuotes) && $this->view($user, $project);
+    }
 }

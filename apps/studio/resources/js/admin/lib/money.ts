@@ -15,3 +15,8 @@ export function eurosToCents(value: string): number | null {
 export function centsToEuros(cents: number | null): string {
   return cents === null ? '' : (cents / 100).toFixed(2)
 }
+
+/** Minor units, formatted for display — e.g. 440000 -> "4.400,00 €" (Q-02's quote table). */
+export function formatEuros(cents: number): string {
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cents / 100)
+}
