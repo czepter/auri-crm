@@ -4,6 +4,7 @@ namespace App\Quotes\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
+use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\QuoteStatus;
@@ -24,9 +25,10 @@ use RuntimeException;
  * Draft is mutable in place. Q-06's SendQuote is the only writer that ever
  * moves a quote past it — sent_at, number and the Q-04/Q-03 snapshot columns
  * all land in that one transaction — and from the moment status reads sent,
- * booted()'s guard below refuses every further write except the one
- * transition ReviseQuote makes: sent -> superseded, the predecessor half of
- * "a revision is a new row" (see App\Quotes\Actions\ReviseQuote).
+ * booted()'s guard below refuses every further write except the two
+ * transitions Q-06 and Q-07 make from there: sent -> superseded
+ * (App\Quotes\Actions\ReviseQuote's predecessor half) and sent -> accepted
+ * (App\Quotes\Actions\AcceptQuote).
  */
 class Quote extends Model
 {
@@ -34,7 +36,7 @@ class Quote extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['project_id', 'predecessor_id', 'status', 'currency', 'valid_until', 'sent_at', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount'];
+    protected $fillable = ['project_id', 'predecessor_id', 'status', 'currency', 'valid_until', 'sent_at', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id'];
 
     // Mirrors every column default in memory (the same reason Project's own
     // $attributes gives for portal_visible): without net and discount_amount
@@ -50,6 +52,7 @@ class Quote extends Model
             'status' => QuoteStatus::class,
             'valid_until' => 'date',
             'sent_at' => 'immutable_datetime',
+            'accepted_at' => 'immutable_datetime',
             'discount_type' => DiscountType::class,
         ];
     }
@@ -63,8 +66,10 @@ class Quote extends Model
      * the row still reads draft in the database — go through untouched, the
      * same shape App\Quotes\Models\QuoteItem's own booted() guard uses.
      *
-     * A sent quote allows exactly one further write: status alone, to
-     * superseded — what ReviseQuote's predecessor half performs. A
+     * A sent quote allows exactly two further writes: status alone, to
+     * superseded — what ReviseQuote's predecessor half performs — or status
+     * bundled with the three acceptance columns together, to accepted —
+     * what App\Quotes\Actions\AcceptQuote performs. An accepted or
      * superseded quote allows nothing more, ever.
      */
     protected static function booted(): void
@@ -72,11 +77,13 @@ class Quote extends Model
         static::updating(function (self $quote) {
             $original = $quote->getRawOriginal('status');
 
-            if (! in_array($original, [QuoteStatus::Sent->value, QuoteStatus::Superseded->value], true)) {
+            if (! in_array($original, [QuoteStatus::Sent->value, QuoteStatus::Accepted->value, QuoteStatus::Superseded->value], true)) {
                 return;
             }
 
-            $allowed = $original === QuoteStatus::Sent->value ? ['status'] : [];
+            $allowed = $original === QuoteStatus::Sent->value
+                ? ['status', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id']
+                : [];
             $blocked = array_diff(array_keys($quote->getDirty()), $allowed);
 
             if ($blocked !== []) {
@@ -107,6 +114,12 @@ class Quote extends Model
     public function revision(): HasOne
     {
         return $this->hasOne(self::class, 'predecessor_id');
+    }
+
+    /** The portal contact who accepted this quote — App\Quotes\Actions\AcceptQuote's own write. Null until then. */
+    public function acceptedBy(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class, 'accepted_by_contact_id');
     }
 
     /**
