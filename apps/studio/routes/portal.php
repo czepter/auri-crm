@@ -1,5 +1,7 @@
 <?php
 
+use App\Gallery\Http\Controllers\GalleryDownloadController;
+use App\Gallery\Http\Controllers\GalleryPasswordController;
 use App\Portal\Http\Controllers\BrandingController;
 use App\Portal\Http\Controllers\ContractController;
 use App\Portal\Http\Controllers\HomeController;
@@ -123,6 +125,38 @@ Route::get('/branding/logo', [BrandingController::class, 'logo'])->name('portal.
 // § 5 TMG. Public and reachable regardless of the maintenance closure above —
 // see ImpressumController and EnsurePortalMaintenanceClosure's own note.
 Route::get('/impressum', ImpressumController::class)->name('portal.impressum');
+
+// G-06: the gallery guest's own way in — a different audience from the
+// client above (no Contact, no `audience:portal` session; see
+// AudienceMatrixTest's PUBLIC_ROUTES for why these carry no `audience:`
+// declaration). Sits outside portal.maintenance's closure entirely: a client
+// portal closed for maintenance says nothing about whether a couple's guests
+// can still reach their gallery.
+Route::prefix('galerien/{gallery}')->group(function () {
+    // The view gate (mockup 08). Its own screen decides unlocked-or-not
+    // rather than being wrapped by `gallery.gate:view` — see
+    // GalleryPasswordController's own doc comment on why.
+    Route::get('/', [GalleryPasswordController::class, 'show'])->name('gallery.show');
+    Route::post('/passwort', [GalleryPasswordController::class, 'store'])->name('gallery.password.store');
+
+    // The download gates (mockups 11, 12) — reachable only once the view
+    // gate above is satisfied, since "download" is a link found inside an
+    // already-unlocked gallery, never before it.
+    Route::middleware('gallery.gate:view')->group(function () {
+        Route::get('/download', [GalleryDownloadController::class, 'show'])->name('gallery.download.show');
+        Route::post('/download/pin', [GalleryDownloadController::class, 'storePin'])->name('gallery.download.pin');
+
+        // The email gate is the second of the two download gates — a guest
+        // who has not yet cleared the PIN has no business requesting or
+        // spending an email-verification link either.
+        Route::middleware('gallery.gate:download')->group(function () {
+            Route::post('/download/email', [GalleryDownloadController::class, 'requestEmail'])
+                ->name('gallery.download.email.request');
+            Route::get('/download/email/{token}', [GalleryDownloadController::class, 'verifyEmail'])
+                ->name('gallery.download.email.verify');
+        });
+    });
+});
 
 // T-11's unsubscribe. Public and reachable regardless of the maintenance
 // closure above — the same reasoning as branding and Impressum: a client

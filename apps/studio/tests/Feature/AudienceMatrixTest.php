@@ -50,7 +50,20 @@ const PUBLIC_ROUTES = [
     // signed into yet. abmelden/{contact} is T-11's unsubscribe: reached from
     // a mail already delivered, with the contact's own public_id as the whole
     // credential, same shape as zugang/{token}.
-    'portal' => ['anmelden', 'zugang/{token}', 'branding/logo', 'impressum', 'abmelden/{contact}'],
+    'portal' => [
+        'anmelden', 'zugang/{token}', 'branding/logo', 'impressum', 'abmelden/{contact}',
+        // G-06's three gates. A gallery guest is neither a staff user nor a
+        // portal Contact — there is no `audience:` guard for it, because the
+        // gate check itself (`gallery.gate:*`, EnsureGalleryGate) is that
+        // audience's whole authorisation story, the same way the token in
+        // `zugang/{token}` above is the client portal's for a guest who
+        // cannot sign in yet. Every route past the view gate carries
+        // `gallery.gate:view` or `gallery.gate:download` even though that
+        // does not read as `audience:` to this test.
+        'galerien/{gallery}', 'galerien/{gallery}/passwort',
+        'galerien/{gallery}/download', 'galerien/{gallery}/download/pin',
+        'galerien/{gallery}/download/email', 'galerien/{gallery}/download/email/{token}',
+    ],
 ];
 
 // routesForSurface() lives in tests/Pest.php — see the note there.
