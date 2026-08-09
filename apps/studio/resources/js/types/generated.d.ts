@@ -174,6 +174,17 @@ shootLabel: string | null,
 audience: string,
 audienceLabel: string,
 };
+export type TaskTemplateData = {
+id: string,
+title: string,
+audience: string,
+audienceLabel: string,
+dayOffset: number,
+shootKind: string | null,
+shootKindLabel: string | null,
+isActive: boolean,
+sortOrder: number,
+};
 }
 namespace Enums {
 export type BookedVia = 'manual' | 'contract';
