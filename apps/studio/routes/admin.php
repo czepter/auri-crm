@@ -3,9 +3,13 @@
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\ContactController;
 use App\Crm\Http\Controllers\ContactSearchController;
+use App\Crm\Http\Controllers\CrewController;
 use App\Crm\Http\Controllers\InquiryCaptureController;
+use App\Crm\Http\Controllers\InternalNoteController;
 use App\Crm\Http\Controllers\LeadBoardController;
 use App\Crm\Http\Controllers\LeadStageController;
+use App\Crm\Http\Controllers\ProjectController;
+use App\Crm\Http\Controllers\ShootController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
@@ -51,5 +55,32 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/anfragen', [InquiryCaptureController::class, 'store'])->name('leads.store');
         Route::post('/anfragen/{lead}/stufe', [LeadStageController::class, 'update'])
             ->name('leads.stage.update');
+
+        // The project screen. Shoot and crew mutations hang off /shootings
+        // rather than under the project, because the shoot's public id already
+        // identifies it and nesting would let the two disagree.
+        Route::get('/auftraege/{project}', [ProjectController::class, 'show'])->name('projects.show');
+        Route::get('/auftraege/{project}/shootings', [ProjectController::class, 'shoots'])
+            ->name('projects.shoots');
+        Route::post('/auftraege/{project}/buchung', [ProjectController::class, 'book'])
+            ->name('projects.book');
+
+        Route::post('/auftraege/{project}/shootings', [ShootController::class, 'store'])
+            ->name('shoots.store');
+        Route::post('/shootings/{shoot}/status', [ShootController::class, 'advance'])
+            ->name('shoots.advance');
+        Route::post('/shootings/{shoot}/absage', [ShootController::class, 'cancel'])
+            ->name('shoots.cancel');
+        Route::post('/shootings/{shoot}/haupttermin', [ShootController::class, 'designatePrimary'])
+            ->name('shoots.primary');
+
+        Route::post('/shootings/{shoot}/crew', [CrewController::class, 'store'])->name('crew.store');
+        Route::delete('/crew/{assignment}', [CrewController::class, 'destroy'])->name('crew.destroy');
+
+        Route::post('/auftraege/{project}/notizen', [InternalNoteController::class, 'store'])
+            ->name('notes.store');
+        Route::patch('/notizen/{note}', [InternalNoteController::class, 'update'])->name('notes.update');
+        Route::delete('/notizen/{note}', [InternalNoteController::class, 'destroy'])
+            ->name('notes.destroy');
     });
 });

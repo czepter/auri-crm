@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
 
 const props = defineProps<{ card: App.Crm.Data.LeadCardData; nextStage: string | null }>()
 
@@ -22,7 +22,13 @@ function advance() {
 <template>
   <article class="group rounded-lg border p-3 transition hover:border-foreground/30">
     <p class="text-[11px] uppercase tracking-wide text-muted-foreground">{{ card.type }}</p>
-    <h3 class="text-sm font-medium">{{ card.names }}</h3>
+    <h3 class="text-sm font-medium">
+      <!-- The card's id is the project's, so the board is the way into the
+           project screen rather than a dead end beside it. -->
+      <Link :href="`/auftraege/${card.id}`" class="underline-offset-2 hover:underline">
+        {{ card.names }}
+      </Link>
+    </h3>
 
     <div class="mt-2 space-y-0.5 text-xs text-muted-foreground">
       <p class="tabular-nums">
