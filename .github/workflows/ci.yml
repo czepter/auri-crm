@@ -2,16 +2,53 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
   pull_request:
 
-# Supersede in-flight runs for the same PR/branch. Pushes to main are never
-# cancelled so every commit on the default branch keeps a verdict.
+# Supersede in-flight runs for the same PR/branch. Pushes to the integration
+# branches are never cancelled so every commit there keeps a verdict.
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # Enforces the branching model documented in docs/branching.md:
+  # feature/bugfix -> dev -> main. Deliberately has no `needs`, so it reports
+  # a verdict even while the test jobs are still running.
+  branch-rules:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the pull request base and head branches
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+        run: |
+          case "$BASE" in
+            main)
+              case "$HEAD" in
+                dev | hotfix/* | release/*) ;;
+                *)
+                  echo "::error::main only accepts dev, hotfix/* or release/*, but this pull request comes from '$HEAD'. Retarget it at dev."
+                  exit 1
+                  ;;
+              esac
+              ;;
+            dev)
+              case "$HEAD" in
+                feat/* | feature/* | fix/* | bugfix/* | hotfix/* | chore/* | docs/* | refactor/* | ci/* | test/*) ;;
+                *)
+                  echo "::error::Branches merged into dev must be named <type>/<slug>, one of feat feature fix bugfix hotfix chore docs refactor ci test. Got '$HEAD'."
+                  exit 1
+                  ;;
+              esac
+              ;;
+            *)
+              echo "Base branch '$BASE' is not an integration branch; stacked branches are unrestricted."
+              ;;
+          esac
+          echo "OK: $HEAD -> $BASE"
+
   changes:
     runs-on: ubuntu-latest
     outputs:
