@@ -182,6 +182,10 @@ statusLabel: string,
 currency: string,
 validUntil: string | null,
 total: number,
+discountType: string | null,
+discountValue: number | null,
+discountAmount: number,
+net: number,
 items: App.Quotes.Data.QuoteItemData[],
 };
 export type QuoteItemData = {
@@ -192,9 +196,14 @@ quantity: number,
 unitPrice: number | null,
 isIncluded: boolean,
 lineTotal: number,
+discountType: string | null,
+discountValue: number | null,
+discountAmount: number,
+netTotal: number,
 };
 }
 namespace Enums {
+export type DiscountType = 'percentage' | 'amount';
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'superseded' | 'expired';
 }
 }

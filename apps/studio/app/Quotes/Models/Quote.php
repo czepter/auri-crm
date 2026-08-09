@@ -5,7 +5,9 @@ namespace App\Quotes\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\Project;
+use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Support\DiscountCalculator;
 use Database\Factories\Quotes\QuoteFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -26,7 +28,7 @@ class Quote extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['project_id', 'status', 'currency', 'valid_until', 'total'];
+    protected $fillable = ['project_id', 'status', 'currency', 'valid_until', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net'];
 
     protected $attributes = ['status' => 'draft', 'currency' => 'EUR', 'total' => 0];
 
@@ -35,6 +37,7 @@ class Quote extends Model
         return [
             'status' => QuoteStatus::class,
             'valid_until' => 'date',
+            'discount_type' => DiscountType::class,
         ];
     }
 
@@ -49,16 +52,29 @@ class Quote extends Model
     }
 
     /**
-     * The only writer of total. Sums each item's line total fresh from the
+     * The only writer of total, discount_amount and net. Sums fresh from the
      * database rather than trusting a possibly-stale relation, so it is safe
-     * to call right after items()->createMany(). An included item's line
-     * total is zero (QuoteItem::lineTotal()), which is what keeps it out of
-     * this sum — the same rule Q-03 will read the discountable base from.
+     * to call right after items()->createMany().
+     *
+     * total stays the gross sum (an included item's line total is zero —
+     * QuoteItem::lineTotal() — which is what keeps it out of this sum).
+     * subtotal sums each item's discountedLineTotal() instead: lineTotal()
+     * less that line's own already-resolved discount, still excluding every
+     * included line for the same reason. The quote-level discount then
+     * resolves once against that subtotal (DiscountCalculator::resolve()),
+     * and net is subtotal minus that single resolved amount — the one
+     * rounding this whole computation performs, on the total, not per line.
      */
     public function recalculateTotal(): void
     {
+        $items = $this->items()->get();
+        $subtotal = $items->sum(fn (QuoteItem $item) => $item->discountedLineTotal());
+        $discountAmount = DiscountCalculator::resolve($subtotal, $this->discount_type, $this->discount_value);
+
         $this->update([
-            'total' => $this->items()->get()->sum(fn (QuoteItem $item) => $item->lineTotal()),
+            'total' => $items->sum(fn (QuoteItem $item) => $item->lineTotal()),
+            'discount_amount' => $discountAmount,
+            'net' => $subtotal - $discountAmount,
         ]);
     }
 

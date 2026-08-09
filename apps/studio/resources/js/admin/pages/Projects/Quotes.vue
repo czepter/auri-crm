@@ -4,7 +4,16 @@ import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectHeader from '@/admin/components/ProjectHeader.vue'
 import QuoteItemsEditor, { type QuoteItemRow } from '@/admin/components/QuoteItemsEditor.vue'
-import { centsToEuros, eurosToCents, formatEuros } from '@/admin/lib/money'
+import { basisPointsToPercent, centsToEuros, eurosToCents, formatEuros, percentToBasisPoints } from '@/admin/lib/money'
+
+/** discountType/discountValue -> the string a discount's own type expects (percent or euros), and back. */
+function discountValueToField(type: string | null, value: number | null): string {
+  return type === 'percentage' ? basisPointsToPercent(value) : centsToEuros(value)
+}
+
+function discountFieldToValue(type: string, value: string): number | null {
+  return type === 'percentage' ? percentToBasisPoints(value) : eurosToCents(value)
+}
 
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
@@ -32,12 +41,16 @@ const editForms = Object.fromEntries(
     quote.id,
     useForm({
       valid_until: quote.validUntil ?? '',
+      discountType: (quote.discountType ?? '') as '' | 'percentage' | 'amount',
+      discountValue: discountValueToField(quote.discountType, quote.discountValue),
       items: quote.items.map(
         (item): QuoteItemRow => ({
           title: item.title,
           description: item.description ?? '',
           quantity: item.quantity,
           unitPrice: centsToEuros(item.unitPrice),
+          discountType: (item.discountType ?? '') as '' | 'percentage' | 'amount',
+          discountValue: discountValueToField(item.discountType, item.discountValue),
         }),
       ),
     }),
@@ -47,12 +60,16 @@ const editForms = Object.fromEntries(
 function save(quoteId: string) {
   editForms[quoteId]
     .transform((data) => ({
-      ...data,
+      valid_until: data.valid_until,
+      discount_type: data.discountType || null,
+      discount_value: data.discountType ? discountFieldToValue(data.discountType, data.discountValue) : null,
       items: data.items.map((item: QuoteItemRow) => ({
         title: item.title,
         description: item.description || null,
         quantity: item.quantity,
         unit_price: eurosToCents(item.unitPrice),
+        discount_type: item.discountType || null,
+        discount_value: item.discountType ? discountFieldToValue(item.discountType, item.discountValue) : null,
       })),
     }))
     .patch(`/angebote/${quoteId}`, { preserveScroll: true })
@@ -115,10 +132,25 @@ function save(quoteId: string) {
           </td>
           <td>{{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.lineTotal) }}</td>
         </tr>
-        <tr class="sum">
+        <!-- No discount on this quote: the single sum row Q-02 already rendered, unchanged. -->
+        <tr v-if="!quote.discountAmount" class="sum">
           <td>{{ $t('quotes.total') }}</td>
           <td>{{ formatEuros(quote.total) }}</td>
         </tr>
+        <template v-else>
+          <tr class="sum">
+            <td>{{ $t('quotes.total') }}</td>
+            <td>{{ formatEuros(quote.total) }}</td>
+          </tr>
+          <tr class="tax">
+            <td>{{ $t('quotes.discount') }}</td>
+            <td>−{{ formatEuros(quote.discountAmount) }}</td>
+          </tr>
+          <tr class="total">
+            <td>{{ $t('quotes.net') }}</td>
+            <td>{{ formatEuros(quote.net) }}</td>
+          </tr>
+        </template>
       </table>
 
       <template v-if="header.canManageQuotes">
@@ -131,6 +163,30 @@ function save(quoteId: string) {
           <div class="fld">
             <label :for="`quote-valid-${quote.id}`">{{ $t('quotes.validUntil') }}</label>
             <input :id="`quote-valid-${quote.id}`" v-model="editForms[quote.id].valid_until" class="inp" type="date" />
+          </div>
+          <div class="fld">
+            <label :for="`quote-discount-type-${quote.id}`">{{ $t('quotes.discountType') }}</label>
+            <select :id="`quote-discount-type-${quote.id}`" v-model="editForms[quote.id].discountType" class="inp">
+              <option value="">{{ $t('quotes.discountNone') }}</option>
+              <option value="percentage">{{ $t('quotes.discountPercentage') }}</option>
+              <option value="amount">{{ $t('quotes.discountAmount') }}</option>
+            </select>
+          </div>
+          <div v-if="editForms[quote.id].discountType" class="fld">
+            <label :for="`quote-discount-value-${quote.id}`">
+              {{
+                editForms[quote.id].discountType === 'percentage'
+                  ? $t('quotes.discountValuePercent')
+                  : $t('quotes.discountValueEuros')
+              }}
+            </label>
+            <input
+              :id="`quote-discount-value-${quote.id}`"
+              v-model="editForms[quote.id].discountValue"
+              class="inp num"
+              type="text"
+              inputmode="decimal"
+            />
           </div>
           <div class="fld wide">
             <div class="formfoot" style="margin-top: 0">

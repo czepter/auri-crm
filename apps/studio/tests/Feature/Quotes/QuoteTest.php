@@ -6,9 +6,11 @@ use App\Crm\Models\Project;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Quotes\Actions\SeedQuoteFromPackage;
+use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -247,4 +249,214 @@ it('distinguishes a zero-priced line from an included line in the data sent to t
         ->toMatchArray(['unitPrice' => 0, 'isIncluded' => false])
         ->and($items->firstWhere('title', 'Enthalten'))
         ->toMatchArray(['unitPrice' => null, 'isIncluded' => true]);
+});
+
+// --- Q-03: line discount resolved to an amount at entry -----------------
+
+it('resolves a percentage line discount to an amount the moment the line is saved', function () {
+    // 10.50% (1050 basis points) of 10.101,00 € does not divide evenly into
+    // whole cents: 1.010.100 × 1050 = 1.060.605.000, /10000 = 106.060,5 —
+    // round-half-up (the one rounding this line performs) takes it to 106061.
+    $item = QuoteItem::factory()->for(Quote::factory())->create([
+        'quantity' => 1,
+        'unit_price' => 1010100,
+        'discount_type' => DiscountType::Percentage,
+        'discount_value' => 1050,
+    ]);
+
+    expect($item->fresh()->discount_amount)->toBe(106061)
+        ->and($item->fresh()->discountedLineTotal())->toBe(1010100 - 106061);
+});
+
+it('resolves an amount line discount straight through, capped at the line total', function () {
+    $item = QuoteItem::factory()->for(Quote::factory())->create([
+        'quantity' => 1,
+        'unit_price' => 5000,
+        'discount_type' => DiscountType::Amount,
+        'discount_value' => 20000,
+    ]);
+
+    expect($item->fresh()->discount_amount)->toBe(5000)
+        ->and($item->fresh()->discountedLineTotal())->toBe(0);
+});
+
+it('recomputes discount_amount on every save, never leaving it stale', function () {
+    $item = QuoteItem::factory()->for(Quote::factory())->create([
+        'quantity' => 1,
+        'unit_price' => 10000,
+        'discount_type' => DiscountType::Percentage,
+        'discount_value' => 1000,
+    ]);
+    expect($item->fresh()->discount_amount)->toBe(1000);
+
+    $item->update(['unit_price' => 20000]);
+
+    expect($item->fresh()->discount_amount)->toBe(2000);
+});
+
+it('keeps an included line at zero discount and zero net regardless of what discount fields carry', function () {
+    $item = QuoteItem::factory()->for(Quote::factory())->included()->create([
+        'discount_type' => DiscountType::Percentage,
+        'discount_value' => 5000,
+    ]);
+
+    expect($item->fresh()->discount_amount)->toBe(0)
+        ->and($item->fresh()->discountedLineTotal())->toBe(0);
+});
+
+// --- Q-03: quote-level discount, applied to the already-line-discounted sum ---
+
+it('applies the quote-level discount to the sum of the already-line-discounted lines, excluding included lines from both bases', function () {
+    $quote = Quote::factory()->create([
+        'discount_type' => DiscountType::Percentage,
+        'discount_value' => 500, // 5%
+    ]);
+    // Line 1: 1.000,00 € less a 10% line discount = 900,00 €.
+    QuoteItem::factory()->for($quote)->create([
+        'quantity' => 1,
+        'unit_price' => 100000,
+        'discount_type' => DiscountType::Percentage,
+        'discount_value' => 1000,
+    ]);
+    // Line 2: 500,00 € flat, no line discount.
+    QuoteItem::factory()->for($quote)->create(['quantity' => 1, 'unit_price' => 50000]);
+    // Included line: contributes nothing to either base.
+    QuoteItem::factory()->for($quote)->included()->create();
+
+    $quote->recalculateTotal();
+    $quote->refresh();
+
+    // Subtotal (already-line-discounted, included line excluded): 900 + 500 = 1.400,00 €.
+    // Quote discount: 5% of 140000 = 7000. Net: 140000 - 7000 = 133000.
+    expect($quote->total)->toBe(150000)
+        ->and($quote->discount_amount)->toBe(7000)
+        ->and($quote->net)->toBe(133000);
+});
+
+it('caps a quote-level discount at the subtotal so net never goes negative through the app path', function () {
+    $quote = Quote::factory()->create([
+        'discount_type' => DiscountType::Amount,
+        'discount_value' => 999999999,
+    ]);
+    QuoteItem::factory()->for($quote)->create(['quantity' => 1, 'unit_price' => 10000]);
+
+    $quote->recalculateTotal();
+
+    expect($quote->fresh()->discount_amount)->toBe(10000)
+        ->and($quote->fresh()->net)->toBe(0);
+});
+
+it('produces a total matching a hand calculation to the cent: a quote-level percentage discount over an already line-discounted sum', function () {
+    // Line: 101,01 € × 1, 10.50% line discount.
+    //   raw = 10101 × 1050 = 10.606.050 → round-half-up /10000 = 1061 → line net = 9040.
+    // Quote: 3.33% (333 bps) on the subtotal (9040, a single line's worth here).
+    //   raw = 9040 × 333 = 3.010.320 → round-half-up /10000 = 301 → net = 9040 - 301 = 8739.
+    $quote = Quote::factory()->create([
+        'discount_type' => DiscountType::Percentage,
+        'discount_value' => 333,
+    ]);
+    QuoteItem::factory()->for($quote)->create([
+        'quantity' => 1,
+        'unit_price' => 10101,
+        'discount_type' => DiscountType::Percentage,
+        'discount_value' => 1050,
+    ]);
+
+    $quote->recalculateTotal();
+
+    expect($quote->fresh()->net)->toBe(8739);
+});
+
+// --- Q-03: net >= 0 is a database constraint, not only an app one -------
+
+it('lets the database itself reject a negative net, bypassing app logic entirely via a raw model save', function () {
+    $quote = Quote::factory()->create();
+
+    expect(fn () => $quote->forceFill(['net' => -1])->saveQuietly())
+        ->toThrow(QueryException::class);
+});
+
+// --- Q-03: property test — total always equals an independent recomputation ---
+
+it('always equals an independent recomputation from the raw inputs, across many random combinations of discounts', function () {
+    // No property-testing plugin ships with this repo's Pest (composer.json
+    // has no faker/eris-style package for it) — a seeded, many-iteration
+    // randomized sweep is the parameterized equivalent without adding one.
+    mt_srand(20260809);
+
+    for ($run = 0; $run < 200; $run++) {
+        $lineCount = mt_rand(1, 4);
+        $lines = [];
+        $expectedSubtotal = 0;
+
+        for ($i = 0; $i < $lineCount; $i++) {
+            $included = mt_rand(0, 4) === 0; // occasionally include one
+            $quantity = mt_rand(1, 5);
+            $unitPrice = mt_rand(0, 500000);
+            $discountType = match (mt_rand(0, 2)) {
+                0 => null,
+                1 => DiscountType::Percentage,
+                2 => DiscountType::Amount,
+            };
+            $discountValue = match (true) {
+                $discountType === null => null,
+                $discountType === DiscountType::Percentage => mt_rand(0, 10000),
+                default => mt_rand(0, 600000),
+            };
+
+            $lineTotal = $included ? 0 : $quantity * $unitPrice;
+
+            // Independent recomputation of this line's own discount amount,
+            // expressed fresh here rather than by calling
+            // App\Quotes\Support\DiscountCalculator.
+            $lineDiscount = 0;
+            if (! $included && $discountType !== null && $discountValue > 0 && $lineTotal > 0) {
+                $lineDiscount = $discountType === DiscountType::Percentage
+                    ? intdiv($lineTotal * $discountValue + 5000, 10000)
+                    : $discountValue;
+                $lineDiscount = max(0, min($lineDiscount, $lineTotal));
+            }
+
+            $lines[] = compact('included', 'quantity', 'unitPrice', 'discountType', 'discountValue');
+            $expectedSubtotal += $lineTotal - $lineDiscount;
+        }
+
+        $quoteDiscountType = match (mt_rand(0, 2)) {
+            0 => null,
+            1 => DiscountType::Percentage,
+            2 => DiscountType::Amount,
+        };
+        $quoteDiscountValue = match (true) {
+            $quoteDiscountType === null => null,
+            $quoteDiscountType === DiscountType::Percentage => mt_rand(0, 10000),
+            default => mt_rand(0, 2000000),
+        };
+
+        $expectedQuoteDiscount = 0;
+        if ($quoteDiscountType !== null && $quoteDiscountValue > 0 && $expectedSubtotal > 0) {
+            $expectedQuoteDiscount = $quoteDiscountType === DiscountType::Percentage
+                ? intdiv($expectedSubtotal * $quoteDiscountValue + 5000, 10000)
+                : $quoteDiscountValue;
+            $expectedQuoteDiscount = max(0, min($expectedQuoteDiscount, $expectedSubtotal));
+        }
+        $expectedNet = $expectedSubtotal - $expectedQuoteDiscount;
+
+        $quote = Quote::factory()->create([
+            'discount_type' => $quoteDiscountType,
+            'discount_value' => $quoteDiscountValue,
+        ]);
+        foreach ($lines as $line) {
+            QuoteItem::factory()->for($quote)->create([
+                'quantity' => $line['quantity'],
+                'unit_price' => $line['included'] ? null : $line['unitPrice'],
+                'discount_type' => $line['discountType'],
+                'discount_value' => $line['discountValue'],
+            ]);
+        }
+
+        $quote->recalculateTotal();
+
+        expect($quote->fresh()->net)->toBe($expectedNet)
+            ->and($quote->fresh()->net)->toBeGreaterThanOrEqual(0);
+    }
 });

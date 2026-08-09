@@ -20,6 +20,13 @@ class QuoteItemData extends Data
         // the total are both facts the server already knows for certain.
         public bool $isIncluded,
         public int $lineTotal,
+        public ?string $discountType,
+        public ?int $discountValue,
+        public int $discountAmount,
+        // lineTotal less discountAmount — sent alongside both rather than
+        // left for the client to subtract, the same reasoning as lineTotal
+        // itself above.
+        public int $netTotal,
     ) {}
 
     public static function fromModel(QuoteItem $item): self
@@ -32,6 +39,10 @@ class QuoteItemData extends Data
             unitPrice: $item->unit_price,
             isIncluded: $item->isIncluded(),
             lineTotal: $item->lineTotal(),
+            discountType: $item->discount_type?->value,
+            discountValue: $item->discount_value,
+            discountAmount: $item->discount_amount,
+            netTotal: $item->discountedLineTotal(),
         );
     }
 }

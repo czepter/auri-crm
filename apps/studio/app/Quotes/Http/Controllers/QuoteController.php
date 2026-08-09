@@ -58,14 +58,22 @@ class QuoteController extends Controller
 
         $validated = $request->validate([
             'valid_until' => ['nullable', 'date'],
+            'discount_type' => ['nullable', 'in:percentage,amount', 'required_with:discount_value'],
+            'discount_value' => ['nullable', 'integer', 'min:1', 'required_with:discount_type'],
             'items' => ['array'],
             'items.*.title' => ['required', 'string', 'max:255'],
             'items.*.description' => ['nullable', 'string', 'max:2000'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
+            'items.*.discount_type' => ['nullable', 'in:percentage,amount', 'required_with:items.*.discount_value'],
+            'items.*.discount_value' => ['nullable', 'integer', 'min:1', 'required_with:items.*.discount_type'],
         ]);
 
-        $quote->update(['valid_until' => $validated['valid_until'] ?? null]);
+        $quote->update([
+            'valid_until' => $validated['valid_until'] ?? null,
+            'discount_type' => $validated['discount_type'] ?? null,
+            'discount_value' => $validated['discount_value'] ?? null,
+        ]);
 
         $quote->items()->delete();
         $quote->items()->createMany(
@@ -77,6 +85,8 @@ class QuoteController extends Controller
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'] ?? null,
                     'sort_order' => $index,
+                    'discount_type' => $item['discount_type'] ?? null,
+                    'discount_value' => $item['discount_value'] ?? null,
                 ])
                 ->all()
         );

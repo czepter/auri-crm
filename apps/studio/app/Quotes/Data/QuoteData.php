@@ -17,6 +17,10 @@ class QuoteData extends Data
         public string $currency,
         public ?string $validUntil,
         public int $total,
+        public ?string $discountType,
+        public ?int $discountValue,
+        public int $discountAmount,
+        public int $net,
         public array $items,
     ) {}
 
@@ -29,6 +33,10 @@ class QuoteData extends Data
             currency: $quote->currency,
             validUntil: $quote->valid_until?->format('Y-m-d'),
             total: $quote->total,
+            discountType: $quote->discount_type?->value,
+            discountValue: $quote->discount_value,
+            discountAmount: $quote->discount_amount,
+            net: $quote->net,
             items: $quote->items->map(QuoteItemData::fromModel(...))->all(),
         );
     }

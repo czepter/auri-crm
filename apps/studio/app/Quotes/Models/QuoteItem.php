@@ -4,6 +4,8 @@ namespace App\Quotes\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
+use App\Quotes\Enums\DiscountType;
+use App\Quotes\Support\DiscountCalculator;
 use Database\Factories\Quotes\QuoteItemFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -26,9 +28,29 @@ class QuoteItem extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['title', 'description', 'quantity', 'unit_price', 'sort_order'];
+    protected $fillable = ['title', 'description', 'quantity', 'unit_price', 'sort_order', 'discount_type', 'discount_value'];
 
     protected $attributes = ['quantity' => 1, 'sort_order' => 0];
+
+    protected function casts(): array
+    {
+        return [
+            'discount_type' => DiscountType::class,
+        ];
+    }
+
+    /**
+     * discount_amount is never mass-assigned — this is the only writer, so
+     * "resolved to an amount at entry" (Q-03) actually holds: it is
+     * recomputed from discount_type/discount_value every time the row is
+     * saved, never left stale and never re-derived a second way elsewhere.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $item) {
+            $item->discount_amount = DiscountCalculator::resolve($item->lineTotal(), $item->discount_type, $item->discount_value);
+        });
+    }
 
     public function quote(): BelongsTo
     {
@@ -49,6 +71,18 @@ class QuoteItem extends Model
     public function lineTotal(): int
     {
         return $this->isIncluded() ? 0 : $this->quantity * $this->unit_price;
+    }
+
+    /**
+     * lineTotal() less this line's own discount — the base
+     * Quote::recalculateTotal() sums into the quote-level discount's base.
+     * Zero for an included line, same as lineTotal(): discount_amount
+     * resolves to zero against a zero base, so nothing extra is needed to
+     * keep an included line out of the discount calculation too.
+     */
+    public function discountedLineTotal(): int
+    {
+        return $this->lineTotal() - $this->discount_amount;
     }
 
     protected static function newFactory(): Factory
