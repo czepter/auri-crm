@@ -1,5 +1,6 @@
 <?php
 
+use App\Gallery\Http\Controllers\AssetFavoriteController;
 use App\Gallery\Http\Controllers\GalleryImageController;
 use App\Gallery\Http\Controllers\GalleryReadController;
 use App\Http\Controllers\GuestIdentityController;
@@ -21,6 +22,17 @@ Route::get('/galleries/{gallery:public_id}', GalleryReadController::class)->name
 Route::get('/gallery-versions/{galleryVersion:public_id}/images/{key}', GalleryImageController::class)
     ->where('key', '.*')
     ->name('api.gallery-versions.images.show');
+
+// G-09: the lightbox's favorite toggle — see AssetFavoriteController's own
+// doc comment for the guest_id it trusts and why. The first browser-
+// originated call this surface serves (the two routes above are only ever
+// hit server-side, by Astro's own SSR fetch, or from a bare <img> src), so
+// it's also what config/cors.php exists for.
+Route::get('/gallery-versions/{galleryVersion:public_id}/favorites', [AssetFavoriteController::class, 'index'])
+    ->name('api.gallery-versions.favorites.index');
+Route::post('/gallery-versions/{galleryVersion:public_id}/favorites/{key}', [AssetFavoriteController::class, 'toggle'])
+    ->where('key', '.*')
+    ->name('api.gallery-versions.favorites.toggle');
 
 // M-05: the first api-surface consumer of user-facing business logic
 // (everything above is infrastructure). No `auth` middleware — Stripe is the

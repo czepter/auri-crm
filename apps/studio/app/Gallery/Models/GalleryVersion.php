@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * One exact, immutable publish of a Gallery — a snapshot of title/assets at
@@ -36,6 +37,12 @@ class GalleryVersion extends Model
     public function gallery(): BelongsTo
     {
         return $this->belongsTo(Gallery::class);
+    }
+
+    /** G-09: every guest mark against this version's assets, whichever guest made it. */
+    public function assetFavorites(): HasMany
+    {
+        return $this->hasMany(AssetFavorite::class);
     }
 
     protected static function newFactory(): Factory
