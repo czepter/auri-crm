@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Visus\Cuid2\Cuid2;
 
 /**
@@ -65,6 +66,11 @@ class Project extends Model
             'tenant_id' => config('tenancy.tenant_id'),
             'public_id' => (string) new Cuid2,
         ]);
+    }
+
+    public function lead(): HasOne
+    {
+        return $this->hasOne(Lead::class);
     }
 
     public function primaryContact(): ?Contact
