@@ -9,8 +9,10 @@
         "php": "^8.5",
         "inertiajs/inertia-laravel": "^3.3",
         "laravel/framework": "^13.0",
+        "laravel/horizon": "^5.48",
         "laravel/tinker": "^3.0",
         "pragmarx/google2fa": "^9.0",
+        "predis/predis": "^3.5",
         "spatie/laravel-data": "^4.23",
         "visus/cuid2": "^6.0"
     },
@@ -61,7 +63,7 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": []
+            "dont-discover": ["laravel/horizon"]
         }
     },
     "config": {
