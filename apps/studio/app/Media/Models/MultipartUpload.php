@@ -35,6 +35,7 @@ class MultipartUpload extends Model
     protected $fillable = [
         'public_id', 'gallery_id', 'key', 'upload_id', 'filename', 'file_size',
         'file_modified_at', 'part_size', 'status', 'completed_at', 'aborted_at',
+        'processed_at', 'asset_id',
     ];
 
     protected function casts(): array
@@ -46,12 +47,23 @@ class MultipartUpload extends Model
             'status' => MultipartUploadStatus::class,
             'completed_at' => 'datetime',
             'aborted_at' => 'datetime',
+            'processed_at' => 'datetime',
         ];
     }
 
     public function gallery(): BelongsTo
     {
         return $this->belongsTo(Gallery::class);
+    }
+
+    /**
+     * The asset G-03's App\Media\Actions\IngestCompletedUpload concluded
+     * this upload as — set on every conclusion, including a duplicate
+     * (checksum already known) and a Failed one, never only on success.
+     */
+    public function asset(): BelongsTo
+    {
+        return $this->belongsTo(Asset::class);
     }
 
     protected static function newFactory(): Factory
