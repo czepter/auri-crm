@@ -8,6 +8,7 @@ use App\Gallery\Http\Controllers\GalleryReadController;
 use App\Http\Controllers\GuestIdentityController;
 use App\Http\Controllers\HealthController;
 use App\Integration\Http\Controllers\ContactController;
+use App\Integration\Http\Controllers\CrmReadController;
 use App\Integration\Http\Controllers\InternalNoteController;
 use App\Integration\Http\Controllers\LeadController;
 use App\Payments\Http\Controllers\StripeWebhookController;
@@ -63,6 +64,29 @@ Route::post('/stripe/webhook', StripeWebhookController::class)->name('api.stripe
 // Nothing beyond identity lives here on purpose — see the controller's own
 // doc comment on why this stays the surface's only route until P6.
 Route::middleware('audience:api')->get('/whoami', GuestIdentityController::class)->name('api.whoami');
+
+// I-02: read-only pages over the CRM core for an ApiToken caller (I-01) —
+// see CrmReadController's own doc comment for the cursor-pagination and
+// `since=` shape every one of these shares. Each scope reuses the exact
+// Capability that already gates the matching admin screen (ContactPolicy,
+// LeadPolicy, ProjectPolicy) rather than inventing an API-only vocabulary —
+// a token can never read something no staff role could. Shoots and jobs
+// have no policy of their own; both hang off a project (ShootPolicy already
+// delegates to ProjectPolicy, and a Job is a project's booking), so both
+// reuse ViewAllProjects, the capability that already means "see every
+// project" rather than only the ones you are crewed on.
+Route::middleware('audience:api')->group(function () {
+    Route::middleware('scope:'.Capability::ManageContacts->value)
+        ->get('/contacts', [CrmReadController::class, 'contacts'])->name('api.contacts.index');
+    Route::middleware('scope:'.Capability::ViewAllProjects->value)
+        ->get('/projects', [CrmReadController::class, 'projects'])->name('api.projects.index');
+    Route::middleware('scope:'.Capability::ManageLeads->value)
+        ->get('/leads', [CrmReadController::class, 'leads'])->name('api.leads.index');
+    Route::middleware('scope:'.Capability::ViewAllProjects->value)
+        ->get('/shoots', [CrmReadController::class, 'shoots'])->name('api.shoots.index');
+    Route::middleware('scope:'.Capability::ViewAllProjects->value)
+        ->get('/jobs', [CrmReadController::class, 'jobs'])->name('api.jobs.index');
+});
 
 // I-03: the api surface's first write endpoints — a workflow runner with a
 // retry policy is the caller, so every one of these carries `idempotent`

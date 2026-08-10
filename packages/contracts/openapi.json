@@ -256,84 +256,391 @@
             }
         },
         "/contacts": {
-            "post": {
-                "operationId": "contacts.store",
+            "get": {
+                "operationId": "contacts.index",
                 "tags": [
-                    "Contact"
+                    "CrmRead"
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "name": {
-                                        "type": "string",
-                                        "maxLength": 255
-                                    },
-                                    "email": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "format": "email",
-                                        "maxLength": 255
-                                    },
-                                    "phone": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "maxLength": 64
-                                    }
-                                },
-                                "required": [
-                                    "name"
-                                ]
-                            }
-                        }
-                    }
-                },
                 "responses": {
-                    "201": {
+                    "200": {
                         "description": "",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
-                                        "id": {
-                                            "type": "string"
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
                                         },
-                                        "name": {
-                                            "type": "string"
-                                        },
-                                        "email": {
-                                            "type": [
-                                                "string",
-                                                "null"
-                                            ]
-                                        },
-                                        "phone": {
-                                            "type": [
-                                                "string",
-                                                "null"
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "next_page_url",
+                                                "prev_cursor",
+                                                "prev_page_url"
                                             ]
                                         }
                                     },
                                     "required": [
-                                        "id",
-                                        "name",
-                                        "email",
-                                        "phone"
+                                        "data",
+                                        "meta"
                                     ]
                                 }
                             }
                         }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/projects": {
+            "get": {
+                "operationId": "projects.index",
+                "tags": [
+                    "CrmRead"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "next_page_url",
+                                                "prev_cursor",
+                                                "prev_page_url"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/leads": {
+            "get": {
+                "operationId": "leads.index",
+                "tags": [
+                    "CrmRead"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "next_page_url",
+                                                "prev_cursor",
+                                                "prev_page_url"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/shoots": {
+            "get": {
+                "operationId": "shoots.index",
+                "tags": [
+                    "CrmRead"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "next_page_url",
+                                                "prev_cursor",
+                                                "prev_page_url"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/jobs": {
+            "get": {
+                "operationId": "jobs.index",
+                "tags": [
+                    "CrmRead"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "next_page_url",
+                                                "prev_cursor",
+                                                "prev_page_url"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -591,215 +898,6 @@
                 }
             }
         },
-        "/projects/{project}/notes": {
-            "post": {
-                "operationId": "projects.notes.store",
-                "tags": [
-                    "InternalNote"
-                ],
-                "parameters": [
-                    {
-                        "name": "project",
-                        "in": "path",
-                        "required": true,
-                        "description": "The project public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "body": {
-                                        "type": "string",
-                                        "maxLength": 5000
-                                    }
-                                },
-                                "required": [
-                                    "body"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {
-                                            "type": "string"
-                                        },
-                                        "body": {
-                                            "type": "string"
-                                        },
-                                        "writtenAt": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "required": [
-                                        "id",
-                                        "body",
-                                        "writtenAt"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            }
-        },
-        "/leads": {
-            "post": {
-                "operationId": "leads.store",
-                "tags": [
-                    "Lead"
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/CaptureInquiryData"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "project": {
-                                            "type": "object",
-                                            "properties": {
-                                                "id": {
-                                                    "type": "string"
-                                                },
-                                                "name": {
-                                                    "type": "string"
-                                                }
-                                            },
-                                            "required": [
-                                                "id",
-                                                "name"
-                                            ]
-                                        },
-                                        "lead": {
-                                            "type": "object",
-                                            "properties": {
-                                                "id": {
-                                                    "type": "string"
-                                                },
-                                                "stage": {
-                                                    "type": "string"
-                                                },
-                                                "source": {
-                                                    "type": "string"
-                                                }
-                                            },
-                                            "required": [
-                                                "id",
-                                                "stage",
-                                                "source"
-                                            ]
-                                        }
-                                    },
-                                    "required": [
-                                        "project",
-                                        "lead"
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/leads/{lead}/stage": {
-            "post": {
-                "operationId": "leads.stage.update",
-                "tags": [
-                    "Lead"
-                ],
-                "parameters": [
-                    {
-                        "name": "lead",
-                        "in": "path",
-                        "required": true,
-                        "description": "The lead public id",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "stage": {
-                                        "$ref": "#/components/schemas/LeadStage"
-                                    }
-                                },
-                                "required": [
-                                    "stage"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "id": {
-                                            "type": "string"
-                                        },
-                                        "stage": {
-                                            "type": "string"
-                                        }
-                                    },
-                                    "required": [
-                                        "id",
-                                        "stage"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    }
-                }
-            }
-        },
         "/stripe/webhook": {
             "post": {
                 "operationId": "stripe.webhook",
@@ -818,133 +916,6 @@
         }
     },
     "components": {
-        "schemas": {
-            "CaptureChannel": {
-                "type": "string",
-                "description": "How the inquiry reached the studio \u2014 a different question from LeadSource, which is how the client heard about it. A referral can arrive by phone or by mail, and neither fact can be recovered afterwards, so both are stored.\n",
-                "enum": [
-                    "phone",
-                    "email",
-                    "in_person",
-                    "other"
-                ],
-                "title": "CaptureChannel"
-            },
-            "CaptureInquiryData": {
-                "type": "object",
-                "description": "The capture form's payload. Six fields the studio fills plus the contact\nblock, matching mockup 03 \u2014 venue, guest count, further shoots and package\nare deliberately absent and belong to the project screen.\n\nNo #[TypeScript]: this is request input, and the frontend builds it rather\nthan receiving it.",
-                "properties": {
-                    "contact_id": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "description": "The CUID2 of an existing contact, or a name for a new one. One\nof the two is required; both together simply reuse the contact.",
-                        "minLength": 24,
-                        "maxLength": 24
-                    },
-                    "contact_name": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "maxLength": 255
-                    },
-                    "contact_email": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "email",
-                        "maxLength": 255
-                    },
-                    "contact_phone": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "maxLength": 64
-                    },
-                    "partner_name": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "maxLength": 255
-                    },
-                    "project_name": {
-                        "type": "string",
-                        "maxLength": 255
-                    },
-                    "type": {
-                        "$ref": "#/components/schemas/ProjectType"
-                    },
-                    "source": {
-                        "$ref": "#/components/schemas/LeadSource"
-                    },
-                    "captured_via": {
-                        "$ref": "#/components/schemas/CaptureChannel"
-                    },
-                    "date": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date",
-                        "description": "Nullable and never checked against existing bookings. The\navailability warning is advisory by design \u2014 see\nCheckDateAvailability."
-                    },
-                    "inquiry_text": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "maxLength": 10000
-                    }
-                },
-                "required": [
-                    "project_name",
-                    "type",
-                    "source",
-                    "captured_via"
-                ],
-                "title": "CaptureInquiryData"
-            },
-            "LeadSource": {
-                "type": "string",
-                "description": "How the client heard about the studio. A fixed list rather than free text: it is the one fact that cannot be read back out of the inquiry text later, and its entire value is being countable (mockup 03).\n",
-                "enum": [
-                    "referral",
-                    "website",
-                    "instagram",
-                    "wedding_fair",
-                    "other"
-                ],
-                "title": "LeadSource"
-            },
-            "LeadStage": {
-                "type": "string",
-                "description": "The sales funnel (vision \u00a77). quote_accepted is its own stage because \"they  * said yes, send the contract\" is the one funnel moment where the studio is the bottleneck, and folding it into quote_sent hides it. Lost is deliberately not a case here. It is reachable from any stage, and a seventh value would erase which stage the lead died in \u2014 the number the funnel is actually measured on. See Lead::$lost_at.\n",
-                "enum": [
-                    "new",
-                    "contacted",
-                    "quote_sent",
-                    "quote_accepted",
-                    "contract_sent",
-                    "booked"
-                ],
-                "title": "LeadStage"
-            },
-            "ProjectType": {
-                "type": "string",
-                "description": "Lives on Project, not Job. Mockup 03 collects it at capture, months before a Job exists and for the many leads that never convert at all, and a project's nature does not change when it does. Deviation from vision \u00a73.1, recorded in the P1b spec \u00a72.2. Shoot.kind stays the finer-grained field: a wedding project has shoots of kind engagement, wedding and reception.\n",
-                "enum": [
-                    "wedding",
-                    "portrait",
-                    "other"
-                ],
-                "title": "ProjectType"
-            }
-        },
         "responses": {
             "ModelNotFoundException": {
                 "description": "Not found",
