@@ -11,6 +11,7 @@
     "build": "tsc -p tsconfig.json",
     "pretest": "pnpm build",
     "test": "vitest run --passWithNoTests",
+    "prelint": "pnpm generate",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
