@@ -3,11 +3,14 @@
 namespace App\Http\Middleware;
 
 use App\Crm\Models\Contact;
+use App\Integration\Models\ApiToken;
+use App\Support\AuditLogger;
 use App\Support\Surface;
 use Closure;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -52,7 +55,51 @@ class EnsureAudience
 
         Auth::shouldUse($audience);
 
+        // I-01: an ApiToken is the api surface's second kind of credential,
+        // and unlike a guest token every call it makes is rate limited and
+        // audited — here rather than per route, so neither is something a
+        // future route author has to remember to wire up.
+        if ($audience === Surface::API && $guard->user() instanceof ApiToken) {
+            return $this->handleApiToken($guard->user(), $request, $next);
+        }
+
         return $next($request);
+    }
+
+    private function handleApiToken(ApiToken $token, Request $request, Closure $next): Response
+    {
+        if ($token->isRevoked()) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        $key = "api-token:{$token->public_id}";
+
+        if (RateLimiter::tooManyAttempts($key, $token->rate_limit_per_minute)) {
+            AuditLogger::record(
+                event: 'api_token.rate_limited',
+                context: ['route' => (string) $request->route()?->getName(), 'method' => $request->method()],
+                subject: $token->public_id,
+            );
+
+            return response()->json(['message' => 'Too Many Requests.'], 429)
+                ->header('Retry-After', (string) RateLimiter::availableIn($key));
+        }
+
+        RateLimiter::hit($key, 60);
+
+        $response = $next($request);
+
+        AuditLogger::record(
+            event: 'api_token.call',
+            context: [
+                'route' => (string) $request->route()?->getName(),
+                'method' => $request->method(),
+                'status' => $response->getStatusCode(),
+            ],
+            subject: $token->public_id,
+        );
+
+        return $response;
     }
 
     /**

@@ -3,12 +3,15 @@
 use App\Automation\Console\Commands\SeedDefaultAutomationRulesCommand;
 use App\Automation\Console\Commands\SweepDateOffsetAutomationRulesCommand;
 use App\Gallery\Console\Commands\ImportLegacyGalleriesCommand;
+use App\Http\Middleware\EnsureApiTokenScope;
 use App\Http\Middleware\EnsureAudience;
 use App\Http\Middleware\EnsureGalleryGate;
 use App\Http\Middleware\EnsurePortalCapability;
 use App\Http\Middleware\EnsurePortalMaintenanceClosure;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RequireConfirmedMfa;
+use App\Integration\Console\Commands\CreateApiTokenCommand;
+use App\Integration\Console\Commands\RevokeApiTokenCommand;
 use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
 use App\Migration\Console\Commands\CutoverRestoreCommand;
 use App\Migration\Console\Commands\CutoverSnapshotCommand;
@@ -40,6 +43,8 @@ return Application::configure(basePath: dirname(__DIR__))
         CutoverRestoreCommand::class,
         SweepDateOffsetAutomationRulesCommand::class,
         SeedDefaultAutomationRulesCommand::class,
+        CreateApiTokenCommand::class,
+        RevokeApiTokenCommand::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         // G-01a's one lifecycle rule (issue #50) — see the command's own
@@ -65,6 +70,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'mfa' => RequireConfirmedMfa::class,
             'audience' => EnsureAudience::class,
+            'scope' => EnsureApiTokenScope::class,
             'portal.maintenance' => EnsurePortalMaintenanceClosure::class,
             'portal.capability' => EnsurePortalCapability::class,
             'gallery.gate' => EnsureGalleryGate::class,
