@@ -20,3 +20,5 @@ export function createApiClient(
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
   })
 }
+
+export type ApiClient = ReturnType<typeof createApiClient>
