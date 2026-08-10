@@ -297,6 +297,46 @@ export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects
 export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' | 'assistant';
 }
 namespace Integration {
+namespace Data {
+export type ContactReadData = {
+id: string,
+name: string,
+email: string | null,
+phone: string | null,
+updatedAt: string,
+};
+export type JobReadData = {
+id: string,
+projectId: string,
+bookedAt: string,
+bookedVia: string,
+updatedAt: string,
+};
+export type LeadReadData = {
+id: string,
+projectId: string,
+source: string,
+stage: string,
+isLost: boolean,
+updatedAt: string,
+};
+export type ProjectReadData = {
+id: string,
+name: string,
+type: string,
+portalVisible: boolean,
+updatedAt: string,
+};
+export type ShootReadData = {
+id: string,
+projectId: string,
+kind: string,
+label: string | null,
+date: string | null,
+status: string,
+updatedAt: string,
+};
+}
 namespace Enums {
 export type WebhookDeliveryStatus = 'pending' | 'delivered' | 'failed';
 }
