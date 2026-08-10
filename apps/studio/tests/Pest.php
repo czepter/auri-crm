@@ -102,8 +102,34 @@ function useSurface(string $surface): void
         'session.cookie' => Surface::COOKIES[$surface],
     ]);
 
+    // Route::setRoutes() itself already keeps route()/URL:: working: it
+    // updates the container's 'routes' binding, and RoutingServiceProvider
+    // wires a 'routes'-rebinding listener (see its registerUrlGenerator())
+    // that calls the *existing* UrlGenerator's setRoutes() the moment that
+    // happens — safe, because 'url' is never forgotten here, only updated
+    // in place. (An earlier version of this helper called
+    // app()->forgetInstance('url') to work around what turned out to be a
+    // different problem below — that forced RoutingServiceProvider's
+    // extend() step to re-run and register a second, third, ... "routes"
+    // rebinding listener on every surface switch, and each one calling
+    // $app['url'] while 'url' was mid-(re)build recursed without end. A
+    // test that crosses surfaces more than once — Portal\RevocationTest's
+    // admin round-trip — hit a real stack overflow from it.)
     Route::setRoutes(new RouteCollection);
     Surface::registerRoutes();
+
+    // Route::name() only sets the route's own action['as'] — the
+    // collection's name lookup table is a separate index, normally built
+    // once by the framework's own boot-time pass over $file (Illuminate\
+    // Foundation\Configuration\ApplicationBuilder's routing bootstrapper)
+    // after every route in it is registered. Re-running Surface::
+    // registerRoutes() here happens after that pass already ran once, so
+    // nothing rebuilds the index for this surface's routes without this
+    // call — route()/URL:: would otherwise throw RouteNotFoundException
+    // even though the route is genuinely there (Route::has() and getByName()
+    // read the index; iterating the collection and calling getName() on
+    // each route does not).
+    Route::getRoutes()->refreshNameLookups();
 
     Auth::shouldUse(match ($surface) {
         Surface::PORTAL => 'portal',

@@ -174,11 +174,41 @@ any of that I/O, how members group into volumes so none would cross 3.9GiB
 split) — pure grouping logic, unit-tested in isolation with a small injected
 threshold rather than a multi-gigabyte fixture.
 
-## Delivery
+## Delivery (G-11)
 
 Clients never receive a storage path or a presigned URL — the application
-proxies every download (G-11, #60 carries what that costs). This story does
-not build that endpoint.
+proxies every download. `App\Gallery\Http\Controllers\DownloadZipPartController`
+(routes/portal.php, `gallery.gate:download` + `signed`) is the only way a
+built `ZipBuildPart`'s bytes leave the `s3` disk, same rule
+`GalleryImageController` already applies to image bytes above.
+
+`Storage::download()` is deliberately not used: it never looks at the
+request's own `Range` header, so a resumed multi-gigabyte transfer through it
+would silently restart from byte zero rather than resume. The controller
+reaches past Flysystem to the raw `Aws\S3\S3Client` instead — the same seam
+`MultipartUploadGateway` already opened for the write side — and issues a
+ranged `GetObject` for exactly the bytes a `Range` header asks for, honouring
+one at a time (`App\Media\Support\ByteRange`, unit-tested in isolation the
+same way `ZipVolumePlanner` is) and answering `206 Partial Content` with a
+correct `Content-Range`, or a plain `200` with `Accept-Ranges: bytes` when
+there is none.
+
+`App\Media\Models\DownloadEvent` (tenant-scoped, `HasPublicId`) is the audit
+trail: one row per request the controller serves, whether fresh or a resumed
+Range request. What's actually bounded is never the row count but
+`DownloadEvent::requesterDayCount()` — distinct (requester_identifier,
+request_date) pairs — so three reconnects resuming the same download the
+same day cost one requester-day, not three. The link itself is a
+`URL::temporarySignedRoute()` good for 24 hours, with the requester's own
+identifier (the same bare-string, no-account shape G-09's `guest_identifier`
+already established) riding in the signed path rather than an ordinary query
+parameter, so tampering with it invalidates the signature rather than merely
+lying about who is asking.
+
+The trigger that requests a `ZipBuild`, waits for it to go Ready and emails
+mockup 12's link is out of scope here: no earlier story sends a "your
+download is ready" notification, and this story's acceptance is entirely
+about the serving/audit mechanics once a signed link exists.
 
 ## Backups
 
