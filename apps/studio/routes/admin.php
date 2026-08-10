@@ -5,6 +5,7 @@ use App\Contracts\Http\Controllers\ContractController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
 use App\Crm\Http\Controllers\ContactController;
+use App\Crm\Http\Controllers\ContactDsgvoController;
 use App\Crm\Http\Controllers\ContactSearchController;
 use App\Crm\Http\Controllers\CrewController;
 use App\Crm\Http\Controllers\FormInstanceController;
@@ -120,6 +121,15 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/kontakte/{contact}', [ContactController::class, 'update'])->name('contacts.update');
         Route::post('/kontakte/{contact}/portal-zugang/widerruf', [ContactController::class, 'revokePortalAccess'])
             ->name('contacts.portal-access.revoke');
+
+        // X-04: DSGVO subject-access export and deletion. Owner-only
+        // (Capability::ManageDsgvo) — see ContactDsgvoController's own
+        // doc comment.
+        Route::get('/kontakte/{contact}/dsgvo/export', [ContactDsgvoController::class, 'export'])
+            ->name('contacts.dsgvo.export');
+        Route::post('/kontakte/{contact}/dsgvo/loeschen', [ContactDsgvoController::class, 'erase'])
+            ->name('contacts.dsgvo.erase');
+
         Route::get('/verfuegbarkeit', AvailabilityController::class)->name('availability.show');
 
         // /pakete/neu stays above /pakete/{package} for the same reason

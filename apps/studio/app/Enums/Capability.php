@@ -102,6 +102,14 @@ enum Capability: string
      */
     case ManageFormTemplates = 'manage_form_templates';
 
+    /**
+     * X-04: export or erase everything the studio holds about one contact.
+     * Owner-only like ManageStaff — this is not reversible work an audit
+     * trail can undo, it is the mechanism that answers a legal deadline, so
+     * the same narrowness applies.
+     */
+    case ManageDsgvo = 'manage_dsgvo';
+
     /** N-04's consent screen is the one place a capability is shown to a human rather than checked in code. */
     public function label(): string
     {
@@ -122,6 +130,7 @@ enum Capability: string
             self::ManageContracts => 'Verträge verwalten',
             self::ManageSettings => 'Einstellungen verwalten',
             self::ManageFormTemplates => 'Fragebögen verwalten',
+            self::ManageDsgvo => 'DSGVO-Anfragen bearbeiten',
         };
     }
 }
