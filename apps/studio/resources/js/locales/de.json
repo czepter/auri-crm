@@ -53,6 +53,7 @@
     "mainDate": "Haupttermin",
     "conflict": "Belegt — {project}{venue}. Speichern ist trotzdem möglich; der Hinweis bleibt an der Anfrage.",
     "conflictClosure": "Studio geschlossen — {label}. Speichern ist trotzdem möglich; der Hinweis bleibt an der Anfrage.",
+    "conflictAbsence": "Abwesend — {label}. Speichern ist trotzdem möglich; der Hinweis bleibt an der Anfrage.",
     "inquiryText": "Anfragetext",
     "inquiryTextHint": "Ort, Gästezahl, weitere Shootings und Paket später im Projekt.",
     "submit": "Anfrage anlegen"
@@ -65,6 +66,7 @@
     "advance": "Weiter",
     "conflict": "Haupttermin belegt — {project}",
     "conflictClosure": "Studio geschlossen — {label}",
+    "conflictAbsence": "Abwesend — {label}",
     "daysInStage": "gestern | vor {count} Tagen",
     "today": "heute",
     "stale": "{count} Tage still",
@@ -132,6 +134,7 @@
     "cancelled": "Abgesagt — {reason}",
     "assignCrew": "Crew hinzufügen …",
     "unassign": "entfernen",
+    "crewAbsence": "Abwesend — {label}. Zuweisung bleibt möglich.",
     "timelineEdit": "Ablauf bearbeiten",
     "timelineDone": "Fertig",
     "timelineTime": "Uhrzeit",
@@ -239,6 +242,19 @@
     "revokeConfirm": "Einladung für {email} zurückziehen? Der Link hört sofort auf zu funktionieren.",
     "mfaOn": "Zwei Faktoren",
     "mfaPending": "Einrichtung offen"
+  },
+  "absences": {
+    "title": "Abwesenheiten",
+    "hint": "Zeiträume, in denen jemand nicht verfügbar ist — erscheinen als Hinweis bei Anfragen, auf dem Board und bei der Crew-Zuweisung, blockieren aber nichts.",
+    "person": "Person",
+    "myself": "Ich selbst",
+    "category": "Art",
+    "startsOn": "Von",
+    "endsOn": "Bis",
+    "add": "Abwesenheit eintragen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "empty": "Noch keine Abwesenheiten hinterlegt."
   },
   "packages": {
     "title": "Pakete",

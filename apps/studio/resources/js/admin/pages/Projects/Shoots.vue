@@ -231,6 +231,17 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
             </div>
           </div>
 
+          <!-- T-10: CheckDateAvailability's third source, already narrowed by
+               ProjectController::shootsOf() to this shoot's date and this
+               shoot's own crew. Warns, same as every other conflict that
+               action produces — the assignment above stays exactly as
+               possible whether or not this shows. -->
+          <div v-if="shoot.crewConflicts.length" style="margin-top: var(--s3)">
+            <div v-for="conflict in shoot.crewConflicts" :key="conflict.personId ?? undefined" class="flag">
+              {{ $t('project.crewAbsence', { label: conflict.label }) }}
+            </div>
+          </div>
+
           <div v-if="header.canManageShoots || header.canManageCrew" class="formfoot" style="margin-top: var(--s3); gap: var(--s3)">
             <select
               v-if="header.canManageShoots"

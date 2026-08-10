@@ -2,7 +2,11 @@
 
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
+use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Project;
+use App\Crm\Models\Shoot;
+use App\Models\Absence;
+use App\Models\User;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -54,9 +58,9 @@ it('lists every visible project in the switcher for a multi-project contact', fu
 
     expect($projects)->toHaveCount(2)
         ->and(collect($projects)->pluck('id')->all())
-            ->toEqualCanonicalizing([$wedding->public_id, $portrait->public_id])
+        ->toEqualCanonicalizing([$wedding->public_id, $portrait->public_id])
         ->and(collect($projects)->pluck('name')->all())
-            ->toContain('Meier & Kowalski', 'Familie Voss');
+        ->toContain('Meier & Kowalski', 'Familie Voss');
 });
 
 it('excludes a project the studio has not made portal_visible from the switcher', function () {
@@ -160,4 +164,38 @@ it('offers the switcher link on a project screen only when there is more than on
     $second->attachContact($contact, ProjectContactRole::Primary);
 
     expect(props("/projekte/{$project->public_id}")['showSwitcher'])->toBeTrue();
+});
+
+/**
+ * T-10's portal-isolation requirement, proven against the real response
+ * rather than by inspecting the controller: seed an absence for someone
+ * crewed on this project's own shoot, then hash the whole JSON body for any
+ * trace of it — the category, the date range, or the person's name — not
+ * only the crew list ProjectController already never sends.
+ */
+it('never lets an absence category or date reach the portal, even for a shoot crewed by someone away on it', function () {
+    $contact = Contact::factory()->create();
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $project->attachContact($contact, ProjectContactRole::Primary);
+    $shoot = Shoot::factory()->for($project)->on('2026-09-03')->create();
+
+    $away = User::factory()->create(['name' => 'Nina Sturm']);
+    CrewAssignment::factory()->for($shoot)->for($away)->create();
+    Absence::factory()->for($away)->spanning('2026-09-01', '2026-09-07')->create(['category' => 'holiday']);
+
+    $this->actingAs($contact, 'portal');
+
+    $body = $this->get("/projekte/{$project->public_id}")->assertOk()->getContent();
+
+    expect($body)->not->toContain('Nina Sturm')
+        ->not->toContain('holiday')
+        ->not->toContain('Urlaub')
+        ->not->toContain('2026-09-01')
+        ->not->toContain('2026-09-07');
+
+    // Structural, not just textual: the shoot the portal does show carries
+    // none of the keys an absence or a crew list would need.
+    $shootProps = props("/projekte/{$project->public_id}")['project']['shoots'][0];
+    expect($shootProps)->not->toHaveKey('crew')
+        ->not->toHaveKey('crewConflicts');
 });

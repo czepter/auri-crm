@@ -4,6 +4,7 @@ namespace App\Crm\Http\Controllers;
 
 use App\Catalog\Models\Package;
 use App\Crm\Actions\BookProject;
+use App\Crm\Actions\CheckDateAvailability;
 use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Data\FormInstanceData;
 use App\Crm\Data\InternalNoteData;
@@ -14,6 +15,7 @@ use App\Crm\Enums\CrewRole;
 use App\Crm\Enums\FormFieldType;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Project;
+use App\Crm\Models\Shoot;
 use App\Data\StaffProfileData;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
@@ -27,7 +29,10 @@ use Inertia\Response;
 
 class ProjectController extends Controller
 {
-    public function __construct(private readonly DeriveProjectPosition $position) {}
+    public function __construct(
+        private readonly DeriveProjectPosition $position,
+        private readonly CheckDateAvailability $availability,
+    ) {}
 
     public function show(Project $project): Response
     {
@@ -174,15 +179,36 @@ class ProjectController extends Controller
     /**
      * Chronological, undated last. sort_order breaks the tie for two shoots on
      * one day — the ceremony before the reception, whatever the studio decided.
+     *
+     * T-10: one CheckDateAvailability::forDates() call for every shoot's date
+     * at once — the same "one query for the whole screen" shape LeadBoardController
+     * already uses — narrowed per shoot to the absence conflicts naming
+     * someone actually crewed on it, which is what makes this S-02's warning
+     * rather than a studio-wide notice repeated on every shoot.
      */
-    private function shootsOf(Project $project)
+    private function shootsOf(Project $project): array
     {
-        return $project->shoots()
+        $shoots = $project->shoots()
             ->with(['crew.user', 'timeline'])
             ->reorder()
             ->orderByRaw('date is null, date')
             ->orderBy('sort_order')
-            ->get()
-            ->map(ShootData::fromShoot(...));
+            ->get();
+
+        $dates = $shoots->pluck('date')->filter()->map(fn ($date) => $date->format('Y-m-d'))
+            ->unique()->values()->all();
+        $conflictsByDate = $this->availability->forDates($dates);
+
+        return $shoots->map(function (Shoot $shoot) use ($conflictsByDate) {
+            $date = $shoot->date?->format('Y-m-d');
+            $crewIds = $shoot->crew->pluck('user.public_id')->all();
+
+            $conflicts = collect($conflictsByDate[$date] ?? [])
+                ->filter(fn ($conflict) => $conflict->source === 'absence' && in_array($conflict->personId, $crewIds, true))
+                ->values()
+                ->all();
+
+            return ShootData::fromShoot($shoot, $conflicts);
+        })->all();
     }
 }

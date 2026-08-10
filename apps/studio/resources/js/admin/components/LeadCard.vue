@@ -35,11 +35,17 @@ function advance() {
       <span class="q">{{ card.source }}</span>
     </div>
 
-    <div v-for="conflict in card.conflicts" :key="conflict.projectId ?? conflict.label ?? undefined" class="flag">
+    <div
+      v-for="conflict in card.conflicts"
+      :key="conflict.projectId ?? conflict.personId ?? conflict.label ?? undefined"
+      class="flag"
+    >
       {{
         conflict.source === 'closure'
           ? $t('board.conflictClosure', { label: conflict.label })
-          : $t('board.conflict', { project: conflict.projectName })
+          : conflict.source === 'absence'
+            ? $t('board.conflictAbsence', { label: conflict.label })
+            : $t('board.conflict', { project: conflict.projectName })
       }}
     </div>
 
