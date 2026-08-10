@@ -47,3 +47,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-avif \
     && docker-php-ext-install -j"$(nproc)" pdo_pgsql bcmath gd intl pcntl exif \
     && rm -rf /var/lib/apt/lists/*
+
+# F-11: release tracking for GlitchTip (config/sentry.php's SENTRY_RELEASE)
+# from the git SHA at build time, so an error is attributable to the deploy
+# that shipped it. Empty by default — `docker compose build` never passes
+# GIT_SHA locally, matching SENTRY_LARAVEL_DSN's own empty-by-default rule
+# (docker-compose.yml). A real deploy pipeline sets it with
+# `--build-arg GIT_SHA=$(git rev-parse --short HEAD)`.
+ARG GIT_SHA=
+ENV SENTRY_RELEASE=${GIT_SHA}
