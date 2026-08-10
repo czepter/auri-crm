@@ -7,7 +7,10 @@ use App\Gallery\Http\Controllers\GalleryImageController;
 use App\Gallery\Http\Controllers\GalleryReadController;
 use App\Http\Controllers\GuestIdentityController;
 use App\Http\Controllers\HealthController;
+use App\Integration\Http\Controllers\ContactController;
 use App\Integration\Http\Controllers\CrmReadController;
+use App\Integration\Http\Controllers\InternalNoteController;
+use App\Integration\Http\Controllers\LeadController;
 use App\Payments\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -84,3 +87,27 @@ Route::middleware('audience:api')->group(function () {
     Route::middleware('scope:'.Capability::ViewAllProjects->value)
         ->get('/jobs', [CrmReadController::class, 'jobs'])->name('api.jobs.index');
 });
+
+// I-03: the api surface's first write endpoints — a workflow runner with a
+// retry policy is the caller, so every one of these carries `idempotent`
+// (App\Http\Middleware\EnsureIdempotentWrite) after `scope:`, in that order:
+// a caller with the wrong scope must never even claim an idempotency key. All
+// four reuse the exact Action or model call the matching admin-surface
+// controller already makes — see each controller's own doc comment for which
+// one and why an ApiToken can still make it without a staff User to attribute
+// it to.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageContacts->value, 'idempotent'])
+    ->post('/contacts', [ContactController::class, 'store'])
+    ->name('api.contacts.store');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
+    ->post('/leads', [LeadController::class, 'store'])
+    ->name('api.leads.store');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
+    ->post('/leads/{lead:public_id}/stage', [LeadController::class, 'advanceStage'])
+    ->name('api.leads.stage.update');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'idempotent'])
+    ->post('/projects/{project:public_id}/notes', [InternalNoteController::class, 'store'])
+    ->name('api.projects.notes.store');

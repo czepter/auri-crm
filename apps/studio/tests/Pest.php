@@ -166,6 +166,18 @@ function staffMember(?StaffRole $role = null): User
 }
 
 /**
+ * A Sanctum plain-text token for anything HasApiTokens — an ApiToken (I-01)
+ * or a Contact's own guest token (G-01). Several api-surface suites need one
+ * now, and a global function declared inside one test file collides the
+ * moment a second file declares the same name — see useSurface()'s own note
+ * just above for why this lives here rather than there.
+ */
+function bearerToken(mixed $tokenable): string
+{
+    return $tokenable->createToken('t')->plainTextToken;
+}
+
+/**
  * A booked project with a primary contact — the fixture RenderContractJob's
  * merge fields resolve against (project.name, contact.name, job.bookedAt).
  * Lives here rather than in whichever Contracts test file happened to

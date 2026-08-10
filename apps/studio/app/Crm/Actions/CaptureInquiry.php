@@ -18,16 +18,21 @@ use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Manual entry is P1's only capture path, so every Project, Lead, Contact and
- * Shoot in the system is born here.
+ * Manual entry was P1's only capture path; I-03's "capture lead" endpoint is
+ * the second, so every Project, Lead, Contact and Shoot in the system is born
+ * here either way.
  *
  * One transaction: a half-created inquiry — a project with no lead, a lead with
  * no shoot — is worse than a rejected one, because nothing downstream expects
  * the gap and nobody would go looking for it.
+ *
+ * $actor is nullable for the api surface: an ApiToken (I-01) is not a User,
+ * so a lead captured through the api carries no captured_by_id — see the
+ * migration that dropped that column's NOT NULL for the same reason.
  */
 class CaptureInquiry
 {
-    public function __invoke(CaptureInquiryData $data, User $actor): Project
+    public function __invoke(CaptureInquiryData $data, ?User $actor): Project
     {
         return DB::transaction(function () use ($data, $actor) {
             $contact = $this->resolveContact($data);
@@ -59,7 +64,7 @@ class CaptureInquiry
                 'stage_entered_at' => now(),
                 'inquiry_text' => $data->inquiry_text,
                 'captured_via' => $data->captured_via,
-                'captured_by_id' => $actor->id,
+                'captured_by_id' => $actor?->id,
             ]);
 
             // Exactly one shoot, and it is the primary one. Mockup 03 collects
