@@ -6,9 +6,11 @@ use App\Gallery\Actions\ConsumeGalleryEmailVerification;
 use App\Gallery\Actions\RequestGalleryEmailVerification;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Support\GalleryAccessSession;
+use App\Gallery\Support\GallerySecretGate;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -32,24 +34,56 @@ class GalleryDownloadController extends Controller
         ]);
     }
 
-    public function storePin(Request $request, Gallery $gallery, GalleryAccessSession $claims): RedirectResponse
+    /**
+     * $gallery arrives as the raw public_id rather than an implicit-bound
+     * model, same reasoning as GalleryPasswordController::store: a 404 from
+     * route-model binding would tell a PIN-guesser "that id doesn't exist"
+     * before this method — or EnsureGalleryGate — ever ran. EnsureGalleryGate
+     * lets a non-Gallery route value straight through for the same reason;
+     * see its own note.
+     */
+    public function storePin(Request $request, string $gallery, GalleryAccessSession $claims, GallerySecretGate $gate): RedirectResponse
     {
-        if ($gallery->requiresDownloadPin()) {
+        $model = Gallery::findByPublicId($gallery);
+        $requiresPin = $model === null || $model->requiresDownloadPin();
+
+        if ($requiresPin) {
             $validated = $request->validate(['pin' => ['required', 'string']]);
 
-            if (! $gallery->checkDownloadPin($validated['pin'])) {
+            $granted = $gate->attempt($request->ip(), $gallery, $model?->download_pin_hash, $validated['pin']);
+
+            if (! $granted || $model === null) {
                 return back()->withErrors(['pin' => __('gallery.pin_wrong')]);
             }
         }
 
-        $claims->grant($gallery, GalleryAccessSession::DOWNLOAD, $gallery->download_pin_version);
+        $claims->grant($model, GalleryAccessSession::DOWNLOAD, $model->download_pin_version);
 
-        return redirect("/galerien/{$gallery->public_id}/download");
+        return redirect("/galerien/{$model->public_id}/download");
     }
 
+    /**
+     * Rate limited the same two ways as the password/PIN checks (G-07),
+     * even though there is no wrong-vs-right secret here to guess — see
+     * RequestGalleryEmailVerification's own docblock for why this always
+     * sends. Without a per-gallery cap, one gallery link would let anyone
+     * spam an unlimited number of inboxes through the studio's own mail
+     * sender; without a per-IP cap, one visitor could do the same across
+     * every gallery it can reach.
+     */
     public function requestEmail(Request $request, Gallery $gallery, RequestGalleryEmailVerification $issue): RedirectResponse
     {
         $validated = $request->validate(['email' => ['required', 'email', 'max:255']]);
+
+        $ipKey = 'gallery-email-ip:'.($request->ip() ?? 'unknown');
+        $galleryKey = 'gallery-email-gallery:'.$gallery->public_id;
+
+        if (RateLimiter::tooManyAttempts($ipKey, 10) || RateLimiter::tooManyAttempts($galleryKey, 30)) {
+            return back()->with('status', __('gallery.email_link_sent'));
+        }
+
+        RateLimiter::hit($ipKey, 300);
+        RateLimiter::hit($galleryKey, 300);
 
         $issue($gallery, $validated['email']);
 
