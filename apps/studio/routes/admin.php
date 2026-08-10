@@ -27,6 +27,8 @@ use App\Http\Controllers\Staff\DevLoginController;
 use App\Http\Controllers\Staff\InvitationController;
 use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
+use App\Http\Controllers\Staff\OAuthAuthorizationController;
+use App\Http\Controllers\Staff\OAuthTokenController;
 use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\SessionController;
 use App\Media\Http\Controllers\FailedAssetController;
@@ -58,6 +60,14 @@ if (app()->environment('local')) {
 // omission.
 Route::get('/kalender/{token}/shootings.ics', [CalendarController::class, 'feed'])
     ->name('calendar.feed');
+
+// N-04: the MCP HTTP transport's token exchange. Called by the MCP client
+// directly, off-browser — no staff cookie, so no `audience:staff`, and no
+// CSRF token, so this path is named in bootstrap/app.php's
+// validateCsrfTokens(except:) list. The single-use authorization code and
+// its PKCE verifier are the credential; see OAuthTokenController's own doc
+// comment for why that is enough without a client_secret.
+Route::post('/oauth/token', [OAuthTokenController::class, 'store'])->name('oauth.token');
 
 // Staff surface. Session-authenticated, Inertia-rendered, never public.
 Route::middleware('guest:staff')->group(function () {
@@ -92,6 +102,12 @@ Route::middleware('audience:staff')->group(function () {
 
     Route::middleware('mfa')->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
+
+        // N-04: the consent screen — gated behind confirmed MFA like every
+        // other sensitive staff screen below, since approving this hands out
+        // a token scoped to this person's own capabilities.
+        Route::get('/oauth/authorize', [OAuthAuthorizationController::class, 'create'])->name('oauth.authorize');
+        Route::post('/oauth/authorize', [OAuthAuthorizationController::class, 'store'])->name('oauth.authorize.store');
 
         // German paths, English route names: the UI reads in one language and
         // the code reads in the other, and neither has to translate the other.

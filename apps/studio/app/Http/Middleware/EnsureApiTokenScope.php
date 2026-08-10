@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Enums\Capability;
 use App\Integration\Models\ApiToken;
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
@@ -14,9 +15,15 @@ use Symfony\Component\HttpFoundation\Response;
  * already proves the bearer authenticated and, for an ApiToken specifically,
  * already rate-limits and audits the call — this middleware is the one that
  * knows which Capability a given route requires and refuses a token that
- * was never scoped to it. Only ApiToken callers carry a scope at all; a
- * guest token minted on a Contact (G-01) never reaches a route that
- * declares one.
+ * was never scoped to it.
+ *
+ * Two kinds of principal carry a scope: an ApiToken (I-01), checked against
+ * its own `scopes` column, or — N-04 — a staff User authenticated by their
+ * own OAuth token, checked against that token's Sanctum abilities instead
+ * (tokenCan(), not ApiToken::allows(): the grant lives on the token
+ * OAuthAuthorizationController minted, not on the user row). A guest token
+ * minted on a Contact (G-01) never reaches a route that declares a scope at
+ * all, so it falls through to the default and is refused.
  */
 class EnsureApiTokenScope
 {
@@ -27,7 +34,13 @@ class EnsureApiTokenScope
 
         $principal = $request->user('api');
 
-        if (! $principal instanceof ApiToken || ! $principal->allows($required)) {
+        $allowed = match (true) {
+            $principal instanceof ApiToken => $principal->allows($required),
+            $principal instanceof User => $principal->tokenCan($required->value),
+            default => false,
+        };
+
+        if (! $allowed) {
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 

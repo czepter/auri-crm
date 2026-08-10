@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
-use App\Integration\Models\ApiToken;
 use App\Integration\Models\IdempotencyKey;
 use Closure;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,14 +16,18 @@ use Symfony\Component\HttpFoundation\Response;
  * different answer than the original call got.
  *
  * The idempotency row is claimed FIRST, by a plain insert that
- * idempotency_keys' own unique constraint on (tenant_id, api_token_id,
- * idempotency_key) guards — the route only ever runs once that claim
- * succeeds, so two overlapping callers racing the same key can only ever
- * produce one write, never two. See the migration's own docblock, and
- * App\Automation\Actions\FireAutomationRule for the same pattern used for a
- * fire-and-forget send rather than an HTTP response that has to be replayed
- * verbatim — this middleware additionally caches the response body, which is
- * the part a replay actually needs back.
+ * idempotency_keys' own unique constraint on (tenant_id, principal_type,
+ * principal_id, idempotency_key) guards — the route only ever runs once
+ * that claim succeeds, so two overlapping callers racing the same key can
+ * only ever produce one write, never two. The principal is whichever kind
+ * of bearer authenticated the call — an ApiToken (I-01) or, since N-04, a
+ * staff User authenticated by their own OAuth token — so two different
+ * principals reusing the same key never collide with each other (see
+ * ApiIdempotencyTest's "scopes idempotency keys per token" case). See the
+ * migration's own docblock, and App\Automation\Actions\FireAutomationRule
+ * for the same pattern used for a fire-and-forget send rather than an HTTP
+ * response that has to be replayed verbatim — this middleware additionally
+ * caches the response body, which is the part a replay actually needs back.
  */
 class EnsureIdempotentWrite
 {
@@ -35,12 +39,13 @@ class EnsureIdempotentWrite
             return response()->json(['message' => 'The Idempotency-Key header is required.'], 400);
         }
 
-        /** @var ApiToken $token */
-        $token = $request->user('api');
+        /** @var Model $principal */
+        $principal = $request->user('api');
         $fingerprint = hash('sha256', $request->method().'|'.$request->path().'|'.$request->getContent());
 
         $existing = IdempotencyKey::query()
-            ->where('api_token_id', $token->id)
+            ->where('principal_type', $principal::class)
+            ->where('principal_id', $principal->getKey())
             ->where('idempotency_key', $key)
             ->first();
 
@@ -50,7 +55,8 @@ class EnsureIdempotentWrite
 
         try {
             $claim = IdempotencyKey::create([
-                'api_token_id' => $token->id,
+                'principal_type' => $principal::class,
+                'principal_id' => $principal->getKey(),
                 'idempotency_key' => $key,
                 'request_fingerprint' => $fingerprint,
             ]);
@@ -58,7 +64,8 @@ class EnsureIdempotentWrite
             // Lost the race: another caller claimed this key first, between
             // the lookup above and this insert.
             $existing = IdempotencyKey::query()
-                ->where('api_token_id', $token->id)
+                ->where('principal_type', $principal::class)
+                ->where('principal_id', $principal->getKey())
                 ->where('idempotency_key', $key)
                 ->first();
 

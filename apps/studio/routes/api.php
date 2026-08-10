@@ -11,6 +11,7 @@ use App\Integration\Http\Controllers\ContactController;
 use App\Integration\Http\Controllers\CrmReadController;
 use App\Integration\Http\Controllers\InternalNoteController;
 use App\Integration\Http\Controllers\LeadController;
+use App\Integration\Http\Controllers\OAuthTokenInfoController;
 use App\Payments\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -64,6 +65,12 @@ Route::post('/stripe/webhook', StripeWebhookController::class)->name('api.stripe
 // Nothing beyond identity lives here on purpose — see the controller's own
 // doc comment on why this stays the surface's only route until P6.
 Route::middleware('audience:api')->get('/whoami', GuestIdentityController::class)->name('api.whoami');
+
+// N-04: what the MCP server's own HTTP transport calls to verify a bearer
+// token before accepting a connection (packages/mcp/src/httpAuth.ts) — see
+// OAuthTokenInfoController's own doc comment for why this is a second route
+// rather than whoami growing a branch for a principal it was never about.
+Route::middleware('audience:api')->get('/oauth/token-info', OAuthTokenInfoController::class)->name('api.oauth.token-info');
 
 // I-02: read-only pages over the CRM core for an ApiToken caller (I-01) —
 // see CrmReadController's own doc comment for the cursor-pagination and

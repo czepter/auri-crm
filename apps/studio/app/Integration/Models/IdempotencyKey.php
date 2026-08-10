@@ -5,12 +5,15 @@ namespace App\Integration\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
  * I-03: the claim + cached response behind App\Http\Middleware\
  * EnsureIdempotentWrite. See the migration's own docblock for the
- * insert-first race protection this row exists for.
+ * insert-first race protection this row exists for, and N-04's own
+ * migration for why the claim is keyed to a polymorphic `principal` —
+ * an ApiToken (I-01) or a staff User authenticated by their own OAuth
+ * token (N-04) — rather than api_token_id alone.
  */
 class IdempotencyKey extends Model
 {
@@ -18,7 +21,8 @@ class IdempotencyKey extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'api_token_id',
+        'principal_type',
+        'principal_id',
         'idempotency_key',
         'request_fingerprint',
         'response_status',
@@ -33,8 +37,8 @@ class IdempotencyKey extends Model
         ];
     }
 
-    public function apiToken(): BelongsTo
+    public function principal(): MorphTo
     {
-        return $this->belongsTo(ApiToken::class);
+        return $this->morphTo();
     }
 }

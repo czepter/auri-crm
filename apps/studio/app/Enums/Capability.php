@@ -101,4 +101,27 @@ enum Capability: string
      * not the open-to-everyone catalog/task shape.
      */
     case ManageFormTemplates = 'manage_form_templates';
+
+    /** N-04's consent screen is the one place a capability is shown to a human rather than checked in code. */
+    public function label(): string
+    {
+        return match ($this) {
+            self::ManageLeads => 'Anfragen verwalten',
+            self::ManageContacts => 'Kontakte verwalten',
+            self::ViewAllProjects => 'Alle Aufträge einsehen',
+            self::BookProject => 'Aufträge buchen',
+            self::ManageShoots => 'Shootings verwalten',
+            self::ManageCrew => 'Crew verwalten',
+            self::ManageTasks => 'Aufgaben verwalten',
+            self::ManageNotes => 'Notizen verwalten',
+            self::ManageMessages => 'Nachrichten verwalten',
+            self::ManageStaff => 'Team verwalten',
+            self::ManagePackages => 'Pakete verwalten',
+            self::ManagePortalAccess => 'Portal-Zugang verwalten',
+            self::ManageQuotes => 'Angebote verwalten',
+            self::ManageContracts => 'Verträge verwalten',
+            self::ManageSettings => 'Einstellungen verwalten',
+            self::ManageFormTemplates => 'Fragebögen verwalten',
+        };
+    }
 }
