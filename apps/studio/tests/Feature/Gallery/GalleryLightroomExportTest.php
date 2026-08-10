@@ -3,6 +3,9 @@
 use App\Enums\StaffRole;
 use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
 
 it('exports every favorited asset\'s original filename, one per line, deduplicated', function () {
     $gallery = Gallery::factory()->create(['title' => 'Hochzeit Meier', 'assets' => [
