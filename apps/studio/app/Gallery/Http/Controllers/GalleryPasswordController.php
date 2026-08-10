@@ -4,6 +4,7 @@ namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Models\Gallery;
 use App\Gallery\Support\GalleryAccessSession;
+use App\Gallery\Support\GallerySecretGate;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,18 +38,32 @@ class GalleryPasswordController extends Controller
         ]);
     }
 
-    public function store(Request $request, Gallery $gallery, GalleryAccessSession $claims): RedirectResponse
+    /**
+     * $gallery arrives as the raw public_id, not an implicit-bound model:
+     * route-model binding 404s before this method ever runs, and a plain 404
+     * here would tell a guest guessing passwords "that id doesn't exist" —
+     * exactly the enumeration G-07 closes. Resolving it by hand instead lets
+     * a nonexistent gallery fall through the same uniform-failure path as a
+     * wrong password on a real one, all the way down to GallerySecretGate's
+     * dummy hash check.
+     */
+    public function store(Request $request, string $gallery, GalleryAccessSession $claims, GallerySecretGate $gate): RedirectResponse
     {
-        if ($gallery->requiresViewPassword()) {
+        $model = Gallery::findByPublicId($gallery);
+        $requiresPassword = $model === null || $model->requiresViewPassword();
+
+        if ($requiresPassword) {
             $validated = $request->validate(['password' => ['required', 'string']]);
 
-            if (! $gallery->checkViewPassword($validated['password'])) {
+            $granted = $gate->attempt($request->ip(), $gallery, $model?->view_password_hash, $validated['password']);
+
+            if (! $granted || $model === null) {
                 return back()->withErrors(['password' => __('gallery.password_wrong')]);
             }
         }
 
-        $claims->grant($gallery, GalleryAccessSession::VIEW, $gallery->view_password_version);
+        $claims->grant($model, GalleryAccessSession::VIEW, $model->view_password_version);
 
-        return redirect("/galerien/{$gallery->public_id}");
+        return redirect("/galerien/{$model->public_id}");
     }
 }
