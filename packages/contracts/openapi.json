@@ -10,6 +10,135 @@
         }
     ],
     "paths": {
+        "/gallery-versions/{galleryVersion}/comments": {
+            "get": {
+                "operationId": "gallery-versions.comments.index",
+                "summary": "Every comment left on one asset within one version, oldest first",
+                "tags": [
+                    "AssetComment"
+                ],
+                "parameters": [
+                    {
+                        "name": "galleryVersion",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery version public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "comments": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "comments"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "gallery-versions.comments.store",
+                "tags": [
+                    "AssetComment"
+                ],
+                "parameters": [
+                    {
+                        "name": "galleryVersion",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery version public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "guest_id": {
+                                        "type": "string",
+                                        "maxLength": 64
+                                    },
+                                    "asset_key": {
+                                        "type": "string"
+                                    },
+                                    "body": {
+                                        "type": "string",
+                                        "maxLength": 2000
+                                    }
+                                },
+                                "required": [
+                                    "guest_id",
+                                    "asset_key",
+                                    "body"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "comment": {
+                                            "type": "object",
+                                            "properties": {
+                                                "body": {
+                                                    "type": "string"
+                                                },
+                                                "created_at": {
+                                                    "type": "string"
+                                                }
+                                            },
+                                            "required": [
+                                                "body",
+                                                "created_at"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "comment"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/gallery-versions/{galleryVersion}/favorites": {
             "get": {
                 "operationId": "gallery-versions.favorites.index",

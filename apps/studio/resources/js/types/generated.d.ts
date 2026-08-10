@@ -298,6 +298,11 @@ export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' |
 }
 namespace Media {
 namespace Data {
+export type FailedAssetData = {
+publicId: string,
+filename: string,
+error: string,
+};
 export type MediaIngestTargetData = {
 galleryId: string,
 galleryTitle: string,
