@@ -51,7 +51,16 @@ class Contact extends Model implements Authenticatable
 
     protected function casts(): array
     {
-        return ['portal_access_revoked_at' => 'immutable_datetime'];
+        return [
+            'portal_access_revoked_at' => 'immutable_datetime',
+            'dsgvo_erased_at' => 'immutable_datetime',
+        ];
+    }
+
+    /** X-04: has App\Crm\Actions\EraseContactDsgvo already scrubbed this row? */
+    public function isDsgvoErased(): bool
+    {
+        return $this->dsgvo_erased_at !== null;
     }
 
     /**
