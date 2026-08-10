@@ -76,6 +76,15 @@ const items = computed(() => [
     icon: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/>',
   },
   {
+    // T-10: open to every role, same as Kalender above — AbsenceController
+    // itself decides "own row, or ManageCrew" per request rather than the
+    // nav hiding the destination from anyone.
+    key: 'abwesenheiten',
+    label: 'Abwesenheiten',
+    href: '/abwesenheiten',
+    icon: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M8 14h3M13 14h3M8 17h3"/>',
+  },
+  {
     key: 'einstellungen',
     label: 'Einstellungen',
     href: '/einstellungen',

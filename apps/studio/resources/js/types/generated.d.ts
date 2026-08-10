@@ -66,6 +66,7 @@ projectName: string | null,
 venue: string | null,
 kind: string | null,
 label: string | null,
+personId: string | null,
 };
 export type FormFieldData = {
 id: string,
@@ -203,6 +204,7 @@ label: string,
 timeline: App.Crm.Data.TimelineEntryData[],
 pdfUrl: string,
 icsUrl: string,
+crewConflicts: App.Crm.Data.DateConflictData[],
 };
 export type TaskRowData = {
 id: string,
@@ -251,6 +253,16 @@ export type TaskAudience = 'internal' | 'client';
 }
 }
 namespace Data {
+export type AbsenceData = {
+id: string,
+userId: string,
+userName: string,
+category: string,
+categoryLabel: string,
+startsOn: string,
+endsOn: string,
+canManage: boolean,
+};
 export type StaffProfileData = {
 id: string,
 name: string,
@@ -293,6 +305,7 @@ messages: App.Engagement.Data.MessageData[],
 }
 }
 namespace Enums {
+export type AbsenceCategory = 'unavailable' | 'holiday' | 'other';
 export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_messages' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings' | 'manage_form_templates';
 export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' | 'assistant';
 }

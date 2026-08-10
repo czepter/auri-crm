@@ -22,6 +22,7 @@ use App\Crm\Http\Controllers\TimelineController;
 use App\Documents\Http\Controllers\DocumentTemplateController;
 use App\Engagement\Http\Controllers\ThreadController;
 use App\Gallery\Http\Controllers\GalleryLightroomExportController;
+use App\Http\Controllers\Staff\AbsenceController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
 use App\Http\Controllers\Staff\InvitationController;
@@ -153,6 +154,15 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/kalender', [CalendarController::class, 'index'])->name('calendar.index');
         Route::post('/kalender/abo', [CalendarController::class, 'regenerate'])
             ->name('calendar.regenerate');
+
+        // T-10: per-person unavailability. Open to every role, not gated
+        // behind ManageStaff like /team above — AbsenceController itself
+        // decides "own row, or ManageCrew" per request, the same 200-not-404
+        // shape /verfuegbarkeit above uses for whoever holds ManageLeads.
+        Route::get('/abwesenheiten', [AbsenceController::class, 'index'])->name('absences.index');
+        Route::post('/abwesenheiten', [AbsenceController::class, 'store'])->name('absences.store');
+        Route::patch('/abwesenheiten/{absence}', [AbsenceController::class, 'update'])->name('absences.update');
+        Route::delete('/abwesenheiten/{absence}', [AbsenceController::class, 'destroy'])->name('absences.destroy');
 
         Route::get('/einstellungen', [StudioSettingsController::class, 'edit'])->name('settings.edit');
         Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');

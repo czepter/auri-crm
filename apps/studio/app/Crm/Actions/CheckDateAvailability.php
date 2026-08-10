@@ -5,6 +5,7 @@ namespace App\Crm\Actions;
 use App\Crm\Data\DateConflictData;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Models\Absence;
 use App\Settings\Models\StudioClosure;
 
 /**
@@ -13,9 +14,10 @@ use App\Settings\Models\StudioClosure;
  * still has its lead, sitting at stage booked.
  *
  * T-09 added a second source: studio_closures, the date ranges the studio is
- * closed. Both sources land in one DateConflictData shape — see that class —
- * so C-05's intake warning, P-02's board and S-04's calendar each keep asking
- * this one action a single question rather than querying two sources
+ * closed. T-10 adds a third: absences, the date ranges one person is away.
+ * Every source lands in one DateConflictData shape — see that class — so
+ * C-05's intake warning, P-02's board and S-02's crew picker each keep asking
+ * this one action a single question rather than querying three sources
  * themselves.
  *
  * This warns; it never blocks. The check answers "is somebody already on this
@@ -23,8 +25,9 @@ use App\Settings\Models\StudioClosure;
  * rule deliberately — a second shooter leads the smaller job, two half-days fit
  * one Saturday, the colliding date may still move or be lost — and a blocking
  * form would teach staff to type a wrong date to get past it, corrupting the
- * very column this reads. A closure conflict is exactly as informational: a
- * studio takes a wedding during Betriebsferien if it is the right wedding.
+ * very column this reads. A closure or absence conflict is exactly as
+ * informational: a studio takes a wedding during Betriebsferien, or assigns
+ * someone on leave to a job that needs them, if it is the right call.
  */
 class CheckDateAvailability
 {
@@ -76,6 +79,23 @@ class CheckDateAvailability
             foreach ($closures as $closure) {
                 if ($closure->coversDate($date)) {
                     $conflicts[$date] = [...($conflicts[$date] ?? []), DateConflictData::fromClosure($closure)];
+                }
+            }
+        }
+
+        // T-10's third source, same range-query shape as closures just
+        // above: one query for the whole span, matched in PHP per date
+        // rather than once per date.
+        $absences = Absence::query()
+            ->with('user')
+            ->where('starts_on', '<=', max($dates))
+            ->where('ends_on', '>=', min($dates))
+            ->get();
+
+        foreach ($dates as $date) {
+            foreach ($absences as $absence) {
+                if ($absence->coversDate($date)) {
+                    $conflicts[$date] = [...($conflicts[$date] ?? []), DateConflictData::fromAbsence($absence)];
                 }
             }
         }
