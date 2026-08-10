@@ -3,6 +3,13 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+      # F-11: baked into the image as SENTRY_RELEASE so GlitchTip can
+      # attribute an error to the deploy that shipped it. Unset by default —
+      # local `docker compose build` never passes GIT_SHA, so the image
+      # carries no release and SENTRY_RELEASE stays empty, same as
+      # SENTRY_LARAVEL_DSN below.
+      args:
+        GIT_SHA: ${GIT_SHA:-}
     working_dir: /app/apps/studio
     volumes:
       - .:/app
@@ -26,6 +33,12 @@ services:
       AWS_SECRET_ACCESS_KEY: studio-media-secret
       AWS_DEFAULT_REGION: us-east-1
       AWS_BUCKET: media
+      # F-11: empty by default, same as apps/studio/.env.example — the SDK
+      # stays fully inert (config/sentry.php) until a developer opts in by
+      # setting this in their own shell or root .env, e.g. to
+      # http://localhost:${GLITCHTIP_PORT:-8080}/<project-dsn-path> once a
+      # project exists on the glitchtip-web service below to test against.
+      SENTRY_LARAVEL_DSN: ${SENTRY_LARAVEL_DSN:-}
     ports:
       # Published so the Playwright suite on the host can reach `artisan serve`
       # running inside this container. The host port is a variable because
@@ -53,6 +66,8 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+      args:
+        GIT_SHA: ${GIT_SHA:-}
     working_dir: /app/apps/studio
     volumes:
       - .:/app
@@ -72,6 +87,10 @@ services:
       AWS_SECRET_ACCESS_KEY: studio-media-secret
       AWS_DEFAULT_REGION: us-east-1
       AWS_BUCKET: media
+      # F-11: a failed job on this container's default/mail/render
+      # supervisors (config/horizon.php) reports here too — same DSN, same
+      # empty-by-default rule as the php service above.
+      SENTRY_LARAVEL_DSN: ${SENTRY_LARAVEL_DSN:-}
     command: php artisan horizon
     depends_on:
       postgres:
@@ -98,6 +117,77 @@ services:
       interval: 2s
       timeout: 3s
       retries: 30
+
+  # F-11: self-hosted GlitchTip — Sentry-protocol-compatible error tracking
+  # (sentry/sentry-laravel, config/sentry.php) on our own Postgres rather
+  # than Sentry's hosted service, so it's one fewer DSGVO processor rather
+  # than one more. Split into its own web + worker services rather than the
+  # single all_in_one container GlitchTip's own sample compose defaults to
+  # (see https://glitchtip.com/documentation/install), the same shape as
+  # this stack's own `php` + `worker` pair just above: one image, one
+  # command override for the worker. Nothing here gates `php`/`worker`
+  # startup (SENTRY_LARAVEL_DSN empty means the SDK never calls out at all —
+  # see config/sentry.php), so neither depends_on's a GlitchTip healthcheck.
+  glitchtip-postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: glitchtip
+      POSTGRES_USER: glitchtip
+      POSTGRES_PASSWORD: glitchtip
+    volumes:
+      - glitchtip-pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U glitchtip -d glitchtip"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # Runs once, on every `docker compose up`, and exits — same "migrate
+  # before anything queries the schema" shape as minio-init below, and
+  # necessary for the same reason: GlitchTip's own image only migrates
+  # itself automatically under Heroku's DYNO convention (bin/start.sh), which
+  # a plain Compose deployment never sets. Without this, glitchtip-worker's
+  # first Celery beat tick fails outright — the schema doesn't exist yet.
+  glitchtip-migrate:
+    image: glitchtip/glitchtip:6
+    command: ./manage.py migrate
+    environment: &glitchtip-environment
+      DATABASE_URL: postgres://glitchtip:glitchtip@glitchtip-postgres:5432/glitchtip
+      # Reuses this stack's own `redis` service (Celery broker + cache)
+      # rather than standing up a second Redis just for GlitchTip — db 1
+      # keeps its keyspace apart from the app's own (db 0).
+      VALKEY_URL: redis://redis:6379/1
+      SECRET_KEY: glitchtip-local-dev-secret-key-do-not-use-in-production
+      # console-only: nothing in this story needs GlitchTip to actually
+      # deliver mail (issue notifications, invites), only to receive errors.
+      EMAIL_URL: "consolemail://"
+      DEFAULT_FROM_EMAIL: glitchtip@studio.test
+      GLITCHTIP_DOMAIN: http://localhost:${GLITCHTIP_PORT:-8080}
+      ENABLE_ORGANIZATION_CREATION: "True"
+    depends_on:
+      glitchtip-postgres:
+        condition: service_healthy
+
+  glitchtip-web:
+    image: glitchtip/glitchtip:6
+    environment: *glitchtip-environment
+    ports:
+      - "127.0.0.1:${GLITCHTIP_PORT:-8080}:8000"
+    depends_on:
+      glitchtip-migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  glitchtip-worker:
+    image: glitchtip/glitchtip:6
+    command: ./bin/run-celery-with-beat.sh
+    environment: *glitchtip-environment
+    depends_on:
+      glitchtip-migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
 
   # S3-compatible object storage (G-01a), local stand-in for whichever
   # provider a deploy chooses — MinIO here, RustFS, IONOS Object Storage and
@@ -173,4 +263,5 @@ volumes:
   pgdata:
   redisdata:
   miniodata:
+  glitchtip-pgdata:
   composer-cache:

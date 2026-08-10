@@ -1,6 +1,7 @@
 <?php
 
 use App\Providers\AppServiceProvider;
+use App\Providers\ObservabilityServiceProvider;
 use App\Providers\TypeScriptTransformerServiceProvider;
 use App\Support\Surface;
 use Laravel\Horizon\HorizonServiceProvider;
@@ -17,6 +18,7 @@ use Laravel\Horizon\HorizonServiceProvider;
 // configuration is loaded.
 return [
     AppServiceProvider::class,
+    ObservabilityServiceProvider::class,
     ...(env('APP_SURFACE', 'admin') === Surface::ADMIN ? [
         HorizonServiceProvider::class,
         App\Providers\HorizonServiceProvider::class,

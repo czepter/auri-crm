@@ -3,6 +3,7 @@
 use App\Automation\Console\Commands\SeedDefaultAutomationRulesCommand;
 use App\Automation\Console\Commands\SweepDateOffsetAutomationRulesCommand;
 use App\Gallery\Console\Commands\ImportLegacyGalleriesCommand;
+use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureApiTokenScope;
 use App\Http\Middleware\EnsureAudience;
 use App\Http\Middleware\EnsureGalleryGate;
@@ -25,6 +26,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Sentry\Laravel\Integration as SentryIntegration;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -65,6 +67,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command(SweepDateOffsetAutomationRulesCommand::class)->daily();
     })
     ->withMiddleware(function (Middleware $middleware) {
+        // F-11: ahead of everything else in the stack, on all three
+        // surfaces, so a request id exists before the first line this
+        // request logs — see App\Http\Middleware\AssignRequestId.
+        $middleware->prepend(AssignRequestId::class);
+
         $middleware->web(append: [
             HandleInertiaRequests::class,
         ]);
@@ -89,5 +96,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // F-11: reports every unhandled exception to GlitchTip (a no-op
+        // with no network call while SENTRY_LARAVEL_DSN is empty — see
+        // config/sentry.php). Queued job failures go through the same
+        // report() call, via Illuminate\Queue\Worker.
+        SentryIntegration::handles($exceptions);
     })->create();

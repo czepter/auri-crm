@@ -63,6 +63,14 @@ Retrying re-queues the job on its original connection and queue with a fresh
 attempt count, and removes the `failed_jobs` row — a retry that fails again
 gets its own new row rather than reusing the old one.
 
+A failed job's own `payload` column carries a `requestId` key — the
+`X-Request-Id` of the HTTP request that dispatched it (F-11,
+`App\Providers\ObservabilityServiceProvider` stamps it on push,
+`App\Support\Observability\JobRequestId` reads it back on failure). GlitchTip
+tags the failure report with the same id, so "the client says the download
+failed" is one query against a request id, not a guess at which of several
+same-second jobs it was.
+
 ## Deploy
 
 This repository has no production deploy configuration yet (no `fly.toml`,
