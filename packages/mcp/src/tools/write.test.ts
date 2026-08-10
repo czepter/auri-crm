@@ -15,9 +15,9 @@ import { registerWriteTools } from './write.js'
 // confirmation gate actually blocks the API call, not just that an
 // annotation is set.
 
-function fakeApiClient() {
+function fakeApiClient(data: unknown = { id: 'fake_public_id' }) {
   const post = vi.fn(async (_path: string, _options: { headers?: Record<string, string> }) => ({
-    data: { id: 'fake_public_id' },
+    data,
     error: undefined,
     response: new Response(),
   }))
@@ -120,4 +120,100 @@ describe('registerWriteTools', () => {
     expect(path).toBe('/projects/{project}/notes')
     expect(options.headers?.['Idempotency-Key']).toBeTruthy()
   })
+
+  // N-04: NoInternalIdsTest's invariant ("no integer identifier in any JSON
+  // body") extended onto the one JSON surface apps/studio's Pest suite can
+  // never reach directly — a Node process's own tool result. A write tool's
+  // CallToolResult.content is `JSON.stringify(data)` off the exact same
+  // *Controller response I-03 already returns (see write.ts's own doc
+  // comment) — public_id strings only, per LeadController/
+  // InternalNoteController — so the fake API client below returns the real
+  // response shape those controllers produce rather than write.test.ts's
+  // usual `{ id: 'fake_public_id' }` stand-in.
+  describe('never puts an integer identifier into a write tool\'s result', () => {
+    async function toolResult(apiClient: ApiClient, name: string, args: Record<string, unknown>) {
+      const { client } = await connectedPair(apiClient, true)
+      clients.push(client)
+      client.setRequestHandler(ElicitRequestSchema, async () => ({ action: 'accept', content: { confirm: true } }))
+
+      const result = await client.callTool({ name, arguments: args })
+      const [content] = result.content as { type: 'text'; text: string }[]
+
+      return JSON.parse(content.text) as unknown
+    }
+
+    it('detects an integer id when one is present, so a clean result below actually proves something', () => {
+      expect(integerIdPaths({ lead: { id: 7, stage: 'new' } })).toEqual(['$.lead.id'])
+      expect(integerIdPaths({ lead: { id: 'lead_abc', stage: 'new' } })).toEqual([])
+    })
+
+    it('capture_lead', async () => {
+      const { client: apiClient } = fakeApiClient({
+        project: { id: 'proj_publicid1234567890ab', name: 'Voss — Portrait' },
+        lead: { id: 'lead_publicid1234567890ab', stage: 'new', source: 'website' },
+      })
+
+      const data = await toolResult(apiClient, 'capture_lead', {
+        contact_name: 'Nina Voss',
+        project_name: 'Voss — Portrait',
+        type: 'portrait',
+        source: 'website',
+        captured_via: 'other',
+      })
+
+      expect(integerIdPaths(data)).toEqual([])
+    })
+
+    it('advance_lead_stage', async () => {
+      const { client: apiClient } = fakeApiClient({ id: 'lead_publicid1234567890ab', stage: 'contacted' })
+
+      const data = await toolResult(apiClient, 'advance_lead_stage', {
+        lead: 'lead_publicid1234567890ab',
+        stage: 'contacted',
+      })
+
+      expect(integerIdPaths(data)).toEqual([])
+    })
+
+    it('add_internal_note', async () => {
+      const { client: apiClient } = fakeApiClient({
+        id: 'note_publicid1234567890ab',
+        body: 'Gegenlicht ab 20 Uhr.',
+        writtenAt: '2026-08-10T12:00:00Z',
+      })
+
+      const data = await toolResult(apiClient, 'add_internal_note', {
+        project: 'project_public_id',
+        body: 'Gegenlicht ab 20 Uhr.',
+      })
+
+      expect(integerIdPaths(data)).toEqual([])
+    })
+  })
 })
+
+/**
+ * A JS port of tests/Pest.php's integerIdPaths() — same rule, same shape of
+ * answer (JSONPath-ish strings), so the invariant it checks reads as the one
+ * invariant everywhere else in this app enforces, not a second one that
+ * happens to look similar. Lives here rather than a shared module: this is
+ * the only MCP suite that needs it yet (N-02's read tools, once merged, are
+ * the next candidate to dedupe this into rather than before then).
+ */
+function integerIdPaths(node: unknown, path = '$'): string[] {
+  if (typeof node !== 'object' || node === null) return []
+
+  const found: string[] = []
+
+  for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
+    const childPath = `${path}.${key}`
+
+    if ((key.endsWith('id') || key.endsWith('ids')) && Number.isInteger(value)) {
+      found.push(childPath)
+    }
+
+    found.push(...integerIdPaths(value, childPath))
+  }
+
+  return found
+}
