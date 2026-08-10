@@ -79,17 +79,17 @@ describe('read tools', () => {
     vi.unstubAllGlobals()
   })
 
-  it('registers exactly the four read tools', async () => {
+  it('registers the four read tools', async () => {
     const client = await connectedClient({})
 
     const { tools } = await client.listTools()
 
-    expect(tools.map((tool) => tool.name).sort()).toEqual([
-      'get_project',
-      'pipeline_snapshot',
-      'search_contacts',
-      'shoots_in_date_range',
-    ])
+    // Containment, not exact equality: createMcpServer() also registers
+    // N-03's write tools on the same server — this checks read
+    // registration specifically, not the server's full tool inventory.
+    expect(tools.map((tool) => tool.name).sort()).toEqual(
+      expect.arrayContaining(['get_project', 'pipeline_snapshot', 'search_contacts', 'shoots_in_date_range'])
+    )
   })
 
   it('search_contacts wraps GET /contacts and carries its cursor through', async () => {
