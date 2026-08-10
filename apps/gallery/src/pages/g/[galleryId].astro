@@ -1,5 +1,6 @@
 ---
 import { FORMATS, imageUrl, srcSet, type GalleryAsset } from '../../lib/images'
+import { callApi } from '../../lib/apiClient'
 import '../../styles/tokens.css'
 import '../../styles/gallery.css'
 
@@ -26,7 +27,11 @@ interface GalleryReadResponse {
   }
 }
 
-const response = await fetch(`${apiBase}/api/galleries/${galleryId}`, {
+// G-13: every outgoing call this SSR page makes to the api surface goes
+// through callApi, which forwards this request's own X-Request-Id
+// (src/middleware.ts) and reports a 5xx or a timeout as the gallery outage
+// it is from a guest's side — see src/lib/apiClient.ts's own doc comment.
+const response = await callApi(apiBase, `/api/galleries/${galleryId}`, Astro.locals.requestId, {
   headers: { Accept: 'application/json' },
 })
 
