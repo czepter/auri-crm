@@ -1,12 +1,12 @@
 {
     "openapi": "3.1.0",
     "info": {
-        "title": "Laravel",
+        "title": "Studio",
         "version": "0.0.1"
     },
     "servers": [
         {
-            "url": "http://localhost:8000/api"
+            "url": "http://localhost/api"
         }
     ],
     "paths": {
@@ -641,6 +641,106 @@
         "/shoots": {
             "get": {
                 "operationId": "shoots.index",
+                "summary": "N-02: `from`/`to` narrow this to a date range \u2014 the query \"which\n     * shoots fall in March\" \u2014 on top of I-02's plain `since` staleness\nfilter, which the shared page() below still applies. Both bounds are\ninclusive and optional independently, so a caller can ask for\neverything from a date onward, or up to one, as well as a closed range",
+                "tags": [
+                    "CrmRead"
+                ],
+                "parameters": [
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "per_page": {
+                                                    "type": "integer"
+                                                },
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev_page_url": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "path",
+                                                "per_page",
+                                                "next_cursor",
+                                                "next_page_url",
+                                                "prev_cursor",
+                                                "prev_page_url"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/jobs": {
+            "get": {
+                "operationId": "jobs.index",
                 "tags": [
                     "CrmRead"
                 ],
@@ -716,9 +816,53 @@
                 }
             }
         },
-        "/jobs": {
+        "/projects/{project}": {
             "get": {
-                "operationId": "jobs.index",
+                "operationId": "projects.show",
+                "summary": "N-02: the single-resource read the index alone can't answer \u2014 \"get a\n     * project\" needs the project, not a page that might contain it. Route\nmodel binding does the tenant + public_id lookup (and the 404 for a\nproject outside the token's tenant) the same as every other\n`{project:public_id}` route on this surface already does",
+                "tags": [
+                    "CrmRead"
+                ],
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ProjectReadData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/pipeline-snapshot": {
+            "get": {
+                "operationId": "pipeline-snapshot",
+                "summary": "N-02: the funnel, not the leads that make it up \u2014 a count per\nLeadStage rather than a page of Lead rows the caller would have to\ntally itself. Same grouping order as LeadBoardController's own board\n(declaration order, not the stored strings' alphabetical order) and\nthe same `open()` scope: a lost lead left its stage the moment it was\nmarked lost, so it no longer belongs to any column's count",
                 "tags": [
                     "CrmRead"
                 ],
@@ -731,61 +875,48 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "meta": {
                                             "type": "object",
-                                            "properties": {
-                                                "path": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
+                                            "additionalProperties": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "stage": {
+                                                        "type": "string"
+                                                    },
+                                                    "label": {
+                                                        "type": "string",
+                                                        "enum": [
+                                                            "Neu",
+                                                            "Kontaktiert",
+                                                            "Angebot",
+                                                            "Angebot angenommen",
+                                                            "Vertrag",
+                                                            "Gebucht"
+                                                        ]
+                                                    },
+                                                    "count": {
+                                                        "anyOf": [
+                                                            {
+                                                                "type": "string"
+                                                            },
+                                                            {
+                                                                "type": "integer",
+                                                                "enum": [
+                                                                    0
+                                                                ]
+                                                            }
+                                                        ]
+                                                    }
                                                 },
-                                                "per_page": {
-                                                    "type": "integer"
-                                                },
-                                                "next_cursor": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
-                                                },
-                                                "next_page_url": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
-                                                },
-                                                "prev_cursor": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
-                                                },
-                                                "prev_page_url": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
-                                                }
-                                            },
-                                            "required": [
-                                                "path",
-                                                "per_page",
-                                                "next_cursor",
-                                                "next_page_url",
-                                                "prev_cursor",
-                                                "prev_page_url"
-                                            ]
+                                                "required": [
+                                                    "stage",
+                                                    "label",
+                                                    "count"
+                                                ]
+                                            }
                                         }
                                     },
                                     "required": [
-                                        "data",
-                                        "meta"
+                                        "data"
                                     ]
                                 }
                             }
@@ -1319,6 +1450,11 @@
                     "booked"
                 ],
                 "title": "LeadStage"
+            },
+            "ProjectReadData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "ProjectReadData"
             },
             "ProjectType": {
                 "type": "string",

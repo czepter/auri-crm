@@ -2,6 +2,7 @@
 
 namespace App\Integration\Http\Controllers;
 
+use App\Crm\Enums\LeadStage;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
@@ -46,19 +47,75 @@ class CrmReadController extends Controller
         return $this->page(Project::query(), $request, ProjectReadData::class);
     }
 
+    /**
+     * N-02: the single-resource read the index alone can't answer — "get a
+     * project" needs the project, not a page that might contain it. Route
+     * model binding does the tenant + public_id lookup (and the 404 for a
+     * project outside the token's tenant) the same as every other
+     * `{project:public_id}` route on this surface already does.
+     */
+    public function project(Project $project): JsonResponse
+    {
+        return response()->json(['data' => ProjectReadData::fromModel($project)]);
+    }
+
     public function leads(Request $request): JsonResponse
     {
         return $this->page(Lead::query()->with('project:id,public_id'), $request, LeadReadData::class);
     }
 
+    /**
+     * N-02: `from`/`to` narrow this to a date range — the query "which
+     * shoots fall in March" — on top of I-02's plain `since` staleness
+     * filter, which the shared page() below still applies. Both bounds are
+     * inclusive and optional independently, so a caller can ask for
+     * everything from a date onward, or up to one, as well as a closed range.
+     */
     public function shoots(Request $request): JsonResponse
     {
-        return $this->page(Shoot::query()->with('project:id,public_id'), $request, ShootReadData::class);
+        $range = $request->validate([
+            'from' => ['sometimes', 'date'],
+            'to' => ['sometimes', 'date', 'after_or_equal:from'],
+        ]);
+
+        $query = Shoot::query()
+            ->with('project:id,public_id')
+            ->when($range['from'] ?? null, fn (Builder $q, string $from) => $q->whereDate('date', '>=', $from))
+            ->when($range['to'] ?? null, fn (Builder $q, string $to) => $q->whereDate('date', '<=', $to));
+
+        return $this->page($query, $request, ShootReadData::class);
     }
 
     public function jobs(Request $request): JsonResponse
     {
         return $this->page(Job::query()->with('project:id,public_id'), $request, JobReadData::class);
+    }
+
+    /**
+     * N-02: the funnel, not the leads that make it up — a count per
+     * LeadStage rather than a page of Lead rows the caller would have to
+     * tally itself. Same grouping order as LeadBoardController's own board
+     * (declaration order, not the stored strings' alphabetical order) and
+     * the same `open()` scope: a lost lead left its stage the moment it was
+     * marked lost, so it no longer belongs to any column's count.
+     */
+    public function pipelineSnapshot(): JsonResponse
+    {
+        $counts = Lead::query()
+            ->open()
+            ->select('stage')
+            ->selectRaw('count(*) as count')
+            ->groupBy('stage')
+            ->get()
+            ->mapWithKeys(fn (Lead $lead) => [$lead->stage->value => (int) $lead->count]);
+
+        $stages = collect(LeadStage::cases())->map(fn (LeadStage $stage) => [
+            'stage' => $stage->value,
+            'label' => $stage->label(),
+            'count' => $counts[$stage->value] ?? 0,
+        ])->all();
+
+        return response()->json(['data' => $stages]);
     }
 
     /**
