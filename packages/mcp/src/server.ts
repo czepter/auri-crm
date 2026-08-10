@@ -1,10 +1,18 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 
+import { createApiClient, type ApiClient } from './client.js'
+import { registerWriteTools } from './tools/write.js'
+
 /**
- * N-01's whole scope: a bare, connectable MCP server — zero tools or
- * resources registered. Tool surface generated from packages/contracts
- * lands in N-02/N-03; this just proves the transports work.
+ * N-01 proved the transports; N-03 adds the tool surface's write half —
+ * capture_lead, advance_lead_stage, add_internal_note, gated behind explicit
+ * confirmation (see tools/write.ts). Read tools (N-02) register the same
+ * way once they land. `apiClient` is injectable so tests can point the
+ * server at a fake CRM instead of a real one.
  */
-export function createMcpServer(): McpServer {
-  return new McpServer({ name: 'studio-mcp', version: '0.0.1' })
+export function createMcpServer(apiClient: ApiClient = createApiClient()): McpServer {
+  const server = new McpServer({ name: 'studio-mcp', version: '0.0.1' })
+  registerWriteTools(server, apiClient)
+
+  return server
 }
