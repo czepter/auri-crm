@@ -663,6 +663,9 @@
     "failed": "Fehler",
     "retry": "Erneut übertragen",
     "empty": "Noch keine Dateien ausgewählt.",
-    "resumeHint": "Ein abgebrochener Import lässt sich jederzeit mit denselben Dateien fortsetzen — bereits übertragene Teile werden erkannt und übersprungen."
+    "resumeHint": "Ein abgebrochener Import lässt sich jederzeit mit denselben Dateien fortsetzen — bereits übertragene Teile werden erkannt und übersprungen.",
+    "needsAttention": "Prüfung erforderlich",
+    "needsAttentionCount": "1 Datei | {count} Dateien",
+    "retryProcessing": "Erneut versuchen"
   }
 }

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import { uploadFile } from '@/admin/lib/multipartUpload'
 
 const props = defineProps<{
   target: App.Media.Data.MediaIngestTargetData
+  failedAssets: App.Media.Data.FailedAssetData[]
 }>()
 
 type FileState = { file: File; status: 'queued' | 'uploading' | 'done' | 'error'; percent: number }
@@ -69,6 +71,12 @@ function retry(entry: FileState) {
   void runUpload(entry)
 }
 
+// G-04: re-runs G-03's ingest pipeline for one Failed asset — distinct from
+// retry() above, which resumes a still-open client-side transfer.
+function retryFailedAsset(asset: App.Media.Data.FailedAssetData) {
+  router.post(`/medien/${asset.publicId}/wiederholen`, {}, { preserveScroll: true })
+}
+
 function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
@@ -104,6 +112,20 @@ function formatSize(bytes: number): string {
       </div>
       <span class="bar big"><i :style="{ width: `${overallPercent}%` }" /></span>
       <div class="hint" style="margin-top: var(--s4)">{{ $t('media.resumeHint') }}</div>
+    </div>
+
+    <!-- G-04: the needs-attention tray — Failed assets from this gallery's own
+         ingest history, never just the current transfer's own client-side
+         errors above. -->
+    <div v-if="failedAssets.length > 0" class="dsec">
+      <div class="dlab warn">{{ $t('media.needsAttention') }} · {{ $t('media.needsAttentionCount', failedAssets.length) }}</div>
+      <div class="panel">
+        <div v-for="asset in failedAssets" :key="asset.publicId" class="trow">
+          <span class="tfile">{{ asset.filename }}</span>
+          <span class="treason">{{ asset.error }}</span>
+          <a class="tretry" href="#" @click.prevent="retryFailedAsset(asset)">{{ $t('media.retryProcessing') }}</a>
+        </div>
+      </div>
     </div>
 
     <div class="split" style="margin-top: var(--s6)">
