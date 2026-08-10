@@ -28,6 +28,14 @@ const PUBLIC_ROUTES = [
         'passwort/vergessen',
         'passwort/neu/{token}',
         'passwort/neu',
+        // N-04's token exchange: the MCP client calls this directly,
+        // off-browser, with no staff session to hold an `audience:` guard —
+        // the single-use authorization code and its PKCE verifier are the
+        // credential instead. See OAuthTokenController's own doc comment.
+        // /oauth/authorize (the half a staff session DOES gate) carries
+        // `audience:staff` same as every other screen in the mfa group below,
+        // so it is not listed here.
+        'oauth/token',
     ],
     // Stripe is the only caller of the webhook, and it authenticates itself
     // by the request signature (Stripe-Signature, verified against

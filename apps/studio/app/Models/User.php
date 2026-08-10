@@ -10,10 +10,20 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
+/**
+ * HasApiTokens (N-04): a staff user can hold their own Sanctum personal
+ * access tokens, alongside App\Integration\Models\ApiToken's machine ones —
+ * the same tokenable relation, the same api guard, a different kind of
+ * caller. See App\Http\Controllers\Staff\OAuthAuthorizationController for
+ * where one gets minted and why its abilities can never exceed this user's
+ * own StaffRole::capabilities().
+ */
 class User extends Authenticatable
 {
     use BelongsToTenant;
+    use HasApiTokens;
     use HasFactory;
     use HasPublicId;
     use Notifiable;

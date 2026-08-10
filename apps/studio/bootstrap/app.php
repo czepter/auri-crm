@@ -72,6 +72,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo('/');
 
+        // N-04: the MCP client calls this directly, off-browser — it holds
+        // no session and so no CSRF token to present. The authorization code
+        // and PKCE verifier OAuthTokenController checks are the credential
+        // that route's CSRF token would otherwise have been.
+        $middleware->validateCsrfTokens(except: ['oauth/token']);
+
         $middleware->alias([
             'mfa' => RequireConfirmedMfa::class,
             'audience' => EnsureAudience::class,

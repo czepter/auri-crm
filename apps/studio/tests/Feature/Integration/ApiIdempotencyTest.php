@@ -126,7 +126,8 @@ it('409s a second caller racing a still in-flight claim for the same key', funct
     // finished — response_status stays null until EnsureIdempotentWrite's
     // own $next() call returns.
     IdempotencyKey::create([
-        'api_token_id' => $token->id,
+        'principal_type' => ApiToken::class,
+        'principal_id' => $token->id,
         'idempotency_key' => 'in-flight',
         'request_fingerprint' => hash('sha256', 'POST|api/contacts|'.json_encode(['name' => 'Lena Meier'])),
     ]);
