@@ -144,11 +144,71 @@ the original left untouched in quarantine for a human to inspect. This is
 what G-04's "needs attention" tray will query — a Failed asset is an expected
 outcome here, not a Horizon failed-job.
 
-## Delivery
+## ZIP builds (G-10)
+
+`App\Media\Models\ZipBuild` (tenant-scoped, `HasPublicId`) is one deduped
+archive for a `(gallery_version_id, scope, size)` triple — the migration's
+own unique index is the dedupe mechanism; `App\Media\Actions\RequestZipBuild`
+finds-or-creates against it and only dispatches
+`App\Media\Jobs\BuildZip` (`media.zip`, #59) for a row that isn't already
+Ready or already Building. `scope` has one case today (`all`); `size` is
+`original` (each `Asset`'s own bytes) or `web` (each asset's widest WebP
+derivative from G-03 — the one of its two formats every target platform can
+at least open). A `ZipBuild` has one or more `ZipBuildPart` rows, the
+`Asset`/`AssetDerivative` one-to-many precedent, each one archive volume's
+output object key.
+
+`App\Media\Actions\BuildGalleryZip` does the actual assembly — S3 to S3,
+same "no server-side copy" rule as everywhere else in this doc: each member
+is read from the `s3` disk and written straight into a
+[zipstream-php](https://github.com/maennchen/zipstream-php) archive (STORE,
+not DEFLATE — photos are already compressed; ZIP64 explicitly disabled, the
+interoperability floor across Explorer, Finder, iOS Files and Files by
+Google), whose own output is a callback stream that
+`App\Media\Services\MultipartZipUploader` buffers to fixed 16MiB chunks and
+uploads back to S3 via `MultipartUploadGateway`'s existing `UploadPart` seam
+(G-02) as it fills. Nothing ever holds the whole archive — peak memory stays
+near that 16MiB buffer. `App\Media\Support\ZipVolumePlanner` decides, before
+any of that I/O, how members group into volumes so none would cross 3.9GiB
+(a member already past that size gets a volume of its own rather than being
+split) — pure grouping logic, unit-tested in isolation with a small injected
+threshold rather than a multi-gigabyte fixture.
+
+## Delivery (G-11)
 
 Clients never receive a storage path or a presigned URL — the application
-proxies every download (G-11, #60 carries what that costs). This story does
-not build that endpoint.
+proxies every download. `App\Gallery\Http\Controllers\DownloadZipPartController`
+(routes/portal.php, `gallery.gate:download` + `signed`) is the only way a
+built `ZipBuildPart`'s bytes leave the `s3` disk, same rule
+`GalleryImageController` already applies to image bytes above.
+
+`Storage::download()` is deliberately not used: it never looks at the
+request's own `Range` header, so a resumed multi-gigabyte transfer through it
+would silently restart from byte zero rather than resume. The controller
+reaches past Flysystem to the raw `Aws\S3\S3Client` instead — the same seam
+`MultipartUploadGateway` already opened for the write side — and issues a
+ranged `GetObject` for exactly the bytes a `Range` header asks for, honouring
+one at a time (`App\Media\Support\ByteRange`, unit-tested in isolation the
+same way `ZipVolumePlanner` is) and answering `206 Partial Content` with a
+correct `Content-Range`, or a plain `200` with `Accept-Ranges: bytes` when
+there is none.
+
+`App\Media\Models\DownloadEvent` (tenant-scoped, `HasPublicId`) is the audit
+trail: one row per request the controller serves, whether fresh or a resumed
+Range request. What's actually bounded is never the row count but
+`DownloadEvent::requesterDayCount()` — distinct (requester_identifier,
+request_date) pairs — so three reconnects resuming the same download the
+same day cost one requester-day, not three. The link itself is a
+`URL::temporarySignedRoute()` good for 24 hours, with the requester's own
+identifier (the same bare-string, no-account shape G-09's `guest_identifier`
+already established) riding in the signed path rather than an ordinary query
+parameter, so tampering with it invalidates the signature rather than merely
+lying about who is asking.
+
+The trigger that requests a `ZipBuild`, waits for it to go Ready and emails
+mockup 12's link is out of scope here: no earlier story sends a "your
+download is ready" notification, and this story's acceptance is entirely
+about the serving/audit mechanics once a signed link exists.
 
 ## Backups
 

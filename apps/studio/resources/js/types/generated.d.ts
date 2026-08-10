@@ -1,4 +1,12 @@
 declare namespace App {
+namespace Automation {
+namespace Enums {
+export type AutomationAnchor = 'per_shoot' | 'primary_shoot';
+export type AutomationOffsetDirection = 'before' | 'after';
+export type AutomationRunStatus = 'pending' | 'sent' | 'failed';
+export type AutomationTriggerType = 'event' | 'date_offset';
+}
+}
 namespace Catalog {
 namespace Data {
 export type PackageData = {
@@ -290,6 +298,11 @@ export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' |
 }
 namespace Media {
 namespace Data {
+export type FailedAssetData = {
+publicId: string,
+filename: string,
+error: string,
+};
 export type MediaIngestTargetData = {
 galleryId: string,
 galleryTitle: string,
@@ -303,6 +316,9 @@ partSize: number,
 namespace Enums {
 export type AssetStatus = 'ready' | 'failed';
 export type MultipartUploadStatus = 'in_progress' | 'completed' | 'aborted';
+export type ZipBuildScope = 'all';
+export type ZipBuildSize = 'original' | 'web';
+export type ZipBuildStatus = 'building' | 'ready' | 'failed';
 }
 }
 namespace Numbering {

@@ -4,6 +4,7 @@ namespace App\Gallery\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
+use App\Media\Models\ZipBuild;
 use Database\Factories\Gallery\GalleryVersionFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -37,6 +38,12 @@ class GalleryVersion extends Model
     public function gallery(): BelongsTo
     {
         return $this->belongsTo(Gallery::class);
+    }
+
+    /** Every (scope, size) archive ever built for this version — G-10, deduped one row per triple. */
+    public function zipBuilds(): HasMany
+    {
+        return $this->hasMany(ZipBuild::class);
     }
 
     /** G-09: every guest mark against this version's assets, whichever guest made it. */
