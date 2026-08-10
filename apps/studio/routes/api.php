@@ -88,6 +88,22 @@ Route::middleware('audience:api')->group(function () {
         ->get('/jobs', [CrmReadController::class, 'jobs'])->name('api.jobs.index');
 });
 
+// N-02: the two reads the MCP server's tool surface needs that I-02's index
+// routes above don't answer on their own — a single project by public_id,
+// and a lead-stage funnel summary. Same `audience:api` + `scope:` shape as
+// every route in the group above, reusing the exact Capability the matching
+// index route already requires (project.show is ViewAllProjects, same as
+// projects.index; pipeline-snapshot is ManageLeads, same as leads.index,
+// since it's a count over the same rows).
+Route::middleware('audience:api')->group(function () {
+    Route::middleware('scope:'.Capability::ViewAllProjects->value)
+        ->get('/projects/{project:public_id}', [CrmReadController::class, 'project'])
+        ->name('api.projects.show');
+    Route::middleware('scope:'.Capability::ManageLeads->value)
+        ->get('/pipeline-snapshot', [CrmReadController::class, 'pipelineSnapshot'])
+        ->name('api.pipeline-snapshot');
+});
+
 // I-03: the api surface's first write endpoints — a workflow runner with a
 // retry policy is the caller, so every one of these carries `idempotent`
 // (App\Http\Middleware\EnsureIdempotentWrite) after `scope:`, in that order:
