@@ -19,11 +19,14 @@ use App\Crm\Models\TaskTemplate;
 use App\Documents\Models\DocumentTemplate;
 use App\Gallery\Listeners\RecomputeGalleryBalanceSettled;
 use App\Gallery\Models\Gallery;
+use App\Integration\Listeners\DispatchWebhookNotifications;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\NotificationPreferences;
 use App\Notifications\Support\QuietHours;
 use App\Notifications\Transports\InAppTransport;
 use App\Notifications\Transports\MailTransport;
+use App\Notifications\Transports\WebhookTransport;
+use App\Payments\Events\InstallmentOverdue;
 use App\Payments\Events\InstallmentPaid;
 use App\Policies\ContactPolicy;
 use App\Policies\DocumentTemplatePolicy;
@@ -72,10 +75,13 @@ class AppServiceProvider extends ServiceProvider
         // wired to a domain event directly — see NotificationService's own
         // docblock. NotificationPreferences and QuietHours are T-11's own
         // gates, autowired the same as any other constructor dependency.
+        // I-04: WebhookTransport is the third — registered here rather than
+        // subscribing to domain events on its own, per issue #86.
         $this->app->singleton(NotificationService::class, fn ($app) => new NotificationService(
             [
                 $app->make(MailTransport::class),
                 $app->make(InAppTransport::class),
+                $app->make(WebhookTransport::class),
             ],
             $app->make(NotificationPreferences::class),
             $app->make(QuietHours::class),
@@ -125,6 +131,16 @@ class AppServiceProvider extends ServiceProvider
         // write — nothing gates on it yet, since delivery/download flows are
         // future stories.
         Event::listen(InstallmentPaid::class, RecomputeGalleryBalanceSettled::class);
+
+        // I-04: wraps each domain event for NotificationService rather than
+        // handing WebhookTransport the event directly — see that listener's
+        // own docblock. ShootDelivered and GalleryPublished, the other two
+        // events issue #86 names, don't exist as classes yet; wiring them is
+        // one Event::listen line here once their own stories land.
+        Event::listen(ProjectBooked::class, [DispatchWebhookNotifications::class, 'handleProjectBooked']);
+        Event::listen(ContractSigned::class, [DispatchWebhookNotifications::class, 'handleContractSigned']);
+        Event::listen(InstallmentPaid::class, [DispatchWebhookNotifications::class, 'handleInstallmentPaid']);
+        Event::listen(InstallmentOverdue::class, [DispatchWebhookNotifications::class, 'handleInstallmentOverdue']);
 
         // E-08: one wildcard subscription rather than one Event::listen()
         // per event class — an AutomationRule's own event_class column is

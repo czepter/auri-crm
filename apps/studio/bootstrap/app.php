@@ -11,6 +11,8 @@ use App\Http\Middleware\EnsurePortalMaintenanceClosure;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RequireConfirmedMfa;
 use App\Integration\Console\Commands\CreateApiTokenCommand;
+use App\Integration\Console\Commands\CreateWebhookEndpointCommand;
+use App\Integration\Console\Commands\RedeliverWebhookCommand;
 use App\Integration\Console\Commands\RevokeApiTokenCommand;
 use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
 use App\Migration\Console\Commands\CutoverRestoreCommand;
@@ -45,6 +47,8 @@ return Application::configure(basePath: dirname(__DIR__))
         SeedDefaultAutomationRulesCommand::class,
         CreateApiTokenCommand::class,
         RevokeApiTokenCommand::class,
+        CreateWebhookEndpointCommand::class,
+        RedeliverWebhookCommand::class,
     ])
     ->withSchedule(function (Schedule $schedule) {
         // G-01a's one lifecycle rule (issue #50) — see the command's own

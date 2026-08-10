@@ -296,6 +296,11 @@ namespace Enums {
 export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_messages' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings' | 'manage_form_templates';
 export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' | 'assistant';
 }
+namespace Integration {
+namespace Enums {
+export type WebhookDeliveryStatus = 'pending' | 'delivered' | 'failed';
+}
+}
 namespace Media {
 namespace Data {
 export type FailedAssetData = {
