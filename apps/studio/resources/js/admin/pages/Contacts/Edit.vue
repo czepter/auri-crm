@@ -7,6 +7,8 @@ const props = defineProps<{
   contact: App.Crm.Data.ContactSuggestionData
   portalAccessRevokedAt: string | null
   canRevokePortalAccess: boolean
+  dsgvoErasedAt: string | null
+  canManageDsgvo: boolean
 }>()
 
 const { t } = useI18n()
@@ -27,6 +29,14 @@ function submit() {
 function revokePortalAccess() {
   if (confirm(t('contacts.revokePortalAccessConfirm', { name: props.contact.name }))) {
     router.post(`/kontakte/${props.contact.id}/portal-zugang/widerruf`)
+  }
+}
+
+// Irreversible, and named as such — the same worded-to-the-scope confirm
+// pattern revokePortalAccess uses above.
+function eraseDsgvoData() {
+  if (confirm(t('contacts.dsgvoEraseConfirm', { name: props.contact.name }))) {
+    router.post(`/kontakte/${props.contact.id}/dsgvo/loeschen`)
   }
 }
 </script>
@@ -69,6 +79,19 @@ function revokePortalAccess() {
           <p>{{ $t('contacts.portalAccessActive') }}</p>
           <button type="button" class="abtn" @click="revokePortalAccess">
             {{ $t('contacts.revokePortalAccess') }}
+          </button>
+        </template>
+      </div>
+
+      <div v-if="canManageDsgvo" class="card static" style="margin-top: var(--s5)">
+        <div class="cardhead"><span class="kick">{{ $t('contacts.dsgvo') }}</span></div>
+        <p v-if="dsgvoErasedAt">
+          {{ $t('contacts.dsgvoErased', { date: new Date(dsgvoErasedAt).toLocaleDateString('de-DE') }) }}
+        </p>
+        <template v-else>
+          <a class="txtbtn" :href="`/kontakte/${contact.id}/dsgvo/export`">{{ $t('contacts.dsgvoExport') }}</a>
+          <button type="button" class="abtn" @click="eraseDsgvoData">
+            {{ $t('contacts.dsgvoErase') }}
           </button>
         </template>
       </div>

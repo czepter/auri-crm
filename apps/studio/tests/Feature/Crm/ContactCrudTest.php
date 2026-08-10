@@ -1,6 +1,7 @@
 <?php
 
 use App\Crm\Models\Contact;
+use App\Enums\StaffRole;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -8,6 +9,20 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->staff = User::factory()->withMfa()->create();
+});
+
+it('shows the dsgvo actions only to the owner', function () {
+    $contact = Contact::factory()->create();
+
+    $owner = User::factory()->withMfa()->create(['role' => StaffRole::Owner]);
+    $props = $this->actingAs($owner, 'staff')->get("/kontakte/{$contact->public_id}")->viewData('page')['props'];
+    expect($props['canManageDsgvo'])->toBeTrue()
+        ->and($props['dsgvoErasedAt'])->toBeNull()
+        ->and(integerIdPaths($props))->toBe([]);
+
+    $photographer = User::factory()->withMfa()->create(['role' => StaffRole::Photographer]);
+    expect($this->actingAs($photographer, 'staff')->get("/kontakte/{$contact->public_id}")->viewData('page')['props']['canManageDsgvo'])
+        ->toBeFalse();
 });
 
 it('lists contacts alphabetically with their project counts', function () {

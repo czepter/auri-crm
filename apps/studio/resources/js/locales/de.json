@@ -86,7 +86,12 @@
     "portalAccessActive": "Aktiv",
     "portalAccessRevoked": "Widerrufen am {date}",
     "revokePortalAccess": "Portal-Zugang widerrufen",
-    "revokePortalAccessConfirm": "Portal-Zugang für {name} vollständig widerrufen? Das beendet den Zugriff auf alle Projekte dieses Kontakts im Kundenbereich, auch bereits angemeldete Sitzungen — nicht nur ein Projekt."
+    "revokePortalAccessConfirm": "Portal-Zugang für {name} vollständig widerrufen? Das beendet den Zugriff auf alle Projekte dieses Kontakts im Kundenbereich, auch bereits angemeldete Sitzungen — nicht nur ein Projekt.",
+    "dsgvo": "DSGVO",
+    "dsgvoExport": "Daten exportieren",
+    "dsgvoErase": "Kontakt löschen",
+    "dsgvoErased": "Gelöscht am {date}",
+    "dsgvoEraseConfirm": "{name} und alle zugehörigen Daten unwiderruflich löschen? Nur unterzeichnete Verträge und der Prüfprotokoll-Eintrag bleiben erhalten."
   },
   "project": {
     "kicker": "Projekt · {type}",

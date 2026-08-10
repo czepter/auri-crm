@@ -38,6 +38,8 @@ class ContactController extends Controller
             'contact' => ContactSuggestionData::fromModel($contact->loadCount('projects')),
             'portalAccessRevokedAt' => $contact->portal_access_revoked_at?->toIso8601String(),
             'canRevokePortalAccess' => $user?->can('revokePortalAccess', $contact) ?? false,
+            'dsgvoErasedAt' => $contact->dsgvo_erased_at?->toIso8601String(),
+            'canManageDsgvo' => $user?->can('eraseDsgvoData', $contact) ?? false,
         ]);
     }
 
