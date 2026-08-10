@@ -28,6 +28,7 @@ use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
 use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\SessionController;
+use App\Media\Http\Controllers\FailedAssetController;
 use App\Media\Http\Controllers\MediaIngestController;
 use App\Media\Http\Controllers\MultipartUploadController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
@@ -279,6 +280,13 @@ Route::middleware('audience:staff')->group(function () {
             ->name('galleries.uploads.complete');
         Route::delete('/uploads/{multipartUpload}', [MultipartUploadController::class, 'destroy'])
             ->name('galleries.uploads.destroy');
+
+        // G-04: the ingest screen's "needs attention" tray — re-runs G-03's
+        // ingest pipeline for one Failed asset. Inertia (a redirect back),
+        // not the JSON API above: this reloads the same ingest screen's
+        // props rather than driving client-side upload state.
+        Route::post('/medien/{asset}/wiederholen', [FailedAssetController::class, 'retry'])
+            ->name('assets.retry');
 
         // No GET here: the Zahlungen card lives on the project overview
         // itself (ProjectController::show), not a tab of its own — see the
