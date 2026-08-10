@@ -1,5 +1,6 @@
 <?php
 
+use App\Gallery\Http\Controllers\AssetCommentController;
 use App\Gallery\Http\Controllers\AssetFavoriteController;
 use App\Gallery\Http\Controllers\GalleryImageController;
 use App\Gallery\Http\Controllers\GalleryReadController;
@@ -33,6 +34,16 @@ Route::get('/gallery-versions/{galleryVersion:public_id}/favorites', [AssetFavor
 Route::post('/gallery-versions/{galleryVersion:public_id}/favorites/{key}', [AssetFavoriteController::class, 'toggle'])
     ->where('key', '.*')
     ->name('api.gallery-versions.favorites.toggle');
+
+// G-12: the lightbox's comment rail — asset_key travels as a request field
+// on both, not a path segment, since a comment (unlike a favorite) is never
+// addressed by its own key/guest pair. Same guest-identity gap as the
+// favorite routes above, inherited on purpose rather than solved here — see
+// AssetCommentController's own doc comment.
+Route::get('/gallery-versions/{galleryVersion:public_id}/comments', [AssetCommentController::class, 'index'])
+    ->name('api.gallery-versions.comments.index');
+Route::post('/gallery-versions/{galleryVersion:public_id}/comments', [AssetCommentController::class, 'store'])
+    ->name('api.gallery-versions.comments.store');
 
 // M-05: the first api-surface consumer of user-facing business logic
 // (everything above is infrastructure). No `auth` middleware — Stripe is the

@@ -43,11 +43,14 @@ const PUBLIC_ROUTES = [
     // favorite routes below inherit the same gap on purpose rather than
     // solving it themselves — see AssetFavoriteController's own doc comment
     // for why an `audience:api` bearer token doesn't fit an anonymous
-    // gallery guest anyway, gate or no gate.
+    // gallery guest anyway, gate or no gate. G-12's two comment routes
+    // inherit the same gap, for the same reason — see
+    // AssetCommentController's own doc comment.
     'api' => [
         'api/health', 'api/stripe/webhook',
         'api/galleries/{gallery}', 'api/gallery-versions/{galleryVersion}/images/{key}',
         'api/gallery-versions/{galleryVersion}/favorites', 'api/gallery-versions/{galleryVersion}/favorites/{key}',
+        'api/gallery-versions/{galleryVersion}/comments',
     ],
 
     // The client's way in. Public by necessity — the only person who needs it

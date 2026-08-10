@@ -21,6 +21,7 @@ use App\Crm\Http\Controllers\TaskTemplateController;
 use App\Crm\Http\Controllers\TimelineController;
 use App\Documents\Http\Controllers\DocumentTemplateController;
 use App\Engagement\Http\Controllers\ThreadController;
+use App\Gallery\Http\Controllers\GalleryLightroomExportController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
 use App\Http\Controllers\Staff\InvitationController;
@@ -280,6 +281,14 @@ Route::middleware('audience:staff')->group(function () {
             ->name('galleries.uploads.complete');
         Route::delete('/uploads/{multipartUpload}', [MultipartUploadController::class, 'destroy'])
             ->name('galleries.uploads.destroy');
+
+        // G-12: the studio side of proofing — every favorited asset in the
+        // gallery's current version, as a Lightroom-importable filename
+        // list. No admin gallery-detail screen exists yet to hang a button
+        // on (see the controller's own doc comment), so this is reachable by
+        // URL only until one does.
+        Route::get('/galerien/{gallery}/lightroom-export', GalleryLightroomExportController::class)
+            ->name('galleries.lightroom-export');
 
         // G-04: the ingest screen's "needs attention" tray — re-runs G-03's
         // ingest pipeline for one Failed asset. Inertia (a redirect back),

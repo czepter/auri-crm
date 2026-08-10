@@ -2,8 +2,10 @@
 
 namespace App\Gallery\Http\Controllers;
 
+use App\Gallery\Actions\NotifyStudioOfEngagement;
 use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\GalleryVersion;
+use App\Gallery\Notifications\AssetFavorited;
 use App\Http\Controllers\Controller;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +32,8 @@ use Illuminate\Http\Request;
  */
 class AssetFavoriteController extends Controller
 {
+    public function __construct(private readonly NotifyStudioOfEngagement $notifyStudio) {}
+
     /** The current guest's favorited asset keys within one version. */
     public function index(Request $request, GalleryVersion $galleryVersion): JsonResponse
     {
@@ -65,15 +69,21 @@ class AssetFavoriteController extends Controller
         }
 
         try {
-            AssetFavorite::create([
+            $created = AssetFavorite::create([
                 'gallery_version_id' => $galleryVersion->id,
                 'asset_key' => $key,
                 'guest_identifier' => $validated['guest_id'],
             ]);
+
+            // G-12: reaches the studio through the unread stream — only on
+            // the add, never on the remove branch above (un-marking a
+            // favorite is not itself an event worth surfacing).
+            ($this->notifyStudio)(new AssetFavorited($galleryVersion->gallery, $created));
         } catch (UniqueConstraintViolationException) {
             // A second request for the same guest+asset landed between the
             // lookup above and this insert — the unique index already made
-            // the mark this one wanted to make, so the outcome is the same.
+            // the mark this one wanted to make (and its own request already
+            // notified the studio), so the outcome is the same.
         }
 
         return response()->json(['favorited' => true]);
