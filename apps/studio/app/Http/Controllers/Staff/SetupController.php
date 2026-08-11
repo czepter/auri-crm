@@ -40,9 +40,18 @@ class SetupController extends Controller
 
         // Re-checked inside the lock: two tabs submitting at once must not
         // both become Owner. EnsureNoStaffExists ran before either request
-        // reached here and cannot see the other.
+        // reached here and cannot see the other. Postgres's SELECT ... FOR
+        // UPDATE only locks rows a query actually returns — on an empty
+        // table that's zero rows, so lockForUpdate() here would take no
+        // lock at all and let two concurrent requests both pass the
+        // emptiness check. An advisory lock on a fixed key has no row to
+        // find, so it blocks the second transaction regardless. Session
+        // key is arbitrary but stable; pg_advisory_xact_lock releases
+        // itself on commit or rollback.
         $user = DB::transaction(function () use ($validated) {
-            abort_if(User::query()->lockForUpdate()->exists(), 404);
+            DB::select('SELECT pg_advisory_xact_lock(?)', [crc32('staff_setup')]);
+
+            abort_if(User::query()->exists(), 404);
 
             return User::create([
                 'name' => $validated['name'],
