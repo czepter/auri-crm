@@ -146,11 +146,12 @@ whose `db:cutover-restore` command exists for exactly this.
    GlitchTip project exists.
 4. Deploy. `migrate` runs the schema, `rustfs-init` creates the bucket, and
    the four web services come up behind their healthchecks.
-5. Create the first staff user by hand — `php artisan tinker` in the `admin`
-   container. No seeder runs in a deploy, and `DemoCrmSeeder` is guarded off
-   in production anyway. Everyone after the first arrives by invitation.
-6. Sign in on the admin domain and complete TOTP enrollment. Staff MFA is
-   mandatory; there is no way past it.
+5. Visit `/einrichtung` on the admin domain and complete first-run setup —
+   see "First-run setup" below. No seeder runs in a deploy, and
+   `DemoCrmSeeder` is guarded off in production anyway. Everyone after the
+   first arrives by invitation.
+6. TOTP enrollment is optional, at `/auth/mfa/enroll` on the admin domain —
+   nothing blocks the dashboard for staff who skip it.
 
 ## First-run setup
 

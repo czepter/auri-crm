@@ -23,6 +23,13 @@ class E2eSeeder extends Seeder
 {
     public function run(): void
     {
+        // db:seed --class=E2eSeeder is directly invocable and bypasses
+        // DatabaseSeeder's own guard — same reasoning as DatabaseSeeder,
+        // duplicated here because this seeder is never called from there.
+        if (app()->isProduction()) {
+            return;
+        }
+
         // The Playwright accounts below sign in past this seeder's own
         // wizard on purpose — E2eSeeder is idempotent fixture data, not a
         // first-run scenario, and no spec here exercises /einrichtung/studio.

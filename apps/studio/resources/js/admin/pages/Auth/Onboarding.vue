@@ -27,6 +27,13 @@ const step = () => steps[stepIndex.value]
 // Only one of these is mounted at a time (v-if chain below), so only one
 // ref is ever non-null. Each exposes { form, submit } — see
 // Settings/panes/ProfileForm.vue and its siblings.
+//
+// stepIndex above survives each pane's own save (POST/PATCH -> redirect ->
+// redirect -> back to this same Inertia component) only because
+// router.post/patch default to preserveState: true, which keeps this Vue
+// component instance — and therefore stepIndex — alive across that
+// redirect chain. If a pane's redirect target or preserveState option ever
+// changes, the wizard will silently reset to step 1 on every save.
 const paneRef = ref<{ form: { processing: boolean }; submit: () => void }>()
 
 function advance() {
@@ -71,7 +78,7 @@ function finish() {
         >
           {{ stepIndex === steps.length - 1 ? $t('onboarding.finish') : $t('onboarding.next') }}
         </button>
-        <button v-if="stepIndex > 0" class="txtbtn" type="button" @click="finish">
+        <button class="txtbtn" type="button" @click="finish">
           {{ $t('onboarding.skip') }}
         </button>
       </div>
