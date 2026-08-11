@@ -33,6 +33,7 @@ use App\Http\Controllers\Staff\OAuthAuthorizationController;
 use App\Http\Controllers\Staff\OAuthTokenController;
 use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\SessionController;
+use App\Http\Controllers\Staff\SetupController;
 use App\Media\Http\Controllers\FailedAssetController;
 use App\Media\Http\Controllers\MediaIngestController;
 use App\Media\Http\Controllers\MultipartUploadController;
@@ -70,6 +71,11 @@ Route::get('/kalender/{token}/shootings.ics', [CalendarController::class, 'feed'
 // its PKCE verifier are the credential; see OAuthTokenController's own doc
 // comment for why that is enough without a client_secret.
 Route::post('/oauth/token', [OAuthTokenController::class, 'store'])->name('oauth.token');
+
+Route::middleware(['guest:staff', 'setup'])->group(function () {
+    Route::get('/einrichtung', [SetupController::class, 'create'])->name('setup');
+    Route::post('/einrichtung', [SetupController::class, 'store']);
+});
 
 // Staff surface. Session-authenticated, Inertia-rendered, never public.
 Route::middleware('guest:staff')->group(function () {

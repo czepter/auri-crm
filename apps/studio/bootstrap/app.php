@@ -8,6 +8,7 @@ use App\Http\Middleware\EnsureApiTokenScope;
 use App\Http\Middleware\EnsureAudience;
 use App\Http\Middleware\EnsureGalleryGate;
 use App\Http\Middleware\EnsureIdempotentWrite;
+use App\Http\Middleware\EnsureNoStaffExists;
 use App\Http\Middleware\EnsurePortalCapability;
 use App\Http\Middleware\EnsurePortalMaintenanceClosure;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -94,6 +95,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'mfa' => RequireConfirmedMfa::class,
+            'setup' => EnsureNoStaffExists::class,
             'audience' => EnsureAudience::class,
             'scope' => EnsureApiTokenScope::class,
             'idempotent' => EnsureIdempotentWrite::class,

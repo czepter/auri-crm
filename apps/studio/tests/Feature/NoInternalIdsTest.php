@@ -50,6 +50,10 @@ it('never puts an integer identifier into an authenticated inertia page prop', f
 });
 
 it('never puts an integer identifier into the login page', function () {
+    // A staff account has to exist for /login to render at all — an empty
+    // table sends every visitor to /einrichtung instead. See SetupTest.
+    User::factory()->create();
+
     $props = $this->get('/login')->assertOk()->viewData('page')['props'];
 
     expect(integerIdPaths($props))->toBe([]);

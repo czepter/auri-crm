@@ -19,8 +19,12 @@ class SessionController extends Controller
     private const MAX_ATTEMPTS = 5;
     private const DECAY_SECONDS = 300;
 
-    public function create(): Response
+    public function create(): Response|RedirectResponse
     {
+        if (! User::query()->exists()) {
+            return redirect('/einrichtung');
+        }
+
         // The third of DevLoginController's three guards: false everywhere but
         // local, so the production bundle renders no path to the bypass.
         return Inertia::render('Auth/Login', [

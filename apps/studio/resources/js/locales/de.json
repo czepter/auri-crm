@@ -472,6 +472,15 @@
     "daySat": "Sa",
     "daySun": "So"
   },
+  "setup": {
+    "title": "Studio einrichten",
+    "hint": "Zuerst das Inhaber-Konto anlegen.",
+    "name": "Name",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "passwordConfirm": "Passwort bestätigen",
+    "submit": "Konto anlegen"
+  },
   "paymentSettings": {
     "title": "Zahlungen",
     "stripeSection": "Stripe",
