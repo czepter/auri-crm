@@ -151,3 +151,15 @@ whose `db:cutover-restore` command exists for exactly this.
    in production anyway. Everyone after the first arrives by invitation.
 6. Sign in on the admin domain and complete TOTP enrollment. Staff MFA is
    mandatory; there is no way past it.
+
+## First-run setup
+
+A freshly deployed instance has no staff account. The first person to reach
+`/einrichtung` becomes the studio's Owner — there is no invite code and no
+recovery path if the wrong person gets there first. Complete setup
+immediately after deploying, before sharing the URL.
+
+To see the wizard on a local machine that already has a seeded account, run
+`php artisan migrate:fresh` first — `db:seed`'s `test@example.com` account
+(created only outside production) otherwise makes `/einrichtung` 404 same as
+it would once any real Owner exists.
