@@ -28,13 +28,65 @@ const PUBLIC_ROUTES = [
         'passwort/vergessen',
         'passwort/neu/{token}',
         'passwort/neu',
+        // N-04's token exchange: the MCP client calls this directly,
+        // off-browser, with no staff session to hold an `audience:` guard —
+        // the single-use authorization code and its PKCE verifier are the
+        // credential instead. See OAuthTokenController's own doc comment.
+        // /oauth/authorize (the half a staff session DOES gate) carries
+        // `audience:staff` same as every other screen in the mfa group below,
+        // so it is not listed here.
+        'oauth/token',
     ],
-    'api' => ['api/health'],
+    // Stripe is the only caller of the webhook, and it authenticates itself
+    // by the request signature (Stripe-Signature, verified against
+    // config('services.stripe.webhook_secret')) rather than by a session an
+    // `audience:` middleware could gate — there is no staff or portal user
+    // on this request to hold one. See StripeWebhookController's own doc
+    // comment.
+    // G-08's own scope note: a gallery guest holds no `audience:api` token
+    // yet — G-06 (#57) is the story that decides how one is earned (a PIN,
+    // an emailed link, a session) and wraps these two routes with that
+    // check. Until it lands, both are deliberately reachable by public_id
+    // alone, same as every other still-open gate in this phase. G-09's two
+    // favorite routes below inherit the same gap on purpose rather than
+    // solving it themselves — see AssetFavoriteController's own doc comment
+    // for why an `audience:api` bearer token doesn't fit an anonymous
+    // gallery guest anyway, gate or no gate. G-12's two comment routes
+    // inherit the same gap, for the same reason — see
+    // AssetCommentController's own doc comment.
+    'api' => [
+        'api/health', 'api/stripe/webhook',
+        'api/galleries/{gallery}', 'api/gallery-versions/{galleryVersion}/images/{key}',
+        'api/gallery-versions/{galleryVersion}/favorites', 'api/gallery-versions/{galleryVersion}/favorites/{key}',
+        'api/gallery-versions/{galleryVersion}/comments',
+    ],
 
     // The client's way in. Public by necessity — the only person who needs it
     // is one who cannot sign in — and the token in the path is the whole
-    // credential, spent the moment it works.
-    'portal' => ['anmelden', 'zugang/{token}'],
+    // credential, spent the moment it works. branding/logo and impressum are
+    // T-08's: a brand mark is not a secret, and a legal notice has to be
+    // reachable from any page a client can see, including one it has not
+    // signed into yet. abmelden/{contact} is T-11's unsubscribe: reached from
+    // a mail already delivered, with the contact's own public_id as the whole
+    // credential, same shape as zugang/{token}.
+    'portal' => [
+        'anmelden', 'zugang/{token}', 'branding/logo', 'impressum', 'abmelden/{contact}',
+        // G-06's three gates. A gallery guest is neither a staff user nor a
+        // portal Contact — there is no `audience:` guard for it, because the
+        // gate check itself (`gallery.gate:*`, EnsureGalleryGate) is that
+        // audience's whole authorisation story, the same way the token in
+        // `zugang/{token}` above is the client portal's for a guest who
+        // cannot sign in yet. Every route past the view gate carries
+        // `gallery.gate:view` or `gallery.gate:download` even though that
+        // does not read as `audience:` to this test.
+        'galerien/{gallery}', 'galerien/{gallery}/passwort',
+        'galerien/{gallery}/download', 'galerien/{gallery}/download/pin',
+        'galerien/{gallery}/download/email', 'galerien/{gallery}/download/email/{token}',
+        // G-11's delivery endpoint carries its own two-layer check —
+        // `gallery.gate:download` plus `signed` — neither of which reads as
+        // `audience:` to this test, same as every other gallery route above.
+        'galerien/{gallery}/download/{zipBuildPart}/{guestId}',
+    ],
 ];
 
 // routesForSurface() lives in tests/Pest.php — see the note there.

@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Data\StaffProfileData;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\Surface;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -49,6 +50,32 @@ class HandleInertiaRequests extends Middleware
                 'leads' => fn () => Lead::query()->open()->count(),
                 'projects' => fn () => Project::query()->count(),
             ],
+            // T-08: logo, accent colour and the two external legal links —
+            // every portal page's own chrome, not one screen's. Lazy and
+            // scoped to the portal surface alone, so an admin request never
+            // pays for a settings read it has no page for.
+            //
+            // Paths are hardcoded strings, not route(...) — the same choice
+            // every other portal URL in this codebase already makes (see
+            // ContractController's downloadUrl) rather than the named-route
+            // helper admin controllers use: the portal and admin surfaces
+            // register their route names into one process-wide UrlGenerator
+            // during the test suite's surface switching, and this surface's
+            // own paths are few and stable enough not to need it.
+            ...(Surface::current() === Surface::PORTAL ? [
+                'portalBranding' => fn () => [
+                    'displayName' => app(StudioSettingsResolver::class)->displayName(),
+                    'logoUrl' => app(StudioSettingsResolver::class)->logoPath() !== null
+                        ? '/branding/logo'
+                        : null,
+                    'accentColor' => app(StudioSettingsResolver::class)->attributes()['accent_color'],
+                ],
+                'portalLegal' => fn () => [
+                    'impressumUrl' => '/impressum',
+                    'datenschutzUrl' => app(StudioSettingsResolver::class)->legalDatenschutzUrl(),
+                    'agbUrl' => app(StudioSettingsResolver::class)->legalAgbUrl(),
+                ],
+            ] : []),
         ];
     }
 }

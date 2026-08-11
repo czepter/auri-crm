@@ -3,14 +3,20 @@
 Redis-backed, supervised by [Horizon](https://laravel.com/docs/horizon), one
 named queue per workload:
 
-| Queue     | Supervisor          | Timeout | Carries                                    |
-|-----------|----------------------|---------|---------------------------------------------|
-| `default` | `supervisor-default` | 60s     | Anything without a more specific home yet.  |
-| `mail`    | `supervisor-mail`    | 30s     | Outbound notifications and transactional mail. |
-| `render`  | `supervisor-render`  | 300s    | Document rendering (Gotenberg, M-01) and other slow external calls. |
+| Queue          | Supervisor                 | Timeout | Carries                                    |
+|----------------|-----------------------------|---------|---------------------------------------------|
+| `default`      | `supervisor-default`       | 60s     | Anything without a more specific home yet.  |
+| `mail`         | `supervisor-mail`          | 30s     | Outbound notifications and transactional mail. |
+| `render`       | `supervisor-render`        | 300s    | Document rendering (Gotenberg, M-01) and other slow external calls. |
+| `media.ingest` | `supervisor-media-ingest`  | 20s     | Deriving thumbnails/previews from an uploaded original (G-01a). |
+| `media.zip`    | `supervisor-media-zip`     | 2400s   | Building a gallery's ZIP download, streamed through the application (G-01a; G-10, #59). |
 
-Nothing dispatches onto `mail` or `render` yet — M-00 ships the runtime, not
-the work. Dispatch onto the queue that matches what the job does:
+Nothing dispatches onto `mail`, `render` or `media.zip` yet — each story ships
+the queue seam ahead of the job that will use it. `media.ingest` carries
+`App\Media\Jobs\ProcessIngestedAsset` (G-03) — dispatched by
+`MultipartUploadController::complete()` the moment a multipart upload session
+is marked Completed; see docs/media.md's own "Ingest processing (G-03)"
+section. Dispatch onto the queue that matches what the job does:
 
 ```php
 SomeJob::dispatch($thing)->onQueue('render');
@@ -23,7 +29,8 @@ has no per-queue granularity, only Horizon's supervisors do.
 ## Running it
 
 `docker compose up` starts a `worker` container running `php artisan horizon`
-alongside `php`, `postgres`, `redis` and `mailpit`. The dashboard is mounted
+alongside `php`, `postgres`, `redis`, `mailpit` and `minio` (G-01a's local
+S3-compatible service — see docs/media.md). The dashboard is mounted
 on the admin surface at `/horizon`, behind the `ManageStaff` capability (see
 `App\Providers\HorizonServiceProvider` and
 `InvitationController::authorizeStaffManagement()` for the sibling check) —
@@ -56,13 +63,24 @@ Retrying re-queues the job on its original connection and queue with a fresh
 attempt count, and removes the `failed_jobs` row — a retry that fails again
 gets its own new row rather than reusing the old one.
 
+A failed job's own `payload` column carries a `requestId` key — the
+`X-Request-Id` of the HTTP request that dispatched it (F-11,
+`App\Providers\ObservabilityServiceProvider` stamps it on push,
+`App\Support\Observability\JobRequestId` reads it back on failure). GlitchTip
+tags the failure report with the same id, so "the client says the download
+failed" is one query against a request id, not a guess at which of several
+same-second jobs it was.
+
 ## Deploy
 
-This repository has no production deploy configuration yet (no `fly.toml`,
-`render.yaml`, Kubernetes manifests, or `deploy/` directory — checked at the
-time this queue runtime was added) — `.github/workflows/ci.yml` runs tests
-only. Wherever a deploy mechanism is added, it needs a worker process running
-`php artisan horizon`, a reachable Redis, and `QUEUE_CONNECTION=redis` in that
-environment's configuration, matching the `worker` service in
-`docker-compose.yml`. Flagged here rather than guessed at, so it isn't
-mistaken for a solved problem.
+`docker-compose.coolify.yml` runs the queue in a deployment: a `horizon`
+service running `php artisan horizon`, a password-protected Redis with
+`appendonly` on so a signed contract's render job survives a restart, and
+`QUEUE_CONNECTION=redis` baked into `docker/app/Dockerfile` — Horizon only
+supervises the redis connection, and the database driver it would otherwise
+inherit is invisible to it, so jobs would pile up unworked beneath a green
+dashboard. A separate `scheduler` service runs `schedule:work` for the entries
+in `bootstrap/app.php`.
+
+The image those services run is built by `.github/workflows/release-image.yml`
+and pushed to GHCR; nothing is built on the deploy server.

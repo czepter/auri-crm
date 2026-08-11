@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { Link, router } from '@inertiajs/vue3'
+import { Link } from '@inertiajs/vue3'
+import PortalFooter from '@/portal/components/PortalFooter.vue'
+import PortalHeader from '@/portal/components/PortalHeader.vue'
 
 type Shoot = {
   id: string
@@ -13,7 +15,15 @@ type Shoot = {
 defineProps<{
   contact: { name: string }
   showSwitcher: boolean
-  project: { id: string; name: string; type: string; shoots: Shoot[]; hasContract: boolean }
+  project: {
+    id: string
+    name: string
+    type: string
+    shoots: Shoot[]
+    hasContract: boolean
+    hasPaymentPlan: boolean
+    messagingEnabled: boolean
+  }
 }>()
 
 function longDate(date: string | null) {
@@ -29,23 +39,7 @@ function longDate(date: string | null) {
 </script>
 
 <template>
-  <header class="phead">
-    <div class="pbar">
-      <span class="pmark"><i />Atelier Nordlicht <em>Fotografie · Hamburg</em></span>
-      <div class="pme">
-        <Link v-if="showSwitcher" href="/">{{ $t('portal.allProjects') }}</Link>
-        <span>{{ $t('portal.signedInAs') }} <b>{{ contact.name }}</b></span>
-        <button type="button" @click="router.post('/abmelden')">
-          <svg viewBox="0 0 24 24">
-            <path d="M15 17l5-5-5-5" />
-            <path d="M20 12H9" />
-            <path d="M12 20H6a2 2 0 01-2-2V6a2 2 0 012-2h6" />
-          </svg>
-          {{ $t('portal.signOut') }}
-        </button>
-      </div>
-    </div>
-  </header>
+  <PortalHeader :contact="contact" :show-switcher="showSwitcher" />
 
   <main class="pwrap">
     <div class="pgreet">{{ $t('portal.greeting', { name: contact.name.split(' ')[0] }) }}</div>
@@ -88,14 +82,28 @@ function longDate(date: string | null) {
       </div>
     </section>
 
+    <!-- E-06, gated by T-08's own "messaging" switch (default off) — the
+         affordance half of ThreadController's own
+         `portal.capability:messaging`, the same shape hasContract/
+         hasPaymentPlan already take for their own links below. -->
+    <section v-if="project.messagingEnabled" class="psec">
+      <Link class="blkfoot" :href="`/projekte/${project.id}/nachrichten`">
+        {{ $t('portal.messagesLinkTitle') }} →
+      </Link>
+    </section>
+
     <section v-if="project.hasContract" class="psec">
       <Link class="blkfoot" :href="`/projekte/${project.id}/vertrag`">
         {{ $t('portal.contractTitle') }} →
       </Link>
     </section>
+
+    <section v-if="project.hasPaymentPlan" class="psec">
+      <Link class="blkfoot" :href="`/projekte/${project.id}/zahlungen`">
+        {{ $t('portal.paymentsLinkTitle') }} →
+      </Link>
+    </section>
   </main>
 
-  <footer class="pfoot">
-    <span>Atelier Nordlicht · Hamburg</span>
-  </footer>
+  <PortalFooter />
 </template>

@@ -42,13 +42,21 @@ it('lives in its own table rather than as a flag on a shared one', function () {
 });
 
 /**
- * The structural guarantee C-07 rests on. The portal surface does not exist
- * yet; this test is written now so that the day routes/portal.php lands, the
- * first route that can reach an internal note fails here rather than in a
- * client's browser.
+ * The structural guarantee C-07 rests on: no client or guest ever reaches an
+ * internal note. This test is written before routes/portal.php carries any
+ * real routes, so the first one that can reach a note fails here rather than
+ * in a client's browser.
+ *
+ * The api surface is deliberately not checked here any more — I-03 gives it
+ * its own scope-gated internal-note route (App\Integration\Http\Controllers\
+ * InternalNoteController), reached only by an ApiToken holding manage_notes,
+ * the same capability a staff role needs. That is machine access to ordinary
+ * studio work, not the client leak this test exists to catch —
+ * tests/Feature/Integration/ApiInternalNoteWriteTest.php proves the scope
+ * gate on that route instead.
  */
-it('is unreachable from every surface that is not the studio', function (string $surface) {
-    $reaching = collect(routesForSurface($surface))
+it('is unreachable from the portal surface', function () {
+    $reaching = collect(routesForSurface(Surface::PORTAL))
         ->map(fn ($route) => $route->getAction('controller'))
         ->filter()
         ->map(fn (string $action) => Str::before($action, '@'))
@@ -59,4 +67,4 @@ it('is unreachable from every surface that is not the studio', function (string 
         ->all();
 
     expect($reaching)->toBe([]);
-})->with(array_values(array_diff(Surface::ALL, [Surface::ADMIN])));
+});

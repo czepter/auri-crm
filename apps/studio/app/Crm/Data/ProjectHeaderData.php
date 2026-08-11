@@ -36,10 +36,13 @@ class ProjectHeaderData extends Data
         public bool $canManageCrew,
         public bool $canManageTasks,
         public bool $canManageNotes,
+        public bool $canManageMessages,
         public bool $portalVisible,
         public bool $canManagePortalVisibility,
         public bool $canManageQuotes,
         public bool $canManageContracts,
+        public bool $canManagePaymentPlan,
+        public bool $canManageForms,
         public array $tabs,
     ) {}
 
@@ -64,20 +67,31 @@ class ProjectHeaderData extends Data
             canManageCrew: $user?->can('manageCrew', $project) ?? false,
             canManageTasks: $user?->can('manageTasks', $project) ?? false,
             canManageNotes: $user?->can('manageNotes', $project) ?? false,
+            canManageMessages: $user?->can('manageMessages', $project) ?? false,
             portalVisible: $project->portal_visible,
             canManagePortalVisibility: $user?->can('manageVisibility', $project) ?? false,
             canManageQuotes: $user?->can('manageQuotes', $project) ?? false,
             canManageContracts: $user?->can('manageContracts', $project) ?? false,
-            // Zahlungen is M-03, Fragebögen and Kommunikation are E-* in P4,
-            // Galerien is G-05 in P3. Each appends a line here on the sprint
-            // it lands.
+            canManagePaymentPlan: $user?->can('managePaymentPlan', $project) ?? false,
+            canManageForms: $user?->can('manageForms', $project) ?? false,
+            // Galerien (G-05, already in P3) appends a line here on the
+            // sprint it lands. Zahlungen (M-03) does not: mockup
+            // 04-auftrag's own comment keeps it and Aufgaben as "previews,
+            // compressed into the Übersicht tab rather than built as full
+            // tab panels" (mockups/_shared/admin-extra.css) — so it lives on
+            // the overview screen instead, never as a tab.
             //
             // Q-02 landed the quote half of "Angebot & Vertrag" under one
             // combined tab; M-01 splits Vertrag into its own tab now that it
-            // has a screen of its own.
+            // has a screen of its own. E-06's Kommunikation and E-02's
+            // Fragebögen both sit between Shootings and Angebot, matching
+            // mockup 04's own tab order (mockups/_shared/layout.js's
+            // PROJECT_TABS).
             tabs: [
                 ['key' => 'overview', 'label' => 'Übersicht', 'href' => "/auftraege/{$project->public_id}"],
                 ['key' => 'shoots', 'label' => 'Shootings', 'href' => "/auftraege/{$project->public_id}/shootings"],
+                ['key' => 'messages', 'label' => 'Kommunikation', 'href' => "/auftraege/{$project->public_id}/nachrichten"],
+                ['key' => 'forms', 'label' => 'Fragebögen', 'href' => "/auftraege/{$project->public_id}/frageboegen"],
                 ['key' => 'quotes', 'label' => 'Angebot', 'href' => "/auftraege/{$project->public_id}/angebote"],
                 ['key' => 'contract', 'label' => 'Vertrag', 'href' => "/auftraege/{$project->public_id}/vertrag"],
             ],

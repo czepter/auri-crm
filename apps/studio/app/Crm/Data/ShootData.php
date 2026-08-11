@@ -20,6 +20,8 @@ class ShootData extends Data
     /**
      * @param  list<CrewMemberData>  $crew
      * @param  list<array{value: string, label: string}>  $forwardStatuses
+     * @param  list<TimelineEntryData>  $timeline
+     * @param  list<DateConflictData>  $crewConflicts
      */
     public function __construct(
         public string $id,
@@ -36,9 +38,21 @@ class ShootData extends Data
         public ?string $cancelledReason,
         public array $crew,
         public array $forwardStatuses,
+        public array $timeline,
+        public string $pdfUrl,
+        public string $icsUrl,
+        public array $crewConflicts,
     ) {}
 
-    public static function fromShoot(Shoot $shoot): self
+    /**
+     * T-10: $conflicts is CheckDateAvailability's own list, already narrowed
+     * by the caller to this shoot's date and this shoot's crew — see
+     * ProjectController::shootsOf(). S-02's picker warns off it; it never
+     * blocks the assignment, same as every other source that action produces.
+     *
+     * @param  list<DateConflictData>  $conflicts
+     */
+    public static function fromShoot(Shoot $shoot, array $conflicts = []): self
     {
         return new self(
             id: $shoot->public_id,
@@ -63,6 +77,10 @@ class ShootData extends Data
                 ->map(fn (ShootStatus $status) => ['value' => $status->value, 'label' => $status->label()])
                 ->values()
                 ->all(),
+            timeline: $shoot->timeline->map(TimelineEntryData::fromEntry(...))->all(),
+            pdfUrl: "/shootings/{$shoot->public_id}/ablauf.pdf",
+            icsUrl: "/shootings/{$shoot->public_id}/ablauf.ics",
+            crewConflicts: $conflicts,
         );
     }
 }

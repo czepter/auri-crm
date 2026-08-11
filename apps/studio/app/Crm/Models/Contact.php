@@ -5,12 +5,14 @@ namespace App\Crm\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use Database\Factories\Crm\ContactFactory;
-use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Auth\Authenticatable as AuthenticatableTrait;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * A person, role-agnostic. One row per address: a household sharing an inbox
@@ -20,19 +22,45 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * Contacts outlive projects. Portal access in P2 hangs off this model rather
  * than off Project, so a repeat client — a portrait sitting one year, a
  * wedding the next — signs in once and switches between them.
+ *
+ * T-11: Notifiable — routeNotificationForMail()'s default reads $this->email,
+ * exactly the column this model already carries, so a client-facing send can
+ * name a Contact as its notifiable (App\Quotes\Notifications\QuoteSent) and
+ * still reach the same inbox an on-demand route would have. Adopted here
+ * rather than left on-demand everywhere, because client preferences
+ * (App\Notifications\Support\NotificationPreferences) key on an identity an
+ * on-demand address does not carry.
+ *
+ * G-01 gives it a second, independent way to prove that same identity:
+ * HasApiTokens, for the api surface's guest tokens (Sanctum bearer tokens,
+ * scoped to whichever contact created them) rather than the portal's session
+ * cookie. Neither grants the other — a magic link never mints a token, and a
+ * token never opens a portal session — they just happen to authenticate the
+ * same row.
  */
 class Contact extends Model implements Authenticatable
 {
     use AuthenticatableTrait;
     use BelongsToTenant;
+    use HasApiTokens;
     use HasFactory;
     use HasPublicId;
+    use Notifiable;
 
     protected $fillable = ['name', 'email', 'phone'];
 
     protected function casts(): array
     {
-        return ['portal_access_revoked_at' => 'immutable_datetime'];
+        return [
+            'portal_access_revoked_at' => 'immutable_datetime',
+            'dsgvo_erased_at' => 'immutable_datetime',
+        ];
+    }
+
+    /** X-04: has App\Crm\Actions\EraseContactDsgvo already scrubbed this row? */
+    public function isDsgvoErased(): bool
+    {
+        return $this->dsgvo_erased_at !== null;
     }
 
     /**

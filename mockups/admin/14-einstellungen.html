@@ -9,18 +9,25 @@
 </head>
 <body data-nav="einst" data-screen="14" data-depth="2">
 
-<!-- Section shell for T-01, holding T-02 (Studio-Profil) and T-03 (Zahlungsdaten & USt).
+<!-- Section shell for T-01, holding T-02 (Studio-Profil) and T-03 (Umsatzsteuer).
      The left column reuses .nav verbatim from the app sidebar — same row, same hover,
      same .on state — so a second-level navigation never reads as a second design
-     language. Groups T-04 and later (Nummernkreise, Dokumente, Zahlungen, Portal,
-     Benachrichtigungen, Allgemein) are drawn disabled with a .chip.next "bald" —
-     the same "not yet" chip screen 4's Vertrag tab already uses for a superseded
-     quote — rather than invented "coming soon" chrome.
+     language. The groups still to come — Nummernkreise (T-04), Dokumente (T-05),
+     E-Mail (T-06), Zahlungen (T-07), Portal (T-08), Verfügbarkeit (T-09),
+     Aufgabenvorlagen (T-14), Benachrichtigungen (T-11), Allgemein (T-13) — are
+     drawn disabled with a .chip.next "bald", the same "not yet" chip screen 4's
+     Vertrag tab already uses for a superseded quote, rather than invented
+     "coming soon" chrome.
+
+     Bankverbindung sits in Studio-Profil, not under its own tab: T-02 is one form
+     with three fieldsets, because the legal entity, the brand and the bank are
+     edited together and rendered together. So the second tab is Umsatzsteuer and
+     nothing else — naming it "Zahlungsdaten" would point at data one pane over.
 
      DIRTY STATE: no JS in a static file can toggle a class, so both states of the
      save affordance are shown as two panes. Studio-Profil renders the dirty state —
-     .chip.now next to a full-opacity .btn — because a field has changed. Zahlungsdaten
-     & USt renders the clean state below it — the same .btn, dimmed and inert, no chip —
+     .chip.now next to a full-opacity .btn — because a field has changed. Umsatzsteuer
+     renders the clean state below it — the same .btn, dimmed and inert, no chip —
      because nothing has. One component, two opacities, is the whole affordance. -->
 
 <div class="app">
@@ -40,11 +47,14 @@
 
       <nav style="width:196px; flex:none; display:flex; flex-direction:column; gap:2px">
         <a class="nav on" href="14-einstellungen.html">Studio-Profil</a>
-        <a class="nav" href="#vat">Zahlungsdaten &amp; USt</a>
+        <a class="nav" href="#vat">Umsatzsteuer</a>
         <a class="nav" href="#" style="pointer-events:none; opacity:.5">Nummernkreise<span class="chip next" style="margin-left:auto">bald</span></a>
         <a class="nav" href="#" style="pointer-events:none; opacity:.5">Dokumente<span class="chip next" style="margin-left:auto">bald</span></a>
+        <a class="nav" href="#" style="pointer-events:none; opacity:.5">E-Mail<span class="chip next" style="margin-left:auto">bald</span></a>
         <a class="nav" href="#" style="pointer-events:none; opacity:.5">Zahlungen<span class="chip next" style="margin-left:auto">bald</span></a>
         <a class="nav" href="#" style="pointer-events:none; opacity:.5">Portal<span class="chip next" style="margin-left:auto">bald</span></a>
+        <a class="nav" href="#" style="pointer-events:none; opacity:.5">Verfügbarkeit<span class="chip next" style="margin-left:auto">bald</span></a>
+        <a class="nav" href="#" style="pointer-events:none; opacity:.5">Aufgabenvorlagen<span class="chip next" style="margin-left:auto">bald</span></a>
         <a class="nav" href="#" style="pointer-events:none; opacity:.5">Benachrichtigungen<span class="chip next" style="margin-left:auto">bald</span></a>
         <a class="nav" href="#" style="pointer-events:none; opacity:.5">Allgemein<span class="chip next" style="margin-left:auto">bald</span></a>
       </nav>
@@ -111,22 +121,24 @@
                 <input class="inp num" id="p-steuernr" type="text" value="22/123/45678">
               </div>
               <div class="fld">
-                <label for="p-ustid">USt-IdNr. <em>optional</em></label>
+                <label for="p-ustid">USt-IdNr.</label>
                 <input class="inp num" id="p-ustid" type="text" value="DE284957312">
               </div>
             </div>
+            <span class="hint" style="display:block; margin-top:var(--s3)">Mindestens eines von beiden — ein Beleg ohne Steuernummer und ohne USt-IdNr. ist nicht abrechenbar.</span>
           </div>
           <div class="grp">
             <div class="two">
               <div class="fld">
-                <label for="p-hrb">Handelsregister-Nummer</label>
+                <label for="p-hrb">Handelsregister-Nummer <em>optional</em></label>
                 <input class="inp num" id="p-hrb" type="text" value="HRB 142 887">
               </div>
               <div class="fld">
-                <label for="p-gericht">Registergericht</label>
+                <label for="p-gericht">Registergericht <em>optional</em></label>
                 <input class="inp" id="p-gericht" type="text" value="Amtsgericht Hamburg">
               </div>
             </div>
+            <span class="hint" style="display:block; margin-top:var(--s3)">Nur bei eingetragenen Rechtsformen. Einzelunternehmen und GbR lassen beides leer.</span>
           </div>
         </div>
 
@@ -160,7 +172,7 @@
                   <span style="display:inline-block; width:32px; height:32px; border-radius:var(--r-sm); border:1px solid var(--line); background:#B44E22; flex:none"></span>
                   <input class="inp num" id="p-akzent" type="text" value="#B44E22">
                 </div>
-                <span class="hint">Erscheint auf Angeboten, im Portal und in E-Mails.</span>
+                <span class="hint">Erscheint auf Angeboten, Verträgen und im Portal.</span>
               </div>
             </div>
           </div>
@@ -191,14 +203,14 @@
       </div>
     </div>
 
-    <!-- second state: Zahlungsdaten & USt selected in the same shell, save clean -->
+    <!-- second state: Umsatzsteuer selected in the same shell, save clean -->
     <div class="variant" id="vat">
-      <span class="vlab">Variante · Zahlungsdaten &amp; USt aktiv, keine ungespeicherten Änderungen</span>
+      <span class="vlab">Variante · Umsatzsteuer aktiv, keine ungespeicherten Änderungen</span>
 
       <div class="hrow">
         <div>
           <div class="kick">Einstellungen</div>
-          <h1>Zahlungsdaten &amp; USt</h1>
+          <h1>Umsatzsteuer</h1>
         </div>
         <a class="btn" href="#" style="opacity:.4; pointer-events:none"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>Speichern</a>
       </div>
@@ -207,11 +219,14 @@
 
         <nav style="width:196px; flex:none; display:flex; flex-direction:column; gap:2px">
           <a class="nav" href="14-einstellungen.html">Studio-Profil</a>
-          <a class="nav on" href="#vat">Zahlungsdaten &amp; USt</a>
+          <a class="nav on" href="#vat">Umsatzsteuer</a>
           <a class="nav" href="#" style="pointer-events:none; opacity:.5">Nummernkreise<span class="chip next" style="margin-left:auto">bald</span></a>
           <a class="nav" href="#" style="pointer-events:none; opacity:.5">Dokumente<span class="chip next" style="margin-left:auto">bald</span></a>
+          <a class="nav" href="#" style="pointer-events:none; opacity:.5">E-Mail<span class="chip next" style="margin-left:auto">bald</span></a>
           <a class="nav" href="#" style="pointer-events:none; opacity:.5">Zahlungen<span class="chip next" style="margin-left:auto">bald</span></a>
           <a class="nav" href="#" style="pointer-events:none; opacity:.5">Portal<span class="chip next" style="margin-left:auto">bald</span></a>
+          <a class="nav" href="#" style="pointer-events:none; opacity:.5">Verfügbarkeit<span class="chip next" style="margin-left:auto">bald</span></a>
+          <a class="nav" href="#" style="pointer-events:none; opacity:.5">Aufgabenvorlagen<span class="chip next" style="margin-left:auto">bald</span></a>
           <a class="nav" href="#" style="pointer-events:none; opacity:.5">Benachrichtigungen<span class="chip next" style="margin-left:auto">bald</span></a>
           <a class="nav" href="#" style="pointer-events:none; opacity:.5">Allgemein<span class="chip next" style="margin-left:auto">bald</span></a>
         </nav>
@@ -234,22 +249,22 @@
             </div>
             <div class="grp">
               <div class="fld" style="max-width:160px">
-                <label for="v-satz">Steuersatz <em>bei Standard</em></label>
-                <input class="inp num" id="v-satz" type="text" value="19" disabled style="opacity:.5">
-                <span class="hint">Prozent, netto. Ohne Wirkung im §19-Modus.</span>
+                <label for="v-satz">Steuersatz</label>
+                <input class="inp num" id="v-satz" type="text" value="19">
+                <span class="hint">Prozent, netto.</span>
               </div>
             </div>
           </div>
 
           <div class="dsec">
-            <div class="dlab">Vorschau · Rechnungshinweis</div>
-            <div class="card static">
-              <div class="cardhead"><span class="kick">Erscheint auf jedem Beleg</span></div>
-              <p style="margin:0; font:400 13px/1.5 var(--font); color:var(--ink)">
-                Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.
-              </p>
+            <div class="dlab">Rechnungshinweis</div>
+            <div class="grp">
+              <div class="fld">
+                <label for="v-hinweis">Hinweistext <em>optional</em></label>
+                <textarea class="inp" id="v-hinweis" rows="3">Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.</textarea>
+                <span class="hint">Steht unter der Summe auf Angebot, Vertrag und Rechnung. Wortlaut frei — leer lassen, wenn kein Hinweis nötig ist.</span>
+              </div>
             </div>
-            <span class="hint" style="display:block; margin-top:var(--s3)">Live-Vorschau des Hinweistexts — folgt dem Modus oben, ohne zu speichern.</span>
           </div>
 
         </div>

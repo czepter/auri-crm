@@ -1,0 +1,341 @@
+/* ------------------------------------------------------------------
+   Atelier Nordlicht — clickdummy design system
+   Plain CSS. No build step, no CDN. Opens over file://
+   ------------------------------------------------------------------ */
+
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  /* ground stays pure white; every other neutral is warmed toward the accent */
+  --bg:#FFFFFF;
+  --ink:#14100E;
+  --muted:#78706B;
+  --faint:#ABA49F;
+  --hover:#F6F3F1;
+  --line:#EDE9E6;
+  --line-hover:#E3DCD7;
+  --accent:#B44E22;
+  --accent-bg:#FBF0EA;
+  --ok:#3F6B4A;
+  --ok-bg:#EDF3EE;
+
+  /* one spacing scale, used everywhere */
+  --s1:4px; --s2:6px; --s3:10px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+
+  --r:8px;          /* cards, buttons, nav items */
+  --r-sm:5px;       /* count chips */
+
+  --font:'Instrument Sans', system-ui, sans-serif;
+}
+
+/* portal — same bones, more air, serif-free but larger and looser */
+[data-theme="portal"] {
+  --hover:#F8F5F3;
+  --s3:14px; --s4:20px; --s5:32px; --s6:44px; --s7:64px;
+  --r:10px;
+}
+
+/* gallery — chrome recedes, photographs carry the page */
+[data-theme="gallery"] {
+  --bg:#0E0C0B;
+  --ink:#F2EDE9;
+  --muted:#8B817B;
+  --faint:#615953;
+  --hover:#1A1614;
+  --line:#241F1C;
+  --line-hover:#332C28;
+  --accent:#D4713F;
+  --accent-bg:#26170F;
+}
+
+* { box-sizing:border-box; }
+
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font:400 14px/1.45 var(--font);
+  -webkit-font-smoothing:antialiased;
+}
+
+/* one icon system: 1.75 stroke, round caps, currentColor wherever it can inherit */
+svg { flex:none; stroke:currentColor; stroke-width:1.75; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+
+/* ---------- shell ---------- */
+
+.app { display:flex; min-height:100vh; }
+
+/* no border between sidebar and content — a 48px gutter does the separating */
+.side { width:204px; flex:none; padding:var(--s5) var(--s3) var(--s4); display:flex; flex-direction:column; }
+.brand { font:700 19px/1 var(--font); letter-spacing:-.035em; padding:0 var(--s3) var(--s5); color:var(--ink); text-decoration:none; }
+.nav { display:flex; align-items:center; gap:var(--s3); padding:9px var(--s3); border-radius:7px;
+       font:400 14px/1 var(--font); color:var(--muted); text-decoration:none; transition:background .12s ease-out; }
+.nav:hover { background:var(--hover); }
+.nav.on { color:var(--ink); font-weight:600; }
+.nav svg { width:17px; height:17px; opacity:.75; }
+.nav.on svg { opacity:1; }
+.nav .ct { margin-left:auto; font-size:12.5px; color:var(--faint); }
+.navlab { font:500 11.5px/1 var(--font); color:var(--faint); padding:var(--s5) var(--s3) var(--s2); }
+.me { margin-top:auto; display:flex; align-items:center; gap:var(--s3); padding:var(--s3); font:500 13px/1 var(--font); }
+.me img { width:26px; height:26px; border-radius:50%; object-fit:cover; background:var(--hover); }
+
+.main { flex:1; min-width:0; padding:var(--s5) var(--s5) var(--s5) var(--s7); display:flex; flex-direction:column; }
+.hrow { display:flex; align-items:center; gap:var(--s4); }
+h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
+
+/* ---------- controls ---------- */
+
+.btn { margin-left:auto; display:inline-flex; align-items:center; gap:7px; padding:9px 14px; border-radius:var(--r);
+       background:var(--ink); color:var(--bg); font:600 13px/1 var(--font); text-decoration:none; }
+.btn svg { width:15px; height:15px; }
+.txtbtn { display:inline-flex; align-items:center; gap:7px; font:500 13px/1 var(--font);
+          color:var(--muted); padding:9px 0; text-decoration:none; }
+.txtbtn svg { width:15px; height:15px; opacity:.8; }
+
+.tabs { display:flex; gap:var(--s5); margin:var(--s4) 0 var(--s5); }
+.tabs a { font:400 13px/1 var(--font); color:var(--muted); text-decoration:none; }
+.tabs a.on { color:var(--ink); font-weight:600; }
+
+/* ---------- board ---------- */
+
+/* six Lead.stage columns (§7): new, contacted, quote_sent, quote_accepted, contract_sent, booked */
+.board { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:var(--s5); flex:1; }
+.col { min-width:0; display:flex; flex-direction:column; gap:var(--s2); }
+
+/* column header: three pieces separated by alignment, not punctuation */
+.ch { display:flex; align-items:center; padding:0 var(--s3); margin-bottom:var(--s3); }
+.ch b { font:600 12.5px/1 var(--font); letter-spacing:.02em; text-transform:uppercase; }
+.ch .n { margin-left:var(--s2); min-width:17px; padding:3px 0; border-radius:var(--r-sm); background:var(--hover);
+         font:500 11px/1 var(--font); color:var(--muted); text-align:center; }
+.ch .sum { margin-left:auto; font:500 11.5px/1 var(--font); color:var(--faint); font-variant-numeric:tabular-nums; }
+
+/* ---------- lead card ---------- */
+
+.card { display:block; padding:var(--s3); border:1px solid var(--line); border-radius:var(--r);
+        color:inherit; text-decoration:none; position:relative;
+        transition:background .12s ease-out, border-color .12s ease-out; }
+.card:hover { background:var(--hover); border-color:var(--line-hover); }
+
+.kick { font:600 10px/1 var(--font); letter-spacing:.09em; text-transform:uppercase; color:var(--faint); margin-bottom:5px; }
+.who { font:600 13.5px/1.35 var(--font); letter-spacing:-.015em; padding-right:18px; }
+
+.meta { display:flex; flex-direction:column; gap:3px; margin-top:var(--s2); }
+.meta span { display:inline-flex; align-items:center; font:400 12.5px/1.35 var(--font); color:var(--muted);
+             background-repeat:no-repeat; background-position:0 center; background-size:13px 13px; padding-left:19px; }
+.meta .d { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A39B96' stroke-width='2' stroke-linecap='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M8 3v4M16 3v4M3 10h18'/%3E%3C/svg%3E"); }
+.meta .v { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A39B96' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E"); }
+.meta .q { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A39B96' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 11V4h7l10 10-7 7L3 11z'/%3E%3Ccircle cx='7.5' cy='7.5' r='1.3'/%3E%3C/svg%3E"); }
+
+.foot { display:flex; align-items:center; gap:var(--s3); margin-top:var(--s3); }
+.val { font:600 13px/1 var(--font); letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+.age { display:inline-flex; align-items:center; font:400 12.5px/1 var(--font); color:var(--faint);
+       background-repeat:no-repeat; background-position:0 center; background-size:12px 12px; padding-left:16px;
+       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ABA49F' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E"); }
+.age.warn { color:var(--accent); font-weight:500;
+       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B44E22' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E"); }
+
+/* the only border in the system: it keeps overlapping faces legible */
+.stack { margin-left:auto; display:flex; }
+.stack img { width:22px; height:22px; border-radius:50%; border:2px solid var(--bg); margin-left:-8px;
+             object-fit:cover; background:var(--hover); }
+.stack img:first-child { margin-left:0; }
+.card:hover .stack img { border-color:var(--hover); }
+
+.flag { display:flex; align-items:center; margin-top:var(--s2); padding:7px 9px 7px 28px; border-radius:7px;
+        background:var(--accent-bg); font:500 12.5px/1.3 var(--font); color:var(--accent);
+        background-repeat:no-repeat; background-position:9px center; background-size:13px 13px;
+        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B44E22' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z'/%3E%3C/svg%3E"); }
+
+/* stage-advance affordance, hover only */
+.go { position:absolute; top:12px; right:var(--s3); width:15px; height:15px; opacity:0;
+      transition:opacity .12s ease-out; background-repeat:no-repeat; background-size:15px 15px;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2378706B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14M13 6l6 6-6 6'/%3E%3C/svg%3E"); }
+.card:hover .go { opacity:1; }
+
+/* ---------- dashboard (screen 1) ---------- */
+
+.dsub { font:400 13px/1 var(--font); color:var(--muted); margin-top:var(--s1); }
+.dlab { font:600 12.5px/1 var(--font); letter-spacing:.02em; text-transform:uppercase; color:var(--faint); margin-bottom:var(--s3); }
+.dsec { margin-top:var(--s6); }
+.dsec:first-of-type { margin-top:var(--s5); }
+
+/* the day's lead shoot gets more air and bigger type than a board card — it's the screen's hero */
+.card.hero { padding:var(--s4); max-width:560px; }
+.card.hero .kick { font-size:11px; }
+.card.hero .who { font-size:18px; }
+.card.hero .meta span { font-size:13.5px; }
+
+.qrow { display:flex; align-items:baseline; gap:var(--s3); margin-top:var(--s3); padding:0 var(--s3);
+        font:400 13px/1.4 var(--font); color:var(--muted); }
+.qrow b { color:var(--ink); font-weight:600; }
+
+.dgrid { display:grid; grid-template-columns:3fr 2fr; gap:var(--s6); margin-top:var(--s6); }
+
+/* a bordered list container reusing the same card hairline, not a new border type */
+.panel { border:1px solid var(--line); border-radius:var(--r); overflow:hidden; }
+
+.trow { display:flex; align-items:center; gap:var(--s3); padding:var(--s3); color:inherit; text-decoration:none;
+        border-top:1px solid var(--line); transition:background .12s ease-out; }
+.trow:first-child { border-top:none; }
+.trow:hover { background:var(--hover); }
+.trow .tfile { font:500 13px/1.3 var(--font); color:var(--ink); }
+.trow .treason { font:400 12.5px/1.3 var(--font); color:var(--muted); }
+.trow .tretry { margin-left:auto; font:500 12.5px/1 var(--font); color:var(--faint); }
+.trow .tclient { font:600 13px/1.3 var(--font); flex:1; min-width:0; }
+
+/* ---------- job detail (screen 4): header meta, forward-only stepper, contact/crew rows, tab previews ---------- */
+
+/* header info line reuses .meta's icon-label pattern, laid out horizontally instead of stacked */
+.meta.row { flex-direction:row; gap:var(--s5); margin:var(--s3) 0 0; }
+.meta .g { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A39B96' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='9' cy='8' r='3'/%3E%3Cpath d='M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6'/%3E%3Ccircle cx='17.5' cy='9' r='2.3'/%3E%3Cpath d='M15.8 14.2c2.6.5 4.7 2.7 5.2 5.8'/%3E%3C/svg%3E"); }
+
+/* Job.status is forward-only. Eight chrome steps said one word, so this states the
+   current stage and offers the single transition that advances it — nothing else. */
+.stage { display:flex; align-items:center; gap:var(--s3); margin:var(--s4) 0 0; }
+.stage .now { display:inline-flex; align-items:center; gap:7px; padding:6px 11px; border-radius:var(--r-sm);
+              background:var(--accent-bg); color:var(--accent); font:600 12px/1 var(--font); }
+.stage .now .dot { width:7px; height:7px; border-radius:50%; background:var(--accent); flex:none; }
+.stage .next { font:400 12px/1 var(--font); color:var(--faint); }
+.stage .adv { font:500 12px/1 var(--font); color:var(--muted); text-decoration:none; }
+.stage .adv:hover { color:var(--ink); }
+
+/* overview is self-sufficient: narrative left, facts right. Tabs hold depth only. */
+.split { display:grid; grid-template-columns:minmax(0,1fr) 296px; gap:var(--s6); align-items:start; }
+.stackcol { display:flex; flex-direction:column; gap:var(--s5); }
+
+/* a block's footer link into its tab — the drill-down affordance */
+.blkfoot { margin-top:var(--s4); font:500 12px/1 var(--font); color:var(--muted); text-decoration:none; display:inline-block; }
+.blkfoot:hover { color:var(--ink); }
+.card.static .blkfoot { display:block; }
+
+/* Ablauf des Tages — the timeline. A wedding is 2–4 locations, not one venue. */
+.tl { display:flex; flex-direction:column; }
+.tlrow { display:grid; grid-template-columns:52px 15px 1fr; gap:var(--s3); align-items:start; }
+.tltime { font:600 12px/1.5 var(--font); font-variant-numeric:tabular-nums; padding-top:9px; }
+.tlrail { position:relative; padding-top:13px; }
+.tlrail .dot { width:7px; height:7px; border-radius:50%; background:var(--faint); margin:0 auto; position:relative; z-index:1; }
+.tlrail::before { content:''; position:absolute; left:50%; top:0; bottom:-4px; width:1px; background:var(--line); transform:translateX(-.5px); }
+.tlrow:first-child .tlrail::before { top:13px; }
+.tlrow:last-child .tlrail::before { bottom:auto; height:13px; }
+.tlrow.move .dot { background:var(--line); border:1px solid var(--faint); width:6px; height:6px; }
+.tlbody { padding:8px 0 8px; min-width:0; }
+.tlname { font:600 13px/1.35 var(--font); letter-spacing:-.01em; }
+.tlwhere { font:400 12.5px/1.35 var(--font); color:var(--muted); margin-top:2px; }
+.tlwho { font:400 11.5px/1.35 var(--font); color:var(--faint); margin-top:3px; }
+.tlrow.move .tlname { font-weight:400; font-size:12px; color:var(--faint); }
+
+/* ---------- booking facts: label over value, two columns, no tiles ---------- */
+.bklist { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--s4) var(--s6); }
+.bkrow > span:first-child { display:block; font:600 10px/1 var(--font); letter-spacing:.09em;
+                            text-transform:uppercase; color:var(--faint); margin-bottom:5px; }
+.bkrow > span:last-child { display:block; font:500 13px/1.4 var(--font); font-variant-numeric:tabular-nums; }
+.bkrow em { font-style:normal; color:var(--muted); font-weight:400; }
+.bkrow i { font-style:normal; color:var(--accent); font-weight:600; }
+.bkrow .big { font-weight:700; font-size:15px; letter-spacing:-.025em; }
+
+/* ---------- Shoot list: one row per shooting occasion, next one expanded ---------- */
+.chip { font:600 10px/1.5 var(--font); letter-spacing:.04em; text-transform:uppercase;
+        padding:3px 8px; border-radius:var(--r-sm); flex:none; }
+.chip.done { background:var(--ok-bg); color:var(--ok); }
+.chip.now  { background:var(--accent-bg); color:var(--accent); }
+.chip.next { background:var(--hover); color:var(--muted); }
+
+.sess { display:flex; flex-direction:column; gap:var(--s2); }
+.srow { border:1px solid var(--line); border-radius:var(--r); padding:var(--s3); }
+.srow.open { border-color:#E0D6CF; background:#FDFAF8; }
+.stop { display:flex; align-items:center; gap:var(--s3); }
+.sdate { font:600 12px/1.2 var(--font); font-variant-numeric:tabular-nums; width:54px; flex:none; }
+.sdate em { display:block; font:400 10.5px/1.3 var(--font); color:var(--faint); font-style:normal; margin-top:2px; }
+.sname { flex:1; min-width:0; font:600 13px/1.3 var(--font); letter-spacing:-.01em; }
+.sname span { display:block; font:400 11.5px/1.35 var(--font); color:var(--muted); font-weight:400;
+              letter-spacing:0; margin-top:2px; }
+.sname .prim { display:inline-block; margin-left:6px; font:600 9px/1.5 var(--font); letter-spacing:.08em;
+               text-transform:uppercase; color:var(--accent); vertical-align:1px; }
+.srow .stack { margin-left:0; }
+.srow.open .stack img { border-color:#FDFAF8; }
+
+/* ---------- gallery rail: cover, publication state, and both gates ---------- */
+/* the cover behaves like the crew avatar in .prow — same row grammar, square because it is a photograph of a set */
+.gal { display:flex; flex-direction:column; gap:var(--s4); }
+.galrow { display:flex; align-items:flex-start; gap:var(--s3); color:inherit; text-decoration:none; }
+.galcover { width:40px; height:40px; flex:none; border-radius:6px; object-fit:cover; background:var(--hover); }
+.galcover.empty { display:flex; align-items:center; justify-content:center; text-align:center;
+                  font:600 8.5px/1.2 var(--font); color:var(--faint); letter-spacing:.02em; padding:4px; }
+.galbody { flex:1; min-width:0; }
+.galtop { display:flex; align-items:center; gap:var(--s2); }
+.galname { font:600 12.5px/1.3 var(--font); letter-spacing:-.01em; flex:1; min-width:0; }
+.galmeta { font:400 11.5px/1.35 var(--font); color:var(--muted); margin-top:2px; }
+.galflags { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+.gf { display:inline-flex; align-items:center; gap:4px; padding:3px 7px; border-radius:var(--r-sm);
+      background:var(--hover); font:500 10.5px/1.4 var(--font); color:var(--muted); }
+.gf svg { width:11px; height:11px; }
+/* an ungated gallery is the state worth noticing, so it is the one that carries colour */
+.gf.open { background:var(--accent-bg); color:var(--accent); }
+
+/* right-rail key/value facts */
+.kv { display:flex; flex-direction:column; gap:9px; }
+.kvrow { display:flex; align-items:baseline; gap:var(--s3); font:400 12.5px/1.35 var(--font); }
+.kvrow span:first-child { color:var(--muted); flex:none; min-width:78px; }
+.kvrow span:last-child { color:var(--ink); text-align:right; margin-left:auto; }
+.kvrow b { font-weight:600; font-variant-numeric:tabular-nums; }
+
+/* questionnaire + message summaries */
+.qz { display:flex; flex-direction:column; gap:11px; }
+.qzrow { display:flex; align-items:center; gap:var(--s3); font:400 12.5px/1.3 var(--font); }
+.qzrow .nm { flex:1; color:var(--ink); }
+.msg { display:flex; flex-direction:column; gap:11px; }
+.msgrow { display:flex; gap:var(--s3); }
+.msgrow img { width:26px; height:26px; border-radius:50%; object-fit:cover; background:var(--hover); flex:none; }
+.msgtxt { min-width:0; }
+.msgwho { font:600 12px/1.3 var(--font); }
+.msgwho em { font-style:normal; font-weight:400; color:var(--faint); margin-left:6px; }
+.msgbody { font:400 12.5px/1.4 var(--font); color:var(--muted); margin-top:1px;
+           overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+
+/* a .card used as a static content panel rather than a link — no hover affordance to imply clickability */
+.card.static { cursor:default; }
+.card.static:hover { background:var(--bg); border-color:var(--line); }
+
+.cardhead { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--s4); }
+.cardhead .txtbtn { padding:0; }
+
+/* typed contact rows and crew rows — a labeled list, not the overlapping .stack, since roles need room to read */
+.plist { display:flex; flex-direction:column; gap:var(--s4); }
+.prow { display:flex; align-items:center; gap:var(--s3); }
+.pavatar { width:32px; height:32px; border-radius:50%; object-fit:cover; background:var(--hover); flex:none; }
+.pinfo { flex:1; min-width:0; }
+.pname { font:600 13px/1.3 var(--font); }
+.psub { font:400 12px/1.3 var(--font); color:var(--muted); margin-top:1px; }
+.proles { display:flex; gap:4px; flex:none; }
+.role { display:inline-flex; align-items:center; padding:3px 8px; border-radius:var(--r-sm); background:var(--hover);
+        font:500 11px/1.4 var(--font); color:var(--muted); white-space:nowrap; }
+
+/* Aufgaben and Zahlungen previews, compressed into the Übersicht tab rather than built as full tab panels */
+.tlist, .paylist { display:flex; flex-direction:column; gap:var(--s4); }
+.taskrow, .payrow { display:flex; align-items:center; gap:var(--s3); font:400 12.5px/1.3 var(--font); }
+.ttext, .payname { flex:1; color:var(--ink); }
+.payname { font-weight:500; }
+.tdate, .paydate { color:var(--faint); font-size:12px; flex:none; }
+.taskrow .val, .payrow .val { flex:none; min-width:58px; text-align:right; }
+
+/* Task.audience is a real field (vision §3.3) — this badge renders it, it never stands in for InternalNote,
+   which stays a separate model with no portal-facing route at all */
+.taudience, .paystatus { flex:none; padding:3px 8px; border-radius:var(--r-sm); font:600 10px/1.5 var(--font);
+                          letter-spacing:.04em; text-transform:uppercase; }
+.taudience.client { background:var(--accent-bg); color:var(--accent); }
+.taudience.internal { background:var(--hover); color:var(--muted); }
+.paystatus.paid { background:var(--ok-bg); color:var(--ok); }
+.paystatus.due { background:var(--accent-bg); color:var(--accent); }
+.paystatus.upcoming { background:var(--hover); color:var(--muted); }
+
+/* ---------- clickdummy footer strip (not part of the product) ---------- */
+
+.dummybar { position:fixed; left:0; right:0; bottom:0; display:flex; align-items:center; gap:var(--s4);
+            padding:8px var(--s5); background:var(--ink); color:#F3EFEC;
+            font:500 11.5px/1 var(--font); letter-spacing:.01em; z-index:99; }
+.dummybar a { color:#F3EFEC; text-decoration:none; opacity:.65; }
+.dummybar a:hover { opacity:1; }
+.dummybar .no { opacity:.45; }
+.dummybar .sp { margin-left:auto; }
+.dummybar .off { opacity:.3; pointer-events:none; }
+body { padding-bottom:34px; }

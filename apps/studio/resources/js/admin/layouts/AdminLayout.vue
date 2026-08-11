@@ -56,9 +56,9 @@ const items = computed(() => [
     icon: '<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/>',
   },
   {
-    key: 'vertragsvorlagen',
-    label: 'Vertragsvorlagen',
-    href: '/vertragsvorlagen',
+    key: 'dokumentvorlagen',
+    label: 'Dokumentvorlagen',
+    href: '/dokumentvorlagen',
     needs: 'manage_contracts',
     icon: '<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4"/><path d="M9 13h6M9 17h6"/>',
   },
@@ -74,6 +74,22 @@ const items = computed(() => [
     label: 'Kalender',
     href: '/kalender',
     icon: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/>',
+  },
+  {
+    // T-10: open to every role, same as Kalender above — AbsenceController
+    // itself decides "own row, or ManageCrew" per request rather than the
+    // nav hiding the destination from anyone.
+    key: 'abwesenheiten',
+    label: 'Abwesenheiten',
+    href: '/abwesenheiten',
+    icon: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M8 14h3M13 14h3M8 17h3"/>',
+  },
+  {
+    key: 'einstellungen',
+    label: 'Einstellungen',
+    href: '/einstellungen',
+    needs: 'manage_settings',
+    icon: '<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/>',
   },
 ].filter((item) => !item.needs || can.value.includes(item.needs as App.Enums.Capability)))
 </script>

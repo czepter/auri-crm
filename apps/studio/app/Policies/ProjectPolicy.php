@@ -60,6 +60,12 @@ class ProjectPolicy
         return $user->role->allows(Capability::ManageNotes) && $this->view($user, $project);
     }
 
+    /** Reply on this project's Thread (E-06) — never originate one; see StartThread. */
+    public function manageMessages(User $user, Project $project): bool
+    {
+        return $user->role->allows(Capability::ManageMessages) && $this->view($user, $project);
+    }
+
     /** Flip portal_visible for this one project (A-04) — never a contact. */
     public function manageVisibility(User $user, Project $project): bool
     {
@@ -71,8 +77,31 @@ class ProjectPolicy
         return $user->role->allows(Capability::ManageQuotes) && $this->view($user, $project);
     }
 
+    /**
+     * Seed and personalise this project's questionnaires (E-02). Reuses
+     * Capability::ManageFormTemplates rather than a new capability:
+     * personalising a project's copy is the same domain of work as authoring
+     * the template it may have started from, done by the same roles.
+     */
+    public function manageForms(User $user, Project $project): bool
+    {
+        return $user->role->allows(Capability::ManageFormTemplates) && $this->view($user, $project);
+    }
+
     /** Generate a rendered contract for this project (M-01). */
     public function manageContracts(User $user, Project $project): bool
+    {
+        return $user->role->allows(Capability::ManageContracts) && $this->view($user, $project);
+    }
+
+    /**
+     * Create or edit this project's payment plan (M-03). Reuses
+     * Capability::ManageContracts rather than a new capability: a payment
+     * plan is created against a signed contract and is exactly as sensitive
+     * as the contract it depends on, so it stays with the same roles rather
+     * than opening to every role ManageQuotes already trusts.
+     */
+    public function managePaymentPlan(User $user, Project $project): bool
     {
         return $user->role->allows(Capability::ManageContracts) && $this->view($user, $project);
     }

@@ -3,7 +3,9 @@
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Models\Absence;
 use App\Models\User;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -128,6 +130,54 @@ it('folds a long line without splitting a character in half', function () {
 
     // Still valid UTF-8 once the continuation markers are removed.
     expect(mb_check_encoding(str_replace("\r\n ", '', $body), 'UTF-8'))->toBeTrue();
+});
+
+it('ends a shoot with no end_time at the configured default duration', function () {
+    // T-09: retires the hardcoded addHours(2), which this default (120)
+    // reproduces exactly — every studio keeps today's behaviour until it
+    // changes the setting.
+    $user = User::factory()->create();
+    $shoot = Shoot::factory()->on('2026-06-14')->create(['call_time' => '09:00', 'end_time' => null]);
+    CrewAssignment::factory()->for($shoot)->for($user)->create();
+
+    $body = $this->get("/kalender/{$user->calendarToken()}/shootings.ics")->getContent();
+
+    expect($body)->toContain('DTSTART:20260614T070000Z')
+        ->and($body)->toContain('DTEND:20260614T090000Z');
+});
+
+it('follows a changed default shoot duration setting', function () {
+    (new StudioSettingsResolver)->set('default_shoot_duration_minutes', 90);
+
+    $user = User::factory()->create();
+    $shoot = Shoot::factory()->on('2026-06-14')->create(['call_time' => '09:00', 'end_time' => null]);
+    CrewAssignment::factory()->for($shoot)->for($user)->create();
+
+    $body = $this->get("/kalender/{$user->calendarToken()}/shootings.ics")->getContent();
+
+    // 09:00 + 90 minutes = 10:30 Berlin time, 08:30Z in June.
+    expect($body)->toContain('DTSTART:20260614T070000Z')
+        ->and($body)->toContain('DTEND:20260614T083000Z');
+});
+
+/**
+ * T-10's portal-isolation requirement extended to this feed: it is not the
+ * client portal, but its URL is a bare token in the path, so it gets the
+ * same proof — seed an absence for the very person whose feed this is, on a
+ * shoot inside it, and show the category and date range never turn up.
+ */
+it('never lets an absence category or date reach this feed, even for the person it belongs to', function () {
+    $user = User::factory()->create(['name' => 'Nina Sturm']);
+    $shoot = Shoot::factory()->on('2026-09-03')->create();
+    CrewAssignment::factory()->for($shoot)->for($user)->create();
+    Absence::factory()->for($user)->spanning('2026-09-01', '2026-09-07')->create(['category' => 'holiday']);
+
+    $body = $this->get("/kalender/{$user->calendarToken()}/shootings.ics")->getContent();
+
+    expect($body)->not->toContain('holiday')
+        ->not->toContain('Urlaub')
+        ->not->toContain('2026-09-01')
+        ->not->toContain('2026-09-07');
 });
 
 it('ends a shoot that runs past midnight on the next day', function () {

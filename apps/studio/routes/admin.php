@@ -2,27 +2,49 @@
 
 use App\Catalog\Http\Controllers\PackageController;
 use App\Contracts\Http\Controllers\ContractController;
-use App\Contracts\Http\Controllers\ContractTemplateController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
 use App\Crm\Http\Controllers\ContactController;
+use App\Crm\Http\Controllers\ContactDsgvoController;
 use App\Crm\Http\Controllers\ContactSearchController;
 use App\Crm\Http\Controllers\CrewController;
+use App\Crm\Http\Controllers\FormInstanceController;
+use App\Crm\Http\Controllers\FormTemplateController;
 use App\Crm\Http\Controllers\InquiryCaptureController;
 use App\Crm\Http\Controllers\InternalNoteController;
 use App\Crm\Http\Controllers\LeadBoardController;
 use App\Crm\Http\Controllers\LeadStageController;
 use App\Crm\Http\Controllers\ProjectController;
 use App\Crm\Http\Controllers\ShootController;
+use App\Crm\Http\Controllers\ShotListItemController;
 use App\Crm\Http\Controllers\TaskController;
+use App\Crm\Http\Controllers\TaskTemplateController;
+use App\Crm\Http\Controllers\TimelineController;
+use App\Documents\Http\Controllers\DocumentTemplateController;
+use App\Engagement\Http\Controllers\ThreadController;
+use App\Gallery\Http\Controllers\GalleryLightroomExportController;
+use App\Http\Controllers\Staff\AbsenceController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
 use App\Http\Controllers\Staff\InvitationController;
 use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
+use App\Http\Controllers\Staff\OAuthAuthorizationController;
+use App\Http\Controllers\Staff\OAuthTokenController;
 use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\SessionController;
+use App\Media\Http\Controllers\FailedAssetController;
+use App\Media\Http\Controllers\MediaIngestController;
+use App\Media\Http\Controllers\MultipartUploadController;
+use App\Payments\Http\Controllers\PaymentInstallmentController;
+use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
+use App\Settings\Http\Controllers\NotificationSettingsController;
+use App\Settings\Http\Controllers\NumberRangeController;
+use App\Settings\Http\Controllers\PaymentSettingsController;
+use App\Settings\Http\Controllers\PortalSettingsController;
+use App\Settings\Http\Controllers\StudioClosureController;
+use App\Settings\Http\Controllers\StudioSettingsController;
 use Illuminate\Support\Facades\Route;
 
 // A full authentication bypass for local inspection — no password, no MFA
@@ -40,6 +62,14 @@ if (app()->environment('local')) {
 // omission.
 Route::get('/kalender/{token}/shootings.ics', [CalendarController::class, 'feed'])
     ->name('calendar.feed');
+
+// N-04: the MCP HTTP transport's token exchange. Called by the MCP client
+// directly, off-browser — no staff cookie, so no `audience:staff`, and no
+// CSRF token, so this path is named in bootstrap/app.php's
+// validateCsrfTokens(except:) list. The single-use authorization code and
+// its PKCE verifier are the credential; see OAuthTokenController's own doc
+// comment for why that is enough without a client_secret.
+Route::post('/oauth/token', [OAuthTokenController::class, 'store'])->name('oauth.token');
 
 // Staff surface. Session-authenticated, Inertia-rendered, never public.
 Route::middleware('guest:staff')->group(function () {
@@ -75,6 +105,12 @@ Route::middleware('audience:staff')->group(function () {
     Route::middleware('mfa')->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
 
+        // N-04: the consent screen — gated behind confirmed MFA like every
+        // other sensitive staff screen below, since approving this hands out
+        // a token scoped to this person's own capabilities.
+        Route::get('/oauth/authorize', [OAuthAuthorizationController::class, 'create'])->name('oauth.authorize');
+        Route::post('/oauth/authorize', [OAuthAuthorizationController::class, 'store'])->name('oauth.authorize.store');
+
         // German paths, English route names: the UI reads in one language and
         // the code reads in the other, and neither has to translate the other.
         //
@@ -86,6 +122,15 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/kontakte/{contact}', [ContactController::class, 'update'])->name('contacts.update');
         Route::post('/kontakte/{contact}/portal-zugang/widerruf', [ContactController::class, 'revokePortalAccess'])
             ->name('contacts.portal-access.revoke');
+
+        // X-04: DSGVO subject-access export and deletion. Owner-only
+        // (Capability::ManageDsgvo) — see ContactDsgvoController's own
+        // doc comment.
+        Route::get('/kontakte/{contact}/dsgvo/export', [ContactDsgvoController::class, 'export'])
+            ->name('contacts.dsgvo.export');
+        Route::post('/kontakte/{contact}/dsgvo/loeschen', [ContactDsgvoController::class, 'erase'])
+            ->name('contacts.dsgvo.erase');
+
         Route::get('/verfuegbarkeit', AvailabilityController::class)->name('availability.show');
 
         // /pakete/neu stays above /pakete/{package} for the same reason
@@ -97,15 +142,19 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/pakete/{package}', [PackageController::class, 'update'])->name('packages.update');
         Route::post('/pakete/{package}/status', [PackageController::class, 'toggle'])->name('packages.toggle');
 
-        // /vertragsvorlagen/neu stays above /vertragsvorlagen/{contractTemplate}
-        // for the same reason /pakete/neu does.
-        Route::get('/vertragsvorlagen', [ContractTemplateController::class, 'index'])->name('contract-templates.index');
-        Route::get('/vertragsvorlagen/neu', [ContractTemplateController::class, 'create'])->name('contract-templates.create');
-        Route::post('/vertragsvorlagen', [ContractTemplateController::class, 'store'])->name('contract-templates.store');
-        Route::get('/vertragsvorlagen/{contractTemplate}', [ContractTemplateController::class, 'edit'])
-            ->name('contract-templates.edit');
-        Route::patch('/vertragsvorlagen/{contractTemplate}', [ContractTemplateController::class, 'update'])
-            ->name('contract-templates.update');
+        // /dokumentvorlagen/neu and /dokumentvorlagen/vorschau stay above
+        // /dokumentvorlagen/{documentTemplate} for the same reason /pakete/neu
+        // does. T-12 generalises M-01's /vertragsvorlagen into one screen
+        // family covering every App\Documents\Enums\DocumentTemplateType.
+        Route::get('/dokumentvorlagen', [DocumentTemplateController::class, 'index'])->name('document-templates.index');
+        Route::get('/dokumentvorlagen/neu', [DocumentTemplateController::class, 'create'])->name('document-templates.create');
+        Route::post('/dokumentvorlagen', [DocumentTemplateController::class, 'store'])->name('document-templates.store');
+        Route::post('/dokumentvorlagen/vorschau', [DocumentTemplateController::class, 'preview'])
+            ->name('document-templates.preview');
+        Route::get('/dokumentvorlagen/{documentTemplate}', [DocumentTemplateController::class, 'edit'])
+            ->name('document-templates.edit');
+        Route::patch('/dokumentvorlagen/{documentTemplate}', [DocumentTemplateController::class, 'update'])
+            ->name('document-templates.update');
 
         Route::get('/team', [InvitationController::class, 'index'])->name('staff.index');
         Route::post('/team/einladungen', [InvitationController::class, 'store'])->name('staff.invite');
@@ -115,6 +164,85 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/kalender', [CalendarController::class, 'index'])->name('calendar.index');
         Route::post('/kalender/abo', [CalendarController::class, 'regenerate'])
             ->name('calendar.regenerate');
+
+        // T-10: per-person unavailability. Open to every role, not gated
+        // behind ManageStaff like /team above — AbsenceController itself
+        // decides "own row, or ManageCrew" per request, the same 200-not-404
+        // shape /verfuegbarkeit above uses for whoever holds ManageLeads.
+        Route::get('/abwesenheiten', [AbsenceController::class, 'index'])->name('absences.index');
+        Route::post('/abwesenheiten', [AbsenceController::class, 'store'])->name('absences.store');
+        Route::patch('/abwesenheiten/{absence}', [AbsenceController::class, 'update'])->name('absences.update');
+        Route::delete('/abwesenheiten/{absence}', [AbsenceController::class, 'destroy'])->name('absences.destroy');
+
+        Route::get('/einstellungen', [StudioSettingsController::class, 'edit'])->name('settings.edit');
+        Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');
+        Route::get('/einstellungen/logo', [StudioSettingsController::class, 'logo'])->name('settings.logo');
+        Route::patch('/einstellungen/ust', [StudioSettingsController::class, 'updateVat'])->name('settings.vat.update');
+        Route::patch('/einstellungen/dokumente', [StudioSettingsController::class, 'updateDocuments'])->name('settings.documents.update');
+        Route::patch('/einstellungen/allgemein', [StudioSettingsController::class, 'updateGeneral'])->name('settings.general.update');
+        Route::patch('/einstellungen/email', [StudioSettingsController::class, 'updateMail'])->name('settings.mail.update');
+
+        Route::get('/einstellungen/nummernkreise', [NumberRangeController::class, 'index'])
+            ->name('number-ranges.index');
+        Route::patch('/einstellungen/nummernkreise/{numberRange}', [NumberRangeController::class, 'update'])
+            ->name('number-ranges.update');
+
+        Route::get('/einstellungen/verfuegbarkeit', [StudioClosureController::class, 'index'])
+            ->name('availability.edit');
+        Route::patch('/einstellungen/verfuegbarkeit/dauer', [StudioClosureController::class, 'updateDuration'])
+            ->name('availability.duration.update');
+        Route::post('/einstellungen/verfuegbarkeit/schliesszeiten', [StudioClosureController::class, 'store'])
+            ->name('studio-closures.store');
+        Route::patch('/einstellungen/verfuegbarkeit/schliesszeiten/{studioClosure}', [StudioClosureController::class, 'update'])
+            ->name('studio-closures.update');
+        Route::delete('/einstellungen/verfuegbarkeit/schliesszeiten/{studioClosure}', [StudioClosureController::class, 'destroy'])
+            ->name('studio-closures.destroy');
+
+        Route::get('/einstellungen/zahlungen', [PaymentSettingsController::class, 'edit'])
+            ->name('settings.payments.edit');
+        Route::patch('/einstellungen/zahlungen', [PaymentSettingsController::class, 'update'])
+            ->name('settings.payments.update');
+
+        // T-14: its own controller and gate (ManageTasks, not ManageSettings —
+        // see TaskTemplateController's doc comment), sitting in the settings
+        // section the same way Numbering and Availability do.
+        Route::get('/einstellungen/aufgabenvorlagen', [TaskTemplateController::class, 'index'])
+            ->name('task-templates.index');
+        Route::post('/einstellungen/aufgabenvorlagen', [TaskTemplateController::class, 'store'])
+            ->name('task-templates.store');
+        Route::patch('/einstellungen/aufgabenvorlagen/{taskTemplate}', [TaskTemplateController::class, 'update'])
+            ->name('task-templates.update');
+        Route::delete('/einstellungen/aufgabenvorlagen/{taskTemplate}', [TaskTemplateController::class, 'destroy'])
+            ->name('task-templates.destroy');
+
+        // E-01: FormTemplate builder — a questionnaire's questions, built
+        // once and reused across projects. /neu stays above /{formTemplate}
+        // for the same reason /pakete/neu does.
+        Route::get('/einstellungen/fragebogen-vorlagen', [FormTemplateController::class, 'index'])
+            ->name('form-templates.index');
+        Route::get('/einstellungen/fragebogen-vorlagen/neu', [FormTemplateController::class, 'create'])
+            ->name('form-templates.create');
+        Route::post('/einstellungen/fragebogen-vorlagen', [FormTemplateController::class, 'store'])
+            ->name('form-templates.store');
+        Route::get('/einstellungen/fragebogen-vorlagen/{formTemplate}', [FormTemplateController::class, 'edit'])
+            ->name('form-templates.edit');
+        Route::patch('/einstellungen/fragebogen-vorlagen/{formTemplate}', [FormTemplateController::class, 'update'])
+            ->name('form-templates.update');
+        Route::delete('/einstellungen/fragebogen-vorlagen/{formTemplate}', [FormTemplateController::class, 'destroy'])
+            ->name('form-templates.destroy');
+
+        Route::get('/einstellungen/portal', [PortalSettingsController::class, 'edit'])
+            ->name('settings.portal.edit');
+        Route::patch('/einstellungen/portal', [PortalSettingsController::class, 'update'])
+            ->name('settings.portal.update');
+
+        // T-11: quiet hours only — see NotificationSettingsController's own
+        // doc comment for why no per-event toggle grid ships in this route
+        // group yet.
+        Route::get('/einstellungen/benachrichtigungen', [NotificationSettingsController::class, 'edit'])
+            ->name('settings.notifications.edit');
+        Route::patch('/einstellungen/benachrichtigungen', [NotificationSettingsController::class, 'update'])
+            ->name('settings.notifications.update');
 
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.
@@ -135,12 +263,37 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/auftraege/{project}/portal-sichtbarkeit', [ProjectController::class, 'togglePortalVisibility'])
             ->name('projects.portal-visibility.toggle');
 
+        // E-06. The client is the only one who can start a thread (see
+        // StartThread, reached from routes/portal.php) — this GET reads
+        // whatever the client has already opened, and the POST beside it is
+        // staff's reply on it, never an origination of its own.
+        Route::get('/auftraege/{project}/nachrichten', [ProjectController::class, 'messages'])
+            ->name('projects.messages');
+        Route::post('/auftraege/{project}/nachrichten', [ThreadController::class, 'reply'])
+            ->name('threads.reply');
+
         Route::get('/auftraege/{project}/angebote', [ProjectController::class, 'quotes'])
             ->name('projects.quotes');
 
         Route::post('/auftraege/{project}/angebote', [QuoteController::class, 'store'])
             ->name('quotes.store');
         Route::patch('/angebote/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
+        Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
+
+        // E-02: a project's own questionnaires, seeded from a FormTemplate
+        // or started blank, then personalised freely — see FormInstance's
+        // own doc comment.
+        Route::get('/auftraege/{project}/frageboegen', [ProjectController::class, 'forms'])
+            ->name('projects.forms');
+        Route::post('/auftraege/{project}/frageboegen', [FormInstanceController::class, 'store'])
+            ->name('form-instances.store');
+        Route::patch('/frageboegen/{formInstance}', [FormInstanceController::class, 'update'])
+            ->name('form-instances.update');
+        // E-03: recording the answer to one question — kept off /frageboegen
+        // itself, since answering a field never touches the field set update()
+        // wholesale-replaces above.
+        Route::patch('/frageboegen-felder/{formInstanceField}/antwort', [FormInstanceController::class, 'answer'])
+            ->name('form-instance-fields.answer');
 
         Route::get('/auftraege/{project}/vertrag', [ContractController::class, 'show'])
             ->name('projects.contract');
@@ -148,6 +301,50 @@ Route::middleware('audience:staff')->group(function () {
             ->name('contracts.store');
         Route::get('/vertraege/{contract}/pdf', [ContractController::class, 'download'])
             ->name('contracts.download');
+
+        // G-02: app-proxied multipart ingest into a gallery's quarantine
+        // prefix. galleries.uploads.* is a JSON API for the browser's own
+        // chunked uploader (resources/js/admin/lib/multipartUpload.ts), not
+        // Inertia — see MultipartUploadController.
+        Route::get('/galerien/{gallery}/medien', [MediaIngestController::class, 'show'])
+            ->name('galleries.media');
+        Route::post('/galerien/{gallery}/uploads', [MultipartUploadController::class, 'store'])
+            ->name('galleries.uploads.store');
+        Route::put('/uploads/{multipartUpload}/teile/{partNumber}', [MultipartUploadController::class, 'uploadPart'])
+            ->whereNumber('partNumber')
+            ->name('galleries.uploads.parts.store');
+        Route::post('/uploads/{multipartUpload}/abschluss', [MultipartUploadController::class, 'complete'])
+            ->name('galleries.uploads.complete');
+        Route::delete('/uploads/{multipartUpload}', [MultipartUploadController::class, 'destroy'])
+            ->name('galleries.uploads.destroy');
+
+        // G-12: the studio side of proofing — every favorited asset in the
+        // gallery's current version, as a Lightroom-importable filename
+        // list. No admin gallery-detail screen exists yet to hang a button
+        // on (see the controller's own doc comment), so this is reachable by
+        // URL only until one does.
+        Route::get('/galerien/{gallery}/lightroom-export', GalleryLightroomExportController::class)
+            ->name('galleries.lightroom-export');
+
+        // G-04: the ingest screen's "needs attention" tray — re-runs G-03's
+        // ingest pipeline for one Failed asset. Inertia (a redirect back),
+        // not the JSON API above: this reloads the same ingest screen's
+        // props rather than driving client-side upload state.
+        Route::post('/medien/{asset}/wiederholen', [FailedAssetController::class, 'retry'])
+            ->name('assets.retry');
+
+        // No GET here: the Zahlungen card lives on the project overview
+        // itself (ProjectController::show), not a tab of its own — see the
+        // note in ProjectHeaderData::fromProject.
+        Route::post('/auftraege/{project}/zahlungsplan', [PaymentPlanController::class, 'store'])
+            ->name('payment-plans.store');
+        Route::patch('/zahlungsplaene/{paymentPlan}', [PaymentPlanController::class, 'update'])
+            ->name('payment-plans.update');
+
+        // T-07's staff action: date, method and reference, recorded once —
+        // never a status flipped on its own. See MarkInstallmentPaid.
+        Route::post('/raten/{installment}/bezahlt', [PaymentInstallmentController::class, 'markPaid'])
+            ->name('payment-installments.mark-paid');
 
         Route::post('/auftraege/{project}/shootings', [ShootController::class, 'store'])
             ->name('shoots.store');
@@ -160,6 +357,26 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::post('/shootings/{shoot}/crew', [CrewController::class, 'store'])->name('crew.store');
         Route::delete('/crew/{assignment}', [CrewController::class, 'destroy'])->name('crew.destroy');
+
+        // E-04: the day-of schedule, shoot-scoped for the same reason the
+        // wedding-day timeline is not the engagement session's. Export routes
+        // sit beside the CRUD rather than under a separate controller — both
+        // read the same `timeline` relation, just rendered differently.
+        Route::post('/shootings/{shoot}/ablauf', [TimelineController::class, 'store'])
+            ->name('timeline.store');
+        Route::delete('/ablauf/{entry}', [TimelineController::class, 'destroy'])
+            ->name('timeline.destroy');
+        Route::get('/shootings/{shoot}/ablauf.pdf', [TimelineController::class, 'pdf'])
+            ->name('timeline.pdf');
+        Route::get('/shootings/{shoot}/ablauf.ics', [TimelineController::class, 'ics'])
+            ->name('timeline.ics');
+
+        Route::post('/shootings/{shoot}/checkliste', [ShotListItemController::class, 'store'])
+            ->name('shot-list-items.store');
+        Route::post('/checkliste/{item}/erledigt', [ShotListItemController::class, 'toggle'])
+            ->name('shot-list-items.toggle');
+        Route::delete('/checkliste/{item}', [ShotListItemController::class, 'destroy'])
+            ->name('shot-list-items.destroy');
 
         Route::post('/auftraege/{project}/aufgaben', [TaskController::class, 'store'])
             ->name('tasks.store');

@@ -38,11 +38,26 @@
 
 /* portal — same bones, more air. The theme is a spacing scale and a radius,
    not a separate component set, which is what lets both surfaces share every
-   rule below. The gallery theme joins this when P3 gives it a screen. */
+   rule below. */
 [data-theme="portal"] {
   --hover:#F8F5F3;
   --s3:14px; --s4:20px; --s5:32px; --s6:44px; --s7:64px;
   --r:10px;
+}
+
+/* gallery — chrome recedes, photographs carry the page. Ported from
+   mockups/_shared/tokens.css for G-06's gate screens (resources/css/
+   gallery.css carries the component vocabulary this unlocks). */
+[data-theme="gallery"] {
+  --bg:#0E0C0B;
+  --ink:#F2EDE9;
+  --muted:#8B817B;
+  --faint:#615953;
+  --hover:#1A1614;
+  --line:#241F1C;
+  --line-hover:#332C28;
+  --accent:#D4713F;
+  --accent-bg:#26170F;
 }
 
 * { box-sizing:border-box; }
@@ -263,12 +278,24 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 .cardhead { display:flex; align-items:center; justify-content:space-between; margin-bottom:var(--s4); }
 .cardhead .txtbtn { padding:0; }
 
-/* the Aufgaben list. .paylist and .paystatus stay in the mockup until M-03
-   gives payments a data source — porting them now would be dead rules. */
+/* the Aufgaben list. */
 .tlist { display:flex; flex-direction:column; gap:var(--s4); }
 .taskrow { display:flex; align-items:center; gap:var(--s3); font:400 12.5px/1.3 var(--font); }
 .ttext { flex:1; min-width:0; color:var(--ink); }
 .tdate { color:var(--faint); font-size:12px; flex:none; font-variant-numeric:tabular-nums; }
+
+/* the Zahlungen list — payment plan preview, ported from mockups/_shared/admin-extra.css
+   now that M-03 gives it a data source. Both previews stay compressed into the
+   Übersicht tab rather than built as full tab panels — see the mockup's own comment. */
+.paylist { display:flex; flex-direction:column; gap:var(--s4); }
+.payrow { display:flex; align-items:center; gap:var(--s3); font:400 12.5px/1.3 var(--font); }
+.payname { flex:1; min-width:0; color:var(--ink); font-weight:500; }
+.payrow .val { flex:none; min-width:58px; text-align:right; }
+.paystatus { flex:none; padding:3px 8px; border-radius:var(--r-sm); font:600 10px/1.5 var(--font);
+             letter-spacing:.04em; text-transform:uppercase; }
+.paystatus.paid { background:var(--ok-bg); color:var(--ok); }
+.paystatus.due { background:var(--accent-bg); color:var(--accent); }
+.paystatus.upcoming { background:var(--hover); color:var(--muted); }
 
 /* Task.audience is a real field (vision §3.3) — this badge renders it. It never
    stands in for InternalNote, which stays a separate model with no
@@ -291,3 +318,12 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 .proles { display:flex; gap:4px; flex:none; }
 .role { display:inline-flex; align-items:center; padding:3px 8px; border-radius:var(--r-sm); background:var(--hover);
         font:500 11px/1.4 var(--font); color:var(--muted); white-space:nowrap; }
+
+/* .galcover only — the gallery feature itself (.gal, .galrow, .galname, ...)
+   has no built screen yet, so the rest of the mockup's gallery-rail block
+   stays there until one exists. T-02's Studio-Profil (screen 14) reuses just
+   this one square-cover shape for the logo preview, the same 40px swatch the
+   mockup itself borrows it for. */
+.galcover { width:40px; height:40px; flex:none; border-radius:6px; object-fit:cover; background:var(--hover); }
+.galcover.empty { display:flex; align-items:center; justify-content:center; text-align:center;
+                  font:600 8.5px/1.2 var(--font); color:var(--faint); letter-spacing:.02em; padding:4px; }

@@ -2,14 +2,19 @@
 
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
-use App\Contracts\Models\ContractTemplate;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
+use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
+use App\Gallery\Models\Gallery;
+use App\Media\Enums\MultipartUploadStatus;
+use App\Media\Models\MultipartUpload;
 use App\Models\User;
 use App\Support\Surface;
+use Aws\MockHandler;
+use Aws\S3\S3Client;
 use Illuminate\Routing\RouteCollection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -97,12 +102,40 @@ function useSurface(string $surface): void
         'session.cookie' => Surface::COOKIES[$surface],
     ]);
 
+    // Route::setRoutes() itself already keeps route()/URL:: working: it
+    // updates the container's 'routes' binding, and RoutingServiceProvider
+    // wires a 'routes'-rebinding listener (see its registerUrlGenerator())
+    // that calls the *existing* UrlGenerator's setRoutes() the moment that
+    // happens — safe, because 'url' is never forgotten here, only updated
+    // in place. (An earlier version of this helper called
+    // app()->forgetInstance('url') to work around what turned out to be a
+    // different problem below — that forced RoutingServiceProvider's
+    // extend() step to re-run and register a second, third, ... "routes"
+    // rebinding listener on every surface switch, and each one calling
+    // $app['url'] while 'url' was mid-(re)build recursed without end. A
+    // test that crosses surfaces more than once — Portal\RevocationTest's
+    // admin round-trip — hit a real stack overflow from it.)
     Route::setRoutes(new RouteCollection);
     Surface::registerRoutes();
 
-    if ($surface !== Surface::API) {
-        Auth::shouldUse($surface === Surface::PORTAL ? 'portal' : 'staff');
-    }
+    // Route::name() only sets the route's own action['as'] — the
+    // collection's name lookup table is a separate index, normally built
+    // once by the framework's own boot-time pass over $file (Illuminate\
+    // Foundation\Configuration\ApplicationBuilder's routing bootstrapper)
+    // after every route in it is registered. Re-running Surface::
+    // registerRoutes() here happens after that pass already ran once, so
+    // nothing rebuilds the index for this surface's routes without this
+    // call — route()/URL:: would otherwise throw RouteNotFoundException
+    // even though the route is genuinely there (Route::has() and getByName()
+    // read the index; iterating the collection and calling getName() on
+    // each route does not).
+    Route::getRoutes()->refreshNameLookups();
+
+    Auth::shouldUse(match ($surface) {
+        Surface::PORTAL => 'portal',
+        Surface::API => 'api',
+        default => 'staff',
+    });
 }
 
 /**
@@ -133,6 +166,18 @@ function staffMember(?StaffRole $role = null): User
 }
 
 /**
+ * A Sanctum plain-text token for anything HasApiTokens — an ApiToken (I-01)
+ * or a Contact's own guest token (G-01). Several api-surface suites need one
+ * now, and a global function declared inside one test file collides the
+ * moment a second file declares the same name — see useSurface()'s own note
+ * just above for why this lives here rather than there.
+ */
+function bearerToken(mixed $tokenable): string
+{
+    return $tokenable->createToken('t')->plainTextToken;
+}
+
+/**
  * A booked project with a primary contact — the fixture RenderContractJob's
  * merge fields resolve against (project.name, contact.name, job.bookedAt).
  * Lives here rather than in whichever Contracts test file happened to
@@ -159,7 +204,7 @@ function renderedContract(?Project $project = null, string $bytes = '%PDF-stored
 {
     $contract = Contract::factory()
         ->for($project ?? Project::factory())
-        ->for(ContractTemplate::factory(), 'template')
+        ->for(DocumentTemplate::factory(), 'template')
         ->create(['status' => ContractStatus::Pending]);
 
     $path = "contracts/test/{$contract->public_id}.pdf";
@@ -167,6 +212,75 @@ function renderedContract(?Project $project = null, string $bytes = '%PDF-stored
     $contract->update(['status' => ContractStatus::Rendered, 'artifact_path' => $path, 'rendered_at' => now()]);
 
     return $contract->fresh();
+}
+
+/**
+ * An Aws\S3\S3Client wired to Aws\MockHandler instead of a live bucket — the
+ * boundary ReapIncompleteMultipartUploadsTest's own comment flags as having
+ * "no fake for that boundary exists in this repo yet" at the time G-01a
+ * shipped. G-02's MultipartUploadGateway is the first thing to actually call
+ * the S3 SDK's multipart operations, so this is that fake: bind the return
+ * value with `$this->app->instance(S3Client::class, ...)` before hitting a
+ * route that resolves MultipartUploadGateway.
+ */
+function mockS3Client(MockHandler $handler): S3Client
+{
+    return new S3Client([
+        'version' => 'latest',
+        'region' => 'eu-central-1',
+        'credentials' => ['key' => 'test', 'secret' => 'test'],
+        'handler' => $handler,
+        // Matches config/filesystems.php's `s3` disk — see the comment
+        // there. Without it, ApplyChecksumMiddleware tries to hash (and
+        // therefore seek) the request body before this test's own
+        // non-seekable-stream case ever gets there.
+        'request_checksum_calculation' => 'when_required',
+    ]);
+}
+
+/**
+ * A tiny, real (GD-encoded) JPEG — G-03's own guidance is to synthesize
+ * fixture images in the test rather than check in real photos. Deliberately
+ * carries no EXIF: GD cannot write it, so App\Media\Support\ExifFields is
+ * unit-tested against exif_read_data()'s own array shape instead of against
+ * a file this suite would have to fabricate byte-for-byte.
+ */
+function syntheticJpeg(int $width = 300, int $height = 200): string
+{
+    $image = imagecreatetruecolor($width, $height);
+    for ($x = 0; $x < $width; $x++) {
+        for ($y = 0; $y < $height; $y++) {
+            imagesetpixel($image, $x, $y, imagecolorallocate($image, $x % 256, $y % 256, ($x + $y) % 256));
+        }
+    }
+
+    ob_start();
+    imagejpeg($image, quality: 90);
+    $bytes = ob_get_clean();
+    imagedestroy($image);
+
+    return $bytes;
+}
+
+/**
+ * A MultipartUpload already Completed, with $bytes actually sitting at its
+ * quarantine key on the faked `s3` disk — the state G-03's
+ * App\Media\Actions\IngestCompletedUpload expects to find one in once
+ * MultipartUploadController::complete() has run. Call Storage::fake('s3')
+ * before this.
+ */
+function completedUpload(Gallery $gallery, string $bytes, string $filename = 'IMG_0001.jpg'): MultipartUpload
+{
+    $upload = MultipartUpload::factory()->for($gallery)->create([
+        'filename' => $filename,
+        'file_size' => strlen($bytes),
+        'status' => MultipartUploadStatus::Completed,
+        'completed_at' => now(),
+    ]);
+
+    Storage::disk('s3')->put($upload->key, $bytes);
+
+    return $upload;
 }
 
 function integerIdPaths(mixed $node, string $path = '$'): array

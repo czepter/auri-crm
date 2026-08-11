@@ -9,9 +9,14 @@ use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
 use App\Models\User;
+use App\Settings\Support\StudioSettingsResolver;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 
 uses(RefreshDatabase::class);
+
+beforeEach(fn () => Cache::store('redis')->flush());
 
 it('anchors each task to its own shoot date, not the project', function () {
     // The story's whole point: a project with an engagement session and a
@@ -110,4 +115,73 @@ it('produces each template against the correct shoot when a project is booked', 
 
     expect(Task::count())->toBe(3)
         ->and(Task::where('title', 'Familienliste einholen')->sole()->due_on->format('Y-m-d'))->toBe('2026-06-07');
+});
+
+it('rolls a due date landing on a non-working day forward to the next working day', function () {
+    // 2026-06-15 is a Monday; -2 days lands the raw offset on Saturday,
+    // 2026-06-13. The seeded default (every day) does not roll it, so this
+    // narrows the studio's working days to Monday-Friday first — the same
+    // configuration T-13's issue names as the motivating example.
+    $owner = User::factory()->create();
+    app(StudioSettingsResolver::class)->set('working_days', [1, 2, 3, 4, 5], $owner);
+
+    $project = Project::factory()->create();
+    Shoot::factory()->for($project)->on('2026-06-15')->create();
+    TaskTemplate::factory()->offset(-2)->create(['title' => 'Technik-Check']);
+
+    app(ApplyTaskTemplates::class)($project);
+
+    // Saturday and Sunday are both non-working; the roll lands on the
+    // following Monday, one direction, all the way to the next working day.
+    expect(Task::sole()->due_on->format('Y-m-d'))->toBe('2026-06-15');
+});
+
+it('rolls forward only as far as the next configured working day, even when a single day is excluded', function () {
+    // The issue's own acceptance example: exclude only Saturday. The raw
+    // offset lands on Saturday 2026-06-13; Sunday 2026-06-14 is still a
+    // working day under this configuration, so the roll stops there.
+    $owner = User::factory()->create();
+    app(StudioSettingsResolver::class)->set('working_days', [1, 2, 3, 4, 5, 7], $owner);
+
+    $project = Project::factory()->create();
+    Shoot::factory()->for($project)->on('2026-06-15')->create();
+    TaskTemplate::factory()->offset(-2)->create(['title' => 'Technik-Check']);
+
+    app(ApplyTaskTemplates::class)($project);
+
+    expect(Task::sole()->due_on->format('Y-m-d'))->toBe('2026-06-14');
+});
+
+it('previews the same due dates the real booking action produces for the same shoot date (T-14)', function () {
+    // The story's own acceptance check: the settings preview must reuse
+    // dueFor()/appliesTo() rather than a second copy of the offset math, so
+    // it can never drift from what a real booking produces.
+    TaskTemplate::factory()->offset(-1)->create(['title' => 'Crew-Briefing verschicken']);
+    TaskTemplate::factory()->offset(-7)->forKind(ShootKind::Wedding)->create(['title' => 'Familienliste einholen']);
+    TaskTemplate::factory()->offset(14)->forKind(ShootKind::Engagement)->create(['title' => 'Nicht anwendbar']);
+
+    $preview = app(ApplyTaskTemplates::class)->preview(CarbonImmutable::parse('2026-06-14'), ShootKind::Wedding);
+
+    $project = Project::factory()->create();
+    Shoot::factory()->for($project)->on('2026-06-14')->create(['kind' => ShootKind::Wedding]);
+    app(BookProject::class)($project, User::factory()->create());
+
+    $actual = Task::query()->orderBy('title')->get()
+        ->map(fn (Task $task) => ['title' => $task->title, 'dueOn' => $task->due_on?->format('Y-m-d')])
+        ->values()->all();
+
+    expect(collect($preview)->sortBy('title')->values()->all())->toBe($actual);
+});
+
+it('leaves a due date that already lands on a working day untouched', function () {
+    $owner = User::factory()->create();
+    app(StudioSettingsResolver::class)->set('working_days', [1, 2, 3, 4, 5], $owner);
+
+    $project = Project::factory()->create();
+    Shoot::factory()->for($project)->on('2026-06-15')->create(); // Monday
+    TaskTemplate::factory()->offset(0)->create();
+
+    app(ApplyTaskTemplates::class)($project);
+
+    expect(Task::sole()->due_on->format('Y-m-d'))->toBe('2026-06-15');
 });

@@ -43,6 +43,14 @@ enum Capability: string
 
     case ManageNotes = 'manage_notes';
 
+    /**
+     * Reply on a project's Thread (E-06). Ordinary studio work, the same
+     * shape as ManageNotes — the client started the conversation, and
+     * whoever may already write the studio's own notes on this project may
+     * also answer them.
+     */
+    case ManageMessages = 'manage_messages';
+
     /** Invite staff and reach the studio's own settings. */
     case ManageStaff = 'manage_staff';
 
@@ -76,4 +84,53 @@ enum Capability: string
      * trusts rather than opening to every crew role the way the catalog does.
      */
     case ManageContracts = 'manage_contracts';
+
+    /**
+     * Read and write the tenant's settings row (T-01) — legal details,
+     * branding, VAT mode and whatever else T-02 and T-03 add to it. One
+     * capability rather than several, the same narrowness as ManageStaff:
+     * the crew today is the owner plus second shooters, and a second
+     * shooter reaches no settings at all. Revisit at the first non-owner
+     * role that needs partial access.
+     */
+    case ManageSettings = 'manage_settings';
+
+    /**
+     * Author FormTemplates — the questionnaires a project's client fills in
+     * (E-01). Shaped after ManageContracts: what a client sees and answers,
+     * not the open-to-everyone catalog/task shape.
+     */
+    case ManageFormTemplates = 'manage_form_templates';
+
+    /**
+     * X-04: export or erase everything the studio holds about one contact.
+     * Owner-only like ManageStaff — this is not reversible work an audit
+     * trail can undo, it is the mechanism that answers a legal deadline, so
+     * the same narrowness applies.
+     */
+    case ManageDsgvo = 'manage_dsgvo';
+
+    /** N-04's consent screen is the one place a capability is shown to a human rather than checked in code. */
+    public function label(): string
+    {
+        return match ($this) {
+            self::ManageLeads => 'Anfragen verwalten',
+            self::ManageContacts => 'Kontakte verwalten',
+            self::ViewAllProjects => 'Alle Aufträge einsehen',
+            self::BookProject => 'Aufträge buchen',
+            self::ManageShoots => 'Shootings verwalten',
+            self::ManageCrew => 'Crew verwalten',
+            self::ManageTasks => 'Aufgaben verwalten',
+            self::ManageNotes => 'Notizen verwalten',
+            self::ManageMessages => 'Nachrichten verwalten',
+            self::ManageStaff => 'Team verwalten',
+            self::ManagePackages => 'Pakete verwalten',
+            self::ManagePortalAccess => 'Portal-Zugang verwalten',
+            self::ManageQuotes => 'Angebote verwalten',
+            self::ManageContracts => 'Verträge verwalten',
+            self::ManageSettings => 'Einstellungen verwalten',
+            self::ManageFormTemplates => 'Fragebögen verwalten',
+            self::ManageDsgvo => 'DSGVO-Anfragen bearbeiten',
+        };
+    }
 }

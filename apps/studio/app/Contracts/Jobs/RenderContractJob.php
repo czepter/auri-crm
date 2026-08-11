@@ -4,8 +4,12 @@ namespace App\Contracts\Jobs;
 
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
-use App\Contracts\Support\GotenbergClient;
-use App\Contracts\Support\MergeFieldResolver;
+use App\Documents\Enums\DocumentTemplateType;
+use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Documents\Support\DocumentRenderer;
+use App\Documents\Support\MergeFieldResolver;
+use App\Settings\Support\StudioSettingsResolver;
+use App\Support\GotenbergClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -21,6 +25,13 @@ use Throwable;
  * a contract read after signing can never silently change because the
  * project it was built from moved on.
  *
+ * The array itself comes from App\Documents\Support\DocumentMergeDataBuilder
+ * (T-12) — the one place every document type builds its merge data from, so
+ * `{{ project.name }}` means the same thing here as it will wherever a quote
+ * or a transactional mail eventually renders. The PDF shell (letterhead and
+ * footer) comes from App\Documents\Support\DocumentRenderer, shared rather
+ * than built here.
+ *
  * Runs on the `render` queue (config/horizon.php's supervisor-render, M-00),
  * which is why the caller only ever dispatches this and returns — never waits
  * on it.
@@ -31,8 +42,12 @@ class RenderContractJob implements ShouldQueue
 
     public function __construct(public readonly Contract $contract) {}
 
-    public function handle(GotenbergClient $gotenberg): void
-    {
+    public function handle(
+        GotenbergClient $gotenberg,
+        StudioSettingsResolver $settings,
+        DocumentMergeDataBuilder $mergeData,
+        DocumentRenderer $renderer,
+    ): void {
         $contract = $this->contract->fresh(['project', 'template']);
 
         // Deleted since dispatch, or already handled by an earlier attempt —
@@ -43,9 +58,12 @@ class RenderContractJob implements ShouldQueue
             return;
         }
 
-        $html = $this->wrapDocument(
-            MergeFieldResolver::resolve($contract->template->body, $this->mergeData($contract))
+        $resolved = MergeFieldResolver::resolve(
+            $contract->template->body,
+            $mergeData->fromProject($contract->project, $settings),
         );
+
+        $html = $renderer->wrap(DocumentTemplateType::Contract, $resolved, $settings);
 
         try {
             $pdf = $gotenberg->htmlToPdf($html);
@@ -63,43 +81,5 @@ class RenderContractJob implements ShouldQueue
             'artifact_path' => $path,
             'rendered_at' => now(),
         ]);
-    }
-
-    /**
-     * Assembled fresh from the database, right now — this is the "at render
-     * time" half of M-01's rule. Add a path here and document it in
-     * docs/contracts.md; MergeFieldResolver reads dot-paths against exactly
-     * this shape.
-     *
-     * @return array<string, mixed>
-     */
-    private function mergeData(Contract $contract): array
-    {
-        $project = $contract->project;
-        $contact = $project->primaryContact();
-
-        return [
-            'project' => [
-                'name' => $project->name,
-                'type' => $project->type->label(),
-            ],
-            'contact' => [
-                'name' => $contact?->name ?? '',
-                'email' => $contact?->email ?? '',
-            ],
-            'job' => [
-                'bookedAt' => $project->job?->booked_at?->format('d.m.Y') ?? '',
-            ],
-        ];
-    }
-
-    /** Gotenberg's chromium route wants a full document, not a fragment. */
-    private function wrapDocument(string $html): string
-    {
-        if (str_contains($html, '<html')) {
-            return $html;
-        }
-
-        return '<!doctype html><html><head><meta charset="utf-8"></head><body>'.$html.'</body></html>';
     }
 }

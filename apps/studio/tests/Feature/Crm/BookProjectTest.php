@@ -92,6 +92,19 @@ it('is a no-op on a project that already has a job', function () {
         ->and(AuditLog::where('event', 'project.booked')->count())->toBe(0);
 });
 
+it('never infers the actor from the ambient session — a null actor stays null even while a staff member is logged in', function () {
+    // P-05b's listener passes null on purpose: a signature is a trigger with
+    // no staff member behind it, even when it happens to run inside a
+    // request a staff member is authenticated on (e.g. the same request in
+    // which they marked an installment paid by hand).
+    $staff = User::factory()->create();
+    $this->actingAs($staff, 'staff');
+
+    $job = app(BookProject::class)(Project::factory()->create(), null);
+
+    expect($job->booked_by_id)->toBeNull();
+});
+
 it('records the trigger a caller names', function () {
     // P-05b adds no column; it writes the second value.
     $job = app(BookProject::class)(

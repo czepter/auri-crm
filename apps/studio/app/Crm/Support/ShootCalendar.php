@@ -3,6 +3,8 @@
 namespace App\Crm\Support;
 
 use App\Crm\Models\Shoot;
+use App\Crm\Support\Concerns\FormatsIcs;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Support\Collection;
 
 /**
@@ -11,18 +13,14 @@ use Illuminate\Support\Collection;
  * Hand-rolled rather than pulling a package in: the subset a shooting calendar
  * needs is one VEVENT shape, and the parts that are actually easy to get wrong
  * — escaping, line folding and the timezone — are the parts a package would
- * not save us from reading anyway.
+ * not save us from reading anyway. See TimelineCalendar (E-04) for the other
+ * shape this codebase needs: one VEVENT per TimelineEntry rather than per shoot.
  */
 class ShootCalendar
 {
-    /**
-     * A shoot's call time is a clock reading at the venue, and every venue is
-     * in Germany.
-     *
-     * ponytail: one studio, one zone. When tenants land this becomes a column
-     * on the tenant, read here instead of a constant.
-     */
-    private const VENUE_TIMEZONE = 'Europe/Berlin';
+    use FormatsIcs;
+
+    public function __construct(private readonly StudioSettingsResolver $settings) {}
 
     /** @param  Collection<int, Shoot>  $shoots */
     public function render(Collection $shoots, string $name): string
@@ -105,9 +103,11 @@ class ShootCalendar
         $start = $this->atVenue($date, substr((string) $shoot->call_time, 0, 8));
 
         // A shooting day that runs past midnight would otherwise end before it
-        // starts; the end simply moves to the next day.
+        // starts; the end simply moves to the next day. ->copy() matters here:
+        // Carbon::addMinutes() mutates in place, and without it $end would be
+        // the same object as $start rather than a value derived from it.
         $end = $shoot->end_time === null
-            ? $start->addHours(2)
+            ? $start->copy()->addMinutes($this->settings->defaultShootDurationMinutes())
             : $this->atVenue($date, substr((string) $shoot->end_time, 0, 8));
 
         if ($end <= $start) {
@@ -118,56 +118,5 @@ class ShootCalendar
             'DTSTART:'.$start->utc()->format('Ymd\THis\Z'),
             'DTEND:'.$end->utc()->format('Ymd\THis\Z'),
         ];
-    }
-
-    private function atVenue(string $date, string $time): \Illuminate\Support\Carbon
-    {
-        return \Illuminate\Support\Carbon::createFromFormat(
-            'Y-m-d H:i:s',
-            $date.' '.$time,
-            self::VENUE_TIMEZONE,
-        );
-    }
-
-    /** Backslash, semicolon, comma and newline carry meaning in a property value. */
-    private function escape(string $value): string
-    {
-        return str_replace(
-            ['\\', ';', ',', "\r\n", "\n"],
-            ['\\\\', '\;', '\,', '\n', '\n'],
-            $value,
-        );
-    }
-
-    /**
-     * Content lines are limited to 75 octets. Folding splits on octets rather
-     * than characters, so a German umlaut cannot be cut in half.
-     */
-    private function fold(string $line): string
-    {
-        if (strlen($line) <= 75) {
-            return $line;
-        }
-
-        $parts = [];
-        $remaining = $line;
-
-        while (strlen($remaining) > 75) {
-            $take = 75;
-
-            // Never split inside a UTF-8 sequence: continuation bytes are
-            // 10xxxxxx, so walk back to the start of the character.
-            while ($take > 1 && (ord($remaining[$take]) & 0xC0) === 0x80) {
-                $take--;
-            }
-
-            $parts[] = substr($remaining, 0, $take);
-            // A leading space marks the continuation, and costs one of the 75.
-            $remaining = ' '.substr($remaining, $take);
-        }
-
-        $parts[] = $remaining;
-
-        return implode("\r\n", $parts);
     }
 }

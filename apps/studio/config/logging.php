@@ -1,5 +1,7 @@
 <?php
 
+use App\Support\Observability\ContextProcessor;
+use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -121,6 +123,22 @@ return [
         'null' => [
             'driver' => 'monolog',
             'handler' => NullHandler::class,
+        ],
+
+        // F-11: one JSON line per entry, each carrying the request id, the
+        // surface, the tenant, and the actor — by public_id, never the
+        // bigint primary key (App\Support\Observability\ContextProcessor).
+        // Not wired into `stack` by default: this channel is for whoever
+        // ships log aggregation next to query by these fields, not for the
+        // human-readable `single`/`daily` channels every other line already
+        // goes to.
+        'observability' => [
+            'driver' => 'monolog',
+            'handler' => StreamHandler::class,
+            'with' => ['stream' => storage_path('logs/observability.log')],
+            'formatter' => JsonFormatter::class,
+            'processors' => [ContextProcessor::class, PsrLogMessageProcessor::class],
+            'level' => env('LOG_LEVEL', 'debug'),
         ],
 
         'emergency' => [

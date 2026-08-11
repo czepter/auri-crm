@@ -1,0 +1,13 @@
+.git
+**/node_modules
+**/vendor
+**/.env
+**/.env.*
+**/test-results
+**/playwright-report
+apps/studio/public/build
+apps/studio/public/hot
+apps/studio/storage/logs/*
+apps/studio/bootstrap/cache/*.php
+mockups
+docs

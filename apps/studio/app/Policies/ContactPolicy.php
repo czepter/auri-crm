@@ -27,4 +27,16 @@ class ContactPolicy
     {
         return $user->role->allows(Capability::ManagePortalAccess);
     }
+
+    /** X-04: download everything the studio holds about this contact. */
+    public function exportDsgvoData(User $user, Contact $contact): bool
+    {
+        return $user->role->allows(Capability::ManageDsgvo);
+    }
+
+    /** X-04: erase this contact, and everything reachable from them, for good. */
+    public function eraseDsgvoData(User $user, Contact $contact): bool
+    {
+        return $user->role->allows(Capability::ManageDsgvo);
+    }
 }
