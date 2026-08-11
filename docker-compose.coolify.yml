@@ -1,0 +1,369 @@
+# Coolify deployment stack. `docker-compose.yml` beside it stays the local
+# development stack and keeps its bind mounts, dev dependencies and host port
+# variables; nothing here is meant to run on a laptop.
+#
+# Nothing is built here. .github/workflows/release-image.yml builds
+# docker/app/Dockerfile and docker/gallery/Dockerfile once per commit and pushes
+# both to GHCR, so a deploy is a pull — seven services off two images, on a
+# server that would otherwise be compiling PHP extensions and two JavaScript
+# bundles while the old containers are still answering. `:latest` is whatever
+# main last built; the workflow also pushes a `sha-<commit>` tag, so a rollback
+# is editing these image lines to name one. Either make the GHCR packages public
+# or give the server a registry login.
+#
+# docker/app/check-coolify-compose.php enforces the rules below in CI.
+#
+# Written against three rules Coolify's compose parser actually enforces, none
+# of which are docker-compose rules:
+#
+#   1. No YAML anchors or merge keys. Coolify fails to parse them
+#      (coollabsio/coolify#2705), which is why every service repeats its
+#      environment instead of sharing one block. Anything that does not vary
+#      per deployment was moved into docker/app/Dockerfile to keep that
+#      repetition down to secrets and domains.
+#   2. A SERVICE_* variable is only generated when it is the entire value —
+#      shared.php gates on the value starting with `$`. `base64:${SERVICE_...}`
+#      is silently skipped, so APP_KEY gets its `base64:` marker in the
+#      entrypoint instead.
+#   3. SERVICE_FQDN_* carries the scheme (https://host), SERVICE_URL_* is the
+#      bare host. APP_URL wants the first one.
+#
+# Magic variables in use:
+#
+#   SERVICE_FQDN_<NAME>_<PORT>   as a key, with no value: registers a domain
+#                                and routes it to that container port. A value
+#                                here would be read as a URL path.
+#   SERVICE_FQDN_<NAME>          as a value: the same domain, with scheme and
+#                                without the port. Declared after the keyed
+#                                form so the proxy sees the port-bearing one
+#                                first — same order the upstream Coolify
+#                                templates use.
+#   SERVICE_PASSWORD_<NAME>      random alphanumeric secret, no symbols.
+#   SERVICE_USER_<NAME>          random 16-character identifier.
+#   SERVICE_REALBASE64_<NAME>    base64 of 32 random bytes — the key length
+#                                Laravel's AES-256-CBC cipher expects.
+#
+# Coolify generates each of these once, stores it in the resource's environment
+# editor and reuses it forever after. That is the only reason APP_KEY can be
+# generated at all: a value that rotated per deploy would invalidate every
+# encrypted column and signed cookie the studio holds.
+#
+# Identifiers carry no underscores — Coolify splits the port off the last one,
+# so SERVICE_FQDN_MY_APP_8080 reads as the service "my" on port "app".
+
+services:
+  # One image, three surfaces. APP_SURFACE decides which route file boots
+  # (App\Support\Surface); the admin routes being unreachable from a client
+  # session is enforced by their absence from the portal container, not by
+  # middleware that could be misconfigured.
+  admin:
+    image: ghcr.io/czepter/auri-crm/studio:latest
+    restart: unless-stopped
+    environment:
+      SERVICE_FQDN_ADMIN_8080:
+      APP_SURFACE: admin
+      APP_URL: ${SERVICE_FQDN_ADMIN}
+      APP_KEY: ${SERVICE_REALBASE64_APPKEY}
+      SENTRY_LARAVEL_DSN: ${STUDIO_SENTRY_DSN}
+      DB_DATABASE: ${POSTGRES_DB:-studio}
+      DB_USERNAME: ${SERVICE_USER_POSTGRES}
+      DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
+      REDIS_PASSWORD: ${SERVICE_PASSWORD_REDIS}
+      AWS_BUCKET: ${AWS_BUCKET:-studio}
+      AWS_ENDPOINT: ${SERVICE_FQDN_RUSTFS}
+      AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
+      AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
+      MAIL_URL: ${MAIL_URL}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      rustfs-init:
+        condition: service_completed_successfully
+
+  portal:
+    image: ghcr.io/czepter/auri-crm/studio:latest
+    restart: unless-stopped
+    environment:
+      SERVICE_FQDN_PORTAL_8080:
+      APP_SURFACE: portal
+      APP_URL: ${SERVICE_FQDN_PORTAL}
+      APP_KEY: ${SERVICE_REALBASE64_APPKEY}
+      SENTRY_LARAVEL_DSN: ${STUDIO_SENTRY_DSN}
+      DB_DATABASE: ${POSTGRES_DB:-studio}
+      DB_USERNAME: ${SERVICE_USER_POSTGRES}
+      DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
+      REDIS_PASSWORD: ${SERVICE_PASSWORD_REDIS}
+      AWS_BUCKET: ${AWS_BUCKET:-studio}
+      AWS_ENDPOINT: ${SERVICE_FQDN_RUSTFS}
+      AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
+      AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
+      MAIL_URL: ${MAIL_URL}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      rustfs-init:
+        condition: service_completed_successfully
+
+  # Carries routes/api.php, and with it the Stripe webhook — which is why the
+  # webhook secret is on this service and nowhere else. Delete the service if
+  # nothing external consumes the API here; an unused public hostname is still
+  # a public hostname.
+  api:
+    image: ghcr.io/czepter/auri-crm/studio:latest
+    restart: unless-stopped
+    environment:
+      SERVICE_FQDN_API_8080:
+      APP_SURFACE: api
+      APP_URL: ${SERVICE_FQDN_API}
+      APP_KEY: ${SERVICE_REALBASE64_APPKEY}
+      SENTRY_LARAVEL_DSN: ${STUDIO_SENTRY_DSN}
+      DB_DATABASE: ${POSTGRES_DB:-studio}
+      DB_USERNAME: ${SERVICE_USER_POSTGRES}
+      DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
+      REDIS_PASSWORD: ${SERVICE_PASSWORD_REDIS}
+      AWS_BUCKET: ${AWS_BUCKET:-studio}
+      AWS_ENDPOINT: ${SERVICE_FQDN_RUSTFS}
+      AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
+      AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      rustfs-init:
+        condition: service_completed_successfully
+
+  # The guest-facing Astro SSR gallery (apps/gallery). Its own image and its own
+  # domain because it shares nothing with the PHP surfaces: it renders
+  # /g/:galleryId server-side and reaches Laravel only over the api surface,
+  # internally — a guest's browser never talks to the api host directly, and a
+  # gallery page cannot be prerendered because which version is current changes
+  # the moment a studio owner republishes (see apps/gallery/astro.config.mjs).
+  #
+  # X-Request-Id crosses from here into that api call and back out on the
+  # response, so an SSR render and the Laravel request it triggered are one
+  # incident under one id (G-13, src/middleware.ts).
+  gallery:
+    image: ghcr.io/czepter/auri-crm/gallery:latest
+    restart: unless-stopped
+    environment:
+      SERVICE_FQDN_GALLERY_4321:
+      API_URL: http://api:8080
+      # Empty leaves the SSR process fully inert — no outbound calls at all —
+      # which is the wanted default until a GlitchTip project exists (F-11).
+      SENTRY_DSN: ${GALLERY_SENTRY_DSN}
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # Horizon rather than `queue:work`: one supervisor per workload (default,
+  # mail, render — config/horizon.php), so a stuck Gotenberg render cannot
+  # starve the queue a signed contract is waiting on. See docs/queue.md.
+  # APP_SURFACE is admin because bootstrap/providers.php only registers
+  # Horizon's provider there. No domain — the dashboard is served by the admin
+  # container, this one only works jobs.
+  horizon:
+    image: ghcr.io/czepter/auri-crm/studio:latest
+    restart: unless-stopped
+    command: php artisan horizon
+    stop_grace_period: 60s
+    environment:
+      APP_SURFACE: admin
+      # Plain variable, not ${SERVICE_FQDN_ADMIN}: Coolify assigns a referenced
+      # domain to whichever service the reference is written in, and this one
+      # has no domain of its own to keep that assignment away from. Referencing
+      # the admin domain here would hand it to a container with no web server.
+      # Set it to the surface whose links a queued mail should contain — the
+      # portal, wherever the mail goes to a client.
+      APP_URL: ${APP_URL}
+      APP_KEY: ${SERVICE_REALBASE64_APPKEY}
+      SENTRY_LARAVEL_DSN: ${STUDIO_SENTRY_DSN}
+      DB_DATABASE: ${POSTGRES_DB:-studio}
+      DB_USERNAME: ${SERVICE_USER_POSTGRES}
+      DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
+      REDIS_PASSWORD: ${SERVICE_PASSWORD_REDIS}
+      AWS_BUCKET: ${AWS_BUCKET:-studio}
+      # The internal address for the same reason, and it is the better one here
+      # anyway: a worker puts and gets objects, it does not hand URLs to a
+      # browser, so it has no need to pay the hairpin through the proxy. Give
+      # this the public endpoint if a queued job ever presigns a link itself.
+      AWS_ENDPOINT: http://rustfs:9000
+      AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
+      AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
+      MAIL_URL: ${MAIL_URL}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+    healthcheck:
+      test: ["CMD", "php", "artisan", "horizon:status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      rustfs-init:
+        condition: service_completed_successfully
+
+  # Carries routes/console.php's daily overdue-installment scan. Separate from
+  # horizon because `schedule:work` is its own long-running process; folded in,
+  # every queue deploy would restart the scheduler too.
+  scheduler:
+    image: ghcr.io/czepter/auri-crm/studio:latest
+    restart: unless-stopped
+    command: php artisan schedule:work
+    environment:
+      APP_SURFACE: admin
+      # Plain, not ${SERVICE_FQDN_ADMIN} — see the note on horizon.
+      APP_URL: ${APP_URL}
+      APP_KEY: ${SERVICE_REALBASE64_APPKEY}
+      SENTRY_LARAVEL_DSN: ${STUDIO_SENTRY_DSN}
+      DB_DATABASE: ${POSTGRES_DB:-studio}
+      DB_USERNAME: ${SERVICE_USER_POSTGRES}
+      DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
+      REDIS_PASSWORD: ${SERVICE_PASSWORD_REDIS}
+      MAIL_URL: ${MAIL_URL}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  # Runs once per deploy and blocks every app container until it exits cleanly,
+  # so no surface serves a request against a half-migrated schema. `restart:
+  # "no"` is also how Coolify recognises a one-shot and leaves it out of the
+  # deployment health check (shared.php:2845).
+  #
+  # --isolated takes its lock through the cache store, which is Redis here, so
+  # this waits on Redis as well as the database it is about to change.
+  migrate:
+    image: ghcr.io/czepter/auri-crm/studio:latest
+    restart: "no"
+    command: php artisan migrate --force --isolated
+    environment:
+      APP_SURFACE: admin
+      APP_KEY: ${SERVICE_REALBASE64_APPKEY}
+      SENTRY_LARAVEL_DSN: ${STUDIO_SENTRY_DSN}
+      DB_DATABASE: ${POSTGRES_DB:-studio}
+      DB_USERNAME: ${SERVICE_USER_POSTGRES}
+      DB_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
+      REDIS_PASSWORD: ${SERVICE_PASSWORD_REDIS}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-studio}
+      POSTGRES_USER: ${SERVICE_USER_POSTGRES}
+      POSTGRES_PASSWORD: ${SERVICE_PASSWORD_POSTGRES}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # Appendonly because queued jobs live here: a restart between a contract
+    # being signed and its PDF being rendered must not lose the render job.
+    command: redis-server --appendonly yes --requirepass ${SERVICE_PASSWORD_REDIS}
+    environment:
+      REDIS_PASSWORD: ${SERVICE_PASSWORD_REDIS}
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a $${REDIS_PASSWORD} ping | grep -q PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # HTML-to-PDF for RenderContractJob, reached only from the render queue and
+  # never from a request thread. No domain: nothing outside this network calls it.
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  # S3-compatible object storage for contracts, galleries and every other
+  # uploaded file, so the app containers stay disposable. Pinned to the release
+  # candidate rather than :latest — RustFS is pre-1.0, and an unpinned storage
+  # engine is the one moving part a deploy cannot roll back cheaply.
+  #
+  # It gets a public domain because AWS_ENDPOINT above points at it: a presigned
+  # URL handed to a browser has to resolve to the host it was signed for.
+  # Server-side puts pay a hairpin through the proxy for that. Point
+  # AWS_ENDPOINT at http://rustfs:9000 instead if this deployment never
+  # presigns and only ever streams objects through PHP.
+  rustfs:
+    image: rustfs/rustfs:1.0.0-rc.1
+    restart: unless-stopped
+    environment:
+      SERVICE_FQDN_RUSTFS_9000:
+      RUSTFS_ADDRESS: ":9000"
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSKEY}
+      RUSTFS_SECRET_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
+      RUSTFS_OBS_LOGGER_LEVEL: error
+      # The bundled console is an admin surface over every object in the studio.
+      # It stays off; run `mc` against the S3 port when something needs
+      # inspecting. Turning it on means giving it its own
+      # SERVICE_FQDN_RUSTFSCONSOLE_9001 and accepting a second public door.
+      RUSTFS_CONSOLE_ENABLE: "false"
+    volumes:
+      - rustfsdata:/data
+    command: ["/data"]
+
+  # RustFS starts empty and the S3 driver will not create a missing bucket, so
+  # the first upload after a fresh deploy would fail with NoSuchBucket. One-shot,
+  # idempotent, retries until the storage listener answers.
+  rustfs-init:
+    image: minio/mc:latest
+    restart: "no"
+    environment:
+      RUSTFS_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSKEY}
+      RUSTFS_SECRET_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
+      AWS_BUCKET: ${AWS_BUCKET:-studio}
+    entrypoint: >
+      sh -c '
+        until mc alias set rustfs http://rustfs:9000 "$$RUSTFS_ACCESS_KEY" "$$RUSTFS_SECRET_KEY"; do
+          echo "waiting for rustfs"; sleep 2;
+        done;
+        mc mb --ignore-existing rustfs/"$$AWS_BUCKET"
+      '
+    depends_on:
+      - rustfs
+
+volumes:
+  pgdata:
+  redisdata:
+  rustfsdata:

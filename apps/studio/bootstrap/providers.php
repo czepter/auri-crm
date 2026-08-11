@@ -5,6 +5,7 @@ use App\Providers\ObservabilityServiceProvider;
 use App\Providers\TypeScriptTransformerServiceProvider;
 use App\Support\Surface;
 use Laravel\Horizon\HorizonServiceProvider;
+use Spatie\LaravelTypeScriptTransformer\TypeScriptTransformerApplicationServiceProvider as BaseTypeScriptTransformerServiceProvider;
 
 // Horizon's own package provider (Laravel\Horizon\HorizonServiceProvider)
 // registers its dashboard routes unconditionally, so composer.json disables
@@ -23,5 +24,12 @@ return [
         HorizonServiceProvider::class,
         App\Providers\HorizonServiceProvider::class,
     ] : []),
-    TypeScriptTransformerServiceProvider::class,
+    // spatie/laravel-typescript-transformer is a require-dev package: it
+    // regenerates resources/js/types from PHP attributes and has no job in a
+    // deployed container. Registered unconditionally, the provider's parent
+    // class is simply missing after `composer install --no-dev` and the
+    // application cannot boot at all — so its presence is what decides.
+    ...(class_exists(BaseTypeScriptTransformerServiceProvider::class)
+        ? [TypeScriptTransformerServiceProvider::class]
+        : []),
 ];
