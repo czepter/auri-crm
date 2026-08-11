@@ -147,9 +147,10 @@ class InvitationController extends Controller
 
         AuditLogger::record('staff.invitation_accepted', $user, [], $invitation->public_id);
 
-        // The account has no MFA yet, so RequireConfirmedMfa sends them
-        // straight to enrollment — an invited user is not usable until TOTP is
-        // set up, which is what F-08 requires and what this story inherits.
+        // MFA is opt-in (see RequireStudioOnboarding's own doc comment for
+        // the one gate that still runs here) — an invited user lands on the
+        // dashboard directly and enrolls later from /auth/mfa/enroll if they
+        // choose to.
         return redirect('/');
     }
 

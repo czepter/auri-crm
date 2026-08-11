@@ -108,12 +108,12 @@ Route::middleware('audience:staff')->group(function () {
     Route::post('/auth/mfa/confirm', [MfaEnrollmentController::class, 'confirm']);
     Route::get('/auth/mfa/recovery-codes', [MfaEnrollmentController::class, 'recoveryCodes']);
 
-    Route::middleware('mfa')->group(function () {
+    Route::middleware([])->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
 
-        // N-04: the consent screen — gated behind confirmed MFA like every
-        // other sensitive staff screen below, since approving this hands out
-        // a token scoped to this person's own capabilities.
+        // N-04: the consent screen — approving it hands out a token scoped
+        // to this person's own capabilities, same as every other sensitive
+        // staff screen below.
         Route::get('/oauth/authorize', [OAuthAuthorizationController::class, 'create'])->name('oauth.authorize');
         Route::post('/oauth/authorize', [OAuthAuthorizationController::class, 'store'])->name('oauth.authorize.store');
 

@@ -12,7 +12,6 @@ use App\Http\Middleware\EnsureNoStaffExists;
 use App\Http\Middleware\EnsurePortalCapability;
 use App\Http\Middleware\EnsurePortalMaintenanceClosure;
 use App\Http\Middleware\HandleInertiaRequests;
-use App\Http\Middleware\RequireConfirmedMfa;
 use App\Integration\Console\Commands\CreateApiTokenCommand;
 use App\Integration\Console\Commands\CreateWebhookEndpointCommand;
 use App\Integration\Console\Commands\RedeliverWebhookCommand;
@@ -94,7 +93,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: ['oauth/token']);
 
         $middleware->alias([
-            'mfa' => RequireConfirmedMfa::class,
             'setup' => EnsureNoStaffExists::class,
             'audience' => EnsureAudience::class,
             'scope' => EnsureApiTokenScope::class,
