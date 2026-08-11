@@ -45,6 +45,7 @@ use App\Settings\Http\Controllers\NumberRangeController;
 use App\Settings\Http\Controllers\PaymentSettingsController;
 use App\Settings\Http\Controllers\PortalSettingsController;
 use App\Settings\Http\Controllers\StudioClosureController;
+use App\Settings\Http\Controllers\StudioOnboardingController;
 use App\Settings\Http\Controllers\StudioSettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -108,7 +109,10 @@ Route::middleware('audience:staff')->group(function () {
     Route::post('/auth/mfa/confirm', [MfaEnrollmentController::class, 'confirm']);
     Route::get('/auth/mfa/recovery-codes', [MfaEnrollmentController::class, 'recoveryCodes']);
 
-    Route::middleware([])->group(function () {
+    Route::get('/einrichtung/studio', [StudioOnboardingController::class, 'show'])->name('onboarding');
+    Route::post('/einrichtung/studio/abschluss', [StudioOnboardingController::class, 'complete']);
+
+    Route::middleware('onboarding')->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
 
         // N-04: the consent screen — approving it hands out a token scoped

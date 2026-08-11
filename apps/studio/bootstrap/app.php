@@ -12,6 +12,7 @@ use App\Http\Middleware\EnsureNoStaffExists;
 use App\Http\Middleware\EnsurePortalCapability;
 use App\Http\Middleware\EnsurePortalMaintenanceClosure;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RequireStudioOnboarding;
 use App\Integration\Console\Commands\CreateApiTokenCommand;
 use App\Integration\Console\Commands\CreateWebhookEndpointCommand;
 use App\Integration\Console\Commands\RedeliverWebhookCommand;
@@ -94,6 +95,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'setup' => EnsureNoStaffExists::class,
+            'onboarding' => RequireStudioOnboarding::class,
             'audience' => EnsureAudience::class,
             'scope' => EnsureApiTokenScope::class,
             'idempotent' => EnsureIdempotentWrite::class,
