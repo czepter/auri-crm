@@ -56,17 +56,24 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withSchedule(function (Schedule $schedule) {
         // G-01a's one lifecycle rule (issue #50) — see the command's own
         // docblock for why this is a schedule entry rather than a bucket
-        // lifecycle policy. No production deploy configuration exists yet to
-        // run `schedule:run` from (same gap docs/queue.md already flags for
-        // the worker process); this is the seam it will hang off once one
-        // does.
+        // lifecycle policy. The `scheduler` service in
+        // docker-compose.coolify.yml is what runs these in a deployment.
         $schedule->command(ReapIncompleteMultipartUploads::class)->daily();
 
-        // E-08's date-offset half — see the command's own docblock. Same
-        // "no production schedule:run yet" gap as the reaper above.
+        // E-08's date-offset half — see the command's own docblock.
         $schedule->command(SweepDateOffsetAutomationRulesCommand::class)->daily();
     })
     ->withMiddleware(function (Middleware $middleware) {
+        // Every deployed surface sits behind a reverse proxy that terminates
+        // TLS (Coolify's, see docker-compose.coolify.yml), so without this the
+        // framework sees plain HTTP: url() would emit http:// links into
+        // contract and gallery mails, and a secure session cookie would be
+        // issued against a request Laravel believes is insecure. The proxy is
+        // the only thing that can reach these containers — the published port
+        // is the proxy's, not the app's — so trusting all of them is trusting
+        // exactly one hop.
+        $middleware->trustProxies(at: '*');
+
         // F-11: ahead of everything else in the stack, on all three
         // surfaces, so a request id exists before the first line this
         // request logs — see App\Http\Middleware\AssignRequestId.

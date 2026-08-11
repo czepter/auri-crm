@@ -73,11 +73,14 @@ same-second jobs it was.
 
 ## Deploy
 
-This repository has no production deploy configuration yet (no `fly.toml`,
-`render.yaml`, Kubernetes manifests, or `deploy/` directory — checked at the
-time this queue runtime was added) — `.github/workflows/ci.yml` runs tests
-only. Wherever a deploy mechanism is added, it needs a worker process running
-`php artisan horizon`, a reachable Redis, and `QUEUE_CONNECTION=redis` in that
-environment's configuration, matching the `worker` service in
-`docker-compose.yml`. Flagged here rather than guessed at, so it isn't
-mistaken for a solved problem.
+`docker-compose.coolify.yml` runs the queue in a deployment: a `horizon`
+service running `php artisan horizon`, a password-protected Redis with
+`appendonly` on so a signed contract's render job survives a restart, and
+`QUEUE_CONNECTION=redis` baked into `docker/app/Dockerfile` — Horizon only
+supervises the redis connection, and the database driver it would otherwise
+inherit is invisible to it, so jobs would pile up unworked beneath a green
+dashboard. A separate `scheduler` service runs `schedule:work` for the entries
+in `bootstrap/app.php`.
+
+The image those services run is built by `.github/workflows/release-image.yml`
+and pushed to GHCR; nothing is built on the deploy server.
