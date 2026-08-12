@@ -84,15 +84,17 @@ save validation, so what staff are offered and what the server accepts cannot
 drift. A block type there with no case in `serialize.ts` renders to nothing;
 add both in the same commit.
 
-A template written before the editor existed has `blocks` null. It is
-imported into a single `rawHtml` block the first time someone opens it, and
-that import is persisted only if they save — a template nobody edits is never
-rewritten.
+A template written before the editor existed has `blocks` null. Its body is
+imported as a single `rawHtml` block when first opened — a textarea showing
+the original markup, which the author can keep, edit, or delete; the change
+persists only if they save, so a template nobody edits is never rewritten.
 
 Merge fields are an inline tool: a `<span data-mf="contact.name">` showing the
 sample value while editing, serialized back to `{{ contact.name }}`. The
-vocabulary the picker offers is `MergeFieldVocabulary::samples()`, the same
-constant the preview resolves against.
+picker offers `MergeFieldVocabulary::samples()`, a flat path-to-value map,
+while the preview resolves against `sample()`, the same values as a nested
+array — both built from one private constant, so what an author picks and what
+the preview shows cannot disagree.
 
 ## Sanitising block HTML
 
