@@ -63,20 +63,20 @@ it('creates a new version rather than mutating on update', function () {
         ->and(AuditLog::where('event', 'document_template.updated')->sole()->context['version'])->toBe(2);
 });
 
-it('keeps block content through a new version, not just the block type', function () {
+it('keeps block content through a new version, and sanitises it on the way', function () {
     $template = DocumentTemplate::factory()->create();
 
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->patch("/dokumentvorlagen/{$template->public_id}", [
             'name' => $template->name,
             'body' => '<p>Neu</p>',
-            'blocks' => ['blocks' => [['type' => 'paragraph', 'data' => ['text' => 'Neu']]]],
+            'blocks' => ['blocks' => [['type' => 'paragraph', 'data' => ['text' => 'Neu <img src=x onerror=alert(1)>']]]],
         ])
         ->assertRedirect('/dokumentvorlagen');
 
     $version = DocumentTemplate::query()->where('version', 2)->firstOrFail();
 
-    expect($version->blocks['blocks'][0]['data']['text'])->toBe('Neu');
+    expect($version->blocks['blocks'][0]['data']['text'])->toBe('Neu ');
 });
 
 it('404s editing a superseded version', function () {
