@@ -58,7 +58,11 @@ export function createMergeFieldTool(fields: MergeField[]) {
           const option = document.createElement('button')
           option.type = 'button'
           option.className = 'doc-mf-option'
-          option.innerHTML = `<b>${field.sample}</b><em>${field.path}</em>`
+          const sample = document.createElement('b')
+          sample.textContent = field.sample
+          const path = document.createElement('em')
+          path.textContent = field.path
+          option.replaceChildren(sample, path)
           option.addEventListener('click', () => {
             this.insert(field)
             picker.remove()

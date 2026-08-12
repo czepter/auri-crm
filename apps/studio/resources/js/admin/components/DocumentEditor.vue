@@ -43,10 +43,13 @@ const registry = {
   image: ImageTool,
 }
 
-onMounted(() => {
-  editor = new EditorJS({
+// Extracted so onMounted and the palette watcher build an instance exactly
+// one way — the tool set is only ever set at construction (see the watcher
+// below for why).
+function create(data: EditorDocument): EditorJS {
+  return new EditorJS({
     holder: holder.value!,
-    data: model.value,
+    data,
     minHeight: 240,
     placeholder: 'Text schreiben oder / für Bausteine',
     tools: {
@@ -59,6 +62,10 @@ onMounted(() => {
       model.value = (await editor!.save()) as EditorDocument
     },
   })
+}
+
+onMounted(() => {
+  editor = create(model.value)
 })
 
 onBeforeUnmount(() => {
@@ -66,14 +73,19 @@ onBeforeUnmount(() => {
   editor = null
 })
 
-// A parent that replaces the whole document (type switch on the create screen)
-// has to push it into the instance — Editor.js does not watch its data option.
+// Editor.js takes its `tools` map once, at construction, and offers no way to
+// change it on a live instance — so a palette change (the type select on the
+// create screen) means a new instance, not a re-render. The current document
+// is carried across explicitly; destroy() alone would drop it.
 watch(
   () => props.palette,
   async () => {
     if (editor === null) return
-    await editor.isReady
-    await editor.render(model.value)
+
+    const current = await editor.save()
+
+    editor.destroy()
+    editor = create(current as EditorDocument)
   },
 )
 </script>

@@ -5,14 +5,19 @@
 // concerns.
 //
 // `sanitize` is the allow-list Editor.js applies when it saves a block, which
-// is why serialize.ts does not re-sanitise inline markup.
+// is why serialize.ts does not re-sanitise inline markup — except here, on
+// construction, where the value comes from stored data rather than from
+// Editor.js's own save path. See sanitizeInline.ts for why that path is not
+// covered by `sanitize`.
+
+import { sanitizeInline } from './sanitizeInline'
 
 function field(placeholder: string, value: string, className = 'doc-editable'): HTMLElement {
   const element = document.createElement('div')
   element.className = className
   element.contentEditable = 'true'
   element.dataset.placeholder = placeholder
-  element.innerHTML = value
+  element.innerHTML = sanitizeInline(value)
 
   return element
 }
