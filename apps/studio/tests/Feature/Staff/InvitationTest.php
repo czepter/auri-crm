@@ -88,9 +88,7 @@ it('refuses an expired, unknown or spent token', function (callable $setup, stri
     'accepted' => [fn () => invite()->forceFill(['accepted_at' => now()])->save(), 'raw-token'],
 ]);
 
-it('creates the account with the invited role and forces enrollment', function () {
-    // The story's acceptance: an invited user is not usable until TOTP is set
-    // up, so the very first request lands on enrollment.
+it('creates the account with the invited role and signs them in directly — MFA is opt-in', function () {
     invite();
 
     $this->post('/einladung/raw-token', [
@@ -103,7 +101,7 @@ it('creates the account with the invited role and forces enrollment', function (
     expect($user->role)->toBe(StaffRole::SecondShooter)
         ->and($user->hasConfirmedMfa())->toBeFalse();
 
-    $this->get('/')->assertRedirect('/auth/mfa/enroll');
+    $this->get('/')->assertOk();
 });
 
 it('refuses to invite an address that already has an account', function () {

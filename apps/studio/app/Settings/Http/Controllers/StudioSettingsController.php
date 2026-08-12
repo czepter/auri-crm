@@ -34,7 +34,7 @@ class StudioSettingsController extends Controller
         $this->authorizeSettings();
 
         return Inertia::render('Settings/Index', [
-            'settings' => $this->toData($settings),
+            'settings' => StudioSettingsData::fromResolver($settings),
         ]);
     }
 
@@ -229,50 +229,5 @@ class StudioSettingsController extends Controller
         // route of its own to GET back to) — same target every other
         // non-profile pane on this controller redirects to.
         return redirect('/einstellungen');
-    }
-
-    private function toData(StudioSettingsResolver $settings): StudioSettingsData
-    {
-        $attrs = $settings->attributes();
-
-        return new StudioSettingsData(
-            id: $settings->publicId(),
-            displayName: $attrs['display_name'],
-            legalName: $attrs['legal_name'],
-            legalForm: $attrs['legal_form'],
-            street: $attrs['street'],
-            postcode: $attrs['postcode'],
-            city: $attrs['city'],
-            country: $attrs['country'],
-            taxNumber: $attrs['tax_number'],
-            vatId: $attrs['vat_id'],
-            registerNumber: $attrs['register_number'],
-            registerCourt: $attrs['register_court'],
-            representative: $attrs['representative'],
-            website: $attrs['website'],
-            accentColor: $attrs['accent_color'],
-            logoUrl: $settings->logoPath() !== null ? route('settings.logo') : null,
-            bankAccountHolder: $attrs['bank_account_holder'],
-            bankIban: $attrs['bank_iban'],
-            bankBic: $attrs['bank_bic'],
-            vatMode: $settings->vatMode(),
-            vatRate: $settings->vatRate(),
-            vatNote: $settings->vatNote(),
-            quoteValidityDays: $settings->quoteValidityDays(),
-            paymentTermDays: $settings->paymentTermDays(),
-            depositPercentage: $settings->depositPercentage(),
-            widerrufIncluded: $settings->widerrufIncluded(),
-            widerrufText: $settings->widerrufText(),
-            documentLetterheadHtml: $settings->documentLetterheadHtml(),
-            documentFooterHtml: $settings->documentFooterHtml(),
-            timezone: $settings->timezone(),
-            locale: $settings->locale(),
-            workingDays: $settings->workingDays(),
-            mailFromName: $settings->mailFromName(),
-            mailFromAddress: $settings->mailFromAddress(),
-            mailReplyTo: $settings->mailReplyTo(),
-            mailSignature: $settings->mailSignature(),
-            mailBcc: $settings->mailBcc(),
-        );
     }
 }

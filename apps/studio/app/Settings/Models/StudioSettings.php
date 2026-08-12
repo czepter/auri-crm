@@ -58,6 +58,7 @@ class StudioSettings extends Model
         'portal_accept_quotes_enabled', 'portal_sign_contracts_enabled',
         'portal_payment_status_enabled', 'portal_messaging_enabled',
         'quiet_hours_enabled', 'quiet_hours_start', 'quiet_hours_end',
+        'onboarding_completed_at',
     ];
 
     // Defence in depth beside StudioSettingsResolver never exposing these
@@ -88,6 +89,7 @@ class StudioSettings extends Model
             'portal_payment_status_enabled' => 'boolean',
             'portal_messaging_enabled' => 'boolean',
             'quiet_hours_enabled' => 'boolean',
+            'onboarding_completed_at' => 'datetime',
         ];
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -28,6 +29,10 @@ it('is absent from the route table outside local', function () {
 });
 
 it('does not offer the button on the login page outside local', function () {
+    // A staff account has to exist for /login to render at all — an empty
+    // table sends every visitor to /einrichtung instead. See SetupTest.
+    User::factory()->create();
+
     $props = $this->get('/login')->assertOk()->viewData('page')['props'];
 
     expect($props['devLogin'])->toBeFalse();

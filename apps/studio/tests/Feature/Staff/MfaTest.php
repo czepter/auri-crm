@@ -14,12 +14,13 @@ beforeEach(function () {
     RateLimiter::clear('staff-mfa|127.0.0.1');
 });
 
-it('sends an enrolled-but-unconfirmed user to enrollment instead of the dashboard', function () {
+it('lets an un-enrolled user reach the dashboard — MFA is opt-in', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user, 'staff')
         ->get('/')
-        ->assertRedirect('/auth/mfa/enroll');
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page->component('Uebersicht'));
 });
 
 it('issues a secret and an otpauth uri on the enrollment page', function () {

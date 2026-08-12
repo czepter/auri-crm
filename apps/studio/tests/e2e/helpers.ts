@@ -7,7 +7,7 @@ export const MFA_SECRET = 'JBSWY3DPEHPK3PXP'
 export const ACCOUNTS = {
   /** Enrolled in MFA — reaches the dashboard. */
   mfa: { email: 'e2e-mfa@studio.test', password: 'correct-horse' },
-  /** Not enrolled — every sign-in lands on the enrollment page. */
+  /** Not enrolled — signs straight in to the dashboard; MFA is opt-in. */
   basic: { email: 'e2e-basic@studio.test', password: 'correct-horse' },
 } as const
 
