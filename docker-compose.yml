@@ -14,7 +14,7 @@ services:
     volumes:
       - .:/app
       - composer-cache:/tmp/composer
-    environment:
+    environment: &studio-environment
       COMPOSER_HOME: /tmp/composer
       DB_HOST: postgres
       DB_PORT: 5432
@@ -101,6 +101,105 @@ services:
         condition: service_healthy
       minio-init:
         condition: service_completed_successfully
+
+  # One image, three surfaces, three containers — the same shape the deploy
+  # runs (docker-compose.coolify.yml). APP_SURFACE decides which route file
+  # boots (App\Support\Surface, config/surface.php), so the admin routes being
+  # unreachable from a client session is enforced by their absence from this
+  # container rather than by middleware that could be misconfigured. Running
+  # them side by side locally is what makes that seam testable at all: a route
+  # that leaked across surfaces shows up as a 200 on the wrong port.
+  #
+  # `php` above stays the toolbox container (artisan, composer, pest — no
+  # long-running command of its own); these two serve.
+  portal:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      args:
+        GIT_SHA: ${GIT_SHA:-}
+    working_dir: /app/apps/studio
+    volumes:
+      - .:/app
+      - composer-cache:/tmp/composer
+    environment:
+      <<: *studio-environment
+      APP_SURFACE: portal
+      APP_URL: http://localhost:${PORTAL_PORT:-8001}
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    ports:
+      - "127.0.0.1:${PORTAL_PORT:-8001}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+
+  # Carries routes/api.php, and with it both the Stripe webhook and the read
+  # routes the gallery below renders against.
+  api:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+      args:
+        GIT_SHA: ${GIT_SHA:-}
+    working_dir: /app/apps/studio
+    volumes:
+      - .:/app
+      - composer-cache:/tmp/composer
+    environment:
+      <<: *studio-environment
+      APP_SURFACE: api
+      APP_URL: http://localhost:${API_PORT:-8002}
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    ports:
+      - "127.0.0.1:${API_PORT:-8002}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+
+  # The guest-facing Astro SSR gallery (apps/gallery), in `astro dev` rather
+  # than the built image the deploy runs: source is bind-mounted, so HMR works
+  # the same way `pnpm --filter @studio/app dev` does for the admin bundle.
+  #
+  # It reaches Laravel only over the api surface, container to container
+  # (API_URL) — a guest's browser never talks to the api host directly, and the
+  # page cannot be prerendered because which GalleryVersion is current changes
+  # the moment a studio owner republishes (apps/gallery/astro.config.mjs).
+  gallery:
+    image: node:24-slim
+    working_dir: /app/apps/gallery
+    volumes:
+      - .:/app
+      # Anonymous volumes, shadowing whatever the host installed: pnpm resolves
+      # optional native binaries per platform (rollup, esbuild), and this repo
+      # is checked out on macOS — the darwin-arm64 build the host has is not
+      # loadable in here. These keep the container's own linux install separate
+      # rather than overwriting the host's, which would break `pnpm dev` on the
+      # host the moment this service ran once.
+      - /app/node_modules
+      - /app/apps/gallery/node_modules
+      - pnpm-store:/pnpm-store
+    environment:
+      npm_config_store_dir: /pnpm-store
+      API_URL: http://api:8000
+      # F-11/G-13: empty leaves the SSR process fully inert — no outbound calls
+      # at all — same empty-by-default rule as SENTRY_LARAVEL_DSN above.
+      SENTRY_DSN: ${GALLERY_SENTRY_DSN:-}
+    command: >
+      sh -c "corepack enable &&
+      pnpm install --frozen-lockfile --filter @studio/gallery &&
+      pnpm --filter @studio/gallery dev --host 0.0.0.0"
+    ports:
+      - "127.0.0.1:${GALLERY_PORT:-4321}:4321"
+    depends_on:
+      - api
 
   # HTML-to-PDF, over HTTP (M-01). The only consumer is RenderContractJob,
   # which runs on the `worker` container's render queue — never the request
@@ -265,3 +364,4 @@ volumes:
   miniodata:
   glitchtip-pgdata:
   composer-cache:
+  pnpm-store:

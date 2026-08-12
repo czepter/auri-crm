@@ -82,31 +82,32 @@ In `local` only, `POST /dev-login` bypasses password and TOTP for inspection;
 `DevLoginController` is registered nowhere else and aborts on the same
 condition.
 
-Other surfaces run the same way with a different `APP_SURFACE`:
+The other surfaces are services of their own, so the three that a deploy runs
+separately also run separately here — a route that leaked across surfaces
+shows up as a 200 on the wrong port:
 
 ```sh
-docker compose run --rm --service-ports -e APP_SURFACE=portal php php artisan serve --host=0.0.0.0 --port=8000
+docker compose up -d portal api gallery      # portal :8001, api :8002, Astro gallery :4321
 ```
 
-The Astro gallery needs the api surface running, and reads its address from
-`API_URL` (default `http://localhost:8000`):
+The gallery reaches Laravel over the api surface container to container
+(`API_URL=http://api:8000`), never from the guest's browser, and installs its
+own linux `node_modules` inside the container rather than reusing the host's.
 
-```sh
-docker compose run --rm --service-ports -e APP_SURFACE=api php php artisan serve --host=0.0.0.0 --port=8000
-pnpm --filter @studio/gallery dev
-```
-
-Ports are variables (`APP_PORT`, `POSTGRES_PORT`, `MINIO_PORT`,
-`GOTENBERG_PORT`, `GLITCHTIP_PORT`) so several git worktrees of this
-repository can run their own stack at once; set them in a root `.env` per
-worktree.
+Ports are variables (`APP_PORT`, `PORTAL_PORT`, `API_PORT`, `GALLERY_PORT`,
+`POSTGRES_PORT`, `MINIO_PORT`, `GOTENBERG_PORT`, `GLITCHTIP_PORT`) so several
+git worktrees of this repository can run their own stack at once; set them in
+a root `.env` per worktree.
 
 | Service | Where | What for |
 |---|---|---|
+| Portal | http://localhost:8001 | The client-facing surface (`routes/portal.php`) |
+| API | http://localhost:8002 | `routes/api.php`, and what the gallery renders against |
+| Gallery | http://localhost:4321 | Guest-facing Astro SSR, `/g/:galleryId` |
 | Mailpit | http://localhost:8025 | Every mail the app sends locally |
 | MinIO console | http://localhost:9001 | The `media` bucket (`studio` / `studio-media-secret`) |
 | Horizon | `/horizon` on the admin surface | Queue supervisors and failed jobs |
-| GlitchTip | http://localhost:8080 | Error tracking, inert until `SENTRY_LARAVEL_DSN` is set |
+| GlitchTip | `http://localhost:${GLITCHTIP_PORT:-8080}` | Error tracking, inert until `SENTRY_LARAVEL_DSN` is set |
 
 ## Tests
 
