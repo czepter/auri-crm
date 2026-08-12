@@ -243,6 +243,21 @@ jobs:
           --health-interval 2s
           --health-timeout 3s
           --health-retries 30
+      # E2eSeeder busts StudioSettingsResolver's redis-backed cache
+      # (Cache::store('redis')->flush()) before seeding, the same
+      # cross-process cache the `studio` job's redis service backs — this
+      # job never had one, so that call had nowhere to connect and crashed
+      # the webServer command it seeds for. .env.example's own REDIS_HOST
+      # (127.0.0.1) already matches where a service container publishes to
+      # on the runner, so no env override is needed below, same as `studio`.
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
