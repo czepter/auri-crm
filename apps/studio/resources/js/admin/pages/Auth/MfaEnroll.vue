@@ -26,7 +26,6 @@ function submit() {
       <span class="brand">Nordlicht</span>
       <h1>{{ $t('auth.mfaEnrollTitle') }}</h1>
       <p class="hint">{{ $t('auth.mfaEnrollRequired') }}</p>
-      <p class="hint" style="margin: var(--s3) 0 var(--s4)">{{ $t('auth.mfaEnrollHint') }}</p>
 
       <img
         v-if="qrCodeDataUrl"

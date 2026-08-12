@@ -34,7 +34,6 @@ function submitEmail() {
       <span class="gmark">{{ studioName }}</span>
       <div class="kick" style="margin-top: 56px">{{ $t('gallery.pinKicker') }}</div>
       <h1 class="gtitle">{{ $t('gallery.pinTitle') }}</h1>
-      <p class="glead">{{ $t('gallery.pinLead') }}</p>
 
       <form @submit.prevent="submitPin">
         <label class="field">

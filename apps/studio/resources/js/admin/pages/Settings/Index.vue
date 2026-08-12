@@ -438,7 +438,6 @@ function submitMail() {
             <div class="fld">
               <label for="v-hinweis">{{ $t('settings.vatNoteFieldLabel') }} <em>{{ $t('settings.optional') }}</em></label>
               <textarea id="v-hinweis" v-model="vatForm.vat_note" class="inp" rows="3"></textarea>
-              <span class="hint">{{ $t('settings.vatNoteHint') }}</span>
               <p v-if="vatForm.errors.vat_note" class="err">{{ vatForm.errors.vat_note }}</p>
             </div>
           </div>
@@ -453,7 +452,6 @@ function submitMail() {
             </p>
             <p v-else class="hint" style="margin: 0">{{ $t('settings.vatPreviewEmpty') }}</p>
           </div>
-          <span class="hint" style="display: block; margin-top: var(--s3)">{{ $t('settings.vatPreviewHint') }}</span>
         </div>
       </form>
 
@@ -497,7 +495,6 @@ function submitMail() {
               <input v-model="documentsForm.widerruf_included" type="checkbox" />
               {{ $t('settings.widerrufIncludedLabel') }}
             </label>
-            <span class="hint">{{ $t('settings.widerrufIncludedHint') }}</span>
           </div>
           <div class="grp">
             <div class="fld">
@@ -509,7 +506,6 @@ function submitMail() {
                 rows="5"
                 :disabled="!documentsForm.widerruf_included"
               ></textarea>
-              <span class="hint">{{ $t('settings.widerrufTextHint') }}</span>
               <p v-if="documentsForm.errors.widerruf_text" class="err">{{ documentsForm.errors.widerruf_text }}</p>
             </div>
           </div>

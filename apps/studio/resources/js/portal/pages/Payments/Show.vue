@@ -63,9 +63,7 @@ function longDate(date: string) {
   <PortalHeader :contact="contact" :show-switcher="showSwitcher" />
 
   <main class="pwrap wide">
-    <div class="kick">{{ $t('portal.paymentsKicker') }}</div>
     <h1>{{ $t('portal.paymentsTitle') }}</h1>
-    <p class="plead">{{ $t('portal.paymentsLead') }}</p>
 
     <template v-if="plan">
       <section class="psec" style="margin-top: var(--s5)">
@@ -98,7 +96,6 @@ function longDate(date: string) {
         <div class="prail">
           <div class="card static">
             <div class="cardhead"><span class="kick">{{ $t('portal.transferTitle') }}</span></div>
-            <p class="hint">{{ $t('portal.transferHint') }}</p>
             <dl class="legal" style="margin: var(--s3) 0 0">
               <div><strong>{{ $t('portal.transferAccountHolder') }}:</strong> {{ bankDetails.accountHolder }}</div>
               <div><strong>{{ $t('portal.transferIban') }}:</strong> {{ bankDetails.iban }}</div>
@@ -115,7 +112,6 @@ function longDate(date: string) {
             <p v-if="paymentStatus === 'success'" class="hint">{{ $t('portal.payNowSuccess') }}</p>
             <p v-else-if="paymentStatus === 'cancelled'" class="hint">{{ $t('portal.payNowCancelled') }}</p>
 
-            <p class="hint">{{ $t('portal.payNowHint') }}</p>
 
             <div v-if="openInstallments.length" class="sess" style="margin-top: var(--s3)">
               <div v-for="installment in openInstallments" :key="installment.id" class="srow">

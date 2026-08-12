@@ -117,7 +117,6 @@ function addClosure() {
 
         <div class="dsec">
           <div class="dlab">{{ $t('settings.closuresLabel') }}</div>
-          <span class="hint" style="display: block; margin-bottom: var(--s3)">{{ $t('settings.closuresHint') }}</span>
 
           <p v-if="closures.length === 0" class="hint">{{ $t('settings.closuresEmpty') }}</p>
 

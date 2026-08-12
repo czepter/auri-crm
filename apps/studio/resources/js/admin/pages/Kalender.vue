@@ -57,7 +57,6 @@ function regenerate() {
         <span class="kick">{{ $t('calendar.subscribe') }}</span>
         <button type="button" class="abtn" @click="regenerate">{{ $t('calendar.revoke') }}</button>
       </div>
-      <p class="hint" style="margin-bottom: var(--s3)">{{ $t('calendar.subscribeHint') }}</p>
       <div class="picked">
         <span class="nm" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
           {{ feedUrl }}

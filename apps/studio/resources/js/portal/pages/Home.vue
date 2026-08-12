@@ -21,7 +21,6 @@ defineProps<{
   <main class="pwrap">
     <div class="pgreet">{{ $t('portal.greeting', { name: contact.name.split(' ')[0] }) }}</div>
     <p v-if="welcomeText" class="plead">{{ welcomeText }}</p>
-    <h1 v-if="projects.length">{{ $t('portal.chooseProject') }}</h1>
 
     <div v-if="projects.length" class="switcher">
       <Link v-for="project in projects" :key="project.id" :href="`/projekte/${project.id}`" class="card">

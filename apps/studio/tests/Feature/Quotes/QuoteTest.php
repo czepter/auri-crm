@@ -712,6 +712,23 @@ describe('Q-06: sending a quote', function () {
         Notification::assertSentTo($contact, QuoteSent::class);
     });
 
+    it('links the mail to the portal quote screen only while the project is portal_visible', function () {
+        $contact = Contact::factory()->create(['email' => 'lena@example.test']);
+
+        $visible = Project::factory()->create(['portal_visible' => true]);
+        $visible->attachContact($contact, ProjectContactRole::Primary);
+        $hidden = Project::factory()->create(['portal_visible' => false]);
+        $hidden->attachContact($contact, ProjectContactRole::Primary);
+
+        $withButton = (new QuoteSent(Quote::factory()->for($visible)->create()))->toMail($contact);
+        $withoutButton = (new QuoteSent(Quote::factory()->for($hidden)->create()))->toMail($contact);
+
+        // A button into the portal's own 404 would be worse than no button:
+        // the route is bound on visibility, not just on the contact.
+        expect($withButton->actionUrl)->toContain("/projekte/{$visible->public_id}/angebot")
+            ->and($withoutButton->actionUrl)->toBeNull();
+    });
+
     it('sends no mail when the project has no contactable primary contact', function () {
         Notification::fake();
         $quote = Quote::factory()->create();

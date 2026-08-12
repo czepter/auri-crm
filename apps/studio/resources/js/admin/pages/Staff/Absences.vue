@@ -45,7 +45,6 @@ function add() {
       <h1>{{ $t('absences.title') }}</h1>
     </div>
 
-    <p class="hint" style="display: block; margin-bottom: var(--s4)">{{ $t('absences.hint') }}</p>
 
     <section class="dsec" style="margin-top: 0">
       <div class="panel">
