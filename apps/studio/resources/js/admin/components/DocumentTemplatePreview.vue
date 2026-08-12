@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { Button } from '@/ui/button'
 
 // T-12's own acceptance criterion: a template is checked before it reaches a
 // client. Posts type+body as currently typed — saved or not — to the one
@@ -30,9 +31,9 @@ async function preview() {
 
 <template>
   <div class="fld grp">
-    <button type="button" class="txtbtn" :disabled="loading" @click="preview">
+    <Button variant="ghost" type="button" :disabled="loading" @click="preview">
       {{ $t('documentTemplates.preview') }}
-    </button>
+    </Button>
     <!-- sandbox="" (no allow-* tokens at all): a template body is
          staff-authored HTML, not trusted script — an empty sandbox strips
          script execution, form submission and top-level navigation, so a

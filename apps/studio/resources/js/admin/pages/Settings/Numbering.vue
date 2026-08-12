@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Label } from '@/ui/label'
 
 const props = defineProps<{ ranges: App.Settings.Data.NumberRangeData[] }>()
 
@@ -72,23 +76,29 @@ function save(rangeId: string) {
           <form :id="`number-range-form-${range.id}`" @submit.prevent="save(range.id)">
             <div class="fgrid grp">
               <div class="fld">
-                <label :for="`prefix-${range.id}`">{{ $t('settings.numberingPrefix') }}</label>
-                <input
+                <Label :for="`prefix-${range.id}`">{{ $t('settings.numberingPrefix') }}</Label>
+                <Input
                   :id="`prefix-${range.id}`"
                   v-model="forms[range.id].prefix"
-                  class="inp"
                   type="text"
-                  maxlength="8"
-                />
+                  maxlength="8" />
                 <p v-if="forms[range.id].errors.prefix" class="err">{{ forms[range.id].errors.prefix }}</p>
               </div>
 
               <div class="fld">
-                <label :for="`reset-rule-${range.id}`">{{ $t('settings.numberingResetRule') }}</label>
-                <select :id="`reset-rule-${range.id}`" v-model="forms[range.id].reset_rule" class="inp">
-                  <option value="yearly">{{ $t('settings.numberingResetRuleYearly') }}</option>
-                  <option value="continuous">{{ $t('settings.numberingResetRuleContinuous') }}</option>
-                </select>
+                <Label :for="`reset-rule-${range.id}`">{{ $t('settings.numberingResetRule') }}</Label>
+                <Select
+                  :model-value="forms[range.id].reset_rule"
+                  @update:model-value="(value) => (forms[range.id].reset_rule = String(value))"
+                >
+                  <SelectTrigger :id="`reset-rule-${range.id}`">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="yearly">{{ $t('settings.numberingResetRuleYearly') }}</SelectItem>
+                    <SelectItem value="continuous">{{ $t('settings.numberingResetRuleContinuous') }}</SelectItem>
+                  </SelectContent>
+                </Select>
                 <p v-if="forms[range.id].errors.reset_rule" class="err">{{ forms[range.id].errors.reset_rule }}</p>
               </div>
 
@@ -97,15 +107,13 @@ function save(rangeId: string) {
               </div>
 
               <div class="fld">
-                <label :for="`starting-counter-${range.id}`">{{ $t('settings.numberingStartingCounter') }}</label>
-                <input
+                <Label :for="`starting-counter-${range.id}`">{{ $t('settings.numberingStartingCounter') }}</Label>
+                <Input
                   :id="`starting-counter-${range.id}`"
-                  v-model.number="forms[range.id].starting_counter"
-                  class="inp num"
+                  v-model.number="forms[range.id].starting_counter" class="tabular-nums"
                   type="number"
                   min="1"
-                  :disabled="!range.canSetStartingCounter"
-                />
+                  :disabled="!range.canSetStartingCounter" />
                 <p class="hint">
                   {{ range.canSetStartingCounter ? $t('settings.numberingStartingCounterHint') : $t('settings.numberingLockedHint') }}
                 </p>
@@ -115,23 +123,24 @@ function save(rangeId: string) {
               </div>
 
               <div class="fld">
-                <label>{{ $t('settings.numberingPreview') }}</label>
-                <div class="inp num" style="background: var(--hover); pointer-events: none">
-                  {{ range.nextNumberPreview }}
-                </div>
+                <Label>{{ $t('settings.numberingPreview') }}</Label>
+                <Input
+                  :model-value="range.nextNumberPreview"
+                  class="pointer-events-none bg-muted tabular-nums"
+                  readonly
+                />
               </div>
             </div>
 
             <div class="formfoot">
-              <button
-                class="btn"
+              <Button
                 type="submit"
                 :disabled="!forms[range.id].isDirty || forms[range.id].processing"
                 :style="!forms[range.id].isDirty ? 'opacity:.4' : undefined"
               >
                 <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
                 {{ $t('settings.numberingSave') }}
-              </button>
+              </Button>
               <span v-if="forms[range.id].isDirty" class="chip now">{{ $t('settings.unsaved') }}</span>
             </div>
           </form>

@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
-import { useI18n } from 'vue-i18n'
+import { Button } from '@/ui/button'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 
 const props = defineProps<{ header: App.Crm.Data.ProjectHeaderData; active: string }>()
-
-const { t } = useI18n()
 
 const dateLabel = computed(() =>
   props.header.primaryDate ? new Date(props.header.primaryDate).toLocaleDateString('de-DE') : null,
@@ -15,9 +14,7 @@ const dateLabel = computed(() =>
 // advances it — nothing else. There is no field here to type a status into,
 // which is the whole point of deriving it.
 function book() {
-  if (confirm(t('project.bookConfirm'))) {
-    router.post(`/auftraege/${props.header.id}/buchung`, {}, { preserveScroll: true })
-  }
+  router.post(`/auftraege/${props.header.id}/buchung`, {}, { preserveScroll: true })
 }
 </script>
 
@@ -34,10 +31,23 @@ function book() {
       <h1>{{ header.names }}</h1>
     </div>
 
-    <button v-if="!header.isBooked && header.canBook" class="btn" type="button" @click="book">
-      <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" /></svg>
-      {{ $t('project.book') }}
-    </button>
+    <AlertDialog v-if="!header.isBooked && header.canBook">
+      <AlertDialogTrigger as-child>
+        <Button type="button">
+          <svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" /></svg>
+          {{ $t('project.book') }}
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ $t('project.bookConfirm') }}</AlertDialogTitle>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogAction @click="book">{{ $t('project.book') }}</AlertDialogAction>
+          <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
     <span v-else class="chip done" style="margin-left: auto">{{ $t('project.booked') }}</span>
   </div>
 

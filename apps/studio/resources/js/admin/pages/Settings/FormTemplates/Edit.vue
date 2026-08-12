@@ -4,6 +4,12 @@ import { useForm } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import FormFieldsEditor, { type FormFieldRow } from '@/admin/components/FormFieldsEditor.vue'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { NONE, fromOption, toOption } from '@/lib/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Checkbox } from '@/ui/checkbox'
+import { Label } from '@/ui/label'
 
 const { t } = useI18n()
 
@@ -56,9 +62,9 @@ function submit() {
         <div class="kick">{{ $t('formTemplates.kicker') }}</div>
         <h1>{{ form.name || $t('formTemplates.untitled') }}</h1>
       </div>
-      <button class="btn" type="submit" form="form-template-form" :disabled="form.processing">
+      <Button type="submit" form="form-template-form" :disabled="form.processing">
         {{ $t('formTemplates.save') }}
-      </button>
+      </Button>
     </div>
 
     <div class="meta row">
@@ -83,18 +89,26 @@ function submit() {
             <div class="kv">
               <div class="kvrow">
                 <span>{{ $t('formTemplates.nameField') }}</span>
-                <input v-model="form.name" class="inp" type="text" maxlength="255" style="text-align: right" />
+                <Input v-model="form.name" type="text" maxlength="255" style="text-align: right" />
               </div>
               <div class="kvrow">
                 <span>{{ $t('formTemplates.projectTypeField') }}</span>
-                <select v-model="form.project_type" class="inp">
-                  <option value="">{{ $t('formTemplates.projectTypeAll') }}</option>
-                  <option v-for="type in projectTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
-                </select>
+                <Select
+                  :model-value="toOption(form.project_type)"
+                  @update:model-value="(value) => (form.project_type = fromOption(value))"
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem :value="NONE">{{ $t('formTemplates.projectTypeAll') }}</SelectItem>
+                    <SelectItem v-for="type in projectTypes" :key="type.value" :value="type.value">{{ type.label }}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div class="kvrow">
-                <span>{{ $t('formTemplates.activeField') }}</span>
-                <input v-model="form.is_active" type="checkbox" />
+                <Label variant="inline" for="ft-active">{{ $t('formTemplates.activeField') }}</Label>
+                <Checkbox id="ft-active" v-model="form.is_active" class="ml-auto" />
               </div>
               <div class="kvrow">
                 <span>{{ $t('formTemplates.fieldsLabel') }}</span>

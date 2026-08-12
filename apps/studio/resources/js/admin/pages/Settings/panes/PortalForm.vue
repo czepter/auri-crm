@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
+import { Input } from '@/ui/input'
+import { Textarea } from '@/ui/textarea'
+import { Checkbox } from '@/ui/checkbox'
+import { Label } from '@/ui/label'
 
 const props = defineProps<{ settings: App.Settings.Data.PortalSettingsData }>()
 const emit = defineEmits<{ saved: [] }>()
@@ -39,16 +43,16 @@ defineExpose({ form, submit })
     <div class="dsec" style="margin-top: 0">
       <div class="dlab">{{ $t('portalSettings.maintenanceSection') }}</div>
       <div class="grp">
-        <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
-          <input v-model="form.portal_maintenance_enabled" type="checkbox" />
-          {{ $t('portalSettings.maintenanceEnabledLabel') }}
-        </label>
+        <div class="cbrow">
+          <Checkbox id="cb-portal-maintenance-enabled" v-model="form.portal_maintenance_enabled" />
+          <Label variant="inline" for="cb-portal-maintenance-enabled">{{ $t('portalSettings.maintenanceEnabledLabel') }}</Label>
+        </div>
         <span class="hint">{{ $t('portalSettings.maintenanceEnabledHint') }}</span>
       </div>
       <div class="grp">
         <div class="fld">
-          <label for="po-wartungstext">{{ $t('portalSettings.maintenanceMessageLabel') }} <em>{{ $t('settings.optional') }}</em></label>
-          <textarea id="po-wartungstext" v-model="form.portal_maintenance_message" class="inp" rows="3"></textarea>
+          <Label for="po-wartungstext">{{ $t('portalSettings.maintenanceMessageLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
+          <Textarea id="po-wartungstext" v-model="form.portal_maintenance_message" rows="3" />
           <p v-if="form.errors.portal_maintenance_message" class="err">{{ form.errors.portal_maintenance_message }}</p>
         </div>
       </div>
@@ -58,8 +62,8 @@ defineExpose({ form, submit })
       <div class="dlab">{{ $t('portalSettings.homeSection') }}</div>
       <div class="grp">
         <div class="fld">
-          <label for="po-willkommen">{{ $t('portalSettings.welcomeTextLabel') }} <em>{{ $t('settings.optional') }}</em></label>
-          <textarea id="po-willkommen" v-model="form.portal_welcome_text" class="inp" rows="3"></textarea>
+          <Label for="po-willkommen">{{ $t('portalSettings.welcomeTextLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
+          <Textarea id="po-willkommen" v-model="form.portal_welcome_text" rows="3" />
           <p v-if="form.errors.portal_welcome_text" class="err">{{ form.errors.portal_welcome_text }}</p>
         </div>
       </div>
@@ -70,13 +74,13 @@ defineExpose({ form, submit })
       <div class="grp">
         <div class="two">
           <div class="fld">
-            <label for="po-datenschutz">{{ $t('portalSettings.datenschutzUrlLabel') }} <em>{{ $t('settings.optional') }}</em></label>
-            <input id="po-datenschutz" v-model="form.portal_legal_datenschutz_url" class="inp" type="text" />
+            <Label for="po-datenschutz">{{ $t('portalSettings.datenschutzUrlLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
+            <Input id="po-datenschutz" v-model="form.portal_legal_datenschutz_url" type="text" />
             <p v-if="form.errors.portal_legal_datenschutz_url" class="err">{{ form.errors.portal_legal_datenschutz_url }}</p>
           </div>
           <div class="fld">
-            <label for="po-agb">{{ $t('portalSettings.agbUrlLabel') }} <em>{{ $t('settings.optional') }}</em></label>
-            <input id="po-agb" v-model="form.portal_legal_agb_url" class="inp" type="text" />
+            <Label for="po-agb">{{ $t('portalSettings.agbUrlLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
+            <Input id="po-agb" v-model="form.portal_legal_agb_url" type="text" />
             <p v-if="form.errors.portal_legal_agb_url" class="err">{{ form.errors.portal_legal_agb_url }}</p>
           </div>
         </div>
@@ -89,28 +93,28 @@ defineExpose({ form, submit })
     <div class="dsec">
       <div class="dlab">{{ $t('portalSettings.capabilitiesSection') }}</div>
       <div class="grp">
-        <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
-          <input v-model="form.portal_accept_quotes_enabled" type="checkbox" />
-          {{ $t('portalSettings.acceptQuotesEnabledLabel') }}
-        </label>
+        <div class="cbrow">
+          <Checkbox id="cb-portal-accept-quotes-enabled" v-model="form.portal_accept_quotes_enabled" />
+          <Label variant="inline" for="cb-portal-accept-quotes-enabled">{{ $t('portalSettings.acceptQuotesEnabledLabel') }}</Label>
+        </div>
       </div>
       <div class="grp">
-        <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
-          <input v-model="form.portal_sign_contracts_enabled" type="checkbox" />
-          {{ $t('portalSettings.signContractsEnabledLabel') }}
-        </label>
+        <div class="cbrow">
+          <Checkbox id="cb-portal-sign-contracts-enabled" v-model="form.portal_sign_contracts_enabled" />
+          <Label variant="inline" for="cb-portal-sign-contracts-enabled">{{ $t('portalSettings.signContractsEnabledLabel') }}</Label>
+        </div>
       </div>
       <div class="grp">
-        <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
-          <input v-model="form.portal_payment_status_enabled" type="checkbox" />
-          {{ $t('portalSettings.paymentStatusEnabledLabel') }}
-        </label>
+        <div class="cbrow">
+          <Checkbox id="cb-portal-payment-status-enabled" v-model="form.portal_payment_status_enabled" />
+          <Label variant="inline" for="cb-portal-payment-status-enabled">{{ $t('portalSettings.paymentStatusEnabledLabel') }}</Label>
+        </div>
       </div>
       <div class="grp">
-        <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
-          <input v-model="form.portal_messaging_enabled" type="checkbox" />
-          {{ $t('portalSettings.messagingEnabledLabel') }}
-        </label>
+        <div class="cbrow">
+          <Checkbox id="cb-portal-messaging-enabled" v-model="form.portal_messaging_enabled" />
+          <Label variant="inline" for="cb-portal-messaging-enabled">{{ $t('portalSettings.messagingEnabledLabel') }}</Label>
+        </div>
       </div>
     </div>
   </form>

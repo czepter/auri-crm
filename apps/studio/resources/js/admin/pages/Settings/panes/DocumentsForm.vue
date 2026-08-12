@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import { basisPointsToPercent, percentToBasisPoints } from '@/admin/lib/money'
+import { Input } from '@/ui/input'
+import { Textarea } from '@/ui/textarea'
+import { Checkbox } from '@/ui/checkbox'
+import { Label } from '@/ui/label'
 
 const props = defineProps<{ settings: App.Settings.Data.StudioSettingsData }>()
 const emit = defineEmits<{ saved: [] }>()
@@ -32,8 +36,8 @@ defineExpose({ form, submit })
       <div class="dlab">{{ $t('settings.documentsQuoteLabel') }}</div>
       <div class="grp">
         <div class="fld" style="max-width: 160px">
-          <label for="d-gueltigkeit">{{ $t('settings.quoteValidityLabel') }}</label>
-          <input id="d-gueltigkeit" v-model.number="form.quote_validity_days" class="inp num" type="number" min="0" />
+          <Label for="d-gueltigkeit">{{ $t('settings.quoteValidityLabel') }}</Label>
+          <Input id="d-gueltigkeit" v-model.number="form.quote_validity_days" class="tabular-nums" type="number" min="0" />
           <span class="hint">{{ $t('settings.quoteValidityHint') }}</span>
           <p v-if="form.errors.quote_validity_days" class="err">{{ form.errors.quote_validity_days }}</p>
         </div>
@@ -45,14 +49,14 @@ defineExpose({ form, submit })
       <div class="grp">
         <div class="two">
           <div class="fld">
-            <label for="d-zahlungsziel">{{ $t('settings.paymentTermLabel') }}</label>
-            <input id="d-zahlungsziel" v-model.number="form.payment_term_days" class="inp num" type="number" min="0" />
+            <Label for="d-zahlungsziel">{{ $t('settings.paymentTermLabel') }}</Label>
+            <Input id="d-zahlungsziel" v-model.number="form.payment_term_days" class="tabular-nums" type="number" min="0" />
             <span class="hint">{{ $t('settings.paymentTermHint') }}</span>
             <p v-if="form.errors.payment_term_days" class="err">{{ form.errors.payment_term_days }}</p>
           </div>
           <div class="fld">
-            <label for="d-anzahlung">{{ $t('settings.depositPercentageLabel') }}</label>
-            <input id="d-anzahlung" v-model="form.deposit_percentage" class="inp num" type="text" inputmode="decimal" />
+            <Label for="d-anzahlung">{{ $t('settings.depositPercentageLabel') }}</Label>
+            <Input id="d-anzahlung" v-model="form.deposit_percentage" class="tabular-nums" type="text" inputmode="decimal" />
             <span class="hint">{{ $t('settings.depositPercentageHint') }}</span>
             <p v-if="form.errors.deposit_percentage" class="err">{{ form.errors.deposit_percentage }}</p>
           </div>
@@ -63,21 +67,19 @@ defineExpose({ form, submit })
     <div class="dsec">
       <div class="dlab">{{ $t('settings.widerrufLabel') }}</div>
       <div class="grp">
-        <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
-          <input v-model="form.widerruf_included" type="checkbox" />
-          {{ $t('settings.widerrufIncludedLabel') }}
-        </label>
+        <div class="cbrow">
+          <Checkbox id="cb-widerruf-included" v-model="form.widerruf_included" />
+          <Label variant="inline" for="cb-widerruf-included">{{ $t('settings.widerrufIncludedLabel') }}</Label>
+        </div>
       </div>
       <div class="grp">
         <div class="fld">
-          <label for="d-widerruf-text">{{ $t('settings.widerrufTextLabel') }}</label>
-          <textarea
+          <Label for="d-widerruf-text">{{ $t('settings.widerrufTextLabel') }}</Label>
+          <Textarea
             id="d-widerruf-text"
             v-model="form.widerruf_text"
-            class="inp"
             rows="5"
-            :disabled="!form.widerruf_included"
-          ></textarea>
+            :disabled="!form.widerruf_included" />
           <p v-if="form.errors.widerruf_text" class="err">{{ form.errors.widerruf_text }}</p>
         </div>
       </div>

@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
-import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectHeader from '@/admin/components/ProjectHeader.vue'
 import CrewStack from '@/admin/components/CrewStack.vue'
 import { chipClass, dayAndMonth, weekday } from '@/admin/lib/shoots'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Checkbox } from '@/ui/checkbox'
+import { Label } from '@/ui/label'
+import { Textarea } from '@/ui/textarea'
+import { Dialog, DialogBody, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
@@ -13,8 +19,6 @@ const props = defineProps<{
   staff: App.Data.StaffProfileData[]
   crewRoles: { value: string; label: string }[]
 }>()
-
-const { t } = useI18n()
 
 const adding = ref(false)
 const form = useForm({
@@ -77,12 +81,27 @@ function advance(shoot: App.Crm.Data.ShootData, status: string) {
   }
 }
 
-function cancel(shoot: App.Crm.Data.ShootData) {
-  const reason = prompt(t('project.cancelReason'))
+// A cancellation is the one action here that writes a sentence into the
+// record — Shoot.cancelled_reason is shown back on the row afterwards and in
+// the client's portal. window.prompt() gave that sentence a single-line
+// unstyled box in a language the browser picked; it gets the same field as
+// every other note the studio writes.
+const cancelling = ref<App.Crm.Data.ShootData | null>(null)
+const cancelReason = ref('')
 
-  if (reason) {
-    router.post(`/shootings/${shoot.id}/absage`, { reason }, { preserveScroll: true })
-  }
+function openCancel(shoot: App.Crm.Data.ShootData) {
+  cancelling.value = shoot
+  cancelReason.value = ''
+}
+
+function confirmCancel() {
+  const shoot = cancelling.value
+  if (!shoot || !cancelReason.value.trim()) return
+
+  router.post(`/shootings/${shoot.id}/absage`, { reason: cancelReason.value }, {
+    preserveScroll: true,
+    onSuccess: () => (cancelling.value = null),
+  })
 }
 
 function designatePrimary(shoot: App.Crm.Data.ShootData) {
@@ -108,71 +127,88 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
       <span class="kick" style="margin-bottom: 0">
         {{ $t('board.shootCount', header.shootCount) }}
       </span>
-      <button v-if="header.canManageShoots" class="btn" type="button" @click="adding = !adding">
-        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
-        {{ $t('project.addShoot') }}
-      </button>
-    </div>
+      <!-- Adding an occasion is a discrete act against a list you are reading:
+           inline, the form pushed every existing shoot down the page and the
+           list you were comparing against scrolled out of sight. -->
+      <Dialog v-if="header.canManageShoots" v-model:open="adding">
+        <DialogTrigger as-child>
+          <Button type="button">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+            {{ $t('project.addShoot') }}
+          </Button>
+        </DialogTrigger>
 
-    <div v-if="adding && header.canManageShoots" class="card static" style="margin-bottom: var(--s4)">
-      <div class="cardhead"><span class="kick">{{ $t('project.addShoot') }}</span></div>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{{ $t('project.addShoot') }}</DialogTitle>
+          </DialogHeader>
 
-      <form class="fgrid" @submit.prevent="create">
-        <div class="fld">
-          <label for="kind">{{ $t('project.shootKind') }}</label>
-          <select id="kind" v-model="form.kind" class="inp">
-            <option v-for="kind in kinds" :key="kind.value" :value="kind.value">
-              {{ kind.label }}
-            </option>
-          </select>
-        </div>
+          <DialogBody>
+            <!-- the submit lives in the footer and reaches back in by form id,
+                 the same way the settings screens already submit from a header -->
+            <form id="shoot-create-form" class="fgrid" @submit.prevent="create">
+              <div class="fld">
+                <Label for="kind">{{ $t('project.shootKind') }}</Label>
+                <Select :model-value="form.kind" @update:model-value="(value) => (form.kind = String(value))">
+                  <SelectTrigger id="kind">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="kind in kinds" :key="kind.value" :value="kind.value">
+                      {{ kind.label }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-        <div class="fld">
-          <label for="label">{{ $t('project.shootLabel') }}</label>
-          <input id="label" v-model="form.label" class="inp" type="text" />
-        </div>
+              <div class="fld">
+                <Label for="label">{{ $t('project.shootLabel') }}</Label>
+                <Input id="label" v-model="form.label" type="text" />
+              </div>
 
-        <div class="fld">
-          <label for="date">
-            {{ $t('project.shootDate') }}<em>{{ $t('project.optional') }}</em>
-          </label>
-          <input id="date" v-model="form.date" class="inp" type="date" />
-          <p class="hint">{{ $t('project.shootDateHint') }}</p>
-        </div>
+              <div class="fld">
+                <Label for="date">
+                  {{ $t('project.shootDate') }}<em>{{ $t('project.optional') }}</em>
+                </Label>
+                <Input id="date" v-model="form.date" type="date" />
+                <p class="hint">{{ $t('project.shootDateHint') }}</p>
+              </div>
 
-        <div class="two">
-          <div class="fld">
-            <label for="call_time">{{ $t('project.callTime') }}</label>
-            <input id="call_time" v-model="form.call_time" class="inp num" type="time" />
-          </div>
-          <div class="fld">
-            <label for="end_time">{{ $t('project.endTime') }}</label>
-            <input id="end_time" v-model="form.end_time" class="inp num" type="time" />
-            <p v-if="form.errors.end_time" class="err">{{ form.errors.end_time }}</p>
-          </div>
-        </div>
+              <div class="two">
+                <div class="fld">
+                  <Label for="call_time">{{ $t('project.callTime') }}</Label>
+                  <Input id="call_time" v-model="form.call_time" class="tabular-nums" type="time" />
+                </div>
+                <div class="fld">
+                  <Label for="end_time">{{ $t('project.endTime') }}</Label>
+                  <Input id="end_time" v-model="form.end_time" class="tabular-nums" type="time" />
+                  <p v-if="form.errors.end_time" class="err">{{ form.errors.end_time }}</p>
+                </div>
+              </div>
 
-        <div class="fld">
-          <label for="venue_name">{{ $t('project.venueName') }}</label>
-          <input id="venue_name" v-model="form.venue_name" class="inp" type="text" />
-        </div>
+              <div class="fld">
+                <Label for="venue_name">{{ $t('project.venueName') }}</Label>
+                <Input id="venue_name" v-model="form.venue_name" type="text" />
+              </div>
 
-        <div class="fld">
-          <label for="venue_city">{{ $t('project.venueCity') }}</label>
-          <input id="venue_city" v-model="form.venue_city" class="inp" type="text" />
-        </div>
+              <div class="fld">
+                <Label for="venue_city">{{ $t('project.venueCity') }}</Label>
+                <Input id="venue_city" v-model="form.venue_city" type="text" />
+              </div>
 
-        <div class="fld wide">
-          <div class="formfoot" style="margin-top: 0">
-            <button class="btn" type="submit" :disabled="form.processing">
+            </form>
+          </DialogBody>
+
+          <DialogFooter>
+            <Button type="submit" form="shoot-create-form" :disabled="form.processing">
               {{ $t('common.save') }}
-            </button>
-            <button class="txtbtn" type="button" @click="adding = false">
-              {{ $t('common.cancel') }}
-            </button>
-          </div>
-        </div>
-      </form>
+            </Button>
+            <DialogClose as-child>
+              <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
 
     <!-- Depth behind the Shootings tab: every occasion in full. Only open
@@ -213,20 +249,23 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
                 <div class="pname">{{ member.name }}</div>
               </div>
               <div class="proles">
-                <select
+                <Select
                   v-if="header.canManageCrew"
-                  class="inp sm"
-                  :value="member.role"
-                  :aria-label="$t('project.crewRole', { name: member.name })"
-                  @change="assign(shoot, member.userId, ($event.target as HTMLSelectElement).value)"
+                  :model-value="member.role"
+                  @update:model-value="(value) => assign(shoot, member.userId, String(value))"
                 >
-                  <option v-for="role in crewRoles" :key="role.value" :value="role.value">
-                    {{ role.label }}
-                  </option>
-                </select>
-                <button v-if="header.canManageCrew" type="button" class="abtn" @click="unassign(member)">
+                  <SelectTrigger size="sm" :aria-label="$t('project.crewRole', { name: member.name })">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="role in crewRoles" :key="role.value" :value="role.value">
+                      {{ role.label }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button v-if="header.canManageCrew" type="button" variant="outline" @click="unassign(member)">
                   {{ $t('project.unassign') }}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -243,40 +282,54 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
           </div>
 
           <div v-if="header.canManageShoots || header.canManageCrew" class="formfoot" style="margin-top: var(--s3); gap: var(--s3)">
-            <select
+            <!-- These two are menus of actions, not fields: nothing stores
+                 what was picked, so model-value is pinned to '' and the
+                 control falls straight back to its own name. That is what the
+                 <option value=""> label did on the native select. -->
+            <Select
               v-if="header.canManageShoots"
-              class="inp sm"
-              style="width: auto"
+              model-value=""
               :disabled="!shoot.forwardStatuses.length"
-              :aria-label="$t('project.advance')"
-              @change="advance(shoot, ($event.target as HTMLSelectElement).value)"
+              @update:model-value="(value) => advance(shoot, String(value))"
             >
-              <option value="">{{ $t('project.advance') }}</option>
-              <option v-for="status in shoot.forwardStatuses" :key="status.value" :value="status.value">
-                {{ status.label }}
-              </option>
-            </select>
+              <SelectTrigger size="sm" style="width: auto" :aria-label="$t('project.advance')">
+                <SelectValue :placeholder="$t('project.advance')" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="status in shoot.forwardStatuses" :key="status.value" :value="status.value">
+                  {{ status.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
 
-            <select
+            <Select
               v-if="header.canManageCrew"
-              class="inp sm"
-              style="width: auto"
-              :aria-label="$t('project.assignCrew')"
-              @change="assign(shoot, ($event.target as HTMLSelectElement).value, crewRoles[0].value)"
+              model-value=""
+              @update:model-value="(value) => assign(shoot, String(value), crewRoles[0].value)"
             >
-              <option value="">{{ $t('project.assignCrew') }}</option>
-              <option v-for="member in staff" :key="member.id" :value="member.id">
-                {{ member.name }}
-              </option>
-            </select>
+              <SelectTrigger size="sm" style="width: auto" :aria-label="$t('project.assignCrew')">
+                <SelectValue :placeholder="$t('project.assignCrew')" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="member in staff" :key="member.id" :value="member.id">
+                  {{ member.name }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
 
-            <button v-if="!shoot.isPrimary && header.canManageShoots" type="button" class="abtn" @click="designatePrimary(shoot)">
+            <Button v-if="!shoot.isPrimary && header.canManageShoots" type="button" variant="outline" @click="designatePrimary(shoot)">
               {{ $t('project.makePrimary') }}
-            </button>
+            </Button>
 
-            <button v-if="header.canManageShoots" type="button" class="abtn hot" @click="cancel(shoot)">
+            <Button
+              v-if="header.canManageShoots"
+              type="button"
+              variant="outline"
+              tone="accent"
+              @click="openCancel(shoot)"
+            >
               {{ $t('project.cancel') }}
-            </button>
+            </Button>
           </div>
 
           <!-- E-04: the day-of schedule. Read-only structure matches mockup
@@ -300,47 +353,47 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
           </div>
 
           <div v-if="shoot.date" class="formfoot" style="margin-top: var(--s3)">
-            <button v-if="header.canManageShoots" type="button" class="txtbtn" @click="toggleTimelineEdit(shoot)">
+            <Button v-if="header.canManageShoots" type="button" variant="ghost" @click="toggleTimelineEdit(shoot)">
               {{ $t(editingTimeline === shoot.id ? 'project.timelineDone' : 'project.timelineEdit') }}
-            </button>
-            <a class="txtbtn" :href="shoot.pdfUrl" download>{{ $t('project.timelinePdf') }}</a>
-            <a class="txtbtn" :href="shoot.icsUrl" download>{{ $t('project.timelineIcs') }}</a>
+            </Button>
+            <Button as="a" variant="ghost" :href="shoot.pdfUrl" download>{{ $t('project.timelinePdf') }}</Button>
+            <Button as="a" variant="ghost" :href="shoot.icsUrl" download>{{ $t('project.timelineIcs') }}</Button>
           </div>
 
           <div v-if="shoot.date && editingTimeline === shoot.id && header.canManageShoots" class="card static" style="margin-top: var(--s3)">
             <form class="fgrid" @submit.prevent="addTimelineEntry(shoot)">
               <div class="fld">
-                <label for="tl-time">{{ $t('project.timelineTime') }}</label>
-                <input id="tl-time" v-model="timelineForm.time" class="inp num" type="time" required />
+                <Label for="tl-time">{{ $t('project.timelineTime') }}</Label>
+                <Input id="tl-time" v-model="timelineForm.time" class="tabular-nums" type="time" required />
               </div>
               <div class="fld wide">
-                <label for="tl-title">{{ $t('project.timelineTitle') }}</label>
-                <input id="tl-title" v-model="timelineForm.title" class="inp" type="text" required />
+                <Label for="tl-title">{{ $t('project.timelineTitle') }}</Label>
+                <Input id="tl-title" v-model="timelineForm.title" type="text" required />
               </div>
               <div class="fld">
-                <label for="tl-location">
+                <Label for="tl-location">
                   {{ $t('project.timelineLocation') }}<em>{{ $t('project.optional') }}</em>
-                </label>
-                <input id="tl-location" v-model="timelineForm.location" class="inp" type="text" />
+                </Label>
+                <Input id="tl-location" v-model="timelineForm.location" type="text" />
               </div>
               <div class="fld">
-                <label for="tl-note">
+                <Label for="tl-note">
                   {{ $t('project.timelineNote') }}<em>{{ $t('project.optional') }}</em>
-                </label>
-                <input id="tl-note" v-model="timelineForm.note" class="inp" type="text" />
+                </Label>
+                <Input id="tl-note" v-model="timelineForm.note" type="text" />
               </div>
               <div class="fld wide">
-                <label style="flex-direction: row; align-items: center; gap: 6px">
-                  <input v-model="timelineForm.is_transit" type="checkbox" />
-                  {{ $t('project.timelineTransit') }}
-                </label>
+                <div class="cbrow" style="gap: 6px">
+                  <Checkbox id="tl-transit" v-model="timelineForm.is_transit" />
+                  <Label variant="inline" for="tl-transit">{{ $t('project.timelineTransit') }}</Label>
+                </div>
               </div>
 
               <div class="fld wide">
                 <div class="formfoot" style="margin-top: 0">
-                  <button class="btn" type="submit" :disabled="timelineForm.processing">
+                  <Button type="submit" :disabled="timelineForm.processing">
                     {{ $t('common.save') }}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </form>
@@ -348,9 +401,9 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
             <div v-if="shoot.timeline.length" style="margin-top: var(--s4); display: flex; flex-direction: column; gap: var(--s2)">
               <div v-for="entry in shoot.timeline" :key="entry.id" class="hrow">
                 <span>{{ entry.time }} · {{ entry.title }}</span>
-                <button type="button" class="abtn hot" style="margin-left: auto" @click="removeTimelineEntry(entry)">
+                <Button type="button" variant="outline" tone="accent" style="margin-left: auto" @click="removeTimelineEntry(entry)">
                   {{ $t('project.timelineRemove') }}
-                </button>
+                </Button>
               </div>
             </div>
             <p v-else class="hint">{{ $t('project.timelineEmpty') }}</p>
@@ -360,5 +413,40 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
 
       <p v-if="!shoots.length" class="hint">{{ $t('project.noShoots') }}</p>
     </div>
+
+    <!-- One dialog for the whole list rather than one per row: only one shoot
+         can be being cancelled at a time, and N hidden dialogs in a v-for is N
+         portals mounted for nothing. -->
+    <Dialog
+      :open="cancelling !== null"
+      @update:open="(open) => { if (!open) cancelling = null }"
+    >
+      <DialogContent class="max-w-[440px]">
+        <DialogHeader>
+          <DialogTitle>{{ $t('project.cancel') }}</DialogTitle>
+          <DialogDescription v-if="cancelling">
+            {{ cancelling.label ?? cancelling.kind }}
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogBody>
+          <form id="shoot-cancel-form" class="fld" @submit.prevent="confirmCancel">
+            <Label for="cancel-reason">{{ $t('project.cancelReason') }}</Label>
+            <Textarea id="cancel-reason" v-model="cancelReason" rows="3" required />
+          </form>
+        </DialogBody>
+
+        <DialogFooter>
+          <!-- the reason is not optional: it is what the row and the client's
+               portal show in place of the shoot afterwards -->
+          <Button type="submit" form="shoot-cancel-form" tone="warm" :disabled="!cancelReason.trim()">
+            {{ $t('project.cancel') }}
+          </Button>
+          <DialogClose as-child>
+            <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </AdminLayout>
 </template>

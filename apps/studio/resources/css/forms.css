@@ -11,36 +11,31 @@
    ------------------------------------------------------------------ */
 
 /* labels sit above their field, never inside it as a placeholder — a
-   filled form must still say what each value is */
+   filled form must still say what each value is. The caption's own type is
+   ui/label's `field` variant now; what stays here is where it sits. */
 .fgrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--s4) var(--s5); }
 .fld { display:flex; flex-direction:column; gap:6px; min-width:0; }
 .fld.wide { grid-column:1 / -1; }
-.fld > label { font:600 10px/1 var(--font); letter-spacing:.09em; text-transform:uppercase; color:var(--faint); }
-.fld > label em { font:400 10px/1 var(--font); font-style:normal; letter-spacing:.02em;
-                  text-transform:none; color:var(--faint); margin-left:6px; }
 
-.inp { width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:var(--r);
-       background:var(--bg); color:var(--ink); font:400 13px/1.35 var(--font);
-       appearance:none; -webkit-appearance:none; transition:border-color .12s ease-out; }
-.inp:hover { border-color:var(--line-hover); }
-.inp:focus { outline:none; border-color:var(--accent); }
-.inp::placeholder { color:var(--faint); }
-.inp.num { font-variant-numeric:tabular-nums; }
-textarea.inp { min-height:104px; line-height:1.5; resize:vertical; }
-select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
-             background-position:right 10px center; background-size:13px 13px;
-             background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2378706B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
+/* a checkbox and the sentence it switches, on one line — the shape a dozen
+   settings panes each repeated as an inline style before Checkbox became a
+   component. The sentence takes ui/label's `inline` variant, because it is
+   not a caption for the control, it is the thing the control switches. */
+.cbrow { display:flex; align-items:center; gap:10px; }
 
-/* a compact select for the controls that sit inside a row rather than a form */
-select.inp.sm { padding:5px 26px 5px 8px; font-size:12px; background-size:12px 12px; }
-
-/* the main date is the field the whole intake hangs off (Shoot.is_primary,
-   vision §3.1), so it is the one control that gets extra weight */
-.fld.lead .inp { padding:12px 13px; font:600 15px/1.2 var(--font); letter-spacing:-.01em; }
+/* .inp, textarea.inp, select.inp and select.inp.sm used to live here. They are
+   now resources/js/ui/input's inputVariants, carrying the same values: the
+   field became a component so a <select> could stop being an OS-drawn menu,
+   and one control cannot be a class on one surface and a component on the
+   next. .fld.lead .inp went the same way, as the `lead` size.
+   The layout above (.fgrid, .fld, its label) stays CSS — it is the form's
+   shape, not the control's. */
 
 .hint { font:400 11.5px/1.45 var(--font); color:var(--faint); }
 .err { font:400 11.5px/1.45 var(--font); color:var(--accent); }
 
 .formfoot { display:flex; align-items:center; gap:var(--s4); margin-top:var(--s5); }
-.formfoot .btn { margin-left:0; }
+/* the default button carries .btn's own margin-left:auto; in a form footer the
+   row already puts it where it belongs */
+.formfoot [data-slot="button"][data-variant="default"] { margin-left:0; }
 

@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
 
 const props = defineProps<{
   name: string
@@ -28,37 +31,33 @@ function submit() {
 
       <form @submit.prevent="submit">
         <div class="fld grp">
-          <label for="password">{{ $t('invite.password') }}</label>
-          <input
+          <Label for="password">{{ $t('invite.password') }}</Label>
+          <Input
             id="password"
             v-model="form.password"
-            class="inp"
             type="password"
             autocomplete="new-password"
-            required
-          />
+            required />
           <p v-if="form.errors.password" class="err">{{ form.errors.password }}</p>
         </div>
 
         <div class="fld grp">
-          <label for="password_confirmation">{{ $t('invite.passwordConfirm') }}</label>
-          <input
+          <Label for="password_confirmation">{{ $t('invite.passwordConfirm') }}</Label>
+          <Input
             id="password_confirmation"
             v-model="form.password_confirmation"
-            class="inp"
             type="password"
             autocomplete="new-password"
-            required
-          />
+            required />
         </div>
 
         <!-- Said before they meet it, because an authenticator app arriving
              unannounced is where people abandon a setup link. -->
         <p class="hint" style="margin-bottom: var(--s4)">{{ $t('invite.mfaNext') }}</p>
 
-        <button class="btn" type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
+        <Button type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
           {{ $t('invite.submit') }}
-        </button>
+        </Button>
       </form>
     </div>
   </div>

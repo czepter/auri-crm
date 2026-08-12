@@ -3,6 +3,8 @@ import { computed, reactive, ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import { uploadFile } from '@/admin/lib/multipartUpload'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
 
 const props = defineProps<{
   target: App.Media.Data.MediaIngestTargetData
@@ -89,15 +91,17 @@ function formatSize(bytes: number): string {
         <div class="kick">{{ $t('media.kicker') }}</div>
         <h1>{{ target.galleryTitle }}</h1>
       </div>
-      <a class="txtbtn" :href="`/auftraege/${target.projectId}`">
+      <Button as="a" variant="ghost" :href="`/auftraege/${target.projectId}`">
         <svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
         {{ $t('media.backToProject') }}
-      </a>
-      <label class="btn" style="cursor: pointer">
+      </Button>
+      <!-- the file input stays hidden and the label is the button, which is
+           the only way to style a file picker at all -->
+      <Button as="label" class="cursor-pointer">
         <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         {{ $t('media.pickFiles') }}
-        <input type="file" multiple style="display: none" @change="onFilesPicked" />
-      </label>
+        <Input type="file" multiple class="hidden" @change="onFilesPicked" />
+      </Button>
     </div>
 
     <div class="meta row">

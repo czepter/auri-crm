@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
+import { Button } from '@/ui/button'
 
 // N-04: no mockup exists for this screen (nothing OAuth-shaped in
 // mockups/admin/) — a minimal functional consent screen, styled off the
@@ -39,24 +40,22 @@ function submit(decision: 'approve' | 'deny') {
       </ul>
 
       <div style="display: flex; gap: var(--s3)">
-        <button
-          class="btn"
+        <Button
           type="button"
           style="flex: 1; justify-content: center"
           :disabled="form.processing"
           @click="submit('approve')"
         >
           {{ $t('auth.oauthApprove') }}
-        </button>
-        <button
-          class="abtn"
+        </Button>
+        <Button variant="outline"
           type="button"
           style="flex: 1; justify-content: center"
           :disabled="form.processing"
           @click="submit('deny')"
         >
           {{ $t('auth.oauthDeny') }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>

@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { NONE, fromOption, toOption } from '@/lib/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Label } from '@/ui/label'
 
 defineProps<{ projectTypes: { value: string; label: string }[] }>()
 
@@ -21,21 +26,29 @@ function submit() {
 
       <form style="margin-top: var(--s5)" @submit.prevent="submit">
         <div class="fld grp">
-          <label for="name">{{ $t('formTemplates.nameField') }}</label>
-          <input id="name" v-model="form.name" class="inp" type="text" required maxlength="255" />
+          <Label for="name">{{ $t('formTemplates.nameField') }}</Label>
+          <Input id="name" v-model="form.name" type="text" required maxlength="255" />
           <p v-if="form.errors.name" class="err">{{ form.errors.name }}</p>
         </div>
         <div class="fld grp">
-          <label for="project-type">{{ $t('formTemplates.projectTypeField') }}</label>
-          <select id="project-type" v-model="form.project_type" class="inp">
-            <option value="">{{ $t('formTemplates.projectTypeAll') }}</option>
-            <option v-for="type in projectTypes" :key="type.value" :value="type.value">{{ type.label }}</option>
-          </select>
+          <Label for="project-type">{{ $t('formTemplates.projectTypeField') }}</Label>
+          <Select
+            :model-value="toOption(form.project_type)"
+            @update:model-value="(value) => (form.project_type = fromOption(value))"
+          >
+            <SelectTrigger id="project-type">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem :value="NONE">{{ $t('formTemplates.projectTypeAll') }}</SelectItem>
+              <SelectItem v-for="type in projectTypes" :key="type.value" :value="type.value">{{ type.label }}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div class="formfoot">
-          <button class="btn" type="submit" :disabled="form.processing">{{ $t('common.save') }}</button>
-          <a href="/einstellungen/fragebogen-vorlagen" class="txtbtn">{{ $t('common.cancel') }}</a>
+          <Button type="submit" :disabled="form.processing">{{ $t('common.save') }}</Button>
+          <Button as="a" href="/einstellungen/fragebogen-vorlagen" variant="ghost">{{ $t('common.cancel') }}</Button>
         </div>
       </form>
     </div>

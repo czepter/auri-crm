@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import { basisPointsToPercent, percentToBasisPoints } from '@/admin/lib/money'
+import { Input } from '@/ui/input'
+import { Textarea } from '@/ui/textarea'
+import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
+import { Label } from '@/ui/label'
 
 const props = defineProps<{ settings: App.Settings.Data.StudioSettingsData }>()
 const emit = defineEmits<{ saved: [] }>()
@@ -29,22 +33,26 @@ defineExpose({ form, submit })
     <div class="dsec" style="margin-top: 0">
       <div class="dlab">{{ $t('settings.vatModeLabel') }}</div>
       <div class="grp">
-        <div style="display: flex; flex-direction: column; gap: var(--s3)">
-          <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
-            <input v-model="form.vat_mode" type="radio" name="vatmode" value="standard" />
-            {{ $t('settings.vatModeStandard') }}
-          </label>
-          <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
-            <input v-model="form.vat_mode" type="radio" name="vatmode" value="small_business" />
-            {{ $t('settings.vatModeSmallBusiness') }}
-          </label>
-        </div>
+        <RadioGroup
+          name="vatmode"
+          :model-value="form.vat_mode"
+          @update:model-value="(value) => (form.vat_mode = String(value))"
+        >
+          <div class="cbrow">
+            <RadioGroupItem id="vat-standard" value="standard" />
+            <Label variant="inline" for="vat-standard">{{ $t('settings.vatModeStandard') }}</Label>
+          </div>
+          <div class="cbrow">
+            <RadioGroupItem id="vat-small-business" value="small_business" />
+            <Label variant="inline" for="vat-small-business">{{ $t('settings.vatModeSmallBusiness') }}</Label>
+          </div>
+        </RadioGroup>
         <p class="hint" style="margin-top: var(--s3); color: var(--accent)">{{ $t('settings.vatModeWarning') }}</p>
       </div>
       <div class="grp">
         <div class="fld" style="max-width: 160px">
-          <label for="v-satz">{{ $t('settings.vatRateLabel') }}</label>
-          <input id="v-satz" v-model="form.vat_rate" class="inp num" type="text" inputmode="decimal" />
+          <Label for="v-satz">{{ $t('settings.vatRateLabel') }}</Label>
+          <Input id="v-satz" v-model="form.vat_rate" class="tabular-nums" type="text" inputmode="decimal" />
           <span class="hint">{{ $t('settings.vatRateHint') }}</span>
           <p v-if="form.errors.vat_rate" class="err">{{ form.errors.vat_rate }}</p>
         </div>
@@ -55,8 +63,8 @@ defineExpose({ form, submit })
       <div class="dlab">{{ $t('settings.vatNoteLabel') }}</div>
       <div class="grp">
         <div class="fld">
-          <label for="v-hinweis">{{ $t('settings.vatNoteFieldLabel') }} <em>{{ $t('settings.optional') }}</em></label>
-          <textarea id="v-hinweis" v-model="form.vat_note" class="inp" rows="3"></textarea>
+          <Label for="v-hinweis">{{ $t('settings.vatNoteFieldLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
+          <Textarea id="v-hinweis" v-model="form.vat_note" rows="3" />
           <p v-if="form.errors.vat_note" class="err">{{ form.errors.vat_note }}</p>
         </div>
       </div>

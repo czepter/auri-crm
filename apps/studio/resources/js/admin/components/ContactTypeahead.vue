@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
 
 // The ordering enforced here IS the anti-duplicate mechanism, not a
 // convenience: portal access in P2 hangs off Contact, so a repeat client must
@@ -62,21 +64,25 @@ function choose(contact: App.Crm.Data.ContactSuggestionData) {
       </div>
       <div class="em">{{ [model.email, model.phone].filter(Boolean).join(' · ') }}</div>
     </div>
-    <button type="button" class="chg" @click="model = null">
+    <Button variant="ghost" class="chg" type="button" @click="model = null">
       {{ $t('leads.contactChange') }}
-    </button>
+    </Button>
   </div>
 
   <div v-else>
     <div class="ta">
-      <input v-model="term" class="inp" type="search" :placeholder="$t('common.search')" style="border: none" />
+      <Input v-model="term" class="border-0" type="search" :placeholder="$t('common.search')" />
 
       <div v-if="searched" class="list">
-        <button
+        <!-- .row is a list row, not one of the system's three buttons: the
+             .ta .row rule below carries its whole look, so ghost is here for
+             the reset and the shared element, nothing more. -->
+        <Button
           v-for="contact in results"
           :key="contact.id"
-          type="button"
+          variant="ghost"
           class="row"
+          type="button"
           @click="choose(contact)"
         >
           <span class="av">{{ contact.name.slice(0, 1).toUpperCase() }}</span>
@@ -84,12 +90,12 @@ function choose(contact: App.Crm.Data.ContactSuggestionData) {
             <span class="nm">{{ contact.name }}</span>
             <span class="em">{{ contact.email }}</span>
           </span>
-        </button>
+        </Button>
 
-        <button type="button" class="row new" @click="emit('createNew', term)">
+        <Button variant="ghost" class="row new" type="button" @click="emit('createNew', term)">
           <span class="av plus">+</span>
           <span class="nm">{{ $t('leads.contactCreate', { term }) }}</span>
-        </button>
+        </Button>
       </div>
     </div>
 

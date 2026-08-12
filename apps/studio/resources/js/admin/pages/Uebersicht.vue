@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { Button } from '@/ui/button'
 
 const props = defineProps<{
   today: string
@@ -46,10 +47,10 @@ function complete(task: App.Crm.Data.TaskRowData) {
         <div class="kick">{{ heading }}</div>
         <h1>{{ $t('dashboard.title') }}</h1>
       </div>
-      <Link class="btn" href="/anfragen/neu">
+      <Button :as="Link" href="/anfragen/neu">
         <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         {{ $t('board.create') }}
-      </Link>
+      </Button>
     </div>
 
     <!-- Two tiles, not four. The mockup's other two are money — quotes are Q-*
@@ -116,9 +117,14 @@ function complete(task: App.Crm.Data.TaskRowData) {
             <i v-if="task.isOverdue"> · {{ $t('dashboard.overdue', { date: shortDate(task.dueOn) }) }}</i>
             <template v-else-if="task.dueOn"> · {{ shortDate(task.dueOn) }}</template>
           </span>
-          <button type="button" class="abtn" :class="{ hot: task.isOverdue }" @click="complete(task)">
+          <Button
+            type="button"
+            variant="outline"
+            :tone="task.isOverdue ? 'accent' : 'default'"
+            @click="complete(task)"
+          >
             {{ $t('dashboard.done') }}
-          </button>
+          </Button>
         </div>
 
         <!-- The production board itself: one row per project in production,

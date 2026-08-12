@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
 
 const form = useForm({ code: '' })
 
@@ -20,21 +23,19 @@ function submit() {
         </p>
 
         <div class="fld grp">
-          <label for="code">{{ $t('auth.mfaCode') }}</label>
-          <input
+          <Label for="code">{{ $t('auth.mfaCode') }}</Label>
+          <Input
             id="code"
-            v-model="form.code"
-            class="inp num"
+            v-model="form.code" class="tabular-nums"
             type="text"
             inputmode="numeric"
             autocomplete="one-time-code"
-            required
-          />
+            required />
         </div>
 
-        <button class="btn" type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
+        <Button type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
           {{ $t('auth.mfaConfirm') }}
-        </button>
+        </Button>
       </form>
     </div>
   </div>

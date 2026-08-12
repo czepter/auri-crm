@@ -3,6 +3,7 @@ import { router } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import { Button } from '@/ui/button'
 
 type Installment = {
   id: string
@@ -117,14 +118,14 @@ function longDate(date: string) {
               <div v-for="installment in openInstallments" :key="installment.id" class="srow">
                 <div class="stop">
                   <div class="sname">{{ installment.label }}<span>{{ formatEuros(installment.amount) }}</span></div>
-                  <button
-                    class="btn warm"
+                  <Button
+                    tone="warm"
                     type="button"
                     :disabled="payingId === installment.id"
                     @click="payNow(installment.id)"
                   >
                     {{ $t('portal.payNowButton') }}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

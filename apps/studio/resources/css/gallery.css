@@ -8,7 +8,8 @@
  * bare the way the mockup's own gallery.css does: the mockup is a standalone
  * document that never loads portal.css, but this bundle is shared with the
  * client portal, and portal.css already owns `.field`, `.hint`, `.err` and
- * `.btn.wide` for its own screens (the contract-signing form, mainly). The
+ * the button's `.wide` for its own screens (the contract-signing form,
+ * mainly). The
  * gate screens set data-theme="gallery" on their own root element, so the
  * extra specificity here is free and never leaks into a portal page.
  */
@@ -46,8 +47,8 @@
 [data-theme="gallery"] .hint { font:400 12.5px/1.55 var(--font); color:var(--muted); margin:9px 0 0; }
 [data-theme="gallery"] .hint.small { font-size:12px; color:var(--faint); }
 
-[data-theme="gallery"] .btn.wide { margin:var(--s4) 0 0; width:100%; justify-content:center; padding:13px 14px; font-size:14px; }
-[data-theme="gallery"] .txtbtn.mid { justify-content:center; width:100%; }
+[data-theme="gallery"] [data-slot="button"].wide { margin:var(--s4) 0 0; width:100%; justify-content:center; padding:13px 14px; font-size:14px; }
+[data-theme="gallery"] [data-slot="button"].mid { justify-content:center; width:100%; }
 
 /* uniform failure notice — warm, not alarming: it is the resting state of a
    security control, not a crash */

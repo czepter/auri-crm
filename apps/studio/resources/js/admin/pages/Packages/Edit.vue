@@ -3,6 +3,9 @@ import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import PackageItemsEditor, { type PackageItemRow } from '@/admin/components/PackageItemsEditor.vue'
 import { centsToEuros, eurosToCents } from '@/admin/lib/money'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
 
 const props = defineProps<{ package: App.Catalog.Data.PackageData }>()
 
@@ -41,13 +44,13 @@ function submit() {
 
       <form style="margin-top: var(--s5)" @submit.prevent="submit">
         <div class="fld grp">
-          <label for="name">{{ $t('packages.name') }}</label>
-          <input id="name" v-model="form.name" class="inp" type="text" required />
+          <Label for="name">{{ $t('packages.name') }}</Label>
+          <Input id="name" v-model="form.name" type="text" required />
           <p v-if="form.errors.name" class="err">{{ form.errors.name }}</p>
         </div>
         <div class="fld grp">
-          <label for="description">{{ $t('packages.description') }}</label>
-          <input id="description" v-model="form.description" class="inp" type="text" />
+          <Label for="description">{{ $t('packages.description') }}</Label>
+          <Input id="description" v-model="form.description" type="text" />
         </div>
 
         <div class="dsec">
@@ -56,8 +59,8 @@ function submit() {
         </div>
 
         <div class="formfoot">
-          <button class="btn" type="submit" :disabled="form.processing">{{ $t('common.save') }}</button>
-          <a href="/pakete" class="txtbtn">{{ $t('common.cancel') }}</a>
+          <Button type="submit" :disabled="form.processing">{{ $t('common.save') }}</Button>
+          <Button as="a" href="/pakete" variant="ghost">{{ $t('common.cancel') }}</Button>
         </div>
       </form>
     </div>

@@ -3,38 +3,60 @@ import { cva } from "class-variance-authority"
 
 export { default as Button } from "./Button.vue"
 
+/*
+ * The three buttons the system actually has, ported from their rules rather
+ * than redesigned:
+ *
+ *   default → tokens.css .btn      the filled ink button
+ *   outline → admin-extra.css .abtn  the small stroked row action
+ *   ghost   → tokens.css .txtbtn   the quiet inline action
+ *
+ * `tone` is the modifier those rules already carried as a second class —
+ * .abtn.hot and .btn.warm — kept as a compound so the base styling is not
+ * written out a second time.
+ *
+ * The `ml-auto` on default is .btn's own, and it is a layout rule living in a
+ * component class: 45 call sites lean on the button pushing itself to the
+ * right of its row. Dropping it here would move every one of them, so it
+ * stays, and the places that opted out (.formfoot, .btn.wide) still opt out.
+ */
 export const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "inline-flex shrink-0 cursor-pointer items-center gap-[7px] font-sans no-underline outline-none disabled:cursor-default disabled:opacity-50",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
+          "ml-auto rounded-md border-0 bg-foreground px-[14px] py-[9px] text-[13px] font-semibold leading-none text-background [&_svg]:size-[15px]",
         outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+          "flex-none rounded-[6px] border border-line-hover bg-background px-[9px] py-[3px] text-[10.5px] font-semibold leading-[1.4] text-muted-foreground hover:border-faint hover:text-foreground [&_svg]:size-[13px]",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
+          "border-0 bg-transparent px-0 py-[9px] text-[13px] font-medium leading-none text-muted-foreground hover:text-foreground [&_svg]:size-[15px] [&_svg]:opacity-80",
       },
-      size: {
-        "default": "h-9 px-4 py-2 has-[>svg]:px-3",
-        "xs": "h-6 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-        "sm": "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        "lg": "h-10 rounded-md px-6 has-[>svg]:px-4",
-        "icon": "size-9",
-        "icon-xs": "size-6 rounded-md [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-8",
-        "icon-lg": "size-10",
+      tone: {
+        default: "",
+        /* admin-extra.css .abtn.hot — the row action that is also the overdue mark */
+        accent: "",
+        /* portal.css .btn.warm — the portal's one accent-filled action */
+        warm: "",
       },
     },
+    compoundVariants: [
+      {
+        variant: "outline",
+        tone: "accent",
+        class: "border-[#EAC9B8] text-destructive hover:border-destructive hover:text-destructive",
+      },
+      {
+        variant: "default",
+        tone: "warm",
+        class: "bg-destructive",
+      },
+    ],
     defaultVariants: {
       variant: "default",
-      size: "default",
+      tone: "default",
     },
   },
 )
+
 export type ButtonVariants = VariantProps<typeof buttonVariants>

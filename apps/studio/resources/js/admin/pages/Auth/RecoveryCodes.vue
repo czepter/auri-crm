@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3'
+import { Button } from '@/ui/button'
 
 defineProps<{ codes: string[] }>()
 </script>
@@ -27,9 +28,9 @@ defineProps<{ codes: string[] }>()
         <li v-for="code in codes" :key="code">{{ code }}</li>
       </ul>
 
-      <button class="btn" type="button" style="width: 100%; justify-content: center" @click="router.visit('/')">
+      <Button type="button" style="width: 100%; justify-content: center" @click="router.visit('/')">
         {{ $t('auth.recoveryContinue') }}
-      </button>
+      </Button>
     </div>
   </div>
 </template>

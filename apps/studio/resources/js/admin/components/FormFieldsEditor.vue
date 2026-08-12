@@ -1,5 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { Button } from '@/ui/button'
+import { Checkbox } from '@/ui/checkbox'
+import { Input } from '@/ui/input'
+import { Textarea } from '@/ui/textarea'
+import { Label } from '@/ui/label'
 
 // Shared by Create and Edit, so the two forms cannot drift into building a
 // form field two different ways. optionsText is a newline-separated string
@@ -47,27 +52,27 @@ function typeLabel(type: string): string {
         <div v-if="editingIndex === index" class="qbody">
           <div class="fgrid grp">
             <div class="fld wide">
-              <label :for="`field-label-${index}`">{{ $t('formTemplates.labelField') }}</label>
-              <input :id="`field-label-${index}`" v-model="field.label" class="inp" type="text" maxlength="255" />
+              <Label :for="`field-label-${index}`">{{ $t('formTemplates.labelField') }}</Label>
+              <Input :id="`field-label-${index}`" v-model="field.label" type="text" maxlength="255" />
             </div>
 
             <div v-if="field.type === 'select'" class="fld wide">
-              <label :for="`field-options-${index}`">{{ $t('formTemplates.optionsField') }}</label>
-              <textarea :id="`field-options-${index}`" v-model="field.optionsText" class="inp" rows="3"></textarea>
+              <Label :for="`field-options-${index}`">{{ $t('formTemplates.optionsField') }}</Label>
+              <Textarea :id="`field-options-${index}`" v-model="field.optionsText" rows="3" />
               <span class="hint">{{ $t('formTemplates.optionsHint') }}</span>
             </div>
 
             <div class="fld">
-              <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
-                <input v-model="field.required" type="checkbox" />
-                {{ $t('formTemplates.requiredField') }}
-              </label>
+              <div class="cbrow">
+                <Checkbox :id="`field-required-${index}`" v-model="field.required" />
+                <Label variant="inline" :for="`field-required-${index}`">{{ $t('formTemplates.requiredField') }}</Label>
+              </div>
             </div>
           </div>
 
           <div class="formfoot">
-            <button type="button" class="abtn" @click="editingIndex = null">{{ $t('formTemplates.done') }}</button>
-            <button type="button" class="abtn hot" @click="removeField(index)">{{ $t('common.remove') }}</button>
+            <Button variant="outline" type="button" @click="editingIndex = null">{{ $t('formTemplates.done') }}</Button>
+            <Button variant="outline" tone="accent" type="button" @click="removeField(index)">{{ $t('common.remove') }}</Button>
           </div>
         </div>
 
@@ -79,7 +84,7 @@ function typeLabel(type: string): string {
             <span v-if="field.type === 'select' && field.optionsText" class="qopts">{{ field.optionsText.split('\n').filter(Boolean).join(', ') }}</span>
             <span v-if="field.type === 'name_list'" class="qopts">{{ $t('formTemplates.nameListHint') }}</span>
           </div>
-          <a href="#" class="abtn" @click.prevent="editingIndex = index">{{ $t('formTemplates.edit') }}</a>
+          <Button as="a" variant="outline" href="#" @click.prevent="editingIndex = index">{{ $t('formTemplates.edit') }}</Button>
         </div>
       </div>
     </div>
@@ -87,9 +92,16 @@ function typeLabel(type: string): string {
     <div style="margin-top: var(--s4)">
       <span class="lab" style="display: block; margin-bottom: var(--s2)">{{ $t('formTemplates.questionsLabel') }}</span>
       <div class="qpal">
-        <a v-for="type in fieldTypes" :key="type.value" href="#" class="abtn" @click.prevent="addField(type.value)">
+        <Button
+          v-for="type in fieldTypes"
+          :key="type.value"
+          as="a"
+          variant="outline"
+          href="#"
+          @click.prevent="addField(type.value)"
+        >
           {{ type.label }}
-        </a>
+        </Button>
       </div>
     </div>
   </div>

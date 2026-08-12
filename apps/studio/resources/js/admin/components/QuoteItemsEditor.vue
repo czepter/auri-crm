@@ -1,4 +1,10 @@
 <script setup lang="ts">
+import { NONE, fromOption, toOption } from '@/lib/select'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Label } from '@/ui/label'
+
 export type QuoteItemRow = {
   title: string
   description: string
@@ -20,6 +26,10 @@ function addRow() {
 function removeRow(index: number) {
   items.value = items.value.filter((_, i) => i !== index)
 }
+
+function setDiscountType(item: QuoteItemRow, value: unknown) {
+  item.discountType = fromOption(value) as QuoteItemRow['discountType']
+}
 </script>
 
 <template>
@@ -27,58 +37,66 @@ function removeRow(index: number) {
     <div v-for="(item, index) in items" :key="index" class="card static grp">
       <div class="cardhead">
         <span class="kick">{{ $t('quotes.itemTitle') }} {{ index + 1 }}</span>
-        <button type="button" class="abtn hot" @click="removeRow(index)">{{ $t('common.remove') }}</button>
+        <Button variant="outline" tone="accent" type="button" @click="removeRow(index)">{{ $t('common.remove') }}</Button>
       </div>
 
       <div class="fgrid">
         <div class="fld wide">
-          <label :for="`quote-item-title-${index}`">{{ $t('quotes.itemTitle') }}</label>
-          <input :id="`quote-item-title-${index}`" v-model="item.title" class="inp" type="text" required />
+          <Label :for="`quote-item-title-${index}`">{{ $t('quotes.itemTitle') }}</Label>
+          <Input :id="`quote-item-title-${index}`" v-model="item.title" type="text" required />
         </div>
         <div class="fld wide">
-          <label :for="`quote-item-description-${index}`">{{ $t('quotes.itemDescription') }}</label>
-          <input :id="`quote-item-description-${index}`" v-model="item.description" class="inp" type="text" />
+          <Label :for="`quote-item-description-${index}`">{{ $t('quotes.itemDescription') }}</Label>
+          <Input :id="`quote-item-description-${index}`" v-model="item.description" type="text" />
         </div>
         <div class="fld">
-          <label :for="`quote-item-quantity-${index}`">{{ $t('quotes.itemQuantity') }}</label>
-          <input
+          <Label :for="`quote-item-quantity-${index}`">{{ $t('quotes.itemQuantity') }}</Label>
+          <Input
             :id="`quote-item-quantity-${index}`"
             v-model.number="item.quantity"
-            class="inp num"
+            class="tabular-nums"
             type="number"
             min="1"
             required
           />
         </div>
         <div class="fld">
-          <label :for="`quote-item-price-${index}`">
+          <Label :for="`quote-item-price-${index}`">
             {{ $t('quotes.itemPrice') }}
-          </label>
-          <input
+          </Label>
+          <Input
             :id="`quote-item-price-${index}`"
             v-model="item.unitPrice"
-            class="inp num"
+            class="tabular-nums"
             type="text"
             inputmode="decimal"
             :placeholder="$t('quotes.itemPriceHint')"
           />
         </div>
         <div class="fld">
-          <label :for="`quote-item-discount-type-${index}`">{{ $t('quotes.discountType') }}</label>
-          <select :id="`quote-item-discount-type-${index}`" v-model="item.discountType" class="inp">
-            <option value="">{{ $t('quotes.discountNone') }}</option>
-            <option value="percentage">{{ $t('quotes.discountPercentage') }}</option>
-            <option value="amount">{{ $t('quotes.discountAmount') }}</option>
-          </select>
+          <Label :for="`quote-item-discount-type-${index}`">{{ $t('quotes.discountType') }}</Label>
+          <Select
+            :model-value="toOption(item.discountType)"
+            @update:model-value="(value) => setDiscountType(item, value)"
+          >
+            <SelectTrigger :id="`quote-item-discount-type-${index}`">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem :value="NONE">{{ $t('quotes.discountNone') }}</SelectItem>
+              <SelectItem value="percentage">{{ $t('quotes.discountPercentage') }}</SelectItem>
+              <SelectItem value="amount">{{ $t('quotes.discountAmount') }}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
         <div v-if="item.discountType" class="fld">
-          <label :for="`quote-item-discount-value-${index}`">
+          <Label :for="`quote-item-discount-value-${index}`">
             {{ item.discountType === 'percentage' ? $t('quotes.discountValuePercent') : $t('quotes.discountValueEuros') }}
-          </label>
-          <input
+          </Label>
+          <Input
             :id="`quote-item-discount-value-${index}`"
             v-model="item.discountValue"
-            class="inp num"
+            class="tabular-nums"
             type="text"
             inputmode="decimal"
           />
@@ -86,6 +104,6 @@ function removeRow(index: number) {
       </div>
     </div>
 
-    <button type="button" class="abtn" @click="addRow">{{ $t('quotes.addItem') }}</button>
+    <Button variant="outline" type="button" @click="addRow">{{ $t('quotes.addItem') }}</Button>
   </div>
 </template>

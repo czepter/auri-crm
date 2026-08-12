@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3'
-import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 
 const props = defineProps<{
   contact: App.Crm.Data.ContactSuggestionData
@@ -10,8 +13,6 @@ const props = defineProps<{
   dsgvoErasedAt: string | null
   canManageDsgvo: boolean
 }>()
-
-const { t } = useI18n()
 
 const form = useForm({
   name: props.contact.name,
@@ -23,21 +24,20 @@ function submit() {
   form.patch(`/kontakte/${props.contact.id}`)
 }
 
-// Its own confirm, worded to the one thing this button changes: every
-// project this contact can reach in the portal, not one of them — the
-// opposite scope from a project's own "hide from portal" control.
+// The confirm is worded to the one thing this button changes: every project
+// this contact can reach in the portal, not one of them — the opposite scope
+// from a project's own "hide from portal" control. It lives in the template
+// now as an AlertDialog, which is the same guard the native confirm() was,
+// minus a browser chrome nobody could style or translate.
 function revokePortalAccess() {
-  if (confirm(t('contacts.revokePortalAccessConfirm', { name: props.contact.name }))) {
-    router.post(`/kontakte/${props.contact.id}/portal-zugang/widerruf`)
-  }
+  router.post(`/kontakte/${props.contact.id}/portal-zugang/widerruf`)
 }
 
-// Irreversible, and named as such — the same worded-to-the-scope confirm
-// pattern revokePortalAccess uses above.
+// Irreversible, and named as such — the same worded-to-the-scope guard
+// revokePortalAccess uses above, and the only one that takes the accent
+// button, because it is the only one that cannot be undone.
 function eraseDsgvoData() {
-  if (confirm(t('contacts.dsgvoEraseConfirm', { name: props.contact.name }))) {
-    router.post(`/kontakte/${props.contact.id}/dsgvo/loeschen`)
-  }
+  router.post(`/kontakte/${props.contact.id}/dsgvo/loeschen`)
 }
 </script>
 
@@ -48,25 +48,25 @@ function eraseDsgvoData() {
 
       <form style="margin-top: var(--s5)" @submit.prevent="submit">
         <div class="fld grp">
-          <label for="name">{{ $t('contacts.name') }}</label>
-          <input id="name" v-model="form.name" class="inp" type="text" />
+          <Label for="name">{{ $t('contacts.name') }}</Label>
+          <Input id="name" v-model="form.name" type="text" />
           <p v-if="form.errors.name" class="err">{{ form.errors.name }}</p>
         </div>
         <div class="fld grp">
-          <label for="email">{{ $t('contacts.email') }}</label>
-          <input id="email" v-model="form.email" class="inp" type="email" />
+          <Label for="email">{{ $t('contacts.email') }}</Label>
+          <Input id="email" v-model="form.email" type="email" />
           <p v-if="form.errors.email" class="err">{{ form.errors.email }}</p>
         </div>
         <div class="fld grp">
-          <label for="phone">{{ $t('contacts.phone') }}</label>
-          <input id="phone" v-model="form.phone" class="inp" type="tel" />
+          <Label for="phone">{{ $t('contacts.phone') }}</Label>
+          <Input id="phone" v-model="form.phone" type="tel" />
         </div>
 
         <div class="formfoot">
-          <button class="btn" type="submit" :disabled="form.processing">
+          <Button type="submit" :disabled="form.processing">
             {{ $t('common.save') }}
-          </button>
-          <a href="/kontakte" class="txtbtn">{{ $t('common.cancel') }}</a>
+          </Button>
+          <Button as="a" href="/kontakte" variant="ghost">{{ $t('common.cancel') }}</Button>
         </div>
       </form>
 
@@ -77,9 +77,24 @@ function eraseDsgvoData() {
         </p>
         <template v-else>
           <p>{{ $t('contacts.portalAccessActive') }}</p>
-          <button type="button" class="abtn" @click="revokePortalAccess">
-            {{ $t('contacts.revokePortalAccess') }}
-          </button>
+          <AlertDialog>
+            <AlertDialogTrigger as-child>
+              <Button type="button" variant="outline">{{ $t('contacts.revokePortalAccess') }}</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  {{ $t('contacts.revokePortalAccessConfirm', { name: contact.name }) }}
+                </AlertDialogTitle>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogAction @click="revokePortalAccess">
+                  {{ $t('contacts.revokePortalAccess') }}
+                </AlertDialogAction>
+                <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </template>
       </div>
 
@@ -89,10 +104,27 @@ function eraseDsgvoData() {
           {{ $t('contacts.dsgvoErased', { date: new Date(dsgvoErasedAt).toLocaleDateString('de-DE') }) }}
         </p>
         <template v-else>
-          <a class="txtbtn" :href="`/kontakte/${contact.id}/dsgvo/export`">{{ $t('contacts.dsgvoExport') }}</a>
-          <button type="button" class="abtn" @click="eraseDsgvoData">
-            {{ $t('contacts.dsgvoErase') }}
-          </button>
+          <Button as="a" variant="ghost" :href="`/kontakte/${contact.id}/dsgvo/export`">{{ $t('contacts.dsgvoExport') }}</Button>
+          <AlertDialog>
+            <AlertDialogTrigger as-child>
+              <Button type="button" variant="outline" tone="accent">{{ $t('contacts.dsgvoErase') }}</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>
+                  {{ $t('contacts.dsgvoEraseConfirm', { name: contact.name }) }}
+                </AlertDialogTitle>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <!-- the accent fill is reserved for the one action here that
+                     cannot be taken back -->
+                <AlertDialogAction tone="warm" @click="eraseDsgvoData">
+                  {{ $t('contacts.dsgvoErase') }}
+                </AlertDialogAction>
+                <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </template>
       </div>
     </div>

@@ -4,6 +4,11 @@ import { ref, watch } from 'vue'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ContactTypeahead from '@/admin/components/ContactTypeahead.vue'
 import ConflictNote from '@/admin/components/ConflictNote.vue'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Textarea } from '@/ui/textarea'
+import { Label } from '@/ui/label'
 
 type Option = { value: string; label: string }
 
@@ -86,7 +91,7 @@ function submit() {
       <form style="margin-top: var(--s5)" @submit.prevent="submit">
         <div class="grp">
           <div class="fld">
-            <label>{{ $t('leads.contact') }}</label>
+            <Label>{{ $t('leads.contact') }}</Label>
             <ContactTypeahead v-model="contact" @create-new="startCreating" />
             <p v-if="form.errors.contact_name" class="err">{{ form.errors.contact_name }}</p>
           </div>
@@ -94,40 +99,36 @@ function submit() {
 
         <div v-if="creating" class="fgrid grp">
           <div class="fld">
-            <label for="contact_name">{{ $t('leads.name') }}</label>
-            <input
+            <Label for="contact_name">{{ $t('leads.name') }}</Label>
+            <Input
               id="contact_name"
               v-model="form.contact_name"
-              class="inp"
               type="text"
-              @input="proposeProjectName"
-            />
+              @input="proposeProjectName" />
           </div>
           <div class="fld">
-            <label for="partner_name">{{ $t('leads.partner') }}</label>
-            <input id="partner_name" v-model="form.partner_name" class="inp" type="text" />
+            <Label for="partner_name">{{ $t('leads.partner') }}</Label>
+            <Input id="partner_name" v-model="form.partner_name" type="text" />
           </div>
           <div class="fld">
-            <label for="contact_email">{{ $t('leads.email') }}</label>
-            <input id="contact_email" v-model="form.contact_email" class="inp" type="email" />
+            <Label for="contact_email">{{ $t('leads.email') }}</Label>
+            <Input id="contact_email" v-model="form.contact_email" type="email" />
           </div>
           <div class="fld">
-            <label for="contact_phone">{{ $t('leads.phone') }}</label>
-            <input id="contact_phone" v-model="form.contact_phone" class="inp" type="tel" />
+            <Label for="contact_phone">{{ $t('leads.phone') }}</Label>
+            <Input id="contact_phone" v-model="form.contact_phone" type="tel" />
           </div>
           <p class="hint" style="grid-column: 1 / -1">{{ $t('leads.noEmailHint') }}</p>
         </div>
 
         <div class="grp">
           <div class="fld">
-            <label for="project_name">{{ $t('leads.projectName') }}</label>
-            <input
+            <Label for="project_name">{{ $t('leads.projectName') }}</Label>
+            <Input
               id="project_name"
               v-model="form.project_name"
-              class="inp"
               type="text"
-              @input="nameTouched = true"
-            />
+              @input="nameTouched = true" />
             <p class="hint">{{ $t('leads.projectNameHint') }}</p>
             <p v-if="form.errors.project_name" class="err">{{ form.errors.project_name }}</p>
           </div>
@@ -135,28 +136,46 @@ function submit() {
 
         <div class="fgrid grp">
           <div class="fld">
-            <label for="type">{{ $t('leads.type') }}</label>
-            <select id="type" v-model="form.type" class="inp">
-              <option v-for="option in types" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
+            <Label for="type">{{ $t('leads.type') }}</Label>
+            <Select :model-value="form.type" @update:model-value="(value) => (form.type = String(value))">
+              <SelectTrigger id="type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="option in types" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div class="fld">
-            <label for="source">{{ $t('leads.source') }}</label>
-            <select id="source" v-model="form.source" class="inp">
-              <option v-for="option in sources" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
+            <Label for="source">{{ $t('leads.source') }}</Label>
+            <Select :model-value="form.source" @update:model-value="(value) => (form.source = String(value))">
+              <SelectTrigger id="source">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="option in sources" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div class="fld">
-            <label for="captured_via">{{ $t('leads.capturedVia') }}</label>
-            <select id="captured_via" v-model="form.captured_via" class="inp">
-              <option v-for="option in channels" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
+            <Label for="captured_via">{{ $t('leads.capturedVia') }}</Label>
+            <Select
+              :model-value="form.captured_via"
+              @update:model-value="(value) => (form.captured_via = String(value))"
+            >
+              <SelectTrigger id="captured_via">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="option in channels" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -166,25 +185,25 @@ function submit() {
              de-DE with no picker library and no parsing code. -->
         <div class="grp">
           <div class="fld lead">
-            <label for="date">{{ $t('leads.mainDate') }}</label>
-            <input id="date" v-model="form.date" class="inp" type="date" />
+            <Label for="date">{{ $t('leads.mainDate') }}</Label>
+            <Input id="date" v-model="form.date" size="lead" type="date" />
             <ConflictNote :conflicts="conflicts" />
           </div>
         </div>
 
         <div class="grp">
           <div class="fld">
-            <label for="inquiry_text">{{ $t('leads.inquiryText') }}</label>
-            <textarea id="inquiry_text" v-model="form.inquiry_text" class="inp" rows="8" />
+            <Label for="inquiry_text">{{ $t('leads.inquiryText') }}</Label>
+            <Textarea id="inquiry_text" v-model="form.inquiry_text" rows="8" />
             <p class="hint">{{ $t('leads.inquiryTextHint') }}</p>
           </div>
         </div>
 
         <div class="formfoot">
-          <button class="btn" type="submit" :disabled="form.processing">
+          <Button type="submit" :disabled="form.processing">
             {{ $t('leads.submit') }}
-          </button>
-          <a href="/anfragen" class="txtbtn">{{ $t('common.cancel') }}</a>
+          </Button>
+          <Button as="a" href="/anfragen" variant="ghost">{{ $t('common.cancel') }}</Button>
         </div>
       </form>
     </div>

@@ -3,6 +3,10 @@ import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectHeader from '@/admin/components/ProjectHeader.vue'
 import FormFieldsEditor, { type FormFieldRow } from '@/admin/components/FormFieldsEditor.vue'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Textarea } from '@/ui/textarea'
+import { Label } from '@/ui/label'
 
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
@@ -84,28 +88,28 @@ function answer(fieldId: string) {
 
           <template v-if="header.canManageForms">
             <div class="fld wide" style="margin-bottom: var(--s3)">
-              <label :for="`form-name-${instance.id}`">{{ $t('formInstances.nameField') }}</label>
-              <input :id="`form-name-${instance.id}`" v-model="editForms[instance.id].name" class="inp" type="text" maxlength="255" />
+              <Label :for="`form-name-${instance.id}`">{{ $t('formInstances.nameField') }}</Label>
+              <Input :id="`form-name-${instance.id}`" v-model="editForms[instance.id].name" type="text" maxlength="255" />
             </div>
 
             <FormFieldsEditor v-model="editForms[instance.id].fields" :field-types="fieldTypes" />
 
             <div class="formfoot">
-              <button class="btn" type="button" :disabled="editForms[instance.id].processing" @click="save(instance.id)">
+              <Button type="button" :disabled="editForms[instance.id].processing" @click="save(instance.id)">
                 {{ $t('common.save') }}
-              </button>
+              </Button>
             </div>
 
             <div v-if="instance.fields.length" class="qa" style="margin-top: var(--s4)">
               <div v-for="field in instance.fields" :key="field.id">
                 <div class="q">{{ field.label }}</div>
                 <div class="fld wide">
-                  <textarea v-model="answerForms[field.id].value" class="inp" rows="2"></textarea>
+                  <Textarea v-model="answerForms[field.id].value" rows="2" />
                 </div>
                 <div class="formfoot" style="margin-top: var(--s2)">
-                  <button class="abtn" type="button" :disabled="answerForms[field.id].processing" @click="answer(field.id)">
+                  <Button variant="outline" type="button" :disabled="answerForms[field.id].processing" @click="answer(field.id)">
                     {{ $t('formInstances.saveAnswer') }}
-                  </button>
+                  </Button>
                   <span v-if="field.answeredAt" class="hint">
                     {{ $t('formInstances.answeredAt', { date: new Date(field.answeredAt).toLocaleDateString('de-DE') }) }}
                   </span>
@@ -123,19 +127,18 @@ function answer(fieldId: string) {
           <div class="cardhead"><span class="kick">{{ $t('formInstances.create') }}</span></div>
           <span class="lab" style="display: block; margin-bottom: var(--s2)">{{ $t('formInstances.fromTemplate') }}</span>
           <div class="qpal">
-            <a
+            <Button as="a"
               v-for="template in formTemplates"
               :key="template.value"
-              href="#"
-              class="abtn"
+              href="#" variant="outline"
               @click.prevent="createFrom(template.value)"
             >
               {{ template.label }}
-            </a>
+            </Button>
           </div>
           <span class="lab" style="display: block; margin: var(--s4) 0 var(--s2)">{{ $t('formInstances.orBlank') }}</span>
           <div class="qpal">
-            <a href="#" class="abtn hot" @click.prevent="createFrom('')">{{ $t('formInstances.startBlank') }}</a>
+            <Button as="a" href="#" variant="outline" tone="accent" @click.prevent="createFrom('')">{{ $t('formInstances.startBlank') }}</Button>
           </div>
         </div>
       </div>

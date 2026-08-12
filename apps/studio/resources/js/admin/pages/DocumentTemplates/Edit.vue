@@ -2,6 +2,10 @@
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import DocumentTemplatePreview from '@/admin/components/DocumentTemplatePreview.vue'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Textarea } from '@/ui/textarea'
+import { Label } from '@/ui/label'
 
 const props = defineProps<{ template: App.Documents.Data.DocumentTemplateData }>()
 
@@ -23,13 +27,13 @@ function submit() {
 
       <form style="margin-top: var(--s5)" @submit.prevent="submit">
         <div class="fld grp">
-          <label for="name">{{ $t('documentTemplates.name') }}</label>
-          <input id="name" v-model="form.name" class="inp" type="text" required />
+          <Label for="name">{{ $t('documentTemplates.name') }}</Label>
+          <Input id="name" v-model="form.name" type="text" required />
           <p v-if="form.errors.name" class="err">{{ form.errors.name }}</p>
         </div>
         <div class="fld grp">
-          <label for="body">{{ $t('documentTemplates.body') }}</label>
-          <textarea id="body" v-model="form.body" class="inp" rows="16" required />
+          <Label for="body">{{ $t('documentTemplates.body') }}</Label>
+          <Textarea id="body" v-model="form.body" rows="16" required />
           <p class="hint">{{ $t('documentTemplates.bodyHint') }}</p>
           <p v-if="form.errors.body" class="err">{{ form.errors.body }}</p>
         </div>
@@ -37,8 +41,8 @@ function submit() {
         <DocumentTemplatePreview :type="template.type" :body="form.body" />
 
         <div class="formfoot">
-          <button class="btn" type="submit" :disabled="form.processing">{{ $t('common.save') }}</button>
-          <a href="/dokumentvorlagen" class="txtbtn">{{ $t('common.cancel') }}</a>
+          <Button type="submit" :disabled="form.processing">{{ $t('common.save') }}</Button>
+          <Button as="a" href="/dokumentvorlagen" variant="ghost">{{ $t('common.cancel') }}</Button>
         </div>
       </form>
     </div>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { Button } from '@/ui/button'
 
 defineProps<{ packages: App.Catalog.Data.PackageData[] }>()
 
@@ -13,10 +14,10 @@ function toggle(pkg: App.Catalog.Data.PackageData) {
   <AdminLayout active="pakete">
     <div class="hrow" style="margin-bottom: var(--s5)">
       <h1>{{ $t('packages.title') }}</h1>
-      <Link class="btn" href="/pakete/neu">
+      <Button :as="Link" href="/pakete/neu">
         <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         {{ $t('packages.create') }}
-      </Link>
+      </Button>
     </div>
 
     <!-- No mockup for this screen. It follows the system: the labelled row
@@ -30,9 +31,9 @@ function toggle(pkg: App.Catalog.Data.PackageData) {
         <span class="chip" :class="pkg.isActive ? 'done' : 'off'">
           {{ pkg.isActive ? $t('packages.active') : $t('packages.inactive') }}
         </span>
-        <button type="button" class="abtn" @click="toggle(pkg)">
+        <Button type="button" variant="outline" @click="toggle(pkg)">
           {{ pkg.isActive ? $t('packages.deactivate') : $t('packages.activate') }}
-        </button>
+        </Button>
       </div>
     </div>
 

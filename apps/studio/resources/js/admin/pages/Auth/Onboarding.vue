@@ -6,6 +6,7 @@ import VatForm from '@/admin/pages/Settings/panes/VatForm.vue'
 import DocumentsForm from '@/admin/pages/Settings/panes/DocumentsForm.vue'
 import EmailForm from '@/admin/pages/Settings/panes/EmailForm.vue'
 import PortalForm from '@/admin/pages/Settings/panes/PortalForm.vue'
+import { Button } from '@/ui/button'
 
 defineProps<{
   settings: App.Settings.Data.StudioSettingsData
@@ -69,18 +70,17 @@ function finish() {
       <PortalForm v-else ref="paneRef" :settings="portalSettings" @saved="finish" />
 
       <div style="display: flex; gap: var(--s3); margin-top: var(--s5)">
-        <button
-          class="btn"
+        <Button
           type="button"
           style="flex: 1; justify-content: center"
           :disabled="paneRef?.form.processing"
           @click="saveAndContinue"
         >
           {{ stepIndex === steps.length - 1 ? $t('onboarding.finish') : $t('onboarding.next') }}
-        </button>
-        <button class="txtbtn" type="button" @click="finish">
+        </Button>
+        <Button variant="ghost" type="button" @click="finish">
           {{ $t('onboarding.skip') }}
-        </button>
+        </Button>
       </div>
     </div>
   </div>

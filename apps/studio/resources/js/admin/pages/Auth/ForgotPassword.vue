@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Link, useForm, usePage } from '@inertiajs/vue3'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
 
 const form = useForm({ email: '' })
 const status = computed(() => usePage().props.flash.status)
@@ -23,25 +26,23 @@ function submit() {
 
       <form @submit.prevent="submit">
         <div class="fld grp">
-          <label for="email">{{ $t('auth.email') }}</label>
-          <input
+          <Label for="email">{{ $t('auth.email') }}</Label>
+          <Input
             id="email"
             v-model="form.email"
-            class="inp"
             type="email"
             autocomplete="username"
-            required
-          />
+            required />
           <p v-if="form.errors.email" class="err">{{ form.errors.email }}</p>
         </div>
 
-        <button class="btn" type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
+        <Button type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
           {{ $t('reset.send') }}
-        </button>
+        </Button>
       </form>
 
       <p style="margin-top: var(--s4); text-align: center">
-        <Link class="txtbtn" href="/login">{{ $t('reset.backToLogin') }}</Link>
+        <Button :as="Link" variant="ghost" href="/login">{{ $t('reset.backToLogin') }}</Button>
       </p>
     </div>
   </div>

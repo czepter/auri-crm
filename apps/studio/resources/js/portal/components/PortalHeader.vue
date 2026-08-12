@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
+import { Button } from '@/ui/button'
 
 // T-08's own branding read: logo and accent colour, shared portal-wide by
 // HandleInertiaRequests (`portalBranding`) rather than passed down per page,
@@ -42,14 +43,14 @@ watch(branding, applyAccent)
       <div v-if="contact" class="pme">
         <Link v-if="showSwitcher" href="/">{{ $t('portal.allProjects') }}</Link>
         <span>{{ $t('portal.signedInAs') }} <b>{{ contact.name }}</b></span>
-        <button type="button" @click="router.post('/abmelden')">
+        <Button variant="ghost" type="button" @click="router.post('/abmelden')">
           <svg viewBox="0 0 24 24">
             <path d="M15 17l5-5-5-5" />
             <path d="M20 12H9" />
             <path d="M12 20H6a2 2 0 01-2-2V6a2 2 0 012-2h6" />
           </svg>
           {{ $t('portal.signOut') }}
-        </button>
+        </Button>
       </div>
     </div>
   </header>

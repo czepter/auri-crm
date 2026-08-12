@@ -6,6 +6,11 @@ import ProfileForm from './panes/ProfileForm.vue'
 import VatForm from './panes/VatForm.vue'
 import DocumentsForm from './panes/DocumentsForm.vue'
 import EmailForm from './panes/EmailForm.vue'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Checkbox } from '@/ui/checkbox'
+import { Label } from '@/ui/label'
 
 const props = defineProps<{ settings: App.Settings.Data.StudioSettingsData }>()
 
@@ -100,8 +105,7 @@ function submitGeneral() {
         <h1>{{ $t(paneTitle) }}</h1>
       </div>
       <span v-if="activeForm?.isDirty" class="chip now">{{ $t('settings.unsaved') }}</span>
-      <button
-        class="btn"
+      <Button
         type="submit"
         :form="formId"
         :disabled="!activeForm?.isDirty || activeForm?.processing"
@@ -109,7 +113,7 @@ function submitGeneral() {
       >
         <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
         {{ $t('common.save') }}
-      </button>
+      </Button>
     </div>
 
     <div style="display: flex; gap: var(--s6); margin-top: var(--s5); align-items: flex-start">
@@ -160,19 +164,27 @@ function submitGeneral() {
             <div class="grp">
               <div class="two">
                 <div class="fld">
-                  <label for="g-zeitzone">{{ $t('settings.timezoneLabel') }}</label>
-                  <input id="g-zeitzone" v-model="generalForm.timezone" class="inp" type="text" placeholder="Europe/Berlin" />
+                  <Label for="g-zeitzone">{{ $t('settings.timezoneLabel') }}</Label>
+                  <Input id="g-zeitzone" v-model="generalForm.timezone" type="text" placeholder="Europe/Berlin" />
                   <span class="hint">{{ $t('settings.timezoneHint') }}</span>
                   <p v-if="generalForm.errors.timezone" class="err">{{ generalForm.errors.timezone }}</p>
                 </div>
                 <div class="fld">
-                  <label for="g-sprache">{{ $t('settings.localeLabel') }}</label>
-                  <select id="g-sprache" v-model="generalForm.locale" class="inp">
-                    <option value="de">{{ $t('settings.localeDe') }}</option>
-                    <option value="de_DE">{{ $t('settings.localeDeDe') }}</option>
-                    <option value="de_AT">{{ $t('settings.localeDeAt') }}</option>
-                    <option value="de_CH">{{ $t('settings.localeDeCh') }}</option>
-                  </select>
+                  <Label for="g-sprache">{{ $t('settings.localeLabel') }}</Label>
+                  <Select
+                    :model-value="generalForm.locale"
+                    @update:model-value="(value) => (generalForm.locale = String(value))"
+                  >
+                    <SelectTrigger id="g-sprache">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="de">{{ $t('settings.localeDe') }}</SelectItem>
+                      <SelectItem value="de_DE">{{ $t('settings.localeDeDe') }}</SelectItem>
+                      <SelectItem value="de_AT">{{ $t('settings.localeDeAt') }}</SelectItem>
+                      <SelectItem value="de_CH">{{ $t('settings.localeDeCh') }}</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <p v-if="generalForm.errors.locale" class="err">{{ generalForm.errors.locale }}</p>
                 </div>
               </div>
@@ -183,18 +195,14 @@ function submitGeneral() {
             <div class="dlab">{{ $t('settings.workingDaysLabel') }}</div>
             <div class="grp">
               <div style="display: flex; flex-wrap: wrap; gap: var(--s4)">
-                <label
-                  v-for="day in weekdays"
-                  :key="day.value"
-                  style="display: flex; align-items: center; gap: 8px; font: 400 13px/1.4 var(--font)"
-                >
-                  <input
-                    type="checkbox"
-                    :checked="generalForm.working_days.includes(day.value)"
-                    @change="toggleWorkingDay(day.value)"
+                <div v-for="day in weekdays" :key="day.value" class="cbrow" style="gap: 8px">
+                  <Checkbox
+                    :id="`wd-${day.value}`"
+                    :model-value="generalForm.working_days.includes(day.value)"
+                    @update:model-value="toggleWorkingDay(day.value)"
                   />
-                  {{ $t(day.key) }}
-                </label>
+                  <Label :for="`wd-${day.value}`">{{ $t(day.key) }}</Label>
+                </div>
               </div>
               <span class="hint">{{ $t('settings.workingDaysHint') }}</span>
               <p v-if="generalForm.errors.working_days" class="err">{{ generalForm.errors.working_days }}</p>

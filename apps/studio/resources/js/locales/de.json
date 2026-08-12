@@ -4,7 +4,8 @@
     "save": "Speichern",
     "signOut": "Abmelden",
     "search": "Suchen",
-    "remove": "Entfernen"
+    "remove": "Entfernen",
+    "close": "Schließen"
   },
   "auth": {
     "signIn": "Anmelden",

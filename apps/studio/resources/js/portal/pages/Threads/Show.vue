@@ -2,6 +2,9 @@
 import { useForm } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Textarea } from '@/ui/textarea'
 
 type Message = {
   id: string
@@ -65,9 +68,8 @@ function send() {
 
     <form class="composer" style="margin-top: var(--s5)" @submit.prevent="send">
       <template v-if="!thread">
-        <input
+        <Input
           v-model="form.subject"
-          class="inp"
           type="text"
           style="margin-bottom: var(--s3)"
           :placeholder="$t('portal.messagesSubjectPlaceholder')"
@@ -75,13 +77,13 @@ function send() {
         <p v-if="form.errors.subject" class="err">{{ form.errors.subject }}</p>
       </template>
 
-      <textarea v-model="form.body" class="inp" rows="4" :placeholder="$t('portal.messagesBodyPlaceholder')" />
+      <Textarea v-model="form.body" rows="4" :placeholder="$t('portal.messagesBodyPlaceholder')" />
       <p v-if="form.errors.body" class="err">{{ form.errors.body }}</p>
 
       <div class="formfoot" style="margin-top: 0">
-        <button class="btn warm" type="submit" :disabled="form.processing">
+        <Button tone="warm" type="submit" :disabled="form.processing">
           {{ $t('portal.messagesSend') }}
-        </button>
+        </Button>
       </div>
     </form>
   </main>

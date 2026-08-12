@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
 
 type Branding = { displayName: string | null }
 
@@ -33,7 +36,7 @@ const subtitle = computed(() => [props.gallery.date, props.gallery.venue].filter
       <template v-if="unlocked">
         <h1 class="gtitle">{{ gallery.title }}</h1>
         <p class="gsub">{{ $t('gallery.unlockedHint') }}</p>
-        <a class="btn wide" :href="`/galerien/${gallery.id}/download`">{{ $t('gallery.downloadLink') }}</a>
+        <Button as="a" class="wide" :href="`/galerien/${gallery.id}/download`">{{ $t('gallery.downloadLink') }}</Button>
       </template>
 
       <template v-else>
@@ -41,14 +44,14 @@ const subtitle = computed(() => [props.gallery.date, props.gallery.venue].filter
         <p v-if="subtitle" class="gsub">{{ subtitle }}</p>
 
         <form @submit.prevent="submit">
-          <label class="field">
+          <Label class="field">
             <span>{{ $t('gallery.passwordLabel') }}</span>
-            <input v-model="form.password" type="password" autocomplete="off" required />
-          </label>
+            <Input v-model="form.password" type="password" autocomplete="off" required />
+          </Label>
 
-          <button class="btn wide" type="submit" :disabled="form.processing">
+          <Button class="wide" type="submit" :disabled="form.processing">
             {{ $t('gallery.passwordOpen') }}
-          </button>
+          </Button>
         </form>
 
         <div v-if="form.errors.password" class="err">
