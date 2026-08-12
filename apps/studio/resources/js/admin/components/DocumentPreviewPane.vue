@@ -48,13 +48,16 @@ const refreshFromServer = useDebounceFn(async () => {
 
     if (!response.ok) return
 
-    // A slower earlier request must not overwrite a newer answer: the local
-    // paint is allowed to lag because it announces itself as provisional, but
-    // a server answer that is silently behind would be indistinguishable from
-    // truth.
+    const responseHtml = await response.text()
+
+    // Re-checked after the body read, not before it: a slow body can outlast
+    // a newer request's entire round trip, and a guard with an await after it
+    // is not a guard. The local paint is allowed to lag because it announces
+    // itself as provisional, but a server answer that is silently behind
+    // would be indistinguishable from truth.
     if (id !== requestId) return
 
-    html.value = await response.text()
+    html.value = responseHtml
     stale.value = false
   } catch {
     // Offline or the request died: the preview is genuinely unconfirmed, so
