@@ -18,7 +18,6 @@ function submit() {
     <div class="authcard">
       <span class="brand">Nordlicht</span>
       <h1>{{ $t('auth.signInTitle') }}</h1>
-      <p class="hint" style="margin-bottom: var(--s5)">{{ $t('auth.signInHint') }}</p>
 
       <form @submit.prevent="submit">
         <p v-if="form.errors.email" class="flag" style="margin-bottom: var(--s4)">

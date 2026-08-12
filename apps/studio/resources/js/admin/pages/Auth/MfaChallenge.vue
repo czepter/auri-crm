@@ -13,7 +13,6 @@ function submit() {
     <div class="authcard">
       <span class="brand">Nordlicht</span>
       <h1>{{ $t('auth.mfaTitle') }}</h1>
-      <p class="hint" style="margin-bottom: var(--s5)">{{ $t('auth.mfaHint') }}</p>
 
       <form @submit.prevent="submit">
         <p v-if="form.errors.code" class="flag" style="margin-bottom: var(--s4)">

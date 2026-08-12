@@ -35,11 +35,10 @@ class ClientAccessLink extends Notification implements Transactional
         $message = (new MailMessage)
             ->subject('Ihr Zugang zum Kundenbereich')
             ->greeting("Hallo {$this->contact->name},")
-            ->line('hier ist Ihr Zugang zum Kundenbereich von Atelier Nordlicht.')
             ->action('Kundenbereich öffnen', $this->url)
             // Said plainly, because a link that stops working without warning
             // reads as a broken system rather than as a deliberate one.
-            ->line('Der Link gilt '.ClientAccess::VALID_FOR_MINUTES.' Minuten und lässt sich einmal öffnen.')
+            ->line('Der Link gilt '.ClientAccess::VALID_FOR_MINUTES.' Minuten und funktioniert einmal.')
             ->line('Wenn Sie das nicht angefordert haben, können Sie diese E-Mail ignorieren.');
 
         // T-06: from/reply-to/BCC and the signature+legal footer, resolved

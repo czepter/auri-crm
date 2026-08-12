@@ -124,7 +124,7 @@ it('omits the footer line entirely when the studio has entered no legal particul
     // No signature, no legal particulars — the outro carries only the
     // notification's own body lines, no blank trailing line.
     expect($message->outroLines)->toBe([
-        'Der Link gilt 15 Minuten und lässt sich einmal öffnen.',
+        'Der Link gilt 15 Minuten und funktioniert einmal.',
         'Wenn Sie das nicht angefordert haben, können Sie diese E-Mail ignorieren.',
     ]);
 });

@@ -68,9 +68,7 @@ function sign() {
   <PortalHeader :contact="contact" :show-switcher="showSwitcher" />
 
   <main class="pwrap wide">
-    <div class="kick">{{ $t('portal.contractKicker') }}</div>
     <h1>{{ $t('portal.contractTitle') }}</h1>
-    <p class="plead">{{ $t('portal.contractLead') }}</p>
 
     <div v-if="contract" class="split" style="margin-top: var(--s5)">
       <div>
@@ -131,7 +129,6 @@ function sign() {
                 {{ $t('portal.signSubmit') }}
               </button>
 
-              <p class="legal" style="margin-top: var(--s3)">{{ $t('portal.signLegal') }}</p>
             </form>
           </div>
         </div>

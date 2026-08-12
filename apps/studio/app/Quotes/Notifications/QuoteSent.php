@@ -18,8 +18,11 @@ use Illuminate\Support\Number;
  * that flips the quote to sent, per the issue's own reasoning that a single
  * quote email is not worth the queue M-00 shipped.
  *
- * No link to a portal quote screen — that screen is Q-07's, and does not
- * exist yet.
+ * Links to Q-07's portal quote screen, but only when the studio has made the
+ * project portal_visible: the portal route is a 404 for every other project,
+ * and a button into a 404 is worse than no button. Signing in is the portal's
+ * own problem from there — the link lands on the magic-link screen when the
+ * contact has no session, same as any other portal URL.
  *
  * T-11: NOT Transactional — a quote is business content about something that
  * already happened elsewhere (SendQuote's own DB write), not a credential
@@ -41,14 +44,19 @@ class QuoteSent extends Notification
         $message = (new MailMessage)
             ->subject("Ihr Angebot {$this->quote->number}")
             ->greeting('Hallo,')
-            ->line("wir haben Ihnen ein neues Angebot ({$this->quote->number}) zugestellt.")
             ->line('Gesamtbetrag: '.Number::currency($this->quote->net / 100, in: 'EUR', locale: 'de'));
 
         if ($this->quote->valid_until !== null) {
             $message->line("Das Angebot ist gültig bis {$this->quote->valid_until->format('d.m.Y')}.");
         }
 
-        $message->line('Bei Fragen melden Sie sich gerne bei uns.');
+        // Raw url() for the same reason the unsubscribe line below uses one.
+        if ($this->quote->project->portal_visible) {
+            $message->action(
+                'Angebot ansehen',
+                url("/projekte/{$this->quote->project->public_id}/angebot")
+            );
+        }
 
         // T-11: the unsubscribe every non-transactional mail must carry.
         // Raw url() rather than route('portal.unsubscribe.show', ...) — this
@@ -58,7 +66,7 @@ class QuoteSent extends Notification
         // same way, one surface over).
         if ($notifiable instanceof Contact) {
             $message->line(
-                'Diese Mail ist keine Pflichtmitteilung. [Abmeldung verwalten]('
+                '[Benachrichtigungen abbestellen]('
                 .url("/abmelden/{$notifiable->public_id}").')'
             );
         }

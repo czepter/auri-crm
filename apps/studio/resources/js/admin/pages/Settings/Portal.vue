@@ -94,7 +94,6 @@ function submit() {
             <div class="fld">
               <label for="po-wartungstext">{{ $t('portalSettings.maintenanceMessageLabel') }} <em>{{ $t('settings.optional') }}</em></label>
               <textarea id="po-wartungstext" v-model="form.portal_maintenance_message" class="inp" rows="3"></textarea>
-              <span class="hint">{{ $t('portalSettings.maintenanceMessageHint') }}</span>
               <p v-if="form.errors.portal_maintenance_message" class="err">{{ form.errors.portal_maintenance_message }}</p>
             </div>
           </div>
@@ -106,7 +105,6 @@ function submit() {
             <div class="fld">
               <label for="po-willkommen">{{ $t('portalSettings.welcomeTextLabel') }} <em>{{ $t('settings.optional') }}</em></label>
               <textarea id="po-willkommen" v-model="form.portal_welcome_text" class="inp" rows="3"></textarea>
-              <span class="hint">{{ $t('portalSettings.welcomeTextHint') }}</span>
               <p v-if="form.errors.portal_welcome_text" class="err">{{ form.errors.portal_welcome_text }}</p>
             </div>
           </div>
@@ -127,7 +125,6 @@ function submit() {
                 <p v-if="form.errors.portal_legal_agb_url" class="err">{{ form.errors.portal_legal_agb_url }}</p>
               </div>
             </div>
-            <span class="hint">{{ $t('portalSettings.legalUrlHint') }}</span>
           </div>
         </div>
 
@@ -141,28 +138,24 @@ function submit() {
               <input v-model="form.portal_accept_quotes_enabled" type="checkbox" />
               {{ $t('portalSettings.acceptQuotesEnabledLabel') }}
             </label>
-            <span class="hint">{{ $t('portalSettings.acceptQuotesEnabledHint') }}</span>
           </div>
           <div class="grp">
             <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
               <input v-model="form.portal_sign_contracts_enabled" type="checkbox" />
               {{ $t('portalSettings.signContractsEnabledLabel') }}
             </label>
-            <span class="hint">{{ $t('portalSettings.signContractsEnabledHint') }}</span>
           </div>
           <div class="grp">
             <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
               <input v-model="form.portal_payment_status_enabled" type="checkbox" />
               {{ $t('portalSettings.paymentStatusEnabledLabel') }}
             </label>
-            <span class="hint">{{ $t('portalSettings.paymentStatusEnabledHint') }}</span>
           </div>
           <div class="grp">
             <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
               <input v-model="form.portal_messaging_enabled" type="checkbox" />
               {{ $t('portalSettings.messagingEnabledLabel') }}
             </label>
-            <span class="hint">{{ $t('portalSettings.messagingEnabledHint') }}</span>
           </div>
         </div>
       </form>

@@ -129,7 +129,6 @@ function runPreview() {
               </button>
             </div>
           </form>
-          <span class="hint" style="display: block; margin-top: var(--s3)">{{ $t('taskTemplates.previewHint') }}</span>
 
           <div v-if="preview" class="card static" style="margin-top: var(--s4)">
             <p v-if="preview.length === 0" class="hint" style="margin: 0">{{ $t('taskTemplates.previewEmpty') }}</p>

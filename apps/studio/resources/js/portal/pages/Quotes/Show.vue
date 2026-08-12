@@ -66,9 +66,7 @@ function accept() {
   <PortalHeader :contact="contact" :show-switcher="showSwitcher" />
 
   <main class="pwrap">
-    <div class="kick">{{ $t('portal.quoteKicker') }}</div>
     <h1>{{ $t('portal.quoteTitle') }}</h1>
-    <p class="plead">{{ $t('portal.quoteLead') }}</p>
 
     <div v-if="quote" class="card static" style="margin-top: var(--s5)">
       <div class="cardhead">

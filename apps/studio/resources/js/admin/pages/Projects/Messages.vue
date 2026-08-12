@@ -61,6 +61,6 @@ function send() {
       </form>
     </template>
 
-    <p v-else class="hint">{{ $t('project.messagesNone') }}</p>
+    <p v-else class="hint">{{ $t('project.messagesEmpty') }}</p>
   </AdminLayout>
 </template>

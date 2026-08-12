@@ -80,7 +80,6 @@ function initials(name: string) {
           <select id="role" v-model="form.role" class="inp">
             <option v-for="role in roles" :key="role.value" :value="role.value">{{ role.label }}</option>
           </select>
-          <p class="hint">{{ $t('team.roleHint') }}</p>
         </div>
         <div class="fld wide">
           <div class="formfoot" style="margin-top: 0">

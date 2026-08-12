@@ -35,15 +35,17 @@ class StaffInvited extends Notification implements Transactional
 
     public function toMail(object $notifiable): MailMessage
     {
+        $studio = $this->settings->displayName();
+
         $message = (new MailMessage)
-            ->subject('Zugang zum Studio von Atelier Nordlicht')
+            ->subject($studio === null ? 'Zugang zum Studio' : "Zugang zum Studio von {$studio}")
             ->greeting("Hallo {$this->invitation->name},")
             ->line("{$this->invitation->invitedBy->name} hat dich als {$this->invitation->role->label()} eingeladen.")
             ->action('Zugang einrichten', $this->url)
             ->line('Der Link gilt '.StaffInvitation::VALID_FOR_DAYS.' Tage.')
             // Said plainly here, because meeting an authenticator app
             // unannounced is where people abandon a setup link.
-            ->line('Im Anschluss richtest du die Bestätigung in zwei Schritten ein — ohne sie ist das Konto nicht nutzbar.');
+            ->line('Danach richtest du die Zwei-Faktor-Bestätigung ein.');
 
         // T-06: from/reply-to/BCC and the signature+legal footer, resolved
         // per tenant at send time rather than from MAIL_FROM_ADDRESS.
