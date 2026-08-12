@@ -69,6 +69,52 @@ Example:
 <p>Vertrag mit {{ contact.name }} über {{ project.name }} ({{ project.type }}).</p>
 ```
 
+## Authoring: the block editor
+
+A template's wording is edited as blocks, not as HTML.
+`document_templates.blocks` holds Editor.js JSON and is the edit source of
+truth; `body` is the HTML those blocks serialize to
+(`resources/js/admin/documents/blocks/serialize.ts`) and keeps its exact
+former meaning — `MergeFieldResolver`, `DocumentRenderer` and
+`RenderContractJob` know nothing about blocks.
+
+Which blocks a document type may use is `App\Documents\Support\
+DocumentBlockCatalog` — one list, read both by the inserter palette and by
+save validation, so what staff are offered and what the server accepts cannot
+drift. A block type there with no case in `serialize.ts` renders to nothing;
+add both in the same commit.
+
+A template written before the editor existed has `blocks` null. It is
+imported into a single `rawHtml` block the first time someone opens it, and
+that import is persisted only if they save — a template nobody edits is never
+rewritten.
+
+Merge fields are an inline tool: a `<span data-mf="contact.name">` showing the
+sample value while editing, serialized back to `{{ contact.name }}`. The
+vocabulary the picker offers is `MergeFieldVocabulary::samples()`, the same
+constant the preview resolves against.
+
+## Sanitising block HTML
+
+Editor.js applies each tool's `sanitize` config when it *saves*, inside a live
+browser editor. A `blocks` payload POSTed straight at the controller never
+meets it, so `App\Documents\Support\InlineHtmlSanitizer` re-applies the
+allow-list on the write path, in both `store()` and `update()`, before
+anything is persisted. That is the copy that holds.
+
+`resources/js/admin/documents/blocks/sanitizeInline.ts` carries the same list
+for the read path, because a tool constructed from stored data assigns it
+straight into a `contenteditable`. Keep the two lists identical — a tag
+allowed on one side and not the other is either a hole or a silently stripped
+feature. The chip's `data-mf` in particular must stay allowed on both: the
+serializer reads it back to rebuild `{{ contact.name }}`.
+
+`script`, `style`, `img`, `iframe`, `object` and `embed` are dropped whole
+rather than unwrapped. Every other disallowed tag is unwrapped, keeping the
+author's text — a `<div>` wraps prose someone wrote, while a `<script>` wraps
+machine source that was never document text and would otherwise land in a PDF
+a client reads.
+
 ## Letterhead and footer
 
 `App\Documents\Support\DocumentRenderer` wraps a Contract or Quote's
