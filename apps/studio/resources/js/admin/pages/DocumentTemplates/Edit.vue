@@ -42,10 +42,12 @@ function submit() {
         <div class="kick">{{ $t('documentTemplates.title') }} · {{ template.typeLabel }}</div>
         <h1>{{ template.name }}</h1>
       </div>
+      <Button as="a" href="/dokumentvorlagen" variant="ghost">{{ $t('common.cancel') }}</Button>
       <Button type="button" :disabled="form.processing" @click="submit">{{ $t('common.save') }}</Button>
     </div>
     <p class="hint">{{ $t('documentTemplates.version', { version: template.version }) }} · {{ $t('documentTemplates.editHint') }}</p>
     <p v-if="form.errors.blocks" class="err">{{ form.errors.blocks }}</p>
+    <p v-if="form.errors.body" class="err">{{ form.errors.body }}</p>
 
     <div class="fld" style="max-width: 420px">
       <Label for="name">{{ $t('documentTemplates.name') }}</Label>

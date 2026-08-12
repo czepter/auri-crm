@@ -8,7 +8,7 @@ import Delimiter from '@editorjs/delimiter'
 import Table from '@editorjs/table'
 import { buildTools } from '@/admin/documents/blocks/tools'
 import { createMergeFieldTool } from '@/admin/documents/blocks/mergeFieldTool'
-import { CalloutTool, ColumnsTool, ImageTool, SpacerTool } from '@/admin/documents/blocks/customTools'
+import { CalloutTool, ColumnsTool, ImageTool, RawHtmlTool, SpacerTool } from '@/admin/documents/blocks/customTools'
 import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
 
 // The Editor.js shell. Vanilla instance rather than a wrapper package: the
@@ -54,6 +54,9 @@ function create(data: EditorDocument): EditorJS {
     placeholder: 'Text schreiben oder / für Bausteine',
     tools: {
       ...buildTools(props.palette, registry),
+      // Never in the palette, always registered: this is the block every
+      // pre-editor template imports into, and without a tool Editor.js drops it.
+      rawHtml: RawHtmlTool,
       mergeField: { class: createMergeFieldTool(props.mergeFields) },
     },
     // Editor.js fires onChange on every keystroke; save() is cheap (it walks

@@ -328,7 +328,6 @@
     "title": "Dokumentvorlagen",
     "create": "Neue Vorlage",
     "createTitle": "Vorlage anlegen",
-    "editTitle": "Vorlage bearbeiten",
     "editHint": "Speichern legt eine neue Version an. Erzeugte Dokumente bleiben unverändert.",
     "name": "Name",
     "body": "Text",
@@ -338,14 +337,12 @@
     "shootKind": "Shooting-Art",
     "shootKindAny": "Jede Art",
     "allTypes": "Alle",
-    "preview": "Vorschau",
     "empty": "Keine Dokumentvorlagen.",
     "previewLabel": "Vorschau · Beispieldaten",
     "previewFresh": "aktuell",
     "previewStale": "wird geprüft",
     "letterhead": "Briefkopf · aus Einstellungen",
-    "footer": "Fußzeile · aus Einstellungen",
-    "blocksError": "Baustein für diesen Dokumenttyp nicht erlaubt"
+    "footer": "Fußzeile · aus Einstellungen"
   },
   "settings": {
     "kicker": "Einstellungen",

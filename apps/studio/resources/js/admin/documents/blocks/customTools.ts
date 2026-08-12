@@ -168,3 +168,31 @@ export class ImageTool {
     return { url: this.url.value.trim(), caption: this.caption.value }
   }
 }
+
+/**
+ * data: { html: string } — a pre-block-editor body, kept verbatim.
+ *
+ * Deliberately has no `toolbox` getter, so Editor.js will render an existing
+ * block of this type but never offer it in the inserter: it is what a legacy
+ * body is imported into, not something an author creates. A textarea rather
+ * than a rendered preview because the point is that the author can read the
+ * old markup, keep it, edit it, or delete the block and rebuild in blocks.
+ */
+export class RawHtmlTool {
+  private element: HTMLTextAreaElement
+
+  constructor({ data }: { data: { html?: string } }) {
+    this.element = document.createElement('textarea')
+    this.element.className = 'doc-tool-input doc-rawhtml'
+    this.element.rows = 8
+    this.element.value = data?.html ?? ''
+  }
+
+  render(): HTMLElement {
+    return this.element
+  }
+
+  save(): { html: string } {
+    return { html: this.element.value }
+  }
+}

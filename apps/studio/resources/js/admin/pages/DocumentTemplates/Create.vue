@@ -40,9 +40,11 @@ function submit() {
         <div class="kick">{{ $t('documentTemplates.title') }}</div>
         <h1>{{ $t('documentTemplates.createTitle') }}</h1>
       </div>
+      <Button as="a" href="/dokumentvorlagen" variant="ghost">{{ $t('common.cancel') }}</Button>
       <Button type="button" :disabled="form.processing" @click="submit">{{ $t('common.save') }}</Button>
     </div>
     <p v-if="form.errors.blocks" class="err">{{ form.errors.blocks }}</p>
+    <p v-if="form.errors.body" class="err">{{ form.errors.body }}</p>
 
     <div class="doc-meta">
       <div class="fld">

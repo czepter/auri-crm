@@ -81,6 +81,7 @@
 .doc-tool-input::placeholder { color: var(--faint); }
 .doc-tool-input:hover { border-color: var(--line-hover); }
 .doc-tool-input:focus { border-color: var(--accent); outline: none; }
+.doc-rawhtml { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 12px; line-height: 1.5; }
 
 /* custom block tools */
 .doc-editable:empty::before { content: attr(data-placeholder); color: var(--faint); }
