@@ -135,13 +135,13 @@ export class ImageTool {
 
   constructor({ data }: { data: { url?: string; caption?: string } }) {
     this.url = document.createElement('input')
-    this.url.className = 'inp'
+    this.url.className = 'doc-tool-input'
     this.url.type = 'url'
     this.url.placeholder = 'https://…'
     this.url.value = data?.url ?? ''
 
     this.caption = document.createElement('input')
-    this.caption.className = 'inp'
+    this.caption.className = 'doc-tool-input'
     this.caption.type = 'text'
     this.caption.placeholder = 'Bildunterschrift'
     this.caption.value = data?.caption ?? ''

@@ -42,7 +42,7 @@ export function createMergeFieldTool(fields: MergeField[]) {
       picker.className = 'doc-mf-picker'
 
       const search = document.createElement('input')
-      search.className = 'inp'
+      search.className = 'doc-tool-input'
       search.type = 'search'
       picker.append(search)
 

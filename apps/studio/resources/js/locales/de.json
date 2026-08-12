@@ -332,14 +332,20 @@
     "editHint": "Speichern legt eine neue Version an. Erzeugte Dokumente bleiben unverändert.",
     "name": "Name",
     "body": "Text",
-    "bodyHint": "HTML. Platzhalter in doppelten geschweiften Klammern, z. B. project.name",
+    "bodyHint": "Bausteine über + oder /",
     "version": "v{version}",
     "type": "Dokumenttyp",
     "shootKind": "Shooting-Art",
     "shootKindAny": "Jede Art",
     "allTypes": "Alle",
     "preview": "Vorschau",
-    "empty": "Keine Dokumentvorlagen."
+    "empty": "Keine Dokumentvorlagen.",
+    "previewLabel": "Vorschau · Beispieldaten",
+    "previewFresh": "aktuell",
+    "previewStale": "wird geprüft",
+    "letterhead": "Briefkopf · aus Einstellungen",
+    "footer": "Fußzeile · aus Einstellungen",
+    "blocksError": "Baustein für diesen Dokumenttyp nicht erlaubt"
   },
   "settings": {
     "kicker": "Einstellungen",
