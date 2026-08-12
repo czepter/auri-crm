@@ -38,6 +38,12 @@ test('a template written in blocks previews with sample data and survives a relo
   const preview = page.frameLocator('.doc-previewframe')
   await expect(preview.getByText('Lena Meier')).toBeVisible({ timeout: 5000 })
 
+  // The content assertion above passes on the instant local paint alone: the
+  // client fills the same sample values the server would. This is the only
+  // signal that separates "painted locally" from "the server rendered it" —
+  // stale flips to false solely on a successful /vorschau response.
+  await expect(page.getByText('aktuell')).toBeVisible({ timeout: 10000 })
+
   await page.getByRole('button', { name: 'Speichern' }).click()
   await expect(page).toHaveURL('/dokumentvorlagen')
 
