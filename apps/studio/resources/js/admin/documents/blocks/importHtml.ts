@@ -15,10 +15,10 @@ export function htmlToBlocks(html: string): EditorDocument {
 // always overwrites it, and MergeFieldResolver remains the only thing that
 // decides what a real document says.
 //
-// ponytail: a plain regex, not a resolver. It matches MergeFieldResolver's
-// {{ path }} form and its empty-string-for-unknown behaviour; if the two ever
-// need to agree on more than that, this should be replaced by a server round
-// trip rather than grown into a second engine.
+// ponytail: a plain regex, not a resolver. Pattern is identical to
+// MergeFieldResolver::PATTERN on the PHP side — do not change it without
+// updating both. If agreement grows beyond the form and empty-string-for-unknown
+// behaviour, replace with a server round trip rather than a second engine.
 export function fillSamples(html: string, samples: Record<string, string>): string {
-  return html.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_match, path: string) => samples[path] ?? '')
+  return html.replace(/\{\{\s*([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*)\s*\}\}/g, (_match, path: string) => samples[path] ?? '')
 }

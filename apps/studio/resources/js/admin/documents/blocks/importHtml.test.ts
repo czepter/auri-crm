@@ -37,4 +37,10 @@ describe('fillSamples', () => {
   it('leaves html without placeholders untouched', () => {
     expect(fillSamples('<p>nichts</p>', samples)).toBe('<p>nichts</p>')
   })
+
+  it('leaves a malformed path alone, exactly as MergeFieldResolver does', () => {
+    expect(fillSamples('<p>{{ contact..name }}</p>', samples)).toBe('<p>{{ contact..name }}</p>')
+    expect(fillSamples('<p>{{ .contact }}</p>', samples)).toBe('<p>{{ .contact }}</p>')
+    expect(fillSamples('<p>{{ contact. }}</p>', samples)).toBe('<p>{{ contact. }}</p>')
+  })
 })
