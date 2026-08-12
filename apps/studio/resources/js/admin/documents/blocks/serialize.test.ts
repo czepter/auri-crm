@@ -92,8 +92,24 @@ describe('safety and unknown input', () => {
     expect(stripUnsafeHrefs('<a href="mailto:a@b.test">x</a>')).toBe('<a href="mailto:a@b.test">x</a>')
   })
 
+  it('drops an unsafe href regardless of how it is quoted', () => {
+    expect(stripUnsafeHrefs(`<a href='javascript:alert(1)'>x</a>`)).toBe('<a>x</a>')
+    expect(stripUnsafeHrefs('<a href=javascript:alert(1)>x</a>')).toBe('<a>x</a>')
+    expect(stripUnsafeHrefs('<a href = "javascript:alert(1)">x</a>')).toBe('<a>x</a>')
+  })
+
+  it('keeps a safe href regardless of how it is quoted', () => {
+    expect(stripUnsafeHrefs(`<a href='https://x.test'>x</a>`)).toBe(`<a href='https://x.test'>x</a>`)
+    expect(stripUnsafeHrefs('<a href=https://x.test>x</a>')).toBe('<a href=https://x.test>x</a>')
+  })
+
   it('strips an unsafe href out of paragraph text on the way through', () => {
     expect(serialize(doc({ type: 'paragraph', data: { text: '<a href="javascript:x()">klick</a>' } }), 'print'))
+      .toBe('<p><a>klick</a></p>')
+  })
+
+  it('strips an unsafe single-quoted href out of paragraph text on the way through', () => {
+    expect(serialize(doc({ type: 'paragraph', data: { text: `<a href='javascript:x()'>klick</a>` } }), 'print'))
       .toBe('<p><a>klick</a></p>')
   })
 

@@ -8,13 +8,20 @@ import type { EditorBlock, EditorDocument, SerializeProfile } from './types'
 // Inline markup inside a block (bold, links, merge-field chips) arrives
 // already restricted by each tool's Editor.js `sanitize` config, so this file
 // does not re-sanitise it. The one exception is href, which is re-checked
-// here because a mail body reaches an inbox we never render ourselves.
+// here because a mail body reaches an inbox we never render ourselves. We
+// match all three href quoting styles (double, single, unquoted) because the
+// serializer's input is not guaranteed to have come from the editor.
 
 const SPACER_HEIGHTS: Record<string, string> = { s: '12px', m: '24px', l: '48px' }
 const SAFE_URL = /^(https?:|mailto:)/i
+const HREF = /\s+href\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi
 
 export function stripUnsafeHrefs(html: string): string {
-  return html.replace(/\s+href="([^"]*)"/gi, (match, url: string) => (SAFE_URL.test(url.trim()) ? match : ''))
+  return html.replace(HREF, (match, double: string, single: string, bare: string) => {
+    const url = (double ?? single ?? bare ?? '').trim()
+
+    return SAFE_URL.test(url) ? match : ''
+  })
 }
 
 function escapeText(value: string): string {
