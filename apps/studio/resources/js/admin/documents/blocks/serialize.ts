@@ -32,8 +32,10 @@ function escapeText(value: string): string {
     .replace(/"/g, '&quot;')
 }
 
+const MERGE_CHIP = /<span[^>]*data-mf="([\w.]+)"[^>]*>.*?<\/span>/gi
+
 function inline(value: unknown): string {
-  return stripUnsafeHrefs(String(value ?? ''))
+  return stripUnsafeHrefs(String(value ?? '').replace(MERGE_CHIP, (_match, path: string) => `{{ ${path} }}`))
 }
 
 /** @editorjs/list v1 gives plain strings, v2 gives {content, items}. Accept both. */

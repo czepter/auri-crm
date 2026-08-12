@@ -122,4 +122,11 @@ describe('safety and unknown input', () => {
     expect(serialize(doc({ type: 'paragraph', data: { text: 'a' } }, { type: 'paragraph', data: { text: 'b' } }), 'print'))
       .toBe('<p>a</p>\n<p>b</p>')
   })
+
+  it('turns a merge-field chip back into the placeholder MergeFieldResolver understands', () => {
+    const chip = '<span class="doc-mf" data-mf="contact.name" contenteditable="false">Lena Meier</span>'
+
+    expect(serialize(doc({ type: 'paragraph', data: { text: `Hallo ${chip}` } }), 'print'))
+      .toBe('<p>Hallo {{ contact.name }}</p>')
+  })
 })
