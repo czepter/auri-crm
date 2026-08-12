@@ -12,12 +12,15 @@ use App\Gallery\Models\Gallery;
 use App\Media\Enums\MultipartUploadStatus;
 use App\Media\Models\MultipartUpload;
 use App\Models\User;
+use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
 use Aws\MockHandler;
 use Aws\S3\S3Client;
 use Illuminate\Routing\RouteCollection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -38,7 +41,27 @@ pest()->extend(TestCase::class)
     // and the root view. Resolving the real manifest would make the PHP suite
     // depend on `pnpm build` having run first. The manifest stays proven by the
     // `web` job and by Playwright, which run against a real build.
-    ->beforeEach(fn () => $this->withoutVite())
+    ->beforeEach(function () {
+        $this->withoutVite();
+
+        // Every feature test exercises a studio that has already finished
+        // onboarding — RequireStudioOnboarding would otherwise redirect any
+        // authenticated GET in this directory to /einrichtung/studio.
+        // tests/Feature/Settings/OnboardingTest.php resets this per test to
+        // exercise the unfinished state on purpose.
+        //
+        // StudioSettingsResolver reads through the `redis` store by name (see
+        // its own doc comment) and only busts that cache from its own set()/
+        // setLogo() — a raw query()->update() like this one does not, and
+        // Redis outlives any one test process, so a value cached by an
+        // earlier run would otherwise leak into this one. Flushing here is
+        // the same fix StudioSettingsAdminTest's own beforeEach already
+        // applies per-file; this makes it universal.
+        if (Schema::hasTable('studio_settings')) {
+            StudioSettings::query()->update(['onboarding_completed_at' => now()]);
+            Cache::store('redis')->flush();
+        }
+    })
     ->in('Feature');
 
 /*

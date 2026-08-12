@@ -33,6 +33,7 @@ use App\Http\Controllers\Staff\OAuthAuthorizationController;
 use App\Http\Controllers\Staff\OAuthTokenController;
 use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\SessionController;
+use App\Http\Controllers\Staff\SetupController;
 use App\Media\Http\Controllers\FailedAssetController;
 use App\Media\Http\Controllers\MediaIngestController;
 use App\Media\Http\Controllers\MultipartUploadController;
@@ -44,6 +45,7 @@ use App\Settings\Http\Controllers\NumberRangeController;
 use App\Settings\Http\Controllers\PaymentSettingsController;
 use App\Settings\Http\Controllers\PortalSettingsController;
 use App\Settings\Http\Controllers\StudioClosureController;
+use App\Settings\Http\Controllers\StudioOnboardingController;
 use App\Settings\Http\Controllers\StudioSettingsController;
 use Illuminate\Support\Facades\Route;
 
@@ -70,6 +72,11 @@ Route::get('/kalender/{token}/shootings.ics', [CalendarController::class, 'feed'
 // its PKCE verifier are the credential; see OAuthTokenController's own doc
 // comment for why that is enough without a client_secret.
 Route::post('/oauth/token', [OAuthTokenController::class, 'store'])->name('oauth.token');
+
+Route::middleware(['guest:staff', 'setup'])->group(function () {
+    Route::get('/einrichtung', [SetupController::class, 'create'])->name('setup');
+    Route::post('/einrichtung', [SetupController::class, 'store']);
+});
 
 // Staff surface. Session-authenticated, Inertia-rendered, never public.
 Route::middleware('guest:staff')->group(function () {
@@ -102,12 +109,15 @@ Route::middleware('audience:staff')->group(function () {
     Route::post('/auth/mfa/confirm', [MfaEnrollmentController::class, 'confirm']);
     Route::get('/auth/mfa/recovery-codes', [MfaEnrollmentController::class, 'recoveryCodes']);
 
-    Route::middleware('mfa')->group(function () {
+    Route::get('/einrichtung/studio', [StudioOnboardingController::class, 'show'])->name('onboarding');
+    Route::post('/einrichtung/studio/abschluss', [StudioOnboardingController::class, 'complete']);
+
+    Route::middleware('onboarding')->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
 
-        // N-04: the consent screen — gated behind confirmed MFA like every
-        // other sensitive staff screen below, since approving this hands out
-        // a token scoped to this person's own capabilities.
+        // N-04: the consent screen — approving it hands out a token scoped
+        // to this person's own capabilities, same as every other sensitive
+        // staff screen below.
         Route::get('/oauth/authorize', [OAuthAuthorizationController::class, 'create'])->name('oauth.authorize');
         Route::post('/oauth/authorize', [OAuthAuthorizationController::class, 'store'])->name('oauth.authorize.store');
 

@@ -9,6 +9,10 @@
 .env
 .env.backup
 .env.production
+# Stray sqlite file created if DB_CONNECTION falls through to the
+# config/database.php default (sqlite) with DB_DATABASE=studio, e.g. via
+# `php artisan` outside Docker without DB_CONNECTION=pgsql set.
+/studio
 .phpactor.json
 .phpunit.result.cache
 Homestead.json

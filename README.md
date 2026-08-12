@@ -22,7 +22,7 @@ request.
 
 | Surface | `APP_SURFACE` | Routes | Audience | Reachability |
 |---|---|---|---|---|
-| Admin | `admin` | `apps/studio/routes/admin.php` | Studio staff | Private, mandatory TOTP |
+| Admin | `admin` | `apps/studio/routes/admin.php` | Studio staff | Private, opt-in TOTP |
 | Portal | `portal` | `apps/studio/routes/portal.php` | Booked clients | Public, magic-link sign-in |
 | API | `api` | `apps/studio/routes/api.php` | The gallery, integrations, the MCP server | Public JSON |
 | Gallery | — | `apps/gallery` (Astro SSR) | Clients and wedding guests | Public |

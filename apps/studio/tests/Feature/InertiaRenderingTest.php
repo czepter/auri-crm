@@ -9,6 +9,10 @@ use Inertia\Testing\AssertableInertia as Assert;
 uses(RefreshDatabase::class);
 
 it('renders the login page as an inertia component', function () {
+    // A staff account has to exist for /login to render at all — an empty
+    // table sends every visitor to /einrichtung instead. See SetupTest.
+    User::factory()->create();
+
     $this->get('/login')
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->component('Auth/Login'));
@@ -38,6 +42,8 @@ it('names a page component that exists on disk', function (string $path, string 
 ]);
 
 it('renders through the admin root view', function () {
+    User::factory()->create();
+
     $response = $this->get('/login')->assertOk();
 
     expect($response->original->name())->toBe('app-admin');

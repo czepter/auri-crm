@@ -459,6 +459,26 @@
     "daySat": "Sa",
     "daySun": "So"
   },
+  "setup": {
+    "title": "Studio einrichten",
+    "hint": "Zuerst das Inhaber-Konto anlegen.",
+    "name": "Name",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "passwordConfirm": "Passwort bestätigen",
+    "submit": "Konto anlegen"
+  },
+  "onboarding": {
+    "stepProfile": "Studio-Profil",
+    "stepVat": "Umsatzsteuer",
+    "stepDocuments": "Dokumente",
+    "stepEmail": "E-Mail",
+    "stepPortal": "Portal",
+    "stepCount": "Schritt {current} von {total}",
+    "next": "Weiter",
+    "finish": "Fertigstellen",
+    "skip": "Später abschließen"
+  },
   "paymentSettings": {
     "title": "Zahlungen",
     "stripeSection": "Stripe",

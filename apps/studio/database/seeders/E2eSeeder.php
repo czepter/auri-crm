@@ -11,7 +11,9 @@ use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Enums\StaffRole;
 use App\Models\User;
+use App\Settings\Models\StudioSettings;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Accounts used only by the Playwright suite. Never registered in
@@ -21,6 +23,23 @@ class E2eSeeder extends Seeder
 {
     public function run(): void
     {
+        // db:seed --class=E2eSeeder is directly invocable and bypasses
+        // DatabaseSeeder's own guard — same reasoning as DatabaseSeeder,
+        // duplicated here because this seeder is never called from there.
+        if (app()->isProduction()) {
+            return;
+        }
+
+        // The Playwright accounts below sign in past this seeder's own
+        // wizard on purpose — E2eSeeder is idempotent fixture data, not a
+        // first-run scenario, and no spec here exercises /einrichtung/studio.
+        // The cache flush matters here too: StudioSettingsResolver reads
+        // through a redis-backed cache this raw update does not bust (see
+        // its own doc comment), and this seeder can run against a
+        // dev-server process that already has the pre-onboarding row cached.
+        StudioSettings::query()->update(['onboarding_completed_at' => now()]);
+        Cache::store('redis')->flush();
+
         User::updateOrCreate(
             ['email' => 'e2e-basic@studio.test'],
             [

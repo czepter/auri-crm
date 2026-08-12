@@ -23,7 +23,7 @@ match ($surface) {
 
 | Surface | Route file | Guard | Session cookie | Authenticated by |
 |---|---|---|---|---|
-| `admin` | `routes/admin.php` | `staff` | `studio_admin_session` | Password + mandatory TOTP |
+| `admin` | `routes/admin.php` | `staff` | `studio_admin_session` | Password, plus opt-in TOTP for whoever has enrolled |
 | `portal` | `routes/portal.php` | `portal` | `studio_portal_session` | Single-use magic link, 15 minutes |
 | `api` | `routes/api.php` | `api` | — (bearer only) | Sanctum token on a Contact, an `ApiToken`, or a staff OAuth token |
 
@@ -75,7 +75,8 @@ Other middleware in the global and per-route stacks:
 | Middleware | Does |
 |---|---|
 | `AssignRequestId` | Mints/echoes `X-Request-Id`, prepended globally on all three surfaces |
-| `RequireConfirmedMfa` | Staff MFA is mandatory; un-enrolled users are sent to enrollment, not shown an error |
+| `EnsureNoStaffExists` | Gates `/einrichtung`: 404s the moment any staff user exists, same as a route that was never registered |
+| `RequireStudioOnboarding` | Redirects GET requests to `/einrichtung/studio` until the studio's first-run settings wizard is completed |
 | `EnsureIdempotentWrite` | Every api write route: claims an idempotency row *before* the route runs, replays the cached response |
 | `EnsurePortalMaintenanceClosure` | Wraps the whole portal; the logo and the Impressum stay reachable from the closure screen |
 | `EnsureGalleryGate` | Declares which of a gallery's gates (password, download PIN) a route needs already satisfied |

@@ -2,6 +2,7 @@
 
 namespace App\Settings\Data;
 
+use App\Settings\Support\StudioSettingsResolver;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -59,4 +60,49 @@ class StudioSettingsData extends Data
         public ?string $mailSignature,
         public ?string $mailBcc,
     ) {}
+
+    public static function fromResolver(StudioSettingsResolver $settings): self
+    {
+        $attrs = $settings->attributes();
+
+        return new self(
+            id: $settings->publicId(),
+            displayName: $attrs['display_name'],
+            legalName: $attrs['legal_name'],
+            legalForm: $attrs['legal_form'],
+            street: $attrs['street'],
+            postcode: $attrs['postcode'],
+            city: $attrs['city'],
+            country: $attrs['country'],
+            taxNumber: $attrs['tax_number'],
+            vatId: $attrs['vat_id'],
+            registerNumber: $attrs['register_number'],
+            registerCourt: $attrs['register_court'],
+            representative: $attrs['representative'],
+            website: $attrs['website'],
+            accentColor: $attrs['accent_color'],
+            logoUrl: $settings->logoPath() !== null ? route('settings.logo') : null,
+            bankAccountHolder: $attrs['bank_account_holder'],
+            bankIban: $attrs['bank_iban'],
+            bankBic: $attrs['bank_bic'],
+            vatMode: $settings->vatMode(),
+            vatRate: $settings->vatRate(),
+            vatNote: $settings->vatNote(),
+            quoteValidityDays: $settings->quoteValidityDays(),
+            paymentTermDays: $settings->paymentTermDays(),
+            depositPercentage: $settings->depositPercentage(),
+            widerrufIncluded: $settings->widerrufIncluded(),
+            widerrufText: $settings->widerrufText(),
+            documentLetterheadHtml: $settings->documentLetterheadHtml(),
+            documentFooterHtml: $settings->documentFooterHtml(),
+            timezone: $settings->timezone(),
+            locale: $settings->locale(),
+            workingDays: $settings->workingDays(),
+            mailFromName: $settings->mailFromName(),
+            mailFromAddress: $settings->mailFromAddress(),
+            mailReplyTo: $settings->mailReplyTo(),
+            mailSignature: $settings->mailSignature(),
+            mailBcc: $settings->mailBcc(),
+        );
+    }
 }

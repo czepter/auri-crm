@@ -16,6 +16,7 @@ services:
       - composer-cache:/tmp/composer
     environment: &studio-environment
       COMPOSER_HOME: /tmp/composer
+      DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: 5432
       DB_DATABASE: studio
@@ -75,6 +76,7 @@ services:
     environment:
       COMPOSER_HOME: /tmp/composer
       APP_SURFACE: admin
+      DB_CONNECTION: pgsql
       DB_HOST: postgres
       DB_PORT: 5432
       DB_DATABASE: studio

@@ -158,6 +158,13 @@ it('issues no more queries for eleven cards spanning several closures than it di
         leadOn(sprintf('2026-%02d-14', $i), name: "Projekt {$i}");
     }
 
+    // Warms StudioSettingsResolver's own redis-backed cache (read once by
+    // RequireStudioOnboarding on every GET) before either measurement below
+    // — otherwise only the first of the two request/response cycles pays
+    // that one-off cache-miss query, and the two counts this test compares
+    // are no longer measuring the same thing.
+    boardProps();
+
     DB::enableQueryLog();
     boardProps();
     $withoutClosures = count(DB::getRawQueryLog());

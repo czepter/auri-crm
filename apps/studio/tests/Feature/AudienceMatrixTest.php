@@ -20,8 +20,12 @@ const PUBLIC_ROUTES = [
     // second by someone locked out of the one they have. Both are authorised
     // by a token in the path, and neither grants access on its own — an
     // invited account lands on MFA enrollment, and a reset signs nobody in.
+    // ...and einrichtung is the same shape one step earlier: EnsureNoStaffExists
+    // is the credential — reachable only while the tenant has no staff account
+    // at all, closed forever the moment one exists.
     'admin' => [
         'login',
+        'einrichtung',
         'auth/mfa',
         'kalender/{token}/shootings.ics',
         'einladung/{token}',
