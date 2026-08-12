@@ -88,3 +88,26 @@ it('scopes forShootKind to the generic templates plus the matching variant', fun
 
     expect($offered->sort()->values()->all())->toBe(collect([$generic->id, $wedding->id])->sort()->values()->all());
 });
+
+it('carries blocks into a new version alongside the body', function () {
+    $template = DocumentTemplate::factory()->create([
+        'body' => '<p>alt</p>',
+        'blocks' => ['blocks' => [['type' => 'paragraph', 'data' => ['text' => 'alt']]]],
+    ]);
+
+    $version = $template->newVersion([
+        'name' => $template->name,
+        'body' => '<p>neu</p>',
+        'blocks' => ['blocks' => [['type' => 'paragraph', 'data' => ['text' => 'neu']]]],
+    ]);
+
+    expect($version->version)->toBe(2)
+        ->and($version->blocks['blocks'][0]['data']['text'])->toBe('neu')
+        ->and($template->fresh()->blocks['blocks'][0]['data']['text'])->toBe('alt');
+});
+
+it('leaves blocks null for a template written before the editor existed', function () {
+    $template = DocumentTemplate::factory()->create(['body' => '<p>alt</p>', 'blocks' => null]);
+
+    expect($template->fresh()->blocks)->toBeNull();
+});

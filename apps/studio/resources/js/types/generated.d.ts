@@ -277,6 +277,7 @@ export type DocumentTemplateData = {
 id: string,
 name: string,
 body: string,
+blocks: Record<string, any> | null,
 version: number,
 type: string,
 typeLabel: string,
