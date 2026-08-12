@@ -8,6 +8,7 @@ use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentBlockCatalog;
 use App\Documents\Support\DocumentRenderer;
+use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Documents\Support\SafeHtml;
@@ -82,9 +83,17 @@ class DocumentTemplateController extends Controller
             'blocks' => ['nullable', 'array'],
             'blocks.blocks' => ['nullable', 'array'],
             'blocks.blocks.*.type' => ['required_with:blocks.blocks', 'string'],
+            // Laravel's validated() rebuilds its output strictly from declared
+            // rule paths — without this, every block's own content is silently
+            // dropped and only its type reaches storage.
+            'blocks.blocks.*.data' => ['nullable', 'array'],
         ]);
 
         $this->assertBlocksAllowed($request, DocumentTemplateType::from($validated['type']));
+
+        if (isset($validated['blocks']) && is_array($validated['blocks'])) {
+            $validated['blocks'] = InlineHtmlSanitizer::blocks($validated['blocks']);
+        }
 
         $template = DocumentTemplate::createFirstVersion($validated);
 
@@ -130,9 +139,16 @@ class DocumentTemplateController extends Controller
             'blocks' => ['nullable', 'array'],
             'blocks.blocks' => ['nullable', 'array'],
             'blocks.blocks.*.type' => ['required_with:blocks.blocks', 'string'],
+            // See the matching rule in store(): without it, validated() drops
+            // every block's content and keeps only its type.
+            'blocks.blocks.*.data' => ['nullable', 'array'],
         ]);
 
         $this->assertBlocksAllowed($request, $documentTemplate->type);
+
+        if (isset($validated['blocks']) && is_array($validated['blocks'])) {
+            $validated['blocks'] = InlineHtmlSanitizer::blocks($validated['blocks']);
+        }
 
         // Never $documentTemplate->update(...): this is the seam that keeps
         // every already-rendered document's template row exactly as it was.
