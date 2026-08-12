@@ -82,6 +82,12 @@ watch(
   async () => {
     if (editor === null) return
 
+    // Editor.js attaches save()/destroy() to the instance only after its
+    // internal isReady promise resolves — before that they are undefined, and
+    // a palette change arriving in that window would throw and leave the tool
+    // set stale, which is the bug this watcher exists to prevent.
+    await editor.isReady
+
     const current = await editor.save()
 
     editor.destroy()
