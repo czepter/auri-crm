@@ -6,18 +6,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap');
 
 :root {
-  /* ground stays pure white; every other neutral is warmed toward the accent */
+  /* neutral ground. The warm accent is action and nothing else — a state
+     that borrows it reads as a button, which is the confusion this palette
+     exists to end. Status has its own three. */
   --bg:#FFFFFF;
-  --ink:#14100E;
-  --muted:#78706B;
-  --faint:#ABA49F;
-  --hover:#F6F3F1;
-  --line:#EDE9E6;
-  --line-hover:#E3DCD7;
-  --accent:#B44E22;
-  --accent-bg:#FBF0EA;
-  --ok:#3F6B4A;
-  --ok-bg:#EDF3EE;
+  --ink:#191919;
+  --muted:#6B6B6B;
+  --faint:#A3A3A3;
+  --hover:#F5F5F4;      /* fill AND hover — the reference's cards and its
+                           hover states are the same grey; two tokens would
+                           invite them to drift */
+  --line:#E9E9E7;
+  --line-hover:#DCDCD9;
+
+  --accent:#B44E22;     --accent-bg:#FBF0EA;   /* action only */
+
+  --ok:#3F6B4A;         --ok-bg:#EDF3EE;
+  --due:#8A6212;        --due-bg:#FAF3E4;
+  --late:#B3261E;       --late-bg:#FCF0EF;
 
   /* one spacing scale, used everywhere */
   --s1:4px; --s2:6px; --s3:10px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
@@ -30,7 +36,7 @@
 
 /* portal — same bones, more air, serif-free but larger and looser */
 [data-theme="portal"] {
-  --hover:#F8F5F3;
+  --hover:#FAFAF9;
   --s3:14px; --s4:20px; --s5:32px; --s6:44px; --s7:64px;
   --r:10px;
 }
