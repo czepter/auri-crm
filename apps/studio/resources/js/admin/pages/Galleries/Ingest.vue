@@ -162,10 +162,10 @@ function formatSize(bytes: number): string {
       <div class="stackcol">
         <div class="card static">
           <div class="cardhead"><span class="kick">{{ $t('media.target') }}</span></div>
-          <div class="kv">
-            <div class="kvrow"><span>{{ $t('media.project') }}</span><span>{{ target.projectName }}</span></div>
-            <div v-if="target.shootLabel" class="kvrow"><span>{{ $t('media.shoot') }}</span><span>{{ target.shootLabel }}</span></div>
-            <div class="kvrow"><span>{{ $t('media.gallery') }}</span><span>{{ target.galleryTitle }}</span></div>
+          <div class="tiles">
+            <div class="fact"><div class="l">{{ $t('media.project') }}</div><div class="v">{{ target.projectName }}</div></div>
+            <div v-if="target.shootLabel" class="fact"><div class="l">{{ $t('media.shoot') }}</div><div class="v">{{ target.shootLabel }}</div></div>
+            <div class="fact"><div class="l">{{ $t('media.gallery') }}</div><div class="v">{{ target.galleryTitle }}</div></div>
           </div>
         </div>
       </div>
