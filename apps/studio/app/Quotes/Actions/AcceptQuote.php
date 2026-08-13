@@ -55,6 +55,7 @@ class AcceptQuote
                 event: 'quote.accepted',
                 context: ['project' => $quote->project->public_id, 'contact' => $contact->public_id],
                 subject: $quote->public_id,
+                projectId: $quote->project_id,
             );
         });
 

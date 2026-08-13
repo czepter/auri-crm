@@ -42,6 +42,7 @@ class DesignatePrimaryShoot
                 actor: $actor ?? auth('staff')->user(),
                 context: ['from' => $incumbent?->public_id],
                 subject: $shoot->public_id,
+                projectId: $shoot->project_id,
             );
 
             return $shoot;

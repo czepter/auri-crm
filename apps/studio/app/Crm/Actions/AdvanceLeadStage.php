@@ -44,6 +44,7 @@ class AdvanceLeadStage
             actor: $actor ?? auth('staff')->user(),
             context: ['from' => $from->value, 'to' => $next->value],
             subject: $lead->public_id,
+            projectId: $lead->project_id,
         );
 
         LeadStageChanged::dispatch($lead, $from, $next);
@@ -70,6 +71,7 @@ class AdvanceLeadStage
             actor: $actor ?? auth('staff')->user(),
             context: ['stage' => $lead->stage->value, 'reason' => $reason],
             subject: $lead->public_id,
+            projectId: $lead->project_id,
         );
 
         LeadLost::dispatch($lead, $reason);

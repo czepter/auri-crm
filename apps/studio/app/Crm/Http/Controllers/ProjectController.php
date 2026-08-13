@@ -163,6 +163,7 @@ class ProjectController extends Controller
             event: $project->portal_visible ? 'project.portal_shown' : 'project.portal_hidden',
             actor: auth('staff')->user(),
             subject: $project->public_id,
+            projectId: $project->id,
         );
 
         return back();

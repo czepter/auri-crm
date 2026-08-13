@@ -44,6 +44,7 @@ class UpdatePaymentPlan
                 actor: auth('staff')->user(),
                 context: ['total' => $total, 'installments' => count($installments)],
                 subject: $plan->public_id,
+                projectId: $plan->job->project_id,
             );
         });
 

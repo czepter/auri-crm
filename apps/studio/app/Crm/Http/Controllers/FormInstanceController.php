@@ -53,6 +53,7 @@ class FormInstanceController extends Controller
             actor: auth('staff')->user(),
             context: ['project' => $project->public_id, 'template' => $template?->public_id],
             subject: $instance->public_id,
+            projectId: $project->id,
         );
 
         return back();
@@ -88,6 +89,7 @@ class FormInstanceController extends Controller
             actor: auth('staff')->user(),
             context: ['name' => $formInstance->name],
             subject: $formInstance->public_id,
+            projectId: $formInstance->project_id,
         );
 
         return back();
@@ -114,6 +116,7 @@ class FormInstanceController extends Controller
             actor: auth('staff')->user(),
             context: ['formInstance' => $formInstanceField->formInstance->public_id],
             subject: $formInstanceField->public_id,
+            projectId: $formInstanceField->formInstance->project_id,
         );
 
         return back();

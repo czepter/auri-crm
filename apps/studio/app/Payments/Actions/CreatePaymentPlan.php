@@ -62,6 +62,7 @@ class CreatePaymentPlan
                 actor: auth('staff')->user(),
                 context: ['job' => $job->public_id, 'total' => $total, 'installments' => count($dueDates)],
                 subject: $plan->public_id,
+                projectId: $job->project_id,
             );
 
             return $plan;

@@ -72,6 +72,7 @@ class ContractController extends Controller
             actor: auth('staff')->user(),
             context: ['template' => $template->name, 'version' => $template->version],
             subject: $contract->public_id,
+            projectId: $project->id,
         );
 
         return back();

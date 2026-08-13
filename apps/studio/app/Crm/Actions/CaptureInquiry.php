@@ -84,6 +84,7 @@ class CaptureInquiry
                 actor: $actor,
                 context: ['source' => $data->source->value, 'via' => $data->captured_via->value],
                 subject: $lead->public_id,
+                projectId: $lead->project_id,
             );
 
             LeadCaptured::dispatch($lead);

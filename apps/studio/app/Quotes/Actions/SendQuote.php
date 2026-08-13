@@ -61,6 +61,7 @@ class SendQuote
                 actor: $actor,
                 context: ['project' => $quote->project->public_id, 'number' => $allocation['number']],
                 subject: $quote->public_id,
+                projectId: $quote->project_id,
             );
         });
 
