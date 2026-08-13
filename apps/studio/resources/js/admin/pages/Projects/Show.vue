@@ -328,7 +328,7 @@ function submitMarkPaid(installmentId: string) {
                 {{ task.title }}
                 <template v-if="task.shootLabel"> · {{ task.shootLabel }}</template>
               </span>
-              <span class="tdate" :style="task.isOverdue ? 'color: var(--accent)' : ''">
+              <span class="tdate" :style="task.isOverdue ? 'color: var(--late)' : ''">
                 {{ task.dueOn ? shortDate(task.dueOn) : '—' }}
               </span>
               <span class="taudience" :class="task.audience">{{ task.audienceLabel }}</span>
