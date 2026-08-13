@@ -215,6 +215,8 @@
            font-variant-numeric:tabular-nums; }
 .fact .s { font:400 12.5px/1.3 var(--font); color:var(--muted); margin-top:var(--s1);
            font-variant-numeric:tabular-nums; }
+/* a delta or a count inside a value is a good number, not an action — --ok, not the accent */
+.fact i { font-style:normal; color:var(--ok); font-weight:600; }
 /* the empty state keeps the grid rhythm that loose grey text broke */
 .fact.ghost { background:transparent; border:1px dashed var(--line); }
 .fact.ghost .v { color:var(--faint); font-weight:400; }
