@@ -882,24 +882,51 @@ Create `lang/de/activity.php`. Terse noun phrases, no sentences. An event absent
 
 return [
     'lead.captured' => 'Anfrage eingegangen',
-    'lead.stage_advanced' => 'Phase gewechselt',
+    'lead.stage_changed' => 'Phase gewechselt',
+    'lead.lost' => 'Anfrage verloren',
     'quote.sent' => 'Angebot gesendet',
     'quote.revised' => 'Angebot überarbeitet',
     'quote.accepted' => 'Angebot angenommen',
-    'contract.sent' => 'Vertrag gesendet',
+    'contract.render_requested' => 'Vertrag erstellt',
     'contract.signed' => 'Vertrag unterschrieben',
     'project.booked' => 'Projekt gebucht',
+    'project.portal_shown' => 'Portal freigegeben',
+    'project.portal_hidden' => 'Portal verborgen',
     'payment_plan.created' => 'Zahlungsplan angelegt',
     'payment_plan.updated' => 'Zahlungsplan geändert',
     'payment_installment.paid' => 'Zahlung erhalten',
     'shoot.status_changed' => 'Shooting-Status geändert',
     'shoot.primary_designated' => 'Haupttermin festgelegt',
-    'form_instance.sent' => 'Fragebogen gesendet',
-    'form_instance.completed' => 'Fragebogen ausgefüllt',
+    'shoot.cancelled' => 'Shooting abgesagt',
+    'form_instance.created' => 'Fragebogen angelegt',
 ];
 ```
 
-Cross-check every key against the `event:` strings at the twenty-four call sites from Task 6. A key that matches no call site is dead copy; a call site with no key is an event that will never appear.
+Eighteen of the twenty-seven event strings the tagged call sites emit. The other nine are omitted
+on purpose, and the file records the reasoning above the array — grouped by why they are out, not
+listed one by one, because the reader needs the rule rather than the roster. They fall into four
+groups: drafting churn (`quote.created`, `quote.updated`, `form_instance.updated`), per-item events
+that would bury the feed (`form_instance_field.answered`, `shot_list_item.checked`,
+`shot_list_item.unchecked` — one apiece for every field answered or box ticked), an audience
+distinction the event key cannot carry (`task.completed`, `task.reopened`: `Task.audience` decides
+whether a task is client-facing and the event string does not know), and a failed attempt
+(`project.booking_attempted`). In an allow-list an omission is a decision, so the next reader must
+be able to tell a deliberate one from an oversight.
+
+`contract.render_requested` earns a label despite sounding like infrastructure: it is the moment
+the contract row comes into existence, and without it the feed jumps from nothing straight to
+"Vertrag unterschrieben". It is worded from the owner's point of view, not the render job's.
+
+Cross-check every key against the `event:` strings at the twenty-four call sites from Task 6, and
+report both directions — keys with no call site, and call-site events with no key. The first
+version of this map was written from prose rather than from the code and had four keys matching
+no event at all, which the allow-list then silently hid.
+
+**The cross-check must handle ternaries.** Three call sites pass an expression rather than a
+literal — `event: $done ? 'task.completed' : 'task.reopened'` in `TaskController`, the same shape
+in `ShotListItemController`, and the portal-visibility toggle in `ProjectController`. A grep for
+`event: '…'` misses all six strings and reports a clean result, which is how the first two passes
+over this map both came back looking complete.
 
 - [ ] **Step 4: Write the presenter**
 
