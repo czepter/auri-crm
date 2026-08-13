@@ -255,7 +255,7 @@ parameter breaks none of them.
 
 ### 3.3 Call sites that gain a project
 
-Roughly twenty of the eighty:
+Nineteen files, twenty-four call lines, of the eighty:
 
 `Crm/Actions`: `CaptureInquiry`, `BookProject`, `AdvanceLeadStage`,
 `AdvanceShootStatus`, `DesignatePrimaryShoot`.
@@ -265,7 +265,6 @@ Roughly twenty of the eighty:
 `Quotes`: `SendQuote`, `AcceptQuote`, `ReviseQuote`, `QuoteController`.
 `Contracts`: `SignContract`, `ContractController`.
 `Payments`: `CreatePaymentPlan`, `UpdatePaymentPlan`, `MarkInstallmentPaid`.
-`Notifications`: `NotificationService`.
 
 Auth, Settings, Catalog, Staff, Portal-access and MFA events stay `null`. They
 are not project events and must not appear in a project's feed.

@@ -46,7 +46,7 @@
 - `apps/studio/resources/css/app.css:39` — `--color-destructive`.
 - `apps/studio/resources/css/forms.css:35`, `gallery.css:56,58`, `document-editor.css:27,48` — accent reassignment.
 - `app/Support/AuditLogger.php` — the new `?int $projectId` parameter.
-- Twenty call sites listed in Task 6.
+- Twenty-four call sites across nineteen files, listed in Task 6.
 - `app/Crm/Http/Controllers/ProjectController.php` — the `activity` prop.
 - `resources/js/admin/pages/Projects/Show.vue` — tiles, action rail, perforation, feed.
 - `tests/Feature/AuditLogTest.php` — coverage for the new parameter.
@@ -530,7 +530,7 @@ git commit -m "feat(audit): let an audit entry name the project it belongs to"
 
 ---
 
-## Task 6: Twenty files, twenty-five call sites, start passing a project
+## Task 6: Nineteen files, twenty-four call sites, start passing a project
 
 **Files:**
 - Modify: `app/Crm/Actions/CaptureInquiry.php:82`, `BookProject.php:69`, `AdvanceLeadStage.php:42,68`, `AdvanceShootStatus.php:46,72`, `DesignatePrimaryShoot.php:40`
@@ -539,7 +539,6 @@ git commit -m "feat(audit): let an audit entry name the project it belongs to"
 - Modify: `app/Quotes/Actions/SendQuote.php:59`, `AcceptQuote.php:54`, `ReviseQuote.php:63`, `app/Quotes/Http/Controllers/QuoteController.php:49,106`
 - Modify: `app/Contracts/Actions/SignContract.php:57`, `app/Contracts/Http/Controllers/ContractController.php:70`
 - Modify: `app/Payments/Actions/CreatePaymentPlan.php:60`, `UpdatePaymentPlan.php:42`, `MarkInstallmentPaid.php:49`
-- Modify: `app/Notifications/NotificationService.php:81`
 - Test: `tests/Feature/Crm/ProjectAuditTrailTest.php` (create)
 
 **Interfaces:**
@@ -614,7 +613,7 @@ If a factory or an action's argument list differs from the above, adjust the cal
 Run: `pnpm php ./vendor/bin/pest tests/Feature/Crm/ProjectAuditTrailTest.php`
 Expected: FAIL — three failures, each `Failed asserting that null matches expected <int>`.
 
-- [ ] **Step 3: Add the argument at all twenty-five call lines**
+- [ ] **Step 3: Add the argument at all twenty-four call lines**
 
 For each line in the Files list, add one named argument to the existing `AuditLogger::record(` call, using the expression from the table above. For example, in `app/Payments/Actions/MarkInstallmentPaid.php`:
 
@@ -650,13 +649,24 @@ Expected: PASS. Nothing else should move — the parameter is optional and every
 grep -rln 'projectId:' apps/studio/app | sort
 ```
 
-Expected: exactly the twenty files in this task's Files list. A hit under `app/Http/`,
-`app/Settings/`, `app/Catalog/`, `app/Portal/` or `app/Documents/` means an event that
-belongs to no project has been given one, and it will surface in some project's feed.
+Expected: the nineteen files in this task's Files list, plus roughly eight pre-existing
+hits on DTOs that happen to carry a `projectId:` property (`TaskRowData`, `NextShootData`,
+the `Integration` read models and so on). Those are named arguments to constructors, not
+to `AuditLogger`; check the surrounding line before counting one as a miss. A hit under
+`app/Http/`, `app/Settings/`, `app/Catalog/`, `app/Portal/` or `app/Documents/` that *is*
+an `AuditLogger::record()` call means an event belonging to no project has been given one,
+and it will surface in some project's feed.
 
-`NotificationService` is the one judgement call in the list: it sends notifications for
-things that have a project and things that do not. Pass `$project?->id` there — the
-null path is correct and expected, not a gap to fill.
+`app/Notifications/NotificationService.php` was in this list when the plan was written and
+has been removed. Its audit call sits in `auditSuppression(mixed $notifiable, Notification
+$notification, string $channel)`, which has no project in scope and, by its own class
+docblock, is deliberately domain-agnostic — it is the fan-out choke point every notification
+leaves through, and it knows nothing about Crm. Deriving a project there would mean either
+importing domain models into that service, the same layering violation `?int $projectId`
+exists to avoid, or a duck-typed guess. The event it records is `notification.suppressed`,
+delivery infrastructure rather than project history, and `lang/de/activity.php` in Task 8
+has no label for it — so `ProjectActivity` would have dropped it anyway. The plan was
+internally inconsistent: it told this task to tag the event and told Task 8 to discard it.
 
 - [ ] **Step 7: Commit**
 
