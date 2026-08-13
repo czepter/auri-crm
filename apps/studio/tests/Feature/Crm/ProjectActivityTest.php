@@ -46,3 +46,31 @@ it('never exposes the request metadata an audit row carries', function () {
     expect(array_keys(ProjectActivity::for($project)[0]))
         ->toBe(['event', 'label', 'at', 'actorName']);
 });
+
+/**
+ * The unit test above covers the presenter's own output. This one covers
+ * the same whitelist at the HTTP layer, where a later change to the
+ * controller — a ->with(), a resource wrapper, a debug prop — could
+ * reintroduce ip_address/user_agent/context without ever touching
+ * ProjectActivity itself.
+ */
+it('never ships request metadata in the admin project payload', function () {
+    $project = Project::factory()->create();
+    AuditLogger::record('quote.sent', staffMember(), ['contact' => 'c_secret'], null, $project->id);
+
+    $this->actingAs(staffMember(), 'staff');
+    $activity = props("/auftraege/{$project->public_id}")['activity'];
+
+    // Proves the payload actually carries the event before asserting what's
+    // absent from it — an empty activity array would satisfy the
+    // assertions below for the wrong reason.
+    expect($activity)->toHaveCount(1)
+        ->and($activity[0]['event'])->toBe('quote.sent');
+
+    $payload = json_encode($activity);
+
+    expect($payload)
+        ->not->toContain('ip_address')
+        ->not->toContain('user_agent')
+        ->not->toContain('c_secret');
+});
