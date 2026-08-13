@@ -54,7 +54,7 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 /* ---------- transfer progress (screen 05) ---------- */
 
 /* flat, 3px, no gradient — a fill against the same hover grey the rest of
-   the system uses. Accent is reserved for the bars that carry a problem. */
+   the system uses. Late is reserved for the bars that carry a problem. */
 .bar { display:block; height:3px; border-radius:2px; background:var(--hover); overflow:hidden; }
 .bar > i { display:block; height:100%; border-radius:2px; background:var(--ink); }
 .bar.big { height:6px; }
@@ -78,7 +78,7 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 
 /* the needs-attention tray reuses .dsec/.dlab/.panel/.trow from screen 1 —
    only its heading is coloured, because that is what must not be missed */
-.dlab.warn { color:var(--accent); }
+.dlab.warn { color:var(--late); }
 
 /* ---------- capture form: contact typeahead ---------- */
 /* the typeahead is not decoration. ClientAccess hangs off Contact, so a repeat
@@ -208,7 +208,7 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 .note .head b { font:600 12.5px/1.3 var(--font); }
 .note .head span { font:400 11.5px/1.3 var(--font); color:var(--faint); }
 .note .head .pin { margin-left:auto; font:600 10px/1.5 var(--font); letter-spacing:.06em;
-                   text-transform:uppercase; color:var(--accent); }
+                   text-transform:uppercase; color:var(--ink); }
 .note p { margin:0; font:400 13px/1.5 var(--font); color:var(--ink); }
 
 /* ---------- Galerien tab: three peer cards, cover as the card's face ---------- */

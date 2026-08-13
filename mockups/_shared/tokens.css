@@ -286,7 +286,7 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
       background:var(--hover); font:500 10.5px/1.4 var(--font); color:var(--muted); }
 .gf svg { width:11px; height:11px; }
 /* an ungated gallery is the state worth noticing, so it is the one that carries colour */
-.gf.open { background:var(--accent-bg); color:var(--accent); }
+.gf.open { background:var(--due-bg); color:var(--due); }
 
 /* right-rail key/value facts */
 .kv { display:flex; flex-direction:column; gap:9px; }

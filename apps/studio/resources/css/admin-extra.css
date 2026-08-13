@@ -14,7 +14,7 @@
 
 /* ---------- screen 05: multipart ingest transfer & file list (G-02) ---------- */
 /* flat, 3px, no gradient — a fill against the same hover grey the rest of
-   the system uses. Accent is reserved for the bars that carry a problem. */
+   the system uses. Late is reserved for the bars that carry a problem. */
 .bar { display:block; height:3px; border-radius:2px; background:var(--hover); overflow:hidden; }
 .bar > i { display:block; height:100%; border-radius:2px; background:var(--ink); }
 .bar.big { height:6px; }
