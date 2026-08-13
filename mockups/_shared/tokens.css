@@ -287,8 +287,8 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
    04-angebot, 04-galerien, 04-shootings, 04-frageboegen, 05-medien,
    13-fragebogen-builder, portal/06-startseite) and converting a mockup
    screen was ruled out of scope for that task. Known gap, not the mockup
-   quietly running ahead of the app as usual — there is a backlog item for
-   sweeping these eight to .tiles/.fact. */
+   quietly running ahead of the app as usual — #198 tracks sweeping these
+   eight to .tiles/.fact. */
 .kv { display:flex; flex-direction:column; gap:9px; }
 .kvrow { display:flex; align-items:baseline; gap:var(--s3); font:400 12.5px/1.35 var(--font); }
 .kvrow span:first-child { color:var(--muted); flex:none; min-width:78px; }
