@@ -16,6 +16,7 @@ use App\Crm\Enums\FormFieldType;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Support\ProjectActivity;
 use App\Data\StaffProfileData;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
@@ -66,6 +67,11 @@ class ProjectController extends Controller
                     'label' => $shoot->label ?? $shoot->kind->label(),
                 ])
                 ->all(),
+            // Whitelisted by ProjectActivity, admin-only by omission: the
+            // portal's own ProjectController does not render this key. An
+            // internal audit trail on a client page would disclose staff
+            // names and internal event vocabulary to the client.
+            'activity' => ProjectActivity::for($project),
         ]);
     }
 
