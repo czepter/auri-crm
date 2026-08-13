@@ -144,7 +144,7 @@ Added to `mockups/_shared/admin-extra.css`, then ported to
 `apps/studio/resources/css/admin-extra.css`. Roughly sixty lines total. No
 JavaScript, no assets, no dependencies.
 
-### 2.1 `.tiles` / `.tile` — filled fact tiles
+### 2.1 `.tiles` / `.fact` — filled fact tiles
 
 Replaces the `.kv` / `.kvrow` fact list — the key-on-the-left, value-on-the-right
 rows used by the Buchung card in `Projects/Show.vue` and four other components. A
@@ -152,11 +152,20 @@ tile is `--hover` fill, `--r` radius, an uppercase 9.5px `--faint` label, a 16px
 tabular value, and an optional 12.5px `--muted` sub-line.
 
 `.bklist` / `.bkrow` — the mockups' two-column label-over-value grid — has no Vue
-consumer at all; the app shipped `.kv` instead and the two have been drifting
-since. Both mockup rules are deleted in favour of `.tiles`, which removes the
-divergence rather than porting it forward.
+consumer, but it does have a clickdummy one: `mockups/portal/07-vertrag.html`
+renders a five-row fact strip with it, widened by `mockups/_shared/portal.css`.
+That screen converts to `.tiles` along with the two admin ones, and then both
+rules are deleted. `.bkrow i` — the bold upright `--ok` treatment for a delta
+inside a value — survives the deletion as `.fact i`, because this codebase has no
+global `<i>` reset and the elements it styled outlive the rule.
 
-`.tile.ghost` — dashed `--line` border, no fill — is the empty state, used where
+The child is `.fact`, not `.tile`, for the same reason the rail is `.rail`:
+`mockups/_shared/gallery.css` already owns `.tile` for the photo-grid item. The
+container stays `.tiles` rather than moving to `.facts` for symmetry, because
+`.facts` is taken too — the gallery's own fact list. The stem mismatch is the
+only combination this namespace leaves free.
+
+`.fact.ghost` — dashed `--line` border, no fill — is the empty state, used where
 a fact is not known yet. The old `.kvrow .tbd` grey-text treatment is dropped in
 its favour, because an empty tile keeps the grid rhythm that loose grey text
 breaks.

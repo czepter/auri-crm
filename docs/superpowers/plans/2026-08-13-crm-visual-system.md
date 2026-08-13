@@ -327,7 +327,7 @@ git commit -m "style(gallery): re-light the semantic colours for the dark theme"
 
 **Interfaces:**
 - Consumes: the palette from Task 1.
-- Produces: `.tiles`, `.tile`, `.tile.ghost`, `.rail`, `.railrow`, `.railrow.danger`, `.perf`, `.feed`, `.ev`, `.ev.pending` — the class names Task 10 and Task 11 write into templates.
+- Produces: `.tiles`, `.fact`, `.fact.ghost`, `.rail`, `.railrow`, `.railrow.danger`, `.perf`, `.feed`, `.ev`, `.ev.pending` — the class names Task 10 and Task 11 write into templates.
 
 - [ ] **Step 1: Write the components into the mockups**
 
@@ -342,15 +342,15 @@ Append to `mockups/_shared/admin-extra.css`:
    the label sits over the value instead of beside it, which is what lets three
    of them share a line without the values colliding. */
 .tiles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--s3); }
-.tile { background:var(--hover); border-radius:var(--r); padding:14px var(--s4) var(--s4); }
-.tile .l { font:600 9.5px/1 var(--font); letter-spacing:.11em; text-transform:uppercase; color:var(--faint); }
-.tile .v { font:500 16px/1.2 var(--font); letter-spacing:-.02em; margin-top:9px;
+.fact { background:var(--hover); border-radius:var(--r); padding:14px var(--s4) var(--s4); }
+.fact .l { font:600 9.5px/1 var(--font); letter-spacing:.11em; text-transform:uppercase; color:var(--faint); }
+.fact .v { font:500 16px/1.2 var(--font); letter-spacing:-.02em; margin-top:9px;
            font-variant-numeric:tabular-nums; }
-.tile .s { font:400 12.5px/1.3 var(--font); color:var(--muted); margin-top:var(--s1);
+.fact .s { font:400 12.5px/1.3 var(--font); color:var(--muted); margin-top:var(--s1);
            font-variant-numeric:tabular-nums; }
 /* the empty state keeps the grid rhythm that loose grey text broke */
-.tile.ghost { background:transparent; border:1px dashed var(--line); }
-.tile.ghost .v { color:var(--faint); font-weight:400; }
+.fact.ghost { background:transparent; border:1px dashed var(--line); }
+.fact.ghost .v { color:var(--faint); font-weight:400; }
 
 /* .rail — one vertical list of verbs, replacing the ghost buttons that were
    scattered through .cardhead. Not a button variant: this is a layout for a
@@ -1068,7 +1068,7 @@ test('the project screen shows tiles, an action rail and an activity feed', asyn
   await page.goto('/auftraege')
   await page.getByRole('link', { name: /Hochzeit/ }).first().click()
 
-  await expect(page.locator('.tile').first()).toBeVisible()
+  await expect(page.locator('.fact').first()).toBeVisible()
   await expect(page.locator('.rail .railrow')).not.toHaveCount(0)
   await expect(page.locator('.feed .ev').first()).toBeVisible()
 })
@@ -1079,7 +1079,7 @@ Check `tests/e2e/helpers.ts` for the actual exported login helper name and use t
 - [ ] **Step 2: Run it and watch it fail**
 
 Run: `pnpm --filter @studio/app exec playwright test project-detail`
-Expected: FAIL — no `.tile` on the page.
+Expected: FAIL — no `.fact` on the page.
 
 - [ ] **Step 3: Replace the fact list with tiles**
 
@@ -1087,7 +1087,7 @@ In `Show.vue`, replace the `.kv` block at lines 393–418 with:
 
 ```vue
           <div class="tiles">
-            <div class="tile">
+            <div class="fact">
               <div class="l">{{ $t('project.mainDateLabel') }}</div>
               <div class="v">
                 {{ header.primaryDate
@@ -1096,7 +1096,7 @@ In `Show.vue`, replace the `.kv` block at lines 393–418 with:
               </div>
               <div class="s">{{ header.type }}</div>
             </div>
-            <div class="tile">
+            <div class="fact">
               <div class="l">{{ $t('project.position') }}</div>
               <div class="v">{{ header.position.label }}</div>
               <div class="s">{{ header.isBooked ? $t('project.booked') : $t('project.notBooked') }}</div>
@@ -1110,7 +1110,7 @@ In `Show.vue`, replace the `.kv` block at lines 393–418 with:
           </div>
 ```
 
-The `.tile.ghost` variant replaces the old `:class="{ tbd: … }"` grey-text treatment. Remove the now-unused `tbd` bindings in this block.
+The `.fact.ghost` variant replaces the old `:class="{ tbd: … }"` grey-text treatment. Remove the now-unused `tbd` bindings in this block.
 
 - [ ] **Step 4: Add the action rail**
 
@@ -1212,7 +1212,7 @@ Expected: four files (`Projects/Show.vue` is already done).
 
 - [ ] **Step 2: Convert each `.kv` list to `.tiles`**
 
-Use the exact markup from Task 10 Step 3 — label in `.l`, value in `.v`, optional sub-line in `.s`, `.tile.ghost` for a fact that is not known yet. Convert one file, run `pnpm lint`, look at the screen, then move to the next. Do not batch four files into one commit.
+Use the exact markup from Task 10 Step 3 — label in `.l`, value in `.v`, optional sub-line in `.s`, `.fact.ghost` for a fact that is not known yet. Convert one file, run `pnpm lint`, look at the screen, then move to the next. Do not batch four files into one commit.
 
 - [ ] **Step 3: Consolidate the ghost buttons**
 

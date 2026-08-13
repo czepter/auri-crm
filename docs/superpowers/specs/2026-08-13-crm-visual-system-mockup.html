@@ -49,12 +49,12 @@ h1 { font:600 25px/1.15 var(--font); letter-spacing:-.03em; margin:7px 0 0; }
 
 /* ---------- 2.1 tiles ---------- */
 .tiles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--s3); }
-.tile { background:var(--hover); border-radius:var(--r); padding:14px var(--s4) var(--s4); }
-.tile .l { font:600 9.5px/1 var(--font); letter-spacing:.11em; text-transform:uppercase; color:var(--faint); }
-.tile .v { font:500 16px/1.2 var(--font); letter-spacing:-.02em; margin-top:9px; font-variant-numeric:tabular-nums; }
-.tile .s { font:400 12.5px/1.3 var(--font); color:var(--muted); margin-top:var(--s1); font-variant-numeric:tabular-nums; }
-.tile.ghost { background:transparent; border:1px dashed var(--line); }
-.tile.ghost .v { color:var(--faint); font-weight:400; }
+.fact { background:var(--hover); border-radius:var(--r); padding:14px var(--s4) var(--s4); }
+.fact .l { font:600 9.5px/1 var(--font); letter-spacing:.11em; text-transform:uppercase; color:var(--faint); }
+.fact .v { font:500 16px/1.2 var(--font); letter-spacing:-.02em; margin-top:9px; font-variant-numeric:tabular-nums; }
+.fact .s { font:400 12.5px/1.3 var(--font); color:var(--muted); margin-top:var(--s1); font-variant-numeric:tabular-nums; }
+.fact.ghost { background:transparent; border:1px dashed var(--line); }
+.fact.ghost .v { color:var(--faint); font-weight:400; }
 
 /* ---------- line items ---------- */
 .items { margin-top:var(--s6); }
@@ -189,17 +189,17 @@ Komponenten gleichzeitig — Kacheln, Aktionsschiene, Perforation, Aktivitätsfe
   <div class="split">
     <div>
       <div class="tiles">
-        <div class="tile">
+        <div class="fact">
           <div class="l">Haupttermin</div>
           <div class="v">14. Juni 2026</div>
           <div class="s">in 5 Tagen</div>
         </div>
-        <div class="tile">
+        <div class="fact">
           <div class="l">Offen</div>
           <div class="v">1.960,00 €</div>
           <div class="s">Restzahlung 21.06.</div>
         </div>
-        <div class="tile ghost">
+        <div class="fact ghost">
           <div class="l">Galerie</div>
           <div class="v">noch keine</div>
         </div>
