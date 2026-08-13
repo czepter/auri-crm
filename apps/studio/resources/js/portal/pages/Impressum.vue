@@ -32,25 +32,25 @@ defineProps<{
     <div class="kick">{{ $t('portal.impressumTitle') }}</div>
     <h1 v-if="name">{{ name }}</h1>
 
-    <div class="kv" style="margin-top: var(--s5)">
-      <div v-if="legalForm" class="kvrow"><span>{{ $t('settings.legalForm') }}</span><span>{{ legalForm }}</span></div>
-      <div v-if="street" class="kvrow"><span>{{ $t('settings.street') }}</span><span>{{ street }}</span></div>
-      <div v-if="postcode || city" class="kvrow">
-        <span>{{ $t('settings.city') }}</span><span>{{ [postcode, city].filter(Boolean).join(' ') }}</span>
+    <div class="tiles" style="margin-top: var(--s5)">
+      <div v-if="legalForm" class="fact"><div class="l">{{ $t('settings.legalForm') }}</div><div class="v">{{ legalForm }}</div></div>
+      <div v-if="street" class="fact"><div class="l">{{ $t('settings.street') }}</div><div class="v">{{ street }}</div></div>
+      <div v-if="postcode || city" class="fact">
+        <div class="l">{{ $t('settings.city') }}</div><div class="v">{{ [postcode, city].filter(Boolean).join(' ') }}</div>
       </div>
-      <div v-if="country" class="kvrow"><span>{{ $t('settings.country') }}</span><span>{{ country }}</span></div>
-      <div v-if="representative" class="kvrow">
-        <span>{{ $t('settings.representative') }}</span><span>{{ representative }}</span>
+      <div v-if="country" class="fact"><div class="l">{{ $t('settings.country') }}</div><div class="v">{{ country }}</div></div>
+      <div v-if="representative" class="fact">
+        <div class="l">{{ $t('settings.representative') }}</div><div class="v">{{ representative }}</div>
       </div>
-      <div v-if="taxNumber" class="kvrow"><span>{{ $t('settings.taxNumber') }}</span><span>{{ taxNumber }}</span></div>
-      <div v-if="vatId" class="kvrow"><span>{{ $t('settings.vatId') }}</span><span>{{ vatId }}</span></div>
-      <div v-if="registerNumber" class="kvrow">
-        <span>{{ $t('settings.registerNumber') }}</span><span>{{ registerNumber }}</span>
+      <div v-if="taxNumber" class="fact"><div class="l">{{ $t('settings.taxNumber') }}</div><div class="v">{{ taxNumber }}</div></div>
+      <div v-if="vatId" class="fact"><div class="l">{{ $t('settings.vatId') }}</div><div class="v">{{ vatId }}</div></div>
+      <div v-if="registerNumber" class="fact">
+        <div class="l">{{ $t('settings.registerNumber') }}</div><div class="v">{{ registerNumber }}</div>
       </div>
-      <div v-if="registerCourt" class="kvrow">
-        <span>{{ $t('settings.registerCourt') }}</span><span>{{ registerCourt }}</span>
+      <div v-if="registerCourt" class="fact">
+        <div class="l">{{ $t('settings.registerCourt') }}</div><div class="v">{{ registerCourt }}</div>
       </div>
-      <div v-if="website" class="kvrow"><span>{{ $t('settings.website') }}</span><span>{{ website }}</span></div>
+      <div v-if="website" class="fact"><div class="l">{{ $t('settings.website') }}</div><div class="v">{{ website }}</div></div>
     </div>
   </main>
 
