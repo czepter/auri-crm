@@ -36,7 +36,7 @@
   --color-muted-foreground: var(--muted);
   --color-accent: var(--hover);
   --color-accent-foreground: var(--ink);
-  --color-destructive: var(--accent);
+  --color-destructive: var(--late);
   --color-destructive-foreground: var(--bg);
   --color-border: var(--line);
   --color-input: var(--line);

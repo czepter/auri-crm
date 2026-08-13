@@ -53,6 +53,6 @@
 /* uniform failure notice — warm, not alarming: it is the resting state of a
    security control, not a crash */
 [data-theme="gallery"] .err { margin-top:var(--s4); padding:12px 14px; border-radius:var(--r);
-       background:var(--accent-bg); border:1px solid #40251A;
+       background:var(--late-bg); border:1px solid #40251A;
        font:400 13px/1.55 var(--font); color:#E7B190; text-align:left; }
-[data-theme="gallery"] .err b { display:block; color:var(--accent); font:600 13px/1.5 var(--font); margin-bottom:4px; }
+[data-theme="gallery"] .err b { display:block; color:var(--late); font:600 13px/1.5 var(--font); margin-bottom:4px; }

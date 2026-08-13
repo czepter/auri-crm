@@ -137,8 +137,8 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 .age { display:inline-flex; align-items:center; font:400 12.5px/1 var(--font); color:var(--faint);
        background-repeat:no-repeat; background-position:0 center; background-size:12px 12px; padding-left:16px;
        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ABA49F' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E"); }
-.age.warn { color:var(--accent); font-weight:500;
-       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B44E22' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E"); }
+.age.warn { color:var(--late); font-weight:500;
+       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B3261E' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E"); }
 
 /* the only border in the system: it keeps overlapping faces legible */
 .stack { margin-left:auto; display:flex; }
@@ -148,9 +148,9 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 .card:hover .stack img { border-color:var(--hover); }
 
 .flag { display:flex; align-items:center; margin-top:var(--s2); padding:7px 9px 7px 28px; border-radius:7px;
-        background:var(--accent-bg); font:500 12.5px/1.3 var(--font); color:var(--accent);
+        background:var(--late-bg); font:500 12.5px/1.3 var(--font); color:var(--late);
         background-repeat:no-repeat; background-position:9px center; background-size:13px 13px;
-        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B44E22' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z'/%3E%3C/svg%3E"); }
+        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B3261E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z'/%3E%3C/svg%3E"); }
 
 /* stage-advance affordance, hover only */
 .go { position:absolute; top:12px; right:var(--s3); width:15px; height:15px; opacity:0;
@@ -199,8 +199,10 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
    current stage and offers the single transition that advances it — nothing else. */
 .stage { display:flex; align-items:center; gap:var(--s3); margin:var(--s4) 0 0; }
 .stage .now { display:inline-flex; align-items:center; gap:7px; padding:6px 11px; border-radius:var(--r-sm);
-              background:var(--accent-bg); color:var(--accent); font:600 12px/1 var(--font); }
-.stage .now .dot { width:7px; height:7px; border-radius:50%; background:var(--accent); flex:none; }
+              background:var(--ok-bg); color:var(--ok); font:600 12px/1 var(--font); }
+.stage .now .dot { width:7px; height:7px; border-radius:50%; background:var(--ok); flex:none; }
+.stage .now.late { background:var(--late-bg); color:var(--late); }
+.stage .now.late .dot { background:var(--late); }
 .stage .next { font:400 12px/1 var(--font); color:var(--faint); }
 .stage .adv { font:500 12px/1 var(--font); color:var(--muted); text-decoration:none; }
 .stage .adv:hover { color:var(--ink); }
@@ -236,14 +238,14 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
                             text-transform:uppercase; color:var(--faint); margin-bottom:5px; }
 .bkrow > span:last-child { display:block; font:500 13px/1.4 var(--font); font-variant-numeric:tabular-nums; }
 .bkrow em { font-style:normal; color:var(--muted); font-weight:400; }
-.bkrow i { font-style:normal; color:var(--accent); font-weight:600; }
+.bkrow i { font-style:normal; color:var(--ok); font-weight:600; }
 .bkrow .big { font-weight:700; font-size:15px; letter-spacing:-.025em; }
 
 /* ---------- Shoot list: one row per shooting occasion, next one expanded ---------- */
 .chip { font:600 10px/1.5 var(--font); letter-spacing:.04em; text-transform:uppercase;
         padding:3px 8px; border-radius:var(--r-sm); flex:none; }
 .chip.done { background:var(--ok-bg); color:var(--ok); }
-.chip.now  { background:var(--accent-bg); color:var(--accent); }
+.chip.now  { background:var(--due-bg); color:var(--due); }
 .chip.next { background:var(--hover); color:var(--muted); }
 
 .sess { display:flex; flex-direction:column; gap:var(--s2); }
@@ -256,7 +258,7 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 .sname span { display:block; font:400 11.5px/1.35 var(--font); color:var(--muted); font-weight:400;
               letter-spacing:0; margin-top:2px; }
 .sname .prim { display:inline-block; margin-left:6px; font:600 9px/1.5 var(--font); letter-spacing:.08em;
-               text-transform:uppercase; color:var(--accent); vertical-align:1px; }
+               text-transform:uppercase; color:var(--ink); vertical-align:1px; }
 .srow .stack { margin-left:0; }
 .srow.open .stack img { border-color:#FDFAF8; }
 
@@ -328,10 +330,11 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
    which stays a separate model with no portal-facing route at all */
 .taudience, .paystatus { flex:none; padding:3px 8px; border-radius:var(--r-sm); font:600 10px/1.5 var(--font);
                           letter-spacing:.04em; text-transform:uppercase; }
-.taudience.client { background:var(--accent-bg); color:var(--accent); }
+.taudience.client   { background:transparent; border:1px solid var(--line-hover); color:var(--muted); }
 .taudience.internal { background:var(--hover); color:var(--muted); }
 .paystatus.paid { background:var(--ok-bg); color:var(--ok); }
-.paystatus.due { background:var(--accent-bg); color:var(--accent); }
+.paystatus.due  { background:var(--due-bg); color:var(--due); }
+.paystatus.late { background:var(--late-bg); color:var(--late); }
 .paystatus.upcoming { background:var(--hover); color:var(--muted); }
 
 /* ---------- clickdummy footer strip (not part of the product) ---------- */

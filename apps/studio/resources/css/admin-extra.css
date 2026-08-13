@@ -18,7 +18,7 @@
 .bar { display:block; height:3px; border-radius:2px; background:var(--hover); overflow:hidden; }
 .bar > i { display:block; height:100%; border-radius:2px; background:var(--ink); }
 .bar.big { height:6px; }
-.bar > i.warn { background:var(--accent); }
+.bar > i.warn { background:var(--late); }
 
 /* per-file rows: name, size, state. In-flight rows drop a bar onto a
    second grid line under the name rather than squeezing one into a cell. */
@@ -34,7 +34,7 @@
 .frow.queued .fname { font-weight:400; color:var(--muted); }
 
 /* a fourth chip state: ingest rejected the file (vision §6, G-03) */
-.chip.fail { background:var(--accent-bg); color:var(--accent); }
+.chip.fail { background:var(--late-bg); color:var(--late); }
 
 /* ---------- capture form: contact typeahead ---------- */
 /* the typeahead is not decoration. ClientAccess hangs off Contact, so a repeat
@@ -50,7 +50,7 @@
 .picked .chg { margin-left:auto; font:500 11.5px/1 var(--font); color:var(--muted);
                text-decoration:none; background:none; border:none; cursor:pointer; }
 .picked .chg:hover { color:var(--ink); }
-.rp { font:500 10px/1.5 var(--font); color:var(--accent); background:var(--accent-bg);
+.rp { font:500 10px/1.5 var(--font); color:var(--muted); background:var(--hover);
       padding:2px 7px; border-radius:var(--r-sm); margin-left:8px; }
 
 .ta { border:1px solid var(--line-hover); border-radius:var(--r); overflow:hidden; }
@@ -92,7 +92,7 @@
        font:400 11px/1.4 var(--font); color:var(--muted); }
 .kpi b { display:block; font:700 19px/1.15 var(--font); color:var(--ink);
          letter-spacing:-.035em; font-variant-numeric:tabular-nums; margin-bottom:2px; }
-.kpi b i { font-style:normal; color:var(--accent); }
+.kpi b i { font-style:normal; color:var(--late); }
 .kpi em { font-style:normal; color:var(--faint); }
 
 .doms { display:grid; grid-template-columns:1fr 1fr; gap:var(--s4); }
@@ -111,7 +111,7 @@
            overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .dr .what { font:400 12px/1.35 var(--font); color:var(--muted); flex:1; min-width:0;
             overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.dr .what i { font-style:normal; color:var(--accent); font-weight:500; }
+.dr .what i { font-style:normal; color:var(--late); font-weight:500; }
 /* .abtn and .abtn.hot used to live here — now ui/button's `outline` variant
    and its `accent` tone, same values. */
 
@@ -123,7 +123,7 @@
 .nextshoot span.sub { display:block; font:400 11.5px/1.4 var(--font); color:var(--muted); margin-top:3px; }
 .ready { display:flex; gap:12px; margin-top:7px; }
 .ready i { font:500 10.5px/1.4 var(--font); font-style:normal; color:var(--ok); }
-.ready i.no { color:var(--accent); }
+.ready i.no { color:var(--late); }
 
 /* ---------- project tab detail pages ---------- */
 
@@ -176,7 +176,7 @@
 .qtype { font:600 10px/1.5 var(--font); letter-spacing:.05em; text-transform:uppercase;
          color:var(--muted); background:var(--hover); padding:2px 7px; border-radius:var(--r-sm); }
 .qreq { font:600 10px/1.5 var(--font); letter-spacing:.05em; text-transform:uppercase;
-        color:var(--accent); background:var(--accent-bg); padding:2px 7px; border-radius:var(--r-sm); }
+        color:var(--muted); background:var(--hover); padding:2px 7px; border-radius:var(--r-sm); }
 .qopts { font:400 11.5px/1.5 var(--font); color:var(--faint); }
 .qbrow [data-slot="button"] { opacity:0; transition:opacity .12s ease-out; }
 .qbrow:hover [data-slot="button"] { opacity:1; }
