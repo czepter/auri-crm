@@ -64,6 +64,14 @@
   --line-hover:#332C28;
   --accent:#D4713F;
   --accent-bg:#26170F;
+
+  /* the semantic three, re-lit for a dark ground. Inheriting :root's here
+     would put a near-white panel on a near-black page — already wrong for
+     --ok before this change, and wrong three times over with --due and
+     --late added. */
+  --ok:#7FB98C;    --ok-bg:#16211A;
+  --due:#D9B25C;   --due-bg:#241D0E;
+  --late:#E88379;  --late-bg:#2A1512;
 }
 
 * { box-sizing:border-box; }
