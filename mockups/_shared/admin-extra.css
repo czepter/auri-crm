@@ -249,9 +249,11 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 /* two equal columns for peer cards — the 296px rail is for facts, not content */
 .cols2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--s4); align-items:start; }
 
-/* ---------- the reference's four shapes ----------
-   Filled tiles, an action rail, a perforation and an activity feed. All four
-   are layout over the existing tokens — no new colour, no asset, no script. */
+/* ---------- the reference's shapes ----------
+   Filled tiles, a perforation and an activity feed. All three are layout
+   over the existing tokens — no new colour, no asset, no script. (The
+   reference also has an action rail; this app has no card with two or
+   more ghost actions to consolidate, so the rail is not built here.) */
 
 /* .tiles — replaces the .kv / .kvrow fact list. A fact is a tile, not a row:
    the label sits over the value instead of beside it, which is what lets three
@@ -270,23 +272,6 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 /* the empty state keeps the grid rhythm that loose grey text broke */
 .fact.ghost { background:transparent; border:1px dashed var(--line); }
 .fact.ghost .v { color:var(--faint); font-weight:400; }
-
-/* .rail — one vertical list of verbs, replacing the ghost buttons that were
-   scattered through .cardhead. Not a button variant: this is a layout for a
-   list of links, the way .nav already is in the sidebar. Named .rail / .railrow
-   rather than .acts / .act: gallery.css already owns that pair for the lightbox's
-   horizontal action row, and admin-extra.css's .note .head .acts is a third,
-   scoped meaning — .railrow matches the file's own .trow / .srow / .payrow
-   suffix for a list item, and leaves both existing rules untouched. */
-.rail { display:flex; flex-direction:column; gap:2px; margin:-8px 0 0 -10px; }
-.railrow { display:flex; align-items:center; gap:12px; padding:8px var(--s3); border-radius:7px;
-       color:var(--ink); text-decoration:none; font:400 14px/1 var(--font); cursor:pointer;
-       background:none; border:none; width:100%; text-align:left;
-       transition:background .12s ease-out, color .12s ease-out; }
-.railrow:hover { background:var(--hover); }
-.railrow svg { width:17px; height:17px; color:var(--muted); }
-/* destructive on hover only — an option should not shout while it sits unused */
-.railrow.danger:hover, .railrow.danger:hover svg { color:var(--late); }
 
 /* .perf — the reference's tear line. A repeating radial gradient, so it
    recolours with --line like every other rule here and needs no asset. */
