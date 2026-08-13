@@ -144,7 +144,7 @@ git commit -m "style(tokens): move the base palette to neutral grey"
 
 **Interfaces:**
 - Consumes: `--ok`, `--due`, `--late` and their `-bg` pairs from Task 1.
-- Produces: `.stage .now.late`, `.paystatus.late` and the outlined `.taudience.client` — three selectors Task 10 and Task 11 render.
+- Produces: `.paystatus.late` and the outlined `.taudience.client`, both rendered by Task 11; and `.stage .now.late`, which ships as a rule with no producer. `DeriveProjectPosition` carries no overdue concept, and deciding when a board position counts as overdue is a product question this plan does not answer. The rule is written so the vocabulary is complete; wiring it is a later story.
 
 This task is mechanical. Work down the table; every row is a colour swap, not a restructure. Do the mockup file and the app file together for each rule so the two never sit in different states.
 
@@ -257,10 +257,12 @@ Run:
 grep -n 'accent' apps/studio/resources/css/*.css
 ```
 
-Expected: exactly seven remaining hits, and every one of them is an action or a focus surface —
-`tokens.css` `:root` and `[data-theme="gallery"]` definitions, `document-editor.css:83`
-(`.doc-tool-input:focus`), `document-editor.css:100` (`.doc-callout`), `app.css:43` (`--color-ring`),
-`portal.css:33` (`.pmark i`), `portal.css:110` (the consent checkbox). Anything else is a miss.
+Expected: hits at exactly these places, and nowhere else — the `--accent` / `--accent-bg`
+definitions in `tokens.css`'s `:root` and its `[data-theme="gallery"]` block,
+`document-editor.css:83` (`.doc-tool-input:focus`), `document-editor.css:100` (`.doc-callout`),
+`app.css:43` (`--color-ring`), `portal.css:33` (`.pmark i`), `portal.css:110` (the consent
+checkbox). Every one is something the user presses or focuses. Any other hit is a miss —
+check it against the reassignment table above rather than assuming it is fine.
 
 - [ ] **Step 7: Verify the mockups and the app still match**
 
@@ -1220,7 +1222,44 @@ grep -rln --include="*.vue" 'cardhead' .
 
 For each file: where a card head carries two or more ghost buttons, move them into an `.acts` rail using the markup from Task 10 Step 4. Where a card head carries exactly one, leave it — a rail of one is a button with extra steps.
 
-- [ ] **Step 4: Run everything**
+- [ ] **Step 4: Wire the late payment state**
+
+`.paystatus.late` exists as a rule after Task 2, but nothing selects it — an overdue installment
+still renders amber. The rule for "overdue" is already established by
+`app/Payments/Actions/DetectOverdueInstallments.php`. Read that action and reuse its condition;
+do not invent a second definition of overdue.
+
+Write the failing test first, in `tests/Feature/Payments/PaymentPlanDataTest.php` (create it if
+absent):
+
+```php
+it('marks an unpaid installment past its due date as late', function () {
+    $installment = PaymentInstallment::factory()->create([
+        'due_on' => now()->subDay()->toDateString(),
+        'status' => PaymentInstallmentStatus::Pending,
+    ]);
+
+    expect(PaymentPlanData::fromModel($installment->plan->load('installments'))
+        ->installments[0]->isLate)->toBeTrue();
+});
+
+it('does not mark a paid installment late, however old', function () {
+    $installment = PaymentInstallment::factory()->create([
+        'due_on' => now()->subYear()->toDateString(),
+        'status' => PaymentInstallmentStatus::Paid,
+    ]);
+
+    expect(PaymentPlanData::fromModel($installment->plan->load('installments'))
+        ->installments[0]->isLate)->toBeFalse();
+});
+```
+
+Run it, watch it fail, add the `isLate` field to the installment Data object, then bind the class
+where the rows render: `:class="['paystatus', row.isLate ? 'late' : row.status]"`. Adjust the Data
+class and property names to whatever `app/Payments/Data/` actually uses — the assertions are the
+requirement, the names around them are not.
+
+- [ ] **Step 5: Run everything**
 
 ```bash
 pnpm lint
@@ -1231,14 +1270,14 @@ pnpm --filter @studio/app exec playwright test
 
 Expected: all green.
 
-- [ ] **Step 5: Walk the app**
+- [ ] **Step 6: Walk the app**
 
 Open every admin screen and the portal. Look for two things specifically: warm orange on anything that is not pressable, and a status chip that lost its meaning in the recolour. Both are misses from Task 2, and both are easier to see on a real screen than in a diff.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add resources/js
+git add resources/js app tests
 git commit -m "feat(admin): carry the new components across the remaining screens"
 ```
 
