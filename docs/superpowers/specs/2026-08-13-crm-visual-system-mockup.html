@@ -74,14 +74,14 @@ h1 { font:600 25px/1.15 var(--font); letter-spacing:-.03em; margin:7px 0 0; }
 .sum .k.tot, .sum .v.tot { font-weight:600; font-size:15px; letter-spacing:-.02em; color:var(--ink); padding-top:var(--s3); }
 
 /* ---------- 2.2 action rail ---------- */
-.acts { display:flex; flex-direction:column; gap:2px; margin:-8px 0 0 -10px; }
-.act { display:flex; align-items:center; gap:12px; padding:8px var(--s3); border-radius:7px;
+.rail { display:flex; flex-direction:column; gap:2px; margin:-8px 0 0 -10px; }
+.railrow { display:flex; align-items:center; gap:12px; padding:8px var(--s3); border-radius:7px;
        color:var(--ink); text-decoration:none; font:400 14px/1 var(--font); cursor:pointer;
        transition:background .12s ease-out, color .12s ease-out; }
-.act:hover { background:var(--hover); }
-.act svg { width:17px; height:17px; color:var(--muted); }
-.act.danger:hover { color:var(--late); }
-.act.danger:hover svg { color:var(--late); }
+.railrow:hover { background:var(--hover); }
+.railrow svg { width:17px; height:17px; color:var(--muted); }
+.railrow.danger:hover { color:var(--late); }
+.railrow.danger:hover svg { color:var(--late); }
 
 /* ---------- 2.3 perforation ---------- */
 .perf { height:8px; margin:var(--s5) 0; opacity:.75;
@@ -249,12 +249,12 @@ Komponenten gleichzeitig — Kacheln, Aktionsschiene, Perforation, Aktivitätsfe
     </div>
 
     <div>
-      <div class="acts">
-        <a class="act"><svg viewBox="0 0 24 24"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></svg>Portal ansehen</a>
-        <a class="act"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.5.5l3-3a5 5 0 00-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 00-7.5-.5l-3 3a5 5 0 007 7l1.7-1.7"/></svg>Portal-Link kopieren</a>
-        <a class="act"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>Vertrag als PDF</a>
-        <a class="act"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Duplizieren</a>
-        <a class="act danger"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>Archivieren</a>
+      <div class="rail">
+        <a class="railrow"><svg viewBox="0 0 24 24"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></svg>Portal ansehen</a>
+        <a class="railrow"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.5.5l3-3a5 5 0 00-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 00-7.5-.5l-3 3a5 5 0 007 7l1.7-1.7"/></svg>Portal-Link kopieren</a>
+        <a class="railrow"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>Vertrag als PDF</a>
+        <a class="railrow"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Duplizieren</a>
+        <a class="railrow danger"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>Archivieren</a>
       </div>
 
       <div class="perf"></div>

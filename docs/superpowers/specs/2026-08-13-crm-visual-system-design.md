@@ -161,16 +161,27 @@ a fact is not known yet. The old `.kvrow .tbd` grey-text treatment is dropped in
 its favour, because an empty tile keeps the grid rhythm that loose grey text
 breaks.
 
-### 2.2 `.acts` / `.act` — the action rail
+### 2.2 `.rail` / `.railrow` — the action rail
 
 Replaces the ghost buttons currently scattered through `.cardhead` across
 fifteen page components. One vertical list: 17px stroked icon, 12px gap, label,
-7px radius, `--hover` on hover. `.act.danger` shifts its text to `--late` on
+7px radius, `--hover` on hover. `.railrow.danger` shifts its text to `--late` on
 hover only — a destructive option should not shout while it sits unused.
 
 The rail is not a new button component. `resources/js/ui/button` keeps its
-variants; `.act` is a layout for a list of links, the way `.nav` already is in
+variants; `.railrow` is a layout for a list of links, the way `.nav` already is in
 the sidebar.
+
+It is named `.rail` because `.acts` — the obvious name, and the one this spec
+first used — is taken twice over. `mockups/_shared/gallery.css` defines `.acts`
+as a horizontal centred row with `.act` items, and `apps/studio/resources/css/
+admin-extra.css` defines `.note .head .acts` for a note's edit/delete pair, which
+`Projects/Show.vue` renders. That second one is the dangerous of the two: it sets
+neither `flex-direction` nor `margin`, so a bare `.acts` rule would reach past it
+and stand the note's buttons on end. One class name meaning two layouts is the
+same failure as one colour meaning two states, which is what this whole document
+is about. The `-row` suffix follows the file's existing `.trow` / `.srow` /
+`.payrow` / `.qbrow`.
 
 ### 2.3 `.perf` — perforated divider
 
@@ -294,7 +305,7 @@ grep over `apps/studio/resources/js`.
 | Change | Files |
 |---|---|
 | `.kv` / `.kvrow` fact lists → `.tiles` | 5 |
-| `.cardhead` ghost buttons → `.acts` rail | 15, one to three lines each |
+| `.cardhead` ghost buttons → the `.rail` | 15, one to three lines each |
 | `.perf` + `.feed` added | 2 (`Projects/Show.vue`, `Contacts/Edit.vue`) |
 | `.chip` variants recoloured | 22, CSS-only — no markup edit |
 | `paystatus` gains a `late` state | 1, plus the controller that derives it |

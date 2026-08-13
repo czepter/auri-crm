@@ -853,12 +853,14 @@ git commit -m "feat(documents): import legacy bodies and fill sample values"
 Persist blocks, refuse a block the type may not use, and hand the editor its palette and sample values.
 
 **Files:**
+- Create: `app/Documents/Support/SafeHtml.php`
 - Modify: `app/Documents/Http/Controllers/DocumentTemplateController.php`, `app/Documents/Support/MergeFieldVocabulary.php`
-- Test: `tests/Feature/Documents/DocumentTemplateAdminTest.php` (append)
+- Test: `tests/Feature/Documents/DocumentTemplateAdminTest.php` (append), `tests/Unit/Documents/SafeHtmlTest.php`
 
 **Interfaces:**
 - Consumes: `DocumentBlockCatalog::for()` / `::allows()` (Task 1), `DocumentTemplate->blocks` (Task 2).
 - Produces:
+  - `SafeHtml::hasUnsafeHref(string $html): bool` — true when any `href` uses a scheme outside `http`, `https`, `mailto`, in any quoting style.
   - `MergeFieldVocabulary::samples(): array<string, string>` — flat path => sample value.
   - Inertia props on `DocumentTemplates/Create` and `DocumentTemplates/Edit`: `palette` (list of `{type, group, label, inline}`) and `mergeFields` (list of `{path, sample}`).
   - `store`/`update` accept `blocks` as a nullable array.
@@ -935,6 +937,52 @@ it('gives the edit screen the palette for the template it is editing', function 
 ```
 
 Note: `assertInertia` needs `use Inertia\Testing\AssertableInertia;` only if you type-hint it — the closure form above does not. Check the top of the file for the `DocumentTemplate` and `StaffRole` imports and add them if missing.
+
+Also create `tests/Unit/Documents/SafeHtmlTest.php`:
+
+```php
+<?php
+
+use App\Documents\Support\SafeHtml;
+
+it('spots an unsafe href in every quoting style', function () {
+    expect(SafeHtml::hasUnsafeHref('<a href="javascript:alert(1)">x</a>'))->toBeTrue()
+        ->and(SafeHtml::hasUnsafeHref("<a href='javascript:alert(1)'>x</a>"))->toBeTrue()
+        ->and(SafeHtml::hasUnsafeHref('<a href=javascript:alert(1)>x</a>'))->toBeTrue()
+        ->and(SafeHtml::hasUnsafeHref('<a href = "data:text/html;base64,PHNjcmlwdD4=">x</a>'))->toBeTrue();
+});
+
+it('passes the three schemes a document may link to', function () {
+    expect(SafeHtml::hasUnsafeHref('<a href="https://x.test">x</a>'))->toBeFalse()
+        ->and(SafeHtml::hasUnsafeHref('<a href="http://x.test">x</a>'))->toBeFalse()
+        ->and(SafeHtml::hasUnsafeHref("<a href='mailto:a@b.test'>x</a>"))->toBeFalse();
+});
+
+it('passes html with no links at all', function () {
+    expect(SafeHtml::hasUnsafeHref('<p>Vertrag mit {{ contact.name }}</p>'))->toBeFalse();
+});
+
+it('treats a relative href as unsafe, since a document has no site to be relative to', function () {
+    expect(SafeHtml::hasUnsafeHref('<a href="/intern/kunden">x</a>'))->toBeTrue();
+});
+```
+
+And append to `tests/Feature/Documents/DocumentTemplateAdminTest.php`:
+
+```php
+it('refuses a body carrying an href with an unsafe scheme', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post('/dokumentvorlagen', [
+            'name' => 'Angebotsmail',
+            'type' => 'mail',
+            'shoot_kind' => null,
+            'body' => '<p><a href=\'javascript:alert(1)\'>klick</a></p>',
+        ])
+        ->assertInvalid(['body']);
+
+    expect(DocumentTemplate::query()->count())->toBe(0);
+});
+```
 
 - [ ] **Step 2: Run it to make sure it fails**
 
@@ -1072,6 +1120,64 @@ private function mergeFieldOptions(): array
 ```
 
 `store()` and `update()` need no further change: `$validated` now carries `blocks`, and `createFirstVersion()` / `newVersion()` already read it (Task 2).
+
+Now the server-side half of the href check. The TS serializer strips unsafe hrefs on the way out of the editor, but that runs in the browser and is not a trust boundary — `body` arrives as a POST field and need never have passed through the editor at all. Create `app/Documents/Support/SafeHtml.php`:
+
+```php
+<?php
+
+namespace App\Documents\Support;
+
+/**
+ * The server-side half of the href check the serializer also performs in the
+ * browser. The browser half keeps a template author from pasting a bad link
+ * in by accident; this half is the one that actually holds, because `body`
+ * arrives as a POST field and need never have passed through the editor.
+ *
+ * It matters most for mail: a Contract or Quote becomes a PDF we render
+ * ourselves, but a mail body is HTML handed to an inbox we never render, so
+ * a javascript:/data: href in it is a link someone else's client decides
+ * what to do with.
+ *
+ * Relative hrefs count as unsafe: a document is a PDF or an email, with no
+ * site for "/intern/kunden" to be relative to, so one is a mistake rather
+ * than a link.
+ */
+class SafeHtml
+{
+    /** Matches href in all three quoting styles: "x", 'x', and bare. */
+    private const HREF = '/\s+href\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s>]+))/i';
+
+    private const SAFE_SCHEME = '/^(https?:|mailto:)/i';
+
+    public static function hasUnsafeHref(string $html): bool
+    {
+        preg_match_all(self::HREF, $html, $matches, PREG_SET_ORDER);
+
+        foreach ($matches as $match) {
+            $url = trim($match[3] ?? '') ?: trim($match[2] ?? '') ?: trim($match[1] ?? '');
+
+            if (preg_match(self::SAFE_SCHEME, $url) !== 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+```
+
+Add the rule to the `body` line in **both** `store()` and `update()`:
+
+```php
+'body' => ['required', 'string', 'max:100000', function (string $attribute, mixed $value, \Closure $fail) {
+    if (SafeHtml::hasUnsafeHref((string) $value)) {
+        $fail('Links dürfen nur auf http, https oder mailto zeigen.');
+    }
+}],
+```
+
+and import `use App\Documents\Support\SafeHtml;`.
 
 - [ ] **Step 5: Run the tests and make sure they pass**
 
@@ -1754,6 +1860,9 @@ import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import DocumentEditor from '@/admin/components/DocumentEditor.vue'
 import DocumentPreviewPane from '@/admin/components/DocumentPreviewPane.vue'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
 import { htmlToBlocks } from '@/admin/documents/blocks/importHtml'
 import { serialize } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
@@ -1789,14 +1898,14 @@ function submit() {
         <div class="kick">{{ $t('documentTemplates.title') }} · {{ template.typeLabel }}</div>
         <h1>{{ template.name }}</h1>
       </div>
-      <button class="btn" type="button" :disabled="form.processing" @click="submit">{{ $t('common.save') }}</button>
+      <Button type="button" :disabled="form.processing" @click="submit">{{ $t('common.save') }}</Button>
     </div>
     <p class="hint">{{ $t('documentTemplates.version', { version: template.version }) }} · {{ $t('documentTemplates.editHint') }}</p>
     <p v-if="form.errors.blocks" class="err">{{ form.errors.blocks }}</p>
 
-    <div class="fld grp" style="max-width: 420px">
-      <label for="name">{{ $t('documentTemplates.name') }}</label>
-      <input id="name" v-model="form.name" class="inp" type="text" required />
+    <div class="fld" style="max-width: 420px">
+      <Label for="name">{{ $t('documentTemplates.name') }}</Label>
+      <Input id="name" v-model="form.name" type="text" required />
       <p v-if="form.errors.name" class="err">{{ form.errors.name }}</p>
     </div>
 
@@ -1832,6 +1941,10 @@ import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import DocumentEditor from '@/admin/components/DocumentEditor.vue'
 import DocumentPreviewPane from '@/admin/components/DocumentPreviewPane.vue'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { serialize } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
 
@@ -1864,28 +1977,34 @@ function submit() {
         <div class="kick">{{ $t('documentTemplates.title') }}</div>
         <h1>{{ $t('documentTemplates.createTitle') }}</h1>
       </div>
-      <button class="btn" type="button" :disabled="form.processing" @click="submit">{{ $t('common.save') }}</button>
+      <Button type="button" :disabled="form.processing" @click="submit">{{ $t('common.save') }}</Button>
     </div>
     <p v-if="form.errors.blocks" class="err">{{ form.errors.blocks }}</p>
 
     <div class="doc-meta">
       <div class="fld">
-        <label for="type">{{ $t('documentTemplates.type') }}</label>
-        <select id="type" v-model="form.type" class="inp">
-          <option v-for="option in types" :key="option.value" :value="option.value">{{ option.label }}</option>
-        </select>
+        <Label for="type">{{ $t('documentTemplates.type') }}</Label>
+        <Select :model-value="form.type" @update:model-value="(value) => (form.type = String(value))">
+          <SelectTrigger id="type"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="option in types" :key="option.value" :value="option.value">{{ option.label }}</SelectItem>
+          </SelectContent>
+        </Select>
         <p v-if="form.errors.type" class="err">{{ form.errors.type }}</p>
       </div>
       <div class="fld">
-        <label for="shoot_kind">{{ $t('documentTemplates.shootKind') }}</label>
-        <select id="shoot_kind" v-model="form.shoot_kind" class="inp">
-          <option value="">{{ $t('documentTemplates.shootKindAny') }}</option>
-          <option v-for="kind in shootKinds" :key="kind.value" :value="kind.value">{{ kind.label }}</option>
-        </select>
+        <Label for="shoot_kind">{{ $t('documentTemplates.shootKind') }}</Label>
+        <Select :model-value="form.shoot_kind" @update:model-value="(value) => (form.shoot_kind = String(value))">
+          <SelectTrigger id="shoot_kind"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">{{ $t('documentTemplates.shootKindAny') }}</SelectItem>
+            <SelectItem v-for="kind in shootKinds" :key="kind.value" :value="kind.value">{{ kind.label }}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       <div class="fld">
-        <label for="name">{{ $t('documentTemplates.name') }}</label>
-        <input id="name" v-model="form.name" class="inp" type="text" required />
+        <Label for="name">{{ $t('documentTemplates.name') }}</Label>
+        <Input id="name" v-model="form.name" type="text" required />
         <p v-if="form.errors.name" class="err">{{ form.errors.name }}</p>
       </div>
     </div>
@@ -1980,6 +2099,34 @@ Create `resources/css/document-editor.css`. Values come from the mockup; the tok
 .doc-mf-option b { font: 500 12.5px/1.3 var(--font); color: var(--ink); }
 .doc-mf-option em { font: 400 11px/1.3 var(--font); font-style: normal; color: var(--faint); }
 
+/*
+ * Editor.js tools build their own DOM in plain TypeScript, so they cannot use
+ * the <Input> component the rest of the admin now uses. This is the one field
+ * rule left in CSS, and it deliberately mirrors inputVariants' ported values
+ * rather than inventing a second field style.
+ */
+.doc-tool-input {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--bg);
+  font: 400 13px/1.4 var(--font);
+  color: var(--ink);
+  transition: border-color 120ms ease-out;
+}
+.doc-tool-input::placeholder { color: var(--faint); }
+.doc-tool-input:hover { border-color: var(--line-hover); }
+.doc-tool-input:focus { border-color: var(--accent); outline: none; }
+
+/* custom block tools */
+.doc-editable:empty::before { content: attr(data-placeholder); color: var(--faint); }
+.doc-spacer-tool { display: flex; gap: var(--s2); }
+.doc-size { padding: 3px 9px; border: 1px solid var(--line); border-radius: var(--r-sm); background: none; cursor: pointer; }
+.doc-size.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.doc-image-tool { display: flex; flex-direction: column; gap: var(--s2); }
+.doc-image-preview { max-width: 100%; border-radius: 4px; }
+
 /* rendered document blocks — the classes serialize.ts emits */
 .doc-rule { border: 0; border-top: 1px solid var(--line); margin: var(--s5) 0; }
 .doc-table { width: 100%; border-collapse: collapse; }
@@ -2000,6 +2147,26 @@ In `resources/css/admin.css`, add the import below the existing two:
 ```css
 @import "./document-editor.css";
 ```
+
+- [ ] **Step 4b: Repoint the Editor.js tools off the retired `.inp` class**
+
+Task 6's tools were written against `.inp`, which no longer exists — the shadcn-vue migration (commit `9259e07`) retired `.inp`, `.btn`, `.abtn`, `.txtbtn` and `.fld > label` from `forms.css`, `tokens.css` and `admin-extra.css`. These two files build raw DOM inside Editor.js tools, so they cannot use the `<Input>` component; they take the `.doc-tool-input` rule added above instead.
+
+In `resources/js/admin/documents/blocks/mergeFieldTool.ts`, the picker's search field:
+
+```ts
+search.className = 'doc-tool-input'
+```
+
+In `resources/js/admin/documents/blocks/customTools.ts`, both inputs in `ImageTool`'s constructor:
+
+```ts
+this.url.className = 'doc-tool-input'
+...
+this.caption.className = 'doc-tool-input'
+```
+
+Grep for any other `'inp'`, `'btn'`, `'txtbtn'` or `'abtn'` string in `resources/js/admin/documents/` and `resources/js/admin/components/DocumentEditor.vue` / `DocumentPreviewPane.vue` before moving on — a retired class in a string literal fails silently, with no build error and no test failure, and shows up only as an unstyled control.
 
 - [ ] **Step 5: Delete the old preview component**
 
@@ -2128,6 +2295,27 @@ Merge fields are an inline tool: a `<span data-mf="contact.name">` showing the
 sample value while editing, serialized back to `{{ contact.name }}`. The
 vocabulary the picker offers is `MergeFieldVocabulary::samples()`, the same
 constant the preview resolves against.
+
+## Sanitising block HTML
+
+Editor.js applies each tool's `sanitize` config when it *saves*, inside a live
+browser editor. A `blocks` payload POSTed straight at the controller never
+meets it, so `App\Documents\Support\InlineHtmlSanitizer` re-applies the
+allow-list on the write path, in both `store()` and `update()`, before
+anything is persisted. That is the copy that holds.
+
+`resources/js/admin/documents/blocks/sanitizeInline.ts` carries the same list
+for the read path, because a tool constructed from stored data assigns it
+straight into a `contenteditable`. Keep the two lists identical — a tag
+allowed on one side and not the other is either a hole or a silently stripped
+feature. The chip's `data-mf` in particular must stay allowed on both: the
+serializer reads it back to rebuild `{{ contact.name }}`.
+
+`script`, `style`, `img`, `iframe`, `object` and `embed` are dropped whole
+rather than unwrapped. Every other disallowed tag is unwrapped, keeping the
+author's text — a `<div>` wraps prose someone wrote, while a `<script>` wraps
+machine source that was never document text and would otherwise land in a PDF
+a client reads.
 ```
 
 - [ ] **Step 2: Commit**
@@ -2135,6 +2323,303 @@ constant the preview resolves against.
 ```bash
 git add docs/documents.md
 git commit -m "docs(documents): describe the block editor authoring path"
+```
+
+---
+
+### Task 11: Server-side block sanitisation
+
+Added after the Task 6 review found that a `blocks` payload POSTed directly reaches storage with unsanitised inner HTML, which then executes in the next staff member's admin DOM. Task 6's fix closes the read path; this closes the write path, which is the one that actually holds. Run this immediately after Task 6.
+
+**Files:**
+- Create: `app/Documents/Support/InlineHtmlSanitizer.php`, `tests/Unit/Documents/InlineHtmlSanitizerTest.php`
+- Modify: `app/Documents/Http/Controllers/DocumentTemplateController.php`
+- Test: `tests/Feature/Documents/DocumentTemplateAdminTest.php` (append)
+
+**Interfaces:**
+- Consumes: the validated `blocks` array in `store()`/`update()` (Task 5).
+- Produces:
+  - `InlineHtmlSanitizer::inline(string $html): string` — strips every tag and attribute outside the allow-list, unwrapping disallowed tags rather than deleting their text.
+  - `InlineHtmlSanitizer::blocks(array $blocks): array` — walks a blocks payload and sanitises every string leaf, leaving a `rawHtml` block's `html` untouched.
+
+- [ ] **Step 1: Write the failing tests**
+
+Create `tests/Unit/Documents/InlineHtmlSanitizerTest.php`:
+
+```php
+<?php
+
+use App\Documents\Support\InlineHtmlSanitizer;
+
+it('keeps the inline markup a document may carry', function () {
+    $html = 'Hallo <b>Lena</b> und <em>Jonas</em><br><a href="https://x.test">Link</a>';
+
+    expect(InlineHtmlSanitizer::inline($html))->toBe($html);
+});
+
+it('keeps a merge-field chip intact, since the serializer reads it back', function () {
+    $chip = '<span class="doc-mf" data-mf="contact.name">Lena Meier</span>';
+
+    expect(InlineHtmlSanitizer::inline($chip))->toBe($chip);
+});
+
+it('unwraps a disallowed tag but keeps the text inside it', function () {
+    expect(InlineHtmlSanitizer::inline('<script>alert(1)</script>'))->toBe('alert(1)')
+        ->and(InlineHtmlSanitizer::inline('<div>Absatz</div>'))->toBe('Absatz')
+        ->and(InlineHtmlSanitizer::inline('<b onclick="x()">fett</b>'))->toBe('<b>fett</b>');
+});
+
+it('drops an img with an onerror payload entirely, tag and attributes', function () {
+    expect(InlineHtmlSanitizer::inline('<img src=x onerror=alert(1)>'))->toBe('');
+});
+
+it('strips an href that is not http, https or mailto', function () {
+    expect(InlineHtmlSanitizer::inline('<a href="javascript:alert(1)">klick</a>'))->toBe('<a>klick</a>')
+        ->and(InlineHtmlSanitizer::inline("<a href='mailto:a@b.test'>mail</a>"))->toBe('<a href="mailto:a@b.test">mail</a>');
+});
+
+it('leaves German text and its umlauts exactly as written', function () {
+    expect(InlineHtmlSanitizer::inline('Vertragsgemäß, für Grüße'))->toBe('Vertragsgemäß, für Grüße');
+});
+
+it('sanitises every string leaf in a blocks payload', function () {
+    $blocks = ['blocks' => [
+        ['type' => 'paragraph', 'data' => ['text' => 'Hallo <img src=x onerror=alert(1)>']],
+        ['type' => 'columns', 'data' => ['left' => '<b>links</b>', 'right' => '<script>x()</script>rechts']],
+    ]];
+
+    $clean = InlineHtmlSanitizer::blocks($blocks);
+
+    expect($clean['blocks'][0]['data']['text'])->toBe('Hallo ')
+        ->and($clean['blocks'][1]['data']['left'])->toBe('<b>links</b>')
+        ->and($clean['blocks'][1]['data']['right'])->toBe('x()rechts');
+});
+
+it('leaves a legacy rawHtml block alone, since it is a pre-editor body by definition', function () {
+    $blocks = ['blocks' => [['type' => 'rawHtml', 'data' => ['html' => '<div class="alt"><p>Alt</p></div>']]]];
+
+    expect(InlineHtmlSanitizer::blocks($blocks)['blocks'][0]['data']['html'])
+        ->toBe('<div class="alt"><p>Alt</p></div>');
+});
+```
+
+And append to `tests/Feature/Documents/DocumentTemplateAdminTest.php`:
+
+```php
+it('sanitises block html on the way into storage, not merely on the way out', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post('/dokumentvorlagen', [
+            'name' => 'Fotovertrag',
+            'type' => 'contract',
+            'shoot_kind' => null,
+            'body' => '<p>Hallo</p>',
+            'blocks' => ['blocks' => [['type' => 'paragraph', 'data' => ['text' => 'Hallo <img src=x onerror=alert(1)>']]]],
+        ])
+        ->assertRedirect('/dokumentvorlagen');
+
+    expect(DocumentTemplate::query()->firstOrFail()->blocks['blocks'][0]['data']['text'])->toBe('Hallo ');
+});
+```
+
+- [ ] **Step 2: Run them to make sure they fail**
+
+Run: `pnpm php ./vendor/bin/pest tests/Unit/Documents/InlineHtmlSanitizerTest.php`
+Expected: FAIL — `Class "App\Documents\Support\InlineHtmlSanitizer" not found`.
+
+- [ ] **Step 3: Write the sanitiser**
+
+Create `app/Documents/Support/InlineHtmlSanitizer.php`:
+
+```php
+<?php
+
+namespace App\Documents\Support;
+
+use DOMDocument;
+use DOMElement;
+use DOMNode;
+
+/**
+ * The write-path half of the editor's inline-HTML allow-list. Editor.js
+ * applies each tool's `sanitize` config when it saves inside a live browser
+ * editor — which means a `blocks` payload POSTed straight at the controller
+ * never meets it. Without this, such a payload is stored verbatim and then
+ * re-injected as live HTML into the next staff member's contenteditable when
+ * they open the template.
+ *
+ * The mirror of this list lives in
+ * resources/js/admin/documents/blocks/sanitizeInline.ts, which defends the
+ * read path. Keep the two in sync; this one is the one that holds.
+ *
+ * DOM-based rather than regex-based: an allow-list over parsed nodes is the
+ * only kind that survives nested and malformed markup.
+ */
+class InlineHtmlSanitizer
+{
+    /** tag => allowed attributes. Mirrors DOCUMENT_INLINE in sanitizeInline.ts. */
+    private const ALLOW = [
+        'b' => [],
+        'strong' => [],
+        'i' => [],
+        'em' => [],
+        'u' => [],
+        'br' => [],
+        'a' => ['href'],
+        'span' => ['class', 'data-mf'],
+    ];
+
+    private const SAFE_SCHEME = '/^(https?:|mailto:)/i';
+
+    /** Tags whose text is worth nothing without them — dropped whole, not unwrapped. */
+    private const DROP_WHOLE = ['script', 'style', 'img', 'iframe', 'object', 'embed'];
+
+    public static function inline(string $html): string
+    {
+        if (trim($html) === '') {
+            return $html;
+        }
+
+        $document = new DOMDocument;
+
+        // The XML prolog is what stops DOMDocument reading UTF-8 as Latin-1 and
+        // turning "Grüße" into mojibake.
+        $loaded = @$document->loadHTML(
+            '<?xml encoding="utf-8" ?><body>'.$html.'</body>',
+            LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+        );
+
+        if ($loaded === false) {
+            return '';
+        }
+
+        $body = $document->getElementsByTagName('body')->item(0);
+
+        if ($body === null) {
+            return '';
+        }
+
+        self::clean($body);
+
+        $out = '';
+
+        foreach ($body->childNodes as $child) {
+            $out .= $document->saveHTML($child);
+        }
+
+        return $out;
+    }
+
+    /**
+     * Every string leaf in a blocks payload, sanitised. A rawHtml block is
+     * skipped: it holds a pre-block-editor body, which is the same
+     * staff-authored HTML the old textarea accepted, and no tool renders it
+     * into the editor's DOM.
+     *
+     * @param  array<mixed>  $blocks
+     * @return array<mixed>
+     */
+    public static function blocks(array $blocks): array
+    {
+        return self::walk($blocks, false);
+    }
+
+    /**
+     * @param  array<mixed>  $value
+     * @return array<mixed>
+     */
+    private static function walk(array $value, bool $raw): array
+    {
+        $clean = [];
+
+        foreach ($value as $key => $item) {
+            if (is_array($item)) {
+                $clean[$key] = self::walk($item, $raw || ($item['type'] ?? null) === 'rawHtml');
+
+                continue;
+            }
+
+            $clean[$key] = is_string($item) && ! $raw ? self::inline($item) : $item;
+        }
+
+        return $clean;
+    }
+
+    private static function clean(DOMNode $node): void
+    {
+        // Snapshot first: the loop mutates the live child list.
+        foreach (iterator_to_array($node->childNodes) as $child) {
+            if (! $child instanceof DOMElement) {
+                continue;
+            }
+
+            self::clean($child);
+
+            $tag = strtolower($child->tagName);
+
+            if (in_array($tag, self::DROP_WHOLE, true)) {
+                $child->parentNode?->removeChild($child);
+
+                continue;
+            }
+
+            if (! array_key_exists($tag, self::ALLOW)) {
+                self::unwrap($child);
+
+                continue;
+            }
+
+            foreach (iterator_to_array($child->attributes) as $attribute) {
+                if (! in_array($attribute->name, self::ALLOW[$tag], true)) {
+                    $child->removeAttribute($attribute->name);
+                }
+            }
+
+            if ($tag === 'a' && preg_match(self::SAFE_SCHEME, $child->getAttribute('href')) !== 1) {
+                $child->removeAttribute('href');
+            }
+        }
+    }
+
+    /** Keeps the author's text, drops the tag around it. */
+    private static function unwrap(DOMElement $element): void
+    {
+        $parent = $element->parentNode;
+
+        if ($parent === null) {
+            return;
+        }
+
+        while ($element->firstChild !== null) {
+            $parent->insertBefore($element->firstChild, $element);
+        }
+
+        $parent->removeChild($element);
+    }
+}
+```
+
+- [ ] **Step 4: Apply it in the controller**
+
+In `DocumentTemplateController.php`, import `use App\Documents\Support\InlineHtmlSanitizer;` and sanitise immediately after `assertBlocksAllowed(...)` in **both** `store()` and `update()`:
+
+```php
+if (isset($validated['blocks']) && is_array($validated['blocks'])) {
+    $validated['blocks'] = InlineHtmlSanitizer::blocks($validated['blocks']);
+}
+```
+
+- [ ] **Step 5: Run the tests**
+
+```bash
+pnpm php ./vendor/bin/pest tests/Unit/Documents/ tests/Feature/Documents/
+```
+Expected: PASS, including the eight new sanitiser tests and the storage test.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add app/Documents/Support/InlineHtmlSanitizer.php app/Documents/Http/Controllers/DocumentTemplateController.php tests/Unit/Documents/InlineHtmlSanitizerTest.php tests/Feature/Documents/DocumentTemplateAdminTest.php
+git commit -m "fix(documents): sanitise block html on the write path"
 ```
 
 ---

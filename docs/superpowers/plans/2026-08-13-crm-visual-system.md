@@ -327,7 +327,7 @@ git commit -m "style(gallery): re-light the semantic colours for the dark theme"
 
 **Interfaces:**
 - Consumes: the palette from Task 1.
-- Produces: `.tiles`, `.tile`, `.tile.ghost`, `.acts`, `.act`, `.act.danger`, `.perf`, `.feed`, `.ev`, `.ev.pending` — the class names Task 10 and Task 11 write into templates.
+- Produces: `.tiles`, `.tile`, `.tile.ghost`, `.rail`, `.railrow`, `.railrow.danger`, `.perf`, `.feed`, `.ev`, `.ev.pending` — the class names Task 10 and Task 11 write into templates.
 
 - [ ] **Step 1: Write the components into the mockups**
 
@@ -352,18 +352,18 @@ Append to `mockups/_shared/admin-extra.css`:
 .tile.ghost { background:transparent; border:1px dashed var(--line); }
 .tile.ghost .v { color:var(--faint); font-weight:400; }
 
-/* .acts — one vertical list of verbs, replacing the ghost buttons that were
+/* .rail — one vertical list of verbs, replacing the ghost buttons that were
    scattered through .cardhead. Not a button variant: this is a layout for a
    list of links, the way .nav already is in the sidebar. */
-.acts { display:flex; flex-direction:column; gap:2px; margin:-8px 0 0 -10px; }
-.act { display:flex; align-items:center; gap:12px; padding:8px var(--s3); border-radius:7px;
+.rail { display:flex; flex-direction:column; gap:2px; margin:-8px 0 0 -10px; }
+.railrow { display:flex; align-items:center; gap:12px; padding:8px var(--s3); border-radius:7px;
        color:var(--ink); text-decoration:none; font:400 14px/1 var(--font); cursor:pointer;
        background:none; border:none; width:100%; text-align:left;
        transition:background .12s ease-out, color .12s ease-out; }
-.act:hover { background:var(--hover); }
-.act svg { width:17px; height:17px; color:var(--muted); }
+.railrow:hover { background:var(--hover); }
+.railrow svg { width:17px; height:17px; color:var(--muted); }
 /* destructive on hover only — an option should not shout while it sits unused */
-.act.danger:hover, .act.danger:hover svg { color:var(--late); }
+.railrow.danger:hover, .railrow.danger:hover svg { color:var(--late); }
 
 /* .perf — the reference's tear line. A repeating radial gradient, so it
    recolours with --line like every other rule here and needs no asset. */
@@ -1050,7 +1050,7 @@ git commit -m "test(projects): hold the activity feed's whitelist and its surfac
 - Create: `tests/e2e/project-detail.spec.ts`
 
 **Interfaces:**
-- Consumes: `.tiles`, `.acts`, `.perf`, `.feed` from Task 4; the `activity` prop from Task 8.
+- Consumes: `.tiles`, `.rail`, `.perf`, `.feed` from Task 4; the `activity` prop from Task 8.
 - Produces: the markup pattern Task 11 copies into the remaining screens.
 
 Hold the file next to `docs/superpowers/specs/2026-08-13-crm-visual-system-mockup.html` while working. The mockup is the acceptance criterion, not a reference.
@@ -1069,7 +1069,7 @@ test('the project screen shows tiles, an action rail and an activity feed', asyn
   await page.getByRole('link', { name: /Hochzeit/ }).first().click()
 
   await expect(page.locator('.tile').first()).toBeVisible()
-  await expect(page.locator('.acts .act')).not.toHaveCount(0)
+  await expect(page.locator('.rail .railrow')).not.toHaveCount(0)
   await expect(page.locator('.feed .ev').first()).toBeVisible()
 })
 ```
@@ -1117,14 +1117,14 @@ The `.tile.ghost` variant replaces the old `:class="{ tbd: … }"` grey-text tre
 Below the tiles, replace the portal-visibility `AlertDialogTrigger` button — and any other lone ghost button in this column — with a rail. Keep the `AlertDialog` wrapper; only the trigger's presentation changes:
 
 ```vue
-          <div class="acts">
-            <a class="act" :href="header.portalUrl" target="_blank" rel="noopener">
+          <div class="rail">
+            <a class="railrow" :href="header.portalUrl" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></svg>
               {{ $t('project.viewPortal') }}
             </a>
             <AlertDialog v-if="header.canManagePortalVisibility">
               <AlertDialogTrigger as-child>
-                <button type="button" class="act danger">
+                <button type="button" class="railrow danger">
                   <svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
                   {{ portalVisibilityLabel }}
                 </button>
@@ -1134,7 +1134,7 @@ Below the tiles, replace the portal-visibility `AlertDialogTrigger` button — a
           </div>
 ```
 
-`header.portalUrl` may not exist on `ProjectHeaderData`. If it does not, either add it there or drop that first `.act` — do not invent a prop and leave it undefined.
+`header.portalUrl` may not exist on `ProjectHeaderData`. If it does not, either add it there or drop that first `.railrow` — do not invent a prop and leave it undefined.
 
 Add any new copy keys to `resources/js/locales/de.json` as short noun phrases.
 
@@ -1220,7 +1220,7 @@ Use the exact markup from Task 10 Step 3 — label in `.l`, value in `.v`, optio
 grep -rln --include="*.vue" 'cardhead' .
 ```
 
-For each file: where a card head carries two or more ghost buttons, move them into an `.acts` rail using the markup from Task 10 Step 4. Where a card head carries exactly one, leave it — a rail of one is a button with extra steps.
+For each file: where a card head carries two or more ghost buttons, move them into an `.rail` rail using the markup from Task 10 Step 4. Where a card head carries exactly one, leave it — a rail of one is a button with extra steps.
 
 - [ ] **Step 4: Wire the late payment state**
 
