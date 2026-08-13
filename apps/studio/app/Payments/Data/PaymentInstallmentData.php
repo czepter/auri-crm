@@ -2,6 +2,7 @@
 
 namespace App\Payments\Data;
 
+use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -30,6 +31,12 @@ class PaymentInstallmentData extends Data
         public ?string $settledViaLabel,
         public ?string $paidOn,
         public ?string $paymentReference,
+        // Derived, not stored: the same "still scheduled, due date passed"
+        // condition App\Payments\Actions\DetectOverdueInstallments queries
+        // for its own scan, minus that action's overdue_notified_at guard —
+        // that column only dedupes the one-time notification event and is
+        // never a second source of truth for whether a row is late.
+        public bool $isLate,
     ) {}
 
     /**
@@ -51,6 +58,8 @@ class PaymentInstallmentData extends Data
             settledViaLabel: $installment->settled_via?->label(),
             paidOn: $installment->paid_on?->format('Y-m-d'),
             paymentReference: $installment->payment_reference,
+            isLate: $installment->status === PaymentInstallmentStatus::Scheduled
+                && $installment->due_on->lt(now('UTC')->startOfDay()),
         );
     }
 }
