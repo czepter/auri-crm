@@ -27,6 +27,7 @@ const props = defineProps<{
   notes: App.Crm.Data.InternalNoteData[]
   tasks: App.Crm.Data.TaskRowData[]
   shootOptions: { value: string; label: string }[]
+  activity: { event: string; label: string; at: string; actorName: string | null }[]
 }>()
 
 const composer = useForm({ body: '' })
@@ -390,30 +391,26 @@ function submitMarkPaid(installmentId: string) {
       <div class="stackcol">
         <div class="card static">
           <div class="cardhead"><span class="kick">{{ $t('project.booking') }}</span></div>
-          <div class="kv">
-            <div class="kvrow">
-              <span>{{ $t('project.type') }}</span><span>{{ header.type }}</span>
+          <div class="tiles">
+            <div class="fact">
+              <div class="l">{{ $t('project.mainDateLabel') }}</div>
+              <div class="v">
+                {{ header.primaryDate
+                    ? new Date(header.primaryDate).toLocaleDateString('de-DE')
+                    : $t('board.openDate') }}
+              </div>
+              <div class="s">{{ header.type }}</div>
             </div>
-            <div class="kvrow">
-              <span>{{ $t('project.mainDateLabel') }}</span>
-              <span :class="{ tbd: !header.primaryDate }">
-                {{ header.primaryDate ? new Date(header.primaryDate).toLocaleDateString('de-DE') : $t('board.openDate') }}
-              </span>
+            <div class="fact">
+              <div class="l">{{ $t('project.position') }}</div>
+              <div class="v">{{ header.position.label }}</div>
+              <div class="s">{{ header.isBooked ? $t('project.booked') : $t('project.notBooked') }}</div>
             </div>
-            <div class="kvrow">
-              <span>{{ $t('project.position') }}</span><span><b>{{ header.position.label }}</b></span>
-            </div>
-            <div class="kvrow">
-              <span>{{ $t('project.bookedState') }}</span>
-              <span :class="{ tbd: !header.isBooked }">
-                {{ header.isBooked ? $t('project.booked') : $t('project.notBooked') }}
-              </span>
-            </div>
-            <div class="kvrow">
-              <span>{{ $t('project.portalStatus') }}</span>
-              <span :class="{ tbd: !header.portalVisible }">
+            <div :class="['fact', { ghost: !header.portalVisible }]">
+              <div class="l">{{ $t('project.portalStatus') }}</div>
+              <div class="v">
                 {{ header.portalVisible ? $t('project.portalVisible') : $t('project.portalHidden') }}
-              </span>
+              </div>
             </div>
           </div>
 
@@ -433,6 +430,25 @@ function submitMarkPaid(installmentId: string) {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+        </div>
+
+        <div class="perf"></div>
+
+        <div class="feedlab">{{ $t('project.activity') }}</div>
+        <div class="feed">
+          <div v-for="event in activity" :key="event.at + event.event" class="ev">
+            <div class="dot"></div>
+            <div>
+              <div class="t">{{ event.label }}</div>
+              <div class="w">
+                {{ new Date(event.at).toLocaleString('de-DE', {
+                     day: '2-digit', month: 'short', year: 'numeric',
+                     hour: '2-digit', minute: '2-digit',
+                   }) }}
+                <template v-if="event.actorName"> · {{ event.actorName }}</template>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Zahlungen: a preview compressed into the Übersicht tab, mockup
