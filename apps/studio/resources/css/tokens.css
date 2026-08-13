@@ -266,21 +266,15 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 .srow .stack { margin-left:0; }
 .srow.open .stack img, .srow.open .stack .av { border-color:#FDFAF8; }
 
-/* right-rail key/value facts */
-.kv { display:flex; flex-direction:column; gap:9px; }
-.kvrow { display:flex; align-items:baseline; gap:var(--s3); font:400 12.5px/1.35 var(--font); }
-.kvrow span:first-child, .kvrow label:first-child { color:var(--muted); flex:none; min-width:78px; }
-.kvrow span:last-child { color:var(--ink); text-align:right; margin-left:auto; }
-.kvrow b { font-weight:600; font-variant-numeric:tabular-nums; }
-.kvrow .tbd { color:var(--faint); }
-
-/* .tiles — replaces the .kv / .kvrow fact list above. A fact is a tile, not a
-   row: the label sits over the value instead of beside it, which is what lets
-   three of them share a line without the values colliding. Named .fact rather
-   than .tile: gallery.css already owns .tile for the photo-grid item, and a
-   second meaning for one class name is the exact confusion this system exists
-   to end. Lives here rather than admin-extra.css because the portal's own
-   Impressum uses it too, and tokens.css is the layer both bundles import. */
+/* .tiles — replaces the right-rail .kv / .kvrow fact list; the sweep across
+   the app's remaining consumers is done, so .kv/.kvrow are gone from here.
+   A fact is a tile, not a row: the label sits over the value instead of
+   beside it, which is what lets three of them share a line without the
+   values colliding. Named .fact rather than .tile: gallery.css already owns
+   .tile for the photo-grid item, and a second meaning for one class name is
+   the exact confusion this system exists to end. Lives here rather than
+   admin-extra.css because the portal's own Impressum uses it too, and
+   tokens.css is the layer both bundles import. */
 .tiles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--s3); }
 .fact { background:var(--hover); border-radius:var(--r); padding:14px var(--s4) var(--s4); }
 .fact .l { font:600 9.5px/1 var(--font); letter-spacing:.11em; text-transform:uppercase; color:var(--faint); }
