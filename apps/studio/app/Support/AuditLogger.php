@@ -19,10 +19,15 @@ class AuditLogger
         ?User $actor = null,
         array $context = [],
         ?string $subject = null,
+        // ?int rather than ?Project: App\Support is cross-cutting and
+        // AuditLog belongs to no module, so importing a Crm model here would
+        // hang the shared layer off a domain one.
+        ?int $projectId = null,
     ): AuditLog {
         return AuditLog::create([
             'event' => $event,
             'actor_id' => $actor?->id,
+            'project_id' => $projectId,
             'subject' => $subject,
             'context' => self::sanitize($context),
             'ip_address' => Request::ip(),

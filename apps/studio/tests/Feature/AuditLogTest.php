@@ -1,5 +1,6 @@
 <?php
 
+use App\Crm\Models\Project;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Support\AuditLogger;
@@ -48,4 +49,18 @@ it('never stores raw credentials in context', function () {
     expect($log->context)->not->toHaveKey('password')
         ->and($log->context)->not->toHaveKey('code')
         ->and($log->context['email'])->toBe('[redacted]');
+});
+
+it('records the project an event belongs to', function () {
+    $project = Project::factory()->create();
+
+    $log = AuditLogger::record('quote.sent', null, [], 'q_123', $project->id);
+
+    expect($log->project_id)->toBe($project->id);
+});
+
+it('leaves project_id null for events that belong to no project', function () {
+    $log = AuditLogger::record('staff.login.succeeded', staffMember());
+
+    expect($log->project_id)->toBeNull();
 });
