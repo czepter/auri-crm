@@ -248,3 +248,64 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 
 /* two equal columns for peer cards — the 296px rail is for facts, not content */
 .cols2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--s4); align-items:start; }
+
+/* ---------- the reference's four shapes ----------
+   Filled tiles, an action rail, a perforation and an activity feed. All four
+   are layout over the existing tokens — no new colour, no asset, no script. */
+
+/* .tiles — replaces the .kv / .kvrow fact list. A fact is a tile, not a row:
+   the label sits over the value instead of beside it, which is what lets three
+   of them share a line without the values colliding. Named .fact rather than
+   .tile: gallery.css already owns .tile for the photo-grid item, and a second
+   meaning for one class name is the exact confusion this system exists to end. */
+.tiles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--s3); }
+.fact { background:var(--hover); border-radius:var(--r); padding:14px var(--s4) var(--s4); }
+.fact .l { font:600 9.5px/1 var(--font); letter-spacing:.11em; text-transform:uppercase; color:var(--faint); }
+.fact .v { font:500 16px/1.2 var(--font); letter-spacing:-.02em; margin-top:9px;
+           font-variant-numeric:tabular-nums; }
+.fact .s { font:400 12.5px/1.3 var(--font); color:var(--muted); margin-top:var(--s1);
+           font-variant-numeric:tabular-nums; }
+/* the empty state keeps the grid rhythm that loose grey text broke */
+.fact.ghost { background:transparent; border:1px dashed var(--line); }
+.fact.ghost .v { color:var(--faint); font-weight:400; }
+
+/* .rail — one vertical list of verbs, replacing the ghost buttons that were
+   scattered through .cardhead. Not a button variant: this is a layout for a
+   list of links, the way .nav already is in the sidebar. Named .rail / .railrow
+   rather than .acts / .act: gallery.css already owns that pair for the lightbox's
+   horizontal action row, and admin-extra.css's .note .head .acts is a third,
+   scoped meaning — .railrow matches the file's own .trow / .srow / .payrow
+   suffix for a list item, and leaves both existing rules untouched. */
+.rail { display:flex; flex-direction:column; gap:2px; margin:-8px 0 0 -10px; }
+.railrow { display:flex; align-items:center; gap:12px; padding:8px var(--s3); border-radius:7px;
+       color:var(--ink); text-decoration:none; font:400 14px/1 var(--font); cursor:pointer;
+       background:none; border:none; width:100%; text-align:left;
+       transition:background .12s ease-out, color .12s ease-out; }
+.railrow:hover { background:var(--hover); }
+.railrow svg { width:17px; height:17px; color:var(--muted); }
+/* destructive on hover only — an option should not shout while it sits unused */
+.railrow.danger:hover, .railrow.danger:hover svg { color:var(--late); }
+
+/* .perf — the reference's tear line. A repeating radial gradient, so it
+   recolours with --line like every other rule here and needs no asset. */
+.perf { height:8px; margin:var(--s5) 0; opacity:.75;
+  background:radial-gradient(circle at 3px 6px, transparent 2.6px,
+             var(--line) 2.7px 3.2px, transparent 3.3px) repeat-x;
+  background-size:8px 8px; }
+
+/* .feed — the same dot-and-rail technique .tlrail already uses for the
+   shooting day, so the two timelines read as one family. */
+.feedlab { font:600 9.5px/1 var(--font); letter-spacing:.11em; text-transform:uppercase;
+           color:var(--faint); margin-bottom:14px; }
+.feed { display:flex; flex-direction:column; }
+.ev { display:grid; grid-template-columns:9px 1fr; gap:12px; position:relative; padding-bottom:var(--s4); }
+.ev:last-child { padding-bottom:0; }
+.ev .dot { width:7px; height:7px; border-radius:50%; background:var(--faint); margin-top:5px;
+           position:relative; z-index:1; }
+.ev::before { content:''; position:absolute; left:3px; top:12px; bottom:0; width:1px; background:var(--line); }
+.ev:last-child::before { display:none; }
+.ev .t { font:400 13.5px/1.3 var(--font); }
+.ev .w { font:400 12px/1.3 var(--font); color:var(--faint); margin-top:3px;
+         font-variant-numeric:tabular-nums; }
+.ev.pending .dot { background:var(--line); }
+.ev.pending .t { color:var(--faint); }

@@ -240,15 +240,6 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 .tlwho { font:400 11.5px/1.35 var(--font); color:var(--faint); margin-top:3px; }
 .tlrow.move .tlname { font-weight:400; font-size:12px; color:var(--faint); }
 
-/* ---------- booking facts: label over value, two columns, no tiles ---------- */
-.bklist { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--s4) var(--s6); }
-.bkrow > span:first-child { display:block; font:600 10px/1 var(--font); letter-spacing:.09em;
-                            text-transform:uppercase; color:var(--faint); margin-bottom:5px; }
-.bkrow > span:last-child { display:block; font:500 13px/1.4 var(--font); font-variant-numeric:tabular-nums; }
-.bkrow em { font-style:normal; color:var(--muted); font-weight:400; }
-.bkrow i { font-style:normal; color:var(--ok); font-weight:600; }
-.bkrow .big { font-weight:700; font-size:15px; letter-spacing:-.025em; }
-
 /* ---------- Shoot list: one row per shooting occasion, next one expanded ---------- */
 .chip { font:600 10px/1.5 var(--font); letter-spacing:.04em; text-transform:uppercase;
         padding:3px 8px; border-radius:var(--r-sm); flex:none; }
