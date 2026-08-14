@@ -11,6 +11,27 @@
 **Spec:** [`docs/superpowers/specs/2026-08-13-crm-visual-system-design.md`](../specs/2026-08-13-crm-visual-system-design.md)
 **Mockup:** [`docs/superpowers/specs/2026-08-13-crm-visual-system-mockup.html`](../specs/2026-08-13-crm-visual-system-mockup.html) — open it in a browser before starting; it is the visual target.
 
+> **This plan was executed and amended in flight. Three passages below describe
+> work that was reversed and are kept for the record rather than corrected in
+> place — the reasoning for each reversal is worth more than a clean document.**
+>
+> - **Task 4's `.rail` / `.railrow` CSS, Task 10's Step 4, Task 11's Step 3, and
+>   the `.rail` assertion in Task 10's e2e spec.** The action rail was built and
+>   then deleted for having no site: 24 `.cardhead` occurrences across 15
+>   components, every one carrying at most a single action. It ships no CSS. See
+>   spec §2.2 and Part 4.
+> - **`header.portalUrl` in Task 10 Step 4** does not exist on
+>   `ProjectHeaderData` and was never added; the markup that used it was dropped
+>   with Step 4.
+> - **Task 11's `.kv` conversion count.** Four screens converted to
+>   `.tiles` / `.fact`; `Settings/FormTemplates/Edit.vue` turned out to be a form
+>   borrowing `.kv` as a layout and went to `.fgrid` / `.fld`.
+>
+> The full decision record, with the reasoning and the cost-if-wrong for each of
+> the eighteen rulings made during execution, is
+> `.superpowers/sdd/2026-08-13-crm-visual-system/progress.md`. Where this file
+> and that one disagree, that one is what happened.
+
 ## Global Constraints
 
 - **Commands run through Docker.** `pnpm php` is `docker compose run --rm php`. Tests: `pnpm php ./vendor/bin/pest`, `pnpm --filter @studio/app test` (vitest), `pnpm --filter @studio/app exec playwright test`, `pnpm lint` (vue-tsc).
@@ -352,6 +373,8 @@ Append to `mockups/_shared/admin-extra.css`:
 .fact.ghost { background:transparent; border:1px dashed var(--line); }
 .fact.ghost .v { color:var(--faint); font-weight:400; }
 
+/* REVERSED — this block was written, shipped, then deleted. It has no consumer.
+   Kept here for the record; see the amendment note at the top of this file. */
 /* .rail — one vertical list of verbs, replacing the ghost buttons that were
    scattered through .cardhead. Not a button variant: this is a layout for a
    list of links, the way .nav already is in the sidebar. */
@@ -1106,7 +1129,8 @@ test('the project screen shows tiles, an action rail and an activity feed', asyn
   await page.getByRole('link', { name: /Hochzeit/ }).first().click()
 
   await expect(page.locator('.fact').first()).toBeVisible()
-  await expect(page.locator('.rail .railrow')).not.toHaveCount(0)
+  // REVERSED — this assertion was dropped; the rail ships no CSS and no markup.
+  // await expect(page.locator('.rail .railrow')).not.toHaveCount(0)
   await expect(page.locator('.feed .ev').first()).toBeVisible()
 })
 ```
@@ -1251,7 +1275,7 @@ Expected: four files (`Projects/Show.vue` is already done).
 
 Use the exact markup from Task 10 Step 3 — label in `.l`, value in `.v`, optional sub-line in `.s`, `.fact.ghost` for a fact that is not known yet. Convert one file, run `pnpm lint`, look at the screen, then move to the next. Do not batch four files into one commit.
 
-- [ ] **Step 3: Consolidate the ghost buttons**
+- [ ] **Step 3: Consolidate the ghost buttons** — REVERSED, and inverted into deleting the rail. See the amendment note at the top of this file.
 
 ```bash
 grep -rln --include="*.vue" 'cardhead' .

@@ -170,7 +170,12 @@ a fact is not known yet. The old `.kvrow .tbd` grey-text treatment is dropped in
 its favour, because an empty tile keeps the grid rhythm that loose grey text
 breaks.
 
-### 2.2 `.rail` / `.railrow` — the action rail
+### 2.2 `.rail` / `.railrow` — the action rail *(specified, not built)*
+
+**This component ships no CSS.** It was built, found to have no site in the
+application, and deleted — see Part 4. The design below stands and is what to
+build from when the verbs exist; nothing currently renders it.
+
 
 Replaces the ghost buttons currently scattered through `.cardhead` across
 fifteen page components. One vertical list: 17px stroked icon, 12px gap, label,
@@ -307,19 +312,42 @@ Both rules are asserted by tests (Part 5), in the spirit of the existing
 
 ## Part 4 — Component Changes
 
-Markup work is small; most of the change is the token file. Counts are from a
-grep over `apps/studio/resources/js`.
+Markup work is small; most of the change is the token file. The table below is
+what shipped, corrected after the fact — the estimates it replaced were wrong in
+three of five rows, and are recorded underneath so the difference stays legible.
 
 | Change | Files |
 |---|---|
-| `.kv` / `.kvrow` fact lists → `.tiles` | 5 |
-| `.cardhead` ghost buttons → the `.rail` | 15, one to three lines each |
-| `.perf` + `.feed` added | 2 (`Projects/Show.vue`, `Contacts/Edit.vue`) |
+| `.kv` / `.kvrow` fact lists → `.tiles` / `.fact` | 4 |
+| `.kv` fact list → `.fgrid` / `.fld` | 1 |
+| `.rail` adopted | 0 — the component was deleted |
+| `.perf` + `.feed` added | 1 (`Projects/Show.vue`) |
 | `.chip` variants recoloured | 22, CSS-only — no markup edit |
-| `paystatus` gains a `late` state | 1, plus the controller that derives it |
+| `paystatus` gains a `late` state | 1, plus the Data object that derives it |
 
-`Projects/Show.vue` is the screen the mockup depicts and the one to build first;
-it exercises all four new components at once.
+Three rows moved during implementation:
+
+**Five `.kv` consumers became four.** `Settings/FormTemplates/Edit.vue` turned out
+not to be a fact list at all — three of its four rows hold an `Input`, a `Select`
+and a `Checkbox`. It had been borrowing `.kv` as a generic two-column layout for a
+form. It went to `forms.css`'s existing `.fgrid` / `.fld` instead, which is the
+pattern for that content.
+
+**The rail was adopted nowhere, and then deleted.** The estimate of fifteen
+components assumed card heads carried clusters of ghost buttons. They do not:
+there are 24 `.cardhead` occurrences across 15 components and every one carries
+at most a single action. The `variant="ghost"` buttons a naive count finds are
+dialog and form-footer cancels. §2.2 keeps the rail's design because it is sound
+and the reference calls for it, but the component ships no CSS — it needs verbs
+this application does not have yet (duplicate, archive, copy portal link), and
+building those is new functionality rather than a redesign.
+
+**Only one screen gained the feed.** `Contacts/Edit.vue` was named on the
+assumption that a contact has an activity history worth showing; the feed is
+project-scoped, and nothing wires a contact to one.
+
+`Projects/Show.vue` is the screen the mockup depicts and the one built first. It
+exercises three of the four components — every one that ships.
 
 ## Part 5 — Testing
 
