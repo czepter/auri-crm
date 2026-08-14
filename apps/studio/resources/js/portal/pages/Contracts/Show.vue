@@ -123,7 +123,6 @@ function sign() {
               </div>
 
               <Button
-                tone="warm"
                 class="wide"
                 type="submit"
                 :disabled="form.processing || !form.consent || !form.typedName"

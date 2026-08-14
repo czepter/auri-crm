@@ -48,6 +48,13 @@
      instead of re-hardcoding the hex. */
   --color-faint: var(--faint);
   --color-line-hover: var(--line-hover);
+
+  /* No shadcn name for this one either — shadcn's own "accent" is already
+     spoken for above, mapped to the grey hover surface. --action is the
+     colour of an action: the warm fill a button takes when it is the thing
+     to press, kept apart from --accent so the two stop colliding. */
+  --color-action: var(--accent);
+  --color-action-foreground: var(--bg);
 }
 
 @layer base {

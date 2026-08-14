@@ -118,7 +118,7 @@ function eraseDsgvoData() {
               <AlertDialogFooter>
                 <!-- the accent fill is reserved for the one action here that
                      cannot be taken back -->
-                <AlertDialogAction tone="warm" @click="eraseDsgvoData">
+                <AlertDialogAction tone="destructive" @click="eraseDsgvoData">
                   {{ $t('contacts.dsgvoErase') }}
                 </AlertDialogAction>
                 <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>

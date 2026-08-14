@@ -439,7 +439,7 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
         <DialogFooter>
           <!-- the reason is not optional: it is what the row and the client's
                portal show in place of the shoot afterwards -->
-          <Button type="submit" form="shoot-cancel-form" tone="warm" :disabled="!cancelReason.trim()">
+          <Button type="submit" form="shoot-cancel-form" tone="destructive" :disabled="!cancelReason.trim()">
             {{ $t('project.cancel') }}
           </Button>
           <DialogClose as-child>
