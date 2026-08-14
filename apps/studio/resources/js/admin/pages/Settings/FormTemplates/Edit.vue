@@ -86,18 +86,18 @@ function submit() {
                 {{ form.is_active ? $t('formTemplates.active') : $t('formTemplates.inactive') }}
               </span>
             </div>
-            <div class="kv">
-              <div class="kvrow">
-                <span>{{ $t('formTemplates.nameField') }}</span>
-                <Input v-model="form.name" type="text" maxlength="255" style="text-align: right" />
+            <div class="fgrid">
+              <div class="fld wide">
+                <Label for="ft-name">{{ $t('formTemplates.nameField') }}</Label>
+                <Input id="ft-name" v-model="form.name" type="text" maxlength="255" />
               </div>
-              <div class="kvrow">
-                <span>{{ $t('formTemplates.projectTypeField') }}</span>
+              <div class="fld wide">
+                <Label for="ft-project-type">{{ $t('formTemplates.projectTypeField') }}</Label>
                 <Select
                   :model-value="toOption(form.project_type)"
                   @update:model-value="(value) => (form.project_type = fromOption(value))"
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="ft-project-type">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -106,12 +106,12 @@ function submit() {
                   </SelectContent>
                 </Select>
               </div>
-              <div class="kvrow">
+              <div class="cbrow" style="grid-column: 1 / -1">
+                <Checkbox id="ft-active" v-model="form.is_active" />
                 <Label variant="inline" for="ft-active">{{ $t('formTemplates.activeField') }}</Label>
-                <Checkbox id="ft-active" v-model="form.is_active" class="ml-auto" />
               </div>
-              <div class="kvrow">
-                <span>{{ $t('formTemplates.fieldsLabel') }}</span>
+              <div class="fld wide">
+                <Label>{{ $t('formTemplates.fieldsLabel') }}</Label>
                 <span><b>{{ $t('formTemplates.fieldSummary', { count: form.fields.length, required: requiredCount }) }}</b></span>
               </div>
             </div>

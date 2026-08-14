@@ -48,6 +48,7 @@ class AdvanceShootStatus
             actor: $actor ?? auth('staff')->user(),
             context: ['from' => $from->value, 'to' => $next->value],
             subject: $shoot->public_id,
+            projectId: $shoot->project_id,
         );
 
         ShootStatusChanged::dispatch($shoot, $from, $next);
@@ -74,6 +75,7 @@ class AdvanceShootStatus
             actor: $actor ?? auth('staff')->user(),
             context: ['status' => $shoot->status->value, 'reason' => $reason],
             subject: $shoot->public_id,
+            projectId: $shoot->project_id,
         );
 
         ShootCancelled::dispatch($shoot, $reason);

@@ -400,6 +400,7 @@ settledVia: string | null,
 settledViaLabel: string | null,
 paidOn: string | null,
 paymentReference: string | null,
+isLate: boolean,
 };
 export type PaymentPlanData = {
 id: string,

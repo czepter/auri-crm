@@ -38,6 +38,8 @@ class MarkInstallmentPaid
             return $installment;
         }
 
+        $installment->loadMissing('plan.job');
+
         DB::transaction(function () use ($installment, $method, $paidOn, $reference, $actor) {
             $installment->update([
                 'status' => PaymentInstallmentStatus::Paid,
@@ -51,6 +53,7 @@ class MarkInstallmentPaid
                 actor: $actor,
                 context: ['method' => $method->value, 'paid_on' => $paidOn, 'reference' => $reference],
                 subject: $installment->public_id,
+                projectId: $installment->plan->job->project_id,
             );
         });
 

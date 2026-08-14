@@ -7,6 +7,7 @@ use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\Absence;
 use App\Models\User;
+use App\Support\AuditLogger;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -198,4 +199,33 @@ it('never lets an absence category or date reach the portal, even for a shoot cr
     $shootProps = props("/projekte/{$project->public_id}")['project']['shoots'][0];
     expect($shootProps)->not->toHaveKey('crew')
         ->not->toHaveKey('crewConflicts');
+});
+
+/**
+ * T-09's other half of the activity feed's boundary: Task 8's admin
+ * ProjectActivity prop is admin-only by omission, since Portal's own
+ * ProjectController never references it. Proven here against the real
+ * response, not by absence of a reference in the controller — an internal
+ * audit trail on a client-facing page would disclose staff names, IP
+ * addresses and internal event vocabulary the client has no business
+ * seeing.
+ */
+it('does not hand the client an internal audit trail', function () {
+    $contact = Contact::factory()->create();
+    $project = Project::factory()->create(['portal_visible' => true, 'name' => 'Meier & Kowalski']);
+    $project->attachContact($contact, ProjectContactRole::Primary);
+
+    AuditLogger::record('quote.sent', staffMember(), [], null, $project->id);
+
+    $this->actingAs($contact, 'portal');
+
+    $props = props("/projekte/{$project->public_id}");
+
+    // Proves the request actually reaches the project screen and returns
+    // real props, rather than 404ing or redirecting to the login screen —
+    // an empty or errored response would satisfy the assertion below for
+    // the wrong reason.
+    expect($props['project']['name'])->toBe('Meier & Kowalski');
+
+    expect($props)->not->toHaveKey('activity');
 });

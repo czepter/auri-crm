@@ -71,6 +71,7 @@ class BookProject
                 actor: $actor,
                 context: ['via' => $via->value, 'job' => $job->public_id],
                 subject: $project->public_id,
+                projectId: $project->id,
             );
 
             return $job;

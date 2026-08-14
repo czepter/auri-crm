@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use RuntimeException;
 
 class AuditLog extends Model
@@ -19,6 +20,11 @@ class AuditLog extends Model
     protected function casts(): array
     {
         return ['context' => 'array', 'created_at' => 'immutable_datetime'];
+    }
+
+    public function actor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'actor_id');
     }
 
     protected static function booted(): void

@@ -47,7 +47,7 @@ defineExpose({ form, submit })
             <Label variant="inline" for="vat-small-business">{{ $t('settings.vatModeSmallBusiness') }}</Label>
           </div>
         </RadioGroup>
-        <p class="hint" style="margin-top: var(--s3); color: var(--accent)">{{ $t('settings.vatModeWarning') }}</p>
+        <p class="hint" style="margin-top: var(--s3); color: var(--late)">{{ $t('settings.vatModeWarning') }}</p>
       </div>
       <div class="grp">
         <div class="fld" style="max-width: 160px">

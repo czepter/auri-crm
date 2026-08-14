@@ -81,7 +81,7 @@ function send() {
       <p v-if="form.errors.body" class="err">{{ form.errors.body }}</p>
 
       <div class="formfoot" style="margin-top: 0">
-        <Button tone="warm" type="submit" :disabled="form.processing">
+        <Button type="submit" :disabled="form.processing">
           {{ $t('portal.messagesSend') }}
         </Button>
       </div>

@@ -56,6 +56,7 @@ class TaskController extends Controller
             actor: auth('staff')->user(),
             context: ['title' => $task->title],
             subject: $task->public_id,
+            projectId: $task->project_id,
         );
 
         return back();

@@ -135,7 +135,6 @@ function accept() {
              switch is off, matching the 404 the accept route itself gives. -->
         <Button
           v-if="canAccept"
-          tone="warm"
           class="wide"
           type="button"
           :disabled="form.processing"

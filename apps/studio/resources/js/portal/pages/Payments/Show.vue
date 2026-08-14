@@ -119,7 +119,6 @@ function longDate(date: string) {
                 <div class="stop">
                   <div class="sname">{{ installment.label }}<span>{{ formatEuros(installment.amount) }}</span></div>
                   <Button
-                    tone="warm"
                     type="button"
                     :disabled="payingId === installment.id"
                     @click="payNow(installment.id)"

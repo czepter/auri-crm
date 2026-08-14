@@ -52,14 +52,15 @@ onBeforeUnmount(clearPoll)
     <div class="card static" style="max-width: 640px; margin-top: var(--s5)">
       <div class="cardhead"><span class="kick">{{ $t('project.contract') }}</span></div>
 
-      <div v-if="contract" class="kv">
-        <div class="kvrow">
-          <span>{{ $t('project.contractTemplate') }}</span>
-          <span>{{ contract.templateName }} · v{{ contract.templateVersion }}</span>
+      <div v-if="contract" class="tiles">
+        <div class="fact">
+          <div class="l">{{ $t('project.contractTemplate') }}</div>
+          <div class="v">{{ contract.templateName }}</div>
+          <div class="s">v{{ contract.templateVersion }}</div>
         </div>
-        <div class="kvrow">
-          <span>{{ $t('project.contractStatus') }}</span>
-          <span>{{ contract.statusLabel }}</span>
+        <div class="fact">
+          <div class="l">{{ $t('project.contractStatus') }}</div>
+          <div class="v">{{ contract.statusLabel }}</div>
         </div>
       </div>
       <p v-else class="hint">{{ $t('project.contractNone') }}</p>

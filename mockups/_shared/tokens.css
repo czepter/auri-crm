@@ -6,18 +6,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap');
 
 :root {
-  /* ground stays pure white; every other neutral is warmed toward the accent */
+  /* neutral ground. The warm accent is action and nothing else — a state
+     that borrows it reads as a button, which is the confusion this palette
+     exists to end. Status has its own three. */
   --bg:#FFFFFF;
-  --ink:#14100E;
-  --muted:#78706B;
-  --faint:#ABA49F;
-  --hover:#F6F3F1;
-  --line:#EDE9E6;
-  --line-hover:#E3DCD7;
-  --accent:#B44E22;
-  --accent-bg:#FBF0EA;
-  --ok:#3F6B4A;
-  --ok-bg:#EDF3EE;
+  --ink:#191919;
+  --muted:#6B6B6B;
+  --faint:#A3A3A3;
+  --hover:#F5F5F4;      /* fill AND hover — the reference's cards and its
+                           hover states are the same grey; two tokens would
+                           invite them to drift */
+  --line:#E9E9E7;
+  --line-hover:#DCDCD9;
+
+  --accent:#B44E22;     --accent-bg:#FBF0EA;   /* action only */
+
+  --ok:#3F6B4A;         --ok-bg:#EDF3EE;
+  --due:#8A6212;        --due-bg:#FAF3E4;
+  --late:#B3261E;       --late-bg:#FCF0EF;
 
   /* one spacing scale, used everywhere */
   --s1:4px; --s2:6px; --s3:10px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
@@ -30,7 +36,7 @@
 
 /* portal — same bones, more air, serif-free but larger and looser */
 [data-theme="portal"] {
-  --hover:#F8F5F3;
+  --hover:#FAFAF9;
   --s3:14px; --s4:20px; --s5:32px; --s6:44px; --s7:64px;
   --r:10px;
 }
@@ -46,6 +52,14 @@
   --line-hover:#332C28;
   --accent:#D4713F;
   --accent-bg:#26170F;
+
+  /* the semantic three, re-lit for a dark ground. Inheriting :root's here
+     would put a near-white panel on a near-black page — already wrong for
+     --ok before this change, and wrong three times over with --due and
+     --late added. */
+  --ok:#7FB98C;    --ok-bg:#16211A;
+  --due:#D9B25C;   --due-bg:#241D0E;
+  --late:#E88379;  --late-bg:#2A1512;
 }
 
 * { box-sizing:border-box; }
@@ -86,7 +100,7 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 /* ---------- controls ---------- */
 
 .btn { margin-left:auto; display:inline-flex; align-items:center; gap:7px; padding:9px 14px; border-radius:var(--r);
-       background:var(--ink); color:var(--bg); font:600 13px/1 var(--font); text-decoration:none; }
+       background:var(--accent); color:var(--bg); font:600 13px/1 var(--font); text-decoration:none; }
 .btn svg { width:15px; height:15px; }
 .txtbtn { display:inline-flex; align-items:center; gap:7px; font:500 13px/1 var(--font);
           color:var(--muted); padding:9px 0; text-decoration:none; }
@@ -131,8 +145,8 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 .age { display:inline-flex; align-items:center; font:400 12.5px/1 var(--font); color:var(--faint);
        background-repeat:no-repeat; background-position:0 center; background-size:12px 12px; padding-left:16px;
        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ABA49F' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E"); }
-.age.warn { color:var(--accent); font-weight:500;
-       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B44E22' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E"); }
+.age.warn { color:var(--late); font-weight:500;
+       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B3261E' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E"); }
 
 /* the only border in the system: it keeps overlapping faces legible */
 .stack { margin-left:auto; display:flex; }
@@ -142,9 +156,9 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 .card:hover .stack img { border-color:var(--hover); }
 
 .flag { display:flex; align-items:center; margin-top:var(--s2); padding:7px 9px 7px 28px; border-radius:7px;
-        background:var(--accent-bg); font:500 12.5px/1.3 var(--font); color:var(--accent);
+        background:var(--late-bg); font:500 12.5px/1.3 var(--font); color:var(--late);
         background-repeat:no-repeat; background-position:9px center; background-size:13px 13px;
-        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B44E22' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z'/%3E%3C/svg%3E"); }
+        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B3261E' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 9v4M12 17h.01M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z'/%3E%3C/svg%3E"); }
 
 /* stage-advance affordance, hover only */
 .go { position:absolute; top:12px; right:var(--s3); width:15px; height:15px; opacity:0;
@@ -193,8 +207,10 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
    current stage and offers the single transition that advances it — nothing else. */
 .stage { display:flex; align-items:center; gap:var(--s3); margin:var(--s4) 0 0; }
 .stage .now { display:inline-flex; align-items:center; gap:7px; padding:6px 11px; border-radius:var(--r-sm);
-              background:var(--accent-bg); color:var(--accent); font:600 12px/1 var(--font); }
-.stage .now .dot { width:7px; height:7px; border-radius:50%; background:var(--accent); flex:none; }
+              background:var(--ok-bg); color:var(--ok); font:600 12px/1 var(--font); }
+.stage .now .dot { width:7px; height:7px; border-radius:50%; background:var(--ok); flex:none; }
+.stage .now.late { background:var(--late-bg); color:var(--late); }
+.stage .now.late .dot { background:var(--late); }
 .stage .next { font:400 12px/1 var(--font); color:var(--faint); }
 .stage .adv { font:500 12px/1 var(--font); color:var(--muted); text-decoration:none; }
 .stage .adv:hover { color:var(--ink); }
@@ -224,20 +240,11 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 .tlwho { font:400 11.5px/1.35 var(--font); color:var(--faint); margin-top:3px; }
 .tlrow.move .tlname { font-weight:400; font-size:12px; color:var(--faint); }
 
-/* ---------- booking facts: label over value, two columns, no tiles ---------- */
-.bklist { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--s4) var(--s6); }
-.bkrow > span:first-child { display:block; font:600 10px/1 var(--font); letter-spacing:.09em;
-                            text-transform:uppercase; color:var(--faint); margin-bottom:5px; }
-.bkrow > span:last-child { display:block; font:500 13px/1.4 var(--font); font-variant-numeric:tabular-nums; }
-.bkrow em { font-style:normal; color:var(--muted); font-weight:400; }
-.bkrow i { font-style:normal; color:var(--accent); font-weight:600; }
-.bkrow .big { font-weight:700; font-size:15px; letter-spacing:-.025em; }
-
 /* ---------- Shoot list: one row per shooting occasion, next one expanded ---------- */
 .chip { font:600 10px/1.5 var(--font); letter-spacing:.04em; text-transform:uppercase;
         padding:3px 8px; border-radius:var(--r-sm); flex:none; }
 .chip.done { background:var(--ok-bg); color:var(--ok); }
-.chip.now  { background:var(--accent-bg); color:var(--accent); }
+.chip.now  { background:var(--due-bg); color:var(--due); }
 .chip.next { background:var(--hover); color:var(--muted); }
 
 .sess { display:flex; flex-direction:column; gap:var(--s2); }
@@ -250,7 +257,7 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 .sname span { display:block; font:400 11.5px/1.35 var(--font); color:var(--muted); font-weight:400;
               letter-spacing:0; margin-top:2px; }
 .sname .prim { display:inline-block; margin-left:6px; font:600 9px/1.5 var(--font); letter-spacing:.08em;
-               text-transform:uppercase; color:var(--accent); vertical-align:1px; }
+               text-transform:uppercase; color:var(--ink); vertical-align:1px; }
 .srow .stack { margin-left:0; }
 .srow.open .stack img { border-color:#FDFAF8; }
 
@@ -270,9 +277,18 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
       background:var(--hover); font:500 10.5px/1.4 var(--font); color:var(--muted); }
 .gf svg { width:11px; height:11px; }
 /* an ungated gallery is the state worth noticing, so it is the one that carries colour */
-.gf.open { background:var(--accent-bg); color:var(--accent); }
+.gf.open { background:var(--due-bg); color:var(--due); }
 
-/* right-rail key/value facts */
+/* right-rail key/value facts. The app dropped this pair once its own last
+   consumer converted (2026-08-13, visual-system plan, Task 11) — every
+   product screen renders .tiles/.fact now, apps/studio/resources/css/
+   tokens.css no longer carries .kv/.kvrow at all. It survives here only
+   because eight clickdummy screens still render it (04-auftrag,
+   04-angebot, 04-galerien, 04-shootings, 04-frageboegen, 05-medien,
+   13-fragebogen-builder, portal/06-startseite) and converting a mockup
+   screen was ruled out of scope for that task. Known gap, not the mockup
+   quietly running ahead of the app as usual — #198 tracks sweeping these
+   eight to .tiles/.fact. */
 .kv { display:flex; flex-direction:column; gap:9px; }
 .kvrow { display:flex; align-items:baseline; gap:var(--s3); font:400 12.5px/1.35 var(--font); }
 .kvrow span:first-child { color:var(--muted); flex:none; min-width:78px; }
@@ -322,10 +338,11 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
    which stays a separate model with no portal-facing route at all */
 .taudience, .paystatus { flex:none; padding:3px 8px; border-radius:var(--r-sm); font:600 10px/1.5 var(--font);
                           letter-spacing:.04em; text-transform:uppercase; }
-.taudience.client { background:var(--accent-bg); color:var(--accent); }
+.taudience.client   { background:transparent; border:1px solid var(--line-hover); color:var(--muted); }
 .taudience.internal { background:var(--hover); color:var(--muted); }
 .paystatus.paid { background:var(--ok-bg); color:var(--ok); }
-.paystatus.due { background:var(--accent-bg); color:var(--accent); }
+.paystatus.due  { background:var(--due-bg); color:var(--due); }
+.paystatus.late { background:var(--late-bg); color:var(--late); }
 .paystatus.upcoming { background:var(--hover); color:var(--muted); }
 
 /* ---------- clickdummy footer strip (not part of the product) ---------- */

@@ -54,11 +54,11 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 /* ---------- transfer progress (screen 05) ---------- */
 
 /* flat, 3px, no gradient — a fill against the same hover grey the rest of
-   the system uses. Accent is reserved for the bars that carry a problem. */
+   the system uses. Late is reserved for the bars that carry a problem. */
 .bar { display:block; height:3px; border-radius:2px; background:var(--hover); overflow:hidden; }
 .bar > i { display:block; height:100%; border-radius:2px; background:var(--ink); }
 .bar.big { height:6px; }
-.bar > i.warn { background:var(--accent); }
+.bar > i.warn { background:var(--late); }
 
 /* per-file rows: name, size, state. In-flight rows drop a bar onto a
    second grid line under the name rather than squeezing one into a cell. */
@@ -74,11 +74,11 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 .frow.queued .fname { font-weight:400; color:var(--muted); }
 
 /* a fourth chip state: ingest rejected the file (vision §6) */
-.chip.fail { background:var(--accent-bg); color:var(--accent); }
+.chip.fail { background:var(--late-bg); color:var(--late); }
 
 /* the needs-attention tray reuses .dsec/.dlab/.panel/.trow from screen 1 —
    only its heading is coloured, because that is what must not be missed */
-.dlab.warn { color:var(--accent); }
+.dlab.warn { color:var(--late); }
 
 /* ---------- capture form: contact typeahead ---------- */
 /* the typeahead is not decoration. ClientAccess hangs off Contact, so a repeat
@@ -93,7 +93,7 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 .picked .em { font:400 11.5px/1.3 var(--font); color:var(--muted); margin-top:1px; }
 .picked .chg { margin-left:auto; font:500 11.5px/1 var(--font); color:var(--muted); text-decoration:none; }
 .picked .chg:hover { color:var(--ink); }
-.rp { font:500 10px/1.5 var(--font); color:var(--accent); background:var(--accent-bg);
+.rp { font:500 10px/1.5 var(--font); color:var(--muted); background:var(--hover);
       padding:2px 7px; border-radius:var(--r-sm); margin-left:8px; }
 
 .ta { border:1px solid var(--line-hover); border-radius:var(--r); overflow:hidden; }
@@ -143,7 +143,7 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
        font:400 11px/1.4 var(--font); color:var(--muted); }
 .kpi b { display:block; font:700 19px/1.15 var(--font); color:var(--ink);
          letter-spacing:-.035em; font-variant-numeric:tabular-nums; margin-bottom:2px; }
-.kpi b i { font-style:normal; color:var(--accent); }
+.kpi b i { font-style:normal; color:var(--late); }
 .kpi em { font-style:normal; color:var(--faint); }
 
 .doms { display:grid; grid-template-columns:1fr 1fr; gap:var(--s4); }
@@ -162,7 +162,7 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
            overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .dr .what { font:400 12px/1.35 var(--font); color:var(--muted); flex:1; min-width:0;
             overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.dr .what i { font-style:normal; color:var(--accent); font-weight:500; }
+.dr .what i { font-style:normal; color:var(--late); font-weight:500; }
 .abtn { flex:none; font:600 10.5px/1.4 var(--font); color:var(--muted); background:var(--bg);
         border:1px solid var(--line-hover); padding:3px 9px; border-radius:6px; text-decoration:none; }
 .abtn:hover { color:var(--ink); border-color:var(--faint); }
@@ -177,7 +177,7 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 .nextshoot span.sub { display:block; font:400 11.5px/1.4 var(--font); color:var(--muted); margin-top:3px; }
 .ready { display:flex; gap:12px; margin-top:7px; }
 .ready i { font:500 10.5px/1.4 var(--font); font-style:normal; color:var(--ok); }
-.ready i.no { color:var(--accent); }
+.ready i.no { color:var(--late); }
 
 /* ---------- project tab detail pages ---------- */
 /* questionnaire answers: question muted above, answer ink below */
@@ -208,7 +208,7 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 .note .head b { font:600 12.5px/1.3 var(--font); }
 .note .head span { font:400 11.5px/1.3 var(--font); color:var(--faint); }
 .note .head .pin { margin-left:auto; font:600 10px/1.5 var(--font); letter-spacing:.06em;
-                   text-transform:uppercase; color:var(--accent); }
+                   text-transform:uppercase; color:var(--ink); }
 .note p { margin:0; font:400 13px/1.5 var(--font); color:var(--ink); }
 
 /* ---------- Galerien tab: three peer cards, cover as the card's face ---------- */
@@ -237,7 +237,7 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 .qtype { font:600 10px/1.5 var(--font); letter-spacing:.05em; text-transform:uppercase;
          color:var(--muted); background:var(--hover); padding:2px 7px; border-radius:var(--r-sm); }
 .qreq { font:600 10px/1.5 var(--font); letter-spacing:.05em; text-transform:uppercase;
-        color:var(--accent); background:var(--accent-bg); padding:2px 7px; border-radius:var(--r-sm); }
+        color:var(--muted); background:var(--hover); padding:2px 7px; border-radius:var(--r-sm); }
 .qopts { font:400 11.5px/1.5 var(--font); color:var(--faint); }
 .qbrow .abtn { opacity:0; transition:opacity .12s ease-out; }
 .qbrow:hover .abtn { opacity:1; }
@@ -248,3 +248,51 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 
 /* two equal columns for peer cards — the 296px rail is for facts, not content */
 .cols2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--s4); align-items:start; }
+
+/* ---------- the reference's shapes ----------
+   Filled tiles, a perforation and an activity feed. All three are layout
+   over the existing tokens — no new colour, no asset, no script. (The
+   reference also has an action rail; this app has no card with two or
+   more ghost actions to consolidate, so the rail is not built here.) */
+
+/* .tiles — replaces the .kv / .kvrow fact list. A fact is a tile, not a row:
+   the label sits over the value instead of beside it, which is what lets three
+   of them share a line without the values colliding. Named .fact rather than
+   .tile: gallery.css already owns .tile for the photo-grid item, and a second
+   meaning for one class name is the exact confusion this system exists to end. */
+.tiles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--s3); }
+.fact { background:var(--hover); border-radius:var(--r); padding:14px var(--s4) var(--s4); }
+.fact .l { font:600 9.5px/1 var(--font); letter-spacing:.11em; text-transform:uppercase; color:var(--faint); }
+.fact .v { font:500 16px/1.2 var(--font); letter-spacing:-.02em; margin-top:9px;
+           font-variant-numeric:tabular-nums; }
+.fact .s { font:400 12.5px/1.3 var(--font); color:var(--muted); margin-top:var(--s1);
+           font-variant-numeric:tabular-nums; }
+/* a delta or a count inside a value is a good number, not an action — --ok, not the accent */
+.fact i { font-style:normal; color:var(--ok); font-weight:600; }
+/* the empty state keeps the grid rhythm that loose grey text broke */
+.fact.ghost { background:transparent; border:1px dashed var(--line); }
+.fact.ghost .v { color:var(--faint); font-weight:400; }
+
+/* .perf — the reference's tear line. A repeating radial gradient, so it
+   recolours with --line like every other rule here and needs no asset. */
+.perf { height:8px; margin:var(--s5) 0; opacity:.75;
+  background:radial-gradient(circle at 3px 6px, transparent 2.6px,
+             var(--line) 2.7px 3.2px, transparent 3.3px) repeat-x;
+  background-size:8px 8px; }
+
+/* .feed — the same dot-and-rail technique .tlrail already uses for the
+   shooting day, so the two timelines read as one family. */
+.feedlab { font:600 9.5px/1 var(--font); letter-spacing:.11em; text-transform:uppercase;
+           color:var(--faint); margin-bottom:14px; }
+.feed { display:flex; flex-direction:column; }
+.ev { display:grid; grid-template-columns:9px 1fr; gap:12px; position:relative; padding-bottom:var(--s4); }
+.ev:last-child { padding-bottom:0; }
+.ev .dot { width:7px; height:7px; border-radius:50%; background:var(--faint); margin-top:5px;
+           position:relative; z-index:1; }
+.ev::before { content:''; position:absolute; left:3px; top:12px; bottom:0; width:1px; background:var(--line); }
+.ev:last-child::before { display:none; }
+.ev .t { font:400 13.5px/1.3 var(--font); }
+.ev .w { font:400 12px/1.3 var(--font); color:var(--faint); margin-top:3px;
+         font-variant-numeric:tabular-nums; }
+.ev.pending .dot { background:var(--line); }
+.ev.pending .t { color:var(--faint); }

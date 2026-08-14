@@ -20,7 +20,6 @@ body { font-size: 15px; line-height: 1.55; }
 h1 { font-size: 30px; }
 .kick { font-size: 11px; letter-spacing: .1em; }
 .chip { font-size: 10.5px; padding: 4px 9px; }
-.kvrow { font-size: 13.5px; }
 
 /* ---------- chrome: wordmark, signed-in contact, sign-out ---------- */
 
@@ -113,8 +112,9 @@ h1 { font-size: 30px; }
 .legal { font: 400 12.5px/1.6 var(--font); color: var(--muted); margin: var(--s4) 0 0; }
 .legal b { font-weight: 600; color: var(--ink); }
 
-/* .warm is ui/button's `warm` tone now; .wide stays CSS because its padding is
-   per-theme (gallery.css sets its own) and a theme is not a component prop */
+/* .wide stays CSS because its padding is per-theme (gallery.css sets its own)
+   and a theme is not a component prop. .warm is gone: ui/button's `default`
+   variant is already the warm fill, so the tone had nothing left to add. */
 [data-slot="button"].wide { margin-left: 0; width: 100%; justify-content: center; padding: 14px 16px; font-size: 14.5px; }
 
 /* ---------- Q-07: the quote screen ---------- */

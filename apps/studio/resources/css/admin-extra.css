@@ -14,11 +14,11 @@
 
 /* ---------- screen 05: multipart ingest transfer & file list (G-02) ---------- */
 /* flat, 3px, no gradient — a fill against the same hover grey the rest of
-   the system uses. Accent is reserved for the bars that carry a problem. */
+   the system uses. Late is reserved for the bars that carry a problem. */
 .bar { display:block; height:3px; border-radius:2px; background:var(--hover); overflow:hidden; }
 .bar > i { display:block; height:100%; border-radius:2px; background:var(--ink); }
 .bar.big { height:6px; }
-.bar > i.warn { background:var(--accent); }
+.bar > i.warn { background:var(--late); }
 
 /* per-file rows: name, size, state. In-flight rows drop a bar onto a
    second grid line under the name rather than squeezing one into a cell. */
@@ -34,7 +34,7 @@
 .frow.queued .fname { font-weight:400; color:var(--muted); }
 
 /* a fourth chip state: ingest rejected the file (vision §6, G-03) */
-.chip.fail { background:var(--accent-bg); color:var(--accent); }
+.chip.fail { background:var(--late-bg); color:var(--late); }
 
 /* ---------- capture form: contact typeahead ---------- */
 /* the typeahead is not decoration. ClientAccess hangs off Contact, so a repeat
@@ -50,7 +50,7 @@
 .picked .chg { margin-left:auto; font:500 11.5px/1 var(--font); color:var(--muted);
                text-decoration:none; background:none; border:none; cursor:pointer; }
 .picked .chg:hover { color:var(--ink); }
-.rp { font:500 10px/1.5 var(--font); color:var(--accent); background:var(--accent-bg);
+.rp { font:500 10px/1.5 var(--font); color:var(--muted); background:var(--hover);
       padding:2px 7px; border-radius:var(--r-sm); margin-left:8px; }
 
 .ta { border:1px solid var(--line-hover); border-radius:var(--r); overflow:hidden; }
@@ -92,7 +92,7 @@
        font:400 11px/1.4 var(--font); color:var(--muted); }
 .kpi b { display:block; font:700 19px/1.15 var(--font); color:var(--ink);
          letter-spacing:-.035em; font-variant-numeric:tabular-nums; margin-bottom:2px; }
-.kpi b i { font-style:normal; color:var(--accent); }
+.kpi b i { font-style:normal; color:var(--late); }
 .kpi em { font-style:normal; color:var(--faint); }
 
 .doms { display:grid; grid-template-columns:1fr 1fr; gap:var(--s4); }
@@ -111,7 +111,7 @@
            overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .dr .what { font:400 12px/1.35 var(--font); color:var(--muted); flex:1; min-width:0;
             overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.dr .what i { font-style:normal; color:var(--accent); font-weight:500; }
+.dr .what i { font-style:normal; color:var(--late); font-weight:500; }
 /* .abtn and .abtn.hot used to live here — now ui/button's `outline` variant
    and its `accent` tone, same values. */
 
@@ -123,7 +123,7 @@
 .nextshoot span.sub { display:block; font:400 11.5px/1.4 var(--font); color:var(--muted); margin-top:3px; }
 .ready { display:flex; gap:12px; margin-top:7px; }
 .ready i { font:500 10.5px/1.4 var(--font); font-style:normal; color:var(--ok); }
-.ready i.no { color:var(--accent); }
+.ready i.no { color:var(--late); }
 
 /* ---------- project tab detail pages ---------- */
 
@@ -176,7 +176,7 @@
 .qtype { font:600 10px/1.5 var(--font); letter-spacing:.05em; text-transform:uppercase;
          color:var(--muted); background:var(--hover); padding:2px 7px; border-radius:var(--r-sm); }
 .qreq { font:600 10px/1.5 var(--font); letter-spacing:.05em; text-transform:uppercase;
-        color:var(--accent); background:var(--accent-bg); padding:2px 7px; border-radius:var(--r-sm); }
+        color:var(--muted); background:var(--hover); padding:2px 7px; border-radius:var(--r-sm); }
 .qopts { font:400 11.5px/1.5 var(--font); color:var(--faint); }
 .qbrow [data-slot="button"] { opacity:0; transition:opacity .12s ease-out; }
 .qbrow:hover [data-slot="button"] { opacity:1; }
@@ -198,3 +198,35 @@
 .authcard { width:100%; max-width:368px; }
 .authcard .brand { display:block; padding:0 0 var(--s5); }
 .authcard h1 { font-size:20px; margin-bottom:var(--s2); }
+
+/* ---------- the reference's shapes ----------
+   A perforation and an activity feed. Both are layout over the existing
+   tokens — no new colour, no asset, no script. (The reference also has an
+   action rail; this app has no card with two or more ghost actions to
+   consolidate, so the rail is not built here. .tiles/.fact, the third
+   shape, moved to tokens.css — the portal needs it too, for T-11's
+   Impressum, and tokens.css is the shared layer both bundles import.) */
+
+/* .perf — the reference's tear line. A repeating radial gradient, so it
+   recolours with --line like every other rule here and needs no asset. */
+.perf { height:8px; margin:var(--s5) 0; opacity:.75;
+  background:radial-gradient(circle at 3px 6px, transparent 2.6px,
+             var(--line) 2.7px 3.2px, transparent 3.3px) repeat-x;
+  background-size:8px 8px; }
+
+/* .feed — the same dot-and-rail technique .tlrail already uses for the
+   shooting day, so the two timelines read as one family. */
+.feedlab { font:600 9.5px/1 var(--font); letter-spacing:.11em; text-transform:uppercase;
+           color:var(--faint); margin-bottom:14px; }
+.feed { display:flex; flex-direction:column; }
+.ev { display:grid; grid-template-columns:9px 1fr; gap:12px; position:relative; padding-bottom:var(--s4); }
+.ev:last-child { padding-bottom:0; }
+.ev .dot { width:7px; height:7px; border-radius:50%; background:var(--faint); margin-top:5px;
+           position:relative; z-index:1; }
+.ev::before { content:''; position:absolute; left:3px; top:12px; bottom:0; width:1px; background:var(--line); }
+.ev:last-child::before { display:none; }
+.ev .t { font:400 13.5px/1.3 var(--font); }
+.ev .w { font:400 12px/1.3 var(--font); color:var(--faint); margin-top:3px;
+         font-variant-numeric:tabular-nums; }
+.ev.pending .dot { background:var(--line); }
+.ev.pending .t { color:var(--faint); }

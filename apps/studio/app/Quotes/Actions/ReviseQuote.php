@@ -65,6 +65,7 @@ class ReviseQuote
                 actor: $actor,
                 context: ['project' => $predecessor->project->public_id, 'predecessor' => $predecessor->public_id],
                 subject: $revision->public_id,
+                projectId: $predecessor->project_id,
             );
 
             // Dispatched last, inside the transaction — see this event's own

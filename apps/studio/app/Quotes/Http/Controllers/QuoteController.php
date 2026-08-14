@@ -51,6 +51,7 @@ class QuoteController extends Controller
             actor: auth('staff')->user(),
             context: ['project' => $project->public_id],
             subject: $quote->public_id,
+            projectId: $project->id,
         );
 
         return back();
@@ -107,6 +108,7 @@ class QuoteController extends Controller
             event: 'quote.updated',
             actor: auth('staff')->user(),
             subject: $quote->public_id,
+            projectId: $quote->project_id,
         );
 
         return back();

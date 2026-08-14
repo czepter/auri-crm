@@ -98,6 +98,7 @@ class BookProjectOnContractAndDeposit
                 event: 'project.booking_attempted',
                 context: ['via' => BookedVia::Contract->value, 'result' => 'already_booked'],
                 subject: $project->public_id,
+                projectId: $project->id,
             );
         }
     }
