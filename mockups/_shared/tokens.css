@@ -292,6 +292,28 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 .msgbody { font:400 12.5px/1.4 var(--font); color:var(--muted); margin-top:1px;
            overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
 
+/* .tiles — replaces the right-rail .kv / .kvrow fact list; #198 swept the
+   remaining clickdummy consumers, so .kv/.kvrow are gone from here too.
+   A fact is a tile, not a row: the label sits over the value instead of
+   beside it, which is what lets three of them share a line without the
+   values colliding. Named .fact rather than .tile: gallery.css already owns
+   .tile for the photo-grid item, and a second meaning for one class name is
+   the exact confusion this system exists to end. Lives here rather than
+   admin-extra.css because the portal's own screens (06-startseite,
+   07-vertrag) use it too, and tokens.css is the layer every screen loads. */
+.tiles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--s3); }
+.fact { background:var(--hover); border-radius:var(--r); padding:14px var(--s4) var(--s4); }
+.fact .l { font:600 9.5px/1 var(--font); letter-spacing:.11em; text-transform:uppercase; color:var(--faint); }
+.fact .v { font:500 16px/1.2 var(--font); letter-spacing:-.02em; margin-top:9px;
+           font-variant-numeric:tabular-nums; }
+.fact .s { font:400 12.5px/1.3 var(--font); color:var(--muted); margin-top:var(--s1);
+           font-variant-numeric:tabular-nums; }
+/* a delta or a count inside a value is a good number, not an action — --ok, not the accent */
+.fact i { font-style:normal; color:var(--ok); font-weight:600; }
+/* the empty state keeps the grid rhythm that loose grey text broke */
+.fact.ghost { background:transparent; border:1px dashed var(--line); }
+.fact.ghost .v { color:var(--faint); font-weight:400; }
+
 /* a .card used as a static content panel rather than a link — no hover affordance to imply clickability */
 .card.static { cursor:default; }
 .card.static:hover { background:var(--bg); border-color:var(--line); }
