@@ -27,7 +27,6 @@ body   { font-size:15px; line-height:1.55; }
 h1     { font-size:30px; }
 .kick  { font-size:11px; letter-spacing:.1em; }
 .chip  { font-size:10.5px; padding:4px 9px; }
-.kvrow { font-size:13.5px; }
 
 /* ---------- chrome: wordmark, signed-in contact, sign-out ---------- */
 
@@ -167,8 +166,7 @@ h1     { font-size:30px; }
 .consent input { width:17px; height:17px; flex:none; margin:2px 0 0; accent-color:var(--accent); }
 
 /* what gets recorded sits above the button, not in a footnote — a client who
-   can read the audit trail is the one who does not email to ask if it counts.
-   Reuses .kv/.kvrow; only the label column widens for "Dokument-Prüfsumme". */
+   can read the audit trail is the one who does not email to ask if it counts. */
 
 .legal { font:400 12.5px/1.6 var(--font); color:var(--muted); margin:var(--s4) 0 0; }
 .legal b { font-weight:600; color:var(--ink); }

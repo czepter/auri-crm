@@ -134,8 +134,6 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 .lgroup { font:600 10px/1 var(--font); letter-spacing:.09em; text-transform:uppercase;
           color:var(--faint); margin:var(--s5) 0 var(--s2); }
 .lgroup:first-child { margin-top:0; }
-/* an unknown fact reads as absent, not as an error */
-.kvrow .tbd { color:var(--faint); }
 
 /* ---------- screen 01: KPI row + four CRM domains ---------- */
 .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--s3); margin:var(--s5) 0; }
