@@ -32,11 +32,13 @@
         <div class="cardhead"><span class="kick">Verlobung</span><span class="chip done">Live</span></div>
         <div class="galmeta">68 Bilder · Version 2 · online bis 03.2027</div>
         <div class="galflags"><span class="gf">Passwort</span><span class="gf">Download-PIN</span></div>
-        <div class="kv" style="margin-top:var(--s4)">
-          <div class="kvrow"><span>Version 2</span><span>21.04. · 3 korrigiert</span></div>
-          <div class="kvrow"><span>Version 1</span><span>09.04.</span></div>
-          <div class="kvrow"><span>Downloads</span><span>14 · zuletzt 02.06.</span></div>
-          <div class="kvrow"><span>Favoriten</span><span>22 Lena · 9 Jonas</span></div>
+        <!-- 4 facts: the default 3-up grid would strand a single tile on its
+             own row, so this block pairs them 2-up instead. -->
+        <div class="tiles" style="grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:var(--s4)">
+          <div class="fact"><div class="l">Version 2</div><div class="v">21.04. · 3 korrigiert</div></div>
+          <div class="fact"><div class="l">Version 1</div><div class="v">09.04.</div></div>
+          <div class="fact"><div class="l">Downloads</div><div class="v">14 · zuletzt 02.06.</div></div>
+          <div class="fact"><div class="l">Favoriten</div><div class="v">22 Lena · 9 Jonas</div></div>
         </div>
         <a class="blkfoot" href="../gallery/09-raster.html">Als Gast ansehen →</a>
       </div>
@@ -58,9 +60,9 @@
         <div class="cardhead"><span class="kick">Hochzeitstag</span><span class="chip next">Entwurf</span></div>
         <div class="galmeta">angelegt 04.02.2026</div>
         <div class="galflags"><span class="gf">Passwort gesetzt</span></div>
-        <div class="kv" style="margin-top:var(--s4)">
-          <div class="kvrow"><span>Zieltermin</span><span>26.07. laut Vertrag</span></div>
-          <div class="kvrow"><span>Freigabe</span><span>an Restzahlung gekoppelt</span></div>
+        <div class="tiles" style="margin-top:var(--s4)">
+          <div class="fact"><div class="l">Zieltermin</div><div class="v">26.07. laut Vertrag</div></div>
+          <div class="fact"><div class="l">Freigabe</div><div class="v">an Restzahlung gekoppelt</div></div>
         </div>
         <a class="blkfoot" href="05-medien.html">Medien hochladen →</a>
       </div>
