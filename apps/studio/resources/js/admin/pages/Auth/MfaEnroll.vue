@@ -2,6 +2,9 @@
 import { useForm } from '@inertiajs/vue3'
 import { toDataURL } from 'qrcode'
 import { ref, watchEffect } from 'vue'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
 
 const props = defineProps<{ secret: string; otpauthUri: string }>()
 
@@ -35,9 +38,9 @@ function submit() {
       />
 
       <details style="margin-bottom: var(--s5)">
-        <summary class="txtbtn" style="padding: 0; cursor: pointer">
+        <Button as="summary" variant="ghost" class="cursor-pointer py-0">
           {{ $t('auth.mfaSecretLabel') }}
-        </summary>
+        </Button>
         <code
           class="panel"
           style="display: block; margin-top: var(--s2); padding: 9px 11px; font-family: ui-monospace, monospace; font-size: 13px; letter-spacing: .12em"
@@ -52,21 +55,19 @@ function submit() {
         </p>
 
         <div class="fld grp">
-          <label for="code">{{ $t('auth.mfaCode') }}</label>
-          <input
+          <Label for="code">{{ $t('auth.mfaCode') }}</Label>
+          <Input
             id="code"
-            v-model="form.code"
-            class="inp num"
+            v-model="form.code" class="tabular-nums"
             type="text"
             inputmode="numeric"
             autocomplete="one-time-code"
-            required
-          />
+            required />
         </div>
 
-        <button class="btn" type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
+        <Button type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
           {{ $t('auth.mfaConfirm') }}
-        </button>
+        </Button>
       </form>
     </div>
   </div>

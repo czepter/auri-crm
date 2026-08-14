@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Checkbox } from '@/ui/checkbox'
+import { Label } from '@/ui/label'
 
 const props = defineProps<{
   quietHoursEnabled: boolean
@@ -40,8 +44,7 @@ function submit() {
         <h1>{{ $t('notificationSettings.title') }}</h1>
       </div>
       <span v-if="form.isDirty" class="chip now">{{ $t('settings.unsaved') }}</span>
-      <button
-        class="btn"
+      <Button
         type="submit"
         form="notification-settings-form"
         :disabled="!form.isDirty || form.processing"
@@ -49,7 +52,7 @@ function submit() {
       >
         <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
         {{ $t('common.save') }}
-      </button>
+      </Button>
     </div>
 
     <div style="display: flex; gap: var(--s6); margin-top: var(--s5); align-items: flex-start">
@@ -70,34 +73,30 @@ function submit() {
         <div class="dsec" style="margin-top: 0">
           <div class="dlab">{{ $t('notificationSettings.quietHoursSection') }}</div>
           <div class="grp">
-            <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
-              <input v-model="form.quiet_hours_enabled" type="checkbox" />
-              {{ $t('notificationSettings.quietHoursEnabledLabel') }}
-            </label>
+            <div class="cbrow">
+              <Checkbox id="cb-quiet-hours-enabled" v-model="form.quiet_hours_enabled" />
+              <Label variant="inline" for="cb-quiet-hours-enabled">{{ $t('notificationSettings.quietHoursEnabledLabel') }}</Label>
+            </div>
             <span class="hint">{{ $t('notificationSettings.quietHoursEnabledHint') }}</span>
           </div>
           <div class="grp">
             <div class="two">
               <div class="fld">
-                <label for="n-ruhe-von">{{ $t('notificationSettings.quietHoursStartLabel') }}</label>
-                <input
+                <Label for="n-ruhe-von">{{ $t('notificationSettings.quietHoursStartLabel') }}</Label>
+                <Input
                   id="n-ruhe-von"
                   v-model="form.quiet_hours_start"
-                  class="inp"
                   type="time"
-                  :disabled="!form.quiet_hours_enabled"
-                />
+                  :disabled="!form.quiet_hours_enabled" />
                 <p v-if="form.errors.quiet_hours_start" class="err">{{ form.errors.quiet_hours_start }}</p>
               </div>
               <div class="fld">
-                <label for="n-ruhe-bis">{{ $t('notificationSettings.quietHoursEndLabel') }}</label>
-                <input
+                <Label for="n-ruhe-bis">{{ $t('notificationSettings.quietHoursEndLabel') }}</Label>
+                <Input
                   id="n-ruhe-bis"
                   v-model="form.quiet_hours_end"
-                  class="inp"
                   type="time"
-                  :disabled="!form.quiet_hours_enabled"
-                />
+                  :disabled="!form.quiet_hours_enabled" />
                 <p v-if="form.errors.quiet_hours_end" class="err">{{ form.errors.quiet_hours_end }}</p>
               </div>
             </div>

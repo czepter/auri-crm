@@ -6,9 +6,12 @@ use App\Crm\Enums\ShootKind;
 use App\Documents\Data\DocumentTemplateData;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
+use App\Documents\Support\DocumentBlockCatalog;
 use App\Documents\Support\DocumentRenderer;
+use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Documents\Support\MergeFieldVocabulary;
+use App\Documents\Support\SafeHtml;
 use App\Http\Controllers\Controller;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
@@ -16,6 +19,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -54,6 +58,12 @@ class DocumentTemplateController extends Controller
         return Inertia::render('DocumentTemplates/Create', [
             'types' => $this->typeOptions(),
             'shootKinds' => $this->shootKindOptions(),
+            // Keyed by type: the create screen's type select changes the palette
+            // without a round trip, and there are three small lists in total.
+            'palettes' => collect(DocumentTemplateType::cases())
+                ->mapWithKeys(fn (DocumentTemplateType $type) => [$type->value => DocumentBlockCatalog::for($type)])
+                ->all(),
+            'mergeFields' => $this->mergeFieldOptions(),
         ]);
     }
 
@@ -63,10 +73,27 @@ class DocumentTemplateController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'body' => ['required', 'string', 'max:100000'],
+            'body' => ['required', 'string', 'max:100000', function (string $attribute, mixed $value, \Closure $fail) {
+                if (SafeHtml::hasUnsafeHref((string) $value)) {
+                    $fail('Links dürfen nur auf http, https oder mailto zeigen.');
+                }
+            }],
             'type' => ['required', Rule::enum(DocumentTemplateType::class)],
             'shoot_kind' => ['nullable', Rule::enum(ShootKind::class)],
+            'blocks' => ['nullable', 'array'],
+            'blocks.blocks' => ['nullable', 'array'],
+            'blocks.blocks.*.type' => ['required_with:blocks.blocks', 'string'],
+            // Laravel's validated() rebuilds its output strictly from declared
+            // rule paths — without this, every block's own content is silently
+            // dropped and only its type reaches storage.
+            'blocks.blocks.*.data' => ['nullable', 'array'],
         ]);
+
+        $this->assertBlocksAllowed($request, DocumentTemplateType::from($validated['type']));
+
+        if (isset($validated['blocks']) && is_array($validated['blocks'])) {
+            $validated['blocks'] = InlineHtmlSanitizer::blocks($validated['blocks']);
+        }
 
         $template = DocumentTemplate::createFirstVersion($validated);
 
@@ -90,6 +117,9 @@ class DocumentTemplateController extends Controller
 
         return Inertia::render('DocumentTemplates/Edit', [
             'template' => DocumentTemplateData::fromModel($documentTemplate),
+            // One palette, not three: a family's type never changes.
+            'palette' => DocumentBlockCatalog::for($documentTemplate->type),
+            'mergeFields' => $this->mergeFieldOptions(),
         ]);
     }
 
@@ -101,8 +131,24 @@ class DocumentTemplateController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'body' => ['required', 'string', 'max:100000'],
+            'body' => ['required', 'string', 'max:100000', function (string $attribute, mixed $value, \Closure $fail) {
+                if (SafeHtml::hasUnsafeHref((string) $value)) {
+                    $fail('Links dürfen nur auf http, https oder mailto zeigen.');
+                }
+            }],
+            'blocks' => ['nullable', 'array'],
+            'blocks.blocks' => ['nullable', 'array'],
+            'blocks.blocks.*.type' => ['required_with:blocks.blocks', 'string'],
+            // See the matching rule in store(): without it, validated() drops
+            // every block's content and keeps only its type.
+            'blocks.blocks.*.data' => ['nullable', 'array'],
         ]);
+
+        $this->assertBlocksAllowed($request, $documentTemplate->type);
+
+        if (isset($validated['blocks']) && is_array($validated['blocks'])) {
+            $validated['blocks'] = InlineHtmlSanitizer::blocks($validated['blocks']);
+        }
 
         // Never $documentTemplate->update(...): this is the seam that keeps
         // every already-rendered document's template row exactly as it was.
@@ -155,6 +201,35 @@ class DocumentTemplateController extends Controller
     {
         return collect(ShootKind::cases())
             ->map(fn (ShootKind $kind) => ['value' => $kind->value, 'label' => $kind->label()])
+            ->all();
+    }
+
+    /**
+     * A block the type may not use is a validation error, never a silent drop:
+     * quietly discarding a block would hand a client a document missing wording
+     * its author believed they had written.
+     */
+    private function assertBlocksAllowed(Request $request, DocumentTemplateType $type): void
+    {
+        $blocks = $request->input('blocks.blocks', []);
+
+        foreach ($blocks as $block) {
+            $blockType = $block['type'] ?? '';
+
+            if (! DocumentBlockCatalog::allows($type, $blockType)) {
+                throw ValidationException::withMessages([
+                    'blocks' => "Baustein \"{$blockType}\" ist für diesen Dokumenttyp nicht erlaubt.",
+                ]);
+            }
+        }
+    }
+
+    /** @return list<array{path: string, sample: string}> */
+    private function mergeFieldOptions(): array
+    {
+        return collect(MergeFieldVocabulary::samples())
+            ->map(fn (string $sample, string $path) => ['path' => $path, 'sample' => $sample])
+            ->values()
             ->all();
     }
 }

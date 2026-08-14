@@ -8,8 +8,9 @@
  * Tailwind's colour scale, pointed at the clickdummy tokens.
  *
  * Both systems are present: tokens.css carries the screen vocabulary
- * (.card, .srow, .chip, .inp), and Tailwind utilities stay available for
- * one-off layout. Mapping them onto the same tokens is what stops them
+ * (.card, .srow, .chip), the controls are shadcn-vue components in
+ * resources/js/ui, and Tailwind utilities stay available for one-off
+ * layout. Mapping all three onto the same tokens is what stops them
  * disagreeing — before this a `text-muted-foreground` was a cold grey sitting
  * beside a warm one from the same design, and the screens read as two
  * products.
@@ -40,10 +41,39 @@
   --color-border: var(--line);
   --color-input: var(--line);
   --color-ring: var(--accent);
+
+  /* No shadcn name means these two, but the controls need them: --faint is
+     placeholder and micro-label text, --line-hover the border a field takes
+     on hover. Exposed here so the components can spell them as utilities
+     instead of re-hardcoding the hex. */
+  --color-faint: var(--faint);
+  --color-line-hover: var(--line-hover);
 }
 
 @layer base {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/*
+ * The one motion the dialog layer needs, written here rather than pulled in
+ * with tailwindcss-animate: two keyframes is less than a dependency, and the
+ * timing has to be the system's own. Every transition in tokens.css is
+ * .12s ease-out — a dialog that springs or scales up from 95% would be the
+ * only thing on screen moving to a different clock.
+ *
+ * The panel rises 4px. Not 16, not a scale: the surfaces here are flat and
+ * hairline-bordered, and a big entrance would promise a depth the rest of
+ * the system does not have.
+ */
+@keyframes nl-overlay-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes nl-panel-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+[data-slot="dialog-overlay"][data-state="open"] { animation: nl-overlay-in .12s ease-out; }
+[data-slot="dialog-panel"][data-state="open"] { animation: nl-panel-in .12s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="dialog-overlay"][data-state="open"],
+  [data-slot="dialog-panel"][data-state="open"] { animation: none; }
 }

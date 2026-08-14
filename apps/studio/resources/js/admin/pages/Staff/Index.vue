@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
-import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Label } from '@/ui/label'
+import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 
 type Member = {
   id: string
@@ -21,7 +26,6 @@ defineProps<{
   roles: { value: string; label: string }[]
 }>()
 
-const { t } = useI18n()
 const inviting = ref(false)
 const form = useForm({ name: '', email: '', role: 'second_shooter' })
 
@@ -36,9 +40,7 @@ function invite() {
 }
 
 function revoke(invitation: Invitation) {
-  if (confirm(t('team.revokeConfirm', { email: invitation.email }))) {
-    router.delete(`/team/einladungen/${invitation.id}`, { preserveScroll: true })
-  }
+  router.delete(`/team/einladungen/${invitation.id}`, { preserveScroll: true })
 }
 
 function initials(name: string) {
@@ -55,39 +57,55 @@ function initials(name: string) {
   <AdminLayout active="team">
     <div class="hrow" style="margin-bottom: var(--s5)">
       <h1>{{ $t('team.title') }}</h1>
-      <button class="btn" type="button" @click="inviting = !inviting">
-        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
-        {{ $t('team.invite') }}
-      </button>
-    </div>
+      <!-- Three fields and you are done — the page behind is the roster you
+           are adding to, and it should still be there when you look up. -->
+      <Dialog v-model:open="inviting">
+        <DialogTrigger as-child>
+          <Button type="button">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+            {{ $t('team.invite') }}
+          </Button>
+        </DialogTrigger>
 
-    <div v-if="inviting" class="card static" style="margin-bottom: var(--s5)">
-      <div class="cardhead"><span class="kick">{{ $t('team.invite') }}</span></div>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{{ $t('team.invite') }}</DialogTitle>
+          </DialogHeader>
 
-      <form class="fgrid" @submit.prevent="invite">
-        <div class="fld">
-          <label for="name">{{ $t('team.name') }}</label>
-          <input id="name" v-model="form.name" class="inp" type="text" required />
-          <p v-if="form.errors.name" class="err">{{ form.errors.name }}</p>
-        </div>
-        <div class="fld">
-          <label for="email">{{ $t('auth.email') }}</label>
-          <input id="email" v-model="form.email" class="inp" type="email" required />
-          <p v-if="form.errors.email" class="err">{{ form.errors.email }}</p>
-        </div>
-        <div class="fld">
-          <label for="role">{{ $t('team.role') }}</label>
-          <select id="role" v-model="form.role" class="inp">
-            <option v-for="role in roles" :key="role.value" :value="role.value">{{ role.label }}</option>
-          </select>
-        </div>
-        <div class="fld wide">
-          <div class="formfoot" style="margin-top: 0">
-            <button class="btn" type="submit" :disabled="form.processing">{{ $t('team.send') }}</button>
-            <button class="txtbtn" type="button" @click="inviting = false">{{ $t('common.cancel') }}</button>
-          </div>
-        </div>
-      </form>
+          <DialogBody>
+            <form id="team-invite-form" class="fgrid" @submit.prevent="invite">
+              <div class="fld wide">
+                <Label for="name">{{ $t('team.name') }}</Label>
+                <Input id="name" v-model="form.name" type="text" required />
+                <p v-if="form.errors.name" class="err">{{ form.errors.name }}</p>
+              </div>
+              <div class="fld">
+                <Label for="email">{{ $t('auth.email') }}</Label>
+                <Input id="email" v-model="form.email" type="email" required />
+                <p v-if="form.errors.email" class="err">{{ form.errors.email }}</p>
+              </div>
+              <div class="fld">
+                <Label for="role">{{ $t('team.role') }}</Label>
+                <Select :model-value="form.role" @update:model-value="(value) => (form.role = String(value))">
+                  <SelectTrigger id="role">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="role in roles" :key="role.value" :value="role.value">{{ role.label }}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </form>
+          </DialogBody>
+
+          <DialogFooter>
+            <Button type="submit" form="team-invite-form" :disabled="form.processing">{{ $t('team.send') }}</Button>
+            <DialogClose as-child>
+              <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
 
     <section v-if="invitations.length" class="dsec">
@@ -100,9 +118,20 @@ function initials(name: string) {
             <span class="psub">{{ invitation.email }} · {{ invitation.roleLabel }}</span>
           </span>
           <span class="tdate">{{ $t('team.expires', { date: invitation.expiresOn }) }}</span>
-          <button type="button" class="abtn hot" @click="revoke(invitation)">
-            {{ $t('team.revoke') }}
-          </button>
+          <AlertDialog>
+            <AlertDialogTrigger as-child>
+              <Button type="button" variant="outline" tone="accent">{{ $t('team.revoke') }}</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{{ $t('team.revokeConfirm', { email: invitation.email }) }}</AlertDialogTitle>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogAction @click="revoke(invitation)">{{ $t('team.revoke') }}</AlertDialogAction>
+                <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </section>

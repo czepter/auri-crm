@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
+import { Button } from '@/ui/button'
 
 const props = defineProps<{ active: string }>()
 
@@ -114,9 +115,9 @@ const items = computed(() => [
       <div class="me">
         <span class="av">{{ initials }}</span>
         {{ user?.name }}
-        <button type="button" class="txtbtn" style="margin-left: auto" @click="router.post('/logout')">
+        <Button type="button" variant="ghost" style="margin-left: auto" @click="router.post('/logout')">
           {{ $t('common.signOut') }}
-        </button>
+        </Button>
       </div>
     </nav>
 

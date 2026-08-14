@@ -3,6 +3,11 @@ import { computed } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import { basisPointsToPercent } from '@/admin/lib/money'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Checkbox } from '@/ui/checkbox'
+import { Label } from '@/ui/label'
 
 const props = defineProps<{ settings: App.Settings.Data.PaymentSettingsData }>()
 
@@ -43,8 +48,7 @@ function submit() {
         <h1>{{ $t('paymentSettings.title') }}</h1>
       </div>
       <span v-if="form.isDirty" class="chip now">{{ $t('settings.unsaved') }}</span>
-      <button
-        class="btn"
+      <Button
         type="submit"
         form="payment-settings-form"
         :disabled="!form.isDirty || form.processing"
@@ -52,7 +56,7 @@ function submit() {
       >
         <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
         {{ $t('common.save') }}
-      </button>
+      </Button>
     </div>
 
     <div style="display: flex; gap: var(--s6); margin-top: var(--s5); align-items: flex-start">
@@ -82,20 +86,28 @@ function submit() {
           <div class="dlab">{{ $t('paymentSettings.stripeSection') }}</div>
 
           <div class="grp">
-            <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
-              <input v-model="form.payments_stripe_enabled" type="checkbox" />
-              {{ $t('paymentSettings.stripeEnabled') }}
-            </label>
+            <div class="cbrow">
+              <Checkbox id="cb-payments-stripe-enabled" v-model="form.payments_stripe_enabled" />
+              <Label variant="inline" for="cb-payments-stripe-enabled">{{ $t('paymentSettings.stripeEnabled') }}</Label>
+            </div>
             <span class="hint">{{ $t('paymentSettings.stripeEnabledHint') }}</span>
           </div>
 
           <div class="grp">
             <div class="fld" style="max-width: 220px">
-              <label for="ps-mode">{{ $t('paymentSettings.stripeMode') }}</label>
-              <select id="ps-mode" v-model="form.payments_stripe_mode" class="inp">
-                <option value="test">{{ $t('paymentSettings.stripeModeTest') }}</option>
-                <option value="live">{{ $t('paymentSettings.stripeModeLive') }}</option>
-              </select>
+              <Label for="ps-mode">{{ $t('paymentSettings.stripeMode') }}</Label>
+              <Select
+                :model-value="form.payments_stripe_mode"
+                @update:model-value="(value) => (form.payments_stripe_mode = String(value))"
+              >
+                <SelectTrigger id="ps-mode">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="test">{{ $t('paymentSettings.stripeModeTest') }}</SelectItem>
+                  <SelectItem value="live">{{ $t('paymentSettings.stripeModeLive') }}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <span class="hint">
               {{ hasActiveKeys ? $t('paymentSettings.stripeKeyConfigured') : $t('paymentSettings.stripeKeyMissing') }}
@@ -106,29 +118,25 @@ function submit() {
             <div class="dlab" style="font-size: 12px">{{ $t('paymentSettings.stripeTestKeys') }}</div>
             <div class="two">
               <div class="fld">
-                <label for="ps-test-pk">{{ $t('paymentSettings.stripePublishableKey') }}</label>
-                <input
+                <Label for="ps-test-pk">{{ $t('paymentSettings.stripePublishableKey') }}</Label>
+                <Input
                   id="ps-test-pk"
-                  v-model="form.payments_stripe_test_publishable_key"
-                  class="inp num"
+                  v-model="form.payments_stripe_test_publishable_key" class="tabular-nums"
                   type="text"
                   autocomplete="off"
-                  :placeholder="settings.hasStripeTestKeys ? '••••••••••••' : ''"
-                />
+                  :placeholder="settings.hasStripeTestKeys ? '••••••••••••' : ''" />
                 <p v-if="form.errors.payments_stripe_test_publishable_key" class="err">
                   {{ form.errors.payments_stripe_test_publishable_key }}
                 </p>
               </div>
               <div class="fld">
-                <label for="ps-test-sk">{{ $t('paymentSettings.stripeSecretKey') }}</label>
-                <input
+                <Label for="ps-test-sk">{{ $t('paymentSettings.stripeSecretKey') }}</Label>
+                <Input
                   id="ps-test-sk"
-                  v-model="form.payments_stripe_test_secret_key"
-                  class="inp num"
+                  v-model="form.payments_stripe_test_secret_key" class="tabular-nums"
                   type="password"
                   autocomplete="off"
-                  :placeholder="settings.hasStripeTestKeys ? '••••••••••••' : ''"
-                />
+                  :placeholder="settings.hasStripeTestKeys ? '••••••••••••' : ''" />
                 <p v-if="form.errors.payments_stripe_test_secret_key" class="err">
                   {{ form.errors.payments_stripe_test_secret_key }}
                 </p>
@@ -141,29 +149,25 @@ function submit() {
             <div class="dlab" style="font-size: 12px">{{ $t('paymentSettings.stripeLiveKeys') }}</div>
             <div class="two">
               <div class="fld">
-                <label for="ps-live-pk">{{ $t('paymentSettings.stripePublishableKey') }}</label>
-                <input
+                <Label for="ps-live-pk">{{ $t('paymentSettings.stripePublishableKey') }}</Label>
+                <Input
                   id="ps-live-pk"
-                  v-model="form.payments_stripe_live_publishable_key"
-                  class="inp num"
+                  v-model="form.payments_stripe_live_publishable_key" class="tabular-nums"
                   type="text"
                   autocomplete="off"
-                  :placeholder="settings.hasStripeLiveKeys ? '••••••••••••' : ''"
-                />
+                  :placeholder="settings.hasStripeLiveKeys ? '••••••••••••' : ''" />
                 <p v-if="form.errors.payments_stripe_live_publishable_key" class="err">
                   {{ form.errors.payments_stripe_live_publishable_key }}
                 </p>
               </div>
               <div class="fld">
-                <label for="ps-live-sk">{{ $t('paymentSettings.stripeSecretKey') }}</label>
-                <input
+                <Label for="ps-live-sk">{{ $t('paymentSettings.stripeSecretKey') }}</Label>
+                <Input
                   id="ps-live-sk"
-                  v-model="form.payments_stripe_live_secret_key"
-                  class="inp num"
+                  v-model="form.payments_stripe_live_secret_key" class="tabular-nums"
                   type="password"
                   autocomplete="off"
-                  :placeholder="settings.hasStripeLiveKeys ? '••••••••••••' : ''"
-                />
+                  :placeholder="settings.hasStripeLiveKeys ? '••••••••••••' : ''" />
                 <p v-if="form.errors.payments_stripe_live_secret_key" class="err">
                   {{ form.errors.payments_stripe_live_secret_key }}
                 </p>
@@ -176,10 +180,10 @@ function submit() {
         <div class="dsec">
           <div class="dlab">{{ $t('paymentSettings.defaultsSection') }}</div>
           <div class="grp">
-            <label style="display: flex; align-items: center; gap: 10px; font: 400 13px/1.4 var(--font)">
-              <input v-model="form.payments_reminders_enabled" type="checkbox" />
-              {{ $t('paymentSettings.remindersEnabled') }}
-            </label>
+            <div class="cbrow">
+              <Checkbox id="cb-payments-reminders-enabled" v-model="form.payments_reminders_enabled" />
+              <Label variant="inline" for="cb-payments-reminders-enabled">{{ $t('paymentSettings.remindersEnabled') }}</Label>
+            </div>
           </div>
 
           <!-- Deposit percentage and Zahlungsziel are T-05's own Dokumente
@@ -189,16 +193,20 @@ function submit() {
           <div class="grp">
             <div class="two">
               <div class="fld">
-                <label>{{ $t('paymentSettings.depositPercent') }}</label>
-                <div class="inp num" style="background: var(--hover); pointer-events: none">
-                  {{ basisPointsToPercent(settings.depositPercent) }} %
-                </div>
+                <Label>{{ $t('paymentSettings.depositPercent') }}</Label>
+                <Input
+                  :model-value="`${basisPointsToPercent(settings.depositPercent)} %`"
+                  class="pointer-events-none bg-muted tabular-nums"
+                  readonly
+                />
               </div>
               <div class="fld">
-                <label>{{ $t('paymentSettings.zahlungszielDays') }}</label>
-                <div class="inp num" style="background: var(--hover); pointer-events: none">
-                  {{ settings.zahlungszielDays }}
-                </div>
+                <Label>{{ $t('paymentSettings.zahlungszielDays') }}</Label>
+                <Input
+                  :model-value="settings.zahlungszielDays"
+                  class="pointer-events-none bg-muted tabular-nums"
+                  readonly
+                />
               </div>
             </div>
             <span class="hint">

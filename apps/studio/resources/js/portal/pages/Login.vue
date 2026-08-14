@@ -2,6 +2,9 @@
 import { computed } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
 
 const form = useForm({ email: '' })
 const status = computed(() => usePage().props.flash.status)
@@ -27,11 +30,10 @@ function submit() {
 
     <form v-else @submit.prevent="submit">
       <div class="fld grp">
-        <label for="email">{{ $t('portal.email') }}</label>
-        <input
+        <Label for="email">{{ $t('portal.email') }}</Label>
+        <Input
           id="email"
           v-model="form.email"
-          class="inp"
           type="email"
           autocomplete="email"
           required
@@ -39,9 +41,9 @@ function submit() {
         <p v-if="form.errors.email" class="err">{{ form.errors.email }}</p>
       </div>
 
-      <button class="btn" type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
+      <Button class="w-full justify-center" type="submit" :disabled="form.processing">
         {{ $t('portal.sendLink') }}
-      </button>
+      </Button>
     </form>
   </div>
 

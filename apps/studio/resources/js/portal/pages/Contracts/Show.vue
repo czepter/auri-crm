@@ -3,6 +3,10 @@ import { onBeforeUnmount, watch } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import { Button } from '@/ui/button'
+import { Checkbox } from '@/ui/checkbox'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
 
 type Signature = {
   typedName: string
@@ -77,10 +81,10 @@ function sign() {
             <span class="kick">
               {{ $t('portal.contractTemplate', { name: contract.templateName, version: contract.templateVersion }) }}
             </span>
-            <a v-if="contract.downloadUrl" class="txtbtn" :href="contract.downloadUrl" download>
+            <Button v-if="contract.downloadUrl" as="a" variant="ghost" :href="contract.downloadUrl" download>
               <svg viewBox="0 0 24 24"><path d="M12 3v12" /><path d="M7.5 10.5L12 15l4.5-4.5" /><path d="M4 19h16" /></svg>
               {{ $t('portal.contractDownload') }}
-            </a>
+            </Button>
           </div>
 
           <div class="pdocscroll">
@@ -105,19 +109,22 @@ function sign() {
             </p>
 
             <form v-else @submit.prevent="sign">
-              <label class="field">
+              <Label class="field">
                 <span>{{ $t('portal.signName') }}</span>
-                <input v-model="form.typedName" type="text" required maxlength="255" />
+                <Input v-model="form.typedName" type="text" required maxlength="255" />
                 <em>{{ $t('portal.signNameHint') }}</em>
-              </label>
+              </Label>
 
-              <label class="consent">
-                <input v-model="form.consent" type="checkbox" required />
-                <span>{{ $t('portal.signConsent') }}</span>
-              </label>
+              <!-- not a <Label> wrapper any more: Checkbox renders a button,
+                   and a button inside a label is not clickable through it -->
+              <div class="consent">
+                <Checkbox id="sign-consent" v-model="form.consent" required />
+                <Label for="sign-consent">{{ $t('portal.signConsent') }}</Label>
+              </div>
 
-              <button
-                class="btn warm wide"
+              <Button
+                tone="warm"
+                class="wide"
                 type="submit"
                 :disabled="form.processing || !form.consent || !form.typedName"
                 style="margin-top: var(--s5)"
@@ -127,7 +134,7 @@ function sign() {
                   <path d="M4.5 16.5c3-1 4-6.5 6-9.5s3.5 5 5.5 6 3.5-1 3.5-1" />
                 </svg>
                 {{ $t('portal.signSubmit') }}
-              </button>
+              </Button>
 
             </form>
           </div>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { Button } from '@/ui/button'
 
 defineProps<{ templates: App.Crm.Data.FormTemplateData[] }>()
 
@@ -14,10 +15,10 @@ const comingSoon = ['navVat', 'navDocuments', 'navNotifications', 'navGeneral'] 
         <div class="kick">{{ $t('settings.kicker') }}</div>
         <h1>{{ $t('formTemplates.title') }}</h1>
       </div>
-      <Link class="btn" href="/einstellungen/fragebogen-vorlagen/neu">
+      <Button :as="Link" href="/einstellungen/fragebogen-vorlagen/neu">
         <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         {{ $t('formTemplates.create') }}
-      </Link>
+      </Button>
     </div>
 
     <div style="display: flex; gap: var(--s6); margin-top: var(--s5); align-items: flex-start">

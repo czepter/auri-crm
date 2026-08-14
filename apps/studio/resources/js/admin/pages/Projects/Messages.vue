@@ -2,6 +2,8 @@
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectHeader from '@/admin/components/ProjectHeader.vue'
+import { Button } from '@/ui/button'
+import { Textarea } from '@/ui/textarea'
 
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
@@ -46,17 +48,15 @@ function send() {
       </div>
 
       <form v-if="header.canManageMessages" class="composer" @submit.prevent="send">
-        <textarea
+        <Textarea
           v-model="reply.body"
-          class="inp"
           rows="4"
-          :placeholder="$t('project.messagesReplyPlaceholder')"
-        />
+          :placeholder="$t('project.messagesReplyPlaceholder')" />
         <p v-if="reply.errors.body" class="err">{{ reply.errors.body }}</p>
         <div class="formfoot" style="margin-top: 0">
-          <button class="btn" type="submit" :disabled="reply.processing">
+          <Button type="submit" :disabled="reply.processing">
             {{ $t('project.messagesSend') }}
-          </button>
+          </Button>
         </div>
       </form>
     </template>

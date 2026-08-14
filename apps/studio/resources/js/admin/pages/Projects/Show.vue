@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
@@ -9,6 +9,14 @@ import PaymentInstallmentsEditor, { type PaymentInstallmentRow } from '@/admin/c
 import { chipClass, dayAndMonth, weekday } from '@/admin/lib/shoots'
 import { installmentChipClass } from '@/admin/lib/payments'
 import { centsToEuros, eurosToCents, formatEuros } from '@/admin/lib/money'
+import { NONE, fromOption, toOption } from '@/lib/select'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Textarea } from '@/ui/textarea'
+import { Label } from '@/ui/label'
+import { Dialog, DialogBody, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 
 const { t } = useI18n()
 
@@ -73,14 +81,21 @@ function remove(id: string) {
 // project's portal_visible, nothing about the contacts on it. Revoking a
 // contact's access entirely lives on the contact screen instead — a
 // deliberately separate control for a deliberately separate question.
-function togglePortalVisibility() {
-  const confirmKey = props.header.portalVisible
-    ? 'project.portalVisibilityHideConfirm'
-    : 'project.portalVisibilityShowConfirm'
+// Hiding warns about scope, showing does not — it is the reversible half.
+const portalVisibilityConfirm = computed(() =>
+  props.header.portalVisible
+    ? t('project.portalVisibilityHideConfirm')
+    : t('project.portalVisibilityShowConfirm'),
+)
 
-  if (confirm(t(confirmKey))) {
-    router.post(`/auftraege/${props.header.id}/portal-sichtbarkeit`, {}, { preserveScroll: true })
-  }
+const portalVisibilityLabel = computed(() =>
+  props.header.portalVisible
+    ? t('project.portalVisibilityHide')
+    : t('project.portalVisibilityShow'),
+)
+
+function togglePortalVisibility() {
+  router.post(`/auftraege/${props.header.id}/portal-sichtbarkeit`, {}, { preserveScroll: true })
 }
 
 // --- Zahlungen: create a plan when the job has none yet ------------------
@@ -151,6 +166,13 @@ function savePlan() {
 const markingPaid = ref<string | null>(null)
 const markPaidForm = useForm({ paid_on: '', method: 'transfer', reference: '' })
 
+// Which instalment the dialog is standing in front of — the schedule stays
+// on screen behind it, which is the point: "welche Rate war das" is answered
+// by the row, not by a form that replaced it.
+const markingPaidInstallment = computed(
+  () => props.paymentPlan?.installments.find((i) => i.id === markingPaid.value) ?? null,
+)
+
 function openMarkPaid(installment: App.Payments.Data.PaymentInstallmentData) {
   markingPaid.value = installment.id
   markPaidForm.reset()
@@ -218,59 +240,89 @@ function submitMarkPaid(installmentId: string) {
         <div class="card static">
           <div class="cardhead">
             <span class="kick">{{ $t('project.tasks') }}</span>
-            <button v-if="header.canManageTasks" type="button" class="abtn" @click="addingTask = !addingTask">
-              {{ $t('project.taskAdd') }}
-            </button>
-          </div>
+            <!-- This card sits in a 296px rail. A four-field form unfolding
+                 inside it squeezed the task list it belongs to down to
+                 nothing; the dialog gives the form room the rail never had. -->
+            <Dialog v-if="header.canManageTasks" v-model:open="addingTask">
+              <DialogTrigger as-child>
+                <Button type="button" variant="outline">{{ $t('project.taskAdd') }}</Button>
+              </DialogTrigger>
 
-          <form v-if="addingTask && header.canManageTasks" class="fgrid" style="margin-bottom: var(--s4)" @submit.prevent="createTask">
-            <div class="fld wide">
-              <label for="task_title">{{ $t('project.taskTitle') }}</label>
-              <input id="task_title" v-model="taskForm.title" class="inp" type="text" />
-              <p v-if="taskForm.errors.title" class="err">{{ taskForm.errors.title }}</p>
-            </div>
-            <div class="fld">
-              <label for="task_due">{{ $t('project.taskDue') }}<em>{{ $t('project.optional') }}</em></label>
-              <input id="task_due" v-model="taskForm.due_on" class="inp" type="date" />
-            </div>
-            <div class="fld">
-              <label for="task_audience">{{ $t('project.taskAudience') }}</label>
-              <select id="task_audience" v-model="taskForm.audience" class="inp">
-                <option value="internal">Intern</option>
-                <option value="client">Kunde</option>
-              </select>
-            </div>
-            <div class="fld wide" v-if="shootOptions.length">
-              <label for="task_shoot">{{ $t('project.taskShoot') }}<em>{{ $t('project.optional') }}</em></label>
-              <select id="task_shoot" v-model="taskForm.shoot" class="inp">
-                <option value="">{{ $t('project.taskNoShoot') }}</option>
-                <option v-for="option in shootOptions" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-            </div>
-            <div class="fld wide">
-              <div class="formfoot" style="margin-top: 0">
-                <button class="btn" type="submit" :disabled="taskForm.processing">
-                  {{ $t('common.save') }}
-                </button>
-              </div>
-            </div>
-          </form>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{{ $t('project.taskAdd') }}</DialogTitle>
+                </DialogHeader>
+
+                <DialogBody>
+                  <form id="task-create-form" class="fgrid" @submit.prevent="createTask">
+                    <div class="fld wide">
+                      <Label for="task_title">{{ $t('project.taskTitle') }}</Label>
+                      <Input id="task_title" v-model="taskForm.title" type="text" />
+                      <p v-if="taskForm.errors.title" class="err">{{ taskForm.errors.title }}</p>
+                    </div>
+                    <div class="fld">
+                      <Label for="task_due">{{ $t('project.taskDue') }}<em>{{ $t('project.optional') }}</em></Label>
+                      <Input id="task_due" v-model="taskForm.due_on" type="date" />
+                    </div>
+                    <div class="fld">
+                      <Label for="task_audience">{{ $t('project.taskAudience') }}</Label>
+                      <Select
+                        :model-value="taskForm.audience"
+                        @update:model-value="(value) => (taskForm.audience = String(value))"
+                      >
+                        <SelectTrigger id="task_audience">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="internal">Intern</SelectItem>
+                          <SelectItem value="client">Kunde</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div class="fld wide" v-if="shootOptions.length">
+                      <Label for="task_shoot">{{ $t('project.taskShoot') }}<em>{{ $t('project.optional') }}</em></Label>
+                      <Select
+                        :model-value="toOption(taskForm.shoot)"
+                        @update:model-value="(value) => (taskForm.shoot = fromOption(value))"
+                      >
+                        <SelectTrigger id="task_shoot">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem :value="NONE">{{ $t('project.taskNoShoot') }}</SelectItem>
+                          <SelectItem v-for="option in shootOptions" :key="option.value" :value="option.value">
+                            {{ option.label }}
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </form>
+                </DialogBody>
+
+                <DialogFooter>
+                  <Button type="submit" form="task-create-form" :disabled="taskForm.processing">
+                    {{ $t('common.save') }}
+                  </Button>
+                  <DialogClose as-child>
+                    <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
 
           <div class="tlist">
             <div v-for="task in tasks" :key="task.id" class="taskrow">
               <!-- Completion is a toggle, not a delete: what was owed and when
                    it was done is the record. -->
-              <button
+              <Button
                 v-if="header.canManageTasks"
-                type="button"
-                class="abtn"
+                type="button" variant="outline"
                 :aria-label="$t(task.isDone ? 'project.taskReopen' : 'project.taskComplete')"
                 @click="toggleTask(task)"
               >
                 {{ task.isDone ? '✓' : '○' }}
-              </button>
+              </Button>
               <span class="ttext" :style="task.isDone ? 'color: var(--faint); text-decoration: line-through' : ''">
                 {{ task.title }}
                 <template v-if="task.shootLabel"> · {{ task.shootLabel }}</template>
@@ -298,41 +350,37 @@ function submitMarkPaid(installmentId: string) {
               <b>{{ note.author }}</b>
               <span>{{ new Date(note.writtenAt).toLocaleDateString('de-DE') }}</span>
               <span v-if="header.canManageNotes" class="acts">
-                <button type="button" class="abtn" @click="edit(note)">
+                <Button type="button" variant="outline" @click="edit(note)">
                   {{ $t('project.noteEdit') }}
-                </button>
-                <button type="button" class="abtn" @click="remove(note.id)">
+                </Button>
+                <Button type="button" variant="outline" @click="remove(note.id)">
                   {{ $t('project.noteDelete') }}
-                </button>
+                </Button>
               </span>
             </div>
 
-            <textarea
+            <Textarea
               v-if="editing === note.id"
               v-model="draft"
-              class="inp"
               rows="3"
-              @keydown.escape="editing = null"
-            />
+              @keydown.escape="editing = null" />
             <p v-else>{{ note.body }}</p>
 
             <div v-if="editing === note.id" class="formfoot">
-              <button class="btn" type="button" @click="save(note.id)">{{ $t('common.save') }}</button>
+              <Button type="button" @click="save(note.id)">{{ $t('common.save') }}</Button>
             </div>
           </div>
 
           <form v-if="header.canManageNotes" class="composer" @submit.prevent="write">
-            <textarea
+            <Textarea
               v-model="composer.body"
-              class="inp"
               rows="2"
-              :placeholder="$t('project.notePlaceholder')"
-            />
+              :placeholder="$t('project.notePlaceholder')" />
             <p v-if="composer.errors.body" class="err">{{ composer.errors.body }}</p>
             <div class="formfoot" style="margin-top: 0">
-              <button class="btn" type="submit" :disabled="composer.processing">
+              <Button type="submit" :disabled="composer.processing">
                 {{ $t('common.save') }}
-              </button>
+              </Button>
             </div>
           </form>
         </div>
@@ -369,15 +417,22 @@ function submitMarkPaid(installmentId: string) {
             </div>
           </div>
 
-          <button
-            v-if="header.canManagePortalVisibility"
-            type="button"
-            class="abtn"
-            style="margin-top: var(--s3)"
-            @click="togglePortalVisibility"
-          >
-            {{ header.portalVisible ? $t('project.portalVisibilityHide') : $t('project.portalVisibilityShow') }}
-          </button>
+          <AlertDialog v-if="header.canManagePortalVisibility">
+            <AlertDialogTrigger as-child>
+              <Button type="button" variant="outline" style="margin-top: var(--s3)">
+                {{ portalVisibilityLabel }}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{{ portalVisibilityConfirm }}</AlertDialogTitle>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogAction @click="togglePortalVisibility">{{ portalVisibilityLabel }}</AlertDialogAction>
+                <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
 
         <!-- Zahlungen: a preview compressed into the Übersicht tab, mockup
@@ -399,49 +454,17 @@ function submitMarkPaid(installmentId: string) {
                 <span class="paystatus" :class="installmentChipClass(installment)">
                   {{ installment.status === 'paid' ? $t('payments.statusPaid') : dayAndMonth(installment.dueOn) }}
                 </span>
-                <button
+                <Button
                   v-if="installment.status !== 'paid' && header.canManagePaymentPlan && markingPaid !== installment.id"
-                  type="button"
-                  class="txtbtn"
+                  type="button" variant="ghost"
                   @click="openMarkPaid(installment)"
                 >
                   {{ $t('payments.markPaid') }}
-                </button>
+                </Button>
                 <span v-else-if="installment.status === 'paid' && installment.settledViaLabel" class="hint">
                   {{ $t('payments.settledVia', { method: installment.settledViaLabel, date: installment.paidOn }) }}
                 </span>
 
-                <form
-                  v-if="markingPaid === installment.id"
-                  class="fgrid"
-                  style="grid-column: 1 / -1; margin-top: var(--s3)"
-                  @submit.prevent="submitMarkPaid(installment.id)"
-                >
-                  <div class="fld">
-                    <label :for="`mp-date-${installment.id}`">{{ $t('payments.markPaidDate') }}</label>
-                    <input :id="`mp-date-${installment.id}`" v-model="markPaidForm.paid_on" class="inp" type="date" required />
-                  </div>
-                  <div class="fld">
-                    <label :for="`mp-method-${installment.id}`">{{ $t('payments.markPaidMethod') }}</label>
-                    <select :id="`mp-method-${installment.id}`" v-model="markPaidForm.method" class="inp">
-                      <option value="transfer">{{ $t('payments.markPaidMethodTransfer') }}</option>
-                      <option value="stripe">{{ $t('payments.markPaidMethodStripe') }}</option>
-                      <option value="manual">{{ $t('payments.markPaidMethodManual') }}</option>
-                    </select>
-                  </div>
-                  <div class="fld">
-                    <label :for="`mp-ref-${installment.id}`">{{ $t('payments.markPaidReference') }}</label>
-                    <input :id="`mp-ref-${installment.id}`" v-model="markPaidForm.reference" class="inp" type="text" />
-                  </div>
-                  <div class="fld wide">
-                    <div class="formfoot" style="margin-top: 0">
-                      <button class="btn" type="submit" :disabled="markPaidForm.processing">
-                        {{ $t('payments.markPaidSubmit') }}
-                      </button>
-                      <button class="abtn" type="button" @click="markingPaid = null">{{ $t('common.cancel') }}</button>
-                    </div>
-                  </div>
-                </form>
               </div>
             </div>
 
@@ -453,15 +476,15 @@ function submitMarkPaid(installmentId: string) {
 
               <form class="fgrid" @submit.prevent="savePlan">
                 <div class="fld">
-                  <label for="plan-total">{{ $t('payments.total') }}</label>
-                  <input id="plan-total" v-model="editPlanForm.total" class="inp num" type="text" inputmode="decimal" required />
+                  <Label for="plan-total">{{ $t('payments.total') }}</Label>
+                  <Input id="plan-total" v-model="editPlanForm.total" class="tabular-nums" type="text" inputmode="decimal" required />
                 </div>
                 <p v-if="editPlanForm.errors.installments" class="err">{{ editPlanForm.errors.installments }}</p>
                 <div class="fld wide">
                   <div class="formfoot" style="margin-top: 0">
-                    <button class="btn" type="submit" :disabled="editPlanForm.processing">
+                    <Button type="submit" :disabled="editPlanForm.processing">
                       {{ $t('common.save') }}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </form>
@@ -472,61 +495,127 @@ function submitMarkPaid(installmentId: string) {
           <template v-else>
             <p class="hint">{{ $t('payments.empty') }}</p>
 
-            <button
-              v-if="header.canManagePaymentPlan && !creatingPlan"
-              type="button"
-              class="abtn"
-              @click="creatingPlan = true"
-            >
-              {{ $t('payments.create') }}
-            </button>
+            <!-- The due dates are a repeatable row, so this form has no fixed
+                 height — the one case in this file that needs DialogBody's
+                 scroll rather than just its room. -->
+            <Dialog v-if="header.canManagePaymentPlan" v-model:open="creatingPlan">
+              <DialogTrigger as-child>
+                <Button type="button" variant="outline">{{ $t('payments.create') }}</Button>
+              </DialogTrigger>
 
-            <form v-if="header.canManagePaymentPlan && creatingPlan" class="fgrid" @submit.prevent="createPlan">
-              <div class="fld">
-                <label for="plan-create-total">{{ $t('payments.total') }}</label>
-                <input
-                  id="plan-create-total"
-                  v-model="createPlanForm.total"
-                  class="inp num"
-                  type="text"
-                  inputmode="decimal"
-                  required
-                />
-              </div>
-              <div class="fld wide">
-                <label>{{ $t('payments.dueOn') }}</label>
-                <div
-                  v-for="(dueDate, index) in createPlanForm.dueDates"
-                  :key="index"
-                  class="hrow"
-                  style="gap: var(--s3); margin-top: var(--s2)"
-                >
-                  <input v-model="createPlanForm.dueDates[index]" class="inp" type="date" required style="max-width: 200px" />
-                  <button
-                    v-if="createPlanForm.dueDates.length > 1"
-                    type="button"
-                    class="abtn hot"
-                    @click="removeDueDate(index)"
-                  >
-                    {{ $t('common.remove') }}
-                  </button>
-                </div>
-                <button type="button" class="abtn" style="margin-top: var(--s2)" @click="addDueDate">
-                  {{ $t('payments.addInstallment') }}
-                </button>
-              </div>
-              <div class="fld wide">
-                <div class="formfoot" style="margin-top: 0">
-                  <button class="btn" type="submit" :disabled="createPlanForm.processing">
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{{ $t('payments.create') }}</DialogTitle>
+                </DialogHeader>
+
+                <DialogBody>
+                  <form id="plan-create-form" class="fgrid" @submit.prevent="createPlan">
+                    <div class="fld">
+                        <Label for="plan-create-total">{{ $t('payments.total') }}</Label>
+                        <Input
+                          id="plan-create-total"
+                          v-model="createPlanForm.total" class="tabular-nums"
+                          type="text"
+                          inputmode="decimal"
+                          required />
+                      </div>
+                      <div class="fld wide">
+                        <Label>{{ $t('payments.dueOn') }}</Label>
+                        <div
+                          v-for="(dueDate, index) in createPlanForm.dueDates"
+                          :key="index"
+                          class="hrow"
+                          style="gap: var(--s3); margin-top: var(--s2)"
+                        >
+                          <Input v-model="createPlanForm.dueDates[index]" type="date" required style="max-width: 200px" />
+                          <Button
+                            v-if="createPlanForm.dueDates.length > 1"
+                            type="button" variant="outline" tone="accent"
+                            @click="removeDueDate(index)"
+                          >
+                            {{ $t('common.remove') }}
+                          </Button>
+                        </div>
+                        <Button type="button" variant="outline" style="margin-top: var(--s2)" @click="addDueDate">
+                          {{ $t('payments.addInstallment') }}
+                        </Button>
+                      </div>
+                  </form>
+                </DialogBody>
+
+                <DialogFooter>
+                  <Button type="submit" form="plan-create-form" :disabled="createPlanForm.processing">
                     {{ $t('common.save') }}
-                  </button>
-                  <button class="txtbtn" type="button" @click="creatingPlan = false">{{ $t('common.cancel') }}</button>
-                </div>
-              </div>
-            </form>
+                  </Button>
+                  <DialogClose as-child>
+                    <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </template>
         </div>
       </div>
     </div>
+
+    <!-- One dialog for the whole schedule, keyed by markingPaid — the form was
+         previously injected into the row itself, which pushed every later
+         instalment down while you were reading them against each other. -->
+    <Dialog
+      :open="markingPaid !== null"
+      @update:open="(open) => { if (!open) markingPaid = null }"
+    >
+      <DialogContent class="max-w-[480px]">
+        <DialogHeader>
+          <DialogTitle>{{ $t('payments.markPaid') }}</DialogTitle>
+          <DialogDescription v-if="markingPaidInstallment">
+            {{ markingPaidInstallment.label }} · {{ formatEuros(markingPaidInstallment.amount) }}
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogBody>
+          <form
+            v-if="markingPaid"
+            id="mark-paid-form"
+            class="fgrid"
+            @submit.prevent="submitMarkPaid(markingPaid)"
+          >
+            <div class="fld">
+              <Label for="mp-date">{{ $t('payments.markPaidDate') }}</Label>
+              <Input id="mp-date" v-model="markPaidForm.paid_on" type="date" required />
+            </div>
+            <div class="fld">
+              <Label for="mp-method">{{ $t('payments.markPaidMethod') }}</Label>
+              <Select
+                :model-value="markPaidForm.method"
+                @update:model-value="(value) => (markPaidForm.method = String(value))"
+              >
+                <SelectTrigger id="mp-method">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="transfer">{{ $t('payments.markPaidMethodTransfer') }}</SelectItem>
+                  <SelectItem value="stripe">{{ $t('payments.markPaidMethodStripe') }}</SelectItem>
+                  <SelectItem value="manual">{{ $t('payments.markPaidMethodManual') }}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div class="fld wide">
+              <Label for="mp-ref">{{ $t('payments.markPaidReference') }}</Label>
+              <Input id="mp-ref" v-model="markPaidForm.reference" type="text" />
+            </div>
+          </form>
+        </DialogBody>
+
+        <DialogFooter>
+          <Button type="submit" form="mark-paid-form" :disabled="markPaidForm.processing">
+            {{ $t('payments.markPaidSubmit') }}
+          </Button>
+          <DialogClose as-child>
+            <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </AdminLayout>
 </template>

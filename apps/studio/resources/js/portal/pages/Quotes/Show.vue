@@ -4,6 +4,7 @@ import { useForm } from '@inertiajs/vue3'
 import { basisPointsToPercent, formatEuros } from '@/admin/lib/money'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import { Button } from '@/ui/button'
 
 type QuoteItem = {
   id: string
@@ -132,16 +133,17 @@ function accept() {
 
         <!-- T-08: the button is the affordance — it never renders once the
              switch is off, matching the 404 the accept route itself gives. -->
-        <button
+        <Button
           v-if="canAccept"
-          class="btn warm wide"
+          tone="warm"
+          class="wide"
           type="button"
           :disabled="form.processing"
           style="margin-top: var(--s4)"
           @click="accept"
         >
           {{ $t('portal.quoteAccept') }}
-        </button>
+        </Button>
       </template>
     </div>
 

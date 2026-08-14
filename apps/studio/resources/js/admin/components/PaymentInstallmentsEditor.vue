@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Label } from '@/ui/label'
+
 export type PaymentInstallmentRow = {
   dueOn: string
   amount: string
@@ -14,6 +19,10 @@ function addRow() {
 function removeRow(index: number) {
   installments.value = installments.value.filter((_, i) => i !== index)
 }
+
+function setStatus(installment: PaymentInstallmentRow, value: unknown) {
+  installment.status = value as PaymentInstallmentRow['status']
+}
 </script>
 
 <template>
@@ -21,35 +30,43 @@ function removeRow(index: number) {
     <div v-for="(installment, index) in installments" :key="index" class="card static grp">
       <div class="cardhead">
         <span class="kick">{{ $t('payments.installments') }} {{ index + 1 }}</span>
-        <button type="button" class="abtn hot" @click="removeRow(index)">{{ $t('common.remove') }}</button>
+        <Button variant="outline" tone="accent" type="button" @click="removeRow(index)">{{ $t('common.remove') }}</Button>
       </div>
 
       <div class="fgrid">
         <div class="fld">
-          <label :for="`installment-due-${index}`">{{ $t('payments.dueOn') }}</label>
-          <input :id="`installment-due-${index}`" v-model="installment.dueOn" class="inp" type="date" required />
+          <Label :for="`installment-due-${index}`">{{ $t('payments.dueOn') }}</Label>
+          <Input :id="`installment-due-${index}`" v-model="installment.dueOn" type="date" required />
         </div>
         <div class="fld">
-          <label :for="`installment-amount-${index}`">{{ $t('payments.amount') }}</label>
-          <input
+          <Label :for="`installment-amount-${index}`">{{ $t('payments.amount') }}</Label>
+          <Input
             :id="`installment-amount-${index}`"
             v-model="installment.amount"
-            class="inp num"
+            class="tabular-nums"
             type="text"
             inputmode="decimal"
             required
           />
         </div>
         <div class="fld">
-          <label :for="`installment-status-${index}`">{{ $t('payments.status') }}</label>
-          <select :id="`installment-status-${index}`" v-model="installment.status" class="inp">
-            <option value="scheduled">{{ $t('payments.statusScheduled') }}</option>
-            <option value="paid">{{ $t('payments.statusPaid') }}</option>
-          </select>
+          <Label :for="`installment-status-${index}`">{{ $t('payments.status') }}</Label>
+          <Select
+            :model-value="installment.status"
+            @update:model-value="(value) => setStatus(installment, value)"
+          >
+            <SelectTrigger :id="`installment-status-${index}`">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="scheduled">{{ $t('payments.statusScheduled') }}</SelectItem>
+              <SelectItem value="paid">{{ $t('payments.statusPaid') }}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>
 
-    <button type="button" class="abtn" @click="addRow">{{ $t('payments.addInstallment') }}</button>
+    <Button variant="outline" type="button" @click="addRow">{{ $t('payments.addInstallment') }}</Button>
   </div>
 </template>

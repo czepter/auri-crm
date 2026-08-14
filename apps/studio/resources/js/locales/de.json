@@ -4,7 +4,8 @@
     "save": "Speichern",
     "signOut": "Abmelden",
     "search": "Suchen",
-    "remove": "Entfernen"
+    "remove": "Entfernen",
+    "close": "Schließen"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -327,18 +328,21 @@
     "title": "Dokumentvorlagen",
     "create": "Neue Vorlage",
     "createTitle": "Vorlage anlegen",
-    "editTitle": "Vorlage bearbeiten",
     "editHint": "Speichern legt eine neue Version an. Erzeugte Dokumente bleiben unverändert.",
     "name": "Name",
     "body": "Text",
-    "bodyHint": "HTML. Platzhalter in doppelten geschweiften Klammern, z. B. project.name",
+    "bodyHint": "Bausteine über + oder /",
     "version": "v{version}",
     "type": "Dokumenttyp",
     "shootKind": "Shooting-Art",
     "shootKindAny": "Jede Art",
     "allTypes": "Alle",
-    "preview": "Vorschau",
-    "empty": "Keine Dokumentvorlagen."
+    "empty": "Keine Dokumentvorlagen.",
+    "previewLabel": "Vorschau · Beispieldaten",
+    "previewFresh": "aktuell",
+    "previewStale": "wird geprüft",
+    "letterhead": "Briefkopf · aus Einstellungen",
+    "footer": "Fußzeile · aus Einstellungen"
   },
   "settings": {
     "kicker": "Einstellungen",

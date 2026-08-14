@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import PortalForm from './panes/PortalForm.vue'
+import { Button } from '@/ui/button'
 
 defineProps<{ settings: App.Settings.Data.PortalSettingsData }>()
 
@@ -22,8 +23,7 @@ const formRef = ref<InstanceType<typeof PortalForm>>()
         <h1>{{ $t('portalSettings.title') }}</h1>
       </div>
       <span v-if="formRef?.form.isDirty" class="chip now">{{ $t('settings.unsaved') }}</span>
-      <button
-        class="btn"
+      <Button
         type="submit"
         form="portal-settings-form"
         :disabled="!formRef?.form.isDirty || formRef?.form.processing"
@@ -31,7 +31,7 @@ const formRef = ref<InstanceType<typeof PortalForm>>()
       >
         <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
         {{ $t('common.save') }}
-      </button>
+      </Button>
     </div>
 
     <div style="display: flex; gap: var(--s6); margin-top: var(--s5); align-items: flex-start">

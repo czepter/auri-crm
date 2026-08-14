@@ -158,6 +158,11 @@ jobs:
           sudo curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
           echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
           sudo apt-get update
+          # PGDG's 18.6 upload moved /usr/bin/pg_config into libpq-dev, which
+          # collides with the postgresql-common the runner image already has.
+          # Nothing here compiles against libpq, so drop the -dev package
+          # instead of force-overwriting a file another package owns.
+          sudo apt-get remove -y libpq-dev
           sudo apt-get install -y postgresql-client-18
       # G-03 (#52): App\Media\Support\LibvipsDerivativePipeline shells out to
       # vipsthumbnail/vipsheader — a CLI tool, not a PHP extension, so it's

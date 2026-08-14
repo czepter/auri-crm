@@ -14,6 +14,8 @@ class DocumentTemplateData extends Data
         public string $id,
         public string $name,
         public string $body,
+        /** @var array<string, mixed>|null */
+        public ?array $blocks,
         public int $version,
         public string $type,
         public string $typeLabel,
@@ -27,6 +29,7 @@ class DocumentTemplateData extends Data
             id: $template->public_id,
             name: $template->name,
             body: $template->body,
+            blocks: $template->blocks,
             version: $template->version,
             type: $template->type->value,
             typeLabel: $template->type->label(),

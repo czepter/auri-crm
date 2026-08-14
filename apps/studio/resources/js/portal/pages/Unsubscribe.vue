@@ -2,6 +2,7 @@
 import { useForm } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import { Button } from '@/ui/button'
 
 // T-11: reached from a link in a mail already delivered — see QuoteSent's
 // own footer line — never from portal navigation. `contact` is the public_id
@@ -30,9 +31,9 @@ function submit() {
     <template v-else>
       <p class="lede">{{ $t('portal.unsubscribeHint') }}</p>
       <form @submit.prevent="submit">
-        <button class="btn" type="submit" :disabled="form.processing">
+        <Button type="submit" :disabled="form.processing">
           {{ $t('portal.unsubscribeConfirm') }}
-        </button>
+        </Button>
       </form>
     </template>
   </main>

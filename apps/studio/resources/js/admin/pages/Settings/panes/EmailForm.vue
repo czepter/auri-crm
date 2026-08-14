@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
+import { Input } from '@/ui/input'
+import { Textarea } from '@/ui/textarea'
+import { Label } from '@/ui/label'
 
 const props = defineProps<{ settings: App.Settings.Data.StudioSettingsData }>()
 const emit = defineEmits<{ saved: [] }>()
@@ -34,13 +37,13 @@ defineExpose({ form, submit })
       <div class="grp">
         <div class="two">
           <div class="fld">
-            <label for="m-absendername">{{ $t('settings.mailFromNameLabel') }}</label>
-            <input id="m-absendername" v-model="form.mail_from_name" class="inp" type="text" />
+            <Label for="m-absendername">{{ $t('settings.mailFromNameLabel') }}</Label>
+            <Input id="m-absendername" v-model="form.mail_from_name" type="text" />
             <p v-if="form.errors.mail_from_name" class="err">{{ form.errors.mail_from_name }}</p>
           </div>
           <div class="fld">
-            <label for="m-absenderadresse">{{ $t('settings.mailFromAddressLabel') }}</label>
-            <input id="m-absenderadresse" v-model="form.mail_from_address" class="inp" type="email" />
+            <Label for="m-absenderadresse">{{ $t('settings.mailFromAddressLabel') }}</Label>
+            <Input id="m-absenderadresse" v-model="form.mail_from_address" type="email" />
             <p v-if="form.errors.mail_from_address" class="err">{{ form.errors.mail_from_address }}</p>
           </div>
         </div>
@@ -52,14 +55,14 @@ defineExpose({ form, submit })
       <div class="grp">
         <div class="two">
           <div class="fld">
-            <label for="m-antwortan">{{ $t('settings.mailReplyToLabel') }} <em>{{ $t('settings.optional') }}</em></label>
-            <input id="m-antwortan" v-model="form.mail_reply_to" class="inp" type="email" />
+            <Label for="m-antwortan">{{ $t('settings.mailReplyToLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
+            <Input id="m-antwortan" v-model="form.mail_reply_to" type="email" />
             <span class="hint">{{ $t('settings.mailReplyToHint') }}</span>
             <p v-if="form.errors.mail_reply_to" class="err">{{ form.errors.mail_reply_to }}</p>
           </div>
           <div class="fld">
-            <label for="m-bcc">{{ $t('settings.mailBccLabel') }} <em>{{ $t('settings.optional') }}</em></label>
-            <input id="m-bcc" v-model="form.mail_bcc" class="inp" type="email" />
+            <Label for="m-bcc">{{ $t('settings.mailBccLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
+            <Input id="m-bcc" v-model="form.mail_bcc" type="email" />
             <span class="hint">{{ $t('settings.mailBccHint') }}</span>
             <p v-if="form.errors.mail_bcc" class="err">{{ form.errors.mail_bcc }}</p>
           </div>
@@ -71,8 +74,8 @@ defineExpose({ form, submit })
       <div class="dlab">{{ $t('settings.mailSignatureLabel') }}</div>
       <div class="grp">
         <div class="fld">
-          <label for="m-signatur">{{ $t('settings.mailSignatureFieldLabel') }} <em>{{ $t('settings.optional') }}</em></label>
-          <textarea id="m-signatur" v-model="form.mail_signature" class="inp" rows="4"></textarea>
+          <Label for="m-signatur">{{ $t('settings.mailSignatureFieldLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
+          <Textarea id="m-signatur" v-model="form.mail_signature" rows="4" />
           <span class="hint">{{ $t('settings.mailSignatureHint') }}</span>
           <p v-if="form.errors.mail_signature" class="err">{{ form.errors.mail_signature }}</p>
         </div>

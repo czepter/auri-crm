@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
 
 type Branding = { displayName: string | null }
 
@@ -36,19 +39,19 @@ function submitEmail() {
       <h1 class="gtitle">{{ $t('gallery.pinTitle') }}</h1>
 
       <form @submit.prevent="submitPin">
-        <label class="field">
+        <Label class="field">
           <span>{{ $t('gallery.pinLabel') }}</span>
-          <input v-model="pinForm.pin" class="pin" type="text" inputmode="numeric" autocomplete="off" required />
-        </label>
+          <Input v-model="pinForm.pin" class="pin" type="text" inputmode="numeric" autocomplete="off" required />
+        </Label>
 
-        <button class="btn wide" type="submit" :disabled="pinForm.processing">
+        <Button class="wide" type="submit" :disabled="pinForm.processing">
           {{ $t('gallery.pinContinue') }}
-        </button>
+        </Button>
       </form>
 
       <div v-if="pinForm.errors.pin" class="err"><b>{{ pinForm.errors.pin }}</b></div>
 
-      <a class="txtbtn mid" :href="`/galerien/${gallery.id}`">{{ $t('gallery.backToGallery') }}</a>
+      <Button as="a" variant="ghost" class="mid" :href="`/galerien/${gallery.id}`">{{ $t('gallery.backToGallery') }}</Button>
     </div>
 
     <!-- mockup 12: only the header centers, the field and actions stay left -->
@@ -63,17 +66,17 @@ function submitEmail() {
       <p v-if="status" class="hint">{{ status }}</p>
 
       <form v-else @submit.prevent="submitEmail">
-        <label class="field">
+        <Label class="field">
           <span>{{ $t('gallery.emailLabel') }}</span>
-          <input v-model="emailForm.email" type="email" autocomplete="email" required />
-        </label>
+          <Input v-model="emailForm.email" type="email" autocomplete="email" required />
+        </Label>
 
-        <button class="btn wide" type="submit" :disabled="emailForm.processing">
+        <Button class="wide" type="submit" :disabled="emailForm.processing">
           {{ $t('gallery.emailRequest') }}
-        </button>
+        </Button>
       </form>
 
-      <a class="txtbtn mid" :href="`/galerien/${gallery.id}`">{{ $t('gallery.backToGallery') }}</a>
+      <Button as="a" variant="ghost" class="mid" :href="`/galerien/${gallery.id}`">{{ $t('gallery.backToGallery') }}</Button>
     </div>
 
     <!-- no mockup names this state (both gates cleared) — the actual delivery
@@ -83,7 +86,7 @@ function submitEmail() {
       <span class="gmark">{{ studioName }}</span>
       <h1 class="gtitle">{{ $t('gallery.readyTitle') }}</h1>
       <p class="gsub">{{ $t('gallery.readyHint') }}</p>
-      <a class="txtbtn mid" :href="`/galerien/${gallery.id}`">{{ $t('gallery.backToGallery') }}</a>
+      <Button as="a" variant="ghost" class="mid" :href="`/galerien/${gallery.id}`">{{ $t('gallery.backToGallery') }}</Button>
     </div>
   </div>
 </template>

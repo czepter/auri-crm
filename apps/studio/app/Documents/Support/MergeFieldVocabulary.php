@@ -45,6 +45,18 @@ class MergeFieldVocabulary
     }
 
     /**
+     * The flat path => sample map behind sample(). The editor shows these values
+     * in its merge-field chips so a paragraph reads as prose rather than as
+     * braces, and paints them into its instant preview.
+     *
+     * @return array<string, string>
+     */
+    public static function samples(): array
+    {
+        return self::SAMPLE;
+    }
+
+    /**
      * A complete, dot-addressable sample dataset — every path in the
      * vocabulary resolves against this with nothing left over, which is
      * what makes a preview built from it prove "no unresolved placeholder"

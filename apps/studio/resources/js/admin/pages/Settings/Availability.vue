@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
 
 const props = defineProps<{
   defaultShootDurationMinutes: number
@@ -85,15 +88,13 @@ function addClosure() {
           <form id="duration-form" @submit.prevent="saveDuration">
             <div class="grp">
               <div class="fld" style="max-width: 160px">
-                <label for="dauer-minuten">{{ $t('settings.durationLabel') }}</label>
-                <input
+                <Label for="dauer-minuten">{{ $t('settings.durationLabel') }}</Label>
+                <Input
                   id="dauer-minuten"
-                  v-model.number="durationForm.default_shoot_duration_minutes"
-                  class="inp num"
+                  v-model.number="durationForm.default_shoot_duration_minutes" class="tabular-nums"
                   type="number"
                   min="1"
-                  max="1440"
-                />
+                  max="1440" />
                 <span class="hint">{{ $t('settings.durationHint') }}</span>
                 <p v-if="durationForm.errors.default_shoot_duration_minutes" class="err">
                   {{ durationForm.errors.default_shoot_duration_minutes }}
@@ -101,15 +102,14 @@ function addClosure() {
               </div>
             </div>
             <div class="formfoot">
-              <button
-                class="btn"
+              <Button
                 type="submit"
                 :disabled="!durationForm.isDirty || durationForm.processing"
                 :style="!durationForm.isDirty ? 'opacity:.4' : undefined"
               >
                 <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
                 {{ $t('settings.durationSave') }}
-              </button>
+              </Button>
               <span v-if="durationForm.isDirty" class="chip now">{{ $t('settings.unsaved') }}</span>
             </div>
           </form>
@@ -124,35 +124,34 @@ function addClosure() {
             <form :id="`closure-form-${closure.id}`" @submit.prevent="saveClosure(closure.id)">
               <div class="fgrid grp">
                 <div class="fld wide">
-                  <label :for="`label-${closure.id}`">{{ $t('settings.closureLabelField') }}</label>
-                  <input :id="`label-${closure.id}`" v-model="closureForms[closure.id].label" class="inp" type="text" maxlength="255" />
+                  <Label :for="`label-${closure.id}`">{{ $t('settings.closureLabelField') }}</Label>
+                  <Input :id="`label-${closure.id}`" v-model="closureForms[closure.id].label" type="text" maxlength="255" />
                   <p v-if="closureForms[closure.id].errors.label" class="err">{{ closureForms[closure.id].errors.label }}</p>
                 </div>
                 <div class="fld">
-                  <label :for="`starts-${closure.id}`">{{ $t('settings.closureStartsOn') }}</label>
-                  <input :id="`starts-${closure.id}`" v-model="closureForms[closure.id].starts_on" class="inp" type="date" />
+                  <Label :for="`starts-${closure.id}`">{{ $t('settings.closureStartsOn') }}</Label>
+                  <Input :id="`starts-${closure.id}`" v-model="closureForms[closure.id].starts_on" type="date" />
                   <p v-if="closureForms[closure.id].errors.starts_on" class="err">{{ closureForms[closure.id].errors.starts_on }}</p>
                 </div>
                 <div class="fld">
-                  <label :for="`ends-${closure.id}`">{{ $t('settings.closureEndsOn') }}</label>
-                  <input :id="`ends-${closure.id}`" v-model="closureForms[closure.id].ends_on" class="inp" type="date" />
+                  <Label :for="`ends-${closure.id}`">{{ $t('settings.closureEndsOn') }}</Label>
+                  <Input :id="`ends-${closure.id}`" v-model="closureForms[closure.id].ends_on" type="date" />
                   <p v-if="closureForms[closure.id].errors.ends_on" class="err">{{ closureForms[closure.id].errors.ends_on }}</p>
                 </div>
               </div>
               <div class="formfoot">
-                <button
-                  class="btn"
+                <Button
                   type="submit"
                   :disabled="!closureForms[closure.id].isDirty || closureForms[closure.id].processing"
                   :style="!closureForms[closure.id].isDirty ? 'opacity:.4' : undefined"
                 >
                   <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
                   {{ $t('settings.numberingSave') }}
-                </button>
+                </Button>
                 <span v-if="closureForms[closure.id].isDirty" class="chip now">{{ $t('settings.unsaved') }}</span>
-                <button type="button" class="abtn" @click="deleteClosure(closure.id)">
+                <Button type="button" variant="outline" @click="deleteClosure(closure.id)">
                   {{ $t('settings.closureDelete') }}
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -160,25 +159,25 @@ function addClosure() {
           <form id="closure-new-form" @submit.prevent="addClosure">
             <div class="fgrid grp">
               <div class="fld wide">
-                <label for="new-label">{{ $t('settings.closureLabelField') }}</label>
-                <input id="new-label" v-model="newClosureForm.label" class="inp" type="text" maxlength="255" />
+                <Label for="new-label">{{ $t('settings.closureLabelField') }}</Label>
+                <Input id="new-label" v-model="newClosureForm.label" type="text" maxlength="255" />
                 <p v-if="newClosureForm.errors.label" class="err">{{ newClosureForm.errors.label }}</p>
               </div>
               <div class="fld">
-                <label for="new-starts">{{ $t('settings.closureStartsOn') }}</label>
-                <input id="new-starts" v-model="newClosureForm.starts_on" class="inp" type="date" />
+                <Label for="new-starts">{{ $t('settings.closureStartsOn') }}</Label>
+                <Input id="new-starts" v-model="newClosureForm.starts_on" type="date" />
                 <p v-if="newClosureForm.errors.starts_on" class="err">{{ newClosureForm.errors.starts_on }}</p>
               </div>
               <div class="fld">
-                <label for="new-ends">{{ $t('settings.closureEndsOn') }}</label>
-                <input id="new-ends" v-model="newClosureForm.ends_on" class="inp" type="date" />
+                <Label for="new-ends">{{ $t('settings.closureEndsOn') }}</Label>
+                <Input id="new-ends" v-model="newClosureForm.ends_on" type="date" />
                 <p v-if="newClosureForm.errors.ends_on" class="err">{{ newClosureForm.errors.ends_on }}</p>
               </div>
             </div>
             <div class="formfoot">
-              <button class="btn" type="submit" :disabled="newClosureForm.processing">
+              <Button type="submit" :disabled="newClosureForm.processing">
                 {{ $t('settings.closureAdd') }}
-              </button>
+              </Button>
             </div>
           </form>
         </div>

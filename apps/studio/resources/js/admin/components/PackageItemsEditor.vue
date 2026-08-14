@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
+
 export type PackageItemRow = {
   title: string
   description: string
@@ -24,37 +28,37 @@ function removeRow(index: number) {
     <div v-for="(item, index) in items" :key="index" class="card static grp">
       <div class="cardhead">
         <span class="kick">{{ $t('packages.itemTitle') }} {{ index + 1 }}</span>
-        <button type="button" class="abtn hot" @click="removeRow(index)">{{ $t('common.remove') }}</button>
+        <Button variant="outline" tone="accent" type="button" @click="removeRow(index)">{{ $t('common.remove') }}</Button>
       </div>
 
       <div class="fgrid">
         <div class="fld wide">
-          <label :for="`item-title-${index}`">{{ $t('packages.itemTitle') }}</label>
-          <input :id="`item-title-${index}`" v-model="item.title" class="inp" type="text" required />
+          <Label :for="`item-title-${index}`">{{ $t('packages.itemTitle') }}</Label>
+          <Input :id="`item-title-${index}`" v-model="item.title" type="text" required />
         </div>
         <div class="fld wide">
-          <label :for="`item-description-${index}`">{{ $t('packages.itemDescription') }}</label>
-          <input :id="`item-description-${index}`" v-model="item.description" class="inp" type="text" />
+          <Label :for="`item-description-${index}`">{{ $t('packages.itemDescription') }}</Label>
+          <Input :id="`item-description-${index}`" v-model="item.description" type="text" />
         </div>
         <div class="fld">
-          <label :for="`item-quantity-${index}`">{{ $t('packages.itemQuantity') }}</label>
-          <input
+          <Label :for="`item-quantity-${index}`">{{ $t('packages.itemQuantity') }}</Label>
+          <Input
             :id="`item-quantity-${index}`"
             v-model.number="item.quantity"
-            class="inp num"
+            class="tabular-nums"
             type="number"
             min="1"
             required
           />
         </div>
         <div class="fld">
-          <label :for="`item-price-${index}`">
+          <Label :for="`item-price-${index}`">
             {{ $t('packages.itemPrice') }}
-          </label>
-          <input
+          </Label>
+          <Input
             :id="`item-price-${index}`"
             v-model="item.unitPrice"
-            class="inp num"
+            class="tabular-nums"
             type="text"
             inputmode="decimal"
             :placeholder="$t('packages.itemPriceHint')"
@@ -63,6 +67,6 @@ function removeRow(index: number) {
       </div>
     </div>
 
-    <button type="button" class="abtn" @click="addRow">{{ $t('packages.addItem') }}</button>
+    <Button variant="outline" type="button" @click="addRow">{{ $t('packages.addItem') }}</Button>
   </div>
 </template>

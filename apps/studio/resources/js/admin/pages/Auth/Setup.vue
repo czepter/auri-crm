@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
 
 const form = useForm({ name: '', email: '', password: '', password_confirmation: '' })
 
@@ -17,45 +20,41 @@ function submit() {
 
       <form @submit.prevent="submit">
         <div class="fld grp">
-          <label for="name">{{ $t('setup.name') }}</label>
-          <input id="name" v-model="form.name" class="inp" type="text" autocomplete="name" required />
+          <Label for="name">{{ $t('setup.name') }}</Label>
+          <Input id="name" v-model="form.name" type="text" autocomplete="name" required />
           <p v-if="form.errors.name" class="err">{{ form.errors.name }}</p>
         </div>
 
         <div class="fld grp">
-          <label for="email">{{ $t('setup.email') }}</label>
-          <input id="email" v-model="form.email" class="inp" type="email" autocomplete="email" required />
+          <Label for="email">{{ $t('setup.email') }}</Label>
+          <Input id="email" v-model="form.email" type="email" autocomplete="email" required />
           <p v-if="form.errors.email" class="err">{{ form.errors.email }}</p>
         </div>
 
         <div class="fld grp">
-          <label for="password">{{ $t('setup.password') }}</label>
-          <input
+          <Label for="password">{{ $t('setup.password') }}</Label>
+          <Input
             id="password"
             v-model="form.password"
-            class="inp"
             type="password"
             autocomplete="new-password"
-            required
-          />
+            required />
           <p v-if="form.errors.password" class="err">{{ form.errors.password }}</p>
         </div>
 
         <div class="fld grp">
-          <label for="password_confirmation">{{ $t('setup.passwordConfirm') }}</label>
-          <input
+          <Label for="password_confirmation">{{ $t('setup.passwordConfirm') }}</Label>
+          <Input
             id="password_confirmation"
             v-model="form.password_confirmation"
-            class="inp"
             type="password"
             autocomplete="new-password"
-            required
-          />
+            required />
         </div>
 
-        <button class="btn" type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
+        <Button type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
           {{ $t('setup.submit') }}
-        </button>
+        </Button>
       </form>
     </div>
   </div>

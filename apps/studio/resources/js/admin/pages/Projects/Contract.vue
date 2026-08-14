@@ -3,6 +3,9 @@ import { onBeforeUnmount, watch } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectHeader from '@/admin/components/ProjectHeader.vue'
+import { Button } from '@/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Label } from '@/ui/label'
 
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
@@ -63,15 +66,14 @@ onBeforeUnmount(clearPoll)
 
       <p v-if="contract?.status === 'pending'" class="hint">{{ $t('project.contractPending') }}</p>
 
-      <a
-        v-if="contract?.downloadUrl"
-        class="txtbtn"
+      <Button as="a"
+        v-if="contract?.downloadUrl" variant="ghost"
         :href="contract.downloadUrl"
         download
         style="margin-top: var(--s3)"
       >
         {{ $t('project.contractDownload') }}
-      </a>
+      </Button>
 
       <form
         v-if="header.canManageContracts && templates.length"
@@ -79,16 +81,21 @@ onBeforeUnmount(clearPoll)
         @submit.prevent="generate"
       >
         <div class="fld grp">
-          <label for="template">{{ $t('project.contractTemplate') }}</label>
-          <select id="template" v-model="form.template" class="inp">
-            <option v-for="option in templates" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </option>
-          </select>
+          <Label for="template">{{ $t('project.contractTemplate') }}</Label>
+          <Select :model-value="form.template" @update:model-value="(value) => (form.template = String(value))">
+            <SelectTrigger id="template">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="option in templates" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
-        <button class="btn" type="submit" :disabled="form.processing">
+        <Button type="submit" :disabled="form.processing">
           {{ $t('project.contractGenerate') }}
-        </button>
+        </Button>
       </form>
       <p v-else-if="header.canManageContracts" class="hint">{{ $t('project.contractNoTemplates') }}</p>
     </div>

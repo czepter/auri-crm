@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
-import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import CrewStack from '@/admin/components/CrewStack.vue'
 import { dayAndMonth, weekday } from '@/admin/lib/shoots'
+import { Button } from '@/ui/button'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 
 const props = defineProps<{
   shoots: App.Crm.Data.ShootData[]
@@ -13,7 +14,6 @@ const props = defineProps<{
   feedUrl: string
 }>()
 
-const { t } = useI18n()
 const copied = ref(false)
 
 // Grouped by month, because a shooting calendar is read a month at a time and
@@ -38,9 +38,7 @@ async function copyFeed() {
 }
 
 function regenerate() {
-  if (confirm(t('calendar.revokeConfirm'))) {
-    router.post('/kalender/abo', {}, { preserveScroll: true })
-  }
+  router.post('/kalender/abo', {}, { preserveScroll: true })
 }
 </script>
 
@@ -55,15 +53,28 @@ function regenerate() {
     <div class="card static" style="margin-bottom: var(--s5)">
       <div class="cardhead">
         <span class="kick">{{ $t('calendar.subscribe') }}</span>
-        <button type="button" class="abtn" @click="regenerate">{{ $t('calendar.revoke') }}</button>
+        <AlertDialog>
+          <AlertDialogTrigger as-child>
+            <Button type="button" variant="outline">{{ $t('calendar.revoke') }}</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{{ $t('calendar.revokeConfirm') }}</AlertDialogTitle>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction @click="regenerate">{{ $t('calendar.revoke') }}</AlertDialogAction>
+              <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
       <div class="picked">
         <span class="nm" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
           {{ feedUrl }}
         </span>
-        <button type="button" class="chg" @click="copyFeed">
+        <Button type="button" variant="ghost" class="chg" @click="copyFeed">
           {{ copied ? $t('calendar.copied') : $t('calendar.copy') }}
-        </button>
+        </Button>
       </div>
     </div>
 

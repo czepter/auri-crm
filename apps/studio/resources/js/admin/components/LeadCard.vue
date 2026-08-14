@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
+import { Button } from '@/ui/button'
 
 const props = defineProps<{ card: App.Crm.Data.LeadCardData; nextStage: string | null }>()
 
@@ -63,10 +64,13 @@ function advance() {
 
     <!-- Hover only, per the clickdummy's card anatomy: the stage-advance
          control does not sit on every card. -->
-    <button
+    <!-- .go is a 15px hover affordance drawn entirely by tokens.css; ghost is
+         the reset it needs, not a style it takes -->
+    <Button
       v-if="nextStage"
-      type="button"
+      variant="ghost"
       class="go"
+      type="button"
       :aria-label="$t('board.advance')"
       @click.prevent.stop="advance"
     />

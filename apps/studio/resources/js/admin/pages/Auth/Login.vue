@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { Link, router, useForm } from '@inertiajs/vue3'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
 
 // Only ever true in local. The server decides; the button cannot talk itself
 // into existence.
@@ -25,47 +28,42 @@ function submit() {
         </p>
 
         <div class="fld grp">
-          <label for="email">{{ $t('auth.email') }}</label>
-          <input
+          <Label for="email">{{ $t('auth.email') }}</Label>
+          <Input
             id="email"
             v-model="form.email"
-            class="inp"
             type="email"
             autocomplete="username"
-            required
-          />
+            required />
         </div>
 
         <div class="fld grp">
-          <label for="password">{{ $t('auth.password') }}</label>
-          <input
+          <Label for="password">{{ $t('auth.password') }}</Label>
+          <Input
             id="password"
             v-model="form.password"
-            class="inp"
             type="password"
             autocomplete="current-password"
-            required
-          />
+            required />
         </div>
 
-        <button class="btn" type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
+        <Button type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
           {{ $t('auth.signIn') }}
-        </button>
+        </Button>
       </form>
 
       <p style="margin-top: var(--s4); text-align: center">
-        <Link class="txtbtn" href="/passwort/vergessen">{{ $t('auth.forgot') }}</Link>
+        <Button :as="Link" variant="ghost" href="/passwort/vergessen">{{ $t('auth.forgot') }}</Button>
       </p>
 
       <div v-if="devLogin" style="margin-top: var(--s5); padding-top: var(--s4); border-top: 1px solid var(--line)">
-        <button
-          class="abtn"
+        <Button variant="outline"
           type="button"
           style="width: 100%; padding: 9px"
           @click="router.post('/dev-login')"
         >
           {{ $t('auth.devLogin') }}
-        </button>
+        </Button>
         <p class="hint" style="margin-top: var(--s2); text-align: center">
           {{ $t('auth.devLoginHint') }}
         </p>

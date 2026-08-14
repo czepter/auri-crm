@@ -5,6 +5,14 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectHeader from '@/admin/components/ProjectHeader.vue'
 import QuoteItemsEditor, { type QuoteItemRow } from '@/admin/components/QuoteItemsEditor.vue'
 import { basisPointsToPercent, centsToEuros, eurosToCents, formatEuros, percentToBasisPoints } from '@/admin/lib/money'
+import { NONE, fromOption, toOption } from '@/lib/select'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Label } from '@/ui/label'
+import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
+
+type DiscountType = '' | 'percentage' | 'amount'
 
 /** discountType/discountValue -> the string a discount's own type expects (percent or euros), and back. */
 function discountValueToField(type: string | null, value: number | null): string {
@@ -57,6 +65,10 @@ const editForms = Object.fromEntries(
   ]),
 )
 
+function setDiscountType(quoteId: string, value: unknown) {
+  editForms[quoteId].discountType = fromOption(value) as DiscountType
+}
+
 function save(quoteId: string) {
   editForms[quoteId]
     .transform((data) => ({
@@ -95,34 +107,57 @@ function chipClass(status: string): string {
 
     <div class="hrow" style="margin-bottom: var(--s4)">
       <span class="kick" style="margin-bottom: 0">{{ $t('quotes.title') }}</span>
-      <button v-if="header.canManageQuotes" class="btn" type="button" @click="creating = !creating">
-        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
-        {{ $t('quotes.create') }}
-      </button>
-    </div>
+      <!-- Two questions — until when, and from which package — and then the
+           quote itself opens below for editing. That is a doorway, not a
+           section of the page, and it was sitting on top of the quotes it
+           was about to join. -->
+      <Dialog v-if="header.canManageQuotes" v-model:open="creating">
+        <DialogTrigger as-child>
+          <Button type="button">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+            {{ $t('quotes.create') }}
+          </Button>
+        </DialogTrigger>
 
-    <div v-if="creating && header.canManageQuotes" class="card static" style="margin-bottom: var(--s4)">
-      <div class="cardhead"><span class="kick">{{ $t('quotes.create') }}</span></div>
+        <DialogContent class="max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle>{{ $t('quotes.create') }}</DialogTitle>
+          </DialogHeader>
 
-      <form class="fgrid" @submit.prevent="create">
-        <div class="fld">
-          <label for="valid_until">{{ $t('quotes.validUntil') }}</label>
-          <input id="valid_until" v-model="createForm.valid_until" class="inp" type="date" />
-        </div>
-        <div class="fld">
-          <label for="package">{{ $t('quotes.fromPackage') }}</label>
-          <select id="package" v-model="createForm.package" class="inp">
-            <option value="">{{ $t('quotes.blank') }}</option>
-            <option v-for="pkg in packages" :key="pkg.value" :value="pkg.value">{{ pkg.label }}</option>
-          </select>
-        </div>
-        <div class="fld wide">
-          <div class="formfoot" style="margin-top: 0">
-            <button class="btn" type="submit" :disabled="createForm.processing">{{ $t('common.save') }}</button>
-            <button class="txtbtn" type="button" @click="creating = false">{{ $t('common.cancel') }}</button>
-          </div>
-        </div>
-      </form>
+          <DialogBody>
+            <form id="quote-create-form" class="fgrid" @submit.prevent="create">
+              <div class="fld">
+                <Label for="valid_until">{{ $t('quotes.validUntil') }}</Label>
+                <Input id="valid_until" v-model="createForm.valid_until" type="date" />
+              </div>
+              <div class="fld">
+                <Label for="package">{{ $t('quotes.fromPackage') }}</Label>
+                <Select
+                  :model-value="toOption(createForm.package)"
+                  @update:model-value="(value) => (createForm.package = fromOption(value))"
+                >
+                  <SelectTrigger id="package">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem :value="NONE">{{ $t('quotes.blank') }}</SelectItem>
+                    <SelectItem v-for="pkg in packages" :key="pkg.value" :value="pkg.value">{{ pkg.label }}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </form>
+          </DialogBody>
+
+          <DialogFooter>
+            <Button type="submit" form="quote-create-form" :disabled="createForm.processing">
+              {{ $t('common.save') }}
+            </Button>
+            <DialogClose as-child>
+              <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
 
     <!-- Depth behind the Angebot & Vertrag tab: only the quote half exists so
@@ -200,41 +235,47 @@ function chipClass(status: string): string {
 
         <form class="fgrid" @submit.prevent="save(quote.id)">
           <div class="fld">
-            <label :for="`quote-valid-${quote.id}`">{{ $t('quotes.validUntil') }}</label>
-            <input :id="`quote-valid-${quote.id}`" v-model="editForms[quote.id].valid_until" class="inp" type="date" />
+            <Label :for="`quote-valid-${quote.id}`">{{ $t('quotes.validUntil') }}</Label>
+            <Input :id="`quote-valid-${quote.id}`" v-model="editForms[quote.id].valid_until" type="date" />
           </div>
           <div class="fld">
-            <label :for="`quote-discount-type-${quote.id}`">{{ $t('quotes.discountType') }}</label>
-            <select :id="`quote-discount-type-${quote.id}`" v-model="editForms[quote.id].discountType" class="inp">
-              <option value="">{{ $t('quotes.discountNone') }}</option>
-              <option value="percentage">{{ $t('quotes.discountPercentage') }}</option>
-              <option value="amount">{{ $t('quotes.discountAmount') }}</option>
-            </select>
+            <Label :for="`quote-discount-type-${quote.id}`">{{ $t('quotes.discountType') }}</Label>
+            <Select
+              :model-value="toOption(editForms[quote.id].discountType)"
+              @update:model-value="(value) => setDiscountType(quote.id, value)"
+            >
+              <SelectTrigger :id="`quote-discount-type-${quote.id}`">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="NONE">{{ $t('quotes.discountNone') }}</SelectItem>
+                <SelectItem value="percentage">{{ $t('quotes.discountPercentage') }}</SelectItem>
+                <SelectItem value="amount">{{ $t('quotes.discountAmount') }}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div v-if="editForms[quote.id].discountType" class="fld">
-            <label :for="`quote-discount-value-${quote.id}`">
+            <Label :for="`quote-discount-value-${quote.id}`">
               {{
                 editForms[quote.id].discountType === 'percentage'
                   ? $t('quotes.discountValuePercent')
                   : $t('quotes.discountValueEuros')
               }}
-            </label>
-            <input
+            </Label>
+            <Input
               :id="`quote-discount-value-${quote.id}`"
-              v-model="editForms[quote.id].discountValue"
-              class="inp num"
+              v-model="editForms[quote.id].discountValue" class="tabular-nums"
               type="text"
-              inputmode="decimal"
-            />
+              inputmode="decimal" />
           </div>
           <div class="fld wide">
             <div class="formfoot" style="margin-top: 0">
-              <button class="btn" type="submit" :disabled="editForms[quote.id].processing">
+              <Button type="submit" :disabled="editForms[quote.id].processing">
                 {{ $t('common.save') }}
-              </button>
-              <button class="btn" type="button" :disabled="sendForms[quote.id].processing" @click="send(quote.id)">
+              </Button>
+              <Button type="button" :disabled="sendForms[quote.id].processing" @click="send(quote.id)">
                 {{ $t('quotes.send') }}
-              </button>
+              </Button>
             </div>
           </div>
         </form>

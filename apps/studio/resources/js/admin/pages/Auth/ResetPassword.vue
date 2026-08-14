@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
 
 const props = defineProps<{ token: string; email: string | null }>()
 
@@ -32,38 +35,34 @@ function submit() {
         </p>
 
         <div class="fld grp">
-          <label for="email">{{ $t('auth.email') }}</label>
-          <input id="email" v-model="form.email" class="inp" type="email" autocomplete="username" required />
+          <Label for="email">{{ $t('auth.email') }}</Label>
+          <Input id="email" v-model="form.email" type="email" autocomplete="username" required />
         </div>
 
         <div class="fld grp">
-          <label for="password">{{ $t('reset.password') }}</label>
-          <input
+          <Label for="password">{{ $t('reset.password') }}</Label>
+          <Input
             id="password"
             v-model="form.password"
-            class="inp"
             type="password"
             autocomplete="new-password"
-            required
-          />
+            required />
           <p v-if="form.errors.password" class="err">{{ form.errors.password }}</p>
         </div>
 
         <div class="fld grp">
-          <label for="password_confirmation">{{ $t('invite.passwordConfirm') }}</label>
-          <input
+          <Label for="password_confirmation">{{ $t('invite.passwordConfirm') }}</Label>
+          <Input
             id="password_confirmation"
             v-model="form.password_confirmation"
-            class="inp"
             type="password"
             autocomplete="new-password"
-            required
-          />
+            required />
         </div>
 
-        <button class="btn" type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
+        <Button type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
           {{ $t('reset.submit') }}
-        </button>
+        </Button>
       </form>
     </div>
   </div>
