@@ -116,21 +116,42 @@
 
       <div class="stackcol">
 
+        <!-- This card is the mockup counterpart of Settings/FormTemplates/Edit.vue,
+             which turned out to be a form rather than a fact list: name, project
+             type and active are edited here, not just displayed (#198). -->
         <div class="card static">
           <div class="cardhead"><span class="kick">Vorlage</span><span class="chip done">Aktiv</span></div>
-          <div class="kv">
-            <div class="kvrow"><span>Name</span><span>Familienkonstellation</span></div>
-            <div class="kvrow"><span>Projekttyp</span><span>Hochzeit</span></div>
-            <div class="kvrow"><span>Fragen</span><span>6 · 3 Pflicht</span></div>
+          <div class="fgrid">
+            <div class="fld wide">
+              <label for="ft-name">Name</label>
+              <input class="inp" id="ft-name" type="text" value="Familienkonstellation">
+            </div>
+            <div class="fld wide">
+              <label for="ft-typ">Projekttyp</label>
+              <select class="inp" id="ft-typ">
+                <option>Alle Projekttypen</option>
+                <option selected>Hochzeit</option>
+                <option>Portrait</option>
+                <option>Sonstige</option>
+              </select>
+            </div>
+            <div style="grid-column:1 / -1; display:flex; align-items:center; gap:10px">
+              <input type="checkbox" id="ft-active" checked>
+              <label for="ft-active" style="font:400 13px/1.4 var(--font)">Aktiv</label>
+            </div>
+            <div class="fld wide">
+              <label>Fragen</label>
+              <span><b>6 · 3 Pflicht</b></span>
+            </div>
           </div>
         </div>
 
         <div class="card static">
           <div class="cardhead"><span class="kick">Versand</span></div>
-          <div class="kv">
-            <div class="kvrow"><span>Automatisch</span><span>14 Tage vor dem Haupttermin</span></div>
-            <div class="kvrow"><span>Erinnert</span><span>nach 3 und 5 Tagen</span></div>
-            <div class="kvrow"><span>Danach</span><span>Anruf-Hinweis auf der Übersicht</span></div>
+          <div class="tiles">
+            <div class="fact"><div class="l">Automatisch</div><div class="v">14 Tage vor dem Haupttermin</div></div>
+            <div class="fact"><div class="l">Erinnert</div><div class="v">nach 3 und 5 Tagen</div></div>
+            <div class="fact"><div class="l">Danach</div><div class="v">Anruf-Hinweis auf der Übersicht</div></div>
           </div>
           <a class="blkfoot" href="#">Versand ändern →</a>
         </div>

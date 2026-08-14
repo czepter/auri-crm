@@ -134,8 +134,6 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 .lgroup { font:600 10px/1 var(--font); letter-spacing:.09em; text-transform:uppercase;
           color:var(--faint); margin:var(--s5) 0 var(--s2); }
 .lgroup:first-child { margin-top:0; }
-/* an unknown fact reads as absent, not as an error */
-.kvrow .tbd { color:var(--faint); }
 
 /* ---------- screen 01: KPI row + four CRM domains ---------- */
 .kpis { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--s3); margin:var(--s5) 0; }
@@ -250,28 +248,12 @@ select.inp { cursor:pointer; padding-right:30px; background-repeat:no-repeat;
 .cols2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--s4); align-items:start; }
 
 /* ---------- the reference's shapes ----------
-   Filled tiles, a perforation and an activity feed. All three are layout
-   over the existing tokens — no new colour, no asset, no script. (The
-   reference also has an action rail; this app has no card with two or
-   more ghost actions to consolidate, so the rail is not built here.) */
-
-/* .tiles — replaces the .kv / .kvrow fact list. A fact is a tile, not a row:
-   the label sits over the value instead of beside it, which is what lets three
-   of them share a line without the values colliding. Named .fact rather than
-   .tile: gallery.css already owns .tile for the photo-grid item, and a second
-   meaning for one class name is the exact confusion this system exists to end. */
-.tiles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--s3); }
-.fact { background:var(--hover); border-radius:var(--r); padding:14px var(--s4) var(--s4); }
-.fact .l { font:600 9.5px/1 var(--font); letter-spacing:.11em; text-transform:uppercase; color:var(--faint); }
-.fact .v { font:500 16px/1.2 var(--font); letter-spacing:-.02em; margin-top:9px;
-           font-variant-numeric:tabular-nums; }
-.fact .s { font:400 12.5px/1.3 var(--font); color:var(--muted); margin-top:var(--s1);
-           font-variant-numeric:tabular-nums; }
-/* a delta or a count inside a value is a good number, not an action — --ok, not the accent */
-.fact i { font-style:normal; color:var(--ok); font-weight:600; }
-/* the empty state keeps the grid rhythm that loose grey text broke */
-.fact.ghost { background:transparent; border:1px dashed var(--line); }
-.fact.ghost .v { color:var(--faint); font-weight:400; }
+   A perforation and an activity feed. Both are layout over the existing
+   tokens — no new colour, no asset, no script. (The reference also has an
+   action rail; this app has no card with two or more ghost actions to
+   consolidate, so the rail is not built here. .tiles/.fact, the third
+   shape, moved to tokens.css — the portal needs it too, for 06-startseite
+   and 07-vertrag, and tokens.css is the shared layer every screen loads.) */
 
 /* .perf — the reference's tear line. A repeating radial gradient, so it
    recolours with --line like every other rule here and needs no asset. */

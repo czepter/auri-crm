@@ -279,22 +279,6 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 /* an ungated gallery is the state worth noticing, so it is the one that carries colour */
 .gf.open { background:var(--due-bg); color:var(--due); }
 
-/* right-rail key/value facts. The app dropped this pair once its own last
-   consumer converted (2026-08-13, visual-system plan, Task 11) — every
-   product screen renders .tiles/.fact now, apps/studio/resources/css/
-   tokens.css no longer carries .kv/.kvrow at all. It survives here only
-   because eight clickdummy screens still render it (04-auftrag,
-   04-angebot, 04-galerien, 04-shootings, 04-frageboegen, 05-medien,
-   13-fragebogen-builder, portal/06-startseite) and converting a mockup
-   screen was ruled out of scope for that task. Known gap, not the mockup
-   quietly running ahead of the app as usual — #198 tracks sweeping these
-   eight to .tiles/.fact. */
-.kv { display:flex; flex-direction:column; gap:9px; }
-.kvrow { display:flex; align-items:baseline; gap:var(--s3); font:400 12.5px/1.35 var(--font); }
-.kvrow span:first-child { color:var(--muted); flex:none; min-width:78px; }
-.kvrow span:last-child { color:var(--ink); text-align:right; margin-left:auto; }
-.kvrow b { font-weight:600; font-variant-numeric:tabular-nums; }
-
 /* questionnaire + message summaries */
 .qz { display:flex; flex-direction:column; gap:11px; }
 .qzrow { display:flex; align-items:center; gap:var(--s3); font:400 12.5px/1.3 var(--font); }
@@ -307,6 +291,28 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 .msgwho em { font-style:normal; font-weight:400; color:var(--faint); margin-left:6px; }
 .msgbody { font:400 12.5px/1.4 var(--font); color:var(--muted); margin-top:1px;
            overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+
+/* .tiles — replaces the right-rail .kv / .kvrow fact list; #198 swept the
+   remaining clickdummy consumers, so .kv/.kvrow are gone from here too.
+   A fact is a tile, not a row: the label sits over the value instead of
+   beside it, which is what lets three of them share a line without the
+   values colliding. Named .fact rather than .tile: gallery.css already owns
+   .tile for the photo-grid item, and a second meaning for one class name is
+   the exact confusion this system exists to end. Lives here rather than
+   admin-extra.css because the portal's own screens (06-startseite,
+   07-vertrag) use it too, and tokens.css is the layer every screen loads. */
+.tiles { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--s3); }
+.fact { background:var(--hover); border-radius:var(--r); padding:14px var(--s4) var(--s4); }
+.fact .l { font:600 9.5px/1 var(--font); letter-spacing:.11em; text-transform:uppercase; color:var(--faint); }
+.fact .v { font:500 16px/1.2 var(--font); letter-spacing:-.02em; margin-top:9px;
+           font-variant-numeric:tabular-nums; }
+.fact .s { font:400 12.5px/1.3 var(--font); color:var(--muted); margin-top:var(--s1);
+           font-variant-numeric:tabular-nums; }
+/* a delta or a count inside a value is a good number, not an action — --ok, not the accent */
+.fact i { font-style:normal; color:var(--ok); font-weight:600; }
+/* the empty state keeps the grid rhythm that loose grey text broke */
+.fact.ghost { background:transparent; border:1px dashed var(--line); }
+.fact.ghost .v { color:var(--faint); font-weight:400; }
 
 /* a .card used as a static content panel rather than a link — no hover affordance to imply clickability */
 .card.static { cursor:default; }

@@ -53,11 +53,13 @@
 
         <div class="card static">
           <div class="cardhead"><span class="kick">Vertrag</span><span class="chip done">Signiert</span></div>
-          <div class="kv">
-            <div class="kvrow"><span>Vorlage</span><span>Hochzeit v3</span></div>
-            <div class="kvrow"><span>Versendet</span><span>03.02.2026</span></div>
-            <div class="kvrow"><span>Signiert</span><span>04.02.2026, 14:32 · Lena Meier</span></div>
-            <div class="kvrow"><span>Prüfsumme</span><span>SHA-256 · 3f9a…c1d7</span></div>
+          <!-- 4 facts: the default 3-up grid would strand a single tile on its
+               own row, so this block pairs them 2-up instead. -->
+          <div class="tiles" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+            <div class="fact"><div class="l">Vorlage</div><div class="v">Hochzeit v3</div></div>
+            <div class="fact"><div class="l">Versendet</div><div class="v">03.02.2026</div></div>
+            <div class="fact"><div class="l">Signiert</div><div class="v">04.02.2026, 14:32 · Lena Meier</div></div>
+            <div class="fact"><div class="l">Prüfsumme</div><div class="v">SHA-256 · 3f9a…c1d7</div></div>
           </div>
           <a class="blkfoot" href="#">Signiertes PDF ansehen →</a>
         </div>

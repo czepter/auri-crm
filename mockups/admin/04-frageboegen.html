@@ -71,11 +71,13 @@
 
         <div class="card static">
           <div class="cardhead"><span class="kick">Familienkonstellation</span><span class="chip now">Offen seit 6 Tagen</span></div>
-          <div class="kv">
-            <div class="kvrow"><span>Gesendet</span><span>03.06. an Lena</span></div>
-            <div class="kvrow"><span>Geöffnet</span><span>04.06., nicht ausgefüllt</span></div>
-            <div class="kvrow"><span>Erinnert</span><span>automatisch, 06.06.</span></div>
-            <div class="kvrow"><span>Erinnert</span><span>automatisch, 08.06.</span></div>
+          <!-- 4 facts: the default 3-up grid would strand a single tile on its
+               own row, so this block pairs them 2-up instead. -->
+          <div class="tiles" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+            <div class="fact"><div class="l">Gesendet</div><div class="v">03.06. an Lena</div></div>
+            <div class="fact"><div class="l">Geöffnet</div><div class="v">04.06., nicht ausgefüllt</div></div>
+            <div class="fact"><div class="l">Erinnert</div><div class="v">automatisch, 06.06.</div></div>
+            <div class="fact"><div class="l">Erinnert</div><div class="v">automatisch, 08.06.</div></div>
           </div>
           <div class="formfoot">
             <a class="btn" href="#">Anrufen</a>
