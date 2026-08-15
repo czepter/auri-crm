@@ -25,6 +25,10 @@ class MessageData extends Data
         // there rather than repeating the same string on every row.
         public ?string $projectName = null,
         public ?string $projectId = null,
+        // E-13: set while the message is still waiting to go out. A
+        // scheduled mail is visible work in the thread rather than a hidden
+        // timer, which is what makes cancelling it a thing anyone can find.
+        public ?string $scheduledFor = null,
     ) {}
 
     public static function fromModel(Message $message): self
@@ -36,6 +40,9 @@ class MessageData extends Data
             body: $message->body,
             sentAt: $message->created_at->toIso8601String(),
             deliveryState: $message->delivery_state,
+            scheduledFor: $message->delivery_state === null
+                ? $message->scheduled_for?->toIso8601String()
+                : null,
         );
     }
 

@@ -300,6 +300,9 @@ Route::middleware('audience:staff')->group(function () {
             ->name('projects.messages');
         Route::post('/auftraege/{project}/nachrichten', [ThreadController::class, 'reply'])
             ->name('threads.reply');
+        // E-13: cancel one that has not gone out yet.
+        Route::delete('/auftraege/{project}/nachrichten/{message}', [ThreadController::class, 'cancel'])
+            ->name('threads.cancel');
 
         Route::get('/auftraege/{project}/angebote', [ProjectController::class, 'quotes'])
             ->name('projects.quotes');

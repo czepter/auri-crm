@@ -183,6 +183,10 @@
     "messagesEmpty": "Keine Nachrichten.",
     "messagesReplyPlaceholder": "Antwort schreiben …",
     "messagesTemplateBroken": "Vorlage „{name}“ nutzt unbekannte Felder: {fields}",
+    "messagesSchedule": "Später senden",
+    "messagesScheduleLabel": "Sendezeitpunkt",
+    "messagesScheduledFor": "Geht raus am {when}",
+    "messagesCancelScheduled": "Abbrechen",
     "messagesSend": "Senden"
   },
   "calendar": {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectHeader from '@/admin/components/ProjectHeader.vue'
 import { Button } from '@/ui/button'
@@ -16,7 +16,7 @@ function longDateTime(iso: string) {
   return new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
-const reply = useForm({ body: '' })
+const reply = useForm({ body: '', scheduled_for: '' })
 
 // E-10: picking a template fills the composer with text already resolved
 // against this project — what is shown is what gets sent. An existing draft
@@ -37,6 +37,17 @@ function send() {
     onSuccess: () => reply.reset(),
   })
 }
+
+// E-13: cancelling deletes the row. It was never sent and nobody has seen
+// it, so a "cancelled" tombstone would be a line the studio reads past
+// forever.
+function cancelScheduled(messageId: string) {
+  router.delete(`/auftraege/${props.header.id}/nachrichten/${messageId}`, { preserveScroll: true })
+}
+
+function scheduledLabel(iso: string) {
+  return new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
 </script>
 
 <template>
@@ -56,6 +67,14 @@ function send() {
               <em>{{ longDateTime(message.sentAt) }}</em>
             </div>
             <div class="msgbody" style="-webkit-line-clamp: unset">{{ message.body }}</div>
+            <!-- Pending, not sent: shown where it will appear once it goes,
+                 with the one control that still applies to it. -->
+            <div v-if="message.scheduledFor" class="hint">
+              {{ $t('project.messagesScheduledFor', { when: scheduledLabel(message.scheduledFor) }) }}
+              <Button type="button" variant="ghost" @click="cancelScheduled(message.id)">
+                {{ $t('project.messagesCancelScheduled') }}
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -81,10 +100,18 @@ function send() {
           :placeholder="$t('project.messagesReplyPlaceholder')" />
         <p v-if="reply.errors.body" class="err">{{ reply.errors.body }}</p>
         <div class="formfoot" style="margin-top: 0">
+          <!-- Native datetime-local: a picker library for one optional field
+               is a dependency this screen does not need. -->
+          <input
+            v-model="reply.scheduled_for"
+            type="datetime-local"
+            :aria-label="$t('project.messagesScheduleLabel')"
+          >
           <Button type="submit" :disabled="reply.processing">
-            {{ $t('project.messagesSend') }}
+            {{ reply.scheduled_for ? $t('project.messagesSchedule') : $t('project.messagesSend') }}
           </Button>
         </div>
+        <p v-if="reply.errors.scheduled_for" class="err">{{ reply.errors.scheduled_for }}</p>
       </form>
     </template>
 

@@ -27,14 +27,15 @@ class Message extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['thread_id', 'contact_id', 'author_id', 'body'];
-
     /**
-     * E-11's two columns are deliberately outside $fillable: nothing but
-     * SendStaffReply may say a message was delivered, and a mass-assigned
-     * delivery_state would be a claim about the outside world made from
-     * request input.
+     * E-11's two columns — `email_message_id` and `delivery_state` — are
+     * deliberately absent: nothing but SendStaffReply may say a message was
+     * delivered, and a mass-assigned delivery state would be a claim about
+     * the outside world made from request input. E-13's `scheduled_for` is
+     * here, because when to send is genuinely the writer's to decide.
      */
+    protected $fillable = ['thread_id', 'contact_id', 'author_id', 'body', 'scheduled_for'];
+
     public static function booted(): void
     {
         static::creating(function (self $message) {
@@ -44,6 +45,11 @@ class Message extends Model
                 );
             }
         });
+    }
+
+    protected function casts(): array
+    {
+        return ['scheduled_for' => 'immutable_datetime'];
     }
 
     public function thread(): BelongsTo

@@ -320,6 +320,7 @@ sentAt: string,
 deliveryState: string | null,
 projectName: string | null,
 projectId: string | null,
+scheduledFor: string | null,
 };
 export type ThreadData = {
 id: string,

@@ -3,9 +3,11 @@
 namespace App\Engagement\Actions;
 
 use App\Crm\Models\Contact;
+use App\Engagement\Jobs\SendScheduledMessage;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -22,9 +24,9 @@ class PostMessage
 {
     public function __construct(private readonly SendStaffReply $send) {}
 
-    public function __invoke(Thread $thread, Contact|User $actor, string $body): Message
+    public function __invoke(Thread $thread, Contact|User $actor, string $body, ?CarbonInterface $scheduledFor = null): Message
     {
-        $message = DB::transaction(function () use ($thread, $actor, $body) {
+        $message = DB::transaction(function () use ($thread, $actor, $body, $scheduledFor) {
             $thread->participants()->firstOrCreate(
                 $actor instanceof Contact ? ['contact_id' => $actor->id] : ['user_id' => $actor->id]
             );
@@ -32,15 +34,18 @@ class PostMessage
             return $thread->messages()->create([
                 ...$actor instanceof Contact ? ['contact_id' => $actor->id] : ['author_id' => $actor->id],
                 'body' => $body,
+                'scheduled_for' => $scheduledFor,
             ]);
         });
 
-        // E-11. Outside the transaction on purpose: a mail that has already
-        // left cannot be rolled back, so it must not be sent from inside one
-        // that still could. Staff only — a client's own message is already
-        // where the studio reads it.
+        // E-11 / E-13. Outside the transaction on purpose: a mail that has
+        // already left cannot be rolled back, so it must not be sent from
+        // inside one that still could. Staff only — a client's own message is
+        // already where the studio reads it.
         if ($actor instanceof User) {
-            ($this->send)($message);
+            $scheduledFor === null
+                ? ($this->send)($message)
+                : SendScheduledMessage::dispatch($message, $scheduledFor->toIso8601String())->delay($scheduledFor);
         }
 
         return $message;
