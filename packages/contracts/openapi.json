@@ -1,7 +1,7 @@
 {
     "openapi": "3.1.0",
     "info": {
-        "title": "Laravel",
+        "title": "Studio",
         "version": "0.0.1"
     },
     "servers": [
@@ -1178,6 +1178,131 @@
                 }
             }
         },
+        "/mail/eingang": {
+            "post": {
+                "operationId": "mail.inbound",
+                "tags": [
+                    "InboundMail"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "message_id": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 998
+                                    },
+                                    "from": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255
+                                    },
+                                    "to": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "subject": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 998
+                                    },
+                                    "body": {
+                                        "type": "string",
+                                        "maxLength": 26214400
+                                    },
+                                    "spf": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 32
+                                    },
+                                    "dkim": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 32
+                                    },
+                                    "dmarc": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 32
+                                    },
+                                    "spam_score": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "from",
+                                    "to",
+                                    "body"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "received"
+                                        }
+                                    },
+                                    "required": [
+                                        "status"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/projects/{project}/notes": {
             "post": {
                 "operationId": "projects.notes.store",
@@ -1424,6 +1549,138 @@
                 }
             }
         },
+        "/anfragen": {
+            "post": {
+                "operationId": "inquiries.store",
+                "tags": [
+                    "PublicInquiry"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "contact_name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "contact_email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255
+                                    },
+                                    "contact_phone": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 64
+                                    },
+                                    "partner_name": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    },
+                                    "project_name": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    },
+                                    "type": {
+                                        "$ref": "#/components/schemas/ProjectType"
+                                    },
+                                    "source": {
+                                        "anyOf": [
+                                            {
+                                                "$ref": "#/components/schemas/LeadSource"
+                                            },
+                                            {
+                                                "type": "null"
+                                            }
+                                        ]
+                                    },
+                                    "date": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date"
+                                    },
+                                    "inquiry_text": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 10000
+                                    },
+                                    "consent": {
+                                        "description": "T-02's Datenschutz link is shown beside this box; refusing\nwithout it is the one validation error this endpoint is willing\nto report, because it is a fact about the submission rather\nthan about the studio's data.",
+                                        "enum": [
+                                            "yes",
+                                            "on",
+                                            "1",
+                                            1,
+                                            "true",
+                                            true
+                                        ]
+                                    },
+                                    "website": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "description": "Never filled by a human \u2014 the field is hidden in the snippet.",
+                                        "maxLength": 255
+                                    },
+                                    "elapsed": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ],
+                                        "description": "Seconds since the form rendered, written by the snippet's own\ninline script. Optional: a client with no JavaScript still gets\nto send an inquiry."
+                                    }
+                                },
+                                "required": [
+                                    "contact_name",
+                                    "contact_email",
+                                    "type"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "No id, no name, nothing to correlate. The client is told the\nstudio has it; anything more is a fact the internet does not need.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "received"
+                                        }
+                                    },
+                                    "required": [
+                                        "status"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/stripe/webhook": {
             "post": {
                 "operationId": "stripe.webhook",
@@ -1450,6 +1707,7 @@
                     "phone",
                     "email",
                     "in_person",
+                    "web_form",
                     "other"
                 ],
                 "title": "CaptureChannel"
@@ -1523,6 +1781,15 @@
                             "null"
                         ],
                         "maxLength": 10000
+                    },
+                    "referred_by_contact_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The CUID2 of an existing contact, same shape as contact_id\nabove. Nullable always, including when the source is a\nreferral \u2014 see the migration.",
+                        "minLength": 24,
+                        "maxLength": 24
                     }
                 },
                 "required": [
@@ -1575,25 +1842,6 @@
             }
         },
         "responses": {
-            "ModelNotFoundException": {
-                "description": "Not found",
-                "content": {
-                    "application/json": {
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "message": {
-                                    "type": "string",
-                                    "description": "Error overview."
-                                }
-                            },
-                            "required": [
-                                "message"
-                            ]
-                        }
-                    }
-                }
-            },
             "ValidationException": {
                 "description": "Validation error",
                 "content": {
@@ -1619,6 +1867,25 @@
                             "required": [
                                 "message",
                                 "errors"
+                            ]
+                        }
+                    }
+                }
+            },
+            "ModelNotFoundException": {
+                "description": "Not found",
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "message": {
+                                    "type": "string",
+                                    "description": "Error overview."
+                                }
+                            },
+                            "required": [
+                                "message"
                             ]
                         }
                     }
