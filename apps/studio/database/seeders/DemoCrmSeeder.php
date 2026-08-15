@@ -31,6 +31,7 @@ use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -68,6 +69,12 @@ class DemoCrmSeeder extends Seeder
     public function run(): void
     {
         $staff = User::query()->first() ?? User::factory()->create();
+
+        // Before anything else: RequireStudioOnboarding gates the entire
+        // admin surface on this, so a demo database that skips it opens on
+        // /einrichtung/studio instead of the Übersicht — indistinguishable,
+        // from the browser, from a broken install.
+        $this->seedStudioOnboarding($staff);
 
         // Before the cast, so booking the wedding below produces its tasks
         // through the listener rather than having them written in by hand.
@@ -134,6 +141,57 @@ class DemoCrmSeeder extends Seeder
         // on the automation rule set the sweep would otherwise seed on its
         // own schedule.
         $this->seedDashboardOccasions($projects);
+    }
+
+    /**
+     * Completes the first-run wizard T-01's own migration already gives every
+     * install a single, empty studio_settings row for. Every column that row
+     * ships with a real default (vat_rate, quote_validity_days, working_days,
+     * ...) already reads as a working studio; only the Studio-Profil pane
+     * (T-02: display_name, legal_name, address, ...) is nullable with no
+     * default, and RequireStudioOnboarding's redirect to /einrichtung/studio
+     * fires on onboarding_completed_at alone, not on the profile being filled
+     * in — so this writes both, in the one order that matters: a plausible
+     * identity first, the completion stamp last.
+     *
+     * Through StudioSettingsResolver::set(), the same seam
+     * StudioSettingsController::update() and StudioOnboardingController::
+     * complete() call — never a raw update on the table — so this seeder
+     * keeps proving the resolver's own cache-bust and audit-row guarantees
+     * rather than writing around them.
+     *
+     * Guarded the same way DatabaseSeeder guards its own call into this
+     * class: db:seed against production is exactly the command someone runs
+     * once against the wrong environment, and this method skipping stays
+     * true even if DemoCrmSeeder is ever invoked some other way than through
+     * DatabaseSeeder.
+     */
+    private function seedStudioOnboarding(User $actor): void
+    {
+        if (app()->isProduction()) {
+            return;
+        }
+
+        $settings = app(StudioSettingsResolver::class);
+
+        foreach ([
+            'display_name' => 'Nordlicht Fotografie',
+            'legal_name' => 'Nordlicht Fotografie GmbH',
+            'legal_form' => 'GmbH',
+            'street' => 'Elbchaussee 12',
+            'postcode' => '22765',
+            'city' => 'Hamburg',
+            'country' => 'Deutschland',
+            'vat_id' => 'DE123456789',
+            'register_number' => 'HRB 123456',
+            'register_court' => 'Amtsgericht Hamburg',
+            'representative' => 'Christian Bergmann',
+            'website' => 'https://nordlicht-fotografie.test',
+        ] as $key => $value) {
+            $settings->set($key, $value, $actor);
+        }
+
+        $settings->set('onboarding_completed_at', now(), $actor);
     }
 
     /**
