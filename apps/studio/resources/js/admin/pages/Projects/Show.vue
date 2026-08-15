@@ -178,7 +178,23 @@ function openMarkPaid(installment: App.Payments.Data.PaymentInstallmentData) {
   markingPaid.value = installment.id
   markPaidForm.reset()
   markPaidForm.paid_on = new Date().toISOString().slice(0, 10)
-  markPaidForm.reference = props.paymentPlan?.reference ?? ''
+  // The invoice number is what the client transferred under once one has
+  // been issued; the plan-level reference is only still here for plans
+  // created before M-06 stopped allocating it.
+  markPaidForm.reference = installment.invoiceNumber ?? props.paymentPlan?.reference ?? ''
+}
+
+// --- M-06: Fällig stellen ------------------------------------------------
+// A bare post, no form: issuing takes no input, and the number it allocates
+// is not something the studio gets to choose.
+const issuingInvoice = ref<string | null>(null)
+
+function issueInvoice(installmentId: string) {
+  issuingInvoice.value = installmentId
+  router.post(`/raten/${installmentId}/rechnung`, {}, {
+    preserveScroll: true,
+    onFinish: () => (issuingInvoice.value = null),
+  })
 }
 
 function submitMarkPaid(installmentId: string) {
@@ -481,6 +497,24 @@ function submitMarkPaid(installmentId: string) {
                   {{ $t('payments.settledVia', { method: installment.settledViaLabel, date: installment.paidOn }) }}
                 </span>
 
+                <!-- M-06: the row S-09 deferred. "Fällig stellen" until the
+                     invoice exists, then its number, then its PDF once the
+                     render has returned — never a link that would 404. -->
+                <Button
+                  v-if="!installment.invoiceNumber && header.canManagePaymentPlan"
+                  type="button" variant="ghost"
+                  :disabled="issuingInvoice === installment.id"
+                  @click="issueInvoice(installment.id)"
+                >
+                  {{ $t('payments.issueInvoice') }}
+                </Button>
+                <a
+                  v-else-if="installment.hasInvoiceDocument"
+                  class="hint" :href="`/raten/${installment.id}/rechnung`" target="_blank"
+                >{{ installment.invoiceNumber }}</a>
+                <span v-else-if="installment.invoiceNumber" class="hint">
+                  {{ $t('payments.invoiceRendering', { number: installment.invoiceNumber }) }}
+                </span>
               </div>
             </div>
 

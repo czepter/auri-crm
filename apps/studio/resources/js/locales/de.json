@@ -75,6 +75,9 @@
     "name": "Name",
     "email": "E-Mail",
     "phone": "Telefon",
+    "street": "Straße",
+    "postcode": "PLZ",
+    "city": "Ort",
     "projects": "Projekte",
     "projectCount": "kein Projekt | 1 Projekt | {count} Projekte",
     "none": "—",
@@ -337,7 +340,9 @@
     "markPaidMethodManual": "Manuell",
     "markPaidReference": "Referenz",
     "markPaidSubmit": "Bestätigen",
-    "settledVia": "Bezahlt via {method}, am {date}"
+    "settledVia": "Bezahlt via {method}, am {date}",
+    "issueInvoice": "Fällig stellen",
+    "invoiceRendering": "{number} — wird erstellt"
   },
   "documentTemplates": {
     "title": "Dokumentvorlagen",
@@ -652,6 +657,8 @@
     "transferIban": "IBAN",
     "transferBic": "BIC",
     "transferReference": "Verwendungszweck",
+    "transferReferencePending": "Rechnung folgt.",
+    "invoiceDownload": "Rechnung {number}",
     "payNowTitle": "Kartenzahlung",
     "payNowButton": "Jetzt zahlen",
     "payNowSuccess": "Zahlung eingegangen.",

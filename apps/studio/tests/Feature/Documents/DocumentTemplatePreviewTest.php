@@ -32,6 +32,6 @@ it('refuses a preview for a role without ManageContracts', function () {
 
 it('rejects a preview with an unknown document type', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->post('/dokumentvorlagen/vorschau', ['type' => 'invoice', 'body' => '<p>x</p>'])
+        ->post('/dokumentvorlagen/vorschau', ['type' => 'receipt', 'body' => '<p>x</p>'])
         ->assertInvalid(['type']);
 });

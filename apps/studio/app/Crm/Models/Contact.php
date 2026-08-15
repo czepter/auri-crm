@@ -47,7 +47,7 @@ class Contact extends Model implements Authenticatable
     use HasPublicId;
     use Notifiable;
 
-    protected $fillable = ['name', 'email', 'phone'];
+    protected $fillable = ['name', 'email', 'phone', 'street', 'postcode', 'city'];
 
     protected function casts(): array
     {

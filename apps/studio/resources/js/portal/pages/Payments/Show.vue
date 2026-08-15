@@ -12,6 +12,8 @@ type Installment = {
   status: string
   statusLabel: string
   label: string
+  invoiceNumber: string | null
+  hasInvoiceDocument: boolean
 }
 
 type Plan = {
@@ -38,6 +40,13 @@ const props = defineProps<{
 // reuses) the Checkout Session and sends the browser there.
 const openInstallments = computed(() => props.plan?.installments.filter((installment) => installment.status !== 'paid') ?? [])
 const payingId = ref<string | null>(null)
+
+// M-06: what a still-open installment should be transferred under. Only
+// issued ones have a number to name, which is why an unissued plan says the
+// invoice is coming rather than printing an empty reference line.
+const referencedInstallments = computed(
+  () => openInstallments.value.filter((installment) => installment.invoiceNumber !== null),
+)
 
 function payNow(installmentId: string) {
   payingId.value = installmentId
@@ -84,6 +93,15 @@ function longDate(date: string) {
                 {{ installment.status === 'paid' ? installment.statusLabel : formatEuros(installment.amount) }}
               </span>
             </div>
+            <!-- M-06: only once the PDF exists. Between issue and render the
+                 number is on the row above as the transfer reference, but
+                 there is nothing to download yet. -->
+            <a
+              v-if="installment.hasInvoiceDocument"
+              class="hint"
+              :href="`/projekte/${project.id}/zahlungen/${installment.id}/rechnung`"
+              target="_blank"
+            >{{ $t('portal.invoiceDownload', { number: installment.invoiceNumber }) }}</a>
           </div>
         </div>
       </section>
@@ -101,7 +119,19 @@ function longDate(date: string) {
               <div><strong>{{ $t('portal.transferAccountHolder') }}:</strong> {{ bankDetails.accountHolder }}</div>
               <div><strong>{{ $t('portal.transferIban') }}:</strong> {{ bankDetails.iban }}</div>
               <div><strong>{{ $t('portal.transferBic') }}:</strong> {{ bankDetails.bic }}</div>
-              <div><strong>{{ $t('portal.transferReference') }}:</strong> {{ plan.reference }}</div>
+              <!-- M-06: each open installment transfers under its own
+                   invoice number. `plan.reference` is the pre-M-06 fallback
+                   and is null for every plan created since. -->
+              <div v-for="installment in referencedInstallments" :key="installment.id">
+                <strong>{{ $t('portal.transferReference') }}:</strong>
+                {{ installment.invoiceNumber }} ({{ installment.label }})
+              </div>
+              <div v-if="!referencedInstallments.length && plan.reference">
+                <strong>{{ $t('portal.transferReference') }}:</strong> {{ plan.reference }}
+              </div>
+              <div v-else-if="!referencedInstallments.length" class="hint">
+                {{ $t('portal.transferReferencePending') }}
+              </div>
             </dl>
           </div>
         </div>

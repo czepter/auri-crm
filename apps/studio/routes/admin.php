@@ -356,6 +356,13 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/raten/{installment}/bezahlt', [PaymentInstallmentController::class, 'markPaid'])
             ->name('payment-installments.mark-paid');
 
+        // M-06's "Fällig stellen" — the row S-09 deferred, because at the
+        // time no invoice state existed for it to move into.
+        Route::post('/raten/{installment}/rechnung', [PaymentInstallmentController::class, 'issueInvoice'])
+            ->name('payment-installments.issue-invoice');
+        Route::get('/raten/{installment}/rechnung', [PaymentInstallmentController::class, 'downloadInvoice'])
+            ->name('payment-installments.invoice');
+
         Route::post('/auftraege/{project}/shootings', [ShootController::class, 'store'])
             ->name('shoots.store');
         Route::post('/shootings/{shoot}/status', [ShootController::class, 'advance'])

@@ -15,6 +15,9 @@ function installment(overrides: Partial<App.Payments.Data.PaymentInstallmentData
     paidOn: null,
     paymentReference: null,
     isLate: false,
+    invoiceNumber: null,
+    invoicedOn: null,
+    hasInvoiceDocument: false,
     ...overrides,
   }
 }

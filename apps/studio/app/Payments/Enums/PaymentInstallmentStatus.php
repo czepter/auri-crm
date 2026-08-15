@@ -5,14 +5,17 @@ namespace App\Payments\Enums;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
- * scheduled -> paid is the whole lifecycle this story ever writes.
+ * scheduled -> invoiced -> paid, though the middle step is optional: a
+ * transfer that arrives before the paperwork goes straight to paid, and
+ * M-06's IssueInvoice leaves an already-paid row paid rather than walking it
+ * backwards.
  *
- * Invoiced exists as a column value now because M-04's real Stripe invoicing
- * needs somewhere to land without a later migration widening this column's
- * domain — the same reason App\Contracts\Enums\ContractStatus declared
- * `failed` before anything produced it. Nothing in this story ever sets it;
- * PaymentPlan::isEditable() is the guard written defensively against the day
- * something does.
+ * M-03 declared `invoiced` before anything produced it — the same shape
+ * App\Contracts\Enums\ContractStatus used for `failed` — so that M-04 would
+ * have somewhere to land without a migration widening this column's domain.
+ * M-04 shipped as Stripe Checkout and never used it; M-06's own invoice is
+ * what finally writes it, which is also what makes PaymentPlan::isEditable()'s
+ * defensive guard load-bearing rather than hypothetical.
  */
 #[TypeScript]
 enum PaymentInstallmentStatus: string

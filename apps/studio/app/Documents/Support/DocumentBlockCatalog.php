@@ -26,17 +26,17 @@ class DocumentBlockCatalog
      * @var array<string, array{group: string, label: string, types: list<string>, inline?: bool}>
      */
     private const BLOCKS = [
-        'paragraph' => ['group' => 'text', 'label' => 'Absatz', 'types' => ['contract', 'quote', 'mail']],
-        'header' => ['group' => 'text', 'label' => 'Überschrift', 'types' => ['contract', 'quote', 'mail']],
-        'list' => ['group' => 'text', 'label' => 'Liste', 'types' => ['contract', 'quote', 'mail']],
-        'quote' => ['group' => 'text', 'label' => 'Zitat', 'types' => ['contract', 'quote', 'mail']],
-        'delimiter' => ['group' => 'text', 'label' => 'Trenner', 'types' => ['contract', 'quote', 'mail']],
-        'table' => ['group' => 'layout', 'label' => 'Tabelle', 'types' => ['contract', 'quote', 'mail']],
-        'columns' => ['group' => 'layout', 'label' => '2 Spalten', 'types' => ['contract', 'quote']],
-        'image' => ['group' => 'layout', 'label' => 'Bild', 'types' => ['contract', 'quote', 'mail']],
-        'callout' => ['group' => 'layout', 'label' => 'Hinweis', 'types' => ['contract', 'quote', 'mail']],
-        'spacer' => ['group' => 'layout', 'label' => 'Abstand', 'types' => ['contract', 'quote']],
-        'mergeField' => ['group' => 'data', 'label' => 'Feld', 'types' => ['contract', 'quote', 'mail'], 'inline' => true],
+        'paragraph' => ['group' => 'text', 'label' => 'Absatz', 'types' => ['contract', 'quote', 'invoice', 'mail']],
+        'header' => ['group' => 'text', 'label' => 'Überschrift', 'types' => ['contract', 'quote', 'invoice', 'mail']],
+        'list' => ['group' => 'text', 'label' => 'Liste', 'types' => ['contract', 'quote', 'invoice', 'mail']],
+        'quote' => ['group' => 'text', 'label' => 'Zitat', 'types' => ['contract', 'quote', 'invoice', 'mail']],
+        'delimiter' => ['group' => 'text', 'label' => 'Trenner', 'types' => ['contract', 'quote', 'invoice', 'mail']],
+        'table' => ['group' => 'layout', 'label' => 'Tabelle', 'types' => ['contract', 'quote', 'invoice', 'mail']],
+        'columns' => ['group' => 'layout', 'label' => '2 Spalten', 'types' => ['contract', 'quote', 'invoice']],
+        'image' => ['group' => 'layout', 'label' => 'Bild', 'types' => ['contract', 'quote', 'invoice', 'mail']],
+        'callout' => ['group' => 'layout', 'label' => 'Hinweis', 'types' => ['contract', 'quote', 'invoice', 'mail']],
+        'spacer' => ['group' => 'layout', 'label' => 'Abstand', 'types' => ['contract', 'quote', 'invoice']],
+        'mergeField' => ['group' => 'data', 'label' => 'Feld', 'types' => ['contract', 'quote', 'invoice', 'mail'], 'inline' => true],
     ];
 
     /**
