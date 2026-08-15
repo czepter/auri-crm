@@ -39,6 +39,16 @@ return [
             'notification_body' => 'Vielen Dank für die wunderschöne Feier — es war uns eine Freude.',
         ],
         [
+            'key' => 'quote-follow-up',
+            'name' => 'Angebot — Erinnerung vor Ablauf',
+            'trigger_type' => AutomationTriggerType::DateOffset,
+            'anchor' => AutomationAnchor::QuoteValidity,
+            'offset_days' => 7,
+            'direction' => AutomationOffsetDirection::Before,
+            'notification_subject' => 'Ihr Angebot läuft bald ab',
+            'notification_body' => 'Ihr Angebot gilt noch eine Woche. Melden Sie sich gern, wenn etwas offen ist.',
+        ],
+        [
             'key' => 'booking-confirmation',
             'name' => 'Buchungsbestätigung',
             'trigger_type' => AutomationTriggerType::Event,

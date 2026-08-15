@@ -1,7 +1,7 @@
 declare namespace App {
 namespace Automation {
 namespace Enums {
-export type AutomationAnchor = 'per_shoot' | 'primary_shoot';
+export type AutomationAnchor = 'per_shoot' | 'primary_shoot' | 'quote_validity';
 export type AutomationOffsetDirection = 'before' | 'after';
 export type AutomationRunStatus = 'pending' | 'sent' | 'failed';
 export type AutomationTriggerType = 'event' | 'date_offset';
