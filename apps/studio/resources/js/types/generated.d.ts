@@ -68,6 +68,15 @@ kind: string | null,
 label: string | null,
 personId: string | null,
 };
+export type DomainRowData = {
+projectId: string,
+who: string,
+what: string,
+emphasis: string | null,
+whatTail: string | null,
+action: App.Crm.Data.RowActionData | null,
+hot: boolean,
+};
 export type FormFieldData = {
 id: string,
 label: string,
@@ -182,6 +191,11 @@ export type ProjectPositionData = {
 source: string,
 value: string | null,
 label: string,
+};
+export type RowActionData = {
+label: string,
+kind: string,
+target: string,
 };
 export type ShootData = {
 id: string,
