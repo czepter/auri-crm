@@ -36,9 +36,19 @@ Settled before this spec was written. Inputs, not open questions.
    job; the phone call is not.
 3. **Real actions where they exist, honest ones where they don't.** `Anrufen` is a
    `tel:` link off `Contact.phone` — a native platform affordance, not a button
-   that logs an intention. `Fällig stellen` and `Vertrag senden` POST to the
-   existing domain actions. `Bedanken` and `Album anbieten` open a prefilled
-   thread through `StartThread`. Nothing on this screen invents an action.
+   that logs an intention. `Bedanken` is a `tel:` link too. `Vertrag senden` and
+   `Album anbieten` open the screen where the decision is taken. `Fällig stellen`
+   has no state and no action behind it and is deferred, named as deferred in its
+   issue. Nothing on this screen invents an action.
+
+   `Bedanken` and `Album anbieten` were drafted as prefilled threads through
+   `StartThread` and corrected during planning: E-06 makes a client the only
+   party who can originate a thread, stated in that action's docblock, in
+   `PostMessage`'s, and beside the route in `routes/admin.php`. Staff reply;
+   they do not open conversations. Routing the dashboard through `StartThread`
+   would have reversed that from a screen that has no business deciding it. A
+   phone call is also the truer action for a thank-you — the mockup files it
+   under "occasions kept deliberately personal".
 4. **`S-10` carries its own enablers.** *Nach der Lieferung* has zero derivable
    rows today. Rather than filing it blocked behind two enabler issues, the two
    schema additions it needs are part of it.
@@ -81,9 +91,18 @@ action     RowActionData   label + kind + target
 hot        bool            .abtn.hot — the action is also the overdue mark
 ```
 
-`RowActionData.kind` is one of `post`, `tel`, `link`. The Vue side renders a
-`Button` for `post`, an anchor for `tel` and `link`, and nothing else. A fourth
-kind means a new affordance nobody agreed to.
+`RowActionData.kind` is one of `tel` or `link`. Both render as an anchor styled
+`.abtn`.
+
+There is no `post` kind, and that is a finding rather than a simplification.
+Every action mockup 01 names either exists behind a choice the dashboard cannot
+make for the studio — `contracts.store` requires a template — or does not exist
+at all. So every button on this screen navigates to where the decision is taken,
+or dials. The one true POST on the Übersicht is the existing task **Erledigt**
+button, which predates this work and stays as it is.
+
+If a later story gives one of these rows a one-press action, `post` is the third
+kind and the row that earns it is the one that gets it.
 
 ### The "has the machine already tried?" predicate
 
@@ -128,17 +147,22 @@ derived, writing nothing. Mirrors `ReadProductionBoard`.
 | condition | row | action |
 | --- | --- | --- |
 | `Quote.status = sent`, `valid_until` inside the warning window, ≥1 `quote-follow-up` run fired against the project | *Angebot still, läuft {date} ab · {n}× erinnert, keine Reaktion* | **Anrufen** · `tel:` · hot |
-| `Quote.accepted_at` set, project has no Contract | *angenommen {date} — Vertrag fehlt* | **Vertrag senden** · post · hot |
-| Contract sent, unsigned for N days | *Vertrag {n} Tage unsigniert* | **Anrufen** · `tel:` |
+| `Quote.accepted_at` set, project has no Contract | *angenommen {date} — Vertrag fehlt* | **Vertrag senden** · link → `/auftraege/{id}/vertrag` · hot |
+| Contract `rendered`, unsigned for N days | *Vertrag {n} Tage unsigniert* | **Anrufen** · `tel:` |
 
 Ordered by urgency within the block, never across blocks. Footer links `/anfragen`
 and states the week's new inquiries.
 
-`Vertrag senden` has no backing action today — `App\Contracts\Actions` holds only
-`SignContract`. The story adds `SendContract` or, if sending turns out to route
-through the document pipeline, wires the button to that path. Which one is an
-implementation finding, not a design choice; either way the button performs
-rather than navigates.
+`Vertrag senden` navigates rather than posts. `ContractController::store`
+requires a `template` — which of the studio's contract templates this project
+gets — and that is a choice the dashboard has no standing to make on the
+studio's behalf. The button opens the screen where the choice is taken, which is
+one press further than the mockup drew and the only honest reading of it.
+
+There is no "sent" contract state to test against: `ContractStatus` is
+`pending | rendered | failed`, describing the render, not a dispatch. So the
+third row's condition is a rendered contract with no `ContractSignature`, aged N
+days.
 
 ## Part 2 — `S-09` · Zahlungen
 
@@ -147,14 +171,27 @@ rather than navigates.
 | condition | row | action |
 | --- | --- | --- |
 | installment overdue, `overdue_notified_at` older than N days | *Stripe mahnt seit {n} Tagen erfolglos · {amount}* | **Anrufen** · `tel:` · hot |
-| `status = scheduled`, `due_on` passed, never invoiced | *{ordinal}. Rate {amount} — nie fällig gestellt* | **Fällig stellen** · post · hot |
 
-The second row is the one the machine genuinely cannot do: an installment that
-was never issued has no Stripe invoice to dun, so no automation covers it and it
-would otherwise sit unnoticed until someone reconciles by hand.
+One row, not the mockup's two. Footer states the sum expected by month end and
+the number of installments behind it.
 
-Footer states the sum expected by month end and the number of installments
-behind it.
+### Deferred: *nie fällig gestellt*
+
+The mockup's second payment row — *"2. Rate 1.800 € — nie fällig gestellt →
+Fällig stellen"* — is not built, and the issue says so rather than shipping a
+button that navigates and calls itself an action.
+
+Nothing in the codebase writes `PaymentInstallmentStatus::Invoiced`.
+`PaymentPlan` says so directly, and the enum's own comment records that the case
+exists in anticipation of Stripe invoicing rather than because something issues
+it. Checkout sessions are created from the portal, by the client, when they
+choose to pay. So there is no state that distinguishes "issued and unpaid" from
+"scheduled", which means there is no condition to put the row on the screen —
+and no action to end it with.
+
+Issuing an installment on the studio's command is a Payments story with a Stripe
+call behind it, not a dashboard story. When it exists, this row is three lines
+in `ReadPaymentColumn` and a `post` kind in `RowActionData`.
 
 ## Part 3 — `S-10` · Nach der Lieferung
 
@@ -177,9 +214,16 @@ one.
 
 No expiry concept exists — `expires_at` today lives only on
 `gallery_email_verifications`, which is a different clock. The column gains a
-nullable `expires_at` on `galleries` plus a retention default in studio settings
-that stamps it at publish. Null means kept indefinitely, which is what every
-existing gallery is, so the migration backfills nothing.
+nullable `expires_at` on `galleries`, stamped by `Gallery::publish()` from
+`config('gallery.retention_days')`. Null means kept indefinitely, which is what
+every existing gallery is, so the migration backfills nothing and the config
+default is null — today's behaviour, unchanged, until a studio sets a number.
+
+Config rather than a studio setting: the settings store is a screen, a form, a
+resolver and a section of `de.json` for one nullable integer nobody has asked to
+edit yet. When a studio asks, the value moves and the stamp does not — one line
+changes. A settings screen built ahead of that ask is the abstraction this spec's
+non-goals already refuse.
 
 ### 3c. The column
 
@@ -187,12 +231,19 @@ existing gallery is, so the migration backfills nothing.
 
 | condition | row | action |
 | --- | --- | --- |
-| a booked project whose lead names a referrer, and no thank-you thread exists | *hat {referred} empfohlen* | **Bedanken** · post → `StartThread` |
-| gallery `expires_at` approaching, no album offer thread | *Galerie läuft am {date} ab — Album nie angeboten* | **Album anbieten** · post → `StartThread` |
+| a booked project whose lead names a referrer | *hat {referred} empfohlen* | **Bedanken** · `tel:` the referrer |
+| gallery `expires_at` approaching | *Galerie läuft am {date} ab* | **Album anbieten** · link → the gallery |
 
-Both actions open a prefilled thread rather than sending anything. The mockup
-files these under "occasions kept deliberately personal"; a thank-you the
-machine sends is not a thank-you.
+Neither sends anything, and neither is a thread. The mockup files these under
+"occasions kept deliberately personal"; a thank-you the machine sends is not a
+thank-you, and E-06 reserves originating a conversation for the client (see
+decision 3).
+
+The mockup's *"— Album nie angeboten"* is dropped from the second row: no album
+concept exists to have been offered, and inventing one to fill a clause is the
+failure clickdummy §6 records for this screen. The row states the expiry, which
+is the fact, and the button opens the gallery, where the studio decides what to
+do about it.
 
 Footer states that review requests run automatically, and the week's replies —
 the one place on this screen where automation reports success rather than
@@ -248,10 +299,10 @@ un-issued installment, a referral, an expiring gallery.
   column nobody has tested against a real studio. Each reader action's test
   builds its own state through the real code paths, as `DemoCrmSeeder` already
   does, so the seeder stays a demo rather than the only proof.
-- **`SendContract` may not exist as a seam.** Part 1 names it as an
-  implementation finding. If contracts turn out to send through the document
-  pipeline, the button wires to that; if neither path exists, the row is dropped
-  from `S-08` and stated as dropped rather than shipped as a navigation.
+- **Every button navigates or dials; none posts.** Resolved during planning, not
+  a compromise reached late: `contracts.store` needs a template choice and
+  nothing issues an installment. A reviewer expecting the mockup's press-in-place
+  buttons should read Part 0 before treating this as an unfinished screen.
 - **Warning windows are unspecified.** "`valid_until` inside the warning window",
   "unsigned for N days", "`overdue_notified_at` older than N days" — each needs a
   number. They are studio judgement, not architecture, and belong in the
