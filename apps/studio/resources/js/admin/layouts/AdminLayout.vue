@@ -71,6 +71,15 @@ const items = computed(() => [
     icon: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M19 8v6M22 11h-6"/>',
   },
   {
+    // S-13: whole-book figures, so the same capability that lets a role see
+    // every project is the one that lets them see the totals over all of them.
+    key: 'auswertungen',
+    label: 'Auswertungen',
+    href: '/auswertungen',
+    needs: 'view_all_projects',
+    icon: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  },
+  {
     key: 'kalender',
     label: 'Kalender',
     href: '/kalender',
