@@ -29,8 +29,8 @@ use Inertia\Response;
  * data now. Nowhere on this screen is a number invented to fill a clause;
  * that is the failure clickdummy §6 records for it.
  *
- * Two deliberate omissions, both because there is no fact behind the mockup's
- * clause rather than because nobody got to it:
+ * Three deliberate omissions, every one of them because there is no fact
+ * behind the mockup's clause rather than because nobody got to it:
  *
  * - The mockup's "nie fällig gestellt" payment row. PaymentInstallmentStatus
  *   ::Invoiced exists on the enum but nothing in this codebase ever writes it
@@ -39,6 +39,20 @@ use Inertia\Response;
  * - The mockup's "— Album nie angeboten" clause on the gallery row. No album
  *   concept exists to have been offered; ReadAfterDeliveryColumn states the
  *   expiry, which is the fact, and leaves the clause off.
+ * - The mockup's "Review-Bitten laufen automatisch" footer under Nach der
+ *   Lieferung. No seeded rule sends review requests, so the line would be
+ *   this screen reporting an automation that does not run.
+ *
+ * And one deviation that is not an omission: the "n unbeantwortet" count in
+ * the header states its figure without linking anywhere. Threads exist only
+ * per-project, at /auftraege/{project}/nachrichten; routes/admin.php has no
+ * cross-project inbox, and the mockup's own href is "#", so no destination
+ * was ever named. Inventing one is the same failure as inventing a number.
+ *
+ * Not in that list, because it predates this screen's completion: the Nächste
+ * Shootings block keeps S-01's open-task-count footer where the mockup shows a
+ * calendar preview of the shoots after the next one. That one is buildable —
+ * the data exists — and is a design call rather than a missing fact.
  */
 class DashboardController extends Controller
 {
