@@ -148,7 +148,7 @@ class ReadInquiryColumn
                 projectId: $contract->project->public_id,
                 who: $contract->project->name,
                 what: 'Vertrag',
-                emphasis: $contract->created_at->diffInDays().' Tage unsigniert',
+                emphasis: (int) $contract->created_at->diffInDays().' Tage unsigniert',
                 whatTail: null,
                 action: RowActionData::tel('Anrufen', $contract->project->primaryContact()?->phone),
             ));

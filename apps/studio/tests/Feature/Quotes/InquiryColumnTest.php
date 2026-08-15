@@ -122,7 +122,7 @@ it('rows a rendered contract left unsigned', function () {
     $rows = app(ReadInquiryColumn::class)();
 
     expect($rows)->toHaveCount(1)
-        ->and($rows->first()->emphasis)->toContain('unsigniert')
+        ->and($rows->first()->emphasis)->toBe('6 Tage unsigniert')
         ->and($rows->first()->hot)->toBeFalse();
 });
 
