@@ -64,8 +64,14 @@ class DemoCrmSeeder extends Seeder
         foreach (self::CAST as [$name, $partner, $type, $date, $stage, $daysAgo, $source, $venue, $city]) {
             $projectType = ProjectType::from($type);
 
+            // Just the names, the way CaptureInquiry takes them from whoever
+            // types the inquiry in. Appending the type here spelled every
+            // project "Meier & Kowalski — Hochzeit", which .who truncates at
+            // its 150px to "Meier & Kowalski — …" on every row of the
+            // Übersicht — the type restated in a column that has no room for
+            // it, next to a block already headed "Nächste Shootings".
             $project = Project::create([
-                'name' => trim($name.($partner ? ' & '.$partner : '')).' — '.$projectType->label(),
+                'name' => trim($name.($partner ? ' & '.$partner : '')),
                 'type' => $projectType,
             ]);
 

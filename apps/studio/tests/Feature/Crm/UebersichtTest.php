@@ -76,9 +76,12 @@ it('lists what is owed, overdue first by date', function () {
         ->and($tasks[1]['isOverdue'])->toBeFalse();
 });
 
-it('lets one project take at most one row', function () {
-    // A project with nine overdue tasks would otherwise be the whole screen,
-    // and a worklist showing one client is a worklist nobody reads.
+it('caps the worklist at six rows, not at one row per project', function () {
+    // Mockup 01 lists the same wedding twice in one block: two different
+    // things are owed on it, and each needs its own button. One row per
+    // project reads well on a busy board and empties the screen on a studio
+    // with a single project in production — which is every studio in its
+    // first month, and the state this screen gets judged in.
     $loud = Project::factory()->create(['name' => 'Laut']);
     Task::factory()->for($loud)->count(9)->due(now()->subDays(3)->format('Y-m-d'))->create();
 
@@ -87,7 +90,9 @@ it('lets one project take at most one row', function () {
 
     $props = props('/');
 
-    expect(collect($props['tasks'])->pluck('projectName')->all())->toBe(['Laut', 'Leise'])
+    // The nine older overdue tasks outrank the newer one, so the cap is what
+    // keeps 'Leise' off the screen — not a per-project rule.
+    expect(collect($props['tasks'])->pluck('projectName')->all())->toBe(array_fill(0, 6, 'Laut'))
         ->and($props['openTasks'])->toBe(10);
 });
 

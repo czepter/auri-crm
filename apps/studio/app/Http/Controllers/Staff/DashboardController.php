@@ -62,12 +62,14 @@ class DashboardController extends Controller
     }
 
     /**
-     * What the studio owes and has not done, at most one row per project.
+     * What the studio owes and has not done, most urgent first, six at most.
      *
-     * The cap is the point, not a performance measure: a project with nine
-     * overdue tasks would otherwise be the whole screen, and a worklist that
-     * only ever shows one client is a worklist nobody reads. Its most urgent
-     * task stands for it, and the project screen holds the rest.
+     * The six is the cap, not one row per project: mockup 01 lists Meier &
+     * Kowalski twice in the same block, because two different things are owed
+     * on that wedding and each needs its own button. Collapsing to one row per
+     * project reads well on a busy board and empties the screen on a studio
+     * with a single project in production — which is every studio in its first
+     * month, and the state this screen gets judged in.
      *
      * Undated tasks sort last: they are owed, but not owed on any given day.
      */
@@ -79,9 +81,8 @@ class DashboardController extends Controller
                 ->whereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id'))
                 ->byDueDate()
                 ->with('project')
+                ->limit(6)
                 ->get()
-                ->unique('project_id')
-                ->take(6)
                 ->map(TaskRowData::fromTask(...))
                 ->values()
         );

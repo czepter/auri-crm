@@ -29,11 +29,12 @@ function shortDate(date: string | null) {
     : null
 }
 
-// The rows the studio still owes, minus the ones already stated as readiness
-// marks on the hero — the same task should not ask twice on one screen.
-const worklist = computed(() =>
-  props.tasks.filter((task) => task.projectId !== props.nextShoot?.projectId),
-)
+// The rows the studio still owes. The hero's readiness marks name the same
+// tasks, and mockup 01 repeats them on purpose: the mark states, the row acts.
+// Filtering the hero's project out instead emptied the worklist entirely for a
+// studio with one project in production — a footer counting nine open tasks
+// above nothing to press.
+const worklist = computed(() => props.tasks)
 
 function complete(task: App.Crm.Data.TaskRowData) {
   router.post(`/aufgaben/${task.id}/erledigt`, {}, { preserveScroll: true })
@@ -56,7 +57,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
     <!-- Two tiles, not four. The mockup's other two are money — quotes are Q-*
          and Stripe is M-04 — and a tile with no source behind it is a number
          somebody has to invent. -->
-    <div class="kpis" style="grid-template-columns: repeat(2, minmax(0, 260px))">
+    <div class="kpis">
       <Link class="kpi" href="/anfragen">
         <b>{{ openLeads }}</b>
         {{ $t('dashboard.openLeads') }}
@@ -71,7 +72,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
       </Link>
     </div>
 
-    <div class="doms" style="grid-template-columns: minmax(0, 1fr)">
+    <div class="doms">
       <div class="dom">
         <div class="dh">
           <b>{{ $t('dashboard.nextShoots') }}</b>
