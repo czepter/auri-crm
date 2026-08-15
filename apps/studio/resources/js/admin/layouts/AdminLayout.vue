@@ -71,6 +71,16 @@ const items = computed(() => [
     icon: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M19 8v6M22 11h-6"/>',
   },
   {
+    // E-12: the tray for mail that arrived and matched nothing. Same
+    // capability as replying to a client, because triaging one is deciding
+    // which conversation it belongs to.
+    key: 'posteingang',
+    label: 'Posteingang',
+    href: '/posteingang',
+    needs: 'manage_messages',
+    icon: '<path d="M3 7l9 6 9-6"/><rect x="3" y="5" width="18" height="14" rx="2"/>',
+  },
+  {
     // S-13: whole-book figures, so the same capability that lets a role see
     // every project is the one that lets them see the totals over all of them.
     key: 'auswertungen',

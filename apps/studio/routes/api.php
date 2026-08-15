@@ -1,6 +1,7 @@
 <?php
 
 use App\Crm\Http\Controllers\PublicInquiryController;
+use App\Engagement\Http\Controllers\InboundMailController;
 use App\Enums\Capability;
 use App\Gallery\Http\Controllers\AssetCommentController;
 use App\Gallery\Http\Controllers\AssetFavoriteController;
@@ -27,6 +28,12 @@ Route::get('/health', HealthController::class);
 // uniform 202 that never says which of them applied — lives in the
 // controller, because they are one decision rather than a stack of them.
 Route::post('/anfragen', PublicInquiryController::class)->name('api.inquiries.store');
+
+// E-12. The inbound provider's delivery webhook. No audience guard for the
+// same reason the Stripe webhook beside it has none: the caller is a machine
+// proving itself with an HMAC over the raw body, which is a credential this
+// app's audience middleware has no vocabulary for.
+Route::post('/mail/eingang', InboundMailController::class)->name('api.mail.inbound');
 
 // G-08: the Astro gallery viewer's two calls — the currently-published
 // version's metadata, and the image bytes it points at. No `audience:api`

@@ -21,6 +21,7 @@ use App\Crm\Http\Controllers\TaskController;
 use App\Crm\Http\Controllers\TaskTemplateController;
 use App\Crm\Http\Controllers\TimelineController;
 use App\Documents\Http\Controllers\DocumentTemplateController;
+use App\Engagement\Http\Controllers\InboxController;
 use App\Engagement\Http\Controllers\ThreadController;
 use App\Gallery\Http\Controllers\GalleryLightroomExportController;
 use App\Http\Controllers\Staff\AbsenceController;
@@ -171,6 +172,17 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/team/einladungen', [InvitationController::class, 'store'])->name('staff.invite');
         Route::delete('/team/einladungen/{invitation}', [InvitationController::class, 'destroy'])
             ->name('staff.invitation.destroy');
+
+        // E-12. Everything that arrived and did not thread itself, and the
+        // addresses the studio hands out. Rotation posts here but is
+        // authorised in RotateInboundSecret rather than by this route — see
+        // that action's own doc comment for why the check is not on the
+        // screen.
+        Route::get('/posteingang', [InboxController::class, 'index'])->name('inbox.index');
+        Route::post('/posteingang/{inboundMessage}/zuordnen', [InboxController::class, 'attach'])
+            ->name('inbox.attach');
+        Route::post('/posteingang/adresse-erneuern', [InboxController::class, 'rotate'])
+            ->name('inbox.rotate');
 
         // S-13 + M-07. One screen: how the studio is doing, and what is
         // coming in. Gated on ViewAllProjects inside the controller — these

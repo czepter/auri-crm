@@ -66,6 +66,10 @@ const PUBLIC_ROUTES = [
         // per-address limits, and a response that never varies; see
         // PublicInquiryController.
         'api/anfragen',
+        // E-12's delivery webhook, for the same reason as the Stripe one
+        // above it: the caller proves itself with an HMAC over the raw
+        // body, a credential 'audience:' has no vocabulary for.
+        'api/mail/eingang',
         'api/galleries/{gallery}', 'api/gallery-versions/{galleryVersion}/images/{key}',
         'api/gallery-versions/{galleryVersion}/favorites', 'api/gallery-versions/{galleryVersion}/favorites/{key}',
         'api/gallery-versions/{galleryVersion}/comments',

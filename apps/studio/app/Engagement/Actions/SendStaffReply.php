@@ -4,6 +4,7 @@ namespace App\Engagement\Actions;
 
 use App\Engagement\Models\Message;
 use App\Engagement\Notifications\StaffReplyPosted;
+use App\Engagement\Support\InboundAddress;
 use App\Engagement\Support\MessageIdentifier;
 use App\Notifications\NotificationService;
 use App\Settings\Support\StudioSettingsResolver;
@@ -47,9 +48,16 @@ class SendStaffReply
 
         $message->forceFill(['email_message_id' => MessageIdentifier::for($message)])->save();
 
+        // E-12: the thread's own reply address, so a client pressing Reply in
+        // any mail client threads exactly. Null until an inbound domain and a
+        // secret both exist — the mail then falls back to T-06's studio
+        // reply-to, which is where it went before this story.
+        $secret = $this->settings->inboundSecret();
+        $replyTo = $secret === null ? null : InboundAddress::forThread($message->thread, $secret);
+
         try {
             foreach ($recipients as $contact) {
-                $this->notifications->send($contact, new StaffReplyPosted($message, $this->settings));
+                $this->notifications->send($contact, new StaffReplyPosted($message, $this->settings, $replyTo));
             }
 
             $message->forceFill(['delivery_state' => 'sent'])->save();

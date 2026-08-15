@@ -327,6 +327,9 @@ subject: string,
 messages: App.Engagement.Data.MessageData[],
 };
 }
+namespace Enums {
+export type InboundMessageState = 'threaded' | 'triage' | 'quarantined';
+}
 }
 namespace Enums {
 export type AbsenceCategory = 'unavailable' | 'holiday' | 'other';
