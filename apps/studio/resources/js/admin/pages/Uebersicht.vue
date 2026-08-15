@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import DomainColumn from '@/admin/components/DomainColumn.vue'
 import { Button } from '@/ui/button'
 
 const props = defineProps<{
@@ -12,6 +13,7 @@ const props = defineProps<{
   production: App.Crm.Data.ProductionRowData[]
   tasks: App.Crm.Data.TaskRowData[]
   openTasks: number
+  inquiries: App.Crm.Data.DomainRowData[]
 }>()
 
 const heading = computed(() =>
@@ -73,6 +75,15 @@ function complete(task: App.Crm.Data.TaskRowData) {
     </div>
 
     <div class="doms">
+      <DomainColumn
+        v-if="inquiries.length"
+        :title="$t('dashboard.inquiries')"
+        :count="$t('dashboard.items', { count: inquiries.length })"
+        :rows="inquiries"
+        :footer="$t('dashboard.toBoard')"
+        footer-href="/anfragen"
+      />
+
       <div class="dom">
         <div class="dh">
           <b>{{ $t('dashboard.nextShoots') }}</b>

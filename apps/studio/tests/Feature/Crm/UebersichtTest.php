@@ -1,13 +1,17 @@
 <?php
 
+use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\TaskAudience;
+use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Models\User;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -144,4 +148,25 @@ it('never puts an integer identifier into the übersicht', function () {
     Task::factory()->for($project)->create(['shoot_id' => $shoot->id, 'audience' => TaskAudience::Client]);
 
     expect(integerIdPaths(props('/')))->toBe([]);
+});
+
+it('carries the Anfragen & Angebote column, free of integer identifiers', function () {
+    $project = Project::factory()->create(['name' => 'Duhnkrack & W.']);
+    $project->attachContact(Contact::factory()->create(), ProjectContactRole::Primary);
+    Quote::factory()->for($project)->create([
+        'status' => QuoteStatus::Accepted,
+        'accepted_at' => now()->subDay(),
+    ]);
+
+    $rows = props('/')['inquiries'];
+
+    expect($rows)->toHaveCount(1)
+        ->and($rows[0]['projectId'])->toBe($project->public_id)
+        ->and($rows[0]['who'])->toBe('Duhnkrack & W.');
+});
+
+it('shows no Anfragen & Angebote column when nothing is owed on an offer', function () {
+    // "Absent, not empty" — S-01's rule, and the reason this screen is a
+    // worklist rather than a dashboard of zeroes.
+    expect(props('/')['inquiries'])->toBeEmpty();
 });

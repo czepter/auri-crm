@@ -11,6 +11,7 @@ use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Quotes\Actions\ReadInquiryColumn;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,7 +26,7 @@ use Inertia\Response;
  */
 class DashboardController extends Controller
 {
-    public function __invoke(ReadProductionBoard $board): Response
+    public function __invoke(ReadProductionBoard $board, ReadInquiryColumn $inquiries): Response
     {
         $viewer = auth('staff')->user();
 
@@ -37,6 +38,7 @@ class DashboardController extends Controller
             'production' => $board($viewer),
             'tasks' => $this->tasks($viewer),
             'openTasks' => Task::query()->open()->whereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id'))->count(),
+            'inquiries' => $inquiries($viewer),
         ]);
     }
 
