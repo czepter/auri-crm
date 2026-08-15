@@ -73,6 +73,24 @@ class MergeFieldVocabulary
     }
 
     /**
+     * Every `{{ path }}` in $body that this vocabulary does not know — E-10's
+     * "an unresolved placeholder blocks sending, and names the field".
+     *
+     * MergeFieldResolver replaces an unknown path with an empty string, which
+     * is the right behaviour at render time and the wrong one to discover at
+     * read time: a typo'd field does not shout, it silently deletes a
+     * sentence. This is how a caller finds out before that happens.
+     *
+     * @return list<string>
+     */
+    public static function unknownPathsIn(string $body): array
+    {
+        preg_match_all('/\{\{\s*([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*)\s*\}\}/', $body, $matches);
+
+        return array_values(array_unique(array_diff($matches[1] ?? [], self::paths())));
+    }
+
+    /**
      * The flat path => sample map behind sample(). The editor shows these values
      * in its merge-field chips so a paragraph reads as prose rather than as
      * braces, and paints them into its instant preview.

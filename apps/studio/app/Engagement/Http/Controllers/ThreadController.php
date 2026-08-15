@@ -30,8 +30,20 @@ class ThreadController extends Controller
         return back();
     }
 
+    /**
+     * E-10: nothing leaves with a merge field still in it. Templates resolve
+     * when they are inserted (MailTemplateData), so a `{{ … }}` surviving to
+     * this point is either a typed one or a pasted one — and the client
+     * would receive it verbatim, since messages have no second resolution
+     * pass. Refused rather than silently blanked, so the staff member finds
+     * out while they can still fix it.
+     */
     private function validated(Request $request): string
     {
-        return $request->validate(['body' => ['required', 'string', 'max:5000']])['body'];
+        return $request->validate([
+            'body' => ['required', 'string', 'max:5000', 'not_regex:/\{\{.*\}\}/s'],
+        ], [
+            'body.not_regex' => 'Die Nachricht enthält ein nicht aufgelöstes Feld.',
+        ])['body'];
     }
 }

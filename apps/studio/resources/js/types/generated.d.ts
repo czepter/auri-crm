@@ -298,6 +298,12 @@ typeLabel: string,
 shootKind: string | null,
 shootKindLabel: string | null,
 };
+export type MailTemplateData = {
+id: string,
+name: string,
+body: string,
+unknownFields: string[],
+};
 }
 namespace Enums {
 export type DocumentTemplateType = 'contract' | 'quote' | 'invoice' | 'mail';

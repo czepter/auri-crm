@@ -180,6 +180,7 @@
     "messagesSubject": "Thema: {subject}",
     "messagesEmpty": "Keine Nachrichten.",
     "messagesReplyPlaceholder": "Antwort schreiben …",
+    "messagesTemplateBroken": "Vorlage „{name}“ nutzt unbekannte Felder: {fields}",
     "messagesSend": "Senden"
   },
   "calendar": {
