@@ -14,6 +14,7 @@ const props = defineProps<{
   tasks: App.Crm.Data.TaskRowData[]
   openTasks: number
   inquiries: App.Crm.Data.DomainRowData[]
+  payments: App.Crm.Data.DomainRowData[]
 }>()
 
 const heading = computed(() =>
@@ -169,6 +170,15 @@ function complete(task: App.Crm.Data.TaskRowData) {
           {{ $t('dashboard.moreTasks', { count: openTasks }) }}
         </span>
       </div>
+
+      <!-- No footer: unlike inquiries, this column has no "all payments"
+           board to link to yet. -->
+      <DomainColumn
+        v-if="payments.length"
+        :title="$t('dashboard.payments')"
+        :count="$t('dashboard.items', { count: payments.length })"
+        :rows="payments"
+      />
     </div>
   </AdminLayout>
 </template>

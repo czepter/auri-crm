@@ -10,6 +10,8 @@ use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Models\User;
+use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\PaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -120,12 +122,13 @@ it('carries the production board, one row per booked project', function () {
 });
 
 it('shows no column for a domain with no data source', function () {
-    // Quotes are Q-*, Stripe is M-04, galleries are G-*. A block with nothing
-    // behind it would have to invent its contents.
+    // Quotes are Q-*, galleries are G-*. Payments now has a source (Task 5/6)
+    // so its prop is always present, possibly empty — "absent, not empty"
+    // moved to the Vue side (v-if="rows.length"), covered by the dedicated
+    // "shows no Zahlungen column when nothing is behind" test below.
     $props = props('/');
 
-    expect($props)->not->toHaveKey('payments')
-        ->and($props)->not->toHaveKey('quotes')
+    expect($props)->not->toHaveKey('quotes')
         ->and($props)->not->toHaveKey('afterDelivery');
 });
 
@@ -169,4 +172,22 @@ it('shows no Anfragen & Angebote column when nothing is owed on an offer', funct
     // "Absent, not empty" — S-01's rule, and the reason this screen is a
     // worklist rather than a dashboard of zeroes.
     expect(props('/')['inquiries'])->toBeEmpty();
+});
+
+it('carries the Zahlungen column', function () {
+    $project = Project::factory()->create(['name' => 'Sievers–Brandt']);
+    $project->attachContact(Contact::factory()->create(['phone' => '+4940123']), ProjectContactRole::Primary);
+    $job = Job::factory()->for($project)->create();
+    $plan = PaymentPlan::factory()->for($job)->create(['total' => 110000]);
+    PaymentInstallment::factory()->for($plan, 'plan')->create([
+        'amount' => 110000,
+        'due_on' => now()->subDays(20)->toDateString(),
+        'overdue_notified_at' => now()->subDays(9),
+    ]);
+
+    expect(props('/')['payments'])->toHaveCount(1);
+});
+
+it('shows no Zahlungen column when nothing is behind', function () {
+    expect(props('/')['payments'])->toBeEmpty();
 });

@@ -11,6 +11,7 @@ use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Payments\Actions\ReadPaymentColumn;
 use App\Quotes\Actions\ReadInquiryColumn;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -18,16 +19,19 @@ use Inertia\Response;
 /**
  * The Übersicht: an action worklist, not a status report.
  *
- * Mockup 01 shows four domain blocks. Three read from data P1b does not have —
- * quotes are Q-*, Stripe is M-04, galleries are G-*. Each arrives with its own
- * phase; building them now would mean inventing their contents, which is the
- * failure clickdummy §6 records for this exact screen. The same rule governs
- * the KPI row: money-led tiles wait for the money.
+ * Mockup 01 shows four domain blocks. Two still read from data P1b does not
+ * have — quotes are Q-*, galleries are G-*. Each arrives with its own phase;
+ * building them now would mean inventing their contents, which is the failure
+ * clickdummy §6 records for this exact screen. The same rule governs the KPI
+ * row: money-led tiles wait for the money.
  */
 class DashboardController extends Controller
 {
-    public function __invoke(ReadProductionBoard $board, ReadInquiryColumn $inquiries): Response
-    {
+    public function __invoke(
+        ReadProductionBoard $board,
+        ReadInquiryColumn $inquiries,
+        ReadPaymentColumn $payments,
+    ): Response {
         $viewer = auth('staff')->user();
 
         return Inertia::render('Uebersicht', [
@@ -39,6 +43,7 @@ class DashboardController extends Controller
             'tasks' => $this->tasks($viewer),
             'openTasks' => Task::query()->open()->whereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id'))->count(),
             'inquiries' => $inquiries($viewer),
+            'payments' => $payments($viewer),
         ]);
     }
 
