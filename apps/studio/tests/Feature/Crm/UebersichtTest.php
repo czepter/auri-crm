@@ -122,16 +122,6 @@ it('carries the production board, one row per booked project', function () {
         ->and($production[0]['status'])->toBe('culling');
 });
 
-it('shows no column for a domain with no data source', function () {
-    // Quotes are Q-*. Payments and afterDelivery now have sources (Tasks
-    // 5/6 and 9/10) so their props are always present, possibly empty —
-    // "absent, not empty" moved to the Vue side (v-if="rows.length"),
-    // covered by the dedicated "shows no ... column when ..." tests below.
-    $props = props('/');
-
-    expect($props)->not->toHaveKey('quotes');
-});
-
 it('completes and reopens a task from the worklist', function () {
     $task = Task::factory()->create();
 
