@@ -5,6 +5,7 @@ namespace App\Crm\Actions;
 use App\Crm\Enums\ShootKind;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
 use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
@@ -37,8 +38,31 @@ class ApplyTaskTemplates
         $shoots = $project->shoots()->uncancelled()->get();
 
         foreach ($shoots as $shoot) {
-            foreach ($templates->filter(fn (TaskTemplate $t) => $t->appliesTo($shoot)) as $template) {
-                $this->applyOne($project, $shoot, $template);
+            $applicable = $templates->filter(fn (TaskTemplate $t) => $t->appliesTo($shoot));
+
+            // Two passes: every task exists before any of them is asked to
+            // point at another. S-12's chains are declared on the templates in
+            // any order, and a single pass would leave a task whose
+            // predecessor had not been created yet with no dependency at all
+            // — a chain silently flattened rather than refused.
+            $created = [];
+
+            foreach ($applicable as $template) {
+                $created[$template->id] = $this->applyOne($project, $shoot, $template);
+            }
+
+            foreach ($applicable as $template) {
+                if ($template->depends_on_template_id === null) {
+                    continue;
+                }
+
+                // Only within this shoot: two shoots produced from the same
+                // template set are two independent chains, and crossing them
+                // would make the second wedding's briefing wait on the first
+                // one's delivery.
+                $predecessor = $created[$template->depends_on_template_id] ?? null;
+
+                $created[$template->id]->update(['depends_on_task_id' => $predecessor?->id]);
             }
         }
     }
@@ -67,12 +91,12 @@ class ApplyTaskTemplates
             ->all();
     }
 
-    private function applyOne(Project $project, Shoot $shoot, TaskTemplate $template): void
+    private function applyOne(Project $project, Shoot $shoot, TaskTemplate $template): Task
     {
         // updateOrCreate rather than create: re-applying must not duplicate,
         // and must not silently reset a due date somebody moved by hand — so
         // only the columns the template owns are written on the way in.
-        $project->tasks()->updateOrCreate(
+        return $project->tasks()->updateOrCreate(
             ['task_template_id' => $template->id, 'shoot_id' => $shoot->id],
             [
                 'title' => $template->title,

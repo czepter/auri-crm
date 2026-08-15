@@ -24,6 +24,11 @@ class TaskRowData extends Data
         public ?string $shootLabel,
         public string $audience,
         public string $audienceLabel,
+        // S-12: waiting on something still open. Shown, never hidden — what
+        // the studio is waiting for is exactly what it needs to see — and
+        // named, because "blocked" without saying by what is a dead end.
+        public bool $isBlocked = false,
+        public ?string $blockedBy = null,
     ) {}
 
     public static function fromTask(Task $task): self
@@ -40,6 +45,8 @@ class TaskRowData extends Data
                 && ! $task->isDone()
                 && $task->due_on->isBefore(now()->startOfDay()),
             isDone: $task->isDone(),
+            isBlocked: $task->isBlocked(),
+            blockedBy: $task->isBlocked() ? $task->dependsOn->title : null,
             // Which occasion it hangs off, so a project with four shoots can
             // tell its four briefings apart.
             shootLabel: $task->shoot?->label ?? $task->shoot?->kind->label(),

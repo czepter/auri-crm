@@ -231,6 +231,8 @@ isDone: boolean,
 shootLabel: string | null,
 audience: string,
 audienceLabel: string,
+isBlocked: boolean,
+blockedBy: string | null,
 };
 export type TaskTemplateData = {
 id: string,

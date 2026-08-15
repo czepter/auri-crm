@@ -332,9 +332,13 @@ function submitMarkPaid(installmentId: string) {
             <div v-for="task in tasks" :key="task.id" class="taskrow">
               <!-- Completion is a toggle, not a delete: what was owed and when
                    it was done is the record. -->
+              <!-- S-12: a blocked task keeps its row and loses its button.
+                   It is never hidden — what the studio is waiting on is
+                   exactly what it needs to see. -->
               <Button
                 v-if="header.canManageTasks"
                 type="button" variant="outline"
+                :disabled="task.isBlocked && !task.isDone"
                 :aria-label="$t(task.isDone ? 'project.taskReopen' : 'project.taskComplete')"
                 @click="toggleTask(task)"
               >
@@ -343,6 +347,9 @@ function submitMarkPaid(installmentId: string) {
               <span class="ttext" :style="task.isDone ? 'color: var(--faint); text-decoration: line-through' : ''">
                 {{ task.title }}
                 <template v-if="task.shootLabel"> · {{ task.shootLabel }}</template>
+                <em v-if="task.isBlocked && !task.isDone" class="hint">
+                  · {{ $t('project.taskBlockedBy', { title: task.blockedBy }) }}
+                </em>
               </span>
               <span class="tdate" :style="task.isOverdue ? 'color: var(--late)' : ''">
                 {{ task.dueOn ? shortDate(task.dueOn) : '—' }}

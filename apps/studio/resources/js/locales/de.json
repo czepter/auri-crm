@@ -156,6 +156,7 @@
     "taskShoot": "Shooting",
     "taskNoShoot": "Ganzes Projekt",
     "taskComplete": "Als erledigt markieren",
+    "taskBlockedBy": "wartet auf „{title}“",
     "taskReopen": "Wieder öffnen",
     "noTasks": "Nichts offen.",
     "notes": "Notizen",

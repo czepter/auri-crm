@@ -421,6 +421,11 @@ Route::middleware('audience:staff')->group(function () {
             ->name('tasks.store');
         Route::post('/aufgaben/{task}/erledigt', [TaskController::class, 'complete'])
             ->name('tasks.complete');
+        // S-12: what this task waits on. Its own route rather than a field on
+        // completion, because changing a dependency and finishing the work
+        // are different decisions taken at different moments.
+        Route::post('/aufgaben/{task}/abhaengigkeit', [TaskController::class, 'depend'])
+            ->name('tasks.depend');
         Route::delete('/aufgaben/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 
         Route::post('/auftraege/{project}/notizen', [InternalNoteController::class, 'store'])

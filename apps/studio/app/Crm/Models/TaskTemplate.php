@@ -7,12 +7,12 @@ use App\Concerns\HasPublicId;
 use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\TaskAudience;
 use App\Settings\Support\StudioSettingsResolver;
+use Carbon\CarbonImmutable;
 use Database\Factories\Crm\TaskTemplateFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\CarbonImmutable;
 
 /**
  * The studio's standing list of what a booked shoot owes, and when.
@@ -23,7 +23,7 @@ class TaskTemplate extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['title', 'audience', 'day_offset', 'shoot_kind', 'is_active', 'sort_order'];
+    protected $fillable = ['title', 'audience', 'day_offset', 'shoot_kind', 'is_active', 'sort_order', 'depends_on_template_id'];
 
     protected $attributes = ['is_active' => true, 'sort_order' => 0];
 
