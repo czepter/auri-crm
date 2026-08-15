@@ -2,6 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Automation\Actions\FireAutomationRule;
+use App\Automation\Models\AutomationRule;
+use App\Contracts\Models\Contract;
 use App\Crm\Actions\AdvanceShootStatus;
 use App\Crm\Actions\BookProject;
 use App\Crm\Enums\CrewRole;
@@ -19,9 +22,18 @@ use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\TaskTemplate;
+use App\Engagement\Actions\StartThread;
 use App\Enums\StaffRole;
+use App\Gallery\Models\Gallery;
 use App\Models\User;
+use App\Payments\Actions\DetectOverdueInstallments;
+use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\PaymentPlan;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -60,6 +72,11 @@ class DemoCrmSeeder extends Seeder
         // Before the cast, so booking the wedding below produces its tasks
         // through the listener rather than having them written in by hand.
         $this->seedTaskTemplates();
+
+        // Keyed by the cast's own contact name, so seedDashboardOccasions()
+        // below can reach back into rows the loop already built rather than
+        // re-querying them by their assembled "name & partner" project name.
+        $projects = [];
 
         foreach (self::CAST as [$name, $partner, $type, $date, $stage, $daysAgo, $source, $venue, $city]) {
             $projectType = ProjectType::from($type);
@@ -102,6 +119,8 @@ class DemoCrmSeeder extends Seeder
                 'captured_by_id' => $staff->id,
             ]);
 
+            $projects[$name] = $project;
+
             // The one booked project gets mockup 04's full shape, so the
             // project screen has something to be held next to the screen it
             // was designed from.
@@ -109,6 +128,12 @@ class DemoCrmSeeder extends Seeder
                 $this->buildOutTheWedding($project, $staff);
             }
         }
+
+        // After the cast, and after the booked wedding: the occasions below
+        // lean on the Job that buildOutTheWedding() only just produced, and
+        // on the automation rule set the sweep would otherwise seed on its
+        // own schedule.
+        $this->seedDashboardOccasions($projects);
     }
 
     /**
@@ -244,6 +269,157 @@ class DemoCrmSeeder extends Seeder
                 'body' => $body,
             ]);
         }
+    }
+
+    /**
+     * Mockup 01's four columns and its header link, each fed by the exact
+     * predicate its reader checks — App\Quotes\Actions\ReadInquiryColumn,
+     * App\Payments\Actions\ReadPaymentColumn, App\Gallery\Actions\
+     * ReadAfterDeliveryColumn and DashboardController::unanswered() — rather
+     * than by a row shaped to merely look right next to the mockup.
+     *
+     * Every project used here is one the cast above already built; nothing
+     * new is invented except the occasion each column is watching for.
+     */
+    private function seedDashboardOccasions(array $projects): void
+    {
+        // config/automation.php ships the rule set; only the console command
+        // loads it into the database, and a Seeder cannot $this->call() one.
+        Artisan::call('automation:seed-default-rules');
+
+        $this->seedChasedQuote($projects['Annika Reuter']);
+        $this->seedAcceptedQuoteWithoutContract($projects['Marie Ahrens']);
+        $this->seedUnsignedContract($projects['Sophie Lang']);
+        $this->seedOverdueInstallment($projects['Meier & Kowalski']);
+        $this->seedReferralAndExpiringGallery($projects['Meier & Kowalski'], $projects['Familie Osterhoff']);
+        $this->seedUnansweredThread($projects['Annika Reuter']);
+    }
+
+    /**
+     * A sent quote running out with the reminders spent: valid_until sits
+     * inside ReadInquiryColumn::EXPIRY_WINDOW_DAYS, and the two AutomationRun
+     * rows are real, fired through FireAutomationRule against two different
+     * trigger dates — the "2× erinnert" the row renders is a count of these,
+     * not a string written to look like one.
+     */
+    private function seedChasedQuote(Project $project): void
+    {
+        $project->primaryContact()?->update(['phone' => '+49 40 5550101']);
+
+        Quote::factory()->for($project)->create([
+            'status' => QuoteStatus::Sent,
+            'sent_at' => now()->subDays(9),
+            'valid_until' => now()->addDays(5),
+            'total' => 350000,
+        ]);
+
+        $rule = AutomationRule::query()->where('key', 'quote-follow-up')->firstOrFail();
+        $fire = app(FireAutomationRule::class);
+
+        // Two distinct trigger dates so the idempotency key differs and both
+        // claims land — the same rule pinging the same project on two
+        // separate weeks, which is exactly what "2×" means on the row.
+        $fire($rule, $project, now()->subDays(9)->toDateString());
+        $fire($rule, $project, now()->subDays(2)->toDateString());
+    }
+
+    /** Accepted, and nothing has rendered a contract for it yet. */
+    private function seedAcceptedQuoteWithoutContract(Project $project): void
+    {
+        Quote::factory()->for($project)->create([
+            'status' => QuoteStatus::Accepted,
+            'sent_at' => now()->subDays(10),
+            'accepted_at' => now()->subDays(3),
+            'total' => 420000,
+        ]);
+    }
+
+    /** Rendered, aged past ReadInquiryColumn::UNSIGNED_AFTER_DAYS, still no signature. */
+    private function seedUnsignedContract(Project $project): void
+    {
+        $project->primaryContact()?->update(['phone' => '+49 40 5550102']);
+
+        $contract = Contract::factory()->for($project)->rendered()->create();
+
+        // created_at drives the row's "N Tage unsigniert" — timestamps only
+        // accept an override outside Eloquent's own auto-touch, which a plain
+        // create() array does not bypass.
+        $contract->timestamps = false;
+        $contract->forceFill([
+            'created_at' => now()->subDays(6),
+            'rendered_at' => now()->subDays(6),
+        ])->save();
+    }
+
+    /**
+     * The plan and its one overdue installment share a transaction: the
+     * sum-matches-total trigger is deferred to commit, but each Eloquent
+     * create() is its own transaction unless one is opened explicitly, and a
+     * plan committed alone with no installments yet would trip it.
+     *
+     * DetectOverdueInstallments always stamps overdue_notified_at with
+     * `now()`, so running it here would read "seit 0 Tagen" — the opposite of
+     * what this row demonstrates. It runs anyway, for the real guard and the
+     * InstallmentOverdue dispatch, and the timestamp is then moved back by
+     * hand to the nine days ReadPaymentColumn::DUNNING_EXHAUSTED_DAYS needs.
+     */
+    private function seedOverdueInstallment(Project $project): void
+    {
+        $project->primaryContact()?->update(['phone' => '+49 40 5550103']);
+
+        $installment = DB::transaction(function () use ($project) {
+            $plan = PaymentPlan::factory()->for($project->job)->create(['total' => 150000]);
+
+            return PaymentInstallment::factory()->for($plan, 'plan')->create([
+                'amount' => 150000,
+                'due_on' => now()->subDays(20)->toDateString(),
+            ]);
+        });
+
+        app(DetectOverdueInstallments::class)->markOverdue($installment);
+        $installment->update(['overdue_notified_at' => now()->subDays(9)]);
+    }
+
+    /**
+     * Both of Nach der Lieferung's rows, on the one project already booked
+     * with a Job: a referral naming the contact InternalNote already credits
+     * above, and a gallery whose expiry sits inside
+     * ReadAfterDeliveryColumn::EXPIRY_WINDOW_DAYS.
+     *
+     * expires_at is set directly rather than through Gallery::publish():
+     * publish() only stamps it when config('gallery.retention_days') is set,
+     * and that config defaults to null — every published gallery keeps no
+     * expiry until a studio asks for one. This row needs an expiry to exist
+     * regardless of that setting, so it is written the same way
+     * publish() itself would have, once retention is configured.
+     */
+    private function seedReferralAndExpiringGallery(Project $project, Project $referrerProject): void
+    {
+        $project->lead->update([
+            'referred_by_contact_id' => $referrerProject->primaryContact()->id,
+        ]);
+        $referrerProject->primaryContact()->update(['phone' => '+49 40 5550104']);
+
+        Gallery::factory()->for($project)->create([
+            'title' => 'Meier & Kowalski — Hochzeit',
+            'expires_at' => now()->addDays(12),
+        ]);
+    }
+
+    /**
+     * Client-initiated, the only way E-06 ever starts a thread — see
+     * ReadAfterDeliveryColumn's own docblock for why a machine-sent
+     * thank-you would be the wrong shape here, and by the same reasoning
+     * this screen owes a real reply, not an invented one.
+     */
+    private function seedUnansweredThread(Project $project): void
+    {
+        app(StartThread::class)(
+            $project,
+            $project->primaryContact(),
+            'Frage zum Angebot',
+            'Hallo, wir hätten noch eine kurze Frage zum Angebot — meldet ihr euch?',
+        );
     }
 
     private static function emailFor(string $name): string
