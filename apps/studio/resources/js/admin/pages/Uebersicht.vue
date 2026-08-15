@@ -15,6 +15,7 @@ const props = defineProps<{
   openTasks: number
   inquiries: App.Crm.Data.DomainRowData[]
   payments: App.Crm.Data.DomainRowData[]
+  afterDelivery: App.Crm.Data.DomainRowData[]
 }>()
 
 const heading = computed(() =>
@@ -178,6 +179,16 @@ function complete(task: App.Crm.Data.TaskRowData) {
         :title="$t('dashboard.payments')"
         :count="$t('dashboard.items', { count: payments.length })"
         :rows="payments"
+      />
+
+      <!-- No footer: the mockup's review-request note describes an
+           automation nothing in this codebase runs, and stating it here
+           would be inventing a fact this screen's design forbids. -->
+      <DomainColumn
+        v-if="afterDelivery.length"
+        :title="$t('dashboard.afterDelivery')"
+        :count="$t('dashboard.occasions', { count: afterDelivery.length })"
+        :rows="afterDelivery"
       />
     </div>
   </AdminLayout>

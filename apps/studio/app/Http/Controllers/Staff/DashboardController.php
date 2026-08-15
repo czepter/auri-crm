@@ -9,6 +9,7 @@ use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
+use App\Gallery\Actions\ReadAfterDeliveryColumn;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Payments\Actions\ReadPaymentColumn;
@@ -19,11 +20,15 @@ use Inertia\Response;
 /**
  * The Übersicht: an action worklist, not a status report.
  *
- * Mockup 01 shows four domain blocks. Two still read from data P1b does not
- * have — quotes are Q-*, galleries are G-*. Each arrives with its own phase;
- * building them now would mean inventing their contents, which is the failure
- * clickdummy §6 records for this exact screen. The same rule governs the KPI
- * row: money-led tiles wait for the money.
+ * Mockup 01's four domain blocks all read from real data now — quotes are
+ * still Q-* and stay off the KPI row for the same reason. Nowhere on this
+ * screen is a number invented to fill a clause; that is the failure
+ * clickdummy §6 records for it.
+ *
+ * One deliberate omission: the mockup's "nie fällig gestellt" payment row.
+ * PaymentInstallmentStatus::Invoiced exists on the column but nothing in
+ * this codebase ever writes it (see that enum's docblock), so there is no
+ * state to detect here and no action to end it with.
  */
 class DashboardController extends Controller
 {
@@ -31,6 +36,7 @@ class DashboardController extends Controller
         ReadProductionBoard $board,
         ReadInquiryColumn $inquiries,
         ReadPaymentColumn $payments,
+        ReadAfterDeliveryColumn $afterDelivery,
     ): Response {
         $viewer = auth('staff')->user();
 
@@ -44,6 +50,7 @@ class DashboardController extends Controller
             'openTasks' => Task::query()->open()->whereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id'))->count(),
             'inquiries' => $inquiries($viewer),
             'payments' => $payments($viewer),
+            'afterDelivery' => $afterDelivery($viewer),
         ]);
     }
 

@@ -9,6 +9,7 @@ use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
+use App\Gallery\Models\Gallery;
 use App\Models\User;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
@@ -122,14 +123,13 @@ it('carries the production board, one row per booked project', function () {
 });
 
 it('shows no column for a domain with no data source', function () {
-    // Quotes are Q-*, galleries are G-*. Payments now has a source (Task 5/6)
-    // so its prop is always present, possibly empty — "absent, not empty"
-    // moved to the Vue side (v-if="rows.length"), covered by the dedicated
-    // "shows no Zahlungen column when nothing is behind" test below.
+    // Quotes are Q-*. Payments and afterDelivery now have sources (Tasks
+    // 5/6 and 9/10) so their props are always present, possibly empty —
+    // "absent, not empty" moved to the Vue side (v-if="rows.length"),
+    // covered by the dedicated "shows no ... column when ..." tests below.
     $props = props('/');
 
-    expect($props)->not->toHaveKey('quotes')
-        ->and($props)->not->toHaveKey('afterDelivery');
+    expect($props)->not->toHaveKey('quotes');
 });
 
 it('completes and reopens a task from the worklist', function () {
@@ -190,4 +190,15 @@ it('carries the Zahlungen column', function () {
 
 it('shows no Zahlungen column when nothing is behind', function () {
     expect(props('/')['payments'])->toBeEmpty();
+});
+
+it('carries the Nach der Lieferung column', function () {
+    $project = Project::factory()->create(['name' => "Hensel Hochzeit '25"]);
+    Gallery::factory()->for($project)->create(['expires_at' => now()->addDays(12)]);
+
+    expect(props('/')['afterDelivery'])->toHaveCount(1);
+});
+
+it('shows no Nach der Lieferung column when no occasion is open', function () {
+    expect(props('/')['afterDelivery'])->toBeEmpty();
 });

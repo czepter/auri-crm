@@ -208,7 +208,9 @@
     "done": "Erledigt",
     "noDetails": "Ort und Uhrzeit noch offen",
     "nothingDue": "Nichts offen.",
-    "moreTasks": "{count} offene Aufgaben"
+    "moreTasks": "{count} offene Aufgaben",
+    "afterDelivery": "Nach der Lieferung",
+    "occasions": "{count} Anlässe"
   },
   "invite": {
     "title": "Willkommen, {name}",
