@@ -33,7 +33,14 @@ class CalendarController extends Controller
             ->get();
 
         return Inertia::render('Kalender', [
-            'shoots' => ShootData::collect($shoots->map(ShootData::fromShoot(...))),
+            // Wrapped in a closure rather than passed as ShootData::fromShoot(...):
+            // Collection::map calls its callback with ($item, $key), and that
+            // second argument binds to fromShoot's optional $conflicts, which is
+            // typed array — so the first-class callable form fataled on every
+            // request with "Argument #2 ($conflicts) must be of type array, int
+            // given". The calendar has no conflicts to narrow by; that list is
+            // ProjectController::shootsOf()'s concern.
+            'shoots' => ShootData::collect($shoots->map(fn (Shoot $shoot) => ShootData::fromShoot($shoot))),
             // Keyed by shoot, because the calendar lists occasions and each
             // one has to name the project it belongs to and link to it.
             'projects' => $shoots->mapWithKeys(fn (Shoot $shoot) => [
