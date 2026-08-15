@@ -113,4 +113,25 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Inbound Mail (E-11, E-12)
+    |--------------------------------------------------------------------------
+    |
+    | The domain this app's own hosting owns for *receiving* mail — never the
+    | studio's mailbox. E-12's per-thread reply addresses and account
+    | catch-all are minted under it, and E-11 uses it for the domain half of
+    | every outgoing Message-ID.
+    |
+    | Unset until the MX records exist, which is what keeps E-12's ingest
+    | inert on a deployment that has not provisioned one.
+    |
+    */
+
+    'inbound' => [
+        'domain' => env('MAIL_INBOUND_DOMAIN'),
+        'signing_secret' => env('MAIL_INBOUND_SIGNING_SECRET'),
+        'max_bytes' => (int) env('MAIL_INBOUND_MAX_BYTES', 26_214_400),
+    ],
+
 ];

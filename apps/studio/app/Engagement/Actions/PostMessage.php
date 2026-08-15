@@ -20,9 +20,11 @@ use Illuminate\Support\Facades\DB;
  */
 class PostMessage
 {
+    public function __construct(private readonly SendStaffReply $send) {}
+
     public function __invoke(Thread $thread, Contact|User $actor, string $body): Message
     {
-        return DB::transaction(function () use ($thread, $actor, $body) {
+        $message = DB::transaction(function () use ($thread, $actor, $body) {
             $thread->participants()->firstOrCreate(
                 $actor instanceof Contact ? ['contact_id' => $actor->id] : ['user_id' => $actor->id]
             );
@@ -32,5 +34,15 @@ class PostMessage
                 'body' => $body,
             ]);
         });
+
+        // E-11. Outside the transaction on purpose: a mail that has already
+        // left cannot be rolled back, so it must not be sent from inside one
+        // that still could. Staff only — a client's own message is already
+        // where the studio reads it.
+        if ($actor instanceof User) {
+            ($this->send)($message);
+        }
+
+        return $message;
     }
 }

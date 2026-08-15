@@ -29,6 +29,12 @@ class Message extends Model
 
     protected $fillable = ['thread_id', 'contact_id', 'author_id', 'body'];
 
+    /**
+     * E-11's two columns are deliberately outside $fillable: nothing but
+     * SendStaffReply may say a message was delivered, and a mass-assigned
+     * delivery_state would be a claim about the outside world made from
+     * request input.
+     */
     public static function booted(): void
     {
         static::creating(function (self $message) {

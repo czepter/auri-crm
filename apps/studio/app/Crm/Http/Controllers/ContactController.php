@@ -4,6 +4,8 @@ namespace App\Crm\Http\Controllers;
 
 use App\Crm\Data\ContactSuggestionData;
 use App\Crm\Models\Contact;
+use App\Engagement\Data\MessageData;
+use App\Engagement\Models\Message;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
@@ -45,6 +47,18 @@ class ContactController extends Controller
                 'postcode' => $contact->postcode,
                 'city' => $contact->city,
             ],
+            // E-11: every thread this contact is on, across projects — the
+            // question "what have we actually said to this person" has no
+            // other place to be answered, because a thread only ever knows
+            // its own project.
+            'correspondence' => Message::query()
+                ->whereHas('thread.participants', fn ($query) => $query->where('contact_id', $contact->id))
+                ->with(['thread.project', 'contact', 'author'])
+                ->latest()
+                ->limit(50)
+                ->get()
+                ->map(MessageData::withProject(...))
+                ->all(),
             'portalAccessRevokedAt' => $contact->portal_access_revoked_at?->toIso8601String(),
             'canRevokePortalAccess' => $user?->can('revokePortalAccess', $contact) ?? false,
             'dsgvoErasedAt' => $contact->dsgvo_erased_at?->toIso8601String(),

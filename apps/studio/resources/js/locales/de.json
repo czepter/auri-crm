@@ -78,6 +78,8 @@
     "street": "Straße",
     "postcode": "PLZ",
     "city": "Ort",
+    "correspondence": "Nachrichten",
+    "deliveryFailed": "nicht zugestellt",
     "projects": "Projekte",
     "projectCount": "kein Projekt | 1 Projekt | {count} Projekte",
     "none": "—",
