@@ -16,7 +16,16 @@ const props = defineProps<{
   inquiries: App.Crm.Data.DomainRowData[]
   payments: App.Crm.Data.DomainRowData[]
   afterDelivery: App.Crm.Data.DomainRowData[]
+  pipeline: number
+  overdueTotal: number
+  acceptanceRate: number | null
+  unanswered: number
 }>()
+
+// Quote.total and PaymentInstallment.amount are minor units end to end; this
+// is the one place they turn into euros, so no other spot on this screen
+// divides by 100 again.
+const money = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 
 const heading = computed(() =>
   new Date(props.today).toLocaleDateString('de-DE', {
@@ -52,21 +61,36 @@ function complete(task: App.Crm.Data.TaskRowData) {
         <div class="kick">{{ heading }}</div>
         <h1>{{ $t('dashboard.title') }}</h1>
       </div>
+      <!-- Unbeantwortet, not ungelesen: ThreadParticipant carries no
+           last_read_at and this screen does not add one. An unanswered
+           thread is a fact about the conversation and something the studio
+           owes; whether someone has opened it is a fact about a person. -->
+      <Button v-if="unanswered" :as="Link" variant="ghost" href="/anfragen" style="margin-left: auto">
+        <svg viewBox="0 0 24 24"><path d="M4 4h16v13H8l-4 4z" /><path d="M8 9h8M8 13h5" /></svg>
+        {{ $t('dashboard.unanswered', { count: unanswered }) }}
+      </Button>
       <Button :as="Link" href="/anfragen/neu">
         <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         {{ $t('board.create') }}
       </Button>
     </div>
 
-    <!-- Two tiles, not four. The mockup's other two are money — quotes are Q-*
-         and Stripe is M-04 — and a tile with no source behind it is a number
-         somebody has to invent. -->
+    <!-- Mockup order: Pipeline, überfällig, nächstes Shooting, Angebote
+         angenommen. Each tile is guarded on its own figure — a tile with
+         nothing behind it is absent, not a zero (S-01's rule). The open-lead
+         count that used to be its own tile is now the Pipeline tile's
+         sub-line, per the same rule: it never gets a tile with no money
+         behind it. -->
     <div class="kpis">
-      <Link class="kpi" href="/anfragen">
-        <b>{{ openLeads }}</b>
-        {{ $t('dashboard.openLeads') }}
+      <Link v-if="pipeline" class="kpi" href="/anfragen">
+        <b>{{ money.format(pipeline / 100) }}</b>
+        {{ $t('dashboard.pipeline') }} · {{ $t('dashboard.openLeads', { count: openLeads }) }}
         <em v-if="newLeadsThisWeek"> · {{ $t('dashboard.newThisWeek', { count: newLeadsThisWeek }) }}</em>
       </Link>
+      <div v-if="overdueTotal" class="kpi">
+        <b><i>{{ money.format(overdueTotal / 100) }}</i></b>
+        {{ $t('dashboard.overdueTotal') }}
+      </div>
       <Link v-if="nextShoot" class="kpi" :href="`/auftraege/${nextShoot.projectId}/shootings`">
         <b>{{ shortDate(nextShoot.date) }}</b>
         {{ $t('dashboard.nextShoot') }}
@@ -74,6 +98,11 @@ function complete(task: App.Crm.Data.TaskRowData) {
           · {{ $t('dashboard.openPoints', { count: nextShoot.readiness.filter((m) => !m.done).length }) }}
         </em>
       </Link>
+      <div v-if="acceptanceRate !== null" class="kpi">
+        <b>{{ acceptanceRate }} %</b>
+        {{ $t('dashboard.acceptance') }}
+        <em> · {{ $t('dashboard.lastTwelveMonths') }}</em>
+      </div>
     </div>
 
     <div class="doms">

@@ -9,21 +9,25 @@ use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
+use App\Engagement\Models\Thread;
 use App\Gallery\Actions\ReadAfterDeliveryColumn;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Payments\Actions\ReadPaymentColumn;
+use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Models\PaymentInstallment;
 use App\Quotes\Actions\ReadInquiryColumn;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /**
  * The Übersicht: an action worklist, not a status report.
  *
- * Mockup 01's four domain blocks all read from real data now — quotes are
- * still Q-* and stay off the KPI row for the same reason. Nowhere on this
- * screen is a number invented to fill a clause; that is the failure
- * clickdummy §6 records for it.
+ * Mockup 01's four domain blocks and its four-tile KPI row all read from real
+ * data now. Nowhere on this screen is a number invented to fill a clause;
+ * that is the failure clickdummy §6 records for it.
  *
  * One deliberate omission: the mockup's "nie fällig gestellt" payment row.
  * PaymentInstallmentStatus::Invoiced exists on the column but nothing in
@@ -51,6 +55,10 @@ class DashboardController extends Controller
             'inquiries' => $inquiries($viewer),
             'payments' => $payments($viewer),
             'afterDelivery' => $afterDelivery($viewer),
+            'pipeline' => $this->pipeline(),
+            'overdueTotal' => $this->overdueTotal(),
+            'acceptanceRate' => $this->acceptanceRate(),
+            'unanswered' => $this->unanswered(),
         ]);
     }
 
@@ -100,5 +108,72 @@ class DashboardController extends Controller
                 ->map(TaskRowData::fromTask(...))
                 ->values()
         );
+    }
+
+    /**
+     * What is still in play. Draft and sent only: accepted is won and belongs
+     * to a revenue number, superseded and expired are gone. Minor units all
+     * the way to the browser, formatted once on the screen.
+     */
+    private function pipeline(): int
+    {
+        return (int) Quote::query()
+            ->whereIn('status', [QuoteStatus::Draft, QuoteStatus::Sent])
+            ->sum('total');
+    }
+
+    private function overdueTotal(): int
+    {
+        return (int) PaymentInstallment::query()
+            ->where('status', PaymentInstallmentStatus::Scheduled)
+            ->whereDate('due_on', '<', now()->toDateString())
+            ->sum('amount');
+    }
+
+    /**
+     * Accepted over sent across the trailing twelve months, by the date the
+     * quote went out rather than the date it was accepted — otherwise a quote
+     * sent in month eleven and accepted in month thirteen counts in a window
+     * its own denominator is not in.
+     *
+     * Null rather than zero when nothing has been sent: a percentage of
+     * nothing is not zero percent, and the tile does not render.
+     */
+    private function acceptanceRate(): ?int
+    {
+        $since = now()->subYear();
+
+        $sent = Quote::query()->whereNotNull('sent_at')->where('sent_at', '>=', $since)->count();
+
+        if ($sent === 0) {
+            return null;
+        }
+
+        $accepted = Quote::query()
+            ->where('status', QuoteStatus::Accepted)
+            ->whereNotNull('sent_at')
+            ->where('sent_at', '>=', $since)
+            ->count();
+
+        return (int) round($accepted / $sent * 100);
+    }
+
+    /**
+     * Threads whose newest message came from the client — unbeantwortet, not
+     * ungelesen. ThreadParticipant carries no last_read_at and this does not
+     * add one: an unanswered thread is a fact about the conversation, and
+     * only that is something the studio owes. Whether a person has opened it
+     * is a fact about the person, not this count.
+     *
+     * `latestMessage` is Thread::hasOne()->latestOfMany() (see that model),
+     * so a thread with no messages has no latestMessage and whereHas simply
+     * never matches it — no raw SQL, no null-comparison edge to get wrong on
+     * a thread that has not had its first message yet.
+     */
+    private function unanswered(): int
+    {
+        return Thread::query()
+            ->whereHas('latestMessage', fn ($query) => $query->whereNotNull('contact_id'))
+            ->count();
     }
 }

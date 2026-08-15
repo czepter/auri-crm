@@ -9,6 +9,8 @@ use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
+use App\Engagement\Models\Message;
+use App\Engagement\Models\Thread;
 use App\Gallery\Models\Gallery;
 use App\Models\User;
 use App\Payments\Models\PaymentInstallment;
@@ -191,4 +193,77 @@ it('carries the Nach der Lieferung column', function () {
 
 it('shows no Nach der Lieferung column when no occasion is open', function () {
     expect(props('/')['afterDelivery'])->toBeEmpty();
+});
+
+it('sums the pipeline from quotes still in play', function () {
+    // Draft and sent are in play; accepted is won and superseded is gone.
+    $project = Project::factory()->create();
+    Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent, 'total' => 4875000]);
+    Quote::factory()->for($project)->create(['status' => QuoteStatus::Accepted, 'total' => 900000]);
+
+    expect(props('/')['pipeline'])->toBe(4875000);
+});
+
+it('sums what is overdue', function () {
+    $job = Job::factory()->create();
+    $plan = PaymentPlan::factory()->for($job)->create(['total' => 290000]);
+    PaymentInstallment::factory()->for($plan, 'plan')->create([
+        'amount' => 290000,
+        'due_on' => now()->subDays(5)->toDateString(),
+    ]);
+
+    expect(props('/')['overdueTotal'])->toBe(290000);
+});
+
+it('reports the acceptance rate over the trailing twelve months', function () {
+    $project = Project::factory()->create();
+    Quote::factory()->for($project)->count(5)->create([
+        'status' => QuoteStatus::Sent,
+        'sent_at' => now()->subMonths(3),
+    ]);
+    Quote::factory()->for($project)->count(3)->create([
+        'status' => QuoteStatus::Accepted,
+        'sent_at' => now()->subMonths(3),
+        'accepted_at' => now()->subMonths(2),
+    ]);
+    // Older than the window; must not move the number.
+    Quote::factory()->for($project)->create([
+        'status' => QuoteStatus::Accepted,
+        'sent_at' => now()->subMonths(18),
+        'accepted_at' => now()->subMonths(17),
+    ]);
+
+    expect(props('/')['acceptanceRate'])->toBe(38);
+});
+
+it('reports no acceptance rate when nothing has been sent', function () {
+    // A percentage of nothing is not zero percent; it is no number at all,
+    // and the tile does not render.
+    expect(props('/')['acceptanceRate'])->toBeNull();
+});
+
+it('counts threads where the client spoke last', function () {
+    // Unbeantwortet, not ungelesen: ThreadParticipant carries no last_read_at
+    // and this does not add one. An unanswered thread is a fact about the
+    // conversation; an unread one is a fact about a person.
+    $project = Project::factory()->create();
+    $contact = Contact::factory()->create();
+
+    $waiting = Thread::factory()->for($project)->create();
+    Message::factory()->for($waiting)->create(['contact_id' => $contact->id, 'author_id' => null]);
+
+    $answered = Thread::factory()->for($project)->create();
+    Message::factory()->for($answered)->create(['contact_id' => $contact->id, 'author_id' => null]);
+    Message::factory()->for($answered)->create(['contact_id' => null, 'author_id' => $this->staff->id]);
+
+    expect(props('/')['unanswered'])->toBe(1);
+});
+
+it('does not count a thread with no messages at all', function () {
+    // The obvious edge a naive "max(created_at) over this thread's messages"
+    // formulation gets wrong: no message means no newest-message fact to
+    // check, so the thread must not count as unanswered.
+    Thread::factory()->for(Project::factory())->create();
+
+    expect(props('/')['unanswered'])->toBe(0);
 });
