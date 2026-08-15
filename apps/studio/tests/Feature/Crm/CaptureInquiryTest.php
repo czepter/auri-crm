@@ -204,3 +204,45 @@ it('rejects an unauthenticated capture', function () {
 
     expect(Project::count())->toBe(0);
 });
+
+it('records who referred a client when the source is a referral', function () {
+    $referrer = Contact::factory()->create(['name' => 'Familie Osterhoff']);
+
+    $project = app(CaptureInquiry::class)(new CaptureInquiryData(
+        contact_id: null,
+        contact_name: 'Steffens & Falk',
+        contact_email: 'steffens@example.test',
+        contact_phone: null,
+        partner_name: null,
+        project_name: 'Steffens & Falk',
+        type: ProjectType::Wedding,
+        source: LeadSource::Referral,
+        captured_via: CaptureChannel::Phone,
+        date: null,
+        inquiry_text: null,
+        referred_by_contact_id: $referrer->public_id,
+    ), $this->staff);
+
+    expect($project->lead->referredBy->is($referrer))->toBeTrue();
+});
+
+it('leaves the referrer null when nobody recorded one', function () {
+    // A referral whose referrer nobody wrote down is still a referral. A
+    // required field would push whoever takes the call into inventing one.
+    $project = app(CaptureInquiry::class)(new CaptureInquiryData(
+        contact_id: null,
+        contact_name: 'Ohne Vermittler',
+        contact_email: 'ohne@example.test',
+        contact_phone: null,
+        partner_name: null,
+        project_name: 'Ohne Vermittler',
+        type: ProjectType::Wedding,
+        source: LeadSource::Referral,
+        captured_via: CaptureChannel::Phone,
+        date: null,
+        inquiry_text: null,
+        referred_by_contact_id: null,
+    ), $this->staff);
+
+    expect($project->lead->referredBy)->toBeNull();
+});

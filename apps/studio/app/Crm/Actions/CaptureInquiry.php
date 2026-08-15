@@ -57,6 +57,13 @@ class CaptureInquiry
                 );
             }
 
+            // A referrer who cannot be found is the same case as one nobody
+            // recorded: the detail is optional by design, so a stale or
+            // unknown public_id must not fail the whole capture.
+            $referrer = $data->referred_by_contact_id === null
+                ? null
+                : Contact::query()->where('public_id', $data->referred_by_contact_id)->first();
+
             $lead = Lead::create([
                 'project_id' => $project->id,
                 'source' => $data->source,
@@ -65,6 +72,7 @@ class CaptureInquiry
                 'inquiry_text' => $data->inquiry_text,
                 'captured_via' => $data->captured_via,
                 'captured_by_id' => $actor?->id,
+                'referred_by_contact_id' => $referrer?->id,
             ]);
 
             // Exactly one shoot, and it is the primary one. Mockup 03 collects

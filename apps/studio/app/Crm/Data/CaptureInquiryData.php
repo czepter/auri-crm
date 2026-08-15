@@ -30,6 +30,7 @@ class CaptureInquiryData extends Data
         public CaptureChannel $captured_via,
         public ?string $date,
         public ?string $inquiry_text,
+        public ?string $referred_by_contact_id,
     ) {}
 
     public static function rules(): array
@@ -52,6 +53,11 @@ class CaptureInquiryData extends Data
             // CheckDateAvailability.
             'date' => ['nullable', 'date_format:Y-m-d'],
             'inquiry_text' => ['nullable', 'string', 'max:10000'],
+
+            // The CUID2 of an existing contact, same shape as contact_id
+            // above. Nullable always, including when the source is a
+            // referral — see the migration.
+            'referred_by_contact_id' => ['nullable', 'string', 'size:24'],
         ];
     }
 }
