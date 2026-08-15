@@ -44,9 +44,10 @@ class ReadAfterDeliveryColumn
     }
 
     /**
-     * A referral whose project actually became work. Joined through `job`
-     * for the same reason ReadProductionBoard is: before the Job exists the
-     * project is a pursuit, and thanking someone for a pursuit is premature.
+     * A referral whose project actually became work. Gated on `project.job`
+     * existing via whereHas — an EXISTS subquery, not a join — for the same
+     * reason ReadProductionBoard is: before the Job exists the project is a
+     * pursuit, and thanking someone for a pursuit is premature.
      *
      * @return Collection<int, DomainRowData>
      */

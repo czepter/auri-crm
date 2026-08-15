@@ -454,9 +454,9 @@ class DemoCrmSeeder extends Seeder
     private function seedReferralAndExpiringGallery(Project $project, Project $referrerProject): void
     {
         $project->lead->update([
-            'referred_by_contact_id' => $referrerProject->primaryContact()->id,
+            'referred_by_contact_id' => $referrerProject->primaryContact()?->id,
         ]);
-        $referrerProject->primaryContact()->update(['phone' => '+49 40 5550104']);
+        $referrerProject->primaryContact()?->update(['phone' => '+49 40 5550104']);
 
         Gallery::factory()->for($project)->create([
             'title' => 'Meier & Kowalski — Hochzeit',

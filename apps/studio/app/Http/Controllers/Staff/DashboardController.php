@@ -29,10 +29,16 @@ use Inertia\Response;
  * data now. Nowhere on this screen is a number invented to fill a clause;
  * that is the failure clickdummy §6 records for it.
  *
- * One deliberate omission: the mockup's "nie fällig gestellt" payment row.
- * PaymentInstallmentStatus::Invoiced exists on the column but nothing in
- * this codebase ever writes it (see that enum's docblock), so there is no
- * state to detect here and no action to end it with.
+ * Two deliberate omissions, both because there is no fact behind the mockup's
+ * clause rather than because nobody got to it:
+ *
+ * - The mockup's "nie fällig gestellt" payment row. PaymentInstallmentStatus
+ *   ::Invoiced exists on the enum but nothing in this codebase ever writes it
+ *   (see that enum's docblock), so there is no state to detect and no action
+ *   to end it with.
+ * - The mockup's "— Album nie angeboten" clause on the gallery row. No album
+ *   concept exists to have been offered; ReadAfterDeliveryColumn states the
+ *   expiry, which is the fact, and leaves the clause off.
  */
 class DashboardController extends Controller
 {
@@ -43,6 +49,7 @@ class DashboardController extends Controller
         ReadAfterDeliveryColumn $afterDelivery,
     ): Response {
         $viewer = auth('staff')->user();
+        $expectedByMonthEnd = $this->expectedByMonthEnd();
 
         return Inertia::render('Uebersicht', [
             'today' => now()->format('Y-m-d'),
@@ -57,6 +64,8 @@ class DashboardController extends Controller
             'afterDelivery' => $afterDelivery($viewer),
             'pipeline' => $this->pipeline(),
             'overdueTotal' => $this->overdueTotal(),
+            'expectedByMonthEndTotal' => $expectedByMonthEnd['total'],
+            'expectedByMonthEndCount' => $expectedByMonthEnd['count'],
             'acceptanceRate' => $this->acceptanceRate(),
             'unanswered' => $this->unanswered(),
         ]);
@@ -128,6 +137,28 @@ class DashboardController extends Controller
             ->where('status', PaymentInstallmentStatus::Scheduled)
             ->whereDate('due_on', '<', now()->toDateString())
             ->sum('amount');
+    }
+
+    /**
+     * What the überfällig tile's sub-line and the Zahlungen footer both name:
+     * money not yet late, still due before the month runs out. Scheduled
+     * only — an installment already overdue has its own tile and its own row
+     * on the board, and counting it here too would report the same money
+     * under two different failures.
+     *
+     * @return array{total: int, count: int}
+     */
+    private function expectedByMonthEnd(): array
+    {
+        $scheduled = PaymentInstallment::query()
+            ->where('status', PaymentInstallmentStatus::Scheduled)
+            ->whereDate('due_on', '>=', now()->toDateString())
+            ->whereDate('due_on', '<=', now()->endOfMonth()->toDateString());
+
+        return [
+            'total' => (int) (clone $scheduled)->sum('amount'),
+            'count' => (clone $scheduled)->count(),
+        ];
     }
 
     /**

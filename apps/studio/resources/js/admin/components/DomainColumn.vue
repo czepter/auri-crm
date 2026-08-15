@@ -47,5 +47,6 @@ defineProps<{
     </div>
 
     <Link v-if="footer && footerHref" class="blkfoot" :href="footerHref">{{ footer }}</Link>
+    <span v-else-if="footer" class="blkfoot">{{ footer }}</span>
   </div>
 </template>

@@ -197,6 +197,7 @@
     "newThisWeek": "{count} neu diese Woche",
     "pipeline": "Pipeline",
     "overdueTotal": "überfällig",
+    "expectedByMonthEnd": "{amount} erwartet bis {date}",
     "acceptance": "Angebote angenommen",
     "lastTwelveMonths": "letzte 12 Monate",
     "unanswered": "{count} unbeantwortet",
@@ -206,6 +207,8 @@
     "items": "{count} Posten",
     "payments": "Zahlungen",
     "toBoard": "Board",
+    "toBoardWithNewLeads": "Board — 1 neue Anfrage diese Woche | Board — {count} neue Anfragen diese Woche",
+    "expectedFooter": "Erwartet bis {date}: {amount} aus 1 Rate | Erwartet bis {date}: {amount} aus {count} Raten",
     "nextShoots": "Nächste Shootings",
     "inProduction": "1 in Produktion | {count} in Produktion",
     "crewCount": "1 Person | {count} Personen",
@@ -215,7 +218,7 @@
     "nothingDue": "Nichts offen.",
     "moreTasks": "{count} offene Aufgaben",
     "afterDelivery": "Nach der Lieferung",
-    "occasions": "{count} Anlässe"
+    "occasions": "1 Anlass | {count} Anlässe"
   },
   "invite": {
     "title": "Willkommen, {name}",

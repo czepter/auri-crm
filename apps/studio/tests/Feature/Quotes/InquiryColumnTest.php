@@ -150,3 +150,52 @@ it('shows a crew member only their own projects', function () {
 
     expect(app(ReadInquiryColumn::class)($crew))->toBeEmpty();
 });
+
+it('orders chased quotes by soonest expiry first', function () {
+    $soon = projectWithPhone('Läuft bald ab');
+    Quote::factory()->for($soon)->create(['status' => QuoteStatus::Sent, 'valid_until' => now()->addDays(3)->toDateString()]);
+    app(FireAutomationRule::class)($this->rule, $soon, now()->subDay()->toDateString());
+
+    $later = projectWithPhone('Läuft später ab');
+    Quote::factory()->for($later)->create(['status' => QuoteStatus::Sent, 'valid_until' => now()->addDays(10)->toDateString()]);
+    app(FireAutomationRule::class)($this->rule, $later, now()->subDay()->toDateString());
+
+    $rows = app(ReadInquiryColumn::class)();
+
+    expect($rows->pluck('who')->all())->toBe(['Läuft bald ab', 'Läuft später ab']);
+});
+
+it('orders accepted-without-contract rows by oldest acceptance first', function () {
+    $newer = projectWithPhone('Kürzlich angenommen');
+    Quote::factory()->for($newer)->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now()->subDay()]);
+
+    $older = projectWithPhone('Länger angenommen');
+    Quote::factory()->for($older)->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now()->subDays(8)]);
+
+    $rows = app(ReadInquiryColumn::class)();
+
+    expect($rows->pluck('who')->all())->toBe(['Länger angenommen', 'Kürzlich angenommen']);
+});
+
+it('orders unsigned-contract rows by oldest render first', function () {
+    $newer = projectWithPhone('Kürzlich gerendert');
+    Contract::factory()->for($newer)->create(['status' => ContractStatus::Rendered, 'created_at' => now()->subDays(5)]);
+
+    $older = projectWithPhone('Länger gerendert');
+    Contract::factory()->for($older)->create(['status' => ContractStatus::Rendered, 'created_at' => now()->subDays(9)]);
+
+    $rows = app(ReadInquiryColumn::class)();
+
+    expect($rows->pluck('who')->all())->toBe(['Länger gerendert', 'Kürzlich gerendert']);
+});
+
+it('does not throw when no viewer is authenticated', function () {
+    // Project::visibleTo() takes a non-nullable User; the guard on each
+    // sub-query keeps a null viewer from ever reaching it (mirrors
+    // ReadPaymentColumn's shape).
+    auth('staff')->logout();
+
+    Quote::factory()->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now()->subDay()]);
+
+    expect(fn () => app(ReadInquiryColumn::class)())->not->toThrow(TypeError::class);
+});

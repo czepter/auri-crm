@@ -47,7 +47,7 @@ class ReadPaymentColumn
                     Project::query()->visibleTo($viewer)->select('projects.id'),
                 ),
             ))
-            ->with('plan.job.project.contacts')
+            ->with('plan.job.project')
             ->orderBy('overdue_notified_at')
             ->get()
             ->map(function (PaymentInstallment $installment) {
@@ -61,7 +61,7 @@ class ReadPaymentColumn
                     emphasis: "seit {$days} Tagen",
                     whatTail: sprintf(
                         'erfolglos · %s',
-                        Number::currency($installment->amount / 100, 'EUR', 'de'),
+                        Number::currency($installment->amount / 100, 'EUR', 'de', 0),
                     ),
                     action: RowActionData::tel('Anrufen', $project->primaryContact()?->phone),
                     hot: true,

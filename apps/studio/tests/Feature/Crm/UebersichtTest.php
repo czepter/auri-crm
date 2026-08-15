@@ -215,6 +215,36 @@ it('sums what is overdue', function () {
     expect(props('/')['overdueTotal'])->toBe(290000);
 });
 
+it('sums what is expected by month end, excluding what is already overdue', function () {
+    $inWindow = Job::factory()->create();
+    $plan = PaymentPlan::factory()->for($inWindow)->create(['total' => 300000]);
+    PaymentInstallment::factory()->for($plan, 'plan')->count(2)->create([
+        'amount' => 150000,
+        'due_on' => now()->addDays(3)->toDateString(),
+    ]);
+
+    // Already overdue: has its own tile, must not double up in this one.
+    $overdue = Job::factory()->create();
+    $overduePlan = PaymentPlan::factory()->for($overdue)->create(['total' => 90000]);
+    PaymentInstallment::factory()->for($overduePlan, 'plan')->create([
+        'amount' => 90000,
+        'due_on' => now()->subDay()->toDateString(),
+    ]);
+
+    // Due next month: outside the window.
+    $nextMonth = Job::factory()->create();
+    $nextMonthPlan = PaymentPlan::factory()->for($nextMonth)->create(['total' => 50000]);
+    PaymentInstallment::factory()->for($nextMonthPlan, 'plan')->create([
+        'amount' => 50000,
+        'due_on' => now()->addMonthNoOverflow()->startOfMonth()->addDays(5)->toDateString(),
+    ]);
+
+    $props = props('/');
+
+    expect($props['expectedByMonthEndTotal'])->toBe(300000)
+        ->and($props['expectedByMonthEndCount'])->toBe(2);
+});
+
 it('reports the acceptance rate over the trailing twelve months', function () {
     $project = Project::factory()->create();
     Quote::factory()->for($project)->count(5)->create([

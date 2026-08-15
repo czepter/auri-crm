@@ -18,6 +18,8 @@ const props = defineProps<{
   afterDelivery: App.Crm.Data.DomainRowData[]
   pipeline: number
   overdueTotal: number
+  expectedByMonthEndTotal: number
+  expectedByMonthEndCount: number
   acceptanceRate: number | null
   unanswered: number
 }>()
@@ -42,6 +44,14 @@ function shortDate(date: string | null) {
     : null
 }
 
+// The date the überfällig tile's sub-line and the Zahlungen footer both
+// name. Derived from `today` rather than a new backend prop: once `today`
+// is parsed, the end of its month is exactly what Date already knows.
+const monthEndDate = computed(() => {
+  const d = new Date(props.today)
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
+})
+
 // The rows the studio still owes. The hero's readiness marks name the same
 // tasks, and mockup 01 repeats them on purpose: the mark states, the row acts.
 // Filtering the hero's project out instead emptied the worklist entirely for a
@@ -64,11 +74,31 @@ function complete(task: App.Crm.Data.TaskRowData) {
       <!-- Unbeantwortet, not ungelesen: ThreadParticipant carries no
            last_read_at and this screen does not add one. An unanswered
            thread is a fact about the conversation and something the studio
-           owes; whether someone has opened it is a fact about a person. -->
-      <Button v-if="unanswered" :as="Link" variant="ghost" href="/anfragen" style="margin-left: auto">
-        <svg viewBox="0 0 24 24"><path d="M4 4h16v13H8l-4 4z" /><path d="M8 9h8M8 13h5" /></svg>
+           owes; whether someone has opened it is a fact about a person.
+
+           Static text, not a link: threads only exist per-project, at
+           /auftraege/{project}/nachrichten — routes/admin.php has no
+           cross-project thread inbox to send this to. The mockup's own href
+           is "#"; no destination was ever named there either. Inventing one
+           is the failure this screen's design forbids, so this states the
+           count without pretending there is somewhere to send it. -->
+      <span
+        v-if="unanswered"
+        style="
+          margin-left: auto;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          font: 500 13px/1 var(--font);
+          color: var(--muted);
+          padding: 9px 0;
+        "
+      >
+        <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; opacity: 0.8">
+          <path d="M4 4h16v13H8l-4 4z" /><path d="M8 9h8M8 13h5" />
+        </svg>
         {{ $t('dashboard.unanswered', { count: unanswered }) }}
-      </Button>
+      </span>
       <Button :as="Link" href="/anfragen/neu">
         <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         {{ $t('board.create') }}
@@ -90,6 +120,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
       <div v-if="overdueTotal" class="kpi">
         <b><i>{{ money.format(overdueTotal / 100) }}</i></b>
         {{ $t('dashboard.overdueTotal') }}
+        <em v-if="expectedByMonthEndCount"> · {{ $t('dashboard.expectedByMonthEnd', { amount: money.format(expectedByMonthEndTotal / 100), date: monthEndDate }) }}</em>
       </div>
       <Link v-if="nextShoot" class="kpi" :href="`/auftraege/${nextShoot.projectId}/shootings`">
         <b>{{ shortDate(nextShoot.date) }}</b>
@@ -111,7 +142,11 @@ function complete(task: App.Crm.Data.TaskRowData) {
         :title="$t('dashboard.inquiries')"
         :count="$t('dashboard.items', { count: inquiries.length })"
         :rows="inquiries"
-        :footer="$t('dashboard.toBoard')"
+        :footer="
+          newLeadsThisWeek
+            ? $t('dashboard.toBoardWithNewLeads', { count: newLeadsThisWeek })
+            : $t('dashboard.toBoard')
+        "
         footer-href="/anfragen"
       />
 
@@ -201,13 +236,23 @@ function complete(task: App.Crm.Data.TaskRowData) {
         </span>
       </div>
 
-      <!-- No footer: unlike inquiries, this column has no "all payments"
-           board to link to yet. -->
+      <!-- Text-only footer: this column has no "all payments" board to link
+           to yet, but DomainColumn's footer needs no href — it states the
+           same expectedByMonthEnd figure as the überfällig tile's sub-line. -->
       <DomainColumn
         v-if="payments.length"
         :title="$t('dashboard.payments')"
         :count="$t('dashboard.items', { count: payments.length })"
         :rows="payments"
+        :footer="
+          expectedByMonthEndCount
+            ? $t('dashboard.expectedFooter', {
+                date: monthEndDate,
+                amount: money.format(expectedByMonthEndTotal / 100),
+                count: expectedByMonthEndCount,
+              })
+            : undefined
+        "
       />
 
       <!-- No footer: the mockup's review-request note describes an

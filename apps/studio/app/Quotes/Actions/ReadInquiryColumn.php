@@ -41,11 +41,9 @@ class ReadInquiryColumn
     {
         $viewer ??= auth('staff')->user();
 
-        $visible = Project::query()->visibleTo($viewer)->select('projects.id');
-
-        return $this->chasedQuotes($visible)
-            ->concat($this->acceptedWithoutContract($visible))
-            ->concat($this->unsignedContracts($visible))
+        return $this->chasedQuotes($viewer)
+            ->concat($this->acceptedWithoutContract($viewer))
+            ->concat($this->unsignedContracts($viewer))
             ->values();
     }
 
@@ -54,17 +52,24 @@ class ReadInquiryColumn
      * is the real number of AutomationRuns fired against the project, which is
      * what makes "2× erinnert, keine Reaktion" a fact rather than a phrase.
      *
+     * Ordered by soonest expiry first: valid_until is the deadline the row is
+     * about, so the quote closest to lapsing is the most urgent one to call.
+     *
      * @return Collection<int, DomainRowData>
      */
-    private function chasedQuotes($visible): Collection
+    private function chasedQuotes(?User $viewer): Collection
     {
         return Quote::query()
             ->where('status', QuoteStatus::Sent)
             ->whereNotNull('valid_until')
             ->whereDate('valid_until', '>=', now()->toDateString())
             ->whereDate('valid_until', '<=', now()->addDays(self::EXPIRY_WINDOW_DAYS)->toDateString())
-            ->whereIn('project_id', $visible)
-            ->with('project.contacts')
+            ->when($viewer !== null, fn ($query) => $query->whereIn(
+                'project_id',
+                Project::query()->visibleTo($viewer)->select('projects.id'),
+            ))
+            ->with('project')
+            ->orderBy('valid_until')
             ->get()
             ->map(function (Quote $quote) {
                 $nudges = $this->nudgeCount($quote->project_id);
@@ -104,15 +109,23 @@ class ReadInquiryColumn
     }
 
     /**
+     * Ordered by oldest acceptance first: there is no deadline here, only how
+     * long the studio has already left "Vertrag fehlt" standing, so the
+     * longest-waiting acceptance is the most urgent one to chase.
+     *
      * @return Collection<int, DomainRowData>
      */
-    private function acceptedWithoutContract($visible): Collection
+    private function acceptedWithoutContract(?User $viewer): Collection
     {
         return Quote::query()
             ->where('status', QuoteStatus::Accepted)
-            ->whereIn('project_id', $visible)
+            ->when($viewer !== null, fn ($query) => $query->whereIn(
+                'project_id',
+                Project::query()->visibleTo($viewer)->select('projects.id'),
+            ))
             ->whereDoesntHave('project.contracts')
-            ->with('project.contacts')
+            ->with('project')
+            ->orderBy('accepted_at')
             ->get()
             ->map(fn (Quote $quote) => new DomainRowData(
                 projectId: $quote->project->public_id,
@@ -133,16 +146,23 @@ class ReadInquiryColumn
      * to test against — so a rendered contract with no signature, aged past
      * the window, is what "unsigniert" means here.
      *
+     * Ordered by oldest render first: the contract that has been waiting on a
+     * signature the longest is the most urgent one to call about.
+     *
      * @return Collection<int, DomainRowData>
      */
-    private function unsignedContracts($visible): Collection
+    private function unsignedContracts(?User $viewer): Collection
     {
         return Contract::query()
             ->where('status', ContractStatus::Rendered)
             ->whereDoesntHave('signature')
             ->where('created_at', '<=', now()->subDays(self::UNSIGNED_AFTER_DAYS))
-            ->whereIn('project_id', $visible)
-            ->with('project.contacts')
+            ->when($viewer !== null, fn ($query) => $query->whereIn(
+                'project_id',
+                Project::query()->visibleTo($viewer)->select('projects.id'),
+            ))
+            ->with('project')
+            ->orderBy('created_at')
             ->get()
             ->map(fn (Contract $contract) => new DomainRowData(
                 projectId: $contract->project->public_id,
