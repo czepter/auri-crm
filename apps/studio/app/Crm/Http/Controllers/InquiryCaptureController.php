@@ -24,7 +24,11 @@ class InquiryCaptureController extends Controller
         return Inertia::render('Leads/Create', [
             'types' => self::options(ProjectType::cases()),
             'sources' => self::options(LeadSource::cases()),
-            'channels' => self::options(CaptureChannel::cases()),
+            // C-08: not cases(). The web-form channel belongs to the public
+            // endpoint alone — offering it here would make "how many
+            // inquiries did the website bring us" unanswerable the first
+            // time someone picked it by hand for a phone call.
+            'channels' => self::options(CaptureChannel::staffSelectable()),
         ]);
     }
 

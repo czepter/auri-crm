@@ -60,6 +60,12 @@ const PUBLIC_ROUTES = [
     // AssetCommentController's own doc comment.
     'api' => [
         'api/health', 'api/stripe/webhook',
+        // C-08. The one route in the system a stranger is meant to reach —
+        // an audience guard on it would defeat the point. What stands in
+        // for one is the honeypot, the timing floor, the per-IP and
+        // per-address limits, and a response that never varies; see
+        // PublicInquiryController.
+        'api/anfragen',
         'api/galleries/{gallery}', 'api/gallery-versions/{galleryVersion}/images/{key}',
         'api/gallery-versions/{galleryVersion}/favorites', 'api/gallery-versions/{galleryVersion}/favorites/{key}',
         'api/gallery-versions/{galleryVersion}/comments',

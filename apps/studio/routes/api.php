@@ -1,5 +1,6 @@
 <?php
 
+use App\Crm\Http\Controllers\PublicInquiryController;
 use App\Enums\Capability;
 use App\Gallery\Http\Controllers\AssetCommentController;
 use App\Gallery\Http\Controllers\AssetFavoriteController;
@@ -15,9 +16,17 @@ use App\Integration\Http\Controllers\OAuthTokenInfoController;
 use App\Payments\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
-// Public JSON surface. In P1a this carries the health probe only; P1b adds
-// the public inquiry endpoint and P3 adds the gallery read API.
+// Public JSON surface. In P1a this carried the health probe only; P3 added
+// the gallery read API, and C-08 finally added the public inquiry endpoint
+// this comment had been promising since P1b.
 Route::get('/health', HealthController::class);
+
+// C-08. No session, no token, no audience guard: this is the one route in
+// the system a stranger is supposed to reach. Everything that protects it —
+// the honeypot, the timing floor, the per-IP and per-address limits, and the
+// uniform 202 that never says which of them applied — lives in the
+// controller, because they are one decision rather than a stack of them.
+Route::post('/anfragen', PublicInquiryController::class)->name('api.inquiries.store');
 
 // G-08: the Astro gallery viewer's two calls — the currently-published
 // version's metadata, and the image bytes it points at. No `audience:api`
