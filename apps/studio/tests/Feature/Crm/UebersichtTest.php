@@ -71,6 +71,78 @@ it('states readiness from real facts rather than invented labels', function () {
         ->and(collect($readiness)->every(fn ($mark) => $mark['done'] === false))->toBeTrue();
 });
 
+it('previews the shoot after the hero shoot in the calendar footer', function () {
+    $project = Project::factory()->create();
+    Job::factory()->for($project)->create();
+    Shoot::factory()->for($project)->on(now()->addDays(5)->format('Y-m-d'))->create(['label' => 'Hochzeitstag']);
+    Shoot::factory()->for($project)->on(now()->addDays(20)->format('Y-m-d'))->create(['label' => 'Portrait Vogt']);
+
+    $upcoming = props('/')['upcomingShoots'];
+
+    expect($upcoming)->toHaveCount(1)
+        ->and($upcoming[0]['label'])->toBe('Portrait Vogt')
+        ->and($upcoming[0]['date'])->toBe(now()->addDays(20)->format('Y-m-d'));
+});
+
+it('does not preview a shoot dated before the hero shoot', function () {
+    // Chronologically earlier and already happened — not a future shoot the
+    // hero could ever have been, so this only exercises the "after the
+    // hero's date" filter, not the hero-selection query.
+    $project = Project::factory()->create();
+    Job::factory()->for($project)->create();
+    Shoot::factory()->for($project)->on(now()->addDays(5)->format('Y-m-d'))->create(['label' => 'Hochzeitstag']);
+    Shoot::factory()->for($project)->on(now()->subDays(10)->format('Y-m-d'))->create(['label' => 'Verlobungsshooting']);
+
+    expect(props('/')['upcomingShoots'])->toBeEmpty();
+});
+
+it('does not preview a cancelled shoot', function () {
+    $project = Project::factory()->create();
+    Job::factory()->for($project)->create();
+    Shoot::factory()->for($project)->on(now()->addDays(5)->format('Y-m-d'))->create(['label' => 'Hochzeitstag']);
+    Shoot::factory()->for($project)->on(now()->addDays(10)->format('Y-m-d'))->cancelled('Termin abgesagt')->create();
+
+    expect(props('/')['upcomingShoots'])->toBeEmpty();
+});
+
+it('does not preview a shoot on a project that is not booked', function () {
+    // An unbooked date is a request, not a commitment — the same rule
+    // nextShoot() already applies to the hero itself.
+    $project = Project::factory()->create();
+    Job::factory()->for($project)->create();
+    Shoot::factory()->for($project)->on(now()->addDays(5)->format('Y-m-d'))->create(['label' => 'Hochzeitstag']);
+
+    $unbooked = Project::factory()->create();
+    Shoot::factory()->for($unbooked)->on(now()->addDays(8)->format('Y-m-d'))->create();
+
+    expect(props('/')['upcomingShoots'])->toBeEmpty();
+});
+
+it('previews nothing when there is no hero shoot', function () {
+    // No hero means "after the next one" has no meaning — an empty list,
+    // not every future shoot.
+    $project = Project::factory()->create();
+    Job::factory()->for($project)->create();
+    Shoot::factory()->for($project)->on(now()->subDay()->format('Y-m-d'))->create();
+
+    expect(props('/')['nextShoot'])->toBeNull()
+        ->and(props('/')['upcomingShoots'])->toBeEmpty();
+});
+
+it('caps the calendar preview at two shoots', function () {
+    $project = Project::factory()->create();
+    Job::factory()->for($project)->create();
+    Shoot::factory()->for($project)->on(now()->addDays(5)->format('Y-m-d'))->create(['label' => 'Hochzeitstag']);
+    Shoot::factory()->for($project)->on(now()->addDays(10)->format('Y-m-d'))->create(['label' => 'A']);
+    Shoot::factory()->for($project)->on(now()->addDays(15)->format('Y-m-d'))->create(['label' => 'B']);
+    Shoot::factory()->for($project)->on(now()->addDays(20)->format('Y-m-d'))->create(['label' => 'C']);
+
+    $upcoming = props('/')['upcomingShoots'];
+
+    expect($upcoming)->toHaveCount(2)
+        ->and(collect($upcoming)->pluck('label')->all())->toBe(['A', 'B']);
+});
+
 it('lists what is owed, overdue first by date', function () {
     // Three projects, because the worklist carries one row each — the
     // ordering is what this asserts, not the grouping.

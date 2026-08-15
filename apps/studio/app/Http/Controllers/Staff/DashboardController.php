@@ -49,10 +49,10 @@ use Inertia\Response;
  * cross-project inbox, and the mockup's own href is "#", so no destination
  * was ever named. Inventing one is the same failure as inventing a number.
  *
- * Not in that list, because it predates this screen's completion: the Nächste
- * Shootings block keeps S-01's open-task-count footer where the mockup shows a
- * calendar preview of the shoots after the next one. That one is buildable —
- * the data exists — and is a design call rather than a missing fact.
+ * The Nächste Shootings block is the one column with two footers: the owner
+ * asked to keep S-01's open-task-count line and add the mockup's calendar
+ * preview beneath it rather than choose between them, so `upcomingShoots`
+ * feeds a second `.blkfoot` instead of replacing the first.
  */
 class DashboardController extends Controller
 {
@@ -64,12 +64,14 @@ class DashboardController extends Controller
     ): Response {
         $viewer = auth('staff')->user();
         $expectedByMonthEnd = $this->expectedByMonthEnd();
+        $hero = $this->nextShoot($viewer);
 
         return Inertia::render('Uebersicht', [
             'today' => now()->format('Y-m-d'),
             'openLeads' => Lead::query()->open()->count(),
             'newLeadsThisWeek' => Lead::query()->open()->where('created_at', '>=', now()->subWeek())->count(),
-            'nextShoot' => $this->nextShoot($viewer),
+            'nextShoot' => $hero === null ? null : NextShootData::fromShoot($hero),
+            'upcomingShoots' => $this->upcomingShoots($viewer, $hero),
             'production' => $board($viewer),
             'tasks' => $this->tasks($viewer),
             'openTasks' => Task::query()->open()->whereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id'))->count(),
@@ -89,10 +91,15 @@ class DashboardController extends Controller
      * The next shooting day the studio still has to work: today or later, not
      * cancelled, and only for a project that is actually booked — an unbooked
      * date is a request, not a commitment.
+     *
+     * Returns the model rather than NextShootData: upcomingShoots() below
+     * needs the hero's own date to filter by, and re-deriving that from
+     * NextShootData's formatted string would be the same query wearing a
+     * worse type.
      */
-    private function nextShoot(User $viewer): ?NextShootData
+    private function nextShoot(User $viewer): ?Shoot
     {
-        $shoot = Shoot::query()
+        return Shoot::query()
             ->join('jobs', 'jobs.project_id', '=', 'shoots.project_id')
             ->select('shoots.*')
             ->with(['project', 'crew.user', 'tasks'])
@@ -102,8 +109,42 @@ class DashboardController extends Controller
             ->whereDate('date', '>=', now()->startOfDay())
             ->orderBy('date')
             ->first();
+    }
 
-        return $shoot === null ? null : NextShootData::fromShoot($shoot);
+    /**
+     * The calendar footer's preview: what is booked after the hero shoot, so
+     * the block hints at what the calendar holds without opening it. Same
+     * booked/uncancelled/dated rule as the hero; "after" is `date >
+     * $hero->date` rather than `>=` plus an id exclusion, since the hero is
+     * by construction the earliest such shoot — nothing dated on or before
+     * it can be anything other than the hero itself.
+     *
+     * No hero, no preview: "after the next one" names nothing when there is
+     * no next one, so this returns empty rather than every future shoot.
+     *
+     * @return list<array{label: string, date: string}>
+     */
+    private function upcomingShoots(User $viewer, ?Shoot $hero): array
+    {
+        if ($hero === null) {
+            return [];
+        }
+
+        return Shoot::query()
+            ->join('jobs', 'jobs.project_id', '=', 'shoots.project_id')
+            ->select('shoots.*')
+            ->whereIn('shoots.project_id', Project::query()->visibleTo($viewer)->select('projects.id'))
+            ->uncancelled()
+            ->whereNotNull('date')
+            ->whereDate('date', '>', $hero->date)
+            ->orderBy('date')
+            ->limit(2)
+            ->get()
+            ->map(fn (Shoot $shoot) => [
+                'label' => $shoot->label ?? $shoot->kind->label(),
+                'date' => $shoot->date->format('Y-m-d'),
+            ])
+            ->all();
     }
 
     /**

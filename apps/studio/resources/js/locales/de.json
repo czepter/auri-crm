@@ -217,6 +217,7 @@
     "noDetails": "Ort und Uhrzeit noch offen",
     "nothingDue": "Nichts offen.",
     "moreTasks": "{count} offene Aufgaben",
+    "calendarPreview": "Kalender — {shoots}",
     "afterDelivery": "Nach der Lieferung",
     "occasions": "1 Anlass | {count} Anlässe"
   },

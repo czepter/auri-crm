@@ -10,6 +10,7 @@ const props = defineProps<{
   openLeads: number
   newLeadsThisWeek: number
   nextShoot: App.Crm.Data.NextShootData | null
+  upcomingShoots: { label: string; date: string }[]
   production: App.Crm.Data.ProductionRowData[]
   tasks: App.Crm.Data.TaskRowData[]
   openTasks: number
@@ -43,6 +44,19 @@ function shortDate(date: string | null) {
     ? new Date(date).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' })
     : null
 }
+
+// The calendar footer's own date form, weekday-free: shortDate() names the
+// day of the week because the KPI tile and the hero card are read as "when
+// do I need to be there", but this line is a calendar preview, and a
+// calendar preview is read as dates, the way the mockup writes "18.06."
+// rather than "Do 18.06.".
+function calendarDate(date: string) {
+  return new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
+}
+
+const calendarPreview = computed(() =>
+  props.upcomingShoots.map((shoot) => `${shoot.label} ${calendarDate(shoot.date)}`).join(', '),
+)
 
 // The date the überfällig tile's sub-line and the Zahlungen footer both
 // name. Derived from `today` rather than a new backend prop: once `today`
@@ -234,6 +248,15 @@ function complete(task: App.Crm.Data.TaskRowData) {
         <span v-if="openTasks > worklist.length" class="blkfoot">
           {{ $t('dashboard.moreTasks', { count: openTasks }) }}
         </span>
+
+        <!-- The one block with two footers: the owner asked to keep S-01's
+             open-task count and add the mockup's calendar preview beneath
+             it, not choose between them. Link, not span — /kalender exists
+             (routes/admin.php, calendar.index) — but no trailing arrow: none
+             of this screen's three existing footers carry one either. -->
+        <Link v-if="upcomingShoots.length" class="blkfoot" href="/kalender">
+          {{ $t('dashboard.calendarPreview', { shoots: calendarPreview }) }}
+        </Link>
       </div>
 
       <!-- Text-only footer: this column has no "all payments" board to link
