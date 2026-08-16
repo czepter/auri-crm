@@ -106,13 +106,15 @@ function longDate(date: string) {
         </div>
       </section>
 
-      <!-- "Überweisen" always renders, Stripe on or off (T-07's own
-           acceptance: a client can always see what to pay, to which account
-           and under which reference). No mockup was drawn for this screen —
-           structure and tokens follow Contracts/Show.vue's own split
-           layout. -->
+      <!-- "Überweisen" renders whenever the studio filed an IBAN, Stripe on
+           or off (T-07's own acceptance: a client can always see what to pay,
+           to which account and under which reference). Bank details are
+           optional in settings, and half a transfer block — labels with
+           nothing behind them — is worse than none. No mockup was drawn for
+           this screen — structure and tokens follow Contracts/Show.vue's own
+           split layout. -->
       <div class="split" style="margin-top: var(--s5)">
-        <div class="prail">
+        <div v-if="bankDetails.iban" class="prail">
           <div class="card static">
             <div class="cardhead"><span class="kick">{{ $t('portal.transferTitle') }}</span></div>
             <dl class="legal" style="margin: var(--s3) 0 0">

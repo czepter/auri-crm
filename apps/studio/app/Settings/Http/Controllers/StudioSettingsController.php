@@ -6,7 +6,6 @@ use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Rules\ValidIban;
-use App\Settings\Support\BankDetailsRequirement;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,8 +41,6 @@ class StudioSettingsController extends Controller
     {
         $this->authorizeSettings();
 
-        $bankRule = BankDetailsRequirement::isRequired() ? 'required' : 'nullable';
-
         $validated = $request->validate([
             'display_name' => ['nullable', 'string', 'max:255'],
             'legal_name' => ['nullable', 'string', 'max:255'],
@@ -66,9 +63,13 @@ class StudioSettingsController extends Controller
             // origin (logo(), below), an uploaded SVG can carry a <script>
             // and execute as this app rather than as an image.
             'logo' => ['nullable', 'file', 'mimes:png', 'max:2048'],
-            'bank_account_holder' => [$bankRule, 'string', 'max:255'],
-            'bank_iban' => [$bankRule, 'string', new ValidIban],
-            'bank_bic' => [$bankRule, 'string', 'max:11'],
+            // Optional: a studio that only takes card payments (or none yet
+            // during onboarding) has no IBAN to file. What is entered still
+            // has to be a real IBAN — the portal's "Überweisen" block hides
+            // itself when there is none (portal/pages/Payments/Show.vue).
+            'bank_account_holder' => ['nullable', 'string', 'max:255'],
+            'bank_iban' => ['nullable', 'string', new ValidIban],
+            'bank_bic' => ['nullable', 'string', 'max:11'],
         ]);
 
         $actor = auth('staff')->user();

@@ -15,10 +15,9 @@ uses(RefreshDatabase::class);
 beforeEach(fn () => Cache::store('redis')->flush());
 
 /**
- * Bank details are required as of T-07 (BankDetailsRequirement::isRequired())
- * — every test below that saves the form and does not itself exercise the
- * bank fieldset needs a valid one merged in, or every save in this file
- * would fail validation on three fields none of these tests are about.
+ * The bank fieldset is optional on save — this is the valid one every test
+ * below that wants bank details stored merges in, rather than repeating a
+ * checksum-valid IBAN per case.
  *
  * Named t07ValidBankFields rather than the generic validBankFields: a global
  * function declared in one test file collides the moment a second file
@@ -155,15 +154,14 @@ it('accepts and stores a checksum-valid IBAN', function () {
     expect(StudioSettings::query()->sole()->bank_iban)->toBe('DE89 3704 0044 0532 0130 00');
 });
 
-it('requires bank details on save — the portal payment screen always prints them, Stripe enabled or not (T-07)', function () {
+it('saves without bank details — the fieldset is optional, the portal hides "Überweisen" when there is no IBAN', function () {
     $owner = staffMember(StaffRole::Owner);
 
-    $response = $this->actingAs($owner, 'staff')
+    $this->actingAs($owner, 'staff')
         ->from('/einstellungen')
-        ->patch('/einstellungen', ['tax_number' => '22/123/45678']);
-
-    $response->assertRedirect('/einstellungen')
-        ->assertSessionHasErrors(['bank_account_holder', 'bank_iban', 'bank_bic']);
+        ->patch('/einstellungen', ['tax_number' => '22/123/45678'])
+        ->assertRedirect('/einstellungen')
+        ->assertSessionHasNoErrors();
 
     expect(StudioSettings::query()->sole()->bank_iban)->toBeNull();
 });
