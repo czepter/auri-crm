@@ -1,0 +1,247 @@
+/* Redesign-Entwurf — CRM (Admin).
+ *
+ * Getrennt von tokens.css: Portal und Galerie tragen Instrument Serif und viel
+ * Raum, das Admin trägt Dichte. Die drei Oberflächen dürfen sich nicht dieselben
+ * Knochen teilen — genau das war der Befund der UX-Prüfung.
+ *
+ * Systemschrift statt Instrument Sans: die Fläche ist ein Werkzeug, das den
+ * ganzen Tag offen steht, SF rastert bei 11–15px sauberer als jede geladene
+ * Familie — und spart den Fremdabruf, der im Portal ein DSGVO-Problem ist.
+ *
+ * Keine Rahmen, keine Schatten. Getrennt wird durch Fläche, Abstand, Größe.
+ * Eine dritte Graustufe für Text gibt es nicht.
+ */
+
+:root {
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;
+
+  --paper: #FFFFFF;
+  --sunk: #FAFAFA;
+  --sunk-2: #F2F2F4;
+
+  --ink: #1D1D1F;
+  --ink-2: #6E6E73;
+  --mark: #DEDEE1;      /* ungefüllter Punkt — kein Text, deshalb eigener Wert */
+  --rule: #EFEFF1;
+
+  --accent: #B44E22;
+
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 20px; --s6: 28px; --s7: 32px;
+
+  --r: 20px;
+  --r-sm: 12px;
+  --r-pill: 980px;
+
+  --col: 20px;          /* Spaltenrinne */
+  --row: 28px;          /* Reihenrinne — größer, damit Reihen als Reihen lesen */
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font: 400 13px/1.47 var(--font);
+  letter-spacing: -.006em;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app { display: flex; min-height: 100vh; }
+
+/* ---------- Sidebar ---------- */
+
+.side { width: 214px; flex: none; padding: 18px 12px; display: flex; flex-direction: column; }
+.side .wm { font: 600 17px/1 var(--font); letter-spacing: -.024em; padding: 0 10px 22px; }
+.side a {
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px 10px; margin-bottom: 1px;
+  border-radius: 8px; color: var(--ink); text-decoration: none;
+  font-size: 13px; letter-spacing: -.01em;
+  transition: background .12s ease-out;
+}
+.side a:hover { background: var(--sunk); }
+.side a.on { background: var(--sunk-2); font-weight: 600; }
+.side a svg {
+  width: 17px; height: 17px; flex: none;
+  fill: none; stroke: var(--ink-2); stroke-width: 1.6;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.side a.on svg { stroke: var(--ink); }
+.side a .ct { margin-left: auto; color: var(--ink-2); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.side .group { height: 18px; }
+.side .lab { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); padding: 0 10px 6px; }
+.side .me { margin-top: auto; display: flex; align-items: center; gap: var(--s2); padding: 10px; font-size: 12.5px; }
+.side .me .av {
+  width: 24px; height: 24px; border-radius: 50%; background: #F0F0F2;
+  font: 600 10px/24px var(--font); text-align: center; color: var(--ink-2);
+}
+
+/* ---------- Befehlspalette ---------- */
+
+/* Sucheintrag sitzt über der Navigation, nicht in ihr: er wechselt nicht die
+   Seite, er öffnet ein Werkzeug. Das Kürzel steht da, wo sonst der Zähler steht. */
+.side .find {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 6px 10px; margin: 0 0 var(--s4);
+  border: 0; border-radius: 8px; background: var(--sunk);
+  font: 400 13px/1.47 var(--font); letter-spacing: -.01em; color: var(--ink-2);
+  text-align: left; cursor: pointer;
+  transition: background .12s ease-out;
+}
+.side .find:hover { background: var(--sunk-2); }
+.side .find svg {
+  width: 17px; height: 17px; flex: none;
+  fill: none; stroke: var(--ink-2); stroke-width: 1.6; stroke-linecap: round;
+}
+.side .find kbd {
+  margin-left: auto; font: 500 11px/1 var(--font); color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+dialog.palette {
+  width: min(560px, calc(100vw - 48px)); padding: 0; border: 0; border-radius: var(--r);
+  background: var(--paper); color: var(--ink);
+  margin: 12vh auto auto;   /* oberes Drittel: die Liste wächst nach unten, der Blick bleibt */
+}
+dialog.palette::backdrop { background: rgba(29, 29, 31, .28); backdrop-filter: blur(3px); }
+
+.palette .q {
+  display: block; width: 100%; padding: 18px 22px; border: 0; outline: 0; background: none;
+  font: 400 20px/1.3 var(--font); letter-spacing: -.022em; color: var(--ink);
+  box-shadow: inset 0 -1px 0 var(--rule);
+}
+.palette .q::placeholder { color: #B0B0B5; }
+.palette .results { max-height: 52vh; overflow: auto; padding: 6px 0 8px; }
+.palette .lab {
+  font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2);
+  padding: 12px 22px 4px;
+}
+.palette a {
+  display: flex; align-items: baseline; gap: 12px; padding: 8px 22px;
+  color: var(--ink); text-decoration: none;
+}
+.palette a:hover, .palette a:focus-visible { background: var(--sunk); outline: 0; }
+.palette a .kind { width: 62px; flex: none; font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
+.palette a .n { font-size: 14px; font-weight: 500; letter-spacing: -.014em; }
+.palette a .m { margin-left: auto; font-size: 11.5px; color: var(--ink-2); white-space: nowrap; }
+
+/* ---------- Kopf ---------- */
+
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.hrow { display: flex; align-items: center; gap: var(--s3); padding: 22px var(--s7) 0; }
+.kick { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
+h1 { margin: 2px 0 0; font: 600 32px/1.08 var(--font); letter-spacing: -.032em; }
+
+/* ---------- Handlungen: gefüllt, grau, Link ---------- */
+
+.btn, .btn-2 {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: var(--r-pill);
+  font-size: 12.5px; font-weight: 500; letter-spacing: -.01em;
+  text-decoration: none; white-space: nowrap; border: 0; cursor: pointer;
+  transition: filter .12s ease-out, background .12s ease-out;
+}
+.btn { background: var(--accent); color: #fff; }
+.btn:hover { filter: brightness(1.08); }
+.btn-2 { background: var(--sunk-2); color: var(--ink); }
+.btn-2:hover { background: #E9E9EC; }
+.link { color: var(--accent); font-size: 12.5px; letter-spacing: -.01em; text-decoration: none; white-space: nowrap; }
+.link:hover { text-decoration: underline; }
+
+/* ---------- Raster ---------- */
+
+.grid {
+  flex: 1; display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: min-content;
+  align-items: start;   /* Feld endet an seinem Inhalt, nicht an der Reihenhöhe */
+  column-gap: var(--col); row-gap: var(--row);
+  padding: var(--s6) var(--s7) var(--s6);
+}
+.sp2 { grid-column: span 2; }
+.sp3 { grid-column: span 3; }
+
+/* ---------- Kennzahl: Label, Zahl, Beleg ---------- */
+
+.metric {
+  background: var(--sunk); border-radius: var(--r);
+  padding: 15px 17px 14px; display: flex; flex-direction: column; min-height: 130px;
+}
+.metric .lab { font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2); }
+.metric .num {
+  margin-top: var(--s2); display: flex; align-items: baseline; gap: 3px;
+  font: 600 28px/1 var(--font); letter-spacing: -.034em; font-variant-numeric: tabular-nums;
+}
+.metric .num .unit { font-size: .52em; font-weight: 500; color: var(--ink-2); }
+.metric .num.warn { color: var(--accent); }
+.metric .proof { margin-top: auto; padding-top: var(--s3); }
+.metric .proof p { margin: 7px 0 0; font-size: 11.5px; color: var(--ink-2); }
+.metric .proof p b { color: var(--ink); font-weight: 600; }
+
+/* Ein Punkt ist ein Vorgang. Höchstens zwölf, der Rest wird gezählt:
+   8px Punkt + 5px Rinne = 151px, das ist die schmalste Kachel ohne Umbruch. */
+.dots { display: flex; gap: 5px; align-items: center; }
+.dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--mark); flex: none; }
+.dots i.on { background: var(--ink); }
+.dots i.s2 { background: #5F5F63; }
+.dots i.s3 { background: #A1A1A6; }
+.dots i.warn { background: var(--accent); }
+.dots .more {
+  margin-left: 3px; font: 600 11px/1 var(--font); color: var(--ink-2);
+  letter-spacing: -.01em; font-variant-numeric: tabular-nums;
+}
+
+/* Termin trägt dieselbe Gliederung, nur mit Datumsfeld statt Zahl */
+.metric.date { padding: 0; overflow: hidden; }
+.metric.date .head { display: flex; gap: 11px; align-items: flex-start; padding: 15px 17px 0; }
+.metric.date .day {
+  width: 46px; height: 46px; flex: none; border-radius: var(--r-sm); color: #fff;
+  background: linear-gradient(158deg, #4D3A2C, #C0A184);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1;
+}
+.metric.date .day b { font: 600 18px/1 var(--font); letter-spacing: -.03em; }
+.metric.date .day i { font-style: normal; font-size: 8px; letter-spacing: .09em; text-transform: uppercase; opacity: .85; margin-top: 3px; }
+.metric.date .what b { display: block; margin-top: 2px; font: 600 13.5px/1.25 var(--font); letter-spacing: -.018em; }
+.metric.date .what span { font-size: 11px; color: var(--ink-2); }
+.metric.date .proof { padding: 0 17px 14px; }
+
+/* ---------- Feld ---------- */
+
+.panel { background: var(--sunk); border-radius: var(--r); padding: var(--s4) 18px; overflow: hidden; }
+.panel.bare { background: none; padding: 2px 2px 0; }   /* das wichtigste Feld braucht keinen Behälter */
+.panel > header { display: flex; align-items: baseline; gap: 9px; margin-bottom: var(--s2); }
+.panel > header h2 { margin: 0; font: 600 15px/1.2 var(--font); letter-spacing: -.02em; }
+.panel > header .n { font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.panel > header .more { margin-left: auto; font-size: 12px; }
+
+/* ---------- Entscheidungszeile ---------- */
+
+.decide .row {
+  display: flex; align-items: center; gap: 14px; padding: 11px 0;
+  box-shadow: inset 0 1px 0 var(--rule);   /* Regel statt Rahmen: verschiebt nichts, wenn eine Zeile geht */
+}
+.decide .row:first-child { box-shadow: none; }
+.decide .who {
+  width: 208px; flex: none; font-size: 14.5px; font-weight: 600; letter-spacing: -.018em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.decide .what {
+  flex: 1; min-width: 0; font-size: 12.5px; color: var(--ink-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.decide .what em { font-style: normal; color: var(--accent); }
+.decide .act { width: 168px; flex: none; display: flex; gap: var(--s2); align-items: center; justify-content: flex-end; }
+
+/* ---------- Kurze Zeile in einem Feld ---------- */
+
+.list .row { display: flex; align-items: baseline; gap: 9px; padding: var(--s2) 0; box-shadow: inset 0 1px 0 #EEEEF0; }
+.list .row:first-child { box-shadow: none; }
+.list .n { font-size: 13px; font-weight: 500; letter-spacing: -.01em; }
+.list .m { margin-left: auto; font-size: 11.5px; color: var(--ink-2); white-space: nowrap; }
+.list .tag { width: 56px; flex: none; font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
+.list .when { width: 62px; flex: none; font-size: 12px; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.list .flag { margin-left: auto; font-size: 11.5px; color: var(--accent); text-decoration: none; white-space: nowrap; }
+.list .flag:hover { text-decoration: underline; }
+.list .row.off .n { color: var(--ink-2); font-weight: 400; }

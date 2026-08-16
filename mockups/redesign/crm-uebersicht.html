@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Übersicht — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+</head>
+<body>
+
+<!-- Redesign des Admin-Einstiegs. Antwort auf drei Befunde der UX-Prüfung:
+     keine Handlungshierarchie (ein gefüllter Knopf pro Screen, zweite Stufe
+     grau, dritte als Link), halbleere Seite (jedes Feld endet, wo sein Inhalt
+     endet — Fußzeilen gibt es nicht), und neun gleich schwere Aufgabenzeilen
+     (fünf Entscheidungen, der Rest hinter "Alle Aufgaben").
+
+     Ohne Beleg keine Kennzahl: "4 Shootings im September" ist gestrichen,
+     weil die Zahl nichts zeigt, was man nachprüfen könnte.
+
+     Der Terminkonflikt steht auf der Zeile, die ihn hat, nicht als Summe
+     darunter — "2 Anfragen kollidieren" nennt weder welche noch führt es
+     irgendwohin. -->
+
+<div class="app">
+
+  <nav class="side">
+    <div class="wm">Nordlicht</div>
+    <button class="find" onclick="palette.showModal()">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>Suchen <kbd>⌘K</kbd></button>
+    <a class="on" href="crm-uebersicht.html">
+      <svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Übersicht</a>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8v8M13 8v5M18 8v10"/></svg>Anfragen <span class="ct">12</span></a>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><path d="M4 8h16v12H4z"/><path d="M9 8V5h6v3"/><path d="M4 13h16"/></svg>Projekte <span class="ct">24</span></a>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><path d="M6 3h12v18H6z"/><circle cx="12" cy="10" r="2.4"/><path d="M8.7 17c.6-1.7 1.8-2.6 3.3-2.6s2.7.9 3.3 2.6"/><path d="M6 7H3.5M6 12H3.5M6 17H3.5"/></svg>Kontakte</a>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>Kalender</a>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><path d="M3 6.5h18v11H3z"/><path d="m3 7.5 9 6 9-6"/></svg>Posteingang <span class="ct">1</span></a>
+    <div class="group"></div>
+    <div class="lab">Studio</div>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><path d="M21 8.5v7l-9 4.5-9-4.5v-7L12 4z"/><path d="M3 8.5 12 13l9-4.5M12 13v7"/></svg>Pakete</a>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><path d="M6 3h7l5 5v13H6z"/><path d="M13 3v5h5"/><path d="M9 13h6M9 17h4"/></svg>Dokumentvorlagen</a>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M16.5 5.5a3.2 3.2 0 0 1 0 5.6M17.5 14.8c2 .7 3.5 2.6 3.5 5.2"/></svg>Team</a>
+    <a href="#">
+      <svg viewBox="0 0 24 24"><path d="M3.5 20h17"/><path d="M7 20v-6M12 20V6M17 20v-9"/></svg>Auswertungen</a>
+    <a href="admin-einstellungen-portal.html">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/></svg>Einstellungen</a>
+    <div class="me"><span class="av">CB</span>Christian</div>
+  </nav>
+
+  <main class="main">
+
+    <div class="hrow">
+      <div>
+        <div class="kick">Sonntag, 16. August</div>
+        <h1>Übersicht</h1>
+      </div>
+      <a class="btn" href="#" style="margin-left:auto">Anfrage anlegen</a>
+    </div>
+
+    <div class="grid">
+
+      <div class="metric">
+        <div class="lab">Pipeline</div>
+        <div class="num">3.500 <span class="unit">€</span></div>
+        <div class="proof">
+          <div class="dots">
+            <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+            <i class="s2"></i><i class="s2"></i><i class="s2"></i>
+            <i class="s3"></i><i class="s3"></i><i></i><i></i><i></i>
+          </div>
+          <p><b>12</b> Anfragen · 4 neu · 2 im Angebot</p>
+        </div>
+      </div>
+
+      <div class="metric">
+        <div class="lab">Überfällig</div>
+        <div class="num warn">1.500 <span class="unit">€</span></div>
+        <div class="proof">
+          <div class="dots"><i class="warn"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+          <p><b>1 von 4</b> Raten offen · seit 9 Tagen</p>
+        </div>
+      </div>
+
+      <div class="metric">
+        <div class="lab">Angebote angenommen</div>
+        <div class="num">6 <span class="unit">von 12</span></div>
+        <div class="proof">
+          <div class="dots">
+            <i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i>
+            <i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <p>12 Monate · Vorjahr <b>4 von 11</b></p>
+        </div>
+      </div>
+
+      <div class="metric date">
+        <div class="head">
+          <div class="day"><b>21</b><i>Fr</i></div>
+          <div class="what">
+            <span class="lab">Als nächstes</span>
+            <b>Hochzeitstag</b>
+            <span>Meier &amp; Kowalski · 09:00</span>
+          </div>
+        </div>
+        <div class="proof">
+          <div class="dots"><i class="warn"></i><i class="warn"></i><i class="warn"></i><i class="on"></i></div>
+          <p><b>3 von 4</b> Punkten offen · Gut Basthorst</p>
+        </div>
+      </div>
+
+      <section class="panel bare sp3">
+        <header>
+          <h2>Heute zu entscheiden</h2>
+          <span class="n">5</span>
+          <a class="link more" href="#">Alle Aufgaben ›</a>
+        </header>
+        <div class="decide">
+          <div class="row">
+            <span class="who">Marie Ahrens &amp; David Kroll</span>
+            <span class="what">Angebot angenommen 13.08. — <em>Vertrag fehlt</em></span>
+            <span class="act"><a class="btn" href="#">Vertrag senden</a></span>
+          </div>
+          <div class="row">
+            <span class="who">Meier &amp; Kowalski</span>
+            <span class="what">Stripe mahnt seit 9 Tagen · <em>1.500 €</em></span>
+            <span class="act"><a class="link" href="#">Zahlung ›</a><a class="btn-2" href="#">Anrufen</a></span>
+          </div>
+          <div class="row">
+            <span class="who">Sophie Lang &amp; Erik Voss</span>
+            <span class="what">Vertrag seit 6 Tagen unsigniert</span>
+            <span class="act"><a class="btn-2" href="#">Erinnern</a></span>
+          </div>
+          <div class="row">
+            <span class="who">Annika Reuter &amp; Finn Sölter</span>
+            <span class="what">Angebot läuft 21.08. ab · 2× erinnert</span>
+            <span class="act"><a class="btn-2" href="#">Anrufen</a></span>
+          </div>
+          <div class="row">
+            <span class="who">Familie Osterhoff</span>
+            <span class="what">hat Meier &amp; Kowalski empfohlen</span>
+            <span class="act"><a class="btn-2" href="#">Bedanken</a></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <header><h2>Diese Woche</h2><a class="link more" href="#">›</a></header>
+        <div class="list">
+          <div class="row"><span class="when">Mi 14:00</span><span class="n">Petersen</span></div>
+          <div class="row off"><span class="when">Do</span><span class="n">Nina abwesend</span></div>
+          <div class="row"><span class="when">Fr 09:00</span><span class="n">Meier &amp; Kowalski</span></div>
+          <div class="row"><span class="when">Sa 11:00</span><span class="n">Osterhoff</span></div>
+        </div>
+      </section>
+
+      <section class="panel sp2">
+        <header><h2>Neue Anfragen</h2><span class="n">3</span><a class="link more" href="#">Board ›</a></header>
+        <div class="list">
+          <div class="row"><span class="tag">Hochzeit</span><span class="n">Sarah Brandt &amp; Tim Erdmann</span><span class="m">heute · Empfehlung</span></div>
+          <div class="row"><span class="tag">Portrait</span><span class="n">Familie Osterhoff</span><span class="m">gestern · Website</span></div>
+          <div class="row"><span class="tag">Hochzeit</span><span class="n">Nina Kaltenbach &amp; Ruben Adler</span><a class="flag" href="#">14.06. doppelt ›</a></div>
+        </div>
+      </section>
+
+      <section class="panel sp2">
+        <header><h2>Galerien</h2><span class="n">3</span><a class="link more" href="#">Alle ›</a></header>
+        <div class="list">
+          <div class="row"><span class="n">Meier &amp; Kowalski</span><a class="flag" href="#">läuft 28.08. ab ›</a></div>
+          <div class="row"><span class="n">Familie Osterhoff</span><span class="m">220 Bilder · seit 12.08. online</span></div>
+          <div class="row"><span class="n">Vehse &amp; Rieck</span><span class="m">wartet auf Freigabe</span></div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- Zuletzt Besuchtes statt leerer Suchmaske: die Palette öffnet mit dem, was
+     man ohnehin wieder aufmacht. Gemischte Liste in Besuchsreihenfolge — nach
+     Gattung gruppiert wäre sie sortiert nach etwas, das niemand sucht. -->
+<dialog class="palette" id="palette">
+  <input class="q" type="search" placeholder="Kontakt, Anfrage, Projekt oder Galerie" autofocus>
+  <div class="results">
+    <div class="lab">Zuletzt</div>
+    <a href="#"><span class="kind">Projekt</span><span class="n">Meier &amp; Kowalski · Hochzeit</span><span class="m">vor 10 Minuten</span></a>
+    <a href="#"><span class="kind">Kontakt</span><span class="n">Familie Osterhoff</span><span class="m">vor 40 Minuten</span></a>
+    <a href="#"><span class="kind">Galerie</span><span class="n">Meier &amp; Kowalski · Hochzeitstag</span><span class="m">heute 11:20</span></a>
+    <a href="#"><span class="kind">Anfrage</span><span class="n">Sarah Brandt &amp; Tim Erdmann</span><span class="m">heute 09:05</span></a>
+    <a href="#"><span class="kind">Projekt</span><span class="n">Sophie Lang &amp; Erik Voss · Hochzeit</span><span class="m">gestern</span></a>
+    <a href="#"><span class="kind">Kontakt</span><span class="n">Nina Kaltenbach &amp; Ruben Adler</span><span class="m">gestern</span></a>
+    <a href="#"><span class="kind">Galerie</span><span class="n">Vehse &amp; Rieck · Standesamt</span><span class="m">Freitag</span></a>
+    <a href="#"><span class="kind">Anfrage</span><span class="n">Mira Sundermann</span><span class="m">Donnerstag</span></a>
+  </div>
+</dialog>
+
+<script>
+addEventListener('keydown', e => {
+  if (e.key === 'k' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); palette.showModal() }
+})
+</script>
+
+</body>
+</html>
