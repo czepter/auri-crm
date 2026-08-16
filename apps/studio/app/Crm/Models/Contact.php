@@ -55,6 +55,10 @@ class Contact extends Model implements Authenticatable
         return [
             'portal_access_revoked_at' => 'immutable_datetime',
             'dsgvo_erased_at' => 'immutable_datetime',
+            'sessions_valid_from' => 'immutable_datetime',
+            // P-09 (#228): this contact's departures from the studio's portal
+            // defaults. An absent key means inherit — see PortalSettings.
+            'portal_overrides' => 'array',
         ];
     }
 

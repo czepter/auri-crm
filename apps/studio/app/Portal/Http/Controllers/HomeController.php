@@ -9,6 +9,7 @@ use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
+use App\Portal\Support\PortalSettings;
 use App\Quotes\Enums\QuoteStatus;
 use App\Settings\Support\StudioSettingsResolver;
 use Inertia\Inertia;
@@ -34,7 +35,7 @@ use Inertia\Response;
  */
 class HomeController extends Controller
 {
-    public function __invoke(StudioSettingsResolver $settings): Response
+    public function __invoke(StudioSettingsResolver $studio, PortalSettings $settings): Response
     {
         $contact = auth('portal')->user();
 
@@ -53,16 +54,23 @@ class HomeController extends Controller
 
         return Inertia::render('Home', [
             'contact' => ['name' => $contact->name],
-            // T-08: the portal home's own welcome text — nowhere else reads
-            // this column.
-            'welcomeText' => $settings->portalWelcomeText(),
+            // P-09 (#228): three rooms, three texts. A sentence written for
+            // one booking reads as a mistake to a venue with forty and to
+            // somebody who has not booked anything at all.
+            'welcomeText' => $settings->welcomeText($contact, match (true) {
+                $bookings->isEmpty() => 'inquiry',
+                $bookings->count() > 1 => 'many',
+                default => 'single',
+            }),
             'pending' => $this->pending($contact, $projects, $settings),
             'bookings' => $bookings->all(),
             'phaseCounts' => $bookings->countBy('phase')->all(),
             'galleries' => $this->galleries($projects),
             'studio' => [
-                'name' => $settings->displayName(),
-                'messagingEnabled' => $settings->messagingEnabled(),
+                'name' => $studio->displayName(),
+                'messagingEnabled' => $settings->messagingEnabled($contact),
+                // The footer's contact line had no source at all before P-09.
+                ...$settings->contactLine(),
             ],
         ]);
     }
@@ -117,12 +125,12 @@ class HomeController extends Controller
      * Both money rows and the message row respect T-08's own switches: an
      * item the client cannot open is not something to put in front of them.
      */
-    private function pending(Contact $contact, $projects, StudioSettingsResolver $settings): array
+    private function pending(Contact $contact, $projects, PortalSettings $settings): array
     {
         $rows = [];
 
         foreach ($projects as $project) {
-            if ($settings->paymentStatusEnabled()) {
+            if ($settings->paymentStatusEnabled($contact)) {
                 foreach ($project->job?->paymentPlan?->installments ?? [] as $installment) {
                     if ($installment->status === PaymentInstallmentStatus::Paid || $installment->due_on === null) {
                         continue;
@@ -153,7 +161,7 @@ class HomeController extends Controller
             }
         }
 
-        if ($settings->messagingEnabled()) {
+        if ($settings->messagingEnabled($contact)) {
             foreach ($this->unanswered($contact) as $thread) {
                 $rows[] = [
                     'kind' => 'message',

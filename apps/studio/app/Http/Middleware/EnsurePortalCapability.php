@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Settings\Support\StudioSettingsResolver;
+use App\Portal\Support\PortalSettings;
 use Closure;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
@@ -20,13 +20,17 @@ class EnsurePortalCapability
 {
     public function handle(Request $request, Closure $next, string $capability): Response
     {
-        $settings = app(StudioSettingsResolver::class);
+        // P-09 (#228): the studio's default, layered with this contact's own
+        // override. A venue that may not message and a couple that may are
+        // the same switch at two levels, not two switches.
+        $settings = app(PortalSettings::class);
+        $contact = auth('portal')->user();
 
         $enabled = match ($capability) {
-            'accept_quotes' => $settings->acceptQuotesEnabled(),
-            'sign_contracts' => $settings->signContractsEnabled(),
-            'payment_status' => $settings->paymentStatusEnabled(),
-            'messaging' => $settings->messagingEnabled(),
+            'accept_quotes' => $settings->acceptQuotesEnabled($contact),
+            'sign_contracts' => $settings->signContractsEnabled($contact),
+            'payment_status' => $settings->paymentStatusEnabled($contact),
+            'messaging' => $settings->messagingEnabled($contact),
             default => throw new InvalidArgumentException("Unknown portal capability \"{$capability}\"."),
         };
 

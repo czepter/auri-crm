@@ -20,6 +20,8 @@ const props = defineProps<{
   openReference: string | null
   bookings: { id: string; label: string }[]
   preselected: string | null
+  // P-09: with messaging limited to bookings, "Allgemein" is not on offer.
+  generalAllowed: boolean
 }>()
 
 // The compose form doubles as "new conversation" — the mailbox is empty on a
@@ -136,7 +138,7 @@ const form = computed(() => (props.openThread === null || composing.value ? star
               <Select v-model="started.project">
                 <SelectTrigger><SelectValue :placeholder="$t('portal.messagesNoBooking')" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{{ $t('portal.messagesNoBooking') }}</SelectItem>
+                  <SelectItem v-if="generalAllowed" value="">{{ $t('portal.messagesNoBooking') }}</SelectItem>
                   <SelectItem v-for="booking in bookings" :key="booking.id" :value="booking.id">
                     {{ booking.label }}
                   </SelectItem>

@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Portal\Actions\UpdateProjectDetails;
+use App\Portal\Support\PortalSettings;
 use App\Quotes\Enums\QuoteStatus;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
@@ -40,7 +41,7 @@ use Inertia\Response;
  */
 class ProjectController extends Controller
 {
-    public function __invoke(string $project, StudioSettingsResolver $settings): Response
+    public function __invoke(string $project, StudioSettingsResolver $studio, PortalSettings $settings): Response
     {
         $contact = auth('portal')->user();
 
@@ -50,7 +51,7 @@ class ProjectController extends Controller
         $shared = [
             'contact' => ['name' => $contact->name],
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
-            'studio' => ['name' => $settings->displayName(), 'messagingEnabled' => $settings->messagingEnabled()],
+            'studio' => ['name' => $studio->displayName(), 'messagingEnabled' => $settings->messagingEnabled($contact)],
         ];
 
         return $editable
@@ -108,7 +109,7 @@ class ProjectController extends Controller
     }
 
     /** The booked booking: cover, one sentence, pictures, dates, paperwork. */
-    private function booking(Project $found, StudioSettingsResolver $settings): array
+    private function booking(Project $found, PortalSettings $settings): array
     {
         $found->load([
             'shoots' => fn ($query) => $query->uncancelled()->orderByRaw('date is null, date'),
@@ -167,12 +168,12 @@ class ProjectController extends Controller
      * three grey text links before this. Each entry respects T-08's own
      * switch, so nothing here leads to a route that answers 404.
      */
-    private function documents(Project $found, StudioSettingsResolver $settings): array
+    private function documents(Project $found, PortalSettings $settings): array
     {
         $rows = [];
         $plan = $found->job?->paymentPlan;
 
-        if ($plan !== null && $settings->paymentStatusEnabled()) {
+        if ($plan !== null && $settings->paymentStatusEnabled(auth('portal')->user())) {
             $next = $plan->installments
                 ->reject(fn (PaymentInstallment $one) => $one->status === PaymentInstallmentStatus::Paid)
                 ->sortBy('due_on')
@@ -209,7 +210,7 @@ class ProjectController extends Controller
             ];
         }
 
-        if ($settings->messagingEnabled()) {
+        if ($settings->messagingEnabled(auth('portal')->user())) {
             $rows[] = [
                 'kind' => 'messages',
                 'href' => "/nachrichten?betrifft={$found->public_id}",

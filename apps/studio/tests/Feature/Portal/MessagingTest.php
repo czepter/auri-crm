@@ -21,7 +21,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     useSurface(Surface::PORTAL);
     Cache::store('redis')->flush();
-    StudioSettings::query()->update(['portal_messaging_enabled' => true]);
+    StudioSettings::query()->update(['portal_messaging_mode' => 'any']);
 });
 
 function bookedContact(): array

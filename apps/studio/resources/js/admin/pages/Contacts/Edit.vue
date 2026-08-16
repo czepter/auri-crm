@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
+import { Textarea } from '@/ui/textarea'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   contact: App.Crm.Data.ContactSuggestionData
@@ -15,6 +19,8 @@ const props = defineProps<{
   dsgvoErasedAt: string | null
   canManageDsgvo: boolean
   dsgvoRequests: { id: string; kind: string; requestedAt: string }[]
+  portalDefaults: Record<string, string | boolean | null>
+  portalOverrides: Record<string, string | boolean>
 }>()
 
 const form = useForm({
@@ -42,6 +48,50 @@ function revokePortalAccess() {
 // Irreversible, and named as such — the same worded-to-the-scope guard
 // revokePortalAccess uses above, and the only one that takes the accent
 // button, because it is the only one that cannot be undone.
+// P-09 (#228): three-valued, always. '' means Standard — the key is removed
+// rather than stored as a copy of today's default, so a studio changing its
+// own default is not silently left behind on this contact.
+const SWITCHES = ['accept_quotes', 'sign_contracts', 'payment_status',
+  'gallery_downloads', 'gallery_lists', 'gallery_comments'] as const
+
+const portal = useForm({
+  accept_quotes: asChoice(props.portalOverrides.accept_quotes),
+  sign_contracts: asChoice(props.portalOverrides.sign_contracts),
+  payment_status: asChoice(props.portalOverrides.payment_status),
+  messaging_mode: (props.portalOverrides.messaging_mode as string) ?? '',
+  gallery_downloads: asChoice(props.portalOverrides.gallery_downloads),
+  gallery_lists: asChoice(props.portalOverrides.gallery_lists),
+  gallery_comments: asChoice(props.portalOverrides.gallery_comments),
+  welcome: (props.portalOverrides.welcome as string) ?? '',
+})
+
+function asChoice(value: string | boolean | undefined) {
+  return value === undefined ? '' : value ? '1' : '0'
+}
+
+function savePortal() {
+  portal
+    .transform((data) => Object.fromEntries(
+      Object.entries(data).map(([key, value]) => [
+        key,
+        value === '' ? null : SWITCHES.includes(key as never) ? value === '1' : value,
+      ]),
+    ))
+    .patch(`/kontakte/${props.contact.id}/portal`, { preserveScroll: true })
+}
+
+// The studio's own value, in the words the studio's own screen uses —
+// "Standard (Nur zu einer Buchung)", not "Standard (booking)".
+function defaultLabel(key: string) {
+  const value = props.portalDefaults[key]
+
+  if (typeof value === 'boolean') {
+    return value ? t('contacts.portalOn') : t('contacts.portalOff')
+  }
+
+  return key === 'messaging_mode' ? t(`portalSettings.messagingMode.${value}`) : String(value ?? '—')
+}
+
 function eraseDsgvoData() {
   router.post(`/kontakte/${props.contact.id}/dsgvo/loeschen`)
 }
@@ -141,6 +191,43 @@ function eraseDsgvoData() {
             </AlertDialogContent>
           </AlertDialog>
         </template>
+      </div>
+
+      <!-- P-09 (#228): what the portal does for this client. Every row is
+           three-valued so the screen says what applies AND where it comes
+           from — "Standard (an)" is a different statement from "An". -->
+      <div class="card static" style="margin-top: var(--s5)">
+        <div class="cardhead"><span class="kick">{{ $t('contacts.portalSection') }}</span></div>
+
+        <form @submit.prevent="savePortal">
+          <div v-for="key in SWITCHES" :key="key" class="grp"><div class="fld">
+            <Label :for="`ov-${key}`">{{ $t(`contacts.portalKey.${key}`) }}</Label>
+            <select :id="`ov-${key}`" v-model="portal[key]">
+              <option value="">{{ $t('contacts.portalInherit', { value: defaultLabel(key) }) }}</option>
+              <option value="1">{{ $t('contacts.portalOn') }}</option>
+              <option value="0">{{ $t('contacts.portalOff') }}</option>
+            </select>
+          </div></div>
+
+          <div class="grp"><div class="fld">
+            <Label for="ov-messaging">{{ $t('contacts.portalKey.messaging_mode') }}</Label>
+            <select id="ov-messaging" v-model="portal.messaging_mode">
+              <option value="">{{ $t('contacts.portalInherit', { value: defaultLabel('messaging_mode') }) }}</option>
+              <option value="off">{{ $t('portalSettings.messagingMode.off') }}</option>
+              <option value="booking">{{ $t('portalSettings.messagingMode.booking') }}</option>
+              <option value="any">{{ $t('portalSettings.messagingMode.any') }}</option>
+            </select>
+          </div></div>
+
+          <div class="grp"><div class="fld">
+            <Label for="ov-welcome">{{ $t('contacts.portalKey.welcome') }}</Label>
+            <Textarea id="ov-welcome" v-model="portal.welcome" rows="2" />
+          </div></div>
+
+          <div class="formfoot">
+            <Button type="submit" :disabled="portal.processing">{{ $t('common.save') }}</Button>
+          </div>
+        </form>
       </div>
 
       <div v-if="canManageDsgvo" class="card static" style="margin-top: var(--s5)">

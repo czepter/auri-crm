@@ -99,7 +99,21 @@
     "dsgvoExport": "Daten exportieren",
     "dsgvoErase": "Kontakt löschen",
     "dsgvoErased": "Gelöscht am {date}",
-    "dsgvoEraseConfirm": "{name} und alle zugehörigen Daten unwiderruflich löschen? Unterzeichnete Verträge und Protokolleinträge bleiben aus gesetzlichen Gründen erhalten."
+    "dsgvoEraseConfirm": "{name} und alle zugehörigen Daten unwiderruflich löschen? Unterzeichnete Verträge und Protokolleinträge bleiben aus gesetzlichen Gründen erhalten.",
+    "portalSection": "Portal",
+    "portalInherit": "Standard ({value})",
+    "portalOn": "An",
+    "portalOff": "Aus",
+    "portalKey": {
+      "accept_quotes": "Angebote annehmen",
+      "sign_contracts": "Verträge unterschreiben",
+      "payment_status": "Zahlungsstand",
+      "messaging_mode": "Nachrichten",
+      "gallery_downloads": "Galerie-Download",
+      "gallery_lists": "Galerie-Listen",
+      "gallery_comments": "Galerie-Kommentare",
+      "welcome": "Begrüßung"
+    }
   },
   "project": {
     "kicker": "Projekt · {type}",
@@ -693,7 +707,27 @@
     "acceptQuotesEnabledLabel": "Angebote online annehmen",
     "signContractsEnabledLabel": "Verträge online unterschreiben",
     "paymentStatusEnabledLabel": "Zahlungsstatus einsehen",
-    "messagingEnabledLabel": "Nachrichten an das Studio"
+    "welcomeInquiryLabel": "Begrüßung vor der ersten Buchung",
+    "welcomeManyLabel": "Begrüßung bei vielen Buchungen",
+    "gallerySection": "Galerie-Vorgaben",
+    "galleryExpiryLabel": "Gültigkeit in Tagen",
+    "galleryBalanceLabel": "Erst nach vollständiger Zahlung freigeben",
+    "galleryDownloadsLabel": "Download erlauben",
+    "galleryListsLabel": "Listen erlauben",
+    "galleryCommentsLabel": "Kommentare erlauben",
+    "dsgvoSection": "Datenschutz-Anfragen",
+    "dsgvoRecipientLabel": "Empfänger",
+    "dsgvoDeadlineLabel": "Frist in Tagen",
+    "contactSection": "Kontakt im Portal-Fuß",
+    "contactPhoneLabel": "Telefon",
+    "contactEmailLabel": "E-Mail",
+    "contactResponseLabel": "Antwortzeit",
+    "messagingLabel": "Nachrichten",
+    "messagingMode": {
+      "off": "Aus",
+      "booking": "Nur zu einer Buchung",
+      "any": "Auch ohne Buchung"
+    }
   },
   "portal": {
     "signInTitle": "Kundenbereich",

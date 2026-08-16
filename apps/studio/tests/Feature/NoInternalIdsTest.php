@@ -271,7 +271,7 @@ it('never puts an integer identifier into the portal messages screen', function 
     // thread screen itself, so the switch is on, the same way the sign and
     // accept tests above turn their own switches on.
     \Illuminate\Support\Facades\Cache::store('redis')->flush();
-    \App\Settings\Models\StudioSettings::query()->update(['portal_messaging_enabled' => true]);
+    \App\Settings\Models\StudioSettings::query()->update(['portal_messaging_mode' => 'any']);
 
     $contact = Contact::factory()->create();
     $project = Project::factory()->create(['portal_visible' => true]);

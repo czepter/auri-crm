@@ -481,7 +481,7 @@ class StudioSettingsResolver
         return $this->row()->portal_maintenance_message;
     }
 
-    /** Shown once, on the portal home only — HomeController reads this, nowhere else does. */
+    /** P-01's room: exactly one booking. The column T-08 shipped, unrenamed so nothing a studio wrote is lost. */
     public function portalWelcomeText(): ?string
     {
         return $this->row()->portal_welcome_text;
@@ -517,10 +517,79 @@ class StudioSettingsResolver
         return $this->row()->portal_payment_status_enabled;
     }
 
-    /** Gates E-06's message thread in full — see EnsurePortalCapability's own note. */
-    public function messagingEnabled(): bool
+    /**
+     * P-09 (#228): three states, not a switch. `off`, `booking` (threads
+     * must name one), `any` (P-04's booking-less threads too). Read through
+     * App\Portal\Support\PortalSettings, which layers a contact's own
+     * override over it.
+     */
+    public function messagingMode(): string
     {
-        return $this->row()->portal_messaging_enabled;
+        return (string) $this->row()->portal_messaging_mode;
+    }
+
+    /** P-09: what a new gallery starts as, so a studio stops setting it per delivery. */
+    public function galleryDefaults(): array
+    {
+        $row = $this->row();
+
+        return [
+            'expiryDays' => $row->gallery_default_expiry_days,
+            'requiresSettledBalance' => (bool) $row->gallery_default_requires_settled_balance,
+        ];
+    }
+
+    public function galleryDownloadsEnabled(): bool
+    {
+        return (bool) $this->row()->gallery_default_downloads_enabled;
+    }
+
+    public function galleryListsEnabled(): bool
+    {
+        return (bool) $this->row()->gallery_default_lists_enabled;
+    }
+
+    public function galleryCommentsEnabled(): bool
+    {
+        return (bool) $this->row()->gallery_default_comments_enabled;
+    }
+
+    /** P-05 (#224)'s requests need a recipient and a deadline; both were missing. */
+    public function dsgvoRequestRecipient(): ?string
+    {
+        return $this->row()->dsgvo_request_recipient;
+    }
+
+    public function dsgvoRequestDeadlineDays(): int
+    {
+        return (int) $this->row()->dsgvo_request_deadline_days;
+    }
+
+    public function portalContactPhone(): ?string
+    {
+        return $this->row()->portal_contact_phone;
+    }
+
+    public function portalContactEmail(): ?string
+    {
+        return $this->row()->portal_contact_email;
+    }
+
+    public function portalContactResponseTime(): ?string
+    {
+        return $this->row()->portal_contact_response_time;
+    }
+
+    /** P-03's room: no booking yet. */
+    public function portalWelcomeInquiry(): ?string
+    {
+        return $this->row()->portal_welcome_inquiry;
+    }
+
+    /** P-02's room: a stock of bookings rather than one. */
+    public function portalWelcomeMany(): ?string
+    {
+        return $this->row()->portal_welcome_many;
     }
 
     /** Whether the first-run wizard (App\Http\Middleware\RequireStudioOnboarding) has been completed. */

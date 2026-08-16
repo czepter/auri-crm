@@ -23,7 +23,7 @@ it('hands every portal setting to the settings screen, every capability switch o
         ->toHaveKey('acceptQuotesEnabled', false)
         ->toHaveKey('signContractsEnabled', false)
         ->toHaveKey('paymentStatusEnabled', false)
-        ->toHaveKey('messagingEnabled', false);
+        ->toHaveKey('messagingMode', 'off');
 });
 
 it('updates the maintenance switch, its message, the welcome text and the legal links, and audits the owner', function () {
@@ -39,7 +39,12 @@ it('updates the maintenance switch, its message, the welcome text and the legal 
             'portal_accept_quotes_enabled' => false,
             'portal_sign_contracts_enabled' => true,
             'portal_payment_status_enabled' => true,
-            'portal_messaging_enabled' => false,
+            'portal_messaging_mode' => 'booking',
+            'gallery_default_requires_settled_balance' => false,
+            'gallery_default_downloads_enabled' => true,
+            'gallery_default_lists_enabled' => true,
+            'gallery_default_comments_enabled' => true,
+            'dsgvo_request_deadline_days' => 30,
         ])
         ->assertRedirect('/einstellungen/portal');
 
@@ -53,6 +58,7 @@ it('updates the maintenance switch, its message, the welcome text and the legal 
         ->and($row->portal_sign_contracts_enabled)->toBeTrue()
         ->and($row->portal_payment_status_enabled)->toBeTrue()
         ->and($row->portal_accept_quotes_enabled)->toBeFalse()
+        ->and($row->portal_messaging_mode)->toBe('booking')
         ->and(AuditLog::where('event', 'studio_settings.updated')
             ->where('context->key', 'portal_maintenance_enabled')->sole()->actor_id)->toBe($owner->id);
 });
@@ -64,7 +70,12 @@ it('rejects a Datenschutz link that is not a URL', function () {
             'portal_accept_quotes_enabled' => false,
             'portal_sign_contracts_enabled' => false,
             'portal_payment_status_enabled' => false,
-            'portal_messaging_enabled' => false,
+            'portal_messaging_mode' => 'off',
+            'gallery_default_requires_settled_balance' => false,
+            'gallery_default_downloads_enabled' => true,
+            'gallery_default_lists_enabled' => true,
+            'gallery_default_comments_enabled' => true,
+            'dsgvo_request_deadline_days' => 30,
             'portal_legal_datenschutz_url' => 'not-a-url',
         ])
         ->assertInvalid(['portal_legal_datenschutz_url']);

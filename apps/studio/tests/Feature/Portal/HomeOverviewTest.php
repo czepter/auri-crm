@@ -25,7 +25,7 @@ beforeEach(function () {
     // are on — the switches' own effect is covered below.
     StudioSettings::query()->update([
         'portal_payment_status_enabled' => true,
-        'portal_messaging_enabled' => true,
+        'portal_messaging_mode' => 'any',
     ]);
 });
 

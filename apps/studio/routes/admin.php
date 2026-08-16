@@ -132,6 +132,12 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/kontakte', [ContactController::class, 'index'])->name('contacts.index');
         Route::get('/kontakte/{contact}', [ContactController::class, 'edit'])->name('contacts.edit');
         Route::patch('/kontakte/{contact}', [ContactController::class, 'update'])->name('contacts.update');
+        // P-09 (#228). This contact's departures from the studio's portal
+        // defaults. Per contact, never per project: an event venue with forty
+        // dates a year is set up once, not forty times.
+        Route::patch('/kontakte/{contact}/portal', [ContactController::class, 'updatePortalOverrides'])
+            ->name('contacts.portal.update');
+
         Route::post('/kontakte/{contact}/portal-zugang/widerruf', [ContactController::class, 'revokePortalAccess'])
             ->name('contacts.portal-access.revoke');
 

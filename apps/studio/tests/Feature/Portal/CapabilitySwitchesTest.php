@@ -33,7 +33,7 @@ it('defaults every client capability switch to off', function () {
     expect($row->portal_accept_quotes_enabled)->toBeFalse()
         ->and($row->portal_sign_contracts_enabled)->toBeFalse()
         ->and($row->portal_payment_status_enabled)->toBeFalse()
-        ->and($row->portal_messaging_enabled)->toBeFalse();
+        ->and($row->portal_messaging_mode)->toBe('off');
 });
 
 it('404s the sign-contract route the same way a route that does not exist would, while the switch is off', function () {
@@ -212,7 +212,7 @@ it('hides the messages link on the project overview while the switch is off', fu
 });
 
 it('lets a client start a thread once the studio switches messaging on', function () {
-    StudioSettings::query()->update(['portal_messaging_enabled' => true]);
+    StudioSettings::query()->update(['portal_messaging_mode' => 'any']);
 
     $project = Project::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();

@@ -8,6 +8,7 @@ use App\Engagement\Data\MessageData;
 use App\Engagement\Models\Message;
 use App\Http\Controllers\Controller;
 use App\Portal\Models\DsgvoRequest;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,7 +32,7 @@ class ContactController extends Controller
         ]);
     }
 
-    public function edit(Contact $contact): Response
+    public function edit(Contact $contact, StudioSettingsResolver $settings): Response
     {
         $this->authorize('update', $contact);
 
@@ -64,6 +65,21 @@ class ContactController extends Controller
             'canRevokePortalAccess' => $user?->can('revokePortalAccess', $contact) ?? false,
             'dsgvoErasedAt' => $contact->dsgvo_erased_at?->toIso8601String(),
             'canManageDsgvo' => $user?->can('eraseDsgvoData', $contact) ?? false,
+            // P-09 (#228): what the portal does for THIS client. Per contact
+            // and not per project — a venue with forty dates a year is set up
+            // once. Each value is three-valued: absent means inherit, which
+            // is why the studio's own value travels beside it.
+            'portalDefaults' => [
+                'accept_quotes' => $settings->acceptQuotesEnabled(),
+                'sign_contracts' => $settings->signContractsEnabled(),
+                'payment_status' => $settings->paymentStatusEnabled(),
+                'messaging_mode' => $settings->messagingMode(),
+                'gallery_downloads' => $settings->galleryDownloadsEnabled(),
+                'gallery_lists' => $settings->galleryListsEnabled(),
+                'gallery_comments' => $settings->galleryCommentsEnabled(),
+                'welcome' => $settings->portalWelcomeText(),
+            ],
+            'portalOverrides' => (object) ($contact->portal_overrides ?? []),
             // P-05 (#224): what the client asked for from inside the portal.
             // A request nobody at the studio ever sees is worse than no
             // button at all, and the deadline is legal rather than polite.
@@ -116,6 +132,42 @@ class ContactController extends Controller
      * Hiding a project from the portal is a separate action on
      * ProjectController, on purpose.
      */
+    /**
+     * P-09 (#228). Writes only the keys that actually depart from the
+     * studio's default; anything the form sends as "Standard" is REMOVED
+     * rather than stored as a copy of today's value — otherwise a studio
+     * changing its own default would silently leave every contact behind on
+     * the old one.
+     */
+    public function updatePortalOverrides(Request $request, Contact $contact): RedirectResponse
+    {
+        $this->authorize('update', $contact);
+
+        $validated = $request->validate([
+            'accept_quotes' => ['nullable', 'boolean'],
+            'sign_contracts' => ['nullable', 'boolean'],
+            'payment_status' => ['nullable', 'boolean'],
+            'messaging_mode' => ['nullable', 'in:off,booking,any'],
+            'gallery_downloads' => ['nullable', 'boolean'],
+            'gallery_lists' => ['nullable', 'boolean'],
+            'gallery_comments' => ['nullable', 'boolean'],
+            'welcome' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $overrides = array_filter($validated, fn ($value) => $value !== null && $value !== '');
+
+        $contact->forceFill(['portal_overrides' => $overrides === [] ? null : $overrides])->save();
+
+        AuditLogger::record(
+            event: 'contact.portal_overrides_updated',
+            actor: auth('staff')->user(),
+            context: ['keys' => array_keys($overrides)],
+            subject: $contact->public_id,
+        );
+
+        return back();
+    }
+
     public function revokePortalAccess(Contact $contact): RedirectResponse
     {
         $this->authorize('revokePortalAccess', $contact);

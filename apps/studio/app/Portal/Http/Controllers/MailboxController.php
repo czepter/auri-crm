@@ -8,6 +8,7 @@ use App\Engagement\Actions\StartThread;
 use App\Engagement\Data\ThreadData;
 use App\Engagement\Models\Thread;
 use App\Http\Controllers\Controller;
+use App\Portal\Support\PortalSettings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -32,7 +33,7 @@ use Inertia\Response;
  */
 class MailboxController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request, PortalSettings $settings): Response
     {
         $contact = auth('portal')->user();
 
@@ -66,6 +67,10 @@ class MailboxController extends Controller
             'openReference' => $open?->project?->name,
             'bookings' => $this->bookings($contact),
             'preselected' => $request->query('betrifft'),
+            // P-09 (#228): messaging is three states. `booking` means every
+            // thread must name one, so the "Allgemein" choice is not offered
+            // — and store() refuses it, not just the form.
+            'generalAllowed' => $settings->generalThreadsAllowed($contact),
         ]);
     }
 
@@ -75,14 +80,14 @@ class MailboxController extends Controller
      * visibleProjects() question every other portal controller asks, so a
      * booking they are not on fails here as it does everywhere else.
      */
-    public function store(Request $request, StartThread $start): RedirectResponse
+    public function store(Request $request, StartThread $start, PortalSettings $settings): RedirectResponse
     {
         $contact = auth('portal')->user();
 
         $data = $request->validate([
             'subject' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string', 'max:5000'],
-            'project' => ['nullable', 'string'],
+            'project' => [$settings->generalThreadsAllowed($contact) ? 'nullable' : 'required', 'string'],
         ]);
 
         $project = ($data['project'] ?? '') === ''
