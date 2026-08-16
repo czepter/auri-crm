@@ -18,42 +18,24 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 uses(RefreshDatabase::class);
 
-const INBOUND_DOMAIN = 'in.nordlicht.test';
 const INBOUND_SIGNING_SECRET = 'webhook-secret';
 
+// inboundDomain(), inboundThread() and withSecret() live in tests/Pest.php —
+// two suites need them, and a global declared in one test file collides the
+// moment a second declares it.
+
 beforeEach(function () {
-    config()->set('mail.inbound.domain', INBOUND_DOMAIN);
+    config()->set('mail.inbound.domain', inboundDomain());
     config()->set('mail.inbound.signing_secret', INBOUND_SIGNING_SECRET);
     Notification::fake();
 });
-
-function inboundThread(string $email = 'lena@example.test'): Thread
-{
-    $project = contractProject();
-    $contact = $project->contacts()->sole();
-    $contact->update(['email' => $email]);
-
-    $thread = Thread::factory()->for($project)->create();
-    $thread->participants()->create(['contact_id' => $contact->id]);
-
-    return $thread;
-}
-
-function withSecret(): string
-{
-    $secret = 'a-tenant-secret';
-    StudioSettings::query()->firstOrFail()->forceFill(['inbound_secret' => $secret])->save();
-    app()->forgetInstance(StudioSettingsResolver::class);
-
-    return $secret;
-}
 
 function deliver(array $overrides = []): InboundMessage
 {
     return app(IngestInboundMessage::class)(array_merge([
         'message_id' => '<client-1@mail.example>',
         'from' => 'lena@example.test',
-        'to' => 'catchall@'.INBOUND_DOMAIN,
+        'to' => 'catchall@'.inboundDomain(),
         'subject' => 'Re: Ihre Hochzeit',
         'body' => 'Klingt gut!',
         'dmarc' => 'pass',
@@ -69,7 +51,7 @@ it('mints an unguessable thread address and reads its thread back', function () 
     $address = InboundAddress::forThread($thread, $secret);
 
     expect($address)->toContain('t.'.$thread->public_id.'.')
-        ->and($address)->toEndWith('@'.INBOUND_DOMAIN)
+        ->and($address)->toEndWith('@'.inboundDomain())
         ->and(InboundAddress::threadIdFrom($address, $secret))->toBe($thread->public_id);
 });
 
@@ -78,7 +60,7 @@ it('refuses an address whose HMAC was forged', function () {
 
     // The shape is right and the public_id is real — only the signature is
     // invented, which is exactly the attack the HMAC exists to stop.
-    $forged = 't.'.$thread->public_id.'.0000000000000000@'.INBOUND_DOMAIN;
+    $forged = 't.'.$thread->public_id.'.0000000000000000@'.inboundDomain();
 
     expect(InboundAddress::threadIdFrom($forged, 'a-tenant-secret'))->toBeNull();
 });
@@ -113,7 +95,7 @@ it('never attaches on a From: address alone', function () {
     // A participant's address, but sent to the catch-all rather than to a
     // signed thread address: no verified claim about which conversation it
     // belongs to, so a human decides.
-    $row = deliver(['to' => 'hallo.abc@'.INBOUND_DOMAIN]);
+    $row = deliver(['to' => 'hallo.abc@'.inboundDomain()]);
 
     expect($row->state)->toBe(InboundMessageState::Triage)
         ->and($row->reason)->toBe('unrecognised_address')
@@ -173,7 +155,7 @@ it('keeps a row for every delivery, whatever became of it', function () {
     withSecret();
     inboundThread();
 
-    deliver(['message_id' => '<a@x>', 'to' => 'was.auch.immer@'.INBOUND_DOMAIN]);
+    deliver(['message_id' => '<a@x>', 'to' => 'was.auch.immer@'.inboundDomain()]);
     deliver(['message_id' => '<b@x>', 'dmarc' => 'fail']);
 
     expect(InboundMessage::count())->toBe(2);
@@ -265,7 +247,7 @@ it('holds no mailbox credential anywhere in the schema', function () {
 it('puts the studio name in the catch-all, slugged', function () {
     expect(InboundAddress::catchAll('Atelier Nordlicht Fotografie GmbH', 'a-tenant-secret'))
         ->toStartWith('atelier-nordlicht-fotografie-gmbh.')
-        ->toEndWith('@'.INBOUND_DOMAIN);
+        ->toEndWith('@'.inboundDomain());
 });
 
 it('keeps the secret half unguessable, so the readable handle is not the credential', function () {

@@ -2,6 +2,7 @@
 
 use App\Automation\Console\Commands\SeedDefaultAutomationRulesCommand;
 use App\Automation\Console\Commands\SweepDateOffsetAutomationRulesCommand;
+use App\Engagement\Console\Commands\PollInboundMailbox;
 use App\Gallery\Console\Commands\ImportLegacyGalleriesCommand;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureApiTokenScope;
@@ -49,6 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
         CutoverRestoreCommand::class,
         SweepDateOffsetAutomationRulesCommand::class,
         SeedDefaultAutomationRulesCommand::class,
+        PollInboundMailbox::class,
         CreateApiTokenCommand::class,
         RevokeApiTokenCommand::class,
         CreateWebhookEndpointCommand::class,
@@ -63,6 +65,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // E-08's date-offset half — see the command's own docblock.
         $schedule->command(SweepDateOffsetAutomationRulesCommand::class)->daily();
+
+        // E-12's inbound half. Every minute, without overlapping: a slow pass
+        // must not have a second one reading the same unread messages behind
+        // it. Harmless if it did — ingest is idempotent on Message-ID — but
+        // two IMAP sessions against one mailbox is a way to get locked out.
+        $schedule->command(PollInboundMailbox::class)->everyMinute()->withoutOverlapping();
     })
     ->withMiddleware(function (Middleware $middleware) {
         // Every deployed surface sits behind a reverse proxy that terminates

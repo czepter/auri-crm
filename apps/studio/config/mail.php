@@ -130,8 +130,31 @@ return [
 
     'inbound' => [
         'domain' => env('MAIL_INBOUND_DOMAIN'),
-        'signing_secret' => env('MAIL_INBOUND_SIGNING_SECRET'),
         'max_bytes' => (int) env('MAIL_INBOUND_MAX_BYTES', 26_214_400),
+
+        // The identity our own MTA writes into Authentication-Results. Only
+        // the topmost header carrying it is trusted for SPF/DKIM/DMARC —
+        // everything below it arrived with the mail and is the sender's own
+        // claim about themselves. See InboundMimeMessage.
+        'authserv_id' => env('MAIL_INBOUND_AUTHSERV_ID'),
+
+        // Adapter one: poll our own catch-all mailbox over IMAP. The default,
+        // because the mailbox belongs to this app's hosting — the studio
+        // still hands over nothing.
+        'imap' => [
+            'host' => env('MAIL_INBOUND_IMAP_HOST'),
+            'port' => (int) env('MAIL_INBOUND_IMAP_PORT', 993),
+            'encryption' => env('MAIL_INBOUND_IMAP_ENCRYPTION', 'ssl'),
+            'validate_cert' => (bool) env('MAIL_INBOUND_IMAP_VALIDATE_CERT', true),
+            'username' => env('MAIL_INBOUND_IMAP_USERNAME'),
+            'password' => env('MAIL_INBOUND_IMAP_PASSWORD'),
+            'folder' => env('MAIL_INBOUND_IMAP_FOLDER', 'INBOX'),
+        ],
+
+        // Adapter two: a provider POSTs each delivery to /api/mail/eingang,
+        // signed with this. Unset on an IMAP deployment, and the endpoint
+        // then refuses everything rather than accepting anything.
+        'signing_secret' => env('MAIL_INBOUND_SIGNING_SECRET'),
     ],
 
 ];
