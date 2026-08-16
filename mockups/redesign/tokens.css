@@ -8,9 +8,16 @@
  *    und tritt sonst nirgends auf. Der Sprung von 13px Meta auf 72px Display
  *    ist der Unterschied zwischen "Formular" und "Buch".
  *
- * 2. Papier statt Weiß. #FBF8F5 gegen #FFFFFF ist ein Wert, der auf dem
- *    Screenshot kaum auffällt und im Auge sofort — Reinweiß ist der Grund,
- *    warum das jetzige Portal nach Verwaltungssoftware aussieht.
+ * 2. Weiß. Hier stand vorher ein warmes #FBF8F5 mit der Begründung, Reinweiß
+ *    lasse warme Fotos vergilbt wirken. Der Effekt ist real, seine
+ *    Größenordnung bei 3 % Sättigung aber kleiner als die Streuung, die
+ *    True Tone, Umgebungslicht und Panelkalibrierung ohnehin erzeugen —
+ *    gestaltet war das auf eine Stelle, die niemand kontrolliert. Und
+ *    warmes Off-White ist inzwischen die Grundfarbe jeder generierten
+ *    Website. Was die Screens trägt, ist die Typo-Skala, der Raum und die
+ *    Fotos, nicht der Grundton.
+ *
+ *    Die Werte kommen aus dem Bestand: --bg, --ink und --line des Produkts.
  *
  * Der Rostton bleibt aus dem Bestand (#B44E22, hier eine Spur tiefer), wird
  * aber vom Flächenfarbton zum Signal: er erscheint nur dort, wo der Kunde
@@ -23,18 +30,18 @@
   --sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
   --serif: 'Instrument Serif', ui-serif, Georgia, serif;
 
-  /* Papier */
-  --paper: #FBF8F5;
-  --sunk: #F1EAE3;
-  --ink: #17130F;
-  --ink-2: #5C534B;
-  --ink-3: #9C9189;
-  --line: #E6DCD2;
-  --line-2: #D6C8BA;
+  /* Fläche */
+  --paper: #FFFFFF;
+  --sunk: #F4F4F3;
+  --ink: #191919;
+  --ink-2: #5C5C58;
+  --ink-3: #9A9A95;
+  --line: #E9E9E7;
+  --line-2: #DCDCD9;
 
   --accent: #B4462A;
   --accent-ink: #FFF6F2;
-  --accent-soft: #F6E5DC;
+  --accent-soft: #FBE9E2;
   --good: #3F6B4A;
 
   /* Dunkel — Galerie */
