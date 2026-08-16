@@ -7,6 +7,7 @@ const PAGES = [
   ['portal-start-location', 'portal-start-location.html'],
   ['portal-anfrage', 'portal-anfrage.html'],
   ['portal-nachrichten', 'portal-nachrichten.html'],
+  ['portal-einstellungen', 'portal-einstellungen.html'],
   ['portal-projekt', 'portal-projekt.html'],
   ['galerie-gate', 'galerie-gate.html'],
   ['galerie', 'galerie.html'],

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Einstellungen — Nordlicht Fotografie</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* Das Konto des Kunden. Im Portal gibt es davon heute nichts: Kontaktdaten
+ * ändert nur das Studio, den Zugang widerruft nur das Studio, und Auskunft
+ * und Löschung liegen hinter einer Owner-Capability im Admin.
+ *
+ * Vier Blöcke, in der Reihenfolge, in der jemand sie braucht:
+ *
+ *   Daten      — was das Studio über sie weiß. Immer änderbar, unabhängig
+ *                von der Phase einer Buchung: das sind ihre Angaben, nicht
+ *                Vertragsinhalt. Die E-Mail ist der Zugang, deshalb steht
+ *                das an dem Feld und nicht in einer Fußnote.
+ *   Post       — der Schalter, den /abmelden/{contact} schon kennt, nur an
+ *                der Stelle, an der man ihn sucht.
+ *   Zugang     — es gibt kein Passwort. Was es gibt, sind offene Sitzungen.
+ *   Datenschutz— Auskunft und Löschung als Antrag, nicht als Knopf: die
+ *                Aufbewahrungspflicht für Verträge und Rechnungen kann das
+ *                Portal nicht wegklicken, und das gehört an die Zeile.
+ */
+.bar { border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10;
+       background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(12px); }
+.bar .inner {
+  max-width: var(--page); margin: 0 auto; padding: var(--s4) var(--s5);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s5);
+}
+.wordmark { display: flex; align-items: center; gap: 9px; font: 600 15px/1 var(--sans); letter-spacing: -0.012em; text-decoration: none; }
+.wordmark i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.bar nav { display: flex; align-items: center; gap: var(--s4); font-size: 13.5px; }
+.bar nav a { color: var(--ink-2); text-decoration: none; }
+.bar nav a:hover { color: var(--ink); }
+.bar nav a.on { color: var(--ink); font-weight: 600; }
+
+.head { padding-block: var(--s8) 0; }
+.head .display { font-size: clamp(36px, 5vw, 52px); }
+
+.col { max-width: 680px; padding-bottom: var(--s10); }
+.block { border-top: 1px solid var(--line); padding-block: var(--s7); }
+.block:first-of-type { margin-top: var(--s7); }
+.lab {
+  font: 600 11px/1 var(--sans); letter-spacing: .17em; text-transform: uppercase;
+  color: var(--ink-3); margin: 0 0 var(--s5);
+}
+
+/* ── Felder ───────────────────────────────────────────────────────────── */
+.fields { display: grid; gap: var(--s4); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); }
+.fld label { display: block; font-size: 13px; color: var(--ink-3); margin-bottom: 7px; }
+.fld input {
+  width: 100%; background: #fff;
+  border: 1px solid var(--line-2); border-radius: var(--r-sm);
+  padding: 11px 13px; color: var(--ink);
+  font: 400 14.5px/1.5 var(--sans);
+  outline: none; transition: border-color .2s var(--ease);
+}
+.fld input:focus { border-color: var(--ink-3); }
+.fld .under { margin-top: 7px; font-size: 12.5px; color: var(--ink-3); }
+.save { margin-top: var(--s5); justify-self: start; }
+
+/* ── Schalter ─────────────────────────────────────────────────────────── */
+.toggle { display: flex; align-items: flex-start; gap: var(--s4); }
+.toggle input { appearance: none; margin: 0; flex: none; cursor: pointer;
+  width: 44px; height: 26px; border-radius: var(--r-pill);
+  background: var(--line-2); position: relative;
+  transition: background .2s var(--ease); }
+.toggle input::after {
+  content: ''; position: absolute; top: 3px; left: 3px;
+  width: 20px; height: 20px; border-radius: 50%; background: #fff;
+  transition: transform .22s var(--ease);
+}
+.toggle input:checked { background: var(--ink); }
+.toggle input:checked::after { transform: translateX(18px); }
+.toggle .txt b { display: block; font: 600 14.5px/1.35 var(--sans); letter-spacing: -0.008em; }
+.toggle .txt span { font-size: 13px; color: var(--ink-2); }
+
+/* ── Aktionszeilen ────────────────────────────────────────────────────── */
+.rows { border-top: 1px solid var(--line); }
+.row {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--s5);
+  padding: var(--s5) var(--s3); margin-inline: calc(var(--s3) * -1);
+  border-bottom: 1px solid var(--line); border-radius: var(--r-sm);
+  text-decoration: none; color: inherit;
+  transition: background .18s var(--ease);
+}
+.row:hover { background: var(--sunk); }
+.row b { display: block; font: 600 15px/1.35 var(--sans); letter-spacing: -0.008em; }
+.row span { font-size: 13px; color: var(--ink-2); }
+.row .go { font-size: 13.5px; color: var(--ink-2); white-space: nowrap; }
+.row:hover .go { color: var(--ink); }
+.row.warn b { color: var(--accent); }
+
+.foot {
+  border-top: 1px solid var(--line);
+  max-width: var(--page); margin: 0 auto;
+  padding: var(--s6) var(--s5) var(--s8);
+  display: flex; justify-content: space-between; gap: var(--s5); flex-wrap: wrap;
+  font-size: 13px; color: var(--ink-3);
+}
+.foot a { text-decoration: none; }
+.foot a:hover { color: var(--ink); }
+.foot .links { display: flex; gap: var(--s5); }
+
+@media (max-width: 640px) { .two { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="inner">
+    <a class="wordmark" href="portal-start.html"><i></i> Nordlicht Fotografie</a>
+    <nav>
+      <a href="portal-start.html">Buchungen</a>
+      <a href="portal-nachrichten.html">Nachrichten</a>
+      <a class="on" href="#">Einstellungen</a>
+      <a href="#">Abmelden</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page col">
+  <section class="head">
+    <h1 class="display rise rise-2">Einstellungen</h1>
+  </section>
+
+  <div class="rise rise-3">
+    <section class="block">
+      <p class="lab">Eure Daten</p>
+      <form class="fields" onsubmit="return false">
+        <div class="two">
+          <div class="fld">
+            <label for="s-name">Name</label>
+            <input id="s-name" type="text" value="Viola Neumann">
+          </div>
+          <div class="fld">
+            <label for="s-partner">Partner/in</label>
+            <input id="s-partner" type="text" value="Chris Neumann">
+          </div>
+        </div>
+
+        <div class="fld">
+          <label for="s-mail">E-Mail</label>
+          <input id="s-mail" type="email" value="viola.neumann@example.test">
+          <p class="under">Mit dieser Adresse meldet ihr euch an.</p>
+        </div>
+
+        <div class="fld">
+          <label for="s-tel">Telefon</label>
+          <input id="s-tel" type="tel" value="0171 2223344">
+        </div>
+
+        <div class="fld">
+          <label for="s-str">Straße und Hausnummer</label>
+          <input id="s-str" type="text" value="Lange Reihe 41">
+        </div>
+
+        <div class="two">
+          <div class="fld">
+            <label for="s-plz">PLZ</label>
+            <input id="s-plz" type="text" class="num" value="20099">
+          </div>
+          <div class="fld">
+            <label for="s-ort">Ort</label>
+            <input id="s-ort" type="text" value="Hamburg">
+          </div>
+        </div>
+
+        <button class="btn save" type="submit">Speichern</button>
+      </form>
+    </section>
+
+    <section class="block">
+      <p class="lab">Post</p>
+      <label class="toggle">
+        <input type="checkbox" checked>
+        <span class="txt">
+          <b>Angebots- und Status-Mails</b>
+          <span>Termine, Angebote, fällige Zahlungen und fertige Galerien.</span>
+        </span>
+      </label>
+    </section>
+
+    <section class="block">
+      <p class="lab">Zugang</p>
+      <div class="rows">
+        <a class="row" href="#">
+          <span>
+            <b>Auf allen Geräten abmelden</b>
+            <span>Zuletzt angemeldet: heute, 09:14 · Hamburg</span>
+          </span>
+          <span class="go">Abmelden</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="block">
+      <p class="lab">Datenschutz</p>
+      <div class="rows">
+        <a class="row" href="#">
+          <span>
+            <b>Datenkopie anfordern</b>
+            <span>Alles, was zu euch gespeichert ist, als Datei.</span>
+          </span>
+          <span class="go">Anfordern</span>
+        </a>
+        <a class="row warn" href="#">
+          <span>
+            <b>Löschung anfragen</b>
+            <span>Unterschriebene Verträge und Rechnungen müssen zehn Jahre aufbewahrt werden.</span>
+          </span>
+          <span class="go">Anfragen</span>
+        </a>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="foot">
+  <span>Nordlicht Fotografie · Elbchaussee 12, 22765 Hamburg</span>
+  <span class="links">
+    <a href="#">Impressum</a>
+    <a href="#">Datenschutz</a>
+    <a href="#">AGB</a>
+  </span>
+</footer>
+
+</body>
+</html>
