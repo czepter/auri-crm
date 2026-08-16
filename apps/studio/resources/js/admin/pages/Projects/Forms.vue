@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3'
+import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectHeader from '@/admin/components/ProjectHeader.vue'
 import FormFieldsEditor, { type FormFieldRow } from '@/admin/components/FormFieldsEditor.vue'
@@ -24,6 +24,10 @@ function createFrom(template: string) {
   createForm
     .transform(() => ({ template: template || null }))
     .post(`/auftraege/${props.header.id}/frageboegen`, { preserveScroll: true })
+}
+
+function share(id: string, shared: boolean) {
+  router.post(`/frageboegen/${id}/freigeben`, { shared }, { preserveScroll: true })
 }
 
 // One edit form per instance, keyed by its id — the same reason Quotes.vue
@@ -84,7 +88,22 @@ function answer(fieldId: string) {
         <div v-for="instance in formInstances" :key="instance.id" class="card static">
           <div class="cardhead">
             <span class="kick">{{ instance.name }}</span>
+            <!-- P-03 (#222): sharing is what makes this fillable in the
+                 portal. Un-sharing hides the screen and deletes nothing —
+                 form_answers is append-only and stays that way. -->
+            <Button
+              v-if="header.canManageForms"
+              variant="ghost"
+              type="button"
+              @click="share(instance.id, !instance.sharedAt)"
+            >
+              {{ instance.sharedAt ? $t('formInstances.unshare') : $t('formInstances.share') }}
+            </Button>
           </div>
+
+          <p v-if="instance.sharedAt" class="hint">
+            {{ $t('formInstances.sharedAt', { date: new Date(instance.sharedAt).toLocaleDateString('de-DE') }) }}
+          </p>
 
           <template v-if="header.canManageForms">
             <div class="fld wide" style="margin-bottom: var(--s3)">

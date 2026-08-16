@@ -5,6 +5,7 @@ namespace App\Crm\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use Database\Factories\Crm\FormInstanceFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -30,6 +31,26 @@ class FormInstance extends Model
     use HasPublicId;
 
     protected $fillable = ['project_id', 'name', 'source_template_name'];
+
+    protected function casts(): array
+    {
+        return ['shared_at' => 'immutable_datetime'];
+    }
+
+    /**
+     * P-03 (#222): has the studio put this questionnaire in front of the
+     * client? Per questionnaire and not per project — a studio keeps its own
+     * checklists on this same table, and those are nobody else's business.
+     */
+    public function isShared(): bool
+    {
+        return $this->shared_at !== null;
+    }
+
+    public function scopeShared(Builder $query): void
+    {
+        $query->whereNotNull('shared_at');
+    }
 
     public function project(): BelongsTo
     {

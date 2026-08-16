@@ -5,6 +5,7 @@ namespace App\Crm\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Enums\FormFieldType;
+use App\Models\User;
 use Database\Factories\Crm\FormInstanceFieldFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -65,14 +66,23 @@ class FormInstanceField extends Model
      * serialize on it or one loses the unique (tenant_id, field, version)
      * index, never both landing the same version number.
      */
-    public function answer(?string $value): FormAnswer
+    public function answer(?string $value, Contact|User|null $actor = null): FormAnswer
     {
-        return DB::transaction(function () use ($value) {
+        return DB::transaction(function () use ($value, $actor) {
             $next = 1 + (int) $this->answers()->max('version');
 
             return $this->answers()->create([
                 'version' => $next,
                 'value' => $value,
+                // P-03 (#222): who typed it. A studio recording an answer off
+                // a phone call and the client typing it themselves are
+                // different facts, and this table is append-only, so the
+                // distinction stays readable years later.
+                ...match (true) {
+                    $actor instanceof Contact => ['contact_id' => $actor->id],
+                    $actor instanceof User => ['author_id' => $actor->id],
+                    default => [],
+                },
             ]);
         });
     }

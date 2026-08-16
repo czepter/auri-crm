@@ -4,6 +4,7 @@ namespace App\Portal\Http\Controllers;
 
 use App\Contracts\Models\Contract;
 use App\Crm\Models\Project;
+use App\Crm\Models\FormInstance;
 use App\Crm\Models\Shoot;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
@@ -81,6 +82,30 @@ class ProjectController extends Controller
         return back();
     }
 
+    /**
+     * P-03 (#222): the questionnaires the studio actually shared. Absent
+     * until one is — a studio's own checklists live on the same table and
+     * are nobody else's business. openCount is what the row says instead of
+     * a progress bar: how many questions still have no answer.
+     */
+    private function questionnaires(Project $found): array
+    {
+        return FormInstance::query()
+            ->shared()
+            ->where('project_id', $found->id)
+            ->with('fields.currentAnswer')
+            ->get()
+            ->map(fn (FormInstance $instance) => [
+                'id' => $instance->public_id,
+                'name' => $instance->name,
+                'count' => $instance->fields->count(),
+                'openCount' => $instance->fields
+                    ->filter(fn ($field) => $field->currentAnswer?->value === null)
+                    ->count(),
+            ])
+            ->all();
+    }
+
     private function find(string $project): Project
     {
         return auth('portal')->user()->visibleProjects()
@@ -101,6 +126,7 @@ class ProjectController extends Controller
             'venueName' => $shoot?->venue_name,
             'venueCity' => $shoot?->venue_city,
             'inquiryText' => $found->lead?->inquiry_text,
+            'questionnaires' => $this->questionnaires($found),
             'contact' => [
                 'email' => auth('portal')->user()->email,
                 'phone' => auth('portal')->user()->phone,
@@ -151,6 +177,7 @@ class ProjectController extends Controller
                     ->values()->all(),
             ],
             'documents' => $this->documents($found, $settings),
+            'questionnaires' => $this->questionnaires($found),
             'details' => [
                 'date' => $found->primaryShoot?->date?->format('Y-m-d'),
                 'callTime' => $found->primaryShoot?->call_time === null

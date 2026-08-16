@@ -15,6 +15,9 @@ class FormInstanceData extends Data
         public string $name,
         public ?string $sourceTemplateName,
         public string $updatedAt,
+        // P-03 (#222): shared with the client, or the studio's own checklist.
+        // Both live on this table; the stamp is the whole difference.
+        public ?string $sharedAt,
         public array $fields,
     ) {}
 
@@ -25,6 +28,7 @@ class FormInstanceData extends Data
             name: $instance->name,
             sourceTemplateName: $instance->source_template_name,
             updatedAt: $instance->updated_at->toIso8601String(),
+            sharedAt: $instance->shared_at?->toIso8601String(),
             fields: $instance->fields->map(FormInstanceFieldData::fromModel(...))->all(),
         );
     }

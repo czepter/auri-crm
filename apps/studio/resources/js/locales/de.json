@@ -113,7 +113,8 @@
       "gallery_lists": "Galerie-Listen",
       "gallery_comments": "Galerie-Kommentare",
       "welcome": "Begrüßung"
-    }
+    },
+    "portalPreview": "Vorschau als Kunde"
   },
   "project": {
     "kicker": "Projekt · {type}",
@@ -690,7 +691,10 @@
     "startBlank": "Leer beginnen",
     "seededFrom": "Aus Vorlage „{name}“.",
     "saveAnswer": "Antwort speichern",
-    "answeredAt": "Beantwortet am {date}"
+    "answeredAt": "Beantwortet am {date}",
+    "share": "Für Kunden freigeben",
+    "unshare": "Freigabe zurücknehmen",
+    "sharedAt": "Seit {date} für Kunden freigegeben"
   },
   "portalSettings": {
     "title": "Portal",
@@ -736,6 +740,8 @@
     "sendLink": "Link anfordern",
     "signedInAs": "Angemeldet als",
     "signOut": "Abmelden",
+    "previewBanner": "Vorschau als Kunde — nur ansehen, nichts ändern.",
+    "previewLeave": "Vorschau beenden",
     "greeting": "Hallo {name}",
     "allProjects": "Alle Projekte",
     "shootsTitle": "Shootings",
@@ -766,6 +772,9 @@
     "requested": "Angefragt",
     "inquiryReceived": "Wir haben eure Anfrage. Wir schauen uns den Termin an und melden uns mit einem Angebot.",
     "notedTitle": "Eure Angaben",
+    "questionnairesTitle": "Fragebogen",
+    "questionsOpen": "{open} von {total} Fragen offen",
+    "questionsDone": "Vollständig",
     "occasion": "Anlass",
     "preferredDate": "Wunschtermin",
     "appointment": "Termin",
@@ -875,6 +884,13 @@
     "downloadLink": "Bilder herunterladen",
     "listsTitle": "Eure Listen",
     "heart": "Favoriten",
+    "backToGrid": "Zurück zum Raster",
+    "previous": "Vorheriges Bild",
+    "next": "Nächstes Bild",
+    "favorite": "Favorit",
+    "unfavorite": "Favorit entfernen",
+    "noComments": "Noch keine Kommentare.",
+    "commentPlaceholder": "Kommentar schreiben …",
     "newList": "Neue Liste",
     "newListName": "Name der Liste",
     "renameList": "Umbenennen",

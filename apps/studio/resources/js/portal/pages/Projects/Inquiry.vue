@@ -21,6 +21,7 @@ const props = defineProps<{
     venueName: string | null
     venueCity: string | null
     inquiryText: string | null
+    questionnaires: { id: string; name: string; count: number; openCount: number }[]
     contact: { email: string | null; phone: string | null }
   }
 }>()
@@ -120,6 +121,29 @@ const venue = [props.project.venueName, props.project.venueCity].filter(Boolean)
           <Button variant="ghost" type="button" @click="editing = false">{{ $t('common.cancel') }}</Button>
         </div>
       </form>
+    </section>
+
+
+    <!-- P-03 (#222): the questionnaire the inquiry screen has always linked
+         to and nobody could fill in. Absent until the studio shares one. -->
+    <section v-if="project.questionnaires.length" class="psec">
+      <p class="lab">{{ $t('portal.questionnairesTitle') }}</p>
+      <div class="pend">
+        <a
+          v-for="sheet in project.questionnaires"
+          :key="sheet.id"
+          :href="`/projekte/${project.id}/fragebogen/${sheet.id}`"
+        >
+          <span style="flex: 1">
+            <h3>{{ sheet.name }}</h3>
+            <div class="sub">
+              {{ sheet.openCount
+                ? $t('portal.questionsOpen', { open: sheet.openCount, total: sheet.count })
+                : $t('portal.questionsDone') }}
+            </div>
+          </span>
+        </a>
+      </div>
     </section>
 
     <section class="psec" style="margin-top: var(--s7)">

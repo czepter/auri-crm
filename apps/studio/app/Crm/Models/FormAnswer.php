@@ -4,6 +4,7 @@ namespace App\Crm\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
+use App\Models\User;
 use Database\Factories\Crm\FormAnswerFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,11 +26,23 @@ class FormAnswer extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['form_instance_field_id', 'version', 'value'];
+    protected $fillable = ['form_instance_field_id', 'version', 'value', 'contact_id', 'author_id'];
 
     public function formInstanceField(): BelongsTo
     {
         return $this->belongsTo(FormInstanceField::class);
+    }
+
+    /** P-03 (#222): set when the client typed it themselves in the portal. */
+    public function contact(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class);
+    }
+
+    /** Set when staff recorded it — off a phone call, usually. Null on both for rows written before either existed. */
+    public function author(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'author_id');
     }
 
     protected static function newFactory(): Factory

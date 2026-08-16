@@ -39,6 +39,7 @@ const props = defineProps<{
     shoots: Shoot[]
     gallery: { id: string; title: string | null; count: number; expiresAt: string | null; strip: string[] } | null
     documents: Document[]
+    questionnaires: { id: string; name: string; count: number; openCount: number }[]
     details: { date: string | null; callTime: string | null; venue: string | null; email: string | null; phone: string | null }
   }
 }>()
@@ -182,6 +183,29 @@ const heroImage = computed(() => props.project.gallery?.strip[0] ?? null)
             </div>
           </span>
           <span v-if="document.amount" class="amount">{{ formatEuros(document.amount) }}</span>
+        </a>
+      </div>
+    </section>
+
+
+    <!-- P-03 (#222): the questionnaire the inquiry screen has always linked
+         to and nobody could fill in. Absent until the studio shares one. -->
+    <section v-if="project.questionnaires.length" class="psec">
+      <p class="lab">{{ $t('portal.questionnairesTitle') }}</p>
+      <div class="pend">
+        <a
+          v-for="sheet in project.questionnaires"
+          :key="sheet.id"
+          :href="`/projekte/${project.id}/fragebogen/${sheet.id}`"
+        >
+          <span style="flex: 1">
+            <h3>{{ sheet.name }}</h3>
+            <div class="sub">
+              {{ sheet.openCount
+                ? $t('portal.questionsOpen', { open: sheet.openCount, total: sheet.count })
+                : $t('portal.questionsDone') }}
+            </div>
+          </span>
         </a>
       </div>
     </section>

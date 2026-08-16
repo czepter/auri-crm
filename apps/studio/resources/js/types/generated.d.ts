@@ -90,6 +90,7 @@ id: string,
 name: string,
 sourceTemplateName: string | null,
 updatedAt: string,
+sharedAt: string | null,
 fields: App.Crm.Data.FormInstanceFieldData[],
 };
 export type FormInstanceFieldData = {

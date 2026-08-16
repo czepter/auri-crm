@@ -96,6 +96,32 @@ class FormInstanceController extends Controller
     }
 
     /**
+     * P-03 (#222): put this questionnaire in front of the client, or take it
+     * back. Per questionnaire rather than per project, because a studio's own
+     * checklists sit on the same table — see FormInstance::isShared().
+     *
+     * Un-sharing hides the screen; it never deletes an answer the client
+     * already gave. form_answers is append-only and stays that way.
+     */
+    public function share(Request $request, FormInstance $formInstance): RedirectResponse
+    {
+        $this->authorize('manageForms', $formInstance->project);
+
+        $shared = $request->validate(['shared' => ['required', 'boolean']])['shared'];
+
+        $formInstance->forceFill(['shared_at' => $shared ? now() : null])->save();
+
+        AuditLogger::record(
+            event: $shared ? 'form_instance.shared' : 'form_instance.unshared',
+            actor: auth('staff')->user(),
+            subject: $formInstance->public_id,
+            projectId: $formInstance->project_id,
+        );
+
+        return back();
+    }
+
+    /**
      * E-03: staff recording (or correcting) the answer to one question on an
      * already-seeded instance. Never updates a FormAnswer in place — always
      * FormInstanceField::answer(), which appends the next version and leaves
@@ -109,7 +135,7 @@ class FormInstanceController extends Controller
             'value' => ['nullable', 'string', 'max:5000'],
         ]);
 
-        $formInstanceField->answer($validated['value'] ?? null);
+        $formInstanceField->answer($validated['value'] ?? null, auth('staff')->user());
 
         AuditLogger::record(
             event: 'form_instance_field.answered',
