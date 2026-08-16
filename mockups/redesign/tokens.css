@@ -264,6 +264,52 @@ a { color: inherit; }
 .gcard b { display: block; font: 400 19px/1.25 var(--serif); margin-top: var(--s3); letter-spacing: -0.01em; }
 .gcard span { font-size: 13px; color: var(--ink-2); }
 
+/* ── Kopfzeile ────────────────────────────────────────────────────────── */
+/* Eine Definition, sieben Seiten. Vorher hatte jede ihre eigene: vier
+ * verschiedene Linksätze, zwei Badge-Varianten, mal sticky mal nicht, und
+ * die Projektseite eine eigene Komponente namens .top. Wer zwischen zwei
+ * Screens wechselt, soll die Navigation nicht neu suchen müssen.
+ *
+ * Über einem Titelbild ist das dieselbe Leiste mit .over — transparent und
+ * hell statt Papier —, nicht ein zweites Bauteil.
+ */
+.bar {
+  position: sticky; top: 0; z-index: 30;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(12px);
+}
+.bar .inner {
+  max-width: var(--page); margin: 0 auto; padding: var(--s4) var(--s5);
+  display: flex; align-items: center; gap: var(--s5);
+}
+.wordmark {
+  display: flex; align-items: center; gap: 9px; flex: none;
+  font: 600 15px/1 var(--sans); letter-spacing: -0.012em;
+  text-decoration: none; color: inherit;
+}
+.wordmark i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+
+.bar nav { display: flex; align-items: center; gap: var(--s5); margin-left: auto; font-size: 13.5px; }
+.bar nav a { color: var(--ink-2); text-decoration: none; transition: color .2s var(--ease); }
+.bar nav a:hover { color: var(--ink); }
+.bar nav a.on { color: var(--ink); font-weight: 600; }
+.bar .mail { display: inline-flex; align-items: center; gap: 8px; }
+.bar .badge {
+  min-width: 18px; padding: 0 5px; border-radius: var(--r-pill);
+  background: var(--accent); color: #fff;
+  font: 600 11px/18px var(--sans); text-align: center;
+}
+
+/* Über dem Titelbild: dieselbe Leiste, andere Farbe. */
+.bar.over {
+  position: absolute; inset: 0 0 auto 0; z-index: 3;
+  background: transparent; backdrop-filter: none; border-bottom: 0;
+  color: #fff;
+}
+.bar.over nav a { color: rgba(255,255,255,.78); }
+.bar.over nav a:hover, .bar.over nav a.on { color: #fff; }
+
 /* ── Navigation am Handy ──────────────────────────────────────────────── */
 /* Vier Textlinks passen nicht in 390px, und 22px hohe Ziele trifft auf Glas
  * niemand. Statt die Kopfzeile zu schrumpfen bekommt das Handy eine eigene

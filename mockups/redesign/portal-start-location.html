@@ -16,18 +16,12 @@
  *   2. Zusammengefasste Jahrgänge. Eine Platzentscheidung gegen 42 Zeilen,
  *      kein Werturteil: ein Klick, und der Jahrgang steht komplett da.
  */
-.bar { border-bottom: 1px solid var(--line); }
-.bar .inner {
-  max-width: var(--page); margin: 0 auto; padding: var(--s4) var(--s5);
-  display: flex; align-items: center; justify-content: space-between; gap: var(--s5);
-}
-.wordmark {
-  display: flex; align-items: center; gap: 9px;
-  font: 600 15px/1 var(--sans); letter-spacing: -0.012em; text-decoration: none;
-}
-.wordmark i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-.bar a.out { font-size: 13.5px; color: var(--ink-2); text-decoration: none; }
-.bar a.out:hover { color: var(--ink); }
+
+
+
+
+
+
 
 .head { padding-block: var(--s9) 0; }
 .head .display { font-size: clamp(42px, 6vw, 68px); }
@@ -63,13 +57,13 @@
 
 <header class="bar">
   <div class="inner">
-    <a class="wordmark" href="#"><i></i> Nordlicht Fotografie</a>
-    <span style="display:flex;align-items:center;gap:var(--s4)">
-      <a class="out" href="#" style="display:inline-flex;align-items:center;gap:8px">Nachrichten
-        <span style="min-width:18px;padding:0 5px;border-radius:var(--r-pill);background:var(--accent);color:#fff;font:600 11px/18px var(--sans);text-align:center">1</span>
-      </a>
-      <a class="out" href="#">Abmelden</a>
-    </span>
+    <a class="wordmark" href="portal-start.html"><i></i> Nordlicht Fotografie</a>
+    <nav>
+      <a href="portal-start.html" class="on">Buchungen</a>
+      <a class="mail" href="portal-nachrichten.html">Nachrichten <span class="badge">2</span></a>
+      <a href="portal-einstellungen.html">Einstellungen</a>
+      <a href="#">Abmelden</a>
+    </nav>
   </div>
 </header>
 

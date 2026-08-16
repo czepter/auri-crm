@@ -6,35 +6,19 @@
 <title>Viola & Chris — Nordlicht Fotografie</title>
 <link rel="stylesheet" href="tokens.css">
 <style>
-/* ── Kopf: liegt auf dem Bild, nicht darüber ──────────────────────────── */
-.top {
-  position: absolute; inset: 0 0 auto 0; z-index: 3;
-  display: flex; align-items: center; justify-content: space-between;
-  gap: var(--s5);
-  max-width: var(--page); margin: 0 auto;
-  padding: var(--s5) var(--s5) 0;
-  color: #fff;
-}
-.wordmark {
-  display: flex; align-items: center; gap: 9px;
-  font: 600 15px/1 var(--sans); letter-spacing: -0.012em;
-  text-decoration: none; color: inherit;
-}
-.wordmark i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-.top nav { display: flex; align-items: center; gap: var(--s5); font-size: 13.5px; }
-.top nav a { color: rgba(255,255,255,.78); text-decoration: none; transition: color .2s var(--ease); }
-.top nav a:hover { color: #fff; }
-.mail { display: inline-flex; align-items: center; gap: 8px; }
-.mailbadge {
-  min-width: 18px; padding: 0 5px; border-radius: var(--r-pill);
-  background: var(--accent); color: #fff;
-  font: 600 11px/18px var(--sans); text-align: center;
-}
+
+
+
+
+
+
+
+
 
 /* ── Auftragswechsler ─────────────────────────────────────────────────── */
 /* Der Name des laufenden Auftrags IST der Umschalter. Ein Kunde mit einem
    einzigen Auftrag sieht nur seinen Namen, kein totes Menü. */
-.switch { position: relative; }
+.switch { position: relative; margin-left: var(--s5); }
 .switchbtn {
   display: inline-flex; align-items: center; gap: 9px;
   padding: 8px 14px 8px 16px; border-radius: var(--r-pill);
@@ -206,9 +190,10 @@
 <body>
 
 <header class="hero">
-  <div class="top">
-    <a class="wordmark" href="#"><i></i> Nordlicht Fotografie</a>
-    <nav>
+  <div class="bar over">
+    <div class="inner">
+      <a class="wordmark" href="portal-start.html"><i></i> Nordlicht Fotografie</a>
+
       <div class="switch" id="switch">
         <button class="switchbtn" type="button" onclick="document.getElementById('switch').classList.toggle('open')">
           Hochzeit 2026
@@ -217,7 +202,7 @@
 
         <div class="panel">
           <div class="yr">2027</div>
-          <a class="prow" href="#">
+          <a class="prow" href="portal-anfrage.html">
             <span class="mono">27</span>
             <span><b>Babybauch</b><span>Termin noch offen</span></span>
             <span class="st open">Angebot offen</span>
@@ -231,16 +216,21 @@
           </a>
 
           <div class="yr">2025</div>
-          <a class="prow" href="portal-start.html">
+          <a class="prow" href="portal-galerie.html">
             <img src="img/p016-sm.jpg" alt="">
             <span><b>Verlobungsshooting</b><span>29.03. · Jenischpark</span></span>
             <span class="st">Geliefert</span>
           </a>
         </div>
       </div>
-      <a class="mail" href="#">Nachrichten <span class="mailbadge">2</span></a>
-      <a href="#">Abmelden</a>
-    </nav>
+
+      <nav>
+        <a class="on" href="portal-start.html">Buchungen</a>
+        <a class="mail" href="portal-nachrichten.html">Nachrichten <span class="badge">2</span></a>
+        <a href="portal-einstellungen.html">Einstellungen</a>
+        <a href="#">Abmelden</a>
+      </nav>
+    </div>
   </div>
 
   <img src="img/p005.jpg" alt="">

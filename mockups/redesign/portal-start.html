@@ -20,28 +20,17 @@
  * Abschnitt 1 verschwindet, wenn nichts offen ist. Abschnitt 3 erscheint
  * erst mit der ersten gelieferten Galerie. Kein Kasten ohne Inhalt.
  */
-.bar { border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10;
-       background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(12px); }
-.bar .inner {
-  max-width: var(--page); margin: 0 auto; padding: var(--s4) var(--s5);
-  display: flex; align-items: center; justify-content: space-between; gap: var(--s5);
-}
-.wordmark {
-  display: flex; align-items: center; gap: 9px;
-  font: 600 15px/1 var(--sans); letter-spacing: -0.012em; text-decoration: none;
-}
-.wordmark i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-.bar nav { display: flex; align-items: center; gap: var(--s4); }
-.bar nav a { font-size: 13.5px; color: var(--ink-2); text-decoration: none; }
-.bar nav a:hover { color: var(--ink); }
+
+
+
+
+
+
+
 /* Nachrichten liegen im Kopf, nicht in einer Buchung: der Kunde schreibt
    dem Studio, nicht dem Auftrag. Die Buchung ist Kontext im Faden. */
-.mail { display: inline-flex; align-items: center; gap: 8px; }
-.mail .badge {
-  min-width: 18px; padding: 0 5px; border-radius: var(--r-pill);
-  background: var(--accent); color: #fff;
-  font: 600 11px/18px var(--sans); text-align: center;
-}
+
+
 
 .head { padding-block: var(--s8) 0; }
 .head .display { font-size: clamp(42px, 6vw, 68px); }
@@ -112,9 +101,11 @@ section { scroll-margin-top: 80px; }
 
 <header class="bar">
   <div class="inner">
-    <a class="wordmark" href="#"><i></i> Nordlicht Fotografie</a>
+    <a class="wordmark" href="portal-start.html"><i></i> Nordlicht Fotografie</a>
     <nav>
-      <a class="mail" href="#">Nachrichten <span class="badge">2</span></a>
+      <a href="portal-start.html" class="on">Buchungen</a>
+      <a class="mail" href="portal-nachrichten.html">Nachrichten <span class="badge">2</span></a>
+      <a href="portal-einstellungen.html">Einstellungen</a>
       <a href="#">Abmelden</a>
     </nav>
   </div>

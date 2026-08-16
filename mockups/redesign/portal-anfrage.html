@@ -15,20 +15,12 @@
  * weil es von diesem Paar noch kein Foto gibt; sobald das erste Shooting
  * geliefert ist, wird aus diesem Kopf das Titelbild (portal-projekt.html).
  */
-.bar {
-  border-bottom: 1px solid var(--line);
-}
-.bar .inner {
-  max-width: var(--page); margin: 0 auto; padding: var(--s4) var(--s5);
-  display: flex; align-items: center; justify-content: space-between; gap: var(--s5);
-}
-.wordmark {
-  display: flex; align-items: center; gap: 9px;
-  font: 600 15px/1 var(--sans); letter-spacing: -0.012em; text-decoration: none;
-}
-.wordmark i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-.bar a.out { font-size: 13.5px; color: var(--ink-2); text-decoration: none; }
-.bar a.out:hover { color: var(--ink); }
+
+
+
+
+
+
 
 /* Briefmaß: 620px. Schmaler als jede andere Seite im Portal — das ist die
    Absicht. Der Screen soll sich anders anfühlen, nicht nur leerer. */
@@ -151,8 +143,13 @@
 
 <header class="bar">
   <div class="inner">
-    <a class="wordmark" href="#"><i></i> Nordlicht Fotografie</a>
-    <a class="out" href="#">Abmelden</a>
+    <a class="wordmark" href="portal-start.html"><i></i> Nordlicht Fotografie</a>
+    <nav>
+      <a href="portal-start.html" class="on">Buchungen</a>
+      <a class="mail" href="portal-nachrichten.html">Nachrichten <span class="badge">2</span></a>
+      <a href="portal-einstellungen.html">Einstellungen</a>
+      <a href="#">Abmelden</a>
+    </nav>
   </div>
 </header>
 

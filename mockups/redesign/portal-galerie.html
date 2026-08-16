@@ -38,17 +38,13 @@
  *   Album, und ein Namensfeld für eine Identität, die es nicht gibt, wäre
  *   ein zweites Problem statt einer Funktion.
  */
-.bar { border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10;
-       background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(12px); }
-.bar .inner {
-  max-width: var(--page); margin: 0 auto; padding: var(--s4) var(--s5);
-  display: flex; align-items: center; justify-content: space-between; gap: var(--s5);
-}
-.wordmark { display: flex; align-items: center; gap: 9px; font: 600 15px/1 var(--sans); letter-spacing: -0.012em; text-decoration: none; }
-.wordmark i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
-.bar nav { display: flex; align-items: center; gap: var(--s4); font-size: 13.5px; }
-.bar nav a { color: var(--ink-2); text-decoration: none; }
-.bar nav a:hover { color: var(--ink); }
+
+
+
+
+
+
+
 
 .head { padding-block: var(--s8) 0; display: flex; align-items: flex-end; gap: var(--s6); flex-wrap: wrap; }
 .head .cover { width: 168px; height: 112px; border-radius: var(--r); object-fit: cover; background: var(--sunk); }
@@ -178,8 +174,8 @@
   <div class="inner">
     <a class="wordmark" href="portal-start.html"><i></i> Nordlicht Fotografie</a>
     <nav>
-      <a href="portal-start.html">Buchungen</a>
-      <a href="portal-nachrichten.html">Nachrichten</a>
+      <a href="portal-start.html" class="on">Buchungen</a>
+      <a class="mail" href="portal-nachrichten.html">Nachrichten <span class="badge">2</span></a>
       <a href="portal-einstellungen.html">Einstellungen</a>
       <a href="#">Abmelden</a>
     </nav>
