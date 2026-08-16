@@ -12,6 +12,8 @@ const PAGES = [
   ['portal-projekt', 'portal-projekt.html'],
   ['galerie-gate', 'galerie-gate.html'],
   ['galerie', 'galerie.html'],
+  ['galerie-lightbox', 'galerie-lightbox.html'],
+  ['galerie-download', 'galerie-download.html'],
 ]
 
 const browser = await chromium.launch()

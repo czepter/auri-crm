@@ -48,7 +48,22 @@ body { background: var(--void); color: var(--void-ink); }
 }
 .bar .who { font-size: 13.5px; color: var(--void-ink-2); }
 .bar .who b { color: var(--void-ink); font-weight: 600; }
-.bar .acts { display: flex; align-items: center; gap: var(--s3); }
+.bar .filters {
+  display: flex; align-items: center; gap: var(--s2);
+  margin-inline: auto; overflow-x: auto; scrollbar-width: none;
+}
+.bar .filters::-webkit-scrollbar { display: none; }
+.fpill {
+  flex: none;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 14px; border-radius: var(--r-pill);
+  border: 1px solid var(--void-line); background: transparent; cursor: pointer;
+  color: var(--void-ink-2); font: 500 12.5px/1 var(--sans);
+  transition: background .18s var(--ease), color .18s var(--ease), border-color .18s var(--ease);
+}
+.fpill:hover { color: var(--void-ink); border-color: #3A3128; }
+.fpill.on { background: #fff; border-color: #fff; color: var(--void); font-weight: 600; }
+.fpill .n { opacity: .55; font-variant-numeric: tabular-nums; }
 .barbtn {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 9px 16px; border-radius: var(--r-pill);
@@ -135,7 +150,9 @@ body { background: var(--void); color: var(--void-ink); }
   .grid { columns: 2; padding-top: var(--s6); }
   .cover { height: 82svh; }
   .covertext { bottom: var(--s8); }
+  .bar { flex-wrap: wrap; gap: var(--s3); }
   .bar .who { display: none; }
+  .bar .filters { margin-inline: 0; order: 2; width: 100%; padding-bottom: 2px; }
 }
 </style>
 </head>
@@ -155,21 +172,25 @@ body { background: var(--void); color: var(--void-ink); }
 </header>
 
 <div class="bar">
-  <span class="who"><b>Viola &amp; Chris</b> · 33 Bilder · online bis 28. August</span>
-  <span class="acts">
-    <button class="barbtn">
-      <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg>
-      Favoriten · 3
-    </button>
-    <a class="barbtn solid" href="#">
-      <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14"/></svg>
-      Alle herunterladen
-    </a>
+  <span class="who"><b>Viola &amp; Chris</b> · online bis 28.08.</span>
+
+  <!-- Listenauswahl: filtert das Raster. Ein Gast sieht hier nur "Alle" und
+       "Favoriten" — benannte Listen gehören dem angemeldeten Kunden. -->
+  <span class="filters">
+    <button class="fpill on" type="button">Alle <span class="n">33</span></button>
+    <button class="fpill" type="button">Favoriten <span class="n">6</span></button>
+    <button class="fpill" type="button">Album <span class="n">12</span></button>
+    <button class="fpill" type="button">Für die Eltern <span class="n">4</span></button>
   </span>
+
+  <a class="barbtn solid" href="galerie-download.html">
+    <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14"/></svg>
+    Herunterladen
+  </a>
 </div>
 
 <main class="grid" id="raster">
-  <div class="tile"><a href="#"><img src="img/p001-sm.jpg" alt=""></a><button class="fav on" aria-label="Zu Liste hinzufügen"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button>
+  <div class="tile"><a href="galerie-lightbox.html"><img src="img/p001-sm.jpg" alt=""></a><button class="fav on" aria-label="Zu Liste hinzufügen"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button>
     <span class="lists">
       <label><input type="checkbox" checked> Favoriten <span class="n">6</span></label>
       <label><input type="checkbox" checked> Album <span class="n">12</span></label>
@@ -177,17 +198,17 @@ body { background: var(--void); color: var(--void-ink); }
       <button class="new" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Neue Liste</button>
     </span>
   </div>
-  <a class="tile" href="#"><img src="img/p016-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
-  <a class="tile" href="#"><img src="img/p011-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
-  <a class="tile" href="#"><img src="img/p025-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
-  <a class="tile" href="#"><img src="img/p020-sm.jpg" alt=""><button class="fav on" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
-  <a class="tile" href="#"><img src="img/p005-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
-  <a class="tile" href="#"><img src="img/p030-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
-  <a class="tile" href="#"><img src="img/p008-sm.jpg" alt=""><button class="fav on" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
-  <a class="tile" href="#"><img src="img/p016-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
-  <a class="tile" href="#"><img src="img/p001-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
-  <a class="tile" href="#"><img src="img/p025-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
-  <a class="tile" href="#"><img src="img/p011-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
+  <a class="tile" href="galerie-lightbox.html"><img src="img/p016-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
+  <a class="tile" href="galerie-lightbox.html"><img src="img/p011-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
+  <a class="tile" href="galerie-lightbox.html"><img src="img/p025-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
+  <a class="tile" href="galerie-lightbox.html"><img src="img/p020-sm.jpg" alt=""><button class="fav on" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
+  <a class="tile" href="galerie-lightbox.html"><img src="img/p005-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
+  <a class="tile" href="galerie-lightbox.html"><img src="img/p030-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
+  <a class="tile" href="galerie-lightbox.html"><img src="img/p008-sm.jpg" alt=""><button class="fav on" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
+  <a class="tile" href="galerie-lightbox.html"><img src="img/p016-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
+  <a class="tile" href="galerie-lightbox.html"><img src="img/p001-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
+  <a class="tile" href="galerie-lightbox.html"><img src="img/p025-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
+  <a class="tile" href="galerie-lightbox.html"><img src="img/p011-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
 </main>
 
 <footer class="gfoot">

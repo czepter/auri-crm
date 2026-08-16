@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bild 7 von 33 — Viola & Chris</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* Die Detailansicht. Hier passiert alles, was im Raster nur angedeutet ist:
+ * kommentieren, in Listen legen, einzeln herunterladen.
+ *
+ * Zwei Rollen auf demselben Screen. Ein Gast sieht ein Herz und schreibt als
+ * "Gast". Ein angemeldeter Kunde sieht stattdessen seine Listen und schreibt
+ * unter seinem Namen — dieselbe Stelle, dieselbe Geste, mehr Werkzeug.
+ * Unterschieden wird über .guest am Wurzelelement, nicht über einen zweiten
+ * Screen: die Bühne ist für beide dieselbe, und sie ist das Bild.
+ */
+body { background: var(--void); color: var(--void-ink); overflow: hidden; }
+
+.lb { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100svh; }
+
+/* ── Kopf ─────────────────────────────────────────────────────────────── */
+.lbtop {
+  display: flex; align-items: center; gap: var(--s5);
+  padding: var(--s4) var(--s5);
+  border-bottom: 1px solid var(--void-line);
+}
+.txtbtn {
+  display: inline-flex; align-items: center; gap: 9px;
+  background: transparent; border: 0; cursor: pointer; text-decoration: none;
+  padding: 10px 2px; color: var(--void-ink-2);
+  font: 500 13px/1 var(--sans);
+  transition: color .18s var(--ease);
+}
+.txtbtn:hover { color: var(--void-ink); }
+.txtbtn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+.lbpos {
+  margin-inline: auto;
+  font: 500 12.5px/1 var(--sans); letter-spacing: .1em; text-transform: uppercase;
+  color: var(--void-ink-2); font-variant-numeric: tabular-nums;
+}
+
+/* ── Bühne ────────────────────────────────────────────────────────────── */
+.lbmain { display: grid; grid-template-columns: minmax(0, 1fr) 360px; min-height: 0; }
+.stage { position: relative; display: grid; place-items: center; padding: var(--s5); min-height: 0; }
+.stage img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; }
+
+.arrow {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 46px; height: 46px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(12,10,9,.5); backdrop-filter: blur(10px);
+  border: 1px solid var(--void-line); color: var(--void-ink); cursor: pointer;
+  transition: background .18s var(--ease), border-color .18s var(--ease);
+}
+.arrow:hover { background: var(--void-2); border-color: #3A3128; }
+.arrow svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+.arrow.prev { left: var(--s4); }
+.arrow.next { right: var(--s4); }
+
+/* ── Schiene ──────────────────────────────────────────────────────────── */
+.rail {
+  border-left: 1px solid var(--void-line);
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: 0;
+}
+
+.acts { display: flex; gap: var(--s2); padding: var(--s4); border-bottom: 1px solid var(--void-line); flex-wrap: wrap; }
+/* Das Menü ist Geschwister des Knopfs, nicht sein Kind: ein <button> darf
+   keinen <button> enthalten, und ein Popover im Trigger bläht ihn auf. */
+.actwrap { position: relative; }
+.act {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 14px; border-radius: var(--r-pill);
+  border: 1px solid var(--void-line); background: transparent; cursor: pointer;
+  color: var(--void-ink); font: 500 13px/1 var(--sans);
+  transition: background .18s var(--ease), border-color .18s var(--ease);
+}
+.act:hover { background: var(--void-2); border-color: #3A3128; }
+.act svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+.act .n { color: var(--void-ink-2); font-variant-numeric: tabular-nums; }
+.act.on { border-color: var(--accent); color: var(--accent); }
+.act.on svg { fill: currentColor; }
+
+/* Listenzuordnung: dieselbe Auswahl wie auf der Kachel im Raster. */
+.listmenu {
+  position: absolute; top: calc(100% + 8px); left: 0; z-index: 10;
+  width: 234px; padding: var(--s2);
+  background: var(--void-2); border: 1px solid var(--void-line); border-radius: var(--r);
+  box-shadow: 0 22px 52px -18px rgba(0,0,0,.65);
+}
+.listmenu label {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 10px; border-radius: var(--r-sm); cursor: pointer;
+  font: 500 13px/1 var(--sans); color: var(--void-ink);
+  transition: background .16s var(--ease);
+}
+.listmenu label:hover { background: rgba(255,255,255,.06); }
+.listmenu input { appearance: none; margin: 0; flex: none; cursor: pointer;
+  width: 16px; height: 16px; border-radius: 5px; border: 1px solid #4A3F36;
+  background: transparent; position: relative; }
+.listmenu input:checked { background: var(--accent); border-color: var(--accent); }
+.listmenu input:checked::after {
+  content: ''; position: absolute; left: 5px; top: 2px; width: 4px; height: 8px;
+  border: solid #fff; border-width: 0 1.6px 1.6px 0; transform: rotate(45deg);
+}
+.listmenu .n { margin-left: auto; font-size: 11.5px; color: var(--void-ink-2); font-variant-numeric: tabular-nums; }
+.listmenu .new {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  margin-top: 4px; padding: 11px 10px; border-radius: var(--r-sm);
+  border: 0; border-top: 1px solid var(--void-line); background: transparent; cursor: pointer;
+  font: 500 13px/1 var(--sans); color: var(--void-ink-2);
+}
+.listmenu .new:hover { color: var(--void-ink); }
+.listmenu .new svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+
+/* ── Kommentare ───────────────────────────────────────────────────────── */
+.cmts { overflow-y: auto; padding: var(--s5) var(--s4); display: grid; gap: var(--s5); align-content: start; }
+.cmt .who { display: flex; align-items: baseline; gap: 9px; margin-bottom: 6px; }
+.cmt .who b { font: 600 13px/1 var(--sans); }
+.cmt .who span { font-size: 11.5px; color: var(--void-ink-2); font-variant-numeric: tabular-nums; }
+.cmt p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--void-ink); }
+/* Ein Gast hinterlässt keinen Namen — die App erhebt keinen. */
+.cmt.anon .who b { color: var(--void-ink-2); font-weight: 500; }
+.cmts .none { font-size: 13.5px; color: var(--void-ink-2); }
+
+.write { border-top: 1px solid var(--void-line); padding: var(--s4); }
+.write input {
+  width: 100%; background: transparent; border: 1px solid var(--void-line);
+  border-radius: var(--r-sm); padding: 13px 14px; color: var(--void-ink);
+  font: 400 14px/1.4 var(--sans); outline: none;
+  transition: border-color .2s var(--ease);
+}
+.write input::placeholder { color: var(--void-ink-2); }
+.write input:focus { border-color: #4A3F36; }
+
+/* ── Filmstreifen ─────────────────────────────────────────────────────── */
+.strip {
+  display: flex; gap: var(--s2); overflow-x: auto; padding: var(--s3) var(--s4);
+  border-top: 1px solid var(--void-line); scrollbar-width: none;
+}
+.strip::-webkit-scrollbar { display: none; }
+.strip a { flex: none; width: 74px; height: 52px; border-radius: 6px; overflow: hidden;
+  opacity: .45; transition: opacity .2s var(--ease); background: var(--void-2); }
+.strip a:hover { opacity: .8; }
+.strip a.on { opacity: 1; outline: 2px solid var(--void-ink); outline-offset: 2px; }
+.strip img { width: 100%; height: 100%; object-fit: cover; }
+
+@media (max-width: 900px) {
+  /* Am Handy steht das Bild oben und die Schiene wird zur Lade darunter —
+     die Aktionen bleiben in Daumenreichweite, ohne das Bild zu verdecken. */
+  .lbmain { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+  .rail { border-left: 0; border-top: 1px solid var(--void-line); max-height: 46svh; }
+  .arrow { width: 44px; height: 44px; }
+  .strip a { width: 62px; height: 44px; }
+}
+</style>
+</head>
+<body>
+
+<div class="lb">
+  <header class="lbtop">
+    <a class="txtbtn" href="galerie.html">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      Zurück zum Raster
+    </a>
+    <span class="lbpos">7 von 33</span>
+    <a class="txtbtn" href="galerie.html">
+      Schließen
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </a>
+  </header>
+
+  <div class="lbmain">
+    <div class="stage">
+      <button class="arrow prev" type="button" title="Vorheriges Bild">
+        <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <img src="img/p001.jpg" alt="">
+      <button class="arrow next" type="button" title="Nächstes Bild">
+        <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
+    <aside class="rail">
+      <div class="acts">
+        <div class="actwrap">
+          <button class="act on" type="button">
+            <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg>
+            In 2 Listen
+          </button>
+
+          <div class="listmenu">
+            <label><input type="checkbox" checked> Favoriten <span class="n">6</span></label>
+            <label><input type="checkbox" checked> Album <span class="n">12</span></label>
+            <label><input type="checkbox"> Für die Eltern <span class="n">4</span></label>
+            <button class="new" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Neue Liste</button>
+          </div>
+        </div>
+
+        <a class="act" href="galerie-download.html">
+          <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14"/></svg>
+          Herunterladen
+        </a>
+      </div>
+
+      <div class="cmts">
+        <div class="cmt">
+          <div class="who"><b>Viola</b><span>14.08.2026, 20:14</span></div>
+          <p>Das bitte groß ausbelichten, für über das Sofa.</p>
+        </div>
+        <div class="cmt anon">
+          <div class="who"><b>Gast</b><span>15.08.2026, 09:41</span></div>
+          <p>So schön! Können wir davon einen Abzug bekommen?</p>
+        </div>
+        <div class="cmt">
+          <div class="who"><b>Christian</b><span>gestern, 08:12</span></div>
+          <p>Klar — sag mir welche Größe, dann lege ich sie mit in die Lieferung.</p>
+        </div>
+      </div>
+
+      <div class="write">
+        <input type="text" placeholder="Kommentar schreiben …">
+      </div>
+    </aside>
+  </div>
+
+  <nav class="strip">
+    <a href="#"><img src="img/p005-sm.jpg" alt=""></a>
+    <a href="#"><img src="img/p008-sm.jpg" alt=""></a>
+    <a href="#"><img src="img/p011-sm.jpg" alt=""></a>
+    <a href="#"><img src="img/p016-sm.jpg" alt=""></a>
+    <a href="#"><img src="img/p020-sm.jpg" alt=""></a>
+    <a href="#"><img src="img/p025-sm.jpg" alt=""></a>
+    <a class="on" href="#"><img src="img/p001-sm.jpg" alt=""></a>
+    <a href="#"><img src="img/p030-sm.jpg" alt=""></a>
+    <a href="#"><img src="img/p005-sm.jpg" alt=""></a>
+    <a href="#"><img src="img/p016-sm.jpg" alt=""></a>
+    <a href="#"><img src="img/p011-sm.jpg" alt=""></a>
+    <a href="#"><img src="img/p025-sm.jpg" alt=""></a>
+  </nav>
+</div>
+
+</body>
+</html>

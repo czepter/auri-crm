@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Herunterladen — Viola & Chris</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* Der Download. Heute endet dieser Weg auf einem Screen, der "bereit" sagt
+ * und nichts anbietet — die Lieferung selbst ist im Controller als
+ * Platzhalter markiert.
+ *
+ * Zwei Entscheidungen, die aus dem Modell kommen und nicht aus dem Layout:
+ *
+ *   Es gibt Teile, keine Datei. BuildGalleryZip plant über ZipVolumePlanner
+ *   mehrere Bände, und ZipBuildPart ist die Einheit, die ausgeliefert wird.
+ *   Ein Screen, der einen einzelnen Knopf zeigt, lügt bei 33 Originalen mit
+ *   4 GB. Also: die Teile stehen als Liste da, jeder mit eigenem Zustand.
+ *
+ *   Heruntergeladen wird eine Liste, nicht "die Galerie". Wer ein Album
+ *   kuratiert hat, will das Album — dieselben Listen wie im Raster und in
+ *   der Detailansicht, hier als Auswahl.
+ *
+ * Die beiden Tore davor (PIN, E-Mail-Bestätigung) sind dasselbe Bauteil wie
+ * das Ansichtspasswort in galerie-gate.html: eine Linie auf dem Bild, ein
+ * Knopf. Sie stehen hier nur als abgehakte Kette, weil dieser Screen den
+ * Zustand danach zeigt.
+ */
+body { background: var(--void); color: var(--void-ink); }
+
+.bar {
+  position: sticky; top: 0; z-index: 10;
+  background: rgba(12,10,9,.8); backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--void-line);
+}
+.bar .inner {
+  display: flex; align-items: center; gap: var(--s5);
+  max-width: 760px; margin: 0 auto; padding: var(--s4) var(--s5);
+}
+.txtbtn {
+  display: inline-flex; align-items: center; gap: 9px;
+  background: transparent; border: 0; cursor: pointer; text-decoration: none;
+  padding: 10px 2px; color: var(--void-ink-2); font: 500 13px/1 var(--sans);
+  transition: color .18s var(--ease);
+}
+.txtbtn:hover { color: var(--void-ink); }
+.txtbtn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+
+.col { max-width: 760px; margin: 0 auto; padding: var(--s8) var(--s5) var(--s10); }
+
+.head h1 { font: 400 clamp(30px, 4.4vw, 42px)/1.12 var(--serif); letter-spacing: -0.016em; margin: 0; color: #fff; }
+.head .meta { margin-top: 10px; font-size: 14px; color: var(--void-ink-2); }
+
+/* ── Torkette ─────────────────────────────────────────────────────────── */
+.gates { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; margin-top: var(--s6); }
+.gc {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 14px; border-radius: var(--r-pill);
+  border: 1px solid var(--void-line); background: var(--void-2);
+  font: 500 12.5px/1 var(--sans); color: var(--void-ink-2);
+}
+.gc svg { width: 13px; height: 13px; stroke: var(--good); fill: none; stroke-width: 2; }
+
+.lab {
+  font: 600 11px/1 var(--sans); letter-spacing: .17em; text-transform: uppercase;
+  color: var(--void-ink-2); margin: 0 0 var(--s4);
+}
+.block { border-top: 1px solid var(--void-line); padding-block: var(--s7); }
+
+/* ── Auswahl ──────────────────────────────────────────────────────────── */
+.opts { display: grid; gap: var(--s2); }
+.opt {
+  display: grid; grid-template-columns: 20px 1fr auto; align-items: center; gap: var(--s4);
+  padding: var(--s4) var(--s5); border-radius: var(--r);
+  border: 1px solid var(--void-line); background: transparent; cursor: pointer;
+  transition: background .18s var(--ease), border-color .18s var(--ease);
+}
+.opt:hover { background: var(--void-2); }
+.opt input { appearance: none; margin: 0; width: 18px; height: 18px; border-radius: 50%;
+  border: 1px solid #4A3F36; background: transparent; position: relative; cursor: pointer; }
+.opt input:checked { border-color: var(--accent); }
+.opt input:checked::after {
+  content: ''; position: absolute; inset: 4px; border-radius: 50%; background: var(--accent);
+}
+.opt:has(input:checked) { border-color: #4A3F36; background: var(--void-2); }
+.opt b { display: block; font: 600 14.5px/1.3 var(--sans); color: var(--void-ink); }
+.opt span { font-size: 13px; color: var(--void-ink-2); }
+.opt .size { font: 500 13px/1 var(--sans); color: var(--void-ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.go { margin-top: var(--s6); background: #fff; color: var(--void); }
+.go:hover { background: var(--accent); color: #fff; }
+
+/* ── Bände ────────────────────────────────────────────────────────────── */
+.parts { border-top: 1px solid var(--void-line); }
+.part {
+  display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: var(--s5);
+  padding: var(--s5) var(--s2); border-bottom: 1px solid var(--void-line);
+}
+.part b { display: block; font: 600 14px/1.35 var(--sans); color: var(--void-ink); }
+.part span { font-size: 12.5px; color: var(--void-ink-2); font-variant-numeric: tabular-nums; }
+.part .size { font: 500 13px/1 var(--sans); color: var(--void-ink-2); font-variant-numeric: tabular-nums; }
+.part .btn { padding: 11px 20px; background: transparent; color: var(--void-ink);
+  box-shadow: inset 0 0 0 1px var(--void-line); }
+.part .btn:hover { background: #fff; color: var(--void); box-shadow: none; }
+.part .wait { font-size: 12.5px; color: var(--void-ink-2); display: inline-flex; align-items: center; gap: 9px; }
+.spin { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid var(--void-line);
+  border-top-color: var(--void-ink-2); animation: turn 1s linear infinite; }
+@keyframes turn { to { transform: rotate(360deg); } }
+
+.note { margin-top: var(--s5); font-size: 12.5px; color: var(--void-ink-2); line-height: 1.6; }
+
+@media (max-width: 640px) {
+  .part { grid-template-columns: 1fr auto; }
+  .part .size { grid-column: 1; }
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="inner">
+    <a class="txtbtn" href="galerie.html">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+      Zurück zur Galerie
+    </a>
+  </div>
+</header>
+
+<main class="col">
+  <section class="head">
+    <h1>Herunterladen</h1>
+    <p class="meta num">Viola &amp; Chris · 33 Bilder · online bis 28.08.2026</p>
+
+    <div class="gates">
+      <span class="gc"><svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg> Passwort</span>
+      <span class="gc"><svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg> PIN</span>
+      <span class="gc"><svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6"/></svg> gast@example.test</span>
+    </div>
+  </section>
+
+  <section class="block">
+    <p class="lab">Was</p>
+    <div class="opts">
+      <label class="opt">
+        <input type="radio" name="was" checked>
+        <span><b>Alle Bilder</b><span>33 Bilder</span></span>
+        <span class="size">4,2 GB</span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="was">
+        <span><b>Album</b><span>12 Bilder · eure Liste</span></span>
+        <span class="size">1,6 GB</span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="was">
+        <span><b>Favoriten</b><span>6 Bilder · eure Liste</span></span>
+        <span class="size">790 MB</span>
+      </label>
+    </div>
+  </section>
+
+  <section class="block">
+    <p class="lab">Größe</p>
+    <div class="opts">
+      <label class="opt">
+        <input type="radio" name="groesse" checked>
+        <span><b>Original</b><span>volle Auflösung, für den Druck</span></span>
+        <span class="size">4,2 GB</span>
+      </label>
+      <label class="opt">
+        <input type="radio" name="groesse">
+        <span><b>Web</b><span>lange Kante 2560 px, für Mail und Social</span></span>
+        <span class="size">410 MB</span>
+      </label>
+    </div>
+
+    <button class="btn go" type="button">
+      ZIP erstellen
+      <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </button>
+  </section>
+
+  <section class="block">
+    <p class="lab">Bereit</p>
+    <div class="parts">
+      <div class="part">
+        <span><b>Teil 1 von 3</b><span class="num">Bild 1–12</span></span>
+        <span class="size">1,5 GB</span>
+        <a class="btn" href="#">Laden</a>
+      </div>
+      <div class="part">
+        <span><b>Teil 2 von 3</b><span class="num">Bild 13–24</span></span>
+        <span class="size">1,4 GB</span>
+        <a class="btn" href="#">Laden</a>
+      </div>
+      <div class="part">
+        <span><b>Teil 3 von 3</b><span class="num">Bild 25–33</span></span>
+        <span class="size">1,3 GB</span>
+        <span class="wait"><i class="spin"></i> wird gepackt</span>
+      </div>
+    </div>
+    <p class="note">Die Links gelten 24 Stunden. Danach hier neu erzeugen.</p>
+  </section>
+</main>
+
+</body>
+</html>

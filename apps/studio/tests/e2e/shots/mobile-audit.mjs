@@ -12,6 +12,8 @@ const PAGES = [
   'portal-projekt.html',
   'galerie-gate.html',
   'galerie.html',
+  'galerie-lightbox.html',
+  'galerie-download.html',
 ]
 
 // 360 ist das schmalste Gerät, das noch verbreitet ist; 390 der iPhone-Regelfall.
@@ -29,6 +31,17 @@ const audit = () => {
     out.overflow = { page: document.documentElement.scrollWidth, viewport: vw }
   }
 
+  // Was in einer horizontal scrollbaren Leiste liegt, ragt absichtlich über
+  // den Rand — Filmstreifen, Listenauswahl. Nur echtes Seiten-Querscrollen
+  // ist ein Fehler, und das prüft scrollWidth oben bereits.
+  const inScroller = (el) => {
+    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+      const ox = getComputedStyle(p).overflowX
+      if (ox === 'auto' || ox === 'scroll') return true
+    }
+    return false
+  }
+
   const label = (el) =>
     `${el.tagName.toLowerCase()}${el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).slice(0, 2).join('.') : ''}` +
     (el.innerText ? ` "${el.innerText.replace(/\s+/g, ' ').trim().slice(0, 32)}"` : '')
@@ -40,7 +53,7 @@ const audit = () => {
     if (style.visibility === 'hidden' || style.display === 'none' || style.opacity === '0') continue
 
     // Was über den rechten Rand hinausragt, verursacht das Querscrollen.
-    if (r.right > vw + 1 && el.children.length === 0) out.wide.push({ el: label(el), right: Math.round(r.right) })
+    if (r.right > vw + 1 && el.children.length === 0 && !inScroller(el)) out.wide.push({ el: label(el), right: Math.round(r.right) })
 
     // Tippziele unter 44px sind auf Glas nicht zuverlässig zu treffen.
     const tappable = el.matches('a, button, input[type=checkbox], select, [role=button]')
