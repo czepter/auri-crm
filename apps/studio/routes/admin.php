@@ -190,6 +190,11 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/posteingang/adresse-erneuern', [InboxController::class, 'rotate'])
             ->name('inbox.rotate');
 
+        // P-04 (#223). A client's own thread that names no booking yet — the
+        // same tray, the same movement, one level up from a single mail.
+        Route::post('/posteingang/faden/{thread}/zuordnen', [InboxController::class, 'file'])
+            ->name('inbox.thread.file');
+
         // S-13 + M-07. One screen: how the studio is doing, and what is
         // coming in. Gated on ViewAllProjects inside the controller — these
         // are whole-book figures, and a per-role filtered aggregate would

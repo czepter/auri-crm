@@ -14,9 +14,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
- * A conversation with a client about one project (E-06). Client-initiable —
- * the client opens the first message, not just replies to a studio one — is
- * what makes this a channel rather than a notification log.
+ * A conversation with a client (E-06). Client-initiable — the client opens
+ * the first message, not just replies to a studio one — is what makes this a
+ * channel rather than a notification log.
+ *
+ * project_id is nullable (P-04, #223). A thread's booking is a reference it
+ * carries, not a precondition for existing: the question that comes before
+ * the booking is exactly the one a client most needs to ask. Null reads as
+ * "Allgemein" on both surfaces, and AttachThreadToProject fills it in when a
+ * general conversation turns out to be about a specific order after all.
  *
  * Holds no visibility flag and never will: InternalNote (C-07) is a client's
  * business the studio keeps to itself, in its own table, and Message below
@@ -35,9 +41,16 @@ class Thread extends Model
         return $this->belongsTo(Project::class);
     }
 
+    /**
+     * Oldest first, with the insertion order as the tiebreaker: two messages
+     * written inside the same second — a client's question and the studio's
+     * reply, on a busy day — otherwise come back in whatever order the
+     * database happens to pick, and a conversation read out of order is a
+     * different conversation.
+     */
     public function messages(): HasMany
     {
-        return $this->hasMany(Message::class)->oldest();
+        return $this->hasMany(Message::class)->oldest()->orderBy('id');
     }
 
     /**

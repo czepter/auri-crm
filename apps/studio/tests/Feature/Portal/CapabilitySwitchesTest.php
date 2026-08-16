@@ -189,8 +189,8 @@ it('404s the messages route the same way a route that does not exist would, whil
 
     $missing = $this->actingAs($contact, 'portal')->get('/this-route-does-not-exist-xyz');
 
-    $get = $this->actingAs($contact, 'portal')->get("/projekte/{$project->public_id}/nachrichten");
-    $post = $this->post("/projekte/{$project->public_id}/nachrichten", ['subject' => 'Thema', 'body' => 'Hallo?']);
+    $get = $this->actingAs($contact, 'portal')->get('/nachrichten');
+    $post = $this->post('/nachrichten', ['subject' => 'Thema', 'body' => 'Hallo?']);
 
     $get->assertNotFound();
     $post->assertNotFound();
@@ -219,7 +219,7 @@ it('lets a client start a thread once the studio switches messaging on', functio
     $project->attachContact($contact, ProjectContactRole::Primary);
 
     $this->actingAs($contact, 'portal')
-        ->post("/projekte/{$project->public_id}/nachrichten", ['subject' => 'Thema', 'body' => 'Hallo!'])
+        ->post('/nachrichten', ['subject' => 'Thema', 'body' => 'Hallo!', 'project' => $project->public_id])
         ->assertRedirect();
 
     expect(App\Engagement\Models\Thread::where('project_id', $project->id)->count())->toBe(1);

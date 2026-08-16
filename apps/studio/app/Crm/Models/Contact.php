@@ -4,6 +4,7 @@ namespace App\Crm\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
+use App\Engagement\Models\Thread;
 use Database\Factories\Crm\ContactFactory;
 use Illuminate\Auth\Authenticatable as AuthenticatableTrait;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -83,6 +84,17 @@ class Contact extends Model implements Authenticatable
     public function getAuthPassword(): string
     {
         return '';
+    }
+
+    /**
+     * P-04 (#223): every conversation this contact is on, whether or not it
+     * names a booking. Joined through thread_participants rather than through
+     * projects, because a thread's project is a reference it may not carry —
+     * the portal's one mailbox is this relation, not a per-project lookup.
+     */
+    public function threads(): BelongsToMany
+    {
+        return $this->belongsToMany(Thread::class, 'thread_participants');
     }
 
     /** Only projects the studio has chosen to show (vision §3.1). */

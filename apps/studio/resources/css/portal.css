@@ -132,3 +132,53 @@ h1 { font-size: 30px; }
 .qt tr.sum td { border-top: 1px solid var(--line); font-weight: 600; padding-top: 10px; }
 .qt tr.tax td { color: var(--muted); padding-top: 2px; padding-bottom: 2px; }
 .qt tr.total td { font-weight: 700; font-size: 14px; padding-top: 8px; }
+
+/* ---------- P-04 (#223): the mailbox ---------- */
+/* Ported from mockups/redesign/portal-nachrichten.html. One list, one
+   conversation, and a reference line on every row — a thread that names no
+   booking is a valid state (`.ref.none`), not a missing value, so it reads
+   as "Allgemein" rather than as a gap.
+
+   Everything here is scoped under .mbox or .mailmsg: this is a global
+   stylesheet and the short names a mailbox wants (.me, .who, .top) are
+   already taken by the admin chrome. */
+
+.mbox { display: grid; gap: var(--s6); align-items: start; }
+@media (min-width: 980px) { .mbox { grid-template-columns: 300px minmax(0, 1fr); } }
+.mbox.single { grid-template-columns: minmax(0, 1fr); max-width: 620px; }
+
+.threads { border-top: 1px solid var(--line); }
+.threads a { display: block; padding: var(--s4) 0; border-bottom: 1px solid var(--line);
+             text-decoration: none; color: var(--ink); }
+.threads a:hover { background: var(--hover); }
+.threads a.on { box-shadow: inset 2px 0 0 var(--accent); padding-left: var(--s3); }
+.threads .line { display: flex; align-items: baseline; gap: var(--s3); }
+.threads .line b { font: 600 14px/1.35 var(--font); flex: 1; }
+.threads .ago { font: 400 11.5px/1 var(--font); color: var(--faint); white-space: nowrap;
+                font-variant-numeric: tabular-nums; }
+.threads .snippet { font: 400 13px/1.5 var(--font); color: var(--muted); margin-top: 3px;
+                    overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical;
+                    -webkit-line-clamp: 2; }
+
+.mbox .ref { display: inline-block; margin-top: var(--s2); font: 500 11px/1 var(--font);
+             letter-spacing: .04em; color: var(--muted); }
+.mbox .ref.none { color: var(--faint); }
+
+.convohead { border-bottom: 1px solid var(--line); padding-bottom: var(--s4); }
+.convohead h2 { font: 700 20px/1.3 var(--font); letter-spacing: -.02em; margin: 0; }
+
+.msgs { display: flex; flex-direction: column; gap: var(--s5); padding: var(--s5) 0; }
+.mailmsg .meta { font: 500 11.5px/1 var(--font); color: var(--faint); margin-bottom: var(--s2);
+                 font-variant-numeric: tabular-nums; }
+.mailmsg .text { font: 400 14.5px/1.65 var(--font); white-space: pre-wrap; }
+/* The client's own lines carry a rule; the studio's do not. One voice is
+   answering the other, and the asymmetry is what says which is which
+   without a coloured bubble. */
+.mailmsg.mine .text { border-left: 2px solid var(--line); padding-left: var(--s4); }
+
+.compose { border: 1px solid var(--line); border-radius: var(--r); padding: var(--s4); }
+.compose textarea { min-height: 96px; }
+.composefoot { display: flex; align-items: center; gap: var(--s4); margin-top: var(--s3); flex-wrap: wrap; }
+.composefoot .about { display: flex; align-items: center; gap: var(--s3);
+                      font: 500 12px/1 var(--font); color: var(--muted); }
+.composefoot [data-slot="button"] { margin-left: auto; }

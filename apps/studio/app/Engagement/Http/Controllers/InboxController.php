@@ -2,6 +2,8 @@
 
 namespace App\Engagement\Http\Controllers;
 
+use App\Crm\Models\Project;
+use App\Engagement\Actions\AttachThreadToProject;
 use App\Engagement\Actions\PostMessage;
 use App\Engagement\Enums\InboundMessageState;
 use App\Engagement\Models\InboundMessage;
@@ -67,6 +69,30 @@ class InboxController extends Controller
                     'projectName' => $row->thread?->project?->name,
                 ])
                 ->all(),
+            // P-04 (#223): conversations a client started without naming a
+            // booking. They belong in the same tray as an unplaced mail — a
+            // thing that arrived and has not been filed — and for the same
+            // reason: the alternative is a conversation nobody at the studio
+            // ever finds because no project screen lists it.
+            'unfiled' => Thread::query()
+                ->whereNull('project_id')
+                ->with('latestMessage')
+                ->latest()
+                ->limit(100)
+                ->get()
+                ->map(fn (Thread $thread) => [
+                    'id' => $thread->public_id,
+                    'subject' => $thread->subject,
+                    'snippet' => $thread->latestMessage?->body,
+                    'startedAt' => $thread->created_at->toIso8601String(),
+                ])
+                ->all(),
+            'projects' => Project::query()
+                ->latest()
+                ->limit(200)
+                ->get()
+                ->map(fn (Project $project) => ['id' => $project->public_id, 'label' => $project->name])
+                ->all(),
             // Only threads a staff member could plausibly attach to: the ones
             // with a client on them. A thread with no contact participant has
             // nobody the mail could have come from.
@@ -116,6 +142,22 @@ class InboxController extends Controller
             'contact_id' => $contact->id,
             'message_id_ref' => $message->id,
         ]);
+
+        return back();
+    }
+
+    /**
+     * P-04 (#223): the same movement one row up, for a thread rather than a
+     * mail. AttachThreadToProject refuses to re-point one that already names
+     * a booking — see its own doc comment.
+     */
+    public function file(Request $request, Thread $thread, AttachThreadToProject $attach): RedirectResponse
+    {
+        $this->authorizeInbox();
+
+        $validated = $request->validate(['project' => ['required', 'string']]);
+
+        $attach($thread, Project::query()->where('public_id', $validated['project'])->firstOrFail());
 
         return back();
     }

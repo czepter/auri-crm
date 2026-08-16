@@ -14,6 +14,9 @@ const PAGES = [
   ['galerie', 'galerie.html'],
   ['galerie-lightbox', 'galerie-lightbox.html'],
   ['galerie-download', 'galerie-download.html'],
+  // Admin-Oberfläche, kein Kundenbildschirm — nur Desktop.
+  ['admin-einstellungen-portal', 'admin-einstellungen-portal.html', 'desktop'],
+  ['admin-kontakt-portal', 'admin-kontakt-portal.html', 'desktop'],
 ]
 
 const browser = await chromium.launch()
@@ -23,7 +26,8 @@ for (const [w, h, label] of [
   [390, 844, 'phone'],
 ]) {
   const page = await (await browser.newContext({ viewport: { width: w, height: h }, locale: 'de-DE', deviceScaleFactor: 2 })).newPage()
-  for (const [name, file] of PAGES) {
+  for (const [name, file, only] of PAGES) {
+    if (only && only !== label) continue
     await page.goto(`${BASE}/${file}`, { waitUntil: 'networkidle' })
     await page.evaluate(() => document.fonts.ready)
     await page.waitForTimeout(1400)

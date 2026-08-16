@@ -12,13 +12,18 @@ use Illuminate\Support\Facades\DB;
  * whole point. Staff reply to a thread (see PostMessage) but never originate
  * one; there is no admin screen that starts a conversation on the client's
  * behalf.
+ *
+ * P-04 (#223): $project is optional. A client who has not booked anything
+ * yet, or who is asking about something no booking covers, still has one
+ * studio to write to — the reference is what the thread carries, not what it
+ * needs before it may exist. AttachThreadToProject supplies one later.
  */
 class StartThread
 {
-    public function __invoke(Project $project, Contact $contact, string $subject, string $body): Thread
+    public function __invoke(?Project $project, Contact $contact, string $subject, string $body): Thread
     {
         return DB::transaction(function () use ($project, $contact, $subject, $body) {
-            $thread = $project->threads()->create(['subject' => $subject]);
+            $thread = Thread::create(['project_id' => $project?->id, 'subject' => $subject]);
 
             $thread->participants()->create(['contact_id' => $contact->id]);
             $thread->messages()->create(['contact_id' => $contact->id, 'body' => $body]);

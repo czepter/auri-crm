@@ -23,6 +23,8 @@ defineProps<{
     projectName: string | null
   }[]
   threads: { id: string; label: string }[]
+  unfiled: { id: string; subject: string; snippet: string | null; startedAt: string }[]
+  projects: { id: string; label: string }[]
 }>()
 
 // One open picker at a time, keyed by the row — the same shape the payments
@@ -38,6 +40,23 @@ function attach(id: string) {
     onSuccess: () => {
       attaching.value = null
       chosenThread.value = null
+    },
+  })
+}
+
+// P-04 (#223): the same one-open-picker shape, for a client thread that
+// names no booking yet.
+const filing = ref<string | null>(null)
+const chosenProject = ref<string | null>(null)
+
+function file(id: string) {
+  if (!chosenProject.value) return
+
+  router.post(`/posteingang/faden/${id}/zuordnen`, { project: chosenProject.value }, {
+    preserveScroll: true,
+    onSuccess: () => {
+      filing.value = null
+      chosenProject.value = null
     },
   })
 }
@@ -88,6 +107,47 @@ function receivedAt(iso: string) {
           </AlertDialogContent>
         </AlertDialog>
       </template>
+    </div>
+
+    <!-- P-04 (#223): a conversation the client started without naming a
+         booking. Nothing else in the admin lists it — every other thread is
+         reachable through its project screen. -->
+    <div v-if="unfiled.length" class="card static" style="margin-top: var(--s4)">
+      <div class="cardhead"><span class="kick">{{ $t('inbox.unfiledTitle') }}</span></div>
+
+      <div class="msg" style="gap: var(--s4); margin-top: var(--s3)">
+        <div v-for="row in unfiled" :key="row.id" class="msgrow">
+          <div class="msgtxt">
+            <div class="msgwho">
+              {{ row.subject }}
+              <em>{{ receivedAt(row.startedAt) }}</em>
+            </div>
+            <div v-if="row.snippet" class="msgbody" style="-webkit-line-clamp: unset">{{ row.snippet }}</div>
+
+            <div style="margin-top: var(--s3)">
+              <template v-if="filing === row.id">
+                <Select v-model="chosenProject">
+                  <SelectTrigger><SelectValue :placeholder="$t('inbox.chooseProject')" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="project in projects" :key="project.id" :value="project.id">
+                      {{ project.label }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <div class="formfoot" style="margin-top: var(--s3)">
+                  <Button type="button" :disabled="!chosenProject" @click="file(row.id)">
+                    {{ $t('inbox.file') }}
+                  </Button>
+                  <Button type="button" variant="ghost" @click="filing = null">{{ $t('common.cancel') }}</Button>
+                </div>
+              </template>
+              <Button v-else type="button" variant="ghost" @click="filing = row.id">
+                {{ $t('inbox.file') }}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="card static" style="margin-top: var(--s4)">

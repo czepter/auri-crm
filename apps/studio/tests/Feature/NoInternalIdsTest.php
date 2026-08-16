@@ -279,7 +279,7 @@ it('never puts an integer identifier into the portal messages screen', function 
     app(App\Engagement\Actions\StartThread::class)($project, $contact, 'Thema', 'Nachricht.');
 
     $props = $this->actingAs($contact, 'portal')
-        ->get("/projekte/{$project->public_id}/nachrichten")
+        ->get('/nachrichten')
         ->assertOk()
         ->viewData('page')['props'];
 

@@ -8,11 +8,11 @@ use App\Portal\Http\Controllers\ContractController;
 use App\Portal\Http\Controllers\HomeController;
 use App\Portal\Http\Controllers\ImpressumController;
 use App\Portal\Http\Controllers\MagicLinkController;
+use App\Portal\Http\Controllers\MailboxController;
 use App\Portal\Http\Controllers\PaymentCheckoutController;
 use App\Portal\Http\Controllers\PaymentController;
 use App\Portal\Http\Controllers\ProjectController;
 use App\Portal\Http\Controllers\QuoteController;
-use App\Portal\Http\Controllers\ThreadController;
 use App\Portal\Http\Controllers\UnsubscribeController;
 use Illuminate\Support\Facades\Route;
 
@@ -88,16 +88,19 @@ Route::middleware('portal.maintenance')->group(function () {
             ->name('portal.quotes.accept');
 
         // E-06, gated by T-08's own "messaging" switch (default off) — the
-        // whole thread, GET and POST alike, the same full-screen shape
+        // whole mailbox, GET and POST alike, the same full-screen shape
         // payment_status above takes rather than gating only a submit the
         // way accept_quotes/sign_contracts do. See EnsurePortalCapability
         // and StudioSettingsResolver::messagingEnabled().
-        Route::get('/projekte/{project}/nachrichten', [ThreadController::class, 'show'])
-            ->middleware('portal.capability:messaging')
-            ->name('portal.threads.show');
-        Route::post('/projekte/{project}/nachrichten', [ThreadController::class, 'store'])
-            ->middleware('portal.capability:messaging')
-            ->name('portal.threads.store');
+        //
+        // P-04 (#223): one mailbox, no project in the path. A thread names a
+        // booking or it does not, and the route can no longer require what
+        // the thread itself may not have — see MailboxController.
+        Route::middleware('portal.capability:messaging')->group(function () {
+            Route::get('/nachrichten', [MailboxController::class, 'index'])->name('portal.threads.index');
+            Route::post('/nachrichten', [MailboxController::class, 'store'])->name('portal.threads.store');
+            Route::post('/nachrichten/{thread}', [MailboxController::class, 'reply'])->name('portal.threads.reply');
+        });
 
         // T-07. Read-only apart from M-04's own confirm step on return from
         // Stripe — nothing here ever CREATES a Stripe object, see

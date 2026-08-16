@@ -83,11 +83,13 @@ function longDate(date: string | null) {
     </section>
 
     <!-- E-06, gated by T-08's own "messaging" switch (default off) — the
-         affordance half of ThreadController's own
+         affordance half of MailboxController's own
          `portal.capability:messaging`, the same shape hasContract/
-         hasPaymentPlan already take for their own links below. -->
+         hasPaymentPlan already take for their own links below. P-04 (#223):
+         the mailbox is one screen for every booking, so this link only
+         preselects which one a new message is about. -->
     <section v-if="project.messagingEnabled" class="psec">
-      <Link class="blkfoot" :href="`/projekte/${project.id}/nachrichten`">
+      <Link class="blkfoot" :href="`/nachrichten?betrifft=${project.id}`">
         {{ $t('portal.messagesLinkTitle') }} →
       </Link>
     </section>

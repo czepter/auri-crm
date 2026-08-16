@@ -53,3 +53,27 @@ it('never creates a second thread for the same project through the action alone'
 
     expect(Thread::where('project_id', $project->id)->count())->toBe(2);
 });
+
+// P-04 (#223): before the first booking there is nothing to hang a thread on,
+// and that is exactly when a client most needs to ask something.
+it('starts a thread with no booking at all', function () {
+    $contact = Contact::factory()->create();
+
+    $thread = app(StartThread::class)(null, $contact, 'Im Herbst noch etwas frei?', 'Wir würden gern im Oktober.');
+
+    expect($thread->project_id)->toBeNull()
+        ->and($thread->messages)->toHaveCount(1)
+        ->and($thread->messages->first()->contact->is($contact))->toBeTrue();
+});
+
+it('files a booking-less thread onto a project, once', function () {
+    $contact = Contact::factory()->create();
+    $thread = app(StartThread::class)(null, $contact, 'Thema', 'Nachricht.');
+    $project = Project::factory()->create();
+
+    app(App\Engagement\Actions\AttachThreadToProject::class)($thread, $project);
+
+    expect($thread->fresh()->project->is($project))->toBeTrue();
+
+    app(App\Engagement\Actions\AttachThreadToProject::class)($thread->fresh(), Project::factory()->create());
+})->throws(LogicException::class);
