@@ -187,6 +187,12 @@ services:
       # host the moment this service ran once.
       - /app/node_modules
       - /app/apps/gallery/node_modules
+      # Same shadowing, for the same reason: `astro dev` writes the running
+      # server's pid to .astro/dev.json, and on the host bind mount that file
+      # outlives the container it describes. The next container then finds a
+      # pid that resolves to something else in its own namespace, decides a dev
+      # server is already running, and refuses to start.
+      - /app/apps/gallery/.astro
       - pnpm-store:/pnpm-store
     environment:
       npm_config_store_dir: /pnpm-store
