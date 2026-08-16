@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 const props = defineProps<{
   contact: App.Crm.Data.ContactSuggestionData
   billingAddress: { street: string | null; postcode: string | null; city: string | null }
+  correspondence: App.Engagement.Data.MessageData[]
   portalAccessRevokedAt: string | null
   canRevokePortalAccess: boolean
   dsgvoErasedAt: string | null
@@ -88,6 +89,30 @@ function eraseDsgvoData() {
           <Button as="a" href="/kontakte" variant="ghost">{{ $t('common.cancel') }}</Button>
         </div>
       </form>
+
+      <!-- E-11: what the studio has actually said to this person, across
+           every project. A thread only ever knows its own project, so this
+           is the one screen that can answer the question at all. -->
+      <div v-if="correspondence.length" class="card static" style="margin-top: var(--s5)">
+        <div class="cardhead"><span class="kick">{{ $t('contacts.correspondence') }}</span></div>
+        <div class="msg" style="gap: var(--s3); margin-top: var(--s3)">
+          <div v-for="message in correspondence" :key="message.id" class="msgrow">
+            <div class="msgtxt">
+              <div class="msgwho">
+                {{ message.author }}
+                <em>{{ new Date(message.sentAt).toLocaleDateString('de-DE') }}</em>
+                <em v-if="message.projectName"> · {{ message.projectName }}</em>
+                <!-- A dead address belongs where the next reply gets typed,
+                     not in a log nobody opens. -->
+                <em v-if="message.deliveryState === 'failed'" class="err">
+                  · {{ $t('contacts.deliveryFailed') }}
+                </em>
+              </div>
+              <div class="msgbody">{{ message.body }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div v-if="canRevokePortalAccess" class="card static" style="margin-top: var(--s5)">
         <div class="cardhead"><span class="kick">{{ $t('contacts.portalAccess') }}</span></div>

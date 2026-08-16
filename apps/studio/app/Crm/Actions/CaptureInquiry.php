@@ -101,10 +101,35 @@ class CaptureInquiry
         });
     }
 
+    /**
+     * An address already on file is the same person enquiring again, not a
+     * second contact — and C-01's partial unique index on (tenant_id, email)
+     * would refuse the insert anyway, with a query exception rather than
+     * anything a caller could show a human.
+     *
+     * The stored name wins over the submitted one. A client who types
+     * "L. Meier" into a public form is not renaming the studio's record of
+     * Lena Meier, and C-08's form is the first caller that can reach this
+     * without a typeahead having already resolved the contact by id.
+     */
     private function resolveContact(CaptureInquiryData $data): Contact
     {
         if (filled($data->contact_id)) {
             return Contact::query()->where('public_id', $data->contact_id)->firstOrFail();
+        }
+
+        $existing = filled($data->contact_email)
+            ? Contact::query()->where('email', $data->contact_email)->first()
+            : null;
+
+        if ($existing !== null) {
+            // A phone number the studio does not have yet is worth keeping;
+            // one it already has is not worth overwriting from a form.
+            if (filled($data->contact_phone) && blank($existing->phone)) {
+                $existing->update(['phone' => $data->contact_phone]);
+            }
+
+            return $existing;
         }
 
         return Contact::create([

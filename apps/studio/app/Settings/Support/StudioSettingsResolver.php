@@ -450,6 +450,20 @@ class StudioSettingsResolver
         return $this->row()->mail_bcc;
     }
 
+    /**
+     * E-12: the secret every inbound address is minted from. Null until the
+     * studio has one, which is also what makes ingest fall closed into
+     * triage on a deployment that never provisioned an inbound domain.
+     *
+     * Never leaves the server. It is not in attributes(), so no Inertia prop
+     * or API response can carry it by accident — the addresses derived from
+     * it are what the studio sees.
+     */
+    public function inboundSecret(): ?string
+    {
+        return $this->row()->inbound_secret;
+    }
+
     // --- T-08: the portal's own settings — a maintenance closure, home
     // branding text, two external legal links, and four client capability
     // switches. See the migration's own doc comment for why each defaults

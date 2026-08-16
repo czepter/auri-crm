@@ -231,6 +231,8 @@ isDone: boolean,
 shootLabel: string | null,
 audience: string,
 audienceLabel: string,
+isBlocked: boolean,
+blockedBy: string | null,
 };
 export type TaskTemplateData = {
 id: string,
@@ -254,7 +256,7 @@ isTransit: boolean,
 }
 namespace Enums {
 export type BookedVia = 'manual' | 'contract';
-export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'other';
+export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'web_form' | 'other';
 export type CrewRole = 'lead_photographer' | 'second_shooter' | 'assistant';
 export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list';
 export type LeadSource = 'referral' | 'website' | 'instagram' | 'wedding_fair' | 'other';
@@ -317,12 +319,19 @@ author: string,
 fromStaff: boolean,
 body: string,
 sentAt: string,
+deliveryState: string | null,
+projectName: string | null,
+projectId: string | null,
+scheduledFor: string | null,
 };
 export type ThreadData = {
 id: string,
 subject: string,
 messages: App.Engagement.Data.MessageData[],
 };
+}
+namespace Enums {
+export type InboundMessageState = 'threaded' | 'triage' | 'quarantined';
 }
 }
 namespace Enums {

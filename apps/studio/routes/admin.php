@@ -21,6 +21,7 @@ use App\Crm\Http\Controllers\TaskController;
 use App\Crm\Http\Controllers\TaskTemplateController;
 use App\Crm\Http\Controllers\TimelineController;
 use App\Documents\Http\Controllers\DocumentTemplateController;
+use App\Engagement\Http\Controllers\InboxController;
 use App\Engagement\Http\Controllers\ThreadController;
 use App\Gallery\Http\Controllers\GalleryLightroomExportController;
 use App\Http\Controllers\Staff\AbsenceController;
@@ -172,6 +173,17 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/team/einladungen/{invitation}', [InvitationController::class, 'destroy'])
             ->name('staff.invitation.destroy');
 
+        // E-12. Everything that arrived and did not thread itself, and the
+        // addresses the studio hands out. Rotation posts here but is
+        // authorised in RotateInboundSecret rather than by this route — see
+        // that action's own doc comment for why the check is not on the
+        // screen.
+        Route::get('/posteingang', [InboxController::class, 'index'])->name('inbox.index');
+        Route::post('/posteingang/{inboundMessage}/zuordnen', [InboxController::class, 'attach'])
+            ->name('inbox.attach');
+        Route::post('/posteingang/adresse-erneuern', [InboxController::class, 'rotate'])
+            ->name('inbox.rotate');
+
         // S-13 + M-07. One screen: how the studio is doing, and what is
         // coming in. Gated on ViewAllProjects inside the controller — these
         // are whole-book figures, and a per-role filtered aggregate would
@@ -288,6 +300,9 @@ Route::middleware('audience:staff')->group(function () {
             ->name('projects.messages');
         Route::post('/auftraege/{project}/nachrichten', [ThreadController::class, 'reply'])
             ->name('threads.reply');
+        // E-13: cancel one that has not gone out yet.
+        Route::delete('/auftraege/{project}/nachrichten/{message}', [ThreadController::class, 'cancel'])
+            ->name('threads.cancel');
 
         Route::get('/auftraege/{project}/angebote', [ProjectController::class, 'quotes'])
             ->name('projects.quotes');
@@ -406,6 +421,11 @@ Route::middleware('audience:staff')->group(function () {
             ->name('tasks.store');
         Route::post('/aufgaben/{task}/erledigt', [TaskController::class, 'complete'])
             ->name('tasks.complete');
+        // S-12: what this task waits on. Its own route rather than a field on
+        // completion, because changing a dependency and finishing the work
+        // are different decisions taken at different moments.
+        Route::post('/aufgaben/{task}/abhaengigkeit', [TaskController::class, 'depend'])
+            ->name('tasks.depend');
         Route::delete('/aufgaben/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 
         Route::post('/auftraege/{project}/notizen', [InternalNoteController::class, 'store'])

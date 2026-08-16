@@ -7,12 +7,14 @@ use App\Crm\Models\Contact;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Documents\Models\DocumentTemplate;
+use App\Engagement\Models\Thread;
 use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
 use App\Media\Enums\MultipartUploadStatus;
 use App\Media\Models\MultipartUpload;
 use App\Models\User;
 use App\Settings\Models\StudioSettings;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\Surface;
 use Aws\MockHandler;
 use Aws\S3\S3Client;
@@ -325,4 +327,37 @@ function integerIdPaths(mixed $node, string $path = '$'): array
     }
 
     return $found;
+}
+
+/**
+ * E-12's inbound-mail fixtures. Both InboundMailTest and
+ * InboundMimeMessageTest need the same tenant secret and the same threaded
+ * project, and a global function declared inside one test file collides the
+ * moment a second file declares it — the reason contractProject() lives here
+ * too.
+ */
+function inboundDomain(): string
+{
+    return 'in.nordlicht.test';
+}
+
+function inboundThread(string $email = 'lena@example.test'): Thread
+{
+    $project = contractProject();
+    $contact = $project->contacts()->sole();
+    $contact->update(['email' => $email]);
+
+    $thread = Thread::factory()->for($project)->create();
+    $thread->participants()->create(['contact_id' => $contact->id]);
+
+    return $thread;
+}
+
+/** The tenant's inbound secret, set and readable — see InboundAddress. */
+function withSecret(string $secret = 'a-tenant-secret'): string
+{
+    StudioSettings::query()->firstOrFail()->forceFill(['inbound_secret' => $secret])->save();
+    app()->forgetInstance(StudioSettingsResolver::class);
+
+    return $secret;
 }

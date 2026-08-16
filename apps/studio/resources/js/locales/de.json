@@ -78,6 +78,8 @@
     "street": "Straße",
     "postcode": "PLZ",
     "city": "Ort",
+    "correspondence": "Nachrichten",
+    "deliveryFailed": "nicht zugestellt",
     "projects": "Projekte",
     "projectCount": "kein Projekt | 1 Projekt | {count} Projekte",
     "none": "—",
@@ -154,6 +156,7 @@
     "taskShoot": "Shooting",
     "taskNoShoot": "Ganzes Projekt",
     "taskComplete": "Als erledigt markieren",
+    "taskBlockedBy": "wartet auf „{title}“",
     "taskReopen": "Wieder öffnen",
     "noTasks": "Nichts offen.",
     "notes": "Notizen",
@@ -181,6 +184,10 @@
     "messagesEmpty": "Keine Nachrichten.",
     "messagesReplyPlaceholder": "Antwort schreiben …",
     "messagesTemplateBroken": "Vorlage „{name}“ nutzt unbekannte Felder: {fields}",
+    "messagesSchedule": "Später senden",
+    "messagesScheduleLabel": "Sendezeitpunkt",
+    "messagesScheduledFor": "Geht raus am {when}",
+    "messagesCancelScheduled": "Abbrechen",
     "messagesSend": "Senden"
   },
   "calendar": {
@@ -192,6 +199,28 @@
     "revokeConfirm": "Neue Adresse erzeugen? Bereits eingetragene Abos hören sofort auf zu aktualisieren.",
     "mine": "Eigenes",
     "empty": "Keine anstehenden Shootings."
+  },
+  "inbox": {
+    "title": "Posteingang",
+    "kicker": "Eingehende E-Mails",
+    "addressTitle": "Ihre Eingangsadresse",
+    "addressHint": "Antworten auf Nachrichten landen automatisch am richtigen Auftrag. Alles andere kommt hierher.",
+    "notConfigured": "Für diese Installation ist keine Eingangsdomain eingerichtet.",
+    "noSecret": "Noch keine Adresse erzeugt.",
+    "rotate": "Adresse erneuern",
+    "rotateConfirm": "Adresse erneuern?",
+    "rotateConsequence": "Alle bisher ausgegebenen Adressen hören auf zu funktionieren. Antworten darauf landen dann hier statt am Auftrag.",
+    "triageTitle": "Zu prüfen",
+    "triageEmpty": "Nichts offen.",
+    "chooseThread": "Auftrag wählen",
+    "attach": "Zuordnen",
+    "reason": {
+      "dmarc_fail": "Absender nicht bestätigt",
+      "no_inbound_secret": "Keine Adresse eingerichtet",
+      "unrecognised_address": "Adresse nicht zuordenbar",
+      "unknown_thread": "Auftrag nicht gefunden",
+      "sender_not_participant": "Absender gehört nicht zum Auftrag"
+    }
   },
   "reports": {
     "title": "Auswertungen",
