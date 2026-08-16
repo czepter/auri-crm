@@ -33,17 +33,20 @@ it('gives a contact with zero visible projects an empty state, not an error', fu
     $response = $this->get('/');
 
     $response->assertOk();
-    expect($response->viewData('page')['props']['projects'])->toBe([]);
+    expect($response->viewData('page')['props']['bookings'])->toBe([]);
 });
 
-it('sends a single-project contact straight to their project, not a picker', function () {
+// P-01 (#220): the home stopped being a switcher, so a single-booking
+// contact stays on it — it carries what is open, their galleries and their
+// contact, none of which the project screen answers across bookings.
+it('keeps a single-booking contact on the home rather than redirecting', function () {
     $contact = Contact::factory()->create();
     $project = Project::factory()->create(['portal_visible' => true]);
     $project->attachContact($contact, ProjectContactRole::Primary);
 
     $this->actingAs($contact, 'portal');
 
-    $this->get('/')->assertRedirect("/projekte/{$project->public_id}");
+    expect(props('/')['bookings'])->toHaveCount(1);
 });
 
 it('lists every visible project in the switcher for a multi-project contact', function () {
@@ -55,7 +58,7 @@ it('lists every visible project in the switcher for a multi-project contact', fu
 
     $this->actingAs($contact, 'portal');
 
-    $projects = props('/')['projects'];
+    $projects = props('/')['bookings'];
 
     expect($projects)->toHaveCount(2)
         ->and(collect($projects)->pluck('id')->all())
@@ -75,7 +78,7 @@ it('excludes a project the studio has not made portal_visible from the switcher'
 
     $this->actingAs($contact, 'portal');
 
-    $ids = collect(props('/')['projects'])->pluck('id')->all();
+    $ids = collect(props('/')['bookings'])->pluck('id')->all();
 
     expect($ids)->toEqualCanonicalizing([$visibleA->public_id, $visibleB->public_id])
         ->and($ids)->not->toContain($hidden->public_id);
@@ -127,12 +130,12 @@ it('reflects a portal_visible flip on the very next request, without a re-login'
 
     $this->actingAs($contact, 'portal');
 
-    expect(props('/')['projects'])->toHaveCount(3);
+    expect(props('/')['bookings'])->toHaveCount(3);
 
     $dropped = $projects->first();
     $dropped->update(['portal_visible' => false]);
 
-    expect(props('/')['projects'])->toHaveCount(2);
+    expect(props('/')['bookings'])->toHaveCount(2);
     $this->get("/projekte/{$dropped->public_id}")->assertNotFound();
 });
 
@@ -143,12 +146,12 @@ it('reflects a detached contact on the very next request, without a re-login', f
 
     $this->actingAs($contact, 'portal');
 
-    expect(props('/')['projects'])->toHaveCount(3);
+    expect(props('/')['bookings'])->toHaveCount(3);
 
     $dropped = $projects->first();
     $dropped->contacts()->detach($contact);
 
-    expect(props('/')['projects'])->toHaveCount(2);
+    expect(props('/')['bookings'])->toHaveCount(2);
     $this->get("/projekte/{$dropped->public_id}")->assertNotFound();
 });
 

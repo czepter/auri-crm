@@ -704,6 +704,27 @@
     "dateOpen": "Termin noch offen",
     "noShoots": "Keine Termine.",
     "nothingShared": "Nichts freigegeben.",
+    "bookingsTitle": "Eure Buchungen",
+    "bookingCount": "eine Buchung|{count} Buchungen",
+    "galleriesTitle": "Eure Galerien",
+    "imageCount": "ein Bild|{count} Bilder",
+    "pendingTitle": "Das wartet auf euch",
+    "contactTitle": "Euer Kontakt",
+    "filterAll": "Alle",
+    "foldYear": "Einklappen",
+    "unfoldYear": "Buchungen anzeigen",
+    "dueOn": "fällig am {date}",
+    "validUntil": "gültig bis {date}",
+    "phase": {
+      "open": "Offen",
+      "upcoming": "Anstehend",
+      "delivered": "Geliefert"
+    },
+    "pending": {
+      "installment": "Rate",
+      "quote": "Angebot",
+      "message": "Antwort vom Studio"
+    },
     "contractTitle": "Vertrag",
     "contractTemplate": "Fotografievertrag · Vorlage {name} v{version}",
     "contractDownload": "PDF herunterladen",

@@ -182,3 +182,76 @@ h1 { font-size: 30px; }
 .composefoot .about { display: flex; align-items: center; gap: var(--s3);
                       font: 500 12px/1 var(--font); color: var(--muted); }
 .composefoot [data-slot="button"] { margin-left: auto; }
+
+/* ---------- P-01/P-02 (#220, #221): the portal home ---------- */
+/* Ported from mockups/redesign/portal-start.html and
+   portal-start-location.html. Two columns from 1080px: the bookings and the
+   galleries on the left, what is open and who to write to alongside. Below
+   that, one column with the open items first — on a phone the answer to
+   "is anything waiting on us?" comes before the archive. */
+
+.phome { display: grid; gap: var(--s6); align-items: start; }
+@media (min-width: 1080px) { .phome { grid-template-columns: minmax(0, 1fr) 320px; } }
+.phome > .rail { order: -1; }
+@media (min-width: 1080px) { .phome > .rail { order: 0; } }
+
+.psec + .psec { margin-top: var(--s6); }
+.lab { font: 600 11px/1 var(--font); letter-spacing: .1em; text-transform: uppercase;
+       color: var(--faint); margin: 0 0 var(--s4); }
+
+/* what is open, across every booking */
+.pend { border-top: 1px solid var(--line); }
+.pend a { display: flex; align-items: center; gap: var(--s4); padding: var(--s4) 0;
+          border-bottom: 1px solid var(--line); text-decoration: none; color: var(--ink); }
+.pend a:hover { background: var(--hover); }
+.pend h3 { font: 600 14px/1.3 var(--font); margin: 0; flex: 1; }
+.pend .sub { font: 400 12.5px/1.4 var(--font); color: var(--muted); margin-top: 2px; }
+.pend .where { font: 400 11.5px/1.4 var(--font); color: var(--faint); margin-top: 3px; }
+.pend .amount { font: 600 14px/1 var(--font); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pend .amount.late { color: var(--late); }
+
+/* the bookings, equal-ranked, split by year */
+.filters { display: flex; gap: var(--s2); flex-wrap: wrap; margin-bottom: var(--s4); }
+.fpill { padding: 7px 13px; border-radius: 999px; border: 1px solid var(--line);
+         background: transparent; cursor: pointer; color: var(--muted);
+         font: 500 12.5px/1 var(--font); }
+.fpill:hover { border-color: var(--line-hover); color: var(--ink); }
+.fpill.on { background: var(--ink); border-color: var(--ink); color: var(--bg); font-weight: 600; }
+.fpill .n { opacity: .55; font-variant-numeric: tabular-nums; margin-left: 5px; }
+
+.yearhead { display: flex; align-items: baseline; gap: var(--s3); margin: var(--s5) 0 var(--s3);
+            font: 600 13px/1 var(--font); font-variant-numeric: tabular-nums; }
+.yearhead button { background: none; border: 0; padding: 0; cursor: pointer;
+                   font: 400 12.5px/1 var(--font); color: var(--muted); }
+.yearhead button:hover { color: var(--ink); }
+.yearhead .n { margin-left: auto; font: 400 12px/1 var(--font); color: var(--faint); }
+
+.entries { border-top: 1px solid var(--line); }
+.entries a { display: flex; align-items: center; gap: var(--s4); padding: var(--s4) 0;
+             border-bottom: 1px solid var(--line); text-decoration: none; color: var(--ink); }
+.entries a:hover { background: var(--hover); }
+.entries .body { flex: 1; min-width: 0; }
+.entries .kick { margin: 0 0 3px; }
+.entries h3 { font: 600 15px/1.3 var(--font); margin: 0; }
+.entries .sub { font: 400 12.5px/1.4 var(--font); color: var(--muted); margin-top: 2px;
+                font-variant-numeric: tabular-nums; }
+.entries .state { font: 400 12.5px/1.4 var(--font); color: var(--muted); text-align: right;
+                  white-space: nowrap; }
+
+/* straight to the pictures, no detour through the booking */
+.gcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--s4); }
+.gcards a { text-decoration: none; color: var(--ink); }
+.gcards .shot { display: block; aspect-ratio: 4 / 3; border-radius: var(--r); overflow: hidden;
+                background: var(--hover); margin-bottom: var(--s3); }
+.gcards .shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gcards b { font: 600 14px/1.3 var(--font); display: block; }
+.gcards span.meta { font: 400 12px/1.4 var(--font); color: var(--muted);
+                    font-variant-numeric: tabular-nums; }
+
+/* a person, not a contact form */
+.person { display: flex; align-items: center; gap: var(--s3); }
+.person .av { width: 38px; height: 38px; border-radius: 50%; flex: none; display: grid;
+              place-items: center; background: var(--accent-bg); color: var(--accent);
+              font: 600 12.5px/1 var(--font); }
+.person b { font: 600 14px/1.3 var(--font); display: block; }
+.person .role { font: 400 12px/1.4 var(--font); color: var(--muted); }
