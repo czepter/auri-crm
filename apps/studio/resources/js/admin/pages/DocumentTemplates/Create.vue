@@ -8,6 +8,7 @@ import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { NONE, fromOption, toOption } from '@/lib/select'
 import { serialize } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
 
@@ -98,10 +99,13 @@ function submit() {
       </div>
       <div v-if="chosen !== null" class="fld">
         <Label for="shoot_kind">{{ $t('documentTemplates.shootKind') }}</Label>
-        <Select :model-value="form.shoot_kind" @update:model-value="(value) => (form.shoot_kind = String(value))">
+        <!-- reka-ui reserves the empty string for "nothing selected", so the
+             "Beliebig" choice needs the NONE stand-in while the model keeps
+             storing '' — see resources/js/lib/select.ts. -->
+        <Select :model-value="toOption(form.shoot_kind)" @update:model-value="(value) => (form.shoot_kind = fromOption(value))">
           <SelectTrigger id="shoot_kind"><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="">{{ $t('documentTemplates.shootKindAny') }}</SelectItem>
+            <SelectItem :value="NONE">{{ $t('documentTemplates.shootKindAny') }}</SelectItem>
             <SelectItem v-for="kind in shootKinds" :key="kind.value" :value="kind.value">{{ kind.label }}</SelectItem>
           </SelectContent>
         </Select>
