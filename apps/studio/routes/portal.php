@@ -2,6 +2,7 @@
 
 use App\Gallery\Http\Controllers\DownloadZipPartController;
 use App\Gallery\Http\Controllers\GalleryDownloadController;
+use App\Gallery\Http\Controllers\GalleryImageController;
 use App\Gallery\Http\Controllers\GalleryPasswordController;
 use App\Portal\Http\Controllers\BrandingController;
 use App\Portal\Http\Controllers\ContractController;
@@ -143,6 +144,17 @@ Route::get('/impressum', ImpressumController::class)->name('portal.impressum');
 // declaration). Sits outside portal.maintenance's closure entirely: a client
 // portal closed for maintenance says nothing about whether a couple's guests
 // can still reach their gallery.
+// P-08 (#227): the image bytes, on the surface that holds the view claim.
+// Registered before the `galerien/{gallery}` group below, which would
+// otherwise swallow the path as a gallery public_id. Bound on the version,
+// not the gallery — a published version's contents never change, which is
+// what lets GalleryImageController's response claim `immutable` — so
+// EnsureGalleryGate resolves the parent gallery from it.
+Route::get('/galerie-bilder/{galleryVersion}/{key}', GalleryImageController::class)
+    ->where('key', '.*')
+    ->middleware('gallery.gate:view')
+    ->name('portal.gallery.image');
+
 Route::prefix('galerien/{gallery}')->group(function () {
     // The view gate (mockup 08). Its own screen decides unlocked-or-not
     // rather than being wrapped by `gallery.gate:view` — see

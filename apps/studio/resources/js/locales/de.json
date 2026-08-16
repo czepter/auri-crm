@@ -760,9 +760,11 @@
   "gallery": {
     "passwordLabel": "Galerie-Passwort",
     "passwordOpen": "Galerie öffnen",
+    "passwordWhere": "Steht in der Mail mit dem Link.",
+    "scrollCue": "Bilder ansehen",
+    "onlineUntil": "online bis {date}",
+    "notPublished": "Diese Galerie ist noch nicht veröffentlicht.",
     "passwordWrong": "Dieser Link und dieses Passwort gehören nicht zusammen.",
-    "unlockedTitle": "Galerie freigeschaltet",
-    "unlockedHint": "Bilderübersicht noch nicht verfügbar.",
     "downloadLink": "Bilder herunterladen",
     "pinKicker": "Download · Schritt 1 von 2",
     "pinTitle": "Download-Code erforderlich",

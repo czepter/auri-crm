@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Support\GalleryAccessSession;
 use Closure;
 use Illuminate\Http\Request;
@@ -26,6 +27,14 @@ class EnsureGalleryGate
     {
         $gallery = $request->route('gallery');
 
+        // P-08 (#227): the image route is bound on the version, not on the
+        // gallery — a version's bytes never change, which is what lets that
+        // response claim `immutable` — so the gate it needs is its parent's.
+        if ($gallery === null) {
+            $version = $request->route('galleryVersion');
+            $gallery = $version instanceof GalleryVersion ? $version->gallery : null;
+        }
+
         // G-07: a route whose own controller resolves the gallery by hand
         // (GalleryDownloadController::storePin, for its own uniform-failure
         // reasons — see its docblock) carries the raw public_id here rather
@@ -33,7 +42,7 @@ class EnsureGalleryGate
         // binding to run against. Resolve it the same way that controller
         // will — a second lookup on this one path, not worth threading the
         // first one through the request just to save it.
-        if (! $gallery instanceof Gallery) {
+        if ($gallery !== null && ! $gallery instanceof Gallery) {
             $gallery = Gallery::findByPublicId((string) $gallery);
         }
 
@@ -53,8 +62,7 @@ class EnsureGalleryGate
     private function satisfied(Gallery $gallery, string $gate): bool
     {
         return match ($gate) {
-            GalleryAccessSession::VIEW => ! $gallery->requiresViewPassword()
-                || $this->claims->has($gallery, GalleryAccessSession::VIEW, $gallery->view_password_version),
+            GalleryAccessSession::VIEW => $this->claims->viewGranted($gallery),
             GalleryAccessSession::DOWNLOAD => ! $gallery->requiresDownloadPin()
                 || $this->claims->has($gallery, GalleryAccessSession::DOWNLOAD, $gallery->download_pin_version),
             GalleryAccessSession::EMAIL => ! $gallery->requiresVerifiedEmail()

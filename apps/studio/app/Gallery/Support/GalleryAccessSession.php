@@ -39,6 +39,32 @@ class GalleryAccessSession
         return $claim !== null && ($claim['version'] ?? null) === $currentVersion;
     }
 
+    /**
+     * P-08 (#227): the one question "may this visitor see the pictures?",
+     * asked identically by the middleware and by the screen itself.
+     *
+     * The view password exists so a couple can hand a link to eighty guests
+     * and still decide who gets in. It was never meant to stand between the
+     * couple and their own photographs — they proved an inbox to get here
+     * (A-02), which is a stronger claim than a shared word. So a signed-in
+     * contact on the gallery's own project passes without it.
+     */
+    public function viewGranted(Gallery $gallery): bool
+    {
+        return ! $gallery->requiresViewPassword()
+            || $this->has($gallery, self::VIEW, $gallery->view_password_version)
+            || $this->belongsToSignedInClient($gallery);
+    }
+
+    private function belongsToSignedInClient(Gallery $gallery): bool
+    {
+        $contact = auth('portal')->user();
+
+        return $contact !== null
+            && $gallery->project_id !== null
+            && $contact->visibleProjects()->whereKey($gallery->project_id)->exists();
+    }
+
     /** The address an already-granted email claim verified, or null. */
     public function verifiedEmail(Gallery $gallery): ?string
     {

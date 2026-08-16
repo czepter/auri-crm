@@ -94,6 +94,12 @@ const PUBLIC_ROUTES = [
         // `gallery.gate:view` or `gallery.gate:download` even though that
         // does not read as `audience:` to this test.
         'galerien/{gallery}', 'galerien/{gallery}/passwort',
+        // P-08 (#227): the image bytes, bound on the version and gated by
+        // its parent gallery's own `gallery.gate:view` — same story as the
+        // routes below, and the reason they moved off the api surface at
+        // all is that the api surface holds no session to check the claim
+        // against (EnsureUngatedGallery).
+        'galerie-bilder/{galleryVersion}/{key}',
         'galerien/{gallery}/download', 'galerien/{gallery}/download/pin',
         'galerien/{gallery}/download/email', 'galerien/{gallery}/download/email/{token}',
         // G-11's delivery endpoint carries its own two-layer check —

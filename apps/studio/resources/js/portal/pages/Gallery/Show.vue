@@ -6,10 +6,12 @@ import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 
 type Branding = { displayName: string | null }
+type Asset = { key: string; width: number | null; height: number | null; src: string }
 
 const props = defineProps<{
-  gallery: { id: string; title: string | null; date: string | null; venue: string | null }
+  gallery: { id: string; title: string | null; date: string | null; venue: string | null; expiresAt: string | null }
   unlocked: boolean
+  assets: Asset[] | null
 }>()
 
 // T-08's shared branding, the same wordmark PortalFooter reads — a gallery
@@ -22,42 +24,111 @@ function submit() {
   form.post(`/galerien/${props.gallery.id}/passwort`)
 }
 
-const subtitle = computed(() => [props.gallery.date, props.gallery.venue].filter(Boolean).join(' · '))
+const subtitle = computed(() => {
+  const parts = [props.gallery.date, props.gallery.venue].filter(Boolean)
+
+  if (props.assets?.length) {
+    parts.push(`${props.assets.length} Bilder`)
+  }
+
+  return parts.join(' · ')
+})
+
+// G-08's own allowed widths (App\Gallery\Support\ImageVariant::WIDTHS). The
+// grid is at most four columns of a 1440px page, so the two largest exist
+// for retina rather than for layout.
+const WIDTHS = [400, 800, 1200, 1600]
+const SIZES = '(max-width: 760px) 50vw, (max-width: 1080px) 33vw, 25vw'
+
+function srcSet(asset: Asset, format: string) {
+  return WIDTHS.map((w) => `${asset.src}?w=${w}&fmt=${format} ${w}w`).join(', ')
+}
+
+// The first published asset carries the cover. Nothing in the schema names
+// one, so "the first" is the studio's own ordering rather than a guess.
+const cover = computed(() => props.assets?.[0] ?? null)
+
+function expiry(iso: string) {
+  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
 </script>
 
 <template>
-  <!-- data-theme lives on an ancestor, never on .gpage itself — gallery.css's
-       rules are all `[data-theme="gallery"] .foo` descendant selectors,
-       matching the mockup's own <html data-theme="gallery"> root. -->
+  <!-- data-theme lives on an ancestor, never on the page wrapper itself —
+       gallery.css's rules are all `[data-theme="gallery"] .foo` descendant
+       selectors, matching the mockup's own <html data-theme="gallery">. -->
   <div data-theme="gallery">
-    <div class="gpage gcenter">
-      <span class="gmark">{{ studioName }}</span>
+    <header class="cover" :class="{ bare: !cover }">
+      <img v-if="cover" :src="`${cover.src}?w=2400&fmt=jpeg`" alt="" />
 
-      <template v-if="unlocked">
-        <h1 class="gtitle">{{ gallery.title }}</h1>
-        <p class="gsub">{{ $t('gallery.unlockedHint') }}</p>
-        <Button as="a" class="wide" :href="`/galerien/${gallery.id}/download`">{{ $t('gallery.downloadLink') }}</Button>
-      </template>
-
-      <template v-else>
-        <h1 class="gtitle">{{ gallery.title }}</h1>
+      <div class="lock">
+        <span class="gmark">{{ studioName }}</span>
+        <h1 class="gtitle" style="margin-top: var(--s4)">{{ gallery.title }}</h1>
         <p v-if="subtitle" class="gsub">{{ subtitle }}</p>
 
-        <form @submit.prevent="submit">
-          <Label class="field">
-            <span>{{ $t('gallery.passwordLabel') }}</span>
-            <Input v-model="form.password" type="password" autocomplete="off" required />
-          </Label>
+        <template v-if="!unlocked">
+          <div class="hair" />
 
-          <Button class="wide" type="submit" :disabled="form.processing">
-            {{ $t('gallery.passwordOpen') }}
-          </Button>
-        </form>
+          <form @submit.prevent="submit">
+            <Label class="field">
+              <span>{{ $t('gallery.passwordLabel') }}</span>
+              <Input v-model="form.password" type="password" autocomplete="off" required />
+            </Label>
 
-        <div v-if="form.errors.password" class="err">
-          <b>{{ form.errors.password }}</b>
-        </div>
-      </template>
-    </div>
+            <Button class="wide" type="submit" :disabled="form.processing">
+              {{ $t('gallery.passwordOpen') }}
+            </Button>
+          </form>
+
+          <p class="hint">{{ $t('gallery.passwordWhere') }}</p>
+
+          <div v-if="form.errors.password" class="err">
+            <b>{{ form.errors.password }}</b>
+          </div>
+        </template>
+      </div>
+
+      <a v-if="assets?.length" class="scrollcue" href="#raster">
+        {{ $t('gallery.scrollCue') }}
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6" /></svg>
+      </a>
+    </header>
+
+    <template v-if="unlocked">
+      <div class="gbar">
+        <span class="who">
+          <b>{{ gallery.title }}</b>
+          <template v-if="gallery.expiresAt"> · {{ $t('gallery.onlineUntil', { date: expiry(gallery.expiresAt) }) }}</template>
+        </span>
+        <Button as="a" :href="`/galerien/${gallery.id}/download`">{{ $t('gallery.downloadLink') }}</Button>
+      </div>
+
+      <main v-if="assets?.length" id="raster" class="gwall">
+        <span v-for="asset in assets" :key="asset.key" class="tile">
+          <picture>
+            <source type="image/avif" :srcset="srcSet(asset, 'avif')" :sizes="SIZES" />
+            <source type="image/webp" :srcset="srcSet(asset, 'webp')" :sizes="SIZES" />
+            <img
+              :src="`${asset.src}?w=800&fmt=jpeg`"
+              :srcset="srcSet(asset, 'jpeg')"
+              :sizes="SIZES"
+              :width="asset.width ?? undefined"
+              :height="asset.height ?? undefined"
+              alt=""
+              loading="lazy"
+            />
+          </picture>
+        </span>
+      </main>
+
+      <!-- Unlocked over a gallery nobody has published yet: a real state,
+           and the studio's link is already out there, so it says so. -->
+      <p v-else class="hint" style="padding: var(--s7) var(--s5)">{{ $t('gallery.notPublished') }}</p>
+
+      <footer class="gfoot">
+        <span>{{ studioName }}</span>
+        <a href="/impressum">{{ $t('portal.footerImpressum') }}</a>
+      </footer>
+    </template>
   </div>
 </template>

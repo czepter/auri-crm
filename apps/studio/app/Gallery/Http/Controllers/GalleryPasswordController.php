@@ -3,6 +3,7 @@
 namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Support\GalleryAccessSession;
 use App\Gallery\Support\GallerySecretGate;
 use App\Http\Controllers\Controller;
@@ -12,20 +13,26 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * The view gate — mockup 08. Its own GET is the gallery link a studio's
- * client shares, so it renders one of two states itself rather than being
- * wrapped by EnsureGalleryGate (which would have nowhere else to redirect a
- * failing request to but here, forever). Once granted, the claim
- * (GalleryAccessSession::VIEW) is what every other gallery route behind
- * `gallery.gate:view` checks — G-08's grid and G-09's lightbox included, once
- * those stories give this route something more than a placeholder to show.
+ * The gallery, gate and grid on one screen — P-08 (#227), mockups
+ * galerie-gate.html and galerie.html.
+ *
+ * It was two pages before, and the second one led nowhere: after the password
+ * this screen said "Bilderübersicht noch nicht verfügbar" while the real grid
+ * sat on the Astro host that nothing linked to and that the api surface could
+ * not gate at all (EnsureUngatedGallery). One page ends both problems — the
+ * cover a visitor lands on is the cover they scroll past into the pictures,
+ * and the pictures are served by the surface that holds the claim.
+ *
+ * Its own GET renders locked-or-unlocked itself rather than being wrapped by
+ * EnsureGalleryGate, which would have nowhere to redirect a failing request
+ * but here, forever.
  */
 class GalleryPasswordController extends Controller
 {
     public function show(Gallery $gallery, GalleryAccessSession $claims): Response
     {
-        $unlocked = ! $gallery->requiresViewPassword()
-            || $claims->has($gallery, GalleryAccessSession::VIEW, $gallery->view_password_version);
+        $unlocked = $claims->viewGranted($gallery);
+        $version = $unlocked ? $gallery->currentVersion : null;
 
         return Inertia::render('Gallery/Show', [
             'gallery' => [
@@ -33,8 +40,14 @@ class GalleryPasswordController extends Controller
                 'title' => $gallery->title,
                 'date' => $gallery->shoot?->date?->format('Y-m-d'),
                 'venue' => $gallery->shoot?->venue(),
+                'expiresAt' => $gallery->expires_at?->toIso8601String(),
             ],
             'unlocked' => $unlocked,
+            // Null while locked, and null for a gallery nobody has published
+            // yet — an unlocked gate over an empty gallery is a real state,
+            // not an error, so the screen says so rather than 404ing a link
+            // the studio has already sent out.
+            'assets' => $version === null ? null : $this->assets($version),
         ]);
     }
 
@@ -65,5 +78,24 @@ class GalleryPasswordController extends Controller
         $claims->grant($model, GalleryAccessSession::VIEW, $model->view_password_version);
 
         return redirect("/galerien/{$model->public_id}");
+    }
+
+    /**
+     * The published version's asset list, each pointing at this surface's own
+     * image route rather than the api surface's — the claim that unlocked
+     * this page lives in this session, and an <img> on another host would not
+     * carry it.
+     */
+    private function assets(GalleryVersion $version): array
+    {
+        return collect($version->assets)
+            ->map(fn (array $asset) => [
+                'key' => $asset['key'],
+                'width' => $asset['width'] ?? null,
+                'height' => $asset['height'] ?? null,
+                'src' => "/galerie-bilder/{$version->public_id}/{$asset['key']}",
+            ])
+            ->values()
+            ->all();
     }
 }

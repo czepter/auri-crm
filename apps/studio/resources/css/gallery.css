@@ -58,3 +58,69 @@
        background:var(--late-bg); border:1px solid #40251A;
        font:400 13px/1.55 var(--font); color:#E7B190; text-align:left; }
 [data-theme="gallery"] .err b { display:block; color:var(--late); font:600 13px/1.5 var(--font); margin-bottom:4px; }
+
+/* ---------- P-08 (#227): cover and grid, on the gate's own page ---------- */
+/* Ported from mockups/redesign/galerie-gate.html and galerie.html. The gate
+   is the cover with a line to type on, and unlocking scrolls the same page
+   to the pictures — there is no second screen and no second host. */
+
+[data-theme="gallery"] .cover { position:relative; min-height:100svh; display:grid; place-items:center;
+        overflow:hidden; }
+[data-theme="gallery"] .cover > img { position:absolute; inset:0; width:100%; height:100%;
+        object-fit:cover; object-position:50% 38%; }
+/* Vignette, so the picture stays a picture and the text stays readable. */
+[data-theme="gallery"] .cover::before { content:''; position:absolute; inset:0; z-index:1;
+        background:radial-gradient(115% 85% at 50% 46%, rgba(12,10,9,.58) 0%, rgba(12,10,9,.80) 62%, rgba(12,10,9,.93) 100%); }
+[data-theme="gallery"] .cover.bare::before { background:none; }
+
+[data-theme="gallery"] .lock { position:relative; z-index:3; text-align:center;
+        padding:var(--s6) var(--s5); width:min(560px, 100%); }
+[data-theme="gallery"] .lock .gtitle { font-size:clamp(34px, 6vw, 56px); color:#fff; }
+[data-theme="gallery"] .lock .gsub { color:var(--ink); opacity:.8; margin-top:var(--s4); }
+[data-theme="gallery"] .hair { width:48px; height:1px; background:rgba(242,237,233,.45);
+        margin:var(--s6) auto var(--s5); }
+
+/* A line, not a box: on a photograph every box is a foreign object. */
+[data-theme="gallery"] .cover .field { text-align:center; width:min(340px, 100%); margin:0 auto; }
+[data-theme="gallery"] .cover .field input { background:transparent; border:0;
+        border-bottom:1px solid rgba(242,237,233,.5); border-radius:0; padding:10px 2px;
+        color:#fff; text-align:center; font-size:20px; letter-spacing:.22em; }
+[data-theme="gallery"] .cover .field input:focus { border-color:var(--accent); outline:none; }
+
+[data-theme="gallery"] .scrollcue { position:absolute; z-index:2; left:50%; bottom:var(--s5);
+        transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:10px;
+        font:600 10.5px/1 var(--font); letter-spacing:.2em; text-transform:uppercase;
+        color:var(--muted); text-decoration:none; }
+[data-theme="gallery"] .scrollcue svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.4; }
+
+[data-theme="gallery"] .gbar { position:sticky; top:0; z-index:10; display:flex; align-items:center;
+        justify-content:space-between; gap:var(--s5); padding:var(--s4) var(--s5);
+        max-width:1240px; margin:0 auto;
+        background:rgba(14,12,11,.72); backdrop-filter:blur(14px) saturate(140%);
+        border-bottom:1px solid var(--line); }
+[data-theme="gallery"] .gbar .who { font-size:13.5px; color:var(--muted); }
+[data-theme="gallery"] .gbar .who b { color:var(--ink); font-weight:600; }
+
+/* columns, not grid: a photo wall wants the original proportions, and
+   `columns` is the only layout method that keeps them without JS. Named
+   .gwall rather than .grid because Tailwind owns `.grid` — display:grid
+   would win over the column count and flatten the whole thing. */
+[data-theme="gallery"] .gwall { columns:4; column-gap:var(--s3); max-width:1240px; margin:0 auto;
+        padding:var(--s6) var(--s5) var(--s7); }
+[data-theme="gallery"] .gwall .tile { display:block; break-inside:avoid; margin-bottom:var(--s3);
+        overflow:hidden; border-radius:10px; background:var(--hover); }
+[data-theme="gallery"] .gwall .tile img { width:100%; display:block;
+        transition:transform 1.2s cubic-bezier(.22,.61,.36,1); }
+[data-theme="gallery"] .gwall .tile:hover img { transform:scale(1.03); }
+
+[data-theme="gallery"] .gfoot { border-top:1px solid var(--line); max-width:1240px; margin:0 auto;
+        padding:var(--s6) var(--s5) var(--s7);
+        display:flex; justify-content:space-between; gap:var(--s5); flex-wrap:wrap;
+        font-size:12.5px; color:var(--muted); }
+
+@media (max-width:1080px) { [data-theme="gallery"] .gwall { columns:3; } }
+@media (max-width:760px) {
+  [data-theme="gallery"] .gwall { columns:2; }
+  [data-theme="gallery"] .cover { min-height:82svh; }
+  [data-theme="gallery"] .gbar .who { display:none; }
+}
