@@ -20,13 +20,15 @@ for (const id of [
   '#cb-portal-accept-quotes-enabled',
   '#cb-portal-sign-contracts-enabled',
   '#cb-portal-payment-status-enabled',
-  '#cb-portal-messaging-enabled',
 ]) {
   const box = admin.locator(id)
   if ((await box.getAttribute('aria-checked')) !== 'true' && !(await box.isChecked().catch(() => false))) {
     await box.click()
   }
 }
+// P-09 (#228): messaging is three states now, not a checkbox. `any` is the
+// one that leaves every portal screen with something on it.
+await admin.locator('#rb-messaging-any').click()
 await shot(admin, 'portal/setup', 'einstellungen-portal--alles-an')
 const save = admin.getByRole('button', { name: /speichern/i })
 if (await save.isEnabled()) {
