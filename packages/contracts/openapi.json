@@ -1523,6 +1523,15 @@
                             "null"
                         ],
                         "maxLength": 10000
+                    },
+                    "referred_by_contact_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "The CUID2 of an existing contact, same shape as contact_id\nabove. Nullable always, including when the source is a\nreferral \u2014 see the migration.",
+                        "minLength": 24,
+                        "maxLength": 24
                     }
                 },
                 "required": [
