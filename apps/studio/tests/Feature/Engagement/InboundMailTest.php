@@ -259,3 +259,40 @@ it('holds no mailbox credential anywhere in the schema', function () {
 
     expect($suspicious->all())->toBe([]);
 });
+
+// --- the catch-all carries the studio's own name ------------------------
+
+it('puts the studio name in the catch-all, slugged', function () {
+    expect(InboundAddress::catchAll('Atelier Nordlicht Fotografie GmbH', 'a-tenant-secret'))
+        ->toStartWith('atelier-nordlicht-fotografie-gmbh.')
+        ->toEndWith('@'.INBOUND_DOMAIN);
+});
+
+it('keeps the secret half unguessable, so the readable handle is not the credential', function () {
+    $first = InboundAddress::catchAll('Atelier Nordlicht', 'one-secret');
+    $second = InboundAddress::catchAll('Atelier Nordlicht', 'another-secret');
+
+    // Same studio, same handle, different address: knowing the studio's name
+    // does not let anyone address it.
+    expect($first)->not->toBe($second)
+        ->and($first)->toStartWith('atelier-nordlicht.')
+        ->and($second)->toStartWith('atelier-nordlicht.');
+});
+
+it('falls back rather than minting an address with an empty handle', function () {
+    expect(InboundAddress::handle(''))->toBe('studio')
+        ->and(InboundAddress::handle('日本語'))->not->toBe('');
+});
+
+it('shows the studio its own catch-all on the Posteingang screen', function () {
+    withSecret();
+    StudioSettings::query()->firstOrFail()->forceFill(['display_name' => 'Atelier Nordlicht'])->save();
+    app()->forgetInstance(StudioSettingsResolver::class);
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get('/posteingang')
+        ->assertOk()
+        ->assertInertia(function ($page) {
+            expect($page->toArray()['props']['catchAll'])->toStartWith('atelier-nordlicht.');
+        });
+});

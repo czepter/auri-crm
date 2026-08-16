@@ -3,6 +3,7 @@
 namespace App\Engagement\Support;
 
 use App\Engagement\Models\Thread;
+use Illuminate\Support\Str;
 
 /**
  * E-12's addressing. Two shapes, one secret behind both.
@@ -46,17 +47,41 @@ class InboundAddress
     }
 
     /**
-     * The catch-all. Anything sent here reaches the studio's triage tray —
-     * forwarded correspondence, an address the studio published itself, a
-     * client writing before a thread exists.
+     * The catch-all: `studio-name.<secret>@<domain>`. Anything sent here
+     * reaches the studio's triage tray — forwarded correspondence, an address
+     * the studio published itself, a client writing before a thread exists.
+     *
+     * The handle is the studio's own name, slugged, because this is the one
+     * address a studio prints on a website or reads out over the phone. A
+     * generic one would be unguessable and unusable in the same breath.
+     *
+     * It is not a credential on its own: the `<secret>` half is what makes
+     * the address unguessable, and the handle is only there to make it
+     * recognisable. Two studios named the same thing collide on the handle
+     * and not on the address.
      */
-    public static function catchAll(string $handle, string $secret): ?string
+    public static function catchAll(string $studioName, string $secret): ?string
     {
         if (! self::configured()) {
             return null;
         }
 
+        $handle = self::handle($studioName);
+
         return $handle.'.'.self::sign($handle, $secret).'@'.self::domain();
+    }
+
+    /**
+     * A studio name as a local-part-safe handle. Falls back rather than
+     * returning an empty string: a studio named only in a script this
+     * transliteration cannot render would otherwise get `.<secret>@…`, which
+     * is a valid-looking address nobody can read.
+     */
+    public static function handle(string $studioName): string
+    {
+        $slug = Str::slug($studioName);
+
+        return $slug !== '' ? mb_substr($slug, 0, 40) : 'studio';
     }
 
     /**

@@ -41,7 +41,12 @@ class InboxController extends Controller
 
         return Inertia::render('Posteingang', [
             'configured' => InboundAddress::configured(),
-            'catchAll' => $secret === null ? null : InboundAddress::catchAll('hallo', $secret),
+            // The studio's own name in the address, not a generic handle:
+            // this is the one inbound address a studio prints on a website
+            // or reads out over the phone.
+            'catchAll' => $secret === null
+                ? null
+                : InboundAddress::catchAll($settings->displayName() ?? '', $secret),
             'canRotate' => $user?->role->allows(Capability::ManageSettings) ?? false,
             'pending' => InboundMessage::query()
                 ->whereIn('state', [InboundMessageState::Triage, InboundMessageState::Quarantined])
