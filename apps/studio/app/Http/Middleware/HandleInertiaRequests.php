@@ -38,6 +38,11 @@ class HandleInertiaRequests extends Middleware
             ],
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
+                // P-06 (#225): a freshly set gallery secret, readable exactly
+                // once. It is hashed the moment it is saved, so this flash is
+                // not a convenience — it is the whole window in which anyone,
+                // client or studio, can read the value they just chose.
+                'secret' => fn () => $request->session()->get('secret'),
             ],
             // The sidebar's counts. Lazy closures, so they cost nothing on the
             // login page and nothing on a partial reload that does not ask for

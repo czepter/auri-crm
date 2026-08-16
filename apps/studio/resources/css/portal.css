@@ -324,3 +324,41 @@ h1 { font-size: 30px; }
    reuses .pend's rhythm without .pend a's whole-row hit target. */
 .pend .prow { display: flex; align-items: center; gap: var(--s4); padding: var(--s4) 0;
               border-bottom: 1px solid var(--line); }
+
+/* ---------- P-06 (#225): the gallery from the client's side ---------- */
+.ghead { display: flex; align-items: center; gap: var(--s5); flex-wrap: wrap; }
+.ghead .shot { width: 120px; aspect-ratio: 4 / 3; border-radius: var(--r); overflow: hidden;
+               background: var(--hover); flex: none; }
+.ghead .shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.listblock + .listblock { margin-top: var(--s5); }
+.listbar { display: flex; align-items: baseline; gap: var(--s4); flex-wrap: wrap; margin-bottom: var(--s3); }
+.listbar b { font: 600 15px/1.3 var(--font); }
+.listbar .hint { flex: 1; margin: 0; }
+.listbar button { background: none; border: 0; padding: 0; cursor: pointer;
+                  font: 400 12.5px/1 var(--font); color: var(--muted); }
+.listbar button:hover { color: var(--ink); }
+.listbar button.warn:hover { color: var(--late); }
+
+.picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: var(--s2); }
+.picks a { display: block; aspect-ratio: 1; border-radius: var(--r-sm); overflow: hidden; background: var(--hover); }
+.picks img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.newlist { display: flex; gap: var(--s3); align-items: center; margin-top: var(--s5); }
+
+.link { display: flex; align-items: center; gap: var(--s3); padding: var(--s3);
+        border: 1px solid var(--line); border-radius: var(--r); }
+.link code { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+             font-size: 12.5px; }
+.link button { background: none; border: 0; padding: 0; cursor: pointer;
+               font: 500 12.5px/1 var(--font); color: var(--accent); }
+
+.gate { display: flex; align-items: center; gap: var(--s3); padding: var(--s4) 0;
+        border-bottom: 1px solid var(--line); }
+.gate b { font: 600 13.5px/1.3 var(--font); }
+.gate .hint { margin: 2px 0 0; }
+.gate button { background: none; border: 0; padding: 0; cursor: pointer;
+               font: 400 12.5px/1 var(--font); color: var(--muted); white-space: nowrap; }
+.gate button:hover { color: var(--ink); }
+.gate button.warn:hover { color: var(--late); }
+.stripactions { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }

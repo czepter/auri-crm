@@ -7,6 +7,7 @@ use App\Gallery\Http\Controllers\GalleryPasswordController;
 use App\Portal\Http\Controllers\AccountController;
 use App\Portal\Http\Controllers\BrandingController;
 use App\Portal\Http\Controllers\ContractController;
+use App\Portal\Http\Controllers\GalleryController as PortalGalleryController;
 use App\Portal\Http\Controllers\HomeController;
 use App\Portal\Http\Controllers\ImpressumController;
 use App\Portal\Http\Controllers\MagicLinkController;
@@ -109,6 +110,27 @@ Route::middleware('portal.maintenance')->group(function () {
             ->name('portal.account.sessions.end');
         Route::post('/einstellungen/datenschutz', [AccountController::class, 'requestDsgvo'])
             ->name('portal.account.dsgvo');
+
+        // P-06 (#225): the gallery from the couple's side. Their link, the
+        // gates in front of it, and their own selections — none of which the
+        // guest-facing grid (P-08) is about. Scoped to a gallery on one of
+        // this contact's own visible bookings.
+        Route::prefix('/galerien/{gallery}/eure-auswahl')->group(function () {
+            Route::get('/', [PortalGalleryController::class, 'show'])->name('portal.galleries.show');
+            Route::post('/listen', [PortalGalleryController::class, 'storeList'])->name('portal.galleries.lists.store');
+            Route::patch('/listen/{list}', [PortalGalleryController::class, 'renameList'])
+                ->name('portal.galleries.lists.rename');
+            Route::delete('/listen/{list}', [PortalGalleryController::class, 'destroyList'])
+                ->name('portal.galleries.lists.destroy');
+            Route::post('/listen/{list}/bild', [PortalGalleryController::class, 'toggleItem'])
+                ->name('portal.galleries.lists.toggle');
+
+            // The three rotate*() methods have lived on the model since G-06
+            // with no caller outside the admin. Rotating is the only real
+            // answer to a link that travelled too far.
+            Route::post('/tore/{gate}', [PortalGalleryController::class, 'rotateGate'])
+                ->name('portal.galleries.gate.rotate');
+        });
 
         // E-06, gated by T-08's own "messaging" switch (default off) — the
         // whole mailbox, GET and POST alike, the same full-screen shape

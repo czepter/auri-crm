@@ -122,6 +122,10 @@ if (!link) {
       ['projekt-zahlungen', `${projectHref}/zahlungen`],
     )
   }
+  // P-06 (#225): the couple's own side of a gallery, if they have one.
+  const galleryHref = hrefs.find((h) => /^\/galerien\/[a-z0-9]+\/eure-auswahl$/.test(h))
+  if (galleryHref) screens.push(['galerie-auswahl', galleryHref])
+
   screens.push(
     ['nachrichten', '/nachrichten'],
     ['einstellungen', '/einstellungen'],

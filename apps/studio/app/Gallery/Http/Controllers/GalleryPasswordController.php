@@ -3,6 +3,7 @@
 namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Support\GalleryAccessSession;
 use App\Gallery\Support\GallerySecretGate;
@@ -29,10 +30,14 @@ use Inertia\Response;
  */
 class GalleryPasswordController extends Controller
 {
-    public function show(Gallery $gallery, GalleryAccessSession $claims): Response
+    public function show(Request $request, Gallery $gallery, GalleryAccessSession $claims): Response
     {
         $unlocked = $claims->viewGranted($gallery);
         $version = $unlocked ? $gallery->currentVersion : null;
+
+        if ($unlocked) {
+            $this->countView($request, $gallery);
+        }
 
         return Inertia::render('Gallery/Show', [
             'gallery' => [
@@ -48,6 +53,10 @@ class GalleryPasswordController extends Controller
             // not an error, so the screen says so rather than 404ing a link
             // the studio has already sent out.
             'assets' => $version === null ? null : $this->assets($version),
+            // P-06 (#225): on the tile, a list menu replaces the single
+            // heart as soon as a client is signed in. A guest keeps the
+            // heart — which is the same thing, a list without a name.
+            'lists' => $this->listsFor($gallery),
         ]);
     }
 
@@ -78,6 +87,54 @@ class GalleryPasswordController extends Controller
         $claims->grant($model, GalleryAccessSession::VIEW, $model->view_password_version);
 
         return redirect("/galerien/{$model->public_id}");
+    }
+
+    /**
+     * This client's own selections, or null for a guest. Owned by the
+     * Contact rather than by a localStorage string, which is the whole
+     * reason GalleryList exists beside AssetFavorite — see its docblock.
+     */
+    private function listsFor(Gallery $gallery): ?array
+    {
+        $contact = auth('portal')->user();
+
+        if ($contact === null || $gallery->project_id === null
+            || ! $contact->visibleProjects()->whereKey($gallery->project_id)->exists()) {
+            return null;
+        }
+
+        return GalleryList::query()
+            ->where('gallery_id', $gallery->id)
+            ->where('contact_id', $contact->id)
+            ->with('items')
+            ->get()
+            ->sortBy(fn (GalleryList $list) => [$list->name === null ? 0 : 1, $list->id])
+            ->map(fn (GalleryList $list) => [
+                'id' => $list->name === null ? 'herz' : $list->public_id,
+                'name' => $list->name,
+                'keys' => $list->items->pluck('asset_key')->values()->all(),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * P-06 (#225): "Aufrufe". Once per visitor session rather than per
+     * request — a couple showing their parents the pictures on a laptop is
+     * one visit, not forty, and DownloadEvent has only ever counted
+     * downloads. increment() rather than a read-modify-write, so two guests
+     * arriving at once do not lose one of the two.
+     */
+    private function countView(Request $request, Gallery $gallery): void
+    {
+        $seen = "gallery_viewed.{$gallery->public_id}";
+
+        if ($request->session()->has($seen)) {
+            return;
+        }
+
+        $request->session()->put($seen, true);
+        $gallery->increment('view_count');
     }
 
     /**

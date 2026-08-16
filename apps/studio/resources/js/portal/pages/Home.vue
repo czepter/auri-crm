@@ -143,7 +143,7 @@ const studioInitials = computed(() => initials(props.studio.name))
         <section v-if="galleries.length" class="psec">
           <p class="lab">{{ $t('portal.galleriesTitle') }}</p>
           <div class="gcards">
-            <a v-for="gallery in galleries" :key="gallery.id" :href="`/galerien/${gallery.id}`">
+            <a v-for="gallery in galleries" :key="gallery.id" :href="`/galerien/${gallery.id}/eure-auswahl`">
               <span class="shot">
                 <img v-if="gallery.cover" :src="`${gallery.cover}?w=800&fmt=jpeg`" alt="" loading="lazy" />
               </span>
