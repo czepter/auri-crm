@@ -3,11 +3,14 @@
 namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
+use App\Documents\Enums\DocumentTemplateType;
+use App\Documents\Support\StarterTemplateCatalog;
 use App\Http\Controllers\Controller;
 use App\Settings\Data\PortalSettingsData;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Arr;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -29,6 +32,20 @@ class StudioOnboardingController extends Controller
         return Inertia::render('Auth/Onboarding', [
             'settings' => StudioSettingsData::fromResolver($settings),
             'portalSettings' => PortalSettingsData::fromResolver($settings),
+            // T-18: the catalog, minus its blocks — this step chooses, it does
+            // not edit, and shipping every starter's document to a screen that
+            // renders four words of each would be a page weight nobody asked
+            // for. DocumentTemplateController::seedStarters resolves a key
+            // back to its blocks server-side.
+            'starters' => collect(StarterTemplateCatalog::byType())
+                ->map(fn (array $entries) => collect($entries)
+                    ->map(fn (array $entry) => Arr::except($entry, 'blocks'))
+                    ->all())
+                ->all(),
+            'starterDefaults' => StarterTemplateCatalog::onboardingDefaults(),
+            'typeLabels' => collect(DocumentTemplateType::cases())
+                ->mapWithKeys(fn (DocumentTemplateType $type) => [$type->value => $type->label()])
+                ->all(),
         ]);
     }
 

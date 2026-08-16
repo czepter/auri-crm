@@ -561,6 +561,9 @@
   "onboarding": {
     "stepProfile": "Studio-Profil",
     "stepVat": "Umsatzsteuer",
+    "stepTemplates": "Vorlagen",
+    "templatesHint": "Fertige Vorlagen als Ausgangspunkt. Alles davon lässt sich später ändern.",
+    "templatesSkipHint": "Nichts auswählen ist auch in Ordnung — die Vorlagen stehen später weiter zur Verfügung.",
     "stepDocuments": "Dokumente",
     "stepEmail": "E-Mail",
     "stepPortal": "Portal",

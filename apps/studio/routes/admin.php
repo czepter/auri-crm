@@ -160,6 +160,12 @@ Route::middleware('audience:staff')->group(function () {
         // family covering every App\Documents\Enums\DocumentTemplateType.
         Route::get('/dokumentvorlagen', [DocumentTemplateController::class, 'index'])->name('document-templates.index');
         Route::get('/dokumentvorlagen/neu', [DocumentTemplateController::class, 'create'])->name('document-templates.create');
+        // T-18: the wizard's template step, and the only writer that takes a
+        // starter key rather than a body. Same capability as creating one by
+        // hand, because that is what it does.
+        Route::post('/dokumentvorlagen/starter', [DocumentTemplateController::class, 'seedStarters'])
+            ->name('document-templates.seed');
+
         Route::post('/dokumentvorlagen', [DocumentTemplateController::class, 'store'])->name('document-templates.store');
         Route::post('/dokumentvorlagen/vorschau', [DocumentTemplateController::class, 'preview'])
             ->name('document-templates.preview');
