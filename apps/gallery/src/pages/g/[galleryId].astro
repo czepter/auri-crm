@@ -1,0 +1,205 @@
+---
+import { FORMATS, imageUrl, srcSet, type GalleryAsset } from '../../lib/images'
+import { callApi } from '../../lib/apiClient'
+import '../../styles/tokens.css'
+import '../../styles/gallery.css'
+
+// G-08: never cached. Which GalleryVersion counts as "current" can change
+// the moment a studio owner republishes (Gallery::publish(), G-05), so a
+// guest's browser — and anything sitting between it and this process — must
+// ask again on every load rather than serve an old version's markup. The
+// images this page points at are the opposite: see GalleryImageController.
+Astro.response.headers.set('Cache-Control', 'no-store')
+
+const apiBase = process.env.API_URL ?? 'http://localhost:8000'
+const { galleryId } = Astro.params
+
+interface GalleryReadResponse {
+  gallery: {
+    public_id: string
+    title: string
+    version: {
+      public_id: string
+      version: number
+      published_at: string
+      assets: GalleryAsset[]
+    }
+  }
+}
+
+// G-13: every outgoing call this SSR page makes to the api surface goes
+// through callApi, which forwards this request's own X-Request-Id
+// (src/middleware.ts) and reports a 5xx or a timeout as the gallery outage
+// it is from a guest's side — see src/lib/apiClient.ts's own doc comment.
+const response = await callApi(apiBase, `/api/galleries/${galleryId}`, Astro.locals.requestId, {
+  headers: { Accept: 'application/json' },
+})
+
+if (!response.ok) {
+  Astro.response.status = response.status === 404 ? 404 : 502
+}
+
+const body: GalleryReadResponse | null = response.ok ? await response.json() : null
+const gallery = body?.gallery ?? null
+
+// (SIZES matches .grid's four fixed columns in gallery.css — a masonry, no
+// responsive breakpoints exist in the mockup this screen matches, so none
+// are invented here either.)
+const SIZES = '(min-width: 1300px) 308px, 25vw'
+const FALLBACK_WIDTH = 800
+---
+
+<html lang="de" data-theme="gallery">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{gallery ? gallery.title : 'Galerie'}</title>
+  </head>
+  <body>
+    {
+      gallery ? (
+        <div class="gwrap">
+          <header class="ghead">
+            <div class="gwho">
+              <b>{gallery.title}</b> · {gallery.version.assets.length} Bilder
+            </div>
+          </header>
+
+          <div class="grid">
+            {gallery.version.assets.map((asset, i) => (
+              <a class="tile" href="#" data-lb-open data-index={i}>
+                <picture>
+                  {FORMATS.filter((f) => f !== 'jpeg').map((format) => (
+                    <source
+                      type={`image/${format}`}
+                      srcset={srcSet(apiBase, gallery.version.public_id, asset.key, format)}
+                      sizes={SIZES}
+                    />
+                  ))}
+                  <img
+                    src={imageUrl(apiBase, gallery.version.public_id, asset.key, FALLBACK_WIDTH, 'jpeg')}
+                    srcset={srcSet(apiBase, gallery.version.public_id, asset.key, 'jpeg')}
+                    sizes={SIZES}
+                    width={asset.width ?? undefined}
+                    height={asset.height ?? undefined}
+                    alt=""
+                    loading="lazy"
+                  />
+                </picture>
+              </a>
+            ))}
+          </div>
+
+          {
+            // G-12, mockup 10 — structure and vocabulary match, with two
+            // deliberate gaps: no "Teilen" (share) act, a feature no story
+            // has built, and no name/avatar on a comment (`.cmt b`/`.cmt
+            // img` in the mockup) — a gallery guest carries no account and
+            // this app collects no name for one (favorites.ts's own doc
+            // comment), so every comment renders as "Gast" rather than
+            // inventing an identity nothing captures. Rendered once,
+            // server-side, from the same asset list the grid above already
+            // has — lightbox.ts only ever shows or hides it and swaps which
+            // asset the stage points at, and fetches/posts comments per
+            // asset as it opens.
+          }
+          <div class="lb" id="lightbox">
+            <header class="lbtop recede">
+              <button type="button" class="txtbtn" data-lb-close>
+                <svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
+                Zurück zum Raster
+              </button>
+              <div class="lbpos" data-lb-pos></div>
+              <button type="button" class="txtbtn" data-lb-close>
+                Schließen
+                <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg>
+              </button>
+            </header>
+
+            <div class="lbsplit">
+              <div class="stage">
+                <button type="button" class="arrow recede" data-lb-prev title="Vorheriges Bild">
+                  <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" /></svg>
+                </button>
+
+                <img data-lb-img alt="" />
+
+                <button type="button" class="arrow recede" data-lb-next title="Nächstes Bild">
+                  <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></svg>
+                </button>
+              </div>
+
+              <aside class="lbrail">
+                <div class="acts">
+                  <button type="button" class="act" data-lb-favorite title="Favorit umschalten">
+                    <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
+                    <span data-lb-favorite-label>Favorit</span>
+                  </button>
+                  <span class="act">
+                    <svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" /></svg>
+                    <span data-lb-comment-count>0 Kommentare</span>
+                  </span>
+                </div>
+
+                <div class="cmts" data-lb-comments></div>
+
+                <div class="lbwrite">
+                  <label class="field">
+                    <input type="text" data-lb-comment-input placeholder="Kommentar schreiben …" />
+                  </label>
+                </div>
+              </aside>
+            </div>
+
+            <div class="strip recede">
+              {gallery.version.assets.map((asset, i) => (
+                <a href="#" data-lb-thumb data-index={i}>
+                  <img
+                    src={imageUrl(apiBase, gallery.version.public_id, asset.key, 400, 'jpeg')}
+                    alt=""
+                    loading="lazy"
+                  />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <style>
+            /* Mockup 10 is a standalone page — .lb fills it by definition. Here
+               it sits over the grid instead, so this alone turns it into an
+               overlay; everything inside stays the mockup's own CSS untouched. */
+            #lightbox { display: none; position: fixed; inset: 0; z-index: 50; background: var(--bg); }
+            #lightbox.open { display: flex; }
+          </style>
+
+          {
+            // Two script tags on purpose: `define:vars` forces `is:inline`
+            // the moment a script carries an attribute (Astro's own hint on
+            // this line), which turns off Vite's processing — an `import`
+            // in that script never resolves. So the server data crosses
+            // here, inline and unprocessed, and the module below reads it
+            // off `window` instead of being handed it directly.
+          }
+          <script is:inline define:vars={{
+            assets: gallery.version.assets,
+            apiBase,
+            versionPublicId: gallery.version.public_id,
+            galleryTitle: gallery.title,
+          }}>
+            window.__lightboxData = { assets, apiBase, versionPublicId, galleryTitle }
+          </script>
+          <script>
+            import { initLightbox } from '../../lib/lightbox'
+            import type { LightboxData } from '../../lib/lightbox'
+
+            initLightbox((window as unknown as { __lightboxData: LightboxData }).__lightboxData)
+          </script>
+        </div>
+      ) : (
+        <div class="gwrap">
+          <p class="gsub">Diese Galerie ist nicht erreichbar.</p>
+        </div>
+      )
+    }
+  </body>
+</html>
