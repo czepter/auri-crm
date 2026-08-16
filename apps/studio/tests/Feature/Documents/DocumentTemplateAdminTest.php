@@ -2,6 +2,8 @@
 
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
+use App\Documents\Support\StarterBlockSerializer;
+use App\Documents\Support\StarterTemplateCatalog;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -205,4 +207,44 @@ it('sanitises block html on the way into storage, not merely on the way out', fu
         ->assertRedirect('/dokumentvorlagen');
 
     expect(DocumentTemplate::query()->firstOrFail()->blocks['blocks'][0]['data']['text'])->toBe('Hallo ');
+});
+
+// --- T-16: starters on the create screen --------------------------------
+
+it('opens the create screen on the catalog rather than on an empty canvas', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get('/dokumentvorlagen/neu')
+        ->assertOk()
+        ->assertInertia(function ($page) {
+            $starters = $page->toArray()['props']['starters'];
+
+            expect(array_keys($starters))->toContain('contract', 'quote', 'invoice', 'mail')
+                ->and($starters['contract'])->not->toBeEmpty()
+                // Blocks travel with the entry, so choosing one is a local
+                // edit rather than a second request.
+                ->and($starters['contract'][0])->toHaveKeys(['key', 'name', 'description', 'shootKind', 'blocks']);
+        });
+});
+
+it('creates a tenant-owned first version whose blocks are the starter\'s own', function () {
+    $starter = StarterTemplateCatalog::find('contract-werkvertrag');
+    $body = StarterBlockSerializer::toHtml($starter['blocks']);
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post('/dokumentvorlagen', [
+            'name' => $starter['name'],
+            'type' => $starter['type'],
+            'body' => $body,
+            'blocks' => $starter['blocks'],
+        ])
+        ->assertRedirect();
+
+    $template = DocumentTemplate::sole();
+
+    expect($template->version)->toBe(1)
+        ->and($template->is_current)->toBeTrue()
+        ->and($template->blocks['blocks'][0]['data']['text'])->toBe('Fotovertrag')
+        // Nothing records which starter it came from: a later release editing
+        // the catalog must not reach a template the studio has made its own.
+        ->and($template->getAttributes())->not->toHaveKey('starter_key');
 });

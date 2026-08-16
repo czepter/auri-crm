@@ -16,10 +16,42 @@ const props = defineProps<{
   shootKinds: { value: string; label: string }[]
   palettes: Record<string, PaletteEntry[]>
   mergeFields: { path: string; sample: string }[]
+  starters: Record<string, Starter[]>
 }>()
+
+type Starter = {
+  key: string
+  name: string
+  description: string
+  shootKind: string | null
+  blocks: EditorDocument
+}
 
 const doc = ref<EditorDocument>({ blocks: [] })
 const form = useForm({ name: '', body: '', blocks: doc.value, type: 'contract', shoot_kind: '' })
+
+// T-16: the screen opens on a choice rather than on an empty canvas. A
+// starter is a starting point and not a link — choosing one copies its blocks
+// into an ordinary unsaved draft, and nothing afterwards remembers which one
+// it came from.
+const chosen = ref<string | null>(null)
+const starters = computed(() => props.starters[form.type] ?? [])
+
+function choose(starter: Starter) {
+  chosen.value = starter.key
+  // Deep copy: the prop is the catalog's own document, and editing the draft
+  // must not edit what the other cards would hand out.
+  doc.value = JSON.parse(JSON.stringify(starter.blocks))
+  form.name = starter.name
+  form.shoot_kind = starter.shootKind ?? ''
+}
+
+function chooseBlank() {
+  chosen.value = 'blank'
+  doc.value = { blocks: [] }
+  form.name = ''
+  form.shoot_kind = ''
+}
 
 const palette = computed(() => props.palettes[form.type] ?? [])
 const samples = computed(() =>
@@ -41,7 +73,14 @@ function submit() {
         <h1>{{ $t('documentTemplates.createTitle') }}</h1>
       </div>
       <Button as="a" href="/dokumentvorlagen" variant="ghost">{{ $t('common.cancel') }}</Button>
-      <Button type="button" :disabled="form.processing" @click="submit">{{ $t('common.save') }}</Button>
+      <!-- Nothing to save until a starting point is chosen, and a back that
+           returns to the choice rather than leaving the screen. -->
+      <Button v-if="chosen !== null" type="button" variant="ghost" @click="chosen = null">
+        {{ $t('documentTemplates.starterBack') }}
+      </Button>
+      <Button v-if="chosen !== null" type="button" :disabled="form.processing" @click="submit">
+        {{ $t('common.save') }}
+      </Button>
     </div>
     <p v-if="form.errors.blocks" class="err">{{ form.errors.blocks }}</p>
     <p v-if="form.errors.body" class="err">{{ form.errors.body }}</p>
@@ -57,7 +96,7 @@ function submit() {
         </Select>
         <p v-if="form.errors.type" class="err">{{ form.errors.type }}</p>
       </div>
-      <div class="fld">
+      <div v-if="chosen !== null" class="fld">
         <Label for="shoot_kind">{{ $t('documentTemplates.shootKind') }}</Label>
         <Select :model-value="form.shoot_kind" @update:model-value="(value) => (form.shoot_kind = String(value))">
           <SelectTrigger id="shoot_kind"><SelectValue /></SelectTrigger>
@@ -67,14 +106,34 @@ function submit() {
           </SelectContent>
         </Select>
       </div>
-      <div class="fld">
+      <div v-if="chosen !== null" class="fld">
         <Label for="name">{{ $t('documentTemplates.name') }}</Label>
         <Input id="name" v-model="form.name" type="text" required />
         <p v-if="form.errors.name" class="err">{{ form.errors.name }}</p>
       </div>
     </div>
 
-    <div class="doc-split">
+    <!-- Leere Vorlage sits among the starters as an equal option rather than
+         as an escape hatch below them. -->
+    <section v-if="chosen === null" class="starters">
+      <div class="cardhead"><span class="kick">{{ $t('documentTemplates.starterTitle') }}</span></div>
+      <div class="startergrid">
+        <button
+          v-for="starter in starters" :key="starter.key"
+          type="button" class="startercard"
+          @click="choose(starter)"
+        >
+          <b>{{ starter.name }}</b>
+          <span>{{ starter.description }}</span>
+        </button>
+        <button type="button" class="startercard" @click="chooseBlank">
+          <b>{{ $t('documentTemplates.starterBlank') }}</b>
+          <span>{{ $t('documentTemplates.starterBlankHint') }}</span>
+        </button>
+      </div>
+    </section>
+
+    <div v-else class="doc-split">
       <section class="doc-pane">
         <div class="doc-panehead">
           <span class="kick">{{ $t('documentTemplates.body') }}</span>
@@ -93,3 +152,40 @@ function submit() {
     </div>
   </AdminLayout>
 </template>
+
+<style scoped>
+/* Cards in the mockup's own vocabulary — the same border, radius and hover
+   the rest of the admin surface uses, so nothing here invents a component. */
+.startergrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--s3);
+  margin-top: var(--s3);
+}
+
+.startercard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  padding: var(--s3);
+  border: 1px solid var(--line);
+  border-radius: var(--r2, 8px);
+  background: var(--surface, #fff);
+  cursor: pointer;
+  font: inherit;
+}
+
+.startercard:hover {
+  border-color: var(--accent, #b45309);
+}
+
+.startercard b {
+  font: 600 14px/1.3 var(--font);
+}
+
+.startercard span {
+  font: 400 13px/1.5 var(--font);
+  color: var(--muted);
+}
+</style>

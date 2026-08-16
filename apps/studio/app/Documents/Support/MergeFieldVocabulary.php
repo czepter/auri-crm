@@ -29,6 +29,12 @@ class MergeFieldVocabulary
         'contact.postcode' => '22765',
         'contact.city' => 'Hamburg',
         'job.bookedAt' => '14.06.2026',
+        // T-17's starters need the occasion's own date and the two figures a
+        // quote states about itself. Resolved from the project's primary
+        // shoot and its latest sent quote — see DocumentMergeDataBuilder.
+        'shoot.date' => '14.06.2026',
+        'quote.validUntil' => '30.09.2026',
+        'quote.vatNote' => 'Alle Preise verstehen sich zzgl. 19 % Umsatzsteuer.',
         'studio.name' => 'Atelier Nordlicht Fotografie GmbH',
         'studio.legalForm' => 'GmbH',
         'studio.street' => 'Beispielstraße 12',

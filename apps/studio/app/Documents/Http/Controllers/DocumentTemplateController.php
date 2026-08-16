@@ -12,6 +12,7 @@ use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Documents\Support\SafeHtml;
+use App\Documents\Support\StarterTemplateCatalog;
 use App\Http\Controllers\Controller;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
@@ -64,6 +65,12 @@ class DocumentTemplateController extends Controller
                 ->mapWithKeys(fn (DocumentTemplateType $type) => [$type->value => DocumentBlockCatalog::for($type)])
                 ->all(),
             'mergeFields' => $this->mergeFieldOptions(),
+            // T-16: keyed by type for the same reason the palettes above are —
+            // the type select changes what is offered without a round trip.
+            // Blocks travel with the entry, so choosing one is a local edit to
+            // an unsaved draft rather than a request for a document that does
+            // not exist yet.
+            'starters' => StarterTemplateCatalog::byType(),
         ]);
     }
 
