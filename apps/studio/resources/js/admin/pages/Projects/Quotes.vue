@@ -4,6 +4,7 @@ import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectHeader from '@/admin/components/ProjectHeader.vue'
 import QuoteItemsEditor, { type QuoteItemRow } from '@/admin/components/QuoteItemsEditor.vue'
+import ValidUntilField from '@/admin/components/ValidUntilField.vue'
 import { basisPointsToPercent, centsToEuros, eurosToCents, formatEuros, percentToBasisPoints } from '@/admin/lib/money'
 import { NONE, fromOption, toOption } from '@/lib/select'
 import { Button } from '@/ui/button'
@@ -126,10 +127,7 @@ function chipClass(status: string): string {
 
           <DialogBody>
             <form id="quote-create-form" class="fgrid" @submit.prevent="create">
-              <div class="fld">
-                <Label for="valid_until">{{ $t('quotes.validUntil') }}</Label>
-                <Input id="valid_until" v-model="createForm.valid_until" type="date" />
-              </div>
+              <ValidUntilField id="valid_until" v-model="createForm.valid_until" />
               <div class="fld">
                 <Label for="package">{{ $t('quotes.fromPackage') }}</Label>
                 <Select
@@ -234,10 +232,7 @@ function chipClass(status: string): string {
         </div>
 
         <form class="fgrid" @submit.prevent="save(quote.id)">
-          <div class="fld">
-            <Label :for="`quote-valid-${quote.id}`">{{ $t('quotes.validUntil') }}</Label>
-            <Input :id="`quote-valid-${quote.id}`" v-model="editForms[quote.id].valid_until" type="date" />
-          </div>
+          <ValidUntilField :id="`quote-valid-${quote.id}`" v-model="editForms[quote.id].valid_until" />
           <div class="fld">
             <Label :for="`quote-discount-type-${quote.id}`">{{ $t('quotes.discountType') }}</Label>
             <Select

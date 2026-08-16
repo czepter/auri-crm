@@ -356,6 +356,8 @@
     "title": "Angebot",
     "create": "Neues Angebot",
     "validUntil": "Gültig bis",
+    "presetWeeks": "{count} Wo",
+    "presetMonths": "{count} Mon",
     "fromPackage": "Aus Paket",
     "blank": "Leeres Angebot",
     "included": "Enthaltene Leistung",
