@@ -34,6 +34,9 @@ return [
     'details_changed_body' => "Wir haben unsere Angaben geändert.\n\nWunschtermin: :date\nOrt: :venue\n\n:text",
     'date_open' => 'noch offen',
 
+    // P-09 (#228): a preview reads and nothing else — see EnsureAudience.
+    'preview_is_read_only' => 'In der Vorschau sind keine Änderungen möglich.',
+
     // P-05 (#224): the confirmation link's own dead end. Someone else may
     // have claimed the address between the request and the click.
     'email_taken' => 'Diese Adresse wird inzwischen von einem anderen Zugang benutzt.',

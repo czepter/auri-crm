@@ -37,13 +37,13 @@ class MagicLinkController extends Controller
 
     public function consume(Request $request, string $token, ConsumeClientAccess $consume): RedirectResponse
     {
-        $contact = $consume($token, $request->ip());
+        $access = $consume($token, $request->ip());
 
-        if ($contact === null) {
+        if ($access === null) {
             return redirect('/anmelden')->with('status', __('portal.link_dead'));
         }
 
-        Auth::guard('portal')->login($contact);
+        Auth::guard('portal')->login($access->contact);
 
         // A fresh session id, so a token that was ever visible in a URL bar,
         // a proxy log or a referrer cannot be replayed against the session it
@@ -54,7 +54,20 @@ class MagicLinkController extends Controller
         // against — see EnsureAudience::sessionWasEnded().
         $request->session()->put('portal_session_started_at', now()->timestamp);
 
+        // P-09 (#228): a studio member looking at what a client sees. Marked
+        // on the session, refused every write by EnsureAudience, and worn as
+        // a banner on every screen so nobody forgets which one they are in.
+        if ($access->isPreview()) {
+            $request->session()->put('portal_preview', true);
+        }
+
         return redirect('/');
+    }
+
+    /** P-09 (#228): ends a preview, touching none of the client's own sessions. */
+    public function leavePreview(Request $request): RedirectResponse
+    {
+        return $this->destroy($request);
     }
 
     public function destroy(Request $request): RedirectResponse

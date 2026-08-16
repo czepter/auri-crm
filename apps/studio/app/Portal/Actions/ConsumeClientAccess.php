@@ -2,7 +2,6 @@
 
 namespace App\Portal\Actions;
 
-use App\Crm\Models\Contact;
 use App\Portal\Models\ClientAccess;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +16,12 @@ use Illuminate\Support\Facades\DB;
  */
 class ConsumeClientAccess
 {
-    public function __invoke(string $token, ?string $ip = null): ?Contact
+    /**
+     * Returns the spent row rather than the Contact alone: P-09's preview
+     * rides on the same link (ClientAccess::isPreview()), and the caller has
+     * to be able to tell the two apart before it opens a session.
+     */
+    public function __invoke(string $token, ?string $ip = null): ?ClientAccess
     {
         return DB::transaction(function () use ($token, $ip) {
             $access = ClientAccess::forToken($token);
@@ -38,12 +42,16 @@ class ConsumeClientAccess
             }
 
             AuditLogger::record(
-                event: 'portal.link_consumed',
-                context: ['contact' => $access->contact->public_id, 'ip' => $ip],
+                event: $access->isPreview() ? 'portal.preview_entered' : 'portal.link_consumed',
+                context: [
+                    'contact' => $access->contact->public_id,
+                    'ip' => $ip,
+                    ...$access->isPreview() ? ['staff' => $access->previewBy?->public_id] : [],
+                ],
                 subject: $access->public_id,
             );
 
-            return $access->contact;
+            return $access;
         });
     }
 }

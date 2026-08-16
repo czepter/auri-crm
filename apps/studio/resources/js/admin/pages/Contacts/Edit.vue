@@ -21,6 +21,7 @@ const props = defineProps<{
   dsgvoRequests: { id: string; kind: string; requestedAt: string }[]
   portalDefaults: Record<string, string | boolean | null>
   portalOverrides: Record<string, string | boolean>
+  canPreviewPortal: boolean
 }>()
 
 const form = useForm({
@@ -90,6 +91,10 @@ function defaultLabel(key: string) {
   }
 
   return key === 'messaging_mode' ? t(`portalSettings.messagingMode.${value}`) : String(value ?? '—')
+}
+
+function previewPortal() {
+  router.post(`/kontakte/${props.contact.id}/portal-vorschau`)
 }
 
 function eraseDsgvoData() {
@@ -198,6 +203,14 @@ function eraseDsgvoData() {
            from — "Standard (an)" is a different statement from "An". -->
       <div class="card static" style="margin-top: var(--s5)">
         <div class="cardhead"><span class="kick">{{ $t('contacts.portalSection') }}</span></div>
+
+        <!-- P-09 (#228): mints a single-use, expiring link and follows it.
+             The session it opens can only read — see EnsureAudience. -->
+        <p v-if="canPreviewPortal" style="margin-bottom: var(--s4)">
+          <Button variant="outline" type="button" @click="previewPortal()">
+            {{ $t('contacts.portalPreview') }}
+          </Button>
+        </p>
 
         <form @submit.prevent="savePortal">
           <div v-for="key in SWITCHES" :key="key" class="grp"><div class="fld">

@@ -17,6 +17,11 @@ type Branding = { displayName: string | null; logoUrl: string | null; accentColo
 
 const branding = computed(() => usePage().props.portalBranding as Branding | undefined)
 
+// P-09 (#228): impersonation nobody can forget they are in. Every write is
+// refused anyway (EnsureAudience), but a studio owner should not have to
+// discover that by being refused.
+const preview = computed(() => usePage().props.portalPreview === true)
+
 // Every portal screen mounts this component once, so applying the accent
 // colour here — rather than in each page — is enough to cover the whole
 // surface.
@@ -33,6 +38,11 @@ watch(branding, applyAccent)
 </script>
 
 <template>
+  <div v-if="preview" class="previewbar">
+    <span>{{ $t('portal.previewBanner') }}</span>
+    <a href="/vorschau-beenden">{{ $t('portal.previewLeave') }}</a>
+  </div>
+
   <header class="phead">
     <div class="pbar">
       <span class="pmark">

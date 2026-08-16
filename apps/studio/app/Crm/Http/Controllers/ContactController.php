@@ -6,7 +6,9 @@ use App\Crm\Data\ContactSuggestionData;
 use App\Crm\Models\Contact;
 use App\Engagement\Data\MessageData;
 use App\Engagement\Models\Message;
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
+use App\Portal\Models\ClientAccess;
 use App\Portal\Models\DsgvoRequest;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
@@ -80,6 +82,11 @@ class ContactController extends Controller
                 'welcome' => $settings->portalWelcomeText(),
             ],
             'portalOverrides' => (object) ($contact->portal_overrides ?? []),
+            // P-09 (#228): may this person open "Vorschau als Kunde"? The
+            // link itself is minted on POST, not rendered into the page — a
+            // live credential in a prop is a live credential in a browser
+            // history and a screenshot.
+            'canPreviewPortal' => $user?->role->allows(Capability::ManageSettings) ?? false,
             // P-05 (#224): what the client asked for from inside the portal.
             // A request nobody at the studio ever sees is worse than no
             // button at all, and the deadline is legal rather than polite.
@@ -132,6 +139,45 @@ class ContactController extends Controller
      * Hiding a project from the portal is a separate action on
      * ProjectController, on purpose.
      */
+    /**
+     * P-09 (#228): "Vorschau als Kunde", on the issue's own terms —
+     * expiring, single use and in the audit log, never a silent guard login.
+     *
+     * A magic link the studio mints for itself rather than a second
+     * mechanism beside the one this app already has: ClientAccess brings the
+     * expiry, the single use, the hashed token and the revocation check
+     * unchanged, and preview_by_id is what makes the session it opens
+     * read-only (EnsureAudience) and what the audit row names.
+     *
+     * The admin process cannot name a route it does not load, so the URL is
+     * composed against config('portal.url') — the two surfaces are separate
+     * hosts.
+     */
+    public function previewPortal(Contact $contact): RedirectResponse
+    {
+        abort_unless(auth('staff')->user()?->role->allows(Capability::ManageSettings) ?? false, 403);
+        abort_if($contact->portal_access_revoked_at !== null, 404);
+
+        $token = bin2hex(random_bytes(32));
+
+        ClientAccess::create([
+            'contact_id' => $contact->id,
+            'token_hash' => ClientAccess::hash($token),
+            'expires_at' => now()->addMinutes(ClientAccess::VALID_FOR_MINUTES),
+            'requested_ip' => request()->ip(),
+            'preview_by_id' => auth('staff')->id(),
+        ]);
+
+        AuditLogger::record(
+            event: 'portal.preview_issued',
+            actor: auth('staff')->user(),
+            context: ['contact' => $contact->public_id],
+            subject: $contact->public_id,
+        );
+
+        return redirect()->away(config('portal.url')."/zugang/{$token}");
+    }
+
     /**
      * P-09 (#228). Writes only the keys that actually depart from the
      * studio's default; anything the form sends as "Standard" is REMOVED

@@ -138,6 +138,13 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/kontakte/{contact}/portal', [ContactController::class, 'updatePortalOverrides'])
             ->name('contacts.portal.update');
 
+        // P-09 (#228): mints a single-use, expiring preview link and sends
+        // the staff member to it. POST rather than a link in the page: a live
+        // credential rendered into a prop is one in a browser history and in
+        // a screenshot.
+        Route::post('/kontakte/{contact}/portal-vorschau', [ContactController::class, 'previewPortal'])
+            ->name('contacts.portal.preview');
+
         Route::post('/kontakte/{contact}/portal-zugang/widerruf', [ContactController::class, 'revokePortalAccess'])
             ->name('contacts.portal-access.revoke');
 
@@ -341,6 +348,12 @@ Route::middleware('audience:staff')->group(function () {
         // E-03: recording the answer to one question — kept off /frageboegen
         // itself, since answering a field never touches the field set update()
         // wholesale-replaces above.
+        // P-03 (#222). Sharing is what makes a questionnaire fillable in the
+        // portal; without it the client's screen 404s, same as an internal
+        // checklist on the same table should.
+        Route::post('/frageboegen/{formInstance}/freigeben', [FormInstanceController::class, 'share'])
+            ->name('form-instances.share');
+
         Route::patch('/frageboegen-felder/{formInstanceField}/antwort', [FormInstanceController::class, 'answer'])
             ->name('form-instance-fields.answer');
 

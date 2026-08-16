@@ -5,6 +5,7 @@ namespace App\Portal\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\Contact;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,7 +29,7 @@ class ClientAccess extends Model
      */
     public const VALID_FOR_MINUTES = 15;
 
-    protected $fillable = ['contact_id', 'token_hash', 'expires_at', 'requested_ip'];
+    protected $fillable = ['contact_id', 'token_hash', 'expires_at', 'requested_ip', 'preview_by_id'];
 
     protected $hidden = ['token_hash'];
 
@@ -43,6 +44,21 @@ class ClientAccess extends Model
     public function contact(): BelongsTo
     {
         return $this->belongsTo(Contact::class);
+    }
+
+    /**
+     * P-09 (#228): set when a studio member minted this link to look at what
+     * a client sees. The session it opens is read-only (EnsureAudience) and
+     * the audit trail names them.
+     */
+    public function previewBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'preview_by_id');
+    }
+
+    public function isPreview(): bool
+    {
+        return $this->preview_by_id !== null;
     }
 
     public function isLive(): bool

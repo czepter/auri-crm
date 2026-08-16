@@ -144,7 +144,7 @@ it('lets one link be spent only once even when raced', function () {
     $first = app(ConsumeClientAccess::class)($token);
     $second = app(ConsumeClientAccess::class)($token);
 
-    expect($first?->id)->toBe($contact->id)
+    expect($first?->contact_id)->toBe($contact->id)
         ->and($second)->toBeNull();
 });
 

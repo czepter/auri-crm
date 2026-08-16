@@ -36,6 +36,10 @@ class HandleInertiaRequests extends Middleware
                     ? []
                     : array_map(fn ($capability) => $capability->value, $user->role->capabilities()),
             ],
+            // P-09 (#228): whether this is a studio member looking at what a
+            // client sees. Every portal screen wears the banner, so it is
+            // shared rather than passed per page.
+            'portalPreview' => $request->session()->get('portal_preview') === true,
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
                 // P-06 (#225): a freshly set gallery secret, readable exactly
