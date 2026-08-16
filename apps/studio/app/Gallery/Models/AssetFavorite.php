@@ -12,15 +12,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * One guest's favorite mark on one asset within one GalleryVersion (G-09).
- *
- * guest_identifier is the portal session's own id for this visitor, minted on
- * first use (GalleryEngagementController). It carries no account: a signed-in
- * client's marks are a GalleryList owned by their Contact instead (P-06,
- * #225), because a value that dies with a cookie cannot carry "Eure Auswahl"
- * across two devices.
- *
- * The (tenant, version, key, guest) unique index is what keeps the toggle
- * race-safe without it having to serialize the request itself.
+ * guest_identifier carries no account behind it — see AssetFavoriteController's
+ * own doc comment for what mints it and why. The (tenant, version, key, guest)
+ * unique index is what keeps AssetFavoriteController::toggle() race-safe
+ * without it having to serialize the request itself.
  */
 class AssetFavorite extends Model
 {

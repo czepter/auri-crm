@@ -3,7 +3,7 @@
 # variables; nothing here is meant to run on a laptop.
 #
 # Nothing is built here. .github/workflows/release-image.yml builds
-# docker/app/Dockerfile once per commit and pushes
+# docker/app/Dockerfile and docker/gallery/Dockerfile once per commit and pushes
 # both to GHCR, so a deploy is a pull — seven services off two images, on a
 # server that would otherwise be compiling PHP extensions and two JavaScript
 # bundles while the old containers are still answering. `:latest` is whatever
@@ -145,6 +145,36 @@ services:
         condition: service_completed_successfully
       rustfs-init:
         condition: service_completed_successfully
+
+  # The guest-facing Astro SSR gallery (apps/gallery). Its own image and its own
+  # domain because it shares nothing with the PHP surfaces: it renders
+  # /g/:galleryId server-side and reaches Laravel only over the api surface,
+  # internally — a guest's browser never talks to the api host directly, and a
+  # gallery page cannot be prerendered because which version is current changes
+  # the moment a studio owner republishes (see apps/gallery/astro.config.mjs).
+  #
+  # X-Request-Id crosses from here into that api call and back out on the
+  # response, so an SSR render and the Laravel request it triggered are one
+  # incident under one id (G-13, src/middleware.ts).
+  gallery:
+    image: ghcr.io/czepter/auri-crm/gallery:latest
+    restart: unless-stopped
+    environment:
+      SERVICE_FQDN_GALLERY_4321:
+      API_URL: http://api:8080
+      # Empty leaves the SSR process fully inert — no outbound calls at all —
+      # which is the wanted default until a GlitchTip project exists (F-11).
+      SENTRY_DSN: ${GALLERY_SENTRY_DSN}
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # Horizon rather than `queue:work`: one supervisor per workload (default,
+  # mail, render — config/horizon.php), so a stuck Gotenberg render cannot
+  # starve the queue a signed contract is waiting on. See docs/queue.md.
+  # APP_SURFACE is admin because bootstrap/providers.php only registers
+  # Horizon's provider there. No domain — the dashboard is served by the admin
+  # container, this one only works jobs.
   horizon:
     image: ghcr.io/czepter/auri-crm/studio:latest
     restart: unless-stopped

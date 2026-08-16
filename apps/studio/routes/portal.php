@@ -2,7 +2,6 @@
 
 use App\Gallery\Http\Controllers\DownloadZipPartController;
 use App\Gallery\Http\Controllers\GalleryDownloadController;
-use App\Gallery\Http\Controllers\GalleryEngagementController;
 use App\Gallery\Http\Controllers\GalleryImageController;
 use App\Gallery\Http\Controllers\GalleryPasswordController;
 use App\Portal\Http\Controllers\AccountController;
@@ -16,7 +15,6 @@ use App\Portal\Http\Controllers\MailboxController;
 use App\Portal\Http\Controllers\PaymentCheckoutController;
 use App\Portal\Http\Controllers\PaymentController;
 use App\Portal\Http\Controllers\ProjectController;
-use App\Portal\Http\Controllers\QuestionnaireController;
 use App\Portal\Http\Controllers\QuoteController;
 use App\Portal\Http\Controllers\UnsubscribeController;
 use Illuminate\Support\Facades\Route;
@@ -46,11 +44,6 @@ Route::middleware('portal.maintenance')->group(function () {
     Route::middleware('audience:portal')->group(function () {
         Route::post('/abmelden', [MagicLinkController::class, 'destroy'])->name('portal.logout');
 
-        // P-09 (#228): ends a preview. A GET because a preview session may
-        // not POST — which is the whole point of it.
-        Route::get('/vorschau-beenden', [MagicLinkController::class, 'leavePreview'])
-            ->name('portal.preview.leave');
-
         // The switcher. Zero visible projects is an empty state here rather
         // than an error, and exactly one skips the picker by redirecting
         // straight to it — see HomeController.
@@ -71,17 +64,6 @@ Route::middleware('portal.maintenance')->group(function () {
         // line it writes into the conversation.
         Route::patch('/projekte/{project}/angaben', [ProjectController::class, 'update'])
             ->name('portal.projects.details.update');
-
-        // P-03 (#222): the questionnaire the inquiry screen has always linked
-        // to and nobody could fill in — E-02/E-03 built the whole family
-        // admin-only. Only one the studio actually shared
-        // (form_instances.shared_at), on a booking this contact is on; a 404
-        // otherwise, because a studio's internal checklist lives on the same
-        // table.
-        Route::get('/projekte/{project}/fragebogen/{questionnaire}', [QuestionnaireController::class, 'show'])
-            ->name('portal.questionnaires.show');
-        Route::patch('/projekte/{project}/fragebogen/{questionnaire}', [QuestionnaireController::class, 'update'])
-            ->name('portal.questionnaires.update');
 
         // Mockup 07. Reads only the artifact M-01's queued job already
         // stored — see App\Portal\Http\Controllers\ContractController.
@@ -230,18 +212,6 @@ Route::prefix('galerien/{gallery}')->group(function () {
     // GalleryPasswordController's own doc comment on why.
     Route::get('/', [GalleryPasswordController::class, 'show'])->name('gallery.show');
     Route::post('/passwort', [GalleryPasswordController::class, 'store'])->name('gallery.password.store');
-
-    // G-09's heart and G-12's comments, moved off the api surface with the
-    // grid they belong to (P-08, #227). Behind the view gate: somebody who
-    // has not got past the front door has nothing to favourite.
-    Route::middleware('gallery.gate:view')->group(function () {
-        Route::get('/beteiligung', [GalleryEngagementController::class, 'index'])
-            ->name('gallery.engagement.index');
-        Route::post('/favorit', [GalleryEngagementController::class, 'toggleFavorite'])
-            ->name('gallery.favorite.toggle');
-        Route::post('/kommentar', [GalleryEngagementController::class, 'storeComment'])
-            ->name('gallery.comment.store');
-    });
 
     // The download gates (mockups 11, 12) — reachable only once the view
     // gate above is satisfied, since "download" is a link found inside an

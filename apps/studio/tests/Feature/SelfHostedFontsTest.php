@@ -10,6 +10,7 @@ use Symfony\Component\Finder\Finder;
 
 $roots = [
     __DIR__.'/../../resources/css',
+    __DIR__.'/../../../gallery/src/styles',
     __DIR__.'/../../../../mockups',
 ];
 
@@ -31,6 +32,7 @@ it('never loads a font from a third party', function () use ($roots) {
 it('ships the woff2 files every @font-face points at', function () {
     $sheets = [
         __DIR__.'/../../resources/css/fonts.css' => __DIR__.'/../../public/fonts',
+        __DIR__.'/../../../gallery/src/styles/tokens.css' => __DIR__.'/../../../gallery/public/fonts',
         __DIR__.'/../../../../mockups/_shared/fonts.css' => __DIR__.'/../../../../mockups/_shared/fonts',
     ];
 

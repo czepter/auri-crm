@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { router, useForm, usePage } from '@inertiajs/vue3'
-import GalleryLightbox from '@/portal/components/GalleryLightbox.vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
@@ -21,9 +20,6 @@ const props = defineProps<{
 
 // One open menu at a time, keyed by asset.
 const menu = ref<string | null>(null)
-
-// The lightbox, by index. Null is closed.
-const openAt = ref<number | null>(null)
 
 function onList(list: List, key: string) {
   return list.keys.includes(key)
@@ -127,7 +123,7 @@ function expiry(iso: string) {
       </div>
 
       <main v-if="assets?.length" id="raster" class="gwall">
-        <span v-for="(asset, index) in assets" :key="asset.key" class="tile" @click="openAt = index">
+        <span v-for="asset in assets" :key="asset.key" class="tile">
           <!-- The list menu replaces the single heart as soon as a client is
                signed in; a guest never sees it. -->
           <button
@@ -135,12 +131,12 @@ function expiry(iso: string) {
             class="listbtn"
             type="button"
             :aria-expanded="menu === asset.key"
-            @click.stop="menu = menu === asset.key ? null : asset.key"
+            @click="menu = menu === asset.key ? null : asset.key"
           >
             <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
           </button>
 
-          <span v-if="menu === asset.key" class="lists" @click.stop>
+          <span v-if="menu === asset.key" class="lists">
             <label v-for="list in lists" :key="list.id">
               <input type="checkbox" :checked="onList(list, asset.key)" @change="toggle(list, asset.key)" />
               {{ list.name ?? $t('gallery.heart') }}
@@ -167,14 +163,6 @@ function expiry(iso: string) {
       <!-- Unlocked over a gallery nobody has published yet: a real state,
            and the studio's link is already out there, so it says so. -->
       <p v-else class="hint" style="padding: var(--s7) var(--s5)">{{ $t('gallery.notPublished') }}</p>
-
-      <GalleryLightbox
-        v-model="openAt"
-        :gallery-id="gallery.id"
-        :title="gallery.title"
-        :assets="assets ?? []"
-        :guest-favourites="!lists?.length"
-      />
 
       <footer class="gfoot">
         <span>{{ studioName }}</span>

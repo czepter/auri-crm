@@ -57,14 +57,11 @@ const SCREENS = [
 ]
 
 function adminSidebar (active) {
-  // NAV hrefs are written relative to admin/; the Portal-Einstellungen screens
-  // live in redesign/ and would otherwise link into their own folder.
-  const base = location.pathname.includes('/admin/') ? '' : '../admin/'
   const items = NAV.map(i => {
     if (i.lab) return `<div class="navlab">${i.lab}</div>`
     const on = i.key === active ? ' on' : ''
     const ct = i.count ? `<span class="ct">${i.count}</span>` : ''
-    const href = i.href ? base + i.href : '#'
+    const href = i.href || '#'
     return `<a class="nav${on}" href="${href}"><svg viewBox="0 0 24 24">${ICON[i.key]}</svg>${i.label} ${ct}</a>`
   }).join('')
 

@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * One guest's comment on one asset within one GalleryVersion (G-12). Same
  * guest-identity shape as AssetFavorite — guest_identifier carries no
- * account behind it — see AssetFavorite's own doc comment for what mints it.
+ * account behind it, see AssetCommentController's own doc comment.
  */
 class AssetComment extends Model
 {

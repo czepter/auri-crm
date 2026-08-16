@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
-beforeEach(fn () => useSurface(Surface::PORTAL));
+beforeEach(fn () => useSurface(Surface::API));
 
 /** A tiny real image, so imagecreatefromstring() has something to decode. */
 function fakeOriginalBytes(): string
@@ -35,14 +35,14 @@ function publishedVersionWithAsset(string $key = 'galleries/g1/a.jpg')
 it('rejects a width outside the allowed set', function () {
     $version = publishedVersionWithAsset();
 
-    $this->get("/galerie-bilder/{$version->public_id}/galleries/g1/a.jpg?w=999&fmt=webp")
+    $this->get("/api/gallery-versions/{$version->public_id}/images/galleries/g1/a.jpg?w=999&fmt=webp")
         ->assertStatus(422);
 });
 
 it('rejects a format outside the allowed set', function () {
     $version = publishedVersionWithAsset();
 
-    $this->get("/galerie-bilder/{$version->public_id}/galleries/g1/a.jpg?w=400&fmt=gif")
+    $this->get("/api/gallery-versions/{$version->public_id}/images/galleries/g1/a.jpg?w=400&fmt=gif")
         ->assertStatus(422);
 });
 
@@ -55,14 +55,14 @@ it('404s a key that is not in this version\'s own assets, even if it exists on t
     ]]);
     $version = $gallery->publish();
 
-    $this->get("/galerie-bilder/{$version->public_id}/galleries/g1/not-listed.jpg?w=400&fmt=webp")
+    $this->get("/api/gallery-versions/{$version->public_id}/images/galleries/g1/not-listed.jpg?w=400&fmt=webp")
         ->assertNotFound();
 });
 
 it('streams a resized webp variant with an immutable cache header', function () {
     $version = publishedVersionWithAsset();
 
-    $response = $this->get("/galerie-bilder/{$version->public_id}/galleries/g1/a.jpg?w=400&fmt=webp");
+    $response = $this->get("/api/gallery-versions/{$version->public_id}/images/galleries/g1/a.jpg?w=400&fmt=webp");
 
     $response->assertOk();
     expect($response->headers->get('Content-Type'))->toBe('image/webp');
@@ -81,7 +81,7 @@ it('streams a resized webp variant with an immutable cache header', function () 
 it('streams an avif variant', function () {
     $version = publishedVersionWithAsset();
 
-    $response = $this->get("/galerie-bilder/{$version->public_id}/galleries/g1/a.jpg?w=400&fmt=avif");
+    $response = $this->get("/api/gallery-versions/{$version->public_id}/images/galleries/g1/a.jpg?w=400&fmt=avif");
 
     $response->assertOk();
     expect($response->headers->get('Content-Type'))->toBe('image/avif');
@@ -99,6 +99,6 @@ it('keeps serving an old version\'s image after a republish, unchanged', functio
     $gallery->update(['assets' => []]);
     $gallery->publish();
 
-    $this->get("/galerie-bilder/{$v1->public_id}/galleries/g1/a.jpg?w=400&fmt=webp")
+    $this->get("/api/gallery-versions/{$v1->public_id}/images/galleries/g1/a.jpg?w=400&fmt=webp")
         ->assertOk();
 });
