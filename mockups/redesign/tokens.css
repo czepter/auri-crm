@@ -264,6 +264,57 @@ a { color: inherit; }
 .gcard b { display: block; font: 400 19px/1.25 var(--serif); margin-top: var(--s3); letter-spacing: -0.01em; }
 .gcard span { font-size: 13px; color: var(--ink-2); }
 
+/* ── Navigation am Handy ──────────────────────────────────────────────── */
+/* Vier Textlinks passen nicht in 390px, und 22px hohe Ziele trifft auf Glas
+ * niemand. Statt die Kopfzeile zu schrumpfen bekommt das Handy eine eigene
+ * Navigation: unten, in der Daumenzone, drei Ziele mit 56px Trefferfläche.
+ * "Abmelden" ist keins davon — das steht in den Einstellungen, wo der
+ * restliche Zugang auch liegt.
+ */
+.tabbar { display: none; }
+
+@media (max-width: 760px) {
+  body .bar nav, body .bar .out, body .bar a.out, body .top nav { display: none; }
+
+  .tabbar {
+    display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+    position: fixed; inset: auto 0 0 0; z-index: 40;
+    background: color-mix(in srgb, var(--paper) 92%, transparent);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tabbar a {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    min-height: 56px; padding: 9px 4px 10px;
+    text-decoration: none; color: var(--ink-3);
+    font: 500 11px/1 var(--sans);
+    transition: color .16s var(--ease);
+  }
+  .tabbar a.on { color: var(--ink); font-weight: 600; }
+  .tabbar a svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+  .tabbar .mark { position: relative; }
+  .tabbar .mark::after {
+    content: ''; position: absolute; top: -1px; right: -5px;
+    width: 7px; height: 7px; border-radius: 50%; background: var(--accent);
+  }
+
+  /* Platz für die Leiste, sonst verdeckt sie den Fuß. */
+  body { padding-bottom: 68px; }
+
+  /* Trefferflächen: alles Tippbare auf mindestens 44px. */
+  .btn, .chip, .copy, .pill, .filter, .barbtn { min-height: 44px; }
+  .editbtn, .cancel, .gate button, .listbar button { padding: 14px 4px; }
+  .scrollcue { padding: 6px 14px; }
+  /* body-Präfix, weil die Seiten .fav in ihrem eigenen <style> nach
+     tokens.css definieren und bei gleicher Spezifität gewinnen. */
+  body .fav { width: 44px; height: 44px; }
+  body .lists label { padding: 13px 10px; }
+  body .lists .new { min-height: 44px; }
+  body .about select, body .compose select { min-height: 44px; }
+  body .facts .inline, body .lockednote a { display: inline-block; padding: 12px 0; }
+}
+
 /* ── Bewegung: genau ein orchestrierter Seitenaufbau ──────────────────── */
 
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }

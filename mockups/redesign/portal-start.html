@@ -62,7 +62,7 @@
 @media (max-width: 1079px) {
   .split { grid-template-columns: 1fr; }
   .rail, .main { display: contents; }
-  .open { order: -1; }
+  .pending { order: -1; }
 }
 
 section { scroll-margin-top: 80px; }
@@ -72,11 +72,11 @@ section { scroll-margin-top: 80px; }
 }
 
 /* ── 1 · Offen ────────────────────────────────────────────────────────── */
-.open .list { border-top: 1px solid var(--line); }
-.open .item { grid-template-columns: 1fr auto; align-items: start; padding-inline: var(--s3); margin-inline: calc(var(--s3) * -1); }
-.open .item h3 { font-size: 19px; }
-.open .item .chev { display: none; }
-.open .item .where { font-size: 12px; color: var(--ink-3); margin-top: 5px; }
+.pending .list { border-top: 1px solid var(--line); }
+.pending .item { grid-template-columns: 1fr auto; align-items: start; padding-inline: var(--s3); margin-inline: calc(var(--s3) * -1); }
+.pending .item h3 { font-size: 19px; }
+.pending .item .chev { display: none; }
+.pending .item .where { font-size: 12px; color: var(--ink-3); margin-top: 5px; }
 
 /* ── 2 · Buchungen ────────────────────────────────────────────────────── */
 .orders { margin-top: 0; }
@@ -98,6 +98,10 @@ section { scroll-margin-top: 80px; }
 .foot .links { display: flex; gap: var(--s5); }
 
 @media (max-width: 700px) {
+  /* Betrag unter den Text statt daneben: in 390px bleibt neben "1.500,00 €"
+     zu wenig für den Titel, und das Grid kippt die Zeile. */
+  .pending .item { grid-template-columns: 1fr; }
+  .pending .amount { justify-self: start; margin-top: var(--s2); }
   .head { padding-top: var(--s7); }
   .person .contact { margin-left: 0; width: 100%; }
   .gcard img { height: 190px; }
@@ -124,7 +128,7 @@ section { scroll-margin-top: 80px; }
   <div class="split">
    <div class="rail">
   <!-- 1 · Quer über alle Buchungen. Fehlt der Abschnitt, ist nichts offen. -->
-  <section class="open rise rise-3">
+  <section class="pending rise rise-3">
     <p class="lab">Das wartet auf euch</p>
     <div class="list">
       <a class="item" href="portal-projekt.html">
@@ -256,6 +260,22 @@ section { scroll-margin-top: 80px; }
     <a href="#">AGB</a>
   </span>
 </footer>
+
+
+<nav class="tabbar">
+  <a href="portal-start.html" class="on">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+    Buchungen
+  </a>
+  <a href="portal-nachrichten.html">
+    <span class="mark"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg></span>
+    Nachrichten
+  </a>
+  <a href="portal-einstellungen.html">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+    Einstellungen
+  </a>
+</nav>
 
 </body>
 </html>
