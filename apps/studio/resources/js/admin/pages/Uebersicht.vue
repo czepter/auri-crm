@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import DomainColumn from '@/admin/components/DomainColumn.vue'
 import { Button } from '@/ui/button'
 
 const props = defineProps<{
@@ -9,10 +10,25 @@ const props = defineProps<{
   openLeads: number
   newLeadsThisWeek: number
   nextShoot: App.Crm.Data.NextShootData | null
+  upcomingShoots: { label: string; date: string }[]
   production: App.Crm.Data.ProductionRowData[]
   tasks: App.Crm.Data.TaskRowData[]
   openTasks: number
+  inquiries: App.Crm.Data.DomainRowData[]
+  payments: App.Crm.Data.DomainRowData[]
+  afterDelivery: App.Crm.Data.DomainRowData[]
+  pipeline: number
+  overdueTotal: number
+  expectedByMonthEndTotal: number
+  expectedByMonthEndCount: number
+  acceptanceRate: number | null
+  unanswered: number
 }>()
+
+// Quote.total and PaymentInstallment.amount are minor units end to end; this
+// is the one place they turn into euros, so no other spot on this screen
+// divides by 100 again.
+const money = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 
 const heading = computed(() =>
   new Date(props.today).toLocaleDateString('de-DE', {
@@ -29,11 +45,33 @@ function shortDate(date: string | null) {
     : null
 }
 
-// The rows the studio still owes, minus the ones already stated as readiness
-// marks on the hero — the same task should not ask twice on one screen.
-const worklist = computed(() =>
-  props.tasks.filter((task) => task.projectId !== props.nextShoot?.projectId),
+// The calendar footer's own date form, weekday-free: shortDate() names the
+// day of the week because the KPI tile and the hero card are read as "when
+// do I need to be there", but this line is a calendar preview, and a
+// calendar preview is read as dates, the way the mockup writes "18.06."
+// rather than "Do 18.06.".
+function calendarDate(date: string) {
+  return new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
+}
+
+const calendarPreview = computed(() =>
+  props.upcomingShoots.map((shoot) => `${shoot.label} ${calendarDate(shoot.date)}`).join(', '),
 )
+
+// The date the überfällig tile's sub-line and the Zahlungen footer both
+// name. Derived from `today` rather than a new backend prop: once `today`
+// is parsed, the end of its month is exactly what Date already knows.
+const monthEndDate = computed(() => {
+  const d = new Date(props.today)
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
+})
+
+// The rows the studio still owes. The hero's readiness marks name the same
+// tasks, and mockup 01 repeats them on purpose: the mark states, the row acts.
+// Filtering the hero's project out instead emptied the worklist entirely for a
+// studio with one project in production — a footer counting nine open tasks
+// above nothing to press.
+const worklist = computed(() => props.tasks)
 
 function complete(task: App.Crm.Data.TaskRowData) {
   router.post(`/aufgaben/${task.id}/erledigt`, {}, { preserveScroll: true })
@@ -47,21 +85,57 @@ function complete(task: App.Crm.Data.TaskRowData) {
         <div class="kick">{{ heading }}</div>
         <h1>{{ $t('dashboard.title') }}</h1>
       </div>
+      <!-- Unbeantwortet, not ungelesen: ThreadParticipant carries no
+           last_read_at and this screen does not add one. An unanswered
+           thread is a fact about the conversation and something the studio
+           owes; whether someone has opened it is a fact about a person.
+
+           Static text, not a link: threads only exist per-project, at
+           /auftraege/{project}/nachrichten — routes/admin.php has no
+           cross-project thread inbox to send this to. The mockup's own href
+           is "#"; no destination was ever named there either. Inventing one
+           is the failure this screen's design forbids, so this states the
+           count without pretending there is somewhere to send it. -->
+      <span
+        v-if="unanswered"
+        style="
+          margin-left: auto;
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          font: 500 13px/1 var(--font);
+          color: var(--muted);
+          padding: 9px 0;
+        "
+      >
+        <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; opacity: 0.8">
+          <path d="M4 4h16v13H8l-4 4z" /><path d="M8 9h8M8 13h5" />
+        </svg>
+        {{ $t('dashboard.unanswered', { count: unanswered }) }}
+      </span>
       <Button :as="Link" href="/anfragen/neu">
         <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         {{ $t('board.create') }}
       </Button>
     </div>
 
-    <!-- Two tiles, not four. The mockup's other two are money — quotes are Q-*
-         and Stripe is M-04 — and a tile with no source behind it is a number
-         somebody has to invent. -->
-    <div class="kpis" style="grid-template-columns: repeat(2, minmax(0, 260px))">
-      <Link class="kpi" href="/anfragen">
-        <b>{{ openLeads }}</b>
-        {{ $t('dashboard.openLeads') }}
+    <!-- Mockup order: Pipeline, überfällig, nächstes Shooting, Angebote
+         angenommen. Each tile is guarded on its own figure — a tile with
+         nothing behind it is absent, not a zero (S-01's rule). The open-lead
+         count that used to be its own tile is now the Pipeline tile's
+         sub-line, per the same rule: it never gets a tile with no money
+         behind it. -->
+    <div class="kpis">
+      <Link v-if="pipeline" class="kpi" href="/anfragen">
+        <b>{{ money.format(pipeline / 100) }}</b>
+        {{ $t('dashboard.pipeline') }} · {{ $t('dashboard.openLeads', { count: openLeads }) }}
         <em v-if="newLeadsThisWeek"> · {{ $t('dashboard.newThisWeek', { count: newLeadsThisWeek }) }}</em>
       </Link>
+      <div v-if="overdueTotal" class="kpi">
+        <b><i>{{ money.format(overdueTotal / 100) }}</i></b>
+        {{ $t('dashboard.overdueTotal') }}
+        <em v-if="expectedByMonthEndCount"> · {{ $t('dashboard.expectedByMonthEnd', { amount: money.format(expectedByMonthEndTotal / 100), date: monthEndDate }) }}</em>
+      </div>
       <Link v-if="nextShoot" class="kpi" :href="`/auftraege/${nextShoot.projectId}/shootings`">
         <b>{{ shortDate(nextShoot.date) }}</b>
         {{ $t('dashboard.nextShoot') }}
@@ -69,9 +143,27 @@ function complete(task: App.Crm.Data.TaskRowData) {
           · {{ $t('dashboard.openPoints', { count: nextShoot.readiness.filter((m) => !m.done).length }) }}
         </em>
       </Link>
+      <div v-if="acceptanceRate !== null" class="kpi">
+        <b>{{ acceptanceRate }} %</b>
+        {{ $t('dashboard.acceptance') }}
+        <em> · {{ $t('dashboard.lastTwelveMonths') }}</em>
+      </div>
     </div>
 
-    <div class="doms" style="grid-template-columns: minmax(0, 1fr)">
+    <div class="doms">
+      <DomainColumn
+        v-if="inquiries.length"
+        :title="$t('dashboard.inquiries')"
+        :count="$t('dashboard.items', { count: inquiries.length })"
+        :rows="inquiries"
+        :footer="
+          newLeadsThisWeek
+            ? $t('dashboard.toBoardWithNewLeads', { count: newLeadsThisWeek })
+            : $t('dashboard.toBoard')
+        "
+        footer-href="/anfragen"
+      />
+
       <div class="dom">
         <div class="dh">
           <b>{{ $t('dashboard.nextShoots') }}</b>
@@ -156,7 +248,45 @@ function complete(task: App.Crm.Data.TaskRowData) {
         <span v-if="openTasks > worklist.length" class="blkfoot">
           {{ $t('dashboard.moreTasks', { count: openTasks }) }}
         </span>
+
+        <!-- The one block with two footers: the owner asked to keep S-01's
+             open-task count and add the mockup's calendar preview beneath
+             it, not choose between them. Link, not span — /kalender exists
+             (routes/admin.php, calendar.index) — but no trailing arrow: none
+             of this screen's three existing footers carry one either. -->
+        <Link v-if="upcomingShoots.length" class="blkfoot" href="/kalender">
+          {{ $t('dashboard.calendarPreview', { shoots: calendarPreview }) }}
+        </Link>
       </div>
+
+      <!-- Text-only footer: this column has no "all payments" board to link
+           to yet, but DomainColumn's footer needs no href — it states the
+           same expectedByMonthEnd figure as the überfällig tile's sub-line. -->
+      <DomainColumn
+        v-if="payments.length"
+        :title="$t('dashboard.payments')"
+        :count="$t('dashboard.items', { count: payments.length })"
+        :rows="payments"
+        :footer="
+          expectedByMonthEndCount
+            ? $t('dashboard.expectedFooter', {
+                date: monthEndDate,
+                amount: money.format(expectedByMonthEndTotal / 100),
+                count: expectedByMonthEndCount,
+              })
+            : undefined
+        "
+      />
+
+      <!-- No footer: the mockup's review-request note describes an
+           automation nothing in this codebase runs, and stating it here
+           would be inventing a fact this screen's design forbids. -->
+      <DomainColumn
+        v-if="afterDelivery.length"
+        :title="$t('dashboard.afterDelivery')"
+        :count="$t('dashboard.occasions', { count: afterDelivery.length })"
+        :rows="afterDelivery"
+      />
     </div>
   </AdminLayout>
 </template>

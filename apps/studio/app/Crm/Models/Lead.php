@@ -39,6 +39,7 @@ class Lead extends Model
         'inquiry_text',
         'captured_via',
         'captured_by_id',
+        'referred_by_contact_id',
     ];
 
     protected function casts(): array
@@ -65,6 +66,15 @@ class Lead extends Model
     public function capturedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'captured_by_id');
+    }
+
+    /**
+     * The contact who sent this client. Null is the ordinary case — see the
+     * migration for why it is not required.
+     */
+    public function referredBy(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class, 'referred_by_contact_id');
     }
 
     /**

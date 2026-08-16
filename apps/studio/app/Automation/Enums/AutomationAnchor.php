@@ -16,4 +16,12 @@ enum AutomationAnchor: string
 {
     case PerShoot = 'per_shoot';
     case PrimaryShoot = 'primary_shoot';
+
+    /**
+     * The date a sent quote stops being valid. Fires against the quote's
+     * Project rather than the Quote: Q-06 makes a revision a new row, and a
+     * nudge trail keyed to the row would forget every reminder the moment the
+     * studio revises the offer.
+     */
+    case QuoteValidity = 'quote_validity';
 }

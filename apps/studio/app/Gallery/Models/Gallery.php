@@ -43,7 +43,7 @@ class Gallery extends Model
     protected $fillable = [
         'project_id', 'shoot_id', 'title', 'assets',
         'requires_settled_balance', 'balance_settled',
-        'is_external', 'external_url',
+        'is_external', 'external_url', 'expires_at',
     ];
 
     protected $attributes = [
@@ -70,6 +70,7 @@ class Gallery extends Model
             'view_password_hash' => 'hashed',
             'download_pin_hash' => 'hashed',
             'requires_verified_email' => 'boolean',
+            'expires_at' => 'immutable_datetime',
         ];
     }
 
@@ -119,6 +120,16 @@ class Gallery extends Model
         }
 
         return DB::transaction(function () {
+            $retention = config('gallery.retention_days');
+
+            if ($retention !== null && $this->expires_at === null) {
+                // Stamped once, on first publish. A second version does not
+                // restart the clock: the client has had the photographs since
+                // version one, and a re-publish to fix a caption is not a new
+                // delivery.
+                $this->update(['expires_at' => now()->addDays((int) $retention)]);
+            }
+
             $next = 1 + (int) $this->versions()->max('version');
 
             return $this->versions()->create([

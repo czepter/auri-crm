@@ -1,7 +1,7 @@
 declare namespace App {
 namespace Automation {
 namespace Enums {
-export type AutomationAnchor = 'per_shoot' | 'primary_shoot';
+export type AutomationAnchor = 'per_shoot' | 'primary_shoot' | 'quote_validity';
 export type AutomationOffsetDirection = 'before' | 'after';
 export type AutomationRunStatus = 'pending' | 'sent' | 'failed';
 export type AutomationTriggerType = 'event' | 'date_offset';
@@ -67,6 +67,15 @@ venue: string | null,
 kind: string | null,
 label: string | null,
 personId: string | null,
+};
+export type DomainRowData = {
+projectId: string,
+who: string,
+what: string,
+emphasis: string | null,
+whatTail: string | null,
+action: App.Crm.Data.RowActionData | null,
+hot: boolean,
 };
 export type FormFieldData = {
 id: string,
@@ -182,6 +191,11 @@ export type ProjectPositionData = {
 source: string,
 value: string | null,
 label: string,
+};
+export type RowActionData = {
+label: string,
+kind: string,
+target: string,
 };
 export type ShootData = {
 id: string,

@@ -114,9 +114,22 @@ const items = computed(() => [
 
       <div class="me">
         <span class="av">{{ initials }}</span>
-        {{ user?.name }}
-        <Button type="button" variant="ghost" style="margin-left: auto" @click="router.post('/logout')">
-          {{ $t('common.signOut') }}
+        <span class="nm">{{ user?.name }}</span>
+        <!-- The mockup's row is a face and a name, and 184px does not hold a
+             third text label without truncating the name to "Dev Lo…". The
+             action survives as its glyph, named for screen readers. -->
+        <Button
+          type="button"
+          variant="ghost"
+          style="margin-left: auto"
+          :aria-label="$t('common.signOut')"
+          :title="$t('common.signOut')"
+          @click="router.post('/logout')"
+        >
+          <svg viewBox="0 0 24 24">
+            <path d="M15 4h4a1 1 0 011 1v14a1 1 0 01-1 1h-4" />
+            <path d="M10 16l-4-4 4-4M6 12h9" />
+          </svg>
         </Button>
       </div>
     </nav>

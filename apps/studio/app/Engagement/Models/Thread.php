@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * A conversation with a client about one project (E-06). Client-initiable —
@@ -37,6 +38,18 @@ class Thread extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(Message::class)->oldest();
+    }
+
+    /**
+     * The one message that decides whether this thread is unanswered: whoever
+     * sent the newest line owes (or is owed) the next one. `latestOfMany`
+     * keeps that a single indexed lookup — Eloquent's own subquery, not a
+     * hand-rolled correlated one — and a thread with no messages simply has
+     * no latestMessage, which is what makes it fall out of that count too.
+     */
+    public function latestMessage(): HasOne
+    {
+        return $this->hasOne(Message::class)->latestOfMany();
     }
 
     public function participants(): HasMany
