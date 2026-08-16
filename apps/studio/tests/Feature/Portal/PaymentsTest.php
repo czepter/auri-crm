@@ -133,7 +133,7 @@ it('never puts the Stripe secret key anywhere in the portal payments response bo
     expect($response->getContent())->not->toContain('sk_test_portalLeakCheck');
 });
 
-it('flags a payment plan as present on the portal project overview once one exists', function () {
+it('lists payments among the booking\'s documents once a plan exists', function () {
     [$project, $contact] = t07PortalProjectWithPlan();
 
     $props = $this->actingAs($contact, 'portal')
@@ -141,5 +141,5 @@ it('flags a payment plan as present on the portal project overview once one exis
         ->assertOk()
         ->viewData('page')['props'];
 
-    expect($props['project']['hasPaymentPlan'])->toBeTrue();
+    expect(collect($props['project']['documents'])->pluck('kind')->all())->toContain('payments');
 });

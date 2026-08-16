@@ -55,6 +55,14 @@ Route::middleware('portal.maintenance')->group(function () {
         // "does not exist" is not this surface's to give away.
         Route::get('/projekte/{project}', ProjectController::class)->name('portal.projects.show');
 
+        // P-03 (#222). The portal's first write path onto a project. Open
+        // only while nothing is reserved — a booked project answers 404 here
+        // rather than 422, the same shape every other closed door on this
+        // surface takes. See UpdateProjectDetails for the audit row and the
+        // line it writes into the conversation.
+        Route::patch('/projekte/{project}/angaben', [ProjectController::class, 'update'])
+            ->name('portal.projects.details.update');
+
         // Mockup 07. Reads only the artifact M-01's queued job already
         // stored — see App\Portal\Http\Controllers\ContractController.
         Route::get('/projekte/{project}/vertrag', [ContractController::class, 'show'])

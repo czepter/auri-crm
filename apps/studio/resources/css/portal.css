@@ -255,3 +255,63 @@ h1 { font-size: 30px; }
               font: 600 12.5px/1 var(--font); }
 .person b { font: 600 14px/1.3 var(--font); display: block; }
 .person .role { font: 400 12px/1.4 var(--font); color: var(--muted); }
+
+/* ---------- P-03/P-07 (#222, #226): the two shapes of a booking ---------- */
+
+/* The inquiry is a letter, not a dashboard: 620px, a heading, one piece of
+   news, what we noted down, a person. A section exists when it has content. */
+.letter { max-width: 620px; margin: 0 auto; padding: var(--s7) var(--s5) var(--s8); }
+.letter h1 { font-size: 34px; }
+.letter .when { font: 400 15px/1.5 var(--font); color: var(--muted); margin: var(--s3) 0 0;
+                font-variant-numeric: tabular-nums; }
+.hair { height: 1px; background: var(--line); margin: var(--s6) 0; }
+
+.facts { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: var(--s3) var(--s4);
+         margin: 0; font: 400 14px/1.55 var(--font); }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; }
+.facts dd.num { font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) { .facts { grid-template-columns: minmax(0, 1fr); gap: 2px var(--s4); }
+                            .facts dd { margin-bottom: var(--s3); } }
+
+.quoted { border-left: 2px solid var(--line); padding-left: var(--s4); margin: var(--s5) 0 0;
+          font: 400 14.5px/1.65 var(--font); color: var(--ink); white-space: pre-wrap; }
+
+.lockednote { display: flex; align-items: center; gap: 8px; margin: var(--s5) 0 0;
+              font: 400 13px/1.5 var(--font); color: var(--muted); }
+.lockednote svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.6; flex: none; }
+
+/* The booked screen: picture before information, pictures before dates,
+   paperwork last. The old order was the exact reverse. */
+.hero { position: relative; }
+.hero > img { width: 100%; height: min(62vh, 560px); object-fit: cover; display: block; }
+.hero::after { content: ''; position: absolute; inset: 0;
+               background: linear-gradient(0deg, rgba(20,16,14,.72) 0%, rgba(20,16,14,.15) 55%, rgba(20,16,14,0) 100%); }
+.herotext { position: absolute; z-index: 2; left: 0; right: 0; bottom: var(--s6);
+            max-width: 1060px; margin: 0 auto; padding-inline: var(--s5); color: #fff; }
+.herotext h1 { color: #fff; margin: var(--s2) 0 0; font-size: clamp(30px, 5vw, 46px); }
+.herotext .kick { color: rgba(255,255,255,.72); }
+.herotext .meta { font: 400 14.5px/1.5 var(--font); color: rgba(255,255,255,.85); margin: var(--s3) 0 0;
+                  font-variant-numeric: tabular-nums; }
+
+/* One sentence where four tiles used to say the same thing four times. */
+.statement { font: 400 22px/1.45 var(--font); letter-spacing: -.02em; margin: 0; }
+
+.strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s3); }
+.strip a { display: block; aspect-ratio: 1; border-radius: var(--r); overflow: hidden; background: var(--hover); }
+.strip img { width: 100%; height: 100%; object-fit: cover; display: block; }
+@media (max-width: 560px) { .strip { grid-template-columns: repeat(2, 1fr); } }
+
+.stripfoot { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--s4);
+             flex-wrap: wrap; margin-top: var(--s4); }
+
+.rail { display: flex; flex-direction: column; }
+.rail .shoot { display: flex; align-items: center; gap: var(--s4); padding: var(--s4) 0;
+               border-bottom: 1px solid var(--line); }
+.rail .when { width: 150px; flex: none; font: 400 12.5px/1.5 var(--font); color: var(--muted);
+              font-variant-numeric: tabular-nums; }
+.rail .when b { display: block; font: 600 14px/1.3 var(--font); color: var(--ink); }
+.rail .what { font: 600 14px/1.3 var(--font); }
+.rail .where { font: 400 12.5px/1.4 var(--font); color: var(--muted); margin-top: 2px; }
+.rail .state { margin-left: auto; font: 400 12.5px/1.4 var(--font); color: var(--muted); white-space: nowrap; }
+@media (max-width: 560px) { .rail .shoot { flex-wrap: wrap; } .rail .when { width: 100%; } }

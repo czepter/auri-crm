@@ -26,4 +26,11 @@ return [
     // waited too long.
     'quote_not_valid' => 'Dieses Angebot ist nicht mehr gültig.',
     'quote_superseded' => 'Dieses Angebot wurde bereits durch eine neuere Version ersetzt.',
+
+    // P-03 (#222): the line UpdateProjectDetails writes into the thread. A
+    // change to a wedding date that lives only in a diff is how a
+    // photographer turns up on the wrong Saturday.
+    'details_changed_subject' => 'Angaben geändert',
+    'details_changed_body' => "Wir haben unsere Angaben geändert.\n\nWunschtermin: :date\nOrt: :venue\n\n:text",
+    'date_open' => 'noch offen',
 ];

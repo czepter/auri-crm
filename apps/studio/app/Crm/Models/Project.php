@@ -7,6 +7,7 @@ use App\Concerns\HasPublicId;
 use App\Contracts\Models\Contract;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
+use App\Crm\Enums\ShootStatus;
 use App\Enums\Capability;
 use App\Engagement\Models\Thread;
 use App\Gallery\Models\Gallery;
@@ -159,6 +160,23 @@ class Project extends Model
     public function latestQuote(): HasOne
     {
         return $this->hasOne(Quote::class)->whereNotNull('sent_at')->latestOfMany('sent_at');
+    }
+
+    /**
+     * P-03 (#222): may the client still change the date and the place
+     * themselves?
+     *
+     * Until something is reserved, the answer is theirs — they wrote those
+     * lines into an inquiry form and a typo in them is their typo to fix.
+     * The moment a Job exists, or any shoot has moved past `requested`, the
+     * same two fields are contract content and the way to change them is to
+     * ask (P-07). Contact details are not covered by this and never are:
+     * see ContactController on the portal surface.
+     */
+    public function clientMayEditDetails(): bool
+    {
+        return $this->job === null
+            && ! $this->shoots()->where('status', '!=', ShootStatus::Requested)->exists();
     }
 
     /** The headline occasion — the wedding day, not the engagement shoot. */

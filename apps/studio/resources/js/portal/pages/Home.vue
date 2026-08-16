@@ -4,6 +4,7 @@ import { Link } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import { formatEuros } from '@/admin/lib/money'
+import { initials } from '@/portal/lib/initials'
 
 type Phase = 'open' | 'upcoming' | 'delivered'
 
@@ -75,15 +76,7 @@ function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-const initials = computed(() =>
-  (props.studio.name ?? '')
-    .split(' ')
-    .map((word) => word[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase(),
-)
+const studioInitials = computed(() => initials(props.studio.name))
 </script>
 
 <template>
@@ -191,7 +184,7 @@ const initials = computed(() =>
         <section class="psec">
           <p class="lab">{{ $t('portal.contactTitle') }}</p>
           <div class="person">
-            <span class="av">{{ initials }}</span>
+            <span class="av">{{ studioInitials }}</span>
             <span>
               <b>{{ studio.name }}</b>
               <span v-if="studio.messagingEnabled" class="role">

@@ -182,6 +182,10 @@ it('never lets an absence category or date reach the portal, even for a shoot cr
     $project = Project::factory()->create(['portal_visible' => true]);
     $project->attachContact($contact, ProjectContactRole::Primary);
     $shoot = Shoot::factory()->for($project)->on('2026-09-03')->create();
+    // Booked, so the screen under test is P-07's rather than P-03's letter —
+    // an inquiry carries no shoot list at all, which would pass this for the
+    // wrong reason.
+    App\Crm\Models\Job::factory()->for($project)->create();
 
     $away = User::factory()->create(['name' => 'Nina Sturm']);
     CrewAssignment::factory()->for($shoot)->for($away)->create();

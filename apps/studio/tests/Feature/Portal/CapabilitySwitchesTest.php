@@ -113,7 +113,7 @@ it('hides the payments link on the project overview while the switch is off, eve
         ->assertOk()
         ->viewData('page')['props'];
 
-    expect($props['project']['hasPaymentPlan'])->toBeFalse();
+    expect(collect($props['project']['documents'])->pluck('kind')->all())->not->toContain('payments');
 });
 
 it('shows the payments route and link once the studio switches payment-status on', function () {
@@ -208,7 +208,7 @@ it('hides the messages link on the project overview while the switch is off', fu
         ->assertOk()
         ->viewData('page')['props'];
 
-    expect($props['project']['messagingEnabled'])->toBeFalse();
+    expect($props['studio']['messagingEnabled'])->toBeFalse();
 });
 
 it('lets a client start a thread once the studio switches messaging on', function () {
