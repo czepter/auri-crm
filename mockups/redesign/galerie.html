@@ -70,7 +70,11 @@ body { background: var(--void); color: var(--void-ink); }
 .tile:hover img { transform: scale(1.03); }
 
 /* Der Favoritenstern erscheint erst beim Hover — im Ruhezustand ist nichts
-   zwischen dem Gast und dem Bild. */
+   zwischen dem Gast und dem Bild.
+
+   Ein Gast sieht genau das: ein Herz, eine Liste ohne Namen. Ein angemeldeter
+   Kunde bekommt dahinter die Auswahl seiner Listen (siehe .lists unten) —
+   dieselbe Stelle, dieselbe Geste, nur mit einem Menü statt eines Umschalters. */
 .fav {
   position: absolute; top: 10px; right: 10px;
   width: 32px; height: 32px; border-radius: 50%;
@@ -84,6 +88,38 @@ body { background: var(--void); color: var(--void-ink); }
 .fav svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; }
 .fav.on { background: var(--accent); }
 .fav.on svg { fill: currentColor; }
+
+/* Listenauswahl — nur für den angemeldeten Kunden. */
+.lists {
+  position: absolute; top: 48px; right: 10px; z-index: 5;
+  width: 216px; padding: var(--s2);
+  background: var(--void-2); border: 1px solid var(--void-line); border-radius: var(--r);
+  box-shadow: 0 20px 48px -16px rgba(0,0,0,.6);
+}
+.lists label {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: var(--r-sm); cursor: pointer;
+  font: 500 13px/1 var(--sans); color: var(--void-ink);
+  transition: background .16s var(--ease);
+}
+.lists label:hover { background: rgba(255,255,255,.06); }
+.lists input { appearance: none; margin: 0; flex: none; cursor: pointer;
+  width: 16px; height: 16px; border-radius: 5px;
+  border: 1px solid #4A3F36; background: transparent; position: relative; }
+.lists input:checked { background: var(--accent); border-color: var(--accent); }
+.lists input:checked::after {
+  content: ''; position: absolute; left: 5px; top: 2px; width: 4px; height: 8px;
+  border: solid #fff; border-width: 0 1.6px 1.6px 0; transform: rotate(45deg);
+}
+.lists .n { margin-left: auto; font-size: 11.5px; color: var(--void-ink-2); font-variant-numeric: tabular-nums; }
+.lists .new {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  margin-top: 4px; padding: 9px 10px; border-radius: var(--r-sm);
+  border: 0; border-top: 1px solid var(--void-line); background: transparent; cursor: pointer;
+  font: 500 13px/1 var(--sans); color: var(--void-ink-2);
+}
+.lists .new:hover { color: var(--void-ink); }
+.lists .new svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.8; }
 
 .gfoot {
   border-top: 1px solid var(--void-line);
@@ -133,7 +169,14 @@ body { background: var(--void); color: var(--void-ink); }
 </div>
 
 <main class="grid" id="raster">
-  <a class="tile" href="#"><img src="img/p001-sm.jpg" alt=""><button class="fav on" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
+  <div class="tile"><a href="#"><img src="img/p001-sm.jpg" alt=""></a><button class="fav on" aria-label="Zu Liste hinzufügen"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button>
+    <span class="lists">
+      <label><input type="checkbox" checked> Favoriten <span class="n">6</span></label>
+      <label><input type="checkbox" checked> Album <span class="n">12</span></label>
+      <label><input type="checkbox"> Für die Eltern <span class="n">4</span></label>
+      <button class="new" type="button"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Neue Liste</button>
+    </span>
+  </div>
   <a class="tile" href="#"><img src="img/p016-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
   <a class="tile" href="#"><img src="img/p011-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>
   <a class="tile" href="#"><img src="img/p025-sm.jpg" alt=""><button class="fav" aria-label="Favorit"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z"/></svg></button></a>

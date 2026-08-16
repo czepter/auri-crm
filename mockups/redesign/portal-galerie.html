@@ -21,10 +21,22 @@
  *   ehrliche Antwort auf "wir haben den Link zu weit gestreut".
  *
  *   Favoriten und Kommentare hängen an guest_identifier, nicht am Kontakt
- *   ("carries no account behind it", AssetFavorite). Damit "Eure Auswahl"
- *   überhaupt die eigene ist, muss die Gast-Identität eines angemeldeten
- *   Kunden an seinen Contact gebunden werden. Bis dahin ist der Block hier
- *   ein Entwurf auf einem Datenmodell, das noch fehlt.
+ *   ("carries no account behind it", AssetFavorite). Damit "Eure Listen"
+ *   überhaupt die eigenen sind, muss die Gast-Identität eines angemeldeten
+ *   Kunden an seinen Contact gebunden werden.
+ *
+ * Listen gibt es im Modell noch gar nicht — heute existiert ein flacher
+ * Favoritensatz je GalleryVersion. Der Entwurf hier setzt voraus:
+ *
+ *   Eine Liste hängt an der Galerie, nicht an einer Version. Sonst ist sie
+ *   nach dem nächsten publish() verwaist. Sie speichert asset_key, und was
+ *   in der aktuellen Version fehlt, fällt aus der Anzeige — dieselbe Logik,
+ *   mit der GalleryImageController einen Key gegen die Version prüft.
+ *
+ *   Benannte Listen gehören dem angemeldeten Kunden. Gäste behalten das
+ *   Herz, also genau eine Liste ohne Namen: wer anonym ist, kuratiert kein
+ *   Album, und ein Namensfeld für eine Identität, die es nicht gibt, wäre
+ *   ein zweites Problem statt einer Funktion.
  */
 .bar { border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10;
        background: color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter: blur(12px); }
@@ -97,6 +109,32 @@
 .fresh .val { font: 600 20px/1 var(--sans); letter-spacing: .12em; color: var(--accent); }
 .fresh .cap { font-size: 12.5px; color: var(--accent); opacity: .85; }
 
+/* ── Listen ───────────────────────────────────────────────────────────── */
+.pills { display: flex; gap: var(--s2); flex-wrap: wrap; margin-bottom: var(--s5); }
+.pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 15px; border-radius: var(--r-pill);
+  border: 1px solid var(--line-2); background: transparent;
+  font: 500 13px/1 var(--sans); color: var(--ink-2); cursor: pointer;
+  transition: background .18s var(--ease), color .18s var(--ease), border-color .18s var(--ease);
+}
+.pill:hover { border-color: var(--ink-3); color: var(--ink); }
+.pill[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.pill .n { opacity: .55; font-variant-numeric: tabular-nums; }
+.pill.add { border-style: dashed; color: var(--ink-3); }
+.pill.add:hover { border-style: solid; }
+.pill svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+
+.listbar { display: flex; align-items: baseline; gap: var(--s4); flex-wrap: wrap; margin-top: var(--s5); }
+.listbar .meta { margin-right: auto; }
+.listbar button {
+  background: transparent; border: 0; cursor: pointer;
+  font: 500 13px/1 var(--sans); color: var(--ink-2);
+  text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2);
+}
+.listbar button:hover { color: var(--ink); text-decoration-color: var(--ink-3); }
+.listbar button.warn:hover { color: var(--accent); text-decoration-color: var(--accent); }
+
 /* ── Auswahl ──────────────────────────────────────────────────────────── */
 .picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: var(--s2); margin-top: var(--s4); }
 .picks a { display: block; border-radius: 8px; overflow: hidden; background: var(--sunk); }
@@ -165,7 +203,18 @@
   <div class="split rise rise-3">
     <div>
       <section class="block">
-        <p class="lab">Eure Auswahl</p>
+        <p class="lab">Eure Listen</p>
+
+        <div class="pills">
+          <button class="pill" aria-pressed="false">Favoriten <span class="n">6</span></button>
+          <button class="pill" aria-pressed="true">Album <span class="n">12</span></button>
+          <button class="pill" aria-pressed="false">Für die Eltern <span class="n">4</span></button>
+          <button class="pill add" type="button">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Neue Liste
+          </button>
+        </div>
+
         <div class="picks">
           <a href="galerie.html"><img src="img/p001-sm.jpg" alt=""></a>
           <a href="galerie.html"><img src="img/p020-sm.jpg" alt=""></a>
@@ -173,10 +222,19 @@
           <a href="galerie.html"><img src="img/p025-sm.jpg" alt=""></a>
           <a href="galerie.html"><img src="img/p011-sm.jpg" alt=""></a>
           <a href="galerie.html"><img src="img/p030-sm.jpg" alt=""></a>
+          <a href="galerie.html"><img src="img/p005-sm.jpg" alt=""></a>
+          <a href="galerie.html"><img src="img/p016-sm.jpg" alt=""></a>
+          <a href="galerie.html"><img src="img/p030-sm.jpg" alt=""></a>
+          <a href="galerie.html"><img src="img/p011-sm.jpg" alt=""></a>
+          <a href="galerie.html"><img src="img/p008-sm.jpg" alt=""></a>
+          <a href="galerie.html"><img src="img/p020-sm.jpg" alt=""></a>
         </div>
-        <div class="pickfoot">
-          <span class="meta num">6 von 33 markiert</span>
-          <a class="btn ghost" href="portal-nachrichten.html">Auswahl an Christian schicken</a>
+
+        <div class="listbar">
+          <span class="meta num">12 von 33 · zuletzt geändert gestern</span>
+          <button type="button">Umbenennen</button>
+          <button class="warn" type="button">Löschen</button>
+          <a class="btn ghost" href="portal-nachrichten.html">An Christian schicken</a>
         </div>
       </section>
 
