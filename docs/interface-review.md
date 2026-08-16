@@ -6,6 +6,7 @@ rather than as a report. The screens it came from are the drafts in
 `apps/studio/tests/e2e/shots`.
 
 Read this before adding a screen, and before defending a visual decision.
+The findings these rules came from are in [ux-audit.md](ux-audit.md).
 
 ## Method
 
