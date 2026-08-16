@@ -7,6 +7,7 @@ use App\Crm\Models\Contact;
 use App\Engagement\Data\MessageData;
 use App\Engagement\Models\Message;
 use App\Http\Controllers\Controller;
+use App\Portal\Models\DsgvoRequest;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -63,6 +64,18 @@ class ContactController extends Controller
             'canRevokePortalAccess' => $user?->can('revokePortalAccess', $contact) ?? false,
             'dsgvoErasedAt' => $contact->dsgvo_erased_at?->toIso8601String(),
             'canManageDsgvo' => $user?->can('eraseDsgvoData', $contact) ?? false,
+            // P-05 (#224): what the client asked for from inside the portal.
+            // A request nobody at the studio ever sees is worse than no
+            // button at all, and the deadline is legal rather than polite.
+            'dsgvoRequests' => DsgvoRequest::query()->open()
+                ->where('contact_id', $contact->id)
+                ->get()
+                ->map(fn (DsgvoRequest $request) => [
+                    'id' => $request->public_id,
+                    'kind' => $request->kind,
+                    'requestedAt' => $request->created_at->toIso8601String(),
+                ])
+                ->all(),
         ]);
     }
 

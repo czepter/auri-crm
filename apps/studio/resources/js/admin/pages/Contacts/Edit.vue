@@ -14,6 +14,7 @@ const props = defineProps<{
   canRevokePortalAccess: boolean
   dsgvoErasedAt: string | null
   canManageDsgvo: boolean
+  dsgvoRequests: { id: string; kind: string; requestedAt: string }[]
 }>()
 
 const form = useForm({
@@ -144,6 +145,15 @@ function eraseDsgvoData() {
 
       <div v-if="canManageDsgvo" class="card static" style="margin-top: var(--s5)">
         <div class="cardhead"><span class="kick">{{ $t('contacts.dsgvo') }}</span></div>
+
+        <!-- P-05 (#224): what the client asked for from the portal. Shown
+             here because this is where the two actions that answer it live. -->
+        <p v-for="request in dsgvoRequests" :key="request.id" class="hint">
+          {{ $t(`contacts.dsgvoRequested.${request.kind}`, {
+            date: new Date(request.requestedAt).toLocaleDateString('de-DE'),
+          }) }}
+        </p>
+
         <p v-if="dsgvoErasedAt">
           {{ $t('contacts.dsgvoErased', { date: new Date(dsgvoErasedAt).toLocaleDateString('de-DE') }) }}
         </p>

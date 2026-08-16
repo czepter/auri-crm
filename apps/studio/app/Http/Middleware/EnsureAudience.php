@@ -6,6 +6,7 @@ use App\Crm\Models\Contact;
 use App\Integration\Models\ApiToken;
 use App\Support\AuditLogger;
 use App\Support\Surface;
+use Carbon\Carbon;
 use Closure;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Http\Request;
@@ -34,7 +35,8 @@ class EnsureAudience
         // next request from it is turned away here, exactly as a
         // portal_visible flip or a detached contact already takes effect on
         // the next click rather than the next login (HomeController).
-        if ($guard->check() && $audience === Surface::PORTAL && $this->accessWasRevoked($guard->id())) {
+        if ($guard->check() && $audience === Surface::PORTAL
+            && ($this->accessWasRevoked($guard->id()) || $this->sessionWasEnded($request, $guard->id()))) {
             $guard->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
@@ -113,5 +115,33 @@ class EnsureAudience
     {
         return $contactId !== null
             && Contact::query()->whereKey($contactId)->whereNotNull('portal_access_revoked_at')->exists();
+    }
+
+    /**
+     * P-05 (#224)'s "sign out on every device". A session records when it
+     * began (MagicLinkController::consume); a client who ends their sessions
+     * moves contacts.sessions_valid_from forward, and every session older
+     * than that stamp is turned away here on its very next request — the
+     * same next-click rule revocation above already follows, and one that
+     * needs no cooperation from the session driver.
+     *
+     * A session with no stamp predates this feature and is treated as older
+     * than any stamp, which is the safe direction.
+     */
+    private function sessionWasEnded(Request $request, int|string|null $contactId): bool
+    {
+        if ($contactId === null) {
+            return false;
+        }
+
+        $validFrom = Contact::query()->whereKey($contactId)->value('sessions_valid_from');
+
+        if ($validFrom === null) {
+            return false;
+        }
+
+        $startedAt = $request->session()->get('portal_session_started_at');
+
+        return $startedAt === null || $startedAt < Carbon::parse($validFrom)->timestamp;
     }
 }

@@ -50,6 +50,10 @@ class MagicLinkController extends Controller
         // created.
         $request->session()->regenerate();
 
+        // P-05 (#224): what "sign out on every device" measures a session
+        // against — see EnsureAudience::sessionWasEnded().
+        $request->session()->put('portal_session_started_at', now()->timestamp);
+
         return redirect('/');
     }
 

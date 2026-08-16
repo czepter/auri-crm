@@ -315,3 +315,12 @@ h1 { font-size: 30px; }
 .rail .where { font: 400 12.5px/1.4 var(--font); color: var(--muted); margin-top: 2px; }
 .rail .state { margin-left: auto; font: 400 12.5px/1.4 var(--font); color: var(--muted); white-space: nowrap; }
 @media (max-width: 560px) { .rail .shoot { flex-wrap: wrap; } .rail .when { width: 100%; } }
+
+/* ---------- P-05 (#224): the account ---------- */
+.tworow { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: var(--s4); }
+@media (max-width: 480px) { .tworow { grid-template-columns: minmax(0, 1fr); } }
+
+/* A privacy row is not a link — it is a request with a button on it, so it
+   reuses .pend's rhythm without .pend a's whole-row hit target. */
+.pend .prow { display: flex; align-items: center; gap: var(--s4); padding: var(--s4) 0;
+              border-bottom: 1px solid var(--line); }

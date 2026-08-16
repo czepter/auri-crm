@@ -85,6 +85,12 @@ const PUBLIC_ROUTES = [
     // credential, same shape as zugang/{token}.
     'portal' => [
         'anmelden', 'zugang/{token}', 'branding/logo', 'impressum', 'abmelden/{contact}',
+        // P-05 (#224): the e-mail-change confirmation. Whoever follows it is
+        // reading the new inbox, which is not necessarily the browser
+        // holding the session — same reason zugang/{token} above carries no
+        // audience — and the single-use token in the path is the whole
+        // credential. It signs nobody in; it swaps one column.
+        'e-mail-bestaetigen/{token}',
         // G-06's three gates. A gallery guest is neither a staff user nor a
         // portal Contact — there is no `audience:` guard for it, because the
         // gate check itself (`gallery.gate:*`, EnsureGalleryGate) is that

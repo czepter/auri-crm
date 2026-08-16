@@ -122,7 +122,11 @@ if (!link) {
       ['projekt-zahlungen', `${projectHref}/zahlungen`],
     )
   }
-  screens.push(['nachrichten', '/nachrichten'], ['impressum', '/impressum'])
+  screens.push(
+    ['nachrichten', '/nachrichten'],
+    ['einstellungen', '/einstellungen'],
+    ['impressum', '/impressum'],
+  )
 
   for (const [name, url] of screens) {
     const status = await visit(page, PORTAL + url)

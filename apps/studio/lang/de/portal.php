@@ -33,4 +33,8 @@ return [
     'details_changed_subject' => 'Angaben geändert',
     'details_changed_body' => "Wir haben unsere Angaben geändert.\n\nWunschtermin: :date\nOrt: :venue\n\n:text",
     'date_open' => 'noch offen',
+
+    // P-05 (#224): the confirmation link's own dead end. Someone else may
+    // have claimed the address between the request and the click.
+    'email_taken' => 'Diese Adresse wird inzwischen von einem anderen Zugang benutzt.',
 ];

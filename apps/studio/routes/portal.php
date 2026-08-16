@@ -4,6 +4,7 @@ use App\Gallery\Http\Controllers\DownloadZipPartController;
 use App\Gallery\Http\Controllers\GalleryDownloadController;
 use App\Gallery\Http\Controllers\GalleryImageController;
 use App\Gallery\Http\Controllers\GalleryPasswordController;
+use App\Portal\Http\Controllers\AccountController;
 use App\Portal\Http\Controllers\BrandingController;
 use App\Portal\Http\Controllers\ContractController;
 use App\Portal\Http\Controllers\HomeController;
@@ -96,11 +97,24 @@ Route::middleware('portal.maintenance')->group(function () {
             ->middleware('portal.capability:accept_quotes')
             ->name('portal.quotes.accept');
 
+        // P-05 (#224): the account the portal never had. Contact details are
+        // editable whatever phase a booking is in — those are the client's
+        // own particulars, not contract content, which is the line P-03 and
+        // P-07 draw for the booking's own fields.
+        Route::get('/einstellungen', [AccountController::class, 'show'])->name('portal.account.show');
+        Route::patch('/einstellungen', [AccountController::class, 'update'])->name('portal.account.update');
+        Route::post('/einstellungen/post', [AccountController::class, 'updateSubscription'])
+            ->name('portal.account.subscription');
+        Route::post('/einstellungen/abmelden-ueberall', [AccountController::class, 'endSessions'])
+            ->name('portal.account.sessions.end');
+        Route::post('/einstellungen/datenschutz', [AccountController::class, 'requestDsgvo'])
+            ->name('portal.account.dsgvo');
+
         // E-06, gated by T-08's own "messaging" switch (default off) — the
         // whole mailbox, GET and POST alike, the same full-screen shape
-        // payment_status above takes rather than gating only a submit the
-        // way accept_quotes/sign_contracts do. See EnsurePortalCapability
-        // and StudioSettingsResolver::messagingEnabled().
+        // payment_status takes rather than gating only a submit the way
+        // accept_quotes/sign_contracts do. See EnsurePortalCapability and
+        // StudioSettingsResolver::messagingEnabled().
         //
         // P-04 (#223): one mailbox, no project in the path. A thread names a
         // booking or it does not, and the route can no longer require what
@@ -141,6 +155,13 @@ Route::middleware('portal.maintenance')->group(function () {
 // resolve on the sign-in screen before any contact session exists. Reachable
 // during a maintenance closure too, same reasoning as the Impressum below.
 Route::get('/branding/logo', [BrandingController::class, 'logo'])->name('portal.branding.logo');
+
+// P-05 (#224): the e-mail-change confirmation. Public by necessity — the
+// person following it is reading the new inbox, which is not necessarily the
+// browser holding the session — and single use, the same rule zugang/{token}
+// follows. It signs nobody in; all it does is swap one column.
+Route::get('/e-mail-bestaetigen/{token}', [AccountController::class, 'confirmEmail'])
+    ->name('portal.account.email.confirm');
 
 // § 5 TMG. Public and reachable regardless of the maintenance closure above —
 // see ImpressumController and EnsurePortalMaintenanceClosure's own note.
