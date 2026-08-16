@@ -21,8 +21,9 @@ use Illuminate\Http\JsonResponse;
  * An external gallery (X-02) and a gallery nobody has published yet both
  * have no currentVersion, so both 404 here without special-casing either.
  *
- * G-06 (#57) wraps this route with the actual access gate; until it lands,
- * reachability is assumed per G-08's own scope note.
+ * A gallery carrying a view password never reaches this method at all —
+ * `gallery.ungated` (EnsureUngatedGallery) refuses it one layer up, because
+ * the api surface holds no session to check G-06's claim against.
  */
 class GalleryReadController extends Controller
 {
