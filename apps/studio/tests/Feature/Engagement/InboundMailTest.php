@@ -30,12 +30,21 @@ beforeEach(function () {
     Notification::fake();
 });
 
-function deliver(array $overrides = []): InboundMessage
+/** The account catch-all for the tenant secret the tests use. */
+function catchAllAddress(string $secret = 'a-tenant-secret'): string
+{
+    return InboundAddress::catchAll(
+        StudioSettings::query()->firstOrFail()->display_name ?? '',
+        $secret,
+    );
+}
+
+function deliver(array $overrides = []): ?InboundMessage
 {
     return app(IngestInboundMessage::class)(array_merge([
         'message_id' => '<client-1@mail.example>',
         'from' => 'lena@example.test',
-        'to' => 'catchall@'.inboundDomain(),
+        'to' => catchAllAddress(),
         'subject' => 'Re: Ihre Hochzeit',
         'body' => 'Klingt gut!',
         'dmarc' => 'pass',
@@ -92,13 +101,13 @@ it('never attaches on a From: address alone', function () {
     $secret = withSecret();
     $thread = inboundThread();
 
-    // A participant's address, but sent to the catch-all rather than to a
-    // signed thread address: no verified claim about which conversation it
-    // belongs to, so a human decides.
-    $row = deliver(['to' => 'hallo.abc@'.inboundDomain()]);
+    // A participant's address, but sent to the account catch-all rather than
+    // to a signed thread address: it resolves to the studio, so it is kept —
+    // but it names no conversation, so a human decides which one.
+    $row = deliver(['to' => catchAllAddress($secret)]);
 
     expect($row->state)->toBe(InboundMessageState::Triage)
-        ->and($row->reason)->toBe('unrecognised_address')
+        ->and($row->reason)->toBe('catch_all')
         ->and($thread->messages()->count())->toBe(0);
 });
 
@@ -116,14 +125,16 @@ it('refuses a stranger who reached a real thread address', function () {
         ->and($thread->messages()->count())->toBe(0);
 });
 
-it('sends a rotated-away address to triage rather than trusting it', function () {
+it('rejects a rotated-away address outright rather than trusting it', function () {
     withSecret();
     $thread = inboundThread();
     $stale = InboundAddress::forThread($thread, 'the-previous-secret');
 
-    $row = deliver(['to' => $stale]);
-
-    expect($row->state)->toBe(InboundMessageState::Triage)
+    // Rotation is meant to make an address stop existing. Keeping what was
+    // sent to it would be keeping mail for an address this system no longer
+    // issues — which is exactly what the rejection rule forbids.
+    expect(deliver(['to' => $stale]))->toBeNull()
+        ->and(InboundMessage::count())->toBe(0)
         ->and($thread->messages()->count())->toBe(0);
 });
 
@@ -151,12 +162,12 @@ it('creates one message when the same delivery is replayed', function () {
         ->and($thread->messages()->count())->toBe(1);
 });
 
-it('keeps a row for every delivery, whatever became of it', function () {
-    withSecret();
+it('keeps a row for every delivery it accepted, whatever became of it', function () {
+    $secret = withSecret();
     inboundThread();
 
-    deliver(['message_id' => '<a@x>', 'to' => 'was.auch.immer@'.inboundDomain()]);
-    deliver(['message_id' => '<b@x>', 'dmarc' => 'fail']);
+    deliver(['message_id' => '<a@x>', 'to' => catchAllAddress($secret)]);
+    deliver(['message_id' => '<b@x>', 'to' => catchAllAddress($secret), 'dmarc' => 'fail']);
 
     expect(InboundMessage::count())->toBe(2);
 });
@@ -277,4 +288,72 @@ it('shows the studio its own catch-all on the Posteingang screen', function () {
         ->assertInertia(function ($page) {
             expect($page->toArray()['props']['catchAll'])->toStartWith('atelier-nordlicht.');
         });
+});
+
+// --- rejection: mail for nobody is never stored -------------------------
+
+it('rejects mail addressed to something no studio account issued', function () {
+    withSecret();
+    inboundThread();
+
+    expect(deliver(['to' => 'irgendwer@'.inboundDomain()]))->toBeNull()
+        // Not a triage row, not a quarantined row: nothing at all. A stranger
+        // writing to an address that belongs to nobody has no relationship
+        // with any studio here, so there is no basis to keep what they wrote.
+        ->and(InboundMessage::count())->toBe(0);
+});
+
+it('stores nothing about the sender of a rejected delivery', function () {
+    withSecret();
+
+    deliver([
+        'to' => 'niemand@'.inboundDomain(),
+        'from' => 'fremde.person@example.test',
+        'subject' => 'Sehr privates Anliegen',
+        'body' => 'Besonders schützenswerte Angaben.',
+    ]);
+
+    $everything = collect(DB::select("
+        select table_name from information_schema.tables where table_schema = 'public'
+    "))->pluck('table_name');
+
+    foreach ($everything as $table) {
+        $rows = DB::table($table)->get();
+
+        expect(json_encode($rows))
+            ->not->toContain('fremde.person@example.test')
+            ->not->toContain('Sehr privates Anliegen')
+            ->not->toContain('Besonders schützenswerte Angaben.');
+    }
+});
+
+it('rejects a forged thread address instead of filing it for review', function () {
+    withSecret();
+    $thread = inboundThread();
+
+    $forged = 't.'.$thread->public_id.'.0000000000000000@'.inboundDomain();
+
+    expect(deliver(['to' => $forged]))->toBeNull()
+        ->and(InboundMessage::count())->toBe(0);
+});
+
+it('files an accepted delivery under the tenant the ADDRESS names', function () {
+    $secret = withSecret();
+    inboundThread();
+
+    $row = deliver(['to' => catchAllAddress($secret)]);
+
+    // Never the ambient tenant: the poller runs outside any request, and an
+    // unresolved delivery filed under whoever happened to be current is one
+    // studio reading another's mail.
+    expect($row->tenant_id)->toBe(StudioSettings::query()->firstOrFail()->tenant_id);
+});
+
+it('rejects everything when no account has a secret yet', function () {
+    // No withSecret(): a fresh deployment issues no addresses at all, so
+    // there is nothing any inbound mail could belong to.
+    inboundThread();
+
+    expect(deliver(['to' => 'egal@'.inboundDomain()]))->toBeNull()
+        ->and(InboundMessage::count())->toBe(0);
 });

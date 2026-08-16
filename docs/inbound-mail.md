@@ -82,15 +82,46 @@ is inert.
 
 ## What happens to a delivery
 
+Resolution comes first. `InboundRecipient` verifies the recipient against
+every account's secret **before a single field is written**, and only two
+shapes resolve: a `t.` thread address, or an account's catch-all.
+
 | condition | outcome |
 |---|---|
+| recipient resolves to no studio account | **rejected** — no row, nothing about the sender stored |
 | `t.` address + valid HMAC + `From:` matches a thread participant | threaded, becomes a `Message` |
 | DMARC failed | **quarantined**, visible, never threaded and never attachable by hand |
-| anything else | **triage**, a human attaches it at `/posteingang` |
+| resolved, but names no conversation | **triage**, a human attaches it at `/posteingang` |
 
-Nothing is ever dropped. Every delivery is an `inbound_messages` row whatever
-became of it, so "the client says they replied and we never saw it" has
-somewhere to be answered.
+### Why rejection is not "triage for unknown senders"
+
+A stranger writing to an address that belongs to nobody has no relationship
+with any studio here — no consent, no contract, no legitimate interest. Filing
+what they wrote into a tray "so a human can look" is processing personal data
+on the strength of it having arrived, which is not a lawful basis. So the
+sender's address, the subject and the body are never written down.
+
+What *is* kept is a log line naming the address it was sent **to** — ours, not
+anybody's personal data — so "why is mail to this address bouncing" stays
+answerable. Deliberately a log line rather than an `audit_logs` row, because
+that table is tenant-scoped and this delivery belongs to no tenant.
+
+It is also a tenancy guard, not only a privacy one. `inbound_messages` takes
+its `tenant_id` from the resolved recipient rather than from the ambient
+tenant — without that, a delivery addressed to nobody would be filed under
+whichever studio the poller happened to be running as.
+
+The IMAP poller **deletes** a rejected message from the mailbox. Leaving it
+sitting there read would be the same personal data in a different store.
+
+**Rejection is best done one layer earlier**, at the MTA's `RCPT TO`, so the
+mail is never accepted at all. That needs a recipient-validation callback on
+the mail host; until one exists, this is the first moment the application
+controls.
+
+Everything that *is* accepted is kept whatever became of it — every accepted
+delivery is an `inbound_messages` row, so "the client says they replied and we
+never saw it" has somewhere to be answered.
 
 Threading needs all three conditions. An address is trivially forged, so
 attaching on `From:` alone would let a stranger post into a client's

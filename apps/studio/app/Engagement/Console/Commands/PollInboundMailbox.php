@@ -77,10 +77,23 @@ class PollInboundMailbox extends Command
             ->get();
 
         $handled = 0;
+        $rejected = 0;
 
         foreach ($messages as $message) {
             try {
-                $ingest(InboundMimeMessage::fromRaw($this->raw($message)));
+                $row = $ingest(InboundMimeMessage::fromRaw($this->raw($message)));
+
+                if ($row === null) {
+                    // Rejected: the recipient belongs to no studio account,
+                    // so the ingest kept nothing — and neither does the
+                    // mailbox. Leaving it sitting there read would be the
+                    // same personal data in a different store.
+                    $message->delete();
+                    $rejected++;
+
+                    continue;
+                }
+
                 $message->setFlag('Seen');
                 $handled++;
             } catch (Throwable $e) {
@@ -93,7 +106,7 @@ class PollInboundMailbox extends Command
             }
         }
 
-        $this->components->info("Ingested {$handled} message(s).");
+        $this->components->info("Ingested {$handled} message(s), rejected {$rejected}.");
 
         return self::SUCCESS;
     }
