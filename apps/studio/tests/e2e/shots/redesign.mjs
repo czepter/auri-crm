@@ -6,6 +6,7 @@ const PAGES = [
   ['portal-start', 'portal-start.html'],
   ['portal-start-location', 'portal-start-location.html'],
   ['portal-anfrage', 'portal-anfrage.html'],
+  ['portal-nachrichten', 'portal-nachrichten.html'],
   ['portal-projekt', 'portal-projekt.html'],
   ['galerie-gate', 'galerie-gate.html'],
   ['galerie', 'galerie.html'],
@@ -24,6 +25,13 @@ for (const [w, h, label] of [
     await page.waitForTimeout(1400)
     await shot(page, `redesign/${label}`, `${name}--${label}`, { full: true })
     await shot(page, `redesign/${label}`, `${name}--${label}--fold`, { full: false })
+
+    // Angaben ändern ist ein Zustand desselben Blocks, kein eigener Screen.
+    if (name === 'portal-anfrage') {
+      await page.locator('.editbtn').click()
+      await page.waitForTimeout(400)
+      await shot(page, `redesign/${label}`, `${name}--${label}--angaben-aendern`, { full: true })
+    }
 
     // Der Auftragswechsler ist ein Zustand, kein eigener Screen.
     if (name === 'portal-projekt') {
