@@ -37,6 +37,16 @@ class PaymentInstallmentData extends Data
         // that column only dedupes the one-time notification event and is
         // never a second source of truth for whether a row is late.
         public bool $isLate,
+        // M-06: the issued invoice. `invoiceNumber` is also the Verwendungszweck
+        // the client transfers under — T-07's plan-level reference stopped
+        // being allocated once real invoice numbers existed, because every
+        // one it drew left a hole in the invoice sequence.
+        // `hasInvoiceDocument` is false between issue and render: the number
+        // exists the moment the action runs, the PDF only after Gotenberg
+        // returns, and a download link offered in that window would 404.
+        public ?string $invoiceNumber,
+        public ?string $invoicedOn,
+        public bool $hasInvoiceDocument,
     ) {}
 
     /**
@@ -60,6 +70,9 @@ class PaymentInstallmentData extends Data
             paymentReference: $installment->payment_reference,
             isLate: $installment->status === PaymentInstallmentStatus::Scheduled
                 && $installment->due_on->lt(now('UTC')->startOfDay()),
+            invoiceNumber: $installment->invoice_number,
+            invoicedOn: $installment->invoiced_at?->format('Y-m-d'),
+            hasInvoiceDocument: $installment->invoice_path !== null,
         );
     }
 }

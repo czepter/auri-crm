@@ -18,11 +18,16 @@ use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\ProjectActivity;
 use App\Data\StaffProfileData;
+use App\Documents\Data\MailTemplateData;
+use App\Documents\Enums\DocumentTemplateType;
+use App\Documents\Models\DocumentTemplate;
+use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Data\QuoteData;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -129,8 +134,11 @@ class ProjectController extends Controller
      * no screen yet that lists more than one, and no admin action starts a
      * new one; only the client does, from the portal (StartThread).
      */
-    public function messages(Project $project): Response
-    {
+    public function messages(
+        Project $project,
+        StudioSettingsResolver $settings,
+        DocumentMergeDataBuilder $mergeData,
+    ): Response {
         $this->authorize('view', $project);
 
         $thread = $project->latestThread()->with('messages.contact', 'messages.author')->first();
@@ -138,6 +146,18 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Messages', [
             'header' => $this->header($project),
             'thread' => $thread === null ? null : ThreadData::fromModel($thread),
+            // E-10: T-12's mail templates, resolved against this project.
+            // Sent with the screen rather than fetched on selection — there
+            // are a handful of them, they share one merge-data build, and a
+            // round trip per pick would buy nothing.
+            'mailTemplates' => DocumentTemplate::query()
+                ->current()
+                ->ofType(DocumentTemplateType::Mail)
+                ->forShootKind($project->primaryShoot?->kind?->value)
+                ->orderBy('name')
+                ->get()
+                ->map(fn (DocumentTemplate $template) => MailTemplateData::fromModel($template, $project, $settings, $mergeData))
+                ->all(),
         ]);
     }
 

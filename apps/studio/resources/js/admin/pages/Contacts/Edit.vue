@@ -8,6 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 const props = defineProps<{
   contact: App.Crm.Data.ContactSuggestionData
+  billingAddress: { street: string | null; postcode: string | null; city: string | null }
   portalAccessRevokedAt: string | null
   canRevokePortalAccess: boolean
   dsgvoErasedAt: string | null
@@ -18,6 +19,9 @@ const form = useForm({
   name: props.contact.name,
   email: props.contact.email ?? '',
   phone: props.contact.phone ?? '',
+  street: props.billingAddress.street ?? '',
+  postcode: props.billingAddress.postcode ?? '',
+  city: props.billingAddress.city ?? '',
 })
 
 function submit() {
@@ -60,6 +64,21 @@ function eraseDsgvoData() {
         <div class="fld grp">
           <Label for="phone">{{ $t('contacts.phone') }}</Label>
           <Input id="phone" v-model="form.phone" type="tel" />
+        </div>
+
+        <!-- M-06: the address an invoice needs. Optional here, and only
+             ever missed at the moment one is issued. -->
+        <div class="fld grp">
+          <Label for="street">{{ $t('contacts.street') }}</Label>
+          <Input id="street" v-model="form.street" type="text" autocomplete="street-address" />
+        </div>
+        <div class="fld grp">
+          <Label for="postcode">{{ $t('contacts.postcode') }}</Label>
+          <Input id="postcode" v-model="form.postcode" type="text" autocomplete="postal-code" />
+        </div>
+        <div class="fld grp">
+          <Label for="city">{{ $t('contacts.city') }}</Label>
+          <Input id="city" v-model="form.city" type="text" autocomplete="address-level2" />
         </div>
 
         <div class="formfoot">

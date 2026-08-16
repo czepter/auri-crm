@@ -21,6 +21,13 @@ class MergeFieldVocabulary
         'project.type' => 'Hochzeit',
         'contact.name' => 'Lena Meier',
         'contact.email' => 'lena@example.test',
+        // §14 UStG wants the recipient's full name *and* address, so the
+        // three billing-address columns M-06 added to contacts are part of
+        // the vocabulary rather than something an invoice template has to
+        // ask the studio to retype.
+        'contact.street' => 'Gartenweg 4',
+        'contact.postcode' => '22765',
+        'contact.city' => 'Hamburg',
         'job.bookedAt' => '14.06.2026',
         'studio.name' => 'Atelier Nordlicht Fotografie GmbH',
         'studio.legalForm' => 'GmbH',
@@ -35,13 +42,52 @@ class MergeFieldVocabulary
         'studio.representative' => 'Alex Nordlicht',
         'studio.website' => 'https://nordlicht.example',
         'studio.logoPath' => 'branding/sample/logo.png',
+        'studio.bankHolder' => 'Atelier Nordlicht Fotografie GmbH',
+        'studio.bankIban' => 'DE02 1203 0000 0000 2020 51',
+        'studio.bankBic' => 'BYLADEM1001',
         'settings.widerrufText' => 'Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen zu widerrufen.',
+        // M-06 / T-15: the §14 UStG particulars an invoice carries and no
+        // other document does. Every one of these resolves off the issued
+        // installment; on any other document type they resolve to empty,
+        // which is why an invoice template is the only place they belong.
+        'invoice.number' => 'RE-2026-17',
+        'invoice.date' => '15.08.2026',
+        'invoice.servicePeriod' => '14.06.2026',
+        'invoice.description' => 'Hochzeitsreportage — 1. Rate',
+        'invoice.net' => '1.260,50 €',
+        'invoice.vatRate' => '19 %',
+        'invoice.vat' => '239,50 €',
+        'invoice.gross' => '1.500,00 €',
+        // Prints only under the small-business rule; the sample carries the
+        // §19 sentence so a preview shows what that case looks like rather
+        // than an empty line nobody can judge.
+        'invoice.vatNote' => 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.',
+        'invoice.dueOn' => '29.08.2026',
+        'invoice.paymentTerm' => 'Zahlbar bis 29.08.2026 ohne Abzug.',
     ];
 
     /** @return list<string> Every documented dot-path, e.g. "project.name". */
     public static function paths(): array
     {
         return array_keys(self::SAMPLE);
+    }
+
+    /**
+     * Every `{{ path }}` in $body that this vocabulary does not know — E-10's
+     * "an unresolved placeholder blocks sending, and names the field".
+     *
+     * MergeFieldResolver replaces an unknown path with an empty string, which
+     * is the right behaviour at render time and the wrong one to discover at
+     * read time: a typo'd field does not shout, it silently deletes a
+     * sentence. This is how a caller finds out before that happens.
+     *
+     * @return list<string>
+     */
+    public static function unknownPathsIn(string $body): array
+    {
+        preg_match_all('/\{\{\s*([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*)\s*\}\}/', $body, $matches);
+
+        return array_values(array_unique(array_diff($matches[1] ?? [], self::paths())));
     }
 
     /**

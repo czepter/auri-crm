@@ -28,11 +28,13 @@ it('creates a quote or mail template exactly the same way as a contract one', fu
         ->assertRedirect('/dokumentvorlagen');
 
     expect(DocumentTemplate::sole()->type)->toBe(DocumentTemplateType::from($type));
-})->with(['quote', 'mail']);
+})->with(['quote', 'invoice', 'mail']);
 
 it('rejects an unknown document type', function () {
+    // 'invoice' was this test's example of an unknown type until T-15 made
+    // it the fourth real one.
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->post('/dokumentvorlagen', ['name' => 'X', 'body' => '<p>x</p>', 'type' => 'invoice'])
+        ->post('/dokumentvorlagen', ['name' => 'X', 'body' => '<p>x</p>', 'type' => 'receipt'])
         ->assertInvalid(['type']);
 });
 

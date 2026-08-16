@@ -298,9 +298,15 @@ typeLabel: string,
 shootKind: string | null,
 shootKindLabel: string | null,
 };
+export type MailTemplateData = {
+id: string,
+name: string,
+body: string,
+unknownFields: string[],
+};
 }
 namespace Enums {
-export type DocumentTemplateType = 'contract' | 'quote' | 'mail';
+export type DocumentTemplateType = 'contract' | 'quote' | 'invoice' | 'mail';
 }
 }
 namespace Engagement {
@@ -415,6 +421,9 @@ settledViaLabel: string | null,
 paidOn: string | null,
 paymentReference: string | null,
 isLate: boolean,
+invoiceNumber: string | null,
+invoicedOn: string | null,
+hasInvoiceDocument: boolean,
 };
 export type PaymentPlanData = {
 id: string,

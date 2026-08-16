@@ -31,6 +31,9 @@ look like at the moment a render runs:
 | `project.type`       | The project type, labelled (e.g. "Hochzeit").   |
 | `contact.name`       | The project's primary contact's name.           |
 | `contact.email`      | The project's primary contact's email.          |
+| `contact.street`     | Billing address, street and number (M-06). Empty until someone fills it in on the contact screen. |
+| `contact.postcode`   | |
+| `contact.city`       | |
 | `job.bookedAt`       | The booking date, `dd.mm.yyyy`, or empty if unbooked. |
 | `studio.name`        | The studio's registered name (`legal_name`), falling back to its display name. |
 | `studio.legalForm`   | e.g. "GmbH", "Einzelunternehmen".               |
@@ -45,7 +48,43 @@ look like at the moment a render runs:
 | `studio.representative` | Authorised representative.                    |
 | `studio.website`     | |
 | `studio.logoPath`    | The logo's stored path on the `local` disk (T-02, `StudioSettingsResolver::logoPath()`) — a filesystem path, not yet a URL. |
+| `studio.bankHolder`  | Account holder (T-02, Bank fieldset). |
+| `studio.bankIban`    | |
+| `studio.bankBic`     | |
 | `settings.widerrufText` | The configured Widerrufsbelehrung (T-05, Dokumente pane) when the studio has it switched on — an empty string, never the stored text, when it is switched off. |
+
+### The invoice block
+
+`invoice.*` is the one part of the vocabulary that is not derivable from the
+project. An invoice is about one `PaymentInstallment`, so `fromProject()`
+takes it as an optional third argument; every other document type passes
+`null` and gets empty strings rather than a missing key, which is what keeps
+a merge field used on the wrong document type rendering as nothing instead of
+leaving `{{ invoice.number }}` in a PDF.
+
+| Path                 | Value                                          |
+|----------------------|-------------------------------------------------|
+| `invoice.number`     | The allocated number (`RE-2026-17`), from T-04's range for `DocumentType::Invoice`. |
+| `invoice.date`       | Rechnungsdatum — when `IssueInvoice` ran, `dd.mm.yyyy`. |
+| `invoice.servicePeriod` | Leistungszeitraum: the **primary shoot's** date, not the invoice's. The supply happened on the shoot day. Empty when the project has no primary shoot. |
+| `invoice.description` | Project name and the installment's own label ("Anzahlung", "2. Rate"), from `PaymentPlanData::labelForInstallment()`. |
+| `invoice.net`        | Formatted euros. Derived *backwards* out of the installment's gross — see `App\Payments\Support\InvoiceFigures`. |
+| `invoice.vatRate`    | e.g. "19 %", or "0 %" under the small-business rule. |
+| `invoice.vat`        | The remainder, so net + VAT is always exactly the amount charged. |
+| `invoice.gross`      | The installment's `amount` — what the client actually transfers. |
+| `invoice.vatNote`    | The §19 UStG sentence under the small-business rule; empty otherwise. |
+| `invoice.dueOn`      | The installment's due date, `dd.mm.yyyy`. |
+| `invoice.paymentTerm` | "Zahlbar bis {date} ohne Abzug." |
+
+The rate and mode come from the project's **accepted quote** where one exists,
+because Q-04 froze them there at send and that snapshot is what the client
+agreed to — the studio's current setting is only the fallback for a plan with
+no quote behind it.
+
+**e-Rechnung (ZUGFeRD/XRechnung) is deliberately absent.** §14 UStG's
+structured-format mandate is domestic B2B; a private client gets a PDF. If
+corporate work ever needs it, it is a second output of this same renderer
+against this same merge data, not a second data model.
 
 All `studio.*` and `settings.*` fields read through
 `App\Settings\Support\StudioSettingsResolver` (T-02/T-05) — the same tenant

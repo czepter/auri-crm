@@ -40,6 +40,7 @@ use App\Media\Http\Controllers\MultipartUploadController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
 use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
+use App\Reporting\Http\Controllers\ReportController;
 use App\Settings\Http\Controllers\NotificationSettingsController;
 use App\Settings\Http\Controllers\NumberRangeController;
 use App\Settings\Http\Controllers\PaymentSettingsController;
@@ -170,6 +171,12 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/team/einladungen', [InvitationController::class, 'store'])->name('staff.invite');
         Route::delete('/team/einladungen/{invitation}', [InvitationController::class, 'destroy'])
             ->name('staff.invitation.destroy');
+
+        // S-13 + M-07. One screen: how the studio is doing, and what is
+        // coming in. Gated on ViewAllProjects inside the controller — these
+        // are whole-book figures, and a per-role filtered aggregate would
+        // mean something different depending who asked.
+        Route::get('/auswertungen', ReportController::class)->name('reports.index');
 
         Route::get('/kalender', [CalendarController::class, 'index'])->name('calendar.index');
         Route::post('/kalender/abo', [CalendarController::class, 'regenerate'])
@@ -355,6 +362,13 @@ Route::middleware('audience:staff')->group(function () {
         // never a status flipped on its own. See MarkInstallmentPaid.
         Route::post('/raten/{installment}/bezahlt', [PaymentInstallmentController::class, 'markPaid'])
             ->name('payment-installments.mark-paid');
+
+        // M-06's "Fällig stellen" — the row S-09 deferred, because at the
+        // time no invoice state existed for it to move into.
+        Route::post('/raten/{installment}/rechnung', [PaymentInstallmentController::class, 'issueInvoice'])
+            ->name('payment-installments.issue-invoice');
+        Route::get('/raten/{installment}/rechnung', [PaymentInstallmentController::class, 'downloadInvoice'])
+            ->name('payment-installments.invoice');
 
         Route::post('/auftraege/{project}/shootings', [ShootController::class, 'store'])
             ->name('shoots.store');

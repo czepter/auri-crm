@@ -7,8 +7,10 @@ use App\Payments\Actions\ConfirmInstallmentCheckoutSession;
 use App\Payments\Data\PaymentPlanData;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * T-07's portal payment screen — no mockup was drawn for this one ("Mockup —"
@@ -75,5 +77,27 @@ class PaymentController extends Controller
                 'bic' => $bank['bank_bic'],
             ],
         ]);
+    }
+
+    /**
+     * M-06's client-side half. Scoped through visibleProjects() and the
+     * plan, never by installment alone: a public_id from another client's
+     * project must 404 here exactly as the screen itself does, rather than
+     * 403 and confirm the row exists.
+     */
+    public function invoice(string $project, string $installment): StreamedResponse
+    {
+        $contact = auth('portal')->user();
+
+        $found = $contact->visibleProjects()
+            ->where('projects.public_id', $project)
+            ->with('job.paymentPlan.installments')
+            ->firstOrFail();
+
+        $row = $found->job?->paymentPlan?->installments->firstWhere('public_id', $installment);
+
+        abort_if($row === null || $row->invoice_path === null, 404);
+
+        return Storage::disk('local')->response($row->invoice_path, "rechnung-{$row->invoice_number}.pdf");
     }
 }

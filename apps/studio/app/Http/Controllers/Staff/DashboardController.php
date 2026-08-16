@@ -19,6 +19,7 @@ use App\Payments\Models\PaymentInstallment;
 use App\Quotes\Actions\ReadInquiryColumn;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Quotes\Support\QuoteAcceptanceRate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -217,31 +218,15 @@ class DashboardController extends Controller
     }
 
     /**
-     * Accepted over sent across the trailing twelve months, by the date the
-     * quote went out rather than the date it was accepted — otherwise a quote
-     * sent in month eleven and accepted in month thirteen counts in a window
-     * its own denominator is not in.
-     *
-     * Null rather than zero when nothing has been sent: a percentage of
-     * nothing is not zero percent, and the tile does not render.
+     * S-13 shows this same percentage on the Auswertungen screen, so the
+     * query moved to App\Quotes\Support\QuoteAcceptanceRate and both screens
+     * read it from there. Its own doc comment carries the two rules that
+     * matter — keyed on `sent_at`, null rather than zero on an empty
+     * denominator.
      */
     private function acceptanceRate(): ?int
     {
-        $since = now()->subYear();
-
-        $sent = Quote::query()->whereNotNull('sent_at')->where('sent_at', '>=', $since)->count();
-
-        if ($sent === 0) {
-            return null;
-        }
-
-        $accepted = Quote::query()
-            ->where('status', QuoteStatus::Accepted)
-            ->whereNotNull('sent_at')
-            ->where('sent_at', '>=', $since)
-            ->count();
-
-        return (int) round($accepted / $sent * 100);
+        return QuoteAcceptanceRate::trailingTwelveMonths();
     }
 
     /**

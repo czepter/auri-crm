@@ -3,6 +3,7 @@
 namespace App\Payments\Data;
 
 use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -51,6 +52,19 @@ class PaymentPlanData extends Data
             reference: $plan->reference,
             installments: $items,
         );
+    }
+
+    /**
+     * The same label for one installment on its own — M-06's invoice
+     * description needs "Anzahlung" or "2. Rate" and must not grow a second
+     * copy of the rule that would drift from the plan screen's.
+     */
+    public static function labelForInstallment(PaymentInstallment $installment): string
+    {
+        $siblings = $installment->plan->installments()->orderBy('sort_order')->pluck('id')->all();
+        $index = array_search($installment->id, $siblings, true);
+
+        return self::labelFor($index === false ? 0 : (int) $index, count($siblings));
     }
 
     /** Anzahlung, first; Restbetrag, last; "N. Rate" in between — mockup 04-auftrag's own vocabulary. */

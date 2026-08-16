@@ -36,6 +36,15 @@ class ContactController extends Controller
 
         return Inertia::render('Contacts/Edit', [
             'contact' => ContactSuggestionData::fromModel($contact->loadCount('projects')),
+            // M-06's billing address rides beside ContactSuggestionData
+            // rather than inside it: that class is also the typeahead's
+            // response shape (ContactSearchController), and a client's home
+            // address has no business travelling on every keystroke.
+            'billingAddress' => [
+                'street' => $contact->street,
+                'postcode' => $contact->postcode,
+                'city' => $contact->city,
+            ],
             'portalAccessRevokedAt' => $contact->portal_access_revoked_at?->toIso8601String(),
             'canRevokePortalAccess' => $user?->can('revokePortalAccess', $contact) ?? false,
             'dsgvoErasedAt' => $contact->dsgvo_erased_at?->toIso8601String(),
@@ -59,6 +68,13 @@ class ContactController extends Controller
                     ->ignore($contact->id),
             ],
             'phone' => ['nullable', 'string', 'max:64'],
+            // M-06: the billing address §14 UStG wants on an invoice. All
+            // three nullable — a lead that never becomes a paying client
+            // never needs one, and demanding it at capture would slow down
+            // the one screen C-04 built to be fast.
+            'street' => ['nullable', 'string', 'max:255'],
+            'postcode' => ['nullable', 'string', 'max:32'],
+            'city' => ['nullable', 'string', 'max:255'],
         ]);
 
         $contact->update($validated);

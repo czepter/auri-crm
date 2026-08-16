@@ -3,12 +3,15 @@
 namespace App\Payments\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Payments\Actions\IssueInvoice;
 use App\Payments\Actions\MarkInstallmentPaid;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\PaymentInstallment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * T-07's staff action: mark one installment paid, with the date, method and
@@ -38,5 +41,38 @@ class PaymentInstallmentController extends Controller
         );
 
         return back();
+    }
+
+    /**
+     * M-06: issue the invoice for one installment. Same authority as marking
+     * it paid — both are statements the studio makes about money owed on a
+     * job it already booked, and splitting them across two capabilities would
+     * invent a role that can settle a payment but not document it.
+     */
+    public function issueInvoice(PaymentInstallment $installment, IssueInvoice $issue): RedirectResponse
+    {
+        $this->authorize('managePaymentPlan', $installment->plan->job->project);
+
+        $issue($installment, auth('staff')->user());
+
+        return back();
+    }
+
+    /**
+     * Inline rather than an attachment, for the reason ContractController::
+     * download() already gives: the browser's own viewer is what a studio
+     * wants when checking its own paperwork, and the client-side `download`
+     * attribute still saves it.
+     */
+    public function downloadInvoice(PaymentInstallment $installment): StreamedResponse
+    {
+        $this->authorize('managePaymentPlan', $installment->plan->job->project);
+
+        abort_if($installment->invoice_path === null, 404);
+
+        return Storage::disk('local')->response(
+            $installment->invoice_path,
+            "rechnung-{$installment->invoice_number}.pdf",
+        );
     }
 }

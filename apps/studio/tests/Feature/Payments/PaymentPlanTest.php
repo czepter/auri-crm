@@ -5,6 +5,8 @@ use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
+use App\Numbering\Enums\DocumentType;
+use App\Numbering\Models\NumberCounter;
 use App\Payments\Actions\CreatePaymentPlan;
 use App\Payments\Actions\UpdatePaymentPlan;
 use App\Payments\Data\PaymentPlanData;
@@ -120,13 +122,18 @@ it('creates a plan whose installments sum exactly to the total, split evenly wit
         ->and($plan->installments()->orderBy('sort_order')->pluck('amount')->all())->toBe([333, 333, 334]);
 });
 
-it('allocates an Invoice-type document number as the plan\'s own reference — T-07\'s Verwendungszweck', function () {
+it('burns no invoice number on creation — M-06 moved the Verwendungszweck onto the invoice itself', function () {
+    // T-07 allocated an Invoice-type number here as the plan's reference.
+    // Once real invoices existed, every one of those was a number no invoice
+    // carried — a hole in the sequence a Betriebsprüfung asks about. The
+    // client now transfers under the issued invoice's own number.
     Storage::fake('local');
     $job = signedContractJob();
 
     $plan = app(CreatePaymentPlan::class)($job, 500, ['2026-09-01']);
 
-    expect($plan->fresh()->reference)->toStartWith('RE-');
+    expect($plan->fresh()->reference)->toBeNull()
+        ->and(NumberCounter::where('document_type', DocumentType::Invoice->value)->count())->toBe(0);
 });
 
 it('logs the creation, naming the job and the total', function () {
@@ -403,7 +410,7 @@ it('labels installments Anzahlung, N. Rate and Restbetrag by position, mockup 04
     $job = signedContractJob();
     $plan = app(CreatePaymentPlan::class)($job, 900, ['2026-09-01', '2026-10-01', '2026-11-01']);
 
-    $data = \App\Payments\Data\PaymentPlanData::fromModel($plan->load('installments'));
+    $data = PaymentPlanData::fromModel($plan->load('installments'));
 
     expect(collect($data->installments)->pluck('label')->all())->toBe(['Anzahlung', '2. Rate', 'Restbetrag']);
 });

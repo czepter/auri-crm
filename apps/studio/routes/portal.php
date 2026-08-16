@@ -115,6 +115,13 @@ Route::middleware('portal.maintenance')->group(function () {
         Route::post('/projekte/{project}/zahlungen/{installment}/jetzt-zahlen', PaymentCheckoutController::class)
             ->middleware('portal.capability:payment_status')
             ->name('portal.payments.checkout');
+
+        // M-06. The invoice itself, behind the same gate as the screen that
+        // links to it — a client who may not see payment status may not
+        // download the paperwork behind it either.
+        Route::get('/projekte/{project}/zahlungen/{installment}/rechnung', [PaymentController::class, 'invoice'])
+            ->middleware('portal.capability:payment_status')
+            ->name('portal.payments.invoice');
     });
 });
 
