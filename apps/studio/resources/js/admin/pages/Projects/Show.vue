@@ -459,6 +459,7 @@ function submitMarkPaid(installmentId: string) {
 
         <div class="feedlab">{{ $t('project.activity') }}</div>
         <div class="feed">
+          <p v-if="!activity.length" class="hint">{{ $t('project.noActivity') }}</p>
           <div v-for="(event, index) in activity" :key="index" class="ev">
             <div class="dot"></div>
             <div>

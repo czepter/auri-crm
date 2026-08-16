@@ -32,7 +32,9 @@ use App\Payments\Models\PaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Settings\Support\StudioSettingsResolver;
+use App\Support\AuditLogger;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -121,10 +123,27 @@ class DemoCrmSeeder extends Seeder
                 'sort_order' => 0,
             ]);
 
-            Lead::factory()->for($project)->atStage(LeadStage::from($stage), $daysAgo)->create([
+            $lead = Lead::factory()->for($project)->atStage(LeadStage::from($stage), $daysAgo)->create([
                 'source' => LeadSource::from($source),
                 'captured_by_id' => $staff->id,
             ]);
+
+            // The cast is built from models rather than CaptureInquiry, so the
+            // audit row that action would have written has to be written here —
+            // without it every seeded project's Aktivität feed is empty. Audit
+            // rows are append-only, so the timestamp is travelled to rather than
+            // corrected afterwards.
+            Carbon::setTestNow($lead->stage_entered_at);
+
+            AuditLogger::record(
+                event: 'lead.captured',
+                actor: $staff,
+                context: ['source' => $source, 'via' => $lead->captured_via->value],
+                subject: $lead->public_id,
+                projectId: $project->id,
+            );
+
+            Carbon::setTestNow();
 
             $projects[$name] = $project;
 
