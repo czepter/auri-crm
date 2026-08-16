@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Viola & Chris — Nordlicht Fotografie</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* Der erste Tag im Portal. Es gibt: zwei Namen, einen Wunschtermin, eine
+   Art. Es gibt nicht: Bilder, Termine, Angebot, Vertrag, Zahlungen.
+ *
+ * Deshalb ist das hier kein Dashboard mit fünf leeren Kästen, sondern ein
+ * Brief. Schmales Maß, viel Luft, kein Bild — und genau eine Auskunft:
+ * was als Nächstes passiert und wer sich kümmert. Der Kopf ist typografisch,
+ * weil es von diesem Paar noch kein Foto gibt; sobald das erste Shooting
+ * geliefert ist, wird aus diesem Kopf das Titelbild (portal-projekt.html).
+ */
+.bar {
+  border-bottom: 1px solid var(--line);
+}
+.bar .inner {
+  max-width: var(--page); margin: 0 auto; padding: var(--s4) var(--s5);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s5);
+}
+.wordmark {
+  display: flex; align-items: center; gap: 9px;
+  font: 600 15px/1 var(--sans); letter-spacing: -0.012em; text-decoration: none;
+}
+.wordmark i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.bar a.out { font-size: 13.5px; color: var(--ink-2); text-decoration: none; }
+.bar a.out:hover { color: var(--ink); }
+
+/* Briefmaß: 620px. Schmaler als jede andere Seite im Portal — das ist die
+   Absicht. Der Screen soll sich anders anfühlen, nicht nur leerer. */
+.letter { max-width: 620px; margin: 0 auto; padding: var(--s10) var(--s5) var(--s9); }
+
+.letter .eyebrow { margin-bottom: var(--s5); }
+.letter .display { font-size: clamp(42px, 6vw, 62px); }
+.letter .when {
+  margin-top: var(--s5); font-size: 15px; color: var(--ink-2);
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.tag {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 11px; border-radius: var(--r-pill);
+  background: var(--accent-soft); color: var(--accent);
+  font: 600 11.5px/1 var(--sans); letter-spacing: .02em;
+}
+
+.hair { height: 1px; background: var(--line); margin: var(--s8) 0; }
+
+/* Die einzige Auskunft, die es zu diesem Zeitpunkt gibt. Ein Satz in der
+   Serif — dieselbe Stelle, an der später der Countdown steht. */
+.next .serif-lg { font-size: clamp(24px, 3vw, 32px); }
+.next p { margin-top: var(--s4); max-width: 48ch; }
+
+/* Wer sich kümmert. Am Tag der Anfrage ist Vertrauen die ganze Aufgabe —
+   deshalb steht hier ein Mensch und keine Support-Adresse. */
+.person {
+  margin-top: var(--s8);
+  display: flex; align-items: center; gap: var(--s5);
+  padding: var(--s5); border: 1px solid var(--line); border-radius: var(--r);
+  background: #fff;
+}
+.person .av {
+  width: 54px; height: 54px; border-radius: 50%; flex: none;
+  display: grid; place-items: center; background: var(--sunk);
+  font: 400 19px/1 var(--serif); color: var(--ink-2);
+}
+.person b { display: block; font: 600 15px/1.3 var(--sans); letter-spacing: -0.01em; }
+.person span { font-size: 13.5px; color: var(--ink-2); }
+.person .contact { margin-left: auto; display: flex; gap: var(--s3); flex-wrap: wrap; }
+.chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 15px; border-radius: var(--r-pill);
+  border: 1px solid var(--line-2); text-decoration: none;
+  font: 500 13px/1 var(--sans); color: var(--ink);
+  transition: background .18s var(--ease), border-color .18s var(--ease);
+}
+.chip:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.chip svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+
+/* Offene Handlung — heute genau eine. Sie sieht aus wie die Zeilen unter
+   "Unterlagen" im gebuchten Projekt, damit später nichts umlernt. */
+.todo { margin-top: var(--s8); border-top: 1px solid var(--line); }
+.item {
+  display: grid; grid-template-columns: 1fr auto 22px; align-items: center; gap: var(--s5);
+  padding: var(--s5) var(--s4); margin-inline: calc(var(--s4) * -1);
+  border-bottom: 1px solid var(--line);
+  text-decoration: none; color: inherit; border-radius: var(--r-sm);
+  transition: background .18s var(--ease);
+}
+.item:hover { background: var(--sunk); }
+.item h3 { font: 400 22px/1.2 var(--serif); margin: 0 0 4px; letter-spacing: -0.01em; }
+.item .sub { font-size: 13.5px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
+.item .chev { justify-self: end; color: var(--ink-3); transition: transform .3s var(--ease), color .2s var(--ease); }
+.item:hover .chev { transform: translateX(3px); color: var(--ink); }
+.item svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.4; }
+
+/* Was noch nicht da ist, wird einmal genannt und nicht fünfmal als leerer
+   Kasten gezeigt. Ein Satz statt vier Platzhalter. */
+.later {
+  margin-top: var(--s7); padding-top: var(--s5);
+  font-size: 13.5px; color: var(--ink-3); line-height: 1.6;
+}
+
+.foot {
+  border-top: 1px solid var(--line);
+  max-width: var(--page); margin: 0 auto;
+  padding: var(--s6) var(--s5) var(--s8);
+  display: flex; justify-content: space-between; gap: var(--s5); flex-wrap: wrap;
+  font-size: 13px; color: var(--ink-3);
+}
+.foot a { text-decoration: none; }
+.foot a:hover { color: var(--ink); }
+.foot .links { display: flex; gap: var(--s5); }
+
+@media (max-width: 700px) {
+  .letter { padding-top: var(--s8); }
+  .person { flex-wrap: wrap; }
+  .person .contact { margin-left: 0; width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="inner">
+    <a class="wordmark" href="#"><i></i> Nordlicht Fotografie</a>
+    <a class="out" href="#">Abmelden</a>
+  </div>
+</header>
+
+<main class="letter">
+  <p class="eyebrow rise rise-1">Hochzeit</p>
+  <h1 class="display rise rise-2">Viola <span class="amp">&amp;</span> Chris</h1>
+  <p class="when rise rise-3 num">
+    14. Juni 2026 · Gut Basthorst
+    <span class="tag">Wunschtermin, noch nicht reserviert</span>
+  </p>
+
+  <div class="rise rise-4">
+    <div class="hair"></div>
+
+    <section class="next">
+      <h2 class="serif-lg">Wir haben eure Anfrage.</h2>
+      <p class="lead">Christian schaut sich den Termin an und meldet sich bis Freitag mit einem Angebot. Bis dahin müsst ihr nichts tun.</p>
+    </section>
+
+    <section class="person">
+      <span class="av">CB</span>
+      <span>
+        <b>Christian Bergmann</b>
+        <span>Euer Fotograf</span>
+      </span>
+      <span class="contact">
+        <a class="chip" href="tel:+4940123456">
+          <svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a1 1 0 01-1 1A16 16 0 014 5a1 1 0 011-1z"/></svg>
+          Anrufen
+        </a>
+        <a class="chip" href="#">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg>
+          Schreiben
+        </a>
+      </span>
+    </section>
+
+    <section class="todo">
+      <a class="item" href="#">
+        <div>
+          <h3>Fragebogen</h3>
+          <div class="sub"><span class="dot open"></span> 8 Fragen · dauert etwa fünf Minuten</div>
+        </div>
+        <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+    </section>
+
+    <p class="later">
+      Angebot, Vertrag und Bilder kommen hierher, sobald es sie gibt.
+    </p>
+  </div>
+</main>
+
+<footer class="foot">
+  <span>Nordlicht Fotografie · Elbchaussee 12, 22765 Hamburg</span>
+  <span class="links">
+    <a href="#">Impressum</a>
+    <a href="#">Datenschutz</a>
+    <a href="#">AGB</a>
+  </span>
+</footer>
+
+</body>
+</html>

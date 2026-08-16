@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Viola & Chris — Nordlicht Fotografie</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* Die Startseite eines Kunden mit mehreren Buchungen.
+ *
+ * Alle Einträge sind gleichrangig: gleiche Zeilenhöhe, gleicher Umfang an
+ * Information, gleiche Zielseite. Keine Buchung ist "die aktuelle" und keine
+ * "das Archiv" — die Hochzeit steht hier neben dem Babybauchshooting, weil
+ * beide ein eigener Auftrag mit eigenem Vertrag, eigenen Zahlungen und
+ * eigener Galerie sind.
+ *
+ * Jede Zeile zeigt ihre eigene Phase. Genau das ist der Normalfall: ein
+ * offenes Angebot, eine gebuchte Hochzeit und eine gelieferte Galerie
+ * nebeneinander, alle drei für dieselben zwei Menschen.
+ */
+.bar { border-bottom: 1px solid var(--line); }
+.bar .inner {
+  max-width: var(--page); margin: 0 auto; padding: var(--s4) var(--s5);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s5);
+}
+.wordmark {
+  display: flex; align-items: center; gap: 9px;
+  font: 600 15px/1 var(--sans); letter-spacing: -0.012em; text-decoration: none;
+}
+.wordmark i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.bar a.out { font-size: 13.5px; color: var(--ink-2); text-decoration: none; }
+.bar a.out:hover { color: var(--ink); }
+
+.head { padding-block: var(--s9) 0; }
+.head .display { font-size: clamp(42px, 6vw, 68px); }
+.head .lead { margin-top: var(--s5); }
+
+.foot {
+  border-top: 1px solid var(--line);
+  max-width: var(--page); margin: var(--s10) auto 0;
+  padding: var(--s6) var(--s5) var(--s8);
+  display: flex; justify-content: space-between; gap: var(--s5); flex-wrap: wrap;
+  font-size: 13px; color: var(--ink-3);
+}
+.foot a { text-decoration: none; }
+.foot a:hover { color: var(--ink); }
+.foot .links { display: flex; gap: var(--s5); }
+
+@media (max-width: 700px) { .head { padding-top: var(--s8); } }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="inner">
+    <a class="wordmark" href="#"><i></i> Nordlicht Fotografie</a>
+    <a class="out" href="#">Abmelden</a>
+  </div>
+</header>
+
+<main class="page">
+  <section class="head">
+    <h1 class="display rise rise-2">Viola <span class="amp">&amp;</span> Chris</h1>
+  </section>
+
+  <section class="orders rise rise-4">
+    <div class="yearhead">2027</div>
+
+    <a class="entry" href="portal-anfrage.html">
+      <span class="mono">27</span>
+      <span>
+        <span class="kind">Babybauch</span>
+        <h3>Babybauchshooting</h3>
+        <div class="sub">Termin noch offen · Hamburg</div>
+      </span>
+      <span class="state"><span class="dot open"></span> Angebot offen</span>
+      <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+    </a>
+
+    <div class="yearhead">2026</div>
+
+    <a class="entry" href="portal-projekt.html">
+      <img src="img/p005-sm.jpg" alt="">
+      <span>
+        <span class="kind">Hochzeit</span>
+        <h3>Hochzeitstag</h3>
+        <div class="sub num">21.08.2026 · Gut Basthorst, Basthorst</div>
+      </span>
+      <span class="state"><span class="dot"></span> Gebucht · 1.500 € offen</span>
+      <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+    </a>
+
+    <div class="yearhead">2025</div>
+
+    <a class="entry" href="galerie.html">
+      <img src="img/p016-sm.jpg" alt="">
+      <span>
+        <span class="kind">Paarshooting</span>
+        <h3>Verlobungsshooting</h3>
+        <div class="sub num">29.03.2025 · Jenischpark, Hamburg</div>
+      </span>
+      <span class="state"><span class="dot done"></span> 33 Bilder geliefert</span>
+      <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+    </a>
+  </section>
+</main>
+
+<footer class="foot">
+  <span>Nordlicht Fotografie · Elbchaussee 12, 22765 Hamburg</span>
+  <span class="links">
+    <a href="#">Impressum</a>
+    <a href="#">Datenschutz</a>
+    <a href="#">AGB</a>
+  </span>
+</footer>
+
+</body>
+</html>

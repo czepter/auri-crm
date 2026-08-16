@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gut Basthorst — Nordlicht Fotografie</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* Derselbe Screen, andere Größenordnung: eine Eventlocation mit 42 Buchungen
+ * über fünf Jahre. Dieselbe Komponente, dieselbe Zeile, derselbe Rang —
+ * nur zwei Zugaben, die erst ab dieser Menge Sinn ergeben:
+ *
+ *   1. Ein Filter über den offenen Posten. Bei drei Buchungen wäre er
+ *      Dekoration, bei zweiundvierzig ist er der Grund, warum jemand die
+ *      Seite überhaupt öffnet.
+ *   2. Zusammengefasste Jahrgänge. Eine Platzentscheidung gegen 42 Zeilen,
+ *      kein Werturteil: ein Klick, und der Jahrgang steht komplett da.
+ */
+.bar { border-bottom: 1px solid var(--line); }
+.bar .inner {
+  max-width: var(--page); margin: 0 auto; padding: var(--s4) var(--s5);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--s5);
+}
+.wordmark {
+  display: flex; align-items: center; gap: 9px;
+  font: 600 15px/1 var(--sans); letter-spacing: -0.012em; text-decoration: none;
+}
+.wordmark i { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
+.bar a.out { font-size: 13.5px; color: var(--ink-2); text-decoration: none; }
+.bar a.out:hover { color: var(--ink); }
+
+.head { padding-block: var(--s9) 0; }
+.head .display { font-size: clamp(42px, 6vw, 68px); }
+.head .lead { margin-top: var(--s5); }
+
+.filters { display: flex; gap: var(--s2); flex-wrap: wrap; margin-top: var(--s7); }
+.filter {
+  padding: 9px 16px; border-radius: var(--r-pill);
+  border: 1px solid var(--line-2); background: transparent;
+  font: 500 13px/1 var(--sans); color: var(--ink-2); cursor: pointer;
+  transition: background .18s var(--ease), color .18s var(--ease), border-color .18s var(--ease);
+}
+.filter:hover { border-color: var(--ink-3); color: var(--ink); }
+.filter[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.filter .n { opacity: .6; margin-left: 6px; font-variant-numeric: tabular-nums; }
+
+.orders { margin-top: var(--s5); }
+
+.foot {
+  border-top: 1px solid var(--line);
+  max-width: var(--page); margin: var(--s10) auto 0;
+  padding: var(--s6) var(--s5) var(--s8);
+  display: flex; justify-content: space-between; gap: var(--s5); flex-wrap: wrap;
+  font-size: 13px; color: var(--ink-3);
+}
+.foot a { text-decoration: none; }
+.foot a:hover { color: var(--ink); }
+
+@media (max-width: 700px) { .head { padding-top: var(--s8); } }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="inner">
+    <a class="wordmark" href="#"><i></i> Nordlicht Fotografie</a>
+    <a class="out" href="#">Abmelden</a>
+  </div>
+</header>
+
+<main class="page">
+  <section class="head">
+    <h1 class="display rise rise-2">Gut Basthorst</h1>
+    <p class="lead rise rise-3">42 Buchungen seit 2023 · 3 offene Posten.</p>
+  </section>
+
+  <div class="filters rise rise-4">
+    <button class="filter" aria-pressed="true">Alle <span class="n">42</span></button>
+    <button class="filter" aria-pressed="false">Offen <span class="n">3</span></button>
+    <button class="filter" aria-pressed="false">Anstehend <span class="n">6</span></button>
+    <button class="filter" aria-pressed="false">Geliefert <span class="n">33</span></button>
+  </div>
+
+  <section class="orders rise rise-4">
+    <div class="yearhead">2027</div>
+
+    <a class="entry" href="portal-anfrage.html">
+      <span class="mono">27</span>
+      <span>
+        <span class="kind">Hochzeit</span>
+        <h3>Sander &amp; Winkler</h3>
+        <div class="sub num">Wunschtermin 12.06.2027 · Scheune</div>
+      </span>
+      <span class="state"><span class="dot open"></span> Angebot offen</span>
+      <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+    </a>
+
+    <a class="entry" href="portal-anfrage.html">
+      <span class="mono">27</span>
+      <span>
+        <span class="kind">Firmenfeier</span>
+        <h3>Contorhaus Jahresempfang</h3>
+        <div class="sub num">15.01.2027 · Remise</div>
+      </span>
+      <span class="state"><span class="dot"></span> Gebucht</span>
+      <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+    </a>
+
+    <div class="yearhead">2026</div>
+
+    <a class="entry" href="portal-projekt.html">
+      <img src="img/p005-sm.jpg" alt="">
+      <span>
+        <span class="kind">Hochzeit</span>
+        <h3>Viola &amp; Chris</h3>
+        <div class="sub num">21.08.2026 · Gutshaus &amp; Park</div>
+      </span>
+      <span class="state"><span class="dot open"></span> 1.500 € offen</span>
+      <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+    </a>
+
+    <a class="entry" href="portal-projekt.html">
+      <img src="img/p020-sm.jpg" alt="">
+      <span>
+        <span class="kind">Hochzeit</span>
+        <h3>Sophie Lang &amp; Erik Voss</h3>
+        <div class="sub num">19.09.2026 · Gutshaus</div>
+      </span>
+      <span class="state"><span class="dot"></span> Gebucht</span>
+      <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+    </a>
+
+    <a class="entry" href="galerie.html">
+      <img src="img/p011-sm.jpg" alt="">
+      <span>
+        <span class="kind">Location</span>
+        <h3>Frühjahrsaufnahmen Park</h3>
+        <div class="sub num">04.05.2026 · für die Website</div>
+      </span>
+      <span class="state"><span class="dot done"></span> 68 Bilder geliefert</span>
+      <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+    </a>
+
+    <a class="entry" href="galerie.html">
+      <img src="img/p025-sm.jpg" alt="">
+      <span>
+        <span class="kind">Hochzeit</span>
+        <h3>Ahrens &amp; Kroll</h3>
+        <div class="sub num">28.03.2026 · Scheune</div>
+      </span>
+      <span class="state"><span class="dot done"></span> 412 Bilder geliefert</span>
+      <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+    </a>
+
+    <!-- Ab hier zusammengefasst: reine Zeilenmenge, ein Klick öffnet alles. -->
+    <button class="folded" type="button">
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+      <b>2025</b> Buchungen anzeigen
+      <span class="count">11 Buchungen · alle geliefert</span>
+    </button>
+
+    <button class="folded" type="button">
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+      <b>2024</b> Buchungen anzeigen
+      <span class="count">14 Buchungen · alle geliefert</span>
+    </button>
+
+    <button class="folded" type="button">
+      <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>
+      <b>2023</b> Buchungen anzeigen
+      <span class="count">9 Buchungen · alle geliefert</span>
+    </button>
+  </section>
+</main>
+
+<footer class="foot">
+  <span>Nordlicht Fotografie · Elbchaussee 12, 22765 Hamburg</span>
+  <span><a href="#">Impressum</a></span>
+</footer>
+
+</body>
+</html>

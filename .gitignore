@@ -21,3 +21,7 @@ test-results/
 
 # Agent worktrees, checked out per branch under this repo
 .claude/worktrees/
+
+# Redesign mockup stock photos — 5.5 MB of demo JPGs the HTML points at.
+# Machine-local: the mockups render without them, and git keeps blobs forever.
+mockups/redesign/img/
