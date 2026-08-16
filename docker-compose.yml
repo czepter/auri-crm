@@ -139,8 +139,10 @@ services:
       minio-init:
         condition: service_completed_successfully
 
-  # Carries routes/api.php, and with it both the Stripe webhook and the read
-  # routes the gallery below renders against.
+  # Carries routes/api.php: the Stripe webhook, the inbound-mail webhook, the
+  # public inquiry endpoint and the machine-facing read/write routes. The
+  # gallery left this surface with P-08 (#227) — it is served by `portal` now,
+  # behind the view gate whose claim lives in that session.
   api:
     build:
       context: .
@@ -165,56 +167,6 @@ services:
         condition: service_healthy
       minio-init:
         condition: service_completed_successfully
-
-  # The guest-facing Astro SSR gallery (apps/gallery), in `astro dev` rather
-  # than the built image the deploy runs: source is bind-mounted, so HMR works
-  # the same way `pnpm --filter @studio/app dev` does for the admin bundle.
-  #
-  # It reaches Laravel only over the api surface, container to container
-  # (API_URL) — a guest's browser never talks to the api host directly, and the
-  # page cannot be prerendered because which GalleryVersion is current changes
-  # the moment a studio owner republishes (apps/gallery/astro.config.mjs).
-  gallery:
-    image: node:24-slim
-    working_dir: /app/apps/gallery
-    volumes:
-      - .:/app
-      # Anonymous volumes, shadowing whatever the host installed: pnpm resolves
-      # optional native binaries per platform (rollup, esbuild), and this repo
-      # is checked out on macOS — the darwin-arm64 build the host has is not
-      # loadable in here. These keep the container's own linux install separate
-      # rather than overwriting the host's, which would break `pnpm dev` on the
-      # host the moment this service ran once.
-      - /app/node_modules
-      - /app/apps/gallery/node_modules
-      # Same shadowing, for the same reason: `astro dev` writes the running
-      # server's pid to .astro/dev.json, and on the host bind mount that file
-      # outlives the container it describes. The next container then finds a
-      # pid that resolves to something else in its own namespace, decides a dev
-      # server is already running, and refuses to start.
-      - /app/apps/gallery/.astro
-      - pnpm-store:/pnpm-store
-    environment:
-      npm_config_store_dir: /pnpm-store
-      API_URL: http://api:8000
-      # F-11/G-13: empty leaves the SSR process fully inert — no outbound calls
-      # at all — same empty-by-default rule as SENTRY_LARAVEL_DSN above.
-      SENTRY_DSN: ${GALLERY_SENTRY_DSN:-}
-    command: >
-      sh -c "corepack enable &&
-      pnpm install --frozen-lockfile --filter @studio/gallery &&
-      pnpm --filter @studio/gallery dev --host 0.0.0.0"
-    ports:
-      - "127.0.0.1:${GALLERY_PORT:-4321}:4321"
-    depends_on:
-      - api
-
-  # HTML-to-PDF, over HTTP (M-01). The only consumer is RenderContractJob,
-  # which runs on the `worker` container's render queue — never the request
-  # thread. Pinned to a major version rather than `:latest`, the same reason
-  # every other image here names one; see GOTENBERG_URL / config/services.php
-  # for how the app finds it, and app/Contracts/Support/GotenbergClient.php
-  # for the one place that calls it.
   gotenberg:
     image: gotenberg/gotenberg:8
     ports:

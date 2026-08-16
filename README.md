@@ -24,8 +24,7 @@ request.
 |---|---|---|---|---|
 | Admin | `admin` | `apps/studio/routes/admin.php` | Studio staff | Private, opt-in TOTP |
 | Portal | `portal` | `apps/studio/routes/portal.php` | Booked clients | Public, magic-link sign-in |
-| API | `api` | `apps/studio/routes/api.php` | The gallery, integrations, the MCP server | Public JSON |
-| Gallery | — | `apps/gallery` (Astro SSR) | Clients and wedding guests | Public |
+| API | `api` | `apps/studio/routes/api.php` | Integrations, webhooks, the MCP server | Public JSON |
 
 Each Laravel surface signs its sessions with its own cookie name
 (`Surface::COOKIES`) so a staff session and a client session can never be
@@ -37,14 +36,12 @@ mistaken for one another on a shared host.
 apps/
   studio/        Laravel 13 · Inertia · Vue 3 · Tailwind 4 · shadcn-vue
                  Postgres · Redis/Horizon · S3-compatible object storage
-  gallery/       Astro 7, server-rendered — the guest gallery viewer
 packages/
   contracts/     openapi.json, generated from the api surface's routes
   mcp/           MCP server over the integration API (stdio or HTTP)
 docker/
   php/           local development image
   app/           production image for the three Laravel surfaces
-  gallery/       production image for the Astro gallery
 docs/            architecture, deployment, backlog, sprints, specs
 ```
 
@@ -87,14 +84,14 @@ separately also run separately here — a route that leaked across surfaces
 shows up as a 200 on the wrong port:
 
 ```sh
-docker compose up -d portal api gallery      # portal :8001, api :8002, Astro gallery :4321
+docker compose up -d portal api             # portal :8001, api :8002
 ```
 
-The gallery reaches Laravel over the api surface container to container
-(`API_URL=http://api:8000`), never from the guest's browser, and installs its
-own linux `node_modules` inside the container rather than reusing the host's.
+The gallery is part of the portal surface (P-08): the grid, the lightbox and
+the image bytes all sit behind the view gate whose claim lives in that
+session.
 
-Ports are variables (`APP_PORT`, `PORTAL_PORT`, `API_PORT`, `GALLERY_PORT`,
+Ports are variables (`APP_PORT`, `PORTAL_PORT`, `API_PORT`,
 `POSTGRES_PORT`, `MINIO_PORT`, `GOTENBERG_PORT`, `GLITCHTIP_PORT`) so several
 git worktrees of this repository can run their own stack at once; set them in
 a root `.env` per worktree.
@@ -102,8 +99,7 @@ a root `.env` per worktree.
 | Service | Where | What for |
 |---|---|---|
 | Portal | http://localhost:8001 | The client-facing surface (`routes/portal.php`) |
-| API | http://localhost:8002 | `routes/api.php`, and what the gallery renders against |
-| Gallery | http://localhost:4321 | Guest-facing Astro SSR, `/g/:galleryId` |
+| API | http://localhost:8002 | `routes/api.php` — webhooks, inquiries, the machine surface |
 | Mailpit | http://localhost:8025 | Every mail the app sends locally |
 | MinIO console | http://localhost:9001 | The `media` bucket (`studio` / `studio-media-secret`) |
 | Horizon | `/horizon` on the admin surface | Queue supervisors and failed jobs |

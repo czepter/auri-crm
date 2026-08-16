@@ -19,10 +19,11 @@ use Inertia\Response;
  *
  * It was two pages before, and the second one led nowhere: after the password
  * this screen said "Bilderübersicht noch nicht verfügbar" while the real grid
- * sat on the Astro host that nothing linked to and that the api surface could
- * not gate at all (EnsureUngatedGallery). One page ends both problems — the
- * cover a visitor lands on is the cover they scroll past into the pictures,
- * and the pictures are served by the surface that holds the claim.
+ * sat on an Astro host that nothing linked to and that the api surface could
+ * not gate at all — no session ever reached it. One page ends both problems:
+ * the cover a visitor lands on is the cover they scroll past into the
+ * pictures, and the pictures are served by the surface that holds the claim.
+ * apps/gallery and its whole api-surface half are gone with it.
  *
  * Its own GET renders locked-or-unlocked itself rather than being wrapped by
  * EnsureGalleryGate, which would have nowhere to redirect a failing request

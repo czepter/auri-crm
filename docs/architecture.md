@@ -48,11 +48,11 @@ rather than an omission. Deliberate exceptions live in the matrix's own
 `PUBLIC_ROUTES` list — the portal login, the calendar subscription feed, the
 Stripe webhook — so each is a recorded decision.
 
-The Astro gallery (`apps/gallery`) is the fourth audience and not a surface
-at all: its own image, its own process, reaching Laravel only over the api
-surface's public JSON. It is server-rendered rather than prerendered because
-which gallery version is current changes the moment a studio owner
-republishes.
+The gallery is not a fourth audience and no longer a separate app. P-08
+(#227) folded the guest grid, its lightbox and the image bytes into the
+portal surface, behind `gallery.gate:view` — the claim lives in that
+surface's session, which is exactly why a separate origin could never check
+it.
 
 ## Authorization, in four layers
 
@@ -167,7 +167,7 @@ never from a request thread.
 on the response, pushed into the log context, and — via
 `ObservabilityServiceProvider` — stamped onto every queued job's payload as
 it is pushed. The Astro gallery forwards the same header into its api calls
-(`apps/gallery/src/lib/observability/`), so one id follows a guest's page
+(the portal surface's own request id), so one id follows a guest's page
 view through SSR, into Laravel, and out into a job.
 
 Errors go to a self-hosted GlitchTip over the Sentry protocol — our own

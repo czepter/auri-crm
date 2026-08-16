@@ -47,17 +47,6 @@ const PUBLIC_ROUTES = [
     // `audience:` middleware could gate — there is no staff or portal user
     // on this request to hold one. See StripeWebhookController's own doc
     // comment.
-    // G-08's own scope note: a gallery guest holds no `audience:api` token
-    // yet — G-06 (#57) is the story that decides how one is earned (a PIN,
-    // an emailed link, a session) and wraps these two routes with that
-    // check. Until it lands, both are deliberately reachable by public_id
-    // alone, same as every other still-open gate in this phase. G-09's two
-    // favorite routes below inherit the same gap on purpose rather than
-    // solving it themselves — see AssetFavoriteController's own doc comment
-    // for why an `audience:api` bearer token doesn't fit an anonymous
-    // gallery guest anyway, gate or no gate. G-12's two comment routes
-    // inherit the same gap, for the same reason — see
-    // AssetCommentController's own doc comment.
     'api' => [
         'api/health', 'api/stripe/webhook',
         // C-08. The one route in the system a stranger is meant to reach —
@@ -70,9 +59,6 @@ const PUBLIC_ROUTES = [
         // above it: the caller proves itself with an HMAC over the raw
         // body, a credential 'audience:' has no vocabulary for.
         'api/mail/eingang',
-        'api/galleries/{gallery}', 'api/gallery-versions/{galleryVersion}/images/{key}',
-        'api/gallery-versions/{galleryVersion}/favorites', 'api/gallery-versions/{galleryVersion}/favorites/{key}',
-        'api/gallery-versions/{galleryVersion}/comments',
     ],
 
     // The client's way in. Public by necessity — the only person who needs it
@@ -100,6 +86,11 @@ const PUBLIC_ROUTES = [
         // `gallery.gate:view` or `gallery.gate:download` even though that
         // does not read as `audience:` to this test.
         'galerien/{gallery}', 'galerien/{gallery}/passwort',
+        // G-09's heart and G-12's comments, moved here off the api surface
+        // with the grid (P-08). Behind `gallery.gate:view`, which does not
+        // read as `audience:` to this test any more than the routes below do.
+        'galerien/{gallery}/beteiligung', 'galerien/{gallery}/favorit',
+        'galerien/{gallery}/kommentar',
         // P-08 (#227): the image bytes, bound on the version and gated by
         // its parent gallery's own `gallery.gate:view` — same story as the
         // routes below, and the reason they moved off the api surface at

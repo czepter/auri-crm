@@ -9,7 +9,7 @@ use Illuminate\Notifications\Notification;
 /**
  * G-12: a gallery guest favorited one asset. in_app only, same reasoning as
  * AssetCommented's own doc comment. Dispatched only when a favorite is added
- * (AssetFavoriteController::toggle()'s `true` branch) — a guest un-marking
+ * (GalleryEngagementController::toggleFavorite()'s `true` branch) — a guest un-marking
  * one is not itself an event the studio needs surfaced.
  */
 class AssetFavorited extends Notification

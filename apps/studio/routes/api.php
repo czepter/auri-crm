@@ -3,10 +3,6 @@
 use App\Crm\Http\Controllers\PublicInquiryController;
 use App\Engagement\Http\Controllers\InboundMailController;
 use App\Enums\Capability;
-use App\Gallery\Http\Controllers\AssetCommentController;
-use App\Gallery\Http\Controllers\AssetFavoriteController;
-use App\Gallery\Http\Controllers\GalleryImageController;
-use App\Gallery\Http\Controllers\GalleryReadController;
 use App\Http\Controllers\GuestIdentityController;
 use App\Http\Controllers\HealthController;
 use App\Integration\Http\Controllers\ContactController;
@@ -35,39 +31,13 @@ Route::post('/anfragen', PublicInquiryController::class)->name('api.inquiries.st
 // app's audience middleware has no vocabulary for.
 Route::post('/mail/eingang', InboundMailController::class)->name('api.mail.inbound');
 
-// G-08/G-09/G-12: everything the Astro gallery viewer calls — version
-// metadata, image bytes, favorites, comments. All of it behind
-// `gallery.ungated`: this surface holds no session and so cannot evaluate
-// G-06's view claim, which is why a gallery carrying a view password is not
-// served here at all (see EnsureUngatedGallery, and P-08 (#227) for the
-// portal-side page that serves those instead). Without it the password
-// protected one screen and left both the asset list and the bytes open to
-// anyone holding an id.
-Route::middleware('gallery.ungated')->group(function () {
-    Route::get('/galleries/{gallery:public_id}', GalleryReadController::class)->name('api.galleries.show');
-    Route::get('/gallery-versions/{galleryVersion:public_id}/images/{key}', GalleryImageController::class)
-        ->where('key', '.*')
-        ->name('api.gallery-versions.images.show');
-
-    // The first browser-originated calls this surface serves (the two routes
-    // above are only ever hit server-side, by Astro's own SSR fetch, or from
-    // a bare <img> src), so they are also what config/cors.php exists for.
-    Route::get('/gallery-versions/{galleryVersion:public_id}/favorites', [AssetFavoriteController::class, 'index'])
-        ->name('api.gallery-versions.favorites.index');
-    Route::post('/gallery-versions/{galleryVersion:public_id}/favorites/{key}', [AssetFavoriteController::class, 'toggle'])
-        ->where('key', '.*')
-        ->name('api.gallery-versions.favorites.toggle');
-
-    // asset_key travels as a request field on the comment routes, not a path
-    // segment, since a comment (unlike a favorite) is never addressed by its
-    // own key/guest pair. Same guest-identity gap as the favorite routes,
-    // inherited on purpose rather than solved here — see
-    // AssetCommentController's own doc comment.
-    Route::get('/gallery-versions/{galleryVersion:public_id}/comments', [AssetCommentController::class, 'index'])
-        ->name('api.gallery-versions.comments.index');
-    Route::post('/gallery-versions/{galleryVersion:public_id}/comments', [AssetCommentController::class, 'store'])
-        ->name('api.gallery-versions.comments.store');
-});
+// P-08 (#227) removed the gallery from this surface entirely. It was here
+// for apps/gallery, an Astro SSR viewer on its own origin, which is why the
+// asset list, the image bytes, the favourites and the comments all had to be
+// reachable without a session — and why a view password protected the portal
+// screen and nothing else. The grid, the lightbox and both engagement
+// endpoints now live on the portal surface behind `gallery.gate:view`
+// (routes/portal.php), where the claim actually is.
 
 // M-05: the first api-surface consumer of user-facing business logic
 // (everything above is infrastructure). No `auth` middleware — Stripe is the

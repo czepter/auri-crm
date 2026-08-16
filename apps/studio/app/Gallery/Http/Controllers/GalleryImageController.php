@@ -43,7 +43,7 @@ class GalleryImageController extends Controller
             'Content-Type' => ImageVariant::mimeType($format),
             // Never purged, never invalidated — publishing a new version
             // changes which GalleryVersion a gallery's currentVersion
-            // points at (see GalleryReadController), it never rewrites this
+            // points at (see GalleryPasswordController), it never rewrites this
             // one's contents.
             'Cache-Control' => 'public, max-age=31536000, immutable',
         ]);
