@@ -201,6 +201,17 @@ h1 { margin: 2px 0 0; font: 600 32px/1.08 var(--font); letter-spacing: -.032em; 
 .cols .card .w { font-size: 11.5px; color: var(--accent); margin-top: 3px; }
 .cols .col.done .nm { font-weight: 500; color: var(--ink-2); }
 
+/* Ziehen ohne Objekt: es fährt nichts mit, es wandert nur die Einfügemarke.
+   Kein Griff — gezogen wird die Zeile selbst, wie in Erinnerungen. Weil nichts
+   mitkommt, muss die Ursprungszeile sagen, dass sie unterwegs ist. */
+.cols .card { cursor: grab; }
+.cols .card.moving { cursor: grabbing; }
+.cols .card.moving .nm { font-weight: 500; color: var(--ink-2); }
+.cols .card.moving .mt, .cols .card.moving .w { color: var(--mark); }
+.cols .dropline { height: 2px; background: var(--accent); border-radius: 1px; margin: 0 -6px; }
+.cols .col.target { background: var(--sunk); border-radius: var(--r-sm); }
+.cols .col.target > .stub { display: block; min-height: 44px; }   /* leere Stufe bleibt ein Ziel */
+
 /* ---------- Liste: Tabelle ---------- */
 
 /* Gruppiert nach Dringlichkeit, nicht nach Stufe: ein Board zeigt, wo etwas

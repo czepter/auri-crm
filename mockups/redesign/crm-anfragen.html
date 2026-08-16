@@ -22,7 +22,18 @@
      Spalten — die Frage, für die man sonst nach Auswertungen geht.
 
      Der Terminkonflikt steht auf beiden Zeilen, die ihn haben, und nennt
-     keine Namen: wer kollidiert, ist die andere markierte Zeile im Bild. -->
+     keine Namen: wer kollidiert, ist die andere markierte Zeile im Bild.
+
+     Ziehen (entschieden, hier nur als Zustandsklassen vorbereitet):
+     Es fährt kein Objekt mit. Die Zeile bleibt liegen und wird zu `.moving` —
+     Name auf Normalgewicht und Grau, Nebentext auf --mark. Die Zielspalte
+     bekommt `.target` (Fläche --sunk), zwischen den Zeilen steht eine 2px
+     Einfügemarke. Eine leere Stufe hält über `.stub` 44px Höhe, sonst gäbe
+     es dort kein Ziel.
+
+     Ohne Maus: Zeile auswählen, ⌘→ / ⌘← schiebt eine Stufe weiter; dieselben
+     Ziele stehen im Kontextmenü. In der Tabellenansicht gibt es kein Ziehen,
+     der Stufenwechsel braucht dort ohnehin diesen zweiten Weg. -->
 
 <div class="app">
 
