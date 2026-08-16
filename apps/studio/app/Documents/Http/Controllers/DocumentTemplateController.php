@@ -3,6 +3,7 @@
 namespace App\Documents\Http\Controllers;
 
 use App\Crm\Enums\ShootKind;
+use App\Documents\Actions\SeedStarterTemplates;
 use App\Documents\Data\DocumentTemplateData;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
@@ -12,6 +13,7 @@ use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Documents\Support\SafeHtml;
+use App\Documents\Support\StarterTemplateCatalog;
 use App\Http\Controllers\Controller;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
@@ -64,6 +66,12 @@ class DocumentTemplateController extends Controller
                 ->mapWithKeys(fn (DocumentTemplateType $type) => [$type->value => DocumentBlockCatalog::for($type)])
                 ->all(),
             'mergeFields' => $this->mergeFieldOptions(),
+            // T-16: keyed by type for the same reason the palettes above are —
+            // the type select changes what is offered without a round trip.
+            // Blocks travel with the entry, so choosing one is a local edit to
+            // an unsaved draft rather than a request for a document that does
+            // not exist yet.
+            'starters' => StarterTemplateCatalog::byType(),
         ]);
     }
 
@@ -105,6 +113,29 @@ class DocumentTemplateController extends Controller
         );
 
         return redirect('/dokumentvorlagen');
+    }
+
+    /**
+     * T-18: seed a chosen set of starters. Lives here rather than on
+     * StudioOnboardingController because that controller is a shell — it shows
+     * the wizard and stamps completion, and duplicating persistence into it is
+     * what its own docblock rules out. The wizard step posts here like every
+     * other step posts to the settings endpoint it belongs to.
+     */
+    public function seedStarters(Request $request, SeedStarterTemplates $seed): RedirectResponse
+    {
+        $this->authorize('create', DocumentTemplate::class);
+
+        $validated = $request->validate([
+            'keys' => ['present', 'array'],
+            'keys.*' => ['string', 'max:64'],
+        ]);
+
+        // Skipping is a first-class outcome: an empty set writes nothing and
+        // is not an error.
+        $seed($validated['keys'], auth('staff')->user());
+
+        return back();
     }
 
     public function edit(DocumentTemplate $documentTemplate): Response

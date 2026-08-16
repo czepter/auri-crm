@@ -6,18 +6,26 @@ import VatForm from '@/admin/pages/Settings/panes/VatForm.vue'
 import DocumentsForm from '@/admin/pages/Settings/panes/DocumentsForm.vue'
 import EmailForm from '@/admin/pages/Settings/panes/EmailForm.vue'
 import PortalForm from '@/admin/pages/Settings/panes/PortalForm.vue'
+import StarterTemplatesForm from '@/admin/pages/Settings/panes/StarterTemplatesForm.vue'
 import { Button } from '@/ui/button'
 
 defineProps<{
   settings: App.Settings.Data.StudioSettingsData
   portalSettings: App.Settings.Data.PortalSettingsData
+  starters: Record<string, { key: string; name: string; description: string; shootKind: string | null }[]>
+  starterDefaults: string[]
+  typeLabels: Record<string, string>
 }>()
 
-const steps = ['profile', 'vat', 'documents', 'email', 'portal'] as const
+// T-18 sits after `documents`: the settings that step collects — validity,
+// VAT mode, the Widerruf switch — are what the starters' merge fields read,
+// so choosing templates before them would be choosing blind.
+const steps = ['profile', 'vat', 'documents', 'templates', 'email', 'portal'] as const
 const titles: Record<(typeof steps)[number], string> = {
   profile: 'onboarding.stepProfile',
   vat: 'onboarding.stepVat',
   documents: 'onboarding.stepDocuments',
+  templates: 'onboarding.stepTemplates',
   email: 'onboarding.stepEmail',
   portal: 'onboarding.stepPortal',
 }
@@ -66,6 +74,14 @@ function finish() {
       <ProfileForm v-if="step() === 'profile'" ref="paneRef" :settings="settings" @saved="advance" />
       <VatForm v-else-if="step() === 'vat'" ref="paneRef" :settings="settings" @saved="advance" />
       <DocumentsForm v-else-if="step() === 'documents'" ref="paneRef" :settings="settings" @saved="advance" />
+      <StarterTemplatesForm
+        v-else-if="step() === 'templates'"
+        ref="paneRef"
+        :starters="starters"
+        :defaults="starterDefaults"
+        :type-labels="typeLabels"
+        @saved="advance"
+      />
       <EmailForm v-else-if="step() === 'email'" ref="paneRef" :settings="settings" @saved="advance" />
       <PortalForm v-else ref="paneRef" :settings="portalSettings" @saved="finish" />
 

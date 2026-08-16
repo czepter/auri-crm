@@ -55,6 +55,18 @@ class DocumentMergeDataBuilder
             'job' => [
                 'bookedAt' => $project->job?->booked_at?->format('d.m.Y') ?? '',
             ],
+            // The occasion this document is about. Same primary shoot the
+            // invoice's Leistungszeitraum reads, named plainly here because a
+            // quote and a contract both talk about the day rather than about
+            // a service period.
+            'shoot' => [
+                'date' => $project->primaryShoot?->date?->format('d.m.Y') ?? '',
+            ],
+            // What a quote says about itself. Empty on a project with no sent
+            // quote — a contract template referencing them is asking about a
+            // document that does not exist, which is exactly the case an
+            // empty string is right for.
+            'quote' => $this->quote($project, $settings),
             'studio' => [
                 'name' => $studio['legal_name'] ?: ($studio['display_name'] ?? ''),
                 'legalForm' => $studio['legal_form'] ?? '',
@@ -117,6 +129,34 @@ class DocumentMergeDataBuilder
             'vatNote' => $figures->vatNote ?? '',
             'dueOn' => $dueOn,
             'paymentTerm' => $dueOn === '' ? '' : "Zahlbar bis {$dueOn} ohne Abzug.",
+        ];
+    }
+
+    /**
+     * Validity and the VAT sentence, frozen on the quote at send (Q-04/Q-06)
+     * rather than recomputed here: a client reading a quote must see the rule
+     * that applied when it went out, not the one the studio switched to
+     * afterwards.
+     *
+     * @return array<string, string>
+     */
+    private function quote(Project $project, StudioSettingsResolver $settings): array
+    {
+        $quote = $project->latestQuote;
+
+        if ($quote === null) {
+            return ['validUntil' => '', 'vatNote' => ''];
+        }
+
+        return [
+            'validUntil' => $quote->valid_until?->format('d.m.Y') ?? '',
+            // A standard-rate quote froze no note — there is nothing unusual
+            // to say — so the sentence is composed from the frozen rate. Only
+            // the small-business case carries stored wording.
+            'vatNote' => $quote->vat_note
+                ?? ($quote->vat_rate === null || $quote->vat_rate === 0
+                    ? ''
+                    : 'Alle Preise verstehen sich zzgl. '.rtrim(rtrim(number_format($quote->vat_rate / 100, 2, ',', '.'), '0'), ',').' % Umsatzsteuer.'),
         ];
     }
 

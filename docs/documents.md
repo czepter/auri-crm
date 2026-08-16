@@ -53,6 +53,47 @@ look like at the moment a render runs:
 | `studio.bankBic`     | |
 | `settings.widerrufText` | The configured Widerrufsbelehrung (T-05, Dokumente pane) when the studio has it switched on — an empty string, never the stored text, when it is switched off. |
 
+## Starter templates
+
+`App\Documents\Support\StarterTemplateCatalog` holds ready-made templates in
+code — a quote (generic and a wedding variant), a photography Werkvertrag, an
+invoice (standard and Kleinunternehmer), and five short mails. The create
+screen opens on them, with **Leere Vorlage** among the cards as an equal
+option rather than an escape hatch.
+
+**A starter is a starting point, not a link.** Choosing one copies its blocks
+into an unsaved draft; saving writes a tenant-owned first version through the
+ordinary `createFirstVersion()` path. Nothing records which starter a template
+came from, so editing an entry in a later release cannot reach a template a
+studio has since made its own — there is no id to reach through.
+
+**Entries are wording, not law.** The legal skeletons carry one line marking
+them as a starting point in their `description`, where the studio reads it
+while choosing — never in a body a client would receive. A test asserts both
+halves of that.
+
+Four invariants are enforced by `StarterTemplateCatalogTest` rather than by
+review, because each fails silently otherwise:
+
+| invariant | what it prevents |
+|---|---|
+| every block passes `DocumentBlockCatalog::allows()` for its type | a starter the server rejects on save |
+| every `{{ … }}` path exists in `MergeFieldVocabulary::paths()` | a placeholder that renders empty in front of a client |
+| every block type is one `StarterBlockSerializer` renders | `T-18` seeding a template with a hole in it |
+| no lorem ipsum, no "hier Text einfügen" | a catalog that costs more to delete than to write |
+
+`StarterBlockSerializer` is a **deliberate mirror** of
+`resources/js/admin/documents/blocks/serialize.ts`, bounded to the block types
+the catalog uses and throwing on anything else. The create screen serialises in
+the browser, where the editor lives; `T-18` seeds server-side with no browser
+in the loop. Same arrangement `fillSamples()` documents for
+`MergeFieldResolver::PATTERN`.
+
+Merge fields are written as plain `{{ path }}` text in an entry rather than as
+the editor's `data-mf` chips. The chip form exists so the editor can show a
+sample value in place of a path; a starter is written by hand in PHP, where
+there is nothing to show it to. Both serialise to the same `{{ path }}`.
+
 ### The invoice block
 
 `invoice.*` is the one part of the vocabulary that is not derivable from the
