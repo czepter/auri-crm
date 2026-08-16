@@ -100,6 +100,11 @@ const PUBLIC_ROUTES = [
         // `gallery.gate:view` or `gallery.gate:download` even though that
         // does not read as `audience:` to this test.
         'galerien/{gallery}', 'galerien/{gallery}/passwort',
+        // G-09's heart and G-12's comments for the portal's own grid (P-08),
+        // behind `gallery.gate:view` — which does not read as `audience:` to
+        // this test any more than the routes below do.
+        'galerien/{gallery}/beteiligung', 'galerien/{gallery}/favorit',
+        'galerien/{gallery}/kommentar',
         // P-08 (#227): the image bytes, bound on the version and gated by
         // its parent gallery's own `gallery.gate:view` — same story as the
         // routes below, and the reason they moved off the api surface at

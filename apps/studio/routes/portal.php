@@ -2,6 +2,7 @@
 
 use App\Gallery\Http\Controllers\DownloadZipPartController;
 use App\Gallery\Http\Controllers\GalleryDownloadController;
+use App\Gallery\Http\Controllers\GalleryEngagementController;
 use App\Gallery\Http\Controllers\GalleryImageController;
 use App\Gallery\Http\Controllers\GalleryPasswordController;
 use App\Portal\Http\Controllers\AccountController;
@@ -229,6 +230,20 @@ Route::prefix('galerien/{gallery}')->group(function () {
     // GalleryPasswordController's own doc comment on why.
     Route::get('/', [GalleryPasswordController::class, 'show'])->name('gallery.show');
     Route::post('/passwort', [GalleryPasswordController::class, 'store'])->name('gallery.password.store');
+
+    // G-09's heart and G-12's comments, for the portal's own grid (P-08).
+    // The api surface keeps its own pair for apps/gallery, which renders
+    // from another origin and so cannot reach a session at all — see
+    // AssetFavoriteController's doc comment for the localStorage identifier
+    // that costs it. Here the guest identity is this session.
+    Route::middleware('gallery.gate:view')->group(function () {
+        Route::get('/beteiligung', [GalleryEngagementController::class, 'index'])
+            ->name('gallery.engagement.index');
+        Route::post('/favorit', [GalleryEngagementController::class, 'toggleFavorite'])
+            ->name('gallery.favorite.toggle');
+        Route::post('/kommentar', [GalleryEngagementController::class, 'storeComment'])
+            ->name('gallery.comment.store');
+    });
 
     // The download gates (mockups 11, 12) — reachable only once the view
     // gate above is satisfied, since "download" is a link found inside an

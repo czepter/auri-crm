@@ -362,3 +362,11 @@ h1 { font-size: 30px; }
 .gate button:hover { color: var(--ink); }
 .gate button.warn:hover { color: var(--late); }
 .stripactions { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+
+/* ---------- P-09 (#228): the preview banner ---------- */
+/* Impersonation nobody can forget they are in. Every write is refused
+   anyway; a studio owner should not have to find that out by being refused. */
+.previewbar { display: flex; align-items: center; justify-content: center; gap: var(--s4);
+              padding: 9px var(--s5); background: var(--due-bg); border-bottom: 1px solid var(--line);
+              font: 500 12.5px/1 var(--font); color: var(--due); }
+.previewbar a { color: var(--due); text-decoration: underline; }
