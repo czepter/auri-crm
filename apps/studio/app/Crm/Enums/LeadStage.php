@@ -47,12 +47,21 @@ enum LeadStage: string implements HasLabel
     }
 
     /**
-     * Forward only, but skipping is allowed: a client can accept on the phone
-     * before any formal quote existed, and forcing staff through the
+     * Any other stage. Forward skipping is legitimate — a client accepts on the
+     * phone before any formal quote existed, and forcing staff through the
      * intermediate stages would make the funnel a fiction rather than a record.
+     *
+     * Backwards is legitimate for the same reason. It was refused until a
+     * mis-drop on the board had no undo, and refusing it did not keep the
+     * funnel honest: it left the wrong stage standing, which is the worse
+     * record. The direction is not lost — audit_logs holds from and to on
+     * every move, so a correction reads as one.
+     *
+     * Only the no-op is refused, because it writes a stage_entered_at reset
+     * and an audit row that say nothing happened.
      */
     public function canTransitionTo(self $next): bool
     {
-        return $next->position() > $this->position();
+        return $next !== $this;
     }
 }

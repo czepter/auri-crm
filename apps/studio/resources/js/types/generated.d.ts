@@ -120,6 +120,7 @@ writtenAt: string,
 };
 export type LeadCardData = {
 id: string,
+leadId: string,
 type: string,
 names: string,
 date: string | null,

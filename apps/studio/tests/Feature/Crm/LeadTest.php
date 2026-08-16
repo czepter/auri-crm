@@ -32,13 +32,16 @@ it('knows the funnel order', function () {
         ->and(LeadStage::Booked->next())->toBeNull();
 });
 
-it('permits forward transitions and refuses backward ones', function () {
+it('permits transitions in both directions and refuses only the no-op', function () {
     expect(LeadStage::New->canTransitionTo(LeadStage::Contacted))->toBeTrue()
         // Skipping forward is legitimate: a client accepts on the phone before
         // any formal quote existed, and forcing staff through the intermediate
         // stages would make the funnel a fiction.
         ->and(LeadStage::New->canTransitionTo(LeadStage::Booked))->toBeTrue()
-        ->and(LeadStage::QuoteSent->canTransitionTo(LeadStage::Contacted))->toBeFalse()
+        // Backwards is how a mis-drop on the board is undone. Leaving the wrong
+        // stage standing is the worse record.
+        ->and(LeadStage::QuoteSent->canTransitionTo(LeadStage::Contacted))->toBeTrue()
+        ->and(LeadStage::Booked->canTransitionTo(LeadStage::New))->toBeTrue()
         ->and(LeadStage::Contacted->canTransitionTo(LeadStage::Contacted))->toBeFalse();
 });
 

@@ -136,6 +136,12 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 .board { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:var(--s5); flex:1; }
 .col { min-width:0; display:flex; flex-direction:column; gap:var(--s2); }
 
+/* drag between stages, both directions — dragging left undoes a mis-drop. Only
+   the column the card already sits in stays dark, because it is the one move
+   the domain refuses. */
+.col.drop { background:var(--hover); border-radius:var(--r); outline:1px dashed var(--line-hover); outline-offset:2px; }
+.card.dragging { opacity:.4; }
+
 /* column header: three pieces separated by alignment, not punctuation */
 .ch { display:flex; align-items:center; padding:0 var(--s3); margin-bottom:var(--s3); }
 .ch b { font:600 12.5px/1 var(--font); letter-spacing:.02em; text-transform:uppercase; }

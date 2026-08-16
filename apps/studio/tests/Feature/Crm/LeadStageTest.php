@@ -46,10 +46,24 @@ it('writes an audit row naming the transition', function () {
         ->and($row->context['to'])->toBe('contacted');
 });
 
-it('refuses a backward transition', function () {
+it('moves a lead backward, recording the direction in the audit row', function () {
     $lead = Lead::factory()->atStage(LeadStage::QuoteSent)->create();
 
-    app(AdvanceLeadStage::class)($lead, LeadStage::New);
+    app(AdvanceLeadStage::class)($lead, LeadStage::Contacted);
+
+    // The from/to pair is what makes a correction readable as one, which is
+    // why the backward move needs no event of its own.
+    $row = AuditLog::where('event', 'lead.stage_changed')->sole();
+
+    expect($lead->fresh()->stage)->toBe(LeadStage::Contacted)
+        ->and($row->context['from'])->toBe('quote_sent')
+        ->and($row->context['to'])->toBe('contacted');
+});
+
+it('refuses a transition to the stage the lead is already in', function () {
+    $lead = Lead::factory()->atStage(LeadStage::QuoteSent)->create();
+
+    app(AdvanceLeadStage::class)($lead, LeadStage::QuoteSent);
 })->throws(DomainException::class);
 
 it('refuses to advance a lost lead', function () {
@@ -62,7 +76,7 @@ it('leaves nothing behind when a transition is refused', function () {
     $lead = Lead::factory()->atStage(LeadStage::QuoteSent)->create();
 
     try {
-        app(AdvanceLeadStage::class)($lead, LeadStage::New);
+        app(AdvanceLeadStage::class)($lead, LeadStage::QuoteSent);
     } catch (DomainException) {
         // expected
     }

@@ -67,9 +67,10 @@ it('rejects an illegal stage transition the same way the board does', function (
     $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
     $lead = Lead::factory()->atStage(LeadStage::Booked)->create();
 
+    // Backwards is legal now — the no-op is the transition left to reject.
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
         ->withHeader('Idempotency-Key', 'stage-illegal')
-        ->postJson("/api/leads/{$lead->public_id}/stage", ['stage' => LeadStage::New->value])
+        ->postJson("/api/leads/{$lead->public_id}/stage", ['stage' => LeadStage::Booked->value])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('stage');
 

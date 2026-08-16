@@ -23,6 +23,10 @@ class LeadCardData extends Data
     /** @param  list<DateConflictData>  $conflicts */
     public function __construct(
         public string $id,
+        // The lead's own id, beside the project's. The card links to the
+        // project and posts stage changes to the lead, and the two public ids
+        // are not interchangeable — one field each is what keeps them apart.
+        public string $leadId,
         public string $type,
         public string $names,
         public ?string $date,
@@ -42,6 +46,7 @@ class LeadCardData extends Data
 
         return new self(
             id: $project->public_id,
+            leadId: $lead->public_id,
             type: $project->type->label(),
             // Primary contact first, then the rest. Falls back to the project
             // name for a project whose contacts have not been attached yet.

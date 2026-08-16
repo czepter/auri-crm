@@ -183,6 +183,22 @@ it('issues no more queries for eleven cards spanning several closures than it di
     expect($withClosures)->toBe($withoutClosures);
 });
 
+// The card carries both public ids, and the stage route only accepts the
+// lead's. Posting the id the card links with is what the board did for a
+// release, and it 404s — so the test posts what the card actually sends.
+it('advances a lead using the identifier the card carries', function () {
+    $lead = leadOn('2026-06-14');
+    $card = boardProps()['columns'][0]['cards'][0];
+
+    expect($card['leadId'])->not->toBe($card['id']);
+
+    $this->actingAs($this->staff, 'staff')
+        ->post("/anfragen/{$card['leadId']}/stufe", ['stage' => 'contacted'])
+        ->assertRedirect('/anfragen');
+
+    expect($lead->fresh()->stage)->toBe(LeadStage::Contacted);
+});
+
 it('advances a lead from the board', function () {
     $lead = leadOn('2026-06-14');
 
@@ -193,11 +209,23 @@ it('advances a lead from the board', function () {
     expect($lead->fresh()->stage)->toBe(LeadStage::Contacted);
 });
 
-it('refuses a backward move from the board', function () {
+// Dragging left is the board's undo for a mis-drop, so the same endpoint takes
+// it. See LeadStage::canTransitionTo.
+it('moves a lead backward from the board', function () {
     $lead = leadOn('2026-06-14', LeadStage::QuoteSent);
 
     $this->actingAs($this->staff, 'staff')
         ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => 'new'])
+        ->assertRedirect('/anfragen');
+
+    expect($lead->fresh()->stage)->toBe(LeadStage::New);
+});
+
+it('refuses a move to the stage the card already sits in', function () {
+    $lead = leadOn('2026-06-14', LeadStage::QuoteSent);
+
+    $this->actingAs($this->staff, 'staff')
+        ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => 'quote_sent'])
         ->assertSessionHasErrors('stage');
 
     expect($lead->fresh()->stage)->toBe(LeadStage::QuoteSent);

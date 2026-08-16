@@ -15,7 +15,7 @@ const dateLabel = computed(() =>
 
 function advance() {
   if (props.nextStage) {
-    router.post(`/anfragen/${props.card.id}/stufe`, { stage: props.nextStage })
+    router.post(`/anfragen/${props.card.leadId}/stufe`, { stage: props.nextStage })
   }
 }
 </script>

@@ -34,6 +34,13 @@ class AdvanceLeadStage
             );
         }
 
+        // Reset on a correction too. The clock the board colours is "how long
+        // has it sat where it sits", and the stage it returns to has no
+        // recorded entry time to restore — only audit_logs knows, and reading
+        // it back would be a query in the write path for a number that is
+        // seconds old whenever a mis-drop is fixed the moment it happens.
+        // ponytail: last-entry lookup from audit_logs if corrections start
+        // arriving days late and the staleness colour matters that far back.
         $lead->forceFill([
             'stage' => $next,
             'stage_entered_at' => now(),
