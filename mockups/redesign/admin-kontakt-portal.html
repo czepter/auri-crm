@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="admin">
+<head>
+<meta charset="utf-8">
+<title>Kontakt · Portal — Nordlicht</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/admin-extra.css">
+<script src="../_shared/layout.js"></script>
+</head>
+<body data-nav="kontakte" data-depth="2">
+
+<!-- #228, zweite Hälfte. Der Studio-Pane (admin-einstellungen-portal.html) setzt
+     den Standard, dieser Tab weicht für einen Kontakt davon ab. Am Kontakt,
+     nicht am Projekt: eine Location mit vierzig Terminen soll einmal
+     eingestellt werden, nicht vierzig Mal.
+
+     Jede Abweichung ist ein Select mit drei Werten, nicht eine Checkbox mit
+     zwei. Der erste Wert nennt den geerbten Zustand — "Standard (an)" —, also
+     steht auf dem Schirm, was gilt und woher es kommt. Eine Checkbox kann das
+     nicht: sie zeigt an oder aus und verschweigt, ob das eine Entscheidung war.
+
+     Sichtbarkeit bleibt je Buchung (`projects.portal_visible`) und Zugang je
+     Kontakt (`contacts.portal_access_revoked_at`) — beides A-04, beides hier
+     nur angezeigt und verlinkt, nicht neu erfunden. -->
+
+<div class="app">
+  <div data-sidebar></div>
+
+  <main class="main">
+    <div class="hrow">
+      <div>
+        <div class="kick">Kontakt · Location</div>
+        <h1>Gut Sonnenhof</h1>
+      </div>
+      <span class="chip now">Ungespeicherte Änderungen</span>
+      <a class="txtbtn" href="portal-start-location.html" style="margin-left:auto">
+        <svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        Vorschau als Kunde
+      </a>
+      <a class="btn" href="#" style="margin-left:var(--s4)"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>Speichern</a>
+    </div>
+
+    <div class="tabs">
+      <a href="#" style="pointer-events:none; opacity:.5">Übersicht</a>
+      <a href="#" style="pointer-events:none; opacity:.5">Buchungen</a>
+      <a href="#" style="pointer-events:none; opacity:.5">Kommunikation</a>
+      <a class="on" href="admin-kontakt-portal.html">Portal</a>
+    </div>
+
+    <div style="max-width:620px">
+
+      <div class="dsec" style="margin-top:0">
+        <div class="dlab">Zugang</div>
+        <div class="tiles" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+          <div class="fact"><div class="l">Status</div><div class="v">Aktiv</div><div class="s">seit 14.02.2026</div></div>
+          <div class="fact"><div class="l">Zuletzt im Portal</div><div class="v">Gestern</div><div class="s">15:42 Uhr</div></div>
+          <div class="fact"><div class="l">Offene Sitzungen</div><div class="v">3 Geräte</div></div>
+        </div>
+        <div style="display:flex; gap:var(--s5); margin-top:var(--s4)">
+          <a class="txtbtn" href="#">Auf allen Geräten abmelden</a>
+          <a class="txtbtn" href="#" style="color:var(--late)">Zugang entziehen</a>
+        </div>
+      </div>
+
+      <div class="dsec">
+        <div class="dlab">Begrüßung</div>
+        <div class="grp">
+          <div style="display:flex; flex-direction:column; gap:var(--s3)">
+            <label style="display:flex; align-items:center; gap:10px; font:400 13px/1.4 var(--font)">
+              <input type="radio" name="k-gruss"> Studio-Standard
+            </label>
+            <span class="hint" style="padding-left:26px">Willkommen zurück. {anzahl} Termine, die offenen Punkte stehen oben.</span>
+            <label style="display:flex; align-items:center; gap:10px; font:400 13px/1.4 var(--font)">
+              <input type="radio" name="k-gruss" checked> Eigener Text
+            </label>
+          </div>
+        </div>
+        <div class="grp">
+          <div class="fld">
+            <textarea class="inp" id="k-grusstext" rows="2">Hallo Team Sonnenhof — hier stehen alle Termine der Saison, mit Stand und offenen Punkten.</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="dsec">
+        <div class="dlab">Freigaben</div>
+        <div class="grp">
+          <div class="two">
+            <div class="fld">
+              <label for="k-angebot">Angebote annehmen</label>
+              <select class="inp" id="k-angebot">
+                <option selected>Standard (an)</option>
+                <option>An</option>
+                <option>Aus</option>
+              </select>
+            </div>
+            <div class="fld">
+              <label for="k-vertrag">Verträge unterschreiben</label>
+              <select class="inp" id="k-vertrag">
+                <option selected>Standard (an)</option>
+                <option>An</option>
+                <option>Aus</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="grp">
+          <div class="two">
+            <div class="fld">
+              <label for="k-zahlung">Zahlungsstand zeigen</label>
+              <select class="inp" id="k-zahlung">
+                <option>Standard (an)</option>
+                <option>An</option>
+                <option selected>Aus</option>
+              </select>
+            </div>
+            <div class="fld">
+              <label for="k-daten">Kontaktdaten selbst ändern</label>
+              <select class="inp" id="k-daten">
+                <option>Standard (aus)</option>
+                <option selected>An</option>
+                <option>Aus</option>
+              </select>
+            </div>
+          </div>
+          <span class="hint" style="display:block; margin-top:var(--s3)">Standard kommt aus <a href="admin-einstellungen-portal.html">Einstellungen · Portal</a> und zieht bei Änderung nach.</span>
+        </div>
+      </div>
+
+      <div class="dsec">
+        <div class="dlab">Nachrichten</div>
+        <div class="grp">
+          <div class="fld" style="max-width:300px">
+            <label for="k-msg">Schreiben im Portal</label>
+            <select class="inp" id="k-msg">
+              <option selected>Standard (auch ohne Buchung)</option>
+              <option>Nur zu einer Buchung</option>
+              <option>Aus</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="dsec">
+        <div class="dlab">Galerie-Vorgaben</div>
+        <div class="grp">
+          <div class="two">
+            <div class="fld">
+              <label for="k-gate">Zugang</label>
+              <select class="inp" id="k-gate">
+                <option>Standard (Passwort)</option>
+                <option selected>Nur über den Link</option>
+                <option>Passwort</option>
+                <option>E-Mail-Bestätigung</option>
+              </select>
+            </div>
+            <div class="fld">
+              <label for="k-ablauf">Gültig für</label>
+              <select class="inp" id="k-ablauf">
+                <option>Standard (180 Tage)</option>
+                <option selected>Unbegrenzt</option>
+                <option>90 Tage</option>
+                <option>365 Tage</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="grp">
+          <div class="two">
+            <div class="fld">
+              <label for="k-download">Download</label>
+              <select class="inp" id="k-download">
+                <option selected>Standard (an)</option>
+                <option>An</option>
+                <option>Aus</option>
+              </select>
+            </div>
+            <div class="fld">
+              <label for="k-restzahlung">Erst nach Restzahlung</label>
+              <select class="inp" id="k-restzahlung">
+                <option>Standard (an)</option>
+                <option>An</option>
+                <option selected>Aus</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="grp">
+          <div class="two">
+            <div class="fld">
+              <label for="k-listen">Listen anlegen</label>
+              <select class="inp" id="k-listen">
+                <option selected>Standard (an)</option>
+                <option>An</option>
+                <option>Aus</option>
+              </select>
+            </div>
+            <div class="fld">
+              <label for="k-kommentare">Kommentare am Bild</label>
+              <select class="inp" id="k-kommentare">
+                <option selected>Standard (an)</option>
+                <option>An</option>
+                <option>Aus</option>
+              </select>
+            </div>
+          </div>
+          <span class="hint" style="display:block; margin-top:var(--s3)">Gilt für neue Galerien dieses Kontakts. Bestehende behalten ihre Einstellung.</span>
+        </div>
+      </div>
+
+      <div class="dsec">
+        <div class="dlab">Buchungen im Portal</div>
+        <div class="card static" style="padding:0">
+          <a class="trow" href="../admin/04-auftrag.html">
+            <span class="tclient">Sommerfest Berger</span>
+            <span class="treason">18.07.2026</span>
+            <span class="chip done" style="margin-left:auto">Sichtbar</span>
+          </a>
+          <a class="trow" href="../admin/04-auftrag.html">
+            <span class="tclient">Hochzeit Meier &amp; Kowalski</span>
+            <span class="treason">14.06.2026</span>
+            <span class="chip done" style="margin-left:auto">Sichtbar</span>
+          </a>
+          <a class="trow" href="../admin/04-auftrag.html">
+            <span class="tclient">Anfrage Firmenfeier</span>
+            <span class="treason">offen</span>
+            <span class="chip next" style="margin-left:auto">Verborgen</span>
+          </a>
+        </div>
+        <span class="hint" style="display:block; margin-top:var(--s3)">Sichtbarkeit steht je Buchung, nicht hier — die Zeile führt hin.</span>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

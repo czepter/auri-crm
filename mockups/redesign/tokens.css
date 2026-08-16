@@ -33,9 +33,20 @@
   /* Fläche */
   --paper: #FFFFFF;
   --sunk: #F4F4F3;
+  /* Zwei Stimmen für Text, nicht drei. Die Rampe Fast-Schwarz / Mittelgrau /
+     Hellgrau ist die Voreinstellung jedes Generators, und ihre dritte Stufe
+     war hier mit 2,83:1 auf Weiß ohnehin unlesbar — gesetzt waren damit
+     ausgerechnet die kleinsten Texte, 11px-Kicker und 12,5px-Hinweise.
+     Hierarchie macht in diesem Entwurf die Größe: 11px Versalien gegen 86px
+     Serif. Eine dritte Graustufe wäre die dritte Markierung derselben Sache.
+
+     --mark ist kein Textwert, aber auch kein Ornament: der Statuspunkt sagt
+     offen oder erledigt. Deshalb der hellste Neutralton, der auf beiden
+     Flächen noch 3:1 schafft — #8D8D89, gerechnet gegen --sunk, nicht gegen
+     Weiß, weil die Zeilen beim Überfahren absinken. */
   --ink: #191919;
   --ink-2: #5C5C58;
-  --ink-3: #9A9A95;
+  --mark: #8D8D89;
   --line: #E9E9E7;
   --line-2: #DCDCD9;
 
@@ -99,13 +110,13 @@ a { color: inherit; }
   font: 600 11px/1 var(--sans);
   letter-spacing: 0.17em;
   text-transform: uppercase;
-  color: var(--ink-3);
+  color: var(--ink-2);
   margin: 0;
 }
 
 .lead { font-size: 17px; line-height: 1.55; color: var(--ink-2); margin: 0; }
 .meta { font-size: 13.5px; line-height: 1.5; color: var(--ink-2); margin: 0; }
-.faint { color: var(--ink-3); }
+.faint { color: var(--ink-2); }
 .num { font-variant-numeric: tabular-nums; }
 
 /* ── Aktionen ─────────────────────────────────────────────────────────── */
@@ -131,7 +142,7 @@ a { color: inherit; }
 
 /* ── Statuspunkte: Farbe ausschließlich als Signal ────────────────────── */
 
-.dot { width: 6px; height: 6px; border-radius: 50%; flex: none; background: var(--ink-3); }
+.dot { width: 6px; height: 6px; border-radius: 50%; flex: none; background: var(--mark); }
 .dot.open { background: var(--accent); }
 .dot.done { background: var(--good); }
 
@@ -150,7 +161,7 @@ a { color: inherit; }
 .yearhead {
   display: flex; align-items: baseline; gap: var(--s4);
   font: 600 11px/1 var(--sans); letter-spacing: .17em; text-transform: uppercase;
-  color: var(--ink-3);
+  color: var(--ink-2);
   padding: var(--s6) 0 var(--s3);
 }
 .yearhead::after { content: ''; flex: 1; height: 1px; background: var(--line); }
@@ -171,16 +182,16 @@ a { color: inherit; }
    sondern seine Jahreszahl in der Serif — dieselbe Stimme wie der Kopf. */
 .entry .mono {
   display: grid; place-items: center; border: 1px solid var(--line);
-  font: 400 26px/1 var(--serif); color: var(--ink-3); letter-spacing: -0.02em;
+  font: 400 26px/1 var(--serif); color: var(--ink-2); letter-spacing: -0.02em;
 }
 .entry .kind {
   font: 600 10.5px/1 var(--sans); letter-spacing: .15em; text-transform: uppercase;
-  color: var(--ink-3); margin-bottom: 6px;
+  color: var(--ink-2); margin-bottom: 6px;
 }
 .entry h3 { font: 400 23px/1.2 var(--serif); margin: 0; letter-spacing: -0.012em; }
 .entry .sub { font-size: 13.5px; color: var(--ink-2); margin-top: 5px; }
 .entry .state { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
-.entry .chev { justify-self: end; color: var(--ink-3); transition: transform .3s var(--ease), color .2s var(--ease); }
+.entry .chev { justify-self: end; color: var(--mark); transition: transform .3s var(--ease), color .2s var(--ease); }
 .entry:hover .chev { transform: translateX(3px); color: var(--ink); }
 .entry svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.4; }
 
@@ -197,7 +208,7 @@ a { color: inherit; }
 }
 .folded:hover { background: var(--sunk); color: var(--ink); }
 .folded b { font: 600 14px/1 var(--sans); color: var(--ink); min-width: 46px; }
-.folded .count { margin-left: auto; font-size: 13px; color: var(--ink-3); }
+.folded .count { margin-left: auto; font-size: 13px; color: var(--ink-2); }
 .folded svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; }
 
 @media (max-width: 700px) {
@@ -225,7 +236,7 @@ a { color: inherit; }
 .item .sub { font-size: 13.5px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
 .item .amount { font: 600 15px/1 var(--sans); letter-spacing: -0.01em; }
 .item .amount.open { color: var(--accent); }
-.item .chev { justify-self: end; color: var(--ink-3); transition: transform .3s var(--ease), color .2s var(--ease); }
+.item .chev { justify-self: end; color: var(--mark); transition: transform .3s var(--ease), color .2s var(--ease); }
 .item:hover .chev { transform: translateX(3px); color: var(--ink); }
 .item svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.4; }
 
@@ -340,7 +351,7 @@ a { color: inherit; }
   .tabbar a {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
     min-height: 56px; padding: 9px 4px 10px;
-    text-decoration: none; color: var(--ink-3);
+    text-decoration: none; color: var(--ink-2);
     font: 500 11px/1 var(--sans);
     transition: color .16s var(--ease);
   }
