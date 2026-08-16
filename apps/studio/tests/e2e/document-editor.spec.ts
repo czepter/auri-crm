@@ -5,6 +5,12 @@ test('a template written in blocks previews with sample data and survives a relo
   await signIn(page)
 
   await page.goto('/dokumentvorlagen/neu')
+
+  // T-16: the screen opens on a choice of starters rather than on an empty
+  // canvas. This test is about the editor, so it takes the blank one — the
+  // same door it used before the catalog existed.
+  await page.getByRole('button', { name: 'Leere Vorlage' }).click()
+
   await page.getByLabel('Name').fill('Fotovertrag Hochzeit')
 
   // Editor.js focuses its first empty paragraph on mount.
