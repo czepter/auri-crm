@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Anfragen — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="anfragen">
+
+<!-- Zwei Ansichten auf dieselben zwölf Anfragen.
+
+     Board: Listenspalten ohne Kartenflächen. Sechs Stufen tragen sich durch
+     senkrechte Haarlinien; die zwölf Vorgänge sind Zeilen, keine Objekte.
+     Der alte Entwurf hatte graue Kärtchen auf Weiß — das ist Kanban aus dem
+     Web, und es kehrt Apples Materialordnung um, in der der Behälter Material
+     trägt und der Inhalt weiß bleibt.
+
+     Liste: Tabelle, gruppiert nach Dringlichkeit statt nach Stufe. Ein Board
+     zeigt, wo etwas steht; eine Tabelle zeigt, was als nächstes dran ist.
+     Deshalb ist sie die Ansicht mit Wert und Zeitpunkt in vergleichbaren
+     Spalten — die Frage, für die man sonst nach Auswertungen geht.
+
+     Der Terminkonflikt steht auf beiden Zeilen, die ihn haben, und nennt
+     keine Namen: wer kollidiert, ist die andere markierte Zeile im Bild. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="main">
+
+    <input class="vswitch" type="radio" name="view" id="view-board" checked>
+    <input class="vswitch" type="radio" name="view" id="view-liste">
+
+    <div class="hrow">
+      <div>
+        <div class="kick">12 offen · 3.500 € · 3 neu diese Woche</div>
+        <h1>Anfragen</h1>
+      </div>
+      <div class="seg" style="margin-left:auto">
+        <label for="view-board">Board</label>
+        <label for="view-liste">Liste</label>
+      </div>
+      <a class="btn" href="#">Anfrage anlegen</a>
+    </div>
+
+    <div class="view board">
+      <div class="filters">
+        <button class="pop"><u>Anlass</u> Alle</button>
+        <button class="pop"><u>Team</u> Alle</button>
+        <button class="pop"><u>Zeitraum</u> 2026</button>
+      </div>
+
+      <div class="cols">
+        <div class="col">
+          <header><b>Neu</b><span class="s">4 · 1.200 €</span></header>
+          <a class="card" href="#">
+            <div class="nm">Meier &amp; Kowalski</div>
+            <div class="mt">14.6. · Gut Basthorst</div>
+            <div class="w">Termin doppelt</div>
+          </a>
+          <a class="card" href="#">
+            <div class="nm">Sarah Brandt &amp; Tim Erdmann</div>
+            <div class="mt">5.9. · Hof Eggers</div>
+          </a>
+          <a class="card" href="#">
+            <div class="nm">Familie Osterhoff</div>
+            <div class="mt">14.3. · Studio</div>
+          </a>
+          <a class="card" href="#">
+            <div class="nm">Nina Kaltenbach &amp; Ruben Adler</div>
+            <div class="mt">14.6. · Gut Basthorst</div>
+            <div class="w">Termin doppelt</div>
+          </a>
+        </div>
+
+        <div class="col">
+          <header><b>Kontaktiert</b><span class="s">3</span></header>
+          <a class="card" href="#">
+            <div class="nm">Jasmin &amp; Kolja Petersen</div>
+            <div class="mt">11.7. · Landhaus Scherrer</div>
+          </a>
+          <a class="card" href="#">
+            <div class="nm">Mira Sundermann</div>
+            <div class="mt">Termin offen · Studio</div>
+          </a>
+          <a class="card" href="#">
+            <div class="nm">Charlotte Vehse &amp; Paul Rieck</div>
+            <div class="mt">22.8. · Schloss Reinbek</div>
+            <div class="w">8 Tage still</div>
+          </a>
+        </div>
+
+        <div class="col">
+          <header><b>Angebot</b><span class="s">2 · 5.900 €</span></header>
+          <a class="card" href="#">
+            <div class="nm">Annika Reuter &amp; Finn Sölter</div>
+            <div class="mt">30.5. · Elbspeicher · 2.400 €</div>
+            <div class="w">läuft 21.08. ab</div>
+          </a>
+          <a class="card" href="#">
+            <div class="nm">Lea Hoffmann &amp; Jonas Behr</div>
+            <div class="mt">3.10. · Gut Wulksfelde · 3.500 €</div>
+          </a>
+        </div>
+
+        <div class="col">
+          <header><b>Angenommen</b><span class="s">1 · 2.400 €</span></header>
+          <a class="card" href="#">
+            <div class="nm">Marie Ahrens &amp; David Kroll</div>
+            <div class="mt">25.7. · Kaispeicher</div>
+            <div class="w">Vertrag fehlt</div>
+          </a>
+        </div>
+
+        <div class="col done">
+          <header><b>Vertrag</b><span class="s">1 · 3.100 €</span></header>
+          <a class="card" href="#">
+            <div class="nm">Sophie Lang &amp; Erik Voss</div>
+            <div class="mt">19.9. · Gut Basthorst</div>
+          </a>
+        </div>
+
+        <div class="col done">
+          <header><b>Gebucht</b><span class="s">1 · 3.500 €</span></header>
+          <a class="card" href="#">
+            <div class="nm">Meier &amp; Kowalski</div>
+            <div class="mt">21.8. · 4 Shootings</div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="view liste">
+      <div class="filters">
+        <button class="pop"><u>Anlass</u> Alle</button>
+        <button class="pop"><u>Team</u> Alle</button>
+        <button class="pop"><u>Gruppiert nach</u> Dringlichkeit</button>
+      </div>
+
+      <table style="margin-top:20px">
+        <thead>
+          <tr>
+            <th style="width:30%">Anfrage</th>
+            <th style="width:15%">Termin</th>
+            <th style="width:20%">Ort</th>
+            <th style="width:17%">Stufe</th>
+            <th class="r" style="width:10%">Wert</th>
+            <th class="r" style="width:8%">Zuletzt</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="grp" colspan="6">Handelt jemand</td></tr>
+          <tr>
+            <td class="nm">Marie Ahrens &amp; David Kroll</td><td class="mu">25.7.2026</td><td class="mu">Kaispeicher, Hamburg</td>
+            <td><span class="stufe"><s class="s4"></s><span class="w">Vertrag fehlt</span></span></td>
+            <td class="r">2.400 €</td><td class="r mu">13.08.</td>
+          </tr>
+          <tr>
+            <td class="nm">Annika Reuter &amp; Finn Sölter</td><td class="mu">30.5.2026</td><td class="mu">Elbspeicher, Hamburg</td>
+            <td><span class="stufe"><s class="s3"></s><span class="w">läuft 21.08. ab</span></span></td>
+            <td class="r">2.400 €</td><td class="r mu">vor 3 T.</td>
+          </tr>
+          <tr>
+            <td class="nm">Meier &amp; Kowalski</td><td class="mu">14.6.2026</td><td class="mu">Gut Basthorst</td>
+            <td><span class="stufe"><s></s><span class="w">Termin doppelt</span></span></td>
+            <td class="r mu">—</td><td class="r mu">heute</td>
+          </tr>
+          <tr>
+            <td class="nm">Nina Kaltenbach &amp; Ruben Adler</td><td class="mu">14.6.2026</td><td class="mu">Gut Basthorst</td>
+            <td><span class="stufe"><s></s><span class="w">Termin doppelt</span></span></td>
+            <td class="r mu">—</td><td class="r mu">gestern</td>
+          </tr>
+          <tr>
+            <td class="nm">Charlotte Vehse &amp; Paul Rieck</td><td class="mu">22.8.2026</td><td class="mu">Schloss Reinbek</td>
+            <td><span class="stufe"><s class="s2"></s><span class="w">8 Tage still</span></span></td>
+            <td class="r mu">—</td><td class="r mu">vor 8 T.</td>
+          </tr>
+
+          <tr><td class="grp" colspan="6">Läuft</td></tr>
+          <tr>
+            <td class="nm">Lea Hoffmann &amp; Jonas Behr</td><td class="mu">3.10.2026</td><td class="mu">Gut Wulksfelde</td>
+            <td><span class="stufe"><s class="s3"></s>Angebot</span></td>
+            <td class="r">3.500 €</td><td class="r mu">vor 6 T.</td>
+          </tr>
+          <tr>
+            <td class="nm">Jasmin &amp; Kolja Petersen</td><td class="mu">11.7.2026</td><td class="mu">Landhaus Scherrer</td>
+            <td><span class="stufe"><s class="s2"></s>Kontaktiert</span></td>
+            <td class="r mu">—</td><td class="r mu">vor 2 T.</td>
+          </tr>
+          <tr>
+            <td class="nm">Mira Sundermann</td><td class="mu">Termin offen</td><td class="mu">Studio</td>
+            <td><span class="stufe"><s class="s2"></s>Kontaktiert</span></td>
+            <td class="r mu">—</td><td class="r mu">vor 4 T.</td>
+          </tr>
+          <tr>
+            <td class="nm">Sarah Brandt &amp; Tim Erdmann</td><td class="mu">5.9.2026</td><td class="mu">Hof Eggers, Winsen</td>
+            <td><span class="stufe"><s></s>Neu</span></td>
+            <td class="r mu">—</td><td class="r mu">heute</td>
+          </tr>
+          <tr>
+            <td class="nm">Familie Osterhoff</td><td class="mu">14.3.2026</td><td class="mu">Studio</td>
+            <td><span class="stufe"><s></s>Neu</span></td>
+            <td class="r mu">—</td><td class="r mu">gestern</td>
+          </tr>
+
+          <tr><td class="grp" colspan="6">Abgeschlossen</td></tr>
+          <tr>
+            <td class="nm">Sophie Lang &amp; Erik Voss</td><td class="mu">19.9.2026</td><td class="mu">Gut Basthorst</td>
+            <td><span class="stufe"><s class="s5"></s>Vertrag</span></td>
+            <td class="r">3.100 €</td><td class="r mu">vor 6 T.</td>
+          </tr>
+          <tr>
+            <td class="nm">Meier &amp; Kowalski</td><td class="mu">21.8.2026</td><td class="mu">Gut Basthorst</td>
+            <td><span class="stufe"><s class="s5"></s>Gebucht</span></td>
+            <td class="r">3.500 €</td><td class="r mu">vor 2 T.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>
