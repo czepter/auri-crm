@@ -194,6 +194,14 @@ source: string,
 value: string | null,
 label: string,
 };
+export type ProjectRowData = {
+id: string,
+name: string,
+date: string | null,
+venue: string | null,
+position: string,
+contact: string | null,
+};
 export type RowActionData = {
 label: string,
 kind: string,

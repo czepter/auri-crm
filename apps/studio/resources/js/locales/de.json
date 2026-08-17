@@ -211,6 +211,12 @@
     "messagesCancelScheduled": "Abbrechen",
     "messagesSend": "Senden"
   },
+  "projects": {
+    "title": "Projekte",
+    "name": "Projekt",
+    "contact": "Kontakt",
+    "empty": "Keine Projekte."
+  },
   "calendar": {
     "title": "Kalender",
     "subscribe": "Kalender abonnieren",

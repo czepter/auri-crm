@@ -305,6 +305,11 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/anfragen/{lead}/stufe', [LeadStageController::class, 'update'])
             ->name('leads.stage.update');
 
+        // C-02 (#236): the list behind the sidebar's Projekte entry. Its own
+        // path, not /auftraege: a Job is what a booked project becomes, and
+        // the list covers every project whether or not one exists yet.
+        Route::get('/projekte', [ProjectController::class, 'index'])->name('projects.index');
+
         // The project screen. Shoot and crew mutations hang off /shootings
         // rather than under the project, because the shoot's public id already
         // identifies it and nesting would let the two disagree.

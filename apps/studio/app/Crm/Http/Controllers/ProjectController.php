@@ -9,6 +9,7 @@ use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Data\FormInstanceData;
 use App\Crm\Data\InternalNoteData;
 use App\Crm\Data\ProjectHeaderData;
+use App\Crm\Data\ProjectRowData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\CrewRole;
@@ -39,6 +40,33 @@ class ProjectController extends Controller
         private readonly DeriveProjectPosition $position,
         private readonly CheckDateAvailability $availability,
     ) {}
+
+    /**
+     * C-02 (#236): the destination the sidebar's new Projekte entry needs.
+     * Projects/* owns most of the product's screens and had no list of its
+     * own — a project was reachable only through the board it came off, or by
+     * URL.
+     *
+     * Ordered by the primary shoot, nearest first, with the undated last:
+     * a studio looks a project up by its day.
+     */
+    public function index(): Response
+    {
+        $this->authorize('viewAny', Project::class);
+
+        $projects = Project::query()
+            ->visibleTo(auth('staff')->user())
+            ->with(['primaryShoot', 'lead', 'job', 'shoots', 'contacts'])
+            ->get()
+            ->sortBy(fn (Project $project) => $project->primaryShoot?->date?->toDateString() ?? '9999-99-99')
+            ->values();
+
+        return Inertia::render('Projects/Index', [
+            'projects' => ProjectRowData::collect(
+                $projects->map(fn (Project $project) => ProjectRowData::fromProject($project, $this->position))
+            ),
+        ]);
+    }
 
     public function show(Project $project): Response
     {
