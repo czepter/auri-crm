@@ -10,8 +10,10 @@
 
 <!-- Die Tore stehen hier, nicht in den Einstellungen: view_password_hash,
      download_pin_hash, requires_verified_email, requires_settled_balance und
-     expires_at gehören zur Galerie. Was aus der Vorgabe kam und unverändert
-     ist, trägt "wie Vorgabe"; was abweicht, nennt den Vorgabewert daneben.
+     expires_at gehören zur Galerie. Der Schalter zeigt den Zustand, daneben
+     steht nur, was er nicht sagen kann: seit wann das Passwort gilt, wie viele
+     Kommentare da sind, wie viel Geld offen ist. Wo übersteuert wurde, führt
+     ein Link zurück auf die Vorgabe.
 
      Veröffentlicht wird in Fassungen (gallery_versions mit version und
      published_at). Eine neue Fassung ersetzt die Auswahl, ohne die alte zu
@@ -73,41 +75,39 @@
           <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Zugang und Freigaben</h2>
           <div class="setting">
             <span class="t">Passwort für die Ansicht</span>
-            <span class="v mut">wie Vorgabe · gesetzt 12.08.</span>
+            <span class="v mut">gesetzt 12.08.</span>
             <span class="sw on"></span>
             <a class="link" href="#">Neu setzen</a>
           </div>
           <div class="setting">
             <span class="t">Zweiter Code für den Download</span>
-            <span class="v mut">wie Vorgabe · vierstellig</span>
+            <span class="v mut">vierstellig</span>
             <span class="sw on"></span>
             <a class="link" href="#">Neu setzen</a>
           </div>
           <div class="setting">
             <span class="t">E-Mail vor dem Download</span>
-            <span class="v" style="color:var(--accent)">abweichend · Vorgabe ist aus</span>
             <span class="sw on"></span>
             <a class="link" href="#">Zurücksetzen</a>
           </div>
           <div class="setting">
             <span class="t">Download erst nach vollständiger Zahlung</span>
-            <span class="v" style="color:var(--accent)">abweichend · 1.500 € offen</span>
+            <span class="v warn" style="color:var(--accent)">1.500 € offen</span>
             <span class="sw on"></span>
             <a class="link" href="#">Zurücksetzen</a>
           </div>
           <div class="setting">
             <span class="t">Herunterladen erlaubt</span>
-            <span class="v mut">wie Vorgabe</span>
             <span class="sw on"></span>
           </div>
           <div class="setting">
             <span class="t">Kommentare</span>
-            <span class="v mut">wie Vorgabe · 18 vorhanden</span>
+            <span class="v mut">18 vorhanden</span>
             <span class="sw on"></span>
           </div>
           <div class="setting">
             <span class="t">Favoritenlisten</span>
-            <span class="v mut">wie Vorgabe · 4 Listen</span>
+            <span class="v mut">4 Listen</span>
             <span class="sw on"></span>
           </div>
           <div class="setting">

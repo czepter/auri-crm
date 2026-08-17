@@ -10,8 +10,9 @@
 
 <!-- Die Stelle, an der die Vorgaben aus den Einstellungen übersteuert werden:
      contacts.portal_overrides ist eine jsonb-Spalte, und was nicht darin steht,
-     folgt der Vorgabe. Deshalb trägt jede Zeile ihren Zustand — "wie Vorgabe"
-     oder den abweichenden Wert mit dem Weg zurück.
+     folgt der Vorgabe. Der Schalter zeigt den Zustand; wo übersteuert wurde,
+     steht daneben der Weg zurück. Ein Text, der "abweichend" danebenschreibt,
+     erzählt nur nach, was der Schalter schon sagt.
 
      Übersteuert wird je Kontakt, nicht je Projekt: eine Location mit vierzig
      Terminen im Jahr wird einmal eingerichtet, nicht vierzigmal.
@@ -72,23 +73,19 @@
           <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Portal</h2>
           <div class="setting">
             <span class="t">Angebot annehmen</span>
-            <span class="v mut">wie Vorgabe</span>
             <span class="sw on"></span>
           </div>
           <div class="setting">
             <span class="t">Vertrag unterschreiben</span>
-            <span class="v mut">wie Vorgabe</span>
             <span class="sw on"></span>
           </div>
           <div class="setting">
             <span class="t">Nachrichten schreiben</span>
-            <span class="v" style="color:var(--accent)">abweichend · Vorgabe ist an</span>
             <span class="sw"></span>
             <a class="link" href="#">Zurücksetzen</a>
           </div>
           <div class="setting">
             <span class="t">Zahlungsstand sehen</span>
-            <span class="v" style="color:var(--accent)">abweichend · Vorgabe ist aus</span>
             <span class="sw on"></span>
             <a class="link" href="#">Zurücksetzen</a>
           </div>
