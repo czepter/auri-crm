@@ -1050,5 +1050,27 @@
       "projekt": "Projekt",
       "galerie": "Galerie"
     }
+  },
+  "lead": {
+    "group": {
+      "unbeantwortet": "Unbeantwortet",
+      "angebot": "Angebot draußen",
+      "angenommen": "Angenommen"
+    },
+    "silentFor": "1 Tag still | {count} Tage still",
+    "said": "Was sie schreiben",
+    "noText": "Kein Text",
+    "noReach": "Keine Kontaktdaten",
+    "dates": "Termine",
+    "quote": "Angebot",
+    "validUntil": "gültig bis {date}",
+    "tasks": "Aufgaben",
+    "notes": "Notizen",
+    "week": "Woche um den Termin",
+    "weekFree": "Nichts anderes an dem Tag",
+    "conflicts": "Belegt",
+    "writeQuote": "Angebot schreiben",
+    "sendContract": "Vertrag senden",
+    "openProject": "Zum Projekt"
   }
 }

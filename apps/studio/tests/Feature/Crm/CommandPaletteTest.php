@@ -46,7 +46,11 @@ it('names an unbooked project an Anfrage and a booked one a Projekt', function (
 });
 
 it('keeps twenty, and drops the oldest rather than growing', function () {
-    $projects = Project::factory()->count(22)->create();
+    // Named by hand: two factory-random names can collide, and the assertion
+    // below is about which row fell out, not about how many share a name.
+    $projects = collect(range(1, 22))->map(
+        fn (int $number) => Project::factory()->create(['name' => "Projekt {$number}"])
+    );
 
     foreach ($projects as $project) {
         $this->get("/auftraege/{$project->public_id}")->assertOk();

@@ -13,6 +13,7 @@ use App\Crm\Http\Controllers\FormTemplateController;
 use App\Crm\Http\Controllers\InquiryCaptureController;
 use App\Crm\Http\Controllers\InternalNoteController;
 use App\Crm\Http\Controllers\LeadBoardController;
+use App\Crm\Http\Controllers\LeadCaseController;
 use App\Crm\Http\Controllers\LeadStageController;
 use App\Crm\Http\Controllers\ProjectController;
 use App\Crm\Http\Controllers\ShootController;
@@ -316,6 +317,10 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/anfragen/ansicht', [LeadBoardController::class, 'chooseView'])
             ->name('leads.view');
         Route::post('/anfragen', [InquiryCaptureController::class, 'store'])->name('leads.store');
+        // C-08 (#243): one inquiry beside the queue it came from. Below
+        // /anfragen/neu and /anfragen/ansicht, which would otherwise bind as
+        // a lead id.
+        Route::get('/anfragen/{lead}', [LeadCaseController::class, 'show'])->name('leads.show');
         Route::post('/anfragen/{lead}/stufe', [LeadStageController::class, 'update'])
             ->name('leads.stage.update');
 

@@ -255,7 +255,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
           <div class="list">
             <div v-for="lead in newLeads" :key="lead.id" class="row">
               <span class="tag">{{ lead.type }}</span>
-              <Link class="n" :href="`/auftraege/${lead.id}`">{{ lead.names }}</Link>
+              <Link class="n" :href="`/anfragen/${lead.leadId}`">{{ lead.names }}</Link>
               <!-- The conflict is a mark on the row that has it and leads into
                    the resolution; a footer counting collisions names neither
                    which nor where. -->

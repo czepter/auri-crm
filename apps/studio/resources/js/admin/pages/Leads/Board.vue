@@ -144,7 +144,7 @@ const groupRows = computed(() => props.groups.filter((group) => group.rows.lengt
             <Link
               class="card"
               :class="{ moving: moving?.id === card.id }"
-              :href="`/auftraege/${card.id}`"
+              :href="`/anfragen/${card.leadId}`"
               draggable="true"
               @dragstart="onDragStart($event, card, index)"
               @dragend="reset"
@@ -185,7 +185,7 @@ const groupRows = computed(() => props.groups.filter((group) => group.rows.lengt
           <template v-for="group in groupRows" :key="group.key">
             <tr><td class="grp" colspan="6">{{ $t(`board.group.${group.key}`) }}</td></tr>
             <tr v-for="card in group.rows" :key="card.id">
-              <td class="nm"><Link :href="`/auftraege/${card.id}`">{{ card.names }}</Link></td>
+              <td class="nm"><Link :href="`/anfragen/${card.leadId}`">{{ card.names }}</Link></td>
               <td>
                 {{ shortDate(card.date) ?? $t('board.openDate') }}
                 <span v-if="card.conflicts.length" class="w"> · {{ $t('board.dateDoubled') }}</span>
