@@ -25,6 +25,7 @@ use App\Documents\Http\Controllers\DocumentTemplateController;
 use App\Engagement\Http\Controllers\InboxController;
 use App\Engagement\Http\Controllers\ThreadController;
 use App\Gallery\Http\Controllers\GalleryLightroomExportController;
+use App\Gallery\Http\Controllers\GalleryRecordController;
 use App\Http\Controllers\Staff\AbsenceController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
@@ -399,6 +400,13 @@ Route::middleware('audience:staff')->group(function () {
         // prefix. galleries.uploads.* is a JSON API for the browser's own
         // chunked uploader (resources/js/admin/lib/multipartUpload.ts), not
         // Inertia — see MultipartUploadController.
+        // C-19 (#255): the gallery as a record with five tabs, not a data
+        // sheet with switches. Above /galerien/{gallery}/medien, which stays
+        // the ingest screen it always was.
+        Route::get('/galerien/{gallery}', [GalleryRecordController::class, 'show'])
+            ->name('galleries.show');
+        Route::patch('/galerien/{gallery}', [GalleryRecordController::class, 'update'])
+            ->name('galleries.update');
         Route::get('/galerien/{gallery}/medien', [MediaIngestController::class, 'show'])
             ->name('galleries.media');
         Route::post('/galerien/{gallery}/uploads', [MultipartUploadController::class, 'store'])

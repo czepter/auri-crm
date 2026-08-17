@@ -1106,5 +1106,52 @@
     "audienceClient": "Kunde",
     "addTask": "Aufgabe anlegen",
     "people": "Personen"
+  },
+  "galleryRecord": {
+    "link": "Link",
+    "published": "Stand",
+    "version": "Fassung {version}",
+    "images": "Bilder",
+    "expiry": "Ablauf",
+    "marked": "Markiert",
+    "downloaded": "Heruntergeladen",
+    "viewed": "Aufgerufen",
+    "blockedByBalance": "Gesperrt bis die Rechnung beglichen ist.",
+    "ingest": "Bilder hochladen",
+    "versions": "Fassungen",
+    "cover": "Titelbild",
+    "cover_full": "Ganzflächig",
+    "cover_split": "Geteilt",
+    "cover_plain": "Ohne Bild",
+    "colour": "Farbe",
+    "colour_light": "Hell",
+    "colour_dark": "Dunkel",
+    "colour_warm": "Warm",
+    "grid": "Raster",
+    "grid_wide": "Weit",
+    "grid_dense": "Dicht",
+    "grid_single": "Einspaltig",
+    "openLive": "Galerie ansehen",
+    "parts": "Teile",
+    "size": "Größe",
+    "state": "Stand",
+    "noBuilds": "Noch nichts vorbereitet.",
+    "emailGate": "E-Mail-Bestätigung",
+    "guest": "Gast",
+    "who": "Wer",
+    "what": "Was",
+    "when": "Wann",
+    "tab": {
+      "bilder": "Bilder",
+      "gestaltung": "Gestaltung",
+      "download": "Download",
+      "freigaben": "Freigaben",
+      "aktivitaet": "Aktivität"
+    },
+    "sheet": {
+      "downloads": "Downloads",
+      "marks": "Markierungen",
+      "views": "Zugriffe"
+    }
   }
 }

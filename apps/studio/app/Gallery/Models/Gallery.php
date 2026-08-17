@@ -41,7 +41,7 @@ class Gallery extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'project_id', 'shoot_id', 'title', 'assets',
+        'project_id', 'shoot_id', 'title', 'assets', 'design',
         'requires_settled_balance', 'balance_settled',
         'is_external', 'external_url', 'expires_at',
     ];
@@ -61,6 +61,10 @@ class Gallery extends Model
     {
         return [
             'assets' => 'array',
+            // C-19 (#255): cover variant, typeface, colour and grid. Null
+            // means "as the studio has it", so a studio changing its own
+            // default still reaches every gallery that never overrode one.
+            'design' => 'array',
             'requires_settled_balance' => 'boolean',
             'balance_settled' => 'boolean',
             'is_external' => 'boolean',
