@@ -41,6 +41,7 @@ class User extends Authenticatable
         'mfa_secret',
         'mfa_confirmed_at',
         'mfa_recovery_codes',
+        'lead_view',
     ];
 
     // calendar_token is a live credential — anyone holding it can read this

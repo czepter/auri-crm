@@ -130,6 +130,8 @@ venue: string | null,
 source: string,
 stage: string,
 daysInStage: number,
+value: number | null,
+lastAt: string,
 conflicts: App.Crm.Data.DateConflictData[],
 };
 export type NextShootData = {

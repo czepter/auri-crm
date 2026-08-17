@@ -7,6 +7,7 @@ use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\User;
+use App\Quotes\Models\Quote;
 use App\Settings\Models\StudioClosure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -243,4 +244,56 @@ it('puts no integer identifier on the board', function () {
     leadOn('2026-06-14');
 
     expect(integerIdPaths(boardProps()))->toBe([]);
+});
+
+// C-07 (#241): the column head carries the count and the sum — the question
+// staff otherwise go to Auswertungen for.
+it('sums each stage from the quotes actually sent', function () {
+    $lead = leadOn('2026-06-14', LeadStage::QuoteSent);
+    Quote::factory()->for($lead->project)->create(['total' => 590000, 'sent_at' => now()->subDay()]);
+
+    $other = leadOn('2026-07-11', LeadStage::QuoteSent, name: 'Petersen');
+    Quote::factory()->for($other->project)->create(['total' => 310000, 'sent_at' => now()->subDay()]);
+
+    // Nothing sent: not a zero in the sum, and a dash in the value column.
+    leadOn('2026-08-02', LeadStage::New, name: 'Sundermann');
+
+    $columns = collect(boardProps()['columns'])->keyBy('stage');
+
+    expect($columns['quote_sent']['total'])->toBe(900000)
+        ->and($columns['new']['total'])->toBe(0)
+        ->and(collect($columns['new']['cards'])->first()['value'])->toBeNull();
+});
+
+// A board shows where something stands; a table shows what is next, so it
+// groups by who owes the next move rather than by the six stages.
+it('groups the table by who owes the next move', function () {
+    leadOn('2026-06-14', LeadStage::New, name: 'Neu');
+    leadOn('2026-07-11', LeadStage::QuoteSent, name: 'Wartet');
+    leadOn('2026-08-02', LeadStage::Booked, name: 'Gebucht');
+
+    $groups = collect(boardProps()['groups'])->keyBy('key');
+
+    expect(collect($groups['handelt']['rows'])->pluck('names')->all())->toBe(['Neu'])
+        ->and(collect($groups['laeuft']['rows'])->pluck('names')->all())->toBe(['Wartet'])
+        ->and(collect($groups['fertig']['rows'])->pluck('names')->all())->toBe(['Gebucht']);
+});
+
+it('lets the url outrank what the user last chose, and remembers a choice', function () {
+    test()->staff->update(['lead_view' => 'liste']);
+
+    expect(boardProps()['view'])->toBe('liste');
+
+    $props = test()->actingAs(test()->staff, 'staff')
+        ->get('/anfragen?ansicht=board')->assertOk()->viewData('page')['props'];
+
+    expect($props['view'])->toBe('board');
+
+    test()->actingAs(test()->staff, 'staff')->post('/anfragen/ansicht', ['ansicht' => 'board']);
+
+    expect(test()->staff->fresh()->lead_view)->toBe('board');
+});
+
+it('falls back to the board when the user has chosen nothing', function () {
+    expect(boardProps()['view'])->toBe('board');
 });

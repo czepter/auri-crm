@@ -300,7 +300,10 @@ Route::middleware('audience:staff')->group(function () {
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.
         Route::get('/anfragen/neu', [InquiryCaptureController::class, 'create'])->name('leads.create');
-        Route::get('/anfragen', LeadBoardController::class)->name('leads.index');
+        Route::get('/anfragen', [LeadBoardController::class, '__invoke'])->name('leads.index');
+        // C-07 (#241): the view the user last chose, kept on the user.
+        Route::post('/anfragen/ansicht', [LeadBoardController::class, 'chooseView'])
+            ->name('leads.view');
         Route::post('/anfragen', [InquiryCaptureController::class, 'store'])->name('leads.store');
         Route::post('/anfragen/{lead}/stufe', [LeadStageController::class, 'update'])
             ->name('leads.stage.update');

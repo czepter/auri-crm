@@ -11,11 +11,10 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * What a lead is triaged on, one fact per line, so a column scans down
  * consistent positions.
  *
- * No value and no column sum: Quote is lead-scoped and arrives with P2, and the
- * two alternatives were both worse — an estimated_value column is a second
- * money number to reconcile against the real quote later, and a placeholder
- * zero is a row nobody can act on. The card still triages, because the age and
- * its stale colouring are what the board exists to surface.
+ * The value is the latest sent quote's total, never an estimate: an
+ * estimated_value column would be a second money number to reconcile against
+ * the real quote later, and a placeholder zero is a row nobody can act on. A
+ * lead with nothing sent carries null and the column shows a dash.
  */
 #[TypeScript]
 class LeadCardData extends Data
@@ -35,6 +34,13 @@ class LeadCardData extends Data
         public string $source,
         public string $stage,
         public int $daysInStage,
+        // C-07 (#241): the list view carries a value column and the board's
+        // column heads carry the sum of one — the question staff otherwise
+        // leave the screen for. Minor units, formatted once on the screen.
+        // Null where nothing has been sent: a quote that does not exist is
+        // not a zero.
+        public ?int $value,
+        public string $lastAt,
         public array $conflicts,
     ) {}
 
@@ -60,6 +66,8 @@ class LeadCardData extends Data
             source: $lead->source->label(),
             stage: $lead->stage->value,
             daysInStage: (int) $lead->stage_entered_at->startOfDay()->diffInDays(now()->startOfDay()),
+            value: $project->latestQuote?->total,
+            lastAt: $lead->stage_entered_at->toIso8601String(),
             conflicts: $conflicts,
         );
     }

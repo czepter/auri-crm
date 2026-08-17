@@ -220,6 +220,17 @@
 [data-theme="crm"] .cols .col.target { background: var(--sunk); border-radius: var(--r-sm); }
 [data-theme="crm"] .cols .col.target > .stub { display: block; min-height: 44px; }   /* an empty stage stays a target */
 
+/* The same stage targets the arrow keys reach, for a pointer with no keyboard
+   beside it. Six entries, so a menu rather than a submenu. */
+[data-theme="crm"] .stagemenu {
+  position: fixed; width: 208px; z-index: 20;
+  background: var(--paper); border-radius: var(--r-sm);
+  padding: 5px; box-shadow: 0 8px 24px rgba(0,0,0,.16);
+}
+[data-theme="crm"] .stagemenu div { padding: 6px 9px; border-radius: 8px; font-size: 12.5px; cursor: pointer; }
+[data-theme="crm"] .stagemenu div:hover { background: var(--sunk); }
+[data-theme="crm"] .stagemenu div.off, [data-theme="crm"] .stagemenu div.off:hover { color: var(--mark); background: none; cursor: default; }
+
 /* ---------- List: table ---------- */
 
 /* Grouped by urgency, not by stage: a board shows where something stands, a
