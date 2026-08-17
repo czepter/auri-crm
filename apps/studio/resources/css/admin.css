@@ -1,6 +1,7 @@
 @import "./app.css";
 @import "./admin-extra.css";
 @import "./document-editor.css";
+@import "./crm.css";
 
 /*
  * The admin surface is the clickdummy's own theme — tokens.css declares its
