@@ -11,13 +11,10 @@ use RuntimeException;
  * natively as of PHP 8.1 — no Intervention Image, no second image library
  * for what one already-installed extension does.
  *
- * ponytail: every request re-decodes the original and re-encodes the
- * variant — no derivative cache. G-01a's own docs/media.md says as much for
- * the wider caching question: "Set a target when there is a real gallery and
- * a real measurement to set it against." Upgrade path, if origin CPU turns
- * out to matter: cache the encoded bytes back onto the `s3` disk under the
- * same immutable path the request came in on, so the next request for that
- * width/format is a Storage::get, not a re-encode.
+ * The encode happens once per width and format: GalleryImageController keeps
+ * the result on the `s3` disk and serves it from there afterwards. G-01
+ * (#229) is what set the target this had been waiting for — a filmstrip of
+ * 33 previews re-decoding 33 originals on every open.
  */
 class ImageVariant
 {
