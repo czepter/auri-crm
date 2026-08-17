@@ -40,7 +40,6 @@
     "contactCreate": "„{term}“ als neuen Kontakt anlegen",
     "contactProjects": "{count}. Projekt",
     "name": "Name",
-    "partner": "Partner/in",
     "email": "E-Mail",
     "phone": "Telefon",
     "noEmailHint": "Ohne E-Mail: kein Portal-Zugang, keine Eingangsbestätigung.",
@@ -55,7 +54,10 @@
     "conflictAbsence": "Abwesend — {label}",
     "inquiryText": "Anfragetext",
     "inquiryTextHint": "Ort, Gästezahl, weitere Shootings und Paket später im Projekt.",
-    "submit": "Anfrage anlegen"
+    "submit": "Anfrage anlegen",
+    "addPerson": "+ Person",
+    "submitAndNext": "Anlegen und nächste",
+    "conflictBooked": "Gebucht — {project}{venue} ›"
   },
   "board": {
     "title": "Anfragen",

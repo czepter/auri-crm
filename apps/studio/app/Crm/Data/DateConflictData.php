@@ -2,6 +2,7 @@
 
 namespace App\Crm\Data;
 
+use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\Shoot;
 use App\Models\Absence;
 use App\Settings\Models\StudioClosure;
@@ -36,6 +37,15 @@ class DateConflictData extends Data
         public ?string $label,
         /** The away person's public_id — set only when source is 'absence', so S-02's picker can match a specific assignee. */
         public ?string $personId = null,
+        /**
+         * C-09 (#244): a competing inquiry on the same Saturday is the normal
+         * case — two couples ask, one books. A day that is already booked is
+         * a different statement, so the row says which it is and the screen
+         * can weigh it. Neither blocks: a form that refuses teaches staff to
+         * type a wrong date to get past it, which corrupts the very column
+         * the check reads.
+         */
+        public bool $booked = false,
     ) {}
 
     public static function fromShoot(Shoot $shoot): self
@@ -47,6 +57,11 @@ class DateConflictData extends Data
             venue: $shoot->venue(),
             kind: $shoot->kind->label(),
             label: null,
+            // Read off the shoot the query already loaded, not off the job:
+            // `requested` is precisely "somebody asked for this day", and
+            // anything past it is a day the studio has committed. A second
+            // relation for the same fact would cost a query per read.
+            booked: $shoot->status !== ShootStatus::Requested,
         );
     }
 

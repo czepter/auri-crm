@@ -23,7 +23,6 @@ class CaptureInquiryData extends Data
         public ?string $contact_name,
         public ?string $contact_email,
         public ?string $contact_phone,
-        public ?string $partner_name,
         public string $project_name,
         public ProjectType $type,
         public LeadSource $source,
@@ -31,6 +30,19 @@ class CaptureInquiryData extends Data
         public ?string $date,
         public ?string $inquiry_text,
         public ?string $referred_by_contact_id,
+        /**
+         * C-09 (#244): one row per person — name, mail, phone — because
+         * `contacts` holds the three in one row. A partner used to arrive as
+         * a bare name and could never be reached; every further person is a
+         * ProjectContact of their own, so each gets their own portal login
+         * rather than sharing an identity.
+         *
+         * Defaulted, because the api's own lead write (I-03) and the public
+         * form both capture a single person.
+         *
+         * @var list<array{name: string, email: ?string, phone: ?string}>
+         */
+        public array $people = [],
     ) {}
 
     public static function rules(): array
@@ -42,7 +54,10 @@ class CaptureInquiryData extends Data
             'contact_name' => ['nullable', 'string', 'max:255', 'required_without:contact_id'],
             'contact_email' => ['nullable', 'email', 'max:255'],
             'contact_phone' => ['nullable', 'string', 'max:64'],
-            'partner_name' => ['nullable', 'string', 'max:255'],
+            'people' => ['array'],
+            'people.*.name' => ['required', 'string', 'max:255'],
+            'people.*.email' => ['nullable', 'email', 'max:255'],
+            'people.*.phone' => ['nullable', 'string', 'max:64'],
             'project_name' => ['required', 'string', 'max:255'],
             'type' => ['required', Rule::enum(ProjectType::class)],
             'source' => ['required', Rule::enum(LeadSource::class)],

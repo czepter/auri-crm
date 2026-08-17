@@ -90,6 +90,7 @@ venue: string | null,
 kind: string | null,
 label: string | null,
 personId: string | null,
+booked: boolean,
 };
 export type DomainRowData = {
 projectId: string,

@@ -26,7 +26,11 @@ const form = useForm({
   contact_name: '',
   contact_email: '',
   contact_phone: '',
-  partner_name: '',
+  // C-09 (#244): one row per person, because `contacts` holds name, mail and
+  // phone in one row. Split into stacked blocks the table is cut crosswise
+  // and it stops being clear whose address is whose — with a couple holding
+  // two addresses that is wrongly enterable.
+  people: [] as { name: string; email: string; phone: string }[],
   project_name: '',
   type: props.types[0].value,
   source: props.sources[0].value,
@@ -77,14 +81,31 @@ watch(
   },
 )
 
+function addPerson() {
+  form.people.push({ name: '', email: '', phone: '' })
+}
+
+// Capture rarely happens singly, so the second button comes back here with
+// an empty form instead of opening the case that was just created.
+const again = ref(false)
+
 function submit() {
-  form.post('/anfragen')
+  form.post('/anfragen', {
+    onSuccess: () => {
+      if (again.value) {
+        form.reset()
+        contact.value = null
+        creating.value = false
+        again.value = false
+      }
+    },
+  })
 }
 </script>
 
 <template>
   <AdminLayout active="anfragen">
-    <div style="max-width: 680px">
+    <div data-theme="crm" class="form" style="padding: var(--s6) var(--s7)">
       <div class="kick">{{ $t('leads.createKicker') }}</div>
       <h1>{{ $t('leads.createTitle') }}</h1>
 
@@ -97,28 +118,40 @@ function submit() {
           </div>
         </div>
 
-        <div v-if="creating" class="fgrid grp">
-          <div class="fld">
-            <Label for="contact_name">{{ $t('leads.name') }}</Label>
-            <Input
-              id="contact_name"
-              v-model="form.contact_name"
-              type="text"
-              @input="proposeProjectName" />
+        <div v-if="creating" class="grp">
+          <div class="line">
+            <div class="field grow">
+              <span>{{ $t('leads.name') }}</span>
+              <input v-model="form.contact_name" type="text" @input="proposeProjectName" />
+            </div>
+            <div class="field grow">
+              <span>{{ $t('leads.email') }}</span>
+              <input v-model="form.contact_email" type="email" />
+            </div>
+            <div class="field grow">
+              <span>{{ $t('leads.phone') }}</span>
+              <input v-model="form.contact_phone" type="tel" />
+            </div>
           </div>
-          <div class="fld">
-            <Label for="partner_name">{{ $t('leads.partner') }}</Label>
-            <Input id="partner_name" v-model="form.partner_name" type="text" />
+
+          <div v-for="(person, index) in form.people" :key="index" class="line">
+            <div class="field grow">
+              <span>{{ $t('leads.name') }}</span>
+              <input v-model="person.name" type="text" />
+            </div>
+            <div class="field grow">
+              <span>{{ $t('leads.email') }}</span>
+              <input v-model="person.email" type="email" />
+            </div>
+            <div class="field grow">
+              <span>{{ $t('leads.phone') }}</span>
+              <input v-model="person.phone" type="tel" />
+            </div>
           </div>
-          <div class="fld">
-            <Label for="contact_email">{{ $t('leads.email') }}</Label>
-            <Input id="contact_email" v-model="form.contact_email" type="email" />
-          </div>
-          <div class="fld">
-            <Label for="contact_phone">{{ $t('leads.phone') }}</Label>
-            <Input id="contact_phone" v-model="form.contact_phone" type="tel" />
-          </div>
-          <p class="hint" style="grid-column: 1 / -1">{{ $t('leads.noEmailHint') }}</p>
+
+          <button class="ghost" type="button" style="margin-top: var(--s2)" @click="addPerson">
+            {{ $t('leads.addPerson') }}
+          </button>
         </div>
 
         <div class="grp">
@@ -134,48 +167,39 @@ function submit() {
           </div>
         </div>
 
-        <div class="fgrid grp">
+        <div class="grp">
+          <!-- Button rows instead of dropdowns: three to five values are hit
+               faster than a menu is opened. -->
           <div class="fld">
-            <Label for="type">{{ $t('leads.type') }}</Label>
-            <Select :model-value="form.type" @update:model-value="(value) => (form.type = String(value))">
-              <SelectTrigger id="type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="option in types" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <Label>{{ $t('leads.type') }}</Label>
+            <div class="choice">
+              <label v-for="option in types" :key="option.value">
+                <input v-model="form.type" type="radio" :value="option.value" @change="proposeProjectName" />
+                <span>{{ option.label }}</span>
+              </label>
+            </div>
           </div>
-          <div class="fld">
-            <Label for="source">{{ $t('leads.source') }}</Label>
-            <Select :model-value="form.source" @update:model-value="(value) => (form.source = String(value))">
-              <SelectTrigger id="source">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="option in sources" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+
+          <div class="fld" style="margin-top: var(--s4)">
+            <Label>{{ $t('leads.source') }}</Label>
+            <div class="choice">
+              <label v-for="option in sources" :key="option.value">
+                <input v-model="form.source" type="radio" :value="option.value" />
+                <span>{{ option.label }}</span>
+              </label>
+            </div>
           </div>
-          <div class="fld">
-            <Label for="captured_via">{{ $t('leads.capturedVia') }}</Label>
-            <Select
-              :model-value="form.captured_via"
-              @update:model-value="(value) => (form.captured_via = String(value))"
-            >
-              <SelectTrigger id="captured_via">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="option in channels" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+
+          <!-- CaptureChannel without web_form: what somebody types in here did
+               not arrive through the form. The controller filters it. -->
+          <div class="fld" style="margin-top: var(--s4)">
+            <Label>{{ $t('leads.capturedVia') }}</Label>
+            <div class="choice">
+              <label v-for="option in channels" :key="option.value">
+                <input v-model="form.captured_via" type="radio" :value="option.value" />
+                <span>{{ option.label }}</span>
+              </label>
+            </div>
           </div>
         </div>
 
@@ -200,10 +224,13 @@ function submit() {
         </div>
 
         <div class="formfoot">
-          <Button type="submit" :disabled="form.processing">
+          <a class="link" href="/anfragen">{{ $t('common.cancel') }}</a>
+          <button class="btn-2" type="submit" :disabled="form.processing" @click="again = true">
+            {{ $t('leads.submitAndNext') }}
+          </button>
+          <button class="btn" type="submit" :disabled="form.processing" @click="again = false">
             {{ $t('leads.submit') }}
-          </Button>
-          <Button as="a" href="/anfragen" variant="ghost">{{ $t('common.cancel') }}</Button>
+          </button>
         </div>
       </form>
     </div>

@@ -47,12 +47,20 @@ class CaptureInquiry
 
             $project->attachContact($contact, ProjectContactRole::Primary);
 
-            // One field in the UI, a second ProjectContact underneath — so in
-            // P2 the partner gets their own portal login rather than sharing
-            // one identity with the primary contact.
-            if (filled($data->partner_name)) {
+            // Everyone else on the inquiry, each their own ProjectContact —
+            // so a partner gets their own portal login rather than sharing
+            // one identity, and can actually be reached.
+            foreach ($data->people as $person) {
+                if (! filled($person['name'] ?? null)) {
+                    continue;
+                }
+
                 $project->attachContact(
-                    Contact::create(['name' => $data->partner_name]),
+                    Contact::create([
+                        'name' => $person['name'],
+                        'email' => $person['email'] ?? null,
+                        'phone' => $person['phone'] ?? null,
+                    ]),
                     ProjectContactRole::Partner,
                 );
             }

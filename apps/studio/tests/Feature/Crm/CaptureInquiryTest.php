@@ -31,7 +31,7 @@ function payload(array $overrides = []): array
         'contact_name' => 'Annika Steffens',
         'contact_email' => 'a.steffens@posteo.de',
         'contact_phone' => '0171 3948820',
-        'partner_name' => 'Ruben Falk',
+        'people' => [['name' => 'Ruben Falk', 'email' => null, 'phone' => null]],
         'project_name' => 'Steffens & Falk — Hochzeit',
         'type' => ProjectType::Wedding->value,
         'source' => LeadSource::Referral->value,
@@ -95,7 +95,7 @@ it('reuses an existing contact rather than creating a second one', function () {
 
 it('saves without a partner', function () {
     $this->actingAs($this->staff, 'staff')
-        ->post('/anfragen', payload(['partner_name' => null]))
+        ->post('/anfragen', payload(['people' => []]))
         ->assertRedirect('/anfragen');
 
     expect(Contact::count())->toBe(1);
@@ -213,7 +213,7 @@ it('records who referred a client when the source is a referral', function () {
         contact_name: 'Steffens & Falk',
         contact_email: 'steffens@example.test',
         contact_phone: null,
-        partner_name: null,
+        people: [],
         project_name: 'Steffens & Falk',
         type: ProjectType::Wedding,
         source: LeadSource::Referral,
@@ -234,7 +234,7 @@ it('leaves the referrer null when nobody recorded one', function () {
         contact_name: 'Ohne Vermittler',
         contact_email: 'ohne@example.test',
         contact_phone: null,
-        partner_name: null,
+        people: [],
         project_name: 'Ohne Vermittler',
         type: ProjectType::Wedding,
         source: LeadSource::Referral,
@@ -245,4 +245,34 @@ it('leaves the referrer null when nobody recorded one', function () {
     ), $this->staff);
 
     expect($project->lead->referredBy)->toBeNull();
+});
+
+// C-09 (#244): a partner used to arrive as a bare name and could never be
+// reached. Every further person is a ProjectContact of their own, with their
+// own mail and phone — which is also what gives them their own portal login.
+it('captures every person on the inquiry with their own reach', function () {
+    test()->actingAs(test()->staff, 'staff')
+        ->post('/anfragen', payload([
+            'people' => [
+                ['name' => 'Tim Erdmann', 'email' => 't.erdmann@example.test', 'phone' => '0170 111'],
+                ['name' => 'Mira Sundermann', 'email' => null, 'phone' => null],
+            ],
+        ]))
+        ->assertRedirect();
+
+    $partners = Project::first()->contacts()
+        ->wherePivot('role', ProjectContactRole::Partner->value)
+        ->get();
+
+    expect($partners->pluck('name')->all())->toBe(['Tim Erdmann', 'Mira Sundermann'])
+        ->and($partners->firstWhere('name', 'Tim Erdmann')->email)->toBe('t.erdmann@example.test')
+        ->and($partners->firstWhere('name', 'Tim Erdmann')->phone)->toBe('0170 111');
+});
+
+it('skips a person row left blank', function () {
+    test()->actingAs(test()->staff, 'staff')
+        ->post('/anfragen', payload(['people' => []]))
+        ->assertRedirect();
+
+    expect(Project::first()->contacts)->toHaveCount(1);
 });
