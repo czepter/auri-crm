@@ -929,8 +929,25 @@
     "emailRequest": "Download-Link anfordern",
     "emailLinkSent": "Bestätigungslink verschickt.",
     "emailLinkDead": "Dieser Bestätigungslink funktioniert nicht mehr.",
-    "readyTitle": "Alles bereit",
-    "readyHint": "Download noch nicht verfügbar."
+    "downloadTitle": "Herunterladen",
+    "everything": "Alle Bilder",
+    "whatLabel": "Was",
+    "sizeLabel": "Größe",
+    "size": {
+      "original": "Original",
+      "web": "Zum Teilen"
+    },
+    "sizeHint": {
+      "original": "volle Größe, für den Druck",
+      "web": "kleinere Dateien, für Mail und Handy"
+    },
+    "prepare": "Bilder vorbereiten",
+    "preparing": "wird vorbereitet",
+    "preparingHint": "Die Dateien werden gerade zusammengestellt.",
+    "yourFiles": "Eure Dateien",
+    "partOf": "Teil {at} von {of}",
+    "partsLive": "Die Dateien liegen 24 Stunden bereit. Danach hier neu vorbereiten.",
+    "buildFailed": "Beim Vorbereiten ist etwas schiefgegangen. Bitte noch einmal versuchen."
   },
   "media": {
     "kicker": "Medien · Import",

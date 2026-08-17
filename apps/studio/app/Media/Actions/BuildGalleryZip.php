@@ -2,6 +2,7 @@
 
 namespace App\Media\Actions;
 
+use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GalleryVersion;
 use App\Media\Enums\AssetStatus;
 use App\Media\Enums\ZipBuildSize;
@@ -63,7 +64,7 @@ class BuildGalleryZip
         // cleared before this attempt writes its own.
         $zipBuild->parts()->delete();
 
-        $members = $this->resolveMembers($zipBuild->galleryVersion, $zipBuild->size);
+        $members = $this->resolveMembers($zipBuild->galleryVersion, $zipBuild->size, $zipBuild->galleryList);
         $volumes = ZipVolumePlanner::plan($members, $splitThresholdBytes);
 
         /** @var FilesystemAdapter $disk */
@@ -159,14 +160,21 @@ class BuildGalleryZip
      * measurements; a version written in the old string form still resolves,
      * since a bare string is its own key.
      */
-    private function resolveMembers(GalleryVersion $version, ZipBuildSize $size): array
+    private function resolveMembers(GalleryVersion $version, ZipBuildSize $size, ?GalleryList $list): array
     {
-        // scope=All is the only case today (#59) — every asset the version
-        // snapshot carries, in the order it carries them.
         $keys = collect($version->assets)
             ->map(fn (array|string $asset) => is_array($asset) ? ($asset['key'] ?? null) : $asset)
             ->filter()
             ->values();
+
+        // G-03 (#231): a build may cover one of the client's own selections
+        // instead of the whole version. Intersected rather than queried from
+        // the list, so the version's own order survives — a couple's album
+        // downloads in the order the studio delivered it.
+        if ($list !== null) {
+            $onList = $list->items->pluck('asset_key')->all();
+            $keys = $keys->filter(fn (string $key) => in_array($key, $onList, true))->values();
+        }
 
         $assetsByKey = Asset::query()
             ->where('gallery_id', $version->gallery_id)

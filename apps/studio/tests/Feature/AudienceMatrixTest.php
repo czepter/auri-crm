@@ -112,6 +112,9 @@ const PUBLIC_ROUTES = [
         // against (EnsureUngatedGallery).
         'galerie-bilder/{galleryVersion}/{key}',
         'galerien/{gallery}/download', 'galerien/{gallery}/download/pin',
+        // G-03 (#231): queues the archive. Behind the same two gates as the
+        // screen that offers it, neither of which reads as `audience:`.
+        'galerien/{gallery}/download/vorbereiten',
         'galerien/{gallery}/download/email', 'galerien/{gallery}/download/email/{token}',
         // G-11's delivery endpoint carries its own two-layer check —
         // `gallery.gate:download` plus `signed` — neither of which reads as

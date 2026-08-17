@@ -250,3 +250,123 @@ it('rotating the view password does not touch a granted download or email claim'
     $this->post("/galerien/{$gallery->public_id}/passwort", ['password' => 'newpassword']);
     expect(props("/galerien/{$gallery->public_id}/download")['step'])->toBe('ready');
 });
+
+// ---------- G-03 (#231): the download screen ----------
+
+it('offers everything plus the client\'s own selections, each with both sizes', function () {
+    $project = App\Crm\Models\Project::factory()->create(['portal_visible' => true]);
+    $contact = App\Crm\Models\Contact::factory()->create();
+    $project->attachContact($contact, App\Crm\Enums\ProjectContactRole::Primary);
+
+    $gallery = Gallery::factory()->for($project)->create();
+    $a = App\Media\Models\Asset::factory()->for($gallery)->create([
+        'key' => 'galleries/g/a.jpg', 'status' => App\Media\Enums\AssetStatus::Ready, 'byte_size' => 4_000_000,
+    ]);
+    App\Media\Models\Asset::factory()->for($gallery)->create([
+        'key' => 'galleries/g/b.jpg', 'status' => App\Media\Enums\AssetStatus::Ready, 'byte_size' => 6_000_000,
+    ]);
+    $gallery->update(['assets' => [['key' => 'galleries/g/a.jpg'], ['key' => 'galleries/g/b.jpg']]]);
+    $gallery->publish();
+
+    $list = App\Gallery\Models\GalleryList::create([
+        'gallery_id' => $gallery->id, 'contact_id' => $contact->id, 'name' => 'Album',
+    ]);
+    App\Gallery\Models\GalleryListItem::create(['gallery_list_id' => $list->id, 'asset_key' => $a->key]);
+
+    $props = test()->actingAs($contact, 'portal')
+        ->get("/galerien/{$gallery->public_id}/download")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    // name null is "everything"; the screen names it, not the controller.
+    expect(collect($props['selections'])->pluck('name')->all())->toBe([null, 'Album'])
+        ->and($props['selections'][0]['sizes']['original'])->toBe(10_000_000)
+        ->and($props['selections'][1]['count'])->toBe(1)
+        ->and($props['selections'][1]['sizes']['original'])->toBe(4_000_000);
+});
+
+// A named list belongs to the client — G-02 draws the same line in the grid.
+it('offers a guest only everything, never somebody\'s named list', function () {
+    $project = App\Crm\Models\Project::factory()->create(['portal_visible' => true]);
+    $contact = App\Crm\Models\Contact::factory()->create();
+    $project->attachContact($contact, App\Crm\Enums\ProjectContactRole::Primary);
+
+    $gallery = Gallery::factory()->for($project)->create(['assets' => [['key' => 'galleries/g/a.jpg']]]);
+    $gallery->publish();
+    App\Gallery\Models\GalleryList::create([
+        'gallery_id' => $gallery->id, 'contact_id' => $contact->id, 'name' => 'Album',
+    ]);
+
+    $props = props("/galerien/{$gallery->public_id}/download");
+
+    expect(collect($props['selections'])->pluck('name')->all())->toBe([null]);
+});
+
+it('queues one build per selection and size, and reuses a fresh one', function () {
+    Illuminate\Support\Facades\Queue::fake();
+
+    $gallery = Gallery::factory()->create(['assets' => [['key' => 'galleries/g/a.jpg']]]);
+    $gallery->publish();
+
+    test()->post("/galerien/{$gallery->public_id}/download/vorbereiten", ['size' => 'original'])
+        ->assertRedirect();
+
+    $build = App\Media\Models\ZipBuild::sole();
+    expect($build->scope)->toBe(App\Media\Enums\ZipBuildScope::All)
+        ->and($build->status)->toBe(App\Media\Enums\ZipBuildStatus::Building);
+
+    Illuminate\Support\Facades\Queue::assertPushed(App\Media\Jobs\BuildZip::class, 1);
+
+    // A different size is a different archive, not the same one again.
+    test()->post("/galerien/{$gallery->public_id}/download/vorbereiten", ['size' => 'web']);
+    expect(App\Media\Models\ZipBuild::count())->toBe(2);
+
+    // A Ready one within the window is not rebuilt.
+    $build->update(['status' => App\Media\Enums\ZipBuildStatus::Ready]);
+    test()->post("/galerien/{$gallery->public_id}/download/vorbereiten", ['size' => 'original']);
+
+    Illuminate\Support\Facades\Queue::assertPushed(App\Media\Jobs\BuildZip::class, 2);
+});
+
+it('refuses to prepare a list the visitor does not own', function () {
+    Illuminate\Support\Facades\Queue::fake();
+
+    $gallery = Gallery::factory()->create(['assets' => [['key' => 'galleries/g/a.jpg']]]);
+    $gallery->publish();
+    $list = App\Gallery\Models\GalleryList::create([
+        'gallery_id' => $gallery->id,
+        'contact_id' => App\Crm\Models\Contact::factory()->create()->id,
+        'name' => 'Album',
+    ]);
+
+    test()->post("/galerien/{$gallery->public_id}/download/vorbereiten", [
+        'size' => 'original', 'list' => $list->public_id,
+    ])->assertNotFound();
+
+    expect(App\Media\Models\ZipBuild::count())->toBe(0);
+});
+
+// One button would be lying about 33 originals at 4,2 GB.
+it('hands back every part of a ready build with its own signed link', function () {
+    $gallery = Gallery::factory()->create(['assets' => [['key' => 'galleries/g/a.jpg']]]);
+    $version = $gallery->publish();
+
+    $build = App\Media\Models\ZipBuild::create([
+        'gallery_version_id' => $version->id,
+        'scope' => App\Media\Enums\ZipBuildScope::All,
+        'size' => App\Media\Enums\ZipBuildSize::Original,
+        'status' => App\Media\Enums\ZipBuildStatus::Ready,
+    ]);
+    $build->parts()->createMany([
+        ['part_number' => 1, 'key' => 'zips/part-1.zip', 'byte_size' => 1_500_000_000],
+        ['part_number' => 2, 'key' => 'zips/part-2.zip', 'byte_size' => 900_000_000],
+    ]);
+
+    $props = props("/galerien/{$gallery->public_id}/download");
+    $row = collect($props['builds'])->sole();
+
+    expect($row['partCount'])->toBe(2)
+        ->and($row['parts'][0]['bytes'])->toBe(1_500_000_000)
+        ->and($row['parts'][0]['url'])->toContain('signature=')
+        ->and($row['parts'][1]['number'])->toBe(2);
+});

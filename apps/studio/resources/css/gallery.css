@@ -234,3 +234,39 @@
           padding-top:var(--s4); }
   [data-theme="gallery"] .arrow { background:rgba(255,255,255,.14); }
 }
+
+/* ---------- G-03 (#231): the download screen ---------- */
+/* Ported from mockups/redesign/galerie-download.html. A list gets
+   downloaded, at a size, in parts — the parts stand as a list because
+   BuildGalleryZip plans volumes and one button would be lying about 4,2 GB. */
+
+[data-theme="gallery"] .dlcol { max-width:620px; margin:0 auto; padding:var(--s6) var(--s5) var(--s8); }
+
+[data-theme="gallery"] .gates { display:flex; gap:var(--s4); flex-wrap:wrap; margin-top:var(--s5); }
+[data-theme="gallery"] .gc { display:inline-flex; align-items:center; gap:7px;
+        font:500 12px/1 var(--font); color:var(--ok); }
+[data-theme="gallery"] .gc svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2; }
+
+[data-theme="gallery"] .block { margin-top:var(--s7); }
+[data-theme="gallery"] .block .lab { font:600 11px/1 var(--font); letter-spacing:.1em;
+        text-transform:uppercase; color:var(--faint); margin:0 0 var(--s4); }
+
+[data-theme="gallery"] .opts { display:flex; flex-direction:column; }
+[data-theme="gallery"] .opt { display:flex; align-items:center; gap:var(--s4); padding:var(--s4) 0;
+        border-bottom:1px solid var(--line); cursor:pointer; }
+[data-theme="gallery"] .opt input { accent-color:var(--accent); margin:0; flex:none; cursor:pointer; }
+[data-theme="gallery"] .opt > span { flex:1; }
+[data-theme="gallery"] .opt b { display:block; font:600 14px/1.3 var(--font); color:var(--ink); }
+[data-theme="gallery"] .opt b + span { font:400 12.5px/1.4 var(--font); color:var(--muted); }
+[data-theme="gallery"] .dlsize { font:400 12.5px/1 var(--font); color:var(--muted); white-space:nowrap;
+        font-variant-numeric:tabular-nums; }
+
+[data-theme="gallery"] .parts { display:flex; flex-direction:column; }
+[data-theme="gallery"] .part { display:flex; align-items:center; gap:var(--s4); padding:var(--s4) 0;
+        border-bottom:1px solid var(--line); }
+[data-theme="gallery"] .part > span:first-child { flex:1; }
+[data-theme="gallery"] .part b { font:600 13.5px/1.3 var(--font); color:var(--ink); }
+/* A size with nothing to pack at it is shown and refused, not hidden — the
+   client should see that "Zum Teilen" exists and simply has nothing yet. */
+[data-theme="gallery"] .opt.off { cursor:default; }
+[data-theme="gallery"] .opt.off b, [data-theme="gallery"] .opt.off b + span { color:var(--faint); }

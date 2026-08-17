@@ -252,6 +252,12 @@ Route::prefix('galerien/{gallery}')->group(function () {
         Route::get('/download', [GalleryDownloadController::class, 'show'])->name('gallery.download.show');
         Route::post('/download/pin', [GalleryDownloadController::class, 'storePin'])->name('gallery.download.pin');
 
+        // G-03 (#231): "Bilder vorbereiten". Queues BuildGalleryZip for one
+        // selection at one size, or does nothing when a fresh archive of the
+        // same request already stands.
+        Route::post('/download/vorbereiten', [GalleryDownloadController::class, 'prepare'])
+            ->name('gallery.download.prepare');
+
         // The email gate is the second of the two download gates — a guest
         // who has not yet cleared the PIN has no business requesting or
         // spending an email-verification link either.

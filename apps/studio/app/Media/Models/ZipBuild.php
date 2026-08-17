@@ -2,6 +2,7 @@
 
 namespace App\Media\Models;
 
+use App\Gallery\Models\GalleryList;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Gallery\Models\GalleryVersion;
@@ -29,7 +30,7 @@ class ZipBuild extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['gallery_version_id', 'scope', 'size', 'status', 'error'];
+    protected $fillable = ['gallery_version_id', 'scope', 'size', 'status', 'error', 'gallery_list_id'];
 
     protected function casts(): array
     {
@@ -46,6 +47,12 @@ class ZipBuild extends Model
     }
 
     /** In split order — see ZipBuildPart::part_number. */
+    /** G-03 (#231): the selection this archive covers, or null for the whole version. */
+    public function galleryList(): BelongsTo
+    {
+        return $this->belongsTo(GalleryList::class, 'gallery_list_id');
+    }
+
     public function parts(): HasMany
     {
         return $this->hasMany(ZipBuildPart::class)->orderBy('part_number');
