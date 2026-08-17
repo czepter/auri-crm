@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Pakete — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="pakete">
+
+<!-- Ein Paket ist eine Vorlage für Angebotspositionen, kein Produkt:
+     Package::copyItems() legt beim Angebot eine tiefe Kopie an, und was danach
+     am Paket geändert wird, rührt bestehende Angebote nicht an.
+
+     Deshalb stehen die Positionen direkt in der Liste — man wählt ein Paket
+     danach aus, was drinsteht, nicht nach seinem Namen. Positionen ohne Preis
+     sind enthaltene Leistungen (package_items.unit_price ist nullable). -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="main">
+
+    <input class="vswitch" type="checkbox" id="newpkg">
+
+    <div class="hrow">
+      <div>
+        <div class="kick">4 aktiv · 1 stillgelegt</div>
+        <h1>Pakete</h1>
+      </div>
+      <a class="link" href="#" style="margin-left:auto">Stillgelegte zeigen</a>
+      <label class="btn" for="newpkg">Paket anlegen</label>
+    </div>
+
+    <div class="work" style="padding-top:20px">
+
+      <div class="composer form">
+        <div class="line">
+          <label class="field grow"><span>Name</span><input placeholder="Ganztag mit Brunch"></label>
+          <label class="field"><span>Anlass</span>
+            <span class="choice">
+              <label><input type="radio" name="pt" checked><span>Hochzeit</span></label>
+              <label><input type="radio" name="pt"><span>Portrait</span></label>
+              <label><input type="radio" name="pt"><span>Sonstiges</span></label>
+            </span>
+          </label>
+        </div>
+        <div class="line">
+          <label class="field grow"><span>Beschreibung</span><input placeholder="optional"></label>
+        </div>
+        <div class="foot">
+          <label class="link" for="newpkg">Abbrechen</label>
+          <button class="btn" type="button">Anlegen</button>
+        </div>
+      </div>
+
+      <div class="pkg">
+        <header>
+          <h3>Ganztag</h3>
+          <span class="n">Hochzeit · 4 Positionen</span>
+          <span class="sum">2.900 €</span>
+        </header>
+        <div class="quote">
+          <div class="qr"><span class="ti">Ganztagsbegleitung<div class="s">bis 12 Stunden</div></span><span class="qty">1×</span><span class="amt">2.400 €</span></div>
+          <div class="qr"><span class="ti">Onlinegalerie mit Download</span><span class="qty">1×</span><span class="amt">150 €</span></div>
+          <div class="qr"><span class="ti">Bildbearbeitung<div class="s">40 Motive</div></span><span class="qty">1×</span><span class="amt">350 €</span></div>
+          <div class="qr"><span class="ti">Vorbesprechung</span><span class="qty">1×</span><span class="amt" style="color:var(--ink-2);font-size:12px">enthalten</span></div>
+        </div>
+        <div class="ghosts"><button class="ghost">+ Position</button><button class="ghost">Duplizieren</button></div>
+      </div>
+
+      <div class="pkg">
+        <header>
+          <h3>Ganztag mit Brunch</h3>
+          <span class="n">Hochzeit · 6 Positionen</span>
+          <span class="sum">3.500 €</span>
+        </header>
+        <div class="quote">
+          <div class="qr"><span class="ti">Ganztagsbegleitung<div class="s">bis 12 Stunden</div></span><span class="qty">1×</span><span class="amt">2.400 €</span></div>
+          <div class="qr"><span class="ti">Zweitfotografin<div class="s">10 Stunden</div></span><span class="qty">1×</span><span class="amt">600 €</span></div>
+          <div class="qr"><span class="ti">Brunch am Folgetag<div class="s">3 Stunden</div></span><span class="qty">1×</span><span class="amt">450 €</span></div>
+          <div class="qr"><span class="ti">Onlinegalerie mit Download</span><span class="qty">1×</span><span class="amt">150 €</span></div>
+          <div class="qr"><span class="ti">Bildbearbeitung<div class="s">60 Motive</div></span><span class="qty">1×</span><span class="amt">450 €</span></div>
+          <div class="qr"><span class="ti">Vorbesprechung</span><span class="qty">1×</span><span class="amt" style="color:var(--ink-2);font-size:12px">enthalten</span></div>
+        </div>
+        <div class="ghosts"><button class="ghost">+ Position</button><button class="ghost">Duplizieren</button></div>
+      </div>
+
+      <div class="pkg">
+        <header>
+          <h3>Familie klein</h3>
+          <span class="n">Portrait · 3 Positionen</span>
+          <span class="sum">420 €</span>
+        </header>
+        <div class="quote">
+          <div class="qr"><span class="ti">Shooting im Studio<div class="s">90 Minuten</div></span><span class="qty">1×</span><span class="amt">290 €</span></div>
+          <div class="qr"><span class="ti">Bildbearbeitung<div class="s">15 Motive</div></span><span class="qty">1×</span><span class="amt">130 €</span></div>
+          <div class="qr"><span class="ti">Onlinegalerie</span><span class="qty">1×</span><span class="amt" style="color:var(--ink-2);font-size:12px">enthalten</span></div>
+        </div>
+        <div class="ghosts"><button class="ghost">+ Position</button><button class="ghost">Duplizieren</button></div>
+      </div>
+
+      <div class="pkg">
+        <header>
+          <h3>Drehtag Unternehmen</h3>
+          <span class="n">Sonstiges · 4 Positionen</span>
+          <span class="sum">1.900 €</span>
+        </header>
+        <div class="quote">
+          <div class="qr"><span class="ti">Drehtag<div class="s">8 Stunden</div></span><span class="qty">1×</span><span class="amt">900 €</span></div>
+          <div class="qr"><span class="ti">Bildbearbeitung<div class="s">40 Motive</div></span><span class="qty">1×</span><span class="amt">480 €</span></div>
+          <div class="qr"><span class="ti">Nutzungsrechte Web<div class="s">2 Jahre</div></span><span class="qty">1×</span><span class="amt">400 €</span></div>
+          <div class="qr"><span class="ti">Anfahrt<div class="s">je angefangene 50 km</div></span><span class="qty">2×</span><span class="amt">60 €</span></div>
+        </div>
+        <div class="ghosts"><button class="ghost">+ Position</button><button class="ghost">Duplizieren</button></div>
+      </div>
+
+      <div class="pkg">
+        <header>
+          <h3>Ganztag 2025</h3>
+          <span class="n off">stillgelegt · in 6 Angeboten benutzt</span>
+          <span class="sum off">2.600 €</span>
+        </header>
+        <div class="ghosts"><button class="ghost">Wieder aktivieren</button></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

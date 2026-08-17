@@ -563,12 +563,6 @@ tbody td.grp {
 .band .val.warn { color: var(--accent); }
 .band .sub { font-size: 11.5px; color: var(--ink-2); margin-top: 3px; }
 
-/* Abweichung wird gezeigt, nicht verhindert: der Auftrag ändert sich im
-   Gespräch, das Dokument hinkt hinterher. Wer das sperrt, bekommt einen
-   Leistungsumfang, der nicht stimmt — gearbeitet wird trotzdem. */
-.deviation { margin-top: var(--s3); padding: 11px 13px; background: #FBEEE8; border-radius: var(--r-sm); font-size: 12.5px; }
-.deviation b { color: var(--accent); }
-.deviation .acts { display: flex; gap: 14px; margin-top: 7px; }
 .quote .tag { margin-left: 3px; font-size: 11.5px; color: var(--accent); }
 .quote .amt .was { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 400; color: var(--accent); }
 .quote .amt { width: 112px; }
@@ -609,3 +603,59 @@ tbody td.grp {
 .band .lab .derived { color: var(--mark); text-transform: none; letter-spacing: 0; }
 #edit:checked ~ * .band .cell .val:not(.plain),
 #edit:checked ~ * .band .cell .val.plain { opacity: 1; }
+
+/* ---------- Kalender ---------- */
+
+/* Ein Monatsraster, kein chronologisches Verzeichnis: der Betrieb plant in
+   Wochen, und ein freier Samstag ist die wichtigste Information darin. */
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); }
+.cal .dow {
+  padding: 0 0 8px 2px; font: 600 10.5px/1 var(--font);
+  letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2);
+}
+.cal .day { min-height: 104px; padding: 8px 8px 10px; box-shadow: inset 0 1px 0 var(--rule), inset 1px 0 0 var(--rule); }
+.cal .day:nth-child(7n + 1) { box-shadow: inset 0 1px 0 var(--rule); }
+.cal .day .n { font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cal .day.off { background: var(--sunk); }
+.cal .day.off .n, .cal .day.pale .n { color: var(--ink-2); font-weight: 400; }
+.cal .day.today .n {
+  display: inline-block; min-width: 20px; padding: 1px 5px; border-radius: var(--r-pill);
+  background: var(--ink); color: var(--paper); text-align: center;
+}
+.cal .e { display: block; margin-top: 5px; font-size: 11.5px; color: inherit; text-decoration: none; }
+.cal .e .tm { font-weight: 600; font-variant-numeric: tabular-nums; }
+.cal .e .who { color: var(--ink-2); }
+.cal .e.hold { color: var(--accent); }
+.cal .e.away { color: var(--ink-2); }
+.cal .e.away .tm { font-weight: 400; }
+
+/* ---------- Posteingang ---------- */
+
+.thread { display: flex; gap: 14px; padding: 11px 0; box-shadow: inset 0 1px 0 var(--rule); color: inherit; text-decoration: none; }
+.thread:first-of-type { box-shadow: none; }
+.thread .who { width: 190px; flex: none; }
+.thread .who .n { font-size: 13.5px; font-weight: 600; letter-spacing: -.014em; }
+.thread .who .p { font-size: 11.5px; color: var(--ink-2); margin-top: 1px; }
+.thread .txt { flex: 1; min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thread .txt .subj { font-weight: 500; }
+.thread .when { width: 96px; flex: none; text-align: right; font-size: 11.5px; color: var(--ink-2); white-space: nowrap; }
+.thread .when.warn { color: var(--accent); }
+
+/* Nachricht im Verlauf einer Unterhaltung */
+.msg { padding: 12px 0; box-shadow: inset 0 1px 0 var(--rule); }
+.msg:first-of-type { box-shadow: none; }
+.msg .head { display: flex; align-items: baseline; gap: 9px; }
+.msg .head .n { font-size: 13px; font-weight: 600; letter-spacing: -.012em; }
+.msg .head .t { margin-left: auto; font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.msg .body { font-size: 13.5px; line-height: 1.55; margin-top: 5px; max-width: 68ch; }
+.msg.own { padding-left: 14px; box-shadow: inset 0 1px 0 var(--rule), inset 2px 0 0 var(--sunk-2); }
+
+/* ---------- Pakete und Vorlagen ---------- */
+
+.pkg { padding: 14px 0 16px; box-shadow: inset 0 1px 0 var(--rule); }
+.pkg:first-of-type { box-shadow: none; }
+.pkg > header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.pkg > header h3 { margin: 0; font: 600 15px/1.2 var(--font); letter-spacing: -.018em; }
+.pkg > header .sum { margin-left: auto; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.pkg > header .n { font-size: 11.5px; color: var(--ink-2); }
+.pkg .off { font-size: 11.5px; color: var(--ink-2); }
