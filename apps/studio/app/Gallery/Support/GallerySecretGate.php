@@ -3,6 +3,7 @@
 namespace App\Gallery\Support;
 
 use Closure;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\RateLimiter;
 
 /**
@@ -24,10 +25,11 @@ use Illuminate\Support\Facades\RateLimiter;
  * wrong guess against a real one, so a guess against a made-up gallery id
  * returns the same answer in the same time.
  *
- * C-17 (#253) took the bcrypt dummy out with the hash. The comparison behind
- * $verify is now hash_equals against a decrypted value, which costs the same
- * whether the gallery exists or not — the timing the dummy existed to level
- * is level without it.
+ * C-17 (#253) replaced the hash with an encrypted value, so the work the real
+ * path does is one decrypt plus one hash_equals. The null path does the same
+ * against a dummy ciphertext rather than nothing at all: without it, "no such
+ * gallery" would return measurably faster than "wrong password", which is the
+ * enumeration G-07 closes wearing a stopwatch.
  */
 class GallerySecretGate
 {
@@ -48,7 +50,7 @@ class GallerySecretGate
             return false;
         }
 
-        $matches = $verify !== null && $verify($secret);
+        $matches = $verify !== null ? $verify($secret) : $this->dummy($secret);
 
         if (! $matches) {
             RateLimiter::hit($ipKey, self::DECAY_SECONDS);
@@ -61,5 +63,15 @@ class GallerySecretGate
         RateLimiter::clear($galleryLimitKey);
 
         return true;
+    }
+
+    /**
+     * The same work a real check does — decrypt, then compare — against a
+     * value nothing was derived from. Always false, and always the same cost
+     * as a wrong guess against a gallery that exists.
+     */
+    private function dummy(string $secret): bool
+    {
+        return hash_equals(Crypt::decryptString(Crypt::encryptString('gallery-secret-gate')), $secret);
     }
 }
