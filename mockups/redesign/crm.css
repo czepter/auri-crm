@@ -833,3 +833,63 @@ tbody td.grp {
 .rail .sw { width: 36px; height: 22px; }
 .rail .sw::after { width: 16px; height: 16px; }
 .rail .sw.on::after { transform: translateX(14px); }
+
+/* ---------- Galerieverwaltung ---------- */
+
+/* Reiter innerhalb des Datensatzes: Bilder, Gestaltung, Zugang, Verlauf.
+   Vier Flächen auf einem Screen wären keine Verwaltung mehr, sondern eine
+   Halde — und die Bilder brauchen die ganze Breite. */
+.tabs { display: flex; gap: 20px; padding: 0 var(--s7); box-shadow: inset 0 -1px 0 var(--rule); }
+.tabs label { padding: 10px 0 11px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.tabs label:hover { color: var(--ink); }
+#tab-bilder:checked ~ .tabs label[for="tab-bilder"],
+#tab-design:checked ~ .tabs label[for="tab-design"],
+#tab-zugang:checked ~ .tabs label[for="tab-zugang"],
+#tab-verlauf:checked ~ .tabs label[for="tab-verlauf"] {
+  color: var(--ink); font-weight: 600; box-shadow: inset 0 -2px 0 var(--ink);
+}
+.tabview { display: none; }
+#tab-bilder:checked ~ .tabview.bilder,
+#tab-design:checked ~ .tabview.design,
+#tab-zugang:checked ~ .tabview.zugang,
+#tab-verlauf:checked ~ .tabview.verlauf { display: flex; }
+
+/* Sätze links, Raster rechts — wie in jedem Galerieverwalter, weil ein Satz
+   die Einheit ist, in der ausgewählt und geliefert wird. */
+.sets { width: 220px; flex: none; padding: var(--s5) var(--s4) var(--s6) var(--s7); }
+.sets a {
+  display: flex; align-items: baseline; gap: 8px; padding: 8px 10px; margin-bottom: 2px;
+  border-radius: 8px; color: var(--ink); text-decoration: none; font-size: 13px;
+}
+.sets a.on { background: var(--sunk-2); font-weight: 600; }
+.sets a .ct { margin-left: auto; font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.sets .add { margin-top: var(--s3); }
+
+.shelf { flex: 1; min-width: 0; padding: var(--s5) var(--s7) var(--s6) 0; }
+.shelf .bar { display: flex; align-items: center; gap: var(--s3); margin-bottom: var(--s4); }
+.shelf .bar h2 { margin: 0; font: 600 17px/1.2 var(--font); letter-spacing: -.022em; }
+.shelf .bar .n { font-size: 12px; color: var(--ink-2); }
+.grid-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.grid-photos figure { margin: 0; position: relative; }
+.grid-photos img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 8px; display: block; }
+.grid-photos figure.tall img { aspect-ratio: 2 / 3; }
+.grid-photos .mark {
+  position: absolute; left: 7px; top: 7px; display: flex; gap: 4px;
+  font-size: 10.5px; color: var(--paper);
+}
+.grid-photos .mark span { background: rgba(29,29,31,.62); border-radius: 980px; padding: 2px 7px; }
+
+/* Gestaltung: Auswahlkarten mit Vorschaubild statt Beschreibungstext */
+.picks { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s3); max-width: 560px; }
+.picks label { cursor: pointer; }
+.picks input { position: absolute; opacity: 0; pointer-events: none; }
+.picks .thumb {
+  border-radius: var(--r-sm); overflow: hidden; background: var(--sunk); aspect-ratio: 4 / 3;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2);
+  box-shadow: inset 0 0 0 1px transparent;
+}
+.picks input:checked + .thumb { box-shadow: inset 0 0 0 2px var(--accent); }
+.picks .cap { font-size: 12.5px; margin-top: 6px; }
+.picks .sw-row { display: flex; gap: 5px; }
+.picks .sw-row i { width: 18px; height: 18px; border-radius: 50%; display: block; }

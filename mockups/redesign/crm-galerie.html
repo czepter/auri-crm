@@ -44,7 +44,108 @@
       <a class="btn" href="#">Neue Fassung</a>
     </div>
 
-    <div style="display:flex; align-items:stretch; flex:1; min-height:0; margin-top:18px">
+
+    <input class="vswitch" type="radio" name="tab" id="tab-bilder" checked>
+    <input class="vswitch" type="radio" name="tab" id="tab-design">
+    <input class="vswitch" type="radio" name="tab" id="tab-zugang">
+    <input class="vswitch" type="radio" name="tab" id="tab-verlauf">
+
+    <div class="tabs">
+      <label for="tab-bilder">Bilder</label>
+      <label for="tab-design">Gestaltung</label>
+      <label for="tab-zugang">Zugang und Fassungen</label>
+      <label for="tab-verlauf">Verlauf</label>
+    </div>
+
+    <div class="tabview bilder">
+      <nav class="sets">
+        <a class="on" href="#">Alle <span class="ct">220</span></a>
+        <a href="#">Getting Ready <span class="ct">38</span></a>
+        <a href="#">Trauung <span class="ct">64</span></a>
+        <a href="#">Paarbilder <span class="ct">42</span></a>
+        <a href="#">Feier <span class="ct">76</span></a>
+        <div class="add"><button class="ghost">+ Satz</button></div>
+      </nav>
+
+      <div class="shelf">
+        <div class="bar">
+          <h2>Alle</h2>
+          <span class="n">220 Bilder · 14,2 GB</span>
+          <span style="margin-left:auto; display:flex; gap:8px; align-items:center">
+            <button class="pop"><u>Sortierung</u> Aufnahmezeit</button>
+            <button class="ghost">Bilder hinzufügen</button>
+          </span>
+        </div>
+
+        <div class="grid-photos">
+          <figure><img src="img/p001-sm.jpg" alt=""><span class="mark"><span>Titelbild</span></span></figure>
+          <figure><img src="img/p005-sm.jpg" alt=""></figure>
+          <figure class="tall"><img src="img/p008-sm.jpg" alt=""><span class="mark"><span>4 Favoriten</span></span></figure>
+          <figure><img src="img/p011-sm.jpg" alt=""></figure>
+          <figure><img src="img/p016-sm.jpg" alt=""><span class="mark"><span>2 Kommentare</span></span></figure>
+          <figure class="tall"><img src="img/p020-sm.jpg" alt=""></figure>
+          <figure><img src="img/p025-sm.jpg" alt=""></figure>
+          <figure><img src="img/p030-sm.jpg" alt=""><span class="mark"><span>in 3 Listen</span></span></figure>
+          <figure><img src="img/p001-sm.jpg" alt=""></figure>
+          <figure><img src="img/p011-sm.jpg" alt=""></figure>
+          <figure class="tall"><img src="img/p005-sm.jpg" alt=""></figure>
+          <figure><img src="img/p016-sm.jpg" alt=""></figure>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabview design">
+      <div class="work" style="padding-top:20px">
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 10px">Titelbild</h2>
+          <div class="picks">
+            <label><input type="radio" name="cover" checked><span class="thumb" style="background:linear-gradient(160deg,#4d3a2c,#c0a184); color:#fff">Mittig</span><span class="cap">Titel über dem Bild</span></label>
+            <label><input type="radio" name="cover"><span class="thumb">Links</span><span class="cap">Titel links unten</span></label>
+            <label><input type="radio" name="cover"><span class="thumb">Geteilt</span><span class="cap">Bild und Titel nebeneinander</span></label>
+          </div>
+        </section>
+
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 10px">Schrift</h2>
+          <div class="picks">
+            <label><input type="radio" name="typo" checked><span class="thumb" style="font:400 22px/1 -apple-system,sans-serif; letter-spacing:-.02em; text-transform:none; color:var(--ink)">Aa</span><span class="cap">Grotesk</span></label>
+            <label><input type="radio" name="typo"><span class="thumb" style="font:400 22px/1 Georgia,serif; text-transform:none; color:var(--ink)">Aa</span><span class="cap">Antiqua</span></label>
+            <label><input type="radio" name="typo"><span class="thumb" style="font:300 22px/1 -apple-system,sans-serif; letter-spacing:.12em; text-transform:none; color:var(--ink)">Aa</span><span class="cap">Weit</span></label>
+          </div>
+        </section>
+
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 10px">Farbe</h2>
+          <div class="picks">
+            <label><input type="radio" name="farbe" checked><span class="thumb"><span class="sw-row"><i style="background:#fff"></i><i style="background:#f2f2f4"></i><i style="background:#1d1d1f"></i></span></span><span class="cap">Hell</span></label>
+            <label><input type="radio" name="farbe"><span class="thumb" style="background:#1d1d1f"><span class="sw-row"><i style="background:#0c0a09"></i><i style="background:#2a2521"></i><i style="background:#f6f1eb"></i></span></span><span class="cap">Dunkel</span></label>
+            <label><input type="radio" name="farbe"><span class="thumb"><span class="sw-row"><i style="background:#fff"></i><i style="background:#f4efe9"></i><i style="background:#b44e22"></i></span></span><span class="cap">Warm</span></label>
+          </div>
+        </section>
+
+        <section class="sec" style="margin-bottom:0">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 10px">Raster</h2>
+          <div class="picks">
+            <label><input type="radio" name="raster" checked><span class="thumb">Gemischt</span><span class="cap">Höhen wie aufgenommen</span></label>
+            <label><input type="radio" name="raster"><span class="thumb">Gleich hoch</span><span class="cap">Beschnitten auf 3:2</span></label>
+            <label><input type="radio" name="raster"><span class="thumb">Groß</span><span class="cap">Zwei Spalten</span></label>
+          </div>
+        </section>
+      </div>
+
+      <aside class="rail" style="width:320px">
+        <h2>Vorschau</h2>
+        <div class="grp">
+          <div class="item"><a class="link" href="galerie.html">Galerie als Gast öffnen</a></div>
+          <div class="item"><div class="n">Titelbild</div><div class="m">p001 · <a class="link" href="#">Anderes wählen</a></div></div>
+        </div>
+        <h2>Gilt für</h2>
+        <div class="grp">
+          <div class="item"><div class="n">Nur diese Galerie</div><div class="m"><a class="link" href="crm-einstellungen-galerie.html">Vorgabe für neue ändern</a></div></div>
+        </div>
+      </aside>
+    </div>
+    <div class="tabview zugang" style="align-items:stretch; flex:1; min-height:0">
 
       <div class="work">
 
@@ -201,6 +302,20 @@
           <div class="item"><div class="n">Ganze Galerie · web</div><div class="m">1,8 GB · 1 Teil</div></div>
         </div>
       </aside>
+    </div>
+
+    <div class="tabview verlauf">
+      <div class="work" style="padding-top:20px">
+        <div class="stream">
+          <div class="ev"><span class="t">heute 09:40</span><span class="c">Galerie geöffnet · Gast, Hamburg</span></div>
+          <div class="ev sys"><span class="t">gestern 21:02</span><span class="c">Download · Liste „Eltern“ · maja.r@example.de · 42 Bilder · web</span></div>
+          <div class="ev sys"><span class="t">gestern 20:55</span><span class="c">Download-Code eingegeben · 2 Fehlversuche</span></div>
+          <div class="ev sys"><span class="t">14.08.</span><span class="c">Liste „Eltern“ angelegt · maja.r@example.de · 42 Bilder</span></div>
+          <div class="ev sys"><span class="t">13.08.</span><span class="c">Galerie geöffnet · Jan Kowalski</span></div>
+          <div class="ev sys"><span class="t">12.08.</span><span class="c">Fassung 2 veröffentlicht · 220 Bilder</span></div>
+          <div class="ev sys"><span class="t">08.08.</span><span class="c">Fassung 1 veröffentlicht · 206 Bilder</span></div>
+        </div>
+      </div>
     </div>
   </main>
 </div>
