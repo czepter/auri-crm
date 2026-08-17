@@ -370,3 +370,41 @@ it('hands back every part of a ready build with its own signed link', function (
         ->and($row['parts'][0]['url'])->toContain('signature=')
         ->and($row['parts'][1]['number'])->toBe(2);
 });
+
+// A guest cleared the view gate, so the photographs are theirs to see. The
+// couple's curation is not: "Für die Eltern" is their words, and a
+// list-scoped archive is their selection, not a stranger's to download.
+it('never shows a guest the client\'s own archives or what they called them', function () {
+    $project = App\Crm\Models\Project::factory()->create(['portal_visible' => true]);
+    $contact = App\Crm\Models\Contact::factory()->create();
+    $project->attachContact($contact, App\Crm\Enums\ProjectContactRole::Primary);
+
+    $gallery = Gallery::factory()->for($project)->create(['assets' => [['key' => 'galleries/g/a.jpg']]]);
+    $version = $gallery->publish();
+
+    $list = App\Gallery\Models\GalleryList::create([
+        'gallery_id' => $gallery->id, 'contact_id' => $contact->id, 'name' => 'Für die Eltern',
+    ]);
+
+    foreach ([null, $list->id] as $listId) {
+        App\Media\Models\ZipBuild::create([
+            'gallery_version_id' => $version->id,
+            'scope' => $listId === null ? App\Media\Enums\ZipBuildScope::All : App\Media\Enums\ZipBuildScope::ListSelection,
+            'size' => App\Media\Enums\ZipBuildSize::Original,
+            'gallery_list_id' => $listId,
+            'status' => App\Media\Enums\ZipBuildStatus::Ready,
+        ]);
+    }
+
+    $asGuest = props("/galerien/{$gallery->public_id}/download");
+
+    expect(collect($asGuest['builds'])->pluck('list')->all())->toBe([''])
+        ->and(json_encode($asGuest))->not->toContain('Für die Eltern');
+
+    $asClient = test()->actingAs($contact, 'portal')
+        ->get("/galerien/{$gallery->public_id}/download")
+        ->assertOk()->viewData('page')['props'];
+
+    expect(collect($asClient['builds'])->pluck('listName')->all())
+        ->toEqualCanonicalizing([null, 'Für die Eltern']);
+});

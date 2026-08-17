@@ -8,6 +8,7 @@ use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Notifications\AssetCommented;
 use App\Gallery\Notifications\AssetFavorited;
+use App\Gallery\Support\GalleryVisitor;
 use App\Http\Controllers\Controller;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
@@ -21,8 +22,9 @@ use Illuminate\Http\Request;
  * another origin: no session reaches it, so a guest's identity there has to
  * be a string the browser minted into localStorage — see
  * AssetFavoriteController's own doc comment for why. Same-origin, that whole
- * argument goes away, so this one uses the portal session the request
- * already carries, which is also where the view gate's claim lives.
+ * argument goes away, so this one asks GalleryVisitor, which reads the
+ * portal session the request already carries — the same session the view
+ * gate's claim lives in.
  *
  * Both write the same AssetFavorite and AssetComment rows, so a gallery
  * opened either way counts the same in P-06's "Eure Gäste".
@@ -32,9 +34,10 @@ use Illuminate\Http\Request;
  */
 class GalleryEngagementController extends Controller
 {
-    private const GUEST_KEY = 'gallery_guest_id';
-
-    public function __construct(private readonly NotifyStudioOfEngagement $notifyStudio) {}
+    public function __construct(
+        private readonly NotifyStudioOfEngagement $notifyStudio,
+        private readonly GalleryVisitor $visitor,
+    ) {}
 
     /** This visitor's own hearts on the published version, plus every comment on it. */
     public function index(Request $request, Gallery $gallery): JsonResponse
@@ -46,7 +49,7 @@ class GalleryEngagementController extends Controller
         return response()->json([
             'favorited' => AssetFavorite::query()
                 ->where('gallery_version_id', $version->id)
-                ->where('guest_identifier', $this->guestId($request))
+                ->where('guest_identifier', $this->visitor->guestId())
                 ->pluck('asset_key')
                 ->values(),
             'comments' => AssetComment::query()
@@ -62,7 +65,7 @@ class GalleryEngagementController extends Controller
     public function toggleFavorite(Request $request, Gallery $gallery): JsonResponse
     {
         $version = $this->versionWithAsset($gallery, $key = $this->assetKey($request));
-        $guestId = $this->guestId($request);
+        $guestId = $this->visitor->guestId();
 
         $existing = AssetFavorite::query()
             ->where('gallery_version_id', $version->id)
@@ -84,7 +87,7 @@ class GalleryEngagementController extends Controller
                 'gallery_version_id' => $version->id,
                 'asset_key' => $key,
                 'guest_identifier' => $guestId,
-                'contact_id' => $this->contactId($gallery),
+                'contact_id' => $this->visitor->client($gallery)?->id,
             ]);
         } catch (UniqueConstraintViolationException) {
             // Two clicks racing each other. The index is what decides, and
@@ -106,8 +109,8 @@ class GalleryEngagementController extends Controller
         $comment = AssetComment::create([
             'gallery_version_id' => $version->id,
             'asset_key' => $key,
-            'guest_identifier' => $this->guestId($request),
-            'contact_id' => $this->contactId($gallery),
+            'guest_identifier' => $this->visitor->guestId(),
+            'contact_id' => $this->visitor->client($gallery)?->id,
             'body' => $body,
         ]);
 
@@ -131,46 +134,6 @@ class GalleryEngagementController extends Controller
             'own' => $comment->contact_id !== null && $comment->contact_id === auth('portal')->id(),
             'createdAt' => $comment->created_at->toIso8601String(),
         ];
-    }
-
-    /**
-     * Who this visitor is, for the length of their session and no longer.
-     *
-     * A signed-in client never gets here for their own hearts — theirs are a
-     * GalleryList owned by the Contact (P-06, #225), because a string that
-     * dies with a cookie cannot carry "Eure Auswahl" across two devices. This
-     * is the guest's, and a guest is exactly somebody with no account.
-     */
-    private function guestId(Request $request): string
-    {
-        $existing = $request->session()->get(self::GUEST_KEY);
-
-        if ($existing !== null) {
-            return $existing;
-        }
-
-        $request->session()->put(self::GUEST_KEY, $minted = bin2hex(random_bytes(16)));
-
-        return $minted;
-    }
-
-    /**
-     * The signed-in client this gallery belongs to, or null. Checked against
-     * the booking rather than taken from the guard alone: somebody signed in
-     * to their own portal who then opens a link a friend forwarded them is a
-     * guest on that gallery, and should read as one.
-     */
-    private function contactId(Gallery $gallery): ?int
-    {
-        $contact = auth('portal')->user();
-
-        if ($contact === null || $gallery->project_id === null) {
-            return null;
-        }
-
-        return $contact->visibleProjects()->whereKey($gallery->project_id)->exists()
-            ? $contact->id
-            : null;
     }
 
     private function assetKey(Request $request): string

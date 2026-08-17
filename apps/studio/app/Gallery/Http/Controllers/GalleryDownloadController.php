@@ -8,6 +8,7 @@ use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Support\GalleryAccessSession;
+use App\Gallery\Support\GalleryVisitor;
 use App\Gallery\Support\GallerySecretGate;
 use App\Http\Controllers\Controller;
 use App\Media\Enums\AssetStatus;
@@ -53,6 +54,8 @@ class GalleryDownloadController extends Controller
 {
     /** How long a prepared archive stands, and how long each part's link is good for. */
     public const PARTS_LIVE_HOURS = 24;
+
+    public function __construct(private readonly GalleryVisitor $visitor) {}
 
     public function show(Request $request, Gallery $gallery, GalleryAccessSession $claims): Response
     {
@@ -219,7 +222,7 @@ class GalleryDownloadController extends Controller
             'sizes' => $this->sizesFor($gallery, $keys->all()),
         ]];
 
-        foreach ($this->listsFor($gallery) as $list) {
+        foreach ($this->visitor->lists($gallery) as $list) {
             $onList = $list->items->pluck('asset_key')->intersect($keys)->values();
 
             if ($onList->isEmpty()) {
@@ -275,8 +278,19 @@ class GalleryDownloadController extends Controller
      */
     private function builds(Request $request, Gallery $gallery, GalleryVersion $version): array
     {
+        // Every archive this visitor may see. A guest cleared the view gate,
+        // so the photographs are theirs to look at — the couple's curation is
+        // not. A list-scoped build carries their words ("Für die Eltern") and
+        // their selection, so it belongs to whoever owns the list and nobody
+        // else. Scoped in the query rather than filtered after, so a build
+        // nobody may see never reaches a signed URL.
+        $ownLists = $this->visitor->lists($gallery)->pluck('id');
+
         return ZipBuild::query()
             ->where('gallery_version_id', $version->id)
+            ->where(fn ($query) => $query
+                ->whereNull('gallery_list_id')
+                ->orWhereIn('gallery_list_id', $ownLists))
             ->with(['parts', 'galleryList'])
             ->get()
             ->map(fn (ZipBuild $build) => [
@@ -325,27 +339,9 @@ class GalleryDownloadController extends Controller
         ]));
     }
 
-    /** The client's own selections, or none for a guest — same rule the grid's tile menu follows. */
-    private function listsFor(Gallery $gallery)
-    {
-        $contact = auth('portal')->user();
-
-        if ($contact === null || $gallery->project_id === null
-            || ! $contact->visibleProjects()->whereKey($gallery->project_id)->exists()) {
-            return collect();
-        }
-
-        return GalleryList::query()
-            ->where('gallery_id', $gallery->id)
-            ->where('contact_id', $contact->id)
-            ->with('items')
-            ->get()
-            ->sortBy(fn (GalleryList $list) => [$list->name === null ? 0 : 1, $list->id]);
-    }
-
     private function ownList(Gallery $gallery, string $list): GalleryList
     {
-        $found = $this->listsFor($gallery)->firstWhere('public_id', $list);
+        $found = $this->visitor->lists($gallery)->firstWhere('public_id', $list);
 
         abort_if($found === null, 404);
 

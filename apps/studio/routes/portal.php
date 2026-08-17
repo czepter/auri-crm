@@ -129,12 +129,11 @@ Route::middleware('portal.maintenance')->group(function () {
         Route::post('/einstellungen/datenschutz', [AccountController::class, 'requestDsgvo'])
             ->name('portal.account.dsgvo');
 
-        // P-06 (#225): the gallery from the couple's side. Their link, the
-        // gates in front of it, and their own selections — none of which the
-        // guest-facing grid (P-08) is about. Scoped to a gallery on one of
-        // this contact's own visible bookings.
+        // P-06 (#225): what the couple may do to their own gallery. Actions
+        // only — the screen they belong to is the gallery itself, one page
+        // for both audiences (GalleryPasswordController). Every one is a
+        // 404 for anybody who is not the client of this gallery.
         Route::prefix('/galerien/{gallery}/eure-auswahl')->group(function () {
-            Route::get('/', [PortalGalleryController::class, 'show'])->name('portal.galleries.show');
             Route::post('/listen', [PortalGalleryController::class, 'storeList'])->name('portal.galleries.lists.store');
             Route::patch('/listen/{list}', [PortalGalleryController::class, 'renameList'])
                 ->name('portal.galleries.lists.rename');

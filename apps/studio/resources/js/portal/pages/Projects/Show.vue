@@ -130,16 +130,11 @@ const heroImage = computed(() => props.project.gallery?.strip[0] ?? null)
             </template>
           </div>
         </div>
-        <span class="stripactions">
-          <Button as="a" :href="`/galerien/${project.gallery.id}`">
-            {{ $t('portal.viewAllImages', { count: project.gallery.count }) }}
-          </Button>
-          <!-- P-06 (#225): the couple's own side of the gallery — the link
-               they hand out, its gates, and their lists. -->
-          <Button as="a" variant="ghost" :href="`/galerien/${project.gallery.id}/eure-auswahl`">
-            {{ $t('gallery.listsTitle') }}
-          </Button>
-        </span>
+        <!-- One gallery for both audiences: the couple's own half — their
+             link, its gates, their lists — sits under the pictures. -->
+        <Button as="a" :href="`/galerien/${project.gallery.id}`">
+          {{ $t('portal.viewAllImages', { count: project.gallery.count }) }}
+        </Button>
       </div>
     </section>
 

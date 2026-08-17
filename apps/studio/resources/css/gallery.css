@@ -270,3 +270,55 @@
    client should see that "Zum Teilen" exists and simply has nothing yet. */
 [data-theme="gallery"] .opt.off { cursor:default; }
 [data-theme="gallery"] .opt.off b, [data-theme="gallery"] .opt.off b + span { color:var(--faint); }
+
+/* ---------- P-06 (#225): the couple's own half, under the pictures ---------- */
+/* One gallery, two audiences. A guest is never sent any of this — no link of
+   their own to share, no gates to rotate, no lists. */
+
+[data-theme="gallery"] .mine { max-width:1240px; margin:0 auto; padding:var(--s7) var(--s5);
+        border-top:1px solid var(--line); display:grid; gap:var(--s7); }
+@media (min-width:900px) { [data-theme="gallery"] .mine { grid-template-columns:minmax(0,1fr) 320px; } }
+[data-theme="gallery"] .mine .block { margin:0; }
+[data-theme="gallery"] .mine .block + .block { margin-top:var(--s6); }
+
+[data-theme="gallery"] .listblock + .listblock { margin-top:var(--s5); }
+[data-theme="gallery"] .listbar { display:flex; align-items:baseline; gap:var(--s4); flex-wrap:wrap;
+        margin-bottom:var(--s3); }
+[data-theme="gallery"] .listbar b { font:600 14px/1.3 var(--font); color:var(--ink); }
+[data-theme="gallery"] .listbar .hint { flex:1; margin:0; }
+[data-theme="gallery"] .listbar button { background:none; border:0; padding:0; cursor:pointer;
+        font:400 12.5px/1 var(--font); color:var(--muted); }
+[data-theme="gallery"] .listbar button:hover { color:var(--ink); }
+[data-theme="gallery"] .listbar button.warn:hover { color:var(--late); }
+
+[data-theme="gallery"] .picks { display:grid; grid-template-columns:repeat(auto-fill, minmax(84px, 1fr));
+        gap:6px; }
+[data-theme="gallery"] .picks button { padding:0; border:0; background:none; cursor:zoom-in;
+        aspect-ratio:1; border-radius:var(--r-sm); overflow:hidden; }
+[data-theme="gallery"] .picks img { width:100%; height:100%; object-fit:cover; display:block; }
+
+[data-theme="gallery"] .newlist { display:flex; gap:var(--s3); align-items:center; margin-top:var(--s5); }
+[data-theme="gallery"] .newlist input { flex:1; padding:11px 12px; border-radius:var(--r);
+        border:1px solid var(--line-hover); background:var(--hover); color:var(--ink);
+        font:400 13.5px/1.2 var(--font); }
+
+[data-theme="gallery"] .link { display:flex; align-items:center; gap:var(--s3); padding:var(--s3);
+        border:1px solid var(--line); border-radius:var(--r); }
+[data-theme="gallery"] .link code { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis;
+        white-space:nowrap; font-size:12.5px; color:var(--muted); }
+[data-theme="gallery"] .link button { background:none; border:0; padding:0; cursor:pointer;
+        font:500 12.5px/1 var(--font); color:var(--accent); }
+
+[data-theme="gallery"] .gate { display:flex; align-items:center; gap:var(--s3); padding:var(--s4) 0;
+        border-bottom:1px solid var(--line); }
+[data-theme="gallery"] .gate b { font:600 13.5px/1.3 var(--font); color:var(--ink); }
+[data-theme="gallery"] .gate .hint { margin:2px 0 0; }
+[data-theme="gallery"] .gate button { background:none; border:0; padding:0; cursor:pointer;
+        white-space:nowrap; font:400 12.5px/1 var(--font); color:var(--muted); }
+[data-theme="gallery"] .gate button:hover { color:var(--ink); }
+[data-theme="gallery"] .gate button.warn:hover { color:var(--late); }
+
+[data-theme="gallery"] .stats { display:grid; grid-template-columns:1fr auto; gap:var(--s3) var(--s4);
+        margin:0; font:400 13.5px/1 var(--font); }
+[data-theme="gallery"] .stats dt { color:var(--muted); }
+[data-theme="gallery"] .stats dd { margin:0; font-variant-numeric:tabular-nums; color:var(--ink); }

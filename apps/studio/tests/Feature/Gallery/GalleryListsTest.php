@@ -32,23 +32,39 @@ function clientGallery(): array
     return [$gallery->fresh(), $contact];
 }
 
-it('opens the client\'s own side of their gallery', function () {
+// One screen, two audiences: the couple's own half rides under the pictures
+// rather than on a second page.
+it('gives the client their own half of the gallery screen', function () {
     [$gallery, $contact] = clientGallery();
 
     $props = test()->actingAs($contact, 'portal')
-        ->get("/galerien/{$gallery->public_id}/eure-auswahl")
+        ->get("/galerien/{$gallery->public_id}")
         ->assertOk()
         ->viewData('page')['props'];
 
-    expect($props['gallery']['count'])->toBe(3)
-        ->and($props['gates']['viewPassword'])->toBeFalse();
+    expect($props['assets'])->toHaveCount(3)
+        ->and($props['gates']['viewPassword'])->toBeFalse()
+        ->and($props['guests'])->not->toBeNull();
 });
 
-it('refuses a gallery on somebody else\'s booking', function () {
+it('sends a guest the pictures and none of the couple\'s half', function () {
+    [$gallery] = clientGallery();
+
+    $props = props("/galerien/{$gallery->public_id}");
+
+    expect($props['assets'])->toHaveCount(3)
+        ->and($props['lists'])->toBeNull()
+        ->and($props['gates'])->toBeNull()
+        ->and($props['guests'])->toBeNull();
+});
+
+// Signed in to your own portal is not the same as being the client of THIS
+// gallery — somebody following a forwarded link is a guest on it.
+it('refuses the couple\'s own actions to somebody on another booking', function () {
     [$gallery] = clientGallery();
 
     test()->actingAs(Contact::factory()->create(), 'portal')
-        ->get("/galerien/{$gallery->public_id}/eure-auswahl")
+        ->post("/galerien/{$gallery->public_id}/eure-auswahl/listen", ['name' => 'Album'])
         ->assertNotFound();
 });
 
@@ -113,7 +129,7 @@ it('keeps a list across a re-publish', function () {
     $gallery->update(['assets' => [['key' => 'galleries/g/a.jpg'], ['key' => 'galleries/g/d.jpg']]]);
     $gallery->publish();
 
-    $props = test()->get("/galerien/{$gallery->public_id}/eure-auswahl")->assertOk()->viewData('page')['props'];
+    $props = test()->get("/galerien/{$gallery->public_id}")->assertOk()->viewData('page')['props'];
 
     expect($props['lists'][0]['keys'])->toBe(['galleries/g/a.jpg']);
 });
@@ -128,7 +144,7 @@ it('leaves out a key the newest version dropped, without breaking the list', fun
     $gallery->update(['assets' => [['key' => 'galleries/g/b.jpg']]]);
     $gallery->publish();
 
-    $props = test()->get($base)->assertOk()->viewData('page')['props'];
+    $props = test()->get("/galerien/{$gallery->public_id}")->assertOk()->viewData('page')['props'];
 
     expect($props['lists'][0]['keys'])->toBe(['galleries/g/b.jpg']);
 });
@@ -171,10 +187,12 @@ it('shows a fresh secret once and never again', function () {
 
     test()->actingAs($contact, 'portal')->post("{$url}/tore/ansicht", ['secret' => 'herbstlicht']);
 
-    $first = test()->get($url)->assertOk()->viewData('page')['props'];
+    $screen = "/galerien/{$gallery->public_id}";
+
+    $first = test()->get($screen)->assertOk()->viewData('page')['props'];
     expect($first['flash']['secret'])->toBe('herbstlicht');
 
-    $second = test()->get($url)->assertOk()->viewData('page')['props'];
+    $second = test()->get($screen)->assertOk()->viewData('page')['props'];
 
     expect(json_encode($second))->not->toContain('herbstlicht')
         ->and($second['gates']['viewPassword'])->toBeTrue();

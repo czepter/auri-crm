@@ -2,11 +2,14 @@
 
 namespace App\Gallery\Http\Controllers;
 
+use App\Gallery\Models\AssetComment;
+use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Support\GalleryAccessSession;
 use App\Gallery\Support\GallerySecretGate;
+use App\Gallery\Support\GalleryVisitor;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,9 +30,18 @@ use Inertia\Response;
  * Its own GET renders locked-or-unlocked itself rather than being wrapped by
  * EnsureGalleryGate, which would have nowhere to redirect a failing request
  * but here, forever.
+ *
+ * One screen, two audiences. The couple it belongs to and the eighty people
+ * they sent the link to see the same photographs; below them the couple also
+ * see the link they hand out, the gates in front of it, their own selections
+ * and what their guests did. That was a second screen at /eure-auswahl until
+ * it turned out the answer to "who is looking?" is one sentence, not a
+ * routing decision — see GalleryVisitor.
  */
 class GalleryPasswordController extends Controller
 {
+    public function __construct(private readonly GalleryVisitor $visitor) {}
+
     public function show(Request $request, Gallery $gallery, GalleryAccessSession $claims): Response
     {
         $unlocked = $claims->viewGranted($gallery);
@@ -39,6 +51,8 @@ class GalleryPasswordController extends Controller
             $this->countView($request, $gallery);
         }
 
+        $isClient = $this->visitor->isClient($gallery);
+
         return Inertia::render('Gallery/Show', [
             'gallery' => [
                 'id' => $gallery->public_id,
@@ -46,6 +60,7 @@ class GalleryPasswordController extends Controller
                 'date' => $gallery->shoot?->date?->format('Y-m-d'),
                 'venue' => $gallery->shoot?->venue(),
                 'expiresAt' => $gallery->expires_at?->toIso8601String(),
+                'url' => url("/galerien/{$gallery->public_id}"),
             ],
             'unlocked' => $unlocked,
             // Null while locked, and null for a gallery nobody has published
@@ -56,7 +71,20 @@ class GalleryPasswordController extends Controller
             // P-06 (#225): on the tile, a list menu replaces the single
             // heart as soon as a client is signed in. A guest keeps the
             // heart — which is the same thing, a list without a name.
-            'lists' => $this->listsFor($gallery),
+            'lists' => $isClient ? $this->lists($gallery, $version) : null,
+            // Everything below belongs to the couple alone. Absent for a
+            // guest rather than rendered empty: a guest has no link of their
+            // own to share and no gates to rotate.
+            'gates' => $isClient ? [
+                'viewPassword' => $gallery->requiresViewPassword(),
+                'downloadPin' => $gallery->requiresDownloadPin(),
+                'emailVerification' => $gallery->requiresVerifiedEmail(),
+            ] : null,
+            'guests' => $isClient && $version !== null ? [
+                'views' => (int) $gallery->view_count,
+                'marks' => AssetFavorite::query()->where('gallery_version_id', $version->id)->count(),
+                'comments' => AssetComment::query()->where('gallery_version_id', $version->id)->count(),
+            ] : null,
         ]);
     }
 
@@ -90,32 +118,31 @@ class GalleryPasswordController extends Controller
     }
 
     /**
-     * This client's own selections, or null for a guest. Owned by the
-     * Contact rather than by a localStorage string, which is the whole
-     * reason GalleryList exists beside AssetFavorite — see its docblock.
+     * The client's own selections, with enough of each to show a strip. Keys
+     * the current version no longer has are left out rather than rendered as
+     * broken pictures — a re-publish that dropped one shortens the list, it
+     * does not break it.
      */
-    private function listsFor(Gallery $gallery): ?array
+    private function lists(Gallery $gallery, ?GalleryVersion $version): array
     {
-        $contact = auth('portal')->user();
+        $known = collect($version?->assets ?? [])->pluck('key');
 
-        if ($contact === null || $gallery->project_id === null
-            || ! $contact->visibleProjects()->whereKey($gallery->project_id)->exists()) {
-            return null;
-        }
+        return $this->visitor->lists($gallery)->map(function (GalleryList $list) use ($version, $known) {
+            $keys = $list->items->pluck('asset_key')->intersect($known)->values();
 
-        return GalleryList::query()
-            ->where('gallery_id', $gallery->id)
-            ->where('contact_id', $contact->id)
-            ->with('items')
-            ->get()
-            ->sortBy(fn (GalleryList $list) => [$list->name === null ? 0 : 1, $list->id])
-            ->map(fn (GalleryList $list) => [
+            return [
+                // The heart answers to "herz" rather than to its own id, so
+                // the tile menu works before the row behind it exists.
                 'id' => $list->name === null ? 'herz' : $list->public_id,
+                'listId' => $list->public_id,
                 'name' => $list->name,
-                'keys' => $list->items->pluck('asset_key')->values()->all(),
-            ])
-            ->values()
-            ->all();
+                'keys' => $keys->all(),
+                'covers' => $version === null ? [] : $keys->take(8)
+                    ->map(fn (string $key) => "/galerie-bilder/{$version->public_id}/{$key}")
+                    ->values()->all(),
+                'changedAt' => $list->updated_at->toIso8601String(),
+            ];
+        })->all();
     }
 
     /**
