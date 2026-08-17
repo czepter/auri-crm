@@ -844,6 +844,7 @@ tbody td.grp {
 .tabs label:hover { color: var(--ink); }
 #tab-bilder:checked ~ .tabs label[for="tab-bilder"],
 #tab-design:checked ~ .tabs label[for="tab-design"],
+#tab-download:checked ~ .tabs label[for="tab-download"],
 #tab-zugang:checked ~ .tabs label[for="tab-zugang"],
 #tab-verlauf:checked ~ .tabs label[for="tab-verlauf"] {
   color: var(--ink); font-weight: 600; box-shadow: inset 0 -2px 0 var(--ink);
@@ -851,6 +852,7 @@ tbody td.grp {
 .tabview { display: none; }
 #tab-bilder:checked ~ .tabview.bilder,
 #tab-design:checked ~ .tabview.design,
+#tab-download:checked ~ .tabview.download,
 #tab-zugang:checked ~ .tabview.zugang,
 #tab-verlauf:checked ~ .tabview.verlauf { display: flex; }
 
@@ -893,3 +895,19 @@ tbody td.grp {
 .picks .cap { font-size: 12.5px; margin-top: 6px; }
 .picks .sw-row { display: flex; gap: 5px; }
 .picks .sw-row i { width: 18px; height: 18px; border-radius: 50%; display: block; }
+
+/* Gestaltung ohne Vorschau ist Raten: die Wahl links, das Ergebnis rechts. */
+.preview-pane { flex: 1; min-width: 0; padding: var(--s5) var(--s7) var(--s6); background: var(--sunk); }
+.preview-pane .frame { background: var(--paper); border-radius: var(--r-sm); overflow: hidden; }
+.preview-pane .cover { position: relative; }
+.preview-pane .cover img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
+.preview-pane .cover .title {
+  position: absolute; inset: auto 0 0 0; padding: 22px 20px;
+  background: linear-gradient(transparent, rgba(20,16,14,.55)); color: var(--paper); text-align: center;
+}
+.preview-pane .cover .title b { display: block; font: 600 19px/1.2 var(--font); letter-spacing: .04em; text-transform: uppercase; }
+.preview-pane .cover .title span { font-size: 11.5px; opacity: .85; }
+.preview-pane .thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 10px; }
+.preview-pane .thumbs img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; display: block; border-radius: 3px; }
+.pv-foot { display: flex; align-items: center; gap: var(--s3); margin-top: var(--s4); }
+.pv-foot .link { margin-left: auto; }

@@ -47,12 +47,14 @@
 
     <input class="vswitch" type="radio" name="tab" id="tab-bilder" checked>
     <input class="vswitch" type="radio" name="tab" id="tab-design">
+    <input class="vswitch" type="radio" name="tab" id="tab-download">
     <input class="vswitch" type="radio" name="tab" id="tab-zugang">
     <input class="vswitch" type="radio" name="tab" id="tab-verlauf">
 
     <div class="tabs">
       <label for="tab-bilder">Bilder</label>
       <label for="tab-design">Gestaltung</label>
+      <label for="tab-download">Download</label>
       <label for="tab-zugang">Zugang und Fassungen</label>
       <label for="tab-verlauf">Verlauf</label>
     </div>
@@ -133,18 +135,116 @@
         </section>
       </div>
 
-      <aside class="rail" style="width:320px">
-        <h2>Vorschau</h2>
-        <div class="grp">
-          <div class="item"><a class="link" href="galerie.html">Galerie als Gast öffnen</a></div>
-          <div class="item"><div class="n">Titelbild</div><div class="m">p001 · <a class="link" href="#">Anderes wählen</a></div></div>
+      <aside class="preview-pane">
+        <div class="frame">
+          <div class="cover">
+            <img src="img/p001.jpg" alt="">
+            <div class="title">
+              <b>Meier &amp; Kowalski</b>
+              <span>21. August 2026 · Gut Basthorst</span>
+            </div>
+          </div>
+          <div class="thumbs">
+            <img src="img/p005-sm.jpg" alt=""><img src="img/p008-sm.jpg" alt=""><img src="img/p011-sm.jpg" alt="">
+            <img src="img/p016-sm.jpg" alt=""><img src="img/p020-sm.jpg" alt=""><img src="img/p025-sm.jpg" alt="">
+            <img src="img/p030-sm.jpg" alt=""><img src="img/p001-sm.jpg" alt=""><img src="img/p011-sm.jpg" alt="">
+          </div>
         </div>
-        <h2>Gilt für</h2>
-        <div class="grp">
-          <div class="item"><div class="n">Nur diese Galerie</div><div class="m"><a class="link" href="crm-einstellungen-galerie.html">Vorgabe für neue ändern</a></div></div>
+        <div class="pv-foot">
+          <div class="seg">
+            <label>Schreibtisch</label>
+            <label>Telefon</label>
+          </div>
+          <a class="link" href="galerie.html">Als Gast öffnen</a>
         </div>
       </aside>
     </div>
+
+    <div class="tabview download">
+      <div class="work" style="padding-top:20px">
+
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Herunterladen</h2>
+          <div class="setting">
+            <span class="t">Download erlaubt</span>
+            <span class="sw on"></span>
+          </div>
+          <div class="setting">
+            <span class="t">Ganze Galerie am Stück</span>
+            <span class="v mut">14,2 GB · 8 Teile à 2 GB</span>
+            <span class="sw on"></span>
+          </div>
+          <div class="setting">
+            <span class="t">Einzelne Bilder</span>
+            <span class="sw on"></span>
+          </div>
+        </section>
+
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Größen</h2>
+          <div class="setting">
+            <span class="t">Original<div class="s">wie aufgenommen · 14,2 GB</div></span>
+            <span class="sw on"></span>
+          </div>
+          <div class="setting">
+            <span class="t">Web<div class="s">lange Kante 2048 px · 1,8 GB</div></span>
+            <span class="sw on"></span>
+          </div>
+        </section>
+
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Wer darf</h2>
+          <div class="setting">
+            <span class="t">Code für den Download</span>
+            <span class="v form" style="display:flex; align-items:center; gap:8px"><input class="s" value="4821" style="width:88px"><button class="ghost" type="button">Würfeln</button></span>
+            <span class="sw on"></span>
+          </div>
+          <div class="setting">
+            <span class="t">Erst nach vollständiger Zahlung</span>
+            <span class="v" style="color:var(--accent)">1.500 € offen</span>
+            <span class="sw on"></span>
+            <a class="link" href="#">Zurücksetzen</a>
+          </div>
+          <div class="setting">
+            <span class="t">Nur für Empfänger der Galerie<div class="s">Lea Meier, Jan Kowalski</div></span>
+            <span class="sw"></span>
+          </div>
+        </section>
+
+        <section class="sec" style="margin-bottom:0">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Sätze</h2>
+          <div class="setting">
+            <span class="t">Getting Ready</span><span class="v mut">38</span><span class="sw on"></span>
+          </div>
+          <div class="setting">
+            <span class="t">Trauung</span><span class="v mut">64</span><span class="sw on"></span>
+          </div>
+          <div class="setting">
+            <span class="t">Paarbilder</span><span class="v mut">42</span><span class="sw on"></span>
+          </div>
+          <div class="setting">
+            <span class="t">Feier</span><span class="v mut">76</span><span class="sw"></span>
+          </div>
+        </section>
+      </div>
+
+      <aside class="rail" style="width:290px">
+        <h2>Bisher geladen</h2>
+        <div class="grp">
+          <div class="item"><div class="n">6 Downloads</div><div class="m">3 ganze Galerie, 3 Auswahl</div></div>
+          <div class="item"><div class="n">maja.r@example.de</div><div class="m">gestern · Liste „Eltern“ · web</div></div>
+          <div class="item"><div class="n">Lea Meier</div><div class="m">13.08. · ganze Galerie · original</div></div>
+        </div>
+
+        <h2>Archive</h2>
+        <div class="grp">
+          <div class="item"><div class="n">Ganze Galerie · original</div><div class="m">14,2 GB · 8 Teile · bereit</div></div>
+          <div class="item"><div class="n">Ganze Galerie · web</div><div class="m">1,8 GB · 1 Teil · bereit</div></div>
+          <div class="item"><a class="link" href="#">Neu bauen</a></div>
+        </div>
+      </aside>
+    </div>
+
     <div class="tabview zugang" style="align-items:stretch; flex:1; min-height:0">
 
       <div class="work">
@@ -205,21 +305,6 @@
 
         <section class="sec">
           <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Zugang und Freigaben</h2>
-          <div class="setting">
-            <span class="t">E-Mail vor dem Download</span>
-            <span class="sw on"></span>
-            <a class="link" href="#">Zurücksetzen</a>
-          </div>
-          <div class="setting">
-            <span class="t">Download erst nach vollständiger Zahlung</span>
-            <span class="v warn" style="color:var(--accent)">1.500 € offen</span>
-            <span class="sw on"></span>
-            <a class="link" href="#">Zurücksetzen</a>
-          </div>
-          <div class="setting">
-            <span class="t">Herunterladen erlaubt</span>
-            <span class="sw on"></span>
-          </div>
           <div class="setting">
             <span class="t">Kommentare</span>
             <span class="v mut">18 vorhanden</span>
