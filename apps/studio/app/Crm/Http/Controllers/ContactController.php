@@ -5,6 +5,8 @@ namespace App\Crm\Http\Controllers;
 use App\Crm\Data\ContactRowData;
 use App\Crm\Data\ContactSuggestionData;
 use App\Crm\Models\Contact;
+use App\Crm\Models\Project;
+use App\Gallery\Models\Gallery;
 use App\Engagement\Data\MessageData;
 use App\Engagement\Models\Message;
 use App\Enums\Capability;
@@ -72,6 +74,42 @@ class ContactController extends Controller
                 ->get()
                 ->map(MessageData::withProject(...))
                 ->all(),
+            // C-18 (#254): a project is an order with money and dates, a
+            // gallery a delivery with an expiry. Mixed into one list they
+            // read as the same thing, so they are two sections.
+            'projects' => $contact->projects()->with(['primaryShoot', 'latestQuote', 'job'])->get()
+                ->map(fn (Project $project) => [
+                    'id' => $project->public_id,
+                    'name' => $project->name,
+                    'role' => $project->pivot->role,
+                    'date' => $project->primaryShoot?->date?->format('Y-m-d'),
+                    'value' => $project->latestQuote?->total,
+                    'booked' => $project->job !== null,
+                ])->all(),
+            'galleries' => Gallery::query()
+                ->whereIn('project_id', $contact->projects()->select('projects.id'))
+                ->with('currentVersion')
+                ->get()
+                ->map(fn (Gallery $gallery) => [
+                    'id' => $gallery->public_id,
+                    'title' => $gallery->title,
+                    'expiresAt' => $gallery->expires_at?->format('Y-m-d'),
+                    'assetCount' => count($gallery->currentVersion?->assets ?? []),
+                ])->all(),
+            // Everyone else on this contact's projects — the other half of a
+            // couple, the planner, whoever pays. Named with the role they
+            // hold, because that is the only thing that makes the list
+            // readable.
+            'connected' => Contact::query()
+                ->whereKeyNot($contact->id)
+                ->whereHas('projects', fn ($query) => $query->whereIn('projects.id', $contact->projects()->select('projects.id')))
+                ->with(['projects' => fn ($query) => $query->whereIn('projects.id', $contact->projects()->select('projects.id'))])
+                ->get()
+                ->map(fn (Contact $other) => [
+                    'id' => $other->public_id,
+                    'name' => $other->name,
+                    'role' => $other->projects->first()?->pivot->role,
+                ])->all(),
             'portalAccessRevokedAt' => $contact->portal_access_revoked_at?->toIso8601String(),
             'canRevokePortalAccess' => $user?->can('revokePortalAccess', $contact) ?? false,
             'dsgvoErasedAt' => $contact->dsgvo_erased_at?->toIso8601String(),

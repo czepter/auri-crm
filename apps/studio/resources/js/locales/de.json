@@ -132,6 +132,21 @@
       "running": "Laufender Auftrag",
       "past": "Bestandskunden",
       "none": "Ohne Auftrag"
+    },
+    "call": "Anrufen",
+    "reach": "Kontakt",
+    "address": "Anschrift",
+    "galleries": "Galerien",
+    "assetCount": "1 Bild | {count} Bilder",
+    "expiresOn": "läuft {date} ab",
+    "connected": "Verbunden",
+    "portalReset": "Zurücksetzen",
+    "role": {
+      "primary": "Hauptkontakt",
+      "partner": "Partner",
+      "payer": "Zahlt",
+      "planner": "Planung",
+      "vendor": "Dienstleister"
     }
   },
   "project": {
