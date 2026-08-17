@@ -35,6 +35,16 @@ class MergeFieldVocabulary
         'shoot.date' => '14.06.2026',
         'quote.validUntil' => '30.09.2026',
         'quote.vatNote' => 'Alle Preise verstehen sich zzgl. 19 % Umsatzsteuer.',
+        // C-17 (#253): the "Galerie online" letter carries link, password and
+        // code, so the client does not hunt through three messages. Whoever
+        // forwards that mail hands on the access — for a gallery that is
+        // shared by messenger anyway, that is the normal case and not a new
+        // hole.
+        'gallery.title' => 'Meier & Kowalski — Hochzeitstag',
+        'gallery.link' => 'https://nordlicht.example/galerien/lnobg6pmxxv4',
+        'gallery.password' => 'basthorst2026',
+        'gallery.downloadPin' => '4821',
+        'gallery.expiresOn' => '28.08.2026',
         'studio.name' => 'Atelier Nordlicht Fotografie GmbH',
         'studio.legalForm' => 'GmbH',
         'studio.street' => 'Beispielstraße 12',

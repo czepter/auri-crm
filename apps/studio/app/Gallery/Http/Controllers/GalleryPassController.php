@@ -41,7 +41,7 @@ class GalleryPassController extends Controller
 
         $password = $request->validate(['password' => ['required', 'string']])['password'];
 
-        $granted = $gate->attempt($request->ip(), $gallery, $model?->view_password_hash, $password);
+        $granted = $gate->attempt($request->ip(), $gallery, $model === null ? null : $model->checkViewPassword(...), $password);
 
         if (! $granted || $model === null) {
             return response()->json(['message' => __('gallery.password_wrong')], 422);

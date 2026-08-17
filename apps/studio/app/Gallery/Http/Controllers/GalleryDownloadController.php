@@ -140,7 +140,7 @@ class GalleryDownloadController extends Controller
         if ($requiresPin) {
             $validated = $request->validate(['pin' => ['required', 'string']]);
 
-            $granted = $gate->attempt($request->ip(), $gallery, $model?->download_pin_hash, $validated['pin']);
+            $granted = $gate->attempt($request->ip(), $gallery, $model === null ? null : $model->checkDownloadPin(...), $validated['pin']);
 
             if (! $granted || $model === null) {
                 return back()->withErrors(['pin' => __('gallery.pin_wrong')]);

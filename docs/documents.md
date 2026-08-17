@@ -94,6 +94,26 @@ the editor's `data-mf` chips. The chip form exists so the editor can show a
 sample value in place of a path; a starter is written by hand in PHP, where
 there is nothing to show it to. Both serialise to the same `{{ path }}`.
 
+### The gallery block
+
+C-17 (#253) stores the view password and the download code recoverably, which
+is what lets a "Galerie online" letter carry link, password and code in one
+message instead of sending the client hunting through three. Whoever forwards
+that mail hands on the access — for a gallery that is shared by messenger
+anyway, that is the normal case rather than a new hole.
+
+| Path                 | Value                                          |
+|----------------------|-------------------------------------------------|
+| `gallery.title`      | The newest gallery of the project. Empty where none exists. |
+| `gallery.link`       | The portal's own address, never the api surface's — no guest can open that one. |
+| `gallery.password`   | The view password in clear, or empty where the gallery is ungated. |
+| `gallery.downloadPin` | The download code in clear, same rule. |
+| `gallery.expiresOn`  | `galleries.expires_at`, `dd.mm.yyyy`. |
+
+Staff login passwords and `client_accesses.token_hash` are not covered by this
+and stay hashes: they are never shown, so nothing is bought by making them
+readable.
+
 ### The invoice block
 
 `invoice.*` is the one part of the vocabulary that is not derivable from the

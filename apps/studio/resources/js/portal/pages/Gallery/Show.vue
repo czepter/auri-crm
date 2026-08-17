@@ -80,9 +80,8 @@ const copied = ref(false)
 const gateForm = useForm({ secret: '' })
 const listForm = useForm({ name: '' })
 
-// A freshly set secret is readable exactly once, in the response to the
-// request that set it — the column is hashed the moment it is saved, so this
-// flash is the whole window.
+// A freshly set secret, echoed back once in the response to the request that
+// set it, so the couple can copy what they just chose without a second read.
 const freshSecret = computed(() => usePage().props.flash?.secret as string | undefined)
 
 const GATES = [
@@ -343,10 +342,10 @@ function expiry(iso: string) {
             </button>
           </div>
 
-          <!-- No value is ever shown: the secrets are hashed the moment they
-               are saved and gone for everyone, the studio included. What can
-               be done about a link that travelled too far is to rotate it,
-               which also turns out every guest already inside. -->
+          <!-- What can be done about a link that travelled too far is to
+               rotate it, which also turns out every guest already inside.
+               The value itself is on the studio's screen (C-17, #253); one
+               the couple set themselves is one they already have. -->
           <div v-for="gate in GATES" :key="gate.key" class="gate">
             <div style="flex: 1">
               <b>{{ $t(gate.label) }}</b>

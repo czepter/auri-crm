@@ -20,13 +20,15 @@ use Illuminate\Http\Request;
  * couple's own half below the pictures — because who is looking turned out
  * to be one sentence rather than a routing decision. See GalleryVisitor.
  *
- * On the gates, one rule runs through everything here: **no value is ever
- * shown**. view_password_hash and download_pin_hash carry Laravel's
- * 'hashed' cast (App\Gallery\Models\Gallery), so from the moment a secret is
- * saved it is gone for everyone, the studio included. What this screen shows
- * is whether a gate is on, and the one action that means anything against a
- * link that travelled too far — rotating it. A newly set secret is readable
- * exactly once, in the response to the request that set it.
+ * On the gates, this screen shows whether one is on and offers the one action
+ * that means anything against a link that travelled too far — rotating it. A
+ * newly set secret is echoed back once, in the response to the request that
+ * set it.
+ *
+ * C-17 (#253) made the stored values recoverable so the studio can read one
+ * out to a guest who asks. That is the admin's screen; what the couple need
+ * here is to change a gate, and a value they set themselves is one they
+ * already have.
  *
  * Reachable only by a contact on the gallery's own booking. Not a 403: same
  * rule as everywhere else on this surface.

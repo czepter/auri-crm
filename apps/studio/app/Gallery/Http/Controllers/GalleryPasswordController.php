@@ -102,8 +102,8 @@ class GalleryPasswordController extends Controller
      * here would tell a guest guessing passwords "that id doesn't exist" —
      * exactly the enumeration G-07 closes. Resolving it by hand instead lets
      * a nonexistent gallery fall through the same uniform-failure path as a
-     * wrong password on a real one, all the way down to GallerySecretGate's
-     * dummy hash check.
+     * wrong password on a real one — GallerySecretGate counts and refuses a
+     * missing gallery exactly like a wrong guess against a real one.
      */
     public function store(Request $request, string $gallery, GalleryAccessSession $claims, GallerySecretGate $gate): RedirectResponse
     {
@@ -113,7 +113,7 @@ class GalleryPasswordController extends Controller
         if ($requiresPassword) {
             $validated = $request->validate(['password' => ['required', 'string']]);
 
-            $granted = $gate->attempt($request->ip(), $gallery, $model?->view_password_hash, $validated['password']);
+            $granted = $gate->attempt($request->ip(), $gallery, $model === null ? null : $model->checkViewPassword(...), $validated['password']);
 
             if (! $granted || $model === null) {
                 return back()->withErrors(['password' => __('gallery.password_wrong')]);
