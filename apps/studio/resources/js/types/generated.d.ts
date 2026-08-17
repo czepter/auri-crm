@@ -406,7 +406,7 @@ partSize: number,
 namespace Enums {
 export type AssetStatus = 'ready' | 'failed';
 export type MultipartUploadStatus = 'in_progress' | 'completed' | 'aborted';
-export type ZipBuildScope = 'all';
+export type ZipBuildScope = 'all' | 'list';
 export type ZipBuildSize = 'original' | 'web';
 export type ZipBuildStatus = 'building' | 'ready' | 'failed';
 }
