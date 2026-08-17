@@ -1073,6 +1073,15 @@
     "conflicts": "Belegt",
     "writeQuote": "Angebot schreiben",
     "sendContract": "Vertrag senden",
-    "openProject": "Zum Projekt"
+    "openProject": "Zum Projekt",
+    "edit": "Bearbeiten",
+    "notePlaceholder": "Notiz",
+    "addNote": "Notiz sichern",
+    "taskTitle": "Aufgabe",
+    "taskAudience": "Für",
+    "taskDue": "Fällig",
+    "audienceInternal": "intern",
+    "audienceClient": "Kunde",
+    "addTask": "Aufgabe anlegen"
   }
 }

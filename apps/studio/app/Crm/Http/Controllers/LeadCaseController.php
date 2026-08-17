@@ -7,13 +7,19 @@ use App\Crm\Actions\CheckDateAvailability;
 use App\Crm\Data\InternalNoteData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
+use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\ProjectType;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Http\Controllers\Controller;
 use App\Quotes\Data\QuoteData;
 use App\Support\RecordVisit;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -69,8 +75,10 @@ class LeadCaseController extends Controller
                 'id' => $lead->public_id,
                 'projectId' => $project->public_id,
                 'name' => $project->name,
-                'type' => $project->type->label(),
-                'source' => $lead->source->label(),
+                'type' => $project->type->value,
+                'typeLabel' => $project->type->label(),
+                'source' => $lead->source->value,
+                'sourceLabel' => $lead->source->label(),
                 'stage' => $lead->stage->value,
                 'stageLabel' => $lead->stage->label(),
                 'inquiryText' => $lead->inquiry_text,
@@ -111,9 +119,100 @@ class LeadCaseController extends Controller
             'notes' => InternalNoteData::collect(
                 $project->notes->map(InternalNoteData::fromNote(...))
             ),
+            // C-10 (#245): the fixed value lists the edit state offers. Same
+            // button rows the capture screen uses.
+            'types' => collect(ProjectType::cases())
+                ->map(fn (ProjectType $type) => ['value' => $type->value, 'label' => $type->label()])->all(),
+            'sources' => collect(LeadSource::cases())
+                ->map(fn (LeadSource $source) => ['value' => $source->value, 'label' => $source->label()])->all(),
             'week' => $this->week($project, $primary?->date?->format('Y-m-d')),
             'conflicts' => $this->availability->forDate($primary?->date?->format('Y-m-d'), $project),
         ]);
+    }
+
+    /**
+     * C-10 (#245): editing is a state of this view, not a second screen and
+     * not a route of its own. What it changes is the case's own fields —
+     * occasion, source, the people, the inquiry text, the shoot rows.
+     *
+     * Quote, tasks and notes are untouched: they have their own actions and
+     * their own rules. A quote is changed in the quote.
+     *
+     * Editability follows the phase. While it is an inquiry nothing is
+     * reserved and nothing is signed, so date and place stand open. From
+     * booked they are contract content and simply do not arrive here — the
+     * read view keeps them, and changing them is a request (P-07), not an
+     * edit. Refused rather than silently dropped: a save that reports success
+     * and changes nothing is worse than one that says no.
+     */
+    public function update(Request $request, Lead $lead): RedirectResponse
+    {
+        $project = $lead->project;
+
+        // The same authority that moves a shoot: the case's own fields are
+        // the inquiry's substance, and ManageShoots is the capability that
+        // already governs it. No new ability for the same decision.
+        $this->authorize('manageShoots', $project);
+
+        $validated = $request->validate([
+            'type' => ['required', Rule::enum(ProjectType::class)],
+            'source' => ['required', Rule::enum(LeadSource::class)],
+            'inquiry_text' => ['nullable', 'string', 'max:10000'],
+            'people' => ['array'],
+            'people.*.id' => ['required', 'string', 'size:24'],
+            'people.*.name' => ['required', 'string', 'max:255'],
+            'people.*.email' => ['nullable', 'email', 'max:255'],
+            'people.*.phone' => ['nullable', 'string', 'max:64'],
+            'shoots' => ['array'],
+            'shoots.*.id' => ['required', 'string', 'size:24'],
+            'shoots.*.date' => ['nullable', 'date_format:Y-m-d'],
+            'shoots.*.venue_name' => ['nullable', 'string', 'max:255'],
+            'shoots.*.venue_city' => ['nullable', 'string', 'max:255'],
+            'shoots.*.call_time' => ['nullable', 'date_format:H:i'],
+            'shoots.*.end_time' => ['nullable', 'date_format:H:i'],
+        ]);
+
+        $booked = $project->job()->exists();
+
+        abort_if($booked && ($validated['shoots'] ?? []) !== [], 422);
+
+        DB::transaction(function () use ($project, $lead, $validated, $booked) {
+            $project->update(['type' => $validated['type']]);
+            $lead->update([
+                'source' => $validated['source'],
+                'inquiry_text' => $validated['inquiry_text'] ?? null,
+            ]);
+
+            foreach ($validated['people'] ?? [] as $person) {
+                $project->contacts()
+                    ->where('contacts.public_id', $person['id'])
+                    ->first()
+                    ?->update([
+                        'name' => $person['name'],
+                        'email' => $person['email'] ?? null,
+                        'phone' => $person['phone'] ?? null,
+                    ]);
+            }
+
+            if ($booked) {
+                return;
+            }
+
+            foreach ($validated['shoots'] ?? [] as $row) {
+                $project->shoots()
+                    ->where('public_id', $row['id'])
+                    ->first()
+                    ?->update([
+                        'date' => $row['date'] ?? null,
+                        'venue_name' => $row['venue_name'] ?? null,
+                        'venue_city' => $row['venue_city'] ?? null,
+                        'call_time' => $row['call_time'] ?? null,
+                        'end_time' => $row['end_time'] ?? null,
+                    ]);
+            }
+        });
+
+        return back();
     }
 
     /**
