@@ -997,6 +997,65 @@
                 }
             }
         },
+        "/galleries/{gallery}/passwort": {
+            "post": {
+                "operationId": "galleries.pass",
+                "tags": [
+                    "GalleryPass"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "password": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "password"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "pass": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "pass"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/galleries/{gallery}": {
             "get": {
                 "operationId": "galleries.show",
