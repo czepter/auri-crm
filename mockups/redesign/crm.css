@@ -911,3 +911,16 @@ tbody td.grp {
 .preview-pane .thumbs img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; display: block; border-radius: 3px; }
 .pv-foot { display: flex; align-items: center; gap: var(--s3); margin-top: var(--s4); }
 .pv-foot .link { margin-left: auto; }
+
+/* Aktivität: drei Blätter, weil die Fragen verschieden sind — wer hat geladen,
+   wer hat markiert, wer war da. Eine Tabelle je Blatt, damit E-Mail, Umfang
+   und Zeit untereinander vergleichbar bleiben. */
+.aktview { display: none; }
+#akt-download:checked ~ .aktview.download,
+#akt-marken:checked ~ .aktview.marken,
+#akt-zugriffe:checked ~ .aktview.zugriffe { display: block; }
+#akt-download:checked ~ * .seg label[for="akt-download"],
+#akt-marken:checked ~ * .seg label[for="akt-marken"],
+#akt-zugriffe:checked ~ * .seg label[for="akt-zugriffe"] { background: var(--paper); font-weight: 500; }
+.aktview thead th:first-child, .aktview tbody td:first-child { padding-left: 0; }
+.aktview thead th:last-child, .aktview tbody td:last-child { padding-right: 0; }
