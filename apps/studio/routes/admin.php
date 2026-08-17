@@ -205,6 +205,13 @@ Route::middleware('audience:staff')->group(function () {
 
         // P-04 (#223). A client's own thread that names no booking yet — the
         // same tray, the same movement, one level up from a single mail.
+        // C-14 (#250): the reply and the "done" mark, from the screen the
+        // conversation is read on. Thread-scoped, because a conversation that
+        // names no booking still has to be answerable.
+        Route::post('/posteingang/faden/{thread}/antwort', [InboxController::class, 'reply'])
+            ->name('inbox.reply');
+        Route::post('/posteingang/faden/{thread}/erledigt', [InboxController::class, 'close'])
+            ->name('inbox.close');
         Route::post('/posteingang/faden/{thread}/zuordnen', [InboxController::class, 'file'])
             ->name('inbox.thread.file');
 

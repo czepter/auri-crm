@@ -268,7 +268,25 @@
       "unrecognised_address": "Adresse nicht zuordenbar",
       "unknown_thread": "Auftrag nicht gefunden",
       "sender_not_participant": "Absender gehört nicht zum Auftrag"
-    }
+    },
+    "group": {
+      "unbeantwortet": "Unbeantwortet",
+      "wartet": "Wartet auf Antwort",
+      "erledigt": "Erledigt"
+    },
+    "origin": {
+      "mail": "E-Mail",
+      "portal": "Portal"
+    },
+    "general": "Allgemein",
+    "waiting": "seit 1 Tag | seit {count} Tagen",
+    "reply": "Antwort",
+    "send": "Senden",
+    "done": "Erledigt",
+    "reopen": "Wieder öffnen",
+    "people": "Beteiligte",
+    "project": "Projekt",
+    "noThreads": "Keine Unterhaltungen."
   },
   "reports": {
     "title": "Auswertungen",

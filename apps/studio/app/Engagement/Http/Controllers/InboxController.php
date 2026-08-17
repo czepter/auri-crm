@@ -34,14 +34,37 @@ use Inertia\Response;
  */
 class InboxController extends Controller
 {
-    public function index(StudioSettingsResolver $settings): Response
+    /** The three groups, in the order the day is worked. */
+    private const STATES = ['unbeantwortet', 'wartet', 'erledigt'];
+
+    public function index(Request $request, StudioSettingsResolver $settings): Response
     {
         $this->authorizeInbox();
 
         $secret = $settings->inboundSecret();
         $user = auth('staff')->user();
 
+        $threads = Thread::query()
+            ->with(['project.primaryShoot', 'latestMessage', 'participants.contact', 'participants.user'])
+            ->withExists(['messages as from_mail' => fn ($query) => $query->whereNotNull('contact_id')])
+            ->latest()
+            ->limit(200)
+            ->get();
+
+        $open = $this->open($request, $threads);
+
         return Inertia::render('Posteingang', [
+            // C-14 (#250): conversations, grouped by working state. An inbox
+            // sorted by clock time hides exactly what it is opened for.
+            'groups' => collect(self::STATES)->map(fn (string $state) => [
+                'key' => $state,
+                'rows' => $threads
+                    ->filter(fn (Thread $thread) => $thread->workState() === $state)
+                    ->map(fn (Thread $thread) => $this->row($thread))
+                    ->values()
+                    ->all(),
+            ])->all(),
+            'open' => $open === null ? null : $this->conversation($open),
             'configured' => InboundAddress::configured(),
             // The studio's own name in the address, not a generic handle:
             // this is the one inbound address a studio prints on a website
@@ -108,6 +131,97 @@ class InboxController extends Controller
                 ])
                 ->all(),
         ]);
+    }
+
+    /** The conversation the screen is showing: what was asked for, else the first unanswered one. */
+    private function open(Request $request, $threads): ?Thread
+    {
+        $asked = (string) $request->query('faden', '');
+
+        return $threads->firstWhere('public_id', $asked)
+            ?? $threads->first(fn (Thread $thread) => $thread->workState() === 'unbeantwortet')
+            ?? $threads->first();
+    }
+
+    /**
+     * One line in the queue. The project name stands under the sender rather
+     * than the mail address: threads hang off a project, and which booking a
+     * message is about is the thing a studio triages on.
+     */
+    private function row(Thread $thread): array
+    {
+        $latest = $thread->latestMessage;
+
+        return [
+            'id' => $thread->public_id,
+            'who' => $thread->participants
+                ->map(fn ($participant) => $participant->contact?->name)
+                ->filter()
+                ->join(', ') ?: ($thread->project?->name ?? ''),
+            'project' => $thread->project?->name,
+            'subject' => $thread->subject,
+            'snippet' => $latest?->body,
+            // Waiting time, in days. The screen decides when it is long
+            // enough to colour — this only states it.
+            'waitingDays' => $latest === null ? null : (int) $latest->created_at->diffInDays(now()),
+            'origin' => $thread->from_mail ? 'mail' : 'portal',
+        ];
+    }
+
+    /** The thread itself, its people and what the trace shows beside it. */
+    private function conversation(Thread $thread): array
+    {
+        $thread->load(['messages.contact', 'messages.author']);
+
+        return [
+            'id' => $thread->public_id,
+            'subject' => $thread->subject,
+            'state' => $thread->workState(),
+            'projectId' => $thread->project?->public_id,
+            'projectName' => $thread->project?->name,
+            'shootDate' => $thread->project?->primaryShoot?->date?->format('Y-m-d'),
+            'origin' => $thread->from_mail ? 'mail' : 'portal',
+            'people' => $thread->participants
+                ->map(fn ($participant) => $participant->contact?->name ?? $participant->user?->name)
+                ->filter()
+                ->values()
+                ->all(),
+            'messages' => $thread->messages->map(fn ($message) => [
+                'id' => $message->public_id,
+                'who' => $message->contact?->name ?? $message->author?->name ?? '',
+                'own' => $message->contact_id === null,
+                'body' => $message->body,
+                'at' => $message->created_at->toIso8601String(),
+            ])->all(),
+        ];
+    }
+
+    /**
+     * A conversation nobody has to answer any more. Not derivable — one that
+     * needs no reply looks exactly like one waiting for it — so it is a
+     * decision, and a new message from the client undoes it.
+     */
+    public function close(Thread $thread): RedirectResponse
+    {
+        $this->authorizeInbox();
+
+        $thread->forceFill([
+            'closed_message_id' => $thread->workState() === 'erledigt' ? null : $thread->latestMessage?->id,
+        ])->save();
+
+        return back();
+    }
+
+    /** The studio's own reply, from the screen the conversation is read on. */
+    public function reply(Request $request, Thread $thread, PostMessage $post): RedirectResponse
+    {
+        $this->authorizeInbox();
+
+        $post($thread, auth('staff')->user(), $request->validate([
+            'body' => ['required', 'string', 'max:20000'],
+        ])['body']);
+
+        return back();
     }
 
     /**
