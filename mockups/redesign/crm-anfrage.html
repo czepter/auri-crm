@@ -139,25 +139,32 @@
         </div>
       </div>
       <div class="edit-on form">
-        <div class="fr">
-          <label>Hochzeitstag</label>
-          <div class="fields">
-            <input class="s" type="date" value="2026-09-05">
-            <input class="m" value="Hof Eggers" placeholder="Ort">
-            <input class="s" value="Winsen" placeholder="Stadt">
-            <input class="s" type="time" placeholder="Antritt">
-            <input class="s" type="time" placeholder="Ende">
+        <div class="shootblock">
+          <div class="line">
+            <label class="field"><span>Tag</span><input class="s" type="date" value="2026-09-05"></label>
+            <label class="field grow"><span>Art</span><input value="Hochzeitstag"></label>
+            <label class="field"><span>Antritt</span><input class="s" type="time"></label>
+            <label class="field"><span>Ende</span><input class="s" type="time"></label>
           </div>
+          <div class="line">
+            <label class="field grow"><span>Ort</span><input value="Hof Eggers"></label>
+            <label class="field"><span>Stadt</span><input class="m" value="Winsen"></label>
+          </div>
+          <label class="primary"><input type="radio" name="haupt" checked>Haupttermin</label>
         </div>
       </div>
       <div class="composer form">
+        <div class="shootblock neu">
         <div class="line">
-          <input class="m" placeholder="Art — Brunch, Getting Ready">
-          <input class="s" type="date">
-          <input class="s" type="time" placeholder="Antritt">
-          <input class="s" type="time" placeholder="Ende">
-          <input class="m" placeholder="Ort">
-          <input class="s" placeholder="Stadt">
+          <label class="field"><span>Tag</span><input class="s" type="date"></label>
+          <label class="field grow"><span>Art</span><input placeholder="Brunch, Getting Ready"></label>
+          <label class="field"><span>Antritt</span><input class="s" type="time"></label>
+          <label class="field"><span>Ende</span><input class="s" type="time"></label>
+        </div>
+        <div class="line">
+          <label class="field grow"><span>Ort</span><input></label>
+          <label class="field"><span>Stadt</span><input class="m"></label>
+        </div>
         </div>
         <div class="foot">
           <label class="link" for="newshoot">Abbrechen</label>
@@ -186,12 +193,14 @@
       </div>
       <div class="composer form">
         <div class="line">
-          <input style="flex:1; min-width:200px" placeholder="Aufgabe">
-          <div class="choice">
-            <label><input type="radio" name="aud" checked><span>intern</span></label>
-            <label><input type="radio" name="aud"><span>kunde</span></label>
-          </div>
-          <input class="s" type="date">
+          <label class="field grow"><span>Aufgabe</span><input></label>
+          <label class="field"><span>Für</span>
+            <div class="choice">
+              <label><input type="radio" name="aud" checked><span>intern</span></label>
+              <label><input type="radio" name="aud"><span>kunde</span></label>
+            </div>
+          </label>
+          <label class="field"><span>Fällig</span><input class="s" type="date"></label>
         </div>
         <div class="foot">
           <label class="link" for="newtask">Abbrechen</label>

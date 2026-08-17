@@ -295,7 +295,7 @@ tbody td.grp {
 .said .who .via.top { margin: 0 0 15px; padding: 0 0 11px; box-shadow: inset 0 -1px 0 var(--rule); }
 
 /* Zeilensatz für Termine und alles mit Zeitpunkt links */
-.rowset .r { display: flex; align-items: center; gap: 14px; padding: var(--s2) 0; box-shadow: inset 0 1px 0 var(--rule); }
+.rowset .r { display: flex; align-items: center; gap: 14px; padding: 11px 0; box-shadow: inset 0 1px 0 var(--rule); }
 .rowset .r:first-child { box-shadow: none; }
 .rowset .when { width: 150px; flex: none; font-size: 13px; font-weight: 600; letter-spacing: -.012em; font-variant-numeric: tabular-nums; }
 .rowset .when .st { display: block; font-weight: 400; font-size: 11.5px; color: var(--ink-2); }
@@ -381,7 +381,30 @@ tbody td.grp {
 .vswitch:checked ~ .composer { display: block; }
 .composer .foot { display: flex; align-items: center; gap: var(--s3); margin-top: 10px; }
 .composer .foot .btn { margin-left: auto; }
-.composer .line { display: flex; gap: var(--s2); align-items: center; flex-wrap: wrap; }
+/* Feste Zeilen statt freiem Umbruch: Datum, Antritt und Ende gehören
+   zusammen, Ort und Stadt gehören zusammen. Frei umbrechend reißt es die
+   Paare bei jeder Fensterbreite anders auseinander. */
+.composer .line, .edit-on .line { display: flex; gap: var(--s2); align-items: flex-end; flex-wrap: nowrap; }
+.composer .line + .line, .edit-on .line + .line { margin-top: var(--s2); }
+
+/* Ein Termin ist ein Block, kein Feldhaufen: sonst läuft der zweite Termin
+   optisch in den ersten. Tag steht vorn — man sucht Termine über das Datum. */
+.shootblock { padding: 14px 0 16px; box-shadow: inset 0 1px 0 var(--rule); }
+.edit-on .shootblock:first-child { padding-top: 4px; box-shadow: none; }
+.field.grow { flex: 1; min-width: 148px; }   /* darf nicht zusammenfallen */
+.field input { width: 100%; }
+.composer .field input[type="date"], .edit-on .field input[type="date"] { width: 124px; }
+.composer .field input[type="time"], .edit-on .field input[type="time"] { width: 96px; }
+
+/* Beschriftung über dem Feld, nicht im Feld: ein Platzhalter verschwindet beim
+   Tippen, und zwei gleich aussehende Zeitfelder sind danach nicht mehr
+   auseinanderzuhalten. Links kann die Beschriftung hier nicht stehen — eine
+   Zeile trägt fünf Felder, eine Beschriftung kann nicht fünf Dinge benennen. */
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field > span {
+  font: 400 10.5px/1 var(--font); letter-spacing: .05em; text-transform: uppercase;
+  color: var(--ink-2); padding-left: 2px;
+}
 
 /* ---------- Formular ---------- */
 
@@ -518,3 +541,11 @@ tbody td.grp {
 .list .flag { margin-left: auto; font-size: 11.5px; color: var(--accent); text-decoration: none; white-space: nowrap; }
 .list .flag:hover { text-decoration: underline; }
 .list .row.off .n { color: var(--ink-2); font-weight: 400; }
+
+/* Haupttermin ist eine Setzung, keine Rechnung: der früheste Termin ist es
+   nicht (Getting Ready steht vor der Trauung), der längste auch nicht.
+   Radio statt Checkbox, weil es je Projekt höchstens einen gibt — der
+   Teilindex on shoots (project_id) where is_primary sagt dasselbe. */
+.primary { display: inline-flex; align-items: center; gap: 7px; margin-top: 10px;
+           font-size: 12.5px; color: var(--ink-2); cursor: pointer; }
+.primary input { accent-color: var(--accent); margin: 0; }
