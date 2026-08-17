@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -48,9 +49,50 @@ class DocumentTemplateController extends Controller
 
         return Inertia::render('DocumentTemplates/Index', [
             'templates' => DocumentTemplateData::collect($templates),
+            // C-15 (#251): a template is a versioned series, so the table
+            // shows the edition and how many documents each one is out in.
+            // The history sits under the row, because "which version did this
+            // signed contract use" is the only question that ever gets asked
+            // about an old one.
+            'families' => $this->families($templates),
             'type' => $type,
             'types' => $this->typeOptions(),
         ]);
+    }
+
+    /**
+     * Every edition of the shown families, with the number of documents that
+     * point at each. Contracts name their exact template row
+     * (contracts.contract_template_id, never the family), which is what makes
+     * "in circulation" a fact rather than an estimate.
+     *
+     * Keyed by the current edition's own public id, never by family_id:
+     * that one is an internal key and has no business on a surface.
+     *
+     * @return array<string, list<array{version: int, isCurrent: bool, inUse: int, id: string}>>
+     */
+    private function families($templates): array
+    {
+        $inUse = DB::table('contracts')
+            ->selectRaw('contract_template_id, count(*) as total')
+            ->groupBy('contract_template_id')
+            ->pluck('total', 'contract_template_id');
+
+        $byFamily = DocumentTemplate::query()
+            ->whereIn('family_id', $templates->pluck('family_id'))
+            ->orderByDesc('version')
+            ->get()
+            ->groupBy('family_id');
+
+        return $templates->mapWithKeys(fn (DocumentTemplate $current) => [
+            $current->public_id => $byFamily->get($current->family_id, collect())
+                ->map(fn (DocumentTemplate $template) => [
+                    'id' => $template->public_id,
+                    'version' => $template->version,
+                    'isCurrent' => $template->is_current,
+                    'inUse' => (int) ($inUse[$template->id] ?? 0),
+                ])->values()->all(),
+        ])->all();
     }
 
     public function create(): Response

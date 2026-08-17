@@ -123,7 +123,16 @@
       "gallery_comments": "Galerie-Kommentare",
       "welcome": "Begrüßung"
     },
-    "portalPreview": "Vorschau als Kunde"
+    "portalPreview": "Vorschau als Kunde",
+    "colName": "Kontakt",
+    "colReach": "Erreichbarkeit",
+    "colProjects": "Projekte",
+    "colNext": "Nächster Termin",
+    "group": {
+      "running": "Laufender Auftrag",
+      "past": "Bestandskunden",
+      "none": "Ohne Auftrag"
+    }
   },
   "project": {
     "kicker": "Projekt · {type}",
@@ -411,7 +420,8 @@
     "itemDescription": "Beschreibung",
     "itemQuantity": "Menge",
     "itemPrice": "Preis (€)",
-    "itemPriceHint": "Leer = inklusive."
+    "itemPriceHint": "Leer = inklusive.",
+    "included": "enthalten"
   },
   "quotes": {
     "title": "Angebot",
@@ -492,7 +502,12 @@
     "previewFresh": "aktuell",
     "previewStale": "wird geprüft",
     "letterhead": "Briefkopf · aus Einstellungen",
-    "footer": "Fußzeile · aus Einstellungen"
+    "footer": "Fußzeile · aus Einstellungen",
+    "colName": "Vorlage",
+    "colType": "Art",
+    "colVersion": "Fassung",
+    "colInUse": "Im Umlauf",
+    "newVersion": "Neue Fassung"
   },
   "settings": {
     "kicker": "Einstellungen",

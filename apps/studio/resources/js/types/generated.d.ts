@@ -57,6 +57,16 @@ what: string,
 who: string | null,
 projectId: string | null,
 };
+export type ContactRowData = {
+id: string,
+name: string,
+email: string | null,
+phone: string | null,
+projectCount: number,
+standing: string,
+nextDate: string | null,
+latestProject: string | null,
+};
 export type ContactSuggestionData = {
 id: string,
 name: string,

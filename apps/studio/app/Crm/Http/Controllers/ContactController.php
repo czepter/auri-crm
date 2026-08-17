@@ -2,6 +2,7 @@
 
 namespace App\Crm\Http\Controllers;
 
+use App\Crm\Data\ContactRowData;
 use App\Crm\Data\ContactSuggestionData;
 use App\Crm\Models\Contact;
 use App\Engagement\Data\MessageData;
@@ -25,13 +26,18 @@ class ContactController extends Controller
     {
         $this->authorize('viewAny', Contact::class);
 
+        // C-15 (#251): a grouped table, and the standing stands on the row.
+        // The projects come along because every column but the name is read
+        // off them — an eager load rather than three counts.
         $contacts = Contact::query()
-            ->withCount('projects')
+            ->with('projects.primaryShoot')
             ->orderBy('name')
             ->get();
 
         return Inertia::render('Contacts/Index', [
-            'contacts' => ContactSuggestionData::collect($contacts),
+            'contacts' => ContactRowData::collect(
+                $contacts->map(ContactRowData::fromContact(...))
+            ),
         ]);
     }
 
