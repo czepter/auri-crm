@@ -21,7 +21,12 @@
      als Datum im Kopf.
 
      balance_settled ist kein Schalter, sondern ein Zustand aus den Zahlungen.
-     Er steht deshalb bei der Sperre und nicht als eigene Zeile. -->
+     Er steht deshalb bei der Sperre und nicht als eigene Zeile.
+
+     gallery_lists.contact_id ist gesetzt und nicht nullbar: eine Liste gehört
+     immer jemandem — dem Paar oder einem Gast, der sich per E-Mail
+     ausgewiesen hat. Deshalb steht in der Spur der Mensch und darunter seine
+     Listen, nicht eine Sammlung namenloser Auswahlen. -->
 
 <div class="app">
 
@@ -42,6 +47,32 @@
     <div style="display:flex; align-items:stretch; flex:1; min-height:0; margin-top:18px">
 
       <div class="work">
+
+        <div class="access">
+          <div class="col">
+            <div class="lab">Link</div>
+            <div class="val"><a class="link" href="galerie.html">nordlicht.de/g/8f3k2q</a></div>
+            <div class="act"><button class="ghost">Kopieren</button></div>
+          </div>
+          <div class="col">
+            <div class="lab">Passwort für die Ansicht</div>
+            <div class="val form"><input value="Basthorst26"></div>
+            <div class="act"><button class="ghost">Würfeln</button></div>
+          </div>
+          <div class="col">
+            <div class="lab">Code für den Download</div>
+            <div class="val form"><input value="4821" class="s"></div>
+            <div class="act"><button class="ghost">Würfeln</button></div>
+          </div>
+          <div class="col wide">
+            <div class="lab">Galerien im Projekt</div>
+            <div class="siblings">
+              <a class="on" href="crm-galerie.html">Hochzeitstag <span>220</span></a>
+              <a href="#">Brunch <span>64</span></a>
+              <a href="#">After-Wedding <span>—</span></a>
+            </div>
+          </div>
+        </div>
 
         <div class="band">
           <div class="cell">
@@ -73,18 +104,6 @@
 
         <section class="sec">
           <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Zugang und Freigaben</h2>
-          <div class="setting">
-            <span class="t">Passwort für die Ansicht</span>
-            <span class="v mut">gesetzt 12.08.</span>
-            <span class="sw on"></span>
-            <a class="link" href="#">Neu setzen</a>
-          </div>
-          <div class="setting">
-            <span class="t">Zweiter Code für den Download</span>
-            <span class="v mut">vierstellig</span>
-            <span class="sw on"></span>
-            <a class="link" href="#">Neu setzen</a>
-          </div>
           <div class="setting">
             <span class="t">E-Mail vor dem Download</span>
             <span class="sw on"></span>
@@ -142,11 +161,11 @@
             </div>
             <div class="ev sys">
               <span class="t">gestern 21:02</span>
-              <span class="c">Download · Auswahl „Eltern“ · 42 Bilder · web</span>
+              <span class="c">Download · Liste „Eltern“ · maja.r@example.de · 42 Bilder · web</span>
             </div>
             <div class="ev sys">
               <span class="t">14.08.</span>
-              <span class="c">Liste „Eltern“ angelegt · 42 Bilder</span>
+              <span class="c">Liste „Eltern“ angelegt · maja.r@example.de · 42 Bilder</span>
             </div>
             <div class="ev sys">
               <span class="t">12.08.</span>
@@ -171,10 +190,9 @@
 
         <h2>Listen</h2>
         <div class="grp">
-          <div class="item"><div class="n">Eltern</div><div class="m">42 Bilder · heruntergeladen</div></div>
-          <div class="item"><div class="n">Danksagung</div><div class="m">12 Bilder</div></div>
-          <div class="item"><div class="n">Album</div><div class="m">80 Bilder</div></div>
-          <div class="item"><div class="n">Favoriten Lea</div><div class="m">31 Bilder</div></div>
+          <div class="item"><div class="n">Lea Meier</div><div class="m">Favoriten · 31 · Album · 80</div></div>
+          <div class="item"><div class="n">Jan Kowalski</div><div class="m">Danksagung · 12</div></div>
+          <div class="item"><div class="n">maja.r@example.de</div><div class="m">Eltern · 42 · heruntergeladen</div></div>
         </div>
 
         <h2>Archive</h2>

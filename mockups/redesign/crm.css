@@ -771,3 +771,62 @@ tbody td.grp {
    unter dem Namen und nicht klein in der Spur. */
 .reach { display: flex; gap: 18px; margin-top: 6px; }
 .reach a { font-size: 15px; letter-spacing: -.012em; }
+
+/* Link, Passwort und Code sind der Grund, warum die Galerie geöffnet wird —
+   sie stehen oben und zeigen ihren Wert. Das setzt voraus, dass sie
+   wiederherstellbar gespeichert werden; heute liegen sie als Hash. */
+.access { display: flex; gap: 26px; align-items: flex-start; margin-bottom: var(--s5); padding-bottom: var(--s5); box-shadow: inset 0 -1px 0 var(--rule); }
+.access .col { min-width: 0; }
+.access .col.wide { margin-left: auto; }
+.access .lab { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.access .val { margin-top: 6px; font-size: 17px; letter-spacing: -.018em; }
+.access .val a { font-size: 17px; }
+.access .val input { font-size: 17px; letter-spacing: -.018em; width: 190px; padding: 5px 9px; }
+.access .val input.s { width: 92px; }
+.access .act { margin-top: 7px; }
+.access .siblings { display: flex; gap: 6px; margin-top: 8px; }
+.access .siblings a {
+  display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 12px; border-radius: var(--r-pill);
+  background: var(--sunk); color: var(--ink); text-decoration: none; font-size: 13px;
+}
+.access .siblings a.on { background: var(--ink); color: var(--paper); }
+.access .siblings a span { font-size: 11.5px; color: var(--ink-2); }
+.access .siblings a.on span { color: #B9B9BD; }
+
+/* ---------- Kontaktblatt ---------- */
+
+/* Aufbau wie in Google Kontakte: Avatar, Name, eine Reihe Handlungen, darunter
+   Datenzeilen mit dem Wert groß und der Bezeichnung klein. Eine Spalte, weil
+   ein Kontakt kein Arbeitsbereich ist, sondern ein Blatt, das man aufschlägt. */
+.sheet { max-width: 760px; padding: var(--s6) var(--s7) var(--s7); }
+.sheet .head { display: flex; align-items: center; gap: var(--s5); }
+.sheet .av {
+  width: 76px; height: 76px; border-radius: 50%; flex: none;
+  background: linear-gradient(158deg, #4D3A2C, #C0A184); color: var(--paper);
+  font: 600 26px/76px var(--font); letter-spacing: -.02em; text-align: center;
+}
+.sheet .head h1 { margin: 0; font-size: 28px; }
+.sheet .head .sub { font-size: 13.5px; color: var(--ink-2); margin-top: 4px; }
+
+.quick { display: flex; gap: var(--s2); margin: var(--s5) 0 var(--s6); }
+.quick a {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 15px; border-radius: var(--r-pill); background: var(--sunk);
+  color: var(--ink); text-decoration: none; font-size: 13px;
+}
+.quick a:hover { background: var(--sunk-2); }
+.quick a.primary { background: var(--accent); color: var(--paper); }
+.quick svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+.sheet section { margin-bottom: var(--s6); }
+.sheet section > h2 {
+  margin: 0 0 var(--s3); font: 600 10.5px/1 var(--font);
+  letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2);
+}
+.datarow { display: flex; align-items: center; gap: 16px; padding: 10px 0; box-shadow: inset 0 1px 0 var(--rule); }
+.datarow:first-of-type { box-shadow: none; }
+.datarow .val { font-size: 15px; letter-spacing: -.012em; }
+.datarow .val a { font-size: 15px; }
+.datarow .lab { font-size: 12px; color: var(--ink-2); margin-top: 1px; }
+.datarow .right { margin-left: auto; font-size: 12.5px; color: var(--ink-2); }
+.datarow .right.warn { color: var(--accent); }
