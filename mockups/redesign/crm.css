@@ -549,3 +549,63 @@ tbody td.grp {
 .primary { display: inline-flex; align-items: center; gap: 7px; margin-top: 10px;
            font-size: 12.5px; color: var(--ink-2); cursor: pointer; }
 .primary input { accent-color: var(--accent); margin: 0; }
+
+/* ---------- Projekt: Kennwerte, Verlauf, Abweichung ---------- */
+
+/* Stammdaten quer statt in einer schmalen Spalte — sechs Werte auf einer
+   Linie, jeder mit Beleg darunter. */
+.band { display: flex; margin: 0 0 var(--s5); }
+.band .cell { flex: 1; min-width: 0; padding: 0 18px; box-shadow: inset 1px 0 0 var(--rule); }
+.band .cell:first-child { padding-left: 0; box-shadow: none; }
+.band .lab { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.band .val { margin-top: 5px; font: 600 17px/1.2 var(--font); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.band .val.plain { font-weight: 500; font-size: 15px; }
+.band .val.warn { color: var(--accent); }
+.band .sub { font-size: 11.5px; color: var(--ink-2); margin-top: 3px; }
+
+/* Abweichung wird gezeigt, nicht verhindert: der Auftrag ändert sich im
+   Gespräch, das Dokument hinkt hinterher. Wer das sperrt, bekommt einen
+   Leistungsumfang, der nicht stimmt — gearbeitet wird trotzdem. */
+.deviation { margin-top: var(--s3); padding: 11px 13px; background: #FBEEE8; border-radius: var(--r-sm); font-size: 12.5px; }
+.deviation b { color: var(--accent); }
+.deviation .acts { display: flex; gap: 14px; margin-top: 7px; }
+.quote .tag { margin-left: 3px; font-size: 11.5px; color: var(--accent); }
+.quote .amt .was { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 400; color: var(--accent); }
+.quote .amt { width: 112px; }
+
+/* Verlauf: Notiz, Anruf, Mail und Systemzeilen in einer Spur */
+.compose {
+  display: flex; align-items: center; gap: 10px; margin-bottom: var(--s1);
+  padding: 10px 12px; border-radius: var(--r-sm); background: var(--sunk);
+  font-size: 13px; color: var(--ink-2);
+}
+.compose .kinds { margin-left: auto; display: flex; gap: 6px; }
+.compose .kinds span { background: var(--paper); border-radius: var(--r-pill); padding: 3px 9px; font-size: 11.5px; color: var(--ink); }
+.stream .ev { display: flex; gap: 14px; padding: 10px 0; box-shadow: inset 0 1px 0 var(--rule); }
+.stream .t { width: 110px; flex: none; font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.stream .c { flex: 1; min-width: 0; font-size: 13px; }
+.stream .kind { font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
+.stream .by { color: var(--ink-2); }
+.stream .ev.sys .c { color: var(--ink-2); }
+
+/* Verknüpftes in der Spur */
+.rail .item { padding: 8px 0; box-shadow: inset 0 1px 0 #ECECEE; }
+.rail .item:first-child { box-shadow: none; }
+.rail .item .n { font-size: 12.5px; font-weight: 600; letter-spacing: -.012em; }
+.rail .item .m { font-size: 11.5px; color: var(--ink-2); margin-top: 1px; }
+.rail .item .m.warn { color: var(--accent); }
+
+/* Projektspalten: Arbeit breit, Spur schmal, beide über die volle Höhe */
+.work { flex: 1; min-width: 0; padding: var(--s5) 26px var(--s6); }
+.work > h2 {
+  margin: 0 0 var(--s2); font: 600 10.5px/1 var(--font);
+  letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2);
+}
+.work > h2 + * { margin-bottom: var(--s5); }
+.work .sec { margin-bottom: var(--s5); }
+
+/* Abgeleitete Kennwerte sagen im Bearbeiten-Zustand, woher sie kommen —
+   sonst sucht man das Feld, das es nicht gibt. */
+.band .lab .derived { color: var(--mark); text-transform: none; letter-spacing: 0; }
+#edit:checked ~ * .band .cell .val:not(.plain),
+#edit:checked ~ * .band .cell .val.plain { opacity: 1; }
