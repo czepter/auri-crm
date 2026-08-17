@@ -973,5 +973,16 @@
     "needsAttention": "Prüfung erforderlich",
     "needsAttentionCount": "1 Datei | {count} Dateien",
     "retryProcessing": "Erneut versuchen"
+  },
+  "palette": {
+    "search": "Suchen",
+    "placeholder": "Kontakt, Anfrage, Projekt oder Galerie",
+    "recent": "Zuletzt",
+    "kind": {
+      "kontakt": "Kontakt",
+      "anfrage": "Anfrage",
+      "projekt": "Projekt",
+      "galerie": "Galerie"
+    }
   }
 }

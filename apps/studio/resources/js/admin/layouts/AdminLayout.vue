@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
 import { Button } from '@/ui/button'
+import CommandPalette from '@/admin/components/CommandPalette.vue'
 
 const props = defineProps<{ active: string }>()
+
+const palette = ref<InstanceType<typeof CommandPalette> | null>(null)
 
 const page = usePage()
 const user = computed(() => page.props.auth.user)
@@ -142,6 +145,14 @@ const items = computed(() => [
       <nav class="side">
         <Link class="wm" href="/">Nordlicht</Link>
 
+        <!-- Above the navigation, not in it: it does not change page, it
+             opens a tool. The shortcut stands where a count would. -->
+        <button class="find" type="button" @click="palette?.open()">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>
+          {{ $t('palette.search') }}
+          <kbd>⌘K</kbd>
+        </button>
+
         <template v-for="item in items" :key="item.key ?? item.group">
           <template v-if="item.group">
             <div class="group" />
@@ -176,6 +187,8 @@ const items = computed(() => [
           </Button>
         </div>
       </nav>
+
+      <CommandPalette ref="palette" />
     </div>
 
     <main class="main">

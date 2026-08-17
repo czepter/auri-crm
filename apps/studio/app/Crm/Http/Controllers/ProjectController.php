@@ -30,6 +30,7 @@ use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Data\QuoteData;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
+use App\Support\RecordVisit;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -71,6 +72,14 @@ class ProjectController extends Controller
     public function show(Project $project): Response
     {
         $this->authorize('view', $project);
+
+        // C-03 (#237): an inquiry and a project are the same record in two
+        // phases, so the palette names it by the phase it is in.
+        RecordVisit::record(
+            $project->job()->exists() ? 'projekt' : 'anfrage',
+            $project->public_id,
+            $project->name,
+        );
 
         return Inertia::render('Projects/Show', [
             'header' => $this->header($project),

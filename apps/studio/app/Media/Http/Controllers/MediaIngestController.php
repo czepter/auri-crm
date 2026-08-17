@@ -8,6 +8,7 @@ use App\Media\Data\FailedAssetData;
 use App\Media\Data\MediaIngestTargetData;
 use App\Media\Enums\AssetStatus;
 use App\Media\Models\Asset;
+use App\Support\RecordVisit;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,6 +23,8 @@ class MediaIngestController extends Controller
     public function show(Gallery $gallery): Response
     {
         $this->authorize('manageMedia', $gallery);
+
+        RecordVisit::record('galerie', $gallery->public_id, $gallery->title ?? $gallery->project?->name ?? '');
 
         $failedAssets = Asset::query()
             ->where('gallery_id', $gallery->id)

@@ -12,6 +12,7 @@ use App\Portal\Models\ClientAccess;
 use App\Portal\Models\DsgvoRequest;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
+use App\Support\RecordVisit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -37,6 +38,8 @@ class ContactController extends Controller
     public function edit(Contact $contact, StudioSettingsResolver $settings): Response
     {
         $this->authorize('update', $contact);
+
+        RecordVisit::record('kontakt', $contact->public_id, $contact->name);
 
         $user = auth('staff')->user();
 
