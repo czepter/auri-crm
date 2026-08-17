@@ -44,6 +44,19 @@ export type ContractStatus = 'pending' | 'rendered' | 'failed';
 }
 namespace Crm {
 namespace Data {
+export type CalendarDayData = {
+date: string,
+inMonth: boolean,
+today: boolean,
+entries: App.Crm.Data.CalendarEntryData[],
+};
+export type CalendarEntryData = {
+kind: string,
+time: string | null,
+what: string,
+who: string | null,
+projectId: string | null,
+};
 export type ContactSuggestionData = {
 id: string,
 name: string,

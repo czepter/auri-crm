@@ -2,9 +2,16 @@
 
 namespace App\Crm\Http\Controllers;
 
+use App\Crm\Data\CalendarDayData;
+use App\Crm\Data\CalendarEntryData;
 use App\Crm\Data\ShootData;
+use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Models\Absence;
+use App\Settings\Models\StudioClosure;
+use Carbon\CarbonImmutable;
+use Illuminate\Http\Request;
 use App\Crm\Support\ShootCalendar;
 use App\Http\Controllers\Controller;
 use App\Models\User;
@@ -16,33 +23,101 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class CalendarController extends Controller
 {
-    public function index(): InertiaResponse
+    /**
+     * C-13 (#249): a month grid, not a chronological index. The operation
+     * plans in weeks, and a free Saturday is the most important thing in the
+     * picture — which is why an empty cell stays empty rather than saying so.
+     *
+     * Six week rows always, starting on the Monday on or before the first:
+     * a fixed frame is what lets the eye compare two months, and a grid that
+     * is five rows in February and six in March is a different shape every
+     * time it is opened.
+     *
+     * The subscription URL is not on this screen any more. It is a credential
+     * — anyone holding it reads this person's schedule — and it was the
+     * widest block above the working area; it lives under
+     * /einstellungen/kalender now.
+     */
+    public function index(Request $request): InertiaResponse
     {
         $user = auth('staff')->user();
+        $month = $this->month($request);
+
+        $from = $month->startOfMonth()->startOfWeek();
+        $to = $from->addWeeks(6)->subDay();
 
         $shoots = Shoot::query()
-            ->with(['project', 'crew.user', 'timeline'])
+            ->with(['project', 'crew.user'])
             // A crew role's calendar is the days they are on, not the studio's
             // whole diary.
             ->whereIn('shoots.project_id', Project::query()->visibleTo($user)->select('projects.id'))
             ->uncancelled()
             ->whereNotNull('date')
-            ->whereDate('date', '>=', now()->startOfDay())
+            ->whereDate('date', '>=', $from->toDateString())
+            ->whereDate('date', '<=', $to->toDateString())
             ->orderBy('date')
             ->orderBy('call_time')
             ->get();
 
+        $absences = Absence::query()
+            ->with('user')
+            ->whereDate('ends_on', '>=', $from->toDateString())
+            ->whereDate('starts_on', '<=', $to->toDateString())
+            ->get();
+
+        $closures = StudioClosure::query()
+            ->whereDate('ends_on', '>=', $from->toDateString())
+            ->whereDate('starts_on', '<=', $to->toDateString())
+            ->get();
+
+        $days = [];
+
+        for ($day = $from; $day <= $to; $day = $day->addDay()) {
+            $date = $day->toDateString();
+
+            $days[] = new CalendarDayData(
+                date: $date,
+                inMonth: $day->month === $month->month,
+                today: $date === now()->toDateString(),
+                entries: [
+                    ...$shoots->filter(fn (Shoot $shoot) => $shoot->date->toDateString() === $date)
+                        ->map(fn (Shoot $shoot) => new CalendarEntryData(
+                            kind: $shoot->status === ShootStatus::Requested ? 'hold' : 'shoot',
+                            time: $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
+                            what: $shoot->project->name,
+                            who: $shoot->crew->map(fn ($assignment) => $assignment->user->name)->join(', ') ?: null,
+                            projectId: $shoot->project->public_id,
+                        ))->values()->all(),
+                    ...$absences->filter(fn (Absence $absence) => $absence->coversDate($date))
+                        ->map(fn (Absence $absence) => new CalendarEntryData(
+                            kind: 'away',
+                            time: null,
+                            what: $absence->user->name,
+                            who: $absence->category->label(),
+                            projectId: null,
+                        ))->values()->all(),
+                    ...$closures->filter(fn (StudioClosure $closure) => $closure->coversDate($date))
+                        ->map(fn (StudioClosure $closure) => new CalendarEntryData(
+                            kind: 'away',
+                            time: null,
+                            what: $closure->label,
+                            who: null,
+                            projectId: null,
+                        ))->values()->all(),
+                ],
+            );
+        }
+
         return Inertia::render('Kalender', [
-            // Wrapped in a closure rather than passed as ShootData::fromShoot(...):
-            // Collection::map calls its callback with ($item, $key), and that
-            // second argument binds to fromShoot's optional $conflicts, which is
-            // typed array — so the first-class callable form fataled on every
-            // request with "Argument #2 ($conflicts) must be of type array, int
-            // given". The calendar has no conflicts to narrow by; that list is
-            // ProjectController::shootsOf()'s concern.
+            'month' => $month->format('Y-m'),
+            'label' => $month->translatedFormat('F Y'),
+            'previous' => $month->subMonthNoOverflow()->format('Y-m'),
+            'next' => $month->addMonthNoOverflow()->format('Y-m'),
+            'days' => CalendarDayData::collect($days),
+            // The list view reads the same month, grouped by week rather than
+            // laid out in one — a list answers "what is next", a grid answers
+            // "how does the month look".
             'shoots' => ShootData::collect($shoots->map(fn (Shoot $shoot) => ShootData::fromShoot($shoot))),
-            // Keyed by shoot, because the calendar lists occasions and each
-            // one has to name the project it belongs to and link to it.
             'projects' => $shoots->mapWithKeys(fn (Shoot $shoot) => [
                 $shoot->public_id => ['id' => $shoot->project->public_id, 'name' => $shoot->project->name],
             ]),
@@ -50,10 +125,28 @@ class CalendarController extends Controller
                 ->filter(fn (Shoot $shoot) => $shoot->crew->contains('user_id', $user->id))
                 ->pluck('public_id')
                 ->values(),
-            // Built here rather than shared, so the secret only ever reaches
-            // the one screen that has a reason to show it.
-            'feedUrl' => url("/kalender/{$user->calendarToken()}/shootings.ics"),
         ]);
+    }
+
+    /**
+     * The subscription secret, on its own screen under the settings. Built
+     * here rather than shared, so it only ever reaches the one screen that
+     * has a reason to show it.
+     */
+    public function subscription(): InertiaResponse
+    {
+        return Inertia::render('Settings/Calendar', [
+            'feedUrl' => url("/kalender/".auth('staff')->user()->calendarToken()."/shootings.ics"),
+        ]);
+    }
+
+    private function month(Request $request): CarbonImmutable
+    {
+        $asked = (string) $request->query('monat', '');
+
+        return preg_match('/^\d{4}-\d{2}$/', $asked) === 1
+            ? CarbonImmutable::createFromFormat('Y-m-d', $asked.'-01')->startOfDay()
+            : CarbonImmutable::now()->startOfMonth();
     }
 
     /** Revocation: every subscribed device stops receiving the feed at once. */

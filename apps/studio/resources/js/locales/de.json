@@ -229,12 +229,21 @@
   "calendar": {
     "title": "Kalender",
     "subscribe": "Kalender abonnieren",
-    "copy": "kopieren",
-    "copied": "kopiert",
     "revoke": "Adresse zurückziehen",
-    "revokeConfirm": "Neue Adresse erzeugen? Bereits eingetragene Abos hören sofort auf zu aktualisieren.",
-    "mine": "Eigenes",
-    "empty": "Keine anstehenden Shootings."
+    "viewMonth": "Monat",
+    "viewList": "Liste",
+    "more": "+{count} weitere",
+    "feedUrl": "Abo-Adresse",
+    "colDate": "Termin",
+    "colWhat": "Projekt",
+    "colVenue": "Ort",
+    "colCrew": "Besetzung",
+    "colStatus": "Stand",
+    "group": {
+      "diese": "Diese Woche",
+      "naechste": "Nächste Woche",
+      "spaeter": "Später"
+    }
   },
   "inbox": {
     "title": "Posteingang",

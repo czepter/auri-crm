@@ -2,117 +2,145 @@
 import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import CrewStack from '@/admin/components/CrewStack.vue'
-import { dayAndMonth, weekday } from '@/admin/lib/shoots'
-import { Button } from '@/ui/button'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 
 const props = defineProps<{
+  month: string
+  label: string
+  previous: string
+  next: string
+  days: App.Crm.Data.CalendarDayData[]
   shoots: App.Crm.Data.ShootData[]
   projects: Record<string, { id: string; name: string }>
   mine: string[]
-  feedUrl: string
 }>()
 
-const copied = ref(false)
+const view = ref('monat')
 
-// Grouped by month, because a shooting calendar is read a month at a time and
-// the gaps between days are the point — a flat list hides them.
-const months = computed(() => {
-  const groups = new Map<string, App.Crm.Data.ShootData[]>()
+// Three lines, then a count. The frame is six week rows and it has to stay
+// six: a wedding with four shoots on one day would otherwise push the rest of
+// the month down a screen. The draft has no such day; this is the ruling for
+// when one turns up.
+const SHOWN = 3
+
+function entries(day: App.Crm.Data.CalendarDayData) {
+  return day.entries.slice(0, SHOWN)
+}
+
+function overflow(day: App.Crm.Data.CalendarDayData) {
+  return Math.max(0, day.entries.length - SHOWN)
+}
+
+const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
+
+function dayNumber(date: string) {
+  return new Date(date).getDate()
+}
+
+function go(month: string) {
+  router.get('/kalender', { monat: month }, { preserveScroll: true, preserveState: true })
+}
+
+// The list answers "what is next", so it groups by nearness rather than by
+// the month the grid is showing.
+const groups = computed(() => {
+  const endOfWeek = new Date()
+  endOfWeek.setDate(endOfWeek.getDate() + (7 - endOfWeek.getDay()))
+  const endOfNext = new Date(endOfWeek)
+  endOfNext.setDate(endOfNext.getDate() + 7)
+
+  const buckets: Record<string, App.Crm.Data.ShootData[]> = { diese: [], naechste: [], spaeter: [] }
 
   for (const shoot of props.shoots) {
     if (!shoot.date) continue
 
-    const label = new Date(shoot.date).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })
-    groups.set(label, [...(groups.get(label) ?? []), shoot])
+    const date = new Date(shoot.date)
+    const key = date <= endOfWeek ? 'diese' : date <= endOfNext ? 'naechste' : 'spaeter'
+    buckets[key].push(shoot)
   }
 
-  return [...groups].map(([label, shoots]) => ({ label, shoots }))
+  return Object.entries(buckets).filter(([, rows]) => rows.length)
 })
 
-async function copyFeed() {
-  await navigator.clipboard.writeText(props.feedUrl)
-  copied.value = true
-  setTimeout(() => (copied.value = false), 2000)
-}
-
-function regenerate() {
-  router.post('/kalender/abo', {}, { preserveScroll: true })
+function shortDate(date: string | null) {
+  return date ? new Date(date).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' }) : '—'
 }
 </script>
 
 <template>
   <AdminLayout active="kalender">
-    <div class="hrow" style="margin-bottom: var(--s5)">
-      <h1>{{ $t('calendar.title') }}</h1>
-    </div>
+    <div data-theme="crm">
+      <div class="hrow">
+        <div>
+          <div class="kick">{{ label }}</div>
+          <h1>{{ $t('calendar.title') }}</h1>
+        </div>
 
-    <!-- The subscription URL is a credential: anyone holding it can read this
-         person's schedule. It is shown once, beside the way to revoke it. -->
-    <div class="card static" style="margin-bottom: var(--s5)">
-      <div class="cardhead">
-        <span class="kick">{{ $t('calendar.subscribe') }}</span>
-        <AlertDialog>
-          <AlertDialogTrigger as-child>
-            <Button type="button" variant="outline">{{ $t('calendar.revoke') }}</Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{{ $t('calendar.revokeConfirm') }}</AlertDialogTitle>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogAction @click="regenerate">{{ $t('calendar.revoke') }}</AlertDialogAction>
-              <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-      <div class="picked">
-        <span class="nm" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">
-          {{ feedUrl }}
+        <span class="seg" style="margin-left: auto">
+          <button type="button" :class="{ on: view === 'monat' }" @click="view = 'monat'">
+            {{ $t('calendar.viewMonth') }}
+          </button>
+          <button type="button" :class="{ on: view === 'liste' }" @click="view = 'liste'">
+            {{ $t('calendar.viewList') }}
+          </button>
         </span>
-        <Button type="button" variant="ghost" class="chg" @click="copyFeed">
-          {{ copied ? $t('calendar.copied') : $t('calendar.copy') }}
-        </Button>
+
+        <button class="btn-2" type="button" @click="go(previous)">←</button>
+        <button class="btn-2" type="button" @click="go(next)">→</button>
       </div>
-    </div>
 
-    <section v-for="month in months" :key="month.label" class="dsec">
-      <div class="dlab">{{ month.label }}</div>
+      <div v-if="view === 'monat'" class="cal" style="padding: var(--s5) var(--s7)">
+        <div v-for="weekday in WEEKDAYS" :key="weekday" class="dow">{{ weekday }}</div>
 
-      <div class="sess">
-        <Link
-          v-for="shoot in month.shoots"
-          :key="shoot.id"
-          class="srow"
-          :class="{ open: mine.includes(shoot.id) }"
-          :href="`/auftraege/${projects[shoot.id].id}/shootings`"
-          style="display: block"
+        <div
+          v-for="day in days"
+          :key="day.date"
+          class="day"
+          :class="{ pale: !day.inMonth, today: day.today }"
         >
-          <div class="stop">
-            <div class="sdate">
-              {{ dayAndMonth(shoot.date) }}
-              <em>{{ weekday(shoot.date) }}</em>
-            </div>
-            <div class="sname">
-              {{ shoot.label ?? shoot.kind }}
-              <span v-if="mine.includes(shoot.id)" class="prim">{{ $t('calendar.mine') }}</span>
-              <span>
-                {{
-                  [projects[shoot.id].name, shoot.venue, shoot.callTime && `${shoot.callTime}–${shoot.endTime ?? ''}`]
-                    .filter(Boolean)
-                    .join(' · ')
-                }}
-              </span>
-            </div>
-            <CrewStack :crew="shoot.crew" />
-            <span class="chip next">{{ shoot.statusLabel }}</span>
-          </div>
-        </Link>
-      </div>
-    </section>
+          <span class="n">{{ dayNumber(day.date) }}</span>
 
-    <p v-if="!months.length" class="hint">{{ $t('calendar.empty') }}</p>
+          <component
+            :is="entry.projectId ? Link : 'span'"
+            v-for="(entry, index) in entries(day)"
+            :key="index"
+            class="e"
+            :class="entry.kind"
+            :href="entry.projectId ? `/auftraege/${entry.projectId}` : undefined"
+          >
+            <span v-if="entry.time" class="tm">{{ entry.time }} </span>
+            {{ entry.what }}
+            <span v-if="entry.who" class="who"> · {{ entry.who }}</span>
+          </component>
+
+          <span v-if="overflow(day)" class="e away">{{ $t('calendar.more', { count: overflow(day) }) }}</span>
+        </div>
+      </div>
+
+      <table v-else style="margin-top: var(--s5)">
+        <thead>
+          <tr>
+            <th>{{ $t('calendar.colDate') }}</th>
+            <th>{{ $t('calendar.colWhat') }}</th>
+            <th>{{ $t('calendar.colVenue') }}</th>
+            <th>{{ $t('calendar.colCrew') }}</th>
+            <th>{{ $t('calendar.colStatus') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template v-for="[key, rows] in groups" :key="key">
+            <tr><td class="grp" colspan="5">{{ $t(`calendar.group.${key}`) }}</td></tr>
+            <tr v-for="shoot in rows" :key="shoot.id">
+              <td>{{ shortDate(shoot.date) }}<template v-if="shoot.callTime"> {{ shoot.callTime }}</template></td>
+              <td class="nm">
+                <Link :href="`/auftraege/${projects[shoot.id].id}`">{{ projects[shoot.id].name }}</Link>
+              </td>
+              <td class="mu">{{ shoot.venue ?? '—' }}</td>
+              <td class="mu">{{ shoot.crew.map((member) => member.name).join(', ') || '—' }}</td>
+              <td :class="{ w: mine.includes(shoot.id) }">{{ shoot.statusLabel }}</td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </div>
   </AdminLayout>
 </template>
