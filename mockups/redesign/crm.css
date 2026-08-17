@@ -800,11 +800,6 @@ tbody td.grp {
    ein Kontakt kein Arbeitsbereich ist, sondern ein Blatt, das man aufschlägt. */
 .sheet { max-width: 760px; padding: var(--s6) var(--s7) var(--s7); }
 .sheet .head { display: flex; align-items: center; gap: var(--s5); }
-.sheet .av {
-  width: 76px; height: 76px; border-radius: 50%; flex: none;
-  background: linear-gradient(158deg, #4D3A2C, #C0A184); color: var(--paper);
-  font: 600 26px/76px var(--font); letter-spacing: -.02em; text-align: center;
-}
 .sheet .head h1 { margin: 0; font-size: 28px; }
 .sheet .head .sub { font-size: 13.5px; color: var(--ink-2); margin-top: 4px; }
 
