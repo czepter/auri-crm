@@ -100,6 +100,7 @@ const items = computed(() => [
     label: 'Pakete',
     href: '/pakete',
     needs: 'manage_packages',
+    studio: true,
     icon: '<path d="M21 8.5v7l-9 4.5-9-4.5v-7L12 4z"/><path d="M3 8.5 12 13l9-4.5M12 13v7"/>',
   },
   {
@@ -107,6 +108,7 @@ const items = computed(() => [
     label: 'Dokumentvorlagen',
     href: '/dokumentvorlagen',
     needs: 'manage_contracts',
+    studio: true,
     icon: '<path d="M6 3h7l5 5v13H6z"/><path d="M13 3v5h5"/><path d="M9 13h6M9 17h4"/>',
   },
   {
@@ -114,6 +116,7 @@ const items = computed(() => [
     label: 'Team',
     href: '/team',
     needs: 'manage_staff',
+    studio: true,
     icon: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M16.5 5.5a3.2 3.2 0 010 5.6M17.5 14.8c2 .7 3.5 2.6 3.5 5.2"/>',
   },
   {
@@ -123,6 +126,7 @@ const items = computed(() => [
     label: 'Auswertungen',
     href: '/auswertungen',
     needs: 'view_all_projects',
+    studio: true,
     icon: '<path d="M3.5 20h17"/><path d="M7 20v-6M12 20V6M17 20v-9"/>',
   },
   {
@@ -130,6 +134,7 @@ const items = computed(() => [
     label: 'Einstellungen',
     href: '/einstellungen',
     needs: 'manage_settings',
+    studio: true,
     icon: '<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/>',
   },
 ].filter((item) => !item.needs || can.value.includes(item.needs as App.Enums.Capability)))
@@ -159,9 +164,17 @@ const items = computed(() => [
             <div class="lab">{{ item.group }}</div>
           </template>
 
-          <Link v-else :class="{ on: item.key === props.active }" :href="item.href!">
+          <!-- The label rides in its own span so the narrow breakpoint can
+               drop it: ten truncated words are harder to hit than ten icons.
+               `studio` marks the second group, which the phone layout leaves
+               out — nobody sets up a studio from a phone. -->
+          <Link
+            v-else
+            :class="{ on: item.key === props.active, studio: item.studio }"
+            :href="item.href!"
+          >
             <svg viewBox="0 0 24 24" v-html="item.icon" />
-            {{ item.label }}
+            <span>{{ item.label }}</span>
             <span v-if="item.count !== undefined" class="ct">{{ item.count }}</span>
           </Link>
         </template>
