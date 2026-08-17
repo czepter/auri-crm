@@ -149,7 +149,9 @@
       "payer": "Zahlt",
       "planner": "Planung",
       "vendor": "Dienstleister"
-    }
+    },
+    "openedOn": "geöffnet am {date}",
+    "notOpened": "noch nicht geöffnet"
   },
   "project": {
     "kicker": "Projekt · {type}",

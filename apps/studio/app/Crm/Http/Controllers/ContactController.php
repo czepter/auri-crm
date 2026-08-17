@@ -7,6 +7,7 @@ use App\Crm\Data\ContactSuggestionData;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryView;
 use App\Engagement\Data\MessageData;
 use App\Engagement\Models\Message;
 use App\Enums\Capability;
@@ -95,6 +96,13 @@ class ContactController extends Controller
                     'title' => $gallery->title,
                     'expiresAt' => $gallery->expires_at?->format('Y-m-d'),
                     'assetCount' => count($gallery->currentVersion?->assets ?? []),
+                    // C-21 (#256): whether this person has opened it. A
+                    // delivered gallery nobody looked at is the one fact the
+                    // sheet could never state.
+                    'openedOn' => GalleryView::query()
+                        ->where('gallery_id', $gallery->id)
+                        ->where('contact_id', $contact->id)
+                        ->min('viewed_on'),
                 ])->all(),
             // Everyone else on this contact's projects — the other half of a
             // couple, the planner, whoever pays. Named with the role they

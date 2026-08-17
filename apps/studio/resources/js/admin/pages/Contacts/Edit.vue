@@ -16,7 +16,13 @@ const props = defineProps<{
   billingAddress: { street: string | null; postcode: string | null; city: string | null }
   correspondence: App.Engagement.Data.MessageData[]
   projects: { id: string; name: string; role: string; date: string | null; value: number | null; booked: boolean }[]
-  galleries: { id: string; title: string | null; expiresAt: string | null; assetCount: number }[]
+  galleries: {
+    id: string
+    title: string | null
+    expiresAt: string | null
+    assetCount: number
+    openedOn: string | null
+  }[]
   connected: { id: string; name: string; role: string | null }[]
   portalAccessRevokedAt: string | null
   canRevokePortalAccess: boolean
@@ -225,7 +231,11 @@ function eraseDsgvoData() {
           <div v-for="gallery in galleries" :key="gallery.id" class="datarow">
             <div>
               <div class="val">{{ gallery.title ?? '—' }}</div>
-              <div class="lab">{{ $t('contacts.assetCount', gallery.assetCount) }}</div>
+              <div class="lab">
+                {{ $t('contacts.assetCount', gallery.assetCount) }}
+                ·
+                {{ gallery.openedOn ? $t('contacts.openedOn', { date: day(gallery.openedOn) }) : $t('contacts.notOpened') }}
+              </div>
             </div>
             <span v-if="gallery.expiresAt" class="right">{{ $t('contacts.expiresOn', { date: day(gallery.expiresAt) }) }}</span>
           </div>

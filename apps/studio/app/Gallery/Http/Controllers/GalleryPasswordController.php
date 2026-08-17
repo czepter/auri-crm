@@ -7,10 +7,12 @@ use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GalleryVersion;
+use App\Gallery\Models\GalleryView;
 use App\Gallery\Support\GalleryAccessSession;
 use App\Gallery\Support\GallerySecretGate;
 use App\Gallery\Support\GalleryVisitor;
 use App\Http\Controllers\Controller;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -154,22 +156,41 @@ class GalleryPasswordController extends Controller
     }
 
     /**
-     * P-06 (#225): "Aufrufe". Once per visitor session rather than per
-     * request — a couple showing their parents the pictures on a laptop is
-     * one visit, not forty, and DownloadEvent has only ever counted
-     * downloads. increment() rather than a read-modify-write, so two guests
-     * arriving at once do not lose one of the two.
+     * C-21 (#256): "Aufgerufen", as a row rather than a counter.
+     *
+     * Once per visitor per day, which is the folding DownloadEvent already
+     * uses: a couple showing their parents the pictures on a laptop is one
+     * visit, not forty. The unique index enforces it, so two tabs opening at
+     * once cannot write two rows — the second collides and is swallowed here
+     * rather than becoming a 500 in front of a guest.
+     *
+     * galleries.view_count stays and keeps being incremented: it is what the
+     * couple's own screen shows, and it counts what happened before this
+     * table existed.
      */
     private function countView(Request $request, Gallery $gallery): void
     {
         $seen = "gallery_viewed.{$gallery->public_id}";
 
-        if ($request->session()->has($seen)) {
-            return;
+        if (! $request->session()->has($seen)) {
+            $request->session()->put($seen, true);
+            $gallery->increment('view_count');
         }
 
-        $request->session()->put($seen, true);
-        $gallery->increment('view_count');
+        try {
+            GalleryView::query()->insertOrIgnore([
+                'tenant_id' => config('tenancy.tenant_id'),
+                'gallery_id' => $gallery->id,
+                'contact_id' => $this->visitor->client($gallery)?->id,
+                'visitor_identifier' => $this->visitor->guestId(),
+                'viewed_on' => now()->toDateString(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            // Two tabs on the same second. The row exists, which is the whole
+            // point of the write.
+        }
     }
 
     /**
