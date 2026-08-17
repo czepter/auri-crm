@@ -120,9 +120,10 @@ it('refuses a second shooter a project they are not crewed on', function () {
         ->assertForbidden();
 });
 
-it('shows a second shooter only their own projects on the übersicht', function () {
+it('shows a second shooter only their own projects in the project list', function () {
     // The screens that list many projects scope rather than refuse, so the
-    // board has to be filtered as well as the detail page guarded.
+    // list has to be filtered as well as the detail page guarded. C-02 (#236)
+    // moved that list off the Übersicht and onto /projekte.
     $nina = staff(StaffRole::SecondShooter);
     $mine = crewedProject($nina);
     Job::factory()->for($mine)->create();
@@ -133,7 +134,7 @@ it('shows a second shooter only their own projects on the übersicht', function 
 
     $this->actingAs($nina, 'staff');
 
-    expect(collect(props('/')['production'])->pluck('projectName')->all())
+    expect(collect(props('/projekte')['projects'])->pluck('name')->all())
         ->not->toContain('Fremdes Projekt');
 });
 

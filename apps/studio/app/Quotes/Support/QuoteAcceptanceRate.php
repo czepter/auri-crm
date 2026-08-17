@@ -32,21 +32,33 @@ class QuoteAcceptanceRate
 
     public static function between(CarbonInterface $from, CarbonInterface $to): ?int
     {
+        ['sent' => $sent, 'accepted' => $accepted] = self::counts($from, $to);
+
+        return $sent === 0 ? null : (int) round($accepted / $sent * 100);
+    }
+
+    /**
+     * The two figures the percentage is made of. C-05 (#239) needs them
+     * unrounded: the Übersicht's tile reads `6 von 12` and draws one dot per
+     * quote, and a percentage cannot be turned back into the cases behind it.
+     *
+     * @return array{sent: int, accepted: int}
+     */
+    public static function countsForTrailingYear(): array
+    {
+        return self::counts(now()->subYear(), now());
+    }
+
+    /** @return array{sent: int, accepted: int} */
+    private static function counts(CarbonInterface $from, CarbonInterface $to): array
+    {
         $sent = Quote::query()
             ->whereNotNull('sent_at')
-            ->whereBetween('sent_at', [$from, $to])
-            ->count();
+            ->whereBetween('sent_at', [$from, $to]);
 
-        if ($sent === 0) {
-            return null;
-        }
-
-        $accepted = Quote::query()
-            ->where('status', QuoteStatus::Accepted)
-            ->whereNotNull('sent_at')
-            ->whereBetween('sent_at', [$from, $to])
-            ->count();
-
-        return (int) round($accepted / $sent * 100);
+        return [
+            'sent' => (clone $sent)->count(),
+            'accepted' => (clone $sent)->where('status', QuoteStatus::Accepted)->count(),
+        ];
     }
 }
