@@ -28,7 +28,7 @@ const NAV = [
     icon:`<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M16.5 5.5a3.2 3.2 0 0 1 0 5.6M17.5 14.8c2 .7 3.5 2.6 3.5 5.2"/>` },
   { key:'auswertungen', label:'Auswertungen',
     icon:`<path d="M3.5 20h17"/><path d="M7 20v-6M12 20V6M17 20v-9"/>` },
-  { key:'einstellungen', label:'Einstellungen', href:'admin-einstellungen-portal.html',
+  { key:'einstellungen', label:'Einstellungen', href:'crm-einstellungen-person.html',
     icon:`<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/>` },
 ]
 

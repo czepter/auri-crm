@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Einstellungen · Konto — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="einstellungen">
+
+<!-- Persönlich und Studio sind getrennt, weil sie verschiedenen Leuten
+     gehören: Name, Passwort und zweiter Faktor sind Sache des Nutzers,
+     Rechtsform und Bankverbindung Sache des Studios. Nina soll ihr Passwort
+     ändern können, ohne in einer Maske zu stehen, die auch die USt-IdNr trägt.
+
+     Die zweite Navigation trägt dieselbe Formsprache wie die globale: Fläche
+     für den aktiven Eintrag, keine Kante, keine eigene Schriftgröße. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="main">
+
+    <div class="hrow">
+      <div>
+        <div class="kick">Einstellungen</div>
+        <h1>Konto</h1>
+      </div>
+      <a class="btn" href="#" style="margin-left:auto">Sichern</a>
+    </div>
+
+    <div style="display:flex; align-items:stretch; flex:1; min-height:0; margin-top:14px">
+
+      <nav class="subnav">
+        <div class="lab">Persönlich</div>
+        <a class="on" href="crm-einstellungen-person.html">Konto</a>
+        <a href="#">Benachrichtigungen</a>
+        <div class="lab">Studio</div>
+        <a href="crm-einstellungen-studio.html">Stammdaten</a>
+        <a href="#">Nummernkreise</a>
+        <a href="#">Zahlungen</a>
+        <a href="#">Verfügbarkeit</a>
+        <a href="#">E-Mail</a>
+        <div class="lab">Kunden</div>
+        <a href="crm-einstellungen-portal.html">Portal</a>
+        <a href="crm-einstellungen-galerie.html">Galerie</a>
+        <a href="#">Aufgabenvorlagen</a>
+        <a href="#">Fragebögen</a>
+      </nav>
+
+      <div class="pane-set">
+
+        <h2>Person</h2>
+        <form class="form">
+          <div class="fr">
+            <label for="nm">Name</label>
+            <div class="fields"><input id="nm" class="m" value="Christian Bergmann"></div>
+          </div>
+          <div class="fr">
+            <label for="ml">E-Mail</label>
+            <div class="fields">
+              <input id="ml" class="m" value="christian@atelier-nordlicht.de" inputmode="email">
+              <div class="hint">Damit meldest du dich an.</div>
+            </div>
+          </div>
+          <div class="fr">
+            <label>Rolle</label>
+            <div class="fields"><span style="font-size:13.5px; padding-top:7px">Inhaber · alle Rechte</span></div>
+          </div>
+        </form>
+
+        <h2>Anmeldung</h2>
+        <div class="setting">
+          <span class="t">Passwort<div class="s">zuletzt geändert 14.02.2026</div></span>
+          <a class="btn-2" href="#">Ändern</a>
+        </div>
+        <div class="setting">
+          <span class="t">Zweiter Faktor<div class="s">Authenticator-App · eingerichtet 02.03.2026</div></span>
+          <span class="v mut">aktiv</span>
+          <a class="link" href="#">Neu einrichten</a>
+        </div>
+        <div class="setting">
+          <span class="t">Wiederherstellungscodes<div class="s">3 von 8 verbraucht</div></span>
+          <a class="link" href="#">Neue erzeugen</a>
+        </div>
+        <div class="setting">
+          <span class="t">Angemeldete Geräte</span>
+          <span class="v mut">2</span>
+          <a class="link" href="#">Überall abmelden</a>
+        </div>
+
+        <h2>Darstellung</h2>
+        <div class="setting">
+          <span class="t">Sprache</span>
+          <span class="v">Deutsch</span>
+        </div>
+        <div class="setting">
+          <span class="t">Zeitzone</span>
+          <span class="v">Europe/Berlin</span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

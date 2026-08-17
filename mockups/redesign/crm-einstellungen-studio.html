@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Einstellungen · Stammdaten — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="einstellungen">
+
+<!-- Alles hier landet in Dokumenten: legal_name, legal_form, register_*,
+     tax_number, vat_id und bank_* sind die Pflichtangaben auf Rechnung und
+     Vertrag, und sie sind zugleich die Platzhalter studio.* aus
+     MergeFieldVocabulary. Deshalb steht neben den Feldern, wo sie erscheinen,
+     statt einer allgemeinen Erklärung.
+
+     Der Umsatzsteuermodus entscheidet, ob Rechnungen Steuer ausweisen —
+     vat_mode, vat_rate, vat_note. Bei Kleinunternehmern verschwindet der
+     Steuersatz aus dem Formular, statt gesperrt dazustehen. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="main">
+
+    <div class="hrow">
+      <div>
+        <div class="kick">Einstellungen</div>
+        <h1>Stammdaten</h1>
+      </div>
+      <a class="link" href="crm-vorlage-editor.html" style="margin-left:auto">In einer Vorlage ansehen</a>
+      <a class="btn" href="#">Sichern</a>
+    </div>
+
+    <div style="display:flex; align-items:stretch; flex:1; min-height:0; margin-top:14px">
+
+      <nav class="subnav">
+        <div class="lab">Persönlich</div>
+        <a href="crm-einstellungen-person.html">Konto</a>
+        <a href="#">Benachrichtigungen</a>
+        <div class="lab">Studio</div>
+        <a class="on" href="crm-einstellungen-studio.html">Stammdaten</a>
+        <a href="#">Nummernkreise</a>
+        <a href="#">Zahlungen</a>
+        <a href="#">Verfügbarkeit</a>
+        <a href="#">E-Mail</a>
+        <div class="lab">Kunden</div>
+        <a href="crm-einstellungen-portal.html">Portal</a>
+        <a href="crm-einstellungen-galerie.html">Galerie</a>
+        <a href="#">Aufgabenvorlagen</a>
+        <a href="#">Fragebögen</a>
+      </nav>
+
+      <div class="pane-set">
+
+        <h2>Name und Anschrift</h2>
+        <form class="form">
+          <div class="fr">
+            <label for="an">Anzeigename</label>
+            <div class="fields">
+              <input id="an" class="m" value="Atelier Nordlicht">
+              <div class="hint">Erscheint im Portal und in der Galerie.</div>
+            </div>
+          </div>
+          <div class="fr">
+            <label for="ln">Rechtlicher Name</label>
+            <div class="fields">
+              <input id="ln" class="m" value="Christian Bergmann Fotografie">
+              <div class="hint">Steht auf Rechnung und Vertrag.</div>
+            </div>
+          </div>
+          <div class="fr">
+            <label>Rechtsform</label>
+            <div class="fields choice">
+              <label><input type="radio" name="rf" checked><span>Einzelunternehmen</span></label>
+              <label><input type="radio" name="rf"><span>GbR</span></label>
+              <label><input type="radio" name="rf"><span>GmbH</span></label>
+              <label><input type="radio" name="rf"><span>UG</span></label>
+            </div>
+          </div>
+          <div class="fr cont">
+            <label for="st">Anschrift</label>
+            <div class="fields">
+              <input id="st" class="m" value="Deichstraße 12">
+              <input class="s" value="20459" placeholder="PLZ">
+              <input class="m" value="Hamburg" placeholder="Stadt">
+            </div>
+          </div>
+          <div class="fr">
+            <label for="ws">Website</label>
+            <div class="fields"><input id="ws" class="m" value="atelier-nordlicht.de"></div>
+          </div>
+        </form>
+
+        <h2>Steuer</h2>
+        <form class="form">
+          <div class="fr">
+            <label>Besteuerung</label>
+            <div class="fields choice">
+              <label><input type="radio" name="vm" checked><span>Regelbesteuerung</span></label>
+              <label><input type="radio" name="vm"><span>Kleinunternehmer § 19</span></label>
+            </div>
+          </div>
+          <div class="fr">
+            <label for="sn">Steuernummer</label>
+            <div class="fields"><input id="sn" class="m" value="22/815/04711"></div>
+          </div>
+          <div class="fr">
+            <label for="ust">USt-IdNr.</label>
+            <div class="fields"><input id="ust" class="m" value="DE812345678"></div>
+          </div>
+          <div class="fr">
+            <label for="sz">Steuersatz</label>
+            <div class="fields"><input id="sz" class="s" value="19 %"></div>
+          </div>
+        </form>
+
+        <h2>Bankverbindung</h2>
+        <form class="form">
+          <div class="fr">
+            <label for="ki">Kontoinhaber</label>
+            <div class="fields"><input id="ki" class="m" value="Christian Bergmann"></div>
+          </div>
+          <div class="fr">
+            <label for="ib">IBAN</label>
+            <div class="fields">
+              <input id="ib" class="m" value="DE02 1203 0000 0000 2020 51">
+              <input class="s" value="BYLADEM1001" placeholder="BIC">
+            </div>
+          </div>
+        </form>
+
+        <h2>Auf Dokumenten</h2>
+        <div class="setting">
+          <span class="t">Logo<div class="s">erscheint im Briefkopf</div></span>
+          <span class="v mut">nordlicht-logo.svg</span>
+          <a class="link" href="#">Ersetzen</a>
+        </div>
+        <div class="setting">
+          <span class="t">Akzentfarbe</span>
+          <span class="v mut" style="display:flex; align-items:center; gap:8px">
+            <span style="width:14px; height:14px; border-radius:50%; background:#B44E22; display:inline-block"></span>#B44E22
+          </span>
+        </div>
+        <div class="setting">
+          <span class="t">Briefkopf und Fußzeile<div class="s">gelten für alle Vorlagen</div></span>
+          <a class="link" href="#">Bearbeiten</a>
+        </div>
+        <div class="setting">
+          <span class="t">Widerrufsbelehrung<div class="s">als Platzhalter <code>settings.widerrufText</code> verfügbar</div></span>
+          <span class="sw on"></span>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>
