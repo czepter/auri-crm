@@ -361,6 +361,28 @@ tbody td.grp {
 .rail .p .av { width: 22px; height: 22px; border-radius: 50%; background: var(--sunk-2); font: 600 8.5px/22px var(--font); text-align: center; color: var(--ink-2); }
 .rail .p .st { margin-left: auto; font-size: 11.5px; color: #3F6B4A; }
 
+/* ---------- Bearbeiten im Screen ---------- */
+
+/* Kein zweiter Screen fürs Ändern: dieselbe Anzeige, dieselben Stellen, nur
+   bedienbar. Umschalter ist eine Checkbox, damit der Zustand im Dokument
+   liegt und nicht in einem Skript. */
+.edit-on { display: none; }
+#edit:checked ~ * .edit-off, #edit:checked ~ .title .edit-off { display: none; }
+#edit:checked ~ * .edit-on { display: block; }
+#edit:checked ~ .title .edit-on, #edit:checked ~ * .edit-on.inline { display: inline-flex; }
+#edit:checked ~ * .said .who { box-shadow: none; }
+
+/* ---------- Anlegen an Ort und Stelle ---------- */
+
+/* Notiz, Aufgabe und Termin entstehen im Abschnitt, zu dem sie gehören.
+   Kein Dialog: das Fenster nimmt den Kontext weg, den man beim Schreiben
+   liest — die letzten drei Notizen, die anderen Termine. */
+.composer { display: none; padding: 4px 0 2px; }
+.vswitch:checked ~ .composer { display: block; }
+.composer .foot { display: flex; align-items: center; gap: var(--s3); margin-top: 10px; }
+.composer .foot .btn { margin-left: auto; }
+.composer .line { display: flex; gap: var(--s2); align-items: center; flex-wrap: wrap; }
+
 /* ---------- Formular ---------- */
 
 /* Felder tragen Fläche statt Rahmen, wie alles andere auch. Die Beschriftung

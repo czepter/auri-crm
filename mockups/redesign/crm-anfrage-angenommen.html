@@ -97,7 +97,30 @@
     </section>
 
     <section>
+      <input class="vswitch" type="checkbox" id="newshoot">
       <header><h2>Termine</h2><span class="n">3</span><a class="link more" href="#">Im Kalender ›</a></header>
+      <div class="composer form">
+        <div class="line">
+          <div class="choice">
+            <label><input type="radio" name="kind" checked><span>Hochzeit</span></label>
+            <label><input type="radio" name="kind"><span>Empfang</span></label>
+            <label><input type="radio" name="kind"><span>Engagement</span></label>
+            <label><input type="radio" name="kind"><span>Portrait</span></label>
+            <label><input type="radio" name="kind"><span>Sonstiges</span></label>
+          </div>
+        </div>
+        <div class="line" style="margin-top:8px">
+          <input class="s" type="date">
+          <input class="s" type="time" placeholder="Antritt">
+          <input class="s" type="time" placeholder="Ende">
+          <input class="m" placeholder="Ort">
+          <input class="s" placeholder="Stadt">
+        </div>
+        <div class="foot">
+          <label class="link" for="newshoot">Abbrechen</label>
+          <button class="btn" type="button">Termin anlegen</button>
+        </div>
+      </div>
       <div class="rowset">
         <div class="r">
           <span class="when">Sa, 05.09. · 10:00<span class="st">bestätigt</span></span>
@@ -115,7 +138,7 @@
           <span class="right">Christian</span>
         </div>
       </div>
-      <div class="ghosts"><button class="ghost">+ Termin</button></div>
+      <div class="ghosts"><label class="ghost" for="newshoot">+ Termin</label></div>
     </section>
 
     <section>
@@ -133,7 +156,23 @@
     </section>
 
     <section>
-      <header><h2>Aufgaben</h2><span class="n">2 offen</span><a class="link more" href="#">Alle ›</a></header>
+      <input class="vswitch" type="checkbox" id="newtask">
+      <header><h2>Aufgaben</h2><span class="n">2 offen</span><label class="link more" for="newtask">+ Aufgabe</label></header>
+      <div class="composer form">
+        <div class="line">
+          <input style="flex:1; min-width:200px" placeholder="Aufgabe">
+          <div class="choice">
+            <label><input type="radio" name="aud" checked><span>intern</span></label>
+            <label><input type="radio" name="aud"><span>kunde</span></label>
+          </div>
+          <input class="s" type="date">
+        </div>
+        <div class="foot">
+          <label class="link" for="newtask">Abbrechen</label>
+          <button class="btn-2" type="button">Aus Vorlage</button>
+          <button class="btn" type="button">Anlegen</button>
+        </div>
+      </div>
       <div class="todo">
         <div class="r"><span class="b"></span><span class="t">Vertrag senden</span><span class="aud">intern</span><span class="due warn">heute</span></div>
         <div class="r"><span class="b"></span><span class="t">Ablaufplan ausfüllen</span><span class="aud">kunde</span><span class="due">bis 15.08.</span></div>
@@ -143,7 +182,15 @@
     </section>
 
     <section>
-      <header><h2>Notizen</h2><span class="n">3</span><a class="link more" href="#">Notiz schreiben ›</a></header>
+      <input class="vswitch" type="checkbox" id="newnote">
+      <header><h2>Notizen</h2><span class="n">3</span><label class="link more" for="newnote">Notiz schreiben ›</label></header>
+      <div class="composer form">
+        <textarea placeholder="Was besprochen wurde"></textarea>
+        <div class="foot">
+          <label class="link" for="newnote">Abbrechen</label>
+          <button class="btn" type="button">Sichern</button>
+        </div>
+      </div>
       <div class="log">
         <div class="e"><span class="t">gestern 16:40</span><span class="c sys">Angebot angenommen · 3.800 €</span></div>
         <div class="e"><span class="t">17.08. 14:20</span><span class="c">Telefonat: 65 Gäste, Feier bis 2 Uhr, Brunch gewünscht. Getting Ready im Landhotel, Nina übernimmt. <span class="by">— Christian</span></span></div>
