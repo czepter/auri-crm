@@ -541,7 +541,10 @@
     "colType": "Art",
     "colVersion": "Fassung",
     "colInUse": "Im Umlauf",
-    "newVersion": "Neue Fassung"
+    "newVersion": "Neue Fassung",
+    "starterScope": "{blocks} Blöcke · {fields} Platzhalter",
+    "previewSamples": "Beispielwerte",
+    "blockOnly": "nur {types}"
   },
   "settings": {
     "kicker": "Einstellungen",

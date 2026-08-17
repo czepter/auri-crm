@@ -13,6 +13,10 @@ const props = defineProps<{
   type: string
   doc: EditorDocument
   samples: Record<string, string>
+  // C-16 (#252): the project the preview reckons with. Null falls back to the
+  // sample values — a template written before there is any project to try it
+  // against still has to render.
+  project?: string | null
 }>()
 
 const html = ref('')
@@ -43,7 +47,7 @@ const refreshFromServer = useDebounceFn(async () => {
     const response = await fetch('/dokumentvorlagen/vorschau', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token, Accept: 'text/html' },
-      body: JSON.stringify({ type: props.type, body }),
+      body: JSON.stringify({ type: props.type, body, project: props.project ?? null }),
     })
 
     if (!response.ok) return
@@ -66,7 +70,7 @@ const refreshFromServer = useDebounceFn(async () => {
 }, 400)
 
 watch(
-  () => [props.doc, props.type],
+  () => [props.doc, props.type, props.project],
   () => {
     stale.value = true
     html.value = fillSamples(serialize(props.doc, props.type === 'mail' ? 'mail' : 'print'), props.samples)
@@ -80,6 +84,7 @@ watch(
   <section class="doc-pane">
     <div class="doc-panehead">
       <span class="kick">{{ $t('documentTemplates.previewLabel') }}</span>
+      <slot />
       <span class="doc-live" :class="{ stale }">{{
         stale ? $t('documentTemplates.previewStale') : $t('documentTemplates.previewFresh')
       }}</span>

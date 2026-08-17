@@ -66,6 +66,22 @@ function submit() {
           <DocumentEditor v-model="doc" :palette="palette" :merge-fields="mergeFields" />
           <div class="doc-chrome foot">{{ $t('documentTemplates.footer') }}</div>
         </div>
+
+        <!-- C-16 (#252): what this document type may not have stands dimmed
+             with its reason rather than missing. Editor.js owns its own plus
+             menu, so the list sits under the sheet instead of inside it —
+             replacing that inserter is a rewrite of the editor shell, not
+             this issue's subject. -->
+        <div class="blocklegend">
+          <span
+            v-for="entry in palette.filter((block) => !block.inline)"
+            :key="entry.type"
+            :class="{ off: entry.allowed === false }"
+          >
+            {{ entry.label }}
+            <template v-if="entry.allowed === false"> · {{ $t('documentTemplates.blockOnly', { types: entry.only }) }}</template>
+          </span>
+        </div>
       </section>
 
       <div class="doc-splitbar"></div>

@@ -867,6 +867,14 @@
 [data-theme="crm"] .pv-foot { display: flex; align-items: center; gap: var(--s3); margin-top: var(--s4); }
 [data-theme="crm"] .pv-foot .link { margin-left: auto; }
 
+/* C-16 (#252): what this document type may not have, dimmed with its reason.
+   Under the sheet rather than inside the inserter — Editor.js owns that one. */
+[data-theme="crm"] .blocklegend, .blocklegend {
+  display: flex; flex-wrap: wrap; gap: 6px 14px; padding: var(--s3) 2px 0;
+  font-size: 11.5px; color: var(--ink-2, #6E6E73);
+}
+.blocklegend .off { color: #DEDEE1; }
+
 /* ---------- Zwei Haltepunkte ---------- */
 
 /* Schmale Schirme bekommen eine andere Navigation, keine kleinere. Unter

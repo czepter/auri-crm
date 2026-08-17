@@ -18,6 +18,7 @@ const props = defineProps<{
   palettes: Record<string, PaletteEntry[]>
   mergeFields: { path: string; sample: string }[]
   starters: Record<string, Starter[]>
+  projects: { id: string; name: string }[]
 }>()
 
 type Starter = {
@@ -26,6 +27,23 @@ type Starter = {
   description: string
   shootKind: string | null
   blocks: EditorDocument
+}
+
+// C-16 (#252): the preview reckons with a chosen project rather than sample
+// values — only then does an empty placeholder show up here rather than in
+// front of the client.
+const project = ref<string | null>(null)
+
+// The scope of a starter, in the two numbers that say whether it is a page or
+// a contract: how many blocks, and how many placeholders it will ask the
+// project for.
+function scopeOf(starter: Starter) {
+  const text = JSON.stringify(starter.blocks)
+
+  return {
+    blocks: starter.blocks.blocks.length,
+    fields: new Set(text.match(/\{\{\s*[\w.]+\s*\}\}/g) ?? []).size,
+  }
 }
 
 const doc = ref<EditorDocument>({ blocks: [] })
@@ -117,23 +135,32 @@ function submit() {
       </div>
     </div>
 
-    <!-- Leere Vorlage sits among the starters as an equal option rather than
-         as an escape hatch below them. -->
-    <section v-if="chosen === null" class="starters">
-      <div class="cardhead"><span class="kick">{{ $t('documentTemplates.starterTitle') }}</span></div>
-      <div class="startergrid">
-        <button
+    <!-- The screen opens on a choice rather than on an empty page. Each card
+         states its scope, because "14 Blöcke · 9 Platzhalter" is what says
+         whether this is a page or a contract. The blank one is the last card
+         and carries no surface: it is a choice, not the default. -->
+    <section v-if="chosen === null" data-theme="crm">
+      <div class="starters">
+        <a
           v-for="starter in starters" :key="starter.key"
-          type="button" class="startercard"
-          @click="choose(starter)"
+          class="starter" href="#"
+          @click.prevent="choose(starter)"
         >
-          <b>{{ starter.name }}</b>
-          <span>{{ starter.description }}</span>
-        </button>
-        <button type="button" class="startercard" @click="chooseBlank">
-          <b>{{ $t('documentTemplates.starterBlank') }}</b>
-          <span>{{ $t('documentTemplates.starterBlankHint') }}</span>
-        </button>
+          <span class="nm">{{ starter.name }}</span>
+          <span class="ty">{{ types.find((t) => t.value === form.type)?.label }}</span>
+          <span class="de">{{ starter.description }}</span>
+          <span class="bl">
+            {{ $t('documentTemplates.starterScope', {
+              blocks: scopeOf(starter).blocks,
+              fields: scopeOf(starter).fields,
+            }) }}
+          </span>
+        </a>
+
+        <a class="starter blank" href="#" @click.prevent="chooseBlank">
+          <span class="nm">{{ $t('documentTemplates.starterBlank') }}</span>
+          <span class="de">{{ $t('documentTemplates.starterBlankHint') }}</span>
+        </a>
       </div>
     </section>
 
@@ -148,11 +175,32 @@ function submit() {
           <DocumentEditor v-model="doc" :palette="palette" :merge-fields="mergeFields" />
           <div class="doc-chrome foot">{{ $t('documentTemplates.footer') }}</div>
         </div>
+
+        <!-- C-16 (#252): what this document type may not have stands dimmed
+             with its reason rather than missing. Editor.js owns its own plus
+             menu, so the list sits under the sheet instead of inside it —
+             replacing that inserter is a rewrite of the editor shell, not
+             this issue's subject. -->
+        <div class="blocklegend">
+          <span
+            v-for="entry in palette.filter((block) => !block.inline)"
+            :key="entry.type"
+            :class="{ off: entry.allowed === false }"
+          >
+            {{ entry.label }}
+            <template v-if="entry.allowed === false"> · {{ $t('documentTemplates.blockOnly', { types: entry.only }) }}</template>
+          </span>
+        </div>
       </section>
 
       <div class="doc-splitbar"></div>
 
-      <DocumentPreviewPane :type="form.type" :doc="doc" :samples="samples" />
+      <DocumentPreviewPane :type="form.type" :doc="doc" :samples="samples" :project="project">
+        <select v-model="project" class="form">
+          <option :value="null">{{ $t('documentTemplates.previewSamples') }}</option>
+          <option v-for="option in projects" :key="option.id" :value="option.id">{{ option.name }}</option>
+        </select>
+      </DocumentPreviewPane>
     </div>
   </AdminLayout>
 </template>
