@@ -244,7 +244,20 @@
     "messagesScheduleLabel": "Sendezeitpunkt",
     "messagesScheduledFor": "Geht raus am {when}",
     "messagesCancelScheduled": "Abbrechen",
-    "messagesSend": "Senden"
+    "messagesSend": "Senden",
+    "openAmount": "Offen",
+    "portal": "Portal",
+    "instalments": "1 Rate | {count} Raten",
+    "scope": "Leistungsumfang",
+    "scope_new": "neu",
+    "scope_changed": "geändert",
+    "scopeDelta": "{amount} gegenüber dem beauftragten Angebot",
+    "sendAddendum": "Nachtrag senden",
+    "openItems": "Offen",
+    "documents": "Unterlagen",
+    "forms": "Fragebögen",
+    "messages": "Nachrichten",
+    "quotes": "Angebot"
   },
   "projects": {
     "title": "Projekte",
@@ -372,7 +385,8 @@
     "away": "{name} abwesend",
     "dateDoubled": "{date} doppelt",
     "galleries": "Galerien",
-    "nothingDueNext": "Nächster Termin: {what} am {date}"
+    "nothingDueNext": "Nächster Termin: {what} am {date}",
+    "payments": "Zahlungen"
   },
   "invite": {
     "title": "Willkommen, {name}",
@@ -1082,6 +1096,7 @@
     "taskDue": "Fällig",
     "audienceInternal": "intern",
     "audienceClient": "Kunde",
-    "addTask": "Aufgabe anlegen"
+    "addTask": "Aufgabe anlegen",
+    "people": "Personen"
   }
 }
