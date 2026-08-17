@@ -72,6 +72,14 @@ class GalleryPasswordController extends Controller
             // heart as soon as a client is signed in. A guest keeps the
             // heart — which is the same thing, a list without a name.
             'lists' => $isClient ? $this->lists($gallery, $version) : null,
+            // G-02 (#230): the filter bar counts a guest's hearts, which are
+            // AssetFavorite rows on this session rather than a list of their
+            // own. Null for a client — theirs is the unnamed list above.
+            'favorited' => $isClient || $version === null ? null : AssetFavorite::query()
+                ->where('gallery_version_id', $version->id)
+                ->where('guest_identifier', $this->visitor->guestId())
+                ->pluck('asset_key')
+                ->all(),
             // Everything below belongs to the couple alone. Absent for a
             // guest rather than rendered empty: a guest has no link of their
             // own to share and no gates to rotate.

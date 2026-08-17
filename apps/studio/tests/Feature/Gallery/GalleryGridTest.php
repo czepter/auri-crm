@@ -95,3 +95,27 @@ it('redirects the image route back to the gate when the gate is closed', functio
     test()->get("/galerie-bilder/{$version->public_id}/galleries/g1/a.jpg?w=800&fmt=jpeg")
         ->assertRedirect("/galerien/{$gallery->public_id}");
 });
+
+// G-02 (#230): the filter bar's own two audiences. A guest's hearts are
+// session-bound AssetFavorite rows and have to be counted before the
+// lightbox ever fetches them; a client's are the unnamed list instead.
+it('sends a guest their own hearts for the filter bar, and a client none', function () {
+    $gallery = publishedGallery();
+
+    test()->post("/galerien/{$gallery->public_id}/favorit", ['key' => 'galleries/g1/b.jpg'])->assertOk();
+
+    expect(props("/galerien/{$gallery->public_id}")['favorited'])->toBe(['galleries/g1/b.jpg']);
+
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $contact = Contact::factory()->create();
+    $project->attachContact($contact, ProjectContactRole::Primary);
+    $own = publishedGallery(['project_id' => $project->id]);
+
+    $props = test()->actingAs($contact, 'portal')
+        ->get("/galerien/{$own->public_id}")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect($props['favorited'])->toBeNull()
+        ->and($props['lists'])->not->toBeNull();
+});

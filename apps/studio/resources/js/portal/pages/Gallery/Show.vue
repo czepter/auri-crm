@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { router, useForm, usePage } from '@inertiajs/vue3'
 import GalleryLightbox from '@/portal/components/GalleryLightbox.vue'
+import { ALL, countOf, selections, visible } from '@/portal/lib/gallerySelections'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
@@ -32,6 +34,9 @@ const props = defineProps<{
   // same thing as an unnamed list; they have no link of their own to share
   // and no gates to rotate.
   lists: List[] | null
+  // A guest's own hearts, so the filter bar can count them before the
+  // lightbox ever opens. Null for a client, whose hearts are a list.
+  favorited: string[] | null
   gates: { viewPassword: boolean; downloadPin: boolean; emailVerification: boolean } | null
   guests: { views: number; marks: number; comments: number } | null
 }>()
@@ -42,8 +47,31 @@ const actions = computed(() => `${base.value}/eure-auswahl`)
 // One open menu at a time, keyed by asset.
 const menu = ref<string | null>(null)
 
-// The lightbox, by index. Null is closed.
+// The lightbox, by index into `shown`. Null is closed.
 const openAt = ref<number | null>(null)
+
+// G-02 (#230): which selection the grid is showing. Filtered here rather
+// than on the read route — the version's asset list is already in these
+// props, so a round trip would buy nothing but a wait.
+const { t } = useI18n()
+const active = ref(ALL)
+
+const bar = computed(() =>
+  selections(
+    props.lists?.map((l) => ({ listId: l.listId, name: l.name, keys: l.keys })) ?? null,
+    props.favorited,
+    { all: t('gallery.all'), heart: t('gallery.heart') },
+  ),
+)
+
+const shown = computed(() =>
+  visible(props.assets ?? [], bar.value.find((s) => s.id === active.value)?.keys ?? null),
+)
+
+function openList(list: List, key: string) {
+  active.value = list.listId
+  openAt.value = visible(props.assets ?? [], list.keys).findIndex((a) => a.key === key)
+}
 
 // ---- the couple's own half ----
 
@@ -200,11 +228,25 @@ function expiry(iso: string) {
           <b>{{ gallery.title }}</b>
           <template v-if="gallery.expiresAt"> · {{ $t('gallery.onlineUntil', { date: expiry(gallery.expiresAt) }) }}</template>
         </span>
+        <span v-if="bar.length > 1" class="filters">
+          <button
+            v-for="selection in bar"
+            :key="selection.id"
+            class="fpill"
+            :class="{ on: active === selection.id }"
+            type="button"
+            @click="active = selection.id"
+          >
+            {{ selection.label }}
+            <span class="n">{{ countOf(selection, assets?.length ?? 0) }}</span>
+          </button>
+        </span>
+
         <Button as="a" :href="`/galerien/${gallery.id}/download`">{{ $t('gallery.downloadLink') }}</Button>
       </div>
 
-      <main v-if="assets?.length" id="raster" class="gwall">
-        <span v-for="(asset, index) in assets" :key="asset.key" class="tile" @click="openAt = index">
+      <main v-if="shown.length" id="raster" class="gwall">
+        <span v-for="(asset, index) in shown" :key="asset.key" class="tile" @click="openAt = index">
           <!-- The list menu replaces the single heart as soon as a client is
                signed in; a guest never sees it. -->
           <button
@@ -243,13 +285,15 @@ function expiry(iso: string) {
 
       <!-- Unlocked over a gallery nobody has published yet: a real state,
            and the studio's link is already out there, so it says so. -->
-      <p v-else class="hint" style="padding: var(--s7) var(--s5)">{{ $t('gallery.notPublished') }}</p>
+      <p v-else class="hint" style="padding: var(--s7) var(--s5)">
+        {{ assets?.length ? $t('gallery.listEmpty') : $t('gallery.notPublished') }}
+      </p>
 
       <GalleryLightbox
         v-model="openAt"
         :gallery-id="gallery.id"
         :title="gallery.title"
-        :assets="assets ?? []"
+        :assets="shown"
         :lists="lists"
       />
 
@@ -276,7 +320,7 @@ function expiry(iso: string) {
                 v-for="(src, index) in list.covers"
                 :key="src"
                 type="button"
-                @click="openAt = assets?.findIndex((a) => a.key === list.keys[index]) ?? null"
+                @click="openList(list, list.keys[index])"
               >
                 <img :src="`${src}?w=400&fmt=jpeg`" alt="" loading="lazy" />
               </button>

@@ -101,6 +101,21 @@
 [data-theme="gallery"] .gbar .who { font-size:13.5px; color:var(--muted); }
 [data-theme="gallery"] .gbar .who b { color:var(--ink); font-weight:600; }
 
+/* G-02 (#230): scrolls sideways rather than wrapping — a wrapped second row
+   would push the pictures down by the number of lists a couple happens to
+   have made. */
+[data-theme="gallery"] .gbar .filters { display:flex; align-items:center; gap:var(--s2);
+        margin-inline:auto; overflow-x:auto; scrollbar-width:none; }
+[data-theme="gallery"] .gbar .filters::-webkit-scrollbar { display:none; }
+[data-theme="gallery"] .fpill { flex:none; display:inline-flex; align-items:center; gap:7px;
+        padding:9px 14px; border-radius:999px; cursor:pointer;
+        border:1px solid var(--line); background:transparent;
+        color:var(--muted); font:500 12.5px/1 var(--font); }
+[data-theme="gallery"] .fpill:hover { color:var(--ink); border-color:var(--line-hover); }
+[data-theme="gallery"] .fpill.on { background:var(--ink); border-color:var(--ink);
+        color:var(--bg); font-weight:600; }
+[data-theme="gallery"] .fpill .n { opacity:.55; font-variant-numeric:tabular-nums; }
+
 /* columns, not grid: a photo wall wants the original proportions, and
    `columns` is the only layout method that keeps them without JS. Named
    .gwall rather than .grid because Tailwind owns `.grid` — display:grid
@@ -122,7 +137,9 @@
 @media (max-width:760px) {
   [data-theme="gallery"] .gwall { columns:2; }
   [data-theme="gallery"] .cover { min-height:82svh; }
+  [data-theme="gallery"] .gbar { flex-wrap:wrap; }
   [data-theme="gallery"] .gbar .who { display:none; }
+  [data-theme="gallery"] .gbar .filters { order:2; width:100%; margin-inline:0; padding-bottom:2px; }
 }
 
 /* ---------- P-06 (#225): the list menu on a tile ---------- */
