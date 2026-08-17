@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Galerie · Meier &amp; Kowalski — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="galerien">
+
+<!-- Die Tore stehen hier, nicht in den Einstellungen: view_password_hash,
+     download_pin_hash, requires_verified_email, requires_settled_balance und
+     expires_at gehören zur Galerie. Was aus der Vorgabe kam und unverändert
+     ist, trägt "wie Vorgabe"; was abweicht, nennt den Vorgabewert daneben.
+
+     Veröffentlicht wird in Fassungen (gallery_versions mit version und
+     published_at). Eine neue Fassung ersetzt die Auswahl, ohne die alte zu
+     löschen — deshalb steht die Fassungsliste als eigener Abschnitt und nicht
+     als Datum im Kopf.
+
+     balance_settled ist kein Schalter, sondern ein Zustand aus den Zahlungen.
+     Er steht deshalb bei der Sperre und nicht als eigene Zeile. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="main">
+
+    <div class="hrow" style="padding-bottom:2px">
+      <div>
+        <div class="kick"><a class="link" href="crm-projekt.html">Meier &amp; Kowalski</a></div>
+        <h1 style="font-size:24px">Hochzeitstag</h1>
+      </div>
+      <a class="link" href="galerie.html" style="margin-left:auto">Als Gast ansehen</a>
+      <a class="btn-2" href="#">Link senden</a>
+      <a class="btn" href="#">Neue Fassung</a>
+    </div>
+
+    <div style="display:flex; align-items:stretch; flex:1; min-height:0; margin-top:18px">
+
+      <div class="work">
+
+        <div class="band">
+          <div class="cell">
+            <div class="lab">Stand</div>
+            <div class="val plain">online</div>
+            <div class="sub">seit 12.08.</div>
+          </div>
+          <div class="cell">
+            <div class="lab">Bilder</div>
+            <div class="val">220</div>
+            <div class="sub">Fassung 2</div>
+          </div>
+          <div class="cell">
+            <div class="lab">Läuft ab</div>
+            <div class="val warn">28.08.</div>
+            <div class="sub">in 11 Tagen</div>
+          </div>
+          <div class="cell">
+            <div class="lab">Aufgerufen</div>
+            <div class="val">34</div>
+            <div class="sub">zuletzt heute 09:40</div>
+          </div>
+          <div class="cell">
+            <div class="lab">Heruntergeladen</div>
+            <div class="val">6</div>
+            <div class="sub">3 ganze Galerie, 3 Auswahl</div>
+          </div>
+        </div>
+
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Zugang und Freigaben</h2>
+          <div class="setting">
+            <span class="t">Passwort für die Ansicht</span>
+            <span class="v mut">wie Vorgabe · gesetzt 12.08.</span>
+            <span class="sw on"></span>
+            <a class="link" href="#">Neu setzen</a>
+          </div>
+          <div class="setting">
+            <span class="t">Zweiter Code für den Download</span>
+            <span class="v mut">wie Vorgabe · vierstellig</span>
+            <span class="sw on"></span>
+            <a class="link" href="#">Neu setzen</a>
+          </div>
+          <div class="setting">
+            <span class="t">E-Mail vor dem Download</span>
+            <span class="v" style="color:var(--accent)">abweichend · Vorgabe ist aus</span>
+            <span class="sw on"></span>
+            <a class="link" href="#">Zurücksetzen</a>
+          </div>
+          <div class="setting">
+            <span class="t">Download erst nach vollständiger Zahlung</span>
+            <span class="v" style="color:var(--accent)">abweichend · 1.500 € offen</span>
+            <span class="sw on"></span>
+            <a class="link" href="#">Zurücksetzen</a>
+          </div>
+          <div class="setting">
+            <span class="t">Herunterladen erlaubt</span>
+            <span class="v mut">wie Vorgabe</span>
+            <span class="sw on"></span>
+          </div>
+          <div class="setting">
+            <span class="t">Kommentare</span>
+            <span class="v mut">wie Vorgabe · 18 vorhanden</span>
+            <span class="sw on"></span>
+          </div>
+          <div class="setting">
+            <span class="t">Favoritenlisten</span>
+            <span class="v mut">wie Vorgabe · 4 Listen</span>
+            <span class="sw on"></span>
+          </div>
+          <div class="setting">
+            <span class="t">Läuft ab am</span>
+            <span class="v">28.08.2026</span>
+            <a class="link" href="#">Verlängern</a>
+          </div>
+        </section>
+
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Fassungen</h2>
+          <div class="rowset">
+            <div class="r">
+              <span class="when">Fassung 2 · 12.08.<span class="st">online</span></span>
+              <span class="what">220 Bilder<div class="s">18 Bilder ergänzt, 4 ersetzt</div></span>
+              <span class="right"><a class="link" href="#">Ansehen</a></span>
+            </div>
+            <div class="r">
+              <span class="when">Fassung 1 · 08.08.</span>
+              <span class="what">206 Bilder<div class="s">erste Veröffentlichung</div></span>
+              <span class="right"><a class="link" href="#">Ansehen</a></span>
+            </div>
+          </div>
+        </section>
+
+        <section class="sec" style="margin-bottom:0">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Verlauf</h2>
+          <div class="stream">
+            <div class="ev">
+              <span class="t">heute 09:40</span>
+              <span class="c">Galerie geöffnet · Gast, Hamburg</span>
+            </div>
+            <div class="ev sys">
+              <span class="t">gestern 21:02</span>
+              <span class="c">Download · Auswahl „Eltern“ · 42 Bilder · web</span>
+            </div>
+            <div class="ev sys">
+              <span class="t">14.08.</span>
+              <span class="c">Liste „Eltern“ angelegt · 42 Bilder</span>
+            </div>
+            <div class="ev sys">
+              <span class="t">12.08.</span>
+              <span class="c">Fassung 2 veröffentlicht · 220 Bilder</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="rail" style="width:290px">
+        <h2>Gehört zu</h2>
+        <div class="grp">
+          <div class="item"><div class="n"><a class="link" href="crm-projekt.html">Meier &amp; Kowalski</a></div><div class="m">Hochzeit · gebucht seit 12.06.</div></div>
+          <div class="item"><div class="n">Hochzeitstag</div><div class="m">Termin am 21.08.</div></div>
+        </div>
+
+        <h2>Empfänger</h2>
+        <div class="grp">
+          <div class="item"><div class="n"><a class="link" href="crm-kontakt.html">Lea Meier</a></div><div class="m">geöffnet heute 11:20</div></div>
+          <div class="item"><div class="n">Jan Kowalski</div><div class="m">geöffnet 13.08.</div></div>
+        </div>
+
+        <h2>Listen</h2>
+        <div class="grp">
+          <div class="item"><div class="n">Eltern</div><div class="m">42 Bilder · heruntergeladen</div></div>
+          <div class="item"><div class="n">Danksagung</div><div class="m">12 Bilder</div></div>
+          <div class="item"><div class="n">Album</div><div class="m">80 Bilder</div></div>
+          <div class="item"><div class="n">Favoriten Lea</div><div class="m">31 Bilder</div></div>
+        </div>
+
+        <h2>Archive</h2>
+        <div class="grp">
+          <div class="item"><div class="n">Ganze Galerie · original</div><div class="m">14,2 GB · 8 Teile</div></div>
+          <div class="item"><div class="n">Ganze Galerie · web</div><div class="m">1,8 GB · 1 Teil</div></div>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

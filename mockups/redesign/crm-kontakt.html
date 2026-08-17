@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Kontakt · Lea Meier — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="kontakte">
+
+<!-- Die Stelle, an der die Vorgaben aus den Einstellungen übersteuert werden:
+     contacts.portal_overrides ist eine jsonb-Spalte, und was nicht darin steht,
+     folgt der Vorgabe. Deshalb trägt jede Zeile ihren Zustand — "wie Vorgabe"
+     oder den abweichenden Wert mit dem Weg zurück.
+
+     Übersteuert wird je Kontakt, nicht je Projekt: eine Location mit vierzig
+     Terminen im Jahr wird einmal eingerichtet, nicht vierzigmal.
+
+     contacts.portal_access_revoked_at ist etwas anderes als eine Freigabe —
+     es schneidet den Zugang ab. Deshalb steht es unten allein und nicht
+     zwischen den Schaltern. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="main">
+
+    <div class="hrow" style="padding-bottom:2px">
+      <div>
+        <div class="kick"><a class="link" href="crm-kontakte.html">Kontakte</a></div>
+        <h1 style="font-size:24px">Lea Meier</h1>
+      </div>
+      <a class="link" href="#" style="margin-left:auto">Bearbeiten</a>
+      <a class="btn-2" href="#">Nachricht</a>
+      <a class="btn" href="#">Zugang senden</a>
+    </div>
+
+    <div style="display:flex; align-items:stretch; flex:1; min-height:0; margin-top:18px">
+
+      <div class="work">
+
+        <div class="band">
+          <div class="cell">
+            <div class="lab">Beziehung</div>
+            <div class="val plain">Auftraggeberin</div>
+            <div class="sub">seit 14.03.2026</div>
+          </div>
+          <div class="cell">
+            <div class="lab">Projekte</div>
+            <div class="val">1</div>
+            <div class="sub">Meier &amp; Kowalski</div>
+          </div>
+          <div class="cell">
+            <div class="lab">Offen</div>
+            <div class="val warn">1.500 €</div>
+            <div class="sub">Rate 3 · 9 Tage</div>
+          </div>
+          <div class="cell">
+            <div class="lab">Portal</div>
+            <div class="val plain">heute 11:20</div>
+            <div class="sub">Zugang gültig bis 30.08.</div>
+          </div>
+          <div class="cell">
+            <div class="lab">Empfohlen von</div>
+            <div class="val plain">Osterhoff</div>
+            <div class="sub">selbst 1 Empfehlung</div>
+          </div>
+        </div>
+
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Portal</h2>
+          <div class="setting">
+            <span class="t">Angebot annehmen</span>
+            <span class="v mut">wie Vorgabe</span>
+            <span class="sw on"></span>
+          </div>
+          <div class="setting">
+            <span class="t">Vertrag unterschreiben</span>
+            <span class="v mut">wie Vorgabe</span>
+            <span class="sw on"></span>
+          </div>
+          <div class="setting">
+            <span class="t">Nachrichten schreiben</span>
+            <span class="v" style="color:var(--accent)">abweichend · Vorgabe ist an</span>
+            <span class="sw"></span>
+            <a class="link" href="#">Zurücksetzen</a>
+          </div>
+          <div class="setting">
+            <span class="t">Zahlungsstand sehen</span>
+            <span class="v" style="color:var(--accent)">abweichend · Vorgabe ist aus</span>
+            <span class="sw on"></span>
+            <a class="link" href="#">Zurücksetzen</a>
+          </div>
+        </section>
+
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Projekte</h2>
+          <div class="rowset">
+            <div class="r">
+              <span class="when">seit 12.06.2026<span class="st">gebucht</span></span>
+              <span class="what"><a class="link" href="crm-projekt.html">Meier &amp; Kowalski</a><div class="s">Hochzeit · 4 Termine · 3.500 €</div></span>
+              <span class="right warn">1.500 € offen</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="sec" style="margin-bottom:0">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Verlauf</h2>
+          <div class="stream">
+            <div class="ev">
+              <span class="t">heute 11:20</span>
+              <span class="c">Portal geöffnet · Zahlungen</span>
+            </div>
+            <div class="ev">
+              <span class="t">gestern 19:14</span>
+              <span class="c"><span class="kind">Nachricht</span> Brunch auf 11 Uhr? <span class="by">— über das Portal</span></span>
+            </div>
+            <div class="ev sys">
+              <span class="t">12.06.</span>
+              <span class="c">Vertrag unterschrieben</span>
+            </div>
+            <div class="ev sys">
+              <span class="t">14.03.</span>
+              <span class="c">Anfrage angelegt · Empfehlung von Familie Osterhoff</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="rail" style="width:290px">
+        <h2>Erreichbar</h2>
+        <div class="grp">
+          <div class="item"><div class="n">0170 445566</div><div class="m">Telefon</div></div>
+          <div class="item"><div class="n">lea.meier@example.de</div><div class="m">E-Mail</div></div>
+        </div>
+
+        <h2>Zugang</h2>
+        <div class="grp">
+          <div class="item"><div class="n">gültig bis 30.08.</div><div class="m">zuletzt benutzt heute 11:20</div></div>
+          <div class="item"><a class="link" href="#">Neuen Link senden</a></div>
+          <div class="item"><a class="link" href="#" style="color:var(--ink-2)">Zugang entziehen</a></div>
+        </div>
+
+        <h2>Verbunden</h2>
+        <div class="grp">
+          <div class="item"><div class="n">Jan Kowalski</div><div class="m">Partner im selben Projekt</div></div>
+          <div class="item"><div class="n">Familie Osterhoff</div><div class="m">hat empfohlen</div></div>
+          <div class="item"><div class="n">Brandt &amp; Erdmann</div><div class="m">von Lea empfohlen</div></div>
+        </div>
+
+        <h2>Galerien</h2>
+        <div class="grp">
+          <div class="item"><div class="n">Hochzeitstag</div><div class="m warn">läuft 28.08. ab</div></div>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>
