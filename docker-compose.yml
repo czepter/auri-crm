@@ -170,10 +170,15 @@ services:
   # than the built image the deploy runs: source is bind-mounted, so HMR works
   # the same way `pnpm --filter @studio/app dev` does for the admin bundle.
   #
-  # It reaches Laravel only over the api surface, container to container
-  # (API_URL) — a guest's browser never talks to the api host directly, and the
-  # page cannot be prerendered because which GalleryVersion is current changes
-  # the moment a studio owner republishes (apps/gallery/astro.config.mjs).
+  # It reaches Laravel over the api surface two ways, and both are needed.
+  # API_URL is container to container, for what this process fetches while
+  # rendering. PUBLIC_API_URL is what ends up in the HTML — every <img src>
+  # points at the image proxy, and the detail view's hearts and comments are
+  # browser calls — so it has to be an address a guest's browser can actually
+  # resolve. One value for both is why images never loaded in dev.
+  #
+  # The page cannot be prerendered because which GalleryVersion is current
+  # changes the moment a studio owner republishes (astro.config.mjs).
   gallery:
     image: node:24-slim
     working_dir: /app/apps/gallery
@@ -197,6 +202,7 @@ services:
     environment:
       npm_config_store_dir: /pnpm-store
       API_URL: http://api:8000
+      PUBLIC_API_URL: http://localhost:${API_PORT:-8002}
       # F-11/G-13: empty leaves the SSR process fully inert — no outbound calls
       # at all — same empty-by-default rule as SENTRY_LARAVEL_DSN above.
       SENTRY_DSN: ${GALLERY_SENTRY_DSN:-}

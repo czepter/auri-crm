@@ -1,6 +1,7 @@
 ---
 import { FORMATS, imageUrl, srcSet, type GalleryAsset } from '../../lib/images'
 import { callApi } from '../../lib/apiClient'
+import { buyPass, passCookieName, PASS_MAX_AGE_SECONDS } from '../../lib/viewPass'
 import '../../styles/tokens.css'
 import '../../styles/gallery.css'
 
@@ -11,8 +12,15 @@ import '../../styles/gallery.css'
 // images this page points at are the opposite: see GalleryImageController.
 Astro.response.headers.set('Cache-Control', 'no-store')
 
+// Two addresses on purpose. apiBase is container to container, for what this
+// process fetches while rendering; publicApi is what ends up in the HTML —
+// image sources and the detail view's own browser calls — so it has to be
+// one a guest's browser can resolve. See docker-compose.yml.
 const apiBase = process.env.API_URL ?? 'http://localhost:8000'
+const publicApi = process.env.PUBLIC_API_URL ?? apiBase
 const { galleryId } = Astro.params
+const requestId = Astro.locals.requestId
+const cookieName = passCookieName(galleryId!)
 
 interface GalleryReadResponse {
   gallery: {
@@ -27,58 +35,152 @@ interface GalleryReadResponse {
   }
 }
 
+// G-05 (#242): the gate, answered here so a guest never leaves the fast
+// viewer. The password buys a signed pass from the api surface
+// (App\Gallery\Support\GalleryViewPass) which this page then carries as a
+// bearer — the portal's session claim cannot reach across an origin, and
+// this one does not need to.
+let pass = Astro.cookies.get(cookieName)?.value ?? null
+let wrongPassword = false
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData()
+  const bought = await buyPass(apiBase, galleryId!, requestId, String(form.get('password') ?? ''))
+
+  if (bought === null) {
+    wrongPassword = true
+  } else {
+    pass = bought
+    Astro.cookies.set(cookieName, bought, {
+      path: `/g/${galleryId}`,
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: Astro.url.protocol === 'https:',
+      maxAge: PASS_MAX_AGE_SECONDS,
+    })
+  }
+}
+
 // G-13: every outgoing call this SSR page makes to the api surface goes
 // through callApi, which forwards this request's own X-Request-Id
 // (src/middleware.ts) and reports a 5xx or a timeout as the gallery outage
 // it is from a guest's side — see src/lib/apiClient.ts's own doc comment.
-const response = await callApi(apiBase, `/api/galleries/${galleryId}`, Astro.locals.requestId, {
+let response = await callApi(apiBase, `/api/galleries/${galleryId}`, requestId, {
   headers: { Accept: 'application/json' },
-})
+}, pass)
 
-if (!response.ok) {
-  Astro.response.status = response.status === 404 ? 404 : 502
+// A gallery with no gate hands out a pass for the asking, so one attempt
+// without a password separates "locked" from "does not exist" — without it
+// every ungated gallery would need a password screen it has no password for.
+if (response.status === 404 && pass === null) {
+  const free = await buyPass(apiBase, galleryId!, requestId)
+
+  if (free !== null) {
+    pass = free
+    response = await callApi(apiBase, `/api/galleries/${galleryId}`, requestId, {
+      headers: { Accept: 'application/json' },
+    }, pass)
+  }
 }
 
 const body: GalleryReadResponse | null = response.ok ? await response.json() : null
 const gallery = body?.gallery ?? null
 
+// Locked and missing answer the same way on purpose (see GalleryPassController):
+// what this page can tell them apart by is only whether a pass ever worked.
+const locked = gallery === null && response.status === 404
+
+if (gallery === null && !locked) {
+  Astro.response.status = 502
+}
+
 // (SIZES matches .grid's four fixed columns in gallery.css — a masonry, no
 // responsive breakpoints exist in the mockup this screen matches, so none
 // are invented here either.)
-const SIZES = '(min-width: 1300px) 308px, 25vw'
+const SIZES = '(max-width: 760px) 50vw, (max-width: 1080px) 33vw, 25vw'
 const FALLBACK_WIDTH = 800
+const cover = gallery?.version.assets[0] ?? null
 ---
 
-<html lang="de" data-theme="gallery">
+<html lang="de">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
     <title>{gallery ? gallery.title : 'Galerie'}</title>
   </head>
   <body>
     {
-      gallery ? (
-        <div class="gwrap">
-          <header class="ghead">
-            <div class="gwho">
-              <b>{gallery.title}</b> · {gallery.version.assets.length} Bilder
+      locked ? (
+        // Mockup galerie-gate.html: the picture is the screen, the password
+        // lies on it. There is no cover to show yet — the asset list is
+        // exactly what the gate withholds — so the field stands on the void.
+        <section class="gate">
+          <div class="lock">
+            <h1 class="display">Galerie</h1>
+
+            <div>
+              <div class="hair" />
+
+              <form method="POST">
+                <div class="field">
+                  <label for="pw">Galerie-Passwort</label>
+                  <input id="pw" name="password" type="password" placeholder="••••••••" autocomplete="off" required />
+                </div>
+
+                {wrongPassword && <p class="err">Dieser Link und dieses Passwort gehören nicht zusammen.</p>}
+
+                <button class="btn" type="submit">
+                  Galerie öffnen
+                  <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                </button>
+              </form>
+
+              <p class="hint">Steht in der Mail mit dem Link.</p>
             </div>
+          </div>
+        </section>
+      ) : gallery ? (
+        <>
+          <header class="cover">
+            {cover && (
+              <img
+                src={imageUrl(publicApi, gallery.version.public_id, cover.key, 2400, 'jpeg', pass)}
+                alt=""
+              />
+            )}
+            <div class="covertext">
+              <h1 class="display">{gallery.title}</h1>
+              <p class="meta">{gallery.version.assets.length} Bilder</p>
+            </div>
+            <a class="scrollcue" href="#raster">
+              Bilder ansehen
+              <svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6" /></svg>
+            </a>
           </header>
 
-          <div class="grid">
+          <div class="bar">
+            <span class="who"><b>{gallery.title}</b></span>
+            <a class="barbtn solid" href={`/g/${galleryId}/download`}>
+              <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
+              Herunterladen
+            </a>
+          </div>
+
+          <main class="grid" id="raster">
             {gallery.version.assets.map((asset, i) => (
               <a class="tile" href="#" data-lb-open data-index={i}>
                 <picture>
                   {FORMATS.filter((f) => f !== 'jpeg').map((format) => (
                     <source
                       type={`image/${format}`}
-                      srcset={srcSet(apiBase, gallery.version.public_id, asset.key, format)}
+                      srcset={srcSet(publicApi, gallery.version.public_id, asset.key, format, pass)}
                       sizes={SIZES}
                     />
                   ))}
                   <img
-                    src={imageUrl(apiBase, gallery.version.public_id, asset.key, FALLBACK_WIDTH, 'jpeg')}
-                    srcset={srcSet(apiBase, gallery.version.public_id, asset.key, 'jpeg')}
+                    src={imageUrl(publicApi, gallery.version.public_id, asset.key, FALLBACK_WIDTH, 'jpeg', pass)}
+                    srcset={srcSet(publicApi, gallery.version.public_id, asset.key, 'jpeg', pass)}
                     sizes={SIZES}
                     width={asset.width ?? undefined}
                     height={asset.height ?? undefined}
@@ -86,91 +188,85 @@ const FALLBACK_WIDTH = 800
                     loading="lazy"
                   />
                 </picture>
+                <button class="fav" type="button" data-fav aria-label="Favorit">
+                  <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
+                </button>
               </a>
             ))}
-          </div>
+          </main>
 
           {
-            // G-12, mockup 10 — structure and vocabulary match, with two
-            // deliberate gaps: no "Teilen" (share) act, a feature no story
-            // has built, and no name/avatar on a comment (`.cmt b`/`.cmt
-            // img` in the mockup) — a gallery guest carries no account and
-            // this app collects no name for one (favorites.ts's own doc
-            // comment), so every comment renders as "Gast" rather than
-            // inventing an identity nothing captures. Rendered once,
-            // server-side, from the same asset list the grid above already
-            // has — lightbox.ts only ever shows or hides it and swaps which
-            // asset the stage points at, and fetches/posts comments per
-            // asset as it opens.
+            // Mockup galerie-lightbox.html. Rendered once, server-side, from
+            // the same asset list the wall above already has — lightbox.ts
+            // only ever shows or hides it and swaps which asset the stage
+            // points at. A guest gets one heart and writes as Gast: named
+            // lists belong to the couple and need an account, which is what
+            // the portal's own copy of this screen is for.
           }
           <div class="lb" id="lightbox">
-            <header class="lbtop recede">
+            <header class="lbtop">
               <button type="button" class="txtbtn" data-lb-close>
                 <svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
                 Zurück zum Raster
               </button>
-              <div class="lbpos" data-lb-pos></div>
+              <span class="lbpos" data-lb-pos />
               <button type="button" class="txtbtn" data-lb-close>
                 Schließen
                 <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg>
               </button>
             </header>
 
-            <div class="lbsplit">
+            <div class="lbmain">
               <div class="stage">
-                <button type="button" class="arrow recede" data-lb-prev title="Vorheriges Bild">
+                <button type="button" class="arrow prev" data-lb-prev title="Vorheriges Bild">
                   <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" /></svg>
                 </button>
 
                 <img data-lb-img alt="" />
 
-                <button type="button" class="arrow recede" data-lb-next title="Nächstes Bild">
+                <button type="button" class="arrow next" data-lb-next title="Nächstes Bild">
                   <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></svg>
                 </button>
               </div>
 
-              <aside class="lbrail">
+              <aside class="rail">
                 <div class="acts">
-                  <button type="button" class="act" data-lb-favorite title="Favorit umschalten">
+                  <button type="button" class="act" data-lb-favorite>
                     <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
                     <span data-lb-favorite-label>Favorit</span>
                   </button>
-                  <span class="act">
-                    <svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z" /></svg>
-                    <span data-lb-comment-count>0 Kommentare</span>
-                  </span>
+
+                  <a class="act" href={`/g/${galleryId}/download`}>
+                    <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
+                    Herunterladen
+                  </a>
                 </div>
 
-                <div class="cmts" data-lb-comments></div>
+                <div class="cmts" data-lb-comments />
 
-                <div class="lbwrite">
-                  <label class="field">
-                    <input type="text" data-lb-comment-input placeholder="Kommentar schreiben …" />
-                  </label>
+                <div class="write">
+                  <input type="text" data-lb-comment-input placeholder="Kommentar schreiben …" />
                 </div>
               </aside>
             </div>
 
-            <div class="strip recede">
+            <nav class="strip">
               {gallery.version.assets.map((asset, i) => (
                 <a href="#" data-lb-thumb data-index={i}>
                   <img
-                    src={imageUrl(apiBase, gallery.version.public_id, asset.key, 400, 'jpeg')}
+                    src={imageUrl(publicApi, gallery.version.public_id, asset.key, 400, 'jpeg', pass)}
                     alt=""
                     loading="lazy"
                   />
                 </a>
               ))}
-            </div>
+            </nav>
           </div>
 
-          <style>
-            /* Mockup 10 is a standalone page — .lb fills it by definition. Here
-               it sits over the grid instead, so this alone turns it into an
-               overlay; everything inside stays the mockup's own CSS untouched. */
-            #lightbox { display: none; position: fixed; inset: 0; z-index: 50; background: var(--bg); }
-            #lightbox.open { display: flex; }
-          </style>
+          <footer class="gfoot">
+            <span>{gallery.title}</span>
+            <span>{gallery.version.assets.length} Bilder</span>
+          </footer>
 
           {
             // Two script tags on purpose: `define:vars` forces `is:inline`
@@ -182,11 +278,12 @@ const FALLBACK_WIDTH = 800
           }
           <script is:inline define:vars={{
             assets: gallery.version.assets,
-            apiBase,
+            apiBase: publicApi,
             versionPublicId: gallery.version.public_id,
             galleryTitle: gallery.title,
+            pass,
           }}>
-            window.__lightboxData = { assets, apiBase, versionPublicId, galleryTitle }
+            window.__lightboxData = { assets, apiBase, versionPublicId, galleryTitle, pass }
           </script>
           <script>
             import { initLightbox } from '../../lib/lightbox'
@@ -194,10 +291,10 @@ const FALLBACK_WIDTH = 800
 
             initLightbox((window as unknown as { __lightboxData: LightboxData }).__lightboxData)
           </script>
-        </div>
+        </>
       ) : (
-        <div class="gwrap">
-          <p class="gsub">Diese Galerie ist nicht erreichbar.</p>
+        <div class="page" style="padding-block: var(--s10)">
+          <p class="eyebrow">Diese Galerie ist nicht erreichbar.</p>
         </div>
       )
     }

@@ -3,6 +3,7 @@
 use App\Crm\Http\Controllers\PublicInquiryController;
 use App\Engagement\Http\Controllers\InboundMailController;
 use App\Enums\Capability;
+use App\Gallery\Http\Controllers\GalleryPassController;
 use App\Gallery\Http\Controllers\AssetCommentController;
 use App\Gallery\Http\Controllers\AssetFavoriteController;
 use App\Gallery\Http\Controllers\GalleryImageController;
@@ -35,15 +36,19 @@ Route::post('/anfragen', PublicInquiryController::class)->name('api.inquiries.st
 // app's audience middleware has no vocabulary for.
 Route::post('/mail/eingang', InboundMailController::class)->name('api.mail.inbound');
 
+// G-06's view gate, answered here so apps/gallery can render its own gate
+// and keep a guest on the fast viewer the whole way. Runs the same
+// GallerySecretGate the portal's gate does — one implementation of "is this
+// the password", rate limits included — and hands back a signed pass.
+Route::post('/galleries/{gallery}/passwort', GalleryPassController::class)->name('api.galleries.pass');
+
 // G-08/G-09/G-12: everything the Astro gallery viewer calls — version
 // metadata, image bytes, favorites, comments. All of it behind
-// `gallery.ungated`: this surface holds no session and so cannot evaluate
-// G-06's view claim, which is why a gallery carrying a view password is not
-// served here at all (see EnsureUngatedGallery, and P-08 (#227) for the
-// portal-side page that serves those instead). Without it the password
-// protected one screen and left both the asset list and the bytes open to
-// anyone holding an id.
-Route::middleware('gallery.ungated')->group(function () {
+// `gallery.pass`: this surface holds no session, so G-06's claim reaches it
+// as a signed bearer instead (GalleryViewPass). A gallery with no password
+// needs none. Without this the password protected one screen and left both
+// the asset list and the bytes open to anyone holding an id.
+Route::middleware('gallery.pass')->group(function () {
     Route::get('/galleries/{gallery:public_id}', GalleryReadController::class)->name('api.galleries.show');
     Route::get('/gallery-versions/{galleryVersion:public_id}/images/{key}', GalleryImageController::class)
         ->where('key', '.*')

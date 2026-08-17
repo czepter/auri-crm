@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Anfrage · Brandt &amp; Erdmann — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="anfragen">
+
+<!-- Der Vorgang am ersten Tag. Anfrage und Projekt sind derselbe Datensatz in
+     verschiedenen Phasen — deshalb derselbe Screen, nur mit den Abschnitten,
+     die es schon gibt (crm-anfrage-angenommen.html zeigt ihn gewachsen).
+
+     Triage in Lesereihenfolge der drei Fragen, die der Bediener stellt:
+     wer ist das und wie erreiche ich sie, was wollen sie, ist der Termin
+     frei, was kostet so etwas. Deshalb Kontakt neben dem Zitat und nicht
+     klein darunter, und deshalb die Spur rechts mit der Woche um den
+     angefragten Tag.
+
+     Die Warteschlange links gruppiert nach Arbeitsstand statt nach den sechs
+     Board-Stufen; ↑↓ geht weiter, ohne die Seite zu wechseln. Antwortzeit ist
+     der Hebel: acht Tage Stille entstehen, wenn jeder Schritt einen
+     Seitenwechsel kostet. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <nav class="queue">
+    <h2><b>Unbeantwortet</b><span class="n">4</span></h2>
+    <a class="on" href="crm-anfrage.html">
+      <div class="nm">Sarah Brandt &amp; Tim Erdmann</div>
+      <div class="mt">5.9. · Hof Eggers · heute</div>
+    </a>
+    <a href="#">
+      <div class="nm">Familie Osterhoff</div>
+      <div class="mt">14.3. · Studio · gestern</div>
+    </a>
+    <a href="#">
+      <div class="nm">Nina Kaltenbach &amp; Ruben Adler</div>
+      <div class="mt warn">14.6. · Termin doppelt</div>
+    </a>
+    <a href="#">
+      <div class="nm">Charlotte Vehse &amp; Paul Rieck</div>
+      <div class="mt warn">22.8. · 8 Tage still</div>
+    </a>
+
+    <h2><b>Angebot draußen</b><span class="n">2</span></h2>
+    <a href="#">
+      <div class="nm">Annika Reuter &amp; Finn Sölter</div>
+      <div class="mt warn">läuft 21.08. ab</div>
+    </a>
+    <a href="#">
+      <div class="nm">Lea Hoffmann &amp; Jonas Behr</div>
+      <div class="mt">3.500 € · vor 6 Tagen</div>
+    </a>
+
+    <h2><b>Angenommen</b><span class="n">1</span></h2>
+    <a href="crm-anfrage-angenommen.html">
+      <div class="nm">Marie Ahrens &amp; David Kroll</div>
+      <div class="mt warn">Vertrag fehlt</div>
+    </a>
+  </nav>
+
+  <main class="detail">
+    <div class="crumb">Anfragen <kbd>↑</kbd><kbd>↓</kbd></div>
+
+    <div class="title">
+      <div>
+        <h1>Sarah Brandt &amp; Tim Erdmann</h1>
+      </div>
+      <div class="acts">
+        <a class="link" href="#">Absagen</a>
+        <a class="btn-2" href="#">Notiz</a>
+        <a class="btn" href="#">Angebot schreiben</a>
+      </div>
+    </div>
+
+
+    <section>
+      <header><h2>Was sie schreiben</h2></header>
+      <div class="said">
+        <p>„Wir heiraten im September auf Hof Eggers und suchen jemanden für den ganzen Tag — Trauung um 14 Uhr, Feier bis in die Nacht. Osterhoffs haben uns eure Bilder gezeigt.“</p>
+        <div class="who">
+          <div class="via top"><b>Hochzeit</b>Empfehlung von Familie Osterhoff</div>
+          <div class="p">
+            <div class="nm">Sarah Brandt</div>
+            <div class="ro">Auftraggeberin</div>
+            <div class="v"><a class="link" href="#">s.brandt@example.de</a></div>
+            <div class="v"><a class="link" href="#">0170 998877</a></div>
+          </div>
+          <div class="p">
+            <div class="nm">Tim Erdmann</div>
+            <div class="ro">Partner</div>
+            <div class="v none">keine Kontaktdaten</div>
+          </div>
+          <div class="via"><b>Website-Formular</b>heute 09:05</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <header><h2>Termine</h2><span class="n">1</span></header>
+      <div class="rowset">
+        <div class="r">
+          <span class="when">Sa, 05.09.2026<span class="st">angefragt</span></span>
+          <span class="what">Hochzeitstag<div class="s">Hof Eggers, Winsen · Zeiten offen</div></span>
+          <span class="right">niemand eingeteilt</span>
+        </div>
+      </div>
+      <div class="ghosts"><button class="ghost">+ Termin</button></div>
+    </section>
+
+    <section>
+      <header><h2>Angebot</h2></header>
+      <div class="ghosts" style="padding-top:0">
+        <button class="ghost"><b>Ganztag</b> · 4 Positionen · 2.900 €</button>
+        <button class="ghost"><b>Ganztag + Brunch</b> · 6 Positionen · 3.500 €</button>
+        <button class="ghost">Leeres Angebot</button>
+      </div>
+    </section>
+
+    <section>
+      <header><h2>Aufgaben</h2><span class="n">3</span><a class="link more" href="#">Aus Vorlage ›</a></header>
+      <div class="todo">
+        <div class="r"><span class="b"></span><span class="t">Rückfrage: Ablauf und Feierende</span><span class="aud">intern</span><span class="due warn">heute</span></div>
+        <div class="r"><span class="b"></span><span class="t">Angebot schreiben</span><span class="aud">intern</span><span class="due">bis 18.08.</span></div>
+        <div class="r"><span class="b"></span><span class="t">Termin vormerken</span><span class="aud">intern</span><span class="due">—</span></div>
+      </div>
+    </section>
+
+    <section>
+      <header><h2>Notizen</h2><a class="link more" href="#">Notiz schreiben ›</a></header>
+      <div class="log">
+        <div class="e"><span class="t">heute 09:05</span><span class="c sys">Anfrage angelegt · Website-Formular</span></div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="rail">
+    <h2>Woche um den 5. September</h2>
+    <div class="grp">
+      <div class="d"><span class="dd">Di 1.9.</span><span class="ev">Portrait Sundermann</span></div>
+      <div class="d none"><span class="dd">Mi 2.9.</span><span class="ev">—</span></div>
+      <div class="d"><span class="dd">Do 3.9.</span><span class="ev">After-Wedding Meier</span></div>
+      <div class="d"><span class="dd">Fr 4.9.</span><span class="ev">Nina · Urlaub</span></div>
+      <div class="d free"><span class="dd">Sa 5.9.</span><span class="ev">frei — angefragt</span></div>
+      <div class="d none"><span class="dd">So 6.9.</span><span class="ev">—</span></div>
+    </div>
+
+    <h2>Wer kann am 5.9.</h2>
+    <div class="grp">
+      <div class="p"><span class="av">CB</span>Christian<span class="st">frei</span></div>
+      <div class="p"><span class="av">NS</span>Nina<span class="st">frei</span></div>
+    </div>
+
+    <h2>September</h2>
+    <div class="grp">
+      <div class="d"><span class="dd">12.9.</span><span class="ev">Lang &amp; Voss</span></div>
+      <div class="d"><span class="dd">19.9.</span><span class="ev">Hoffmann &amp; Behr</span></div>
+      <div class="d none"><span class="dd">26.9.</span><span class="ev">frei</span></div>
+    </div>
+
+    <h2>Hochzeiten 2026</h2>
+    <div class="grp">
+      <div class="k"><span>Angebote</span><span>2.400–3.500 €</span></div>
+      <div class="k"><span>Gebucht</span><span>6 von 12</span></div>
+    </div>
+  </aside>
+</div>
+
+</body>
+</html>

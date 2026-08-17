@@ -70,6 +70,10 @@ const PUBLIC_ROUTES = [
         // above it: the caller proves itself with an HMAC over the raw
         // body, a credential 'audience:' has no vocabulary for.
         'api/mail/eingang',
+        // G-06's gate on this surface: the password itself is the
+        // credential, and what it buys is a signed pass (GalleryViewPass) —
+        // neither of which reads as `audience:`.
+        'api/galleries/{gallery}/passwort',
         'api/galleries/{gallery}', 'api/gallery-versions/{galleryVersion}/images/{key}',
         'api/gallery-versions/{galleryVersion}/favorites', 'api/gallery-versions/{galleryVersion}/favorites/{key}',
         'api/gallery-versions/{galleryVersion}/comments',

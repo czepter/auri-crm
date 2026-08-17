@@ -49,24 +49,27 @@ describe('fetchFavorites', () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ favorited: ['a.jpg', 'b.jpg'] }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
 
-    const keys = await fetchFavorites('https://api.example', 'ver_abc', store)
+    const keys = await fetchFavorites('https://api.example', 'ver_abc', null, store)
 
     expect(keys).toEqual(new Set(['a.jpg', 'b.jpg']))
-    expect(fetchMock).toHaveBeenCalledWith('https://api.example/api/gallery-versions/ver_abc/favorites?guest_id=guest-1')
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.example/api/gallery-versions/ver_abc/favorites?guest_id=guest-1',
+      { headers: {} },
+    )
   })
 
   it('degrades to an empty set on a failed response, rather than throwing', async () => {
     const store = memoryStore()
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 500 })))
 
-    expect(await fetchFavorites('https://api.example', 'ver_abc', store)).toEqual(new Set())
+    expect(await fetchFavorites('https://api.example', 'ver_abc', null, store)).toEqual(new Set())
   })
 
   it('degrades to an empty set when the network call itself rejects', async () => {
     const store = memoryStore()
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
 
-    expect(await fetchFavorites('https://api.example', 'ver_abc', store)).toEqual(new Set())
+    expect(await fetchFavorites('https://api.example', 'ver_abc', null, store)).toEqual(new Set())
   })
 })
 
@@ -77,7 +80,7 @@ describe('toggleFavorite', () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ favorited: true }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
 
-    const favorited = await toggleFavorite('https://api.example', 'ver_abc', 'galleries/g 1/a.jpg', store)
+    const favorited = await toggleFavorite('https://api.example', 'ver_abc', 'galleries/g 1/a.jpg', null, store)
 
     expect(favorited).toBe(true)
     expect(fetchMock).toHaveBeenCalledWith(
