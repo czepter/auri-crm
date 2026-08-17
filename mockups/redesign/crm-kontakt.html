@@ -26,6 +26,7 @@
   <div data-chrome></div>
 
   <main class="main">
+   <div style="display:flex; align-items:stretch; flex:1; min-height:0">
     <div class="sheet">
 
       <div class="head">
@@ -75,35 +76,6 @@
             <div class="val">Lindenweg 3, 21514 Basthorst</div>
             <div class="lab">Anschrift auf Rechnung und Vertrag</div>
           </div>
-        </div>
-      </section>
-
-      <section>
-        <h2>Portal</h2>
-        <div class="setting">
-          <span class="t">Angebot annehmen</span>
-          <span class="sw on"></span>
-        </div>
-        <div class="setting">
-          <span class="t">Vertrag unterschreiben</span>
-          <span class="sw on"></span>
-        </div>
-        <div class="setting">
-          <span class="t">Nachrichten schreiben</span>
-          <span class="sw"></span>
-          <a class="link" href="#">Zurücksetzen</a>
-        </div>
-        <div class="setting">
-          <span class="t">Zahlungsstand sehen</span>
-          <span class="sw on"></span>
-          <a class="link" href="#">Zurücksetzen</a>
-        </div>
-        <div class="datarow" style="margin-top:6px">
-          <div>
-            <div class="val">Zugang gültig bis 30.08.</div>
-            <div class="lab">zuletzt benutzt heute 11:20</div>
-          </div>
-          <span class="right"><a class="link" href="#">Neuen Link senden</a> &nbsp; <a class="link" href="#" style="color:var(--ink-2)">Entziehen</a></span>
         </div>
       </section>
 
@@ -170,6 +142,36 @@
       </section>
 
     </div>
+
+    <aside class="rail" style="width:320px">
+      <h2>Portal</h2>
+      <div class="grp">
+        <div class="setting">
+          <span class="t">Angebot annehmen</span>
+          <span class="sw on"></span>
+        </div>
+        <div class="setting">
+          <span class="t">Vertrag unterschreiben</span>
+          <span class="sw on"></span>
+        </div>
+        <div class="setting">
+          <span class="t">Nachrichten schreiben<div class="s"><a class="link" href="#">Zurücksetzen</a></div></span>
+          <span class="sw"></span>
+        </div>
+        <div class="setting">
+          <span class="t">Zahlungsstand sehen<div class="s"><a class="link" href="#">Zurücksetzen</a></div></span>
+          <span class="sw on"></span>
+        </div>
+      </div>
+
+      <h2>Zugang</h2>
+      <div class="grp">
+        <div class="item"><div class="n">gültig bis 30.08.</div><div class="m">zuletzt benutzt heute 11:20</div></div>
+        <div class="item"><a class="link" href="#">Neuen Link senden</a></div>
+        <div class="item"><a class="link" href="#" style="color:var(--ink-2)">Zugang entziehen</a></div>
+      </div>
+    </aside>
+   </div>
   </main>
 </div>
 
