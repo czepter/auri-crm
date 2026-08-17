@@ -659,3 +659,76 @@ tbody td.grp {
 .pkg > header .sum { margin-left: auto; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .pkg > header .n { font-size: 11.5px; color: var(--ink-2); }
 .pkg .off { font-size: 11.5px; color: var(--ink-2); }
+
+/* ---------- Dokumentvorlagen ---------- */
+
+/* Wahl statt leerer Seite: der Blockeditor hat die HTML-Hürde beseitigt und
+   die Hürde der leeren Seite stehen lassen (StarterTemplateCatalog, T-16). */
+.starters { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s3); }
+.starter { background: var(--sunk); border-radius: var(--r-sm); padding: 14px 16px; color: inherit; text-decoration: none; display: block; }
+.starter:hover { background: var(--sunk-2); }
+.starter .nm { font: 600 14px/1.3 var(--font); letter-spacing: -.016em; }
+.starter .ty { font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); margin-top: 2px; }
+.starter .de { font-size: 12px; line-height: 1.45; color: var(--ink-2); margin-top: 7px; }
+.starter .bl { font-size: 11.5px; color: var(--ink-2); margin-top: 9px; padding-top: 8px; box-shadow: inset 0 1px 0 #ECECEE; }
+.starter.blank { background: none; box-shadow: inset 0 0 0 1px var(--rule); }
+
+/* Editor und Vorschau teilen sich die Fläche zur Hälfte */
+.split { flex: 1; display: flex; min-height: 0; }
+.split > .pane { flex: 1 1 50%; min-width: 0; padding: 14px 26px var(--s6); }
+.split > .pane.preview { background: var(--sunk); box-shadow: inset 1px 0 0 #ECECEE; }
+.panehead { display: flex; align-items: baseline; gap: 9px; margin-bottom: var(--s3); }
+.panehead h2 { margin: 0; font: 600 10.5px/1 var(--font); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2); }
+.panehead .r { margin-left: auto; font-size: 12px; color: var(--ink-2); }
+
+/* Editor.js stellt den Rahmen: Griff und Plus in der Rinne, Leiste bei Auswahl */
+.ej { position: relative; }
+.ejb { position: relative; padding: 7px 0 7px 44px; border-radius: 8px; }
+.ejb:hover, .ejb.sel { background: var(--sunk); }
+.ejb .gut { position: absolute; left: 6px; top: 7px; display: flex; gap: 2px; opacity: 0; }
+.ejb:hover .gut, .ejb.sel .gut { opacity: 1; }
+.ejb .gut i {
+  width: 22px; height: 22px; border-radius: 6px; background: var(--sunk-2); color: var(--ink-2);
+  font-style: normal; font-size: 13px; line-height: 22px; text-align: center;
+}
+.ejb h3 { margin: 0; font: 600 17px/1.35 var(--font); letter-spacing: -.02em; }
+.ejb h4 { margin: 0; font: 600 14px/1.4 var(--font); letter-spacing: -.016em; }
+.ejb p { margin: 0; font-size: 13.5px; line-height: 1.65; }
+.ejb ul { margin: 0; padding-left: 19px; font-size: 13.5px; line-height: 1.65; }
+.ejb table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.ejb td { padding: 5px 0; box-shadow: inset 0 1px 0 #ECECEE; }
+.ejb td.r { text-align: right; font-variant-numeric: tabular-nums; }
+.ph { background: #F2E7DF; border-radius: 5px; padding: 0 4px; color: var(--accent); }
+
+.tools {
+  position: absolute; left: 44px; top: -16px; display: flex; gap: 2px;
+  background: var(--paper); border-radius: 9px; padding: 3px; box-shadow: 0 4px 14px rgba(0,0,0,.14);
+}
+.tools i { font-style: normal; font-size: 12px; padding: 4px 8px; border-radius: 6px; }
+.tools i.on { background: var(--sunk-2); }
+.tools i.field { color: var(--accent); }
+.tools .sep { width: 1px; background: var(--rule); margin: 3px 2px; }
+
+.blockmenu {
+  position: absolute; left: 34px; width: 208px; background: var(--paper); border-radius: var(--r-sm);
+  padding: 5px; box-shadow: 0 8px 24px rgba(0,0,0,.16); z-index: 2;
+}
+.blockmenu div { display: flex; align-items: center; gap: 9px; padding: 6px 9px; border-radius: 8px; font-size: 12.5px; }
+.blockmenu div:hover { background: var(--sunk); }
+.blockmenu div .k { margin-left: auto; font-size: 10.5px; color: var(--ink-2); }
+.blockmenu .off, .blockmenu .off:hover { color: var(--mark); background: none; }
+
+/* Das Blatt: weiß auf grauer Fläche, dadurch ein Papierrand ohne Rahmen */
+.paper { background: var(--paper); border-radius: 10px; padding: 26px 24px; font-size: 11.5px; line-height: 1.65; }
+.paper .logo { font: 600 14px/1 var(--font); letter-spacing: -.02em; }
+.paper .addr { color: var(--ink-2); font-size: 10px; margin-top: 14px; }
+.paper h3 { margin: 16px 0 8px; font: 600 15px/1.3 var(--font); }
+.paper h4 { margin: 14px 0 5px; font: 600 12.5px/1.3 var(--font); }
+.paper p { margin: 0 0 9px; }
+.paper table { width: 100%; border-collapse: collapse; margin: 9px 0; font-size: 11px; }
+.paper td { padding: 4px 0; border-top: 1px solid #ECECEE; }
+.paper td.r { text-align: right; font-variant-numeric: tabular-nums; }
+.paper .sum td { font-weight: 600; border-top: 1px solid #C9C9CD; }
+.paper .fine { color: var(--ink-2); font-size: 10px; margin-top: 14px; }
+.paper .sig { display: flex; gap: 26px; margin-top: 20px; font-size: 10px; color: var(--ink-2); }
+.paper .sig div { flex: 1; padding-top: 6px; border-top: 1px solid #C9C9CD; }

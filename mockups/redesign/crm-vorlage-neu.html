@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Neue Vorlage — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="vorlagen">
+
+<!-- T-16: der Blockeditor hat die HTML-Hürde beseitigt und die Hürde der
+     leeren Seite stehen lassen. Wer "Neue Vorlage" klickt, sollte keinen
+     Werkvertrag aus dem Nichts schreiben müssen.
+
+     Die zehn Einträge stehen als Konstante im Code (StarterTemplateCatalog),
+     nicht in einer Tabelle: eine gewählte Vorlage lädt ihre Blöcke in den
+     Editor, gesichert wird eine eigene erste Fassung. Danach erinnert sich
+     nichts mehr an die Herkunft — es gibt keine Id, durch die ein späteres
+     Release in eine Vorlage hineinreichen könnte, die ein Studio inzwischen
+     zu seiner gemacht hat.
+
+     Der Satz über Rechtsberatung steht in der Beschreibung, wo das Studio ihn
+     beim Wählen liest — nie in einem Text, den ein Kunde bekommt. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="main">
+
+    <div class="hrow">
+      <div>
+        <div class="kick">Dokumentvorlagen</div>
+        <h1>Neue Vorlage</h1>
+      </div>
+      <a class="link" href="crm-dokumentvorlagen.html" style="margin-left:auto">Abbrechen</a>
+    </div>
+
+    <div class="work" style="padding-top:22px">
+
+      <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 12px">Verträge und Belege</h2>
+      <div class="starters" style="margin-bottom:26px">
+        <a class="starter" href="crm-vorlage-editor.html">
+          <div class="nm">Fotovertrag</div>
+          <div class="ty">Vertrag · Werkvertrag</div>
+          <div class="de">Leistung, Termine, Honorar, Nutzungsrechte, Ausfall und Absage. Die Formulierungen sind ein Ausgangspunkt, keine Rechtsberatung.</div>
+          <div class="bl">14 Blöcke · 9 Platzhalter</div>
+        </a>
+        <a class="starter" href="crm-vorlage-rechnung.html">
+          <div class="nm">Angebot</div>
+          <div class="ty">Angebot</div>
+          <div class="de">Kopf, Positionen aus dem Angebot, Summe, Gültigkeit, Hinweis zur Umsatzsteuer.</div>
+          <div class="bl">8 Blöcke · 6 Platzhalter</div>
+        </a>
+        <a class="starter" href="crm-vorlage-rechnung.html">
+          <div class="nm">Angebot — Hochzeit</div>
+          <div class="ty">Angebot · Hochzeit</div>
+          <div class="de">Wie Angebot, zusätzlich Ablauf des Tages und Regelung zur Zweitfotografin.</div>
+          <div class="bl">11 Blöcke · 7 Platzhalter</div>
+        </a>
+        <a class="starter" href="crm-vorlage-rechnung.html">
+          <div class="nm">Rechnung</div>
+          <div class="ty">Rechnung</div>
+          <div class="de">Pflichtangaben, Leistungszeitraum, Netto, Umsatzsteuer, Zahlungsziel.</div>
+          <div class="bl">10 Blöcke · 12 Platzhalter</div>
+        </a>
+        <a class="starter" href="crm-vorlage-rechnung.html">
+          <div class="nm">Rechnung — Kleinunternehmer</div>
+          <div class="ty">Rechnung · § 19 UStG</div>
+          <div class="de">Ohne Ausweis der Umsatzsteuer, mit dem Hinweis nach § 19 UStG.</div>
+          <div class="bl">9 Blöcke · 10 Platzhalter</div>
+        </a>
+        <a class="starter blank" href="crm-vorlage-editor.html">
+          <div class="nm">Leere Vorlage</div>
+          <div class="ty">Art wählen</div>
+          <div class="de">Für alles, was keiner der fertigen Zuschnitte trifft.</div>
+        </a>
+      </div>
+
+      <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 12px">Anschreiben</h2>
+      <div class="starters">
+        <a class="starter" href="crm-vorlage-editor.html">
+          <div class="nm">Angebot verschickt</div>
+          <div class="ty">Anschreiben</div>
+          <div class="de">Begleittext zum Angebot mit Gültigkeit und Rückfrage.</div>
+          <div class="bl">4 Blöcke · 5 Platzhalter</div>
+        </a>
+        <a class="starter" href="crm-vorlage-editor.html">
+          <div class="nm">Vertrag zur Unterschrift</div>
+          <div class="ty">Anschreiben</div>
+          <div class="de">Hinweis auf den Zugang im Portal und die nächsten Schritte.</div>
+          <div class="bl">4 Blöcke · 6 Platzhalter</div>
+        </a>
+        <a class="starter" href="crm-vorlage-editor.html">
+          <div class="nm">Buchung bestätigt</div>
+          <div class="ty">Anschreiben</div>
+          <div class="de">Bestätigung mit Termin, Ort und erster Rate.</div>
+          <div class="bl">5 Blöcke · 7 Platzhalter</div>
+        </a>
+        <a class="starter" href="crm-vorlage-editor.html">
+          <div class="nm">Zahlungserinnerung</div>
+          <div class="ty">Anschreiben</div>
+          <div class="de">Offener Betrag, Fälligkeit, Bankverbindung.</div>
+          <div class="bl">5 Blöcke · 7 Platzhalter</div>
+        </a>
+        <a class="starter" href="crm-vorlage-editor.html">
+          <div class="nm">Galerie online</div>
+          <div class="ty">Anschreiben</div>
+          <div class="de">Zugang zur Galerie, Passwort, Ablaufdatum.</div>
+          <div class="bl">4 Blöcke · 6 Platzhalter</div>
+        </a>
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

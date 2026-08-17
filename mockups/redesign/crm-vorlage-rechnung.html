@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Vorlage bearbeiten · Rechnung — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="vorlagen">
+
+<!-- Zweites Beispiel derselben Fläche, andere Art: eine Rechnung. Der
+     Unterschied steckt nicht im Aufbau, sondern in dem, was erlaubt ist —
+     hier ist der Positionsblock zugelassen und das Unterschriftfeld nicht.
+
+     Der Positionsblock hat keinen Inhalt zum Tippen: er zieht die Zeilen aus
+     quote_items beziehungsweise der Rechnung. Deshalb steht im Editor, was er
+     ziehen wird, und nicht eine ausgedachte Tabelle.
+
+     Ein Platzhalter, der im gewählten Projekt leer bliebe, wird markiert —
+     invoice.number entsteht erst beim Festschreiben, also ist er in der
+     Vorschau als fehlend gekennzeichnet statt still leer zu bleiben. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="main">
+
+    <div class="hrow" style="padding-bottom:14px">
+      <div>
+        <div class="kick">Dokumentvorlagen · aus „Rechnung“ · v1, nicht gesichert</div>
+        <h1 style="font-size:23px">Rechnung 2027</h1>
+      </div>
+      <a class="link" href="crm-dokumentvorlagen.html" style="margin-left:auto">Verwerfen</a>
+      <a class="btn-2" href="#">Als Entwurf</a>
+      <a class="btn" href="#">Fassung sichern</a>
+    </div>
+
+    <div class="split">
+
+      <div class="pane">
+        <div class="panehead">
+          <h2>Vorlage</h2>
+          <span class="r">8 Blöcke · 12 Platzhalter</span>
+        </div>
+
+        <div class="ej">
+          <div class="ejb">
+            <span class="gut"><i>⋮⋮</i><i>+</i></span>
+            <h3>Rechnung <span class="ph">invoice.number</span></h3>
+          </div>
+
+          <div class="ejb">
+            <span class="gut"><i>⋮⋮</i><i>+</i></span>
+            <p><span class="ph">contact.name</span><br><span class="ph">contact.street</span><br><span class="ph">contact.postcode</span> <span class="ph">contact.city</span></p>
+          </div>
+
+          <div class="ejb">
+            <span class="gut"><i>⋮⋮</i><i>+</i></span>
+            <table>
+              <tr><td>Rechnungsdatum</td><td class="r"><span class="ph">invoice.date</span></td></tr>
+              <tr><td>Leistungszeitraum</td><td class="r"><span class="ph">invoice.servicePeriod</span></td></tr>
+              <tr><td>Fällig</td><td class="r"><span class="ph">invoice.dueOn</span></td></tr>
+            </table>
+          </div>
+
+          <div class="ejb sel">
+            <span class="gut"><i>⋮⋮</i><i>+</i></span>
+            <span class="tools">
+              <i>Beschreibung zeigen</i>
+              <span class="sep"></span>
+              <i>Menge zeigen</i>
+              <i class="on">Einzelpreis zeigen</i>
+            </span>
+            <div style="background:var(--sunk-2); border-radius:10px; padding:11px 13px; font-size:12.5px; color:var(--ink-2)">
+              <b style="color:var(--ink)">Positionen</b> — zieht die Zeilen der Rechnung: Bezeichnung, Menge, Einzelpreis, Betrag
+            </div>
+          </div>
+
+          <div class="ejb">
+            <span class="gut"><i>⋮⋮</i><i>+</i></span>
+            <table>
+              <tr><td>Netto</td><td class="r"><span class="ph">invoice.net</span></td></tr>
+              <tr><td>Umsatzsteuer <span class="ph">invoice.vatRate</span></td><td class="r"><span class="ph">invoice.vat</span></td></tr>
+              <tr><td><b>Gesamt</b></td><td class="r"><b><span class="ph">invoice.gross</span></b></td></tr>
+            </table>
+          </div>
+
+          <div class="ejb">
+            <span class="gut"><i>⋮⋮</i><i>+</i></span>
+            <p><span class="ph">invoice.paymentTerm</span> Bitte überweisen Sie an <span class="ph">studio.bankHolder</span>, <span class="ph">studio.bankIban</span>, <span class="ph">studio.bankBic</span>.</p>
+          </div>
+
+          <div class="ejb" style="padding-bottom:170px">
+            <span class="gut"><i>⋮⋮</i><i>+</i></span>
+            <p><span class="ph">invoice.vatNote</span></p>
+            <div class="blockmenu" style="top:42px">
+              <div>Überschrift <span class="k">H</span></div>
+              <div>Absatz <span class="k">¶</span></div>
+              <div>Liste</div>
+              <div>Tabelle</div>
+              <div>Positionen <span class="k">automatisch</span></div>
+              <div>Trenner</div>
+              <div class="off">Unterschriftfeld · nur Vertrag</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pane preview">
+        <div class="panehead">
+          <h2>Vorschau</h2>
+          <button class="pop" style="margin-left:auto"><u>Daten von</u> Familie Osterhoff</button>
+        </div>
+
+        <div class="paper">
+          <div class="logo">Atelier Nordlicht</div>
+          <div class="addr">Atelier Nordlicht · Deichstraße 12 · 20459 Hamburg · USt-IdNr. DE812345678</div>
+
+          <h3>Rechnung <span style="color:var(--accent)">RE-2026-0148</span></h3>
+          <p>Marie Osterhoff<br>Rosenweg 8<br>21077 Hamburg</p>
+
+          <table>
+            <tr><td>Rechnungsdatum</td><td class="r">17.08.2026</td></tr>
+            <tr><td>Leistungszeitraum</td><td class="r">14.08.2026</td></tr>
+            <tr><td>Fällig</td><td class="r">31.08.2026</td></tr>
+          </table>
+
+          <table>
+            <tr><td>Shooting im Studio · 90 Minuten</td><td class="r">1 ×</td><td class="r">290,00 €</td></tr>
+            <tr><td>Bildbearbeitung · 15 Motive</td><td class="r">1 ×</td><td class="r">130,00 €</td></tr>
+            <tr><td>Onlinegalerie</td><td class="r">1 ×</td><td class="r">0,00 €</td></tr>
+            <tr><td>Netto</td><td></td><td class="r">352,94 €</td></tr>
+            <tr><td>Umsatzsteuer 19 %</td><td></td><td class="r">67,06 €</td></tr>
+            <tr class="sum"><td>Gesamt</td><td></td><td class="r">420,00 €</td></tr>
+          </table>
+
+          <p>Zahlbar innerhalb von 14 Tagen ohne Abzug. Bitte überweisen Sie an Christian Bergmann, DE02 1203 0000 0000 2020 51, BYLADEM1001.</p>
+
+          <div class="fine">Es gilt der Steuersatz zum Zeitpunkt der Leistung. Rechnung erstellt am 17.08.2026.</div>
+        </div>
+
+        <div style="margin-top:14px; font-size:12.5px; color:var(--ink-2)">
+          <span style="color:var(--accent)">RE-2026-0148</span> entsteht beim Festschreiben aus dem Nummernkreis — in der Vorschau die nächste freie Nummer.
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>
