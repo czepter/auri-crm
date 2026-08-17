@@ -150,7 +150,12 @@
 [data-theme="gallery"] .lists .n { margin-left:auto; font-size:11.5px; color:var(--muted);
         font-variant-numeric:tabular-nums; }
 
-/* ---------- P-08 (#227): the lightbox, ported off apps/gallery ---------- */
+/* ---------- G-01 (#229): the detail view ---------- */
+/* Ported from mockups/redesign/galerie-lightbox.html. The place where
+   commenting and list assignment actually happen — the grid only hints at
+   both. Two roles on one screen: a guest sees a heart and writes as Gast, a
+   signed-in client sees their lists and writes under their name. */
+
 [data-theme="gallery"] .gwall .tile { cursor:zoom-in; }
 
 [data-theme="gallery"] .lb { position:fixed; inset:0; z-index:50; display:flex; flex-direction:column;
@@ -159,35 +164,59 @@
         gap:var(--s4); padding:var(--s4) var(--s5); }
 [data-theme="gallery"] .lbpos { font:400 12.5px/1 var(--font); color:var(--muted);
         font-variant-numeric:tabular-nums; }
-[data-theme="gallery"] .txtbtn { background:none; border:0; padding:0; cursor:pointer;
-        font:500 13px/1 var(--font); color:var(--muted); }
+[data-theme="gallery"] .txtbtn { display:inline-flex; align-items:center; gap:8px;
+        background:none; border:0; padding:0; cursor:pointer;
+        font:500 13px/1 var(--font); color:var(--muted); text-decoration:none; }
 [data-theme="gallery"] .txtbtn:hover { color:var(--ink); }
+[data-theme="gallery"] .txtbtn svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:1.6; }
 
-[data-theme="gallery"] .lbsplit { flex:1; min-height:0; display:grid;
+[data-theme="gallery"] .lbmain { flex:1; min-height:0; display:grid;
         grid-template-columns:minmax(0,1fr) 300px; gap:var(--s5); padding-inline:var(--s5); }
 [data-theme="gallery"] .stage { position:relative; display:grid; place-items:center; min-height:0; }
 [data-theme="gallery"] .stage img { max-width:100%; max-height:100%; object-fit:contain; display:block; }
 [data-theme="gallery"] .arrow { position:absolute; top:50%; transform:translateY(-50%);
-        width:40px; height:40px; border-radius:50%; border:0; cursor:pointer;
-        background:rgba(255,255,255,.08); color:var(--ink); font-size:22px; line-height:1; }
-[data-theme="gallery"] .arrow:first-of-type { left:0; }
-[data-theme="gallery"] .arrow:last-of-type { right:0; }
+        width:40px; height:40px; border-radius:50%; border:0; cursor:pointer; display:grid;
+        place-items:center; background:rgba(255,255,255,.08); color:var(--ink); }
+[data-theme="gallery"] .arrow svg { width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.6; }
+[data-theme="gallery"] .arrow:hover { background:rgba(255,255,255,.16); }
+[data-theme="gallery"] .arrow.prev { left:0; }
+[data-theme="gallery"] .arrow.next { right:0; }
 
-[data-theme="gallery"] .lbrail { display:flex; flex-direction:column; gap:var(--s4); min-height:0;
+[data-theme="gallery"] .rail { display:flex; flex-direction:column; gap:var(--s4); min-height:0;
         padding-block:var(--s3); }
-[data-theme="gallery"] .act { display:inline-flex; align-items:center; gap:8px; align-self:flex-start;
-        background:none; border:0; padding:0; cursor:pointer;
+[data-theme="gallery"] .acts { display:flex; align-items:flex-start; gap:var(--s5); flex-wrap:wrap; }
+[data-theme="gallery"] .actwrap { position:relative; }
+[data-theme="gallery"] .act { display:inline-flex; align-items:center; gap:8px;
+        background:none; border:0; padding:0; cursor:pointer; text-decoration:none;
         font:500 13px/1 var(--font); color:var(--muted); }
+[data-theme="gallery"] .act:hover { color:var(--ink); }
 [data-theme="gallery"] .act svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.5; }
 [data-theme="gallery"] .act.on { color:var(--accent); }
 [data-theme="gallery"] .act.on svg { fill:currentColor; }
 
-[data-theme="gallery"] .cmts { flex:1; min-height:0; overflow-y:auto; display:flex;
-        flex-direction:column; gap:var(--s3); }
-[data-theme="gallery"] .cmt .txt { font:400 13.5px/1.55 var(--font); color:var(--ink); }
-[data-theme="gallery"] .cmt .when { font:400 11.5px/1 var(--font); color:var(--faint); margin-top:3px;
+/* The same checkbox set the grid tile opens — one picture reaches a list
+   from wherever the client happens to be looking at it. */
+[data-theme="gallery"] .listmenu { position:absolute; top:28px; left:0; z-index:5; width:216px;
+        padding:var(--s2); background:var(--hover); border:1px solid var(--line);
+        border-radius:var(--r); box-shadow:0 20px 48px -16px rgba(0,0,0,.6); }
+[data-theme="gallery"] .listmenu label { display:flex; align-items:center; gap:10px; padding:9px 10px;
+        border-radius:var(--r-sm); cursor:pointer; font:500 13px/1 var(--font); color:var(--ink); }
+[data-theme="gallery"] .listmenu label:hover { background:rgba(255,255,255,.06); }
+[data-theme="gallery"] .listmenu input { accent-color:var(--accent); margin:0; flex:none; cursor:pointer; }
+[data-theme="gallery"] .listmenu .n { margin-left:auto; font-size:11.5px; color:var(--muted);
         font-variant-numeric:tabular-nums; }
-[data-theme="gallery"] .lbwrite input { width:100%; padding:11px 12px; border-radius:var(--r);
+
+[data-theme="gallery"] .cmts { flex:1; min-height:0; overflow-y:auto; display:flex;
+        flex-direction:column; gap:var(--s4); }
+[data-theme="gallery"] .cmt .who { display:flex; align-items:baseline; gap:8px; margin-bottom:4px; }
+[data-theme="gallery"] .cmt .who b { font:600 12.5px/1 var(--font); color:var(--ink); }
+[data-theme="gallery"] .cmt .who span { font:400 11.5px/1 var(--font); color:var(--faint);
+        font-variant-numeric:tabular-nums; }
+/* A guest's line is quieter than the couple's own — same rail, different
+   standing. */
+[data-theme="gallery"] .cmt.anon .who b { color:var(--muted); font-weight:500; }
+[data-theme="gallery"] .cmt p { font:400 13.5px/1.55 var(--font); color:var(--ink); margin:0; }
+[data-theme="gallery"] .write input { width:100%; padding:11px 12px; border-radius:var(--r);
         border:1px solid var(--line-hover); background:var(--hover); color:var(--ink);
         font:400 13.5px/1.2 var(--font); }
 
@@ -197,7 +226,11 @@
 [data-theme="gallery"] .lb .strip button.on { opacity:1; }
 [data-theme="gallery"] .lb .strip img { width:100%; height:100%; object-fit:cover; display:block; }
 
+/* At phone width the rail becomes a drawer under the picture: the actions
+   stay in thumb reach without covering the photograph. */
 @media (max-width:860px) {
-  [data-theme="gallery"] .lbsplit { grid-template-columns:minmax(0,1fr); }
-  [data-theme="gallery"] .lbrail { display:none; }
+  [data-theme="gallery"] .lbmain { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) auto; }
+  [data-theme="gallery"] .rail { max-height:38svh; border-top:1px solid var(--line);
+          padding-top:var(--s4); }
+  [data-theme="gallery"] .arrow { background:rgba(255,255,255,.14); }
 }

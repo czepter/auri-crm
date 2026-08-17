@@ -79,6 +79,44 @@ it('takes a comment and hands it back to everyone', function () {
         ->and($comments[0]['body'])->toBe('Das bitte groß ausbelichten.');
 });
 
+// G-01 (#229): two roles, one screen. Without this the couple appear to the
+// studio as anonymous strangers on their own gallery.
+it('signs a client\'s comment with their name and a guest\'s with Gast', function () {
+    $project = App\Crm\Models\Project::factory()->create(['portal_visible' => true]);
+    $contact = App\Crm\Models\Contact::factory()->create(['name' => 'Viola Neumann']);
+    $project->attachContact($contact, App\Crm\Enums\ProjectContactRole::Primary);
+
+    $gallery = Gallery::factory()->for($project)->create(['assets' => [['key' => 'galleries/g/a.jpg']]]);
+    $gallery->publish();
+
+    // The guest first, while nobody is signed in.
+    test()->postJson("/galerien/{$gallery->public_id}/kommentar", [
+        'key' => 'galleries/g/a.jpg', 'body' => 'So schön!',
+    ])->assertCreated();
+
+    test()->actingAs($contact, 'portal')->postJson("/galerien/{$gallery->public_id}/kommentar", [
+        'key' => 'galleries/g/a.jpg', 'body' => 'Das bitte groß ausbelichten.',
+    ])->assertCreated();
+
+    $comments = test()->getJson("/galerien/{$gallery->public_id}/beteiligung")->json('comments');
+
+    expect(collect($comments)->pluck('author')->all())->toBe(['Gast', 'Viola Neumann'])
+        ->and(collect($comments)->pluck('own')->all())->toBe([false, true]);
+});
+
+// Signed in to your own portal, then following a link a friend forwarded:
+// that is a guest on somebody else's gallery, and reads as one.
+it('treats a signed-in client as a guest on a gallery that is not theirs', function () {
+    $gallery = engagedGallery();
+
+    test()->actingAs(App\Crm\Models\Contact::factory()->create(), 'portal')
+        ->postJson("/galerien/{$gallery->public_id}/kommentar", [
+            'key' => 'galleries/g/a.jpg', 'body' => 'Hallo.',
+        ])->assertCreated();
+
+    expect(AssetComment::sole()->contact_id)->toBeNull();
+});
+
 it('refuses a key the published version does not have', function () {
     $gallery = engagedGallery();
 
@@ -98,4 +136,18 @@ it('sends a visitor who has not cleared the view gate back to it', function () {
         ->assertRedirect("/galerien/{$gallery->public_id}");
 
     expect(AssetFavorite::count())->toBe(0);
+});
+
+// The rail appends the posted row without a reload, so it has to come back
+// in the shape the read route returns — otherwise it renders nameless.
+it('returns a posted comment in the same shape it reads them', function () {
+    $gallery = engagedGallery();
+
+    $posted = test()->postJson("/galerien/{$gallery->public_id}/kommentar", [
+        'key' => 'galleries/g/a.jpg', 'body' => 'So schön!',
+    ])->assertCreated()->json('comment');
+
+    $read = test()->getJson("/galerien/{$gallery->public_id}/beteiligung")->json('comments.0');
+
+    expect($posted)->toBe($read);
 });

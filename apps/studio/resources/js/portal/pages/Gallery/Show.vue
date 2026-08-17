@@ -173,7 +173,7 @@ function expiry(iso: string) {
         :gallery-id="gallery.id"
         :title="gallery.title"
         :assets="assets ?? []"
-        :guest-favourites="!lists?.length"
+        :lists="lists"
       />
 
       <footer class="gfoot">

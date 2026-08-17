@@ -51,13 +51,10 @@ class GalleryEngagementController extends Controller
                 ->values(),
             'comments' => AssetComment::query()
                 ->where('gallery_version_id', $version->id)
+                ->with('contact')
                 ->orderBy('created_at')
                 ->get()
-                ->map(fn (AssetComment $comment) => [
-                    'key' => $comment->asset_key,
-                    'body' => $comment->body,
-                    'createdAt' => $comment->created_at->toIso8601String(),
-                ])
+                ->map($this->row(...))
                 ->values(),
         ])->header('Cache-Control', 'no-store');
     }
@@ -87,6 +84,7 @@ class GalleryEngagementController extends Controller
                 'gallery_version_id' => $version->id,
                 'asset_key' => $key,
                 'guest_identifier' => $guestId,
+                'contact_id' => $this->contactId($gallery),
             ]);
         } catch (UniqueConstraintViolationException) {
             // Two clicks racing each other. The index is what decides, and
@@ -109,18 +107,30 @@ class GalleryEngagementController extends Controller
             'gallery_version_id' => $version->id,
             'asset_key' => $key,
             'guest_identifier' => $this->guestId($request),
+            'contact_id' => $this->contactId($gallery),
             'body' => $body,
         ]);
 
         ($this->notifyStudio)(new AssetCommented($gallery, $comment));
 
-        return response()->json([
-            'comment' => [
-                'key' => $comment->asset_key,
-                'body' => $comment->body,
-                'createdAt' => $comment->created_at->toIso8601String(),
-            ],
-        ], 201);
+        // The exact shape index() returns, so the rail can append it without
+        // a reload — a row that came back missing its author rendered as a
+        // nameless comment until the next fetch.
+        return response()->json(['comment' => $this->row($comment)], 201);
+    }
+
+    /** @return array<string, mixed> */
+    private function row(AssetComment $comment): array
+    {
+        return [
+            'key' => $comment->asset_key,
+            'body' => $comment->body,
+            // G-01 (#229): a client writes under their own name, a guest as
+            // "Gast". One screen, one rule, no second row shape.
+            'author' => $comment->contact?->name ?? __('gallery.guest'),
+            'own' => $comment->contact_id !== null && $comment->contact_id === auth('portal')->id(),
+            'createdAt' => $comment->created_at->toIso8601String(),
+        ];
     }
 
     /**
@@ -142,6 +152,25 @@ class GalleryEngagementController extends Controller
         $request->session()->put(self::GUEST_KEY, $minted = bin2hex(random_bytes(16)));
 
         return $minted;
+    }
+
+    /**
+     * The signed-in client this gallery belongs to, or null. Checked against
+     * the booking rather than taken from the guard alone: somebody signed in
+     * to their own portal who then opens a link a friend forwarded them is a
+     * guest on that gallery, and should read as one.
+     */
+    private function contactId(Gallery $gallery): ?int
+    {
+        $contact = auth('portal')->user();
+
+        if ($contact === null || $gallery->project_id === null) {
+            return null;
+        }
+
+        return $contact->visibleProjects()->whereKey($gallery->project_id)->exists()
+            ? $contact->id
+            : null;
     }
 
     private function assetKey(Request $request): string
