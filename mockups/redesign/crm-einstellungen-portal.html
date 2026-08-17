@@ -8,9 +8,13 @@
 </head>
 <body data-nav="einstellungen">
 
-<!-- Was das Portal kann, nicht wer hineindarf: Zugänge hängen am Kontakt und
-     am Projekt. Hier stehen die vier Freigaben (portal_*_enabled), die
-     Wartung, die Begrüßung und die Rechtslinks.
+<!-- Zwei Sorten, deshalb zwei Gruppen: die vier Freigaben (portal_*_enabled)
+     sind Vorgaben für neue Kontakte und stehen am Kontakt übersteuerbar
+     (admin-kontakt-portal.html); Wartung, Begrüßung und Rechtslinks gelten für
+     das ganze Portal und haben keine Ausnahme.
+
+     Neben jeder Vorgabe steht, wie viele Kontakte heute abweichen — sonst
+     ändert man einen Startwert in der Annahme, damit alle zu treffen.
 
      Drei Begrüßungen statt einer, weil die Startseite drei Zustände hat —
      Anfrage, ein Auftrag, viele Aufträge. Ein Text für alle drei begrüßt
@@ -55,28 +59,49 @@
 
       <div class="pane-set">
 
-        <h2>Was Kunden dürfen</h2>
+        <h2>Vorgabe für neue Kontakte</h2>
         <div class="setting">
           <span class="t">Angebot annehmen</span>
-          <span class="v mut">14 angenommen · 2026</span>
+          <span class="v mut">2 Kontakte abweichend</span>
           <span class="sw on"></span>
         </div>
         <div class="setting">
           <span class="t">Vertrag unterschreiben</span>
-          <span class="v mut">11 unterschrieben</span>
+          <span class="v mut">alle wie Vorgabe</span>
           <span class="sw on"></span>
         </div>
         <div class="setting">
           <span class="t">Nachrichten schreiben</span>
-          <span class="v mut">6 Fäden offen</span>
+          <span class="v mut">1 Kontakt abweichend</span>
           <span class="sw on"></span>
         </div>
         <div class="setting">
           <span class="t">Zahlungsstand sehen</span>
+          <span class="v mut">4 Kontakte abweichend</span>
           <span class="sw"></span>
         </div>
+        <div class="setting">
+          <span class="t">Gültigkeit eines Zugangslinks</span>
+          <span class="v">14 Tage</span>
+        </div>
+        <div class="setting">
+          <span class="t">Abweichungen ansehen</span>
+          <span class="v mut">7 von 31 Kontakten</span>
+          <a class="link" href="crm-kontakte.html">Kontakte</a>
+        </div>
 
-        <h2>Begrüßung</h2>
+        <h2>Gilt für das ganze Portal</h2>
+        <div class="setting">
+          <span class="t">Portal geschlossen</span>
+          <span class="sw"></span>
+        </div>
+        <div class="setting">
+          <span class="t">Hinweistext bei geschlossenem Portal</span>
+          <span class="v mut">Wir sind kurz im Umbau, ab Montag wieder da.</span>
+          <a class="link" href="#">Ändern</a>
+        </div>
+
+        <h2>Begrüßung auf der Startseite</h2>
         <form class="form">
           <div class="fr">
             <label for="g1">Anfrage</label>
@@ -92,17 +117,6 @@
           </div>
         </form>
 
-        <h2>Wartung</h2>
-        <div class="setting">
-          <span class="t">Portal geschlossen</span>
-          <span class="sw"></span>
-        </div>
-        <div class="setting">
-          <span class="t">Hinweistext</span>
-          <span class="v mut">Wir sind kurz im Umbau, ab Montag wieder da.</span>
-          <a class="link" href="#">Ändern</a>
-        </div>
-
         <h2>Rechtliches</h2>
         <form class="form">
           <div class="fr">
@@ -115,16 +129,6 @@
           </div>
         </form>
 
-        <h2>Zugänge</h2>
-        <div class="setting">
-          <span class="t">Aktive Zugänge je Kontakt</span>
-          <span class="v mut">31</span>
-          <a class="link" href="crm-kontakte.html">Kontakte</a>
-        </div>
-        <div class="setting">
-          <span class="t">Gültigkeit eines Zugangslinks</span>
-          <span class="v">14 Tage</span>
-        </div>
       </div>
     </div>
   </main>
