@@ -593,6 +593,7 @@ registerCourt: string | null,
 representative: string | null,
 website: string | null,
 accentColor: string | null,
+fontPair: string | null,
 logoUrl: string | null,
 bankAccountHolder: string | null,
 bankIban: string | null,
@@ -616,6 +617,9 @@ mailReplyTo: string | null,
 mailSignature: string | null,
 mailBcc: string | null,
 };
+}
+namespace Enums {
+export type FontPair = 'instrument' | 'fraunces' | 'cormorant' | 'grotesk';
 }
 }
 }

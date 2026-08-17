@@ -4,7 +4,12 @@ import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
 
-const props = defineProps<{ settings: App.Settings.Data.StudioSettingsData }>()
+const props = withDefaults(defineProps<{
+  settings: App.Settings.Data.StudioSettingsData
+  // Absent during first-run setup: the pair is fine-tuning, not a thing a
+  // studio has to decide before it can work.
+  fontPairs?: { value: string; label: string; description: string }[]
+}>(), { fontPairs: () => [] })
 const emit = defineEmits<{ saved: [] }>()
 
 const form = useForm({
@@ -22,6 +27,7 @@ const form = useForm({
   representative: props.settings.representative ?? '',
   website: props.settings.website ?? '',
   accent_color: props.settings.accentColor ?? '',
+  font_pair: props.settings.fontPair ?? 'instrument',
   logo: null as File | null,
   bank_account_holder: props.settings.bankAccountHolder ?? '',
   bank_iban: props.settings.bankIban ?? '',
@@ -191,6 +197,22 @@ defineExpose({ form, submit })
             </div>
             <span class="hint">{{ $t('settings.accentColorHint') }}</span>
             <p v-if="form.errors.accent_color" class="err">{{ form.errors.accent_color }}</p>
+          </div>
+        </div>
+
+        <!-- #234: the pair is shown in itself, not named in a sample line —
+             a typeface is judged by reading it. Only the display pair is
+             selectable; minimum sizes and contrast stay fixed. -->
+        <div v-if="fontPairs.length" class="fld grp">
+          <Label>{{ $t('settings.fontPair') }}</Label>
+          <div class="fontpairs">
+            <label v-for="pair in fontPairs" :key="pair.value" :data-font="pair.value">
+              <input v-model="form.font_pair" type="radio" :value="pair.value" />
+              <span class="pv">
+                <b>{{ settings.displayName || pair.label }}</b>
+                <em>{{ pair.description }}</em>
+              </span>
+            </label>
           </div>
         </div>
       </div>

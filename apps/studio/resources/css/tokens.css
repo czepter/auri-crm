@@ -38,6 +38,15 @@
   --r-sm:5px;       /* count chips */
 
   --font:'Instrument Sans', system-ui, sans-serif;
+
+  /* #234: the display face and the two corrections it needs. A pair is
+     chosen per studio and every one of them rasterises differently, so the
+     tracking and the leading of the big sizes travel with the pair rather
+     than being baked into the rules that use them — a broad slab at
+     -0.022em collides with itself, a Didone at 0.94 clips its ascenders. */
+  --font-display:'Instrument Serif', Georgia, serif;
+  --display-tracking:-.022em;
+  --display-leading:.94;
 }
 
 /* portal — same bones, more air. The theme is a spacing scale and a radius,
@@ -354,3 +363,42 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 .galcover { width:40px; height:40px; flex:none; border-radius:6px; object-fit:cover; background:var(--hover); }
 .galcover.empty { display:flex; align-items:center; justify-content:center; text-align:center;
                   font:600 8.5px/1.2 var(--font); color:var(--faint); letter-spacing:.02em; padding:4px; }
+
+/* ------------------------------------------------------------------
+   #234: four pairs, chosen per studio and set on the surface root.
+
+   Not a free picker, for the reason the issue records: a studio's CI font
+   is a desktop licence, web use is a separate contract, and the metric
+   corrections below cannot be guessed for a file somebody uploads. Every
+   family here is OFL, which is what lets the product license one set for
+   everybody and self-host it.
+
+   Only the display pair changes. Minimum sizes and contrast stay put —
+   they are legibility, not taste.
+   ------------------------------------------------------------------ */
+
+[data-font="fraunces"] {
+  --font:'Inter', system-ui, sans-serif;
+  --font-display:'Fraunces', Georgia, serif;
+  /* Fraunces sets wide and tall: less tracking to take back, and a leading
+     that does not let the ascenders touch. */
+  --display-tracking:-.014em;
+  --display-leading:1.02;
+}
+
+[data-font="cormorant"] {
+  --font:'Karla', system-ui, sans-serif;
+  --font-display:'Cormorant Garamond', Georgia, serif;
+  /* A fine old-style at display size needs tightening, and it carries its
+     own generous leading already. */
+  --display-tracking:-.028em;
+  --display-leading:1;
+}
+
+[data-font="grotesk"] {
+  --font:'IBM Plex Sans', system-ui, sans-serif;
+  --font-display:'Space Grotesk', system-ui, sans-serif;
+  /* A technical grotesque has no ascender problem and reads tight. */
+  --display-tracking:-.03em;
+  --display-leading:.98;
+}

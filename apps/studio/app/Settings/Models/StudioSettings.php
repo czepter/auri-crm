@@ -41,7 +41,7 @@ class StudioSettings extends Model
         'display_name',
         'legal_name', 'legal_form', 'street', 'postcode', 'city', 'country',
         'tax_number', 'vat_id', 'register_number', 'register_court', 'representative',
-        'website', 'accent_color', 'logo_path',
+        'website', 'accent_color', 'logo_path', 'font_pair',
         'bank_account_holder', 'bank_iban', 'bank_bic',
         'vat_mode', 'vat_rate', 'vat_note',
         'default_shoot_duration_minutes',

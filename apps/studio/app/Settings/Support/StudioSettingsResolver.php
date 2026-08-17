@@ -2,6 +2,8 @@
 
 namespace App\Settings\Support;
 
+use App\Settings\Enums\FontPair;
+
 use App\Models\User;
 use App\Settings\Models\StudioSettings;
 use App\Support\AuditLogger;
@@ -204,13 +206,23 @@ class StudioSettingsResolver
      *
      * @return array<string, mixed>
      */
+    /**
+     * #234: the display pair this studio's portal and gallery are written in.
+     * Null is Instrument — a studio that never opened the setting keeps what
+     * it had.
+     */
+    public function fontPair(): FontPair
+    {
+        return FontPair::tryFrom((string) $this->row()->font_pair) ?? FontPair::Instrument;
+    }
+
     public function attributes(): array
     {
         return Arr::only($this->row()->getAttributes(), [
             'display_name',
             'legal_name', 'legal_form', 'street', 'postcode', 'city', 'country',
             'tax_number', 'vat_id', 'register_number', 'register_court', 'representative',
-            'website', 'accent_color', 'logo_path',
+            'website', 'accent_color', 'logo_path', 'font_pair',
             'bank_account_holder', 'bank_iban', 'bank_bic',
         ]);
     }

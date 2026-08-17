@@ -36,6 +36,8 @@ class StudioSettingsData extends Data
         public ?string $representative,
         public ?string $website,
         public ?string $accentColor,
+        /** #234: which of the four licensed pairs this studio writes in. */
+        public ?string $fontPair,
         public ?string $logoUrl,
         public ?string $bankAccountHolder,
         public ?string $bankIban,
@@ -81,6 +83,7 @@ class StudioSettingsData extends Data
             representative: $attrs['representative'],
             website: $attrs['website'],
             accentColor: $attrs['accent_color'],
+            fontPair: $attrs['font_pair'] ?? null,
             logoUrl: $settings->logoPath() !== null ? route('settings.logo') : null,
             bankAccountHolder: $attrs['bank_account_holder'],
             bankIban: $attrs['bank_iban'],

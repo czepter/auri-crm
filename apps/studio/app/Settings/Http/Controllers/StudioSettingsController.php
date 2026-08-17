@@ -6,6 +6,7 @@ use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Rules\ValidIban;
+use App\Settings\Enums\FontPair;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,6 +34,13 @@ class StudioSettingsController extends Controller
         $this->authorizeSettings();
 
         return Inertia::render('Settings/Index', [
+            // #234: the four pairs, each with what it is — the screen draws
+            // the choice as a preview and not as a sample line.
+            'fontPairs' => collect(FontPair::cases())->map(fn (FontPair $pair) => [
+                'value' => $pair->value,
+                'label' => $pair->label(),
+                'description' => $pair->description(),
+            ])->all(),
             'settings' => StudioSettingsData::fromResolver($settings),
         ]);
     }
@@ -59,6 +67,9 @@ class StudioSettingsController extends Controller
             'representative' => ['nullable', 'string', 'max:255'],
             'website' => ['nullable', 'string', 'max:255', 'url'],
             'accent_color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            // #234: an enum, never free text — the cases are the pairs this
+            // product licensed and self-hosts.
+            'font_pair' => ['nullable', Rule::enum(FontPair::class)],
             // SVG deliberately excluded: served inline from this app's own
             // origin (logo(), below), an uploaded SVG can carry a <script>
             // and execute as this app rather than as an image.

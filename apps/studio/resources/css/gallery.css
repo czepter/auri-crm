@@ -31,7 +31,8 @@
 [data-theme="gallery"] .gpage { max-width:430px; margin:0 auto; padding:56px var(--s5) var(--s6); }
 [data-theme="gallery"] .gpage.wide { max-width:560px; }
 [data-theme="gallery"] .gcenter { text-align:center; }
-[data-theme="gallery"] .gtitle { font:600 27px/1.2 var(--font); letter-spacing:-.035em; margin:0; }
+/* #234: the display face and its own corrections — the pair decides both. */
+[data-theme="gallery"] .gtitle { font:600 27px/1.2 var(--font-display); letter-spacing:var(--display-tracking); margin:0; }
 [data-theme="gallery"] .gsub   { font:400 14px/1.6 var(--font); color:var(--muted); margin:var(--s2) 0 0; }
 [data-theme="gallery"] .glead  { font:400 14px/1.65 var(--font); color:var(--muted); margin:var(--s4) 0 0; }
 [data-theme="gallery"] .glead b { color:var(--ink); font-weight:600; }

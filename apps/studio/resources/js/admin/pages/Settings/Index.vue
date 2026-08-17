@@ -12,7 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
 
-const props = defineProps<{ settings: App.Settings.Data.StudioSettingsData }>()
+const props = defineProps<{
+
+  fontPairs: { value: string; label: string; description: string }[]
+  settings: App.Settings.Data.StudioSettingsData
+}>()
 
 // Which pane of the section shell is showing — client-side only, the same
 // second-level tab set the mockup draws as two static variants of one
@@ -153,7 +157,7 @@ function submitGeneral() {
       </nav>
 
       <div style="flex: 1; min-width: 0; max-width: 620px">
-        <ProfileForm v-if="pane === 'profile'" ref="profileRef" :settings="settings" />
+        <ProfileForm v-if="pane === 'profile'" ref="profileRef" :settings="settings" :font-pairs="fontPairs" />
         <VatForm v-else-if="pane === 'vat'" ref="vatRef" :settings="settings" />
         <DocumentsForm v-else-if="pane === 'documents'" ref="documentsRef" :settings="settings" />
         <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" />

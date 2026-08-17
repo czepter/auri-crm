@@ -2,7 +2,9 @@
 
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
+use App\Settings\Enums\FontPair;
 use App\Settings\Models\StudioSettings;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
@@ -248,4 +250,27 @@ it('lists Einstellungen in the sidebar only for a role that manages settings', f
 
     $photographer = $this->actingAs(staffMember(StaffRole::Photographer), 'staff')->get('/')->assertOk();
     expect($photographer->viewData('page')['props']['auth']['can'])->not->toContain('manage_settings');
+});
+
+// #234: an enum, never free text — the cases are the pairs this product has
+// licensed and self-hosts, and a fifth name would be a font nobody may serve.
+it('stores the chosen font pair and refuses one that is not licensed', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch('/einstellungen', [
+            'display_name' => 'Atelier Nordlicht', 'tax_number' => '22/123/45678',
+            'font_pair' => 'fraunces', ...t07ValidBankFields(),
+        ])
+        ->assertRedirect('/einstellungen');
+
+    expect(app(StudioSettingsResolver::class)->fontPair())->toBe(FontPair::Fraunces);
+
+    $this->patch('/einstellungen', [
+        'display_name' => 'Atelier Nordlicht', 'tax_number' => '22/123/45678',
+        'font_pair' => 'helvetica', ...t07ValidBankFields(),
+    ])->assertInvalid(['font_pair']);
+});
+
+// A studio that never opens the setting keeps exactly what it had.
+it('falls back to Instrument while nothing is chosen', function () {
+    expect(app(StudioSettingsResolver::class)->fontPair())->toBe(FontPair::Instrument);
 });

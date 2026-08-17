@@ -665,7 +665,8 @@
     "dayThu": "Do",
     "dayFri": "Fr",
     "daySat": "Sa",
-    "daySun": "So"
+    "daySun": "So",
+    "fontPair": "Schriftpaar"
   },
   "setup": {
     "title": "Studio einrichten",
