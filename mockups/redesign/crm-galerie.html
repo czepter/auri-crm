@@ -15,10 +15,16 @@
      ist eine veröffentlichte Auswahl (gallery_versions.version, published_at),
      also eine Aussage über Bilder.
 
-     Aktivität hat drei Blätter, weil die Fragen verschieden sind: wer hat
-     geladen (download_events mit requester_identifier, zip_build_id, ip),
-     wer hat markiert (asset_favorites, asset_comments je guest_identifier),
-     wer hat sich ausgewiesen (gallery_email_verifications mit consumed_at).
+     Aktivität zeigt nur, was auch aufgezeichnet wird. Aufrufe werden es
+     nicht: wer das Ansichtspasswort eingibt, bleibt eine anonyme Sitzung
+     (GalleryAccessSession), es gibt keine Zeile dafür. Aufgezeichnet sind
+     download_events (requester_identifier, zip_build_id, ip, request_date),
+     asset_favorites und asset_comments je guest_identifier sowie die Zugänge:
+     gallery_email_verifications.consumed_at für Gäste,
+     client_accesses.consumed_at für Kontakte mit Portalzugang.
+
+     zip_builds.scope kennt zwei Umfänge, ganze Fassung oder eine Liste —
+     Sets und Einzelbilder werden nicht als Download geführt.
 
      gallery_lists.contact_id ist nicht nullbar: eine Liste gehört immer
      jemandem. Deshalb steht der Mensch vorn und die Liste dahinter.
@@ -85,14 +91,14 @@
         <div class="sub">in 11 Tagen</div>
       </div>
       <div class="cell">
-        <div class="lab">Aufgerufen</div>
-        <div class="val">34</div>
-        <div class="sub">zuletzt heute 09:40</div>
+        <div class="lab">Markiert</div>
+        <div class="val">87</div>
+        <div class="sub">4 Listen · 18 Kommentare</div>
       </div>
       <div class="cell">
         <div class="lab">Heruntergeladen</div>
         <div class="val">6</div>
-        <div class="sub">3× ZIP, 3× Auswahl</div>
+        <div class="sub">zuletzt gestern 21:02</div>
       </div>
     </div>
 
@@ -285,12 +291,12 @@
             <div class="r">
               <span class="when">Lea Meier<span class="st">Auftraggeberin</span></span>
               <span class="what"><a class="link" href="crm-kontakt.html">lea.meier@example.de</a></span>
-              <span class="right">geöffnet heute 11:20</span>
+              <span class="right">Zugang benutzt heute 11:20</span>
             </div>
             <div class="r">
               <span class="when">Jan Kowalski<span class="st">Partner</span></span>
               <span class="what"><a class="link" href="#">j.kowalski@example.de</a></span>
-              <span class="right">geöffnet 13.08.</span>
+              <span class="right">Zugang benutzt 13.08.</span>
             </div>
             <div class="r">
               <span class="when">Maja Reinhold<span class="st">Gast</span></span>
@@ -335,7 +341,7 @@
           <div class="seg">
             <label for="akt-download">Downloads</label>
             <label for="akt-marken">Favoriten und Kommentare</label>
-            <label for="akt-zugriffe">Zugriffe</label>
+            <label for="akt-zugriffe">Zugänge</label>
           </div>
           <a class="link" href="#" style="margin-left:auto">Exportieren</a>
         </div>
@@ -347,7 +353,7 @@
                 <th style="width:26%">Wer</th>
                 <th style="width:30%">Was</th>
                 <th style="width:14%">Größe</th>
-                <th style="width:12%">Code</th>
+                <th style="width:12%">Fassung</th>
                 <th class="r" style="width:18%">Wann</th>
               </tr>
             </thead>
@@ -356,36 +362,29 @@
                 <td class="nm">maja.r@example.de</td>
                 <td>Liste „Eltern“ · 42 Bilder</td>
                 <td class="mu">web</td>
-                <td class="mu">4821</td>
-                <td class="r mu">gestern 21:02</td>
+                <td class="mu">Fassung 2</td>
+                <td class="r mu">gestern</td>
               </tr>
               <tr>
                 <td class="nm">Lea Meier</td>
-                <td>Alle Bilder als ZIP · 220</td>
+                <td>Alle Bilder · 220</td>
                 <td class="mu">original</td>
-                <td class="mu">4821</td>
-                <td class="r mu">13.08. · 19:40</td>
-              </tr>
-              <tr>
-                <td class="nm">Lea Meier</td>
-                <td>Einzelbild · 50mmfreunde_2026_0184</td>
-                <td class="mu">original</td>
-                <td class="mu">4821</td>
-                <td class="r mu">13.08. · 19:31</td>
+                <td class="mu">Fassung 2</td>
+                <td class="r mu">13.08.</td>
               </tr>
               <tr>
                 <td class="nm">j.kowalski@example.de</td>
-                <td>Set „Trauung“ · 64 Bilder</td>
+                <td>Liste „Danksagung“ · 12 Bilder</td>
                 <td class="mu">web</td>
-                <td class="mu">4821</td>
-                <td class="r mu">13.08. · 08:12</td>
+                <td class="mu">Fassung 2</td>
+                <td class="r mu">13.08.</td>
               </tr>
               <tr>
-                <td class="nm">maja.r@example.de</td>
-                <td class="mu">Code falsch · 2 Versuche</td>
-                <td class="mu">—</td>
-                <td class="mu">—</td>
-                <td class="r mu">gestern 20:55</td>
+                <td class="nm">Lea Meier</td>
+                <td>Alle Bilder · 206</td>
+                <td class="mu">original</td>
+                <td class="mu">Fassung 1</td>
+                <td class="r mu">09.08.</td>
               </tr>
             </tbody>
           </table>
@@ -416,18 +415,17 @@
           <table>
             <thead>
               <tr>
-                <th style="width:30%">Wer</th>
-                <th style="width:22%">Ausgewiesen</th>
-                <th style="width:14%">Aufrufe</th>
-                <th style="width:16%">Zuletzt</th>
-                <th class="r" style="width:18%">Herkunft</th>
+                <th style="width:32%">Wer</th>
+                <th style="width:26%">Womit</th>
+                <th style="width:20%">Bestätigt</th>
+                <th class="r" style="width:22%">Gültig bis</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td class="nm">Lea Meier</td><td class="mu">Portalzugang</td><td class="mu">18</td><td class="mu">heute 11:20</td><td class="r mu">Hamburg</td></tr>
-              <tr><td class="nm">Jan Kowalski</td><td class="mu">Portalzugang</td><td class="mu">6</td><td class="mu">13.08.</td><td class="r mu">Hamburg</td></tr>
-              <tr><td class="nm">maja.r@example.de</td><td class="mu">E-Mail · 14.08.</td><td class="mu">7</td><td class="mu">gestern 21:02</td><td class="r mu">Lüneburg</td></tr>
-              <tr><td class="nm">ohne Ausweis</td><td class="mu">nur Passwort</td><td class="mu">3</td><td class="mu">heute 09:40</td><td class="r mu">Hamburg</td></tr>
+              <tr><td class="nm">Lea Meier</td><td class="mu">Zugangslink</td><td class="mu">heute 11:20</td><td class="r mu">30.08.</td></tr>
+              <tr><td class="nm">Jan Kowalski</td><td class="mu">Zugangslink</td><td class="mu">13.08.</td><td class="r mu">30.08.</td></tr>
+              <tr><td class="nm">maja.r@example.de</td><td class="mu">E-Mail-Code</td><td class="mu">14.08. · 20:48</td><td class="r mu">abgelaufen</td></tr>
+              <tr><td class="nm">theresia.f@example.de</td><td class="mu">E-Mail-Code</td><td class="mu">—</td><td class="r mu">heute 22:10</td></tr>
             </tbody>
           </table>
         </div>
