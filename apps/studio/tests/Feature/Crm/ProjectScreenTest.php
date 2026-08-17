@@ -272,3 +272,45 @@ it('rejects an empty note', function () {
     $this->post("/auftraege/{$this->project->public_id}/notizen", ['body' => ''])
         ->assertSessionHasErrors('body');
 });
+
+// C-12 (#248): editing is a state of the same screen, so it posts back to the
+// record. One save for the whole state — the same answer #245 gives for the
+// inquiry, so the two screens behave alike.
+it('saves the name, the stage and the shoot blocks from the project screen', function () {
+    $project = Project::factory()->create(['name' => 'Alt']);
+    $lead = Lead::factory()->for($project)->atStage(LeadStage::New)->create();
+    $shoot = Shoot::factory()->for($project)->primary()->on('2026-06-14')->create();
+
+    test()->actingAs(test()->staff, 'staff')
+        ->patch("/auftraege/{$project->public_id}", [
+            'name' => 'Neu',
+            'stage' => LeadStage::Contacted->value,
+            'shoots' => [[
+                'id' => $shoot->public_id,
+                'date' => '2026-06-20',
+                'call_time' => '10:00',
+                'end_time' => null,
+                'venue_name' => 'Gut Basthorst',
+                'venue_city' => 'Basthorst',
+            ]],
+        ])
+        ->assertRedirect();
+
+    expect($project->fresh()->name)->toBe('Neu')
+        ->and($lead->fresh()->stage)->toBe(LeadStage::Contacted)
+        ->and($shoot->fresh()->date->format('Y-m-d'))->toBe('2026-06-20')
+        ->and($shoot->fresh()->venue_name)->toBe('Gut Basthorst');
+});
+
+// The value follows from the line items, not the other way round — so the
+// screen ships the figures with their source rather than a disabled field.
+it('carries the key figures with the proof under each', function () {
+    $project = Project::factory()->create();
+    Shoot::factory()->for($project)->primary()->on(now()->addMonth()->format('Y-m-d'))->create();
+
+    $figures = test()->actingAs(test()->staff, 'staff')
+        ->get("/auftraege/{$project->public_id}")->assertOk()->viewData('page')['props']['figures'];
+
+    expect($figures)->toHaveKeys(['phase', 'nextDate', 'value', 'open', 'portal'])
+        ->and($figures['nextDate']['value'])->toBe(now()->addMonth()->format('Y-m-d'));
+});

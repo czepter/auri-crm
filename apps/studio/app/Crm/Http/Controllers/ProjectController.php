@@ -13,6 +13,9 @@ use App\Crm\Data\ProjectRowData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\CrewRole;
+use App\Crm\Enums\LeadSource;
+use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\FormFieldType;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Project;
@@ -34,6 +37,9 @@ use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use App\Support\RecordVisit;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -132,12 +138,89 @@ class ProjectController extends Controller
                 'email' => $contact->email,
                 'phone' => $contact->phone,
             ])->all(),
+            // C-12 (#248): what the edit state offers as fixed choices.
+            'stages' => collect(LeadStage::cases())
+                ->map(fn (LeadStage $stage) => ['value' => $stage->value, 'label' => $stage->label()])->all(),
+            'sources' => collect(LeadSource::cases())
+                ->map(fn (LeadSource $source) => ['value' => $source->value, 'label' => $source->label()])->all(),
+            'roles' => collect(ProjectContactRole::cases())
+                ->map(fn (ProjectContactRole $role) => ['value' => $role->value, 'label' => $role->value])->all(),
+            'stage' => $project->lead?->stage->value,
+            'source' => $project->lead?->source->value,
             'galleries' => $project->galleries()->get()->map(fn ($gallery) => [
                 'id' => $gallery->public_id,
                 'title' => $gallery->title,
                 'expiresAt' => $gallery->expires_at?->format('Y-m-d'),
             ])->all(),
         ]);
+    }
+
+    /**
+     * C-12 (#248): editing is a state of this screen, not a second one — the
+     * same answer #245 gives for the inquiry, so the two screens behave
+     * alike: one save for the whole state, and the head stays put.
+     *
+     * What is operable: the project name, the funnel stage, the source, every
+     * shoot as a block, and each person's role. What is not — next date,
+     * value, what is open — carries the reason at its own label rather than a
+     * disabled field: the value follows from the line items, not the other
+     * way round, and without the note the operator hunts for a field that
+     * must not exist.
+     *
+     * Creating stays independent of this state: a note, a task, a shoot each
+     * have their own form at their own section. Nobody should have to unlock
+     * the whole record to write one line.
+     */
+    public function update(Request $request, Project $project): RedirectResponse
+    {
+        $this->authorize('manageShoots', $project);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'stage' => ['nullable', Rule::enum(LeadStage::class)],
+            'source' => ['nullable', Rule::enum(LeadSource::class)],
+            'people' => ['array'],
+            'people.*.id' => ['required', 'string', 'size:24'],
+            'people.*.role' => ['required', Rule::enum(ProjectContactRole::class)],
+            'shoots' => ['array'],
+            'shoots.*.id' => ['required', 'string', 'size:24'],
+            'shoots.*.date' => ['nullable', 'date_format:Y-m-d'],
+            'shoots.*.call_time' => ['nullable', 'date_format:H:i'],
+            'shoots.*.end_time' => ['nullable', 'date_format:H:i'],
+            'shoots.*.venue_name' => ['nullable', 'string', 'max:255'],
+            'shoots.*.venue_city' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        DB::transaction(function () use ($project, $validated) {
+            $project->update(['name' => $validated['name']]);
+
+            if ($project->lead !== null) {
+                $project->lead->update(array_filter([
+                    'stage' => $validated['stage'] ?? null,
+                    'source' => $validated['source'] ?? null,
+                ]));
+            }
+
+            foreach ($validated['people'] ?? [] as $person) {
+                $contact = $project->contacts()->where('contacts.public_id', $person['id'])->first();
+
+                if ($contact !== null) {
+                    $project->contacts()->updateExistingPivot($contact->id, ['role' => $person['role']]);
+                }
+            }
+
+            foreach ($validated['shoots'] ?? [] as $row) {
+                $project->shoots()->where('public_id', $row['id'])->first()?->update([
+                    'date' => $row['date'] ?? null,
+                    'call_time' => $row['call_time'] ?? null,
+                    'end_time' => $row['end_time'] ?? null,
+                    'venue_name' => $row['venue_name'] ?? null,
+                    'venue_city' => $row['venue_city'] ?? null,
+                ]);
+            }
+        });
+
+        return back();
     }
 
     /**

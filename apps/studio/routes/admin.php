@@ -336,6 +336,10 @@ Route::middleware('audience:staff')->group(function () {
         // rather than under the project, because the shoot's public id already
         // identifies it and nesting would let the two disagree.
         Route::get('/auftraege/{project}', [ProjectController::class, 'show'])->name('projects.show');
+        // C-12 (#248): editing is a state of the screen, so it posts back to
+        // the same record.
+        Route::patch('/auftraege/{project}', [ProjectController::class, 'update'])
+            ->name('projects.update');
         Route::get('/auftraege/{project}/shootings', [ProjectController::class, 'shoots'])
             ->name('projects.shoots');
         Route::post('/auftraege/{project}/buchung', [ProjectController::class, 'book'])

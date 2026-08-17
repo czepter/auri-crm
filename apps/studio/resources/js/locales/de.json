@@ -257,7 +257,10 @@
     "documents": "Unterlagen",
     "forms": "Fragebögen",
     "messages": "Nachrichten",
-    "quotes": "Angebot"
+    "quotes": "Angebot",
+    "fromShoots": "aus den Terminen",
+    "fromScope": "aus dem Leistungsumfang",
+    "fromPayments": "aus den Zahlungen"
   },
   "projects": {
     "title": "Projekte",

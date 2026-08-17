@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 
@@ -28,6 +28,11 @@ const props = defineProps<{
   }
   people: { id: string; name: string; role: string; email: string | null; phone: string | null }[]
   galleries: { id: string; title: string | null; expiresAt: string | null }[]
+  stages: { value: string; label: string }[]
+  sources: { value: string; label: string }[]
+  roles: { value: string; label: string }[]
+  stage: string | null
+  source: string | null
 }>()
 
 const money = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
@@ -47,6 +52,40 @@ function euro(minor: string | number | null) {
 // means widening the screen with every phase that turns up.
 const open = computed(() => props.tasks.filter((task) => !task.isDone))
 const done = computed(() => props.tasks.filter((task) => task.isDone))
+
+// C-12 (#248): the same answer #245 gives for the inquiry — one save for the
+// whole state, and the head stays put, so the two screens behave alike.
+const editing = ref(false)
+
+const edit = useForm({
+  name: props.header.name,
+  stage: props.stage,
+  source: props.source,
+  people: props.people.map((person) => ({ id: person.id, role: person.role })),
+  shoots: props.shoots.map((shoot) => ({
+    id: shoot.id,
+    date: shoot.date ?? '',
+    call_time: shoot.callTime ?? '',
+    end_time: shoot.endTime ?? '',
+    venue_name: shoot.venue?.split(', ')[0] ?? '',
+    venue_city: shoot.venue?.split(', ')[1] ?? '',
+  })),
+})
+
+function save() {
+  edit.transform((data) => ({
+    ...data,
+    shoots: data.shoots.map((shoot) => ({
+      ...shoot,
+      date: shoot.date === '' ? null : shoot.date,
+      call_time: shoot.call_time === '' ? null : shoot.call_time,
+      end_time: shoot.end_time === '' ? null : shoot.end_time,
+    })),
+  })).patch(`/auftraege/${props.header.id}`, {
+    preserveScroll: true,
+    onSuccess: () => (editing.value = false),
+  })
+}
 
 const note = useForm({ body: '' })
 
@@ -70,9 +109,19 @@ function complete(task: App.Crm.Data.TaskRowData) {
           <Link href="/projekte">{{ $t('projects.title') }}</Link>
         </div>
 
-        <div class="title">
-          <div><h1>{{ header.names }}</h1></div>
-          <div class="acts">
+        <div class="title" style="position: sticky; top: 0; z-index: 5; background: var(--paper)">
+          <div>
+            <input v-if="editing" v-model="edit.name" class="form" type="text" style="font-size: 22px" />
+            <h1 v-else>{{ header.names }}</h1>
+          </div>
+
+          <div v-if="editing" class="acts">
+            <a class="link" href="#" @click.prevent="editing = false">{{ $t('common.cancel') }}</a>
+            <button class="btn" type="button" :disabled="edit.processing" @click="save">{{ $t('common.save') }}</button>
+          </div>
+
+          <div v-else class="acts">
+            <a class="link" href="#" @click.prevent="editing = true">{{ $t('lead.edit') }}</a>
             <Link v-if="header.canManageQuotes" class="link" :href="`/auftraege/${header.id}/angebote`">
               {{ $t('project.quotes') }}
             </Link>
@@ -85,21 +134,33 @@ function complete(task: App.Crm.Data.TaskRowData) {
         <div class="band" style="margin-top: var(--s5)">
           <div class="cell">
             <div class="lab">{{ $t('project.position') }}</div>
-            <div class="val plain">{{ figures.phase.value ?? '—' }}</div>
+            <select v-if="editing && stage" v-model="edit.stage" class="form">
+              <option v-for="option in stages" :key="option.value" :value="option.value">{{ option.label }}</option>
+            </select>
+            <div v-else class="val plain">{{ figures.phase.value ?? '—' }}</div>
             <div v-if="figures.phase.proof" class="sub">{{ figures.phase.proof }}</div>
           </div>
           <div class="cell">
-            <div class="lab">{{ $t('project.mainDateLabel') }}</div>
+            <div class="lab">
+              {{ $t('project.mainDateLabel') }}
+              <span v-if="editing" class="derived"> · {{ $t('project.fromShoots') }}</span>
+            </div>
             <div class="val plain">{{ day(figures.nextDate.value) }}</div>
             <div class="sub">{{ $t('board.shootCount', shoots.length) }}</div>
           </div>
           <div class="cell">
-            <div class="lab">{{ $t('board.colValue') }}</div>
+            <div class="lab">
+              {{ $t('board.colValue') }}
+              <span v-if="editing" class="derived"> · {{ $t('project.fromScope') }}</span>
+            </div>
             <div class="val">{{ euro(figures.value.value) }}</div>
             <div v-if="figures.value.proof" class="sub">{{ figures.value.proof }}</div>
           </div>
           <div class="cell">
-            <div class="lab">{{ $t('project.openAmount') }}</div>
+            <div class="lab">
+              {{ $t('project.openAmount') }}
+              <span v-if="editing" class="derived"> · {{ $t('project.fromPayments') }}</span>
+            </div>
             <div class="val" :class="{ warn: Number(figures.open.value ?? 0) > 0 }">{{ euro(figures.open.value) }}</div>
             <div v-if="figures.open.proof" class="sub">{{ $t('project.instalments', Number(figures.open.proof)) }}</div>
           </div>
@@ -113,7 +174,21 @@ function complete(task: App.Crm.Data.TaskRowData) {
 
         <section class="sec">
           <h2>{{ $t('lead.dates') }}</h2>
-          <div class="rowset">
+          <div v-if="editing" class="form">
+            <div v-for="shoot in edit.shoots" :key="shoot.id" class="shootblock">
+              <div class="line">
+                <div class="field"><span>{{ $t('project.shootDate') }}</span><input v-model="shoot.date" type="date" /></div>
+                <div class="field"><span>{{ $t('project.callTime') }}</span><input v-model="shoot.call_time" type="time" /></div>
+                <div class="field"><span>{{ $t('project.endTime') }}</span><input v-model="shoot.end_time" type="time" /></div>
+              </div>
+              <div class="line">
+                <div class="field grow"><span>{{ $t('project.venueName') }}</span><input v-model="shoot.venue_name" type="text" /></div>
+                <div class="field grow"><span>{{ $t('project.venueCity') }}</span><input v-model="shoot.venue_city" type="text" /></div>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="rowset">
             <div v-for="shoot in shoots" :key="shoot.id" class="r">
               <span class="when">
                 {{ day(shoot.date) }}
@@ -206,9 +281,14 @@ function complete(task: App.Crm.Data.TaskRowData) {
 
       <aside class="rail">
         <h2>{{ $t('lead.people') }}</h2>
-        <div v-for="person in people" :key="person.id" class="p">
+        <div v-for="(person, index) in people" :key="person.id" class="p">
           <Link class="n" :href="`/kontakte/${person.id}`">{{ person.name }}</Link>
-          <span class="st">{{ $t(`contacts.role.${person.role}`) }}</span>
+          <select v-if="editing" v-model="edit.people[index].role" class="form">
+            <option v-for="option in roles" :key="option.value" :value="option.value">
+              {{ $t(`contacts.role.${option.value}`) }}
+            </option>
+          </select>
+          <span v-else class="st">{{ $t(`contacts.role.${person.role}`) }}</span>
         </div>
 
         <template v-if="paymentPlan">
