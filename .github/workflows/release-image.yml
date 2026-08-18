@@ -34,7 +34,7 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check the Compose file against Coolify's parser rules
         run: php docker/app/check-coolify-compose.php
 
@@ -52,11 +52,11 @@ jobs:
           - image: gallery
             dockerfile: docker/gallery/Dockerfile
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -68,7 +68,7 @@ jobs:
       # commit SHA; the SHA is the only tag that can name a specific deploy to
       # roll back to.
       - id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository }}/${{ matrix.image }}
           tags: |
@@ -76,7 +76,7 @@ jobs:
             type=ref,event=branch
             type=sha,format=long
 
-      - uses: docker/build-push-action@v6
+      - uses: docker/build-push-action@v7
         with:
           context: .
           file: ${{ matrix.dockerfile }}
