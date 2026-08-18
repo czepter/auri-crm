@@ -262,7 +262,8 @@
     "quotes": "Angebot",
     "fromShoots": "aus den Terminen",
     "fromScope": "aus dem Leistungsumfang",
-    "fromPayments": "aus den Zahlungen"
+    "fromPayments": "aus den Zahlungen",
+    "portalToggle": "Portal-Sichtbarkeit umschalten"
   },
   "projects": {
     "title": "Projekte",

@@ -120,33 +120,33 @@ function submit() {
 
         <div v-if="creating" class="grp">
           <div class="line">
-            <div class="field grow">
+            <label class="field grow">
               <span>{{ $t('leads.name') }}</span>
               <input v-model="form.contact_name" type="text" @input="proposeProjectName" />
-            </div>
-            <div class="field grow">
+            </label>
+            <label class="field grow">
               <span>{{ $t('leads.email') }}</span>
               <input v-model="form.contact_email" type="email" />
-            </div>
-            <div class="field grow">
+            </label>
+            <label class="field grow">
               <span>{{ $t('leads.phone') }}</span>
               <input v-model="form.contact_phone" type="tel" />
-            </div>
+            </label>
           </div>
 
           <div v-for="(person, index) in form.people" :key="index" class="line">
-            <div class="field grow">
+            <label class="field grow">
               <span>{{ $t('leads.name') }}</span>
               <input v-model="person.name" type="text" />
-            </div>
-            <div class="field grow">
+            </label>
+            <label class="field grow">
               <span>{{ $t('leads.email') }}</span>
               <input v-model="person.email" type="email" />
-            </div>
-            <div class="field grow">
+            </label>
+            <label class="field grow">
               <span>{{ $t('leads.phone') }}</span>
               <input v-model="person.phone" type="tel" />
-            </div>
+            </label>
           </div>
 
           <button class="ghost" type="button" style="margin-top: var(--s2)" @click="addPerson">

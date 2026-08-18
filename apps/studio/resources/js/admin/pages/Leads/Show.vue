@@ -265,13 +265,13 @@ const due = computed(() => {
           <div v-if="editing && !lead.booked" class="form">
             <div v-for="shoot in edit.shoots" :key="shoot.id" class="shootblock">
               <div class="line">
-                <div class="field"><span>{{ $t('project.shootDate') }}</span><input v-model="shoot.date" type="date" /></div>
-                <div class="field"><span>{{ $t('project.callTime') }}</span><input v-model="shoot.call_time" type="time" /></div>
-                <div class="field"><span>{{ $t('project.endTime') }}</span><input v-model="shoot.end_time" type="time" /></div>
+                <label class="field"><span>{{ $t('project.shootDate') }}</span><input v-model="shoot.date" type="date" /></label>
+                <label class="field"><span>{{ $t('project.callTime') }}</span><input v-model="shoot.call_time" type="time" /></label>
+                <label class="field"><span>{{ $t('project.endTime') }}</span><input v-model="shoot.end_time" type="time" /></label>
               </div>
               <div class="line">
-                <div class="field grow"><span>{{ $t('project.venueName') }}</span><input v-model="shoot.venue_name" type="text" /></div>
-                <div class="field grow"><span>{{ $t('project.venueCity') }}</span><input v-model="shoot.venue_city" type="text" /></div>
+                <label class="field grow"><span>{{ $t('project.venueName') }}</span><input v-model="shoot.venue_name" type="text" /></label>
+                <label class="field grow"><span>{{ $t('project.venueCity') }}</span><input v-model="shoot.venue_city" type="text" /></label>
               </div>
             </div>
           </div>
@@ -328,21 +328,21 @@ const due = computed(() => {
           <!-- One row: title, who it is for, when it is due. -->
           <form class="composer form" @submit.prevent="addTask">
             <div class="line">
-              <div class="field grow">
+              <label class="field grow">
                 <span>{{ $t('lead.taskTitle') }}</span>
                 <input v-model="task.title" type="text" />
-              </div>
-              <div class="field">
+              </label>
+              <label class="field">
                 <span>{{ $t('lead.taskAudience') }}</span>
                 <select v-model="task.audience">
                   <option value="internal">{{ $t('lead.audienceInternal') }}</option>
                   <option value="client">{{ $t('lead.audienceClient') }}</option>
                 </select>
-              </div>
-              <div class="field">
+              </label>
+              <label class="field">
                 <span>{{ $t('lead.taskDue') }}</span>
                 <input v-model="task.due_on" type="date" />
-              </div>
+              </label>
             </div>
             <div class="foot">
               <button class="btn-2" type="submit" :disabled="!task.title || task.processing">

@@ -96,6 +96,10 @@ function addNote() {
   })
 }
 
+function togglePortal() {
+  router.post(`/auftraege/${props.header.id}/portal-sichtbarkeit`, {}, { preserveScroll: true })
+}
+
 function complete(task: App.Crm.Data.TaskRowData) {
   router.post(`/aufgaben/${task.id}/erledigt`, {}, { preserveScroll: true })
 }
@@ -166,8 +170,19 @@ function complete(task: App.Crm.Data.TaskRowData) {
           </div>
           <div class="cell">
             <div class="lab">{{ $t('project.portal') }}</div>
-            <div class="val plain">
+            <!-- The figure and the switch that changes it, in one cell: this
+                 is the one key value that is a decision rather than a
+                 derivation, so it is the one with a control. -->
+            <div class="val plain" style="display: flex; align-items: center; gap: var(--s3)">
               {{ figures.portal.value === 'on' ? $t('contacts.portalOn') : $t('contacts.portalOff') }}
+              <span
+                v-if="header.canManagePortalVisibility"
+                class="sw"
+                :class="{ on: figures.portal.value === 'on' }"
+                role="button"
+                :aria-label="$t('project.portalToggle')"
+                @click="togglePortal"
+              />
             </div>
           </div>
         </div>
@@ -177,13 +192,13 @@ function complete(task: App.Crm.Data.TaskRowData) {
           <div v-if="editing" class="form">
             <div v-for="shoot in edit.shoots" :key="shoot.id" class="shootblock">
               <div class="line">
-                <div class="field"><span>{{ $t('project.shootDate') }}</span><input v-model="shoot.date" type="date" /></div>
-                <div class="field"><span>{{ $t('project.callTime') }}</span><input v-model="shoot.call_time" type="time" /></div>
-                <div class="field"><span>{{ $t('project.endTime') }}</span><input v-model="shoot.end_time" type="time" /></div>
+                <label class="field"><span>{{ $t('project.shootDate') }}</span><input v-model="shoot.date" type="date" /></label>
+                <label class="field"><span>{{ $t('project.callTime') }}</span><input v-model="shoot.call_time" type="time" /></label>
+                <label class="field"><span>{{ $t('project.endTime') }}</span><input v-model="shoot.end_time" type="time" /></label>
               </div>
               <div class="line">
-                <div class="field grow"><span>{{ $t('project.venueName') }}</span><input v-model="shoot.venue_name" type="text" /></div>
-                <div class="field grow"><span>{{ $t('project.venueCity') }}</span><input v-model="shoot.venue_city" type="text" /></div>
+                <label class="field grow"><span>{{ $t('project.venueName') }}</span><input v-model="shoot.venue_name" type="text" /></label>
+                <label class="field grow"><span>{{ $t('project.venueCity') }}</span><input v-model="shoot.venue_city" type="text" /></label>
               </div>
             </div>
           </div>
