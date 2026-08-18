@@ -18,7 +18,6 @@ function submit() {
     <div class="authcard">
       <span class="brand">Nordlicht</span>
       <h1>{{ $t('reset.requestTitle') }}</h1>
-      <p class="hint" style="margin-bottom: var(--s5)">{{ $t('reset.requestHint') }}</p>
 
       <!-- The same message whether or not the address has an account: a
            differing one tells a stranger which addresses exist. -->

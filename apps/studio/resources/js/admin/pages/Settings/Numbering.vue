@@ -114,9 +114,7 @@ function save(rangeId: string) {
                   type="number"
                   min="1"
                   :disabled="!range.canSetStartingCounter" />
-                <p class="hint">
-                  {{ range.canSetStartingCounter ? $t('settings.numberingStartingCounterHint') : $t('settings.numberingLockedHint') }}
-                </p>
+                <p v-if="!range.canSetStartingCounter" class="hint">{{ $t('settings.numberingLockedHint') }}</p>
                 <p v-if="forms[range.id].errors.starting_counter" class="err">
                   {{ forms[range.id].errors.starting_counter }}
                 </p>

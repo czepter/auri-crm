@@ -57,13 +57,11 @@ defineExpose({ form, submit })
           <div class="fld">
             <Label for="m-antwortan">{{ $t('settings.mailReplyToLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
             <Input id="m-antwortan" v-model="form.mail_reply_to" type="email" />
-            <span class="hint">{{ $t('settings.mailReplyToHint') }}</span>
             <p v-if="form.errors.mail_reply_to" class="err">{{ form.errors.mail_reply_to }}</p>
           </div>
           <div class="fld">
             <Label for="m-bcc">{{ $t('settings.mailBccLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
             <Input id="m-bcc" v-model="form.mail_bcc" type="email" />
-            <span class="hint">{{ $t('settings.mailBccHint') }}</span>
             <p v-if="form.errors.mail_bcc" class="err">{{ form.errors.mail_bcc }}</p>
           </div>
         </div>
@@ -76,7 +74,6 @@ defineExpose({ form, submit })
         <div class="fld">
           <Label for="m-signatur">{{ $t('settings.mailSignatureFieldLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
           <Textarea id="m-signatur" v-model="form.mail_signature" rows="4" />
-          <span class="hint">{{ $t('settings.mailSignatureHint') }}</span>
           <p v-if="form.errors.mail_signature" class="err">{{ form.errors.mail_signature }}</p>
         </div>
       </div>

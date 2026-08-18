@@ -36,8 +36,6 @@ defineExpose({ form, submit })
 
 <template>
   <div>
-    <p class="hint">{{ $t('onboarding.templatesHint') }}</p>
-
     <div v-for="(entries, type) in starters" :key="type" class="dsec">
       <div class="dlab">{{ typeLabels[type] ?? type }}</div>
       <label v-for="starter in entries" :key="starter.key" class="cbrow">
@@ -48,9 +46,5 @@ defineExpose({ form, submit })
         </span>
       </label>
     </div>
-
-    <!-- Nothing ticked is a real answer, not a nag: the create screen still
-         offers the whole catalog afterwards. -->
-    <p class="hint" style="margin-top: var(--s3)">{{ $t('onboarding.templatesSkipHint') }}</p>
   </div>
 </template>

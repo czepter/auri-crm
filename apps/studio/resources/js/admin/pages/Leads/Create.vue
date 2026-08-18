@@ -162,7 +162,6 @@ function submit() {
               v-model="form.project_name"
               type="text"
               @input="nameTouched = true" />
-            <p class="hint">{{ $t('leads.projectNameHint') }}</p>
             <p v-if="form.errors.project_name" class="err">{{ form.errors.project_name }}</p>
           </div>
         </div>
@@ -219,7 +218,6 @@ function submit() {
           <div class="fld">
             <Label for="inquiry_text">{{ $t('leads.inquiryText') }}</Label>
             <Textarea id="inquiry_text" v-model="form.inquiry_text" rows="8" />
-            <p class="hint">{{ $t('leads.inquiryTextHint') }}</p>
           </div>
         </div>
 

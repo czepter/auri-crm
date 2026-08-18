@@ -171,7 +171,6 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
                   {{ $t('project.shootDate') }}<em>{{ $t('project.optional') }}</em>
                 </Label>
                 <Input id="date" v-model="form.date" type="date" />
-                <p class="hint">{{ $t('project.shootDateHint') }}</p>
               </div>
 
               <div class="two">

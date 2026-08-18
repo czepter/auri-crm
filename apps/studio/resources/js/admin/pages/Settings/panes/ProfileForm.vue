@@ -195,7 +195,6 @@ defineExpose({ form, submit })
               ></span>
               <Input id="p-akzent" v-model="form.accent_color" class="tabular-nums" type="text" placeholder="#B44E22" />
             </div>
-            <span class="hint">{{ $t('settings.accentColorHint') }}</span>
             <p v-if="form.errors.accent_color" class="err">{{ form.errors.accent_color }}</p>
           </div>
         </div>

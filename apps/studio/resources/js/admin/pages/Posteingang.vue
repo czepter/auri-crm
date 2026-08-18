@@ -212,7 +212,6 @@ function receivedAt(iso: string) {
       <template v-else>
         <p v-if="catchAll"><code>{{ catchAll }}</code></p>
         <p v-else class="hint">{{ $t('inbox.noSecret') }}</p>
-        <p class="hint">{{ $t('inbox.addressHint') }}</p>
 
         <!-- Rotation is the Inhaber's alone, and the dialog says what it
              costs: every address already handed out stops working, including

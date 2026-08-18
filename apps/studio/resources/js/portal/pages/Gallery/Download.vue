@@ -231,7 +231,7 @@ function longDate(iso: string) {
 
         <p v-if="build.status === 'failed'" class="err"><b>{{ $t('gallery.buildFailed') }}</b></p>
 
-        <p v-else-if="build.status === 'building'" class="hint">{{ $t('gallery.preparingHint') }}</p>
+        <p v-else-if="build.status === 'building'" class="hint">{{ $t('gallery.preparing') }}</p>
 
         <div v-else class="parts">
           <div v-for="part in build.parts" :key="part.number" class="part">
