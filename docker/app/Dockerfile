@@ -82,6 +82,11 @@ ENV SERVER_NAME=:8080
 # has to be repeated once per service — and a service name or a driver choice
 # repeated eight times is eight places for them to drift apart. What remains in
 # Compose is exactly the set that varies per deployment: secrets and domains.
+#
+# predis rather than config/database.php's phpredis default: composer.json
+# requires predis/predis and install-php-extensions above installs no ext-redis,
+# so leaving the default in place makes every Redis call fatal — the migration
+# one-shot dies on `--isolated`'s cache lock and no surface ever starts.
 ENV APP_ENV=production \
     APP_DEBUG=false \
     APP_NAME=Studio \
@@ -93,6 +98,7 @@ ENV APP_ENV=production \
     DB_PORT=5432 \
     REDIS_HOST=redis \
     REDIS_PORT=6379 \
+    REDIS_CLIENT=predis \
     QUEUE_CONNECTION=redis \
     CACHE_STORE=redis \
     SESSION_DRIVER=database \
