@@ -15,9 +15,12 @@ test('an inquiry typed into one form lands on the board', async ({ page }) => {
 
   // C-09 (#244): one row per person. The partner is a second row, added
   // where they belong, with their own way of being reached.
-  await page.getByLabel('Telefon').first().fill('0171 3948820')
+  // `exact` on both: getByLabel matches substrings, and "Name" would take
+  // "Projektname" with it — the partner then lands in the project's own name
+  // field and the person row stays empty.
+  await page.getByLabel('Telefon', { exact: true }).first().fill('0171 3948820')
   await page.getByRole('button', { name: '+ Person' }).click()
-  await page.getByLabel('Name').last().fill('Ruben Falk')
+  await page.getByLabel('Name', { exact: true }).last().fill('Ruben Falk')
   await page.getByLabel('Haupttermin').fill('2026-06-14')
 
   await page.getByRole('button', { name: 'Anfrage anlegen' }).click()
