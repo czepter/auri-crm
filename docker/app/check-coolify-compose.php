@@ -18,6 +18,7 @@ $errors = [];
 
 $service = null;
 $declaredOwnFqdn = [];
+$referencedFqdn = [];
 
 foreach ($lines as $i => $line) {
     $no = $i + 1;
@@ -63,12 +64,19 @@ foreach ($lines as $i => $line) {
         $errors[] = "$no: $service.$key = $value — a SERVICE_* variable has to be the entire value or Coolify skips it.";
     }
 
-    // Rule 3/4: Coolify assigns a referenced domain to whichever service the
-    // reference is written in, but only while that service has no domain yet.
-    // So the reference is safe exactly when this service has already declared
-    // its own keyed FQDN above it — and never in a service that has none.
-    if (preg_match('/^\$\{?SERVICE_FQDN_/', $value) && ! ($declaredOwnFqdn[$service] ?? false)) {
-        $errors[] = "$no: $service.$key references a domain before (or without) declaring its own SERVICE_FQDN_<NAME>_<PORT> — Coolify would hand that domain to $service.";
+    // Rule 3/4: shared.php assigns a referenced domain to the service the
+    // reference is written in, but only when that service has no domain yet
+    // *and* nothing has referenced that bare name before
+    // (`is_null($savedService->fqdn) && ! $foundEnv`). The keyed form stores
+    // SERVICE_FQDN_<NAME>_<PORT>, a different key, so only an earlier
+    // reference sets $foundEnv. Either condition failing makes the reference
+    // safe; both holding is what silently moves a domain.
+    if (preg_match('/^\$\{?(SERVICE_FQDN_[A-Z0-9]+)\}?$/', $value, $ref)) {
+        if (! ($declaredOwnFqdn[$service] ?? false) && ! isset($referencedFqdn[$ref[1]])) {
+            $errors[] = "$no: $service.$key is the first reference to \${$ref[1]} and $service declares no domain of its own — Coolify would hand that domain to $service.";
+        }
+
+        $referencedFqdn[$ref[1]] = true;
     }
 }
 

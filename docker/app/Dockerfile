@@ -13,12 +13,24 @@ FROM dunglas/frankenphp:1-php8.5 AS base
 
 # install-php-extensions ships inside the FrankenPHP image and resolves each
 # extension's system libraries itself, so the list here is the one CI installs
-# via shivammathur/setup-php (pdo_pgsql, bcmath, gd, intl), plus pcntl — Horizon
-# traps SIGTERM/SIGUSR2 through it, see docker/php/Dockerfile — plus opcache,
-# which the dev image has no use for, and zip, which Composer needs to unpack a
-# dist archive at all.
-RUN install-php-extensions pdo_pgsql bcmath gd intl pcntl opcache zip \
+# via shivammathur/setup-php (pdo_pgsql, bcmath, gd, intl, exif), plus pcntl —
+# Horizon traps SIGTERM/SIGUSR2 through it, see docker/php/Dockerfile — plus
+# opcache, which the dev image has no use for, and zip, which Composer needs to
+# unpack a dist archive at all.
+RUN install-php-extensions pdo_pgsql bcmath gd intl exif pcntl opcache zip \
     && mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+
+# Neither of these is a PHP extension, which is why install-php-extensions
+# above cannot carry them and docker/php/Dockerfile installs them by apt too.
+# App\Media\Support\LibvipsDerivativePipeline shells out to
+# vipsthumbnail/vipsheader rather than binding libvips into PHP (#52), and
+# Debian's libheif links no AV1 encoder on its own — without the plugin every
+# AVIF rung of the derivative ladder fails "Unsupported compression" while the
+# WebP rung beside it succeeds.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libvips-tools \
+        libheif-plugin-aomenc \
+    && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------- assets
 FROM node:24-alpine AS assets

@@ -16,6 +16,7 @@ services:
       AWS_ENDPOINT: ${SERVICE_FQDN_RUSTFS}
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
+      PORTAL_URL: ${SERVICE_FQDN_PORTAL}
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
     depends_on:
@@ -104,11 +105,7 @@ services:
     stop_grace_period: 60s
     environment:
       APP_SURFACE: admin
-      # Plain variable, not ${SERVICE_FQDN_ADMIN}: Coolify assigns a referenced
-      # domain to whichever service the reference is written in, and this one
-      # has no domain of its own to keep that assignment away from. Set it to
-      # the surface whose links a queued mail should contain.
-      APP_URL: ${APP_URL}
+      APP_URL: ${SERVICE_FQDN_PORTAL}
       APP_KEY: ${SERVICE_REALBASE64_APPKEY}
       SENTRY_LARAVEL_DSN: ${STUDIO_SENTRY_DSN}
       DB_DATABASE: ${POSTGRES_DB:-studio}
@@ -142,8 +139,7 @@ services:
     command: php artisan schedule:work
     environment:
       APP_SURFACE: admin
-      # Plain, not ${SERVICE_FQDN_ADMIN} — see the note on horizon.
-      APP_URL: ${APP_URL}
+      APP_URL: ${SERVICE_FQDN_PORTAL}
       APP_KEY: ${SERVICE_REALBASE64_APPKEY}
       SENTRY_LARAVEL_DSN: ${STUDIO_SENTRY_DSN}
       DB_DATABASE: ${POSTGRES_DB:-studio}
