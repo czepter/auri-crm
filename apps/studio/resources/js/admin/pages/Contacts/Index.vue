@@ -1,38 +1,57 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 
-defineProps<{ contacts: App.Crm.Data.ContactSuggestionData[] }>()
+const props = defineProps<{ contacts: App.Crm.Data.ContactRowData[] }>()
 
-function initials(name: string): string {
-  const words = name.trim().split(/\s+/).filter(Boolean)
-  const picked = words.length > 1 ? [words[0], words[words.length - 1]] : words
+// C-15 (#251): grouped by standing, not alphabetically. Who the studio is
+// working with right now is the question this screen is opened with.
+const GROUPS = ['running', 'past', 'none'] as const
 
-  return picked.map((word) => word[0]).join('').toUpperCase()
+const groups = computed(() =>
+  GROUPS.map((key) => ({ key, rows: props.contacts.filter((contact) => contact.standing === key) }))
+    .filter((group) => group.rows.length),
+)
+
+function day(iso: string) {
+  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
 }
 </script>
 
 <template>
   <AdminLayout active="kontakte">
-    <div class="hrow" style="margin-bottom: var(--s5)">
-      <h1>{{ $t('contacts.title') }}</h1>
-    </div>
+    <div data-theme="crm">
+      <div class="hrow">
+        <h1>{{ $t('contacts.title') }}</h1>
+      </div>
 
-    <!-- No mockup for this screen. It follows the system: the labelled row
-         grammar from the project screen's contact list, not a data table. -->
-    <div v-if="contacts.length" class="panel">
-      <Link v-for="contact in contacts" :key="contact.id" class="trow" :href="`/kontakte/${contact.id}`">
-        <span class="pavatar">{{ initials(contact.name) }}</span>
-        <span class="pinfo">
-          <span class="pname">{{ contact.name }}</span>
-          <span class="psub">
-            {{ [contact.email, contact.phone].filter(Boolean).join(' · ') || $t('contacts.none') }}
-          </span>
-        </span>
-        <span class="role">{{ $t('contacts.projectCount', contact.projectCount) }}</span>
-      </Link>
-    </div>
+      <table v-if="contacts.length" style="margin-top: var(--s5)">
+        <thead>
+          <tr>
+            <th>{{ $t('contacts.colName') }}</th>
+            <th>{{ $t('contacts.colReach') }}</th>
+            <th>{{ $t('contacts.colProjects') }}</th>
+            <th class="r">{{ $t('contacts.colNext') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template v-for="group in groups" :key="group.key">
+            <tr><td class="grp" colspan="4">{{ $t(`contacts.group.${group.key}`) }}</td></tr>
+            <tr v-for="contact in group.rows" :key="contact.id">
+              <td class="nm"><Link :href="`/kontakte/${contact.id}`">{{ contact.name }}</Link></td>
+              <td class="mu">{{ [contact.email, contact.phone].filter(Boolean).join(' · ') || '—' }}</td>
+              <td class="mu">
+                {{ contact.latestProject ?? '—' }}
+                <template v-if="contact.projectCount > 1"> · {{ $t('contacts.projectCount', contact.projectCount) }}</template>
+              </td>
+              <td class="r">{{ contact.nextDate ? day(contact.nextDate) : '—' }}</td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
 
-    <p v-else class="hint">{{ $t('contacts.empty') }}</p>
+      <p v-else class="hint" style="padding: var(--s5) var(--s7)">{{ $t('contacts.empty') }}</p>
+    </div>
   </AdminLayout>
 </template>

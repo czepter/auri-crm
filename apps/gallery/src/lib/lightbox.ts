@@ -14,11 +14,14 @@ export interface LightboxData {
   apiBase: string
   versionPublicId: string
   galleryTitle: string
+  // G-05 (#242): the view claim this page was served under. Null for a
+  // gallery with no gate; the api needs it on all four routes otherwise.
+  pass: string | null
 }
 
 const STAGE_WIDTH = 1600
 
-export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle }: LightboxData): void {
+export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle, pass }: LightboxData): void {
   const root = document.getElementById('lightbox')
   if (!root || assets.length === 0) return
 
@@ -27,7 +30,6 @@ export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle }:
   const favBtn = root.querySelector<HTMLButtonElement>('[data-lb-favorite]')
   const favLabel = root.querySelector<HTMLElement>('[data-lb-favorite-label]')
   const thumbs = Array.from(root.querySelectorAll<HTMLAnchorElement>('[data-lb-thumb]'))
-  const commentCount = root.querySelector<HTMLElement>('[data-lb-comment-count]')
   const commentsList = root.querySelector<HTMLElement>('[data-lb-comments]')
   const commentInput = root.querySelector<HTMLInputElement>('[data-lb-comment-input]')
   if (!img || !pos || !favBtn || !favLabel) return
@@ -37,40 +39,60 @@ export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle }:
 
   const render = (): void => {
     const asset = assets[index]
-    img.src = imageUrl(apiBase, versionPublicId, asset.key, STAGE_WIDTH, 'jpeg')
-    img.srcset = srcSet(apiBase, versionPublicId, asset.key, 'jpeg')
-    pos.textContent = `${galleryTitle} · ${index + 1} von ${assets.length}`
+    img.src = imageUrl(apiBase, versionPublicId, asset.key, STAGE_WIDTH, 'jpeg', pass)
+    img.srcset = srcSet(apiBase, versionPublicId, asset.key, 'jpeg', pass)
+    pos.textContent = `${index + 1} von ${assets.length}`
     thumbs.forEach((a, i) => a.classList.toggle('on', i === index))
     renderFavorite()
     loadComments()
   }
 
+  const tileHearts = new Map<number, HTMLButtonElement>()
+
   const renderFavorite = (): void => {
     const on = favorited.has(assets[index].key)
     favBtn.classList.toggle('on', on)
     favLabel.textContent = on ? 'Favorit entfernen' : 'Favorit'
+    renderTileHearts()
   }
 
-  const renderComments = (comments: GalleryComment[]): void => {
-    if (!commentsList || !commentCount) return
+  /** The same mark, on the wall — a guest should see what they picked without opening each one. */
+  const renderTileHearts = (): void => {
+    tileHearts.forEach((button, i) => button.classList.toggle('on', favorited.has(assets[i].key)))
+  }
 
-    commentCount.textContent = `${comments.length} Kommentare`
+  const flip = (i: number): void => {
+    void toggleFavorite(apiBase, versionPublicId, assets[i].key, pass).then((on) => {
+      const key = assets[i].key
+      if (on) favorited.add(key)
+      else favorited.delete(key)
+      renderFavorite()
+    })
+  }
+
+  // Mockup galerie-lightbox.html: a name and a time above every line. The
+  // api names a signed-in client and answers "Gast" for everyone else — on
+  // this viewer that is always everyone, since no account reaches it.
+  const renderComments = (comments: GalleryComment[]): void => {
+    if (!commentsList) return
+
     commentsList.replaceChildren(
       ...comments.map((comment) => {
         const row = document.createElement('div')
-        row.className = 'cmt'
+        row.className = comment.own ? 'cmt' : 'cmt anon'
 
-        const body = document.createElement('div')
+        const who = document.createElement('div')
+        who.className = 'who'
         const author = document.createElement('b')
-        author.textContent = 'Gast'
-        const time = document.createElement('em')
+        author.textContent = comment.author
+        const time = document.createElement('span')
         time.textContent = new Date(comment.createdAt).toLocaleString('de-DE')
-        author.append(time)
+        who.append(author, time)
+
         const text = document.createElement('p')
         text.textContent = comment.body
 
-        body.append(author, text)
-        row.append(body)
+        row.append(who, text)
 
         return row
       }),
@@ -82,7 +104,7 @@ export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle }:
   // never overwrites that image's own list with a stale one.
   const loadComments = (): void => {
     const key = assets[index].key
-    void fetchComments(apiBase, versionPublicId, key).then((comments) => {
+    void fetchComments(apiBase, versionPublicId, key, pass).then((comments) => {
       if (assets[index].key === key) renderComments(comments)
     })
   }
@@ -102,11 +124,24 @@ export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle }:
   const step = (delta: number): void => open((index + delta + assets.length) % assets.length)
 
   document.querySelectorAll<HTMLElement>('.tile[data-lb-open]').forEach((tile) => {
+    const i = Number(tile.dataset.index)
+
     tile.addEventListener('click', (event) => {
       event.preventDefault()
-      const i = Number(tile.dataset.index)
       if (Number.isInteger(i)) open(i)
     })
+
+    const heart = tile.querySelector<HTMLButtonElement>('[data-fav]')
+
+    if (heart && Number.isInteger(i)) {
+      tileHearts.set(i, heart)
+      heart.addEventListener('click', (event) => {
+        // The tile is a link to the detail view; the heart on it is not.
+        event.preventDefault()
+        event.stopPropagation()
+        flip(i)
+      })
+    }
   })
 
   thumbs.forEach((a, i) => {
@@ -120,14 +155,7 @@ export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle }:
   root.querySelector('[data-lb-prev]')?.addEventListener('click', () => step(-1))
   root.querySelector('[data-lb-next]')?.addEventListener('click', () => step(1))
 
-  favBtn.addEventListener('click', () => {
-    void toggleFavorite(apiBase, versionPublicId, assets[index].key).then((on) => {
-      const key = assets[index].key
-      if (on) favorited.add(key)
-      else favorited.delete(key)
-      renderFavorite()
-    })
-  })
+  favBtn.addEventListener('click', () => flip(index))
 
   commentInput?.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter') return
@@ -135,7 +163,7 @@ export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle }:
     if (body === '') return
 
     commentInput.disabled = true
-    void postComment(apiBase, versionPublicId, assets[index].key, body)
+    void postComment(apiBase, versionPublicId, assets[index].key, body, pass)
       .then((comment) => {
         if (comment) {
           commentInput.value = ''
@@ -157,8 +185,9 @@ export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle }:
     if (event.key === 'ArrowRight') step(1)
   })
 
-  void fetchFavorites(apiBase, versionPublicId).then((keys) => {
+  void fetchFavorites(apiBase, versionPublicId, pass).then((keys) => {
     favorited = keys
+    renderTileHearts()
     if (root.classList.contains('open')) renderFavorite()
   })
 }

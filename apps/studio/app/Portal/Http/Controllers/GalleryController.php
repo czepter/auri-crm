@@ -2,71 +2,40 @@
 
 namespace App\Portal\Http\Controllers;
 
-use App\Crm\Models\Contact;
-use App\Gallery\Models\AssetComment;
-use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GalleryListItem;
+use App\Gallery\Support\GalleryVisitor;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 
 /**
- * P-06 (#225). The gallery from the couple's side — not the pictures
- * themselves (that is P-08's grid), but what is theirs about it: the link
- * they hand out, the gates in front of it, and their own selections.
+ * P-06 (#225). What the couple may do to their own gallery: rename and
+ * delete their selections, put a picture on one, and rotate the gates.
  *
- * On the gates, one rule runs through everything here: **no value is ever
- * shown**. view_password_hash and download_pin_hash carry Laravel's
- * 'hashed' cast (App\Gallery\Models\Gallery), so from the moment a secret is
- * saved it is gone for everyone, the studio included. What this screen shows
- * is whether a gate is on, and the one action that means anything against a
- * link that travelled too far — rotating it. A newly set secret is readable
- * exactly once, in the response to the request that set it.
+ * These are actions, not a screen. The screen they belong to is the gallery
+ * itself (GalleryPasswordController) — one page for both audiences, with the
+ * couple's own half below the pictures — because who is looking turned out
+ * to be one sentence rather than a routing decision. See GalleryVisitor.
+ *
+ * On the gates, this screen shows whether one is on and offers the one action
+ * that means anything against a link that travelled too far — rotating it. A
+ * newly set secret is echoed back once, in the response to the request that
+ * set it.
+ *
+ * C-17 (#253) made the stored values recoverable so the studio can read one
+ * out to a guest who asks. That is the admin's screen; what the couple need
+ * here is to change a gate, and a value they set themselves is one they
+ * already have.
  *
  * Reachable only by a contact on the gallery's own booking. Not a 403: same
  * rule as everywhere else on this surface.
  */
 class GalleryController extends Controller
 {
-    public function show(string $gallery): Response
-    {
-        $found = $this->find($gallery);
-        $contact = auth('portal')->user();
-        $version = $found->currentVersion;
-
-        return Inertia::render('Gallery/Overview', [
-            'contact' => ['name' => $contact->name],
-            'gallery' => [
-                'id' => $found->public_id,
-                'title' => $found->title,
-                'count' => $version === null ? 0 : count($version->assets),
-                'expiresAt' => $found->expires_at?->format('Y-m-d'),
-                'url' => url("/galerien/{$found->public_id}"),
-                'cover' => $this->assetUrl($found, 0),
-            ],
-            'gates' => [
-                'viewPassword' => $found->requiresViewPassword(),
-                'downloadPin' => $found->requiresDownloadPin(),
-                'emailVerification' => $found->requiresVerifiedEmail(),
-            ],
-            'lists' => $this->lists($found, $contact),
-            // "Eure Gäste": what the people the link was shared with did.
-            // Views are new (DownloadEvent only ever counted downloads);
-            // marks and comments are the guests', not the client's own.
-            'guests' => [
-                'views' => (int) $found->view_count,
-                'marks' => $version === null ? 0 : AssetFavorite::query()
-                    ->where('gallery_version_id', $version->id)->count(),
-                'comments' => $version === null ? 0 : AssetComment::query()
-                    ->where('gallery_version_id', $version->id)->count(),
-            ],
-        ]);
-    }
+    public function __construct(private readonly GalleryVisitor $visitor) {}
 
     public function storeList(Request $request, string $gallery): RedirectResponse
     {
@@ -162,71 +131,31 @@ class GalleryController extends Controller
         return back()->with('secret', $secret);
     }
 
-    /** @return array<int, array<string, mixed>> */
-    private function lists(Gallery $gallery, Contact $contact): array
-    {
-        $lists = GalleryList::query()
-            ->where('gallery_id', $gallery->id)
-            ->where('contact_id', $contact->id)
-            ->with('items')
-            ->get()
-            // The heart first, then the named ones in the order they were made.
-            ->sortBy(fn (GalleryList $list) => [$list->name === null ? 0 : 1, $list->id])
-            ->values();
-
-        $version = $gallery->currentVersion;
-        $keys = $version === null ? [] : collect($version->assets)->pluck('key')->all();
-
-        return $lists->map(fn (GalleryList $list) => [
-            'id' => $list->public_id,
-            'name' => $list->name,
-            // Keys the current version no longer has are left out rather
-            // than rendered as broken pictures — a re-publish that dropped
-            // one shortens the list, it does not break it.
-            'keys' => $list->items->pluck('asset_key')->intersect($keys)->values()->all(),
-            'covers' => $list->items->pluck('asset_key')->intersect($keys)->take(8)
-                ->map(fn (string $key) => "/galerie-bilder/{$version->public_id}/{$key}")
-                ->values()->all(),
-            'changedAt' => $list->updated_at->toIso8601String(),
-        ])->all();
-    }
-
     private function hasAsset(Gallery $gallery, string $key): bool
     {
         return collect($gallery->currentVersion?->assets ?? [])
             ->contains(fn (array $asset) => $asset['key'] === $key);
     }
 
-    private function assetUrl(Gallery $gallery, int $index): ?string
-    {
-        $version = $gallery->currentVersion;
-        $key = $version?->assets[$index]['key'] ?? null;
-
-        return $key === null ? null : "/galerie-bilder/{$version->public_id}/{$key}";
-    }
-
     private function ownList(Gallery $gallery, string $list): GalleryList
     {
-        return GalleryList::query()
-            ->where('gallery_id', $gallery->id)
-            ->where('contact_id', auth('portal')->id())
-            ->where('public_id', $list)
-            ->firstOrFail();
+        $found = $this->visitor->lists($gallery)->firstWhere('public_id', $list);
+
+        abort_if($found === null, 404);
+
+        return $found;
     }
 
     /**
-     * A gallery on one of this contact's own visible bookings, or a 404.
-     * DB::table rather than a relation hop: galleries hang off projects, and
-     * this is the same visibleProjects() scope every other portal controller
-     * asks, phrased once.
+     * A gallery this visitor is the client of, or a 404. One question, asked
+     * the same way everywhere — see GalleryVisitor.
      */
     private function find(string $gallery): Gallery
     {
-        $visible = auth('portal')->user()->visibleProjects()->pluck('projects.id');
+        $found = Gallery::query()->where('public_id', $gallery)->firstOrFail();
 
-        return Gallery::query()
-            ->where('public_id', $gallery)
-            ->whereIn('project_id', $visible)
-            ->firstOrFail();
+        abort_unless($this->visitor->isClient($found), 404);
+
+        return $found;
     }
 }

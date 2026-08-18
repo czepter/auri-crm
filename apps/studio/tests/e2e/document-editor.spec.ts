@@ -8,8 +8,9 @@ test('a template written in blocks previews with sample data and survives a relo
 
   // T-16: the screen opens on a choice of starters rather than on an empty
   // canvas. This test is about the editor, so it takes the blank one — the
-  // same door it used before the catalog existed.
-  await page.getByRole('button', { name: 'Leere Vorlage' }).click()
+  // same door it used before the catalog existed. C-16 (#252) made the cards
+  // links, so the blank one is the last card rather than a button.
+  await page.getByRole('link', { name: /Leere Vorlage/ }).click()
 
   await page.getByLabel('Name').fill('Fotovertrag Hochzeit')
 

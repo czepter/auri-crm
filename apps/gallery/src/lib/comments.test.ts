@@ -24,8 +24,15 @@ describe('fetchComments', () => {
 
     const comments = await fetchComments('https://api.example', 'ver_abc', 'galleries/g 1/a.jpg')
 
-    expect(comments).toEqual([{ body: 'Schön!', createdAt: '2026-08-10T12:00:00Z' }])
-    expect(fetchMock).toHaveBeenCalledWith('https://api.example/api/gallery-versions/ver_abc/comments?asset_key=galleries%2Fg%201%2Fa.jpg')
+    // G-01 (#229): the api names a signed-in client and answers "Gast"
+    // otherwise. On this viewer nobody is signed in, so it is always Gast.
+    expect(comments).toEqual([
+      { body: 'Schön!', author: 'Gast', own: false, createdAt: '2026-08-10T12:00:00Z' },
+    ])
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.example/api/gallery-versions/ver_abc/comments?asset_key=galleries%2Fg%201%2Fa.jpg',
+      { headers: {} },
+    )
   })
 
   it('degrades to an empty list on a failed response, rather than throwing', async () => {
@@ -50,9 +57,9 @@ describe('postComment', () => {
     )
     vi.stubGlobal('fetch', fetchMock)
 
-    const comment = await postComment('https://api.example', 'ver_abc', 'a.jpg', 'Toll!', store)
+    const comment = await postComment('https://api.example', 'ver_abc', 'a.jpg', 'Toll!', null, store)
 
-    expect(comment).toEqual({ body: 'Toll!', createdAt: '2026-08-10T12:00:00Z' })
+    expect(comment).toEqual({ body: 'Toll!', author: 'Gast', own: false, createdAt: '2026-08-10T12:00:00Z' })
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.example/api/gallery-versions/ver_abc/comments',
       expect.objectContaining({

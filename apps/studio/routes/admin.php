@@ -13,6 +13,7 @@ use App\Crm\Http\Controllers\FormTemplateController;
 use App\Crm\Http\Controllers\InquiryCaptureController;
 use App\Crm\Http\Controllers\InternalNoteController;
 use App\Crm\Http\Controllers\LeadBoardController;
+use App\Crm\Http\Controllers\LeadCaseController;
 use App\Crm\Http\Controllers\LeadStageController;
 use App\Crm\Http\Controllers\ProjectController;
 use App\Crm\Http\Controllers\ShootController;
@@ -24,6 +25,7 @@ use App\Documents\Http\Controllers\DocumentTemplateController;
 use App\Engagement\Http\Controllers\InboxController;
 use App\Engagement\Http\Controllers\ThreadController;
 use App\Gallery\Http\Controllers\GalleryLightroomExportController;
+use App\Gallery\Http\Controllers\GalleryRecordController;
 use App\Http\Controllers\Staff\AbsenceController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
@@ -205,6 +207,13 @@ Route::middleware('audience:staff')->group(function () {
 
         // P-04 (#223). A client's own thread that names no booking yet — the
         // same tray, the same movement, one level up from a single mail.
+        // C-14 (#250): the reply and the "done" mark, from the screen the
+        // conversation is read on. Thread-scoped, because a conversation that
+        // names no booking still has to be answerable.
+        Route::post('/posteingang/faden/{thread}/antwort', [InboxController::class, 'reply'])
+            ->name('inbox.reply');
+        Route::post('/posteingang/faden/{thread}/erledigt', [InboxController::class, 'close'])
+            ->name('inbox.close');
         Route::post('/posteingang/faden/{thread}/zuordnen', [InboxController::class, 'file'])
             ->name('inbox.thread.file');
 
@@ -215,6 +224,10 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/auswertungen', ReportController::class)->name('reports.index');
 
         Route::get('/kalender', [CalendarController::class, 'index'])->name('calendar.index');
+        // C-13 (#249): the subscription secret is a credential and belongs in
+        // the settings, not as the widest block over the working area.
+        Route::get('/einstellungen/kalender', [CalendarController::class, 'subscription'])
+            ->name('settings.calendar');
         Route::post('/kalender/abo', [CalendarController::class, 'regenerate'])
             ->name('calendar.regenerate');
 
@@ -300,15 +313,34 @@ Route::middleware('audience:staff')->group(function () {
         // /anfragen/neu stays above /anfragen/{lead}/stufe for the same reason
         // /kontakte/suche stays above /kontakte/{contact}.
         Route::get('/anfragen/neu', [InquiryCaptureController::class, 'create'])->name('leads.create');
-        Route::get('/anfragen', LeadBoardController::class)->name('leads.index');
+        Route::get('/anfragen', [LeadBoardController::class, '__invoke'])->name('leads.index');
+        // C-07 (#241): the view the user last chose, kept on the user.
+        Route::post('/anfragen/ansicht', [LeadBoardController::class, 'chooseView'])
+            ->name('leads.view');
         Route::post('/anfragen', [InquiryCaptureController::class, 'store'])->name('leads.store');
+        // C-08 (#243): one inquiry beside the queue it came from. Below
+        // /anfragen/neu and /anfragen/ansicht, which would otherwise bind as
+        // a lead id.
+        Route::get('/anfragen/{lead}', [LeadCaseController::class, 'show'])->name('leads.show');
+        // C-10 (#245): editing is a state of the view, so it posts back to
+        // the same case rather than to a screen of its own.
+        Route::patch('/anfragen/{lead}', [LeadCaseController::class, 'update'])->name('leads.update');
         Route::post('/anfragen/{lead}/stufe', [LeadStageController::class, 'update'])
             ->name('leads.stage.update');
+
+        // C-02 (#236): the list behind the sidebar's Projekte entry. Its own
+        // path, not /auftraege: a Job is what a booked project becomes, and
+        // the list covers every project whether or not one exists yet.
+        Route::get('/projekte', [ProjectController::class, 'index'])->name('projects.index');
 
         // The project screen. Shoot and crew mutations hang off /shootings
         // rather than under the project, because the shoot's public id already
         // identifies it and nesting would let the two disagree.
         Route::get('/auftraege/{project}', [ProjectController::class, 'show'])->name('projects.show');
+        // C-12 (#248): editing is a state of the screen, so it posts back to
+        // the same record.
+        Route::patch('/auftraege/{project}', [ProjectController::class, 'update'])
+            ->name('projects.update');
         Route::get('/auftraege/{project}/shootings', [ProjectController::class, 'shoots'])
             ->name('projects.shoots');
         Route::post('/auftraege/{project}/buchung', [ProjectController::class, 'book'])
@@ -368,6 +400,13 @@ Route::middleware('audience:staff')->group(function () {
         // prefix. galleries.uploads.* is a JSON API for the browser's own
         // chunked uploader (resources/js/admin/lib/multipartUpload.ts), not
         // Inertia — see MultipartUploadController.
+        // C-19 (#255): the gallery as a record with five tabs, not a data
+        // sheet with switches. Above /galerien/{gallery}/medien, which stays
+        // the ingest screen it always was.
+        Route::get('/galerien/{gallery}', [GalleryRecordController::class, 'show'])
+            ->name('galleries.show');
+        Route::patch('/galerien/{gallery}', [GalleryRecordController::class, 'update'])
+            ->name('galleries.update');
         Route::get('/galerien/{gallery}/medien', [MediaIngestController::class, 'show'])
             ->name('galleries.media');
         Route::post('/galerien/{gallery}/uploads', [MultipartUploadController::class, 'store'])

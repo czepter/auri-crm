@@ -95,7 +95,11 @@ class PublicInquiryController extends Controller
             contact_name: $validated['contact_name'],
             contact_email: $validated['contact_email'],
             contact_phone: $validated['contact_phone'] ?? null,
-            partner_name: $validated['partner_name'] ?? null,
+            // The public form asks for one further name and no way to reach
+            // them; the admin's own capture asks for all three (C-09, #244).
+            people: filled($validated['partner_name'] ?? null)
+                ? [['name' => $validated['partner_name'], 'email' => null, 'phone' => null]]
+                : [],
             // A public form should not make a client invent a project name.
             project_name: $validated['project_name'] ?? $validated['contact_name'],
             type: ProjectType::from($validated['type']),

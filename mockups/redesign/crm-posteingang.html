@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Posteingang — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="posteingang">
+
+<!-- Unterhaltungen statt Einzelnachrichten: threads trägt den Betreff, messages
+     die Beiträge, thread_participants sagt, wer beteiligt ist. Ein Faden hängt
+     an einem Projekt, deshalb steht dessen Name unter dem Absender.
+
+     Gruppiert nach Arbeitsstand, nicht nach Datum: unbeantwortet zuerst, dann
+     was beim Kunden liegt, dann Erledigtes. Ein Posteingang, der nach Uhrzeit
+     sortiert, verschweigt genau das, wofür man ihn öffnet.
+
+     Rechts liest man den Faden und antwortet an Ort und Stelle. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <nav class="queue">
+    <h2><b>Unbeantwortet</b><span class="n">3</span></h2>
+    <a class="on" href="crm-posteingang.html">
+      <div class="nm">Lea Meier</div>
+      <div class="mt">Brunch auf 11 Uhr? · gestern</div>
+    </a>
+    <a href="#">
+      <div class="nm">Katrin Ahrend</div>
+      <div class="mt warn">Zimmerbelegung · seit 4 Tagen</div>
+    </a>
+    <a href="#">
+      <div class="nm">Sarah Brandt</div>
+      <div class="mt">Frage zum Vertrag · heute 08:40</div>
+    </a>
+
+    <h2><b>Wartet auf Antwort</b><span class="n">2</span></h2>
+    <a href="#">
+      <div class="nm">Annika Reuter</div>
+      <div class="mt warn">Angebot · 2× erinnert</div>
+    </a>
+    <a href="#">
+      <div class="nm">Familie Osterhoff</div>
+      <div class="mt">Bildauswahl · vor 3 Tagen</div>
+    </a>
+
+    <h2><b>Erledigt</b><span class="n">14</span></h2>
+    <a href="#">
+      <div class="nm">Marie Ahrens</div>
+      <div class="mt">Anfahrt Kaispeicher · 12.08.</div>
+    </a>
+  </nav>
+
+  <main class="detail">
+    <div class="crumb">Posteingang <kbd>↑</kbd><kbd>↓</kbd></div>
+
+    <div class="title">
+      <div>
+        <h1>Brunch auf 11 Uhr?</h1>
+        <div class="sub">Lea Meier · <a class="link" href="crm-projekt.html">Meier &amp; Kowalski</a> · 6 Nachrichten</div>
+      </div>
+      <div class="acts">
+        <a class="link" href="#">Als erledigt</a>
+        <a class="btn-2" href="#">Aufgabe daraus</a>
+        <a class="btn" href="#">Antworten</a>
+      </div>
+    </div>
+
+    <section>
+      <div class="compose">
+        Antwort an Lea Meier
+        <span class="kinds"><span>Vorlage</span><span>Termin vorschlagen</span></span>
+      </div>
+
+      <div style="margin-top:14px">
+        <div class="msg">
+          <div class="head"><span class="n">Lea Meier</span><span class="t">gestern 19:14</span></div>
+          <div class="body">Können wir den Brunch auf 11 Uhr schieben? Die Küche im Gut macht erst ab 10:30 auf, und ein paar Gäste reisen morgens an.</div>
+        </div>
+        <div class="msg own">
+          <div class="head"><span class="n">Christian</span><span class="t">14.08. 16:02</span></div>
+          <div class="body">Brunch steht bei mir für 10:00 im Ablauf. Sagt Bescheid, wenn sich etwas ändert, dann ziehe ich die Zeiten nach.</div>
+        </div>
+        <div class="msg">
+          <div class="head"><span class="n">Jan Kowalski</span><span class="t">12.08. 20:31</span></div>
+          <div class="body">Wir haben die Familienliste noch nicht fertig, kommt bis Ende der Woche.</div>
+        </div>
+        <div class="msg own">
+          <div class="head"><span class="n">Christian</span><span class="t">10.08. 09:00</span></div>
+          <div class="body">Ablaufplan liegt im Portal, dort könnt ihr die Zeiten selbst eintragen.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="rail">
+    <h2>Beteiligte</h2>
+    <div class="grp">
+      <div class="item"><div class="n">Lea Meier</div><div class="m">Auftraggeberin · <a class="link" href="#">0170 445566</a></div></div>
+      <div class="item"><div class="n">Jan Kowalski</div><div class="m">Partner</div></div>
+      <div class="item"><div class="n">Christian Bergmann</div><div class="m">Studio</div></div>
+    </div>
+
+    <h2>Projekt</h2>
+    <div class="grp">
+      <div class="item"><div class="n">Meier &amp; Kowalski</div><div class="m">Hochzeit · gebucht seit 12.06.</div></div>
+      <div class="item"><div class="n">Brunch</div><div class="m">Sa, 22.08. · 10:00 · Nina</div></div>
+      <div class="item"><div class="n">Offen</div><div class="m warn">1.500 € · Rate 3 überfällig</div></div>
+    </div>
+
+    <h2>Herkunft</h2>
+    <div class="grp">
+      <div class="item"><div class="n">Portal</div><div class="m">gestern 19:14 · angemeldet</div></div>
+    </div>
+  </aside>
+</div>
+
+</body>
+</html>

@@ -65,6 +65,40 @@ class DocumentBlockCatalog
     }
 
     /**
+     * The same palette, plus the blocks this type may not have — each with
+     * the reason, in the words the inserter shows.
+     *
+     * C-16 (#252): a disallowed entry stands dimmed rather than missing. What
+     * is silently absent reads as a bug, and the operator goes looking for
+     * the block they saw on the other template. allows() still decides on the
+     * server; this only stops the screen lying about why.
+     *
+     * @return list<array{type: string, group: string, label: string, inline: bool, allowed: bool, only: ?string}>
+     */
+    public static function paletteFor(DocumentTemplateType $type): array
+    {
+        $palette = [];
+
+        foreach (self::BLOCKS as $blockType => $definition) {
+            $allowed = in_array($type->value, $definition['types'], true);
+
+            $palette[] = [
+                'type' => $blockType,
+                'group' => $definition['group'],
+                'label' => $definition['label'],
+                'inline' => $definition['inline'] ?? false,
+                'allowed' => $allowed,
+                'only' => $allowed ? null : implode(' und ', array_map(
+                    fn (string $value) => DocumentTemplateType::from($value)->label(),
+                    $definition['types'],
+                )),
+            ];
+        }
+
+        return $palette;
+    }
+
+    /**
      * May this document type persist a block of this type?
      *
      * rawHtml is allowed everywhere and deliberately absent from the palette:

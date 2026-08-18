@@ -4,7 +4,9 @@ use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Models\Absence;
 use App\Models\User;
+use App\Settings\Models\StudioClosure;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -45,4 +47,74 @@ it('never puts an integer identifier into the calendar', function () {
     CrewAssignment::factory()->for($shoot)->create();
 
     expect(integerIdPaths(props('/kalender')))->toBe([]);
+});
+
+// C-13 (#249): six week rows, always, starting on the Monday on or before the
+// first — a grid that is five rows in February and six in March is a different
+// shape every time it is opened.
+it('lays the month out as six weeks from a monday', function () {
+    $props = test()->actingAs(test()->staff, 'staff')
+        ->get('/kalender?monat=2026-02')->assertOk()->viewData('page')['props'];
+
+    expect($props['days'])->toHaveCount(42)
+        ->and($props['days'][0]['date'])->toBe('2026-01-26')
+        ->and($props['days'][0]['inMonth'])->toBeFalse()
+        ->and($props['label'])->toContain('2026');
+});
+
+it('puts a requested shoot on the grid as a hold, and a booked one as a shoot', function () {
+    $project = Project::factory()->create(['name' => 'Meier & Kowalski']);
+    Shoot::factory()->for($project)->on('2026-02-14')->atStatus(ShootStatus::Requested)->create();
+    Shoot::factory()->for($project)->on('2026-02-15')->atStatus(ShootStatus::Booked)->create(['call_time' => '09:00']);
+
+    $days = collect(test()->actingAs(test()->staff, 'staff')
+        ->get('/kalender?monat=2026-02')->assertOk()->viewData('page')['props']['days'])
+        ->keyBy('date');
+
+    expect($days['2026-02-14']['entries'][0]['kind'])->toBe('hold')
+        ->and($days['2026-02-15']['entries'][0]['kind'])->toBe('shoot')
+        ->and($days['2026-02-15']['entries'][0]['time'])->toBe('09:00');
+});
+
+// A free Saturday is the most important thing in the grid, and it is not
+// shown with text.
+it('leaves an empty day empty', function () {
+    $days = collect(test()->actingAs(test()->staff, 'staff')
+        ->get('/kalender?monat=2026-02')->assertOk()->viewData('page')['props']['days'])
+        ->keyBy('date');
+
+    expect($days['2026-02-14']['entries'])->toBe([]);
+});
+
+it('carries an absence and a studio closure as all-day lines', function () {
+    Absence::factory()->create([
+        'user_id' => User::factory()->create(['name' => 'Nina Brandt'])->id,
+        'starts_on' => '2026-02-10',
+        'ends_on' => '2026-02-11',
+    ]);
+    StudioClosure::factory()->create([
+        'label' => 'Betriebsferien',
+        'starts_on' => '2026-02-20',
+        'ends_on' => '2026-02-21',
+    ]);
+
+    $days = collect(test()->actingAs(test()->staff, 'staff')
+        ->get('/kalender?monat=2026-02')->assertOk()->viewData('page')['props']['days'])
+        ->keyBy('date');
+
+    expect($days['2026-02-10']['entries'][0])->toMatchArray(['kind' => 'away', 'what' => 'Nina Brandt'])
+        ->and($days['2026-02-21']['entries'][0])->toMatchArray(['kind' => 'away', 'what' => 'Betriebsferien']);
+});
+
+// The subscription secret was the widest block over the working area. It is a
+// credential, and it belongs in the settings.
+it('keeps the feed url off the calendar and puts it under the settings', function () {
+    $props = test()->actingAs(test()->staff, 'staff')->get('/kalender')->assertOk()->viewData('page')['props'];
+
+    expect($props)->not->toHaveKey('feedUrl');
+
+    $settings = test()->actingAs(test()->staff, 'staff')
+        ->get('/einstellungen/kalender')->assertOk()->viewData('page')['props'];
+
+    expect($settings['feedUrl'])->toContain('/shootings.ics');
 });

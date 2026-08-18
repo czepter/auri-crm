@@ -162,6 +162,8 @@ services:
     environment:
       SERVICE_FQDN_GALLERY_4321:
       API_URL: http://api:8080
+      # What ends up in the HTML — image sources and the browser's own calls.
+      PUBLIC_API_URL: ${SERVICE_FQDN_API}
       # Empty leaves the SSR process fully inert — no outbound calls at all —
       # which is the wanted default until a GlitchTip project exists (F-11).
       SENTRY_DSN: ${GALLERY_SENTRY_DSN}

@@ -6,6 +6,7 @@ use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Data\StaffProfileData;
 use App\Settings\Support\StudioSettingsResolver;
+use App\Support\RecordVisit;
 use App\Support\Surface;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -59,6 +60,10 @@ class HandleInertiaRequests extends Middleware
                 'leads' => fn () => Lead::query()->open()->count(),
                 'projects' => fn () => Project::query()->count(),
             ],
+            // C-03 (#237): what this user last opened. Shared rather than
+            // passed per page, because the palette is chrome and opens over
+            // whatever screen is up. Lazy for the same reason as the counts.
+            'recent' => $user === null ? null : fn () => RecordVisit::recent(),
             // T-08: logo, accent colour and the two external legal links —
             // every portal page's own chrome, not one screen's. Lazy and
             // scoped to the portal surface alone, so an admin request never

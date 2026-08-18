@@ -102,3 +102,19 @@ it('keeps serving an old version\'s image after a republish, unchanged', functio
     $this->get("/api/gallery-versions/{$v1->public_id}/images/galleries/g1/a.jpg?w=400&fmt=webp")
         ->assertOk();
 });
+
+// G-01 (#229): the filmstrip asks for 33 previews at once, and every one of
+// them re-decoded the original until the encode was kept.
+it('encodes a width and format once and serves the stored bytes after that', function () {
+    $version = publishedVersionWithAsset();
+    $url = "/api/gallery-versions/{$version->public_id}/images/galleries/g1/a.jpg?w=400&fmt=webp";
+
+    $first = $this->get($url)->assertOk()->getContent();
+
+    Storage::disk('s3')->assertExists('variants/400/webp/galleries/g1/a.jpg.webp');
+
+    // Nothing left to decode: a second answer can only come from the store.
+    Storage::disk('s3')->delete('galleries/g1/a.jpg');
+
+    expect($this->get($url)->assertOk()->getContent())->toBe($first);
+});

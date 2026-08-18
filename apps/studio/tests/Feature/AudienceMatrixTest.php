@@ -70,6 +70,10 @@ const PUBLIC_ROUTES = [
         // above it: the caller proves itself with an HMAC over the raw
         // body, a credential 'audience:' has no vocabulary for.
         'api/mail/eingang',
+        // G-06's gate on this surface: the password itself is the
+        // credential, and what it buys is a signed pass (GalleryViewPass) —
+        // neither of which reads as `audience:`.
+        'api/galleries/{gallery}/passwort',
         'api/galleries/{gallery}', 'api/gallery-versions/{galleryVersion}/images/{key}',
         'api/gallery-versions/{galleryVersion}/favorites', 'api/gallery-versions/{galleryVersion}/favorites/{key}',
         'api/gallery-versions/{galleryVersion}/comments',
@@ -112,6 +116,9 @@ const PUBLIC_ROUTES = [
         // against (EnsureUngatedGallery).
         'galerie-bilder/{galleryVersion}/{key}',
         'galerien/{gallery}/download', 'galerien/{gallery}/download/pin',
+        // G-03 (#231): queues the archive. Behind the same two gates as the
+        // screen that offers it, neither of which reads as `audience:`.
+        'galerien/{gallery}/download/vorbereiten',
         'galerien/{gallery}/download/email', 'galerien/{gallery}/download/email/{token}',
         // G-11's delivery endpoint carries its own two-layer check —
         // `gallery.gate:download` plus `signed` — neither of which reads as

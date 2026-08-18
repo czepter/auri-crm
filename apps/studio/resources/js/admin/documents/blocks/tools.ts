@@ -14,7 +14,10 @@ export function buildTools(
   const tools: Record<string, unknown> = {}
 
   for (const entry of palette) {
-    if (entry.inline) continue
+    // Dimmed entries are shown, never registered: DocumentBlockCatalog::
+    // allows() would refuse them on save anyway, and a tool that inserts a
+    // block the server rejects is worse than one that is not offered.
+    if (entry.inline || entry.allowed === false) continue
 
     const tool = registry[entry.type]
 

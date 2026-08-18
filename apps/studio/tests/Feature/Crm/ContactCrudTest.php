@@ -1,7 +1,11 @@
 <?php
 
+use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
+use App\Crm\Models\Project;
+use App\Crm\Models\Shoot;
 use App\Enums\StaffRole;
+use App\Gallery\Models\Gallery;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -99,4 +103,71 @@ it('rejects unauthenticated access to every contact route', function () {
     $this->get('/kontakte')->assertRedirect('/login');
     $this->get("/kontakte/{$contact->public_id}")->assertRedirect('/login');
     $this->patch("/kontakte/{$contact->public_id}", [])->assertRedirect('/login');
+});
+
+// C-15 (#251): a contact is the sum of their projects, so the list groups by
+// standing rather than by the alphabet.
+it('groups contacts by whether the studio is working with them', function () {
+    test()->actingAs(test()->staff, 'staff');
+
+    $running = Contact::factory()->create(['name' => 'Läuft']);
+    $project = Project::factory()->create();
+    $project->attachContact($running, ProjectContactRole::Primary);
+    Shoot::factory()->for($project)->primary()->on(now()->addMonth()->format('Y-m-d'))->create();
+
+    $past = Contact::factory()->create(['name' => 'Bestand']);
+    $old = Project::factory()->create();
+    $old->attachContact($past, ProjectContactRole::Primary);
+    Shoot::factory()->for($old)->primary()->on(now()->subYear()->format('Y-m-d'))->create();
+
+    Contact::factory()->create(['name' => 'Ohne']);
+
+    $rows = collect(props('/kontakte')['contacts'])->keyBy('name');
+
+    expect($rows['Läuft']['standing'])->toBe('running')
+        ->and($rows['Läuft']['nextDate'])->toBe(now()->addMonth()->format('Y-m-d'))
+        ->and($rows['Bestand']['standing'])->toBe('past')
+        ->and($rows['Ohne']['standing'])->toBe('none');
+});
+
+// A couple is two contacts, never one row with a composed name: each has
+// their own address and their own portal access.
+it('lists both halves of a couple as their own rows', function () {
+    test()->actingAs(test()->staff, 'staff');
+
+    $project = Project::factory()->create();
+    $project->attachContact(Contact::factory()->create(['name' => 'Lena Meier']), ProjectContactRole::Primary);
+    $project->attachContact(Contact::factory()->create(['name' => 'Jan Kowalski']), ProjectContactRole::Partner);
+
+    expect(collect(props('/kontakte')['contacts'])->pluck('name')->all())
+        ->toBe(['Jan Kowalski', 'Lena Meier']);
+});
+
+// C-18 (#254): a project is an order with money and dates, a gallery a
+// delivery with an expiry. Mixed into one list they read as the same thing.
+it('carries projects, galleries and connected people as their own sections', function () {
+    test()->actingAs(test()->staff, 'staff');
+
+    $contact = Contact::factory()->create();
+    $partner = Contact::factory()->create(['name' => 'Jan Kowalski']);
+
+    $project = Project::factory()->create(['name' => 'Meier & Kowalski']);
+    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($partner, ProjectContactRole::Partner);
+    Shoot::factory()->for($project)->primary()->on('2026-06-14')->create();
+
+    $gallery = Gallery::factory()->for($project)->create([
+        'title' => 'Hochzeitstag',
+        'expires_at' => now()->addMonth(),
+    ]);
+    $gallery->publish();
+
+    $props = props("/kontakte/{$contact->public_id}");
+
+    expect($props['projects'])->toHaveCount(1)
+        ->and($props['projects'][0]['role'])->toBe('primary')
+        ->and($props['projects'][0]['date'])->toBe('2026-06-14')
+        ->and($props['galleries'])->toHaveCount(1)
+        ->and($props['galleries'][0]['title'])->toBe('Hochzeitstag')
+        ->and(collect($props['connected'])->pluck('name')->all())->toBe(['Jan Kowalski']);
 });

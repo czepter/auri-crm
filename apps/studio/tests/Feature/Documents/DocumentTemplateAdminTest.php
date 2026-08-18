@@ -179,7 +179,12 @@ it('gives the edit screen the palette for the template it is editing', function 
         ->get("/dokumentvorlagen/{$template->public_id}")
         ->assertInertia(fn ($page) => $page
             ->component('DocumentTemplates/Edit')
-            ->where('palette', fn ($palette) => collect($palette)->pluck('type')->doesntContain('columns')));
+            // C-16 (#252): `columns` is in the palette for a mail, marked as
+            // refused with its reason — it must never arrive usable.
+            ->where('palette', fn ($palette) => collect($palette)
+                ->where('allowed', true)->pluck('type')->doesntContain('columns'))
+            ->where('palette', fn ($palette) => collect($palette)
+                ->firstWhere('type', 'columns')['only'] === 'Vertrag und Angebot und Rechnung'));
 });
 
 it('refuses a body carrying an href with an unsafe scheme', function () {

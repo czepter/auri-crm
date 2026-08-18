@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Kontakte — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="kontakte">
+
+<!-- Ein Kontakt ist keine Karteikarte, sondern die Summe seiner Projekte:
+     contacts hält Name, E-Mail, Telefon, project_contacts die Rolle je
+     Projekt. Deshalb steht in der Tabelle die Zahl der Aufträge und das, was
+     gerade offen ist — nicht die Anschrift, die es ohnehin nicht gibt.
+
+     Gruppiert nach Beziehung statt alphabetisch: wer gerade einen laufenden
+     Auftrag hat, steht oben. Namen von Paaren stehen als zwei Kontakte, denn
+     jeder hat eine eigene Adresse und einen eigenen Portalzugang. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="main">
+
+    <div class="hrow">
+      <div>
+        <div class="kick">148 Kontakte · 24 mit laufendem Auftrag</div>
+        <h1>Kontakte</h1>
+      </div>
+      <a class="link" href="#" style="margin-left:auto">Exportieren</a>
+      <a class="btn" href="#">Kontakt anlegen</a>
+    </div>
+
+    <div class="filters">
+      <button class="pop"><u>Beziehung</u> Alle</button>
+      <button class="pop"><u>Anlass</u> Alle</button>
+      <button class="pop"><u>Zeitraum</u> 2026</button>
+    </div>
+
+    <table style="margin-top:20px">
+      <thead>
+        <tr>
+          <th style="width:24%">Name</th>
+          <th style="width:24%">Erreichbar</th>
+          <th style="width:26%">Projekte</th>
+          <th style="width:16%">Offen</th>
+          <th class="r" style="width:10%">Zuletzt</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="grp" colspan="5">Laufender Auftrag</td></tr>
+        <tr>
+          <td class="nm">Lea Meier</td>
+          <td class="mu">0170 445566 · lea.meier@example.de</td>
+          <td class="mu">Meier &amp; Kowalski · Hochzeit</td>
+          <td><span class="w">1.500 € offen</span></td>
+          <td class="r mu">heute</td>
+        </tr>
+        <tr>
+          <td class="nm">Jan Kowalski</td>
+          <td class="mu">0171 998877</td>
+          <td class="mu">Meier &amp; Kowalski · Hochzeit</td>
+          <td class="mu">—</td>
+          <td class="r mu">12.08.</td>
+        </tr>
+        <tr>
+          <td class="nm">Katrin Ahrend</td>
+          <td class="mu">040 334455 · k.ahrend@elbblick.de</td>
+          <td class="mu">Hotel Elbblick · Auftrag</td>
+          <td><span class="w">Zimmerbelegung fehlt</span></td>
+          <td class="r mu">gestern</td>
+        </tr>
+        <tr>
+          <td class="nm">Sarah Brandt</td>
+          <td class="mu">0170 998877 · s.brandt@example.de</td>
+          <td class="mu">Brandt &amp; Erdmann · Anfrage</td>
+          <td><span class="w">Vertrag fehlt</span></td>
+          <td class="r mu">heute</td>
+        </tr>
+
+        <tr><td class="grp" colspan="5">Bestandskunden</td></tr>
+        <tr>
+          <td class="nm">Marie Osterhoff</td>
+          <td class="mu">0175 665544 · m.osterhoff@example.de</td>
+          <td class="mu">3 Aufträge · zuletzt Portrait 2026</td>
+          <td class="mu">—</td>
+          <td class="r mu">15.08.</td>
+        </tr>
+        <tr>
+          <td class="nm">Sophie Lang</td>
+          <td class="mu">0152 334455</td>
+          <td class="mu">Lang &amp; Voss · Hochzeit 2026</td>
+          <td class="mu">—</td>
+          <td class="r mu">11.08.</td>
+        </tr>
+        <tr>
+          <td class="nm">Hotel Elbblick</td>
+          <td class="mu">rechnung@elbblick.de</td>
+          <td class="mu">2 Aufträge · Rechnungsempfänger</td>
+          <td class="mu">—</td>
+          <td class="r mu">02.07.</td>
+        </tr>
+
+        <tr><td class="grp" colspan="5">Ohne Auftrag</td></tr>
+        <tr>
+          <td class="nm">Mira Sundermann</td>
+          <td class="mu">m.sundermann@example.de</td>
+          <td class="mu">Anfrage · Portrait</td>
+          <td class="mu">—</td>
+          <td class="r mu">vor 4 Tagen</td>
+        </tr>
+        <tr>
+          <td class="nm">Maja Reinhold</td>
+          <td class="mu">0151 22334</td>
+          <td class="mu">Trauzeugin bei Meier &amp; Kowalski</td>
+          <td class="mu">—</td>
+          <td class="r mu">03.08.</td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+</div>
+
+</body>
+</html>

@@ -11,4 +11,7 @@ namespace App\Media\Enums;
 enum ZipBuildScope: string
 {
     case All = 'all';
+
+    /** G-03 (#231): one of the client's own selections — see GalleryList (#225). */
+    case ListSelection = 'list';
 }

@@ -67,6 +67,11 @@ class DocumentMergeDataBuilder
             // document that does not exist, which is exactly the case an
             // empty string is right for.
             'quote' => $this->quote($project, $settings),
+            // C-17 (#253): the gallery this project delivered, with the two
+            // secrets in clear. Empty where none is published — a template
+            // that names them on a project without a gallery is asking about
+            // something that does not exist.
+            'gallery' => $this->gallery($project),
             'studio' => [
                 'name' => $studio['legal_name'] ?: ($studio['display_name'] ?? ''),
                 'legalForm' => $studio['legal_form'] ?? '',
@@ -90,6 +95,27 @@ class DocumentMergeDataBuilder
             'settings' => [
                 'widerrufText' => $settings->widerrufIncluded() ? ($settings->widerrufText() ?? '') : '',
             ],
+        ];
+    }
+
+    /**
+     * The newest gallery of this project, or empty strings.
+     *
+     * The link is the portal's own address, the same one the couple's screen
+     * copies — never the api surface's, which no guest can open.
+     *
+     * @return array<string, string>
+     */
+    private function gallery(Project $project): array
+    {
+        $gallery = $project->galleries()->latest('id')->first();
+
+        return [
+            'title' => $gallery?->title ?? '',
+            'link' => $gallery === null ? '' : url("/galerien/{$gallery->public_id}"),
+            'password' => $gallery?->view_password ?? '',
+            'downloadPin' => $gallery?->download_pin ?? '',
+            'expiresOn' => $gallery?->expires_at?->format('d.m.Y') ?? '',
         ];
     }
 

@@ -230,3 +230,17 @@
          font-variant-numeric:tabular-nums; }
 .ev.pending .dot { background:var(--line); }
 .ev.pending .t { color:var(--faint); }
+
+/* #234: the pairs shown in themselves. A typeface is judged by reading it,
+   so each card is set in the pair it offers rather than naming it in a
+   sample line. */
+.fontpairs { display:grid; grid-template-columns:repeat(2, 1fr); gap:var(--s3); }
+.fontpairs label { display:block; cursor:pointer; }
+.fontpairs input { position:absolute; opacity:0; pointer-events:none; }
+.fontpairs .pv { display:block; padding:var(--s4) var(--s4) var(--s5); border-radius:var(--r);
+        background:var(--hover); box-shadow:inset 0 0 0 1px transparent; }
+.fontpairs input:checked + .pv { box-shadow:inset 0 0 0 2px var(--accent); }
+.fontpairs .pv b { display:block; font:400 26px/var(--display-leading) var(--font-display);
+        letter-spacing:var(--display-tracking); color:var(--ink); }
+.fontpairs .pv em { display:block; margin-top:8px; font:400 12.5px/1.5 var(--font);
+        font-style:normal; color:var(--muted); }

@@ -2,12 +2,17 @@
 
 namespace App\Gallery\Http\Controllers;
 
+use App\Gallery\Models\AssetComment;
+use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GalleryVersion;
+use App\Gallery\Models\GalleryView;
 use App\Gallery\Support\GalleryAccessSession;
 use App\Gallery\Support\GallerySecretGate;
+use App\Gallery\Support\GalleryVisitor;
 use App\Http\Controllers\Controller;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -27,9 +32,18 @@ use Inertia\Response;
  * Its own GET renders locked-or-unlocked itself rather than being wrapped by
  * EnsureGalleryGate, which would have nowhere to redirect a failing request
  * but here, forever.
+ *
+ * One screen, two audiences. The couple it belongs to and the eighty people
+ * they sent the link to see the same photographs; below them the couple also
+ * see the link they hand out, the gates in front of it, their own selections
+ * and what their guests did. That was a second screen at /eure-auswahl until
+ * it turned out the answer to "who is looking?" is one sentence, not a
+ * routing decision — see GalleryVisitor.
  */
 class GalleryPasswordController extends Controller
 {
+    public function __construct(private readonly GalleryVisitor $visitor) {}
+
     public function show(Request $request, Gallery $gallery, GalleryAccessSession $claims): Response
     {
         $unlocked = $claims->viewGranted($gallery);
@@ -39,6 +53,8 @@ class GalleryPasswordController extends Controller
             $this->countView($request, $gallery);
         }
 
+        $isClient = $this->visitor->isClient($gallery);
+
         return Inertia::render('Gallery/Show', [
             'gallery' => [
                 'id' => $gallery->public_id,
@@ -46,6 +62,7 @@ class GalleryPasswordController extends Controller
                 'date' => $gallery->shoot?->date?->format('Y-m-d'),
                 'venue' => $gallery->shoot?->venue(),
                 'expiresAt' => $gallery->expires_at?->toIso8601String(),
+                'url' => url("/galerien/{$gallery->public_id}"),
             ],
             'unlocked' => $unlocked,
             // Null while locked, and null for a gallery nobody has published
@@ -56,7 +73,28 @@ class GalleryPasswordController extends Controller
             // P-06 (#225): on the tile, a list menu replaces the single
             // heart as soon as a client is signed in. A guest keeps the
             // heart — which is the same thing, a list without a name.
-            'lists' => $this->listsFor($gallery),
+            'lists' => $isClient ? $this->lists($gallery, $version) : null,
+            // G-02 (#230): the filter bar counts a guest's hearts, which are
+            // AssetFavorite rows on this session rather than a list of their
+            // own. Null for a client — theirs is the unnamed list above.
+            'favorited' => $isClient || $version === null ? null : AssetFavorite::query()
+                ->where('gallery_version_id', $version->id)
+                ->where('guest_identifier', $this->visitor->guestId())
+                ->pluck('asset_key')
+                ->all(),
+            // Everything below belongs to the couple alone. Absent for a
+            // guest rather than rendered empty: a guest has no link of their
+            // own to share and no gates to rotate.
+            'gates' => $isClient ? [
+                'viewPassword' => $gallery->requiresViewPassword(),
+                'downloadPin' => $gallery->requiresDownloadPin(),
+                'emailVerification' => $gallery->requiresVerifiedEmail(),
+            ] : null,
+            'guests' => $isClient && $version !== null ? [
+                'views' => (int) $gallery->view_count,
+                'marks' => AssetFavorite::query()->where('gallery_version_id', $version->id)->count(),
+                'comments' => AssetComment::query()->where('gallery_version_id', $version->id)->count(),
+            ] : null,
         ]);
     }
 
@@ -66,8 +104,8 @@ class GalleryPasswordController extends Controller
      * here would tell a guest guessing passwords "that id doesn't exist" —
      * exactly the enumeration G-07 closes. Resolving it by hand instead lets
      * a nonexistent gallery fall through the same uniform-failure path as a
-     * wrong password on a real one, all the way down to GallerySecretGate's
-     * dummy hash check.
+     * wrong password on a real one — GallerySecretGate counts and refuses a
+     * missing gallery exactly like a wrong guess against a real one.
      */
     public function store(Request $request, string $gallery, GalleryAccessSession $claims, GallerySecretGate $gate): RedirectResponse
     {
@@ -77,7 +115,7 @@ class GalleryPasswordController extends Controller
         if ($requiresPassword) {
             $validated = $request->validate(['password' => ['required', 'string']]);
 
-            $granted = $gate->attempt($request->ip(), $gallery, $model?->view_password_hash, $validated['password']);
+            $granted = $gate->attempt($request->ip(), $gallery, $model === null ? null : $model->checkViewPassword(...), $validated['password']);
 
             if (! $granted || $model === null) {
                 return back()->withErrors(['password' => __('gallery.password_wrong')]);
@@ -90,51 +128,69 @@ class GalleryPasswordController extends Controller
     }
 
     /**
-     * This client's own selections, or null for a guest. Owned by the
-     * Contact rather than by a localStorage string, which is the whole
-     * reason GalleryList exists beside AssetFavorite — see its docblock.
+     * The client's own selections, with enough of each to show a strip. Keys
+     * the current version no longer has are left out rather than rendered as
+     * broken pictures — a re-publish that dropped one shortens the list, it
+     * does not break it.
      */
-    private function listsFor(Gallery $gallery): ?array
+    private function lists(Gallery $gallery, ?GalleryVersion $version): array
     {
-        $contact = auth('portal')->user();
+        $known = collect($version?->assets ?? [])->pluck('key');
 
-        if ($contact === null || $gallery->project_id === null
-            || ! $contact->visibleProjects()->whereKey($gallery->project_id)->exists()) {
-            return null;
-        }
+        return $this->visitor->lists($gallery)->map(function (GalleryList $list) use ($version, $known) {
+            $keys = $list->items->pluck('asset_key')->intersect($known)->values();
 
-        return GalleryList::query()
-            ->where('gallery_id', $gallery->id)
-            ->where('contact_id', $contact->id)
-            ->with('items')
-            ->get()
-            ->sortBy(fn (GalleryList $list) => [$list->name === null ? 0 : 1, $list->id])
-            ->map(fn (GalleryList $list) => [
+            return [
+                // The heart answers to "herz" rather than to its own id, so
+                // the tile menu works before the row behind it exists.
                 'id' => $list->name === null ? 'herz' : $list->public_id,
+                'listId' => $list->public_id,
                 'name' => $list->name,
-                'keys' => $list->items->pluck('asset_key')->values()->all(),
-            ])
-            ->values()
-            ->all();
+                'keys' => $keys->all(),
+                'covers' => $version === null ? [] : $keys->take(8)
+                    ->map(fn (string $key) => "/galerie-bilder/{$version->public_id}/{$key}")
+                    ->values()->all(),
+                'changedAt' => $list->updated_at->toIso8601String(),
+            ];
+        })->all();
     }
 
     /**
-     * P-06 (#225): "Aufrufe". Once per visitor session rather than per
-     * request — a couple showing their parents the pictures on a laptop is
-     * one visit, not forty, and DownloadEvent has only ever counted
-     * downloads. increment() rather than a read-modify-write, so two guests
-     * arriving at once do not lose one of the two.
+     * C-21 (#256): "Aufgerufen", as a row rather than a counter.
+     *
+     * Once per visitor per day, which is the folding DownloadEvent already
+     * uses: a couple showing their parents the pictures on a laptop is one
+     * visit, not forty. The unique index enforces it, so two tabs opening at
+     * once cannot write two rows — the second collides and is swallowed here
+     * rather than becoming a 500 in front of a guest.
+     *
+     * galleries.view_count stays and keeps being incremented: it is what the
+     * couple's own screen shows, and it counts what happened before this
+     * table existed.
      */
     private function countView(Request $request, Gallery $gallery): void
     {
         $seen = "gallery_viewed.{$gallery->public_id}";
 
-        if ($request->session()->has($seen)) {
-            return;
+        if (! $request->session()->has($seen)) {
+            $request->session()->put($seen, true);
+            $gallery->increment('view_count');
         }
 
-        $request->session()->put($seen, true);
-        $gallery->increment('view_count');
+        try {
+            GalleryView::query()->insertOrIgnore([
+                'tenant_id' => config('tenancy.tenant_id'),
+                'gallery_id' => $gallery->id,
+                'contact_id' => $this->visitor->client($gallery)?->id,
+                'visitor_identifier' => $this->visitor->guestId(),
+                'viewed_on' => now()->toDateString(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            // Two tabs on the same second. The row exists, which is the whole
+            // point of the write.
+        }
     }
 
     /**

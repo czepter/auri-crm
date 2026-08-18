@@ -2,6 +2,7 @@
 
 namespace App\Media\Actions;
 
+use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GalleryVersion;
 use App\Media\Enums\AssetStatus;
 use App\Media\Enums\ZipBuildSize;
@@ -63,7 +64,7 @@ class BuildGalleryZip
         // cleared before this attempt writes its own.
         $zipBuild->parts()->delete();
 
-        $members = $this->resolveMembers($zipBuild->galleryVersion, $zipBuild->size);
+        $members = $this->resolveMembers($zipBuild->galleryVersion, $zipBuild->size, $zipBuild->galleryList);
         $volumes = ZipVolumePlanner::plan($members, $splitThresholdBytes);
 
         /** @var FilesystemAdapter $disk */
@@ -144,19 +145,46 @@ class BuildGalleryZip
     /**
      * @return list<ZipBuildMember>
      */
-    private function resolveMembers(GalleryVersion $version, ZipBuildSize $size): array
+    /**
+     * G-04 (#232): resolved by storage key, not by public_id.
+     *
+     * A GalleryVersion's `assets` is a list of objects carrying `key`,
+     * `width` and `height` — that is what every reader has always expected
+     * (the portal grid needs the dimensions to lay out without reflow) and
+     * what publish() copies out of Gallery::assets. This method alone read
+     * the same column as a list of public_id strings, so the first real
+     * published version it met threw "Nested arrays may not be passed to
+     * whereIn method" and no archive could ever be built.
+     *
+     * The object form wins because it is the only one that carries the
+     * measurements; a version written in the old string form still resolves,
+     * since a bare string is its own key.
+     */
+    private function resolveMembers(GalleryVersion $version, ZipBuildSize $size, ?GalleryList $list): array
     {
-        // scope=All is the only case today (#59) — every asset the version
-        // snapshot carries, in the order it carries them.
-        $assetsByPublicId = Asset::query()
+        $keys = collect($version->assets)
+            ->map(fn (array|string $asset) => is_array($asset) ? ($asset['key'] ?? null) : $asset)
+            ->filter()
+            ->values();
+
+        // G-03 (#231): a build may cover one of the client's own selections
+        // instead of the whole version. Intersected rather than queried from
+        // the list, so the version's own order survives — a couple's album
+        // downloads in the order the studio delivered it.
+        if ($list !== null) {
+            $onList = $list->items->pluck('asset_key')->all();
+            $keys = $keys->filter(fn (string $key) => in_array($key, $onList, true))->values();
+        }
+
+        $assetsByKey = Asset::query()
             ->where('gallery_id', $version->gallery_id)
-            ->whereIn('public_id', $version->assets)
+            ->whereIn('key', $keys)
             ->where('status', AssetStatus::Ready)
             ->get()
-            ->keyBy('public_id');
+            ->keyBy('key');
 
-        $assets = collect($version->assets)
-            ->map(fn (string $publicId) => $assetsByPublicId->get($publicId))
+        $assets = $keys
+            ->map(fn (string $key) => $assetsByKey->get($key))
             ->filter()
             ->values();
 

@@ -1,0 +1,16 @@
+    <nav class="subnav">
+      <div class="lab">Persönlich</div>
+      <a href="crm-einstellungen-person.html">Konto</a>
+      <a href="#">Benachrichtigungen</a>
+      <div class="lab">Studio</div>
+      <a href="crm-einstellungen-studio.html">Stammdaten</a>
+      <a href="#">Nummernkreise</a>
+      <a href="#">Zahlungen</a>
+      <a href="#">Verfügbarkeit</a>
+      <a href="#">E-Mail</a>
+      <div class="lab">Kunden</div>
+      <a href="crm-einstellungen-portal.html">Portal</a>
+      <a href="crm-einstellungen-galerie.html">Galerie</a>
+      <a href="#">Aufgabenvorlagen</a>
+      <a href="#">Fragebögen</a>
+    </nav>

@@ -44,6 +44,29 @@ export type ContractStatus = 'pending' | 'rendered' | 'failed';
 }
 namespace Crm {
 namespace Data {
+export type CalendarDayData = {
+date: string,
+inMonth: boolean,
+today: boolean,
+entries: App.Crm.Data.CalendarEntryData[],
+};
+export type CalendarEntryData = {
+kind: string,
+time: string | null,
+what: string,
+who: string | null,
+projectId: string | null,
+};
+export type ContactRowData = {
+id: string,
+name: string,
+email: string | null,
+phone: string | null,
+projectCount: number,
+standing: string,
+nextDate: string | null,
+latestProject: string | null,
+};
 export type ContactSuggestionData = {
 id: string,
 name: string,
@@ -67,6 +90,7 @@ venue: string | null,
 kind: string | null,
 label: string | null,
 personId: string | null,
+booked: boolean,
 };
 export type DomainRowData = {
 projectId: string,
@@ -130,6 +154,8 @@ venue: string | null,
 source: string,
 stage: string,
 daysInStage: number,
+value: number | null,
+lastAt: string,
 conflicts: App.Crm.Data.DateConflictData[],
 };
 export type NextShootData = {
@@ -193,6 +219,14 @@ export type ProjectPositionData = {
 source: string,
 value: string | null,
 label: string,
+};
+export type ProjectRowData = {
+id: string,
+name: string,
+date: string | null,
+venue: string | null,
+position: string,
+contact: string | null,
 };
 export type RowActionData = {
 label: string,
@@ -406,7 +440,7 @@ partSize: number,
 namespace Enums {
 export type AssetStatus = 'ready' | 'failed';
 export type MultipartUploadStatus = 'in_progress' | 'completed' | 'aborted';
-export type ZipBuildScope = 'all';
+export type ZipBuildScope = 'all' | 'list';
 export type ZipBuildSize = 'original' | 'web';
 export type ZipBuildStatus = 'building' | 'ready' | 'failed';
 }
@@ -559,6 +593,7 @@ registerCourt: string | null,
 representative: string | null,
 website: string | null,
 accentColor: string | null,
+fontPair: string | null,
 logoUrl: string | null,
 bankAccountHolder: string | null,
 bankIban: string | null,
@@ -582,6 +617,9 @@ mailReplyTo: string | null,
 mailSignature: string | null,
 mailBcc: string | null,
 };
+}
+namespace Enums {
+export type FontPair = 'instrument' | 'fraunces' | 'cormorant' | 'grotesk';
 }
 }
 }

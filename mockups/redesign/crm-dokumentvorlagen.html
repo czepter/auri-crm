@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Dokumentvorlagen — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="vorlagen">
+
+<!-- Vorlagen sind versioniert: family_id hält die Reihe zusammen, version
+     zählt hoch, is_current sagt, welche Fassung neue Dokumente bekommen.
+     Bereits erzeugte Verträge behalten ihre Fassung — deshalb steht neben
+     jeder Reihe, wie viele Dokumente an einer älteren Version hängen.
+
+     Deshalb heißt die Handlung "Neue Fassung" und nicht "Bearbeiten": eine
+     laufende Vorlage zu überschreiben würde bedeuten, dass ein unterschriebener
+     Vertrag nachträglich anders aussieht. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="main">
+
+    <div class="hrow">
+      <div>
+        <div class="kick">7 Reihen · 3 mit älteren Fassungen im Umlauf</div>
+        <h1>Dokumentvorlagen</h1>
+      </div>
+      <a class="link" href="#" style="margin-left:auto">Platzhalter</a>
+      <a class="btn" href="#">Vorlage anlegen</a>
+    </div>
+
+    <div class="filters">
+      <button class="pop"><u>Art</u> Alle</button>
+      <button class="pop"><u>Anlass</u> Alle</button>
+    </div>
+
+    <table style="margin-top:20px">
+      <thead>
+        <tr>
+          <th style="width:30%">Vorlage</th>
+          <th style="width:14%">Art</th>
+          <th style="width:16%">Anlass</th>
+          <th style="width:14%">Fassung</th>
+          <th style="width:16%">Im Umlauf</th>
+          <th class="r" style="width:10%">Geändert</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="grp" colspan="6">Verträge</td></tr>
+        <tr>
+          <td class="nm">Hochzeit 2026</td>
+          <td class="mu">Vertrag</td>
+          <td class="mu">Hochzeit</td>
+          <td class="mu">v4 · aktuell</td>
+          <td class="mu">11 Verträge</td>
+          <td class="r mu">12.06.</td>
+        </tr>
+        <tr>
+          <td class="nm">Portrait und Familie</td>
+          <td class="mu">Vertrag</td>
+          <td class="mu">Portrait</td>
+          <td class="mu">v2 · aktuell</td>
+          <td class="mu">23 Verträge</td>
+          <td class="r mu">04.02.</td>
+        </tr>
+        <tr>
+          <td class="nm">Auftrag Unternehmen</td>
+          <td class="mu">Vertrag</td>
+          <td class="mu">Sonstiges</td>
+          <td class="mu">v1 · aktuell</td>
+          <td class="mu">4 Verträge</td>
+          <td class="r mu">28.06.</td>
+        </tr>
+
+        <tr><td class="grp" colspan="6">Angebote und Rechnungen</td></tr>
+        <tr>
+          <td class="nm">Angebot Standard</td>
+          <td class="mu">Angebot</td>
+          <td class="mu">alle</td>
+          <td class="mu">v6 · aktuell</td>
+          <td><span class="w">2 Angebote auf v5</span></td>
+          <td class="r mu">01.08.</td>
+        </tr>
+        <tr>
+          <td class="nm">Rechnung</td>
+          <td class="mu">Rechnung</td>
+          <td class="mu">alle</td>
+          <td class="mu">v3 · aktuell</td>
+          <td class="mu">38 Rechnungen</td>
+          <td class="r mu">14.01.</td>
+        </tr>
+
+        <tr><td class="grp" colspan="6">Anschreiben</td></tr>
+        <tr>
+          <td class="nm">Ablauf zum Termin</td>
+          <td class="mu">Anschreiben</td>
+          <td class="mu">Hochzeit</td>
+          <td class="mu">v2 · aktuell</td>
+          <td class="mu">—</td>
+          <td class="r mu">30.07.</td>
+        </tr>
+        <tr>
+          <td class="nm">Galerie ist online</td>
+          <td class="mu">Anschreiben</td>
+          <td class="mu">alle</td>
+          <td class="mu">v5 · aktuell</td>
+          <td><span class="w">1 Entwurf offen</span></td>
+          <td class="r mu">16.08.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="work" style="padding-top:26px">
+      <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Hochzeit 2026 · Fassungen</h2>
+      <div class="rowset">
+        <div class="r">
+          <span class="when">v4 · 12.06.2026<span class="st">aktuell</span></span>
+          <span class="what">Haftung und Absage neu gefasst<div class="s">Christian · 11 Verträge daraus</div></span>
+          <span class="right"><a class="link" href="#">Ansehen</a></span>
+        </div>
+        <div class="r">
+          <span class="when">v3 · 02.02.2026</span>
+          <span class="what">Zahlungsziele auf 14 Tage<div class="s">Christian · 8 Verträge daraus</div></span>
+          <span class="right"><a class="link" href="#">Ansehen</a></span>
+        </div>
+        <div class="r">
+          <span class="when">v2 · 18.09.2025</span>
+          <span class="what">Nutzungsrechte ergänzt<div class="s">Christian · 14 Verträge daraus</div></span>
+          <span class="right"><a class="link" href="#">Ansehen</a></span>
+        </div>
+      </div>
+      <div class="ghosts">
+        <button class="ghost">Neue Fassung</button>
+        <button class="ghost">Als Vorlage duplizieren</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

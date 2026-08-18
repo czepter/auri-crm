@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Galerie · Meier &amp; Kowalski — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="galerien">
+
+<!-- Link, Passwort, Code und die Kennwerte stehen über den Reitern: sie gelten
+     für die ganze Galerie und wechseln nicht mit der Ansicht.
+
+     Fassungen sitzen bei den Bildern, nicht bei den Freigaben — eine Fassung
+     ist eine veröffentlichte Auswahl (gallery_versions.version, published_at),
+     also eine Aussage über Bilder.
+
+     Aktivität zeigt nur, was auch aufgezeichnet wird. Aufrufe werden es
+     nicht: wer das Ansichtspasswort eingibt, bleibt eine anonyme Sitzung
+     (GalleryAccessSession), es gibt keine Zeile dafür. Aufgezeichnet sind
+     download_events (requester_identifier, zip_build_id, ip, request_date),
+     asset_favorites und asset_comments je guest_identifier sowie die Zugänge:
+     gallery_email_verifications.consumed_at für Gäste,
+     client_accesses.consumed_at für Kontakte mit Portalzugang.
+
+     zip_builds.scope kennt zwei Umfänge, ganze Fassung oder eine Liste —
+     Sets und Einzelbilder werden nicht als Download geführt.
+
+     gallery_lists.contact_id ist nicht nullbar: eine Liste gehört immer
+     jemandem. Deshalb steht der Mensch vorn und die Liste dahinter.
+
+     balance_settled ist kein Schalter, sondern ein Zustand aus den Zahlungen —
+     er steht als Wert bei der Sperre, die er auslöst. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="main">
+
+    <div class="hrow" style="padding-bottom:2px">
+      <div>
+        <div class="kick"><a class="link" href="crm-projekt.html">Meier &amp; Kowalski</a></div>
+        <h1 style="font-size:24px">Hochzeitstag</h1>
+      </div>
+      <a class="link" href="galerie.html" style="margin-left:auto">Als Gast ansehen</a>
+      <a class="btn-2" href="#">Link senden</a>
+      <a class="btn" href="#">Neue Fassung</a>
+    </div>
+
+    <div class="access" style="margin:18px 32px 0">
+      <div class="col">
+        <div class="lab">Link</div>
+        <div class="val"><a class="link" href="galerie.html">nordlicht.de/g/8f3k2q</a></div>
+        <div class="act"><button class="ghost">Kopieren</button></div>
+      </div>
+      <div class="col">
+        <div class="lab">Passwort für die Ansicht</div>
+        <div class="val form"><input value="Basthorst26"></div>
+        <div class="act"><button class="ghost">Würfeln</button></div>
+      </div>
+      <div class="col">
+        <div class="lab">Code für den Download</div>
+        <div class="val form"><input value="4821" class="s"></div>
+        <div class="act"><button class="ghost">Würfeln</button></div>
+      </div>
+      <div class="col wide">
+        <div class="lab">Galerien im Projekt</div>
+        <div class="siblings">
+          <a class="on" href="crm-galerie.html">Hochzeitstag <span>220</span></a>
+          <a href="#">Brunch <span>64</span></a>
+          <a href="#">After-Wedding <span>—</span></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="band" style="margin:0 32px 20px">
+      <div class="cell">
+        <div class="lab">Stand</div>
+        <div class="val plain">online</div>
+        <div class="sub">seit 12.08. · Fassung 2</div>
+      </div>
+      <div class="cell">
+        <div class="lab">Bilder</div>
+        <div class="val">220</div>
+        <div class="sub">14,2 GB · 4 Sets</div>
+      </div>
+      <div class="cell">
+        <div class="lab">Läuft ab</div>
+        <div class="val warn">28.08.</div>
+        <div class="sub">in 11 Tagen</div>
+      </div>
+      <div class="cell">
+        <div class="lab">Markiert</div>
+        <div class="val">87</div>
+        <div class="sub">4 Listen · 18 Kommentare</div>
+      </div>
+      <div class="cell">
+        <div class="lab">Heruntergeladen</div>
+        <div class="val">6</div>
+        <div class="sub">zuletzt gestern 21:02</div>
+      </div>
+    </div>
+
+    <input class="vswitch" type="radio" name="tab" id="tab-bilder" checked>
+    <input class="vswitch" type="radio" name="tab" id="tab-design">
+    <input class="vswitch" type="radio" name="tab" id="tab-download">
+    <input class="vswitch" type="radio" name="tab" id="tab-zugang">
+    <input class="vswitch" type="radio" name="tab" id="tab-verlauf">
+
+    <div class="tabs">
+      <label for="tab-bilder">Bilder</label>
+      <label for="tab-design">Gestaltung</label>
+      <label for="tab-download">Download</label>
+      <label for="tab-zugang">Freigaben</label>
+      <label for="tab-verlauf">Aktivität</label>
+    </div>
+
+    <div class="tabview bilder">
+      <nav class="sets">
+        <a class="on" href="#">Alle <span class="ct">220</span></a>
+        <a href="#">Getting Ready <span class="ct">38</span></a>
+        <a href="#">Trauung <span class="ct">64</span></a>
+        <a href="#">Paarbilder <span class="ct">42</span></a>
+        <a href="#">Feier <span class="ct">76</span></a>
+        <div class="add"><button class="ghost">+ Set</button></div>
+      </nav>
+
+      <div class="shelf">
+        <div class="bar">
+          <h2>Alle</h2>
+          <span class="n">220 Bilder · 14,2 GB</span>
+          <span style="margin-left:auto; display:flex; gap:8px; align-items:center">
+            <button class="pop"><u>Sortierung</u> Aufnahmezeit</button>
+            <button class="ghost">Bilder hinzufügen</button>
+          </span>
+        </div>
+
+        <div class="grid-photos">
+          <figure><img src="img/p001-sm.jpg" alt=""><span class="mark"><span>Titelbild</span></span></figure>
+          <figure><img src="img/p005-sm.jpg" alt=""></figure>
+          <figure class="tall"><img src="img/p008-sm.jpg" alt=""><span class="mark"><span>4 Favoriten</span></span></figure>
+          <figure><img src="img/p011-sm.jpg" alt=""></figure>
+          <figure><img src="img/p016-sm.jpg" alt=""><span class="mark"><span>2 Kommentare</span></span></figure>
+          <figure class="tall"><img src="img/p020-sm.jpg" alt=""></figure>
+          <figure><img src="img/p025-sm.jpg" alt=""></figure>
+          <figure><img src="img/p030-sm.jpg" alt=""><span class="mark"><span>in 3 Listen</span></span></figure>
+          <figure><img src="img/p001-sm.jpg" alt=""></figure>
+          <figure><img src="img/p011-sm.jpg" alt=""></figure>
+          <figure class="tall"><img src="img/p005-sm.jpg" alt=""></figure>
+          <figure><img src="img/p016-sm.jpg" alt=""></figure>
+        </div>
+
+        <section class="sec" style="margin-top:28px">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Fassungen</h2>
+          <div class="rowset">
+            <div class="r">
+              <span class="when">Fassung 2 · 12.08.<span class="st">online</span></span>
+              <span class="what">220 Bilder<div class="s">18 ergänzt, 4 ersetzt</div></span>
+              <span class="right"><a class="link" href="#">Ansehen</a></span>
+            </div>
+            <div class="r">
+              <span class="when">Fassung 1 · 08.08.</span>
+              <span class="what">206 Bilder<div class="s">erste Veröffentlichung</div></span>
+              <span class="right"><a class="link" href="#">Ansehen</a></span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="tabview design">
+      <div class="work" style="padding-top:20px">
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 10px">Titelbild</h2>
+          <div class="picks">
+            <label><input type="radio" name="cover" checked><span class="thumb" style="background:linear-gradient(160deg,#4d3a2c,#c0a184); color:#fff">Mittig</span><span class="cap">Titel über dem Bild</span></label>
+            <label><input type="radio" name="cover"><span class="thumb">Links</span><span class="cap">Titel links unten</span></label>
+            <label><input type="radio" name="cover"><span class="thumb">Geteilt</span><span class="cap">Bild und Titel nebeneinander</span></label>
+          </div>
+        </section>
+
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 10px">Schrift</h2>
+          <div class="picks">
+            <label><input type="radio" name="typo" checked><span class="thumb" style="font:400 22px/1 -apple-system,sans-serif; letter-spacing:-.02em; text-transform:none; color:var(--ink)">Aa</span><span class="cap">Grotesk</span></label>
+            <label><input type="radio" name="typo"><span class="thumb" style="font:400 22px/1 Georgia,serif; text-transform:none; color:var(--ink)">Aa</span><span class="cap">Antiqua</span></label>
+            <label><input type="radio" name="typo"><span class="thumb" style="font:300 22px/1 -apple-system,sans-serif; letter-spacing:.12em; text-transform:none; color:var(--ink)">Aa</span><span class="cap">Weit</span></label>
+          </div>
+        </section>
+
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 10px">Farbe</h2>
+          <div class="picks">
+            <label><input type="radio" name="farbe" checked><span class="thumb"><span class="sw-row"><i style="background:#fff"></i><i style="background:#f2f2f4"></i><i style="background:#1d1d1f"></i></span></span><span class="cap">Hell</span></label>
+            <label><input type="radio" name="farbe"><span class="thumb" style="background:#1d1d1f"><span class="sw-row"><i style="background:#0c0a09"></i><i style="background:#2a2521"></i><i style="background:#f6f1eb"></i></span></span><span class="cap">Dunkel</span></label>
+            <label><input type="radio" name="farbe"><span class="thumb"><span class="sw-row"><i style="background:#fff"></i><i style="background:#f4efe9"></i><i style="background:#b44e22"></i></span></span><span class="cap">Warm</span></label>
+          </div>
+        </section>
+
+        <section class="sec" style="margin-bottom:0">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 10px">Raster</h2>
+          <div class="picks">
+            <label><input type="radio" name="raster" checked><span class="thumb">Gemischt</span><span class="cap">Höhen wie aufgenommen</span></label>
+            <label><input type="radio" name="raster"><span class="thumb">Gleich hoch</span><span class="cap">Beschnitten auf 3:2</span></label>
+            <label><input type="radio" name="raster"><span class="thumb">Groß</span><span class="cap">Zwei Spalten</span></label>
+          </div>
+        </section>
+      </div>
+
+      <aside class="preview-pane">
+        <div class="frame">
+          <div class="cover">
+            <img src="img/p001.jpg" alt="">
+            <div class="title">
+              <b>Meier &amp; Kowalski</b>
+              <span>21. August 2026 · Gut Basthorst</span>
+            </div>
+          </div>
+          <div class="thumbs">
+            <img src="img/p005-sm.jpg" alt=""><img src="img/p008-sm.jpg" alt=""><img src="img/p011-sm.jpg" alt="">
+            <img src="img/p016-sm.jpg" alt=""><img src="img/p020-sm.jpg" alt=""><img src="img/p025-sm.jpg" alt="">
+            <img src="img/p030-sm.jpg" alt=""><img src="img/p001-sm.jpg" alt=""><img src="img/p011-sm.jpg" alt="">
+          </div>
+        </div>
+        <div class="pv-foot">
+          <div class="seg">
+            <label>Schreibtisch</label>
+            <label>Telefon</label>
+          </div>
+          <a class="link" href="galerie.html">Als Gast öffnen</a>
+        </div>
+      </aside>
+    </div>
+
+    <div class="tabview download">
+      <div class="work" style="padding-top:20px">
+
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Herunterladen</h2>
+          <div class="setting"><span class="t">Download erlaubt</span><span class="sw on"></span></div>
+          <div class="setting"><span class="t">Alle Bilder als ZIP</span><span class="v mut">14,2 GB · 8 Teile à 2 GB</span><span class="sw on"></span></div>
+          <div class="setting"><span class="t">Einzelne Bilder</span><span class="sw on"></span></div>
+        </section>
+
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Größen</h2>
+          <div class="setting"><span class="t">Original<div class="s">wie aufgenommen · 14,2 GB</div></span><span class="sw on"></span></div>
+          <div class="setting"><span class="t">Web<div class="s">lange Kante 2048 px · 1,8 GB</div></span><span class="sw on"></span></div>
+        </section>
+
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Wer darf</h2>
+          <div class="setting"><span class="t">Code für den Download</span><span class="v mut">4821</span><span class="sw on"></span></div>
+          <div class="setting"><span class="t">E-Mail vor dem Download</span><span class="sw on"></span><a class="link" href="#">Zurücksetzen</a></div>
+          <div class="setting"><span class="t">Erst nach vollständiger Zahlung</span><span class="v" style="color:var(--accent)">1.500 € offen</span><span class="sw on"></span><a class="link" href="#">Zurücksetzen</a></div>
+          <div class="setting"><span class="t">Nur Empfänger der Galerie<div class="s">Lea Meier, Jan Kowalski</div></span><span class="sw"></span></div>
+        </section>
+
+        <section class="sec" style="margin-bottom:0">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Sets</h2>
+          <div class="setting"><span class="t">Getting Ready</span><span class="v mut">38</span><span class="sw on"></span></div>
+          <div class="setting"><span class="t">Trauung</span><span class="v mut">64</span><span class="sw on"></span></div>
+          <div class="setting"><span class="t">Paarbilder</span><span class="v mut">42</span><span class="sw on"></span></div>
+          <div class="setting"><span class="t">Feier</span><span class="v mut">76</span><span class="sw"></span></div>
+        </section>
+      </div>
+
+      <aside class="rail" style="width:290px">
+        <h2>Archive</h2>
+        <div class="grp">
+          <div class="item"><div class="n">ZIP · original</div><div class="m">14,2 GB · 8 Teile · bereit</div></div>
+          <div class="item"><div class="n">ZIP · web</div><div class="m">1,8 GB · 1 Teil · bereit</div></div>
+          <div class="item"><a class="link" href="#">Neu bauen</a></div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="tabview zugang">
+      <div class="work" style="padding-top:20px">
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Was Gäste dürfen</h2>
+          <div class="setting"><span class="t">Kommentare</span><span class="v mut">18 vorhanden</span><span class="sw on"></span></div>
+          <div class="setting"><span class="t">Favoritenlisten</span><span class="v mut">4 Listen</span><span class="sw on"></span></div>
+          <div class="setting"><span class="t">Läuft ab am</span><span class="v">28.08.2026</span><a class="link" href="#">Verlängern</a></div>
+        </section>
+
+        <section class="sec">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Empfänger</h2>
+          <div class="rowset">
+            <div class="r">
+              <span class="when">Lea Meier<span class="st">Auftraggeberin</span></span>
+              <span class="what"><a class="link" href="crm-kontakt.html">lea.meier@example.de</a></span>
+              <span class="right">Zugang benutzt heute 11:20</span>
+            </div>
+            <div class="r">
+              <span class="when">Jan Kowalski<span class="st">Partner</span></span>
+              <span class="what"><a class="link" href="#">j.kowalski@example.de</a></span>
+              <span class="right">Zugang benutzt 13.08.</span>
+            </div>
+            <div class="r">
+              <span class="when">Maja Reinhold<span class="st">Gast</span></span>
+              <span class="what"><a class="link" href="#">maja.r@example.de</a></span>
+              <span class="right">per E-Mail ausgewiesen</span>
+            </div>
+          </div>
+          <div class="ghosts"><button class="ghost">+ Empfänger</button></div>
+        </section>
+
+        <section class="sec" style="margin-bottom:0">
+          <h2 style="font:600 10.5px/1 var(--font); letter-spacing:.07em; text-transform:uppercase; color:var(--ink-2); margin:0 0 8px">Listen der Gäste</h2>
+          <div class="rowset">
+            <div class="r">
+              <span class="when">Lea Meier</span>
+              <span class="what">Favoriten · 31 Bilder<div class="s">Album · 80 Bilder</div></span>
+              <span class="right"><a class="link" href="#">Ansehen</a></span>
+            </div>
+            <div class="r">
+              <span class="when">Jan Kowalski</span>
+              <span class="what">Danksagung · 12 Bilder</span>
+              <span class="right"><a class="link" href="#">Ansehen</a></span>
+            </div>
+            <div class="r">
+              <span class="when">Maja Reinhold</span>
+              <span class="what">Eltern · 42 Bilder<div class="s">gestern heruntergeladen</div></span>
+              <span class="right"><a class="link" href="#">Ansehen</a></span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="tabview verlauf">
+      <div class="work" style="padding-top:18px; padding-right:32px">
+
+        <input class="vswitch" type="radio" name="akt" id="akt-download" checked>
+        <input class="vswitch" type="radio" name="akt" id="akt-marken">
+        <input class="vswitch" type="radio" name="akt" id="akt-zugriffe">
+
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px">
+          <div class="seg">
+            <label for="akt-download">Downloads</label>
+            <label for="akt-marken">Favoriten und Kommentare</label>
+            <label for="akt-zugriffe">Zugänge</label>
+          </div>
+          <a class="link" href="#" style="margin-left:auto">Exportieren</a>
+        </div>
+
+        <div class="aktview download">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:26%">Wer</th>
+                <th style="width:30%">Was</th>
+                <th style="width:14%">Größe</th>
+                <th style="width:12%">Fassung</th>
+                <th class="r" style="width:18%">Wann</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="nm">maja.r@example.de</td>
+                <td>Liste „Eltern“ · 42 Bilder</td>
+                <td class="mu">web</td>
+                <td class="mu">Fassung 2</td>
+                <td class="r mu">gestern</td>
+              </tr>
+              <tr>
+                <td class="nm">Lea Meier</td>
+                <td>Alle Bilder · 220</td>
+                <td class="mu">original</td>
+                <td class="mu">Fassung 2</td>
+                <td class="r mu">13.08.</td>
+              </tr>
+              <tr>
+                <td class="nm">j.kowalski@example.de</td>
+                <td>Liste „Danksagung“ · 12 Bilder</td>
+                <td class="mu">web</td>
+                <td class="mu">Fassung 2</td>
+                <td class="r mu">13.08.</td>
+              </tr>
+              <tr>
+                <td class="nm">Lea Meier</td>
+                <td>Alle Bilder · 206</td>
+                <td class="mu">original</td>
+                <td class="mu">Fassung 1</td>
+                <td class="r mu">09.08.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="aktview marken">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:26%">Wer</th>
+                <th style="width:40%">Was</th>
+                <th style="width:16%">Bilder</th>
+                <th class="r" style="width:18%">Zuletzt</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="nm">Lea Meier</td><td>Favoriten</td><td class="mu">31</td><td class="r mu">gestern 19:20</td></tr>
+              <tr><td class="nm">Lea Meier</td><td>Album</td><td class="mu">80</td><td class="r mu">15.08.</td></tr>
+              <tr><td class="nm">Maja Reinhold</td><td>Eltern</td><td class="mu">42</td><td class="r mu">14.08.</td></tr>
+              <tr><td class="nm">Jan Kowalski</td><td>Danksagung</td><td class="mu">12</td><td class="r mu">14.08.</td></tr>
+              <tr><td class="nm">Lea Meier</td><td>Kommentar · „Bitte dieses in Schwarzweiß“</td><td class="mu">1 Bild</td><td class="r mu">14.08.</td></tr>
+              <tr><td class="nm">Jan Kowalski</td><td>Kommentar · „Meine Eltern fehlen hier“</td><td class="mu">1 Bild</td><td class="r mu">13.08.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="aktview zugriffe">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:32%">Wer</th>
+                <th style="width:26%">Womit</th>
+                <th style="width:20%">Bestätigt</th>
+                <th class="r" style="width:22%">Gültig bis</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td class="nm">Lea Meier</td><td class="mu">Zugangslink</td><td class="mu">heute 11:20</td><td class="r mu">30.08.</td></tr>
+              <tr><td class="nm">Jan Kowalski</td><td class="mu">Zugangslink</td><td class="mu">13.08.</td><td class="r mu">30.08.</td></tr>
+              <tr><td class="nm">maja.r@example.de</td><td class="mu">E-Mail-Code</td><td class="mu">14.08. · 20:48</td><td class="r mu">abgelaufen</td></tr>
+              <tr><td class="nm">theresia.f@example.de</td><td class="mu">E-Mail-Code</td><td class="mu">—</td><td class="r mu">heute 22:10</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

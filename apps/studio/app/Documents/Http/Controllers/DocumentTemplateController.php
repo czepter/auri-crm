@@ -5,9 +5,11 @@ namespace App\Documents\Http\Controllers;
 use App\Crm\Enums\ShootKind;
 use App\Documents\Actions\SeedStarterTemplates;
 use App\Documents\Data\DocumentTemplateData;
+use App\Crm\Models\Project;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentBlockCatalog;
+use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldResolver;
@@ -22,6 +24,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -48,9 +51,50 @@ class DocumentTemplateController extends Controller
 
         return Inertia::render('DocumentTemplates/Index', [
             'templates' => DocumentTemplateData::collect($templates),
+            // C-15 (#251): a template is a versioned series, so the table
+            // shows the edition and how many documents each one is out in.
+            // The history sits under the row, because "which version did this
+            // signed contract use" is the only question that ever gets asked
+            // about an old one.
+            'families' => $this->families($templates),
             'type' => $type,
             'types' => $this->typeOptions(),
         ]);
+    }
+
+    /**
+     * Every edition of the shown families, with the number of documents that
+     * point at each. Contracts name their exact template row
+     * (contracts.contract_template_id, never the family), which is what makes
+     * "in circulation" a fact rather than an estimate.
+     *
+     * Keyed by the current edition's own public id, never by family_id:
+     * that one is an internal key and has no business on a surface.
+     *
+     * @return array<string, list<array{version: int, isCurrent: bool, inUse: int, id: string}>>
+     */
+    private function families($templates): array
+    {
+        $inUse = DB::table('contracts')
+            ->selectRaw('contract_template_id, count(*) as total')
+            ->groupBy('contract_template_id')
+            ->pluck('total', 'contract_template_id');
+
+        $byFamily = DocumentTemplate::query()
+            ->whereIn('family_id', $templates->pluck('family_id'))
+            ->orderByDesc('version')
+            ->get()
+            ->groupBy('family_id');
+
+        return $templates->mapWithKeys(fn (DocumentTemplate $current) => [
+            $current->public_id => $byFamily->get($current->family_id, collect())
+                ->map(fn (DocumentTemplate $template) => [
+                    'id' => $template->public_id,
+                    'version' => $template->version,
+                    'isCurrent' => $template->is_current,
+                    'inUse' => (int) ($inUse[$template->id] ?? 0),
+                ])->values()->all(),
+        ])->all();
     }
 
     public function create(): Response
@@ -63,7 +107,7 @@ class DocumentTemplateController extends Controller
             // Keyed by type: the create screen's type select changes the palette
             // without a round trip, and there are three small lists in total.
             'palettes' => collect(DocumentTemplateType::cases())
-                ->mapWithKeys(fn (DocumentTemplateType $type) => [$type->value => DocumentBlockCatalog::for($type)])
+                ->mapWithKeys(fn (DocumentTemplateType $type) => [$type->value => DocumentBlockCatalog::paletteFor($type)])
                 ->all(),
             'mergeFields' => $this->mergeFieldOptions(),
             // T-16: keyed by type for the same reason the palettes above are —
@@ -71,6 +115,10 @@ class DocumentTemplateController extends Controller
             // Blocks travel with the entry, so choosing one is a local edit to
             // an unsaved draft rather than a request for a document that does
             // not exist yet.
+            // C-16 (#252): the projects the preview can reckon with. Newest
+            // first — a template is written for the work in front of you.
+            'projects' => Project::query()->latest()->limit(50)->get()
+                ->map(fn (Project $project) => ['id' => $project->public_id, 'name' => $project->name])->all(),
             'starters' => StarterTemplateCatalog::byType(),
         ]);
     }
@@ -149,7 +197,11 @@ class DocumentTemplateController extends Controller
         return Inertia::render('DocumentTemplates/Edit', [
             'template' => DocumentTemplateData::fromModel($documentTemplate),
             // One palette, not three: a family's type never changes.
-            'palette' => DocumentBlockCatalog::for($documentTemplate->type),
+            // C-16 (#252): the projects the preview can reckon with. Newest
+            // first — a template is written for the work in front of you.
+            'projects' => Project::query()->latest()->limit(50)->get()
+                ->map(fn (Project $project) => ['id' => $project->public_id, 'name' => $project->name])->all(),
+            'palette' => DocumentBlockCatalog::paletteFor($documentTemplate->type),
             'mergeFields' => $this->mergeFieldOptions(),
         ]);
     }
@@ -210,10 +262,25 @@ class DocumentTemplateController extends Controller
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:100000'],
             'type' => ['required', Rule::enum(DocumentTemplateType::class)],
+            // C-16 (#252): reckoned against a chosen project rather than
+            // sample values — only then does an empty placeholder show up
+            // here rather than in front of the client.
+            'project' => ['nullable', 'string', 'size:24'],
         ]);
 
         $type = DocumentTemplateType::from($validated['type']);
-        $resolved = MergeFieldResolver::resolve($validated['body'], MergeFieldVocabulary::sample());
+        $project = ($validated['project'] ?? null) === null
+            ? null
+            : Project::query()->where('public_id', $validated['project'])->first();
+
+        $resolved = MergeFieldResolver::resolve(
+            $validated['body'],
+            $project === null
+                ? MergeFieldVocabulary::sample()
+                // Nested, like MergeFieldVocabulary::sample() — the resolver
+                // walks the path, it does not look up a dotted key.
+                : app(DocumentMergeDataBuilder::class)->fromProject($project, $settings),
+        );
         $html = $renderer->wrap($type, $resolved, $settings);
 
         return response($html)->header('Content-Type', 'text/html; charset=utf-8');

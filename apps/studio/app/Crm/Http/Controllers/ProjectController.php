@@ -9,9 +9,13 @@ use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Data\FormInstanceData;
 use App\Crm\Data\InternalNoteData;
 use App\Crm\Data\ProjectHeaderData;
+use App\Crm\Data\ProjectRowData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\CrewRole;
+use App\Crm\Enums\LeadSource;
+use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\FormFieldType;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Project;
@@ -26,10 +30,16 @@ use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Payments\Data\PaymentPlanData;
+use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Quotes\Data\QuoteData;
+use App\Quotes\Enums\QuoteStatus;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
+use App\Support\RecordVisit;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -40,9 +50,44 @@ class ProjectController extends Controller
         private readonly CheckDateAvailability $availability,
     ) {}
 
+    /**
+     * C-02 (#236): the destination the sidebar's new Projekte entry needs.
+     * Projects/* owns most of the product's screens and had no list of its
+     * own — a project was reachable only through the board it came off, or by
+     * URL.
+     *
+     * Ordered by the primary shoot, nearest first, with the undated last:
+     * a studio looks a project up by its day.
+     */
+    public function index(): Response
+    {
+        $this->authorize('viewAny', Project::class);
+
+        $projects = Project::query()
+            ->visibleTo(auth('staff')->user())
+            ->with(['primaryShoot', 'lead', 'job', 'shoots', 'contacts'])
+            ->get()
+            ->sortBy(fn (Project $project) => $project->primaryShoot?->date?->toDateString() ?? '9999-99-99')
+            ->values();
+
+        return Inertia::render('Projects/Index', [
+            'projects' => ProjectRowData::collect(
+                $projects->map(fn (Project $project) => ProjectRowData::fromProject($project, $this->position))
+            ),
+        ]);
+    }
+
     public function show(Project $project): Response
     {
         $this->authorize('view', $project);
+
+        // C-03 (#237): an inquiry and a project are the same record in two
+        // phases, so the palette names it by the phase it is in.
+        RecordVisit::record(
+            $project->job()->exists() ? 'projekt' : 'anfrage',
+            $project->public_id,
+            $project->name,
+        );
 
         return Inertia::render('Projects/Show', [
             'header' => $this->header($project),
@@ -77,7 +122,193 @@ class ProjectController extends Controller
             // internal audit trail on a client page would disclose staff
             // names and internal event vocabulary to the client.
             'activity' => ProjectActivity::for($project),
+            // C-11 (#247): the key figures, each with the line that proves it.
+            'figures' => $this->figures($project),
+            // The scope as it actually stands, not a copy of the quote. The
+            // divergence is the difference between the draft at this project
+            // and the accepted quote; nothing is locked, because the order
+            // changes in conversation and the document lags behind — forbid
+            // it and you get a scope that is wrong while the work happens
+            // anyway.
+            'scope' => $this->scope($project),
+            'people' => $project->contacts->map(fn ($contact) => [
+                'id' => $contact->public_id,
+                'name' => $contact->name,
+                'role' => $contact->pivot->role,
+                'email' => $contact->email,
+                'phone' => $contact->phone,
+            ])->all(),
+            // C-12 (#248): what the edit state offers as fixed choices.
+            'stages' => collect(LeadStage::cases())
+                ->map(fn (LeadStage $stage) => ['value' => $stage->value, 'label' => $stage->label()])->all(),
+            'sources' => collect(LeadSource::cases())
+                ->map(fn (LeadSource $source) => ['value' => $source->value, 'label' => $source->label()])->all(),
+            'roles' => collect(ProjectContactRole::cases())
+                ->map(fn (ProjectContactRole $role) => ['value' => $role->value, 'label' => $role->value])->all(),
+            'stage' => $project->lead?->stage->value,
+            'source' => $project->lead?->source->value,
+            'galleries' => $project->galleries()->get()->map(fn ($gallery) => [
+                'id' => $gallery->public_id,
+                'title' => $gallery->title,
+                'expiresAt' => $gallery->expires_at?->format('Y-m-d'),
+            ])->all(),
         ]);
+    }
+
+    /**
+     * C-12 (#248): editing is a state of this screen, not a second one — the
+     * same answer #245 gives for the inquiry, so the two screens behave
+     * alike: one save for the whole state, and the head stays put.
+     *
+     * What is operable: the project name, the funnel stage, the source, every
+     * shoot as a block, and each person's role. What is not — next date,
+     * value, what is open — carries the reason at its own label rather than a
+     * disabled field: the value follows from the line items, not the other
+     * way round, and without the note the operator hunts for a field that
+     * must not exist.
+     *
+     * Creating stays independent of this state: a note, a task, a shoot each
+     * have their own form at their own section. Nobody should have to unlock
+     * the whole record to write one line.
+     */
+    public function update(Request $request, Project $project): RedirectResponse
+    {
+        $this->authorize('manageShoots', $project);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'stage' => ['nullable', Rule::enum(LeadStage::class)],
+            'source' => ['nullable', Rule::enum(LeadSource::class)],
+            'people' => ['array'],
+            'people.*.id' => ['required', 'string', 'size:24'],
+            'people.*.role' => ['required', Rule::enum(ProjectContactRole::class)],
+            'shoots' => ['array'],
+            'shoots.*.id' => ['required', 'string', 'size:24'],
+            'shoots.*.date' => ['nullable', 'date_format:Y-m-d'],
+            'shoots.*.call_time' => ['nullable', 'date_format:H:i'],
+            'shoots.*.end_time' => ['nullable', 'date_format:H:i'],
+            'shoots.*.venue_name' => ['nullable', 'string', 'max:255'],
+            'shoots.*.venue_city' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        DB::transaction(function () use ($project, $validated) {
+            $project->update(['name' => $validated['name']]);
+
+            if ($project->lead !== null) {
+                $project->lead->update(array_filter([
+                    'stage' => $validated['stage'] ?? null,
+                    'source' => $validated['source'] ?? null,
+                ]));
+            }
+
+            foreach ($validated['people'] ?? [] as $person) {
+                $contact = $project->contacts()->where('contacts.public_id', $person['id'])->first();
+
+                if ($contact !== null) {
+                    $project->contacts()->updateExistingPivot($contact->id, ['role' => $person['role']]);
+                }
+            }
+
+            foreach ($validated['shoots'] ?? [] as $row) {
+                $project->shoots()->where('public_id', $row['id'])->first()?->update([
+                    'date' => $row['date'] ?? null,
+                    'call_time' => $row['call_time'] ?? null,
+                    'end_time' => $row['end_time'] ?? null,
+                    'venue_name' => $row['venue_name'] ?? null,
+                    'venue_city' => $row['venue_city'] ?? null,
+                ]);
+            }
+        });
+
+        return back();
+    }
+
+    /**
+     * The band across the top: phase, next date, value, what is open, source,
+     * portal — each with one line of proof under it.
+     *
+     * Two fields the draft asks for are deliberately not invented. `Phase` as
+     * a maintained value does not exist — it is derived (DeriveProjectPosition)
+     * and stays derived. And the follow-up date is a task with a due date, so
+     * it needs no column of its own: the row in "Offen" is the whole feature.
+     *
+     * @return array<string, array{value: ?string, proof: ?string}>
+     */
+    private function figures(Project $project): array
+    {
+        $accepted = $project->quotes()->where('status', QuoteStatus::Accepted)->latest('id')->first();
+        $plan = $project->job?->paymentPlan;
+        $open = $plan === null ? null : (int) $plan->installments()
+            ->where('status', PaymentInstallmentStatus::Scheduled)
+            ->sum('amount');
+
+        return [
+            'phase' => [
+                'value' => ($this->position)($project)->label,
+                'proof' => $project->lead?->source->label(),
+            ],
+            'nextDate' => [
+                'value' => $project->shoots()->uncancelled()->whereNotNull('date')
+                    ->whereDate('date', '>=', now()->toDateString())
+                    ->orderBy('date')->value('date')?->format('Y-m-d'),
+                'proof' => null,
+            ],
+            'value' => [
+                'value' => $accepted === null ? null : (string) $accepted->total,
+                'proof' => $accepted?->number,
+            ],
+            'open' => [
+                'value' => $open === null ? null : (string) $open,
+                'proof' => $plan === null ? null : (string) $plan->installments()->count(),
+            ],
+            'portal' => [
+                'value' => $project->portal_visible ? 'on' : 'off',
+                'proof' => null,
+            ],
+        ];
+    }
+
+    /**
+     * What was ordered against what stands now.
+     *
+     * The accepted quote is untouched; the current state is a draft quote at
+     * the same project. Every line that differs is marked, the old value
+     * stays under the new one, and the strip states the difference in money.
+     *
+     * @return array{items: list<array<string, mixed>>, delta: int, hasDraft: bool}
+     */
+    private function scope(Project $project): array
+    {
+        $accepted = $project->quotes()->where('status', QuoteStatus::Accepted)->latest('id')->first();
+        $draft = $project->quotes()->where('status', QuoteStatus::Draft)->latest('id')->first();
+        $current = $draft ?? $accepted;
+
+        if ($current === null) {
+            return ['items' => [], 'delta' => 0, 'hasDraft' => false];
+        }
+
+        $before = $accepted?->items->keyBy('title') ?? collect();
+
+        return [
+            'items' => $current->items->map(function ($item) use ($before, $draft) {
+                $was = $before->get($item->title);
+
+                return [
+                    'id' => $item->public_id,
+                    'title' => $item->title,
+                    'quantity' => $item->quantity,
+                    'unitPrice' => $item->unit_price,
+                    // Only a draft can diverge: without one, what stands is
+                    // what was ordered.
+                    'state' => $draft === null || $was !== null && (int) $was->unit_price === (int) $item->unit_price
+                        ? null
+                        : ($was === null ? 'new' : 'changed'),
+                    'wasUnitPrice' => $was?->unit_price,
+                ];
+            })->all(),
+            'delta' => $accepted === null || $draft === null ? 0 : (int) $draft->total - (int) $accepted->total,
+            'hasDraft' => $draft !== null,
+        ];
     }
 
     public function shoots(Project $project): Response

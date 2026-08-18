@@ -35,11 +35,7 @@ class GalleryImageController extends Controller
         $known = collect($galleryVersion->assets)->contains(fn (array $asset) => $asset['key'] === $key);
         abort_unless($known, 404);
 
-        abort_unless(Storage::disk('s3')->exists($key), 404);
-
-        $variant = ImageVariant::resizeAndEncode(Storage::disk('s3')->get($key), $width, $format);
-
-        return response($variant, 200, [
+        return response($this->variant($key, $width, $format), 200, [
             'Content-Type' => ImageVariant::mimeType($format),
             // Never purged, never invalidated — publishing a new version
             // changes which GalleryVersion a gallery's currentVersion
@@ -47,5 +43,36 @@ class GalleryImageController extends Controller
             // one's contents.
             'Cache-Control' => 'public, max-age=31536000, immutable',
         ]);
+    }
+
+    /**
+     * G-01 (#229): the encoded bytes, from the disk if this width and format
+     * have been asked for before.
+     *
+     * The lightbox's filmstrip is what made the missing cache visible — 33
+     * previews at w=400, every one of them decoding a 40-megapixel original
+     * and re-encoding it, on every open. Since the request path is already
+     * immutable (a version's assets never change after publish, which is why
+     * the response above may claim `immutable`), the answer to the same
+     * request is a file, not a computation.
+     *
+     * No lock: two requests racing on the same variant both write the same
+     * bytes to the same key.
+     */
+    private function variant(string $key, int $width, string $format): string
+    {
+        $disk = Storage::disk('s3');
+        $cached = "variants/{$width}/{$format}/{$key}.{$format}";
+
+        if ($disk->exists($cached)) {
+            return $disk->get($cached);
+        }
+
+        abort_unless($disk->exists($key), 404);
+
+        $variant = ImageVariant::resizeAndEncode($disk->get($key), $width, $format);
+        $disk->put($cached, $variant);
+
+        return $variant;
     }
 }

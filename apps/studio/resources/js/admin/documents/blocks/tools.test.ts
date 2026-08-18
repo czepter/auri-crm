@@ -31,3 +31,17 @@ describe('buildTools', () => {
     expect(Object.keys(tools)).toEqual(['paragraph'])
   })
 })
+
+describe('buildTools with a palette that names what is refused', () => {
+  it('registers the allowed blocks and never the dimmed ones', () => {
+    const tools = buildTools(
+      [
+        { type: 'paragraph', group: 'text', label: 'Absatz', inline: false, allowed: true },
+        { type: 'columns', group: 'layout', label: '2 Spalten', inline: false, allowed: false, only: 'Vertrag' },
+      ],
+      { paragraph: {}, columns: {} },
+    )
+
+    expect(Object.keys(tools)).toEqual(['paragraph'])
+  })
+})

@@ -101,7 +101,7 @@ it('streams every Ready asset into a valid, ZIP64-free STORE archive and marks t
     $gallery = Gallery::factory()->create();
     $a = readyAsset($gallery, 'IMG_0001.jpg', str_repeat('a', 5_000));
     $b = readyAsset($gallery, 'IMG_0002.jpg', str_repeat('b', 3_000));
-    $version = GalleryVersion::factory()->for($gallery)->create(['assets' => [$a->public_id, $b->public_id]]);
+    $version = GalleryVersion::factory()->for($gallery)->create(['assets' => [['key' => $a->key], ['key' => $b->key]]]);
     $zipBuild = ZipBuild::factory()->for($version, 'galleryVersion')->create([
         'scope' => ZipBuildScope::All,
         'size' => ZipBuildSize::Original,
@@ -147,7 +147,7 @@ it('packs the widest WebP derivative, not the original, for size=web', function 
     $asset = readyAsset($gallery, 'IMG_0001.jpg', str_repeat('o', 9_000));
     withWebDerivative($asset, str_repeat('w', 400), width: 400);
     withWebDerivative($asset, str_repeat('w', 900), width: 800); // the widest — this one should win
-    $version = GalleryVersion::factory()->for($gallery)->create(['assets' => [$asset->public_id]]);
+    $version = GalleryVersion::factory()->for($gallery)->create(['assets' => [['key' => $asset->key]]]);
     $zipBuild = ZipBuild::factory()->for($version, 'galleryVersion')->create([
         'scope' => ZipBuildScope::All,
         'size' => ZipBuildSize::Web,
@@ -194,7 +194,7 @@ it('aborts the multipart upload and marks the build Failed when a member cannot 
         'key' => 'galleries/test/missing.jpg', // never actually put on the fake disk
         'byte_size' => 100,
     ]);
-    $version = GalleryVersion::factory()->for($gallery)->create(['assets' => [$asset->public_id]]);
+    $version = GalleryVersion::factory()->for($gallery)->create(['assets' => [['key' => $asset->key]]]);
     $zipBuild = ZipBuild::factory()->for($version, 'galleryVersion')->create(['status' => ZipBuildStatus::Building]);
 
     $captured = [];
@@ -238,7 +238,7 @@ it('keeps peak memory near one 16MiB buffer, not the archive size', function () 
     // and a "loads the whole archive into memory" one are distinguishable.
     $bytes = str_repeat('x', 3 * 1024 * 1024);
     $asset = readyAsset($gallery, 'IMG_0001.jpg', $bytes);
-    $version = GalleryVersion::factory()->for($gallery)->create(['assets' => [$asset->public_id]]);
+    $version = GalleryVersion::factory()->for($gallery)->create(['assets' => [['key' => $asset->key]]]);
     $zipBuild = ZipBuild::factory()->for($version, 'galleryVersion')->create(['status' => ZipBuildStatus::Building]);
 
     // Counts and sizes only — capturing every part's full bytes (as the
@@ -274,4 +274,33 @@ it('keeps peak memory near one 16MiB buffer, not the archive size', function () 
 it('fixes the multipart part size at 16MiB, keeping part count under the 10,000-part ceiling at the 3.9GiB split size', function () {
     expect(MultipartZipUploader::PART_SIZE)->toBe(16 * 1024 * 1024)
         ->and((int) ceil(BuildGalleryZip::SPLIT_THRESHOLD_BYTES / MultipartZipUploader::PART_SIZE))->toBeLessThan(10_000);
+});
+
+// G-04 (#232): every reader treats a version's `assets` as objects carrying
+// key/width/height — the portal grid needs the measurements to lay out
+// without reflow. This resolver alone read them as public_id strings, so the
+// first real published version it met threw and no archive could be built.
+it('resolves the members of a version published by Gallery::publish()', function () {
+    $gallery = Gallery::factory()->create();
+    $asset = readyAsset($gallery, 'IMG_0001.jpg', str_repeat('a', 4_000));
+
+    // Not a hand-written fixture: the exact shape publish() writes.
+    $gallery->update(['assets' => [['key' => $asset->key, 'width' => 4000, 'height' => 3000]]]);
+    $version = $gallery->publish();
+
+    $zipBuild = ZipBuild::factory()->for($version, 'galleryVersion')->create([
+        'scope' => ZipBuildScope::All,
+        'size' => ZipBuildSize::Original,
+        'status' => ZipBuildStatus::Building,
+    ]);
+
+    $captured = [];
+    $aborted = [];
+    app()->instance(S3Client::class, zipMultipartMock($captured, $aborted));
+
+    app(BuildGalleryZip::class)($zipBuild);
+
+    expect($zipBuild->fresh()->status)->toBe(ZipBuildStatus::Ready)
+        ->and($zipBuild->fresh()->parts()->count())->toBe(1)
+        ->and($aborted)->toBe([]);
 });

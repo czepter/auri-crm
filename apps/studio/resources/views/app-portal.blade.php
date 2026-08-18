@@ -1,5 +1,9 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="portal">
+{{-- #234: the studio's display pair, set on the root so both the portal and
+     the gallery inherit it — they are the two surfaces a client sees, and the
+     admin deliberately writes in the system stack (C-01). --}}
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="portal"
+      data-font="{{ app(App\Settings\Support\StudioSettingsResolver::class)->fontPair()->value }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">

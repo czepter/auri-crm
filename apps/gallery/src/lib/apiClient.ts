@@ -25,9 +25,22 @@ const TIMEOUT_MS = 10_000
  * needs to exist for that — no separate gate-failure classifier to keep in
  * sync with G-06/G-07's own definition of one.
  */
-export async function callApi(apiBase: string, path: string, requestId: string, init: RequestInit = {}): Promise<Response> {
+export async function callApi(
+  apiBase: string,
+  path: string,
+  requestId: string,
+  init: RequestInit = {},
+  // G-06's view claim, when this gallery carries one. A bearer rather than a
+  // query parameter: a pass in a URL ends up in an access log, a Referer and
+  // a bookmark. See src/lib/viewPass.ts.
+  pass?: string | null,
+): Promise<Response> {
   const headers = new Headers(init.headers)
   headers.set('X-Request-Id', requestId)
+
+  if (pass) {
+    headers.set('Authorization', `Bearer ${pass}`)
+  }
 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)

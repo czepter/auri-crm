@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import { Button } from '@/ui/button'
 
-const props = defineProps<{
+type Edition = { id: string; version: number; isCurrent: boolean; inUse: number }
+
+defineProps<{
   templates: App.Documents.Data.DocumentTemplateData[]
+  families: Record<string, Edition[]>
   type: string | null
   types: { value: string; label: string }[]
 }>()
@@ -12,49 +14,67 @@ const props = defineProps<{
 
 <template>
   <AdminLayout active="dokumentvorlagen">
-    <div class="hrow" style="margin-bottom: var(--s5)">
-      <h1>{{ $t('documentTemplates.title') }}</h1>
-      <Button :as="Link" href="/dokumentvorlagen/neu">
-        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
-        {{ $t('documentTemplates.create') }}
-      </Button>
-    </div>
-
-    <!-- No mockup for this screen — follows the system, same as Packages/Index. -->
-    <div class="hrow" style="margin-bottom: var(--s4); gap: var(--s4)">
-      <Button
-        :as="Link"
-        variant="ghost"
-        :style="{ fontWeight: !props.type ? 700 : 400 }"
-        href="/dokumentvorlagen"
-      >
-        {{ $t('documentTemplates.allTypes') }}
-      </Button>
-      <Button
-        v-for="option in props.types"
-        :key="option.value"
-        :as="Link"
-        variant="ghost"
-        :style="{ fontWeight: props.type === option.value ? 700 : 400 }"
-        :href="`/dokumentvorlagen?type=${option.value}`"
-      >
-        {{ option.label }}
-      </Button>
-    </div>
-
-    <div v-if="templates.length" class="panel">
-      <div v-for="template in templates" :key="template.id" class="trow">
-        <Link class="pinfo" :href="`/dokumentvorlagen/${template.id}`">
-          <span class="pname">{{ template.name }}</span>
-          <span class="psub">
-            {{ template.typeLabel }}
-            <template v-if="template.shootKindLabel"> · {{ template.shootKindLabel }}</template>
-            · {{ $t('documentTemplates.version', { version: template.version }) }}
-          </span>
+    <div data-theme="crm">
+      <div class="hrow">
+        <h1>{{ $t('documentTemplates.title') }}</h1>
+        <Link class="btn" href="/dokumentvorlagen/neu" style="margin-left: auto">
+          {{ $t('documentTemplates.create') }}
         </Link>
       </div>
-    </div>
 
-    <p v-else class="hint">{{ $t('documentTemplates.empty') }}</p>
+      <div class="filters">
+        <Link class="pop" href="/dokumentvorlagen">{{ $t('documentTemplates.allTypes') }}</Link>
+        <Link
+          v-for="option in types"
+          :key="option.value"
+          class="pop"
+          :href="`/dokumentvorlagen?type=${option.value}`"
+        >
+          <u v-if="type === option.value">•</u>{{ option.label }}
+        </Link>
+      </div>
+
+      <table v-if="templates.length" style="margin-top: var(--s5)">
+        <thead>
+          <tr>
+            <th>{{ $t('documentTemplates.colName') }}</th>
+            <th>{{ $t('documentTemplates.colType') }}</th>
+            <th class="r">{{ $t('documentTemplates.colVersion') }}</th>
+            <th class="r">{{ $t('documentTemplates.colInUse') }}</th>
+            <th class="r" />
+          </tr>
+        </thead>
+        <tbody>
+          <template v-for="template in templates" :key="template.id">
+            <tr>
+              <td class="nm"><Link :href="`/dokumentvorlagen/${template.id}`">{{ template.name }}</Link></td>
+              <td class="mu">
+                {{ template.typeLabel }}
+                <template v-if="template.shootKindLabel"> · {{ template.shootKindLabel }}</template>
+              </td>
+              <td class="r">{{ template.version }}</td>
+              <td class="r">{{ families[template.id]?.find((e) => e.isCurrent)?.inUse ?? 0 }}</td>
+              <td class="r">
+                <!-- Not "Bearbeiten": overwriting a template that is out
+                     would mean a signed contract silently looking different
+                     afterwards. -->
+                <Link class="link" :href="`/dokumentvorlagen/${template.id}`">
+                  {{ $t('documentTemplates.newVersion') }}
+                </Link>
+              </td>
+            </tr>
+
+            <tr v-for="edition in (families[template.id] ?? []).filter((e) => !e.isCurrent)" :key="edition.id">
+              <td class="mu" colspan="2">{{ $t('documentTemplates.version', { version: edition.version }) }}</td>
+              <td class="r mu">{{ edition.version }}</td>
+              <td class="r mu">{{ edition.inUse }}</td>
+              <td />
+            </tr>
+          </template>
+        </tbody>
+      </table>
+
+      <p v-else class="hint" style="padding: var(--s5) var(--s7)">{{ $t('documentTemplates.empty') }}</p>
+    </div>
   </AdminLayout>
 </template>

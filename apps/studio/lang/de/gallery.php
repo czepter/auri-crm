@@ -16,4 +16,7 @@ return [
     // Uniform for expired, already used and never existed — the same reason
     // portal.link_dead makes no distinction either.
     'email_link_dead' => 'Dieser Bestätigungslink funktioniert nicht mehr.',
+
+    // G-01 (#229): what a comment from somebody with no account is signed.
+    'guest' => 'Gast',
 ];

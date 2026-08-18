@@ -31,7 +31,8 @@
 [data-theme="gallery"] .gpage { max-width:430px; margin:0 auto; padding:56px var(--s5) var(--s6); }
 [data-theme="gallery"] .gpage.wide { max-width:560px; }
 [data-theme="gallery"] .gcenter { text-align:center; }
-[data-theme="gallery"] .gtitle { font:600 27px/1.2 var(--font); letter-spacing:-.035em; margin:0; }
+/* #234: the display face and its own corrections — the pair decides both. */
+[data-theme="gallery"] .gtitle { font:600 27px/1.2 var(--font-display); letter-spacing:var(--display-tracking); margin:0; }
 [data-theme="gallery"] .gsub   { font:400 14px/1.6 var(--font); color:var(--muted); margin:var(--s2) 0 0; }
 [data-theme="gallery"] .glead  { font:400 14px/1.65 var(--font); color:var(--muted); margin:var(--s4) 0 0; }
 [data-theme="gallery"] .glead b { color:var(--ink); font-weight:600; }
@@ -101,6 +102,21 @@
 [data-theme="gallery"] .gbar .who { font-size:13.5px; color:var(--muted); }
 [data-theme="gallery"] .gbar .who b { color:var(--ink); font-weight:600; }
 
+/* G-02 (#230): scrolls sideways rather than wrapping — a wrapped second row
+   would push the pictures down by the number of lists a couple happens to
+   have made. */
+[data-theme="gallery"] .gbar .filters { display:flex; align-items:center; gap:var(--s2);
+        margin-inline:auto; overflow-x:auto; scrollbar-width:none; }
+[data-theme="gallery"] .gbar .filters::-webkit-scrollbar { display:none; }
+[data-theme="gallery"] .fpill { flex:none; display:inline-flex; align-items:center; gap:7px;
+        padding:9px 14px; border-radius:999px; cursor:pointer;
+        border:1px solid var(--line); background:transparent;
+        color:var(--muted); font:500 12.5px/1 var(--font); }
+[data-theme="gallery"] .fpill:hover { color:var(--ink); border-color:var(--line-hover); }
+[data-theme="gallery"] .fpill.on { background:var(--ink); border-color:var(--ink);
+        color:var(--bg); font-weight:600; }
+[data-theme="gallery"] .fpill .n { opacity:.55; font-variant-numeric:tabular-nums; }
+
 /* columns, not grid: a photo wall wants the original proportions, and
    `columns` is the only layout method that keeps them without JS. Named
    .gwall rather than .grid because Tailwind owns `.grid` — display:grid
@@ -122,7 +138,9 @@
 @media (max-width:760px) {
   [data-theme="gallery"] .gwall { columns:2; }
   [data-theme="gallery"] .cover { min-height:82svh; }
+  [data-theme="gallery"] .gbar { flex-wrap:wrap; }
   [data-theme="gallery"] .gbar .who { display:none; }
+  [data-theme="gallery"] .gbar .filters { order:2; width:100%; margin-inline:0; padding-bottom:2px; }
 }
 
 /* ---------- P-06 (#225): the list menu on a tile ---------- */
@@ -150,7 +168,12 @@
 [data-theme="gallery"] .lists .n { margin-left:auto; font-size:11.5px; color:var(--muted);
         font-variant-numeric:tabular-nums; }
 
-/* ---------- P-08 (#227): the lightbox, ported off apps/gallery ---------- */
+/* ---------- G-01 (#229): the detail view ---------- */
+/* Ported from mockups/redesign/galerie-lightbox.html. The place where
+   commenting and list assignment actually happen — the grid only hints at
+   both. Two roles on one screen: a guest sees a heart and writes as Gast, a
+   signed-in client sees their lists and writes under their name. */
+
 [data-theme="gallery"] .gwall .tile { cursor:zoom-in; }
 
 [data-theme="gallery"] .lb { position:fixed; inset:0; z-index:50; display:flex; flex-direction:column;
@@ -159,35 +182,59 @@
         gap:var(--s4); padding:var(--s4) var(--s5); }
 [data-theme="gallery"] .lbpos { font:400 12.5px/1 var(--font); color:var(--muted);
         font-variant-numeric:tabular-nums; }
-[data-theme="gallery"] .txtbtn { background:none; border:0; padding:0; cursor:pointer;
-        font:500 13px/1 var(--font); color:var(--muted); }
+[data-theme="gallery"] .txtbtn { display:inline-flex; align-items:center; gap:8px;
+        background:none; border:0; padding:0; cursor:pointer;
+        font:500 13px/1 var(--font); color:var(--muted); text-decoration:none; }
 [data-theme="gallery"] .txtbtn:hover { color:var(--ink); }
+[data-theme="gallery"] .txtbtn svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:1.6; }
 
-[data-theme="gallery"] .lbsplit { flex:1; min-height:0; display:grid;
+[data-theme="gallery"] .lbmain { flex:1; min-height:0; display:grid;
         grid-template-columns:minmax(0,1fr) 300px; gap:var(--s5); padding-inline:var(--s5); }
 [data-theme="gallery"] .stage { position:relative; display:grid; place-items:center; min-height:0; }
 [data-theme="gallery"] .stage img { max-width:100%; max-height:100%; object-fit:contain; display:block; }
 [data-theme="gallery"] .arrow { position:absolute; top:50%; transform:translateY(-50%);
-        width:40px; height:40px; border-radius:50%; border:0; cursor:pointer;
-        background:rgba(255,255,255,.08); color:var(--ink); font-size:22px; line-height:1; }
-[data-theme="gallery"] .arrow:first-of-type { left:0; }
-[data-theme="gallery"] .arrow:last-of-type { right:0; }
+        width:40px; height:40px; border-radius:50%; border:0; cursor:pointer; display:grid;
+        place-items:center; background:rgba(255,255,255,.08); color:var(--ink); }
+[data-theme="gallery"] .arrow svg { width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.6; }
+[data-theme="gallery"] .arrow:hover { background:rgba(255,255,255,.16); }
+[data-theme="gallery"] .arrow.prev { left:0; }
+[data-theme="gallery"] .arrow.next { right:0; }
 
-[data-theme="gallery"] .lbrail { display:flex; flex-direction:column; gap:var(--s4); min-height:0;
+[data-theme="gallery"] .rail { display:flex; flex-direction:column; gap:var(--s4); min-height:0;
         padding-block:var(--s3); }
-[data-theme="gallery"] .act { display:inline-flex; align-items:center; gap:8px; align-self:flex-start;
-        background:none; border:0; padding:0; cursor:pointer;
+[data-theme="gallery"] .acts { display:flex; align-items:flex-start; gap:var(--s5); flex-wrap:wrap; }
+[data-theme="gallery"] .actwrap { position:relative; }
+[data-theme="gallery"] .act { display:inline-flex; align-items:center; gap:8px;
+        background:none; border:0; padding:0; cursor:pointer; text-decoration:none;
         font:500 13px/1 var(--font); color:var(--muted); }
+[data-theme="gallery"] .act:hover { color:var(--ink); }
 [data-theme="gallery"] .act svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.5; }
 [data-theme="gallery"] .act.on { color:var(--accent); }
 [data-theme="gallery"] .act.on svg { fill:currentColor; }
 
-[data-theme="gallery"] .cmts { flex:1; min-height:0; overflow-y:auto; display:flex;
-        flex-direction:column; gap:var(--s3); }
-[data-theme="gallery"] .cmt .txt { font:400 13.5px/1.55 var(--font); color:var(--ink); }
-[data-theme="gallery"] .cmt .when { font:400 11.5px/1 var(--font); color:var(--faint); margin-top:3px;
+/* The same checkbox set the grid tile opens — one picture reaches a list
+   from wherever the client happens to be looking at it. */
+[data-theme="gallery"] .listmenu { position:absolute; top:28px; left:0; z-index:5; width:216px;
+        padding:var(--s2); background:var(--hover); border:1px solid var(--line);
+        border-radius:var(--r); box-shadow:0 20px 48px -16px rgba(0,0,0,.6); }
+[data-theme="gallery"] .listmenu label { display:flex; align-items:center; gap:10px; padding:9px 10px;
+        border-radius:var(--r-sm); cursor:pointer; font:500 13px/1 var(--font); color:var(--ink); }
+[data-theme="gallery"] .listmenu label:hover { background:rgba(255,255,255,.06); }
+[data-theme="gallery"] .listmenu input { accent-color:var(--accent); margin:0; flex:none; cursor:pointer; }
+[data-theme="gallery"] .listmenu .n { margin-left:auto; font-size:11.5px; color:var(--muted);
         font-variant-numeric:tabular-nums; }
-[data-theme="gallery"] .lbwrite input { width:100%; padding:11px 12px; border-radius:var(--r);
+
+[data-theme="gallery"] .cmts { flex:1; min-height:0; overflow-y:auto; display:flex;
+        flex-direction:column; gap:var(--s4); }
+[data-theme="gallery"] .cmt .who { display:flex; align-items:baseline; gap:8px; margin-bottom:4px; }
+[data-theme="gallery"] .cmt .who b { font:600 12.5px/1 var(--font); color:var(--ink); }
+[data-theme="gallery"] .cmt .who span { font:400 11.5px/1 var(--font); color:var(--faint);
+        font-variant-numeric:tabular-nums; }
+/* A guest's line is quieter than the couple's own — same rail, different
+   standing. */
+[data-theme="gallery"] .cmt.anon .who b { color:var(--muted); font-weight:500; }
+[data-theme="gallery"] .cmt p { font:400 13.5px/1.55 var(--font); color:var(--ink); margin:0; }
+[data-theme="gallery"] .write input { width:100%; padding:11px 12px; border-radius:var(--r);
         border:1px solid var(--line-hover); background:var(--hover); color:var(--ink);
         font:400 13.5px/1.2 var(--font); }
 
@@ -197,7 +244,99 @@
 [data-theme="gallery"] .lb .strip button.on { opacity:1; }
 [data-theme="gallery"] .lb .strip img { width:100%; height:100%; object-fit:cover; display:block; }
 
+/* At phone width the rail becomes a drawer under the picture: the actions
+   stay in thumb reach without covering the photograph. */
 @media (max-width:860px) {
-  [data-theme="gallery"] .lbsplit { grid-template-columns:minmax(0,1fr); }
-  [data-theme="gallery"] .lbrail { display:none; }
+  [data-theme="gallery"] .lbmain { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) auto; }
+  [data-theme="gallery"] .rail { max-height:38svh; border-top:1px solid var(--line);
+          padding-top:var(--s4); }
+  [data-theme="gallery"] .arrow { background:rgba(255,255,255,.14); }
 }
+
+/* ---------- G-03 (#231): the download screen ---------- */
+/* Ported from mockups/redesign/galerie-download.html. A list gets
+   downloaded, at a size, in parts — the parts stand as a list because
+   BuildGalleryZip plans volumes and one button would be lying about 4,2 GB. */
+
+[data-theme="gallery"] .dlcol { max-width:620px; margin:0 auto; padding:var(--s6) var(--s5) var(--s8); }
+
+[data-theme="gallery"] .gates { display:flex; gap:var(--s4); flex-wrap:wrap; margin-top:var(--s5); }
+[data-theme="gallery"] .gc { display:inline-flex; align-items:center; gap:7px;
+        font:500 12px/1 var(--font); color:var(--ok); }
+[data-theme="gallery"] .gc svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2; }
+
+[data-theme="gallery"] .block { margin-top:var(--s7); }
+[data-theme="gallery"] .block .lab { font:600 11px/1 var(--font); letter-spacing:.1em;
+        text-transform:uppercase; color:var(--faint); margin:0 0 var(--s4); }
+
+[data-theme="gallery"] .opts { display:flex; flex-direction:column; }
+[data-theme="gallery"] .opt { display:flex; align-items:center; gap:var(--s4); padding:var(--s4) 0;
+        border-bottom:1px solid var(--line); cursor:pointer; }
+[data-theme="gallery"] .opt input { accent-color:var(--accent); margin:0; flex:none; cursor:pointer; }
+[data-theme="gallery"] .opt > span { flex:1; }
+[data-theme="gallery"] .opt b { display:block; font:600 14px/1.3 var(--font); color:var(--ink); }
+[data-theme="gallery"] .opt b + span { font:400 12.5px/1.4 var(--font); color:var(--muted); }
+[data-theme="gallery"] .dlsize { font:400 12.5px/1 var(--font); color:var(--muted); white-space:nowrap;
+        font-variant-numeric:tabular-nums; }
+
+[data-theme="gallery"] .parts { display:flex; flex-direction:column; }
+[data-theme="gallery"] .part { display:flex; align-items:center; gap:var(--s4); padding:var(--s4) 0;
+        border-bottom:1px solid var(--line); }
+[data-theme="gallery"] .part > span:first-child { flex:1; }
+[data-theme="gallery"] .part b { font:600 13.5px/1.3 var(--font); color:var(--ink); }
+/* A size with nothing to pack at it is shown and refused, not hidden — the
+   client should see that "Zum Teilen" exists and simply has nothing yet. */
+[data-theme="gallery"] .opt.off { cursor:default; }
+[data-theme="gallery"] .opt.off b, [data-theme="gallery"] .opt.off b + span { color:var(--faint); }
+
+/* ---------- P-06 (#225): the couple's own half, under the pictures ---------- */
+/* One gallery, two audiences. A guest is never sent any of this — no link of
+   their own to share, no gates to rotate, no lists. */
+
+[data-theme="gallery"] .mine { max-width:1240px; margin:0 auto; padding:var(--s7) var(--s5);
+        border-top:1px solid var(--line); display:grid; gap:var(--s7); }
+@media (min-width:900px) { [data-theme="gallery"] .mine { grid-template-columns:minmax(0,1fr) 320px; } }
+[data-theme="gallery"] .mine .block { margin:0; }
+[data-theme="gallery"] .mine .block + .block { margin-top:var(--s6); }
+
+[data-theme="gallery"] .listblock + .listblock { margin-top:var(--s5); }
+[data-theme="gallery"] .listbar { display:flex; align-items:baseline; gap:var(--s4); flex-wrap:wrap;
+        margin-bottom:var(--s3); }
+[data-theme="gallery"] .listbar b { font:600 14px/1.3 var(--font); color:var(--ink); }
+[data-theme="gallery"] .listbar .hint { flex:1; margin:0; }
+[data-theme="gallery"] .listbar button { background:none; border:0; padding:0; cursor:pointer;
+        font:400 12.5px/1 var(--font); color:var(--muted); }
+[data-theme="gallery"] .listbar button:hover { color:var(--ink); }
+[data-theme="gallery"] .listbar button.warn:hover { color:var(--late); }
+
+[data-theme="gallery"] .picks { display:grid; grid-template-columns:repeat(auto-fill, minmax(84px, 1fr));
+        gap:6px; }
+[data-theme="gallery"] .picks button { padding:0; border:0; background:none; cursor:zoom-in;
+        aspect-ratio:1; border-radius:var(--r-sm); overflow:hidden; }
+[data-theme="gallery"] .picks img { width:100%; height:100%; object-fit:cover; display:block; }
+
+[data-theme="gallery"] .newlist { display:flex; gap:var(--s3); align-items:center; margin-top:var(--s5); }
+[data-theme="gallery"] .newlist input { flex:1; padding:11px 12px; border-radius:var(--r);
+        border:1px solid var(--line-hover); background:var(--hover); color:var(--ink);
+        font:400 13.5px/1.2 var(--font); }
+
+[data-theme="gallery"] .link { display:flex; align-items:center; gap:var(--s3); padding:var(--s3);
+        border:1px solid var(--line); border-radius:var(--r); }
+[data-theme="gallery"] .link code { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis;
+        white-space:nowrap; font-size:12.5px; color:var(--muted); }
+[data-theme="gallery"] .link button { background:none; border:0; padding:0; cursor:pointer;
+        font:500 12.5px/1 var(--font); color:var(--accent); }
+
+[data-theme="gallery"] .gate { display:flex; align-items:center; gap:var(--s3); padding:var(--s4) 0;
+        border-bottom:1px solid var(--line); }
+[data-theme="gallery"] .gate b { font:600 13.5px/1.3 var(--font); color:var(--ink); }
+[data-theme="gallery"] .gate .hint { margin:2px 0 0; }
+[data-theme="gallery"] .gate button { background:none; border:0; padding:0; cursor:pointer;
+        white-space:nowrap; font:400 12.5px/1 var(--font); color:var(--muted); }
+[data-theme="gallery"] .gate button:hover { color:var(--ink); }
+[data-theme="gallery"] .gate button.warn:hover { color:var(--late); }
+
+[data-theme="gallery"] .stats { display:grid; grid-template-columns:1fr auto; gap:var(--s3) var(--s4);
+        margin:0; font:400 13.5px/1 var(--font); }
+[data-theme="gallery"] .stats dt { color:var(--muted); }
+[data-theme="gallery"] .stats dd { margin:0; font-variant-numeric:tabular-nums; color:var(--ink); }

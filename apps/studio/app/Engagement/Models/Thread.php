@@ -36,6 +36,28 @@ class Thread extends Model
 
     protected $fillable = ['project_id', 'subject'];
 
+    /**
+     * C-14 (#250): where this conversation stands. Two of the three are the
+     * newest message's own author and cannot go stale; the third is a
+     * decision somebody took, recorded against the message it was taken on —
+     * a client who writes again has reopened the conversation whatever the
+     * studio filed, and no clock is consulted to notice.
+     */
+    public function workState(): string
+    {
+        $latest = $this->latestMessage;
+
+        if ($latest === null) {
+            return 'erledigt';
+        }
+
+        if ($this->closed_message_id === $latest->id) {
+            return 'erledigt';
+        }
+
+        return $latest->contact_id === null ? 'wartet' : 'unbeantwortet';
+    }
+
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);

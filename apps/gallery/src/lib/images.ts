@@ -20,14 +20,35 @@ export interface GalleryAsset {
   height: number | null
 }
 
-/** One image-proxy URL — never a bucket URL, per G-01a's delivery rule. */
-export function imageUrl(apiBase: string, versionPublicId: string, key: string, width: number, format: Format): string {
+/**
+ * One image-proxy URL — never a bucket URL, per G-01a's delivery rule.
+ *
+ * G-05 (#242): carries the view pass as a query parameter rather than a
+ * header, because a browser will not attach one to an `<img>`. See
+ * App\Http\Middleware\EnsureGalleryPass for what that costs and why it is
+ * bounded. Omitted entirely for a gallery with no gate.
+ */
+export function imageUrl(
+  apiBase: string,
+  versionPublicId: string,
+  key: string,
+  width: number,
+  format: Format,
+  pass?: string | null,
+): string {
   const path = key.split('/').map(encodeURIComponent).join('/')
+  const gate = pass ? `&pass=${encodeURIComponent(pass)}` : ''
 
-  return `${apiBase}/api/gallery-versions/${versionPublicId}/images/${path}?w=${width}&fmt=${format}`
+  return `${apiBase}/api/gallery-versions/${versionPublicId}/images/${path}?w=${width}&fmt=${format}${gate}`
 }
 
 /** The srcset attribute for one format, across every allowed width. */
-export function srcSet(apiBase: string, versionPublicId: string, key: string, format: Format): string {
-  return WIDTHS.map((w) => `${imageUrl(apiBase, versionPublicId, key, w, format)} ${w}w`).join(', ')
+export function srcSet(
+  apiBase: string,
+  versionPublicId: string,
+  key: string,
+  format: Format,
+  pass?: string | null,
+): string {
+  return WIDTHS.map((w) => `${imageUrl(apiBase, versionPublicId, key, w, format, pass)} ${w}w`).join(', ')
 }

@@ -1,29 +1,133 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { router, useForm, usePage } from '@inertiajs/vue3'
 import GalleryLightbox from '@/portal/components/GalleryLightbox.vue'
+import { ALL, countOf, selections, visible } from '@/portal/lib/gallerySelections'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 
 type Branding = { displayName: string | null }
 type Asset = { key: string; width: number | null; height: number | null; src: string }
-type List = { id: string; name: string | null; keys: string[] }
+type List = {
+  id: string
+  listId: string
+  name: string | null
+  keys: string[]
+  covers: string[]
+  changedAt: string
+}
 
 const props = defineProps<{
-  gallery: { id: string; title: string | null; date: string | null; venue: string | null; expiresAt: string | null }
+  gallery: {
+    id: string
+    title: string | null
+    date: string | null
+    venue: string | null
+    expiresAt: string | null
+    url: string
+  }
   unlocked: boolean
   assets: Asset[] | null
-  // P-06: null for a guest. A guest keeps the heart, which is the same
-  // thing as this — a list without a name.
+  // Everything below is null for a guest. They keep the heart, which is the
+  // same thing as an unnamed list; they have no link of their own to share
+  // and no gates to rotate.
   lists: List[] | null
+  // A guest's own hearts, so the filter bar can count them before the
+  // lightbox ever opens. Null for a client, whose hearts are a list.
+  favorited: string[] | null
+  gates: { viewPassword: boolean; downloadPin: boolean; emailVerification: boolean } | null
+  guests: { views: number; marks: number; comments: number } | null
 }>()
+
+const base = computed(() => `/galerien/${props.gallery.id}`)
+const actions = computed(() => `${base.value}/eure-auswahl`)
 
 // One open menu at a time, keyed by asset.
 const menu = ref<string | null>(null)
 
-// The lightbox, by index. Null is closed.
+// The lightbox, by index into `shown`. Null is closed.
 const openAt = ref<number | null>(null)
+
+// G-02 (#230): which selection the grid is showing. Filtered here rather
+// than on the read route — the version's asset list is already in these
+// props, so a round trip would buy nothing but a wait.
+const { t } = useI18n()
+const active = ref(ALL)
+
+const bar = computed(() =>
+  selections(
+    props.lists?.map((l) => ({ listId: l.listId, name: l.name, keys: l.keys })) ?? null,
+    props.favorited,
+    { all: t('gallery.all'), heart: t('gallery.heart') },
+  ),
+)
+
+const shown = computed(() =>
+  visible(props.assets ?? [], bar.value.find((s) => s.id === active.value)?.keys ?? null),
+)
+
+function openList(list: List, key: string) {
+  active.value = list.listId
+  openAt.value = visible(props.assets ?? [], list.keys).findIndex((a) => a.key === key)
+}
+
+// ---- the couple's own half ----
+
+const openGate = ref<string | null>(null)
+const copied = ref(false)
+const gateForm = useForm({ secret: '' })
+const listForm = useForm({ name: '' })
+
+// A freshly set secret, echoed back once in the response to the request that
+// set it, so the couple can copy what they just chose without a second read.
+const freshSecret = computed(() => usePage().props.flash?.secret as string | undefined)
+
+const GATES = [
+  { key: 'ansicht', label: 'gallery.gateView', on: 'viewPassword' },
+  { key: 'download', label: 'gallery.gateDownload', on: 'downloadPin' },
+] as const
+
+function rotate(gate: string) {
+  gateForm.post(`${actions.value}/tore/${gate}`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      gateForm.reset()
+      openGate.value = null
+    },
+  })
+}
+
+function clearGate(gate: string) {
+  router.post(`${actions.value}/tore/${gate}`, { secret: null }, { preserveScroll: true })
+}
+
+function addList() {
+  listForm.post(`${actions.value}/listen`, { preserveScroll: true, onSuccess: () => listForm.reset() })
+}
+
+function rename(list: List) {
+  const name = window.prompt('', list.name ?? '')
+
+  if (name) {
+    router.patch(`${actions.value}/listen/${list.listId}`, { name }, { preserveScroll: true })
+  }
+}
+
+function remove(list: List) {
+  router.delete(`${actions.value}/listen/${list.listId}`, { preserveScroll: true })
+}
+
+// A browser may refuse the clipboard outright (permission, insecure origin).
+// The link is on screen either way; an unhandled rejection would be the only
+// thing that broke.
+function copyLink() {
+  navigator.clipboard
+    ?.writeText(props.gallery.url)
+    .then(() => (copied.value = true))
+    .catch(() => (copied.value = false))
+}
 
 function onList(list: List, key: string) {
   return list.keys.includes(key)
@@ -31,7 +135,7 @@ function onList(list: List, key: string) {
 
 function toggle(list: List, key: string) {
   router.post(
-    `/galerien/${props.gallery.id}/eure-auswahl/listen/${list.id}/bild`,
+    `${actions.value}/listen/${list.id}/bild`,
     { key },
     { preserveScroll: true, preserveState: false },
   )
@@ -123,11 +227,25 @@ function expiry(iso: string) {
           <b>{{ gallery.title }}</b>
           <template v-if="gallery.expiresAt"> · {{ $t('gallery.onlineUntil', { date: expiry(gallery.expiresAt) }) }}</template>
         </span>
+        <span v-if="bar.length > 1" class="filters">
+          <button
+            v-for="selection in bar"
+            :key="selection.id"
+            class="fpill"
+            :class="{ on: active === selection.id }"
+            type="button"
+            @click="active = selection.id"
+          >
+            {{ selection.label }}
+            <span class="n">{{ countOf(selection, assets?.length ?? 0) }}</span>
+          </button>
+        </span>
+
         <Button as="a" :href="`/galerien/${gallery.id}/download`">{{ $t('gallery.downloadLink') }}</Button>
       </div>
 
-      <main v-if="assets?.length" id="raster" class="gwall">
-        <span v-for="(asset, index) in assets" :key="asset.key" class="tile" @click="openAt = index">
+      <main v-if="shown.length" id="raster" class="gwall">
+        <span v-for="(asset, index) in shown" :key="asset.key" class="tile" @click="openAt = index">
           <!-- The list menu replaces the single heart as soon as a client is
                signed in; a guest never sees it. -->
           <button
@@ -166,15 +284,102 @@ function expiry(iso: string) {
 
       <!-- Unlocked over a gallery nobody has published yet: a real state,
            and the studio's link is already out there, so it says so. -->
-      <p v-else class="hint" style="padding: var(--s7) var(--s5)">{{ $t('gallery.notPublished') }}</p>
+      <p v-else class="hint" style="padding: var(--s7) var(--s5)">
+        {{ assets?.length ? $t('gallery.listEmpty') : $t('gallery.notPublished') }}
+      </p>
 
       <GalleryLightbox
         v-model="openAt"
         :gallery-id="gallery.id"
         :title="gallery.title"
-        :assets="assets ?? []"
-        :guest-favourites="!lists?.length"
+        :assets="shown"
+        :lists="lists"
       />
+
+      <!-- The couple's own half of their gallery, under the pictures. A
+           guest never receives any of it. -->
+      <section v-if="lists" class="mine">
+        <div class="block">
+          <p class="lab">{{ $t('gallery.listsTitle') }}</p>
+
+          <div v-for="list in lists" :key="list.listId" class="listblock">
+            <div class="listbar">
+              <b>{{ list.name ?? $t('gallery.heart') }}</b>
+              <span class="hint">
+                {{ $t('gallery.ofCount', { picked: list.keys.length, total: assets?.length ?? 0 }) }}
+              </span>
+              <template v-if="list.name !== null">
+                <button type="button" @click="rename(list)">{{ $t('gallery.renameList') }}</button>
+                <button type="button" class="warn" @click="remove(list)">{{ $t('common.remove') }}</button>
+              </template>
+            </div>
+
+            <div v-if="list.covers.length" class="picks">
+              <button
+                v-for="(src, index) in list.covers"
+                :key="src"
+                type="button"
+                @click="openList(list, list.keys[index])"
+              >
+                <img :src="`${src}?w=400&fmt=jpeg`" alt="" loading="lazy" />
+              </button>
+            </div>
+            <p v-else class="hint">{{ $t('gallery.listEmpty') }}</p>
+          </div>
+
+          <form class="newlist" @submit.prevent="addList">
+            <input v-model="listForm.name" type="text" :placeholder="$t('gallery.newListName')" />
+            <Button type="submit" variant="ghost" :disabled="!listForm.name">{{ $t('gallery.newList') }}</Button>
+          </form>
+        </div>
+
+        <div class="block">
+          <p class="lab">{{ $t('gallery.shareTitle') }}</p>
+          <div class="link">
+            <code>{{ gallery.url }}</code>
+            <button type="button" @click="copyLink">
+              {{ copied ? $t('gallery.copied') : $t('gallery.copy') }}
+            </button>
+          </div>
+
+          <!-- What can be done about a link that travelled too far is to
+               rotate it, which also turns out every guest already inside.
+               The value itself is on the studio's screen (C-17, #253); one
+               the couple set themselves is one they already have. -->
+          <div v-for="gate in GATES" :key="gate.key" class="gate">
+            <div style="flex: 1">
+              <b>{{ $t(gate.label) }}</b>
+              <div class="hint">{{ gates?.[gate.on] ? $t('gallery.gateOn') : $t('gallery.gateOff') }}</div>
+            </div>
+            <button type="button" @click="openGate = openGate === gate.key ? null : gate.key">
+              {{ gates?.[gate.on] ? $t('gallery.gateRotate') : $t('gallery.gateSet') }}
+            </button>
+            <button v-if="gates?.[gate.on]" type="button" class="warn" @click="clearGate(gate.key)">
+              {{ $t('gallery.gateClear') }}
+            </button>
+          </div>
+
+          <form v-if="openGate" @submit.prevent="rotate(openGate)">
+            <Label class="field">
+              <span>{{ $t('gallery.gateNewValue') }}</span>
+              <Input v-model="gateForm.secret" type="text" autocomplete="off" />
+            </Label>
+            <p v-if="gateForm.errors.secret" class="err">{{ gateForm.errors.secret }}</p>
+            <Button class="mid" type="submit" :disabled="gateForm.processing">{{ $t('common.save') }}</Button>
+          </form>
+
+          <p v-if="freshSecret" class="hint"><b>{{ freshSecret }}</b> — {{ $t('gallery.secretOnce') }}</p>
+        </div>
+
+        <div v-if="guests" class="block">
+          <p class="lab">{{ $t('gallery.guestsTitle') }}</p>
+          <dl class="stats">
+            <dt>{{ $t('gallery.views') }}</dt><dd>{{ guests.views }}</dd>
+            <dt>{{ $t('gallery.marks') }}</dt><dd>{{ guests.marks }}</dd>
+            <dt>{{ $t('gallery.comments') }}</dt><dd>{{ guests.comments }}</dd>
+          </dl>
+        </div>
+      </section>
 
       <footer class="gfoot">
         <span>{{ studioName }}</span>

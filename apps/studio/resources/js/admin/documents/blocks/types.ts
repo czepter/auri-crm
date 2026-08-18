@@ -23,4 +23,9 @@ export type PaletteEntry = {
   group: string
   label: string
   inline: boolean
+  // C-16 (#252): the palette also names what this document type may NOT have,
+  // with the reason. A silently missing entry reads as a bug, so it stands
+  // dimmed instead — but it must never reach the editor as a usable tool.
+  allowed?: boolean
+  only?: string | null
 }

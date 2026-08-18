@@ -12,7 +12,7 @@ use App\Http\Middleware\EnsureIdempotentWrite;
 use App\Http\Middleware\EnsureNoStaffExists;
 use App\Http\Middleware\EnsurePortalCapability;
 use App\Http\Middleware\EnsurePortalMaintenanceClosure;
-use App\Http\Middleware\EnsureUngatedGallery;
+use App\Http\Middleware\EnsureGalleryPass;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RequireStudioOnboarding;
 use App\Integration\Console\Commands\CreateApiTokenCommand;
@@ -111,7 +111,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'portal.maintenance' => EnsurePortalMaintenanceClosure::class,
             'portal.capability' => EnsurePortalCapability::class,
             'gallery.gate' => EnsureGalleryGate::class,
-            'gallery.ungated' => EnsureUngatedGallery::class,
+            'gallery.pass' => EnsureGalleryPass::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

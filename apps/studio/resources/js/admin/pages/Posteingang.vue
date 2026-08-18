@@ -1,12 +1,34 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import { Button } from '@/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 
-defineProps<{
+type Row = {
+  id: string
+  who: string
+  project: string | null
+  subject: string
+  snippet: string | null
+  waitingDays: number | null
+  origin: string
+}
+
+const props = defineProps<{
+  groups: { key: string; rows: Row[] }[]
+  open: {
+    id: string
+    subject: string
+    state: string
+    projectId: string | null
+    projectName: string | null
+    shootDate: string | null
+    origin: string
+    people: string[]
+    messages: { id: string; who: string; own: boolean; body: string; at: string }[]
+  } | null
   configured: boolean
   catchAll: string | null
   canRotate: boolean
@@ -61,6 +83,29 @@ function file(id: string) {
   })
 }
 
+// Long enough to notice. Below that the wait is the normal course of a
+// conversation and colouring it would make every thread look late.
+const NOTICEABLE_DAYS = 3
+
+const reply = useForm({ body: '' })
+
+function send() {
+  if (!props.open) return
+
+  reply.post(`/posteingang/faden/${props.open.id}/antwort`, {
+    preserveScroll: true,
+    onSuccess: () => reply.reset(),
+  })
+}
+
+function close(id: string) {
+  router.post(`/posteingang/faden/${id}/erledigt`, {}, { preserveScroll: true })
+}
+
+function show(id: string) {
+  router.get('/posteingang', { faden: id }, { preserveScroll: true, preserveState: true })
+}
+
 function rotate() {
   router.post('/posteingang/adresse-erneuern', {}, { preserveScroll: true })
 }
@@ -72,6 +117,87 @@ function receivedAt(iso: string) {
 
 <template>
   <AdminLayout active="posteingang">
+    <!-- C-14 (#250): conversations, grouped by working state. A queue on the
+         left, the thread on the right, its trace beside it. -->
+    <div data-theme="crm" style="display: flex; min-height: 60vh">
+      <div class="queue">
+        <template v-for="group in groups" :key="group.key">
+          <h2 v-if="group.rows.length">
+            <b>{{ $t(`inbox.group.${group.key}`) }}</b>
+            <span class="n">{{ group.rows.length }}</span>
+          </h2>
+
+          <a
+            v-for="row in group.rows"
+            :key="row.id"
+            href="#"
+            :class="{ on: open?.id === row.id }"
+            @click.prevent="show(row.id)"
+          >
+            <span class="nm">{{ row.who }}</span>
+            <!-- The project name under the sender, not the mail address:
+                 which booking a message is about is what one triages on. -->
+            <span class="mt">{{ row.project ?? $t('inbox.general') }}</span>
+            <span
+              v-if="row.waitingDays !== null && row.waitingDays >= NOTICEABLE_DAYS"
+              class="mt warn"
+            >{{ $t('inbox.waiting', row.waitingDays) }}</span>
+          </a>
+        </template>
+      </div>
+
+      <div class="detail">
+        <template v-if="open">
+          <div class="title">
+            <div>
+              <div class="crumb">{{ $t(`inbox.origin.${open.origin}`) }}</div>
+              <h1>{{ open.subject }}</h1>
+            </div>
+            <div class="acts">
+              <button class="btn-2" type="button" @click="close(open.id)">
+                {{ open.state === 'erledigt' ? $t('inbox.reopen') : $t('inbox.done') }}
+              </button>
+            </div>
+          </div>
+
+          <div class="msg" v-for="message in open.messages" :key="message.id" :class="{ own: message.own }">
+            <div class="head">
+              <span class="n">{{ message.who }}</span>
+              <span class="t">{{ receivedAt(message.at) }}</span>
+            </div>
+            <div class="body">{{ message.body }}</div>
+          </div>
+
+          <form class="composer" @submit.prevent="send">
+            <div class="field">
+              <span>{{ $t('inbox.reply') }}</span>
+              <textarea v-model="reply.body" rows="3" />
+            </div>
+            <div class="foot">
+              <button class="btn" type="submit" :disabled="reply.processing || !reply.body">
+                {{ $t('inbox.send') }}
+              </button>
+            </div>
+          </form>
+        </template>
+
+        <p v-else class="hint">{{ $t('inbox.noThreads') }}</p>
+      </div>
+
+      <aside v-if="open" class="rail">
+        <h2>{{ $t('inbox.people') }}</h2>
+        <div v-for="person in open.people" :key="person" class="p">{{ person }}</div>
+
+        <template v-if="open.projectName">
+          <h2>{{ $t('inbox.project') }}</h2>
+          <div class="item">
+            <Link class="n" :href="`/auftraege/${open.projectId}`">{{ open.projectName }}</Link>
+            <div v-if="open.shootDate" class="m">{{ receivedAt(open.shootDate) }}</div>
+          </div>
+        </template>
+      </aside>
+    </div>
+
     <div class="hrow">
       <div>
         <div class="kick">{{ $t('inbox.kicker') }}</div>

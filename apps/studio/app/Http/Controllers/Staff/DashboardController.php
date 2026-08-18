@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Staff;
 
-use App\Crm\Actions\ReadProductionBoard;
+use App\Crm\Data\LeadCardData;
 use App\Crm\Data\NextShootData;
 use App\Crm\Data\TaskRowData;
+use App\Crm\Enums\LeadStage;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -12,6 +13,7 @@ use App\Crm\Models\Task;
 use App\Engagement\Models\Thread;
 use App\Gallery\Actions\ReadAfterDeliveryColumn;
 use App\Http\Controllers\Controller;
+use App\Models\Absence;
 use App\Models\User;
 use App\Payments\Actions\ReadPaymentColumn;
 use App\Payments\Enums\PaymentInstallmentStatus;
@@ -26,66 +28,88 @@ use Inertia\Response;
 /**
  * The Übersicht: an action worklist, not a status report.
  *
- * Mockup 01's four domain blocks and its four-tile KPI row all read from real
- * data now. Nowhere on this screen is a number invented to fill a clause;
- * that is the failure clickdummy §6 records for it.
+ * C-04 (#238) rebuilt it on the CRM's own four-column grid, which changed what
+ * this method has to answer for. Two rules came with it:
  *
- * Three deliberate omissions, every one of them because there is no fact
- * behind the mockup's clause rather than because nobody got to it:
+ * **No metric without its proof** (C-05, #239). Every figure in the first row
+ * ships the cases behind it, one dot each, so the number can be checked rather
+ * than believed. `4 Shootings im September` is struck from the draft for
+ * failing that, and nothing here may be added without its dots.
  *
- * - The mockup's "nie fällig gestellt" payment row. PaymentInstallmentStatus
+ * **Nothing summarised in a footer.** A line reading "2 Anfragen kollidieren
+ * mit dem 14.06." names neither which nor where; the conflict is a mark on the
+ * row that has it, and it leads into the resolution. Same reason the calendar
+ * preview is gone: "Diese Woche" is the week, not a sentence about it.
+ *
+ * Three deliberate omissions survive from the first build, every one because
+ * there is no fact behind the draft's clause rather than because nobody got
+ * to it:
+ *
+ * - The draft's "nie fällig gestellt" payment row. PaymentInstallmentStatus
  *   ::Invoiced exists on the enum but nothing in this codebase ever writes it
  *   (see that enum's docblock), so there is no state to detect and no action
  *   to end it with.
- * - The mockup's "— Album nie angeboten" clause on the gallery row. No album
+ * - The draft's "— Album nie angeboten" clause on the gallery row. No album
  *   concept exists to have been offered; ReadAfterDeliveryColumn states the
  *   expiry, which is the fact, and leaves the clause off.
- * - The mockup's "Review-Bitten laufen automatisch" footer under Nach der
- *   Lieferung. No seeded rule sends review requests, so the line would be
- *   this screen reporting an automation that does not run.
+ * - The draft's "Review-Bitten laufen automatisch" footer under Galerien. No
+ *   seeded rule sends review requests, so the line would be this screen
+ *   reporting an automation that does not run.
  *
- * And one deviation that is not an omission: the "n unbeantwortet" count in
- * the header states its figure without linking anywhere. Threads exist only
- * per-project, at /auftraege/{project}/nachrichten; routes/admin.php has no
- * cross-project inbox, and the mockup's own href is "#", so no destination
- * was ever named. Inventing one is the same failure as inventing a number.
- *
- * The Nächste Shootings block is the one column with two footers: the owner
- * asked to keep S-01's open-task-count line and add the mockup's calendar
- * preview beneath it rather than choose between them, so `upcomingShoots`
- * feeds a second `.blkfoot` instead of replacing the first.
+ * The production board came off this screen with C-02 (#236): every project in
+ * production is a row at /projekte, which is a list, and this screen is a day.
  */
 class DashboardController extends Controller
 {
+    /** Five decisions. The rest is on the project it belongs to. */
+    private const DECISIONS = 5;
+
     public function __invoke(
-        ReadProductionBoard $board,
         ReadInquiryColumn $inquiries,
         ReadPaymentColumn $payments,
         ReadAfterDeliveryColumn $afterDelivery,
     ): Response {
         $viewer = auth('staff')->user();
-        $expectedByMonthEnd = $this->expectedByMonthEnd();
         $hero = $this->nextShoot($viewer);
 
         return Inertia::render('Uebersicht', [
             'today' => now()->format('Y-m-d'),
-            'openLeads' => Lead::query()->open()->count(),
-            'newLeadsThisWeek' => Lead::query()->open()->where('created_at', '>=', now()->subWeek())->count(),
             'nextShoot' => $hero === null ? null : NextShootData::fromShoot($hero),
-            'upcomingShoots' => $this->upcomingShoots($viewer, $hero),
-            'production' => $board($viewer),
+            'week' => $this->week($viewer),
             'tasks' => $this->tasks($viewer),
             'openTasks' => Task::query()->open()->whereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id'))->count(),
             'inquiries' => $inquiries($viewer),
             'payments' => $payments($viewer),
-            'afterDelivery' => $afterDelivery($viewer),
+            'galleries' => $afterDelivery($viewer),
+            'newLeads' => $this->newLeads(),
             'pipeline' => $this->pipeline(),
-            'overdueTotal' => $this->overdueTotal(),
-            'expectedByMonthEndTotal' => $expectedByMonthEnd['total'],
-            'expectedByMonthEndCount' => $expectedByMonthEnd['count'],
-            'acceptanceRate' => $this->acceptanceRate(),
+            // The proof under Pipeline: one dot per open lead, carrying its
+            // own stage so the screen can shade it. The stage travels rather
+            // than a colour — which shade a stage gets is the sheet's
+            // business, not this method's.
+            'pipelineStages' => $this->pipelineStages(),
+            'overdue' => $this->overdue(),
+            'quotes' => QuoteAcceptanceRate::countsForTrailingYear(),
             'unanswered' => $this->unanswered(),
         ]);
+    }
+
+    /**
+     * One stage per open lead, in funnel order — not the column's alphabetical
+     * order, which puts `contacted` before `new` and makes the row's shading
+     * jump for no reason a reader could follow.
+     *
+     * @return list<string>
+     */
+    private function pipelineStages(): array
+    {
+        $order = array_column(LeadStage::cases(), 'value');
+
+        return Lead::query()->open()->pluck('stage')
+            ->map(fn (LeadStage $stage) => $stage->value)
+            ->sortBy(fn (string $stage) => array_search($stage, $order, true))
+            ->values()
+            ->all();
     }
 
     /**
@@ -93,10 +117,9 @@ class DashboardController extends Controller
      * cancelled, and only for a project that is actually booked — an unbooked
      * date is a request, not a commitment.
      *
-     * Returns the model rather than NextShootData: upcomingShoots() below
-     * needs the hero's own date to filter by, and re-deriving that from
-     * NextShootData's formatted string would be the same query wearing a
-     * worse type.
+     * Returns the model rather than NextShootData: week() below needs the
+     * hero's own date to leave it out of the list, and re-deriving that from a
+     * formatted string would be the same query wearing a worse type.
      */
     private function nextShoot(User $viewer): ?Shoot
     {
@@ -113,50 +136,68 @@ class DashboardController extends Controller
     }
 
     /**
-     * The calendar footer's preview: what is booked after the hero shoot, so
-     * the block hints at what the calendar holds without opening it. Same
-     * booked/uncancelled/dated rule as the hero; "after" is `date >
-     * $hero->date` rather than `>=` plus an id exclusion, since the hero is
-     * by construction the earliest such shoot — nothing dated on or before
-     * it can be anything other than the hero itself.
+     * "Diese Woche": the seven days ahead, shooting days and absences in one
+     * list, in time order.
      *
-     * No hero, no preview: "after the next one" names nothing when there is
-     * no next one, so this returns empty rather than every future shoot.
+     * An absence is an entry, dimmed on its own day — not a message. `Nina
+     * abwesend` announced above the week said nothing about which day it
+     * costs, which is the only thing anyone reads that line for.
      *
-     * @return list<array{label: string, date: string}>
+     * @return list<array{when: string, what: string, away: bool}>
      */
-    private function upcomingShoots(User $viewer, ?Shoot $hero): array
+    private function week(User $viewer): array
     {
-        if ($hero === null) {
-            return [];
-        }
+        $until = now()->addWeek();
 
-        return Shoot::query()
+        $shoots = Shoot::query()
             ->join('jobs', 'jobs.project_id', '=', 'shoots.project_id')
             ->select('shoots.*')
+            ->with('project')
             ->whereIn('shoots.project_id', Project::query()->visibleTo($viewer)->select('projects.id'))
             ->uncancelled()
             ->whereNotNull('date')
-            ->whereDate('date', '>', $hero->date)
-            ->orderBy('date')
-            ->limit(2)
+            ->whereDate('date', '>=', now()->startOfDay())
+            ->whereDate('date', '<=', $until->toDateString())
             ->get()
             ->map(fn (Shoot $shoot) => [
-                'label' => $shoot->label ?? $shoot->kind->label(),
                 'date' => $shoot->date->format('Y-m-d'),
+                // call_time is a plain time column, not a cast — same
+                // trimming NextShootData does with it.
+                'time' => $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
+                'what' => $shoot->project->name,
+                'away' => false,
+            ]);
+
+        $absences = Absence::query()
+            ->with('user')
+            ->whereDate('ends_on', '>=', now()->toDateString())
+            ->whereDate('starts_on', '<=', $until->toDateString())
+            ->get()
+            ->map(fn (Absence $absence) => [
+                'date' => $absence->starts_on->max(now())->format('Y-m-d'),
+                'time' => null,
+                // The name alone. Whoever renders it says "abwesend" — the
+                // German lives in de.json, not split across a PHP lang file
+                // nobody thinks to look in.
+                'what' => $absence->user->name,
+                'away' => true,
+            ]);
+
+        return $shoots->concat($absences)
+            ->sortBy(fn (array $entry) => [$entry['date'], $entry['time'] ?? ''])
+            ->values()
+            ->map(fn (array $entry) => [
+                'when' => $entry['date'].($entry['time'] === null ? '' : ' '.$entry['time']),
+                'what' => $entry['what'],
+                'away' => $entry['away'],
             ])
             ->all();
     }
 
     /**
-     * What the studio owes and has not done, most urgent first, six at most.
-     *
-     * The six is the cap, not one row per project: mockup 01 lists Meier &
-     * Kowalski twice in the same block, because two different things are owed
-     * on that wedding and each needs its own button. Collapsing to one row per
-     * project reads well on a busy board and empties the screen on a studio
-     * with a single project in production — which is every studio in its first
-     * month, and the state this screen gets judged in.
+     * What the studio owes and has not done, most urgent first. Six read, five
+     * shown beside the two other decision sources — the count of what is left
+     * is on the panel's own header.
      *
      * Undated tasks sort last: they are owed, but not owed on any given day.
      */
@@ -168,9 +209,28 @@ class DashboardController extends Controller
                 ->whereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id'))
                 ->byDueDate()
                 ->with('project')
-                ->limit(6)
+                ->limit(self::DECISIONS)
                 ->get()
                 ->map(TaskRowData::fromTask(...))
+                ->values()
+        );
+    }
+
+    /**
+     * The newest open inquiries, as they arrived — occasion, names, when and
+     * from where. Their date conflicts ride along on the card, because a
+     * doubled date is a mark on the row that has it.
+     */
+    private function newLeads()
+    {
+        return LeadCardData::collect(
+            Lead::query()
+                ->open()
+                ->with(['project.contacts', 'project.shoots'])
+                ->latest()
+                ->limit(3)
+                ->get()
+                ->map(fn (Lead $lead) => LeadCardData::fromLead($lead, []))
                 ->values()
         );
     }
@@ -187,46 +247,28 @@ class DashboardController extends Controller
             ->sum('total');
     }
 
-    private function overdueTotal(): int
-    {
-        return (int) PaymentInstallment::query()
-            ->where('status', PaymentInstallmentStatus::Scheduled)
-            ->whereDate('due_on', '<', now()->toDateString())
-            ->sum('amount');
-    }
-
     /**
-     * What the überfällig tile's sub-line and the Zahlungen footer both name:
-     * money not yet late, still due before the month runs out. Scheduled
-     * only — an installment already overdue has its own tile and its own row
-     * on the board, and counting it here too would report the same money
-     * under two different failures.
+     * Overdue money with the proof beside it: how many instalments are late
+     * out of how many the studio is owed at all, and how long the oldest has
+     * been late. The dots are open against settled, which is the only reading
+     * of "1 von 4 Raten offen" a caller can check.
      *
-     * @return array{total: int, count: int}
+     * @return array{total: int, open: int, all: int, sinceDays: int|null}
      */
-    private function expectedByMonthEnd(): array
+    private function overdue(): array
     {
-        $scheduled = PaymentInstallment::query()
+        $late = PaymentInstallment::query()
             ->where('status', PaymentInstallmentStatus::Scheduled)
-            ->whereDate('due_on', '>=', now()->toDateString())
-            ->whereDate('due_on', '<=', now()->endOfMonth()->toDateString());
+            ->whereDate('due_on', '<', now()->toDateString());
+
+        $oldest = (clone $late)->orderBy('due_on')->value('due_on');
 
         return [
-            'total' => (int) (clone $scheduled)->sum('amount'),
-            'count' => (clone $scheduled)->count(),
+            'total' => (int) (clone $late)->sum('amount'),
+            'open' => (clone $late)->count(),
+            'all' => PaymentInstallment::query()->count(),
+            'sinceDays' => $oldest === null ? null : (int) $oldest->diffInDays(now()),
         ];
-    }
-
-    /**
-     * S-13 shows this same percentage on the Auswertungen screen, so the
-     * query moved to App\Quotes\Support\QuoteAcceptanceRate and both screens
-     * read it from there. Its own doc comment carries the two rules that
-     * matter — keyed on `sent_at`, null rather than zero on an empty
-     * denominator.
-     */
-    private function acceptanceRate(): ?int
-    {
-        return QuoteAcceptanceRate::trailingTwelveMonths();
     }
 
     /**

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Auswertungen — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+<style>
+/* Ein Diagramm statt vier Kacheln über drei Tabellen, von denen zwei leer
+   sind. Der Trichter über zwölf Monate ist die einzige Frage, die man an
+   diesen Screen wirklich stellt: kommt genug herein, und wird daraus etwas.
+
+   Balken als Grid, nicht als Bibliothek: zwölf Monate mit zwei Werten sind
+   24 Zahlen, und jede Diagrammbibliothek bringt ihr eigenes Schriftbild mit,
+   das dann als einziges auf der Fläche nicht zur Formsprache passt. */
+.chart { display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--s2); align-items: end;
+         height: 220px; padding: var(--s5) 0 0; }
+.chart .m { display: flex; flex-direction: column; justify-content: flex-end; gap: 3px; height: 100%; }
+.chart .bar { border-radius: 4px 4px 0 0; background: var(--sunk-2); }
+.chart .bar.won { background: var(--ink); }
+/* Eigene Spalte je Monat, damit kein Balken in die Nachbarspalte läuft — der
+   heutige Screen tut genau das und kollidiert mit der Ziffer darunter. */
+.chart .lab { padding-top: 7px; font-size: 10.5px; color: var(--ink-2); text-align: center;
+              font-variant-numeric: tabular-nums; }
+.legend { display: flex; gap: var(--s4); font-size: 11.5px; color: var(--ink-2); }
+.legend i { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; }
+.legend .won i { background: var(--ink); }
+.legend .all i { background: var(--sunk-2); }
+</style>
+</head>
+<body data-nav="auswertungen">
+
+<!-- C-06 (#240). Was hier verschwindet: die vier Kennzahlkacheln über drei
+     Tabellen. Zwei davon standen im Betrieb dauerhaft leer — verlorene Gründe
+     und Empfehlungen füllen sich erst nach Jahren —, und leere Tabellen sind
+     das, was einen Screen als kaputt lesen lässt.
+
+     Was bleibt: ein Diagramm, darunter die Zahlen, die es erklären. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="main">
+
+    <div class="hrow">
+      <div>
+        <div class="kick">Sep 2025 – Aug 2026</div>
+        <h1>Auswertungen</h1>
+      </div>
+      <span class="legend" style="margin-left: auto">
+        <span class="all"><i></i>Anfragen</span>
+        <span class="won"><i></i>gebucht</span>
+      </span>
+    </div>
+
+    <div class="grid">
+
+      <section class="panel bare sp3">
+        <header><h2>Anfragen und Buchungen</h2><span class="n">12 Monate</span></header>
+
+        <div class="chart">
+          <div class="m"><div class="bar" style="height: 34%"></div><div class="bar won" style="height: 12%"></div><div class="lab">S</div></div>
+          <div class="m"><div class="bar" style="height: 28%"></div><div class="bar won" style="height: 9%"></div><div class="lab">O</div></div>
+          <div class="m"><div class="bar" style="height: 22%"></div><div class="bar won" style="height: 9%"></div><div class="lab">N</div></div>
+          <div class="m"><div class="bar" style="height: 18%"></div><div class="bar won" style="height: 6%"></div><div class="lab">D</div></div>
+          <div class="m"><div class="bar" style="height: 46%"></div><div class="bar won" style="height: 18%"></div><div class="lab">J</div></div>
+          <div class="m"><div class="bar" style="height: 58%"></div><div class="bar won" style="height: 24%"></div><div class="lab">F</div></div>
+          <div class="m"><div class="bar" style="height: 72%"></div><div class="bar won" style="height: 30%"></div><div class="lab">M</div></div>
+          <div class="m"><div class="bar" style="height: 66%"></div><div class="bar won" style="height: 27%"></div><div class="lab">A</div></div>
+          <div class="m"><div class="bar" style="height: 54%"></div><div class="bar won" style="height: 21%"></div><div class="lab">M</div></div>
+          <div class="m"><div class="bar" style="height: 44%"></div><div class="bar won" style="height: 15%"></div><div class="lab">J</div></div>
+          <div class="m"><div class="bar" style="height: 38%"></div><div class="bar won" style="height: 12%"></div><div class="lab">J</div></div>
+          <div class="m"><div class="bar" style="height: 30%"></div><div class="bar won" style="height: 9%"></div><div class="lab">A</div></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <header><h2>Umsatz</h2></header>
+        <div class="band" style="margin: 0">
+          <div class="cell">
+            <div class="lab">Zwölf Monate</div>
+            <div class="val">48.200 €</div>
+            <div class="sub">Vorjahr 39.100 €</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel sp2">
+        <header><h2>Woher die Anfragen kommen</h2><span class="n">64</span></header>
+        <div class="list">
+          <div class="row"><span class="n">Empfehlung</span><span class="m">27</span></div>
+          <div class="row"><span class="n">Website</span><span class="m">19</span></div>
+          <div class="row"><span class="n">Instagram</span><span class="m">12</span></div>
+          <div class="row"><span class="n">Hochzeitsmesse</span><span class="m">6</span></div>
+        </div>
+      </section>
+
+      <section class="panel sp2">
+        <header><h2>Angebote</h2><span class="n">38 verschickt</span></header>
+        <div class="list">
+          <div class="row"><span class="n">Angenommen</span><span class="m">14</span></div>
+          <div class="row"><span class="n">Offen</span><span class="m">7</span></div>
+          <div class="row off"><span class="n">Abgelaufen</span><span class="m">17</span></div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

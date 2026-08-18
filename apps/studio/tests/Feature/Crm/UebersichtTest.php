@@ -1,17 +1,20 @@
 <?php
 
+use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Job;
+use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Gallery\Models\Gallery;
+use App\Models\Absence;
 use App\Models\User;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
@@ -25,6 +28,11 @@ beforeEach(function () {
     $this->staff = User::factory()->withMfa()->create();
     $this->actingAs($this->staff, 'staff');
 });
+
+function leadAtStage(LeadStage $stage): Lead
+{
+    return Lead::factory()->for(Project::factory()->wedding()->create())->atStage($stage)->create();
+}
 
 it('leads with the next shooting day of a booked project', function () {
     $project = Project::factory()->create(['name' => 'Meier & Kowalski']);
@@ -71,76 +79,50 @@ it('states readiness from real facts rather than invented labels', function () {
         ->and(collect($readiness)->every(fn ($mark) => $mark['done'] === false))->toBeTrue();
 });
 
-it('previews the shoot after the hero shoot in the calendar footer', function () {
-    $project = Project::factory()->create();
+// C-04 (#238): "Diese Woche" is the week itself, not a sentence about it —
+// the calendar-preview footer is gone with the rest of the summarising ones.
+it('lists this week\'s shooting days in time order', function () {
+    $project = Project::factory()->create(['name' => 'Meier & Kowalski']);
     Job::factory()->for($project)->create();
-    Shoot::factory()->for($project)->on(now()->addDays(5)->format('Y-m-d'))->create(['label' => 'Hochzeitstag']);
-    Shoot::factory()->for($project)->on(now()->addDays(20)->format('Y-m-d'))->create(['label' => 'Portrait Vogt']);
+    Shoot::factory()->for($project)->on(now()->addDays(4)->format('Y-m-d'))->create(['call_time' => '14:00']);
+    Shoot::factory()->for($project)->on(now()->addDays(2)->format('Y-m-d'))->create(['call_time' => '09:00']);
 
-    $upcoming = props('/')['upcomingShoots'];
+    $week = props('/')['week'];
 
-    expect($upcoming)->toHaveCount(1)
-        ->and($upcoming[0]['label'])->toBe('Portrait Vogt')
-        ->and($upcoming[0]['date'])->toBe(now()->addDays(20)->format('Y-m-d'));
+    expect(collect($week)->pluck('when')->all())->toBe([
+        now()->addDays(2)->format('Y-m-d').' 09:00',
+        now()->addDays(4)->format('Y-m-d').' 14:00',
+    ]);
 });
 
-it('does not preview a shoot dated before the hero shoot', function () {
-    // Chronologically earlier and already happened — not a future shoot the
-    // hero could ever have been, so this only exercises the "after the
-    // hero's date" filter, not the hero-selection query.
-    $project = Project::factory()->create();
-    Job::factory()->for($project)->create();
-    Shoot::factory()->for($project)->on(now()->addDays(5)->format('Y-m-d'))->create(['label' => 'Hochzeitstag']);
-    Shoot::factory()->for($project)->on(now()->subDays(10)->format('Y-m-d'))->create(['label' => 'Verlobungsshooting']);
-
-    expect(props('/')['upcomingShoots'])->toBeEmpty();
-});
-
-it('does not preview a cancelled shoot', function () {
-    $project = Project::factory()->create();
-    Job::factory()->for($project)->create();
-    Shoot::factory()->for($project)->on(now()->addDays(5)->format('Y-m-d'))->create(['label' => 'Hochzeitstag']);
-    Shoot::factory()->for($project)->on(now()->addDays(10)->format('Y-m-d'))->cancelled('Termin abgesagt')->create();
-
-    expect(props('/')['upcomingShoots'])->toBeEmpty();
-});
-
-it('does not preview a shoot on a project that is not booked', function () {
-    // An unbooked date is a request, not a commitment — the same rule
-    // nextShoot() already applies to the hero itself.
-    $project = Project::factory()->create();
-    Job::factory()->for($project)->create();
-    Shoot::factory()->for($project)->on(now()->addDays(5)->format('Y-m-d'))->create(['label' => 'Hochzeitstag']);
+it('leaves out what is further off than a week, cancelled, or unbooked', function () {
+    $booked = Project::factory()->create();
+    Job::factory()->for($booked)->create();
+    Shoot::factory()->for($booked)->on(now()->addDays(3)->format('Y-m-d'))->create();
+    Shoot::factory()->for($booked)->on(now()->addDays(20)->format('Y-m-d'))->create();
+    Shoot::factory()->for($booked)->on(now()->addDays(4)->format('Y-m-d'))->cancelled('Abgesagt')->create();
 
     $unbooked = Project::factory()->create();
-    Shoot::factory()->for($unbooked)->on(now()->addDays(8)->format('Y-m-d'))->create();
+    Shoot::factory()->for($unbooked)->on(now()->addDays(5)->format('Y-m-d'))->create();
 
-    expect(props('/')['upcomingShoots'])->toBeEmpty();
+    expect(props('/')['week'])->toHaveCount(1);
 });
 
-it('previews nothing when there is no hero shoot', function () {
-    // No hero means "after the next one" has no meaning — an empty list,
-    // not every future shoot.
-    $project = Project::factory()->create();
-    Job::factory()->for($project)->create();
-    Shoot::factory()->for($project)->on(now()->subDay()->format('Y-m-d'))->create();
+// An absence is an entry on the day it costs, dimmed. Announced above the
+// week it said nothing about which day that is, which is the only thing
+// anyone reads the line for.
+it('puts an absence in the week as its own entry', function () {
+    Absence::factory()->create([
+        'user_id' => User::factory()->create(['name' => 'Nina Brandt'])->id,
+        'starts_on' => now()->addDays(2)->toDateString(),
+        'ends_on' => now()->addDays(3)->toDateString(),
+    ]);
 
-    expect(props('/')['nextShoot'])->toBeNull()
-        ->and(props('/')['upcomingShoots'])->toBeEmpty();
-});
+    $week = props('/')['week'];
 
-it('caps the calendar preview at two shoots', function () {
-    $project = Project::factory()->create();
-    Job::factory()->for($project)->create();
-    Shoot::factory()->for($project)->on(now()->addDays(5)->format('Y-m-d'))->create(['label' => 'Hochzeitstag']);
-    Shoot::factory()->for($project)->on(now()->addDays(10)->format('Y-m-d'))->create(['label' => 'A']);
-    Shoot::factory()->for($project)->on(now()->addDays(15)->format('Y-m-d'))->create(['label' => 'B']);
-    Shoot::factory()->for($project)->on(now()->addDays(20)->format('Y-m-d'))->create(['label' => 'C']);
-
-    $upcoming = props('/')['upcomingShoots'];
-
-    expect($upcoming)->toHaveCount(2)
-        ->and(collect($upcoming)->pluck('label')->all())->toBe(['A', 'B']);
+    expect($week)->toHaveCount(1)
+        ->and($week[0]['what'])->toBe('Nina Brandt')
+        ->and($week[0]['away'])->toBeTrue();
 });
 
 it('lists what is owed, overdue first by date', function () {
@@ -157,12 +139,12 @@ it('lists what is owed, overdue first by date', function () {
         ->and($tasks[1]['isOverdue'])->toBeFalse();
 });
 
-it('caps the worklist at six rows, not at one row per project', function () {
-    // Mockup 01 lists the same wedding twice in one block: two different
-    // things are owed on it, and each needs its own button. One row per
-    // project reads well on a busy board and empties the screen on a studio
-    // with a single project in production — which is every studio in its
-    // first month, and the state this screen gets judged in.
+it('caps the decisions at five, not at one row per project', function () {
+    // The draft lists the same wedding twice in one field: two different things
+    // are owed on it, and each needs its own button. One row per project reads
+    // well on a busy board and empties the screen on a studio with a single
+    // project in production — which is every studio in its first month, and the
+    // state this screen gets judged in.
     $loud = Project::factory()->create(['name' => 'Laut']);
     Task::factory()->for($loud)->count(9)->due(now()->subDays(3)->format('Y-m-d'))->create();
 
@@ -173,7 +155,7 @@ it('caps the worklist at six rows, not at one row per project', function () {
 
     // The nine older overdue tasks outrank the newer one, so the cap is what
     // keeps 'Leise' off the screen — not a per-project rule.
-    expect(collect($props['tasks'])->pluck('projectName')->all())->toBe(array_fill(0, 6, 'Laut'))
+    expect(collect($props['tasks'])->pluck('projectName')->all())->toBe(array_fill(0, 5, 'Laut'))
         ->and($props['openTasks'])->toBe(10);
 });
 
@@ -182,18 +164,6 @@ it('does not call a task due today overdue', function () {
     Task::factory()->due(now()->format('Y-m-d'))->create();
 
     expect(props('/')['tasks'][0]['isOverdue'])->toBeFalse();
-});
-
-it('carries the production board, one row per booked project', function () {
-    $project = Project::factory()->create();
-    Job::factory()->for($project)->create();
-    Shoot::factory()->for($project)->atStatus(ShootStatus::Delivered)->create();
-    Shoot::factory()->for($project)->atStatus(ShootStatus::Culling)->create();
-
-    $production = props('/')['production'];
-
-    expect($production)->toHaveCount(1)
-        ->and($production[0]['status'])->toBe('culling');
 });
 
 it('completes and reopens a task from the worklist', function () {
@@ -256,15 +226,15 @@ it('shows no Zahlungen column when nothing is behind', function () {
     expect(props('/')['payments'])->toBeEmpty();
 });
 
-it('carries the Nach der Lieferung column', function () {
+it('carries the Galerien field', function () {
     $project = Project::factory()->create(['name' => "Hensel Hochzeit '25"]);
     Gallery::factory()->for($project)->create(['expires_at' => now()->addDays(12)]);
 
-    expect(props('/')['afterDelivery'])->toHaveCount(1);
+    expect(props('/')['galleries'])->toHaveCount(1);
 });
 
-it('shows no Nach der Lieferung column when no occasion is open', function () {
-    expect(props('/')['afterDelivery'])->toBeEmpty();
+it('shows no Galerien field when no occasion is open', function () {
+    expect(props('/')['galleries'])->toBeEmpty();
 });
 
 it('sums the pipeline from quotes still in play', function () {
@@ -276,48 +246,36 @@ it('sums the pipeline from quotes still in play', function () {
     expect(props('/')['pipeline'])->toBe(4875000);
 });
 
-it('sums what is overdue', function () {
+it('sums what is overdue and counts the instalments behind it', function () {
+    // C-05 (#239): no metric without its proof. The dots are open against
+    // settled, which is the only reading of "1 von 4 Raten offen" anyone can
+    // check against the plan.
     $job = Job::factory()->create();
-    $plan = PaymentPlan::factory()->for($job)->create(['total' => 290000]);
+    $plan = PaymentPlan::factory()->for($job)->create(['total' => 380000]);
     PaymentInstallment::factory()->for($plan, 'plan')->create([
         'amount' => 290000,
         'due_on' => now()->subDays(5)->toDateString(),
     ]);
-
-    expect(props('/')['overdueTotal'])->toBe(290000);
-});
-
-it('sums what is expected by month end, excluding what is already overdue', function () {
-    $inWindow = Job::factory()->create();
-    $plan = PaymentPlan::factory()->for($inWindow)->create(['total' => 300000]);
-    PaymentInstallment::factory()->for($plan, 'plan')->count(2)->create([
-        'amount' => 150000,
-        'due_on' => now()->addDays(3)->toDateString(),
-    ]);
-
-    // Already overdue: has its own tile, must not double up in this one.
-    $overdue = Job::factory()->create();
-    $overduePlan = PaymentPlan::factory()->for($overdue)->create(['total' => 90000]);
-    PaymentInstallment::factory()->for($overduePlan, 'plan')->create([
+    PaymentInstallment::factory()->for($plan, 'plan')->create([
         'amount' => 90000,
-        'due_on' => now()->subDay()->toDateString(),
+        'due_on' => now()->addDays(9)->toDateString(),
     ]);
 
-    // Due next month: outside the window.
-    $nextMonth = Job::factory()->create();
-    $nextMonthPlan = PaymentPlan::factory()->for($nextMonth)->create(['total' => 50000]);
-    PaymentInstallment::factory()->for($nextMonthPlan, 'plan')->create([
-        'amount' => 50000,
-        'due_on' => now()->addMonthNoOverflow()->startOfMonth()->addDays(5)->toDateString(),
-    ]);
+    $overdue = props('/')['overdue'];
 
-    $props = props('/');
-
-    expect($props['expectedByMonthEndTotal'])->toBe(300000)
-        ->and($props['expectedByMonthEndCount'])->toBe(2);
+    expect($overdue['total'])->toBe(290000)
+        ->and($overdue['open'])->toBe(1)
+        ->and($overdue['all'])->toBe(2)
+        ->and($overdue['sinceDays'])->toBe(5);
 });
 
-it('reports the acceptance rate over the trailing twelve months', function () {
+it('reports no overdue day when nothing is late', function () {
+    expect(props('/')['overdue'])->toBe(['total' => 0, 'open' => 0, 'all' => 0, 'sinceDays' => null]);
+});
+
+it('counts quotes sent and accepted over the trailing twelve months', function () {
+    // Counts, not the percentage: the tile reads `3 von 8` and draws one dot
+    // per quote, and a rounded percentage cannot be turned back into cases.
     $project = Project::factory()->create();
     Quote::factory()->for($project)->count(5)->create([
         'status' => QuoteStatus::Sent,
@@ -328,20 +286,41 @@ it('reports the acceptance rate over the trailing twelve months', function () {
         'sent_at' => now()->subMonths(3),
         'accepted_at' => now()->subMonths(2),
     ]);
-    // Older than the window; must not move the number.
+    // Older than the window; must not move either figure.
     Quote::factory()->for($project)->create([
         'status' => QuoteStatus::Accepted,
         'sent_at' => now()->subMonths(18),
         'accepted_at' => now()->subMonths(17),
     ]);
 
-    expect(props('/')['acceptanceRate'])->toBe(38);
+    expect(props('/')['quotes'])->toBe(['sent' => 8, 'accepted' => 3]);
 });
 
-it('reports no acceptance rate when nothing has been sent', function () {
-    // A percentage of nothing is not zero percent; it is no number at all,
-    // and the tile does not render.
-    expect(props('/')['acceptanceRate'])->toBeNull();
+it('shows no acceptance tile when nothing has been sent', function () {
+    // Nothing sent is not "0 von 0" — the tile has no proof and does not
+    // render, which is the rule the screen applies to every figure on it.
+    expect(props('/')['quotes'])->toBe(['sent' => 0, 'accepted' => 0]);
+});
+
+// The dots under Pipeline: one per open lead, carrying its own stage so the
+// screen can shade it. Drawn in stage order, or the colour distribution jumps
+// the moment one case moves on.
+it('sends the open leads\' stages in stage order', function () {
+    leadAtStage(LeadStage::QuoteSent);
+    leadAtStage(LeadStage::New);
+    leadAtStage(LeadStage::Contacted);
+
+    expect(props('/')['pipelineStages'])->toBe(['new', 'contacted', 'quote_sent']);
+});
+
+it('carries the newest inquiries with their occasion and source', function () {
+    $lead = leadAtStage(LeadStage::New);
+
+    $rows = props('/')['newLeads'];
+
+    expect($rows)->toHaveCount(1)
+        ->and($rows[0]['id'])->toBe($lead->project->public_id)
+        ->and($rows[0]['type'])->toBe($lead->project->type->label());
 });
 
 it('counts threads where the client spoke last', function () {

@@ -40,7 +40,6 @@
     "contactCreate": "„{term}“ als neuen Kontakt anlegen",
     "contactProjects": "{count}. Projekt",
     "name": "Name",
-    "partner": "Partner/in",
     "email": "E-Mail",
     "phone": "Telefon",
     "noEmailHint": "Ohne E-Mail: kein Portal-Zugang, keine Eingangsbestätigung.",
@@ -55,21 +54,33 @@
     "conflictAbsence": "Abwesend — {label}",
     "inquiryText": "Anfragetext",
     "inquiryTextHint": "Ort, Gästezahl, weitere Shootings und Paket später im Projekt.",
-    "submit": "Anfrage anlegen"
+    "submit": "Anfrage anlegen",
+    "addPerson": "+ Person",
+    "submitAndNext": "Anlegen und nächste",
+    "conflictBooked": "Gebucht — {project}{venue} ›"
   },
   "board": {
     "title": "Anfragen",
     "create": "Anfrage anlegen",
-    "shootCount": "1 Shooting | {count} Shootings",
     "openDate": "Termin offen",
-    "advance": "Weiter",
-    "conflict": "Haupttermin belegt — {project}",
     "conflictClosure": "Studio geschlossen — {label}",
     "conflictAbsence": "Abwesend — {label}",
-    "daysInStage": "gestern | vor {count} Tagen",
-    "today": "heute",
-    "stale": "{count} Tage still",
-    "empty": "Keine Anfragen."
+    "empty": "Keine Anfragen.",
+    "viewBoard": "Board",
+    "viewList": "Liste",
+    "dateDoubled": "Termin doppelt",
+    "colInquiry": "Anfrage",
+    "colDate": "Termin",
+    "colVenue": "Ort",
+    "colStage": "Stufe",
+    "colValue": "Wert",
+    "colLast": "Zuletzt",
+    "group": {
+      "handelt": "Handelt jemand",
+      "laeuft": "Läuft",
+      "fertig": "Abgeschlossen"
+    },
+    "shootCount": "1 Shooting | {count} Shootings"
   },
   "contacts": {
     "title": "Kontakte",
@@ -114,7 +125,33 @@
       "gallery_comments": "Galerie-Kommentare",
       "welcome": "Begrüßung"
     },
-    "portalPreview": "Vorschau als Kunde"
+    "portalPreview": "Vorschau als Kunde",
+    "colName": "Kontakt",
+    "colReach": "Erreichbarkeit",
+    "colProjects": "Projekte",
+    "colNext": "Nächster Termin",
+    "group": {
+      "running": "Laufender Auftrag",
+      "past": "Bestandskunden",
+      "none": "Ohne Auftrag"
+    },
+    "call": "Anrufen",
+    "reach": "Kontakt",
+    "address": "Anschrift",
+    "galleries": "Galerien",
+    "assetCount": "1 Bild | {count} Bilder",
+    "expiresOn": "läuft {date} ab",
+    "connected": "Verbunden",
+    "portalReset": "Zurücksetzen",
+    "role": {
+      "primary": "Hauptkontakt",
+      "partner": "Partner",
+      "payer": "Zahlt",
+      "planner": "Planung",
+      "vendor": "Dienstleister"
+    },
+    "openedOn": "geöffnet am {date}",
+    "notOpened": "noch nicht geöffnet"
   },
   "project": {
     "kicker": "Projekt · {type}",
@@ -209,17 +246,49 @@
     "messagesScheduleLabel": "Sendezeitpunkt",
     "messagesScheduledFor": "Geht raus am {when}",
     "messagesCancelScheduled": "Abbrechen",
-    "messagesSend": "Senden"
+    "messagesSend": "Senden",
+    "openAmount": "Offen",
+    "portal": "Portal",
+    "instalments": "1 Rate | {count} Raten",
+    "scope": "Leistungsumfang",
+    "scope_new": "neu",
+    "scope_changed": "geändert",
+    "scopeDelta": "{amount} gegenüber dem beauftragten Angebot",
+    "sendAddendum": "Nachtrag senden",
+    "openItems": "Offen",
+    "documents": "Unterlagen",
+    "forms": "Fragebögen",
+    "messages": "Nachrichten",
+    "quotes": "Angebot",
+    "fromShoots": "aus den Terminen",
+    "fromScope": "aus dem Leistungsumfang",
+    "fromPayments": "aus den Zahlungen",
+    "portalToggle": "Portal-Sichtbarkeit umschalten"
+  },
+  "projects": {
+    "title": "Projekte",
+    "name": "Projekt",
+    "contact": "Kontakt",
+    "empty": "Keine Projekte."
   },
   "calendar": {
     "title": "Kalender",
     "subscribe": "Kalender abonnieren",
-    "copy": "kopieren",
-    "copied": "kopiert",
     "revoke": "Adresse zurückziehen",
-    "revokeConfirm": "Neue Adresse erzeugen? Bereits eingetragene Abos hören sofort auf zu aktualisieren.",
-    "mine": "Eigenes",
-    "empty": "Keine anstehenden Shootings."
+    "viewMonth": "Monat",
+    "viewList": "Liste",
+    "more": "+{count} weitere",
+    "feedUrl": "Abo-Adresse",
+    "colDate": "Termin",
+    "colWhat": "Projekt",
+    "colVenue": "Ort",
+    "colCrew": "Besetzung",
+    "colStatus": "Stand",
+    "group": {
+      "diese": "Diese Woche",
+      "naechste": "Nächste Woche",
+      "spaeter": "Später"
+    }
   },
   "inbox": {
     "title": "Posteingang",
@@ -244,7 +313,25 @@
       "unrecognised_address": "Adresse nicht zuordenbar",
       "unknown_thread": "Auftrag nicht gefunden",
       "sender_not_participant": "Absender gehört nicht zum Auftrag"
-    }
+    },
+    "group": {
+      "unbeantwortet": "Unbeantwortet",
+      "wartet": "Wartet auf Antwort",
+      "erledigt": "Erledigt"
+    },
+    "origin": {
+      "mail": "E-Mail",
+      "portal": "Portal"
+    },
+    "general": "Allgemein",
+    "waiting": "seit 1 Tag | seit {count} Tagen",
+    "reply": "Antwort",
+    "send": "Senden",
+    "done": "Erledigt",
+    "reopen": "Wieder öffnen",
+    "people": "Beteiligte",
+    "project": "Projekt",
+    "noThreads": "Keine Unterhaltungen."
   },
   "reports": {
     "title": "Auswertungen",
@@ -281,34 +368,31 @@
   "dashboard": {
     "title": "Übersicht",
     "signedInAs": "Angemeldet als {name}",
-    "openLeads": "1 Anfrage | {count} Anfragen",
-    "activeJobs": "Laufende Aufträge",
-    "newThisWeek": "{count} neu diese Woche",
     "pipeline": "Pipeline",
     "overdueTotal": "überfällig",
-    "expectedByMonthEnd": "{amount} erwartet bis {date}",
     "acceptance": "Angebote angenommen",
     "lastTwelveMonths": "letzte 12 Monate",
     "unanswered": "{count} unbeantwortet",
     "nextShoot": "nächstes Shooting",
-    "openPoints": "1 Punkt offen | {count} Punkte offen",
-    "inquiries": "Anfragen & Angebote",
-    "items": "{count} Posten",
-    "payments": "Zahlungen",
+    "openPoints": "1 von {all} Punkten offen | {count} von {all} Punkten offen",
+    "inquiries": "Neue Anfragen",
     "toBoard": "Board",
-    "toBoardWithNewLeads": "Board — 1 neue Anfrage diese Woche | Board — {count} neue Anfragen diese Woche",
-    "expectedFooter": "Erwartet bis {date}: {amount} aus 1 Rate | Erwartet bis {date}: {amount} aus {count} Raten",
-    "nextShoots": "Nächste Shootings",
-    "inProduction": "1 in Produktion | {count} in Produktion",
-    "crewCount": "1 Person | {count} Personen",
-    "overdue": "überfällig seit {date}",
     "done": "Erledigt",
-    "noDetails": "Ort und Uhrzeit noch offen",
     "nothingDue": "Nichts offen.",
-    "moreTasks": "{count} offene Aufgaben",
-    "calendarPreview": "Kalender — {shoots}",
-    "afterDelivery": "Nach der Lieferung",
-    "occasions": "1 Anlass | {count} Anlässe"
+    "leadCount": "1 Anfrage | {count} Anfragen",
+    "instalmentsOpen": "{open} von {all} Raten offen",
+    "sinceDays": "seit 1 Tag | seit {count} Tagen",
+    "ofSent": "von {count}",
+    "allReady": "Alles vorbereitet",
+    "decide": "Heute zu entscheiden",
+    "moreOwed": "+{count}",
+    "thisWeek": "Diese Woche",
+    "weekEmpty": "Keine Termine.",
+    "away": "{name} abwesend",
+    "dateDoubled": "{date} doppelt",
+    "galleries": "Galerien",
+    "nothingDueNext": "Nächster Termin: {what} am {date}",
+    "payments": "Zahlungen"
   },
   "invite": {
     "title": "Willkommen, {name}",
@@ -373,7 +457,8 @@
     "itemDescription": "Beschreibung",
     "itemQuantity": "Menge",
     "itemPrice": "Preis (€)",
-    "itemPriceHint": "Leer = inklusive."
+    "itemPriceHint": "Leer = inklusive.",
+    "included": "enthalten"
   },
   "quotes": {
     "title": "Angebot",
@@ -454,7 +539,15 @@
     "previewFresh": "aktuell",
     "previewStale": "wird geprüft",
     "letterhead": "Briefkopf · aus Einstellungen",
-    "footer": "Fußzeile · aus Einstellungen"
+    "footer": "Fußzeile · aus Einstellungen",
+    "colName": "Vorlage",
+    "colType": "Art",
+    "colVersion": "Fassung",
+    "colInUse": "Im Umlauf",
+    "newVersion": "Neue Fassung",
+    "starterScope": "{blocks} Blöcke · {fields} Platzhalter",
+    "previewSamples": "Beispielwerte",
+    "blockOnly": "nur {types}"
   },
   "settings": {
     "kicker": "Einstellungen",
@@ -573,7 +666,8 @@
     "dayThu": "Do",
     "dayFri": "Fr",
     "daySat": "Sa",
-    "daySun": "So"
+    "daySun": "So",
+    "fontPair": "Schriftpaar"
   },
   "setup": {
     "title": "Studio einrichten",
@@ -882,9 +976,14 @@
     "notPublished": "Diese Galerie ist noch nicht veröffentlicht.",
     "passwordWrong": "Dieser Link und dieses Passwort gehören nicht zusammen.",
     "downloadLink": "Bilder herunterladen",
+    "download": "Herunterladen",
     "listsTitle": "Eure Listen",
+    "all": "Alle",
     "heart": "Favoriten",
     "backToGrid": "Zurück zum Raster",
+    "position": "{at} von {of}",
+    "onLists": "In einer Liste|In {count} Listen",
+    "addToList": "Zu einer Liste",
     "previous": "Vorheriges Bild",
     "next": "Nächstes Bild",
     "favorite": "Favorit",
@@ -925,8 +1024,25 @@
     "emailRequest": "Download-Link anfordern",
     "emailLinkSent": "Bestätigungslink verschickt.",
     "emailLinkDead": "Dieser Bestätigungslink funktioniert nicht mehr.",
-    "readyTitle": "Alles bereit",
-    "readyHint": "Download noch nicht verfügbar."
+    "downloadTitle": "Herunterladen",
+    "everything": "Alle Bilder",
+    "whatLabel": "Was",
+    "sizeLabel": "Größe",
+    "size": {
+      "original": "Original",
+      "web": "Zum Teilen"
+    },
+    "sizeHint": {
+      "original": "volle Größe, für den Druck",
+      "web": "kleinere Dateien, für Mail und Handy"
+    },
+    "prepare": "Bilder vorbereiten",
+    "preparing": "wird vorbereitet",
+    "preparingHint": "Die Dateien werden gerade zusammengestellt.",
+    "yourFiles": "Eure Dateien",
+    "partOf": "Teil {at} von {of}",
+    "partsLive": "Die Dateien liegen 24 Stunden bereit. Danach hier neu vorbereiten.",
+    "buildFailed": "Beim Vorbereiten ist etwas schiefgegangen. Bitte noch einmal versuchen."
   },
   "media": {
     "kicker": "Medien · Import",
@@ -949,5 +1065,95 @@
     "needsAttention": "Prüfung erforderlich",
     "needsAttentionCount": "1 Datei | {count} Dateien",
     "retryProcessing": "Erneut versuchen"
+  },
+  "palette": {
+    "search": "Suchen",
+    "placeholder": "Kontakt, Anfrage, Projekt oder Galerie",
+    "recent": "Zuletzt",
+    "kind": {
+      "kontakt": "Kontakt",
+      "anfrage": "Anfrage",
+      "projekt": "Projekt",
+      "galerie": "Galerie"
+    }
+  },
+  "lead": {
+    "group": {
+      "unbeantwortet": "Unbeantwortet",
+      "angebot": "Angebot draußen",
+      "angenommen": "Angenommen"
+    },
+    "silentFor": "1 Tag still | {count} Tage still",
+    "said": "Was sie schreiben",
+    "noText": "Kein Text",
+    "noReach": "Keine Kontaktdaten",
+    "dates": "Termine",
+    "quote": "Angebot",
+    "validUntil": "gültig bis {date}",
+    "tasks": "Aufgaben",
+    "notes": "Notizen",
+    "week": "Woche um den Termin",
+    "weekFree": "Nichts anderes an dem Tag",
+    "conflicts": "Belegt",
+    "writeQuote": "Angebot schreiben",
+    "sendContract": "Vertrag senden",
+    "openProject": "Zum Projekt",
+    "edit": "Bearbeiten",
+    "notePlaceholder": "Notiz",
+    "addNote": "Notiz sichern",
+    "taskTitle": "Aufgabe",
+    "taskAudience": "Für",
+    "taskDue": "Fällig",
+    "audienceInternal": "intern",
+    "audienceClient": "Kunde",
+    "addTask": "Aufgabe anlegen",
+    "people": "Personen"
+  },
+  "galleryRecord": {
+    "link": "Link",
+    "published": "Stand",
+    "version": "Fassung {version}",
+    "images": "Bilder",
+    "expiry": "Ablauf",
+    "marked": "Markiert",
+    "downloaded": "Heruntergeladen",
+    "viewed": "Aufgerufen",
+    "blockedByBalance": "Gesperrt bis die Rechnung beglichen ist.",
+    "ingest": "Bilder hochladen",
+    "versions": "Fassungen",
+    "cover": "Titelbild",
+    "cover_full": "Ganzflächig",
+    "cover_split": "Geteilt",
+    "cover_plain": "Ohne Bild",
+    "colour": "Farbe",
+    "colour_light": "Hell",
+    "colour_dark": "Dunkel",
+    "colour_warm": "Warm",
+    "grid": "Raster",
+    "grid_wide": "Weit",
+    "grid_dense": "Dicht",
+    "grid_single": "Einspaltig",
+    "openLive": "Galerie ansehen",
+    "parts": "Teile",
+    "size": "Größe",
+    "state": "Stand",
+    "noBuilds": "Noch nichts vorbereitet.",
+    "emailGate": "E-Mail-Bestätigung",
+    "guest": "Gast",
+    "who": "Wer",
+    "what": "Was",
+    "when": "Wann",
+    "tab": {
+      "bilder": "Bilder",
+      "gestaltung": "Gestaltung",
+      "download": "Download",
+      "freigaben": "Freigaben",
+      "aktivitaet": "Aktivität"
+    },
+    "sheet": {
+      "downloads": "Downloads",
+      "marks": "Markierungen",
+      "views": "Zugriffe"
+    }
   }
 }

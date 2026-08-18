@@ -16,10 +16,25 @@ These get the change rejected outright:
   A comment is allowed only for *why* — a non-obvious constraint, a workaround
   with a link, a `ponytail:` ceiling. If the code needs a comment to be
   understood, rewrite the code.
-- **AI-slop copy.** No verbose hint text, no "Please enter…", no reassurance
-  sentences, no emoji, no exclamation marks in UI strings. `de.json` labels
-  and hints stay short and native German (`Wunschtermin`, not `Bitte gib
-  hier deinen gewünschten Termin ein`). One noun beats a sentence.
+- **AI-slop copy.** Applies to `de.json`, to Blade and Vue, and to mockup
+  text — a draft ships its wording into the product. Labels stay short and
+  native German (`Wunschtermin`, not `Bitte gib hier deinen gewünschten
+  Termin ein`). One noun beats a sentence. No emoji, no exclamation marks.
+  Five tells, each of which already shipped once:
+  - *Reassurance.* "Speichern ist trotzdem möglich", "blockieren aber
+    nichts", "bleibt danach frei änderbar" — calming the reader about a
+    consequence nobody asked about.
+  - *System narration.* "Christian bekommt eure Änderung als Nachricht."
+    Notifying, syncing and storing are the system's job, never announced.
+  - *Empty states as prose.* "Noch kein Angebot." An empty state is the
+    controls that fill it. Write there only what no control can show.
+  - *Restating the control.* Hint text repeating its own label, or
+    explaining why a disabled field is disabled. A form holds only fields
+    you can operate; the rest belongs in the read view.
+  - *Rule of three.* "bei Anfragen, auf dem Board und bei Crew-Zuweisung"
+    where one place suffices.
+  Test before shipping a string: read its three neighbours in `de.json`.
+  Longer than they are, or explaining rather than naming, means rewrite.
 - **Filler in messages, commits, PRs.** No "Certainly", "Great question",
   "I hope this helps", "Let me know if…", "In summary". No hedging on facts you
   can verify. State the thing.
