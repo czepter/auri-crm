@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { DatePicker } from '@/ui/date-picker'
 
 type QueueRow = { id: string; name: string; date: string | null; open: boolean; waitingDays: number }
 
@@ -265,7 +266,7 @@ const due = computed(() => {
           <div v-if="editing && !lead.booked" class="form">
             <div v-for="shoot in edit.shoots" :key="shoot.id" class="shootblock">
               <div class="line">
-                <label class="field"><span>{{ $t('project.shootDate') }}</span><input v-model="shoot.date" type="date" /></label>
+                <label class="field"><span>{{ $t('project.shootDate') }}</span><DatePicker v-model="shoot.date" /></label>
                 <label class="field"><span>{{ $t('project.callTime') }}</span><input v-model="shoot.call_time" type="time" /></label>
                 <label class="field"><span>{{ $t('project.endTime') }}</span><input v-model="shoot.end_time" type="time" /></label>
               </div>
@@ -341,7 +342,7 @@ const due = computed(() => {
               </label>
               <label class="field">
                 <span>{{ $t('lead.taskDue') }}</span>
-                <input v-model="task.due_on" type="date" />
+                <DatePicker v-model="task.due_on" />
               </label>
             </div>
             <div class="foot">

@@ -2,6 +2,7 @@
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import { Button } from '@/ui/button'
+import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 
@@ -130,12 +131,12 @@ function addClosure() {
                 </div>
                 <div class="fld">
                   <Label :for="`starts-${closure.id}`">{{ $t('settings.closureStartsOn') }}</Label>
-                  <Input :id="`starts-${closure.id}`" v-model="closureForms[closure.id].starts_on" type="date" />
+                  <DatePicker :id="`starts-${closure.id}`" v-model="closureForms[closure.id].starts_on" />
                   <p v-if="closureForms[closure.id].errors.starts_on" class="err">{{ closureForms[closure.id].errors.starts_on }}</p>
                 </div>
                 <div class="fld">
                   <Label :for="`ends-${closure.id}`">{{ $t('settings.closureEndsOn') }}</Label>
-                  <Input :id="`ends-${closure.id}`" v-model="closureForms[closure.id].ends_on" type="date" />
+                  <DatePicker :id="`ends-${closure.id}`" v-model="closureForms[closure.id].ends_on" />
                   <p v-if="closureForms[closure.id].errors.ends_on" class="err">{{ closureForms[closure.id].errors.ends_on }}</p>
                 </div>
               </div>
@@ -165,12 +166,12 @@ function addClosure() {
               </div>
               <div class="fld">
                 <Label for="new-starts">{{ $t('settings.closureStartsOn') }}</Label>
-                <Input id="new-starts" v-model="newClosureForm.starts_on" type="date" />
+                <DatePicker id="new-starts" v-model="newClosureForm.starts_on" />
                 <p v-if="newClosureForm.errors.starts_on" class="err">{{ newClosureForm.errors.starts_on }}</p>
               </div>
               <div class="fld">
                 <Label for="new-ends">{{ $t('settings.closureEndsOn') }}</Label>
-                <Input id="new-ends" v-model="newClosureForm.ends_on" type="date" />
+                <DatePicker id="new-ends" v-model="newClosureForm.ends_on" />
                 <p v-if="newClosureForm.errors.ends_on" class="err">{{ newClosureForm.errors.ends_on }}</p>
               </div>
             </div>

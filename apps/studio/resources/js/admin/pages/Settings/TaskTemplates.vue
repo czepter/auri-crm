@@ -4,6 +4,7 @@ import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import { Button } from '@/ui/button'
+import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
 import { NONE, fromOption, toOption } from '@/lib/select'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -126,7 +127,7 @@ function runPreview() {
             <div class="fgrid grp">
               <div class="fld">
                 <Label for="preview-date">{{ $t('taskTemplates.previewDateField') }}</Label>
-                <Input id="preview-date" v-model="previewForm.preview_date" type="date" />
+                <DatePicker id="preview-date" v-model="previewForm.preview_date" />
               </div>
               <div class="fld">
                 <Label for="preview-kind">{{ $t('taskTemplates.shootKindField') }}</Label>

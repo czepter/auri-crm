@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { DatePicker } from '@/ui/date-picker'
 
 type Figure = { value: string | null; proof: string | null }
 
@@ -192,7 +193,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
           <div v-if="editing" class="form">
             <div v-for="shoot in edit.shoots" :key="shoot.id" class="shootblock">
               <div class="line">
-                <label class="field"><span>{{ $t('project.shootDate') }}</span><input v-model="shoot.date" type="date" /></label>
+                <label class="field"><span>{{ $t('project.shootDate') }}</span><DatePicker v-model="shoot.date" /></label>
                 <label class="field"><span>{{ $t('project.callTime') }}</span><input v-model="shoot.call_time" type="time" /></label>
                 <label class="field"><span>{{ $t('project.endTime') }}</span><input v-model="shoot.end_time" type="time" /></label>
               </div>

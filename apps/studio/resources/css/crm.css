@@ -406,7 +406,8 @@
 [data-theme="crm"] .editing .shootblock:first-child { padding-top: 4px; box-shadow: none; }
 [data-theme="crm"] .field.grow { flex: 1; min-width: 148px; }   /* must not collapse */
 [data-theme="crm"] .field input { width: 100%; }
-[data-theme="crm"] .composer .field input[type="date"], [data-theme="crm"] .editing .field input[type="date"] { width: 124px; }
+[data-theme="crm"] .form .field [data-slot="date-picker"] { width: 148px; }
+[data-theme="crm"] .form [data-slot="date-picker"] input { padding-right: 32px; }
 [data-theme="crm"] .composer .field input[type="time"], [data-theme="crm"] .editing .field input[type="time"] { width: 96px; }
 
 /* The label above the field, not in it: a placeholder disappears while typing,

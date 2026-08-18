@@ -6,7 +6,8 @@
     "signOut": "Abmelden",
     "search": "Suchen",
     "remove": "Entfernen",
-    "close": "Schließen"
+    "close": "Schließen",
+    "calendar": "Kalender"
   },
   "auth": {
     "signIn": "Anmelden",

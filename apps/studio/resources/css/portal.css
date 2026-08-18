@@ -100,6 +100,10 @@ h1 { font-size: 30px; }
                 text-transform: uppercase; color: var(--faint); margin-bottom: 8px; }
 .field input { width: 100%; padding: 12px var(--s3); border: 1px solid var(--line-hover); border-radius: var(--r);
                background: var(--bg); color: var(--ink); font: 500 16px/1.2 var(--font); }
+/* .field input above wins on specificity, so the room for the calendar
+   button has to be claimed at the same level. */
+.field [data-slot="date-picker"] input { padding-right: 36px; }
+
 .field em { display: block; font: 400 12.5px/1.45 var(--font); font-style: normal; color: var(--faint); margin-top: 7px; }
 
 .consent { display: flex; align-items: flex-start; gap: var(--s3); font: 400 13.5px/1.5 var(--font); }

@@ -6,6 +6,7 @@ import ProjectHeader from '@/admin/components/ProjectHeader.vue'
 import CrewStack from '@/admin/components/CrewStack.vue'
 import { chipClass, dayAndMonth, weekday } from '@/admin/lib/shoots'
 import { Button } from '@/ui/button'
+import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Checkbox } from '@/ui/checkbox'
@@ -170,7 +171,7 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
                 <Label for="date">
                   {{ $t('project.shootDate') }}<em>{{ $t('project.optional') }}</em>
                 </Label>
-                <Input id="date" v-model="form.date" type="date" />
+                <DatePicker id="date" v-model="form.date" />
               </div>
 
               <div class="two">

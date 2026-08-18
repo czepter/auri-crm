@@ -1,5 +1,5 @@
 /*
- * Datumsfelder haben zwei Leser: <input type="date"> will YYYY-MM-DD, der
+ * Datumsfelder haben zwei Leser: das Feld will YYYY-MM-DD, der
  * Mensch davor will "in 3 Wochen". Beides hier, weil die Fallen (Zeitzone,
  * Monatsende) sonst in jeder Komponente einzeln stehen.
  */

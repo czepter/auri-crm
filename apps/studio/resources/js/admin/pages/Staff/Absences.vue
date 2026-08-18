@@ -4,7 +4,7 @@ import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import { Button } from '@/ui/button'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
-import { Input } from '@/ui/input'
+import { DatePicker } from '@/ui/date-picker'
 import { NONE, fromOption, toOption } from '@/lib/select'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
@@ -104,12 +104,12 @@ function add() {
               </div>
               <div class="fld">
                 <Label for="new-starts">{{ $t('absences.startsOn') }}</Label>
-                <Input id="new-starts" v-model="newForm.starts_on" type="date" />
+                <DatePicker id="new-starts" v-model="newForm.starts_on" />
                 <p v-if="newForm.errors.starts_on" class="err">{{ newForm.errors.starts_on }}</p>
               </div>
               <div class="fld">
                 <Label for="new-ends">{{ $t('absences.endsOn') }}</Label>
-                <Input id="new-ends" v-model="newForm.ends_on" type="date" />
+                <DatePicker id="new-ends" v-model="newForm.ends_on" />
                 <p v-if="newForm.errors.ends_on" class="err">{{ newForm.errors.ends_on }}</p>
               </div>
             </form>
@@ -159,12 +159,12 @@ function add() {
               </div>
               <div class="fld">
                 <Label :for="`starts-${absence.id}`">{{ $t('absences.startsOn') }}</Label>
-                <Input :id="`starts-${absence.id}`" v-model="rowForms[absence.id].starts_on" type="date" />
+                <DatePicker :id="`starts-${absence.id}`" v-model="rowForms[absence.id].starts_on" />
                 <p v-if="rowForms[absence.id].errors.starts_on" class="err">{{ rowForms[absence.id].errors.starts_on }}</p>
               </div>
               <div class="fld">
                 <Label :for="`ends-${absence.id}`">{{ $t('absences.endsOn') }}</Label>
-                <Input :id="`ends-${absence.id}`" v-model="rowForms[absence.id].ends_on" type="date" />
+                <DatePicker :id="`ends-${absence.id}`" v-model="rowForms[absence.id].ends_on" />
                 <p v-if="rowForms[absence.id].errors.ends_on" class="err">{{ rowForms[absence.id].errors.ends_on }}</p>
               </div>
               <div class="fld" style="justify-content: flex-end; flex-direction: row; gap: var(--s2)">

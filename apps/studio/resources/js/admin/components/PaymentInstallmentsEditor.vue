@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/ui/button'
+import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
@@ -36,7 +37,7 @@ function setStatus(installment: PaymentInstallmentRow, value: unknown) {
       <div class="fgrid">
         <div class="fld">
           <Label :for="`installment-due-${index}`">{{ $t('payments.dueOn') }}</Label>
-          <Input :id="`installment-due-${index}`" v-model="installment.dueOn" type="date" required />
+          <DatePicker :id="`installment-due-${index}`" v-model="installment.dueOn" required />
         </div>
         <div class="fld">
           <Label :for="`installment-amount-${index}`">{{ $t('payments.amount') }}</Label>

@@ -5,6 +5,7 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ContactTypeahead from '@/admin/components/ContactTypeahead.vue'
 import ConflictNote from '@/admin/components/ConflictNote.vue'
 import { Button } from '@/ui/button'
+import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Textarea } from '@/ui/textarea'
@@ -204,12 +205,12 @@ function submit() {
 
         <!-- The main date is the field the whole intake hangs off
              (Shoot.is_primary, vision §3.1), so it is the one control that
-             gets extra weight. Native date input: renders dd.mm.yyyy under
-             de-DE with no picker library and no parsing code. -->
+             gets extra weight. Typed as TT.MM.JJJJ or picked from the
+             calendar — both reach the same ISO day. -->
         <div class="grp">
           <div class="fld lead">
             <Label for="date">{{ $t('leads.mainDate') }}</Label>
-            <Input id="date" v-model="form.date" size="lead" type="date" />
+            <DatePicker id="date" v-model="form.date" size="lead" />
             <ConflictNote :conflicts="conflicts" />
           </div>
         </div>

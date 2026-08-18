@@ -5,6 +5,7 @@ import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import { Button } from '@/ui/button'
 import { initials } from '@/portal/lib/initials'
+import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
@@ -97,7 +98,7 @@ const venue = [props.project.venueName, props.project.venueCity].filter(Boolean)
       <form v-else @submit.prevent="save">
         <Label class="field">
           <span>{{ $t('portal.preferredDate') }}</span>
-          <Input v-model="form.date" type="date" />
+          <DatePicker v-model="form.date" />
         </Label>
         <p v-if="form.errors.date" class="err">{{ form.errors.date }}</p>
 
