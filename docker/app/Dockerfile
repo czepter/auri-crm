@@ -13,12 +13,24 @@ FROM dunglas/frankenphp:1-php8.5 AS base
 
 # install-php-extensions ships inside the FrankenPHP image and resolves each
 # extension's system libraries itself, so the list here is the one CI installs
-# via shivammathur/setup-php (pdo_pgsql, bcmath, gd, intl), plus pcntl — Horizon
-# traps SIGTERM/SIGUSR2 through it, see docker/php/Dockerfile — plus opcache,
-# which the dev image has no use for, and zip, which Composer needs to unpack a
-# dist archive at all.
-RUN install-php-extensions pdo_pgsql bcmath gd intl pcntl opcache zip \
+# via shivammathur/setup-php (pdo_pgsql, bcmath, gd, intl, exif), plus pcntl —
+# Horizon traps SIGTERM/SIGUSR2 through it, see docker/php/Dockerfile — plus
+# opcache, which the dev image has no use for, and zip, which Composer needs to
+# unpack a dist archive at all.
+RUN install-php-extensions pdo_pgsql bcmath gd intl exif pcntl opcache zip \
     && mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+
+# Neither of these is a PHP extension, which is why install-php-extensions
+# above cannot carry them and docker/php/Dockerfile installs them by apt too.
+# App\Media\Support\LibvipsDerivativePipeline shells out to
+# vipsthumbnail/vipsheader rather than binding libvips into PHP (#52), and
+# Debian's libheif links no AV1 encoder on its own — without the plugin every
+# AVIF rung of the derivative ladder fails "Unsupported compression" while the
+# WebP rung beside it succeeds.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libvips-tools \
+        libheif-plugin-aomenc \
+    && rm -rf /var/lib/apt/lists/*
 
 # ---------------------------------------------------------------- assets
 FROM node:24-alpine AS assets
@@ -82,6 +94,11 @@ ENV SERVER_NAME=:8080
 # has to be repeated once per service — and a service name or a driver choice
 # repeated eight times is eight places for them to drift apart. What remains in
 # Compose is exactly the set that varies per deployment: secrets and domains.
+#
+# predis rather than config/database.php's phpredis default: composer.json
+# requires predis/predis and install-php-extensions above installs no ext-redis,
+# so leaving the default in place makes every Redis call fatal — the migration
+# one-shot dies on `--isolated`'s cache lock and no surface ever starts.
 ENV APP_ENV=production \
     APP_DEBUG=false \
     APP_NAME=Studio \
@@ -93,6 +110,7 @@ ENV APP_ENV=production \
     DB_PORT=5432 \
     REDIS_HOST=redis \
     REDIS_PORT=6379 \
+    REDIS_CLIENT=predis \
     QUEUE_CONNECTION=redis \
     CACHE_STORE=redis \
     SESSION_DRIVER=database \
