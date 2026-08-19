@@ -178,79 +178,162 @@ const cover = computed(() => props.assets?.[0] ?? null)
 function expiry(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
+
+/* gallery.css, inlined where the same shape recurs on this screen. The sheet
+   scopes every rule under [data-theme="gallery"], so nothing here can be
+   shared with the portal's own .field / .hint / .err of the same name. */
+const FIELD = 'mt-8 block text-left'
+const CAPTION = 'mb-2 block text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint'
+const INPUT = [
+  '[&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-line-hover',
+  '[&_input]:bg-muted [&_input]:px-3.5 [&_input]:py-[13px]',
+  '[&_input]:text-[15px] [&_input]:leading-[1.2] [&_input]:font-normal [&_input]:text-foreground',
+  '[&_input::placeholder]:text-faint',
+].join(' ')
+/* On a photograph a box is a foreign object, so the gate's own field is a line. */
+const COVER_INPUT = [
+  '[&_input]:rounded-none [&_input]:border-0 [&_input]:border-b',
+  '[&_input]:border-[rgba(242,237,233,.5)] [&_input]:bg-transparent [&_input]:px-0.5 [&_input]:py-2.5',
+  '[&_input]:text-center [&_input]:text-[20px] [&_input]:tracking-[0.22em] [&_input]:text-white',
+  '[&_input:focus]:border-action [&_input:focus]:outline-none',
+].join(' ')
+/* Without the margin: .gate .hint and .listbar .hint each override it, and
+   two margin utilities on one element are decided by bundle order. */
+const HINT = 'text-[12.5px] leading-[1.55] font-normal text-muted-foreground'
+const LAB = 'mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint'
+const WIDE = 'mt-5 ml-0 w-full justify-center px-3.5 py-[13px] text-[14px]'
+const PILL =
+  'inline-flex flex-none cursor-pointer items-center gap-[7px] rounded-full border border-border bg-transparent px-3.5 py-2.5 text-[12.5px] leading-none font-medium text-muted-foreground hover:border-line-hover hover:text-foreground'
+const LIST_MENU =
+  'z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]'
+const LIST_ROW =
+  'flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-[13px] leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]'
 </script>
 
 <template>
   <!-- data-theme lives on an ancestor, never on the page wrapper itself —
        gallery.css's rules are all `[data-theme="gallery"] .foo` descendant
        selectors, matching the mockup's own <html data-theme="gallery">. -->
-  <div data-theme="gallery">
-    <header class="cover" :class="{ bare: !cover }">
-      <img v-if="cover" :src="`${cover.src}?w=2400&fmt=jpeg`" alt="" />
+  <!-- data-theme stays: tokens.css declares the gallery palette under it,
+       and this element is the theme root that has to paint its own
+       background — the portal's <html> is themed "portal" (gallery.css). -->
+  <div data-theme="gallery" class="block min-h-screen bg-background text-foreground">
+    <header
+      class="relative grid min-h-[100svh] place-items-center overflow-hidden max-[760px]:min-h-[82svh] before:absolute before:inset-0 before:z-1 before:content-['']"
+      :class="
+        cover
+          ? 'before:bg-[radial-gradient(115%_85%_at_50%_46%,rgba(12,10,9,.58)_0%,rgba(12,10,9,.80)_62%,rgba(12,10,9,.93)_100%)]'
+          : 'before:bg-none'
+      "
+    >
+      <img
+        v-if="cover"
+        :src="`${cover.src}?w=2400&fmt=jpeg`"
+        alt=""
+        class="absolute inset-0 size-full object-cover object-[50%_38%]"
+      />
 
-      <div class="lock">
-        <span class="gmark">{{ studioName }}</span>
-        <h1 class="gtitle" style="margin-top: var(--s4)">{{ gallery.title }}</h1>
-        <p v-if="subtitle" class="gsub">{{ subtitle }}</p>
+      <!-- data-tokens: the gate's title is a bare h1, and tokens.css sets one
+           unlayered — 24px in the app's own sans, which beats any utility. -->
+      <div data-tokens class="relative z-3 w-[min(560px,100%)] px-8 py-11 text-center">
+        <span class="text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-foreground no-underline">
+          {{ studioName }}
+        </span>
+        <h1
+          class="mt-5 font-[family-name:var(--font-display)] text-[clamp(34px,6vw,56px)] leading-[1.2] font-semibold tracking-[var(--display-tracking)] text-white"
+        >
+          {{ gallery.title }}
+        </h1>
+        <p v-if="subtitle" class="mt-5 text-[14px] leading-[1.6] font-normal text-foreground opacity-80">
+          {{ subtitle }}
+        </p>
 
         <template v-if="!unlocked">
-          <div class="hair" />
+          <div class="mx-auto mt-11 mb-8 h-px w-12 bg-[rgba(242,237,233,.45)]" />
 
           <form @submit.prevent="submit">
-            <Label class="field">
-              <span>{{ $t('gallery.passwordLabel') }}</span>
+            <Label :class="[FIELD, 'mx-auto w-[min(340px,100%)] text-center', COVER_INPUT]">
+              <span :class="CAPTION">{{ $t('gallery.passwordLabel') }}</span>
               <Input v-model="form.password" type="password" autocomplete="off" required />
             </Label>
 
-            <Button class="wide" type="submit" :disabled="form.processing">
+            <Button :class="WIDE" type="submit" :disabled="form.processing">
               {{ $t('gallery.passwordOpen') }}
             </Button>
           </form>
 
-          <p class="hint">{{ $t('gallery.passwordWhere') }}</p>
+          <p :class="[HINT, 'mt-[9px]']">{{ $t('gallery.passwordWhere') }}</p>
 
-          <div v-if="form.errors.password" class="err">
+          <div
+            v-if="form.errors.password"
+            class="mt-5 rounded-md border border-[#40251A] bg-late-bg px-3.5 py-3 text-left text-[13px] leading-[1.55] font-normal text-[#E7B190]"
+          >
             <b>{{ form.errors.password }}</b>
           </div>
         </template>
       </div>
 
-      <a v-if="assets?.length" class="scrollcue" href="#raster">
+      <a
+        v-if="assets?.length"
+        class="absolute bottom-8 left-1/2 z-2 flex -translate-x-1/2 flex-col items-center gap-2.5 text-[10.5px] leading-none font-semibold tracking-[0.2em] uppercase text-muted-foreground no-underline [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.4]"
+        href="#raster"
+      >
         {{ $t('gallery.scrollCue') }}
         <svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6" /></svg>
       </a>
     </header>
 
     <template v-if="unlocked">
-      <div class="gbar">
-        <span class="who">
+      <div
+        class="sticky top-0 z-10 mx-auto flex max-w-[1240px] items-center justify-between gap-8 border-b border-border bg-[rgba(14,12,11,.72)] px-8 py-5 backdrop-blur-[14px] backdrop-saturate-[1.4] max-[760px]:flex-wrap"
+      >
+        <!-- tokens.css .who decides everything but the size and the colour -->
+        <span
+          class="m-0 pr-[18px] text-[13.5px] leading-[1.35] font-semibold tracking-[-0.015em] text-muted-foreground max-[760px]:hidden [&_b]:font-semibold [&_b]:text-foreground"
+        >
           <b>{{ gallery.title }}</b>
           <template v-if="gallery.expiresAt"> · {{ $t('gallery.onlineUntil', { date: expiry(gallery.expiresAt) }) }}</template>
         </span>
-        <span v-if="bar.length > 1" class="filters">
+        <span
+          v-if="bar.length > 1"
+          class="mx-auto flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
           <button
             v-for="selection in bar"
             :key="selection.id"
-            class="fpill"
-            :class="{ on: active === selection.id }"
+            :class="[
+              PILL,
+              active === selection.id && 'border-foreground bg-foreground font-semibold text-background',
+            ]"
             type="button"
             @click="active = selection.id"
           >
             {{ selection.label }}
-            <span class="n">{{ countOf(selection, assets?.length ?? 0) }}</span>
+            <span class="tabular-nums opacity-55">{{ countOf(selection, assets?.length ?? 0) }}</span>
           </button>
         </span>
 
         <Button as="a" :href="`/galerien/${gallery.id}/download`">{{ $t('gallery.downloadLink') }}</Button>
       </div>
 
-      <main v-if="shown.length" id="raster" class="gwall">
-        <span v-for="(asset, index) in shown" :key="asset.key" class="tile" @click="openAt = index">
+      <!-- columns, not grid: a photo wall wants the original proportions, and
+           `columns` is the only layout method that keeps them without JS. -->
+      <main
+        v-if="shown.length"
+        id="raster"
+        class="mx-auto max-w-[1240px] columns-4 gap-x-3.5 px-8 pt-11 pb-16 max-[1080px]:columns-3 max-[760px]:columns-2"
+      >
+        <span
+          v-for="(asset, index) in shown"
+          :key="asset.key"
+          class="relative mb-3.5 block cursor-zoom-in overflow-hidden rounded-[10px] bg-muted break-inside-avoid [&_img]:block [&_img]:w-full [&_img]:transition-transform [&_img]:duration-[1.2s] [&_img]:ease-[cubic-bezier(.22,.61,.36,1)] hover:[&_img]:scale-[1.03]"
+          @click="openAt = index"
+        >
           <!-- The list menu replaces the single heart as soon as a client is
                signed in; a guest never sees it. -->
           <button
             v-if="lists?.length"
-            class="listbtn"
+            class="absolute top-2.5 right-2.5 z-4 grid size-8 scale-90 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(12,10,9,.5)] text-white opacity-0 backdrop-blur-[8px] transition-[opacity,transform] duration-[.22s] ease-out group-hover:scale-100 group-hover:opacity-100 aria-expanded:scale-100 aria-expanded:opacity-100 [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.5]"
             type="button"
             :aria-expanded="menu === asset.key"
             @click.stop="menu = menu === asset.key ? null : asset.key"
@@ -258,11 +341,16 @@ function expiry(iso: string) {
             <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
           </button>
 
-          <span v-if="menu === asset.key" class="lists" @click.stop>
-            <label v-for="list in lists" :key="list.id">
-              <input type="checkbox" :checked="onList(list, asset.key)" @change="toggle(list, asset.key)" />
+          <span v-if="menu === asset.key" :class="['absolute top-12 right-2.5', LIST_MENU]" @click.stop>
+            <label v-for="list in lists" :key="list.id" :class="LIST_ROW">
+              <input
+                type="checkbox"
+                class="m-0 flex-none cursor-pointer accent-[var(--accent)]"
+                :checked="onList(list, asset.key)"
+                @change="toggle(list, asset.key)"
+              />
               {{ list.name ?? $t('gallery.heart') }}
-              <span class="n">{{ list.keys.length }}</span>
+              <span class="ml-auto text-[11.5px] tabular-nums text-muted-foreground">{{ list.keys.length }}</span>
             </label>
           </span>
 
@@ -284,7 +372,7 @@ function expiry(iso: string) {
 
       <!-- Unlocked over a gallery nobody has published yet: a real state,
            and the studio's link is already out there, so it says so. -->
-      <p v-else class="hint" style="padding: var(--s7) var(--s5)">
+      <p v-else :class="[HINT, 'mt-[9px] px-8 py-16']">
         {{ assets?.length ? $t('gallery.listEmpty') : $t('gallery.notPublished') }}
       </p>
 
@@ -298,23 +386,33 @@ function expiry(iso: string) {
 
       <!-- The couple's own half of their gallery, under the pictures. A
            guest never receives any of it. -->
-      <section v-if="lists" class="mine">
-        <div class="block">
-          <p class="lab">{{ $t('gallery.listsTitle') }}</p>
+      <section
+        v-if="lists"
+        class="mx-auto grid max-w-[1240px] gap-16 border-t border-border px-8 py-16 min-[900px]:grid-cols-[minmax(0,1fr)_320px] [&>div:not(:first-child)]:mt-11"
+      >
+        <div>
+          <p :class="LAB">{{ $t('gallery.listsTitle') }}</p>
 
-          <div v-for="list in lists" :key="list.listId" class="listblock">
-            <div class="listbar">
+          <div v-for="(list, index) in lists" :key="list.listId" :class="index > 0 && 'mt-8'">
+            <div
+              class="mb-3.5 flex flex-wrap items-baseline gap-5 [&_b]:text-[14px] [&_b]:leading-[1.3] [&_b]:font-semibold [&_b]:text-foreground [&_button]:cursor-pointer [&_button]:border-0 [&_button]:bg-none [&_button]:p-0 [&_button]:text-[12.5px] [&_button]:leading-none [&_button]:font-normal [&_button]:text-muted-foreground [&_button:hover]:text-foreground"
+            >
               <b>{{ list.name ?? $t('gallery.heart') }}</b>
-              <span class="hint">
+              <span :class="[HINT, 'flex-1']">
                 {{ $t('gallery.ofCount', { picked: list.keys.length, total: assets?.length ?? 0 }) }}
               </span>
               <template v-if="list.name !== null">
                 <button type="button" @click="rename(list)">{{ $t('gallery.renameList') }}</button>
-                <button type="button" class="warn" @click="remove(list)">{{ $t('common.remove') }}</button>
+                <button type="button" class="hover:text-destructive!" @click="remove(list)">
+                  {{ $t('common.remove') }}
+                </button>
               </template>
             </div>
 
-            <div v-if="list.covers.length" class="picks">
+            <div
+              v-if="list.covers.length"
+              class="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-1.5 [&_button]:aspect-square [&_button]:cursor-zoom-in [&_button]:overflow-hidden [&_button]:rounded-[var(--r-sm)] [&_button]:border-0 [&_button]:bg-none [&_button]:p-0 [&_img]:block [&_img]:size-full [&_img]:object-cover"
+            >
               <button
                 v-for="(src, index) in list.covers"
                 :key="src"
@@ -324,18 +422,23 @@ function expiry(iso: string) {
                 <img :src="`${src}?w=400&fmt=jpeg`" alt="" loading="lazy" />
               </button>
             </div>
-            <p v-else class="hint">{{ $t('gallery.listEmpty') }}</p>
+            <p v-else :class="[HINT, 'mt-[9px]']">{{ $t('gallery.listEmpty') }}</p>
           </div>
 
-          <form class="newlist" @submit.prevent="addList">
+          <form
+            class="mt-8 flex items-center gap-3.5 [&_input]:flex-1 [&_input]:rounded-md [&_input]:border [&_input]:border-line-hover [&_input]:bg-muted [&_input]:px-3 [&_input]:py-[11px] [&_input]:text-[13.5px] [&_input]:leading-[1.2] [&_input]:font-normal [&_input]:text-foreground"
+            @submit.prevent="addList"
+          >
             <input v-model="listForm.name" type="text" :placeholder="$t('gallery.newListName')" />
             <Button type="submit" variant="ghost" :disabled="!listForm.name">{{ $t('gallery.newList') }}</Button>
           </form>
         </div>
 
-        <div class="block">
-          <p class="lab">{{ $t('gallery.shareTitle') }}</p>
-          <div class="link">
+        <div>
+          <p :class="LAB">{{ $t('gallery.shareTitle') }}</p>
+          <div
+            class="flex items-center gap-3.5 rounded-md border border-border p-3.5 [&_button]:cursor-pointer [&_button]:border-0 [&_button]:bg-none [&_button]:p-0 [&_button]:text-[12.5px] [&_button]:leading-none [&_button]:font-medium [&_button]:text-action [&_code]:min-w-0 [&_code]:flex-1 [&_code]:overflow-hidden [&_code]:text-[12.5px] [&_code]:text-ellipsis [&_code]:whitespace-nowrap [&_code]:text-muted-foreground"
+          >
             <code>{{ gallery.url }}</code>
             <button type="button" @click="copyLink">
               {{ copied ? $t('gallery.copied') : $t('gallery.copy') }}
@@ -346,34 +449,54 @@ function expiry(iso: string) {
                rotate it, which also turns out every guest already inside.
                The value itself is on the studio's screen (C-17, #253); one
                the couple set themselves is one they already have. -->
-          <div v-for="gate in GATES" :key="gate.key" class="gate">
-            <div style="flex: 1">
+          <div
+            v-for="gate in GATES"
+            :key="gate.key"
+            class="flex items-center gap-3.5 border-b border-border py-5 [&_b]:text-[13.5px] [&_b]:leading-[1.3] [&_b]:font-semibold [&_b]:text-foreground [&_button]:cursor-pointer [&_button]:border-0 [&_button]:bg-none [&_button]:p-0 [&_button]:text-[12.5px] [&_button]:leading-none [&_button]:font-normal [&_button]:whitespace-nowrap [&_button]:text-muted-foreground [&_button:hover]:text-foreground"
+          >
+            <div class="flex-1">
               <b>{{ $t(gate.label) }}</b>
-              <div class="hint">{{ gates?.[gate.on] ? $t('gallery.gateOn') : $t('gallery.gateOff') }}</div>
+              <div :class="[HINT, 'mt-0.5']">
+                {{ gates?.[gate.on] ? $t('gallery.gateOn') : $t('gallery.gateOff') }}
+              </div>
             </div>
             <button type="button" @click="openGate = openGate === gate.key ? null : gate.key">
               {{ gates?.[gate.on] ? $t('gallery.gateRotate') : $t('gallery.gateSet') }}
             </button>
-            <button v-if="gates?.[gate.on]" type="button" class="warn" @click="clearGate(gate.key)">
+            <button
+              v-if="gates?.[gate.on]"
+              type="button"
+              class="hover:text-destructive!"
+              @click="clearGate(gate.key)"
+            >
               {{ $t('gallery.gateClear') }}
             </button>
           </div>
 
           <form v-if="openGate" @submit.prevent="rotate(openGate)">
-            <Label class="field">
-              <span>{{ $t('gallery.gateNewValue') }}</span>
+            <Label :class="[FIELD, INPUT]">
+              <span :class="CAPTION">{{ $t('gallery.gateNewValue') }}</span>
               <Input v-model="gateForm.secret" type="text" autocomplete="off" />
             </Label>
-            <p v-if="gateForm.errors.secret" class="err">{{ gateForm.errors.secret }}</p>
-            <Button class="mid" type="submit" :disabled="gateForm.processing">{{ $t('common.save') }}</Button>
+            <p
+              v-if="gateForm.errors.secret"
+              class="mt-5 rounded-md border border-[#40251A] bg-late-bg px-3.5 py-3 text-left text-[13px] leading-[1.55] font-normal text-[#E7B190]"
+            >
+              {{ gateForm.errors.secret }}
+            </p>
+            <Button class="ml-0 w-full justify-center" type="submit" :disabled="gateForm.processing">
+              {{ $t('common.save') }}
+            </Button>
           </form>
 
-          <p v-if="freshSecret" class="hint"><b>{{ freshSecret }}</b> — {{ $t('gallery.secretOnce') }}</p>
+          <p v-if="freshSecret" :class="[HINT, 'mt-[9px]']"><b>{{ freshSecret }}</b> — {{ $t('gallery.secretOnce') }}</p>
         </div>
 
-        <div v-if="guests" class="block">
-          <p class="lab">{{ $t('gallery.guestsTitle') }}</p>
-          <dl class="stats">
+        <div v-if="guests">
+          <p :class="LAB">{{ $t('gallery.guestsTitle') }}</p>
+          <dl
+            class="m-0 grid grid-cols-[1fr_auto] gap-x-5 gap-y-3.5 text-[13.5px] leading-none font-normal [&_dd]:m-0 [&_dd]:tabular-nums [&_dd]:text-foreground [&_dt]:text-muted-foreground"
+          >
             <dt>{{ $t('gallery.views') }}</dt><dd>{{ guests.views }}</dd>
             <dt>{{ $t('gallery.marks') }}</dt><dd>{{ guests.marks }}</dd>
             <dt>{{ $t('gallery.comments') }}</dt><dd>{{ guests.comments }}</dd>
@@ -381,7 +504,9 @@ function expiry(iso: string) {
         </div>
       </section>
 
-      <footer class="gfoot">
+      <footer
+        class="mx-auto flex max-w-[1240px] flex-wrap justify-between gap-8 border-t border-border px-8 pt-11 pb-16 text-[12.5px] text-muted-foreground"
+      >
         <span>{{ studioName }}</span>
         <a href="/impressum">{{ $t('portal.footerImpressum') }}</a>
       </footer>

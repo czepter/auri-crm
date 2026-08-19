@@ -44,12 +44,16 @@ test.setTimeout(10 * 60 * 1000)
 async function settle(page: Page): Promise<void> {
   await page.waitForLoadState('networkidle')
   await page.waitForFunction(() => document.fonts.status === 'loaded')
+  // Gallery variants are encoded on first request (GalleryImageController), so
+  // on a fresh database the first run's thumbnails are still being made when
+  // the network goes idle. Four of six missing is what that looks like.
+  await page.waitForFunction(() => [...document.images].every((image) => image.complete))
 }
 
 /* The gallery counts its own views, so one of its numbers is one higher on
    every run. Masked rather than reset: the count is the screen's, not the
    test's, and zeroing it would need a write the spec has no business making. */
-const VOLATILE = { galerie: 'dl.stats' } as Record<string, string>
+const VOLATILE = { galerie: 'section dl' } as Record<string, string>
 
 /* The lightbox is fixed to the viewport, so a full-page frame of it is the
    grid it covers with one screen's worth of overlay on top. */
@@ -205,7 +209,7 @@ test('Portal haelt seine Baselines', async ({ page }) => {
     await shoot(page, 'galerie')
 
     // One picture, full-bleed. Not a route: the lightbox is a ref on the grid.
-    await page.locator('#raster .tile').first().click()
+    await page.locator('#raster > span').first().click()
     await shoot(page, 'galerie-bild')
 
     // The download gate. Behind the view gate above, which this session has
