@@ -82,52 +82,57 @@ const studioInitials = computed(() => initials(props.studio.name))
 <template>
   <PortalHeader :contact="contact" />
 
-  <main class="pwrap wide">
+  <main class="mx-auto max-w-[1060px] px-8 pt-11 pb-16">
     <h1>{{ contact.name }}</h1>
-    <p v-if="welcomeText" class="plead">{{ welcomeText }}</p>
+    <p v-if="welcomeText" class="mt-5 max-w-[56ch] text-[16px] leading-[1.6] font-normal text-muted-foreground">{{ welcomeText }}</p>
 
-    <div class="phome" style="margin-top: var(--s6)">
+    <div class="mt-11 grid items-start gap-11 min-[1080px]:grid-cols-[minmax(0,1fr)_320px]">
       <div>
         <!-- Equal-ranked, by year. No booking type is privileged. -->
-        <section v-if="bookings.length" class="psec">
-          <p class="lab">{{ $t('portal.bookingsTitle') }}</p>
+        <section v-if="bookings.length">
+          <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.bookingsTitle') }}</p>
 
-          <div v-if="showFilters" class="filters">
-            <button class="fpill" :class="{ on: filter === 'all' }" type="button" @click="filter = 'all'">
-              {{ $t('portal.filterAll') }}<span class="n">{{ bookings.length }}</span>
+          <div v-if="showFilters" class="mb-5 flex flex-wrap gap-1.5">
+            <button class="rounded-full border border-border px-[13px] py-[7px] text-[13px] text-muted-foreground hover:border-line-hover hover:text-foreground" :class="filter === 'all' && 'border-foreground bg-foreground font-semibold text-background'" type="button" @click="filter = 'all'">
+              {{ $t('portal.filterAll') }}<span class="ml-[5px] tabular-nums opacity-55">{{ bookings.length }}</span>
             </button>
             <button
               v-for="phase in (['open', 'upcoming', 'delivered'] as Phase[])"
               v-show="phaseCounts[phase]"
               :key="phase"
-              class="fpill"
-              :class="{ on: filter === phase }"
+              class="rounded-full border border-border px-[13px] py-[7px] text-[13px] text-muted-foreground hover:border-line-hover hover:text-foreground"
+              :class="filter === phase && 'border-foreground bg-foreground font-semibold text-background'"
               type="button"
               @click="filter = phase"
             >
-              {{ $t(`portal.phase.${phase}`) }}<span class="n">{{ phaseCounts[phase] }}</span>
+              {{ $t(`portal.phase.${phase}`) }}<span class="ml-[5px] tabular-nums opacity-55">{{ phaseCounts[phase] }}</span>
             </button>
           </div>
 
           <template v-for="[year, rows] in years" :key="year">
-            <div class="yearhead">
+            <div class="mt-8 mb-3.5 flex items-baseline gap-3.5 text-[13px] leading-none font-semibold tabular-nums">
               <span>{{ year === 'offen' ? $t('portal.dateOpen') : year }}</span>
-              <button v-if="rows.length > ROLLUP_FROM" type="button" @click="opened[year] = !opened[year]">
+              <button
+                v-if="rows.length > ROLLUP_FROM"
+                class="cursor-pointer border-0 bg-transparent p-0 text-[12.5px] leading-none font-normal text-muted-foreground hover:text-foreground"
+                type="button"
+                @click="opened[year] = !opened[year]"
+              >
                 {{ opened[year] ? $t('portal.foldYear') : $t('portal.unfoldYear') }}
               </button>
-              <span class="n">{{ $t('portal.bookingCount', rows.length) }}</span>
+              <span class="ml-auto text-[12px] leading-none font-normal text-faint">{{ $t('portal.bookingCount', rows.length) }}</span>
             </div>
 
-            <div v-if="!folded(year, rows)" class="entries">
-              <Link v-for="booking in rows" :key="booking.id" :href="`/projekte/${booking.id}`">
-                <span class="body">
-                  <span class="kick">{{ booking.type }}</span>
-                  <h3>{{ booking.name }}</h3>
-                  <div class="sub">
+            <div v-if="!folded(year, rows)" class="border-t border-border">
+              <Link v-for="booking in rows" :key="booking.id" class="flex items-center gap-5 border-b border-border py-5 text-foreground no-underline hover:bg-muted" :href="`/projekte/${booking.id}`">
+                <span class="min-w-0 flex-1">
+                  <span class="mb-[3px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ booking.type }}</span>
+                  <h3 class="m-0 text-[15px] leading-[1.3] font-semibold">{{ booking.name }}</h3>
+                  <div class="mt-0.5 text-[12.5px] leading-[1.4] font-normal tabular-nums text-muted-foreground">
                     {{ [booking.date ? shortDate(booking.date) : $t('portal.dateOpen'), booking.venue].filter(Boolean).join(' · ') }}
                   </div>
                 </span>
-                <span class="state">
+                <span class="text-right text-[12.5px] leading-[1.4] font-normal whitespace-nowrap text-muted-foreground">
                   {{ $t(`portal.phase.${booking.phase}`) }}
                   <template v-if="booking.openAmount">
                     · {{ $t('portal.paymentsOpen', { amount: formatEuros(booking.openAmount) }) }}
@@ -138,13 +143,13 @@ const studioInitials = computed(() => initials(props.studio.name))
           </template>
         </section>
 
-        <p v-else class="hint">{{ $t('portal.nothingShared') }}</p>
+        <p v-else class="text-[11.5px] leading-[1.45] text-faint">{{ $t('portal.nothingShared') }}</p>
 
-        <section v-if="galleries.length" class="psec">
-          <p class="lab">{{ $t('portal.galleriesTitle') }}</p>
-          <div class="gcards">
-            <a v-for="gallery in galleries" :key="gallery.id" :href="`/galerien/${gallery.id}`">
-              <span class="shot">
+        <section v-if="galleries.length" class="mt-11">
+          <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.galleriesTitle') }}</p>
+          <div class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-5">
+            <a v-for="gallery in galleries" :key="gallery.id" class="text-foreground no-underline" :href="`/galerien/${gallery.id}`">
+              <span class="mb-3.5 block aspect-4/3 overflow-hidden rounded-md bg-muted">
                 <img v-if="gallery.cover" :src="`${gallery.cover}?w=800&fmt=jpeg`" alt="" loading="lazy" />
               </span>
               <b>{{ gallery.title }}</b>
@@ -159,35 +164,39 @@ const studioInitials = computed(() => initials(props.studio.name))
         </section>
       </div>
 
-      <div class="rail">
+      <div class="order-first min-[1080px]:order-none">
         <!-- Absent when nothing is open. An empty box would say the studio
              has nothing for them, which is a different statement. -->
-        <section v-if="pending.length" class="psec">
-          <p class="lab">{{ $t('portal.pendingTitle') }}</p>
-          <div class="pend">
-            <a v-for="(row, index) in pending" :key="index" :href="row.href">
+        <section v-if="pending.length">
+          <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.pendingTitle') }}</p>
+          <div class="border-t border-border">
+            <a v-for="(row, index) in pending" :key="index" class="flex items-center gap-5 border-b border-border py-5 text-foreground no-underline hover:bg-muted" :href="row.href">
               <span style="flex: 1">
-                <h3>{{ row.kind === 'message' ? row.subject : $t(`portal.pending.${row.kind}`) }}</h3>
-                <div v-if="row.dueOn" class="sub">
+                <h3 class="m-0 flex-1 text-[14px] leading-[1.3] font-semibold">{{ row.kind === 'message' ? row.subject : $t(`portal.pending.${row.kind}`) }}</h3>
+                <div v-if="row.dueOn" class="mt-0.5 text-[12.5px] leading-[1.4] font-normal text-muted-foreground">
                   {{ $t(row.kind === 'quote' ? 'portal.validUntil' : 'portal.dueOn', { date: shortDate(row.dueOn) }) }}
                 </div>
-                <div v-else-if="row.kind === 'message'" class="sub">{{ $t('portal.pending.message') }}</div>
-                <div v-if="row.booking" class="where">{{ row.booking }}</div>
+                <div v-else-if="row.kind === 'message'" class="mt-0.5 text-[12.5px] leading-[1.4] font-normal text-muted-foreground">{{ $t('portal.pending.message') }}</div>
+                <div v-if="row.booking" class="mt-[3px] text-[11.5px] leading-[1.4] font-normal text-faint">{{ row.booking }}</div>
               </span>
-              <span v-if="row.amount" class="amount" :class="{ late: row.overdue }">
+              <span
+                v-if="row.amount"
+                class="text-[14px] leading-none font-semibold tabular-nums whitespace-nowrap"
+                :class="row.overdue && 'text-destructive'"
+              >
                 {{ formatEuros(row.amount) }}
               </span>
             </a>
           </div>
         </section>
 
-        <section class="psec">
-          <p class="lab">{{ $t('portal.contactTitle') }}</p>
-          <div class="person">
-            <span class="av">{{ studioInitials }}</span>
+        <section class="mt-11 first:mt-0">
+          <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.contactTitle') }}</p>
+          <div class="flex items-center gap-3.5">
+            <span class="grid size-[38px] flex-none place-items-center rounded-full bg-[var(--accent-bg)] text-[12.5px] leading-none font-semibold text-action">{{ studioInitials }}</span>
             <span>
-              <b>{{ studio.name }}</b>
-              <span v-if="studio.messagingEnabled" class="role">
+              <b class="block text-[14px] leading-[1.3] font-semibold">{{ studio.name }}</b>
+              <span v-if="studio.messagingEnabled" class="text-[12px] leading-[1.4] font-normal text-muted-foreground">
                 <Link href="/nachrichten">{{ $t('portal.messagesLinkTitle') }}</Link>
               </span>
             </span>
