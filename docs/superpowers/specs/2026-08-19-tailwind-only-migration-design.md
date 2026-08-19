@@ -208,117 +208,43 @@ Stand dieser Sitzung:
 | Blocker | betrifft |
 |---|---|
 | unfestgeschriebene Arbeit in 25 Dateien | 830 Vorkommen |
-| Wartungsschalter an heisst jede andere Route 503 | `Maintenance` 3 |
-| kein frischer Studiozustand | `Setup` 11, `Onboarding` 4 |
+| kein Studio ohne einen einzigen Zugang | `Setup` — migriert, ohne Bild |
+| kein Aufrufer | `PaymentInstallmentsEditor` — toter Code |
+| Kontext gehoert einer fremden Datei | `CrewStack` 2 |
 
-Das Portal ist fertig, bis auf `Maintenance`. Die Galerie hat jetzt echte
-Bytes: `GalleryImageController` rechnet jede Variante aus dem Original auf
-der s3-Platte und antwortet ohne eines 404, also legt `E2eSeeder` sechs
-einfarbige JPEGs an — ein Foto waere huebscher, und die Baseline haenge dann
-an der Version eines JPEG-Encoders.
+Portal und Auth sind fertig. Alles, was jetzt noch Klassen traegt, liegt in
+den 25 Dateien mit unfestgeschriebener Arbeit — bis auf drei Faelle:
 
-Vier der sechs Auth-Schirme sind auch durch: der Passwortlink rendert mit
-jedem Token, die Einladung braucht ein echtes und bekommt es vom Seeder, die
-MFA-Abfrage steht am Ende des Laufs, weil sie die Sitzung kostet, und die
-OAuth-Freigabe ist nur eine Frage der richtigen Query. Setup und Onboarding
-bleiben: `E2eSeeder` setzt `onboarding_completed_at`, und ohne das ist die
-ganze uebrige Oberflaeche eine Weiterleitung.
+`Setup` verlangt ein Studio ohne einen einzigen Mitarbeiterzugang; den
+herzustellen hiesse, alle Zugaenge zu loeschen. Die Huelle ist dieselbe wie
+bei den neun anderen Auth-Schirmen, das Formular darin ist ungeprueft.
 
-Kein Portalframe haengt mehr an den Demodaten eines Entwicklers. Das war
-vorher der stille Fehler: `migrate:fresh --seed=E2eSeeder` legt genau die
-Fixtures an und sonst nichts, die Baselines waren auf einem CI-Lauf also gar
-nicht reproduzierbar.
+`PaymentInstallmentsEditor` hat keinen Aufrufer. Migrieren waere Arbeit an
+totem Code; geloescht habe ich ihn nicht, das ist keine Entscheidung dieser
+Migration.
+
+`CrewStack` haengt an Regeln, die anderen Dateien gehoeren: `.card:hover
+.stack .av` und `.srow .stack` faerben und ruecken die Gesichter aus dem
+Kontext heraus. Solange `Projects/Shoots` und die Kartenlisten
+unfestgeschrieben sind, waere jede Uebersetzung hier eine Wette darauf, was
+dort spaeter steht.
+
+Fuer die Galerie legt `E2eSeeder` jetzt echte Bytes an:
+`GalleryImageController` rechnet jede Variante aus dem Original auf der
+s3-Platte und antwortet ohne eines 404, also sechs einfarbige JPEGs — ein
+Foto waere huebscher, und die Baseline haenge dann an der Version eines
+JPEG-Encoders.
+
+Kein Frame haengt mehr an den Demodaten eines Entwicklers. Das war vorher
+der stille Fehler: `migrate:fresh --seed=E2eSeeder` legt genau die Fixtures
+an und sonst nichts, die Baselines waren auf einem CI-Lauf also gar nicht
+reproduzierbar.
 
 Teilweise abgedeckt, migriert wird trotzdem: `Payments/Show` (Bankblock und
 Stripe-Spalte brauchen ausgefuellte Studioeinstellungen), `Contracts/Show`
 (das eingebettete Dokument ist 404, weil kein Artefakt gerendert wurde),
-`Questionnaire` (Auswahlfeld, Ja/Nein-Zeile und Fehlermeldung: das Fixture hat
-ein Feld, und es ist ein Textfeld).
-
-Offen und nicht blockiert ist nur `ContactTypeahead`: die Trefferzeilen sitzen
-nach der Korrektur exakt, ein Pixel in der Zeile „als neuen Kontakt anlegen"
-bleibt und verschiebt alles darunter.
-
-Reihenfolge geaendert. Die Galerie sollte zuerst kommen, weil sie am
-kleinsten ist. Sie hat aber keine Baseline: Galerie- und Projektseiten
-erscheinen im Portal erst, wenn das Studio sie freigegeben hat, und eine
-Freigabe aus dem Test heraus wuerde fremde Entwicklerdaten umschreiben. Der
-Admin ist mit 24 Routen vollstaendig abgedeckt, also faengt die Migration
-dort an.
-
-`AdminLayout` ist die Abbruchstelle: eine Datei, pixelgleich, danach steht
-der Aufwand pro Screen als Messwert statt als Schaetzung.
-
-Geteilte Komponenten (`PortalFooter` 13×, `PortalHeader` 12×, `SettingsNav` 8×,
-`ProjectHeader` 5×) migrieren in Phase 4, vor den Screens, die sie einbinden.
-
-## §5 Komponenten
-
-Kandidaten, alle in ≥3 Dateien:
-
-| Komponente | löst ab | Dateien | Vork. | zu schlichten |
-|---|---|---|---|---|
-| `<Field>` | `.fld` `.err` `.wide` | 37 | 308 | erledigt, `ui/field` |
-| `<Group>` | `.grp` `.hint` | 42 | 175 | `.hint` 3× definiert |
-| `<PageHeader>` | `.hrow` `.kick` | 38 | 90 | je 2× definiert |
-| `<Section>` | `.dsec` `.dlab` | 18 | 79 | — |
-| `Button` (vorhanden) | `.btn` `.btn-2` | 10 | 32 | — |
-| `<AuthLayout>` | `.authwrap` `.authcard` `.brand` | 10 | 30 | erledigt, 4 von 10 Schirmen |
-| `<FormFooter>` | `.formfoot` | 16 | 24 | 2× definiert |
-| `<Chip>` | `.chip` | 16 | 23 | 3× definiert |
-| `<PageWrap>` | `.pwrap` | 10 | 10 | — |
-| `<LinkCard>` | `.card` `.cardhead` | 17 | 51 | ≠ Board-Karte |
-| `<BoardCard>` | `.cols .card` `.nm` `.mt` `.w` | 2 | — | ≠ shadcn Card |
-
-Zielform, heute in `ProfileForm.vue`:
-
-    <div class="fld wide">
-      <Label for="p-firma">…</Label>
-      <Input id="p-firma" v-model="form.legal_name" type="text" />
-      <p v-if="form.errors.legal_name" class="err">…</p>
-    </div>
-
-danach:
-
-    <Field wide :label="…" :error="form.errors.legal_name" v-slot="{ id }">
-      <Input :id v-model="form.legal_name" type="text" />
-    </Field>
-
-`Label`, `Input`, `Select`, `Textarea`, `Checkbox` liegen in `ui/`. `cva`,
-`tailwind-merge` und `clsx` sind installiert; das Varianten-Muster steht in
-`ui/button/Button.vue`. Keine neue Abhängigkeit.
-
-**Extraktion beim dritten Screen**, der ein Muster braucht. Die ersten zwei
-tragen rohe Utilities. Jede Komponente muss zuerst ihren Namenskonflikt
-schlichten — `.formfoot` existiert zweimal, `.chip` dreimal — und genau dort
-entstehen die Pixel-Diffs, die Phase 0 sichtbar macht.
-
-Erwartbarer Anfall: Phase 3 `<PageWrap>` `<Section>` `<Group>` `<Chip>`,
-Phase 4 `<PageHeader>`, Phase 5 `<Field>` `<FormFooter>` `<LinkCard>`
-`<BoardCard>` und der `Button`-Rest, Phase 6 `<AuthLayout>`.
-
-Die 204 Klassen aus genau einer Datei werden nie Komponente, sondern immer
-Inline-Utilities.
-
-### Offen: das Feld des Portals
-
-`portal.css .field` ist nicht dasselbe Muster wie `.fld`. Es umschliesst sein
-Steuerelement (`<Label class="field"><span>Beschriftung</span><Input/></Label>`)
-und stylt das `<input>` darin um — Breite, Polsterung, Rahmen, Radius. Ein
-migrierter Aufruf verliert diese Umstellung, weil das shadcn-`Input` dann seine
-eigenen Werte behaelt. Das ist eine zweite Feldkomponente, keine Variante der
-ersten, und sie gehoert entschieden, bevor die 18 Portalseiten drankommen.
-
-### Zwei Aufräumentscheidungen
-
-`resources/js/ui/card/` löschen — sieben Dateien, null Verwendungen, während
-`class="card"` in 17 Dateien steht. Die drei sind nicht dasselbe:
-`[data-theme="crm"] .cols .card` ist eine ziehbare Board-Karte,
-`tokens.css:161 .card` eine Link-Kachel, shadcns `Card` ein Container. Ein
-CLI-Aufruf holt die shadcn-Variante zurück, falls sie gebraucht wird.
-
-`.btn`/`.btn-2` gehen auf das vorhandene `Button` — 55 Dateien nutzen es
-bereits, die zehn übrigen sind Nachzügler.
+`Questionnaire` (Auswahlfeld, Ja/Nein-Zeile und Fehlermeldung: das Fixture
+hat ein Feld, und es ist ein Textfeld).
 
 ## Namenskollisionen
 
