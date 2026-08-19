@@ -21,7 +21,7 @@ function submit() {
   <!-- No sidebar: there is no navigation available to someone not signed in. -->
   <AuthLayout :title="$t('auth.signInTitle')">
     <form @submit.prevent="submit">
-      <p v-if="form.errors.email" class="flag" style="margin-bottom: var(--s4)">
+      <p v-if="form.errors.email" class="mb-4 mt-1.5 flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[12.5px] leading-[1.3] font-medium text-destructive">
         {{ form.errors.email }}
       </p>
 
@@ -45,24 +45,24 @@ function submit() {
           required />
       </Field>
 
-      <Button type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
+      <Button type="submit" class="w-full justify-center" :disabled="form.processing">
         {{ $t('auth.signIn') }}
       </Button>
     </form>
 
-    <p style="margin-top: var(--s4); text-align: center">
+    <p class="mt-4 text-center">
       <Button :as="Link" variant="ghost" href="/passwort/vergessen">{{ $t('auth.forgot') }}</Button>
     </p>
 
-    <div v-if="devLogin" style="margin-top: var(--s5); padding-top: var(--s4); border-top: 1px solid var(--line)">
+    <div v-if="devLogin" class="mt-6 border-t border-border pt-4">
       <Button variant="outline"
         type="button"
-        style="width: 100%; padding: 9px"
+        class="w-full p-[9px]"
         @click="router.post('/dev-login')"
       >
         {{ $t('auth.devLogin') }}
       </Button>
-      <p class="text-[11.5px] leading-[1.45] text-faint" style="margin-top: var(--s2); text-align: center">
+      <p class="mt-1.5 text-center text-[11.5px] leading-[1.45] text-faint">
         {{ $t('auth.devLoginHint') }}
       </p>
     </div>

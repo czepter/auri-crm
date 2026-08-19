@@ -33,23 +33,23 @@ function submit() {
       v-if="qrCodeDataUrl"
       :src="qrCodeDataUrl"
       :alt="$t('auth.mfaQrAlt')"
-      style="display: block; margin: 0 auto var(--s4); width: 220px; height: 220px; border: 1px solid var(--line); border-radius: var(--r)"
+      class="mx-auto mb-4 block size-[220px] rounded-md border border-border"
     />
 
-    <details style="margin-bottom: var(--s5)">
+    <details class="mb-6">
       <Button as="summary" variant="ghost" class="cursor-pointer py-0">
         {{ $t('auth.mfaSecretLabel') }}
       </Button>
       <code
-        class="panel"
-        style="display: block; margin-top: var(--s2); padding: 9px 11px; font-family: ui-monospace, monospace; font-size: 13px; letter-spacing: .12em"
+        class="overflow-hidden rounded-md border border-border"
+        class="mt-1.5 block px-[11px] py-[9px] font-mono text-[13px] tracking-[0.12em]"
       >
         {{ secret }}
       </code>
     </details>
 
     <form @submit.prevent="submit">
-      <p v-if="form.errors.code" class="flag" style="margin-bottom: var(--s4)">
+      <p v-if="form.errors.code" class="mb-4 mt-1.5 flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[12.5px] leading-[1.3] font-medium text-destructive">
         {{ form.errors.code }}
       </p>
 
@@ -64,7 +64,7 @@ function submit() {
           required />
       </Field>
 
-      <Button type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
+      <Button type="submit" class="w-full justify-center" :disabled="form.processing">
         {{ $t('auth.mfaConfirm') }}
       </Button>
     </form>

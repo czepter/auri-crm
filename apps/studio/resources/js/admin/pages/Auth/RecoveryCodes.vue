@@ -8,25 +8,15 @@ defineProps<{ codes: string[] }>()
 
 <template>
   <AuthLayout :title="$t('auth.recoveryTitle')" width="max-w-[420px]">
-    <p class="text-[11.5px] leading-[1.45] text-faint" style="margin-bottom: var(--s5)">{{ $t('auth.recoveryHint') }}</p>
+    <p class="mb-6 text-[11.5px] leading-[1.45] text-faint">{{ $t('auth.recoveryHint') }}</p>
 
     <ul
-      class="panel"
-      style="
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: var(--s2) var(--s4);
-        padding: var(--s4);
-        margin: 0 0 var(--s5);
-        list-style: none;
-        font-family: ui-monospace, monospace;
-        font-size: 13px;
-      "
+      class="m-0 mb-6 grid list-none grid-cols-2 gap-x-4 gap-y-1.5 overflow-hidden rounded-md border border-border p-4 font-mono text-[13px]"
     >
       <li v-for="code in codes" :key="code">{{ code }}</li>
     </ul>
 
-    <Button type="button" style="width: 100%; justify-content: center" @click="router.visit('/')">
+    <Button type="button" class="w-full justify-center" @click="router.visit('/')">
       {{ $t('auth.recoveryContinue') }}
     </Button>
   </AuthLayout>
