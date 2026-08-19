@@ -147,6 +147,19 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
       fullPage: true,
       animations: 'disabled',
     })
+
+    // A project carries five more screens under its own id.
+    if (name === 'auftrag') {
+      for (const sub of ['angebote', 'frageboegen', 'nachrichten', 'shootings', 'vertrag']) {
+        await page.goto(`${href}/${sub}`)
+        await page.waitForLoadState('networkidle')
+        await page.waitForFunction(() => document.fonts.status === 'loaded')
+        await expect.soft(page).toHaveScreenshot(`auftrag-${sub}.png`, {
+          fullPage: true,
+          animations: 'disabled',
+        })
+      }
+    }
   }
 
   // The gallery record has no list of its own — the dashboard links the media
