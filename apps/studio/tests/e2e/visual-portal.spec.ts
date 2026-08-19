@@ -46,11 +46,18 @@ async function settle(page: Page): Promise<void> {
   await page.waitForFunction(() => document.fonts.status === 'loaded')
 }
 
+/* The gallery counts its own views, so one of its numbers is one higher on
+   every run. Masked rather than reset: the count is the screen's, not the
+   test's, and zeroing it would need a write the spec has no business making. */
+const VOLATILE = { galerie: 'dl.stats' } as Record<string, string>
+
 async function shoot(page: Page, name: string): Promise<void> {
   await settle(page)
+  const volatile = VOLATILE[name]
   await expect.soft(page).toHaveScreenshot(`${name}.png`, {
     fullPage: true,
     animations: 'disabled',
+    ...(volatile ? { mask: [page.locator(volatile)] } : {}),
   })
 }
 

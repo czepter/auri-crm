@@ -24,6 +24,9 @@ use App\Documents\Models\DocumentTemplate;
 use App\Engagement\Actions\PostMessage;
 use App\Engagement\Actions\StartThread;
 use App\Enums\StaffRole;
+use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryVersion;
+use App\Models\StaffInvitation;
 use App\Models\User;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -33,6 +36,7 @@ use App\Quotes\Models\QuoteItem;
 use App\Settings\Models\StudioSettings;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -41,6 +45,13 @@ use Illuminate\Support\Facades\Cache;
  */
 class E2eSeeder extends Seeder
 {
+    private const IMAGE_WIDTH = 1200;
+
+    private const IMAGE_HEIGHT = 800;
+
+    /** The invitation link's token, spelled the same way in visual.spec.ts. */
+    public const INVITATION_TOKEN = 'e2e-einladung';
+
     public function run(): void
     {
         // db:seed --class=E2eSeeder is directly invocable and bypasses
@@ -90,9 +101,30 @@ class E2eSeeder extends Seeder
             ],
         );
 
+        $this->seedInvitation();
         $this->seedOccupiedDate();
         $this->seedEditableRecords();
         $this->seedBooking();
+    }
+
+    /**
+     * A live invitation with a token the spec can spell. The screen behind it
+     * is a 404 for anything else, and the real token only ever exists in an
+     * inbox.
+     */
+    private function seedInvitation(): void
+    {
+        StaffInvitation::updateOrCreate(
+            ['email' => 'e2e-eingeladen@studio.test'],
+            [
+                'name' => 'E2E Eingeladen',
+                'role' => StaffRole::Photographer,
+                'token_hash' => StaffInvitation::hash(self::INVITATION_TOKEN),
+                'expires_at' => now()->addDays(StaffInvitation::VALID_FOR_DAYS),
+                'accepted_at' => null,
+                'invited_by_id' => User::query()->firstOrFail()->id,
+            ],
+        );
     }
 
     /**
@@ -209,7 +241,13 @@ class E2eSeeder extends Seeder
             ['type' => ProjectType::Wedding, 'portal_visible' => true],
         );
 
+        // The gallery and the conversation guard themselves and are seeded
+        // whether or not the project is new — they were added after the
+        // records below, and a developer's database already holds the rest.
         if (! $project->wasRecentlyCreated) {
+            $this->seedGallery($project);
+            $this->seedThread($project);
+
             return;
         }
 
@@ -254,7 +292,66 @@ class E2eSeeder extends Seeder
             )->create();
         });
 
+        $this->seedGallery($project);
         $this->seedThread($project);
+    }
+
+    /**
+     * A delivered gallery with bytes behind it. Rows alone are not enough:
+     * GalleryImageController encodes every variant from the original on the
+     * s3 disk and answers 404 without one, so a seeded gallery with no
+     * objects is six broken tiles.
+     */
+    private function seedGallery(Project $project): void
+    {
+        $gallery = Gallery::firstOrCreate([
+            'project_id' => $project->id,
+            'title' => 'E2E Galerie',
+        ]);
+
+        if (! $gallery->wasRecentlyCreated) {
+            return;
+        }
+
+        $disk = Storage::disk('s3');
+        $assets = [];
+
+        foreach (range(1, 6) as $index) {
+            $key = "galleries/e2e/{$gallery->public_id}/{$index}.jpg";
+            $disk->put($key, self::flatJpeg($index));
+            $assets[] = ['key' => $key, 'width' => self::IMAGE_WIDTH, 'height' => self::IMAGE_HEIGHT];
+        }
+
+        GalleryVersion::create([
+            'gallery_id' => $gallery->id,
+            'version' => 1,
+            'title' => 'E2E Galerie',
+            'assets' => $assets,
+            'published_at' => now(),
+        ]);
+    }
+
+    /**
+     * One flat colour per index. A photograph would be prettier and a pixel
+     * baseline would then depend on a JPEG encoder's own version.
+     */
+    private static function flatJpeg(int $index): string
+    {
+        $image = imagecreatetruecolor(self::IMAGE_WIDTH, self::IMAGE_HEIGHT);
+        imagefilledrectangle(
+            $image,
+            0,
+            0,
+            self::IMAGE_WIDTH,
+            self::IMAGE_HEIGHT,
+            imagecolorallocate($image, 30 + $index * 25, 60 + $index * 10, 90),
+        );
+
+        ob_start();
+        imagejpeg($image, null, 82);
+        imagedestroy($image);
+
+        return (string) ob_get_clean();
     }
 
     /**

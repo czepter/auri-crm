@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { signIn } from './helpers'
+import { ACCOUNTS, signIn, submitLogin } from './helpers'
 
 /*
  * Pixel baselines for the Tailwind-only migration
@@ -97,6 +97,12 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
   for (const [route, name] of [
     ['/login', 'login'],
     ['/passwort/vergessen', 'passwort-vergessen'],
+    // The form behind a reset link. Any token renders it — the link is only
+    // checked when the new password is posted — so none has to be minted.
+    ['/passwort/neu/e2e?email=e2e-basic%40studio.test', 'passwort-neu'],
+    // This one does have to be real: an unknown token redirects away. The
+    // token is E2eSeeder::INVITATION_TOKEN.
+    ['/einladung/e2e-einladung', 'einladung'],
   ] as const) {
     await page.goto(route)
     await page.waitForLoadState('networkidle')
@@ -177,6 +183,23 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
         })
       }
     }
+  }
+
+  // N-04's consent screen. Not in ROUTES because it is only a screen with the
+  // whole authorization request on the query string; without one it is a 400.
+  await page.goto(
+    '/oauth/authorize?client_id=studio-mcp&redirect_uri=http%3A%2F%2F127.0.0.1%3A33418%2Fcallback' +
+      '&response_type=code&code_challenge_method=S256&code_challenge=e2e&scope=manage_leads+manage_settings',
+  )
+  await page.waitForLoadState('networkidle')
+  if ((await page.locator('[data-slot="button"]').count()) === 0) {
+    console.log('OHNE BASELINE: oauth-freigabe — kein Einwilligungsschirm')
+  } else {
+    await page.waitForFunction(() => document.fonts.status === 'loaded')
+    await expect.soft(page).toHaveScreenshot('oauth-freigabe.png', {
+      fullPage: true,
+      animations: 'disabled',
+    })
   }
 
   // The quote editor, on a project that has a quote — the row above may not.
@@ -317,4 +340,20 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     clip: { x: 440, y: 100, width: 560, height: 420 },
     mask: [page.locator('dialog[open] > div')],
   })
+
+  // The challenge, last: reaching it means signing out of the session every
+  // frame above was taken in. E2eSeeder's own enrolled account, so the screen
+  // exists whether or not the developer's own user has MFA on.
+  await page.context().clearCookies()
+  await submitLogin(page, ACCOUNTS.mfa)
+  await page.waitForLoadState('networkidle')
+  if (page.url().endsWith('/auth/mfa')) {
+    await page.waitForFunction(() => document.fonts.status === 'loaded')
+    await expect.soft(page).toHaveScreenshot('auth--mfa.png', {
+      fullPage: true,
+      animations: 'disabled',
+    })
+  } else {
+    console.log('OHNE BASELINE: auth--mfa — der Testzugang wurde nicht abgefragt')
+  }
 })

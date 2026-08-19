@@ -93,9 +93,15 @@ const heroImage = computed(() => props.project.gallery?.strip[0] ?? null)
 
   <header v-if="heroImage" class="relative after:absolute after:inset-0 after:bg-[linear-gradient(0deg,rgba(20,16,14,0.72)_0%,rgba(20,16,14,0.15)_55%,rgba(20,16,14,0)_100%)] after:content-['']">
     <img class="block h-[min(62vh,560px)] w-full object-cover" :src="`${heroImage}?w=2400&fmt=jpeg`" alt="" />
-    <div class="absolute inset-x-0 bottom-11 z-2 mx-auto max-w-[1060px] px-8 text-white">
-      <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint text-white/72">{{ project.type }}</div>
-      <h1 class="mt-1.5 text-[clamp(30px,5vw,46px)] text-white">{{ project.name }}</h1>
+    <!-- data-tokens without a value: the marker that takes this heading out
+         of the unlayered h1 rule in portal.css, which is 30px and would beat
+         any utility. Everything tokens.css's own h1 rule set has to be
+         spelled out here in exchange. -->
+    <div data-tokens class="absolute inset-x-0 bottom-11 z-2 mx-auto max-w-[1060px] px-8 text-white">
+      <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-white/72">{{ project.type }}</div>
+      <h1 class="mt-1.5 text-[clamp(30px,5vw,46px)] leading-none font-bold tracking-[-0.04em] text-white">
+        {{ project.name }}
+      </h1>
       <p v-if="project.date || project.venue" class="mt-3.5 text-[14.5px] leading-[1.5] font-normal tabular-nums text-white/85">
         {{ [project.date ? longDate(project.date) : null, project.venue].filter(Boolean).join(' · ') }}
       </p>
