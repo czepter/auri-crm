@@ -58,6 +58,7 @@ const ROUTES = [
   '/pakete',
   '/pakete/neu',
   '/posteingang',
+  '/projekte',
   '/team',
   '/abwesenheiten',
   '/verfuegbarkeit',
