@@ -163,7 +163,7 @@ function shortDate(iso: string) {
         </section>
       </div>
 
-      <div class="order-first min-[1080px]:order-none">
+      <div class="order-first flex flex-col min-[1080px]:order-none">
         <!-- Absent when nothing is open. An empty box would say the studio
              has nothing for them, which is a different statement. -->
         <section v-if="pending.length">
@@ -176,7 +176,7 @@ function shortDate(iso: string) {
                   {{ $t(row.kind === 'quote' ? 'portal.validUntil' : 'portal.dueOn', { date: shortDate(row.dueOn) }) }}
                 </div>
                 <div v-else-if="row.kind === 'message'" class="mt-0.5 text-[12.5px] leading-[1.4] font-normal text-muted-foreground">{{ $t('portal.pending.message') }}</div>
-                <div v-if="row.booking" class="mt-[3px] text-[11.5px] leading-[1.4] font-normal text-faint">{{ row.booking }}</div>
+                <div v-if="row.booking" class="mt-0.5 text-[12.5px] leading-[1.4] font-normal text-muted-foreground">{{ row.booking }}</div>
               </span>
               <span
                 v-if="row.amount"

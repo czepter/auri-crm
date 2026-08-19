@@ -15,6 +15,8 @@ use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Engagement\Actions\PostMessage;
+use App\Engagement\Actions\StartThread;
 use App\Enums\StaffRole;
 use App\Models\User;
 use App\Quotes\Enums\QuoteStatus;
@@ -180,5 +182,25 @@ class E2eSeeder extends Seeder
         if ($quote->wasRecentlyCreated) {
             QuoteItem::factory()->for($quote)->create();
         }
+
+        $this->seedThread($project);
+    }
+
+    /**
+     * One conversation with a reply on it. The mailbox renders its empty
+     * state without one, and an empty state is not the screen — the thread
+     * list, the conversation and both sides of a message only exist here.
+     */
+    private function seedThread(Project $project): void
+    {
+        $contact = $project->contacts()->first();
+
+        if ($contact === null || $contact->threads()->where('subject', 'E2E Faden')->exists()) {
+            return;
+        }
+
+        $thread = app(StartThread::class)($project, $contact, 'E2E Faden', 'Passt der Termin so?');
+
+        app(PostMessage::class)($thread, User::query()->firstOrFail(), 'Ja, der Termin steht.');
     }
 }
