@@ -14,7 +14,11 @@
 import { chromium } from '@playwright/test'
 
 const ROUTE = process.argv[2]
-if (!ROUTE) throw new Error('usage: node cascade.mjs <route>')
+if (!ROUTE) throw new Error('usage: node cascade.mjs <route> [--anon]')
+
+/* Routes that exist for someone without a session — the sign-in screens — have
+   to be read without one, or the dev login lands on the dashboard instead. */
+const ANON = process.argv.includes('--anon')
 
 const ADMIN = process.env.ADMIN_URL ?? 'http://127.0.0.1:8000'
 
@@ -36,9 +40,11 @@ const page = await (
   await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'de-DE' })
 ).newPage()
 
-await page.goto(`${ADMIN}/login`)
-await page.getByRole('button', { name: 'Dev-Login' }).click()
-await page.waitForURL(`${ADMIN}/`)
+if (!ANON) {
+  await page.goto(`${ADMIN}/login`)
+  await page.getByRole('button', { name: 'Dev-Login' }).click()
+  await page.waitForURL(`${ADMIN}/`)
+}
 await page.goto(ADMIN + ROUTE)
 await page.waitForLoadState('networkidle')
 

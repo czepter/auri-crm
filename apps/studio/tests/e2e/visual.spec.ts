@@ -51,6 +51,8 @@ const ROUTES = [
   '/einstellungen?pane=documents',
   '/einstellungen?pane=email',
   '/einstellungen?pane=general',
+  '/auth/mfa/enroll',
+  '/auth/mfa/recovery-codes',
   '/einstellungen/aufgabenvorlagen',
   '/einstellungen/benachrichtigungen',
   '/einstellungen/fragebogen-vorlagen',
@@ -77,6 +79,21 @@ test.use({ viewport: { width: 1440, height: 900 }, locale: 'de-DE' })
 test.setTimeout(10 * 60 * 1000)
 
 test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
+  // Before signing in: the two auth screens reachable without a session. They
+  // share a shell with six more that need a token or a challenge to reach.
+  for (const [route, name] of [
+    ['/login', 'login'],
+    ['/passwort/vergessen', 'passwort-vergessen'],
+  ] as const) {
+    await page.goto(route)
+    await page.waitForLoadState('networkidle')
+    await page.waitForFunction(() => document.fonts.status === 'loaded')
+    await expect.soft(page).toHaveScreenshot(`${name}.png`, {
+      fullPage: true,
+      animations: 'disabled',
+    })
+  }
+
   await arrive(page)
 
   for (const route of ROUTES) {

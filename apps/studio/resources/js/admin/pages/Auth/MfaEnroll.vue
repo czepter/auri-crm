@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { Field } from '@/ui/field'
+import AuthLayout from '@/admin/layouts/AuthLayout.vue'
 import { useForm } from '@inertiajs/vue3'
 import { toDataURL } from 'qrcode'
 import { ref, watchEffect } from 'vue'
@@ -24,51 +26,47 @@ function submit() {
 </script>
 
 <template>
-  <div class="authwrap">
-    <div class="authcard" style="max-width: 400px">
-      <span class="brand">{{ $page.props.brand }}</span>
-      <h1>{{ $t('auth.mfaEnrollTitle') }}</h1>
-      <p class="hint">{{ $t('auth.mfaEnrollRequired') }}</p>
+  <AuthLayout :title="$t('auth.mfaEnrollTitle')" width="max-w-[400px]">
+    <p class="text-[11.5px] leading-[1.45] text-faint">{{ $t('auth.mfaEnrollRequired') }}</p>
 
-      <img
-        v-if="qrCodeDataUrl"
-        :src="qrCodeDataUrl"
-        :alt="$t('auth.mfaQrAlt')"
-        style="display: block; margin: 0 auto var(--s4); width: 220px; height: 220px; border: 1px solid var(--line); border-radius: var(--r)"
-      />
+    <img
+      v-if="qrCodeDataUrl"
+      :src="qrCodeDataUrl"
+      :alt="$t('auth.mfaQrAlt')"
+      style="display: block; margin: 0 auto var(--s4); width: 220px; height: 220px; border: 1px solid var(--line); border-radius: var(--r)"
+    />
 
-      <details style="margin-bottom: var(--s5)">
-        <Button as="summary" variant="ghost" class="cursor-pointer py-0">
-          {{ $t('auth.mfaSecretLabel') }}
-        </Button>
-        <code
-          class="panel"
-          style="display: block; margin-top: var(--s2); padding: 9px 11px; font-family: ui-monospace, monospace; font-size: 13px; letter-spacing: .12em"
-        >
-          {{ secret }}
-        </code>
-      </details>
+    <details style="margin-bottom: var(--s5)">
+      <Button as="summary" variant="ghost" class="cursor-pointer py-0">
+        {{ $t('auth.mfaSecretLabel') }}
+      </Button>
+      <code
+        class="panel"
+        style="display: block; margin-top: var(--s2); padding: 9px 11px; font-family: ui-monospace, monospace; font-size: 13px; letter-spacing: .12em"
+      >
+        {{ secret }}
+      </code>
+    </details>
 
-      <form @submit.prevent="submit">
-        <p v-if="form.errors.code" class="flag" style="margin-bottom: var(--s4)">
-          {{ form.errors.code }}
-        </p>
+    <form @submit.prevent="submit">
+      <p v-if="form.errors.code" class="flag" style="margin-bottom: var(--s4)">
+        {{ form.errors.code }}
+      </p>
 
-        <div class="fld grp">
-          <Label for="code">{{ $t('auth.mfaCode') }}</Label>
-          <Input
-            id="code"
-            v-model="form.code" class="tabular-nums"
-            type="text"
-            inputmode="numeric"
-            autocomplete="one-time-code"
-            required />
-        </div>
+      <Field class="mb-6">
+        <Label for="code">{{ $t('auth.mfaCode') }}</Label>
+        <Input
+          id="code"
+          v-model="form.code" class="tabular-nums"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          required />
+      </Field>
 
-        <Button type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
-          {{ $t('auth.mfaConfirm') }}
-        </Button>
-      </form>
-    </div>
-  </div>
+      <Button type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
+        {{ $t('auth.mfaConfirm') }}
+      </Button>
+    </form>
+  </AuthLayout>
 </template>
