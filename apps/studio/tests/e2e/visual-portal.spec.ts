@@ -49,14 +49,21 @@ async function enterPreview(page: Page): Promise<void> {
   // became a booking, whose portal home then has no project to open.
   // Read the href and navigate, rather than click: the row links on /projekte
   // report no bounding box, so an actionability check never settles.
+  // Sorted, not first: both lists order by something that moves with the data,
+  // so "the first row" is a different record from one week to the next.
+  const lowest = async (prefix: string) => {
+    const hrefs = await page
+      .locator(`a[href^="${prefix}"]:not([href$="/neu"])`)
+      .evaluateAll((nodes) => nodes.map((n) => (n as HTMLAnchorElement).getAttribute('href') ?? ''))
+    return [...new Set(hrefs)].sort()[0]
+  }
+
   await page.goto('/projekte')
   await settle(page)
-  const project = await page.locator('a[href^="/auftraege/"]').first().getAttribute('href')
-  await page.goto(project!)
+  await page.goto(await lowest('/auftraege/'))
   await settle(page)
 
-  const contact = await page.locator('a[href^="/kontakte/"]').first().getAttribute('href')
-  await page.goto(contact!)
+  await page.goto(await lowest('/kontakte/'))
   await settle(page)
 
   await page.getByRole('button', { name: 'Vorschau als Kunde' }).click()
