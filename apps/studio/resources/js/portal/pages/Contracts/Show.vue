@@ -2,7 +2,9 @@
 import { onBeforeUnmount, watch } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
+import PortalField from '@/portal/components/PortalField.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
@@ -71,14 +73,14 @@ function sign() {
 <template>
   <PortalHeader :contact="contact" :show-switcher="showSwitcher" />
 
-  <main class="pwrap wide">
+  <PortalWrap wide>
     <h1>{{ $t('portal.contractTitle') }}</h1>
 
-    <div v-if="contract" class="split" style="margin-top: var(--s5)">
+    <div v-if="contract" class="mt-8 grid grid-cols-[minmax(0,1fr)_352px] items-stretch gap-11">
       <div>
-        <div class="pdoc">
-          <div class="pdochead">
-            <span class="kick">
+        <div class="overflow-hidden rounded-md border border-border">
+          <div class="flex items-center gap-5 border-b border-border px-8 py-5 [&_[data-slot=button]]:ml-auto [&_[data-slot=button]]:p-0">
+            <span class="text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">
               {{ $t('portal.contractTemplate', { name: contract.templateName, version: contract.templateVersion }) }}
             </span>
             <Button v-if="contract.downloadUrl" as="a" variant="ghost" :href="contract.downloadUrl" download>
@@ -87,9 +89,9 @@ function sign() {
             </Button>
           </div>
 
-          <div class="pdocscroll">
+          <div class="h-[74vh] bg-[#FDFCFB] [&_iframe]:block [&_iframe]:size-full [&_iframe]:border-0">
             <iframe v-if="contract.downloadUrl" :src="contract.downloadUrl" :title="$t('portal.contractTitle')" />
-            <p v-else class="pdocwait">{{ $t('portal.contractPending') }}</p>
+            <p v-else class="px-8 py-16 text-center text-[14px] leading-[1.5] font-normal text-muted-foreground">{{ $t('portal.contractPending') }}</p>
           </div>
         </div>
       </div>
@@ -100,33 +102,38 @@ function sign() {
            already happened (a recorded signature is shown regardless of the
            switch's current state; it is a fact, not an offered action). -->
       <div v-if="contract.downloadUrl && (contract.signature || canSign)">
-        <div class="prail">
-          <div class="card static sig">
-            <div class="cardhead"><span class="kick">{{ $t('portal.signTitle') }}</span></div>
+        <div class="sticky top-5 flex max-h-[calc(100vh-20px-44px)] flex-col gap-5 overflow-y-auto">
+          <div class="relative block cursor-default rounded-md border border-line-hover p-5 text-inherit no-underline">
+            <div class="mb-3.5 flex items-center justify-between">
+              <span class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">
+                {{ $t('portal.signTitle') }}
+              </span>
+            </div>
 
-            <p v-if="contract.signature" class="legal">
+            <p v-if="contract.signature" class="mt-5 text-[12.5px] leading-[1.6] font-normal text-muted-foreground">
               {{ $t('portal.signedConfirmation', { name: contract.signature.typedName }) }}
             </p>
 
             <form v-else @submit.prevent="sign">
-              <Label class="field">
-                <span>{{ $t('portal.signName') }}</span>
+              <PortalField
+                class="mb-3.5"
+                :label="$t('portal.signName')"
+                :hint="$t('portal.signNameHint')"
+              >
                 <Input v-model="form.typedName" type="text" required maxlength="255" />
-                <em>{{ $t('portal.signNameHint') }}</em>
-              </Label>
+              </PortalField>
 
               <!-- not a <Label> wrapper any more: Checkbox renders a button,
                    and a button inside a label is not clickable through it -->
-              <div class="consent">
+              <div class="flex cursor-pointer items-start gap-3.5 text-[13.5px] leading-[1.5] font-normal [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action">
                 <Checkbox id="sign-consent" v-model="form.consent" required />
                 <Label for="sign-consent">{{ $t('portal.signConsent') }}</Label>
               </div>
 
               <Button
-                class="wide"
+                class="wide mt-8"
                 type="submit"
                 :disabled="form.processing || !form.consent || !form.typedName"
-                style="margin-top: var(--s5)"
               >
                 <svg viewBox="0 0 24 24">
                   <path d="M3 20h18" />
@@ -141,12 +148,12 @@ function sign() {
       </div>
     </div>
 
-    <p v-else class="hint">{{ $t('portal.contractNone') }}</p>
+    <p v-else class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('portal.contractNone') }}</p>
 
     <!-- ponytail: mockup 07 also shows a "Noch eine Frage?" card with a hardcoded
          studio phone number under the document. Skipped — no tenant contact info
          is modelled or exposed to this page yet; add once a story surfaces it. -->
-  </main>
+  </PortalWrap>
 
   <PortalFooter />
 </template>
