@@ -14,7 +14,7 @@
 import { chromium } from '@playwright/test'
 
 const ROUTE = process.argv[2]
-if (!ROUTE) throw new Error('usage: node cascade.mjs <route> [--anon] [--portal] [--click <name>]')
+if (!ROUTE) throw new Error('usage: node cascade.mjs <route> [--anon] [--portal] [--as <route>] [--click <name>] [--fill <placeholder> <value>]')
 
 /* Routes that exist for someone without a session — the sign-in screens — have
    to be read without one, or the dev login lands on the dashboard instead. */
@@ -24,6 +24,16 @@ const ANON = process.argv.includes('--anon')
    --click <name> presses one button by its accessible name first. */
 const CLICK = (() => {
   const i = process.argv.indexOf('--click')
+  return i === -1 ? null : process.argv[i + 1]
+})()
+
+/* --as <route>: the portal route that decides which preview to keep. Contact-
+   scoped screens — the mailbox, the account — render for every client, so
+   "the first session that reaches /nachrichten" is whichever contact came
+   first, not the one with a conversation on it. Naming a project route here
+   picks the session by what it can see. */
+const AS = (() => {
+  const i = process.argv.indexOf('--as')
   return i === -1 ? null : process.argv[i + 1]
 })()
 
@@ -92,9 +102,13 @@ if (SURFACE === PORTAL) {
 
       await preview.click()
       await page.waitForURL(`${PORTAL}/**`)
-      await page.goto(PORTAL + ROUTE)
+      await page.goto(PORTAL + (AS ?? ROUTE))
       await page.waitForLoadState('networkidle')
       if ((await page.locator('header').count()) > 0) {
+        if (AS) {
+          await page.goto(PORTAL + ROUTE)
+          await page.waitForLoadState('networkidle')
+        }
         reached = true
         break
       }

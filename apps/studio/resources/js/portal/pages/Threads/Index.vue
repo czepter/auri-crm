@@ -56,84 +56,95 @@ function shortDate(iso: string) {
 }
 
 const form = computed(() => (props.openThread === null || composing.value ? started : reply))
+
+/* portal.css `.mbox .ref` — the line that names the booking a thread is
+   about. Twice on the screen, once per list row and once over the
+   conversation, and both take .ref.none when there is no booking to name. */
+const REF = 'mt-1.5 inline-block text-[11px] leading-none font-medium tracking-[0.04em] text-muted-foreground'
 </script>
 
 <template>
   <PortalHeader :contact="contact" :show-switcher="showSwitcher" />
 
-  <main class="pwrap wide">
+  <main class="mx-auto max-w-[1060px] px-8 pt-11 pb-16">
     <h1>{{ $t('portal.messagesTitle') }}</h1>
 
     <!-- No list until there is something to list: an empty 300px rail beside
          a lone compose box is a hole, not a layout. -->
-    <div class="mbox" :class="{ single: !threads.length }" style="margin-top: var(--s5)">
+    <div
+      class="mt-8 grid items-start gap-11"
+      :class="threads.length ? 'min-[980px]:grid-cols-[300px_minmax(0,1fr)]' : 'max-w-[620px]'"
+    >
       <aside v-if="threads.length">
-        <div class="threads">
+        <div class="border-t border-border">
           <Link
             v-for="row in threads"
             :key="row.id"
-            :class="{ on: openThread?.id === row.id && !composing }"
+            class="block border-b border-border py-5 text-foreground no-underline hover:bg-muted"
+            :class="
+              openThread?.id === row.id && !composing && 'pl-3.5 shadow-[inset_2px_0_0_var(--accent)]'
+            "
             :href="`/nachrichten?faden=${row.id}`"
             preserve-scroll
             @click="composing = false"
           >
-            <span class="line">
-              <b>{{ row.subject }}</b>
-              <span class="ago">{{ shortDate(row.lastAt) }}</span>
+            <span class="flex items-baseline gap-3.5">
+              <b class="flex-1 text-[14px] leading-[1.35] font-semibold">{{ row.subject }}</b>
+              <span class="text-[11.5px] leading-none font-normal whitespace-nowrap tabular-nums text-faint">{{ shortDate(row.lastAt) }}</span>
             </span>
-            <div v-if="row.snippet" class="snippet">{{ row.snippet }}</div>
-            <span class="ref" :class="{ none: !row.reference }">
+            <div v-if="row.snippet" class="mt-[3px] line-clamp-2 text-[13px] leading-[1.5] font-normal text-muted-foreground">{{ row.snippet }}</div>
+            <span :class="[REF, !row.reference && 'text-faint']">
               {{ row.reference ?? $t('portal.messagesNoBooking') }}
             </span>
           </Link>
         </div>
 
-        <Button variant="ghost" type="button" style="margin-top: var(--s4)" @click="composing = true">
+        <Button variant="ghost" type="button" class="mt-5" @click="composing = true">
           {{ $t('portal.messagesNew') }}
         </Button>
       </aside>
 
       <div>
         <template v-if="openThread && !composing">
-          <div class="convohead">
-            <h2>{{ openThread.subject }}</h2>
-            <span class="ref" :class="{ none: !openReference }">
+          <div class="border-b border-border pb-5">
+            <h2 class="m-0 text-[20px] leading-[1.3] font-bold tracking-[-0.02em]">{{ openThread.subject }}</h2>
+            <span :class="[REF, !openReference && 'text-faint']">
               {{ openReference ?? $t('portal.messagesNoBooking') }}
             </span>
           </div>
 
-          <div class="msgs">
-            <div
-              v-for="message in openThread.messages"
-              :key="message.id"
-              class="mailmsg"
-              :class="{ mine: !message.fromStaff }"
-            >
-              <div class="meta">{{ message.author }} · {{ longDateTime(message.sentAt) }}</div>
-              <div class="text">{{ message.body }}</div>
+          <div class="flex flex-col gap-8 py-8">
+            <div v-for="message in openThread.messages" :key="message.id">
+              <div class="my-1.5 flex flex-col gap-[3px] text-[11.5px] leading-none font-medium tabular-nums text-faint">{{ message.author }} · {{ longDateTime(message.sentAt) }}</div>
+              <div
+                class="text-[14.5px] leading-[1.65] font-normal whitespace-pre-wrap"
+                :class="!message.fromStaff && 'border-l-2 border-border pl-5'"
+              >
+                {{ message.body }}
+              </div>
             </div>
           </div>
         </template>
 
-        <form class="compose" @submit.prevent="send">
+        <form class="rounded-md border border-border p-5 [&_textarea]:min-h-24" @submit.prevent="send">
           <template v-if="!openThread || composing">
             <Input
               v-model="started.subject"
               type="text"
-              style="margin-bottom: var(--s3)"
+              class="mb-3.5"
               :placeholder="$t('portal.messagesSubjectPlaceholder')"
             />
-            <p v-if="started.errors.subject" class="err">{{ started.errors.subject }}</p>
+            <p v-if="started.errors.subject" class="text-[11.5px] leading-[1.45] text-destructive">{{ started.errors.subject }}</p>
           </template>
 
           <Textarea v-model="form.body" :placeholder="$t('portal.messagesBodyPlaceholder')" />
-          <p v-if="form.errors.body" class="err">{{ form.errors.body }}</p>
+          <p v-if="form.errors.body" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.body }}</p>
 
-          <div class="composefoot">
+          <div class="mt-3.5 flex flex-wrap items-center gap-5 [&_[data-slot=button]]:ml-auto">
             <!-- Optional, never required. A client writing out of a booking
                  arrives with it preselected; everyone else sends "Allgemein"
                  and the studio files it later. -->
-            <label v-if="(!openThread || composing) && bookings.length" class="about">
+            <label v-if="(!openThread || composing) && bookings.length" class="flex items-center gap-3.5 text-[12px] leading-none font-medium text-muted-foreground">
               {{ $t('portal.messagesAbout') }}
               <Select v-model="started.project">
                 <SelectTrigger><SelectValue :placeholder="$t('portal.messagesNoBooking')" /></SelectTrigger>
