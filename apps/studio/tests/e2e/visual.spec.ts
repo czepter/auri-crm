@@ -87,16 +87,40 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     })
   }
 
+  // Detail screens carry the heaviest markup in the admin — Projects/Show
+  // alone holds 116 of the semantic classes. Their ids come from the lists
+  // rather than from a fixture, and the href is read rather than clicked: the
+  // row links report no bounding box, so an actionability check never settles.
+  for (const [list, prefix, name] of [
+    ['/projekte', '/auftraege/', 'auftrag'],
+    ['/anfragen', '/anfragen/', 'anfrage'],
+    ['/kontakte', '/kontakte/', 'kontakt'],
+  ] as const) {
+    await page.goto(list)
+    await page.waitForLoadState('networkidle')
+    const href = await page.locator(`a[href^="${prefix}"]`).first().getAttribute('href')
+    if (!href || href === list) {
+      console.log(`OHNE BASELINE: ${name} — nichts unter ${prefix} verlinkt`)
+      continue
+    }
+    await page.goto(href)
+    await page.waitForLoadState('networkidle')
+    await page.waitForFunction(() => document.fonts.status === 'loaded')
+    await expect.soft(page).toHaveScreenshot(`${name}.png`, {
+      fullPage: true,
+      animations: 'disabled',
+    })
+  }
+
   // The palette is closed on every screen above, so it needs its own frame.
+  // Its rows carry relative times, computed in the browser against Date.now()
+  // — frozen here, because a mask would not help: the column is content-width
+  // and "vor 8 Minuten" is narrower than "vor 12 Minuten".
+  await page.clock.setFixedTime(new Date('2026-08-19T12:00:00Z'))
   await page.goto('/')
   await page.waitForLoadState('networkidle')
   await page.waitForFunction(() => document.fonts.status === 'loaded')
   await page.getByRole('button', { name: 'Suchen' }).click()
   await expect(page.locator('dialog[open]')).toBeVisible()
-  await expect.soft(page).toHaveScreenshot('palette.png', {
-    animations: 'disabled',
-    // "vor 8 Minuten" ages between runs; it is the one thing in this frame
-    // that moves on its own.
-    mask: [page.locator('dialog[open] a > span:last-child')],
-  })
+  await expect.soft(page).toHaveScreenshot('palette.png', { animations: 'disabled' })
 })
