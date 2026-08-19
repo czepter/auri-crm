@@ -38,22 +38,41 @@ watch(branding, applyAccent)
 </script>
 
 <template>
-  <div v-if="preview" class="previewbar">
+  <div
+    v-if="preview"
+    class="flex items-center justify-center gap-5 border-b border-border bg-due-bg px-8 py-[9px] text-[12.5px] leading-none font-medium text-due"
+  >
     <span>{{ $t('portal.previewBanner') }}</span>
-    <a href="/vorschau-beenden">{{ $t('portal.previewLeave') }}</a>
+    <a class="text-due underline" href="/vorschau-beenden">{{ $t('portal.previewLeave') }}</a>
   </div>
 
-  <header class="phead">
-    <div class="pbar">
-      <span class="pmark">
-        <img v-if="branding?.logoUrl" :src="branding.logoUrl" alt="" style="height: 22px; width: auto" />
-        <i v-else />
+  <header class="border-b border-border">
+    <div class="mx-auto flex max-w-[1060px] items-center gap-5 px-8 py-5">
+      <span class="flex items-baseline gap-2.25 text-[19px] leading-[1.1] font-bold tracking-[-0.035em] text-foreground">
+        <img v-if="branding?.logoUrl" :src="branding.logoUrl" alt="" class="h-[22px] w-auto" />
+        <i v-else class="size-[7px] flex-none rounded-full bg-action" />
         <template v-if="branding?.displayName">{{ branding.displayName }}</template>
       </span>
-      <div v-if="contact" class="pme">
-        <Link v-if="showSwitcher" href="/">{{ $t('portal.allProjects') }}</Link>
-        <span>{{ $t('portal.signedInAs') }} <b>{{ contact.name }}</b></span>
-        <Button variant="ghost" type="button" @click="router.post('/abmelden')">
+      <div
+        v-if="contact"
+        class="ml-auto flex items-center gap-5 text-[13px] leading-none font-normal text-muted-foreground"
+      >
+        <Link
+          v-if="showSwitcher"
+          class="inline-flex items-center gap-1.5 text-muted-foreground no-underline hover:text-foreground"
+          href="/"
+        >
+          {{ $t('portal.allProjects') }}
+        </Link>
+        <span>{{ $t('portal.signedInAs') }} <b class="font-semibold text-foreground">{{ contact.name }}</b></span>
+        <!-- The ghost button is a shade heavier and a shade padded than the
+             row it stands in; .pme used to flatten both. -->
+        <Button
+          class="gap-1.5 py-0 font-normal [&_svg]:opacity-100"
+          variant="ghost"
+          type="button"
+          @click="router.post('/abmelden')"
+        >
           <svg viewBox="0 0 24 24">
             <path d="M15 17l5-5-5-5" />
             <path d="M20 12H9" />

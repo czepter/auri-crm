@@ -14,12 +14,14 @@ const legal = computed(() => usePage().props.portalLegal as Legal | undefined)
 </script>
 
 <template>
-  <footer class="pfoot">
+  <footer
+    class="mx-auto flex max-w-[740px] flex-wrap gap-5 px-8 pb-11 text-[12.5px] leading-none font-normal text-faint"
+  >
     <span v-if="branding?.displayName">{{ branding.displayName }}</span>
-    <a :href="legal?.impressumUrl ?? '/impressum'">{{ $t('portal.footerImpressum') }}</a>
-    <a v-if="legal?.datenschutzUrl" :href="legal.datenschutzUrl" target="_blank" rel="noopener">
+    <a class="text-faint no-underline hover:text-muted-foreground" :href="legal?.impressumUrl ?? '/impressum'">{{ $t('portal.footerImpressum') }}</a>
+    <a v-if="legal?.datenschutzUrl" class="text-faint no-underline hover:text-muted-foreground" :href="legal.datenschutzUrl" target="_blank" rel="noopener">
       {{ $t('portal.footerDatenschutz') }}
     </a>
-    <a v-if="legal?.agbUrl" :href="legal.agbUrl" target="_blank" rel="noopener">{{ $t('portal.footerAgb') }}</a>
+    <a v-if="legal?.agbUrl" class="text-faint no-underline hover:text-muted-foreground" :href="legal.agbUrl" target="_blank" rel="noopener">{{ $t('portal.footerAgb') }}</a>
   </footer>
 </template>
