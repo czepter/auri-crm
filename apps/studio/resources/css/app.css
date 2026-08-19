@@ -64,6 +64,7 @@
   --color-sunk: var(--sunk);
   --color-sunk-2: var(--sunk-2);
   --color-ink-2: var(--ink-2);
+  --color-mark: var(--mark);
   --color-rule: var(--rule);
 
   /* The semantic three and their grounds. --late already answers to
