@@ -130,89 +130,137 @@ function time(iso: string) {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
   })
 }
+
+/* gallery.css's lightbox block. Every svg carries the reset tokens.css would
+   have given it — data-tokens on the root switches that reset off, which is
+   the only way a stroke-width from here can win at all. */
+const SVG = '[&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]'
+const TXTBTN =
+  `inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-3.5 [&_svg]:stroke-[1.6] ${SVG}`
+const ACT =
+  `inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] ${SVG}`
+const ARROW =
+  `absolute top-1/2 grid size-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(255,255,255,.08)] text-foreground hover:bg-[rgba(255,255,255,.16)] max-[860px]:bg-[rgba(255,255,255,.14)] [&_svg]:size-5 [&_svg]:stroke-[1.6] ${SVG}`
+const LIST_MENU =
+  'z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]'
+const LIST_ROW =
+  'flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-[13px] leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]'
+/* tokens.css .who decides the face here too — gallery.css only lays the row out. */
+const WHO =
+  'mb-1 flex items-baseline gap-2 pr-[18px] text-[13.5px] leading-[1.35] font-semibold tracking-[-0.015em] [&_b]:text-[12.5px] [&_b]:leading-none [&_b]:font-semibold [&_b]:text-foreground [&_span]:text-[11.5px] [&_span]:leading-none [&_span]:font-normal [&_span]:tabular-nums [&_span]:text-faint'
 </script>
 
 <template>
-  <div v-if="asset" class="lb">
-    <header class="lbtop">
-      <button type="button" class="txtbtn" @click="open = null">
+  <!-- data-tokens: the svg reset in tokens.css is unlayered and would beat
+       every stroke-width here. Switched off, the reset's own defaults are
+       spelled out per class below. -->
+  <div v-if="asset" data-tokens class="fixed inset-0 z-50 flex flex-col bg-background">
+    <header class="flex items-center justify-between gap-5 px-8 py-5">
+      <button type="button" :class="TXTBTN" @click="open = null">
         <svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
         {{ $t('gallery.backToGrid') }}
       </button>
-      <span class="lbpos">{{ $t('gallery.position', { at: (open ?? 0) + 1, of: assets.length }) }}</span>
-      <button type="button" class="txtbtn" @click="open = null">
+      <span class="text-[12.5px] leading-none font-normal tabular-nums text-muted-foreground">{{ $t('gallery.position', { at: (open ?? 0) + 1, of: assets.length }) }}</span>
+      <button type="button" :class="TXTBTN" @click="open = null">
         {{ $t('common.close') }}
         <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg>
       </button>
     </header>
 
-    <div class="lbmain">
-      <div class="stage">
-        <button type="button" class="arrow prev" :title="$t('gallery.previous')" @click="step(-1)">
+    <div
+      class="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_300px] gap-8 px-8 max-[860px]:grid-cols-[minmax(0,1fr)] max-[860px]:grid-rows-[minmax(0,1fr)_auto]"
+    >
+      <!-- mt-5 is tokens.css .stage's own margin, which this stage never asked
+           for and has always had: two files spell the same name. -->
+      <div
+        class="relative mt-5 grid min-h-0 place-items-center [&>img]:block [&>img]:max-h-full [&>img]:max-w-full [&>img]:object-contain"
+      >
+        <button type="button" :class="[ARROW, 'left-0']" :title="$t('gallery.previous')" @click="step(-1)">
           <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
         <img :src="`${asset.src}?w=1600&fmt=jpeg`" :srcset="srcSet(asset)" sizes="72vw" alt="" />
-        <button type="button" class="arrow next" :title="$t('gallery.next')" @click="step(1)">
+        <button type="button" :class="[ARROW, 'right-0']" :title="$t('gallery.next')" @click="step(1)">
           <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></svg>
         </button>
       </div>
 
       <!-- At phone width this becomes a drawer under the picture: the
            actions stay in thumb reach without covering the photograph. -->
-      <aside class="rail">
-        <div class="acts">
+      <aside
+        class="flex min-h-0 flex-col gap-5 py-3.5 max-[860px]:max-h-[38svh] max-[860px]:border-t max-[860px]:border-border max-[860px]:pt-5"
+      >
+        <div class="flex flex-wrap items-start gap-8">
           <!-- A client sees their lists behind one button; a guest sees the
                heart. Same place, same gesture, one menu instead of a toggle. -->
-          <div v-if="lists?.length" class="actwrap">
-            <button type="button" class="act" :class="{ on: onLists.length }" @click="listsOpen = !listsOpen">
+          <div v-if="lists?.length" class="relative">
+            <button
+              type="button"
+              :class="[ACT, onLists.length && 'text-action [&_svg]:fill-current']"
+              @click="listsOpen = !listsOpen"
+            >
               <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
               {{ onLists.length ? $t('gallery.onLists', onLists.length) : $t('gallery.addToList') }}
             </button>
 
-            <div v-if="listsOpen" class="listmenu">
-              <label v-for="list in lists" :key="list.id">
+            <div v-if="listsOpen" :class="['absolute top-7 left-0', LIST_MENU]">
+              <label v-for="list in lists" :key="list.id" :class="LIST_ROW">
                 <input
                   type="checkbox"
+                  class="m-0 flex-none cursor-pointer accent-[var(--accent)]"
                   :checked="list.keys.includes(asset.key)"
                   @change="toggleList(list)"
                 />
                 {{ list.name ?? $t('gallery.heart') }}
-                <span class="n">{{ list.keys.length }}</span>
+                <span class="ml-auto text-[11.5px] tabular-nums text-muted-foreground">{{ list.keys.length }}</span>
               </label>
             </div>
           </div>
 
-          <button v-else type="button" class="act" :class="{ on: isFavorite }" @click="toggleFavorite">
+          <button
+            v-else
+            type="button"
+            :class="[ACT, isFavorite && 'text-action [&_svg]:fill-current']"
+            @click="toggleFavorite"
+          >
             <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
             {{ isFavorite ? $t('gallery.unfavorite') : $t('gallery.favorite') }}
           </button>
 
-          <a class="act" :href="`${base}/download`">
+          <a :class="ACT" :href="`${base}/download`">
             <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
             {{ $t('gallery.download') }}
           </a>
         </div>
 
-        <div class="cmts">
-          <div v-for="(comment, index) in forAsset" :key="index" class="cmt" :class="{ anon: !comment.own }">
-            <div class="who"><b>{{ comment.author }}</b><span>{{ time(comment.createdAt) }}</span></div>
-            <p>{{ comment.body }}</p>
+        <div class="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto">
+          <div v-for="(comment, index) in forAsset" :key="index">
+            <div :class="[WHO, !comment.own && '[&_b]:font-medium [&_b]:text-muted-foreground!']">
+              <b>{{ comment.author }}</b><span>{{ time(comment.createdAt) }}</span>
+            </div>
+            <p class="m-0 text-[13.5px] leading-[1.55] font-normal text-foreground">{{ comment.body }}</p>
           </div>
-          <p v-if="!forAsset.length" class="hint">{{ $t('gallery.noComments') }}</p>
+          <p v-if="!forAsset.length" class="mt-[9px] text-[12.5px] leading-[1.55] font-normal text-muted-foreground">
+            {{ $t('gallery.noComments') }}
+          </p>
         </div>
 
-        <form class="write" @submit.prevent="sendComment">
+        <form
+          class="[&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-line-hover [&_input]:bg-muted [&_input]:px-3 [&_input]:py-[11px] [&_input]:text-[13.5px] [&_input]:leading-[1.2] [&_input]:font-normal [&_input]:text-foreground"
+          @submit.prevent="sendComment"
+        >
           <input v-model="draft" type="text" :placeholder="$t('gallery.commentPlaceholder')" />
         </form>
       </aside>
     </div>
 
-    <nav class="strip">
+    <nav
+      class="flex gap-1.5 overflow-x-auto px-8 py-5 [&_button]:size-16 [&_button]:flex-none [&_button]:cursor-pointer [&_button]:overflow-hidden [&_button]:rounded-[var(--r-sm)] [&_button]:border-0 [&_button]:bg-none [&_button]:p-0 [&_button]:opacity-45 [&_img]:block [&_img]:size-full [&_img]:object-cover"
+    >
       <button
         v-for="(thumb, index) in assets"
         :key="thumb.key"
         type="button"
-        :class="{ on: index === open }"
+        :class="index === open && 'opacity-100!'"
         @click="open = index"
       >
         <img :src="`${thumb.src}?w=400&fmt=jpeg`" alt="" loading="lazy" />
