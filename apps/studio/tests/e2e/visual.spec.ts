@@ -54,6 +54,10 @@ const ROUTES = [
   '/einstellungen?pane=documents',
   '/einstellungen?pane=email',
   '/einstellungen?pane=general',
+  // Reachable whatever onboarding says: the gate sits on the routes after it,
+  // not on the wizard itself. /einrichtung, the first-run screen, needs a
+  // studio with no staff account at all and has no frame.
+  '/einrichtung/studio',
   '/auth/mfa/enroll',
   '/auth/mfa/recovery-codes',
   '/einstellungen/aufgabenvorlagen',
