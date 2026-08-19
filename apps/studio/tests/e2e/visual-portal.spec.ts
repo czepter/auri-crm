@@ -20,8 +20,18 @@ import { expect, test, type Page } from '@playwright/test'
 // match the wait nor share a session cookie with it.
 const PORTAL = process.env.PORTAL_URL ?? `http://localhost:${process.env.PORTAL_PORT ?? '8001'}`
 
-/** The one project E2eSeeder owns. Its portal is the inquiry screen. */
-const FIXTURE_PROJECT = 'Meier & Kowalski \u2014 Hochzeit'
+/*
+ * The two projects E2eSeeder owns, and the reason there are two: a booking
+ * and an inquiry are different screens, and every document screen hangs off
+ * the first while the details form only exists on the second.
+ *
+ * By name, not by public id — that is generated per database. Named at all,
+ * rather than discovered, because a fresh `migrate:fresh --seed=E2eSeeder`
+ * holds nothing else, and baselines taken off a developer's demo cast are
+ * baselines CI cannot reproduce.
+ */
+const BOOKING = 'E2E Buchung'
+const INQUIRY = 'Meier & Kowalski \u2014 Hochzeit'
 
 /** A client session: the project it was opened for, and whose it is. */
 type Session = { url: string; contact: string }
@@ -90,40 +100,24 @@ async function previewProject(page: Page, project: string): Promise<Session | nu
   return null
 }
 
-/** The admin hrefs of the projects whose row names, or does not name, the fixture. */
-async function projectsNamed(page: Page, fixture: boolean): Promise<string[]> {
+/** The admin href of the project whose row carries this name. */
+async function projectNamed(page: Page, name: string): Promise<string | undefined> {
   await page.goto('/projekte')
   await settle(page)
   const hrefs = await page.locator('a[href^="/auftraege/"]').evaluateAll(
-    (nodes, [name, want]) =>
+    (nodes, wanted) =>
       nodes
-        .filter((n) => ((n.closest('tr, li') ?? n).textContent?.includes(name) ?? false) === want)
+        .filter((n) => (n.closest('tr, li') ?? n).textContent?.includes(wanted))
         .map((n) => (n as HTMLAnchorElement).getAttribute('href') ?? ''),
-    [FIXTURE_PROJECT, fixture] as [string, boolean],
+    name,
   )
-  return [...new Set(hrefs)].sort()
+  return [...new Set(hrefs)].sort()[0]
 }
 
-/**
- * Admin dev-login, then the first booking whose portal is reachable.
- *
- * Not the fixture project: that one is an inquiry and is framed separately
- * below. Sorted, not first: the list orders by something that moves with the
- * data, so "the first row" is a different record from one week to the next.
- */
-async function enterPreview(page: Page): Promise<Session | null> {
-  await page.goto('/login')
-  await page.getByRole('button', { name: 'Dev-Login' }).click()
-  await expect(page).toHaveURL('/')
-
-  for (const project of await projectsNamed(page, false)) {
-    const session = await previewProject(page, project)
-    if (session !== null) {
-      return session
-    }
-  }
-
-  return null
+/** Admin dev-login, then a client session for one named project. */
+async function preview(page: Page, name: string): Promise<Session | null> {
+  const project = await projectNamed(page, name)
+  return project === undefined ? null : previewProject(page, project)
 }
 
 /** In-portal hrefs matching a prefix, deduplicated and ordered so names are stable. */
@@ -134,26 +128,20 @@ async function linksUnder(page: Page, prefix: string): Promise<string[]> {
   return [...new Set(hrefs.filter((h) => h.includes(prefix)))].sort()
 }
 
-/**
- * The fixture project's own portal, found by name — a public id is generated
- * per database. Nothing is reserved on it, which is the state
- * ProjectController renders Projects/Inquiry for.
- */
-async function previewFixture(page: Page): Promise<Session | null> {
-  const [project] = await projectsNamed(page, true)
-  return project === undefined ? null : previewProject(page, project)
-}
-
 test('Portal haelt seine Baselines', async ({ page }) => {
   // Both screens a client reaches without a session, framed before one
   // exists: /anmelden is behind `guest:portal` and would redirect away.
   await page.goto(`${PORTAL}/anmelden`)
   await shoot(page, 'anmelden')
 
-  const booking = await enterPreview(page)
+  await page.goto('/login')
+  await page.getByRole('button', { name: 'Dev-Login' }).click()
+  await expect(page).toHaveURL('/')
+
+  const booking = await preview(page, BOOKING)
 
   if (booking === null) {
-    console.log('OHNE BASELINE: alle — kein Kontakt mit einem freigegebenen Projekt')
+    console.log(`OHNE BASELINE: alle — ${BOOKING} nicht erreichbar`)
     return
   }
 
@@ -220,7 +208,7 @@ test('Portal haelt seine Baselines', async ({ page }) => {
     await shoot(page, 'abmelden')
   }
 
-  const inquiry = await previewFixture(page)
+  const inquiry = await preview(page, INQUIRY)
 
   if (inquiry !== null) {
     await shoot(page, 'anfrage')
@@ -240,13 +228,13 @@ test('Portal haelt seine Baselines', async ({ page }) => {
       await shoot(page, 'fragebogen')
     }
 
-    // The mailbox again, on the contact E2eSeeder gave a conversation to.
-    // /nachrichten above is the same screen with nothing on it, and its empty
-    // state has neither a thread list nor a conversation in it.
+    // The mailbox with nothing in it. /nachrichten above is the same screen
+    // on the contact E2eSeeder gave a conversation to, and the two share no
+    // element: one is a list beside a conversation, the other a compose box.
     await page.goto(`${PORTAL}/nachrichten`)
     await settle(page)
-    await shoot(page, 'nachrichten-faden')
+    await shoot(page, 'nachrichten-leer')
   } else {
-    console.log(`OHNE BASELINE: anfrage — ${FIXTURE_PROJECT} nicht erreichbar`)
+    console.log(`OHNE BASELINE: anfrage — ${INQUIRY} nicht erreichbar`)
   }
 })

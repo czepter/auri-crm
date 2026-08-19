@@ -7,6 +7,7 @@ use App\Catalog\Models\PackageItem;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootKind;
+use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\FormField;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
@@ -14,16 +15,24 @@ use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
+use App\Crm\Models\Job;
 use App\Crm\Models\Shoot;
+use App\Contracts\Enums\ContractStatus;
+use App\Contracts\Models\Contract;
+use App\Contracts\Models\ContractSignature;
+use App\Documents\Models\DocumentTemplate;
 use App\Engagement\Actions\PostMessage;
 use App\Engagement\Actions\StartThread;
 use App\Enums\StaffRole;
 use App\Models\User;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\PaymentPlan;
 use App\Quotes\Models\QuoteItem;
 use App\Settings\Models\StudioSettings;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -83,6 +92,7 @@ class E2eSeeder extends Seeder
 
         $this->seedOccupiedDate();
         $this->seedEditableRecords();
+        $this->seedBooking();
     }
 
     /**
@@ -182,6 +192,67 @@ class E2eSeeder extends Seeder
         if ($quote->wasRecentlyCreated) {
             QuoteItem::factory()->for($quote)->create();
         }
+
+    }
+
+    /**
+     * The booking the portal's document screens hang off: a quote that was
+     * sent, a contract that was signed, and a payment plan with something
+     * still open on it. None of the three screens renders without its record,
+     * and the inquiry above deliberately has none — that is what makes it an
+     * inquiry.
+     */
+    private function seedBooking(): void
+    {
+        $project = Project::firstOrCreate(
+            ['name' => 'E2E Buchung'],
+            ['type' => ProjectType::Wedding, 'portal_visible' => true],
+        );
+
+        if (! $project->wasRecentlyCreated) {
+            return;
+        }
+
+        $contact = Contact::create(['name' => 'E2E Kundin', 'email' => 'e2e-kundin@example.test']);
+        $project->attachContact($contact, ProjectContactRole::Primary);
+
+        Shoot::create([
+            'project_id' => $project->id,
+            'kind' => ShootKind::Wedding,
+            'date' => '2026-09-05',
+            'venue_name' => 'Hof Eggers',
+            'venue_city' => 'Winsen',
+            'is_primary' => true,
+            'status' => ShootStatus::Booked,
+        ]);
+
+        $quote = Quote::factory()->for($project)->create([
+            'status' => QuoteStatus::Sent,
+            'sent_at' => now(),
+            'net' => 440000,
+            'total' => 440000,
+        ]);
+        QuoteItem::factory()->for($quote)->create();
+
+        $contract = Contract::factory()->for($project)->create([
+            'contract_template_id' => DocumentTemplate::query()->firstOrFail()->id,
+            'status' => ContractStatus::Rendered,
+        ]);
+        ContractSignature::factory()->for($contract)->create(['contact_id' => $contact->id]);
+
+        $job = Job::factory()->for($project)->create(['booked_by_id' => User::query()->firstOrFail()->id]);
+
+        // In one transaction: the sum-matches-total trigger is deferred to
+        // commit, and a plan created outside one is checked while it still
+        // has no installments under it.
+        DB::transaction(function () use ($job) {
+            $plan = PaymentPlan::factory()->for($job)->create(['total' => 200000]);
+
+            PaymentInstallment::factory()->for($plan, 'plan')->count(2)->sequence(
+                ['sort_order' => 0, 'due_on' => now()->subWeek()->toDateString()],
+                ['sort_order' => 1, 'due_on' => now()->addMonths(2)->toDateString()],
+            )->create();
+        });
 
         $this->seedThread($project);
     }
