@@ -121,10 +121,16 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     ['/projekte', '/auftraege/', 'auftrag'],
     ['/anfragen', '/anfragen/', 'anfrage'],
     ['/kontakte', '/kontakte/', 'kontakt'],
+    ['/dokumentvorlagen', '/dokumentvorlagen/', 'dokumentvorlage'],
   ] as const) {
     await page.goto(list)
     await page.waitForLoadState('networkidle')
-    const href = await page.locator(`a[href^="${prefix}"]`).first().getAttribute('href')
+    // Sorted, not first: the lists order by date or by name, and both move
+    // as the data does. The lowest id is the same row on every run.
+    const hrefs = await page
+      .locator(`a[href^="${prefix}"]:not([href$="/neu"])`)
+      .evaluateAll((nodes) => nodes.map((n) => (n as HTMLAnchorElement).getAttribute('href') ?? ''))
+    const href = [...new Set(hrefs)].sort()[0]
     if (!href || href === list) {
       console.log(`OHNE BASELINE: ${name} — nichts unter ${prefix} verlinkt`)
       continue
@@ -181,8 +187,12 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
   await page.waitForFunction(() => document.fonts.status === 'loaded')
   await page.getByRole('button', { name: 'Suchen' }).click()
   await expect(page.locator('dialog[open]')).toBeVisible()
+  // The result list is this session's own recently-viewed items, so the walk
+  // above rewrites it. Masked rather than clipped away: the container's
+  // geometry is fixed, so the mask box does not move with its contents.
   await expect.soft(page).toHaveScreenshot('palette.png', {
     animations: 'disabled',
-    clip: { x: 440, y: 100, width: 440, height: 420 },
+    clip: { x: 440, y: 100, width: 560, height: 420 },
+    mask: [page.locator('dialog[open] > div')],
   })
 })
