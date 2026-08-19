@@ -1,6 +1,6 @@
 # Tailwind-only — Migration der eigenen Stylesheets
 
-Status: Phase 0, 1 und die Admin-Shell erledigt
+Status: 18 von 91 Dateien migriert, 319 von 2032 Klassenvorkommen
 Datum: 2026-08-19
 
 ## Ziel
@@ -80,6 +80,12 @@ Die drei nehmen migriertes Markup deshalb aus:
 
     svg:not(:where([data-tokens] svg)) { ... }
 
+Migriertes Markup markiert sich mit `data-tokens`. Wo eine Oberflaeche eine
+eigene Palette hat, traegt das Attribut ihren Namen (`data-tokens="crm"`); wo
+nicht, steht es ohne Wert (`<div data-tokens>`) und dient nur als Marke. Ein
+Screen braucht es nur, wenn er ein `h1` oder ein `svg` selbst setzen will —
+`Staff/Index` etwa will die globale Ueberschrift behalten und bleibt ohne.
+
 `:where()` ist dabei tragend: `:not()` erbt sonst die Spezifitaet seines
 Arguments, und ein blankes `:not([data-tokens] h1)` ueberholt
 `[data-theme="crm"] h1` — womit jede unportierte Seite ihre Ueberschrift
@@ -103,10 +109,14 @@ verschiedenen Werten — `:root` 4/6/10/16/24/32/48, `[data-theme="portal"]`
 Utility-Namen gerettet, und `p-5` hieße je nach Ort 24px, 32px oder 20px. Das
 ist genau das Problem, das die Migration beseitigen soll.
 
-Stattdessen Tailwinds eigene Skala. Alle drei Sätze liegen exakt auf dem
+Stattdessen Tailwinds eigene Skala. Alle drei Saetze liegen exakt auf dem
 4px-Raster (6px = `1.5`, 10px = `2.5`, 14px = `3.5`), es entsteht kein einziger
 arbitrary value. Die Umrechnung passiert beim Migrieren eines Screens, der
 Screenshot-Diff belegt sie.
+
+Die haeufigste Fehlerquelle dabei: dieselbe Nummer meint je Scope etwas
+anderes. `--s2` ist im Root 6px und im crm-Scope 8px. Wer die Skala aus dem
+Kopf einsetzt statt sie zu messen, ist um zwei Pixel daneben.
 
 **Farben dürfen kontextabhängig bleiben**, weil `bg-paper` "die Papierfarbe
 dieser Oberfläche" heißt und nicht ein Hex. Dafür ist `@theme inline` tragend:
@@ -140,6 +150,15 @@ für 23. Und jeder Screenshot wartet auf `document.fonts.status === 'loaded'`:
 `networkidle` landet sonst zwischen Fallback-Paint und Font-Swap, was die
 Marke in Instrument Serif um exakt 594 Pixel driften ließ.
 
+Stand: 36 Frames (32 Admin, 4 Portal). Drei Screens koennen keine bekommen,
+und der Test sagt es statt zu schweigen: `/nachrichten` im Portal antwortet
+404, weil der Kontakt Nachrichten abgeschaltet hat, und Projekt- und
+Galerieseiten erscheinen erst nach einer Freigabe.
+
+`tests/e2e/shots/cascade.mjs` liest die wirksamen Stile einer Route. Seit es
+das gibt, sitzt eine Portierung beim ersten Versuch — davor waren es drei
+Anlaeufe pro Screen.
+
 Portal- und Galerie-Baselines fehlen noch. Sie brauchen einen zweiten
 Playwright-Server (Portal läuft auf 8001 mit `APP_SURFACE=portal`) und den
 Magic-Link-Umweg über Mailpit, den `tests/e2e/shots/portal.mjs` bereits
@@ -156,6 +175,11 @@ beschreibt. Sie müssen vor Phase 2 stehen.
 | 4 | Portal: 18 Dateien | `portal.css` geloescht |
 | 5 | Galerie: `Gallery/Show`, `Gallery/Download`, `GalleryLightbox` | `gallery.css` geloescht (342 Zeilen) |
 | 6 | Auth-Seiten, Editoren, Reste | Sheets bis auf `:root` geloescht |
+
+47 Prozent der verbleibenden Arbeit (830 Vorkommen in 25 Dateien) liegen in
+Dateien mit unfestgeschriebener Arbeit — darunter `Projects/Show`,
+`Leads/Show`, `Posteingang`, `Uebersicht` und fuenf Einstellungsseiten. Sie
+bleiben liegen, bis diese Arbeit committet ist.
 
 Reihenfolge geaendert. Die Galerie sollte zuerst kommen, weil sie am
 kleinsten ist. Sie hat aber keine Baseline: Galerie- und Projektseiten
@@ -176,12 +200,12 @@ Kandidaten, alle in ≥3 Dateien:
 
 | Komponente | löst ab | Dateien | Vork. | zu schlichten |
 |---|---|---|---|---|
-| `<Field>` | `.fld` `.err` `.wide` | 37 | 308 | — |
+| `<Field>` | `.fld` `.err` `.wide` | 37 | 308 | erledigt, `ui/field` |
 | `<Group>` | `.grp` `.hint` | 42 | 175 | `.hint` 3× definiert |
 | `<PageHeader>` | `.hrow` `.kick` | 38 | 90 | je 2× definiert |
 | `<Section>` | `.dsec` `.dlab` | 18 | 79 | — |
 | `Button` (vorhanden) | `.btn` `.btn-2` | 10 | 32 | — |
-| `<AuthLayout>` | `.authwrap` `.authcard` `.brand` | 10 | 30 | — |
+| `<AuthLayout>` | `.authwrap` `.authcard` `.brand` | 10 | 30 | erledigt, 4 von 10 Schirmen |
 | `<FormFooter>` | `.formfoot` | 16 | 24 | 2× definiert |
 | `<Chip>` | `.chip` | 16 | 23 | 3× definiert |
 | `<PageWrap>` | `.pwrap` | 10 | 10 | — |
@@ -217,6 +241,15 @@ Phase 4 `<PageHeader>`, Phase 5 `<Field>` `<FormFooter>` `<LinkCard>`
 
 Die 204 Klassen aus genau einer Datei werden nie Komponente, sondern immer
 Inline-Utilities.
+
+### Offen: das Feld des Portals
+
+`portal.css .field` ist nicht dasselbe Muster wie `.fld`. Es umschliesst sein
+Steuerelement (`<Label class="field"><span>Beschriftung</span><Input/></Label>`)
+und stylt das `<input>` darin um — Breite, Polsterung, Rahmen, Radius. Ein
+migrierter Aufruf verliert diese Umstellung, weil das shadcn-`Input` dann seine
+eigenen Werte behaelt. Das ist eine zweite Feldkomponente, keine Variante der
+ersten, und sie gehoert entschieden, bevor die 18 Portalseiten drankommen.
 
 ### Zwei Aufräumentscheidungen
 
