@@ -149,10 +149,16 @@ function shortDate(iso: string) {
           <div class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-5">
             <a v-for="gallery in galleries" :key="gallery.id" class="text-foreground no-underline" :href="`/galerien/${gallery.id}`">
               <span class="mb-3.5 block aspect-4/3 overflow-hidden rounded-md bg-muted">
-                <img v-if="gallery.cover" :src="`${gallery.cover}?w=800&fmt=jpeg`" alt="" loading="lazy" />
+                <img
+                  v-if="gallery.cover"
+                  :src="`${gallery.cover}?w=800&fmt=jpeg`"
+                  alt=""
+                  loading="lazy"
+                  class="block size-full object-cover"
+                />
               </span>
-              <b>{{ gallery.title }}</b>
-              <span class="meta">
+              <b class="block text-[14px] leading-[1.3] font-semibold">{{ gallery.title }}</b>
+              <span class="mt-1.5 flex flex-col gap-[3px] text-[12px] leading-[1.4] font-normal tabular-nums text-muted-foreground">
                 {{ $t('portal.imageCount', gallery.count) }}
                 <template v-if="gallery.expiresAt">
                   · {{ $t('gallery.onlineUntil', { date: shortDate(gallery.expiresAt) }) }}
