@@ -107,7 +107,7 @@ function submit() {
                   </SelectContent>
                 </Select>
               </Field>
-              <div class="cbrow" style="grid-column: 1 / -1">
+              <div class="col-span-full flex items-center gap-2.5">
                 <Checkbox id="ft-active" v-model="form.is_active" />
                 <Label variant="inline" for="ft-active">{{ $t('formTemplates.activeField') }}</Label>
               </div>
