@@ -65,6 +65,14 @@
   --color-sunk-2: var(--sunk-2);
   --color-ink-2: var(--ink-2);
   --color-rule: var(--rule);
+
+  /* The semantic three and their grounds. --late already answers to
+     `destructive`; these two have no shadcn name at all. */
+  --color-ok: var(--ok);
+  --color-ok-bg: var(--ok-bg);
+  --color-due: var(--due);
+  --color-due-bg: var(--due-bg);
+  --color-late-bg: var(--late-bg);
 }
 
 @layer base {

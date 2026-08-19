@@ -55,7 +55,7 @@ function initials(name: string) {
 
 <template>
   <AdminLayout active="team">
-    <div class="hrow" style="margin-bottom: var(--s5)">
+    <div class="mb-6 flex items-center gap-4">
       <h1>{{ $t('team.title') }}</h1>
       <!-- Three fields and you are done — the page behind is the roster you
            are adding to, and it should still be there when you look up. -->
@@ -108,16 +108,16 @@ function initials(name: string) {
       </Dialog>
     </div>
 
-    <section v-if="invitations.length" class="dsec">
-      <div class="dlab">{{ $t('team.pending') }}</div>
-      <div class="panel">
-        <div v-for="invitation in invitations" :key="invitation.id" class="trow">
-          <span class="pavatar">{{ initials(invitation.name) }}</span>
-          <span class="pinfo">
-            <span class="pname">{{ invitation.name }}</span>
-            <span class="psub">{{ invitation.email }} · {{ invitation.roleLabel }}</span>
+    <section v-if="invitations.length" class="mt-8 first-of-type:mt-6">
+      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('team.pending') }}</div>
+      <div class="overflow-hidden rounded-lg border border-border">
+        <div v-for="invitation in invitations" :key="invitation.id" class="flex items-center gap-2.5 border-t border-border p-2.5 text-inherit no-underline transition-colors duration-[120ms] ease-out first:border-t-0 hover:bg-muted">
+          <span class="flex size-8 flex-none items-center justify-center rounded-full bg-muted text-[11px] leading-none font-semibold text-muted-foreground">{{ initials(invitation.name) }}</span>
+          <span class="min-w-0 flex-1">
+            <span class="block text-[13px] leading-[1.3] font-semibold">{{ invitation.name }}</span>
+            <span class="mt-px block text-[12px] leading-[1.3] font-normal text-muted-foreground">{{ invitation.email }} · {{ invitation.roleLabel }}</span>
           </span>
-          <span class="tdate">{{ $t('team.expires', { date: invitation.expiresOn }) }}</span>
+          <span class="flex-none text-[12px] tabular-nums text-faint">{{ $t('team.expires', { date: invitation.expiresOn }) }}</span>
           <AlertDialog>
             <AlertDialogTrigger as-child>
               <Button type="button" variant="outline" tone="accent">{{ $t('team.revoke') }}</Button>
@@ -136,19 +136,22 @@ function initials(name: string) {
       </div>
     </section>
 
-    <section class="dsec">
-      <div class="dlab">{{ $t('team.members') }}</div>
-      <div class="panel">
-        <div v-for="member in staff" :key="member.id" class="trow">
-          <span class="pavatar">{{ initials(member.name) }}</span>
-          <span class="pinfo">
-            <span class="pname">{{ member.name }}</span>
-            <span class="psub">{{ member.email }}</span>
+    <section class="mt-8 first-of-type:mt-6">
+      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('team.members') }}</div>
+      <div class="overflow-hidden rounded-lg border border-border">
+        <div v-for="member in staff" :key="member.id" class="flex items-center gap-2.5 border-t border-border p-2.5 text-inherit no-underline transition-colors duration-[120ms] ease-out first:border-t-0 hover:bg-muted">
+          <span class="flex size-8 flex-none items-center justify-center rounded-full bg-muted text-[11px] leading-none font-semibold text-muted-foreground">{{ initials(member.name) }}</span>
+          <span class="min-w-0 flex-1">
+            <span class="block text-[13px] leading-[1.3] font-semibold">{{ member.name }}</span>
+            <span class="mt-px block text-[12px] leading-[1.3] font-normal text-muted-foreground">{{ member.email }}</span>
           </span>
-          <span class="role">{{ member.roleLabel }}</span>
+          <span class="inline-flex items-center rounded-[5px] bg-muted px-2 py-[3px] text-[11px] leading-[1.4] font-medium whitespace-nowrap text-muted-foreground">{{ member.roleLabel }}</span>
           <!-- An account without the second factor cannot reach anything, so
                the list says so rather than looking complete. -->
-          <span class="chip" :class="member.mfaConfirmed ? 'done' : 'off'">
+          <span
+            class="flex-none rounded-[5px] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase"
+            :class="member.mfaConfirmed ? 'bg-ok-bg text-ok' : 'bg-muted text-faint'"
+          >
             {{ member.mfaConfirmed ? $t('team.mfaOn') : $t('team.mfaPending') }}
           </span>
         </div>
