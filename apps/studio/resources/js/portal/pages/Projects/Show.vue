@@ -90,40 +90,45 @@ const heroImage = computed(() => props.project.gallery?.strip[0] ?? null)
 <template>
   <PortalHeader :contact="contact" :show-switcher="showSwitcher" />
 
-  <header v-if="heroImage" class="hero">
-    <img :src="`${heroImage}?w=2400&fmt=jpeg`" alt="" />
-    <div class="herotext">
-      <div class="kick">{{ project.type }}</div>
-      <h1>{{ project.name }}</h1>
-      <p v-if="project.date || project.venue" class="meta">
+  <header v-if="heroImage" class="relative after:absolute after:inset-0 after:bg-[linear-gradient(0deg,rgba(20,16,14,0.72)_0%,rgba(20,16,14,0.15)_55%,rgba(20,16,14,0)_100%)] after:content-['']">
+    <img class="block h-[min(62vh,560px)] w-full object-cover" :src="`${heroImage}?w=2400&fmt=jpeg`" alt="" />
+    <div class="absolute inset-x-0 bottom-11 z-2 mx-auto max-w-[1060px] px-8 text-white">
+      <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint text-white/72">{{ project.type }}</div>
+      <h1 class="mt-1.5 text-[clamp(30px,5vw,46px)] text-white">{{ project.name }}</h1>
+      <p v-if="project.date || project.venue" class="mt-3.5 text-[14.5px] leading-[1.5] font-normal tabular-nums text-white/85">
         {{ [project.date ? longDate(project.date) : null, project.venue].filter(Boolean).join(' · ') }}
       </p>
     </div>
   </header>
 
-  <main class="pwrap wide">
+  <main class="mx-auto max-w-[1060px] px-8 pt-11 pb-16">
     <template v-if="!heroImage">
-      <div class="kick">{{ project.type }}</div>
+      <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ project.type }}</div>
       <h1>{{ project.name }}</h1>
     </template>
 
-    <p v-if="statement" class="statement" :style="heroImage ? '' : 'margin-top: var(--s5)'">
+    <p v-if="statement" class="m-0 text-[22px] leading-[1.45] font-normal tracking-[-0.02em]" :class="!heroImage && 'mt-8'">
       {{ statement === 'countdown' ? $t('portal.daysUntil', { days: daysLeft }) : $t(`portal.${statement}`) }}
     </p>
 
     <!-- The emotional core, and the one thing the old screen had no way in
          to at all. -->
-    <section v-if="project.gallery" class="psec" style="margin-top: var(--s6)">
-      <div class="strip">
-        <a v-for="src in project.gallery.strip" :key="src" :href="`/galerien/${project.gallery.id}`">
-          <img :src="`${src}?w=800&fmt=jpeg`" alt="" loading="lazy" />
+    <section v-if="project.gallery" class="mt-11 [&:not(:first-of-type)]:mt-11">
+      <div class="grid grid-cols-4 gap-3.5 max-[560px]:grid-cols-2">
+        <a
+          v-for="src in project.gallery.strip"
+          :key="src"
+          class="block aspect-square overflow-hidden rounded-md bg-muted"
+          :href="`/galerien/${project.gallery.id}`"
+        >
+          <img class="block size-full object-cover" :src="`${src}?w=800&fmt=jpeg`" alt="" loading="lazy" />
         </a>
       </div>
 
-      <div class="stripfoot">
+      <div class="mt-5 flex flex-wrap items-end justify-between gap-5">
         <div>
           <b>{{ project.gallery.title }}</b>
-          <div class="hint">
+          <div class="text-[11.5px] leading-[1.45] text-faint">
             {{ $t('portal.imageCount', project.gallery.count) }}
             <template v-if="project.gallery.expiresAt">
               · {{ $t('gallery.onlineUntil', { date: shortDate(project.gallery.expiresAt) }) }}
@@ -138,33 +143,36 @@ const heroImage = computed(() => props.project.gallery?.strip[0] ?? null)
       </div>
     </section>
 
-    <section v-if="project.shoots.length" class="psec">
-      <p class="lab">{{ $t('portal.shootsTitle') }}</p>
-      <div class="rail">
-        <div v-for="shoot in project.shoots" :key="shoot.id" class="shoot">
-          <div class="when">
-            <b>{{ shoot.date ? shortDate(shoot.date) : $t('portal.dateOpen') }}</b>
+    <section v-if="project.shoots.length" class="[&:not(:first-of-type)]:mt-11">
+      <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.shootsTitle') }}</p>
+      <div class="flex flex-col">
+        <div v-for="shoot in project.shoots" :key="shoot.id" class="flex items-center gap-5 border-b border-border py-5 max-[560px]:flex-wrap">
+          <div class="w-[150px] flex-none text-[12.5px] leading-[1.5] font-normal tabular-nums text-muted-foreground max-[560px]:w-full">
+            <!-- normal-nums: die font-Kurzschrift der abgeloesten Regel setzt
+                 font-variant-numeric zurueck, das tabular-nums des Elternteils
+                 gilt hier also nicht. -->
+            <b class="block text-[14px] leading-[1.3] font-semibold normal-nums text-foreground">{{ shoot.date ? shortDate(shoot.date) : $t('portal.dateOpen') }}</b>
             <template v-if="shoot.date">
               {{ [weekday(shoot.date), shoot.callTime].filter(Boolean).join(' · ') }}
             </template>
           </div>
           <div>
-            <div class="what">{{ shoot.title }}</div>
-            <div v-if="shoot.venue" class="where">{{ shoot.venue }}</div>
+            <div class="text-[14px] leading-[1.3] font-semibold">{{ shoot.title }}</div>
+            <div v-if="shoot.venue" class="mt-0.5 text-[12.5px] leading-[1.4] font-normal text-muted-foreground">{{ shoot.venue }}</div>
           </div>
-          <div class="state">{{ shoot.status }}</div>
+          <div class="ml-auto text-[12.5px] leading-[1.4] font-normal whitespace-nowrap text-muted-foreground">{{ shoot.status }}</div>
         </div>
       </div>
     </section>
 
     <!-- State in the row, not behind a click. Three grey text links before. -->
-    <section v-if="project.documents.length" class="psec">
-      <p class="lab">{{ $t('portal.documentsTitle') }}</p>
-      <div class="pend">
-        <a v-for="document in project.documents" :key="document.kind" :href="document.href">
+    <section v-if="project.documents.length" class="[&:not(:first-of-type)]:mt-11">
+      <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.documentsTitle') }}</p>
+      <div class="border-t border-border">
+        <a v-for="document in project.documents" :key="document.kind" class="flex items-center gap-5 border-b border-border py-5 text-foreground no-underline hover:bg-muted" :href="document.href">
           <span style="flex: 1">
-            <h3>{{ $t(`portal.document.${document.kind}`) }}</h3>
-            <div class="sub">
+            <h3 class="m-0 flex-1 text-[14px] leading-[1.3] font-semibold">{{ $t(`portal.document.${document.kind}`) }}</h3>
+            <div class="mt-0.5 text-[12.5px] leading-[1.4] font-normal text-muted-foreground">
               <template v-if="document.kind === 'payments'">
                 {{ document.settled ? $t('portal.allSettled') : $t('portal.dueOn', { date: shortDate(document.dueOn!) }) }}
               </template>
@@ -177,7 +185,7 @@ const heroImage = computed(() => props.project.gallery?.strip[0] ?? null)
               <template v-else>{{ $t('portal.messagesAbout') }} {{ project.name }}</template>
             </div>
           </span>
-          <span v-if="document.amount" class="amount">{{ formatEuros(document.amount) }}</span>
+          <span v-if="document.amount" class="text-[14px] leading-none font-semibold tabular-nums whitespace-nowrap">{{ formatEuros(document.amount) }}</span>
         </a>
       </div>
     </section>
@@ -185,17 +193,18 @@ const heroImage = computed(() => props.project.gallery?.strip[0] ?? null)
 
     <!-- P-03 (#222): the questionnaire the inquiry screen has always linked
          to and nobody could fill in. Absent until the studio shares one. -->
-    <section v-if="project.questionnaires.length" class="psec">
-      <p class="lab">{{ $t('portal.questionnairesTitle') }}</p>
-      <div class="pend">
+    <section v-if="project.questionnaires.length" class="[&:not(:first-of-type)]:mt-11">
+      <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.questionnairesTitle') }}</p>
+      <div class="border-t border-border">
         <a
           v-for="sheet in project.questionnaires"
           :key="sheet.id"
+          class="flex items-center gap-5 border-b border-border py-5 text-foreground no-underline hover:bg-muted"
           :href="`/projekte/${project.id}/fragebogen/${sheet.id}`"
         >
           <span style="flex: 1">
-            <h3>{{ sheet.name }}</h3>
-            <div class="sub">
+            <h3 class="m-0 flex-1 text-[14px] leading-[1.3] font-semibold">{{ sheet.name }}</h3>
+            <div class="mt-0.5 text-[12.5px] leading-[1.4] font-normal text-muted-foreground">
               {{ sheet.openCount
                 ? $t('portal.questionsOpen', { open: sheet.openCount, total: sheet.count })
                 : $t('portal.questionsDone') }}
@@ -208,36 +217,36 @@ const heroImage = computed(() => props.project.gallery?.strip[0] ?? null)
     <!-- The same details the inquiry let them edit, read-only now: from
          `gebucht` the date and the place are contract content. In their
          place stands the way a change gets discussed. -->
-    <section class="psec">
-      <p class="lab">{{ $t('portal.notedTitle') }}</p>
-      <dl class="facts">
-        <dt>{{ $t('portal.appointment') }}</dt>
-        <dd class="num">
+    <section class="[&:not(:first-of-type)]:mt-11">
+      <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.notedTitle') }}</p>
+      <dl class="m-0 grid grid-cols-[150px_minmax(0,1fr)] gap-x-5 gap-y-3.5 text-[14px] leading-[1.55] font-normal max-[560px]:grid-cols-[minmax(0,1fr)] max-[560px]:gap-x-5 max-[560px]:gap-y-0.5">
+        <dt class="text-muted-foreground">{{ $t('portal.appointment') }}</dt>
+        <dd class="m-0 tabular-nums max-[560px]:mb-3.5">
           {{ project.details.date ? longDate(project.details.date) : $t('portal.dateOpen') }}
           <template v-if="project.details.callTime"> · {{ project.details.callTime }}</template>
         </dd>
-        <dt>{{ $t('portal.place') }}</dt>
-        <dd>{{ project.details.venue ?? '—' }}</dd>
-        <dt>{{ $t('portal.reachUs') }}</dt>
-        <dd>
+        <dt class="text-muted-foreground">{{ $t('portal.place') }}</dt>
+        <dd class="m-0 max-[560px]:mb-3.5">{{ project.details.venue ?? '—' }}</dd>
+        <dt class="text-muted-foreground">{{ $t('portal.reachUs') }}</dt>
+        <dd class="m-0 max-[560px]:mb-3.5">
           {{ [project.details.email, project.details.phone].filter(Boolean).join(' · ') }}
           <Link href="/einstellungen">{{ $t('common.edit').toLowerCase() }}</Link>
         </dd>
       </dl>
 
-      <p v-if="studio.messagingEnabled" class="lockednote">
-        <svg viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0110 0v3M5 11h14v9H5z" /></svg>
+      <p v-if="studio.messagingEnabled" class="mt-8 flex items-center gap-2 text-[13px] leading-[1.5] font-normal text-muted-foreground">
+        <svg class="size-3.5 flex-none fill-none stroke-current stroke-[1.6]" viewBox="0 0 24 24"><path d="M7 11V8a5 5 0 0110 0v3M5 11h14v9H5z" /></svg>
         <a :href="`/nachrichten?betrifft=${project.id}`">{{ $t('portal.requestChange') }}</a>
       </p>
     </section>
 
-    <section class="psec">
-      <p class="lab">{{ $t('portal.contactTitle') }}</p>
-      <div class="person">
-        <span class="av">{{ initials(studio.name) }}</span>
+    <section class="[&:not(:first-of-type)]:mt-11">
+      <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.contactTitle') }}</p>
+      <div class="flex items-center gap-3.5">
+        <span class="grid size-[38px] flex-none place-items-center rounded-full bg-[var(--accent-bg)] text-[12.5px] leading-none font-semibold text-action">{{ initials(studio.name) }}</span>
         <span>
-          <b>{{ studio.name }}</b>
-          <a v-if="studio.messagingEnabled" class="role" :href="`/nachrichten?betrifft=${project.id}`">
+          <b class="block text-[14px] leading-[1.3] font-semibold">{{ studio.name }}</b>
+          <a v-if="studio.messagingEnabled" class="text-[12px] leading-[1.4] font-normal text-muted-foreground" :href="`/nachrichten?betrifft=${project.id}`">
             {{ $t('portal.messagesLinkTitle') }}
           </a>
         </span>
