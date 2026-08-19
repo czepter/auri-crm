@@ -208,29 +208,32 @@ Stand dieser Sitzung:
 | Blocker | betrifft |
 |---|---|
 | unfestgeschriebene Arbeit in 25 Dateien | 830 Vorkommen |
-| keine freigegebene Galerie mit Bildern | `Gallery/Show` 44, `Gallery/Download` 41, `GalleryLightbox` 27 |
 | Wartungsschalter an heisst jede andere Route 503 | `Maintenance` 3 |
-| Token oder frischer Studiozustand noetig | sechs Auth-Schirme |
+| kein frischer Studiozustand | `Setup` 11, `Onboarding` 4 |
 
-Aufgeloest seit dem letzten Stand: `portal.css .field` ist `PortalField`
-geworden (Verhalten erhalten heisst zweite Komponente, nicht eine
-zusammengelegte); Paket, Fragebogen-Vorlage, Fragebogen-Instanz und
-Entwurfsangebot legt `E2eSeeder` an; die vier Portalschalter stehen dort
-jetzt auf an; und statt „nichts freigegeben" besitzt der Seeder zwei eigene
-Projekte — eine Anfrage und eine Buchung mit gesendetem Angebot,
-unterschriebenem Vertrag und Zahlplan.
+Das Portal ist fertig, bis auf `Maintenance`. Die Galerie hat jetzt echte
+Bytes: `GalleryImageController` rechnet jede Variante aus dem Original auf
+der s3-Platte und antwortet ohne eines 404, also legt `E2eSeeder` sechs
+einfarbige JPEGs an — ein Foto waere huebscher, und die Baseline haenge dann
+an der Version eines JPEG-Encoders.
 
-Damit haengt kein Portalframe mehr an den Demodaten eines Entwicklers. Das
-war vorher der stille Fehler: `migrate:fresh --seed=E2eSeeder` legt genau
-diese Fixtures an und sonst nichts, die Baselines waren auf einem CI-Lauf
-also gar nicht reproduzierbar.
+Vier der sechs Auth-Schirme sind auch durch: der Passwortlink rendert mit
+jedem Token, die Einladung braucht ein echtes und bekommt es vom Seeder, die
+MFA-Abfrage steht am Ende des Laufs, weil sie die Sitzung kostet, und die
+OAuth-Freigabe ist nur eine Frage der richtigen Query. Setup und Onboarding
+bleiben: `E2eSeeder` setzt `onboarding_completed_at`, und ohne das ist die
+ganze uebrige Oberflaeche eine Weiterleitung.
 
-Teilweise abgedeckt, migriert wird trotzdem: `Payments/Show` (9 von 29
-Klassen im Bild — Bankblock und Stripe-Spalte brauchen ausgefuellte
-Studioeinstellungen), `Contracts/Show` (das eingebettete Dokument ist 404,
-weil kein Artefakt gerendert wurde), `Questionnaire` (Auswahlfeld,
-Ja/Nein-Zeile und Fehlermeldung: das Fixture hat ein Feld, und es ist ein
-Textfeld).
+Kein Portalframe haengt mehr an den Demodaten eines Entwicklers. Das war
+vorher der stille Fehler: `migrate:fresh --seed=E2eSeeder` legt genau die
+Fixtures an und sonst nichts, die Baselines waren auf einem CI-Lauf also gar
+nicht reproduzierbar.
+
+Teilweise abgedeckt, migriert wird trotzdem: `Payments/Show` (Bankblock und
+Stripe-Spalte brauchen ausgefuellte Studioeinstellungen), `Contracts/Show`
+(das eingebettete Dokument ist 404, weil kein Artefakt gerendert wurde),
+`Questionnaire` (Auswahlfeld, Ja/Nein-Zeile und Fehlermeldung: das Fixture hat
+ein Feld, und es ist ein Textfeld).
 
 Offen und nicht blockiert ist nur `ContactTypeahead`: die Trefferzeilen sitzen
 nach der Korrektur exakt, ein Pixel in der Zeile „als neuen Kontakt anlegen"
@@ -316,6 +319,21 @@ CLI-Aufruf holt die shadcn-Variante zurück, falls sie gebraucht wird.
 
 `.btn`/`.btn-2` gehen auf das vorhandene `Button` — 55 Dateien nutzen es
 bereits, die zehn übrigen sind Nachzügler.
+
+## Namenskollisionen
+
+Vier Klassen heissen in zwei Sheets gleich, und die zweite Regel gewinnt
+still. Alle vier haben Pixel gekostet:
+
+| Name | erwartet aus | trifft ausserdem |
+|---|---|---|
+| `.block` | gallery.css (Abschnitt) | Tailwinds eigene `block`-Utility |
+| `.stage` | gallery.css (Bildbuehne) | tokens.css, 20px Rand nach oben |
+| `.who` | gallery.css (Kopfzeile) | tokens.css, Schrift und 18px rechts |
+| `.where` | portal.css `.pend` | portal.css `.rail`, spaeter und damit staerker |
+
+Die ersten drei bleiben erhalten, wie sie heute aussehen; `.rail .where` war
+die richtige Regel und stand nur nicht in der Datei, in der man sie sucht.
 
 ## §6 Mockups
 
