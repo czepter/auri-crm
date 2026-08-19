@@ -161,6 +161,16 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
       fullPage: true,
       animations: 'disabled',
     })
+
+    // Four more tabs behind the first, all client state.
+    for (const tab of ['Gestaltung', 'Download', 'Freigaben', 'Aktivität']) {
+      await page.getByRole('button', { name: tab, exact: true }).click()
+      await page.waitForFunction(() => document.fonts.status === 'loaded')
+      await expect.soft(page).toHaveScreenshot(`galerie-${tab.toLowerCase()}.png`, {
+        fullPage: true,
+        animations: 'disabled',
+      })
+    }
   } else {
     console.log('OHNE BASELINE: galerie-datensatz — keine Galerie verlinkt')
   }
