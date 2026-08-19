@@ -60,6 +60,7 @@ const ROUTES = [
   '/einstellungen/benachrichtigungen',
   '/einstellungen/fragebogen-vorlagen',
   '/einstellungen/fragebogen-vorlagen/neu',
+  '/einstellungen/kalender',
   '/einstellungen/nummernkreise',
   '/einstellungen/portal',
   '/einstellungen/verfuegbarkeit',
