@@ -113,14 +113,17 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
   }
 
   // The palette is closed on every screen above, so it needs its own frame.
-  // Its rows carry relative times, computed in the browser against Date.now()
-  // — frozen here, because a mask would not help: the column is content-width
-  // and "vor 8 Minuten" is narrower than "vor 12 Minuten".
-  await page.clock.setFixedTime(new Date('2026-08-19T12:00:00Z'))
+  // Clipped to everything left of the time column: the rows are this session's
+  // own recently-viewed list, so the walk above keeps rewriting the timestamps
+  // it shows. A mask does not help — the column is content-width, and "vor 8
+  // Minuten" is narrower than "vor 12 Minuten".
   await page.goto('/')
   await page.waitForLoadState('networkidle')
   await page.waitForFunction(() => document.fonts.status === 'loaded')
   await page.getByRole('button', { name: 'Suchen' }).click()
   await expect(page.locator('dialog[open]')).toBeVisible()
-  await expect.soft(page).toHaveScreenshot('palette.png', { animations: 'disabled' })
+  await expect.soft(page).toHaveScreenshot('palette.png', {
+    animations: 'disabled',
+    clip: { x: 440, y: 100, width: 440, height: 420 },
+  })
 })
