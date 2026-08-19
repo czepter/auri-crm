@@ -14,11 +14,18 @@
 import { chromium } from '@playwright/test'
 
 const ROUTE = process.argv[2]
-if (!ROUTE) throw new Error('usage: node cascade.mjs <route> [--anon] [--portal]')
+if (!ROUTE) throw new Error('usage: node cascade.mjs <route> [--anon] [--portal] [--click <name>]')
 
 /* Routes that exist for someone without a session — the sign-in screens — have
    to be read without one, or the dev login lands on the dashboard instead. */
 const ANON = process.argv.includes('--anon')
+
+/* Some states are not routes: a list view held in a ref, a dialog, a menu.
+   --click <name> presses one button by its accessible name first. */
+const CLICK = (() => {
+  const i = process.argv.indexOf('--click')
+  return i === -1 ? null : process.argv[i + 1]
+})()
 
 const ADMIN = process.env.ADMIN_URL ?? 'http://127.0.0.1:8000'
 
@@ -63,6 +70,11 @@ if (SURFACE === PORTAL) {
 }
 await page.goto(SURFACE + ROUTE)
 await page.waitForLoadState('networkidle')
+
+if (CLICK) {
+  await page.getByRole('button', { name: CLICK, exact: true }).click()
+  await page.waitForLoadState('networkidle')
+}
 
 const rows = await page.evaluate((PROPS) => {
   /* A class is "legacy" when a hand-written sheet declares it. Tailwind's own

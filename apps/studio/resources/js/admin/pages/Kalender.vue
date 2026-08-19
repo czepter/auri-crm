@@ -68,75 +68,116 @@ function shortDate(date: string | null) {
 
 <template>
   <AdminLayout active="kalender">
-    <div data-theme="crm">
-      <div class="hrow">
+    <div data-tokens="crm">
+      <div class="flex items-center gap-3 px-8 pt-[22px]">
         <div>
-          <div class="kick">{{ label }}</div>
-          <h1>{{ $t('calendar.title') }}</h1>
+          <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.05em] uppercase text-ink-2">{{ label }}</div>
+          <h1 class="mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em]">{{ $t('calendar.title') }}</h1>
         </div>
 
-        <span class="seg" style="margin-left: auto">
-          <button type="button" :class="{ on: view === 'monat' }" @click="view = 'monat'">
-            {{ $t('calendar.viewMonth') }}
-          </button>
-          <button type="button" :class="{ on: view === 'liste' }" @click="view = 'liste'">
-            {{ $t('calendar.viewList') }}
+        <span class="ml-auto flex rounded-lg bg-sunk-2 p-0.5">
+          <button
+            v-for="option in (['monat', 'liste'] as const)"
+            :key="option"
+            class="cursor-pointer rounded-[6px] border-0 bg-transparent px-3.5 py-1 text-[12.5px] leading-[1.4] text-foreground transition-colors duration-[120ms] ease-out"
+            :class="view === option ? 'bg-paper font-medium' : 'font-normal'"
+            type="button"
+            @click="view = option"
+          >
+            {{ option === 'monat' ? $t('calendar.viewMonth') : $t('calendar.viewList') }}
           </button>
         </span>
 
-        <button class="btn-2" type="button" @click="go(previous)">←</button>
-        <button class="btn-2" type="button" @click="go(next)">→</button>
+        <button
+          v-for="step in ([['←', previous], ['→', next]] as const)"
+          :key="step[0]"
+          class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-sunk-2 px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-[filter,background] duration-[120ms] ease-out hover:bg-[#E9E9EC]"
+          type="button"
+          @click="go(step[1])"
+        >
+          {{ step[0] }}
+        </button>
       </div>
 
-      <div v-if="view === 'monat'" class="cal" style="padding: var(--s5) var(--s7)">
-        <div v-for="weekday in WEEKDAYS" :key="weekday" class="dow">{{ weekday }}</div>
+      <div v-if="view === 'monat'" class="grid grid-cols-7 px-8 py-5">
+        <div
+          v-for="weekday in WEEKDAYS"
+          :key="weekday"
+          class="pb-2 pl-0.5 text-[10.5px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2"
+        >
+          {{ weekday }}
+        </div>
 
         <div
           v-for="day in days"
           :key="day.date"
-          class="day"
-          :class="{ pale: !day.inMonth, today: day.today }"
+          class="min-h-[104px] px-2 pt-2 pb-2.5 shadow-[inset_0_1px_0_var(--rule),inset_1px_0_0_var(--rule)] [&:nth-child(7n+1)]:shadow-[inset_0_1px_0_var(--rule)]"
         >
-          <span class="n">{{ dayNumber(day.date) }}</span>
+          <span
+            class="text-[12.5px] tabular-nums"
+            :class="day.today
+              ? 'inline-block min-w-5 rounded-full bg-foreground px-[5px] py-px text-center font-semibold text-paper'
+              : day.inMonth ? 'font-semibold' : 'font-normal text-ink-2'"
+          >
+            {{ dayNumber(day.date) }}
+          </span>
 
           <component
             :is="entry.projectId ? Link : 'span'"
             v-for="(entry, index) in entries(day)"
             :key="index"
-            class="e"
-            :class="entry.kind"
+            class="mt-[5px] block text-[11.5px] no-underline"
+            :class="{ hold: 'text-action', away: 'text-ink-2' }[entry.kind ?? ''] ?? 'text-inherit'"
             :href="entry.projectId ? `/auftraege/${entry.projectId}` : undefined"
           >
-            <span v-if="entry.time" class="tm">{{ entry.time }} </span>
+            <span
+              v-if="entry.time"
+              class="tabular-nums"
+              :class="entry.kind === 'away' ? 'font-normal' : 'font-semibold'"
+            >{{ entry.time }} </span>
             {{ entry.what }}
-            <span v-if="entry.who" class="who"> · {{ entry.who }}</span>
+            <!-- The measured values, not the ones crm.css .cal .e .who alone would
+                 suggest: a second .who rule reaches this span as well. -->
+            <span
+              v-if="entry.who"
+              class="pr-[18px] text-[13.5px] leading-[1.35] font-semibold tracking-[-0.015em] text-ink-2"
+            > · {{ entry.who }}</span>
           </component>
 
-          <span v-if="overflow(day)" class="e away">{{ $t('calendar.more', { count: overflow(day) }) }}</span>
+          <span v-if="overflow(day)" class="mt-[5px] block text-[11.5px] text-ink-2">
+            {{ $t('calendar.more', { count: overflow(day) }) }}
+          </span>
         </div>
       </div>
 
-      <table v-else style="margin-top: var(--s5)">
+      <table v-else class="mt-5 w-full border-collapse">
         <thead>
           <tr>
-            <th>{{ $t('calendar.colDate') }}</th>
-            <th>{{ $t('calendar.colWhat') }}</th>
-            <th>{{ $t('calendar.colVenue') }}</th>
-            <th>{{ $t('calendar.colCrew') }}</th>
-            <th>{{ $t('calendar.colStatus') }}</th>
+            <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('calendar.colDate') }}</th>
+            <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('calendar.colWhat') }}</th>
+            <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('calendar.colVenue') }}</th>
+            <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('calendar.colCrew') }}</th>
+            <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('calendar.colStatus') }}</th>
           </tr>
         </thead>
         <tbody>
           <template v-for="[key, rows] in groups" :key="key">
-            <tr><td class="grp" colspan="5">{{ $t(`calendar.group.${key}`) }}</td></tr>
-            <tr v-for="shoot in rows" :key="shoot.id">
-              <td>{{ shortDate(shoot.date) }}<template v-if="shoot.callTime"> {{ shoot.callTime }}</template></td>
-              <td class="nm">
+            <tr>
+              <td
+                class="bg-sunk px-8 pt-4 pb-1.5 align-baseline text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2"
+                colspan="5"
+              >
+                {{ $t(`calendar.group.${key}`) }}
+              </td>
+            </tr>
+            <tr v-for="shoot in rows" :key="shoot.id" class="[&:hover>td]:bg-sunk">
+              <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2]">{{ shortDate(shoot.date) }}<template v-if="shoot.callTime"> {{ shoot.callTime }}</template></td>
+              <td class="px-8 py-2.5 align-baseline shadow-[inset_0_1px_0_#F0F0F2] text-[13.5px] font-semibold tracking-[-0.014em]">
                 <Link :href="`/auftraege/${projects[shoot.id].id}`">{{ projects[shoot.id].name }}</Link>
               </td>
-              <td class="mu">{{ shoot.venue ?? '—' }}</td>
-              <td class="mu">{{ shoot.crew.map((member) => member.name).join(', ') || '—' }}</td>
-              <td :class="{ w: mine.includes(shoot.id) }">{{ shoot.statusLabel }}</td>
+              <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ shoot.venue ?? '—' }}</td>
+              <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ shoot.crew.map((member) => member.name).join(', ') || '—' }}</td>
+              <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2]" :class="mine.includes(shoot.id) && 'text-action'">{{ shoot.statusLabel }}</td>
             </tr>
           </template>
         </tbody>
