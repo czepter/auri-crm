@@ -28,7 +28,12 @@
  *    each state, as an `.on` class.
  */
 
-[data-theme="crm"] {
+/* Two attributes, one token set. `data-theme` still prefixes every rule below;
+   `data-tokens` carries nothing but these values. A screen that has moved to
+   Tailwind swaps one for the other and keeps the palette while the 476 rules
+   stop reaching it — including the five that anchor on a bare element
+   (h1, table, thead th, tbody td) and would otherwise still land. */
+[data-theme="crm"], [data-tokens="crm"] {
   /* System stack, not Instrument Sans: the admin is a surface that stands
      open all day, SF rasterises cleaner at 11–15px than any loaded family,
      and the foreign fetch — a GDPR finding on the portal — falls away. */
