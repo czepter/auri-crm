@@ -81,13 +81,13 @@ function answer(fieldId: string) {
   <AdminLayout active="anfragen">
     <ProjectHeader :header="header" active="forms" />
 
-    <span class="kick" style="margin-bottom: var(--s4)">{{ $t('formInstances.title') }}</span>
+    <span class="mb-4 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('formInstances.title') }}</span>
 
-    <div class="cols2">
-      <div class="stackcol">
-        <div v-for="instance in formInstances" :key="instance.id" class="card static">
-          <div class="cardhead">
-            <span class="kick">{{ instance.name }}</span>
+    <div class="grid grid-cols-2 items-start gap-4">
+      <div class="flex flex-col gap-6">
+        <div v-for="instance in formInstances" :key="instance.id" class="relative block cursor-default rounded-lg border border-border p-2.5">
+          <div class="mb-4 flex items-center justify-between">
+            <span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ instance.name }}</span>
             <!-- P-03 (#222): sharing is what makes this fillable in the
                  portal. Un-sharing hides the screen and deletes nothing —
                  form_answers is append-only and stays that way. -->
@@ -101,35 +101,35 @@ function answer(fieldId: string) {
             </Button>
           </div>
 
-          <p v-if="instance.sharedAt" class="hint">
+          <p v-if="instance.sharedAt" class="text-[11.5px] leading-[1.45] text-faint">
             {{ $t('formInstances.sharedAt', { date: new Date(instance.sharedAt).toLocaleDateString('de-DE') }) }}
           </p>
 
           <template v-if="header.canManageForms">
-            <div class="fld wide" style="margin-bottom: var(--s3)">
+            <div class="mb-2.5 flex min-w-0 flex-col gap-1.5">
               <Label :for="`form-name-${instance.id}`">{{ $t('formInstances.nameField') }}</Label>
               <Input :id="`form-name-${instance.id}`" v-model="editForms[instance.id].name" type="text" maxlength="255" />
             </div>
 
             <FormFieldsEditor v-model="editForms[instance.id].fields" :field-types="fieldTypes" />
 
-            <div class="formfoot">
+            <div class="mt-6 flex items-center gap-4">
               <Button type="button" :disabled="editForms[instance.id].processing" @click="save(instance.id)">
                 {{ $t('common.save') }}
               </Button>
             </div>
 
-            <div v-if="instance.fields.length" class="qa" style="margin-top: var(--s4)">
+            <div v-if="instance.fields.length" class="mt-4">
               <div v-for="field in instance.fields" :key="field.id">
-                <div class="q">{{ field.label }}</div>
-                <div class="fld wide">
+                <div class="text-[12.5px] leading-[1.35] text-muted-foreground">{{ field.label }}</div>
+                <div class="flex min-w-0 flex-col gap-1.5">
                   <Textarea v-model="answerForms[field.id].value" rows="2" />
                 </div>
-                <div class="formfoot" style="margin-top: var(--s2)">
+                <div class="mt-1.5 flex items-center gap-4">
                   <Button variant="outline" type="button" :disabled="answerForms[field.id].processing" @click="answer(field.id)">
                     {{ $t('formInstances.saveAnswer') }}
                   </Button>
-                  <span v-if="field.answeredAt" class="hint">
+                  <span v-if="field.answeredAt" class="text-[11.5px] leading-[1.45] text-faint">
                     {{ $t('formInstances.answeredAt', { date: new Date(field.answeredAt).toLocaleDateString('de-DE') }) }}
                   </span>
                 </div>
@@ -137,17 +137,17 @@ function answer(fieldId: string) {
             </div>
           </template>
 
-          <span v-if="instance.sourceTemplateName" class="hint">
+          <span v-if="instance.sourceTemplateName" class="text-[11.5px] leading-[1.45] text-faint">
             {{ $t('formInstances.seededFrom', { name: instance.sourceTemplateName }) }}
           </span>
         </div>
 
-        <div v-if="header.canManageForms" class="card static">
-          <div class="cardhead"><span class="kick">{{ $t('formInstances.create') }}</span></div>
-          <span class="lab" style="display: block; margin-bottom: var(--s2)">{{ $t('formInstances.fromTemplate') }}</span>
-          <div class="qpal">
+        <div v-if="header.canManageForms" class="relative block cursor-default rounded-lg border border-border p-2.5">
+          <div class="mb-4 flex items-center justify-between"><span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('formInstances.create') }}</span></div>
+          <span class="mb-1.5 block">{{ $t('formInstances.fromTemplate') }}</span>
+          <div class="flex flex-wrap gap-1.5">
             <Button as="a"
-              v-for="template in formTemplates"
+              class="px-[11px] py-1.5 text-[11.5px]" v-for="template in formTemplates"
               :key="template.value"
               href="#" variant="outline"
               @click.prevent="createFrom(template.value)"
@@ -155,14 +155,14 @@ function answer(fieldId: string) {
               {{ template.label }}
             </Button>
           </div>
-          <span class="lab" style="display: block; margin: var(--s4) 0 var(--s2)">{{ $t('formInstances.orBlank') }}</span>
-          <div class="qpal">
-            <Button as="a" href="#" variant="outline" tone="accent" @click.prevent="createFrom('')">{{ $t('formInstances.startBlank') }}</Button>
+          <span class="mt-4 mb-1.5 block">{{ $t('formInstances.orBlank') }}</span>
+          <div class="flex flex-wrap gap-1.5">
+            <Button as="a" class="px-[11px] py-1.5 text-[11.5px]" href="#" variant="outline" tone="accent" @click.prevent="createFrom('')">{{ $t('formInstances.startBlank') }}</Button>
           </div>
         </div>
       </div>
     </div>
 
-    <p v-if="!formInstances.length && !header.canManageForms" class="hint">{{ $t('formInstances.empty') }}</p>
+    <p v-if="!formInstances.length && !header.canManageForms" class="text-[11.5px] leading-[1.45] text-faint">{{ $t('formInstances.empty') }}</p>
   </AdminLayout>
 </template>
