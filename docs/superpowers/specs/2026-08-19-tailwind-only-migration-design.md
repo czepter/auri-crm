@@ -1,6 +1,6 @@
 # Tailwind-only — Migration der eigenen Stylesheets
 
-Status: 29 von 91 Dateien migriert, 630 von 2032 Klassenvorkommen
+Status: 31 von 91 Dateien migriert, 660 von 2032 Klassenvorkommen
 Datum: 2026-08-19
 
 ## Ziel
@@ -199,6 +199,27 @@ beschreibt. Sie müssen vor Phase 2 stehen.
 | 4 | Portal: 18 Dateien | `portal.css` geloescht |
 | 5 | Galerie: `Gallery/Show`, `Gallery/Download`, `GalleryLightbox` | `gallery.css` geloescht (342 Zeilen) |
 | 6 | Auth-Seiten, Editoren, Reste | Sheets bis auf `:root` geloescht |
+
+## Was den Rest blockiert
+
+Der Test meldet jede Luecke selbst (`OHNE BASELINE: …`). Vollstaendige Liste,
+Stand dieser Sitzung:
+
+| Blocker | betrifft |
+|---|---|
+| unfestgeschriebene Arbeit in 25 Dateien | 830 Vorkommen |
+| Entscheidung zu `portal.css .field` | 18 Portalseiten, ~300 Vorkommen |
+| kein Paket in den Daten | `Packages/Edit` |
+| keine Fragebogen-Vorlage | `Settings/FormTemplates/Edit` |
+| keine Fragebogen-Instanz | `FormFieldsEditor` |
+| kein Angebot im Entwurf | `QuoteItemsEditor` |
+| Portal-Nachrichten beim Testkontakt aus | `Threads/Index` |
+| nichts im Portal freigegeben | `Projects/Show`, `Gallery/*` im Portal |
+| Token oder frischer Studiozustand noetig | sechs Auth-Schirme |
+
+Offen und nicht blockiert ist nur `ContactTypeahead`: die Trefferzeilen sitzen
+nach der Korrektur exakt, ein Pixel in der Zeile „als neuen Kontakt anlegen"
+bleibt und verschiebt alles darunter.
 
 59 Prozent der verbleibenden Arbeit (830 Vorkommen in 25 Dateien) liegen in
 Dateien mit unfestgeschriebener Arbeit — darunter `Projects/Show`,

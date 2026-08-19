@@ -123,6 +123,7 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     ['/anfragen', '/anfragen/', 'anfrage'],
     ['/kontakte', '/kontakte/', 'kontakt'],
     ['/dokumentvorlagen', '/dokumentvorlagen/', 'dokumentvorlage'],
+    ['/pakete', '/pakete/', 'paket'],
     ['/einstellungen/fragebogen-vorlagen', '/einstellungen/fragebogen-vorlagen/', 'fragebogen'],
     // The admin has no gallery index — the dashboard is the only screen
     // that links one (the record is #254, the nav entry is not built).
@@ -148,7 +149,9 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
       animations: 'disabled',
     })
 
-    // A project carries five more screens under its own id.
+    // A project carries five more screens under its own id. The quote editor
+    // only renders where a quote exists, so that one screen is taken from the
+    // lowest project that has one rather than from this row.
     if (name === 'auftrag') {
       for (const sub of ['angebote', 'frageboegen', 'nachrichten', 'shootings', 'vertrag']) {
         await page.goto(`${href}/${sub}`)
@@ -160,6 +163,33 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
         })
       }
     }
+  }
+
+  // The quote editor, on a project that has a quote — the row above may not.
+  await page.goto('/projekte')
+  await page.waitForLoadState('networkidle')
+  const projects = await page
+    .locator('a[href^="/auftraege/"]')
+    .evaluateAll((nodes) => nodes.map((n) => (n as HTMLAnchorElement).getAttribute('href') ?? ''))
+  let quoted: string | null = null
+  // Bounded: the editor only shows for a draft, and walking every project to
+  // find one costs a page load each.
+  for (const project of [...new Set(projects)].sort().slice(0, 5)) {
+    await page.goto(`${project}/angebote`)
+    await page.waitForLoadState('networkidle')
+    if ((await page.locator('[data-slot="button"]').filter({ hasText: 'Position' }).count()) > 0) {
+      quoted = project
+      break
+    }
+  }
+  if (quoted) {
+    await page.waitForFunction(() => document.fonts.status === 'loaded')
+    await expect.soft(page).toHaveScreenshot('auftrag-angebot-editor.png', {
+      fullPage: true,
+      animations: 'disabled',
+    })
+  } else {
+    console.log('OHNE BASELINE: auftrag-angebot-editor — kein Angebot im Entwurf')
   }
 
   // The gallery record has no list of its own — the dashboard links the media
