@@ -15,21 +15,25 @@ function submit() {
 </script>
 
 <template>
-  <div class="pgate">
-    <span class="pmark" style="margin-bottom: var(--s6)">
-      <i />{{ $page.props.brand }}
+  <div data-tokens class="mx-auto max-w-[420px] px-8 py-16">
+    <span
+      class="mb-11 flex items-baseline gap-2.25 text-[19px] leading-[1.1] font-bold tracking-[-0.035em] text-foreground"
+    >
+      <i class="size-[7px] flex-none rounded-full bg-action" />{{ $page.props.brand }}
     </span>
 
-    <h1>{{ $t('portal.signInTitle') }}</h1>
+    <h1 class="mb-3.5 text-[24px] leading-none font-bold tracking-[-0.04em]">
+      {{ $t('portal.signInTitle') }}
+    </h1>
     <!-- No password, ever. The client proves an inbox and nothing else. -->
-    <p class="lede">{{ $t('portal.signInHint') }}</p>
+    <p class="mb-8 text-[14px] leading-[1.5] font-normal text-muted-foreground">{{ $t('portal.signInHint') }}</p>
 
     <!-- The same sentence whatever was typed: known address, unknown address
          or one that has asked too often. -->
-    <p v-if="status" class="sent">{{ status }}</p>
+    <p v-if="status" class="rounded-md border border-border bg-muted p-5 text-[14px] leading-[1.5] font-normal text-foreground">{{ status }}</p>
 
     <form v-else @submit.prevent="submit">
-      <div class="fld grp">
+      <div class="flex min-w-0 flex-col gap-1.5">
         <Label for="email">{{ $t('portal.email') }}</Label>
         <Input
           id="email"
@@ -38,7 +42,7 @@ function submit() {
           autocomplete="email"
           required
         />
-        <p v-if="form.errors.email" class="err">{{ form.errors.email }}</p>
+        <p v-if="form.errors.email" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.email }}</p>
       </div>
 
       <Button class="w-full justify-center" type="submit" :disabled="form.processing">

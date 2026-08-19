@@ -52,7 +52,7 @@ function errorFor(id: string) {
 
     <form class="mt-11" @submit.prevent="submit">
       <template v-for="field in questionnaire.fields" :key="field.id">
-        <div v-if="field.type === 'boolean'" class="mb-8">
+        <div v-if="field.type === 'boolean'">
           <label class="flex cursor-pointer items-start gap-3.5 text-[13.5px] leading-[1.5] font-normal [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action">
             <Checkbox
               :model-value="isChecked(field.id)"

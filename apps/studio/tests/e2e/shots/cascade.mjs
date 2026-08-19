@@ -75,7 +75,9 @@ if (!ANON) {
   await page.getByRole('button', { name: 'Dev-Login' }).click()
   await page.waitForURL(`${ADMIN}/`)
 }
-if (SURFACE === PORTAL) {
+// A portal route with no session of its own — the sign-in screen, the
+// unsubscribe link — is reached directly; there is nothing to preview as.
+if (SURFACE === PORTAL && !ANON) {
   await page.goto(`${ADMIN}/projekte`)
   await page.waitForLoadState('networkidle')
   const projects = await page

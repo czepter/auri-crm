@@ -23,13 +23,13 @@ function submit() {
 <template>
   <PortalHeader />
 
-  <main class="pwrap">
-    <div class="kick">{{ $t('portal.unsubscribeKicker') }}</div>
+  <main class="mx-auto max-w-[740px] px-8 pt-11 pb-16">
+    <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.unsubscribeKicker') }}</div>
     <h1>{{ $t('portal.unsubscribeTitle') }}</h1>
 
-    <p v-if="unsubscribed" class="lede">{{ $t('portal.unsubscribeDone') }}</p>
+    <p v-if="unsubscribed">{{ $t('portal.unsubscribeDone') }}</p>
     <template v-else>
-      <p class="lede">{{ $t('portal.unsubscribeHint') }}</p>
+      <p>{{ $t('portal.unsubscribeHint') }}</p>
       <form @submit.prevent="submit">
         <Button type="submit" :disabled="form.processing">
           {{ $t('portal.unsubscribeConfirm') }}
