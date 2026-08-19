@@ -76,6 +76,15 @@ const ROUTES = [
   '/verfuegbarkeit',
 ]
 
+/*
+ * Columns that carry a relative time ("vor 6 Tagen", "gestern"). They cross a
+ * boundary on their own, so the frame masks them; the cell's width comes from
+ * the column, not from its text, so the mask box stays put.
+ */
+const RELATIVE_TIME_CELLS: Record<string, string> = {
+  '/anfragen': 'tbody td:last-child',
+}
+
 test.use({ viewport: { width: 1440, height: 900 }, locale: 'de-DE' })
 
 // The config's 30s is sized for a spec that exercises one flow. This one walks
@@ -108,9 +117,11 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     // screen unlucky enough to be caught there.
     await page.waitForFunction(() => document.fonts.status === 'loaded')
     const name = route === '/' ? 'uebersicht' : route.slice(1).replace(/[/?=]/g, '--')
+    const volatile = RELATIVE_TIME_CELLS[route]
     await expect.soft(page).toHaveScreenshot(`${name}.png`, {
       fullPage: true,
       animations: 'disabled',
+      ...(volatile ? { mask: [page.locator(volatile)] } : {}),
     })
   }
 
