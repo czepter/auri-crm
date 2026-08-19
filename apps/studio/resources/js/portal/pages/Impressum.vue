@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalWrap from '@/portal/components/PortalWrap.vue'
 
 // § 5 TMG. Reads straight through StudioSettingsResolver's T-02 columns —
 // the same particulars RenderContractJob's `studio.*` merge fields already
@@ -28,7 +29,7 @@ defineProps<{
 <template>
   <PortalHeader />
 
-  <main class="mx-auto max-w-[740px] px-8 pt-11 pb-16">
+  <PortalWrap>
     <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.impressumTitle') }}</div>
     <h1 v-if="name">{{ name }}</h1>
 
@@ -52,7 +53,7 @@ defineProps<{
       </div>
       <div v-if="website" class="rounded-md bg-muted px-5 pt-3.5 pb-5"><div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('settings.website') }}</div><div class="mt-2.25 text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ website }}</div></div>
     </div>
-  </main>
+  </PortalWrap>
 
   <PortalFooter />
 </template>

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalWrap from '@/portal/components/PortalWrap.vue'
 import PortalPerson from '@/portal/components/PortalPerson.vue'
 import { Button } from '@/ui/button'
 import { formatEuros } from '@/admin/lib/money'
@@ -101,7 +102,7 @@ const heroImage = computed(() => props.project.gallery?.strip[0] ?? null)
     </div>
   </header>
 
-  <main class="mx-auto max-w-[1060px] px-8 pt-11 pb-16">
+  <PortalWrap wide>
     <template v-if="!heroImage">
       <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ project.type }}</div>
       <h1>{{ project.name }}</h1>
@@ -248,7 +249,7 @@ const heroImage = computed(() => props.project.gallery?.strip[0] ?? null)
         </a>
       </PortalPerson>
     </section>
-  </main>
+  </PortalWrap>
 
   <PortalFooter />
 </template>

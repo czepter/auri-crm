@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -66,7 +67,7 @@ const REF = 'mt-1.5 inline-block text-[11px] leading-none font-medium tracking-[
 <template>
   <PortalHeader :contact="contact" :show-switcher="showSwitcher" />
 
-  <main class="mx-auto max-w-[1060px] px-8 pt-11 pb-16">
+  <PortalWrap wide>
     <h1>{{ $t('portal.messagesTitle') }}</h1>
 
     <!-- No list until there is something to list: an empty 300px rail beside
@@ -162,7 +163,7 @@ const REF = 'mt-1.5 inline-block text-[11px] leading-none font-medium tracking-[
         </form>
       </div>
     </div>
-  </main>
+  </PortalWrap>
 
   <PortalFooter />
 </template>

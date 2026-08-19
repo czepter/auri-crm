@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalWrap from '@/portal/components/PortalWrap.vue'
 import PortalPerson from '@/portal/components/PortalPerson.vue'
 import { formatEuros } from '@/admin/lib/money'
 
@@ -81,7 +82,7 @@ function shortDate(iso: string) {
 <template>
   <PortalHeader :contact="contact" />
 
-  <main class="mx-auto max-w-[1060px] px-8 pt-11 pb-16">
+  <PortalWrap wide>
     <h1>{{ contact.name }}</h1>
     <p v-if="welcomeText" class="mt-5 max-w-[56ch] text-[16px] leading-[1.6] font-normal text-muted-foreground">{{ welcomeText }}</p>
 
@@ -203,7 +204,7 @@ function shortDate(iso: string) {
         </section>
       </div>
     </div>
-  </main>
+  </PortalWrap>
 
   <PortalFooter />
 </template>

@@ -3,6 +3,7 @@ import { router, useForm } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalField from '@/portal/components/PortalField.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
@@ -39,7 +40,7 @@ function requestDsgvo(kind: 'export' | 'erasure') {
 <template>
   <PortalHeader :contact="contact" />
 
-  <main class="mx-auto max-w-[740px] px-8 pt-11 pb-16">
+  <PortalWrap>
     <h1>{{ $t('portal.accountTitle') }}</h1>
 
     <!-- Always editable, whatever phase a booking is in: these are the
@@ -144,7 +145,7 @@ function requestDsgvo(kind: 'export' | 'erasure') {
         </div>
       </div>
     </section>
-  </main>
+  </PortalWrap>
 
   <PortalFooter />
 </template>

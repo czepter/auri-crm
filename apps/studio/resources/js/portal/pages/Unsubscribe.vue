@@ -2,6 +2,7 @@
 import { useForm } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { Button } from '@/ui/button'
 
 // T-11: reached from a link in a mail already delivered — see QuoteSent's
@@ -23,7 +24,7 @@ function submit() {
 <template>
   <PortalHeader />
 
-  <main class="mx-auto max-w-[740px] px-8 pt-11 pb-16">
+  <PortalWrap>
     <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.unsubscribeKicker') }}</div>
     <h1>{{ $t('portal.unsubscribeTitle') }}</h1>
 
@@ -36,7 +37,7 @@ function submit() {
         </Button>
       </form>
     </template>
-  </main>
+  </PortalWrap>
 
   <PortalFooter />
 </template>
