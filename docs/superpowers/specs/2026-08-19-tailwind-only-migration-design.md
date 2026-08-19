@@ -114,6 +114,13 @@ Stattdessen Tailwinds eigene Skala. Alle drei Saetze liegen exakt auf dem
 arbitrary value. Die Umrechnung passiert beim Migrieren eines Screens, der
 Screenshot-Diff belegt sie.
 
+Zweite Fehlerquelle, sechsmal aufgetreten: eine Klasse in der Basis und eine
+widersprechende in `:class`. `class="text-[13px]"` neben
+`:class="… 'text-[13.5px]'"` — welche gewinnt, entscheidet die Reihenfolge im
+erzeugten CSS, nicht die im Attribut. Beide stehen in derselben Layer. Solche
+Paare gehoeren gegenseitig ausschliessend geschrieben (`:class="a ? 'x' : 'y'"`)
+oder durch `cn()` geschickt.
+
 Die haeufigste Fehlerquelle dabei: dieselbe Nummer meint je Scope etwas
 anderes. `--s2` ist im Root 6px und im crm-Scope 8px. Wer die Skala aus dem
 Kopf einsetzt statt sie zu messen, ist um zwei Pixel daneben.
