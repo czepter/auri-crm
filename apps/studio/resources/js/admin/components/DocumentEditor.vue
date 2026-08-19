@@ -100,5 +100,5 @@ watch(
 </script>
 
 <template>
-  <div ref="holder" class="doc-canvas"></div>
+  <div ref="holder"></div>
 </template>
