@@ -86,4 +86,17 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
       animations: 'disabled',
     })
   }
+
+  // The palette is closed on every screen above, so it needs its own frame.
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  await page.waitForFunction(() => document.fonts.status === 'loaded')
+  await page.getByRole('button', { name: 'Suchen' }).click()
+  await expect(page.locator('dialog[open]')).toBeVisible()
+  await expect.soft(page).toHaveScreenshot('palette.png', {
+    animations: 'disabled',
+    // "vor 8 Minuten" ages between runs; it is the one thing in this frame
+    // that moves on its own.
+    mask: [page.locator('dialog[open] a > span:last-child')],
+  })
 })

@@ -67,36 +67,6 @@
   -webkit-font-smoothing: antialiased;
 }
 
-/* ---------- Command palette ---------- */
-[data-theme="crm"] dialog.palette, dialog.palette[data-theme="crm"] {
-  width: min(560px, calc(100vw - 48px)); padding: 0; border: 0; border-radius: var(--r);
-  background: var(--paper); color: var(--ink);
-  margin: 12vh auto auto;   /* upper third: the list grows downward, the eye stays */
-}
-[data-theme="crm"] dialog.palette::backdrop, dialog.palette[data-theme="crm"]::backdrop {
-  background: rgba(29, 29, 31, .28); backdrop-filter: blur(3px);
-}
-
-[data-theme="crm"] .palette .q {
-  display: block; width: 100%; padding: 18px 22px; border: 0; outline: 0; background: none;
-  font: 400 20px/1.3 var(--font); letter-spacing: -.022em; color: var(--ink);
-  box-shadow: inset 0 -1px 0 var(--rule);
-}
-[data-theme="crm"] .palette .q::placeholder { color: #B0B0B5; }
-[data-theme="crm"] .palette .results { max-height: 52vh; overflow: auto; padding: 6px 0 8px; }
-[data-theme="crm"] .palette .lab {
-  font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2);
-  padding: 12px 22px 4px;
-}
-[data-theme="crm"] .palette a {
-  display: flex; align-items: baseline; gap: 12px; padding: 8px 22px;
-  color: var(--ink); text-decoration: none;
-}
-[data-theme="crm"] .palette a:hover, [data-theme="crm"] .palette a:focus-visible { background: var(--sunk); outline: 0; }
-[data-theme="crm"] .palette a .kind { width: 62px; flex: none; font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
-[data-theme="crm"] .palette a .n { font-size: 14px; font-weight: 500; letter-spacing: -.014em; }
-[data-theme="crm"] .palette a .m { margin-left: auto; font-size: 11.5px; color: var(--ink-2); white-space: nowrap; }
-
 /* ---------- Head ---------- */
 
 [data-theme="crm"] .hrow { display: flex; align-items: center; gap: var(--s3); padding: 22px var(--s7) 0; }
