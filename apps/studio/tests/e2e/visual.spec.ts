@@ -123,6 +123,9 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     ['/kontakte', '/kontakte/', 'kontakt'],
     ['/dokumentvorlagen', '/dokumentvorlagen/', 'dokumentvorlage'],
     ['/einstellungen/fragebogen-vorlagen', '/einstellungen/fragebogen-vorlagen/', 'fragebogen'],
+    // The admin has no gallery index — the dashboard is the only screen
+    // that links one (the record is #254, the nav entry is not built).
+    ['/', '/galerien/', 'galerie-verwaltung'],
   ] as const) {
     await page.goto(list)
     await page.waitForLoadState('networkidle')
@@ -143,6 +146,23 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
       fullPage: true,
       animations: 'disabled',
     })
+  }
+
+  // The gallery record has no list of its own — the dashboard links the media
+  // screen under it, so the record's own route is derived from that id.
+  await page.goto('/')
+  await page.waitForLoadState('networkidle')
+  const media = await page.locator('a[href^="/galerien/"]').first().getAttribute('href')
+  if (media) {
+    await page.goto(media.split('/').slice(0, 3).join('/'))
+    await page.waitForLoadState('networkidle')
+    await page.waitForFunction(() => document.fonts.status === 'loaded')
+    await expect.soft(page).toHaveScreenshot('galerie-datensatz.png', {
+      fullPage: true,
+      animations: 'disabled',
+    })
+  } else {
+    console.log('OHNE BASELINE: galerie-datensatz — keine Galerie verlinkt')
   }
 
   // The item editor renders nothing until a row exists, so the card, its head
