@@ -51,11 +51,15 @@ async function settle(page: Page): Promise<void> {
    test's, and zeroing it would need a write the spec has no business making. */
 const VOLATILE = { galerie: 'dl.stats' } as Record<string, string>
 
+/* The lightbox is fixed to the viewport, so a full-page frame of it is the
+   grid it covers with one screen's worth of overlay on top. */
+const VIEWPORT_ONLY = new Set(['galerie-bild'])
+
 async function shoot(page: Page, name: string): Promise<void> {
   await settle(page)
   const volatile = VOLATILE[name]
   await expect.soft(page).toHaveScreenshot(`${name}.png`, {
-    fullPage: true,
+    fullPage: !VIEWPORT_ONLY.has(name),
     animations: 'disabled',
     ...(volatile ? { mask: [page.locator(volatile)] } : {}),
   })
@@ -196,8 +200,23 @@ test('Portal haelt seine Baselines', async ({ page }) => {
   if (gallery === undefined) {
     console.log('OHNE BASELINE: galerie — nichts unter /galerien/ freigegeben')
   } else {
-    await page.goto(gallery.startsWith('http') ? gallery : `${PORTAL}${gallery}`)
+    const url = gallery.startsWith('http') ? gallery : `${PORTAL}${gallery}`
+    await page.goto(url)
     await shoot(page, 'galerie')
+
+    // One picture, full-bleed. Not a route: the lightbox is a ref on the grid.
+    await page.locator('#raster .tile').first().click()
+    await shoot(page, 'galerie-bild')
+
+    // The download gate. Behind the view gate above, which this session has
+    // already cleared — see routes/portal.php.
+    await page.goto(`${url}/download`)
+    await settle(page)
+    if ((await page.locator('body > div').count()) === 0) {
+      console.log('OHNE BASELINE: galerie-download — kein Downloadschirm')
+    } else {
+      await shoot(page, 'galerie-download')
+    }
   }
 
   // A different contact, so it comes last: entering a preview replaces the
