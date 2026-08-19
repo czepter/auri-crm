@@ -75,8 +75,8 @@ defineExpose({ form, submit })
 
     <div class="mt-8 first-of-type:mt-6">
       <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.vatPreviewLabel') }}</div>
-      <div class="card static">
-        <div class="cardhead"><span class="kick">{{ $t('settings.vatPreviewKicker') }}</span></div>
+      <div class="relative block cursor-default rounded-lg border border-border p-2.5">
+        <div class="mb-4 flex items-center justify-between"><span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('settings.vatPreviewKicker') }}</span></div>
         <p v-if="form.vat_note" style="margin: 0; font: 400 13px/1.5 var(--font); color: var(--ink)">
           {{ form.vat_note }}
         </p>
