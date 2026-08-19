@@ -14,7 +14,7 @@
 import { chromium } from '@playwright/test'
 
 const ROUTE = process.argv[2]
-if (!ROUTE) throw new Error('usage: node cascade.mjs <route> [--anon]')
+if (!ROUTE) throw new Error('usage: node cascade.mjs <route> [--anon] [--portal]')
 
 /* Routes that exist for someone without a session — the sign-in screens — have
    to be read without one, or the dev login lands on the dashboard instead. */
@@ -40,12 +40,28 @@ const page = await (
   await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'de-DE' })
 ).newPage()
 
+/* The portal is a second service on a second port, and a client session is
+   minted by the admin's own "Vorschau als Kunde" — the same detour
+   visual-portal.spec.ts takes, for the same reason. */
+const PORTAL = process.env.PORTAL_URL ?? `http://localhost:${process.env.PORTAL_PORT ?? '8001'}`
+const SURFACE = process.argv.includes('--portal') ? PORTAL : ADMIN
+
 if (!ANON) {
   await page.goto(`${ADMIN}/login`)
   await page.getByRole('button', { name: 'Dev-Login' }).click()
   await page.waitForURL(`${ADMIN}/`)
 }
-await page.goto(ADMIN + ROUTE)
+if (SURFACE === PORTAL) {
+  await page.goto(`${ADMIN}/projekte`)
+  await page.waitForLoadState('networkidle')
+  await page.goto(ADMIN + (await page.locator('a[href^="/auftraege/"]').first().getAttribute('href')))
+  await page.waitForLoadState('networkidle')
+  await page.goto(ADMIN + (await page.locator('a[href^="/kontakte/"]').first().getAttribute('href')))
+  await page.waitForLoadState('networkidle')
+  await page.getByRole('button', { name: 'Vorschau als Kunde' }).click()
+  await page.waitForURL(`${PORTAL}/**`)
+}
+await page.goto(SURFACE + ROUTE)
 await page.waitForLoadState('networkidle')
 
 const rows = await page.evaluate((PROPS) => {

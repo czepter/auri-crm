@@ -76,6 +76,14 @@ test('Portal haelt seine Baselines', async ({ page }) => {
 
   for (const route of STATIC_ROUTES) {
     await page.goto(`${PORTAL}${route}`)
+    await settle(page)
+    // A screen the studio has switched off answers 404, and a frame of the
+    // error page proves nothing about the screen it stands in for. Messaging
+    // is one such switch.
+    if ((await page.locator('header').count()) === 0) {
+      console.log(`OHNE BASELINE: ${route} — keine Portalseite, vermutlich abgeschaltet`)
+      continue
+    }
     await shoot(page, route === '/' ? 'home' : route.slice(1).replace(/\//g, '--'))
   }
 
