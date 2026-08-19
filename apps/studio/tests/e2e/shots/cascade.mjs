@@ -68,15 +68,46 @@ if (!ANON) {
 if (SURFACE === PORTAL) {
   await page.goto(`${ADMIN}/projekte`)
   await page.waitForLoadState('networkidle')
-  await page.goto(ADMIN + (await page.locator('a[href^="/auftraege/"]').first().getAttribute('href')))
+  const projects = await page
+    .locator('a[href^="/auftraege/"]')
+    .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('href') ?? ''))
+
+  // Which contact holds a session that reaches the requested route is not
+  // something any page says: a project links people who are only connected to
+  // it, and a portal route belonging to somebody else answers 404. So every
+  // preview is tried until the route itself renders.
+  let reached = false
+  for (const project of [...new Set(projects)].sort()) {
+    await page.goto(ADMIN + project)
+    await page.waitForLoadState('networkidle')
+    const contacts = await page
+      .locator('a[href^="/kontakte/"]')
+      .evaluateAll((nodes) => nodes.map((n) => n.getAttribute('href') ?? ''))
+
+    for (const contact of [...new Set(contacts)].sort()) {
+      await page.goto(ADMIN + contact)
+      await page.waitForLoadState('networkidle')
+      const preview = page.getByRole('button', { name: 'Vorschau als Kunde' })
+      if ((await preview.count()) === 0) continue
+
+      await preview.click()
+      await page.waitForURL(`${PORTAL}/**`)
+      await page.goto(PORTAL + ROUTE)
+      await page.waitForLoadState('networkidle')
+      if ((await page.locator('header').count()) > 0) {
+        reached = true
+        break
+      }
+      await page.goto(`${PORTAL}/vorschau-beenden`)
+      await page.waitForLoadState('networkidle')
+    }
+    if (reached) break
+  }
+  if (!reached) throw new Error(`kein Kontakt erreicht ${ROUTE}`)
+} else {
+  await page.goto(SURFACE + ROUTE)
   await page.waitForLoadState('networkidle')
-  await page.goto(ADMIN + (await page.locator('a[href^="/kontakte/"]').first().getAttribute('href')))
-  await page.waitForLoadState('networkidle')
-  await page.getByRole('button', { name: 'Vorschau als Kunde' }).click()
-  await page.waitForURL(`${PORTAL}/**`)
 }
-await page.goto(SURFACE + ROUTE)
-await page.waitForLoadState('networkidle')
 
 if (FILL) {
   await page.getByPlaceholder(FILL.where).fill(FILL.what)

@@ -87,7 +87,10 @@ class E2eSeeder extends Seeder
     {
         $project = Project::updateOrCreate(
             ['name' => 'Meier & Kowalski — Hochzeit'],
-            ['type' => ProjectType::Wedding],
+            // Visible in the portal, and with nothing reserved on it: that is
+            // the state ProjectController renders Projects/Inquiry for, and
+            // there is otherwise no database in which that screen has a frame.
+            ['type' => ProjectType::Wedding, 'portal_visible' => true],
         );
 
         if ($project->wasRecentlyCreated) {
@@ -149,6 +152,13 @@ class E2eSeeder extends Seeder
             'project_id' => $project->id,
             'name' => 'E2E Fragebogen',
         ]);
+
+        // Guarded against mass assignment on purpose — sharing a questionnaire
+        // is a decision, not a form field. Set directly, and only once.
+        if ($instance->shared_at === null) {
+            $instance->shared_at = now();
+            $instance->save();
+        }
 
         if ($instance->wasRecentlyCreated) {
             FormInstanceField::factory()->for($instance)->create();

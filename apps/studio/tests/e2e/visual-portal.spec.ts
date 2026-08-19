@@ -115,6 +115,67 @@ async function linksUnder(page: Page, prefix: string): Promise<string[]> {
   return [...new Set(hrefs.filter((h) => h.includes(prefix)))].sort()
 }
 
+/**
+ * The one project E2eSeeder owns, reached by name.
+ *
+ * Not by public id: that is generated per database. Not through the loop
+ * above either — it stops at the first portal that has a project on it, and
+ * the inquiry screen is a second project on the same surface, one with
+ * nothing reserved on it yet (see Project::clientMayEditDetails).
+ */
+const FIXTURE_PROJECT = 'Meier & Kowalski \u2014 Hochzeit'
+
+async function previewFixture(page: Page): Promise<boolean> {
+  await page.goto('/projekte')
+  await settle(page)
+
+  const href = (
+    await page
+      .locator('a[href^="/auftraege/"]')
+      .evaluateAll(
+        (nodes, name) =>
+          nodes
+            .filter((n) => (n.closest('tr, li') ?? n).textContent?.includes(name))
+            .map((n) => (n as HTMLAnchorElement).getAttribute('href') ?? ''),
+        FIXTURE_PROJECT,
+      )
+  )[0]
+
+  if (href === undefined) {
+    return false
+  }
+
+  await page.goto(href)
+  await settle(page)
+  const contacts = await page
+    .locator('a[href^="/kontakte/"]')
+    .evaluateAll((nodes) => nodes.map((n) => (n as HTMLAnchorElement).getAttribute('href') ?? ''))
+
+  // Admin and portal bind the same public id, so the screen can be addressed
+  // directly once a session exists. Which of the people the project page
+  // links is the one holding that session is not something the page says —
+  // so each is tried, and a 404 means it was somebody else.
+  const url = `${PORTAL}/projekte/${href.split('/').pop()}`
+
+  for (const contact of [...new Set(contacts)]) {
+    await page.goto(contact)
+    await settle(page)
+    await page.getByRole('button', { name: 'Vorschau als Kunde' }).click()
+    await page.waitForURL(`${PORTAL}/**`)
+    await page.goto(url)
+    await settle(page)
+
+    if ((await page.locator('header').count()) > 0) {
+      return true
+    }
+
+    await page.goto(`${PORTAL}/vorschau-beenden`)
+    await settle(page)
+  }
+
+  return false
+}
+
 test('Portal haelt seine Baselines', async ({ page }) => {
   if (!(await enterPreview(page))) {
     console.log('OHNE BASELINE: alle — kein Kontakt mit einem freigegebenen Projekt')
@@ -154,5 +215,32 @@ test('Portal haelt seine Baselines', async ({ page }) => {
     await shoot(page, name)
     await page.goto(`${PORTAL}/`)
     await settle(page)
+  }
+
+  // A different contact, so it comes last: entering a preview replaces the
+  // session every frame above was taken in.
+  await page.goto(`${PORTAL}/vorschau-beenden`)
+  await settle(page)
+
+  if (await previewFixture(page)) {
+    await shoot(page, 'anfrage')
+
+    // The details form is not a route: the read view holds it behind its own
+    // button, and the fields are the whole of what P-03 added.
+    const url = page.url()
+    await page.getByRole('button', { name: 'Ändern' }).click()
+    await shoot(page, 'anfrage-bearbeiten')
+
+    await page.goto(url)
+    await settle(page)
+    const sheet = (await linksUnder(page, '/fragebogen/'))[0]
+    if (sheet === undefined) {
+      console.log('OHNE BASELINE: fragebogen — keiner geteilt')
+    } else {
+      await page.goto(sheet.startsWith('http') ? sheet : `${PORTAL}${sheet}`)
+      await shoot(page, 'fragebogen')
+    }
+  } else {
+    console.log(`OHNE BASELINE: anfrage — ${FIXTURE_PROJECT} nicht erreichbar`)
   }
 })
