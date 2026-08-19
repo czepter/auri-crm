@@ -74,6 +74,12 @@
   --color-due: var(--due);
   --color-due-bg: var(--due-bg);
   --color-late-bg: var(--late-bg);
+
+  /* tokens.css .meta .d and .meta .q. They belong here rather than in a class
+     attribute: a data URI with a viewBox in it is 400 characters of escaping
+     that nobody reads twice. */
+  --background-image-icon-date: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A39B96' stroke-width='2' stroke-linecap='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M8 3v4M16 3v4M3 10h18'/%3E%3C/svg%3E");
+  --background-image-icon-kind: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A39B96' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 11V4h7l10 10-7 7L3 11z'/%3E%3Ccircle cx='7.5' cy='7.5' r='1.3'/%3E%3C/svg%3E");
 }
 
 @layer base {

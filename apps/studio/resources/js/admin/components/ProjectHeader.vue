@@ -19,13 +19,13 @@ function book() {
 </script>
 
 <template>
-  <div class="hrow">
+  <div class="flex items-center gap-4">
     <div>
       <!-- A Project exists from the moment an inquiry lands (vision §3.1), but
            calling an unbooked one "Projekt" while the board calls it an
            Anfrage is the same screen-to-screen disagreement the derived
            position exists to prevent. The word follows the commitment. -->
-      <div class="kick">
+      <div class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">
         {{ $t(header.isBooked ? 'project.kicker' : 'project.kickerLead', { type: header.type }) }}
       </div>
       <h1>{{ header.names }}</h1>
@@ -48,29 +48,30 @@ function book() {
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-    <span v-else class="chip done" style="margin-left: auto">{{ $t('project.booked') }}</span>
+    <span v-else class="ml-auto flex-none rounded-[5px] bg-ok-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-ok">{{ $t('project.booked') }}</span>
   </div>
 
-  <div class="meta row">
-    <span class="d">
+  <div class="mt-2.5 flex flex-row gap-6">
+    <span class="inline-flex items-center bg-left bg-no-repeat bg-[length:13px_13px] pl-[19px] text-[12.5px] leading-[1.35] font-normal text-muted-foreground bg-icon-date">
       {{ dateLabel ? $t('project.mainDate', { date: dateLabel }) : $t('board.openDate') }}
     </span>
-    <span class="q">{{ $t('board.shootCount', header.shootCount) }}</span>
+    <span class="inline-flex items-center bg-left bg-no-repeat bg-[length:13px_13px] pl-[19px] text-[12.5px] leading-[1.35] font-normal text-muted-foreground bg-icon-kind">{{ $t('board.shootCount', header.shootCount) }}</span>
   </div>
 
   <!-- Derived, never stored: the least-advanced uncancelled shoot speaks for
        the project, and the lead stage answers when none exists. -->
-  <div class="stage">
-    <span class="now"><span class="dot" />{{ header.position.label }}</span>
-    <span class="next">{{ $t(`project.positionSource.${header.position.source}`) }}</span>
+  <div class="mt-4 flex items-center gap-2.5">
+    <span class="inline-flex items-center gap-[7px] rounded-[5px] bg-ok-bg px-[11px] py-1.5 text-[12px] leading-none font-semibold text-ok"><span class="size-[7px] flex-none rounded-full bg-ok" />{{ header.position.label }}</span>
+    <span class="text-[12px] leading-none font-normal text-faint">{{ $t(`project.positionSource.${header.position.source}`) }}</span>
   </div>
 
-  <div class="tabs">
+  <div class="mt-4 mb-6 flex gap-6">
     <Link
       v-for="tab in header.tabs"
       :key="tab.key"
       :href="tab.href"
-      :class="{ on: tab.key === active }"
+      class="text-[13px] leading-none no-underline"
+      :class="tab.key === active ? 'font-semibold text-foreground' : 'font-normal text-muted-foreground'"
     >
       {{ tab.label }}
     </Link>
