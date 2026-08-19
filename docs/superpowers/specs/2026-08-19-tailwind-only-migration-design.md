@@ -1,6 +1,6 @@
 # Tailwind-only — Migration der eigenen Stylesheets
 
-Status: 18 von 91 Dateien migriert, 319 von 2032 Klassenvorkommen
+Status: 29 von 91 Dateien migriert, 630 von 2032 Klassenvorkommen
 Datum: 2026-08-19
 
 ## Ziel
@@ -114,6 +114,20 @@ Stattdessen Tailwinds eigene Skala. Alle drei Saetze liegen exakt auf dem
 arbitrary value. Die Umrechnung passiert beim Migrieren eines Screens, der
 Screenshot-Diff belegt sie.
 
+Dritte Fehlerquelle, und die teuerste: eine Legacy-Regel, die ueber eine
+*Komponente* hinweggreift. `.qpal [data-slot="button"]` setzt Schriftgroesse
+und Polsterung der Buttons darin; loescht man `.qpal`, fallen sie auf ihre
+Variante zurueck und die Karte wird fuenf Pixel flacher. `.pme button`,
+`.formfoot [data-variant="default"]` und `.cardhead [data-variant="ghost"]`
+sind dieselbe Sorte — vierzehn Regeln im Repo. Jede muss beim Migrieren ihres
+*Kontexts* an den Aufruf wandern, und dort durch `cn()`: bei einem rohen
+Element entscheidet sonst wieder die Reihenfolge im erzeugten CSS.
+
+Verwandt: eine Komponentenvariante vererbt Werte, die die abgeloeste Regel
+ausdruecklich gesetzt hatte. Die Adresse im Kontakt-Typeahead stand auf 400,
+weil `.ta .em` eine `font`-Kurzschrift trug; ohne ein eigenes `font-normal`
+erbt sie die 500 der ghost-Variante und wird vier Pixel breiter.
+
 Zweite Fehlerquelle, sechsmal aufgetreten: eine Klasse in der Basis und eine
 widersprechende in `:class`. `class="text-[13px]"` neben
 `:class="… 'text-[13.5px]'"` — welche gewinnt, entscheidet die Reihenfolge im
@@ -157,7 +171,10 @@ für 23. Und jeder Screenshot wartet auf `document.fonts.status === 'loaded'`:
 `networkidle` landet sonst zwischen Fallback-Paint und Font-Swap, was die
 Marke in Instrument Serif um exakt 594 Pixel driften ließ.
 
-Stand: 36 Frames (32 Admin, 4 Portal). Drei Screens koennen keine bekommen,
+Stand: 62 Frames (59 Admin, 3 Portal). Dazu gekommen sind die Zustaende, die
+keine Route haben: Kommandopalette, Einladungsdialog, Vorlagen-Editor,
+Paketposition, Kalenderliste, fuenf Galerie-Reiter, Kontaktsuche in zwei
+Zustaenden, fuenf Projekt-Unterseiten. Drei Screens koennen keine bekommen,
 und der Test sagt es statt zu schweigen: `/nachrichten` im Portal antwortet
 404, weil der Kontakt Nachrichten abgeschaltet hat, und Projekt- und
 Galerieseiten erscheinen erst nach einer Freigabe.
@@ -183,7 +200,7 @@ beschreibt. Sie müssen vor Phase 2 stehen.
 | 5 | Galerie: `Gallery/Show`, `Gallery/Download`, `GalleryLightbox` | `gallery.css` geloescht (342 Zeilen) |
 | 6 | Auth-Seiten, Editoren, Reste | Sheets bis auf `:root` geloescht |
 
-47 Prozent der verbleibenden Arbeit (830 Vorkommen in 25 Dateien) liegen in
+59 Prozent der verbleibenden Arbeit (830 Vorkommen in 25 Dateien) liegen in
 Dateien mit unfestgeschriebener Arbeit — darunter `Projects/Show`,
 `Leads/Show`, `Posteingang`, `Uebersicht` und fuenf Einstellungsseiten. Sie
 bleiben liegen, bis diese Arbeit committet ist.
@@ -287,3 +304,5 @@ zeilenweise gegen die App diffen. Der Kommentar in `tokens.css:5` beschreibt ab
   `[data-slot=...]` noch ueber den Utilities stehen muessen
 - keine Komponente in `resources/js/ui` mit null Verwendungen
 - keine extrahierte Komponente mit weniger als drei Aufrufern
+- keine Datei ohne Frame migriert; wo kein Frame moeglich ist, sagt der Test
+  es (`OHNE BASELINE: …`) statt zu schweigen
