@@ -208,23 +208,33 @@ Stand dieser Sitzung:
 | Blocker | betrifft |
 |---|---|
 | unfestgeschriebene Arbeit in 25 Dateien | 830 Vorkommen |
-| Entscheidung zu `portal.css .field` | 18 Portalseiten, ~300 Vorkommen |
-| kein Paket in den Daten | `Packages/Edit` |
-| keine Fragebogen-Vorlage | `Settings/FormTemplates/Edit` |
-| keine Fragebogen-Instanz | `FormFieldsEditor` |
-| kein Angebot im Entwurf | `QuoteItemsEditor` |
-| Portal-Nachrichten beim Testkontakt aus | `Threads/Index` |
-| nichts im Portal freigegeben | `Projects/Show`, `Gallery/*` im Portal |
+| keine freigegebene Galerie mit Bildern | `Gallery/Show` 44, `Gallery/Download` 41, `GalleryLightbox` 27 |
+| Wartungsschalter an heisst jede andere Route 503 | `Maintenance` 3 |
 | Token oder frischer Studiozustand noetig | sechs Auth-Schirme |
+
+Aufgeloest seit dem letzten Stand: `portal.css .field` ist `PortalField`
+geworden (Verhalten erhalten heisst zweite Komponente, nicht eine
+zusammengelegte); Paket, Fragebogen-Vorlage, Fragebogen-Instanz und
+Entwurfsangebot legt `E2eSeeder` an; die vier Portalschalter stehen dort
+jetzt auf an; und statt „nichts freigegeben" besitzt der Seeder zwei eigene
+Projekte — eine Anfrage und eine Buchung mit gesendetem Angebot,
+unterschriebenem Vertrag und Zahlplan.
+
+Damit haengt kein Portalframe mehr an den Demodaten eines Entwicklers. Das
+war vorher der stille Fehler: `migrate:fresh --seed=E2eSeeder` legt genau
+diese Fixtures an und sonst nichts, die Baselines waren auf einem CI-Lauf
+also gar nicht reproduzierbar.
+
+Teilweise abgedeckt, migriert wird trotzdem: `Payments/Show` (9 von 29
+Klassen im Bild — Bankblock und Stripe-Spalte brauchen ausgefuellte
+Studioeinstellungen), `Contracts/Show` (das eingebettete Dokument ist 404,
+weil kein Artefakt gerendert wurde), `Questionnaire` (Auswahlfeld,
+Ja/Nein-Zeile und Fehlermeldung: das Fixture hat ein Feld, und es ist ein
+Textfeld).
 
 Offen und nicht blockiert ist nur `ContactTypeahead`: die Trefferzeilen sitzen
 nach der Korrektur exakt, ein Pixel in der Zeile „als neuen Kontakt anlegen"
 bleibt und verschiebt alles darunter.
-
-59 Prozent der verbleibenden Arbeit (830 Vorkommen in 25 Dateien) liegen in
-Dateien mit unfestgeschriebener Arbeit — darunter `Projects/Show`,
-`Leads/Show`, `Posteingang`, `Uebersicht` und fuenf Einstellungsseiten. Sie
-bleiben liegen, bis diese Arbeit committet ist.
 
 Reihenfolge geaendert. Die Galerie sollte zuerst kommen, weil sie am
 kleinsten ist. Sie hat aber keine Baseline: Galerie- und Projektseiten
