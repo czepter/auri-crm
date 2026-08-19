@@ -138,6 +138,17 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     })
   }
 
+  // The calendar's list view is client state, not a route: it can only be
+  // reached by pressing the toggle.
+  await page.goto('/kalender')
+  await page.waitForLoadState('networkidle')
+  await page.getByRole('button', { name: 'Liste', exact: true }).click()
+  await page.waitForFunction(() => document.fonts.status === 'loaded')
+  await expect.soft(page).toHaveScreenshot('kalender-liste.png', {
+    fullPage: true,
+    animations: 'disabled',
+  })
+
   // Dialogs are closed on every screen above. The invite form is the one that
   // still carries the shared .fgrid/.fld shell, so it gets a frame of its own.
   await page.goto('/team')
