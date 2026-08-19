@@ -23,7 +23,7 @@ function submit() {
 <template>
   <div class="authwrap">
     <div class="authcard">
-      <span class="brand">Nordlicht</span>
+      <span class="brand">{{ $page.props.brand }}</span>
       <h1>{{ $t('reset.newTitle') }}</h1>
       <!-- Stated up front: this changes the password and nothing else. The
            second factor is still required to get in. -->

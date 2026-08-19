@@ -8,7 +8,7 @@ defineProps<{ codes: string[] }>()
 <template>
   <div class="authwrap">
     <div class="authcard" style="max-width: 420px">
-      <span class="brand">Nordlicht</span>
+      <span class="brand">{{ $page.props.brand }}</span>
       <h1>{{ $t('auth.recoveryTitle') }}</h1>
       <p class="hint" style="margin-bottom: var(--s5)">{{ $t('auth.recoveryHint') }}</p>
 

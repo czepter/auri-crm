@@ -28,7 +28,7 @@ class ShootCalendar
         $lines = [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
-            'PRODID:-//Atelier Nordlicht//Studio//DE',
+            'PRODID:-//Studio//Studio//DE',
             'CALSCALE:GREGORIAN',
             'METHOD:PUBLISH',
             'X-WR-CALNAME:'.$this->escape($name),
@@ -58,7 +58,7 @@ class ShootCalendar
             'BEGIN:VEVENT',
             // Stable across regenerations, so a client updates the event it
             // already has rather than showing a second one beside it.
-            'UID:'.$shoot->public_id.'@studio.nordlicht',
+            'UID:'.$this->uid($shoot->public_id),
             'DTSTAMP:'.now()->utc()->format('Ymd\THis\Z'),
             'SUMMARY:'.$this->escape($summary),
             ...$this->timing($shoot),

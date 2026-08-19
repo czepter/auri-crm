@@ -2,6 +2,7 @@
 
 use App\Crm\Models\Project;
 use App\Models\User;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -47,4 +48,16 @@ it('renders through the admin root view', function () {
     $response = $this->get('/login')->assertOk();
 
     expect($response->original->name())->toBe('app-admin');
+});
+
+it('shares the studio name rather than a hardcoded one', function () {
+    // The admin wordmark and every sign-in screen read this prop, all of them
+    // with nobody signed in yet.
+    $user = User::factory()->create();
+    (new StudioSettingsResolver)->set('display_name', 'Atelier Weitwinkel', $user);
+
+    $this->get('/login')
+        ->assertOk()
+        ->assertSee('<title inertia>Atelier Weitwinkel</title>', false)
+        ->assertInertia(fn (Assert $page) => $page->where('brand', 'Atelier Weitwinkel'));
 });

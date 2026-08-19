@@ -17,7 +17,7 @@ function submit() {
 <template>
   <div class="pgate">
     <span class="pmark" style="margin-bottom: var(--s6)">
-      <i />Atelier Nordlicht <em>Fotografie · Hamburg</em>
+      <i />{{ $page.props.brand }}
     </span>
 
     <h1>{{ $t('portal.signInTitle') }}</h1>

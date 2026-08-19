@@ -16,7 +16,7 @@ function submit() {
 <template>
   <div class="authwrap">
     <div class="authcard">
-      <span class="brand">Nordlicht</span>
+      <span class="brand">{{ $page.props.brand }}</span>
       <h1>{{ $t('reset.requestTitle') }}</h1>
 
       <!-- The same message whether or not the address has an account: a

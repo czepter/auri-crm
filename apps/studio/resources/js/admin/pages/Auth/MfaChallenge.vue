@@ -14,7 +14,7 @@ function submit() {
 <template>
   <div class="authwrap">
     <div class="authcard">
-      <span class="brand">Nordlicht</span>
+      <span class="brand">{{ $page.props.brand }}</span>
       <h1>{{ $t('auth.mfaTitle') }}</h1>
 
       <form @submit.prevent="submit">

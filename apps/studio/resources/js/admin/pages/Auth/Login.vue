@@ -19,7 +19,7 @@ function submit() {
   <!-- No sidebar: there is no navigation available to someone not signed in. -->
   <div class="authwrap">
     <div class="authcard">
-      <span class="brand">Nordlicht</span>
+      <span class="brand">{{ $page.props.brand }}</span>
       <h1>{{ $t('auth.signInTitle') }}</h1>
 
       <form @submit.prevent="submit">

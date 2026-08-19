@@ -8,6 +8,7 @@ declare module '@inertiajs/core' {
       nav: { leads: number; projects: number } | null
       flash: { status: string | null; secret: string | null }
       portalPreview: boolean
+      brand: string
     }
   }
 }

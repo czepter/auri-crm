@@ -26,7 +26,7 @@ function submit() {
 <template>
   <div class="authwrap">
     <div class="authcard" style="max-width: 400px">
-      <span class="brand">Nordlicht</span>
+      <span class="brand">{{ $page.props.brand }}</span>
       <h1>{{ $t('auth.mfaEnrollTitle') }}</h1>
       <p class="hint">{{ $t('auth.mfaEnrollRequired') }}</p>
 

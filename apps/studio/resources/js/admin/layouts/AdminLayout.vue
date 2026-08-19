@@ -148,7 +148,7 @@ const items = computed(() => [
          screen at once. -->
     <div data-theme="crm" style="flex: none">
       <nav class="side">
-        <Link class="wm" href="/">Nordlicht</Link>
+        <Link class="wm" href="/">{{ $page.props.brand }}</Link>
 
         <!-- Above the navigation, not in it: it does not change page, it
              opens a tool. The shortcut stands where a count would. -->

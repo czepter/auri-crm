@@ -26,6 +26,18 @@ trait FormatsIcs
         return Carbon::createFromFormat('Y-m-d H:i:s', $date.' '.$time, self::VENUE_TIMEZONE);
     }
 
+    /**
+     * RFC 5545 wants a globally unique value, and a public_id alone is only
+     * unique inside this installation. The host it runs on is what makes it
+     * global — and what keeps the studio's own name out of a field a client's
+     * calendar stores forever. Changing APP_URL orphans every event a client
+     * already subscribed to; they arrive again as new ones.
+     */
+    private function uid(string $publicId): string
+    {
+        return $publicId.'@'.(parse_url((string) config('app.url'), PHP_URL_HOST) ?: 'studio');
+    }
+
     /** Backslash, semicolon, comma and newline carry meaning in a property value. */
     private function escape(string $value): string
     {

@@ -37,6 +37,11 @@ class HandleInertiaRequests extends Middleware
                     ? []
                     : array_map(fn ($capability) => $capability->value, $user->role->capabilities()),
             ],
+            // The studio's own name. Shared on every surface rather than only
+            // in the portal's branding block: the admin wordmark and the
+            // sign-in screens wear it with nobody signed in yet. Falls back
+            // until onboarding names the studio.
+            'brand' => fn () => app(StudioSettingsResolver::class)->displayName() ?? config('app.name'),
             // P-09 (#228): whether this is a studio member looking at what a
             // client sees. Every portal screen wears the banner, so it is
             // shared rather than passed per page.

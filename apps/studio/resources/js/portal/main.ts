@@ -18,7 +18,7 @@ const i18n = createI18n({
 const pages = import.meta.glob<{ default: DefineComponent }>('./pages/**/*.vue')
 
 createInertiaApp({
-  title: (title) => (title ? `${title} · Atelier Nordlicht` : 'Atelier Nordlicht'),
+  title: (title) => (title ? `${title} · Studio` : 'Studio'),
   resolve: (name) => {
     const page = pages[`./pages/${name}.vue`]
 

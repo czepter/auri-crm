@@ -23,7 +23,7 @@ function submit() {
 <template>
   <div class="authwrap">
     <div class="authcard">
-      <span class="brand">Nordlicht</span>
+      <span class="brand">{{ $page.props.brand }}</span>
       <h1>{{ $t('invite.title', { name }) }}</h1>
       <p class="hint" style="margin-bottom: var(--s5)">
         {{ $t('invite.hint', { email, role: roleLabel }) }}

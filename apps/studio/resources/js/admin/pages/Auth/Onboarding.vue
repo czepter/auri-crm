@@ -65,7 +65,7 @@ function finish() {
 <template>
   <div class="authwrap">
     <div class="authcard" style="max-width: 640px">
-      <span class="brand">Nordlicht</span>
+      <span class="brand">{{ $page.props.brand }}</span>
       <h1>{{ $t(titles[step()]) }}</h1>
       <p class="hint" style="margin-bottom: var(--s5)">
         {{ $t('onboarding.stepCount', { current: stepIndex + 1, total: steps.length }) }}
