@@ -81,11 +81,11 @@ watch(
 </script>
 
 <template>
-  <section class="doc-pane">
-    <div class="doc-panehead">
-      <span class="kick">{{ $t('documentTemplates.previewLabel') }}</span>
+  <section class="flex min-w-0 flex-col">
+    <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
+      <span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('documentTemplates.previewLabel') }}</span>
       <slot />
-      <span class="doc-live" :class="{ stale }">{{
+      <span class="ml-auto text-[11px] leading-none font-normal" :class="stale ? 'text-due' : 'text-faint'">{{
         stale ? $t('documentTemplates.previewStale') : $t('documentTemplates.previewFresh')
       }}</span>
     </div>
@@ -93,6 +93,7 @@ watch(
          staff-authored HTML, not trusted script — an empty sandbox strips
          script execution, form submission and top-level navigation, so a
          <script> in a preview can never run with this session's origin. -->
-    <iframe class="doc-previewframe" :srcdoc="html" sandbox=""></iframe>
+    <iframe
+      class="mt-6 min-h-[520px] w-full flex-1 rounded-[2px] border border-border bg-white max-[1100px]:min-h-[360px]" :srcdoc="html" sandbox=""></iframe>
   </section>
 </template>

@@ -122,6 +122,7 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     ['/anfragen', '/anfragen/', 'anfrage'],
     ['/kontakte', '/kontakte/', 'kontakt'],
     ['/dokumentvorlagen', '/dokumentvorlagen/', 'dokumentvorlage'],
+    ['/einstellungen/fragebogen-vorlagen', '/einstellungen/fragebogen-vorlagen/', 'fragebogen'],
   ] as const) {
     await page.goto(list)
     await page.waitForLoadState('networkidle')
@@ -143,6 +144,17 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
       animations: 'disabled',
     })
   }
+
+  // The item editor renders nothing until a row exists, so the card, its head
+  // and the field grid inside it are never on the /pakete/neu frame.
+  await page.goto('/pakete/neu')
+  await page.waitForLoadState('networkidle')
+  await page.getByRole('button', { name: 'Leistung hinzufügen' }).click()
+  await page.waitForFunction(() => document.fonts.status === 'loaded')
+  await expect.soft(page).toHaveScreenshot('paket-position.png', {
+    fullPage: true,
+    animations: 'disabled',
+  })
 
   // The template editor opens only after a starting point is chosen — the
   // screen's first state is the choice, and the split view behind it would
