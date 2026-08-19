@@ -5,6 +5,7 @@ import { Input } from '@/ui/input'
 import { Textarea } from '@/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
 import { Label } from '@/ui/label'
+import { Field } from '@/ui/field'
 
 const props = defineProps<{ settings: App.Settings.Data.StudioSettingsData }>()
 const emit = defineEmits<{ saved: [] }>()
@@ -30,54 +31,56 @@ defineExpose({ form, submit })
 
 <template>
   <form id="vat-form" @submit.prevent="submit">
-    <div class="dsec" style="margin-top: 0">
-      <div class="dlab">{{ $t('settings.vatModeLabel') }}</div>
-      <div class="grp">
+    <div class="mt-0">
+      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.vatModeLabel') }}</div>
+      <div class="mb-6">
         <RadioGroup
           name="vatmode"
           :model-value="form.vat_mode"
           @update:model-value="(value) => (form.vat_mode = String(value))"
         >
-          <div class="cbrow">
+          <div class="flex items-center gap-2.5">
             <RadioGroupItem id="vat-standard" value="standard" />
             <Label variant="inline" for="vat-standard">{{ $t('settings.vatModeStandard') }}</Label>
           </div>
-          <div class="cbrow">
+          <div class="flex items-center gap-2.5">
             <RadioGroupItem id="vat-small-business" value="small_business" />
             <Label variant="inline" for="vat-small-business">{{ $t('settings.vatModeSmallBusiness') }}</Label>
           </div>
         </RadioGroup>
-        <p class="hint" style="margin-top: var(--s3); color: var(--late)">{{ $t('settings.vatModeWarning') }}</p>
+        <p class="mt-2.5 text-[11.5px] leading-[1.45] text-destructive">{{ $t('settings.vatModeWarning') }}</p>
       </div>
-      <div class="grp">
-        <div class="fld" style="max-width: 160px">
-          <Label for="v-satz">{{ $t('settings.vatRateLabel') }}</Label>
+      <div class="mb-6">
+        <Field
+          id="v-satz"
+          class="max-w-[160px]"
+          :label="$t('settings.vatRateLabel')"
+          :hint="$t('settings.vatRateHint')"
+          :error="form.errors.vat_rate"
+        >
           <Input id="v-satz" v-model="form.vat_rate" class="tabular-nums" type="text" inputmode="decimal" />
-          <span class="hint">{{ $t('settings.vatRateHint') }}</span>
-          <p v-if="form.errors.vat_rate" class="err">{{ form.errors.vat_rate }}</p>
-        </div>
+        </Field>
       </div>
     </div>
 
-    <div class="dsec">
-      <div class="dlab">{{ $t('settings.vatNoteLabel') }}</div>
-      <div class="grp">
-        <div class="fld">
-          <Label for="v-hinweis">{{ $t('settings.vatNoteFieldLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
-          <Textarea id="v-hinweis" v-model="form.vat_note" rows="3" />
-          <p v-if="form.errors.vat_note" class="err">{{ form.errors.vat_note }}</p>
-        </div>
+    <div class="mt-8 first-of-type:mt-6">
+      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.vatNoteLabel') }}</div>
+      <div class="mb-6">
+        <Field :error="form.errors.vat_note" v-slot="{ id }">
+          <Label :for="id">{{ $t('settings.vatNoteFieldLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
+          <Textarea :id v-model="form.vat_note" rows="3" />
+        </Field>
       </div>
     </div>
 
-    <div class="dsec">
-      <div class="dlab">{{ $t('settings.vatPreviewLabel') }}</div>
+    <div class="mt-8 first-of-type:mt-6">
+      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.vatPreviewLabel') }}</div>
       <div class="card static">
         <div class="cardhead"><span class="kick">{{ $t('settings.vatPreviewKicker') }}</span></div>
         <p v-if="form.vat_note" style="margin: 0; font: 400 13px/1.5 var(--font); color: var(--ink)">
           {{ form.vat_note }}
         </p>
-        <p v-else class="hint" style="margin: 0">{{ $t('settings.vatPreviewEmpty') }}</p>
+        <p v-else class="m-0 text-[11.5px] leading-[1.45] text-faint">{{ $t('settings.vatPreviewEmpty') }}</p>
       </div>
     </div>
   </form>

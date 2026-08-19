@@ -36,13 +36,13 @@ defineExpose({ form, submit })
 
 <template>
   <div>
-    <div v-for="(entries, type) in starters" :key="type" class="dsec">
-      <div class="dlab">{{ typeLabels[type] ?? type }}</div>
-      <label v-for="starter in entries" :key="starter.key" class="cbrow">
+    <div v-for="(entries, type) in starters" :key="type" class="mt-8 first-of-type:mt-6">
+      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ typeLabels[type] ?? type }}</div>
+      <label v-for="starter in entries" :key="starter.key" class="flex items-center gap-2.5">
         <input type="checkbox" :checked="chosen.includes(starter.key)" @change="toggle(starter.key)">
         <span>
           <b>{{ starter.name }}</b>
-          <em class="hint"> — {{ starter.description }}</em>
+          <em class="text-[11.5px] leading-[1.45] text-faint"> — {{ starter.description }}</em>
         </span>
       </label>
     </div>

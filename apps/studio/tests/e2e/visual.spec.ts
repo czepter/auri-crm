@@ -45,6 +45,12 @@ const ROUTES = [
   '/dokumentvorlagen',
   '/dokumentvorlagen/neu',
   '/einstellungen',
+  // The settings shell keeps its pane in the query, so each one is its own
+  // frame. `capture` is left out on purpose — it is uncommitted work.
+  '/einstellungen?pane=vat',
+  '/einstellungen?pane=documents',
+  '/einstellungen?pane=email',
+  '/einstellungen?pane=general',
   '/einstellungen/aufgabenvorlagen',
   '/einstellungen/benachrichtigungen',
   '/einstellungen/fragebogen-vorlagen',
@@ -80,7 +86,7 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     // the fallback paint and the swap, which is a diff in the sidebar of every
     // screen unlucky enough to be caught there.
     await page.waitForFunction(() => document.fonts.status === 'loaded')
-    const name = route === '/' ? 'uebersicht' : route.slice(1).replace(/\//g, '--')
+    const name = route === '/' ? 'uebersicht' : route.slice(1).replace(/[/?=]/g, '--')
     await expect.soft(page).toHaveScreenshot(`${name}.png`, {
       fullPage: true,
       animations: 'disabled',
