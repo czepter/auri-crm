@@ -7,6 +7,7 @@ import DocumentsForm from '@/admin/pages/Settings/panes/DocumentsForm.vue'
 import EmailForm from '@/admin/pages/Settings/panes/EmailForm.vue'
 import PortalForm from '@/admin/pages/Settings/panes/PortalForm.vue'
 import StarterTemplatesForm from '@/admin/pages/Settings/panes/StarterTemplatesForm.vue'
+import AuthLayout from '@/admin/layouts/AuthLayout.vue'
 import { Button } from '@/ui/button'
 
 defineProps<{
@@ -63,41 +64,37 @@ function finish() {
 </script>
 
 <template>
-  <div class="authwrap">
-    <div class="authcard" style="max-width: 640px">
-      <span class="brand">{{ $page.props.brand }}</span>
-      <h1>{{ $t(titles[step()]) }}</h1>
-      <p class="hint" style="margin-bottom: var(--s5)">
-        {{ $t('onboarding.stepCount', { current: stepIndex + 1, total: steps.length }) }}
-      </p>
+  <AuthLayout :title="$t(titles[step()])" width="max-w-[640px]">
+    <p class="mb-6 text-[11.5px] leading-[1.45] font-normal text-faint">
+      {{ $t('onboarding.stepCount', { current: stepIndex + 1, total: steps.length }) }}
+    </p>
 
-      <ProfileForm v-if="step() === 'profile'" ref="paneRef" :settings="settings" @saved="advance" />
-      <VatForm v-else-if="step() === 'vat'" ref="paneRef" :settings="settings" @saved="advance" />
-      <DocumentsForm v-else-if="step() === 'documents'" ref="paneRef" :settings="settings" @saved="advance" />
-      <StarterTemplatesForm
-        v-else-if="step() === 'templates'"
-        ref="paneRef"
-        :starters="starters"
-        :defaults="starterDefaults"
-        :type-labels="typeLabels"
-        @saved="advance"
-      />
-      <EmailForm v-else-if="step() === 'email'" ref="paneRef" :settings="settings" @saved="advance" />
-      <PortalForm v-else ref="paneRef" :settings="portalSettings" @saved="finish" />
+    <ProfileForm v-if="step() === 'profile'" ref="paneRef" :settings="settings" @saved="advance" />
+    <VatForm v-else-if="step() === 'vat'" ref="paneRef" :settings="settings" @saved="advance" />
+    <DocumentsForm v-else-if="step() === 'documents'" ref="paneRef" :settings="settings" @saved="advance" />
+    <StarterTemplatesForm
+      v-else-if="step() === 'templates'"
+      ref="paneRef"
+      :starters="starters"
+      :defaults="starterDefaults"
+      :type-labels="typeLabels"
+      @saved="advance"
+    />
+    <EmailForm v-else-if="step() === 'email'" ref="paneRef" :settings="settings" @saved="advance" />
+    <PortalForm v-else ref="paneRef" :settings="portalSettings" @saved="finish" />
 
-      <div style="display: flex; gap: var(--s3); margin-top: var(--s5)">
-        <Button
-          type="button"
-          style="flex: 1; justify-content: center"
-          :disabled="paneRef?.form.processing"
-          @click="saveAndContinue"
-        >
-          {{ stepIndex === steps.length - 1 ? $t('onboarding.finish') : $t('onboarding.next') }}
-        </Button>
-        <Button variant="ghost" type="button" @click="finish">
-          {{ $t('onboarding.skip') }}
-        </Button>
-      </div>
+    <div class="mt-6 flex gap-2.5">
+      <Button
+        type="button"
+        class="flex-1 justify-center"
+        :disabled="paneRef?.form.processing"
+        @click="saveAndContinue"
+      >
+        {{ stepIndex === steps.length - 1 ? $t('onboarding.finish') : $t('onboarding.next') }}
+      </Button>
+      <Button variant="ghost" type="button" @click="finish">
+        {{ $t('onboarding.skip') }}
+      </Button>
     </div>
-  </div>
+  </AuthLayout>
 </template>
