@@ -40,6 +40,9 @@ async function arrive(page: Page): Promise<void> {
 const ROUTES = [
   '/',
   '/anfragen',
+  // Both views of the board: ?ansicht= drives it, the POST that persists a
+  // preference only fires on a click.
+  '/anfragen?ansicht=board',
   '/anfragen/neu',
   '/auswertungen',
   '/dokumentvorlagen',
