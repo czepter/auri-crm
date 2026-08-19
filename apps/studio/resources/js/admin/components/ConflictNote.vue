@@ -13,7 +13,7 @@ defineProps<{ conflicts: App.Crm.Data.DateConflictData[] }>()
     :is="conflict.projectId ? Link : 'div'"
     v-for="conflict in conflicts"
     :key="conflict.projectId ?? conflict.personId ?? conflict.label ?? undefined"
-    class="flag"
+    class="mt-1.5 flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[12.5px] leading-[1.3] font-medium text-destructive"
     :href="conflict.projectId ? `/auftraege/${conflict.projectId}` : undefined"
   >
     {{

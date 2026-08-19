@@ -57,7 +57,7 @@ function typeLabel(type: string): string {
               <Input :id="`field-label-${index}`" v-model="field.label" type="text" maxlength="255" />
             </Field>
 
-            <div v-if="field.type === 'select'" class="fld wide">
+            <div v-if="field.type === 'select'" class="col-span-full flex min-w-0 flex-col gap-1.5">
               <Label :for="`field-options-${index}`">{{ $t('formTemplates.optionsField') }}</Label>
               <Textarea :id="`field-options-${index}`" v-model="field.optionsText" rows="3" />
               <span class="text-[11.5px] leading-[1.45] text-faint">{{ $t('formTemplates.optionsHint') }}</span>
