@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
+import PortalField from '@/portal/components/PortalField.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
-import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
 
 type Field = App.Crm.Data.FormInstanceFieldData
@@ -46,14 +46,14 @@ function errorFor(id: string) {
 <template>
   <PortalHeader :contact="contact" />
 
-  <main class="letter">
-    <div class="kick">{{ project.name }}</div>
-    <h1>{{ questionnaire.name }}</h1>
+  <main data-tokens class="mx-auto max-w-[620px]">
+    <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ project.name }}</div>
+    <h1 class="m-0 text-[34px] leading-none font-bold tracking-[-0.04em]">{{ questionnaire.name }}</h1>
 
-    <form style="margin-top: var(--s6)" @submit.prevent="submit">
+    <form class="mt-11" @submit.prevent="submit">
       <template v-for="field in questionnaire.fields" :key="field.id">
-        <div v-if="field.type === 'boolean'" class="grp">
-          <label class="consent">
+        <div v-if="field.type === 'boolean'" class="mb-8">
+          <label class="flex cursor-pointer items-start gap-3.5 text-[13.5px] leading-[1.5] font-normal [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action">
             <Checkbox
               :model-value="isChecked(field.id)"
               @update:model-value="form.answers[field.id] = isChecked(field.id) ? '' : 'ja'"
@@ -62,8 +62,11 @@ function errorFor(id: string) {
           </label>
         </div>
 
-        <Label v-else class="field">
-          <span>{{ field.label }}<em v-if="!field.required"> · {{ $t('settings.optional') }}</em></span>
+        <PortalField
+          v-else
+          :label="field.label"
+          :optional="field.required ? undefined : $t('settings.optional')"
+        >
 
           <select v-if="field.type === 'select'" v-model="form.answers[field.id]">
             <option value="" />
@@ -83,12 +86,12 @@ function errorFor(id: string) {
             v-model="form.answers[field.id]"
             :type="field.type === 'date' ? 'date' : field.type === 'time' ? 'time' : 'text'"
           />
-        </Label>
+        </PortalField>
 
-        <p v-if="errorFor(field.id)" class="err">{{ errorFor(field.id) }}</p>
+        <p v-if="errorFor(field.id)" class="text-[11.5px] leading-[1.45] text-destructive">{{ errorFor(field.id) }}</p>
       </template>
 
-      <div class="formfoot">
+      <div class="mt-8 flex items-center gap-5 [&_[data-slot=button][data-variant=default]]:ml-0">
         <Button type="submit" :disabled="form.processing">{{ $t('common.save') }}</Button>
       </div>
     </form>
