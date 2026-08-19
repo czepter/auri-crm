@@ -175,6 +175,28 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     console.log('OHNE BASELINE: galerie-datensatz — keine Galerie verlinkt')
   }
 
+  // The contact typeahead shows a field and a hint until something is typed;
+  // its result rows, avatars and the create-new row are behind that.
+  await page.goto('/anfragen/neu')
+  await page.waitForLoadState('networkidle')
+  // Two characters at least, then a 250ms debounce and a fetch.
+  await page.getByPlaceholder('Suchen').fill('an')
+  await expect(page.locator('form')).toBeVisible()
+  await page.waitForTimeout(1200)
+  await page.waitForFunction(() => document.fonts.status === 'loaded')
+  await expect.soft(page).toHaveScreenshot('anfrage-kontaktsuche.png', {
+    fullPage: true,
+    animations: 'disabled',
+  })
+
+  // And the chosen state: the picked card replaces the field entirely.
+  await page.locator('form button').filter({ hasText: 'Annika Reuter' }).first().click()
+  await page.waitForFunction(() => document.fonts.status === 'loaded')
+  await expect.soft(page).toHaveScreenshot('anfrage-kontakt-gewaehlt.png', {
+    fullPage: true,
+    animations: 'disabled',
+  })
+
   // The item editor renders nothing until a row exists, so the card, its head
   // and the field grid inside it are never on the /pakete/neu frame.
   await page.goto('/pakete/neu')

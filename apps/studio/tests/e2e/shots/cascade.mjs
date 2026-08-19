@@ -27,6 +27,13 @@ const CLICK = (() => {
   return i === -1 ? null : process.argv[i + 1]
 })()
 
+/* --fill <placeholder> <value>: states that only exist once something is
+   typed — a typeahead's result list, a filtered table. */
+const FILL = (() => {
+  const i = process.argv.indexOf('--fill')
+  return i === -1 ? null : { where: process.argv[i + 1], what: process.argv[i + 2] }
+})()
+
 const ADMIN = process.env.ADMIN_URL ?? 'http://127.0.0.1:8000'
 
 /* The properties a port has to reproduce. The full computed style is 340
@@ -70,6 +77,11 @@ if (SURFACE === PORTAL) {
 }
 await page.goto(SURFACE + ROUTE)
 await page.waitForLoadState('networkidle')
+
+if (FILL) {
+  await page.getByPlaceholder(FILL.where).fill(FILL.what)
+  await page.waitForTimeout(1200)
+}
 
 if (CLICK) {
   // Button or link: the states worth measuring hide behind both.
