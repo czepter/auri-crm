@@ -164,16 +164,16 @@ function submit() {
       </div>
     </section>
 
-    <div v-else class="doc-split">
-      <section class="doc-pane">
-        <div class="doc-panehead">
-          <span class="kick">{{ $t('documentTemplates.body') }}</span>
-          <span class="hint">{{ $t('documentTemplates.bodyHint') }}</span>
+    <div v-else class="mt-6 grid min-h-0 grid-cols-[minmax(0,1fr)_7px_minmax(0,1fr)] gap-0 max-[1100px]:grid-cols-[minmax(0,1fr)]">
+      <section class="flex min-w-0 flex-col">
+        <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
+          <span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('documentTemplates.body') }}</span>
+          <span class="ml-auto text-[11.5px] leading-[1.45] text-faint">{{ $t('documentTemplates.bodyHint') }}</span>
         </div>
-        <div class="doc-sheet">
-          <div class="doc-chrome">{{ $t('documentTemplates.letterhead') }}</div>
+        <div class="mx-auto mt-6 w-full max-w-[520px] rounded-[2px] border border-border bg-white px-10 pb-10">
+          <div class="-mx-10 border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-[10px] leading-[1.4] font-medium tracking-[0.06em] uppercase text-faint mb-6 border-b">{{ $t('documentTemplates.letterhead') }}</div>
           <DocumentEditor v-model="doc" :palette="palette" :merge-fields="mergeFields" />
-          <div class="doc-chrome foot">{{ $t('documentTemplates.footer') }}</div>
+          <div class="-mx-10 border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-[10px] leading-[1.4] font-medium tracking-[0.06em] uppercase text-faint -mb-10 mt-6 border-t">{{ $t('documentTemplates.footer') }}</div>
         </div>
 
         <!-- C-16 (#252): what this document type may not have stands dimmed
@@ -181,11 +181,11 @@ function submit() {
              menu, so the list sits under the sheet instead of inside it —
              replacing that inserter is a rewrite of the editor shell, not
              this issue's subject. -->
-        <div class="blocklegend">
+        <div class="flex flex-wrap gap-x-3.5 gap-y-1.5 px-0.5 pt-2.5 text-[11.5px] text-[#6E6E73]">
           <span
             v-for="entry in palette.filter((block) => !block.inline)"
             :key="entry.type"
-            :class="{ off: entry.allowed === false }"
+            :class="entry.allowed === false && 'text-[#DEDEE1]'"
           >
             {{ entry.label }}
             <template v-if="entry.allowed === false"> · {{ $t('documentTemplates.blockOnly', { types: entry.only }) }}</template>
@@ -193,10 +193,12 @@ function submit() {
         </div>
       </section>
 
-      <div class="doc-splitbar"></div>
+      <div
+        class="flex cursor-col-resize items-center justify-center before:block before:h-full before:w-px before:bg-border before:content-[''] max-[1100px]:hidden"
+      />
 
       <DocumentPreviewPane :type="form.type" :doc="doc" :samples="samples" :project="project">
-        <select v-model="project" class="form">
+        <select v-model="project">
           <option :value="null">{{ $t('documentTemplates.previewSamples') }}</option>
           <option v-for="option in projects" :key="option.id" :value="option.id">{{ option.name }}</option>
         </select>
