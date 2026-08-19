@@ -152,10 +152,10 @@ defineExpose({ form, submit })
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.logo')" id="p-logo" :error="form.errors.logo" :hint="$t('settings.logoHint')">
             <div style="display: flex; align-items: center; gap: var(--s3)">
-              <div v-if="settings.logoUrl" class="galcover" style="width: 40px; height: 40px">
+              <div v-if="settings.logoUrl" class="size-10 flex-none rounded-[6px] bg-muted object-cover">
                 <img :src="settings.logoUrl" :alt="$t('settings.logo')" style="width: 100%; height: 100%; object-fit: contain" />
               </div>
-              <div v-else class="galcover empty" style="width: 40px; height: 40px">{{ $t('settings.logo') }}</div>
+              <div v-else class="flex size-10 flex-none items-center justify-center rounded-[6px] bg-muted p-1 text-center text-[8.5px] leading-[1.2] font-semibold tracking-[0.02em] text-faint">{{ $t('settings.logo') }}</div>
               <Input id="p-logo" type="file" accept="image/png" style="flex: 1" @change="onLogoChange" />
             </div>
           </Field>
@@ -175,12 +175,14 @@ defineExpose({ form, submit })
              selectable; minimum sizes and contrast stay fixed. -->
         <Field v-if="fontPairs.length" class="mb-6">
           <Label>{{ $t('settings.fontPair') }}</Label>
-          <div class="fontpairs">
-            <label v-for="pair in fontPairs" :key="pair.value" :data-font="pair.value">
-              <input v-model="form.font_pair" type="radio" :value="pair.value" />
-              <span class="pv">
-                <b>{{ settings.displayName || pair.label }}</b>
-                <em>{{ pair.description }}</em>
+          <div class="grid grid-cols-2 gap-2.5">
+            <label v-for="pair in fontPairs" :key="pair.value" class="block cursor-pointer" :data-font="pair.value">
+              <input class="peer absolute opacity-0 pointer-events-none" v-model="form.font_pair" type="radio" :value="pair.value" />
+              <span
+                class="block rounded-md bg-muted px-4 pt-4 pb-6 shadow-[inset_0_0_0_1px_transparent] peer-checked:shadow-[inset_0_0_0_2px_var(--accent)]"
+              >
+                <b class="block font-normal text-[26px] leading-[var(--display-leading)] font-[family-name:var(--font-display)] tracking-[var(--display-tracking)] text-foreground">{{ settings.displayName || pair.label }}</b>
+                <em class="mt-2 block font-sans text-[12.5px] leading-[1.5] font-normal not-italic text-muted-foreground">{{ pair.description }}</em>
               </span>
             </label>
           </div>
