@@ -143,6 +143,34 @@ async function linksUnder(page: Page, prefix: string): Promise<string[]> {
   return [...new Set(hrefs.filter((h) => h.includes(prefix)))].sort()
 }
 
+/**
+ * T-08's closure switch, from the studio's own settings screen.
+ *
+ * Turned on, every portal route answers with the closure screen — which is
+ * why it is the last frame and why the caller puts the way back in a
+ * `finally`. E2eSeeder sets it to false on every run, so a suite that dies
+ * in between is one seeder away from a portal that opens again.
+ */
+async function setMaintenance(page: Page, on: boolean): Promise<void> {
+  await page.goto('/einstellungen/portal')
+  await settle(page)
+
+  const box = page.locator('#cb-portal-maintenance-enabled')
+  const want = on ? 'checked' : 'unchecked'
+
+  if ((await box.getAttribute('data-state')) !== want) {
+    await box.click()
+    await page.getByRole('button', { name: 'Speichern' }).first().click()
+    await settle(page)
+  }
+
+  // Read it back from a fresh request rather than from the form that just
+  // posted: what matters is what the next portal request will see.
+  await page.goto('/einstellungen/portal')
+  await settle(page)
+  await expect(page.locator('#cb-portal-maintenance-enabled')).toHaveAttribute('data-state', want)
+}
+
 test('Portal haelt seine Baselines', async ({ page }) => {
   // Both screens a client reaches without a session, framed before one
   // exists: /anmelden is behind `guest:portal` and would redirect away.
@@ -266,5 +294,17 @@ test('Portal haelt seine Baselines', async ({ page }) => {
     await shoot(page, 'nachrichten-leer')
   } else {
     console.log(`OHNE BASELINE: anfrage — ${INQUIRY} nicht erreichbar`)
+  }
+
+  // Last, and switched back whatever happens above it.
+  await setMaintenance(page, true)
+  try {
+    await page.goto(`${PORTAL}/`)
+    // The switch is read through a cache the settings form busts; wait for the
+    // screen rather than for a duration.
+    await expect(page.getByRole('heading').first()).toContainText('geschlossen')
+    await shoot(page, 'wartung')
+  } finally {
+    await setMaintenance(page, false)
   }
 })

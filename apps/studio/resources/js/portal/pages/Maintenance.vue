@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalWrap from '@/portal/components/PortalWrap.vue'
 
 // T-08: rendered by EnsurePortalMaintenanceClosure instead of whatever route
 // was actually requested — no project, quote, contract or payment data ever
@@ -14,12 +15,12 @@ defineProps<{ message: string | null }>()
 <template>
   <PortalHeader />
 
-  <main class="pwrap">
-    <div class="psec" style="margin-top: var(--s6)">
+  <PortalWrap>
+    <div class="mt-11">
       <h1>{{ $t('portal.maintenanceTitle') }}</h1>
-      <p class="plead">{{ message ?? $t('portal.maintenanceDefaultMessage') }}</p>
+      <p class="mt-5 max-w-[56ch] text-[16px] leading-[1.6] font-normal text-muted-foreground">{{ message ?? $t('portal.maintenanceDefaultMessage') }}</p>
     </div>
-  </main>
+  </PortalWrap>
 
   <PortalFooter />
 </template>

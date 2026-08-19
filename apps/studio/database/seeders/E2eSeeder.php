@@ -73,6 +73,9 @@ class E2eSeeder extends Seeder
         // no frame in any database that has not turned them on.
         StudioSettings::query()->update([
             'onboarding_completed_at' => now(),
+            // The closure is the one switch a spec turns on and off again. If
+            // a run dies between the two, this seeder is the way back.
+            'portal_maintenance_enabled' => false,
             'portal_messaging_mode' => 'any',
             'portal_accept_quotes_enabled' => true,
             'portal_sign_contracts_enabled' => true,
