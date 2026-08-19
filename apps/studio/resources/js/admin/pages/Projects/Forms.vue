@@ -147,7 +147,7 @@ function answer(fieldId: string) {
           <span class="mb-1.5 block">{{ $t('formInstances.fromTemplate') }}</span>
           <div class="flex flex-wrap gap-1.5">
             <Button as="a"
-              class="px-[11px] py-1.5 text-[11.5px]" v-for="template in formTemplates"
+              class="px-[11px] py-1.5 text-[11.5px] leading-[1.4]" v-for="template in formTemplates"
               :key="template.value"
               href="#" variant="outline"
               @click.prevent="createFrom(template.value)"
@@ -157,7 +157,7 @@ function answer(fieldId: string) {
           </div>
           <span class="mt-4 mb-1.5 block">{{ $t('formInstances.orBlank') }}</span>
           <div class="flex flex-wrap gap-1.5">
-            <Button as="a" class="px-[11px] py-1.5 text-[11.5px]" href="#" variant="outline" tone="accent" @click.prevent="createFrom('')">{{ $t('formInstances.startBlank') }}</Button>
+            <Button as="a" class="px-[11px] py-1.5 text-[11.5px] leading-[1.4]" href="#" variant="outline" tone="accent" @click.prevent="createFrom('')">{{ $t('formInstances.startBlank') }}</Button>
           </div>
         </div>
       </div>

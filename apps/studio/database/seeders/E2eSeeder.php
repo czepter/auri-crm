@@ -2,15 +2,24 @@
 
 namespace Database\Seeders;
 
+use App\Catalog\Models\Package;
+use App\Catalog\Models\PackageItem;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootKind;
+use App\Crm\Models\FormField;
+use App\Crm\Models\FormInstance;
+use App\Crm\Models\FormInstanceField;
+use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Enums\StaffRole;
 use App\Models\User;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
+use App\Quotes\Models\QuoteItem;
 use App\Settings\Models\StudioSettings;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Cache;
@@ -62,6 +71,7 @@ class E2eSeeder extends Seeder
         );
 
         $this->seedOccupiedDate();
+        $this->seedEditableRecords();
     }
 
     /**
@@ -98,6 +108,58 @@ class E2eSeeder extends Seeder
                 'venue_city' => 'Basthorst',
                 'is_primary' => true,
             ]);
+        }
+    }
+
+    /**
+     * One of each record whose editor only exists once the record does: a
+     * package, a questionnaire template with an instance on a project, and a
+     * quote still in draft. Without them the screens render their empty state
+     * and a pixel baseline of that empty state proves nothing about the
+     * editor behind it — see
+     * docs/superpowers/specs/2026-08-19-tailwind-only-migration-design.md.
+     *
+     * Named "E2E …" so a developer looking at their own database can tell at
+     * a glance where the row came from.
+     */
+    private function seedEditableRecords(): void
+    {
+        $package = Package::firstOrCreate(['name' => 'E2E Paket']);
+
+        if ($package->wasRecentlyCreated) {
+            PackageItem::factory()->for($package)->create();
+        }
+
+        $template = FormTemplate::firstOrCreate(
+            ['name' => 'E2E Fragebogen'],
+            ['project_type' => ProjectType::Wedding],
+        );
+
+        if ($template->wasRecentlyCreated) {
+            FormField::factory()->for($template)->create();
+        }
+
+        $project = Project::query()->where('name', 'Meier & Kowalski — Hochzeit')->first();
+
+        if ($project === null) {
+            return;
+        }
+
+        $instance = FormInstance::firstOrCreate([
+            'project_id' => $project->id,
+            'name' => 'E2E Fragebogen',
+        ]);
+
+        if ($instance->wasRecentlyCreated) {
+            FormInstanceField::factory()->for($instance)->create();
+        }
+
+        $quote = Quote::firstOrCreate(
+            ['project_id' => $project->id, 'status' => QuoteStatus::Draft],
+        );
+
+        if ($quote->wasRecentlyCreated) {
+            QuoteItem::factory()->for($quote)->create();
         }
     }
 }
