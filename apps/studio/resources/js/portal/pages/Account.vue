@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
+import PortalField from '@/portal/components/PortalField.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
-import { Label } from '@/ui/label'
 
 const props = defineProps<{
   contact: { name: string; email: string | null; phone: string | null; street: string | null; postcode: string | null; city: string | null }
@@ -39,60 +39,54 @@ function requestDsgvo(kind: 'export' | 'erasure') {
 <template>
   <PortalHeader :contact="contact" />
 
-  <main class="pwrap">
+  <main class="mx-auto max-w-[740px] px-8 pt-11 pb-16">
     <h1>{{ $t('portal.accountTitle') }}</h1>
 
     <!-- Always editable, whatever phase a booking is in: these are the
          client's own particulars, not contract content. -->
-    <section class="psec" style="margin-top: var(--s6)">
-      <p class="lab">{{ $t('portal.yourData') }}</p>
+    <section class="mt-11">
+      <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.yourData') }}</p>
 
       <form @submit.prevent="save">
-        <Label class="field">
-          <span>{{ $t('portal.nameLabel') }}</span>
+        <PortalField :label="$t('portal.nameLabel')">
           <Input v-model="form.name" type="text" required />
-        </Label>
-        <p v-if="form.errors.name" class="err">{{ form.errors.name }}</p>
+        </PortalField>
+        <p v-if="form.errors.name" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.name }}</p>
 
-        <Label class="field">
-          <span>{{ $t('portal.emailLabel') }}</span>
+        <PortalField :label="$t('portal.emailLabel')">
           <Input v-model="form.email" type="email" required />
-        </Label>
-        <p v-if="form.errors.email" class="err">{{ form.errors.email }}</p>
+        </PortalField>
+        <p v-if="form.errors.email" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.email }}</p>
         <!-- The address is the login, so nothing changes until the link sent
              to the new inbox is followed. -->
-        <p v-if="pendingEmail" class="hint">{{ $t('portal.emailPending', { email: pendingEmail }) }}</p>
+        <p v-if="pendingEmail" class="text-[11.5px] leading-[1.45] text-faint">{{ $t('portal.emailPending', { email: pendingEmail }) }}</p>
 
-        <Label class="field">
-          <span>{{ $t('portal.phone') }}</span>
+        <PortalField :label="$t('portal.phone')">
           <Input v-model="form.phone" type="tel" />
-        </Label>
+        </PortalField>
 
-        <Label class="field">
-          <span>{{ $t('portal.street') }}</span>
+        <PortalField :label="$t('portal.street')">
           <Input v-model="form.street" type="text" />
-        </Label>
+        </PortalField>
 
-        <div class="tworow">
-          <Label class="field">
-            <span>{{ $t('portal.postcode') }}</span>
+        <div class="grid grid-cols-[120px_minmax(0,1fr)] gap-5">
+          <PortalField :label="$t('portal.postcode')">
             <Input v-model="form.postcode" type="text" />
-          </Label>
-          <Label class="field">
-            <span>{{ $t('portal.city') }}</span>
+          </PortalField>
+          <PortalField :label="$t('portal.city')">
             <Input v-model="form.city" type="text" />
-          </Label>
+          </PortalField>
         </div>
 
-        <div class="formfoot">
+        <div class="mt-8 flex items-center gap-5">
           <Button type="submit" :disabled="form.processing">{{ $t('common.save') }}</Button>
         </div>
       </form>
     </section>
 
-    <section class="psec">
-      <p class="lab">{{ $t('portal.postTitle') }}</p>
-      <label class="consent">
+    <section class="mt-11">
+      <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.postTitle') }}</p>
+      <label class="flex cursor-pointer items-start gap-3.5 text-[13.5px] leading-[1.5] font-normal [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action">
         <Checkbox :model-value="subscribed" @update:model-value="setSubscription(!subscribed)" />
         <span>{{ $t('portal.postConsent') }}</span>
       </label>
@@ -100,24 +94,24 @@ function requestDsgvo(kind: 'export' | 'erasure') {
 
     <!-- There is no password here and there never will be: a client proves
          an inbox. What there is, is other sessions. -->
-    <section class="psec">
-      <p class="lab">{{ $t('portal.accessTitle') }}</p>
-      <p class="hint">{{ $t('portal.accessHint') }}</p>
-      <div class="formfoot">
+    <section class="mt-11">
+      <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.accessTitle') }}</p>
+      <p class="text-[11.5px] leading-[1.45] text-faint">{{ $t('portal.accessHint') }}</p>
+      <div class="mt-8 flex items-center gap-5">
         <Button variant="outline" type="button" @click="router.post('/einstellungen/abmelden-ueberall')">
           {{ $t('portal.endSessions') }}
         </Button>
       </div>
     </section>
 
-    <section class="psec">
-      <p class="lab">{{ $t('portal.privacyTitle') }}</p>
+    <section class="mt-11">
+      <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.privacyTitle') }}</p>
 
-      <div class="pend">
-        <div class="prow">
-          <span style="flex: 1">
-            <h3>{{ $t('portal.dataCopy') }}</h3>
-            <div class="sub">{{ $t('portal.dataCopyHint') }}</div>
+      <div class="border-t border-border">
+        <div class="flex items-center gap-5 border-b border-border py-5">
+          <span class="flex-1">
+            <h3 class="m-0 text-[14px] leading-[1.3] font-semibold">{{ $t('portal.dataCopy') }}</h3>
+            <div class="mt-0.5 text-[12.5px] leading-[1.4] font-normal text-muted-foreground">{{ $t('portal.dataCopyHint') }}</div>
           </span>
           <Button
             v-if="!openRequests.includes('export')"
@@ -127,16 +121,16 @@ function requestDsgvo(kind: 'export' | 'erasure') {
           >
             {{ $t('portal.request') }}
           </Button>
-          <span v-else class="hint">{{ $t('portal.requested') }}</span>
+          <span v-else class="text-[11.5px] leading-[1.45] text-faint">{{ $t('portal.requested') }}</span>
         </div>
 
-        <div class="prow">
-          <span style="flex: 1">
-            <h3>{{ $t('portal.erasure') }}</h3>
+        <div class="flex items-center gap-5 border-b border-border py-5">
+          <span class="flex-1">
+            <h3 class="m-0 text-[14px] leading-[1.3] font-semibold">{{ $t('portal.erasure') }}</h3>
             <!-- Ten years of retention on signed contracts and issued
                  invoices. The line says so instead of promising a deletion
                  that would not be one. -->
-            <div class="sub">{{ $t('portal.erasureHint') }}</div>
+            <div class="mt-0.5 text-[12.5px] leading-[1.4] font-normal text-muted-foreground">{{ $t('portal.erasureHint') }}</div>
           </span>
           <Button
             v-if="!openRequests.includes('erasure')"
@@ -146,7 +140,7 @@ function requestDsgvo(kind: 'export' | 'erasure') {
           >
             {{ $t('portal.request') }}
           </Button>
-          <span v-else class="hint">{{ $t('portal.requested') }}</span>
+          <span v-else class="text-[11.5px] leading-[1.45] text-faint">{{ $t('portal.requested') }}</span>
         </div>
       </div>
     </section>

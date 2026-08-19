@@ -1,0 +1,43 @@
+<script setup lang="ts">
+import type { HTMLAttributes } from "vue"
+import { cn } from "@/lib/utils"
+
+/*
+ * portal.css `.field`, as a component. Not a variant of `ui/field`: that one
+ * is a column around a shadcn control and leaves the control alone, this one
+ * wraps its control in a <label> and restyles the input itself — full width,
+ * 12px of padding, a 16px face. Folding the two together would mean choosing
+ * whose input wins, and the portal's is the one eighteen screens were built
+ * against.
+ *
+ * The input rules are descendant variants rather than classes on the control,
+ * because `.field input` reached whatever the slot happened to hold — an
+ * Input, a DatePicker, a native date field — and the call sites do not all
+ * know which.
+ */
+const props = defineProps<{
+  label: string
+  hint?: string
+  class?: HTMLAttributes["class"]
+}>()
+
+const INPUT = [
+  '[&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-line-hover',
+  '[&_input]:bg-background [&_input]:px-3.5 [&_input]:py-3 [&_input]:font-sans',
+  '[&_input]:text-[16px] [&_input]:leading-[1.2] [&_input]:font-medium [&_input]:text-foreground',
+  // the room the calendar button needs, claimed at the same level as above
+  '[&_[data-slot=date-picker]_input]:pr-9',
+].join(' ')
+</script>
+
+<template>
+  <label :class="cn('mb-5 block', INPUT, props.class)">
+    <span class="mb-2 block text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">
+      {{ label }}
+    </span>
+    <slot />
+    <em v-if="hint" class="mt-[7px] block text-[12.5px] leading-[1.45] font-normal not-italic text-faint">
+      {{ hint }}
+    </em>
+  </label>
+</template>
