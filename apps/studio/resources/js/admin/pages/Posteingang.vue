@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import { Button } from '@/ui/button'
@@ -110,8 +110,6 @@ function rotate() {
   router.post('/posteingang/adresse-erneuern', {}, { preserveScroll: true })
 }
 
-const threaded = computed(() => props.groups.some((group) => group.rows.length > 0))
-
 function receivedAt(iso: string) {
   return new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
@@ -119,16 +117,9 @@ function receivedAt(iso: string) {
 
 <template>
   <AdminLayout active="posteingang">
-    <div class="hrow">
-      <div>
-        <div class="kick">{{ $t('inbox.kicker') }}</div>
-        <h1>{{ $t('inbox.title') }}</h1>
-      </div>
-    </div>
-
     <!-- C-14 (#250): conversations, grouped by working state. A queue on the
          left, the thread on the right, its trace beside it. -->
-    <div v-if="threaded" data-theme="crm" style="display: flex; min-height: 60vh; margin-top: var(--s5)">
+    <div data-theme="crm" style="display: flex; min-height: 60vh">
       <div class="queue">
         <template v-for="group in groups" :key="group.key">
           <h2 v-if="group.rows.length">
@@ -189,6 +180,8 @@ function receivedAt(iso: string) {
             </div>
           </form>
         </template>
+
+        <p v-else class="hint">{{ $t('inbox.noThreads') }}</p>
       </div>
 
       <aside v-if="open" class="rail">
@@ -203,6 +196,13 @@ function receivedAt(iso: string) {
           </div>
         </template>
       </aside>
+    </div>
+
+    <div class="hrow">
+      <div>
+        <div class="kick">{{ $t('inbox.kicker') }}</div>
+        <h1>{{ $t('inbox.title') }}</h1>
+      </div>
     </div>
 
     <div class="card static" style="margin-top: var(--s5)">
@@ -275,10 +275,12 @@ function receivedAt(iso: string) {
       </div>
     </div>
 
-    <div v-if="pending.length" class="card static" style="margin-top: var(--s4)">
+    <div class="card static" style="margin-top: var(--s4)">
       <div class="cardhead"><span class="kick">{{ $t('inbox.triageTitle') }}</span></div>
 
-      <div class="msg" style="gap: var(--s4); margin-top: var(--s3)">
+      <p v-if="!pending.length" class="hint">{{ $t('inbox.triageEmpty') }}</p>
+
+      <div v-else class="msg" style="gap: var(--s4); margin-top: var(--s3)">
         <div v-for="row in pending" :key="row.id" class="msgrow">
           <div class="msgtxt">
             <div class="msgwho">

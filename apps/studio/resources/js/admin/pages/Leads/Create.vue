@@ -106,11 +106,11 @@ function submit() {
 
 <template>
   <AdminLayout active="anfragen">
-    <div data-theme="crm" style="padding: var(--s6) var(--s7)">
+    <div data-theme="crm" class="form" style="padding: var(--s6) var(--s7)">
       <div class="kick">{{ $t('leads.createKicker') }}</div>
       <h1>{{ $t('leads.createTitle') }}</h1>
 
-      <form class="form" style="margin-top: var(--s5)" @submit.prevent="submit">
+      <form style="margin-top: var(--s5)" @submit.prevent="submit">
         <div class="grp">
           <div class="fld">
             <Label>{{ $t('leads.contact') }}</Label>
@@ -121,37 +121,33 @@ function submit() {
 
         <div v-if="creating" class="grp">
           <div class="line">
-            <div class="fld">
-              <Label for="contact_name">{{ $t('leads.name') }}</Label>
-              <Input
-                id="contact_name"
-                v-model="form.contact_name"
-                type="text"
-                @input="proposeProjectName" />
-            </div>
-            <div class="fld">
-              <Label for="contact_email">{{ $t('leads.email') }}</Label>
-              <Input id="contact_email" v-model="form.contact_email" type="email" />
-            </div>
-            <div class="fld">
-              <Label for="contact_phone">{{ $t('leads.phone') }}</Label>
-              <Input id="contact_phone" v-model="form.contact_phone" type="tel" />
-            </div>
+            <label class="field grow">
+              <span>{{ $t('leads.name') }}</span>
+              <input v-model="form.contact_name" type="text" @input="proposeProjectName" />
+            </label>
+            <label class="field grow">
+              <span>{{ $t('leads.email') }}</span>
+              <input v-model="form.contact_email" type="email" />
+            </label>
+            <label class="field grow">
+              <span>{{ $t('leads.phone') }}</span>
+              <input v-model="form.contact_phone" type="tel" />
+            </label>
           </div>
 
           <div v-for="(person, index) in form.people" :key="index" class="line">
-            <div class="fld">
-              <Label :for="`person_name_${index}`">{{ $t('leads.name') }}</Label>
-              <Input :id="`person_name_${index}`" v-model="person.name" type="text" />
-            </div>
-            <div class="fld">
-              <Label :for="`person_email_${index}`">{{ $t('leads.email') }}</Label>
-              <Input :id="`person_email_${index}`" v-model="person.email" type="email" />
-            </div>
-            <div class="fld">
-              <Label :for="`person_phone_${index}`">{{ $t('leads.phone') }}</Label>
-              <Input :id="`person_phone_${index}`" v-model="person.phone" type="tel" />
-            </div>
+            <label class="field grow">
+              <span>{{ $t('leads.name') }}</span>
+              <input v-model="person.name" type="text" />
+            </label>
+            <label class="field grow">
+              <span>{{ $t('leads.email') }}</span>
+              <input v-model="person.email" type="email" />
+            </label>
+            <label class="field grow">
+              <span>{{ $t('leads.phone') }}</span>
+              <input v-model="person.phone" type="tel" />
+            </label>
           </div>
 
           <button class="ghost" type="button" style="margin-top: var(--s2)" @click="addPerson">

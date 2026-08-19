@@ -32,11 +32,8 @@ const props = defineProps<{
   stages: { value: string; label: string }[]
   sources: { value: string; label: string }[]
   roles: { value: string; label: string }[]
-  presets: { source: string[] }
   stage: string | null
   source: string | null
-  sourceOther: string | null
-  sourceLabel: string | null
 }>()
 
 const money = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
@@ -65,7 +62,6 @@ const edit = useForm({
   name: props.header.name,
   stage: props.stage,
   source: props.source,
-  source_other: props.sourceOther ?? '',
   people: props.people.map((person) => ({ id: person.id, role: person.role })),
   shoots: props.shoots.map((shoot) => ({
     id: shoot.id,
@@ -173,23 +169,6 @@ function complete(task: App.Crm.Data.TaskRowData) {
             <div class="val" :class="{ warn: Number(figures.open.value ?? 0) > 0 }">{{ euro(figures.open.value) }}</div>
             <div v-if="figures.open.proof" class="sub">{{ $t('project.instalments', Number(figures.open.proof)) }}</div>
           </div>
-          <div v-if="sourceLabel" class="cell">
-            <div class="lab">{{ $t('leads.source') }}</div>
-            <select v-if="editing" v-model="edit.source" class="form">
-              <option v-for="option in sources" :key="option.value" :value="option.value">{{ option.label }}</option>
-            </select>
-            <div v-else class="val plain">{{ sourceLabel }}</div>
-            <input
-              v-if="editing && edit.source === 'other'"
-              v-model="edit.source_other"
-              type="text"
-              class="form"
-              list="source-presets"
-              style="margin-top: 6px" />
-            <datalist id="source-presets">
-              <option v-for="value in presets.source" :key="value" :value="value" />
-            </datalist>
-          </div>
           <div class="cell">
             <div class="lab">{{ $t('project.portal') }}</div>
             <!-- The figure and the switch that changes it, in one cell: this
@@ -209,7 +188,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
           </div>
         </div>
 
-        <section v-if="editing || shoots.length" class="sec">
+        <section class="sec">
           <h2>{{ $t('lead.dates') }}</h2>
           <div v-if="editing" class="form">
             <div v-for="shoot in edit.shoots" :key="shoot.id" class="shootblock">
@@ -225,7 +204,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
             </div>
           </div>
 
-          <div v-else-if="shoots.length" class="rowset">
+          <div v-else class="rowset">
             <div v-for="shoot in shoots" :key="shoot.id" class="r">
               <span class="when">
                 {{ day(shoot.date) }}
@@ -237,6 +216,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
               </span>
               <span class="right">{{ shoot.crew.map((member) => member.name).join(', ') || '—' }}</span>
             </div>
+            <p v-if="!shoots.length" class="hint">{{ $t('project.noShoots') }}</p>
           </div>
         </section>
 
@@ -268,7 +248,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
           </p>
         </section>
 
-        <section v-if="open.length" class="sec">
+        <section class="sec">
           <h2>{{ $t('project.openItems') }}</h2>
           <div class="todo">
             <div v-for="task in open" :key="task.id" class="r">
@@ -277,6 +257,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
               <span class="aud">{{ task.audience }}</span>
               <span class="due" :class="{ warn: task.isOverdue }">{{ task.dueOn ? day(task.dueOn) : '' }}</span>
             </div>
+            <p v-if="!open.length" class="hint">{{ $t('dashboard.nothingDue') }}</p>
           </div>
         </section>
 

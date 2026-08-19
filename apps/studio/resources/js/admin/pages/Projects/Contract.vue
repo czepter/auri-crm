@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, watch } from 'vue'
-import { Link, router, useForm } from '@inertiajs/vue3'
+import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectHeader from '@/admin/components/ProjectHeader.vue'
 import { Button } from '@/ui/button'
@@ -63,7 +63,7 @@ onBeforeUnmount(clearPoll)
           <div class="v">{{ contract.statusLabel }}</div>
         </div>
       </div>
-      <p v-else-if="!header.canManageContracts || !templates.length" class="hint">{{ $t('project.contractNone') }}</p>
+      <p v-else class="hint">{{ $t('project.contractNone') }}</p>
 
       <p v-if="contract?.status === 'pending'" class="hint">{{ $t('project.contractPending') }}</p>
 
@@ -98,9 +98,7 @@ onBeforeUnmount(clearPoll)
           {{ $t('project.contractGenerate') }}
         </Button>
       </form>
-      <Button v-else-if="header.canManageContracts" :as="Link" href="/dokumentvorlagen/neu" style="margin-top: var(--s4)">
-        {{ $t('documentTemplates.create') }}
-      </Button>
+      <p v-else-if="header.canManageContracts" class="hint">{{ $t('project.contractNoTemplates') }}</p>
     </div>
   </AdminLayout>
 </template>

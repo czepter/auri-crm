@@ -13,10 +13,8 @@ const props = defineProps<{
     projectId: string
     name: string
     type: string
-    typeOther: string | null
     typeLabel: string
     source: string
-    sourceOther: string | null
     sourceLabel: string
     stage: string
     stageLabel: string
@@ -33,7 +31,6 @@ const props = defineProps<{
   notes: App.Crm.Data.InternalNoteData[]
   types: { value: string; label: string }[]
   sources: { value: string; label: string }[]
-  presets: { type: string[]; source: string[] }
   week: { date: string; what: string }[]
   conflicts: App.Crm.Data.DateConflictData[]
 }>()
@@ -88,9 +85,7 @@ const editing = ref(false)
 
 const edit = useForm({
   type: props.lead.type,
-  type_other: props.lead.typeOther ?? '',
   source: props.lead.source,
-  source_other: props.lead.sourceOther ?? '',
   inquiry_text: props.lead.inquiryText ?? '',
   people: props.people.map((person) => ({
     id: person.id,
@@ -230,30 +225,12 @@ const due = computed(() => {
                     <span>{{ option.label }}</span>
                   </label>
                 </div>
-                <input
-                  v-if="edit.type === 'other'"
-                  v-model="edit.type_other"
-                  type="text"
-                  list="type-presets"
-                  style="margin-bottom: 8px" />
-                <datalist id="type-presets">
-                  <option v-for="value in presets.type" :key="value" :value="value" />
-                </datalist>
                 <div class="choice">
                   <label v-for="option in sources" :key="option.value">
                     <input v-model="edit.source" type="radio" :value="option.value" />
                     <span>{{ option.label }}</span>
                   </label>
                 </div>
-                <input
-                  v-if="edit.source === 'other'"
-                  v-model="edit.source_other"
-                  type="text"
-                  list="source-presets"
-                  style="margin-top: 8px" />
-                <datalist id="source-presets">
-                  <option v-for="value in presets.source" :key="value" :value="value" />
-                </datalist>
               </div>
               <div v-else class="via top"><b>{{ lead.typeLabel }}</b>{{ lead.sourceLabel }}</div>
 
@@ -274,7 +251,7 @@ const due = computed(() => {
               </div>
 
               <div class="via">
-                <b>{{ lead.capturedVia ?? lead.sourceLabel }}</b>
+                <b>{{ lead.capturedVia ?? lead.source }}</b>
                 {{ new Date(lead.capturedAt).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) }}
               </div>
             </div>

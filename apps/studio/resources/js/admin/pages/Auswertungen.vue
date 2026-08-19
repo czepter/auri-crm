@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import { Button } from '@/ui/button'
 
 const props = defineProps<{
   window: { from: string; to: string }
@@ -17,17 +15,6 @@ const props = defineProps<{
   perContact: { name: string; projects: number; revenue: number }[]
   cashFlow: { overdue: number; months: { month: string; due: number; received: number; open: number }[] }
 }>()
-
-const bare = computed(() =>
-  !props.funnelByMonth.length
-  && !props.sources.length
-  && !props.referrers.length
-  && !props.lostReasons.length
-  && !props.perContact.length
-  && !props.cashFlow.months.length
-  && props.acceptanceRate === null
-  && !props.revenue.projects,
-)
 
 // Minor units end to end, turned into euros exactly once — the same rule
 // Uebersicht.vue states for its own tiles.
@@ -77,17 +64,10 @@ const bookingRate = computed(() =>
       </div>
     </div>
 
-    <!-- Nothing on this screen is entered here: every figure comes out of
-         the funnel, so a studio without history gets the funnel's own
-         control rather than nine cards reporting no data. -->
-    <Button v-if="bare" :as="Link" href="/anfragen/neu" style="margin-top: var(--s5)">
-      {{ $t('leads.createKicker') }}
-    </Button>
-
     <!-- Same rule as the Übersicht's tiles: a figure with nothing behind it
          is absent, never a zero. A studio with no history reads as empty,
          which is true, rather than as failing. -->
-    <div v-if="!bare" class="kpis">
+    <div class="kpis">
       <div v-if="bookingRate !== null" class="kpi">
         <b>{{ bookingRate }} %</b>
         {{ $t('reports.bookingRate') }}
@@ -110,11 +90,11 @@ const bookingRate = computed(() =>
       </div>
     </div>
 
-    <div v-if="!bare" class="split" style="margin-top: var(--s5)">
+    <div class="split" style="margin-top: var(--s5)">
       <div class="prail">
-        <div v-if="funnelByMonth.length" class="card static">
+        <div class="card static">
           <div class="cardhead"><span class="kick">{{ $t('reports.funnelTitle') }}</span></div>
-          <table class="tbl">
+          <table v-if="funnelByMonth.length" class="tbl">
             <thead>
               <tr>
                 <th>{{ $t('reports.month') }}</th>
@@ -134,9 +114,10 @@ const bookingRate = computed(() =>
               </tr>
             </tbody>
           </table>
+          <p v-else class="hint">{{ $t('reports.empty') }}</p>
         </div>
 
-        <div v-if="sources.length || referrers.length" class="card static" style="margin-top: var(--s4)">
+        <div class="card static" style="margin-top: var(--s4)">
           <div class="cardhead"><span class="kick">{{ $t('reports.sourcesTitle') }}</span></div>
           <table v-if="sources.length" class="tbl">
             <thead>
@@ -156,6 +137,7 @@ const bookingRate = computed(() =>
               </tr>
             </tbody>
           </table>
+          <p v-else class="hint">{{ $t('reports.empty') }}</p>
 
           <template v-if="referrers.length">
             <div class="dlab" style="margin-top: var(--s4)">{{ $t('reports.referrersTitle') }}</div>
@@ -172,11 +154,12 @@ const bookingRate = computed(() =>
              funnel above and absent here rather than bucketed as
              "unbekannt" — a category invented for an empty field makes a
              breakdown look complete when it is not. -->
-        <div v-if="lostReasons.length" class="card static" style="margin-top: var(--s4)">
+        <div class="card static" style="margin-top: var(--s4)">
           <div class="cardhead"><span class="kick">{{ $t('reports.lostTitle') }}</span></div>
-          <ul class="plain">
+          <ul v-if="lostReasons.length" class="plain">
             <li v-for="row in lostReasons" :key="row.reason">{{ row.reason }} — {{ row.count }}</li>
           </ul>
+          <p v-else class="hint">{{ $t('reports.empty') }}</p>
         </div>
       </div>
 
@@ -184,7 +167,7 @@ const bookingRate = computed(() =>
         <!-- M-07. Its own panel on this screen rather than a screen of its
              own: "how are we doing" and "what is coming in" are the same
              question asked twice. -->
-        <div v-if="cashFlow.months.length" class="card static">
+        <div class="card static">
           <div class="cardhead"><span class="kick">{{ $t('reports.cashFlowTitle') }}</span></div>
 
           <p v-if="cashFlow.overdue" class="err">
@@ -216,9 +199,9 @@ const bookingRate = computed(() =>
           <p class="hint">{{ $t('reports.cashFlowNote') }}</p>
         </div>
 
-        <div v-if="perContact.length" class="card static" style="margin-top: var(--s4)">
+        <div class="card static" style="margin-top: var(--s4)">
           <div class="cardhead"><span class="kick">{{ $t('reports.perContactTitle') }}</span></div>
-          <table class="tbl">
+          <table v-if="perContact.length" class="tbl">
             <thead>
               <tr>
                 <th>{{ $t('reports.contact') }}</th>
@@ -234,6 +217,7 @@ const bookingRate = computed(() =>
               </tr>
             </tbody>
           </table>
+          <p v-else class="hint">{{ $t('reports.empty') }}</p>
         </div>
       </div>
     </div>

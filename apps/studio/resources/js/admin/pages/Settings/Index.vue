@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useForm, usePage } from '@inertiajs/vue3'
+import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import SettingsNav from '@/admin/components/SettingsNav.vue'
 import ProfileForm from './panes/ProfileForm.vue'
 import VatForm from './panes/VatForm.vue'
 import DocumentsForm from './panes/DocumentsForm.vue'
@@ -11,7 +10,6 @@ import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Checkbox } from '@/ui/checkbox'
-import { Textarea } from '@/ui/textarea'
 import { Label } from '@/ui/label'
 
 const props = defineProps<{
@@ -20,19 +18,11 @@ const props = defineProps<{
   settings: App.Settings.Data.StudioSettingsData
 }>()
 
-// Which pane of the section shell is showing. In the query rather than in a
-// ref, because SettingsNav reaches these four from the sibling settings
-// screens too — a pane only this component could switch to was a pane those
-// screens had to render as "bald".
-const PANES = ['profile', 'vat', 'documents', 'email', 'capture', 'general'] as const
-
-const page = usePage()
-
-const pane = computed(() => {
-  const asked = new URL(page.url, 'http://settings').searchParams.get('pane')
-
-  return PANES.find((known) => known === asked) ?? 'profile'
-})
+// Which pane of the section shell is showing — client-side only, the same
+// second-level tab set the mockup draws as two static variants of one
+// screen. Nothing here is routed: every form already saves through its own
+// endpoint, so switching panes has no request to make.
+const pane = ref<'profile' | 'vat' | 'documents' | 'email' | 'general'>('profile')
 
 // Mo..So, ISO weekday order — matches the integers StudioSettingsController
 // validates working_days.* against and TaskTemplate::dueFor() rolls over.
@@ -55,29 +45,6 @@ const generalForm = useForm({
   working_days: [...props.settings.workingDays] as number[],
 })
 
-// The three suggestion lists the "Sonstige" fields at capture offer, one
-// entry per line — the list is short and typed rarely, so a textarea beats a
-// tag editor nobody asked for.
-const captureForm = useForm({
-  lead_type_presets: props.settings.leadTypePresets.join('\n'),
-  lead_source_presets: props.settings.leadSourcePresets.join('\n'),
-  lead_channel_presets: props.settings.leadChannelPresets.join('\n'),
-})
-
-function lines(value: string) {
-  return value.split('\n').map((line) => line.trim()).filter(Boolean)
-}
-
-function submitCapture() {
-  captureForm
-    .transform((data) => ({
-      lead_type_presets: lines(data.lead_type_presets),
-      lead_source_presets: lines(data.lead_source_presets),
-      lead_channel_presets: lines(data.lead_channel_presets),
-    }))
-    .patch('/einstellungen/erfassung', { preserveScroll: true })
-}
-
 // Template refs onto the four extracted panes — each exposes { form, submit }
 // (see panes/ProfileForm.vue and its siblings). Only one is ever mounted at a
 // time (v-if/v-else-if below), so only one of these is non-null at once.
@@ -94,7 +61,6 @@ const activeForm = computed(() => {
   if (pane.value === 'vat') return vatRef.value?.form
   if (pane.value === 'documents') return documentsRef.value?.form
   if (pane.value === 'email') return emailRef.value?.form
-  if (pane.value === 'capture') return captureForm
   if (pane.value === 'general') return generalForm
   return profileRef.value?.form
 })
@@ -103,7 +69,6 @@ const formId = computed(() => {
   if (pane.value === 'vat') return 'vat-form'
   if (pane.value === 'documents') return 'documents-form'
   if (pane.value === 'email') return 'mail-form'
-  if (pane.value === 'capture') return 'capture-form'
   if (pane.value === 'general') return 'general-form'
   return 'settings-form'
 })
@@ -112,10 +77,13 @@ const paneTitle = computed(() => {
   if (pane.value === 'vat') return 'settings.vatTitle'
   if (pane.value === 'documents') return 'settings.documentsTitle'
   if (pane.value === 'email') return 'settings.mailTitle'
-  if (pane.value === 'capture') return 'settings.captureTitle'
   if (pane.value === 'general') return 'settings.generalTitle'
   return 'settings.profileTitle'
 })
+
+// Every group named across this section's stories is live now that T-11's
+// Benachrichtigungen has its own route — nothing left in this list.
+const comingSoon: readonly string[] = []
 
 function toggleWorkingDay(day: number) {
   const days = generalForm.working_days
@@ -153,34 +121,46 @@ function submitGeneral() {
     </div>
 
     <div style="display: flex; gap: var(--s6); margin-top: var(--s5); align-items: flex-start">
-      <SettingsNav :active="pane" />
+      <nav style="width: 196px; flex: none; display: flex; flex-direction: column; gap: 2px">
+        <a class="nav" :class="{ on: pane === 'profile' }" href="#" @click.prevent="pane = 'profile'">
+          {{ $t('settings.navProfile') }}
+        </a>
+        <a class="nav" :class="{ on: pane === 'vat' }" href="#" @click.prevent="pane = 'vat'">
+          {{ $t('settings.navVat') }}
+        </a>
+        <a class="nav" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
+        <a class="nav" :class="{ on: pane === 'documents' }" href="#" @click.prevent="pane = 'documents'">
+          {{ $t('settings.navDocuments') }}
+        </a>
+        <a class="nav" :class="{ on: pane === 'email' }" href="#" @click.prevent="pane = 'email'">
+          {{ $t('settings.navMail') }}
+        </a>
+        <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
+        <a class="nav" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
+        <a class="nav" href="/einstellungen/aufgabenvorlagen">{{ $t('settings.navTaskTemplates') }}</a>
+        <a class="nav" href="/einstellungen/fragebogen-vorlagen">{{ $t('settings.navFormTemplates') }}</a>
+        <a class="nav" href="/einstellungen/portal">{{ $t('settings.navPortal') }}</a>
+        <a class="nav" href="/einstellungen/benachrichtigungen">{{ $t('settings.navNotifications') }}</a>
+        <a
+          v-for="key in comingSoon"
+          :key="key"
+          class="nav"
+          href="#"
+          style="pointer-events: none; opacity: 0.5"
+        >
+          {{ $t(`settings.${key}`) }}
+          <span class="chip next" style="margin-left: auto">{{ $t('settings.soon') }}</span>
+        </a>
+        <a class="nav" :class="{ on: pane === 'general' }" href="#" @click.prevent="pane = 'general'">
+          {{ $t('settings.navGeneral') }}
+        </a>
+      </nav>
 
       <div style="flex: 1; min-width: 0; max-width: 620px">
         <ProfileForm v-if="pane === 'profile'" ref="profileRef" :settings="settings" :font-pairs="fontPairs" />
         <VatForm v-else-if="pane === 'vat'" ref="vatRef" :settings="settings" />
         <DocumentsForm v-else-if="pane === 'documents'" ref="documentsRef" :settings="settings" />
         <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" />
-
-        <form v-else-if="pane === 'capture'" id="capture-form" @submit.prevent="submitCapture">
-          <div class="dsec" style="margin-top: 0">
-            <div class="dlab">{{ $t('settings.capturePresetsLabel') }}</div>
-            <div class="grp">
-              <div class="fld">
-                <Label for="c-typ">{{ $t('leads.type') }}</Label>
-                <Textarea id="c-typ" v-model="captureForm.lead_type_presets" rows="4" />
-              </div>
-              <div class="fld" style="margin-top: var(--s4)">
-                <Label for="c-quelle">{{ $t('leads.source') }}</Label>
-                <Textarea id="c-quelle" v-model="captureForm.lead_source_presets" rows="4" />
-              </div>
-              <div class="fld" style="margin-top: var(--s4)">
-                <Label for="c-kanal">{{ $t('leads.capturedVia') }}</Label>
-                <Textarea id="c-kanal" v-model="captureForm.lead_channel_presets" rows="4" />
-              </div>
-              <span class="hint">{{ $t('settings.capturePresetsHint') }}</span>
-            </div>
-          </div>
-        </form>
 
         <form v-else id="general-form" @submit.prevent="submitGeneral">
           <div class="dsec" style="margin-top: 0">

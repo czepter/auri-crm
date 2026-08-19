@@ -140,7 +140,9 @@ function formatSize(bytes: number): string {
             <span class="chip next">{{ partsDone }} {{ $t('media.of') }} {{ partsTotal }}</span>
           </div>
 
-          <div v-if="fileList.length" class="flist">
+          <p v-if="fileList.length === 0" class="hint">{{ $t('media.empty') }}</p>
+
+          <div v-else class="flist">
             <div v-for="entry in fileList" :key="keyOf(entry.file)" class="frow" :class="{ queued: entry.status === 'queued' }">
               <span class="fname">{{ entry.file.name }}</span>
               <span class="fsize">{{ formatSize(entry.file.size) }}</span>

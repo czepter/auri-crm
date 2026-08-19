@@ -277,6 +277,6 @@ function chipClass(status: string): string {
       </template>
     </div>
 
-    <p v-if="!quotes.length && !header.canManageQuotes" class="hint">{{ $t('quotes.empty') }}</p>
+    <p v-if="!quotes.length" class="hint">{{ $t('quotes.empty') }}</p>
   </AdminLayout>
 </template>

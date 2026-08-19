@@ -129,7 +129,9 @@ function add() {
 
 
     <section class="dsec" style="margin-top: 0">
-      <div v-if="absences.length" class="panel">
+      <div class="panel">
+        <p v-if="absences.length === 0" class="hint" style="padding: var(--s3)">{{ $t('absences.empty') }}</p>
+
         <div v-for="absence in absences" :key="absence.id" class="trow" style="align-items: flex-start">
           <span class="pavatar">{{ absence.userName.slice(0, 1) }}</span>
           <span class="pinfo">

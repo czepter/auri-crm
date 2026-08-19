@@ -51,9 +51,7 @@ function day(iso: string) {
         </tbody>
       </table>
 
-      <Link v-else class="btn" href="/anfragen/neu" style="margin-top: var(--s5)">
-        {{ $t('leads.createKicker') }}
-      </Link>
+      <p v-else class="hint" style="padding: var(--s5) var(--s7)">{{ $t('contacts.empty') }}</p>
     </div>
   </AdminLayout>
 </template>
