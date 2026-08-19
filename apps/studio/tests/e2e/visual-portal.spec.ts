@@ -164,6 +164,26 @@ test('Portal haelt seine Baselines', async ({ page }) => {
   await page.goto(booking)
   await shoot(page, 'projekt')
 
+  // The three documents a booking hangs off. Each is a 404 when the studio
+  // has not produced it — or, for payments, when T-08's switch is off — and
+  // a frame of the error page would prove nothing about the screen.
+  for (const [path, name] of [
+    ['/angebot', 'angebot'],
+    ['/vertrag', 'vertrag'],
+    ['/zahlungen', 'zahlungen'],
+  ] as const) {
+    await page.goto(`${booking}${path}`)
+    await settle(page)
+    if ((await page.locator('header').count()) === 0) {
+      console.log(`OHNE BASELINE: ${name} — nichts unter ${path}`)
+      continue
+    }
+    await shoot(page, name)
+  }
+
+  await page.goto(booking)
+  await settle(page)
+
   // A gallery only appears once the studio has released it to that client. A
   // database where none is released reaches it never, and releasing one from
   // here would rewrite a developer's own data. The gap is reported rather
