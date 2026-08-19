@@ -141,59 +141,105 @@ const items = computed(() => [
 </script>
 
 <template>
-  <div class="app">
-    <!-- The theme root sits on the sidebar alone while the screens come over
-         one at a time (C-01, #235): crm.css and the older tokens.css share
-         forty class names, so a root on .app would restyle every unported
-         screen at once. -->
-    <div data-theme="crm" style="flex: none">
-      <nav class="side">
-        <Link class="wm" href="/">{{ $page.props.brand }}</Link>
+  <div class="flex min-h-screen max-[640px]:flex-col">
+    <!-- data-tokens, not data-theme: the sidebar has moved to Tailwind and no
+         longer wants crm.css's rules, but it still wants the admin's palette,
+         its system font stack and its 4/8/12/16/20/28/32 scale. -->
+    <div data-tokens="crm" class="flex-none">
+      <!-- The phone rules sit on the nav, exactly where crm.css had them.
+           `order` and `sticky` do nothing from here — the nav is a child of
+           this wrapper, not of the flex row — but that is today's behaviour,
+           and no baseline covers 640px to tell a fix from a regression. -->
+      <nav
+        class="flex w-[214px] flex-col px-3 py-4.5 max-[1080px]:w-14 max-[1080px]:px-2 max-[640px]:sticky max-[640px]:bottom-0 max-[640px]:z-30 max-[640px]:order-2 max-[640px]:w-auto max-[640px]:flex-row max-[640px]:justify-around max-[640px]:bg-paper max-[640px]:px-1 max-[640px]:py-1.5 max-[640px]:shadow-[inset_0_1px_0_var(--rule)]"
+      >
+        <Link
+          class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 pb-5.5 text-[17px] leading-none font-semibold tracking-[-0.024em] text-foreground no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:hidden"
+          href="/"
+        >
+          {{ $page.props.brand }}
+        </Link>
 
         <!-- Above the navigation, not in it: it does not change page, it
              opens a tool. The shortcut stands where a count would. -->
-        <button class="find" type="button" @click="palette?.open()">
-          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" /></svg>
+        <button
+          class="mb-4 flex w-full cursor-pointer items-center gap-2.25 rounded-lg border-0 bg-sunk px-2.5 py-1.5 text-left text-[13px] leading-[1.47] tracking-[-0.01em] text-ink-2 transition-colors duration-[120ms] ease-out hover:bg-sunk-2 max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2 max-[640px]:hidden"
+          type="button"
+          @click="palette?.open()"
+        >
+          <svg class="size-4.25 flex-none fill-none stroke-ink-2 stroke-[1.6] [stroke-linecap:round]" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="6.5" /><path d="m16 16 4.5 4.5" />
+          </svg>
           {{ $t('palette.search') }}
-          <kbd>⌘K</kbd>
+          <!-- font-sans against the browser's monospace default for kbd; the
+               shorthand in crm.css carried the family along. -->
+          <kbd class="ml-auto font-sans text-[11px] leading-none font-medium tabular-nums text-ink-2 max-[1080px]:hidden">⌘K</kbd>
         </button>
 
         <template v-for="item in items" :key="item.key ?? item.group">
           <template v-if="item.group">
-            <div class="group" />
-            <div class="lab">{{ item.group }}</div>
+            <div class="h-4.5 max-[640px]:hidden" />
+            <div class="px-2.5 pb-1.5 text-[10.5px] tracking-[0.06em] uppercase text-ink-2 max-[1080px]:hidden">
+              {{ item.group }}
+            </div>
           </template>
 
           <!-- The label rides in its own span so the narrow breakpoint can
                drop it: ten truncated words are harder to hit than ten icons.
-               `studio` marks the second group, which the phone layout leaves
-               out — nobody sets up a studio from a phone. -->
+               The second group drops out entirely on a phone — nobody sets up
+               a studio from one. -->
           <Link
             v-else
-            :class="{ on: item.key === props.active, studio: item.studio }"
+            class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 py-1.5 text-[13px] tracking-[-0.01em] text-foreground no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2"
+            :class="[
+              item.key === props.active && 'bg-sunk-2 font-semibold',
+              item.studio && 'max-[640px]:hidden',
+            ]"
             :href="item.href!"
           >
-            <svg viewBox="0 0 24 24" v-html="item.icon" />
-            <span>{{ item.label }}</span>
-            <span v-if="item.count !== undefined" class="ct">{{ item.count }}</span>
+            <svg
+              class="size-4.25 flex-none fill-none stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"
+              :class="item.key === props.active ? 'stroke-foreground' : 'stroke-ink-2'"
+              viewBox="0 0 24 24"
+              v-html="item.icon"
+            />
+            <span class="max-[1080px]:hidden">{{ item.label }}</span>
+            <span
+              v-if="item.count !== undefined"
+              class="ml-auto text-[11.5px] tabular-nums text-ink-2 max-[640px]:hidden"
+            >
+              {{ item.count }}
+            </span>
           </Link>
         </template>
 
-        <div class="me">
-          <span class="av">{{ initials }}</span>
-          <span class="nm">{{ user?.name }}</span>
+        <!-- The effective style here is the cascade of both sheets: crm.css
+             set the box and the size, tokens.css the weight and the flex
+             centring inside the avatar. -->
+        <div class="mt-auto flex items-center gap-2 p-2.5 text-[12.5px] leading-none font-medium max-[1080px]:hidden">
+          <span
+            class="flex size-6 flex-none items-center justify-center rounded-full bg-[#F0F0F2] text-[10px] font-semibold text-ink-2"
+          >
+            {{ initials }}
+          </span>
+          <span class="min-w-0 truncate">{{ user?.name }}</span>
           <!-- The draft's row is a face and a name, and 214px does not hold a
                third text label without truncating the name to "Dev Lo…". The
                action survives as its glyph, named for screen readers. -->
           <Button
+            class="ml-auto"
             type="button"
             variant="ghost"
-            style="margin-left: auto"
             :aria-label="$t('common.signOut')"
             :title="$t('common.signOut')"
             @click="router.post('/logout')"
           >
-            <svg viewBox="0 0 24 24">
+            <!-- The icon defaults from tokens.css stop at data-tokens, so a
+                 migrated screen spells stroke and fill itself. -->
+            <svg
+              class="flex-none fill-none stroke-current stroke-[1.75] [stroke-linecap:round] [stroke-linejoin:round]"
+              viewBox="0 0 24 24"
+            >
               <path d="M15 4h4a1 1 0 011 1v14a1 1 0 01-1 1h-4" />
               <path d="M10 16l-4-4 4-4M6 12h9" />
             </svg>
@@ -204,7 +250,7 @@ const items = computed(() => [
       <CommandPalette ref="palette" />
     </div>
 
-    <main class="main">
+    <main class="flex min-w-0 flex-1 flex-col py-6 pr-6 pl-12 max-[640px]:order-1">
       <slot />
     </main>
   </div>

@@ -1,6 +1,6 @@
 # Tailwind-only — Migration der eigenen Stylesheets
 
-Status: entworfen, Phase 0 offen
+Status: Phase 0, 1 und die Admin-Shell erledigt
 Datum: 2026-08-19
 
 ## Ziel
@@ -11,6 +11,9 @@ definiert — `.lab` viermal, mit vier verschiedenen Werten. Welcher gilt,
 entscheidet der Vorfahre.
 
 Nicht Ziel: Bundle-Größe, Spezifitätskonflikte, Ablösung von `mockups/`.
+
+Nicht im Umfang: `apps/gallery`. Die Astro-App hat kein Tailwind und eigene
+Sheets (315 Zeilen); sie zu migrieren hieße, Tailwind dort erst einzuführen.
 
 ## Ausgangslage
 
@@ -64,23 +67,61 @@ greifen nicht mehr, die Token schon. Rückrollbar durch ein Attribut.
 `gallery.css` hat keinen eigenen Token-Block — dort genügt das Entfernen von
 `data-theme="gallery"`.
 
-Vier ungescopte Element-Regeln können auf migriertes Markup durchschlagen:
-`svg` und `h1` (`tokens.css:95,126`), `h1` (`portal.css:20`). `body`
-(`tokens.css:86`) ist gewollter Reset. Sie werden nicht vorab entschärft —
-Phase 2 zeigt am Screenshot-Diff, ob sie beißen.
+Drei ungescopte Element-Regeln schlagen auf migriertes Markup durch: `svg`
+und `h1` in `tokens.css`, `h1` in `portal.css`. `body` ist gewollter Reset.
+
+Sie beißen härter als gedacht. Die eigenen Sheets werden ungelayert
+importiert, Tailwind legt seine Utilities in `@layer utilities` — und
+ungelayertes CSS gewinnt gegen jede Layer-Regel, unabhängig von der
+Spezifitaet. `svg { stroke-width: 1.75 }` schlaegt damit jedes
+`stroke-[1.6]`, das an einem migrierten Icon steht.
+
+Die drei nehmen migriertes Markup deshalb aus:
+
+    svg:not(:where([data-tokens] svg)) { ... }
+
+`:where()` ist dabei tragend: `:not()` erbt sonst die Spezifitaet seines
+Arguments, und ein blankes `:not([data-tokens] h1)` ueberholt
+`[data-theme="crm"] h1` — womit jede unportierte Seite ihre Ueberschrift
+verliert.
+
+Verworfen: die Sheets in `@layer components` legen. Das waere der saubere
+Weg, kippt aber vierzehn Regeln, die shadcn-Komponenten absichtlich ueber
+`[data-slot=...]` ueberschreiben — `.formfoot [data-slot="button"]
+[data-variant="default"] { margin-left: 0 }` und Verwandte. Gemessen an den
+Baselines: sechs Formularseiten verschoben ihre Buttons.
+
+Erledigt in `crm.css:35`. Dieselben 23 Baselines laufen mit und ohne den
+zweiten Selektor grün durch.
 
 ## §2 Token-Schicht
 
-`app.css` mappt 21 Farbnamen, aber keine Abstände — daher die 150 Inline
-`style="…var(--s5)…"`. Ergänzt wird das Spacing (`--s1`…`--s7` als
-`--spacing-1`…`--spacing-7`), die fehlenden Farben (`paper`, `sunk`, `sunk-2`,
-`ink-2`, `mark`, `rule`, `ok`, `due`, `late`), die Radien (`r-sm`, `r-pill`)
-und die acht eigenen Breakpoints.
+**Abstände werden nicht gemappt.** `--s1`…`--s7` existieren dreimal mit
+verschiedenen Werten — `:root` 4/6/10/16/24/32/48, `[data-theme="portal"]`
+–/–/14/20/32/44/64, `[data-theme="crm"]` 4/8/12/16/20/28/32. Ein Mapping auf
+`--spacing-*` hätte die kontextabhängige Bedeutung aus der Kaskade in die
+Utility-Namen gerettet, und `p-5` hieße je nach Ort 24px, 32px oder 20px. Das
+ist genau das Problem, das die Migration beseitigen soll.
 
-`inline` ist tragend: Tailwind schreibt `var(--paper)` in die Utility statt den
-Wert. `bg-paper` liefert damit innerhalb von `data-tokens="crm"` den einen und
-außerhalb den anderen Wert. Zwei Paletten ohne einen einzigen
-Descendant-Selektor.
+Stattdessen Tailwinds eigene Skala. Alle drei Sätze liegen exakt auf dem
+4px-Raster (6px = `1.5`, 10px = `2.5`, 14px = `3.5`), es entsteht kein einziger
+arbitrary value. Die Umrechnung passiert beim Migrieren eines Screens, der
+Screenshot-Diff belegt sie.
+
+**Farben dürfen kontextabhängig bleiben**, weil `bg-paper` "die Papierfarbe
+dieser Oberfläche" heißt und nicht ein Hex. Dafür ist `@theme inline` tragend:
+Tailwind schreibt `var(--paper)` in die Utility statt den Wert. `app.css`
+mappt heute 21 Namen nach diesem Muster.
+
+Fehlende Farbnamen (`paper`, `sunk`, `sunk-2`, `ink-2`, `mark`, `rule`, `ok`,
+`due`, `late`) kommen dann dazu, wenn ein Screen sie braucht — nicht vorab. Ein
+`@theme`-Eintrag ohne Aufrufer ist dieselbe Spekulation wie eine Komponente
+ohne Aufrufer.
+
+Offen und bewusst nicht angefasst: `--radius-md: var(--r)` ist bereits
+kontextabhängig (8px root, 10px portal, 20px crm). Das anzugleichen würde jede
+shadcn-Kontrolle auf allen Oberflächen umstellen und gehört nicht in diese
+Migration.
 
 ## §3 Sicherungsnetz
 
@@ -92,20 +133,39 @@ Der Beweis, dass das Netz taugt: §1 und §2 müssen pixelgleich durchlaufen.
 Beide ändern nur Selektoren und Tokennamen. Zeigt der Diff dort etwas, ist
 entweder das Netz zu grob oder eine Annahme falsch.
 
+Erledigt: `tests/e2e/visual.spec.ts`, 23 Routen, drei Läufe identisch. Zwei
+Dinge waren nötig, damit das gilt. Der Test braucht sein eigenes Zeitbudget —
+die 30 Sekunden aus `playwright.config.ts` sind für einen Flow gedacht, nicht
+für 23. Und jeder Screenshot wartet auf `document.fonts.status === 'loaded'`:
+`networkidle` landet sonst zwischen Fallback-Paint und Font-Swap, was die
+Marke in Instrument Serif um exakt 594 Pixel driften ließ.
+
+Portal- und Galerie-Baselines fehlen noch. Sie brauchen einen zweiten
+Playwright-Server (Portal läuft auf 8001 mit `APP_SURFACE=portal`) und den
+Magic-Link-Umweg über Mailpit, den `tests/e2e/shots/portal.mjs` bereits
+beschreibt. Sie müssen vor Phase 2 stehen.
+
 ## §4 Phasen
 
 | Phase | Umfang | Ergebnis |
 |---|---|---|
-| 0 | Playwright-Baselines | Netz steht |
-| 1 | Token-Selektor + `@theme`-Ausbau | pixelgleich |
-| 2 | Galerie: `Gallery/Show`, `Gallery/Download`, `GalleryLightbox` | `gallery.css` gelöscht (342 Zeilen) |
-| 3 | Portal: 18 Dateien | Portal Tailwind-only |
-| 4 | Admin-Shell: `AdminLayout`, `CommandPalette`, `SettingsNav`, `ProjectHeader` | geteilte Rahmen |
-| 5 | Admin-Screens, absteigend nach Masse | `crm.css` gelöscht |
-| 6 | Auth-Seiten, Editoren, Reste | Sheets bis auf `:root` gelöscht |
+| 0 | Playwright-Baselines | Netz steht (Admin erledigt, Portal offen) |
+| 1 | Token-Selektor | erledigt, pixelgleich |
+| 2 | Admin-Shell: `AdminLayout` (erledigt), `CommandPalette`, `SettingsNav`, `ProjectHeader` | geteilte Rahmen |
+| 3 | Admin-Screens, absteigend nach Masse | `crm.css` geloescht |
+| 4 | Portal: 18 Dateien | `portal.css` geloescht |
+| 5 | Galerie: `Gallery/Show`, `Gallery/Download`, `GalleryLightbox` | `gallery.css` geloescht (342 Zeilen) |
+| 6 | Auth-Seiten, Editoren, Reste | Sheets bis auf `:root` geloescht |
 
-Phase 2 ist die Abbruchstelle: drei Dateien, ein gelöschtes Sheet, danach steht
-der Aufwand pro Screen als Messwert statt als Schätzung.
+Reihenfolge geaendert. Die Galerie sollte zuerst kommen, weil sie am
+kleinsten ist. Sie hat aber keine Baseline: Galerie- und Projektseiten
+erscheinen im Portal erst, wenn das Studio sie freigegeben hat, und eine
+Freigabe aus dem Test heraus wuerde fremde Entwicklerdaten umschreiben. Der
+Admin ist mit 24 Routen vollstaendig abgedeckt, also faengt die Migration
+dort an.
+
+`AdminLayout` ist die Abbruchstelle: eine Datei, pixelgleich, danach steht
+der Aufwand pro Screen als Messwert statt als Schaetzung.
 
 Geteilte Komponenten (`PortalFooter` 13×, `PortalHeader` 12×, `SettingsNav` 8×,
 `ProjectHeader` 5×) migrieren in Phase 4, vor den Screens, die sie einbinden.
@@ -183,5 +243,7 @@ zeilenweise gegen die App diffen. Der Kommentar in `tokens.css:5` beschreibt ab
 - `vue-tsc --noEmit` und Vite-Build grün
 - Pest-Suite grün (`-e APP_SURFACE=admin`)
 - kein `@apply` im Ergebnis
+- kein Sheet in `@layer components`, solange Legacy-Regeln auf
+  `[data-slot=...]` noch ueber den Utilities stehen muessen
 - keine Komponente in `resources/js/ui` mit null Verwendungen
 - keine extrahierte Komponente mit weniger als drei Aufrufern

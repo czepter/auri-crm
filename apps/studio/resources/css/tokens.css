@@ -92,14 +92,18 @@ body {
 }
 
 /* one icon system: 1.75 stroke, round caps, currentColor wherever it can inherit */
-svg { flex:none; stroke:currentColor; stroke-width:1.75; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+/* The bare element selectors below sit outside every layer, so they beat any
+   Tailwind utility on the same property regardless of specificity. Screens
+   that have moved to Tailwind mark themselves with data-tokens and are
+   excluded here, or an icon there could never set its own stroke.
+
+   :where() around the exclusion, because :not() otherwise inherits its
+   argument's specificity — a bare :not([data-tokens] h1) outranks
+   [data-theme="crm"] h1 and resets the heading on every unported screen. */
+svg:not(:where([data-tokens] svg)) { flex:none; stroke:currentColor; stroke-width:1.75; fill:none; stroke-linecap:round; stroke-linejoin:round; }
 
 /* ---------- shell ---------- */
 
-.app { display:flex; min-height:100vh; }
-
-/* no border between sidebar and content — a 48px gutter does the separating */
-.side { width:204px; flex:none; padding:var(--s5) var(--s3) var(--s4); display:flex; flex-direction:column; }
 .brand { font:700 19px/1 var(--font); letter-spacing:-.035em; padding:0 var(--s3) var(--s5); color:var(--ink); text-decoration:none; }
 .nav { display:flex; align-items:center; gap:var(--s3); padding:9px var(--s3); border-radius:7px;
        font:400 14px/1 var(--font); color:var(--muted); text-decoration:none; transition:background .12s ease-out; }
@@ -108,22 +112,9 @@ svg { flex:none; stroke:currentColor; stroke-width:1.75; fill:none; stroke-linec
 .nav svg { width:17px; height:17px; opacity:.75; }
 .nav.on svg { opacity:1; }
 .nav .ct { margin-left:auto; font-size:12.5px; color:var(--faint); }
-.navlab { font:500 11.5px/1 var(--font); color:var(--faint); padding:var(--s5) var(--s3) var(--s2); }
-.me { margin-top:auto; display:flex; align-items:center; gap:var(--s3); padding:var(--s3); font:500 13px/1 var(--font); }
-.me img { width:26px; height:26px; border-radius:50%; object-fit:cover; background:var(--hover); }
 
-/* users carries no avatar column, so the sidebar face is initials too */
-.me .av { width:26px; height:26px; border-radius:50%; flex:none; display:flex; align-items:center;
-          justify-content:center; background:var(--hover); font:600 10.5px/1 var(--font); color:var(--muted); }
-
-/* The app's .me carries a sign-out control the mockup's two-child row never
-   had, so the name has to give way rather than wrap onto a second line and
-   push the row off its 13px baseline. */
-.me .nm { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-
-.main { flex:1; min-width:0; padding:var(--s5) var(--s5) var(--s5) var(--s7); display:flex; flex-direction:column; }
 .hrow { display:flex; align-items:center; gap:var(--s4); }
-h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
+h1:not(:where([data-tokens] h1)) { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 
 /* ---------- controls ---------- */
 
