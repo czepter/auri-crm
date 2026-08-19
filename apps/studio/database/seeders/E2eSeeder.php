@@ -46,7 +46,16 @@ class E2eSeeder extends Seeder
         // through a redis-backed cache this raw update does not bust (see
         // its own doc comment), and this seeder can run against a
         // dev-server process that already has the pre-onboarding row cached.
-        StudioSettings::query()->update(['onboarding_completed_at' => now()]);
+        // T-08's four client switches default to off, and a screen behind an
+        // off switch answers 404 — so the mailbox and the payment screen have
+        // no frame in any database that has not turned them on.
+        StudioSettings::query()->update([
+            'onboarding_completed_at' => now(),
+            'portal_messaging_mode' => 'any',
+            'portal_accept_quotes_enabled' => true,
+            'portal_sign_contracts_enabled' => true,
+            'portal_payment_status_enabled' => true,
+        ]);
         Cache::store('redis')->flush();
 
         User::updateOrCreate(

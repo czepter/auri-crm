@@ -8,15 +8,16 @@ import { initials } from '@/portal/lib/initials'
  *
  * The link is a slot rather than a prop, because the three do not agree on
  * what it is: an Inertia <Link>, a plain href carrying a project, or nothing
- * at all when messaging is off. Its type styling is a descendant variant, so
- * a caller passes the link it has and not the classes for it.
+ * at all when messaging is off. Its styling is a descendant variant, so a
+ * caller passes the link it has and not the classes for it — tokens.css
+ * `.role` draws it as a chip, portal.css `.person .role` resizes the type.
  */
 defineProps<{ name: string | null }>()
 </script>
 
 <template>
   <div
-    class="flex items-center gap-3.5 [&_a]:text-[12px] [&_a]:leading-[1.4] [&_a]:font-normal [&_a]:text-muted-foreground"
+    class="flex items-center gap-3.5 [&_a]:inline-flex [&_a]:items-center [&_a]:rounded-[var(--r-sm)] [&_a]:bg-muted [&_a]:px-2 [&_a]:py-[3px] [&_a]:text-[12px] [&_a]:leading-[1.4] [&_a]:font-normal [&_a]:whitespace-nowrap [&_a]:text-muted-foreground"
   >
     <span
       class="grid size-[38px] flex-none place-items-center rounded-full bg-[var(--accent-bg)] text-[12.5px] leading-none font-semibold text-action"
