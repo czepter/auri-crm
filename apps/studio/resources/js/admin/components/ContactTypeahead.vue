@@ -50,55 +50,84 @@ function choose(contact: App.Crm.Data.ContactSuggestionData) {
   model.value = contact
   results.value = []
 }
+
+const ROW = [
+  'flex w-full cursor-pointer items-baseline gap-[9px] border-0 bg-none px-0 py-2 text-left text-inherit no-underline',
+  'shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none',
+  'not-first:border-t not-first:border-muted',
+].join(' ')
+const AVATAR =
+  'flex size-[26px] flex-none items-center justify-center rounded-full bg-[#FBE9E7] text-[11px] leading-none font-semibold text-[#A2493B]'
+const MAIL = 'mt-px text-[11.5px] leading-[1.3] font-normal text-muted-foreground'
 </script>
 
 <template>
-  <div v-if="model" class="picked">
-    <span class="av">{{ initials }}</span>
+  <div v-if="model" class="flex items-center gap-[11px] rounded-md border border-line-hover px-3 py-[9px]">
+    <span
+      class="flex size-[30px] flex-none items-center justify-center rounded-full bg-[#EDE7F6] text-[12px] leading-none font-semibold text-[#5B4B8A]"
+    >
+      {{ initials }}
+    </span>
     <div>
-      <div class="nm">
+      <div class="text-[13px] leading-[1.25] font-semibold">
         {{ model.name }}
-        <span v-if="model.projectCount" class="rp">
+        <span
+          v-if="model.projectCount"
+          class="ml-2 inline rounded-[var(--r-sm)] bg-muted px-[7px] py-0.5 text-[10px] leading-[1.5] font-medium text-muted-foreground"
+        >
           {{ $t('leads.contactProjects', { count: model.projectCount + 1 }) }}
         </span>
       </div>
-      <div class="em">{{ [model.email, model.phone].filter(Boolean).join(' · ') }}</div>
+      <div :class="MAIL">{{ [model.email, model.phone].filter(Boolean).join(' · ') }}</div>
     </div>
-    <Button variant="ghost" class="chg" type="button" @click="model = null">
+    <!-- leading-none again after the size: tailwind-merge treats a new
+         text-[…] as clearing the variant's line-height, because Tailwind lets
+         one class carry both. -->
+    <Button
+      variant="ghost"
+      class="ml-auto text-[11.5px] leading-none text-muted-foreground hover:text-foreground"
+      type="button"
+      @click="model = null"
+    >
       {{ $t('leads.contactChange') }}
     </Button>
   </div>
 
   <div v-else>
-    <div class="ta">
+    <div class="overflow-hidden rounded-md border border-line-hover">
       <Input v-model="term" class="border-0" type="search" :placeholder="$t('common.search')" />
 
-      <div v-if="searched" class="list">
-        <!-- .row is a list row, not one of the system's three buttons: the
-             .ta .row rule below carries its whole look, so ghost is here for
-             the reset and the shared element, nothing more. -->
+      <div v-if="searched" class="border-t border-border">
+        <!-- A list row, not one of the system's three buttons: ghost is here
+             for the reset and the shared element, nothing more. The row's own
+             rhythm came from crm.css's inbox list, which reached these rows
+             through .list and decided their padding, gap and baseline. -->
         <Button
           v-for="contact in results"
           :key="contact.id"
           variant="ghost"
-          class="row"
+          :class="ROW"
           type="button"
           @click="choose(contact)"
         >
-          <span class="av">{{ contact.name.slice(0, 1).toUpperCase() }}</span>
+          <span :class="AVATAR">{{ contact.name.slice(0, 1).toUpperCase() }}</span>
           <span>
-            <span class="nm">{{ contact.name }}</span>
-            <span class="em">{{ contact.email }}</span>
+            <span class="text-[12.5px] leading-[1.25] font-semibold">{{ contact.name }}</span>
+            <span :class="MAIL">{{ contact.email }}</span>
           </span>
         </Button>
 
-        <Button variant="ghost" class="row new" type="button" @click="emit('createNew', term)">
-          <span class="av plus">+</span>
-          <span class="nm">{{ $t('leads.contactCreate', { term }) }}</span>
+        <Button variant="ghost" :class="[ROW, 'bg-muted']" type="button" @click="emit('createNew', term)">
+          <span :class="[AVATAR, 'bg-foreground text-[14px] text-background']">+</span>
+          <span class="text-[12.5px] leading-[1.25] font-semibold">{{ $t('leads.contactCreate', { term }) }}</span>
         </Button>
       </div>
     </div>
 
-    <p class="hint" style="margin-top: 6px">{{ $t('leads.contactSearchHint') }}</p>
+    <!-- text-ink-2 and the 12px are crm.css's own .form .hint, which is the
+         only place this component is used. -->
+    <p class="mt-1.5 pt-1.5 text-[12px] leading-[1.45] font-normal text-ink-2">
+      {{ $t('leads.contactSearchHint') }}
+    </p>
   </div>
 </template>
