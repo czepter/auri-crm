@@ -5,6 +5,7 @@ import PackageItemsEditor, { type PackageItemRow } from '@/admin/components/Pack
 import { eurosToCents } from '@/admin/lib/money'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
+import { Field } from '@/ui/field'
 import { Label } from '@/ui/label'
 
 const form = useForm({
@@ -34,23 +35,20 @@ function submit() {
       <h1>{{ $t('packages.createTitle') }}</h1>
 
       <form style="margin-top: var(--s5)" @submit.prevent="submit">
-        <div class="fld grp">
-          <Label for="name">{{ $t('packages.name') }}</Label>
+        <Field id="name" class="mb-6" :label="$t('packages.name')" :error="form.errors.name">
           <Input id="name" v-model="form.name" type="text" required />
-          <p v-if="form.errors.name" class="err">{{ form.errors.name }}</p>
-        </div>
-        <div class="fld grp">
-          <Label for="description">{{ $t('packages.description') }}</Label>
+        </Field>
+        <Field id="description" class="mb-6" :label="$t('packages.description')">
           <Input id="description" v-model="form.description" type="text" />
-        </div>
+        </Field>
 
-        <div class="dsec">
-          <div class="dlab">{{ $t('packages.items') }}</div>
+        <div class="mt-8 first-of-type:mt-6">
+          <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.items') }}</div>
           <PackageItemsEditor v-model="form.items" />
         </div>
 
-        <div class="formfoot">
-          <Button type="submit" :disabled="form.processing">{{ $t('common.save') }}</Button>
+        <div class="mt-6 flex items-center gap-4">
+          <Button type="submit" class="ml-0" :disabled="form.processing">{{ $t('common.save') }}</Button>
           <Button as="a" href="/pakete" variant="ghost">{{ $t('common.cancel') }}</Button>
         </div>
       </form>
