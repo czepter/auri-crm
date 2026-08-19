@@ -37,6 +37,9 @@ async function arrive(page: Page): Promise<void> {
   await signIn(page)
 }
 
+/** E2eSeeder's own project, the one with a quote still in draft on it. */
+const DRAFT_QUOTE_PROJECT = 'Meier & Kowalski \u2014 Hochzeit'
+
 const ROUTES = [
   '/',
   '/anfragen',
@@ -206,24 +209,27 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     })
   }
 
-  // The quote editor, on a project that has a quote — the row above may not.
+  // The quote editor, which only renders for a draft. E2eSeeder puts one on a
+  // project it owns, so this looks that project up by name rather than walking
+  // rows until one happens to have a draft on it.
   await page.goto('/projekte')
   await page.waitForLoadState('networkidle')
-  const projects = await page
-    .locator('a[href^="/auftraege/"]')
-    .evaluateAll((nodes) => nodes.map((n) => (n as HTMLAnchorElement).getAttribute('href') ?? ''))
-  let quoted: string | null = null
-  // Bounded: the editor only shows for a draft, and walking every project to
-  // find one costs a page load each.
-  for (const project of [...new Set(projects)].sort().slice(0, 5)) {
-    await page.goto(`${project}/angebote`)
+  const quoted = (
+    await page.locator('a[href^="/auftraege/"]').evaluateAll(
+      (nodes, name) =>
+        nodes
+          .filter((n) => (n.closest('tr, li') ?? n).textContent?.includes(name))
+          .map((n) => (n as HTMLAnchorElement).getAttribute('href') ?? ''),
+      DRAFT_QUOTE_PROJECT,
+    )
+  )[0]
+
+  if (quoted !== undefined) {
+    await page.goto(`${quoted}/angebote`)
     await page.waitForLoadState('networkidle')
-    if ((await page.locator('[data-slot="button"]').filter({ hasText: 'Position' }).count()) > 0) {
-      quoted = project
-      break
-    }
   }
-  if (quoted) {
+
+  if (quoted !== undefined && (await page.locator('[data-slot="button"]').filter({ hasText: 'Position' }).count()) > 0) {
     await page.waitForFunction(() => document.fonts.status === 'loaded')
     await expect.soft(page).toHaveScreenshot('auftrag-angebot-editor.png', {
       fullPage: true,
