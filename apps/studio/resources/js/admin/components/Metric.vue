@@ -25,34 +25,67 @@ const props = defineProps<{
 }>()
 
 const proof = computed(() => drawDots(props.dots))
+
+/* crm.css .dots i.on / .s2 / .s3 / .warn — how far a case has come, as a
+   shade rather than a label. */
+const DOT: Record<string, string> = {
+  on: 'bg-foreground',
+  s2: 'bg-[#5F5F63]',
+  s3: 'bg-[#A1A1A6]',
+  warn: 'bg-action',
+}
 </script>
 
 <template>
-  <div class="metric" :class="{ date: day }">
+  <div
+    class="flex min-h-[130px] flex-col rounded-md bg-sunk"
+    :class="day ? 'overflow-hidden p-0' : 'px-[17px] pt-[15px] pb-3.5'"
+  >
     <template v-if="day">
-      <div class="head">
-        <div class="day">
-          <b>{{ day.number }}</b><i>{{ day.weekday }}</i>
+      <div class="flex items-start gap-[11px] px-[17px] pt-[15px]">
+        <div
+          class="flex size-[46px] flex-none flex-col items-center justify-center rounded-[12px] bg-[linear-gradient(158deg,#4D3A2C,#C0A184)] leading-none text-white"
+        >
+          <b class="text-[18px] leading-none font-semibold tracking-[-0.03em]">{{ day.number }}</b>
+          <i class="mt-[3px] text-[8px] not-italic tracking-[0.09em] uppercase opacity-85">{{ day.weekday }}</i>
         </div>
-        <div class="what">
-          <span class="lab">{{ label }}</span>
-          <b>{{ day.what }}</b>
-          <span>{{ day.who }}</span>
+        <div>
+          <!-- 11px, not the 10.5px of the metric's own label: .metric.date
+               .what span outranks .metric .lab on this one. -->
+          <span class="text-[11px] tracking-[0.07em] uppercase text-ink-2">{{ label }}</span>
+          <b class="mt-0.5 block text-[13.5px] leading-[1.25] font-semibold tracking-[-0.018em]">{{ day.what }}</b>
+          <span class="text-[11px] text-ink-2">{{ day.who }}</span>
         </div>
       </div>
     </template>
 
     <template v-else>
-      <div class="lab">{{ label }}</div>
-      <div class="num" :class="{ warn }">
-        {{ value }}<span v-if="unit" class="unit">{{ unit }}</span>
+      <div class="text-[10.5px] tracking-[0.07em] uppercase text-ink-2">{{ label }}</div>
+      <div
+        class="mt-2 flex items-baseline gap-[3px] text-[28px] leading-none font-semibold tracking-[-0.034em] tabular-nums"
+        :class="warn && 'text-action'"
+      >
+        {{ value }}<span v-if="unit" class="text-[0.52em] font-medium text-ink-2">{{ unit }}</span>
       </div>
     </template>
 
-    <div class="proof">
-      <div class="dots">
-        <i v-for="(tone, index) in proof.shown" :key="index" :class="tone" />
-        <span v-if="proof.overflow" class="more">+{{ proof.overflow }}</span>
+    <!-- The slot's paragraphs were styled by .metric .proof p; without the
+         class the rule stops matching, so the wrapper says it itself. -->
+    <div
+      class="mt-auto [&_p]:mt-[7px] [&_p]:text-[11.5px] [&_p]:text-ink-2 [&_p_b]:font-semibold [&_p_b]:text-foreground"
+      :class="day ? 'px-[17px] pt-0 pb-3.5' : 'pt-3'"
+    >
+      <div class="flex items-center gap-[5px]">
+        <i
+          v-for="(tone, index) in proof.shown"
+          :key="index"
+          class="size-2 flex-none rounded-full"
+          :class="DOT[tone] ?? 'bg-mark'"
+        />
+        <span
+          v-if="proof.overflow"
+          class="ml-[3px] text-[11px] leading-none font-semibold tracking-[-0.01em] tabular-nums text-ink-2"
+        >+{{ proof.overflow }}</span>
       </div>
       <slot />
     </div>
