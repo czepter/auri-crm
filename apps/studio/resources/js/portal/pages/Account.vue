@@ -78,7 +78,7 @@ function requestDsgvo(kind: 'export' | 'erasure') {
           </PortalField>
         </div>
 
-        <div class="mt-8 flex items-center gap-5">
+        <div class="mt-8 flex items-center gap-5 [&_[data-slot=button][data-variant=default]]:ml-0">
           <Button type="submit" :disabled="form.processing">{{ $t('common.save') }}</Button>
         </div>
       </form>
@@ -97,7 +97,7 @@ function requestDsgvo(kind: 'export' | 'erasure') {
     <section class="mt-11">
       <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.accessTitle') }}</p>
       <p class="text-[11.5px] leading-[1.45] text-faint">{{ $t('portal.accessHint') }}</p>
-      <div class="mt-8 flex items-center gap-5">
+      <div class="mt-8 flex items-center gap-5 [&_[data-slot=button][data-variant=default]]:ml-0">
         <Button variant="outline" type="button" @click="router.post('/einstellungen/abmelden-ueberall')">
           {{ $t('portal.endSessions') }}
         </Button>

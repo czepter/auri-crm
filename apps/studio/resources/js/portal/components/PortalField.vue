@@ -31,7 +31,11 @@ const INPUT = [
 </script>
 
 <template>
-  <label :class="cn('mb-5 block', INPUT, props.class)">
+  <!-- text-[10px]/leading-none on the wrapper, not only on the caption: a
+       control is inline-level, so the label's own strut is part of the line
+       box it sits in. At the inherited 15px/1.55 a textarea gains 4px of
+       descender space it never had. -->
+  <label :class="cn('mb-5 block text-[10px] leading-none', INPUT, props.class)">
     <span class="mb-2 block text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">
       {{ label }}
     </span>

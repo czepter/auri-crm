@@ -3,8 +3,8 @@ import { computed, ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalPerson from '@/portal/components/PortalPerson.vue'
 import { formatEuros } from '@/admin/lib/money'
-import { initials } from '@/portal/lib/initials'
 
 type Phase = 'open' | 'upcoming' | 'delivered'
 
@@ -76,7 +76,6 @@ function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-const studioInitials = computed(() => initials(props.studio.name))
 </script>
 
 <template>
@@ -192,15 +191,9 @@ const studioInitials = computed(() => initials(props.studio.name))
 
         <section class="mt-11 first:mt-0">
           <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.contactTitle') }}</p>
-          <div class="flex items-center gap-3.5">
-            <span class="grid size-[38px] flex-none place-items-center rounded-full bg-[var(--accent-bg)] text-[12.5px] leading-none font-semibold text-action">{{ studioInitials }}</span>
-            <span>
-              <b class="block text-[14px] leading-[1.3] font-semibold">{{ studio.name }}</b>
-              <span v-if="studio.messagingEnabled" class="text-[12px] leading-[1.4] font-normal text-muted-foreground">
-                <Link href="/nachrichten">{{ $t('portal.messagesLinkTitle') }}</Link>
-              </span>
-            </span>
-          </div>
+          <PortalPerson :name="studio.name">
+            <Link v-if="studio.messagingEnabled" href="/nachrichten">{{ $t('portal.messagesLinkTitle') }}</Link>
+          </PortalPerson>
         </section>
       </div>
     </div>

@@ -3,8 +3,8 @@ import { computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalPerson from '@/portal/components/PortalPerson.vue'
 import { Button } from '@/ui/button'
-import { initials } from '@/portal/lib/initials'
 import { formatEuros } from '@/admin/lib/money'
 
 type Shoot = {
@@ -242,15 +242,11 @@ const heroImage = computed(() => props.project.gallery?.strip[0] ?? null)
 
     <section class="[&:not(:first-of-type)]:mt-11">
       <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.contactTitle') }}</p>
-      <div class="flex items-center gap-3.5">
-        <span class="grid size-[38px] flex-none place-items-center rounded-full bg-[var(--accent-bg)] text-[12.5px] leading-none font-semibold text-action">{{ initials(studio.name) }}</span>
-        <span>
-          <b class="block text-[14px] leading-[1.3] font-semibold">{{ studio.name }}</b>
-          <a v-if="studio.messagingEnabled" class="text-[12px] leading-[1.4] font-normal text-muted-foreground" :href="`/nachrichten?betrifft=${project.id}`">
-            {{ $t('portal.messagesLinkTitle') }}
-          </a>
-        </span>
-      </div>
+      <PortalPerson :name="studio.name">
+        <a v-if="studio.messagingEnabled" :href="`/nachrichten?betrifft=${project.id}`">
+          {{ $t('portal.messagesLinkTitle') }}
+        </a>
+      </PortalPerson>
     </section>
   </main>
 

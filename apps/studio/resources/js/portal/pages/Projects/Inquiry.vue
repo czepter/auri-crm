@@ -2,12 +2,12 @@
 import { ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
+import PortalField from '@/portal/components/PortalField.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalPerson from '@/portal/components/PortalPerson.vue'
 import { Button } from '@/ui/button'
-import { initials } from '@/portal/lib/initials'
 import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
-import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
 
 const props = defineProps<{
@@ -58,66 +58,62 @@ const venue = [props.project.venueName, props.project.venueCity].filter(Boolean)
 <template>
   <PortalHeader :contact="contact" :show-switcher="showSwitcher" />
 
-  <main class="letter">
-    <div class="kick">{{ project.type }}</div>
-    <h1>{{ project.name }}</h1>
-    <p v-if="project.date || venue" class="when">
+  <main data-tokens class="mx-auto max-w-[620px]">
+    <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ project.type }}</div>
+    <h1 class="m-0 text-[34px] leading-none font-bold tracking-[-0.04em]">{{ project.name }}</h1>
+    <p v-if="project.date || venue" class="mt-3.5 text-[15px] leading-[1.5] font-normal text-muted-foreground tabular-nums">
       {{ [project.date ? longDate(project.date) : $t('portal.dateOpen'), venue].filter(Boolean).join(' · ') }}
     </p>
 
-    <div class="hair" />
+    <div class="my-11 h-px bg-border" />
 
     <!-- One piece of news, in a sentence. No status tiles: at this point
          there is nothing to put in them. -->
-    <p class="statement">{{ $t('portal.inquiryReceived') }}</p>
+    <p class="m-0 text-[22px] leading-[1.45] font-normal tracking-[-0.02em]">{{ $t('portal.inquiryReceived') }}</p>
 
-    <section class="psec" style="margin-top: var(--s6)">
-      <div style="display: flex; align-items: baseline; gap: var(--s4)">
-        <p class="lab" style="flex: 1">{{ $t('portal.notedTitle') }}</p>
+    <section class="mt-11">
+      <div class="flex items-baseline gap-5">
+        <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint flex-1">{{ $t('portal.notedTitle') }}</p>
         <Button v-if="!editing" variant="ghost" type="button" @click="editing = true">
           {{ $t('common.edit') }}
         </Button>
       </div>
 
       <template v-if="!editing">
-        <dl class="facts">
-          <dt>{{ $t('portal.occasion') }}</dt>
-          <dd>{{ project.type }}</dd>
-          <dt>{{ $t('portal.preferredDate') }}</dt>
-          <dd class="num">{{ project.date ? longDate(project.date) : $t('portal.dateOpen') }}</dd>
-          <dt>{{ $t('portal.place') }}</dt>
-          <dd>{{ venue || '—' }}</dd>
-          <dt>{{ $t('portal.reachUs') }}</dt>
-          <dd>{{ [project.contact.email, project.contact.phone].filter(Boolean).join(' · ') }}</dd>
+        <dl class="m-0 grid grid-cols-[150px_minmax(0,1fr)] gap-x-5 gap-y-3.5 text-[14px] leading-[1.55] font-normal max-[560px]:grid-cols-[minmax(0,1fr)] max-[560px]:gap-y-0.5">
+          <dt class="text-muted-foreground">{{ $t('portal.occasion') }}</dt>
+          <dd class="m-0 max-[560px]:mb-3.5">{{ project.type }}</dd>
+          <dt class="text-muted-foreground">{{ $t('portal.preferredDate') }}</dt>
+          <dd class="m-0 tabular-nums max-[560px]:mb-3.5">{{ project.date ? longDate(project.date) : $t('portal.dateOpen') }}</dd>
+          <dt class="text-muted-foreground">{{ $t('portal.place') }}</dt>
+          <dd class="m-0 max-[560px]:mb-3.5">{{ venue || '—' }}</dd>
+          <dt class="text-muted-foreground">{{ $t('portal.reachUs') }}</dt>
+          <dd class="m-0 max-[560px]:mb-3.5">{{ [project.contact.email, project.contact.phone].filter(Boolean).join(' · ') }}</dd>
         </dl>
-        <blockquote v-if="project.inquiryText" class="quoted">{{ project.inquiryText }}</blockquote>
+        <blockquote v-if="project.inquiryText" class="mt-8 border-l-2 border-border pl-5 text-[14.5px] leading-[1.65] font-normal whitespace-pre-wrap text-foreground">{{ project.inquiryText }}</blockquote>
       </template>
 
       <!-- The occasion is not a field: a different occasion is a different
            booking. -->
       <form v-else @submit.prevent="save">
-        <Label class="field">
-          <span>{{ $t('portal.preferredDate') }}</span>
+        <PortalField :label="$t('portal.preferredDate')">
           <DatePicker v-model="form.date" />
-        </Label>
-        <p v-if="form.errors.date" class="err">{{ form.errors.date }}</p>
+        </PortalField>
+        <p v-if="form.errors.date" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.date }}</p>
 
-        <Label class="field">
-          <span>{{ $t('portal.venueName') }}</span>
+        <PortalField :label="$t('portal.venueName')">
           <Input v-model="form.venue_name" type="text" />
-        </Label>
+        </PortalField>
 
-        <Label class="field">
-          <span>{{ $t('portal.venueCity') }}</span>
+        <PortalField :label="$t('portal.venueCity')">
           <Input v-model="form.venue_city" type="text" />
-        </Label>
+        </PortalField>
 
-        <Label class="field">
-          <span>{{ $t('portal.inquiryText') }}</span>
+        <PortalField :label="$t('portal.inquiryText')">
           <Textarea v-model="form.inquiry_text" rows="5" />
-        </Label>
+        </PortalField>
 
-        <div class="formfoot">
+        <div class="mt-8 flex items-center gap-5 [&_[data-slot=button][data-variant=default]]:ml-0">
           <Button type="submit" :disabled="form.processing">{{ $t('common.save') }}</Button>
           <Button variant="ghost" type="button" @click="editing = false">{{ $t('common.cancel') }}</Button>
         </div>
@@ -127,17 +123,18 @@ const venue = [props.project.venueName, props.project.venueCity].filter(Boolean)
 
     <!-- P-03 (#222): the questionnaire the inquiry screen has always linked
          to and nobody could fill in. Absent until the studio shares one. -->
-    <section v-if="project.questionnaires.length" class="psec">
-      <p class="lab">{{ $t('portal.questionnairesTitle') }}</p>
-      <div class="pend">
+    <section v-if="project.questionnaires.length" class="mt-11">
+      <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.questionnairesTitle') }}</p>
+      <div class="border-t border-border">
         <a
           v-for="sheet in project.questionnaires"
           :key="sheet.id"
           :href="`/projekte/${project.id}/fragebogen/${sheet.id}`"
+          class="flex items-center gap-5 border-b border-border py-5 text-foreground no-underline hover:bg-muted"
         >
-          <span style="flex: 1">
-            <h3>{{ sheet.name }}</h3>
-            <div class="sub">
+          <span class="flex-1">
+            <h3 class="m-0 text-[14px] leading-[1.3] font-semibold">{{ sheet.name }}</h3>
+            <div class="mt-0.5 text-[12.5px] leading-[1.4] font-normal text-muted-foreground">
               {{ sheet.openCount
                 ? $t('portal.questionsOpen', { open: sheet.openCount, total: sheet.count })
                 : $t('portal.questionsDone') }}
@@ -147,17 +144,13 @@ const venue = [props.project.venueName, props.project.venueCity].filter(Boolean)
       </div>
     </section>
 
-    <section class="psec" style="margin-top: var(--s7)">
-      <p class="lab">{{ $t('portal.contactTitle') }}</p>
-      <div class="person">
-        <span class="av">{{ initials(studio.name) }}</span>
-        <span>
-          <b>{{ studio.name }}</b>
-          <a v-if="studio.messagingEnabled" class="role" :href="`/nachrichten?betrifft=${project.id}`">
-            {{ $t('portal.messagesLinkTitle') }}
-          </a>
-        </span>
-      </div>
+    <section class="mt-16">
+      <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.contactTitle') }}</p>
+      <PortalPerson :name="studio.name">
+        <a v-if="studio.messagingEnabled" :href="`/nachrichten?betrifft=${project.id}`">
+          {{ $t('portal.messagesLinkTitle') }}
+        </a>
+      </PortalPerson>
     </section>
   </main>
 
