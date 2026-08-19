@@ -1,24 +1,13 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import SettingsNav from '@/admin/components/SettingsNav.vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
 
 const props = defineProps<{ ranges: App.Settings.Data.NumberRangeData[] }>()
-
-// Every other future group (Zahlungsdaten & USt, Dokumente, ...) — the same
-// disabled "bald" list Settings/Index.vue renders, repeated here because
-// each settings screen carries its own copy of the nav rather than a shared
-// partial, matching how Index.vue already does it. Zahlungen is T-07's own
-// route, Portal is T-08's own route and Benachrichtigungen is T-11's, so all
-// three drop out of this list.
-const comingSoon = [
-  'navVat',
-  'navDocuments',
-  'navGeneral',
-] as const
 
 // One form per range, keyed by its id — three independent drafts rather than
 // one save button that would need to reason about which range changed.
@@ -48,26 +37,7 @@ function save(rangeId: string) {
     </div>
 
     <div style="display: flex; gap: var(--s6); margin-top: var(--s5); align-items: flex-start">
-      <nav style="width: 196px; flex: none; display: flex; flex-direction: column; gap: 2px">
-        <a class="nav" href="/einstellungen">{{ $t('settings.navProfile') }}</a>
-        <a class="nav on" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
-        <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
-        <a class="nav" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
-        <a class="nav" href="/einstellungen/aufgabenvorlagen">{{ $t('settings.navTaskTemplates') }}</a>
-        <a class="nav" href="/einstellungen/fragebogen-vorlagen">{{ $t('settings.navFormTemplates') }}</a>
-        <a class="nav" href="/einstellungen/portal">{{ $t('settings.navPortal') }}</a>
-        <a class="nav" href="/einstellungen/benachrichtigungen">{{ $t('settings.navNotifications') }}</a>
-        <a
-          v-for="key in comingSoon"
-          :key="key"
-          class="nav"
-          href="#"
-          style="pointer-events: none; opacity: 0.5"
-        >
-          {{ $t(`settings.${key}`) }}
-          <span class="chip next" style="margin-left: auto">{{ $t('settings.soon') }}</span>
-        </a>
-      </nav>
+      <SettingsNav active="numbering" />
 
       <div style="flex: 1; min-width: 0; max-width: 620px">
         <div v-for="range in ranges" :key="range.id" class="dsec">

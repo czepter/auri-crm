@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import SettingsNav from '@/admin/components/SettingsNav.vue'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
@@ -19,12 +20,6 @@ const props = defineProps<{
   previewShootKind: string | null
   preview: { title: string; dueOn: string | null }[] | null
 }>()
-
-// The same disabled "bald" list Settings/Numbering.vue carries: Nummernkreise,
-// Verfügbarkeit, Zahlungen and Benachrichtigungen have their own live route
-// already, so only the panes still living inside Index.vue (and reachable
-// only from there) stay disabled here.
-const comingSoon = ['navVat', 'navDocuments', 'navGeneral'] as const
 
 // One form per template, keyed by its id — an independent draft per row,
 // matching how Settings/Numbering.vue and Settings/Availability.vue edit
@@ -99,26 +94,7 @@ function runPreview() {
     </div>
 
     <div style="display: flex; gap: var(--s6); margin-top: var(--s5); align-items: flex-start">
-      <nav style="width: 196px; flex: none; display: flex; flex-direction: column; gap: 2px">
-        <a class="nav" href="/einstellungen">{{ $t('settings.navProfile') }}</a>
-        <a class="nav" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
-        <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
-        <a class="nav" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
-        <a class="nav on" href="/einstellungen/aufgabenvorlagen">{{ $t('settings.navTaskTemplates') }}</a>
-        <a class="nav" href="/einstellungen/fragebogen-vorlagen">{{ $t('settings.navFormTemplates') }}</a>
-        <a class="nav" href="/einstellungen/portal">{{ $t('settings.navPortal') }}</a>
-        <a class="nav" href="/einstellungen/benachrichtigungen">{{ $t('settings.navNotifications') }}</a>
-        <a
-          v-for="key in comingSoon"
-          :key="key"
-          class="nav"
-          href="#"
-          style="pointer-events: none; opacity: 0.5"
-        >
-          {{ $t(`settings.${key}`) }}
-          <span class="chip next" style="margin-left: auto">{{ $t('settings.soon') }}</span>
-        </a>
-      </nav>
+      <SettingsNav active="taskTemplates" />
 
       <div style="flex: 1; min-width: 0; max-width: 620px">
         <div class="dsec" style="margin-top: 0">
@@ -161,7 +137,6 @@ function runPreview() {
           </div>
         </div>
 
-        <p v-if="templates.length === 0" class="hint">{{ $t('taskTemplates.empty') }}</p>
 
         <div v-for="template in templates" :key="template.id" class="dsec">
           <div class="dlab">{{ template.title }}</div>

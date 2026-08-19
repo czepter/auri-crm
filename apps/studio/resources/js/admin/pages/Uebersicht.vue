@@ -98,6 +98,20 @@ const decisions = computed(() => {
 
 const owed = computed(() => props.openTasks + props.inquiries.length + props.payments.length)
 
+// A studio on its first day owes nothing, has booked nothing and has no
+// history to count — the screen is then the one control that starts all
+// three, not eight containers reporting their own absence.
+const bare = computed(() =>
+  !decisions.value.length
+  && !props.nextShoot
+  && !props.week.length
+  && !props.newLeads.length
+  && !props.galleries.length
+  && !props.pipeline
+  && !props.overdue.total
+  && !props.quotes.sent,
+)
+
 function dayOf(date: string | null) {
   return date ? new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) : ''
 }
@@ -150,7 +164,11 @@ function complete(task: App.Crm.Data.TaskRowData) {
         </span>
       </div>
 
-      <div class="cgrid">
+      <Link v-if="bare" class="btn" href="/anfragen/neu" style="margin-top: var(--s5)">
+        {{ $t('leads.createKicker') }}
+      </Link>
+
+      <div v-else class="cgrid">
         <!-- Every tile brings its own proof, or it is not a tile (C-05). A
              figure with nothing behind it is absent rather than a zero. -->
         <Metric v-if="pipeline" :label="$t('dashboard.pipeline')" :value="money.format(pipeline / 100)" :dots="pipelineDots">
@@ -190,7 +208,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
 
         <!-- The most important field is the only one without a container:
              emphasis comes from position, size and the one filled button. -->
-        <section class="panel bare sp3">
+        <section v-if="decisions.length || nextShoot" class="panel bare sp3">
           <header>
             <h2>{{ $t('dashboard.decide') }}</h2>
             <span v-if="decisions.length" class="n">{{ decisions.length }}</span>
@@ -232,18 +250,16 @@ function complete(task: App.Crm.Data.TaskRowData) {
           <p v-else-if="nextShoot" class="hint">
             {{ $t('dashboard.nothingDueNext', { what: nextShoot.title, date: dayOf(nextShoot.date) }) }}
           </p>
-          <p v-else class="hint">{{ $t('dashboard.nothingDue') }}</p>
         </section>
 
-        <section class="panel">
+        <section v-if="week.length" class="panel">
           <header><h2>{{ $t('dashboard.thisWeek') }}</h2></header>
-          <div v-if="week.length" class="list">
+          <div class="list">
             <div v-for="entry in week" :key="`${entry.when}${entry.what}`" class="row" :class="{ off: entry.away }">
               <span class="when">{{ weekWhen(entry.when) }}</span>
               <span class="n">{{ entry.away ? $t('dashboard.away', { name: entry.what }) : entry.what }}</span>
             </div>
           </div>
-          <p v-else class="hint">{{ $t('dashboard.weekEmpty') }}</p>
         </section>
 
         <section v-if="newLeads.length" class="panel sp2">

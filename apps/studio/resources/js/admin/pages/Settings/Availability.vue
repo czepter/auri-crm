@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import SettingsNav from '@/admin/components/SettingsNav.vue'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
@@ -10,12 +11,6 @@ const props = defineProps<{
   defaultShootDurationMinutes: number
   closures: App.Settings.Data.StudioClosureData[]
 }>()
-
-// Every other future group (Zahlungsdaten & USt, Dokumente, ...) — the same
-// disabled "bald" list every settings screen carries its own copy of, per
-// Settings/Index.vue and Settings/Numbering.vue. Portal is T-08's own route
-// and Benachrichtigungen is T-11's, so both drop out of this list.
-const comingSoon = ['navDocuments', 'navGeneral'] as const
 
 const durationForm = useForm({
   default_shoot_duration_minutes: props.defaultShootDurationMinutes,
@@ -62,26 +57,7 @@ function addClosure() {
     </div>
 
     <div style="display: flex; gap: var(--s6); margin-top: var(--s5); align-items: flex-start">
-      <nav style="width: 196px; flex: none; display: flex; flex-direction: column; gap: 2px">
-        <a class="nav" href="/einstellungen">{{ $t('settings.navProfile') }}</a>
-        <a class="nav" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
-        <a class="nav on" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
-        <a class="nav" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
-        <a class="nav" href="/einstellungen/aufgabenvorlagen">{{ $t('settings.navTaskTemplates') }}</a>
-        <a class="nav" href="/einstellungen/fragebogen-vorlagen">{{ $t('settings.navFormTemplates') }}</a>
-        <a class="nav" href="/einstellungen/portal">{{ $t('settings.navPortal') }}</a>
-        <a class="nav" href="/einstellungen/benachrichtigungen">{{ $t('settings.navNotifications') }}</a>
-        <a
-          v-for="key in comingSoon"
-          :key="key"
-          class="nav"
-          href="#"
-          style="pointer-events: none; opacity: 0.5"
-        >
-          {{ $t(`settings.${key}`) }}
-          <span class="chip next" style="margin-left: auto">{{ $t('settings.soon') }}</span>
-        </a>
-      </nav>
+      <SettingsNav active="availability" />
 
       <div style="flex: 1; min-width: 0; max-width: 620px">
         <div class="dsec" style="margin-top: 0">
@@ -119,7 +95,6 @@ function addClosure() {
         <div class="dsec">
           <div class="dlab">{{ $t('settings.closuresLabel') }}</div>
 
-          <p v-if="closures.length === 0" class="hint">{{ $t('settings.closuresEmpty') }}</p>
 
           <div v-for="closure in closures" :key="closure.id" style="margin-bottom: var(--s5)">
             <form :id="`closure-form-${closure.id}`" @submit.prevent="saveClosure(closure.id)">

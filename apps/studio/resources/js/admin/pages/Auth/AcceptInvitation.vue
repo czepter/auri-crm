@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
+import AuthLayout from '@/admin/layouts/AuthLayout.vue'
+import { Field } from '@/ui/field'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
@@ -21,16 +23,13 @@ function submit() {
 </script>
 
 <template>
-  <div class="authwrap">
-    <div class="authcard">
-      <span class="brand">{{ $page.props.brand }}</span>
-      <h1>{{ $t('invite.title', { name }) }}</h1>
-      <p class="hint" style="margin-bottom: var(--s5)">
+  <AuthLayout :title="$t('invite.title', { name })">
+      <p class="mb-6 text-[11.5px] leading-[1.45] font-normal text-faint">
         {{ $t('invite.hint', { email, role: roleLabel }) }}
       </p>
 
       <form @submit.prevent="submit">
-        <div class="fld grp">
+        <Field class="mb-6">
           <Label for="password">{{ $t('invite.password') }}</Label>
           <Input
             id="password"
@@ -38,10 +37,10 @@ function submit() {
             type="password"
             autocomplete="new-password"
             required />
-          <p v-if="form.errors.password" class="err">{{ form.errors.password }}</p>
-        </div>
+          <p class="text-[11.5px] leading-[1.45] text-destructive" v-if="form.errors.password">{{ form.errors.password }}</p>
+        </Field>
 
-        <div class="fld grp">
+        <Field class="mb-6">
           <Label for="password_confirmation">{{ $t('invite.passwordConfirm') }}</Label>
           <Input
             id="password_confirmation"
@@ -49,16 +48,15 @@ function submit() {
             type="password"
             autocomplete="new-password"
             required />
-        </div>
+        </Field>
 
         <!-- Said before they meet it, because an authenticator app arriving
              unannounced is where people abandon a setup link. -->
-        <p class="hint" style="margin-bottom: var(--s4)">{{ $t('invite.mfaNext') }}</p>
+        <p class="mb-4 text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('invite.mfaNext') }}</p>
 
-        <Button type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
+        <Button type="submit" class="w-full justify-center" :disabled="form.processing">
           {{ $t('invite.submit') }}
         </Button>
       </form>
-    </div>
-  </div>
+  </AuthLayout>
 </template>

@@ -406,12 +406,10 @@ function unassign(member: App.Crm.Data.CrewMemberData) {
                 </Button>
               </div>
             </div>
-            <p v-else class="hint">{{ $t('project.timelineEmpty') }}</p>
           </div>
         </template>
       </section>
 
-      <p v-if="!shoots.length" class="hint">{{ $t('project.noShoots') }}</p>
     </div>
 
     <!-- One dialog for the whole list rather than one per row: only one shoot

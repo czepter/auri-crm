@@ -78,7 +78,6 @@ function scheduledLabel(iso: string) {
           </div>
         </div>
 
-        <p v-if="!thread.messages.length" class="hint">{{ $t('project.messagesEmpty') }}</p>
       </div>
 
       <form v-if="header.canManageMessages" class="composer" @submit.prevent="send">

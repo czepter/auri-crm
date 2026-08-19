@@ -54,7 +54,6 @@ function total(pkg: App.Catalog.Data.PackageData) {
         </div>
       </div>
 
-      <p v-else class="hint" style="padding: var(--s5) var(--s7)">{{ $t('packages.empty') }}</p>
     </div>
   </AdminLayout>
 </template>

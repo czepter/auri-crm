@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import SettingsNav from '@/admin/components/SettingsNav.vue'
 import { basisPointsToPercent } from '@/admin/lib/money'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
@@ -10,13 +11,6 @@ import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
 
 const props = defineProps<{ settings: App.Settings.Data.PaymentSettingsData }>()
-
-// Every other future group — the same disabled "bald" list Settings/Index.vue
-// and Numbering.vue both render. Zahlungsdaten & USt is T-03's own pane,
-// Nummernkreise is T-04's, Dokumente is T-05's, Zahlungen is this pane,
-// Portal is T-08's own route and Benachrichtigungen is T-11's, so all six
-// drop out of this list.
-const comingSoon: readonly string[] = []
 
 // Keys are write-only (T-07): the server never echoes a stored value back,
 // so this form always starts with them blank. Submitting blank leaves the
@@ -60,26 +54,7 @@ function submit() {
     </div>
 
     <div style="display: flex; gap: var(--s6); margin-top: var(--s5); align-items: flex-start">
-      <nav style="width: 196px; flex: none; display: flex; flex-direction: column; gap: 2px">
-        <a class="nav" href="/einstellungen">{{ $t('settings.navProfile') }}</a>
-        <a class="nav" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
-        <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
-        <a class="nav on" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
-        <a class="nav" href="/einstellungen/aufgabenvorlagen">{{ $t('settings.navTaskTemplates') }}</a>
-        <a class="nav" href="/einstellungen/fragebogen-vorlagen">{{ $t('settings.navFormTemplates') }}</a>
-        <a class="nav" href="/einstellungen/portal">{{ $t('settings.navPortal') }}</a>
-        <a class="nav" href="/einstellungen/benachrichtigungen">{{ $t('settings.navNotifications') }}</a>
-        <a
-          v-for="key in comingSoon"
-          :key="key"
-          class="nav"
-          href="#"
-          style="pointer-events: none; opacity: 0.5"
-        >
-          {{ $t(`settings.${key}`) }}
-          <span class="chip next" style="margin-left: auto">{{ $t('settings.soon') }}</span>
-        </a>
-      </nav>
+      <SettingsNav active="payments" />
 
       <form id="payment-settings-form" style="flex: 1; min-width: 0; max-width: 620px" @submit.prevent="submit">
         <div class="dsec" style="margin-top: 0">

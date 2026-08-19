@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
+import AuthLayout from '@/admin/layouts/AuthLayout.vue'
+import { Field } from '@/ui/field'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
@@ -12,17 +14,14 @@ function submit() {
 </script>
 
 <template>
-  <div class="authwrap">
-    <div class="authcard">
-      <span class="brand">{{ $page.props.brand }}</span>
-      <h1>{{ $t('auth.mfaTitle') }}</h1>
+  <AuthLayout :title="$t('auth.mfaTitle')">
 
       <form @submit.prevent="submit">
-        <p v-if="form.errors.code" class="flag" style="margin-bottom: var(--s4)">
+        <p v-if="form.errors.code" class="mb-4 mt-1.5 flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[12.5px] leading-[1.3] font-medium text-destructive">
           {{ form.errors.code }}
         </p>
 
-        <div class="fld grp">
+        <Field class="mb-6">
           <Label for="code">{{ $t('auth.mfaCode') }}</Label>
           <Input
             id="code"
@@ -31,12 +30,11 @@ function submit() {
             inputmode="numeric"
             autocomplete="one-time-code"
             required />
-        </div>
+        </Field>
 
-        <Button type="submit" style="width: 100%; justify-content: center" :disabled="form.processing">
+        <Button type="submit" class="w-full justify-center" :disabled="form.processing">
           {{ $t('auth.mfaConfirm') }}
         </Button>
       </form>
-    </div>
-  </div>
+  </AuthLayout>
 </template>

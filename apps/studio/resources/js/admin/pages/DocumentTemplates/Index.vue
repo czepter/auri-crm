@@ -74,7 +74,6 @@ defineProps<{
         </tbody>
       </table>
 
-      <p v-else class="hint" style="padding: var(--s5) var(--s7)">{{ $t('documentTemplates.empty') }}</p>
     </div>
   </AdminLayout>
 </template>

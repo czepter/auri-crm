@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
+import AuthLayout from '@/admin/layouts/AuthLayout.vue'
 import { Button } from '@/ui/button'
 
 // N-04: no mockup exists for this screen (nothing OAuth-shaped in
@@ -29,20 +30,17 @@ function submit(decision: 'approve' | 'deny') {
 </script>
 
 <template>
-  <div class="authwrap">
-    <div class="authcard">
-      <span class="brand">{{ $page.props.brand }}</span>
-      <h1>{{ $t('auth.oauthTitle') }}</h1>
-      <p class="hint" style="margin-bottom: var(--s4)">{{ $t('auth.oauthHint') }}</p>
+  <AuthLayout :title="$t('auth.oauthTitle')">
+      <p class="mb-4 text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('auth.oauthHint') }}</p>
 
-      <ul style="margin: 0 0 var(--s5); padding-left: var(--s4)">
+      <ul class="mt-0 mb-6 pl-4">
         <li v-for="item in scopes" :key="item.value">{{ item.label }}</li>
       </ul>
 
-      <div style="display: flex; gap: var(--s3)">
+      <div class="flex gap-2.5">
         <Button
           type="button"
-          style="flex: 1; justify-content: center"
+          class="flex-1 justify-center"
           :disabled="form.processing"
           @click="submit('approve')"
         >
@@ -50,13 +48,12 @@ function submit(decision: 'approve' | 'deny') {
         </Button>
         <Button variant="outline"
           type="button"
-          style="flex: 1; justify-content: center"
+          class="flex-1 justify-center"
           :disabled="form.processing"
           @click="submit('deny')"
         >
           {{ $t('auth.oauthDeny') }}
         </Button>
       </div>
-    </div>
-  </div>
+  </AuthLayout>
 </template>
