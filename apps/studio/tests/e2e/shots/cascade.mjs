@@ -72,7 +72,10 @@ await page.goto(SURFACE + ROUTE)
 await page.waitForLoadState('networkidle')
 
 if (CLICK) {
-  await page.getByRole('button', { name: CLICK, exact: true }).click()
+  // Button or link: the states worth measuring hide behind both.
+  const target = page.getByRole('button', { name: CLICK })
+  const hit = (await target.count()) > 0 ? target : page.getByRole('link', { name: CLICK })
+  await hit.first().click()
   await page.waitForLoadState('networkidle')
 }
 

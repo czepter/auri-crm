@@ -138,6 +138,18 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     })
   }
 
+  // The template editor opens only after a starting point is chosen — the
+  // screen's first state is the choice, and the split view behind it would
+  // otherwise never be measured.
+  await page.goto('/dokumentvorlagen/neu')
+  await page.waitForLoadState('networkidle')
+  await page.getByRole('link', { name: /Leere Vorlage/ }).click()
+  await page.waitForFunction(() => document.fonts.status === 'loaded')
+  await expect.soft(page).toHaveScreenshot('dokumentvorlage-editor.png', {
+    fullPage: true,
+    animations: 'disabled',
+  })
+
   // The calendar's list view is client state, not a route: it can only be
   // reached by pressing the toggle.
   await page.goto('/kalender')
