@@ -34,22 +34,22 @@ function setDiscountType(item: QuoteItemRow, value: unknown) {
 
 <template>
   <div>
-    <div v-for="(item, index) in items" :key="index" class="card static grp">
-      <div class="cardhead">
-        <span class="kick">{{ $t('quotes.itemTitle') }} {{ index + 1 }}</span>
+    <div v-for="(item, index) in items" :key="index" class="relative mb-6 block cursor-default rounded-md border border-border p-2.5 text-inherit no-underline">
+      <div class="mb-4 flex items-center justify-between [&_[data-slot=button][data-variant=ghost]]:p-0">
+        <span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('quotes.itemTitle') }} {{ index + 1 }}</span>
         <Button variant="outline" tone="accent" type="button" @click="removeRow(index)">{{ $t('common.remove') }}</Button>
       </div>
 
-      <div class="fgrid">
-        <div class="fld wide">
+      <div class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4">
+        <div class="col-span-full flex min-w-0 flex-col gap-1.5">
           <Label :for="`quote-item-title-${index}`">{{ $t('quotes.itemTitle') }}</Label>
           <Input :id="`quote-item-title-${index}`" v-model="item.title" type="text" required />
         </div>
-        <div class="fld wide">
+        <div class="col-span-full flex min-w-0 flex-col gap-1.5">
           <Label :for="`quote-item-description-${index}`">{{ $t('quotes.itemDescription') }}</Label>
           <Input :id="`quote-item-description-${index}`" v-model="item.description" type="text" />
         </div>
-        <div class="fld">
+        <div class="flex min-w-0 flex-col gap-1.5">
           <Label :for="`quote-item-quantity-${index}`">{{ $t('quotes.itemQuantity') }}</Label>
           <Input
             :id="`quote-item-quantity-${index}`"
@@ -60,7 +60,7 @@ function setDiscountType(item: QuoteItemRow, value: unknown) {
             required
           />
         </div>
-        <div class="fld">
+        <div class="flex min-w-0 flex-col gap-1.5">
           <Label :for="`quote-item-price-${index}`">
             {{ $t('quotes.itemPrice') }}
           </Label>
@@ -73,7 +73,7 @@ function setDiscountType(item: QuoteItemRow, value: unknown) {
             :placeholder="$t('quotes.itemPriceHint')"
           />
         </div>
-        <div class="fld">
+        <div class="flex min-w-0 flex-col gap-1.5">
           <Label :for="`quote-item-discount-type-${index}`">{{ $t('quotes.discountType') }}</Label>
           <Select
             :model-value="toOption(item.discountType)"
@@ -89,7 +89,7 @@ function setDiscountType(item: QuoteItemRow, value: unknown) {
             </SelectContent>
           </Select>
         </div>
-        <div v-if="item.discountType" class="fld">
+        <div v-if="item.discountType" class="flex min-w-0 flex-col gap-1.5">
           <Label :for="`quote-item-discount-value-${index}`">
             {{ item.discountType === 'percentage' ? $t('quotes.discountValuePercent') : $t('quotes.discountValueEuros') }}
           </Label>
