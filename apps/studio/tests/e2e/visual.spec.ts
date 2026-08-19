@@ -135,6 +135,16 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     })
   }
 
+  // Dialogs are closed on every screen above. The invite form is the one that
+  // still carries the shared .fgrid/.fld shell, so it gets a frame of its own.
+  await page.goto('/team')
+  await page.waitForLoadState('networkidle')
+  await page.getByRole('button', { name: 'Einladen', exact: true }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.waitForFunction(() => document.fonts.status === 'loaded')
+  await expect.soft(page).toHaveScreenshot('team-einladen.png', { animations: 'disabled' })
+  await page.keyboard.press('Escape')
+
   // The palette is closed on every screen above, so it needs its own frame.
   // Clipped to everything left of the time column: the rows are this session's
   // own recently-viewed list, so the walk above keeps rewriting the timestamps

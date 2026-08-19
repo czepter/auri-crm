@@ -4,6 +4,7 @@ import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
+import { Field } from '@/ui/field'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
@@ -73,19 +74,14 @@ function initials(name: string) {
           </DialogHeader>
 
           <DialogBody>
-            <form id="team-invite-form" class="fgrid" @submit.prevent="invite">
-              <div class="fld wide">
-                <Label for="name">{{ $t('team.name') }}</Label>
+            <form id="team-invite-form" class="grid grid-cols-2 gap-x-6 gap-y-4" @submit.prevent="invite">
+              <Field id="name" wide :label="$t('team.name')" :error="form.errors.name">
                 <Input id="name" v-model="form.name" type="text" required />
-                <p v-if="form.errors.name" class="err">{{ form.errors.name }}</p>
-              </div>
-              <div class="fld">
-                <Label for="email">{{ $t('auth.email') }}</Label>
+              </Field>
+              <Field id="email" :label="$t('auth.email')" :error="form.errors.email">
                 <Input id="email" v-model="form.email" type="email" required />
-                <p v-if="form.errors.email" class="err">{{ form.errors.email }}</p>
-              </div>
-              <div class="fld">
-                <Label for="role">{{ $t('team.role') }}</Label>
+              </Field>
+              <Field id="role" :label="$t('team.role')">
                 <Select :model-value="form.role" @update:model-value="(value) => (form.role = String(value))">
                   <SelectTrigger id="role">
                     <SelectValue />
@@ -94,7 +90,7 @@ function initials(name: string) {
                     <SelectItem v-for="role in roles" :key="role.value" :value="role.value">{{ role.label }}</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+              </Field>
             </form>
           </DialogBody>
 
