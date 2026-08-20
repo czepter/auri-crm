@@ -195,12 +195,6 @@ const COVER_INPUT = [
   '[&_input]:text-center [&_input]:text-[20px] [&_input]:tracking-[0.22em] [&_input]:text-white',
   '[&_input:focus]:border-action [&_input:focus]:outline-none',
 ].join(' ')
-/* Without the margin: .gate .hint and .listbar .hint each override it, and
-   two margin utilities on one element are decided by bundle order. */
-const PILL =
-  'inline-flex flex-none cursor-pointer items-center gap-[7px] rounded-full border border-border bg-transparent px-3.5 py-2.5 text-[12.5px] leading-none font-medium text-muted-foreground hover:border-line-hover hover:text-foreground'
-const LIST_MENU =
-  'z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]'
 </script>
 
 <template>
@@ -297,10 +291,12 @@ const LIST_MENU =
           <button
             v-for="selection in bar"
             :key="selection.id"
-            :class="[
-              PILL,
-              active === selection.id && 'border-foreground bg-foreground font-semibold text-background',
-            ]"
+            class="inline-flex flex-none cursor-pointer items-center gap-[7px] rounded-full border px-3.5 py-2.5 text-[12.5px] leading-none font-medium hover:border-line-hover hover:text-foreground"
+            :class="
+              active === selection.id
+                ? 'border-foreground bg-foreground font-semibold text-background'
+                : 'border-border bg-transparent text-muted-foreground'
+            "
             type="button"
             @click="active = selection.id"
           >
@@ -337,7 +333,7 @@ const LIST_MENU =
             <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
           </button>
 
-          <span v-if="menu === asset.key" :class="['absolute top-12 right-2.5', LIST_MENU]" @click.stop>
+          <span v-if="menu === asset.key" class="absolute top-12 right-2.5 z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]" @click.stop>
             <label v-for="list in lists" :key="list.id" class="flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-[13px] leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]">
               <input
                 type="checkbox"

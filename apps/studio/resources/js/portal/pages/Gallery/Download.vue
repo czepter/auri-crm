@@ -109,7 +109,6 @@ const INPUT = [
   '[&_input]:text-[15px] [&_input]:leading-[1.2] [&_input]:font-normal [&_input]:text-foreground',
   '[&_input::placeholder]:text-faint',
 ].join(' ')
-const PIN = '[&_input]:text-center [&_input]:indent-[0.55em] [&_input]:text-[21px] [&_input]:tracking-[0.55em] [&_input]:tabular-nums'
 const OPT = [
   'flex cursor-pointer items-center gap-5 border-b border-border py-5',
   '[&>input]:m-0 [&>input]:flex-none [&>input]:cursor-pointer [&>input]:accent-[var(--accent)]',
@@ -131,7 +130,7 @@ const OPT = [
       <h1 class="m-0 font-[family-name:var(--font-display)] text-[27px] leading-[1.2] font-semibold tracking-[var(--display-tracking)]">{{ $t('gallery.pinTitle') }}</h1>
 
       <form @submit.prevent="submitPin">
-        <Label class="mt-8 text-left [display:block]" :class="INPUT, PIN">
+        <Label class="mt-8 text-left [display:block]" :class="[INPUT, '[&_input]:text-center [&_input]:indent-[0.55em] [&_input]:text-[21px] [&_input]:tracking-[0.55em] [&_input]:tabular-nums']">
           <span class="mb-2 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint [display:block]">{{ $t('gallery.pinLabel') }}</span>
           <Input v-model="pinForm.pin" type="text" inputmode="numeric" autocomplete="off" required />
         </Label>

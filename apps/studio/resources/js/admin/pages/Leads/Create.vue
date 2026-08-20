@@ -7,9 +7,9 @@ import ConflictNote from '@/admin/components/ConflictNote.vue'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { ChoiceGroup } from '@/ui/choice-group'
+import { Field } from '@/ui/field'
 import { Textarea } from '@/ui/textarea'
-import { Label } from '@/ui/label'
 
 type Option = { value: string; label: string }
 
@@ -113,101 +113,90 @@ function submit() {
       <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.05em] uppercase text-ink-2">{{ $t('leads.createKicker') }}</div>
       <h1 class="m-0 mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px] max-[640px]:leading-[1.08]">{{ $t('leads.createTitle') }}</h1>
 
-      <form class="max-w-[820px] [&_:is(input,textarea,select)]:w-full [&_:is(input,textarea,select)]:rounded-[10px] [&_:is(input,textarea,select)]:border-0 [&_:is(input,textarea,select)]:bg-sunk [&_:is(input,textarea,select)]:px-[11px] [&_:is(input,textarea,select)]:py-[7px] [&_:is(input,textarea,select)]:text-[13.5px] [&_:is(input,textarea,select)]:leading-[1.4] [&_:is(input,textarea,select)]:font-normal [&_:is(input,textarea,select)]:tracking-[-0.01em] [&_:is(input,textarea,select)]:text-foreground [&_:is(input,textarea,select)]:outline-0 [&_:is(input,textarea)::placeholder]:text-[#B0B0B5] [&_:is(input,textarea,select):focus]:bg-sunk-2 [&_:is(input,textarea,select):focus]:shadow-[inset_0_0_0_2px_var(--accent)] [&_textarea]:min-h-[88px] [&_textarea]:resize-y mt-5" @submit.prevent="submit">
+      <form class="mt-5 max-w-[820px]" @submit.prevent="submit">
         <div class="mb-5">
-          <div class="flex min-w-0 flex-col gap-1.5">
-            <Label>{{ $t('leads.contact') }}</Label>
+          <Field :label="$t('leads.contact')" :error="form.errors.contact_name">
             <ContactTypeahead v-model="contact" @create-new="startCreating" />
-            <p v-if="form.errors.contact_name" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.contact_name }}</p>
-          </div>
+          </Field>
         </div>
 
         <div v-if="creating" class="mb-5">
-          <div class="flex gap-3 [&+&]:mt-3 [&>div]:min-w-[148px] [&>div]:flex-1">
-            <div class="flex min-w-0 flex-col gap-1.5">
-              <Label for="contact_name">{{ $t('leads.name') }}</Label>
+          <div class="flex gap-3 [&+&]:mt-3 [&>*]:min-w-[148px] [&>*]:flex-1">
+            <Field v-slot="{ id }" :label="$t('leads.name')">
               <Input
-                id="contact_name"
+                :id="id"
                 v-model="form.contact_name"
+                variant="filled"
                 type="text"
-                @input="proposeProjectName" />
-            </div>
-            <div class="flex min-w-0 flex-col gap-1.5">
-              <Label for="contact_email">{{ $t('leads.email') }}</Label>
-              <Input id="contact_email" v-model="form.contact_email" type="email" />
-            </div>
-            <div class="flex min-w-0 flex-col gap-1.5">
-              <Label for="contact_phone">{{ $t('leads.phone') }}</Label>
-              <Input id="contact_phone" v-model="form.contact_phone" type="tel" />
-            </div>
+                @input="proposeProjectName"
+              />
+            </Field>
+            <Field v-slot="{ id }" :label="$t('leads.email')">
+              <Input :id="id" v-model="form.contact_email" variant="filled" type="email" />
+            </Field>
+            <Field v-slot="{ id }" :label="$t('leads.phone')">
+              <Input :id="id" v-model="form.contact_phone" variant="filled" type="tel" />
+            </Field>
           </div>
 
-          <div v-for="(person, index) in form.people" :key="index" class="flex gap-3 [&+&]:mt-3 [&>div]:min-w-[148px] [&>div]:flex-1">
-            <div class="flex min-w-0 flex-col gap-1.5">
-              <Label :for="`person_name_${index}`">{{ $t('leads.name') }}</Label>
-              <Input :id="`person_name_${index}`" v-model="person.name" type="text" />
-            </div>
-            <div class="flex min-w-0 flex-col gap-1.5">
-              <Label :for="`person_email_${index}`">{{ $t('leads.email') }}</Label>
-              <Input :id="`person_email_${index}`" v-model="person.email" type="email" />
-            </div>
-            <div class="flex min-w-0 flex-col gap-1.5">
-              <Label :for="`person_phone_${index}`">{{ $t('leads.phone') }}</Label>
-              <Input :id="`person_phone_${index}`" v-model="person.phone" type="tel" />
-            </div>
+          <div v-for="(person, index) in form.people" :key="index" class="flex gap-3 [&+&]:mt-3 [&>*]:min-w-[148px] [&>*]:flex-1">
+            <Field v-slot="{ id }" :label="$t('leads.name')">
+              <Input :id="id" v-model="person.name" variant="filled" type="text" />
+            </Field>
+            <Field v-slot="{ id }" :label="$t('leads.email')">
+              <Input :id="id" v-model="person.email" variant="filled" type="email" />
+            </Field>
+            <Field v-slot="{ id }" :label="$t('leads.phone')">
+              <Input :id="id" v-model="person.phone" variant="filled" type="tel" />
+            </Field>
           </div>
 
-          <button class="cursor-pointer rounded-[var(--r-pill)] border-0 bg-sunk px-[11px] py-[5px] text-[12px] leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2 [&_b]:font-semibold [&_b]:text-foreground mt-2" type="button" @click="addPerson">
+          <button
+            class="mt-2 cursor-pointer rounded-[var(--r-pill)] border-0 bg-sunk px-[11px] py-[5px] text-[12px] leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2 [&_b]:font-semibold [&_b]:text-foreground"
+            type="button"
+            @click="addPerson"
+          >
             {{ $t('leads.addPerson') }}
           </button>
         </div>
 
         <div class="mb-5">
-          <div class="flex min-w-0 flex-col gap-1.5">
-            <Label for="project_name">{{ $t('leads.projectName') }}</Label>
+          <Field v-slot="{ id }" :label="$t('leads.projectName')" :error="form.errors.project_name">
             <Input
-              id="project_name"
+              :id="id"
               v-model="form.project_name"
+              variant="filled"
               type="text"
-              @input="nameTouched = true" />
-            <p v-if="form.errors.project_name" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.project_name }}</p>
-          </div>
+              @input="nameTouched = true"
+            />
+          </Field>
         </div>
 
         <div class="mb-5">
           <!-- Button rows instead of dropdowns: three to five values are hit
                faster than a menu is opened. -->
-          <div class="flex min-w-0 flex-col gap-1.5">
-            <Label>{{ $t('leads.type') }}</Label>
-            <div class="flex flex-wrap gap-1.5 [&_label]:relative [&_input]:pointer-events-none [&_input]:absolute [&_input]:opacity-0 [&_span]:inline-block [&_span]:cursor-pointer [&_span]:rounded-[var(--r-pill)] [&_span]:bg-sunk [&_span]:px-3 [&_span]:py-1.5 [&_span]:text-[12.5px] [&_span]:text-foreground [&_input:checked+span]:bg-foreground [&_input:checked+span]:text-paper">
-              <label v-for="option in types" :key="option.value">
-                <input v-model="form.type" type="radio" :value="option.value" @change="proposeProjectName" />
-                <span>{{ option.label }}</span>
-              </label>
-            </div>
-          </div>
+          <ChoiceGroup
+            v-model="form.type"
+            :label="$t('leads.type')"
+            :options="types"
+            @update:model-value="proposeProjectName"
+          />
 
-          <div class="flex min-w-0 flex-col gap-1.5 mt-4">
-            <Label>{{ $t('leads.source') }}</Label>
-            <div class="flex flex-wrap gap-1.5 [&_label]:relative [&_input]:pointer-events-none [&_input]:absolute [&_input]:opacity-0 [&_span]:inline-block [&_span]:cursor-pointer [&_span]:rounded-[var(--r-pill)] [&_span]:bg-sunk [&_span]:px-3 [&_span]:py-1.5 [&_span]:text-[12.5px] [&_span]:text-foreground [&_input:checked+span]:bg-foreground [&_input:checked+span]:text-paper">
-              <label v-for="option in sources" :key="option.value">
-                <input v-model="form.source" type="radio" :value="option.value" />
-                <span>{{ option.label }}</span>
-              </label>
-            </div>
-          </div>
+          <ChoiceGroup
+            v-model="form.source"
+            class="mt-4"
+            :label="$t('leads.source')"
+            :options="sources"
+          />
 
           <!-- CaptureChannel without web_form: what somebody types in here did
                not arrive through the form. The controller filters it. -->
-          <div class="flex min-w-0 flex-col gap-1.5 mt-4">
-            <Label>{{ $t('leads.capturedVia') }}</Label>
-            <div class="flex flex-wrap gap-1.5 [&_label]:relative [&_input]:pointer-events-none [&_input]:absolute [&_input]:opacity-0 [&_span]:inline-block [&_span]:cursor-pointer [&_span]:rounded-[var(--r-pill)] [&_span]:bg-sunk [&_span]:px-3 [&_span]:py-1.5 [&_span]:text-[12.5px] [&_span]:text-foreground [&_input:checked+span]:bg-foreground [&_input:checked+span]:text-paper">
-              <label v-for="option in channels" :key="option.value">
-                <input v-model="form.captured_via" type="radio" :value="option.value" />
-                <span>{{ option.label }}</span>
-              </label>
-            </div>
-          </div>
+          <ChoiceGroup
+            v-model="form.captured_via"
+            class="mt-4"
+            :label="$t('leads.capturedVia')"
+            :options="channels"
+          />
         </div>
 
         <!-- The main date is the field the whole intake hangs off
@@ -215,22 +204,23 @@ function submit() {
              gets extra weight. Typed as TT.MM.JJJJ or picked from the
              calendar — both reach the same ISO day. -->
         <div class="mb-5">
-          <div class="flex min-w-0 flex-col gap-1.5">
-            <Label for="date">{{ $t('leads.mainDate') }}</Label>
-            <DatePicker id="date" v-model="form.date" size="lead" />
+          <Field v-slot="{ id }" :label="$t('leads.mainDate')">
+            <DatePicker :id="id" v-model="form.date" size="lead" />
             <ConflictNote :conflicts="conflicts" />
-          </div>
+          </Field>
         </div>
 
         <div class="mb-5">
-          <div class="flex min-w-0 flex-col gap-1.5">
-            <Label for="inquiry_text">{{ $t('leads.inquiryText') }}</Label>
-            <Textarea id="inquiry_text" v-model="form.inquiry_text" rows="8" />
-          </div>
+          <Field v-slot="{ id }" :label="$t('leads.inquiryText')">
+            <Textarea :id="id" v-model="form.inquiry_text" variant="filled" rows="8" />
+          </Field>
         </div>
 
         <div class="mt-5 flex items-center gap-3 pt-4 shadow-[inset_0_1px_0_var(--rule)] [&>button:last-child]:ml-auto">
-          <a class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline" href="/anfragen">{{ $t('common.cancel') }}</a>
+          <a
+            class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+            href="/anfragen"
+          >{{ $t('common.cancel') }}</a>
           <Button variant="pill-muted" type="submit" :disabled="form.processing" @click="again = true">
             {{ $t('leads.submitAndNext') }}
           </Button>

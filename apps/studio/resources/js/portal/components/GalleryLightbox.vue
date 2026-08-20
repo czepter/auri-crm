@@ -130,22 +130,6 @@ function time(iso: string) {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
   })
 }
-
-/* gallery.css's lightbox block. Every svg carries the reset tokens.css would
-   have given it — data-tokens on the root switches that reset off, which is
-   the only way a stroke-width from here can win at all. */
-const SVG = '[&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]'
-const TXTBTN =
-  `inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-3.5 [&_svg]:stroke-[1.6] ${SVG}`
-const ACT =
-  `inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] ${SVG}`
-const ARROW =
-  `absolute top-1/2 grid size-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(255,255,255,.08)] text-foreground hover:bg-[rgba(255,255,255,.16)] max-[860px]:bg-[rgba(255,255,255,.14)] [&_svg]:size-5 [&_svg]:stroke-[1.6] ${SVG}`
-const LIST_MENU =
-  'z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]'
-/* tokens.css .who decides the face here too — gallery.css only lays the row out. */
-const WHO =
-  'mb-1 flex items-baseline gap-2 pr-[18px] text-[13.5px] leading-[1.35] font-semibold tracking-[-0.015em] [&_b]:text-[12.5px] [&_b]:leading-none [&_b]:font-semibold [&_b]:text-foreground [&_span]:text-[11.5px] [&_span]:leading-none [&_span]:font-normal [&_span]:tabular-nums [&_span]:text-faint'
 </script>
 
 <template>
@@ -154,12 +138,20 @@ const WHO =
        spelled out per class below. -->
   <div v-if="asset" data-tokens class="fixed inset-0 z-50 flex flex-col bg-background">
     <header class="flex items-center justify-between gap-5 px-8 py-5">
-      <button type="button" :class="TXTBTN" @click="open = null">
+      <button
+        type="button"
+        class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-3.5 [&_svg]:stroke-[1.6] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
+        @click="open = null"
+      >
         <svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
         {{ $t('gallery.backToGrid') }}
       </button>
       <span class="text-[12.5px] leading-none font-normal tabular-nums text-muted-foreground">{{ $t('gallery.position', { at: (open ?? 0) + 1, of: assets.length }) }}</span>
-      <button type="button" :class="TXTBTN" @click="open = null">
+      <button
+        type="button"
+        class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-3.5 [&_svg]:stroke-[1.6] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
+        @click="open = null"
+      >
         {{ $t('common.close') }}
         <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></svg>
       </button>
@@ -173,11 +165,21 @@ const WHO =
       <div
         class="relative mt-5 grid min-h-0 place-items-center [&>img]:block [&>img]:max-h-full [&>img]:max-w-full [&>img]:object-contain"
       >
-        <button type="button" :class="[ARROW, 'left-0']" :title="$t('gallery.previous')" @click="step(-1)">
+        <button
+          type="button"
+          class="absolute top-1/2 grid size-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(255,255,255,.08)] text-foreground hover:bg-[rgba(255,255,255,.16)] max-[860px]:bg-[rgba(255,255,255,.14)] [&_svg]:size-5 [&_svg]:stroke-[1.6] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round] left-0"
+          :title="$t('gallery.previous')"
+          @click="step(-1)"
+        >
           <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
         <img :src="`${asset.src}?w=1600&fmt=jpeg`" :srcset="srcSet(asset)" sizes="72vw" alt="" />
-        <button type="button" :class="[ARROW, 'right-0']" :title="$t('gallery.next')" @click="step(1)">
+        <button
+          type="button"
+          class="absolute top-1/2 grid size-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(255,255,255,.08)] text-foreground hover:bg-[rgba(255,255,255,.16)] max-[860px]:bg-[rgba(255,255,255,.14)] [&_svg]:size-5 [&_svg]:stroke-[1.6] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round] right-0"
+          :title="$t('gallery.next')"
+          @click="step(1)"
+        >
           <svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></svg>
         </button>
       </div>
@@ -193,14 +195,15 @@ const WHO =
           <div v-if="lists?.length" class="relative">
             <button
               type="button"
-              :class="[ACT, onLists.length && 'text-action [&_svg]:fill-current']"
+              class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
+              :class="onLists.length ? 'text-action [&_svg]:fill-current' : 'text-muted-foreground [&_svg]:fill-none'"
               @click="listsOpen = !listsOpen"
             >
               <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
               {{ onLists.length ? $t('gallery.onLists', onLists.length) : $t('gallery.addToList') }}
             </button>
 
-            <div v-if="listsOpen" :class="['absolute top-7 left-0', LIST_MENU]">
+            <div v-if="listsOpen" class="absolute top-7 left-0 z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]">
               <label v-for="list in lists" :key="list.id" class="flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-[13px] leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]">
                 <input
                   type="checkbox"
@@ -217,14 +220,15 @@ const WHO =
           <button
             v-else
             type="button"
-            :class="[ACT, isFavorite && 'text-action [&_svg]:fill-current']"
+            class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
+            :class="isFavorite ? 'text-action [&_svg]:fill-current' : 'text-muted-foreground [&_svg]:fill-none'"
             @click="toggleFavorite"
           >
             <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
             {{ isFavorite ? $t('gallery.unfavorite') : $t('gallery.favorite') }}
           </button>
 
-          <a :class="ACT" :href="`${base}/download`">
+          <a class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]" :href="`${base}/download`">
             <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
             {{ $t('gallery.download') }}
           </a>
@@ -232,7 +236,11 @@ const WHO =
 
         <div class="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto">
           <div v-for="(comment, index) in forAsset" :key="index">
-            <div :class="[WHO, !comment.own && '[&_b]:font-medium [&_b]:text-muted-foreground!']">
+            <!-- tokens.css .who decides the face here too — gallery.css only lays the row out. -->
+            <div
+              class="mb-1 flex items-baseline gap-2 pr-[18px] text-[13.5px] leading-[1.35] font-semibold tracking-[-0.015em] [&_b]:text-[12.5px] [&_b]:leading-none [&_span]:text-[11.5px] [&_span]:leading-none [&_span]:font-normal [&_span]:tabular-nums [&_span]:text-faint"
+              :class="comment.own ? '[&_b]:font-semibold [&_b]:text-foreground' : '[&_b]:font-medium [&_b]:text-muted-foreground!'"
+            >
               <b>{{ comment.author }}</b><span>{{ time(comment.createdAt) }}</span>
             </div>
             <p class="m-0 text-[13.5px] leading-[1.55] font-normal text-foreground">{{ comment.body }}</p>

@@ -2,6 +2,8 @@
 import { computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import ReportCard from '@/admin/components/ReportCard.vue'
+import ReportKpi from '@/admin/components/ReportKpi.vue'
 import { Button } from '@/ui/button'
 
 const props = defineProps<{
@@ -66,14 +68,13 @@ const capturedTotal = computed(() => props.funnelByMonth.reduce((sum, m) => sum 
 const bookingRate = computed(() =>
   capturedTotal.value === 0 ? null : Math.round((bookedTotal.value / capturedTotal.value) * 100),
 )
-
 </script>
 
 <template>
   <AdminLayout active="auswertungen">
-    <div class="hrow">
+    <div class="flex items-center gap-4">
       <div>
-        <div class="kick">{{ $t('reports.window') }}</div>
+        <div class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('reports.window') }}</div>
         <h1>{{ $t('reports.title') }}</h1>
       </div>
     </div>
@@ -81,41 +82,40 @@ const bookingRate = computed(() =>
     <!-- Nothing on this screen is entered here: every figure comes out of
          the funnel, so a studio without history gets the funnel's own
          control rather than nine cards reporting no data. -->
-    <Button v-if="bare" :as="Link" href="/anfragen/neu" style="margin-top: var(--s5)">
+    <Button v-if="bare" :as="Link" href="/anfragen/neu" class="mt-6">
       {{ $t('leads.createKicker') }}
     </Button>
 
     <!-- Same rule as the Übersicht's tiles: a figure with nothing behind it
          is absent, never a zero. A studio with no history reads as empty,
          which is true, rather than as failing. -->
-    <div v-if="!bare" class="kpis">
-      <div v-if="bookingRate !== null" class="kpi">
+    <div v-if="!bare" class="my-6 grid grid-cols-4 gap-2.5">
+      <ReportKpi v-if="bookingRate !== null">
         <b>{{ bookingRate }} %</b>
         {{ $t('reports.bookingRate') }}
         <em> · {{ $t('reports.ofCaptured', { count: capturedTotal }) }}</em>
-      </div>
-      <div v-if="acceptanceRate !== null" class="kpi">
+      </ReportKpi>
+      <ReportKpi v-if="acceptanceRate !== null">
         <b>{{ acceptanceRate }} %</b>
         {{ $t('reports.acceptanceRate') }}
         <em v-if="acceptanceDelta !== null"> · {{ $t('reports.vsPriorPoints', { delta: acceptanceDelta > 0 ? `+${acceptanceDelta}` : acceptanceDelta }) }}</em>
-      </div>
-      <div v-if="revenue.projects" class="kpi">
+      </ReportKpi>
+      <ReportKpi v-if="revenue.projects">
         <b>{{ money.format(revenue.revenue / 100) }}</b>
         {{ $t('reports.revenue') }}
         <em v-if="revenueDelta !== null"> · {{ $t('reports.vsPrior', { delta: revenueDelta > 0 ? `+${revenueDelta}` : revenueDelta }) }}</em>
-      </div>
-      <div v-if="revenue.averagePerProject !== null" class="kpi">
+      </ReportKpi>
+      <ReportKpi v-if="revenue.averagePerProject !== null">
         <b>{{ money.format(revenue.averagePerProject / 100) }}</b>
         {{ $t('reports.averagePerProject') }}
         <em> · {{ $t('reports.bookedProjects', { count: revenue.projects }) }}</em>
-      </div>
+      </ReportKpi>
     </div>
 
-    <div v-if="!bare" class="split" style="margin-top: var(--s5)">
-      <div class="prail">
-        <div v-if="funnelByMonth.length" class="card static">
-          <div class="cardhead"><span class="kick">{{ $t('reports.funnelTitle') }}</span></div>
-          <table class="tbl">
+    <div v-if="!bare" class="grid grid-cols-[minmax(0,1fr)_296px] items-start gap-8 mt-6">
+      <div>
+        <ReportCard v-if="funnelByMonth.length" :title="$t('reports.funnelTitle')">
+          <table class="mt-2.5 w-full border-collapse text-[13px] leading-[1.5] [&_th]:pb-1.5 [&_th]:text-left [&_th]:text-[12px] [&_th]:leading-none [&_th]:font-medium [&_th]:text-muted-foreground [&_td]:border-t [&_td]:border-border [&_td]:py-1">
             <thead>
               <tr>
                 <th>{{ $t('reports.month') }}</th>
@@ -128,18 +128,22 @@ const bookingRate = computed(() =>
               <tr v-for="row in funnelByMonth" :key="row.month">
                 <td>{{ monthLabel(row.month) }}</td>
                 <td>
-                  <span class="bar" :style="{ '--fill': `${(row.captured / funnelPeak) * 100}%` }">{{ row.captured }}</span>
+                  <!-- Ein Balken hinter der Zahl statt einer Chart-Bibliothek: eine Spalte
+                       Proportionen ist die ganze Anforderung. --fill kommt aus dem Markup. -->
+                  <span
+                    class="relative isolate block h-[3px] overflow-hidden rounded-[2px] bg-muted px-1.5 py-0.5 before:absolute before:top-0 before:bottom-0 before:left-0 before:right-auto before:-z-10 before:w-[var(--fill)] before:rounded-[3px] before:bg-[var(--accent-weak,rgb(0_0_0/6%))] before:content-['']"
+                    :style="{ '--fill': `${(row.captured / funnelPeak) * 100}%` }"
+                  >{{ row.captured }}</span>
                 </td>
                 <td>{{ row.booked }}</td>
                 <td>{{ row.rate === null ? '—' : `${row.rate} %` }}</td>
               </tr>
             </tbody>
           </table>
-        </div>
+        </ReportCard>
 
-        <div v-if="sources.length || referrers.length" class="card static" style="margin-top: var(--s4)">
-          <div class="cardhead"><span class="kick">{{ $t('reports.sourcesTitle') }}</span></div>
-          <table v-if="sources.length" class="tbl">
+        <ReportCard v-if="sources.length || referrers.length" class="mt-4" :title="$t('reports.sourcesTitle')">
+          <table v-if="sources.length" class="mt-2.5 w-full border-collapse text-[13px] leading-[1.5] [&_th]:pb-1.5 [&_th]:text-left [&_th]:text-[12px] [&_th]:leading-none [&_th]:font-medium [&_th]:text-muted-foreground [&_td]:border-t [&_td]:border-border [&_td]:py-1">
             <thead>
               <tr>
                 <th>{{ $t('reports.source') }}</th>
@@ -159,40 +163,37 @@ const bookingRate = computed(() =>
           </table>
 
           <template v-if="referrers.length">
-            <div class="dlab" style="margin-top: var(--s4)">{{ $t('reports.referrersTitle') }}</div>
-            <ul class="plain">
+            <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint mt-4">{{ $t('reports.referrersTitle') }}</div>
+            <ul class="mt-2.5 list-none p-0 text-[13px] leading-[1.7]">
               <li v-for="row in referrers" :key="row.name">
                 {{ row.name }} — {{ $t('reports.referralCount', { count: row.count }) }}
               </li>
             </ul>
           </template>
-        </div>
+        </ReportCard>
 
         <!-- The field P-01 has collected since the funnel existed and no
              screen has ever shown. A lead lost without a reason is in the
              funnel above and absent here rather than bucketed as
              "unbekannt" — a category invented for an empty field makes a
              breakdown look complete when it is not. -->
-        <div v-if="lostReasons.length" class="card static" style="margin-top: var(--s4)">
-          <div class="cardhead"><span class="kick">{{ $t('reports.lostTitle') }}</span></div>
-          <ul class="plain">
+        <ReportCard v-if="lostReasons.length" class="mt-4" :title="$t('reports.lostTitle')">
+          <ul class="mt-2.5 list-none p-0 text-[13px] leading-[1.7]">
             <li v-for="row in lostReasons" :key="row.reason">{{ row.reason }} — {{ row.count }}</li>
           </ul>
-        </div>
+        </ReportCard>
       </div>
 
-      <div class="prail">
+      <div>
         <!-- M-07. Its own panel on this screen rather than a screen of its
              own: "how are we doing" and "what is coming in" are the same
              question asked twice. -->
-        <div v-if="cashFlow.months.length" class="card static">
-          <div class="cardhead"><span class="kick">{{ $t('reports.cashFlowTitle') }}</span></div>
-
-          <p v-if="cashFlow.overdue" class="err">
+        <ReportCard v-if="cashFlow.months.length" :title="$t('reports.cashFlowTitle')">
+          <p v-if="cashFlow.overdue" class="text-[11.5px] leading-[1.45] font-normal text-destructive">
             {{ $t('reports.overdue', { amount: money.format(cashFlow.overdue / 100) }) }}
           </p>
 
-          <table class="tbl">
+          <table class="mt-2.5 w-full border-collapse text-[13px] leading-[1.5] [&_th]:pb-1.5 [&_th]:text-left [&_th]:text-[12px] [&_th]:leading-none [&_th]:font-medium [&_th]:text-muted-foreground [&_td]:border-t [&_td]:border-border [&_td]:py-1">
             <thead>
               <tr>
                 <th>{{ $t('reports.month') }}</th>
@@ -205,7 +206,10 @@ const bookingRate = computed(() =>
               <tr v-for="row in cashFlow.months" :key="row.month">
                 <td>{{ monthLabel(row.month) }}</td>
                 <td>
-                  <span class="bar" :style="{ '--fill': `${(row.due / cashPeak) * 100}%` }">
+                  <span
+                    class="relative isolate block h-[3px] overflow-hidden rounded-[2px] bg-muted px-1.5 py-0.5 before:absolute before:top-0 before:bottom-0 before:left-0 before:right-auto before:-z-10 before:w-[var(--fill)] before:rounded-[3px] before:bg-[var(--accent-weak,rgb(0_0_0/6%))] before:content-['']"
+                    :style="{ '--fill': `${(row.due / cashPeak) * 100}%` }"
+                  >
                     {{ row.due ? money.format(row.due / 100) : '—' }}
                   </span>
                 </td>
@@ -214,12 +218,11 @@ const bookingRate = computed(() =>
               </tr>
             </tbody>
           </table>
-          <p class="hint">{{ $t('reports.cashFlowNote') }}</p>
-        </div>
+          <p class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('reports.cashFlowNote') }}</p>
+        </ReportCard>
 
-        <div v-if="perContact.length" class="card static" style="margin-top: var(--s4)">
-          <div class="cardhead"><span class="kick">{{ $t('reports.perContactTitle') }}</span></div>
-          <table class="tbl">
+        <ReportCard v-if="perContact.length" class="mt-4" :title="$t('reports.perContactTitle')">
+          <table class="mt-2.5 w-full border-collapse text-[13px] leading-[1.5] [&_th]:pb-1.5 [&_th]:text-left [&_th]:text-[12px] [&_th]:leading-none [&_th]:font-medium [&_th]:text-muted-foreground [&_td]:border-t [&_td]:border-border [&_td]:py-1">
             <thead>
               <tr>
                 <th>{{ $t('reports.contact') }}</th>
@@ -235,56 +238,8 @@ const bookingRate = computed(() =>
               </tr>
             </tbody>
           </table>
-        </div>
+        </ReportCard>
       </div>
     </div>
   </AdminLayout>
 </template>
-
-<style scoped>
-/* A bar behind the number rather than a chart library: one column of
-   proportions is the whole requirement, and a dependency for it would be
-   the kind of weight this codebase adds only when a real chart arrives. */
-.bar {
-  display: block;
-  position: relative;
-  padding: 2px 6px;
-  isolation: isolate;
-}
-
-.bar::before {
-  content: '';
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: var(--fill);
-  background: var(--accent-weak, rgb(0 0 0 / 6%));
-  border-radius: 3px;
-  z-index: -1;
-}
-
-.tbl {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: var(--s3);
-  font: 400 13px/1.5 var(--font);
-}
-
-.tbl th {
-  text-align: left;
-  font: 500 12px/1 var(--font);
-  color: var(--muted);
-  padding-bottom: 6px;
-}
-
-.tbl td {
-  padding: 4px 0;
-  border-top: 1px solid var(--line);
-}
-
-.plain {
-  list-style: none;
-  margin: var(--s3) 0 0;
-  padding: 0;
-  font: 400 13px/1.7 var(--font);
-}
-</style>
