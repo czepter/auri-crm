@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { Link, router, useForm } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
+import { Button } from "@/ui/button";
 import { DatePicker } from "@/ui/date-picker";
 import Page from "@/ui/page/Page.vue";
 
@@ -150,10 +151,6 @@ const TITLE = "sticky top-0 z-[5] flex items-center gap-3 bg-paper";
 const ACTS = "ml-auto flex items-center gap-2";
 
 /* crm.css .btn / .btn-2 / .link. */
-const BTN_BASE =
-    "inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] border-0 px-3.5 py-1.5 text-[12.5px] leading-[1.47] font-medium tracking-[-0.01em] whitespace-nowrap no-underline transition-[filter,background-color] duration-[.12s] ease-out";
-const BTN = `${BTN_BASE} bg-action text-white hover:brightness-[1.08]`;
-const BTN_2 = `${BTN_BASE} bg-sunk-2 text-foreground hover:bg-[#E9E9EC]`;
 const LINK =
     "text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline";
 
@@ -363,14 +360,14 @@ const RAIL_M = "mt-px text-[11.5px] leading-[1.47] text-ink-2";
                                 @click.prevent="editing = false"
                                 >{{ $t("common.cancel") }}</a
                             >
-                            <button
-                                :class="BTN"
+                            <Button
+                                variant="pill"
                                 type="button"
                                 :disabled="edit.processing"
                                 @click="save"
                             >
                                 {{ $t("common.save") }}
-                            </button>
+                            </Button>
                         </div>
 
                         <div v-else :class="ACTS">
@@ -387,10 +384,11 @@ const RAIL_M = "mt-px text-[11.5px] leading-[1.47] text-ink-2";
                             >
                                 {{ $t("project.quotes") }}
                             </Link>
-                            <Link
-                                :class="BTN"
+                            <Button
+                                :as="Link"
+                                variant="pill"
                                 :href="`/auftraege/${header.id}/shootings`"
-                                >{{ $t("project.shoots") }}</Link
+                                >{{ $t("project.shoots") }}</Button
                             >
                         </div>
                     </div>
@@ -703,13 +701,13 @@ const RAIL_M = "mt-px text-[11.5px] leading-[1.47] text-ink-2";
                                 :placeholder="$t('lead.notePlaceholder')"
                             />
                             <div :class="FOOT">
-                                <button
-                                    :class="BTN_2"
+                                <Button
+                                    variant="pill-muted"
                                     type="submit"
                                     :disabled="!note.body || note.processing"
                                 >
                                     {{ $t("lead.addNote") }}
-                                </button>
+                                </Button>
                             </div>
                         </form>
 

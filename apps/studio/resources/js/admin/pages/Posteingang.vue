@@ -140,9 +140,6 @@ const MSG_BODY = 'mt-[5px] max-w-[68ch] text-[13.5px] leading-[1.55]'
 const COMPOSER = 'mt-4 pt-1 pb-0.5'
 const FIELD = 'flex flex-col gap-1 [&>span]:pl-0.5 [&>span]:text-[10.5px] [&>span]:leading-none [&>span]:font-normal [&>span]:tracking-[0.05em] [&>span]:uppercase [&>span]:text-ink-2'
 const FOOT = 'mt-2.5 flex items-center gap-3'
-const BTN_BASE = 'inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] border-0 px-3.5 py-1.5 text-[12.5px] leading-[1.47] font-medium tracking-[-0.01em] whitespace-nowrap no-underline transition-[filter,background-color] duration-[.12s] ease-out'
-const BTN = `${BTN_BASE} bg-action text-white hover:brightness-[1.08]`
-const BTN_2 = `${BTN_BASE} bg-sunk-2 text-foreground hover:bg-[#E9E9EC]`
 
 /* crm.css .rail — who is on the thread, and what it belongs to. */
 const RAIL = 'w-70 flex-none overflow-y-auto bg-sunk px-5 py-4 max-[1080px]:hidden'
@@ -203,9 +200,9 @@ function receivedAt(iso: string) {
               <h1 :class="H1">{{ open.subject }}</h1>
             </div>
             <div :class="ACTS">
-              <button :class="BTN_2" type="button" @click="close(open.id)">
+              <Button variant="pill-muted" type="button" @click="close(open.id)">
                 {{ open.state === 'erledigt' ? $t('inbox.reopen') : $t('inbox.done') }}
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -223,9 +220,9 @@ function receivedAt(iso: string) {
               <textarea v-model="reply.body" rows="3" class="mb-3" />
             </div>
             <div :class="FOOT">
-              <button :class="[BTN, 'ml-auto']" type="submit" :disabled="reply.processing || !reply.body">
+              <Button variant="pill" class="ml-auto" type="submit" :disabled="reply.processing || !reply.body">
                 {{ $t('inbox.send') }}
-              </button>
+              </Button>
             </div>
           </form>
         </template>

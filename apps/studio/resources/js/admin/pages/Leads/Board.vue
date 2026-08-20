@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -223,37 +224,32 @@ const STAGE_DOT = ['bg-foreground', 'bg-[#5F5F63]', 'bg-[#A1A1A6]', 'bg-action',
 
       <!-- List — grouped by who owes the next move, not by stage. A board
            shows where something stands, a table shows what is next. -->
-      <table v-else class="mt-5 w-full border-collapse">
+      <Table v-else>
         <thead>
           <tr>
-            <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('board.colInquiry') }}</th>
-            <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('board.colDate') }}</th>
-            <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('board.colVenue') }}</th>
-            <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('board.colStage') }}</th>
-            <th class="px-8 pb-2 text-right text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('board.colValue') }}</th>
-            <th class="px-8 pb-2 text-right text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('board.colLast') }}</th>
+            <TableHead>{{ $t('board.colInquiry') }}</TableHead>
+            <TableHead>{{ $t('board.colDate') }}</TableHead>
+            <TableHead>{{ $t('board.colVenue') }}</TableHead>
+            <TableHead>{{ $t('board.colStage') }}</TableHead>
+            <TableHead align="right">{{ $t('board.colValue') }}</TableHead>
+            <TableHead align="right">{{ $t('board.colLast') }}</TableHead>
           </tr>
         </thead>
         <tbody>
           <template v-for="group in groupRows" :key="group.key">
-            <tr>
-              <td
-                class="bg-sunk px-8 pt-4 pb-1.5 align-baseline text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2"
-                colspan="6"
-              >
+            <TableGroupRow :colspan="6">
                 {{ $t(`board.group.${group.key}`) }}
-              </td>
-            </tr>
-            <tr v-for="card in group.rows" :key="card.id" class="[&:hover>td]:bg-sunk">
-              <td class="px-8 py-2.5 align-baseline text-[13.5px] font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_#F0F0F2]">
+            </TableGroupRow>
+            <TableRow v-for="card in group.rows" :key="card.id">
+              <TableCell tone="name">
                 <Link :href="`/anfragen/${card.leadId}`">{{ card.names }}</Link>
-              </td>
-              <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2]">
+              </TableCell>
+              <TableCell>
                 {{ shortDate(card.date) ?? $t('board.openDate') }}
                 <span v-if="card.conflicts.length" class="text-action"> · {{ $t('board.dateDoubled') }}</span>
-              </td>
-              <td class="px-8 py-2.5 align-baseline text-[13px] text-ink-2 shadow-[inset_0_1px_0_#F0F0F2]">{{ card.venue ?? '—' }}</td>
-              <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2]">
+              </TableCell>
+              <TableCell tone="muted">{{ card.venue ?? '—' }}</TableCell>
+              <TableCell>
                 <span class="inline-flex items-baseline gap-[7px] text-[12.5px]">
                   <s
                     class="size-1.5 self-center rounded-full no-underline"
@@ -261,17 +257,17 @@ const STAGE_DOT = ['bg-foreground', 'bg-[#5F5F63]', 'bg-[#A1A1A6]', 'bg-action',
                   />
                   {{ columns.find((c) => c.stage === card.stage)?.label }}
                 </span>
-              </td>
-              <td class="px-8 py-2.5 text-right align-baseline text-[13px] tabular-nums shadow-[inset_0_1px_0_#F0F0F2]">
+              </TableCell>
+              <TableCell align="right">
                 {{ card.value === null ? '—' : money.format(card.value / 100) }}
-              </td>
-              <td class="px-8 py-2.5 text-right align-baseline text-[13px] tabular-nums text-ink-2 shadow-[inset_0_1px_0_#F0F0F2]">
+              </TableCell>
+              <TableCell tone="muted" align="right">
                 {{ relative(card.lastAt) }}
-              </td>
-            </tr>
+              </TableCell>
+            </TableRow>
           </template>
         </tbody>
-      </table>
+      </Table>
 
       <div
         v-if="menu"

@@ -106,9 +106,6 @@ function submit() {
 /* crm.css's .form family, written out — the sheet reached input, textarea and
    select directly, and an element rule beats every utility. */
 const FORM = 'max-w-[820px] [&_:is(input,textarea,select)]:w-full [&_:is(input,textarea,select)]:rounded-[10px] [&_:is(input,textarea,select)]:border-0 [&_:is(input,textarea,select)]:bg-sunk [&_:is(input,textarea,select)]:px-[11px] [&_:is(input,textarea,select)]:py-[7px] [&_:is(input,textarea,select)]:text-[13.5px] [&_:is(input,textarea,select)]:leading-[1.4] [&_:is(input,textarea,select)]:font-normal [&_:is(input,textarea,select)]:tracking-[-0.01em] [&_:is(input,textarea,select)]:text-foreground [&_:is(input,textarea,select)]:outline-0 [&_:is(input,textarea)::placeholder]:text-[#B0B0B5] [&_:is(input,textarea,select):focus]:bg-sunk-2 [&_:is(input,textarea,select):focus]:shadow-[inset_0_0_0_2px_var(--accent)] [&_textarea]:min-h-[88px] [&_textarea]:resize-y'
-const BTN_BASE = 'inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] border-0 px-3.5 py-1.5 text-[12.5px] leading-[1.47] font-medium tracking-[-0.01em] whitespace-nowrap no-underline transition-[filter,background-color] duration-[.12s] ease-out'
-const BTN = `${BTN_BASE} bg-action text-white hover:brightness-[1.08]`
-const BTN_2 = `${BTN_BASE} bg-sunk-2 text-foreground hover:bg-[#E9E9EC]`
 const H1 = 'm-0 mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px] max-[640px]:leading-[1.08]'
 </script>
 
@@ -236,12 +233,12 @@ const H1 = 'm-0 mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032
 
         <div class="mt-5 flex items-center gap-3 pt-4 shadow-[inset_0_1px_0_var(--rule)] [&>button:last-child]:ml-auto">
           <a class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline" href="/anfragen">{{ $t('common.cancel') }}</a>
-          <button :class="BTN_2" type="submit" :disabled="form.processing" @click="again = true">
+          <Button variant="pill-muted" type="submit" :disabled="form.processing" @click="again = true">
             {{ $t('leads.submitAndNext') }}
-          </button>
-          <button :class="BTN" type="submit" :disabled="form.processing" @click="again = false">
+          </Button>
+          <Button variant="pill" type="submit" :disabled="form.processing" @click="again = false">
             {{ $t('leads.submit') }}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

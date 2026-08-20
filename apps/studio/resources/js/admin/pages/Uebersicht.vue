@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { Link, router } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
+import PageHead from "@/ui/page/PageHead.vue";
 import Metric from "@/admin/components/Metric.vue";
 import { Button } from "@/ui/button";
 import type { Tone } from "@/admin/lib/metricDots";
@@ -181,14 +182,6 @@ function complete(task: App.Crm.Data.TaskRowData) {
 }
 
 /* crm.css, inlined. */
-const HROW =
-    "flex items-center gap-3 px-8 pt-[22px] max-[640px]:px-5 max-[640px]:pt-4";
-const H1 =
-    "m-0 mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px] max-[640px]:leading-[1.08]";
-const BTN_BASE =
-    "inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] border-0 px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] leading-[1.45] whitespace-nowrap no-underline transition-[filter,background-color] duration-[.12s] ease-out";
-const BTN = `${BTN_BASE} bg-action text-white hover:brightness-[1.08]`;
-const BTN_2 = `${BTN_BASE} bg-sunk-2 text-foreground hover:bg-[#E9E9EC]`;
 const LINK =
     "text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline";
 /* border and radius are tokens.css .panel, background and padding crm.css. */
@@ -209,15 +202,7 @@ const FLAG =
 <template>
     <AdminLayout active="uebersicht">
         <div data-tokens="crm">
-            <div :class="HROW">
-                <div>
-                    <div
-                        class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.05em] uppercase text-ink-2"
-                    >
-                        {{ heading }}
-                    </div>
-                    <h1 :class="H1">{{ $t("dashboard.title") }}</h1>
-                </div>
+            <PageHead :kicker="heading" :title="$t('dashboard.title')">
 
                 <!-- Unbeantwortet, not ungelesen: ThreadParticipant carries no
              last_read_at and this screen does not add one. Static, because
@@ -230,11 +215,11 @@ const FLAG =
                 >
                     {{ $t("dashboard.unanswered", { count: unanswered }) }}
                 </span>
-            </div>
+            </PageHead>
 
-            <Link v-if="bare" :class="[BTN, 'mt-5']" href="/anfragen/neu">
+            <Button v-if="bare" :as="Link" variant="pill" class="mt-5" href="/anfragen/neu">
                 {{ $t("leads.createKicker") }}
-            </Link>
+            </Button>
 
             <div
                 v-else
@@ -364,14 +349,14 @@ const FLAG =
                                 <Button
                                     v-if="decision.action"
                                     :as="Link"
-                                    :class="index === 0 ? BTN : BTN_2"
+                                    :variant="index === 0 ? 'pill' : 'pill-muted'"
                                     :href="decision.action.target"
                                     >{{ decision.action.label }}</Button
                                 >
                                 <Button
                                     v-else-if="decision.done"
                                     type="button"
-                                    :class="index === 0 ? BTN : BTN_2"
+                                    :variant="index === 0 ? 'pill' : 'pill-muted'"
                                     @click="complete(decision.done)"
                                     >{{ $t("dashboard.done") }}</Button
                                 >

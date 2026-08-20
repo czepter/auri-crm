@@ -33,6 +33,15 @@ export const buttonVariants = cva(
           "flex-none rounded-[6px] border border-line-hover bg-background px-[9px] py-[3px] text-[10.5px] font-semibold leading-[1.4] text-muted-foreground hover:border-faint hover:text-foreground [&_svg]:size-[13px]",
         ghost:
           "border-0 bg-transparent px-0 py-[9px] text-[13px] font-medium leading-none text-muted-foreground hover:text-foreground [&_svg]:size-[15px] [&_svg]:opacity-80",
+        /*
+         * crm.css .btn and .btn-2 — the admin's own pair. A fourth and fifth
+         * variant rather than a second Button: the admin presses the same
+         * kind of button as the portal, it is only drawn denser and rounder
+         * on a surface that stands open all day.
+         */
+        pill: "gap-1.5 rounded-[var(--r-pill)] border-0 bg-action px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-white transition-[filter,background-color] duration-[.12s] ease-out hover:brightness-[1.08]",
+        "pill-muted":
+          "gap-1.5 rounded-[var(--r-pill)] border-0 bg-sunk-2 px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-[filter,background-color] duration-[.12s] ease-out hover:bg-[#E9E9EC]",
       },
       tone: {
         default: "",

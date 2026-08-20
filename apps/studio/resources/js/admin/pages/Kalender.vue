@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 
 const props = defineProps<{
   month: string
@@ -150,38 +151,33 @@ function shortDate(date: string | null) {
         </div>
       </div>
 
-      <table v-else class="mt-5 w-full border-collapse">
+      <Table v-else>
         <thead>
           <tr>
-            <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('calendar.colDate') }}</th>
-            <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('calendar.colWhat') }}</th>
-            <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('calendar.colVenue') }}</th>
-            <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('calendar.colCrew') }}</th>
-            <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('calendar.colStatus') }}</th>
+            <TableHead>{{ $t('calendar.colDate') }}</TableHead>
+            <TableHead>{{ $t('calendar.colWhat') }}</TableHead>
+            <TableHead>{{ $t('calendar.colVenue') }}</TableHead>
+            <TableHead>{{ $t('calendar.colCrew') }}</TableHead>
+            <TableHead>{{ $t('calendar.colStatus') }}</TableHead>
           </tr>
         </thead>
         <tbody>
           <template v-for="[key, rows] in groups" :key="key">
-            <tr>
-              <td
-                class="bg-sunk px-8 pt-4 pb-1.5 align-baseline text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2"
-                colspan="5"
-              >
+            <TableGroupRow :colspan="5">
                 {{ $t(`calendar.group.${key}`) }}
-              </td>
-            </tr>
-            <tr v-for="shoot in rows" :key="shoot.id" class="[&:hover>td]:bg-sunk">
-              <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2]">{{ shortDate(shoot.date) }}<template v-if="shoot.callTime"> {{ shoot.callTime }}</template></td>
-              <td class="px-8 py-2.5 align-baseline shadow-[inset_0_1px_0_#F0F0F2] text-[13.5px] font-semibold tracking-[-0.014em]">
+            </TableGroupRow>
+            <TableRow v-for="shoot in rows" :key="shoot.id">
+              <TableCell>{{ shortDate(shoot.date) }}<template v-if="shoot.callTime"> {{ shoot.callTime }}</template></TableCell>
+              <TableCell tone="name">
                 <Link :href="`/auftraege/${projects[shoot.id].id}`">{{ projects[shoot.id].name }}</Link>
-              </td>
-              <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ shoot.venue ?? '—' }}</td>
-              <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ shoot.crew.map((member) => member.name).join(', ') || '—' }}</td>
-              <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2]" :class="mine.includes(shoot.id) && 'text-action'">{{ shoot.statusLabel }}</td>
-            </tr>
+              </TableCell>
+              <TableCell tone="muted">{{ shoot.venue ?? '—' }}</TableCell>
+              <TableCell tone="muted">{{ shoot.crew.map((member) => member.name).join(', ') || '—' }}</TableCell>
+              <TableCell :class="mine.includes(shoot.id) && 'text-action'">{{ shoot.statusLabel }}</TableCell>
+            </TableRow>
           </template>
         </tbody>
-      </table>
+      </Table>
     </div>
   </AdminLayout>
 </template>
