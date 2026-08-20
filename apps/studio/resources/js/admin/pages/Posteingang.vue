@@ -118,8 +118,8 @@ const QUEUE_H2 = 'm-0 flex items-baseline px-3.5 pb-2 [a+&]:pt-5'
 const QUEUE_B = 'text-[12.5px] leading-none font-semibold tracking-[-0.012em]'
 const QUEUE_N = 'ml-auto text-[11px] leading-[1.47] tabular-nums text-ink-2'
 const QUEUE_A = 'block px-3.5 py-[9px] text-inherit no-underline shadow-[inset_0_1px_0_#ECECEE]'
-const QUEUE_NM = 'text-[12.5px] leading-[1.47] font-semibold tracking-[-0.012em]'
-const QUEUE_MT = 'mt-px text-[11.5px] leading-[1.47]'
+const QUEUE_NM = 'block text-[12.5px] leading-[1.47] font-semibold tracking-[-0.012em]'
+const QUEUE_MT = 'mt-px block text-[11.5px] leading-[1.47]'
 
 /* crm.css .detail — the thread itself. */
 const DETAIL = 'min-w-0 flex-1 overflow-y-auto px-[26px] pt-4 pb-5'

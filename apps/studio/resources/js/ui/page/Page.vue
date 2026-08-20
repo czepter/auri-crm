@@ -1,20 +1,12 @@
 <template>
-    <div class="flex items-stretch justify-between" data-tokens="crm">
-        <div v-if="$slots.left" class="shrink-0 max-w-64 pt-4">
-            <slot name="left" />
-        </div>
-
-        <div class="flex-1 pt-4">
-            <slot />
-        </div>
-
-        <!-- crm.css .rail, written out: 280px capped to max-w-64 by the column
-             itself, and gone below 1080px, where the case outweighs its trace. -->
-        <div
-            v-if="$slots.right"
-            class="w-70 max-w-64 shrink-0 overflow-y-auto bg-sunk px-5 py-4 max-[1080px]:hidden"
-        >
-            <slot name="right" />
-        </div>
+    <!-- Queue, case and trace stand side by side and each fills the height —
+         as in mockups/redesign/crm-anfrage.html, where .queue, .detail and
+         .rail are the flex children themselves. No wrapper of our own around
+         them: one would take the stretch and leave the column at the height of
+         its content, with the grey ending mid-screen. -->
+    <div class="flex items-stretch" data-tokens="crm">
+        <slot name="left" />
+        <slot />
+        <slot name="right" />
     </div>
 </template>

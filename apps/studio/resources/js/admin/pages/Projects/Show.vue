@@ -143,6 +143,11 @@ const WORK = "min-w-0 flex-1 px-[26px] pt-5 pb-7";
 const H1 =
     "m-0 mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]";
 const SEC = "mb-5";
+/* Der Kopf steht wie im Klickdummy: Kicker, Name, Aktionen rechts daneben
+   (mockups/redesign/crm-projekt.html, .hrow). */
+const KICK = "text-[11px] tracking-[0.05em] uppercase text-ink-2";
+const TITLE = "sticky top-0 z-[5] flex items-center gap-3 bg-paper";
+const ACTS = "ml-auto flex items-center gap-2";
 
 /* crm.css .btn / .btn-2 / .link. */
 const BTN_BASE =
@@ -221,6 +226,8 @@ const EV_T = "w-[110px] flex-none text-[12px] leading-[1.3] tabular-nums text-in
 const EV_C = "min-w-0 flex-1 text-[13px] leading-[1.47]";
 
 /* crm.css .rail — the trace column Page.vue holds. */
+const RAIL =
+    "w-70 flex-none overflow-y-auto bg-sunk px-5 py-4 max-[1080px]:hidden";
 const RAIL_H2 =
     "m-0 mb-[9px] text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2";
 const RAIL_P = "flex items-center gap-2 py-[5px] text-[12.5px] leading-[1.47]";
@@ -237,6 +244,7 @@ const RAIL_M = "mt-px text-[11.5px] leading-[1.47] text-ink-2";
     <AdminLayout active="projekte">
         <Page>
             <template #right>
+                <aside :class="RAIL">
                 <h2 :class="RAIL_H2">{{ $t("lead.people") }}</h2>
                 <div
                     v-for="(person, index) in people"
@@ -322,15 +330,19 @@ const RAIL_M = "mt-px text-[11.5px] leading-[1.47] text-ink-2";
                         >{{ $t("project.messages") }}</Link
                     >
                 </div>
+                </aside>
             </template>
 
-            <div data-tokens="crm" style="display: flex; align-items: stretch">
+            <div
+                class="flex min-w-0 flex-1 items-stretch"
+                data-tokens="crm"
+            >
                 <div :class="WORK">
-                    <div>
+                    <div :class="KICK">
                         <Link href="/projekte">{{ $t("projects.title") }}</Link>
                     </div>
 
-                    <div class="sticky top-0 z-[5] bg-paper">
+                    <div :class="TITLE">
                         <div>
                             <input
                                 v-if="editing"
@@ -344,7 +356,7 @@ const RAIL_M = "mt-px text-[11.5px] leading-[1.47] text-ink-2";
                             </h1>
                         </div>
 
-                        <div v-if="editing">
+                        <div v-if="editing" :class="ACTS">
                             <a
                                 :class="LINK"
                                 href="#"
@@ -361,7 +373,7 @@ const RAIL_M = "mt-px text-[11.5px] leading-[1.47] text-ink-2";
                             </button>
                         </div>
 
-                        <div v-else>
+                        <div v-else :class="ACTS">
                             <a
                                 :class="LINK"
                                 href="#"
