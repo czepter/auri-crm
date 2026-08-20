@@ -103,12 +103,6 @@ function longDate(iso: string) {
 
 /* gallery.css, inlined. Its own .field / .hint / .err are not the portal's of
    the same name — the sheet scopes every rule under [data-theme="gallery"]. */
-const PAGE = 'mx-auto max-w-[560px] px-8 pt-14 pb-11'
-const TITLE =
-  'm-0 font-[family-name:var(--font-display)] text-[27px] leading-[1.2] font-semibold tracking-[var(--display-tracking)]'
-const SUB = 'mt-1.5 text-[14px] leading-[1.6] font-normal text-muted-foreground'
-const FIELD = 'mt-8 text-left [display:block]'
-const CAPTION = 'mb-2 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint [display:block]'
 const INPUT = [
   '[&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-line-hover',
   '[&_input]:bg-muted [&_input]:px-3.5 [&_input]:py-[13px]',
@@ -116,9 +110,6 @@ const INPUT = [
   '[&_input::placeholder]:text-faint',
 ].join(' ')
 const PIN = '[&_input]:text-center [&_input]:indent-[0.55em] [&_input]:text-[21px] [&_input]:tracking-[0.55em] [&_input]:tabular-nums'
-const HINT = 'mt-[9px] text-[12.5px] leading-[1.55] font-normal text-muted-foreground'
-const LAB = 'mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint'
-const WIDE = 'mt-5 ml-0 w-full justify-center px-3.5 py-[13px] text-[14px]'
 const OPT = [
   'flex cursor-pointer items-center gap-5 border-b border-border py-5',
   '[&>input]:m-0 [&>input]:flex-none [&>input]:cursor-pointer [&>input]:accent-[var(--accent)]',
@@ -126,7 +117,6 @@ const OPT = [
   '[&_b]:text-[14px] [&_b]:leading-[1.3] [&_b]:font-semibold [&_b]:text-foreground [&_b]:[display:block]',
   '[&_b+span]:text-[12.5px] [&_b+span]:leading-[1.4] [&_b+span]:font-normal [&_b+span]:text-muted-foreground',
 ].join(' ')
-const SIZE = 'text-[12.5px] leading-none font-normal whitespace-nowrap tabular-nums text-muted-foreground'
 </script>
 
 <template>
@@ -135,18 +125,18 @@ const SIZE = 'text-[12.5px] leading-none font-normal whitespace-nowrap tabular-n
        matching the mockup's own <html data-theme="gallery"> root. -->
   <div data-theme="gallery" class="min-h-screen bg-background text-foreground">
     <!-- mockup 11: the whole page centers on the pin step -->
-    <div v-if="step === 'pin'" data-tokens :class="[PAGE, 'text-center']">
+    <div v-if="step === 'pin'" data-tokens class="mx-auto max-w-[560px] px-8 pt-14 pb-11 text-center">
       <span class="text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-foreground no-underline">{{ studioName }}</span>
       <div class="mt-14 mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.pinKicker') }}</div>
-      <h1 :class="TITLE">{{ $t('gallery.pinTitle') }}</h1>
+      <h1 class="m-0 font-[family-name:var(--font-display)] text-[27px] leading-[1.2] font-semibold tracking-[var(--display-tracking)]">{{ $t('gallery.pinTitle') }}</h1>
 
       <form @submit.prevent="submitPin">
-        <Label :class="[FIELD, INPUT, PIN]">
-          <span :class="CAPTION">{{ $t('gallery.pinLabel') }}</span>
+        <Label class="mt-8 text-left [display:block]" :class="INPUT, PIN">
+          <span class="mb-2 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint [display:block]">{{ $t('gallery.pinLabel') }}</span>
           <Input v-model="pinForm.pin" type="text" inputmode="numeric" autocomplete="off" required />
         </Label>
 
-        <Button :class="WIDE" type="submit" :disabled="pinForm.processing">
+        <Button class="mt-5 ml-0 w-full justify-center px-3.5 py-[13px] text-[14px]" type="submit" :disabled="pinForm.processing">
           {{ $t('gallery.pinContinue') }}
         </Button>
       </form>
@@ -159,23 +149,23 @@ const SIZE = 'text-[12.5px] leading-none font-normal whitespace-nowrap tabular-n
     </div>
 
     <!-- mockup 12: only the header centers, the field and actions stay left -->
-    <div v-else-if="step === 'email'" data-tokens :class="PAGE">
+    <div v-else-if="step === 'email'" data-tokens class="mx-auto max-w-[560px] px-8 pt-14 pb-11">
       <div class="text-center">
         <span class="text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-foreground no-underline">{{ studioName }}</span>
         <div class="mt-14 mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.emailKicker') }}</div>
-        <h1 :class="TITLE">{{ $t('gallery.emailTitle') }}</h1>
-        <p v-if="gallery.title" :class="SUB">{{ gallery.title }}</p>
+        <h1 class="m-0 font-[family-name:var(--font-display)] text-[27px] leading-[1.2] font-semibold tracking-[var(--display-tracking)]">{{ $t('gallery.emailTitle') }}</h1>
+        <p v-if="gallery.title" class="mt-1.5 text-[14px] leading-[1.6] font-normal text-muted-foreground">{{ gallery.title }}</p>
       </div>
 
-      <p v-if="status" :class="HINT">{{ status }}</p>
+      <p v-if="status" class="mt-[9px] text-[12.5px] leading-[1.55] font-normal text-muted-foreground">{{ status }}</p>
 
       <form v-else @submit.prevent="submitEmail">
-        <Label :class="[FIELD, INPUT]">
-          <span :class="CAPTION">{{ $t('gallery.emailLabel') }}</span>
+        <Label class="mt-8 text-left [display:block]" :class="INPUT">
+          <span class="mb-2 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint [display:block]">{{ $t('gallery.emailLabel') }}</span>
           <Input v-model="emailForm.email" type="email" autocomplete="email" required />
         </Label>
 
-        <Button :class="WIDE" type="submit" :disabled="emailForm.processing">
+        <Button class="mt-5 ml-0 w-full justify-center px-3.5 py-[13px] text-[14px]" type="submit" :disabled="emailForm.processing">
           {{ $t('gallery.emailRequest') }}
         </Button>
       </form>
@@ -199,8 +189,8 @@ const SIZE = 'text-[12.5px] leading-none font-normal whitespace-nowrap tabular-n
         {{ $t('gallery.backToGallery') }}
       </a>
 
-      <h1 :class="[TITLE, 'mt-8']">{{ $t('gallery.downloadTitle') }}</h1>
-      <p :class="SUB">
+      <h1 class="m-0 font-[family-name:var(--font-display)] text-[27px] leading-[1.2] font-semibold tracking-[var(--display-tracking)] mt-8">{{ $t('gallery.downloadTitle') }}</h1>
+      <p class="mt-1.5 text-[14px] leading-[1.6] font-normal text-muted-foreground">
         {{ [gallery.title, $t('portal.imageCount', gallery.count)].filter(Boolean).join(' · ') }}
         <template v-if="gallery.expiresAt">
           · {{ $t('gallery.onlineUntil', { date: longDate(gallery.expiresAt) }) }}
@@ -221,7 +211,7 @@ const SIZE = 'text-[12.5px] leading-none font-normal whitespace-nowrap tabular-n
       </div>
 
       <section class="mt-16">
-        <p :class="LAB">{{ $t('gallery.whatLabel') }}</p>
+        <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.whatLabel') }}</p>
         <div class="flex flex-col">
           <label v-for="option in selections" :key="option.id" :class="OPT">
             <input v-model="chosenList" type="radio" :value="option.id" />
@@ -229,13 +219,13 @@ const SIZE = 'text-[12.5px] leading-none font-normal whitespace-nowrap tabular-n
               <b>{{ option.name ?? (option.id ? $t('gallery.heart') : $t('gallery.everything')) }}</b>
               <span>{{ $t('portal.imageCount', option.count) }}</span>
             </span>
-            <span :class="SIZE">{{ size(option.sizes[chosenSize] ?? 0) }}</span>
+            <span class="text-[12.5px] leading-none font-normal whitespace-nowrap tabular-nums text-muted-foreground">{{ size(option.sizes[chosenSize] ?? 0) }}</span>
           </label>
         </div>
       </section>
 
       <section class="mt-16">
-        <p :class="LAB">{{ $t('gallery.sizeLabel') }}</p>
+        <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.sizeLabel') }}</p>
         <div class="flex flex-col">
           <!-- ZipBuildSize::Web is "Zum Teilen" to a client; the enum value
                stays what it is. de.json wins over any class name. -->
@@ -249,7 +239,7 @@ const SIZE = 'text-[12.5px] leading-none font-normal whitespace-nowrap tabular-n
               <b>{{ $t(`gallery.size.${option}`) }}</b>
               <span>{{ $t(`gallery.sizeHint.${option}`) }}</span>
             </span>
-            <span :class="SIZE">{{ size(selection?.sizes[option] ?? 0) }}</span>
+            <span class="text-[12.5px] leading-none font-normal whitespace-nowrap tabular-nums text-muted-foreground">{{ size(selection?.sizes[option] ?? 0) }}</span>
           </label>
         </div>
 
@@ -266,11 +256,11 @@ const SIZE = 'text-[12.5px] leading-none font-normal whitespace-nowrap tabular-n
       <!-- There are parts, not a file: BuildGalleryZip plans volumes, and one
            button would be lying about 4,2 GB. -->
       <section v-if="build" class="mt-16">
-        <p :class="LAB">{{ $t('gallery.yourFiles') }}</p>
+        <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.yourFiles') }}</p>
 
         <p v-if="build.status === 'failed'" class="mt-5 rounded-md border border-[#40251A] bg-late-bg px-3.5 py-3 text-left text-[13px] leading-[1.55] font-normal text-[#E7B190]"><b>{{ $t('gallery.buildFailed') }}</b></p>
 
-        <p v-else-if="build.status === 'building'" :class="HINT">{{ $t('gallery.preparing') }}</p>
+        <p v-else-if="build.status === 'building'" class="mt-[9px] text-[12.5px] leading-[1.55] font-normal text-muted-foreground">{{ $t('gallery.preparing') }}</p>
 
         <div v-else class="flex flex-col">
           <div
@@ -281,12 +271,12 @@ const SIZE = 'text-[12.5px] leading-none font-normal whitespace-nowrap tabular-n
             <span>
               <b>{{ $t('gallery.partOf', { at: part.number, of: build.partCount }) }}</b>
             </span>
-            <span :class="SIZE">{{ size(part.bytes) }}</span>
+            <span class="text-[12.5px] leading-none font-normal whitespace-nowrap tabular-nums text-muted-foreground">{{ size(part.bytes) }}</span>
             <Button as="a" variant="outline" :href="part.url">{{ $t('gallery.download') }}</Button>
           </div>
         </div>
 
-        <p :class="HINT">{{ $t('gallery.partsLive') }}</p>
+        <p class="mt-[9px] text-[12.5px] leading-[1.55] font-normal text-muted-foreground">{{ $t('gallery.partsLive') }}</p>
       </section>
     </div>
   </div>

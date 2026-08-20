@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { Link, router } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
+import Panel from "@/admin/components/Panel.vue";
 import PageHead from "@/ui/page/PageHead.vue";
 import Metric from "@/admin/components/Metric.vue";
 import { Button } from "@/ui/button";
@@ -182,21 +183,9 @@ function complete(task: App.Crm.Data.TaskRowData) {
 }
 
 /* crm.css, inlined. */
-const LINK =
-    "text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline";
 /* border and radius are tokens.css .panel, background and padding crm.css. */
-const PANEL = "overflow-hidden rounded-md bg-sunk px-[18px] py-4";
-const HEAD = "mb-2 flex items-baseline gap-[9px]";
-const H2 = "m-0 text-[15px] leading-[1.2] font-semibold tracking-[-0.02em]";
-const COUNT = "text-[11.5px] tabular-nums text-ink-2";
-const ROW =
-    "flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none";
-const NAME = "text-[13px] font-medium tracking-[-0.01em]";
-const META = "ml-auto text-[11.5px] whitespace-nowrap text-ink-2";
 /* Unexercised: the fixture has no double-booked date. tokens.css .flag draws
    the alert chip, crm.css .list .flag overrides everything but that chip. */
-const FLAG =
-    "mt-1.5 ml-auto flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[11.5px] leading-[1.3] font-medium whitespace-nowrap text-action no-underline hover:underline";
 </script>
 
 <template>
@@ -294,28 +283,19 @@ const FLAG =
                 </Metric>
 
                 <!-- The most important field is the only one without a container:
-             emphasis comes from position, size and the one filled button. -->
-                <!-- bare: the most important field is the only one without a container. -->
-                <section
+                     emphasis comes from position, size and the one filled button. -->
+                <Panel
                     v-if="decisions.length || nextShoot"
-                    class="col-span-3 overflow-hidden bg-transparent px-[18px] py-4"
+                    bare
+                    class="col-span-3"
+                    :title="$t('dashboard.decide')"
+                    :count="decisions.length || null"
                 >
-                    <header :class="HEAD">
-                        <h2 :class="H2">{{ $t("dashboard.decide") }}</h2>
-                        <span v-if="decisions.length" :class="COUNT">{{
-                            decisions.length
-                        }}</span>
-                        <span
-                            v-if="owed > decisions.length"
-                            :class="[COUNT, 'ml-auto']"
-                        >
-                            {{
-                                $t("dashboard.moreOwed", {
-                                    count: owed - decisions.length,
-                                })
-                            }}
+                    <template v-if="owed > decisions.length" #action>
+                        <span class="ml-auto text-[11.5px] tabular-nums text-ink-2">
+                            {{ $t("dashboard.moreOwed", { count: owed - decisions.length }) }}
                         </span>
-                    </header>
+                    </template>
 
                     <div v-if="decisions.length">
                         <div
@@ -378,113 +358,77 @@ const FLAG =
                             })
                         }}
                     </p>
-                </section>
+                </Panel>
 
-                <section v-if="week.length" :class="PANEL">
-                    <header :class="HEAD">
-                        <h2 :class="H2">{{ $t("dashboard.thisWeek") }}</h2>
-                    </header>
-                    <div>
-                        <div
-                            v-for="entry in week"
-                            :key="`${entry.when}${entry.what}`"
-                            :class="ROW"
+                <Panel v-if="week.length" :title="$t('dashboard.thisWeek')">
+                    <div
+                        v-for="entry in week"
+                        :key="`${entry.when}${entry.what}`"
+                        class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none"
+                    >
+                        <span
+                            class="w-[62px] flex-none text-[12px] font-semibold tracking-[-0.01em] tabular-nums"
                         >
-                            <span
-                                class="w-[62px] flex-none text-[12px] font-semibold tracking-[-0.01em] tabular-nums"
-                            >
-                                {{ weekWhen(entry.when) }}
-                            </span>
-                            <span
-                                :class="[
-                                    NAME,
-                                    entry.away && 'font-normal text-ink-2',
-                                ]"
-                            >
-                                {{
-                                    entry.away
-                                        ? $t("dashboard.away", {
-                                              name: entry.what,
-                                          })
-                                        : entry.what
-                                }}
-                            </span>
-                        </div>
+                            {{ weekWhen(entry.when) }}
+                        </span>
+                        <span
+                            class="text-[13px] font-medium tracking-[-0.01em]"
+                            :class="entry.away && 'font-normal text-ink-2'"
+                        >
+                            {{ entry.away ? $t("dashboard.away", { name: entry.what }) : entry.what }}
+                        </span>
                     </div>
-                </section>
+                </Panel>
 
-                <section v-if="newLeads.length" :class="[PANEL, 'col-span-2']">
-                    <header :class="HEAD">
-                        <h2 :class="H2">{{ $t("dashboard.inquiries") }}</h2>
-                        <span :class="COUNT">{{ newLeads.length }}</span>
+                <Panel
+                    v-if="newLeads.length"
+                    class="col-span-2"
+                    :title="$t('dashboard.inquiries')"
+                    :count="newLeads.length"
+                >
+                    <template #action>
+                        <Link class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline ml-auto text-[12px]" href="/anfragen">{{
+                            $t("dashboard.toBoard")
+                        }}</Link>
+                    </template>
+                    <div v-for="lead in newLeads" :key="lead.id" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
+                        <span
+                            class="w-14 flex-none text-[10.5px] tracking-[0.05em] uppercase text-ink-2"
+                        >{{ lead.type }}</span>
+                        <Link class="text-[13px] font-medium tracking-[-0.01em]" :href="`/anfragen/${lead.leadId}`">{{ lead.names }}</Link>
+                        <!-- The conflict is a mark on the row that has it and leads into
+                             the resolution; a footer counting collisions names neither
+                             which nor where. -->
                         <Link
-                            :class="[LINK, 'ml-auto text-[12px]']"
-                            href="/anfragen"
-                            >{{ $t("dashboard.toBoard") }}</Link
+                            v-if="lead.conflicts.length"
+                            class="mt-1.5 ml-auto flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[11.5px] leading-[1.3] font-medium whitespace-nowrap text-action no-underline hover:underline"
+                            :href="`/auftraege/${lead.id}/shootings`"
                         >
-                    </header>
-                    <div>
-                        <div
-                            v-for="lead in newLeads"
-                            :key="lead.id"
-                            :class="ROW"
-                        >
-                            <span
-                                class="w-14 flex-none text-[10.5px] tracking-[0.05em] uppercase text-ink-2"
-                                >{{ lead.type }}</span
-                            >
-                            <Link
-                                :class="NAME"
-                                :href="`/anfragen/${lead.leadId}`"
-                                >{{ lead.names }}</Link
-                            >
-                            <!-- The conflict is a mark on the row that has it and leads into
-                   the resolution; a footer counting collisions names neither
-                   which nor where. -->
-                            <Link
-                                v-if="lead.conflicts.length"
-                                :class="FLAG"
-                                :href="`/auftraege/${lead.id}/shootings`"
-                            >
-                                {{
-                                    $t("dashboard.dateDoubled", {
-                                        date: dayOf(lead.date),
-                                    })
-                                }}
-                            </Link>
-                            <span v-else :class="META">{{ lead.source }}</span>
-                        </div>
+                            {{ $t("dashboard.dateDoubled", { date: dayOf(lead.date) }) }}
+                        </Link>
+                        <span v-else class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ lead.source }}</span>
                     </div>
-                </section>
+                </Panel>
 
-                <section v-if="galleries.length" :class="[PANEL, 'col-span-2']">
-                    <header :class="HEAD">
-                        <h2 :class="H2">{{ $t("dashboard.galleries") }}</h2>
-                        <span :class="COUNT">{{ galleries.length }}</span>
-                    </header>
-                    <div>
-                        <div
-                            v-for="row in galleries"
-                            :key="`${row.projectId}${row.what}`"
-                            :class="ROW"
-                        >
-                            <Link
-                                :class="NAME"
-                                :href="`/auftraege/${row.projectId}`"
-                                >{{ row.who }}</Link
-                            >
-                            <span :class="META">
-                                {{ row.what }}
-                                <template v-if="row.emphasis">{{
-                                    row.emphasis
-                                }}</template>
-                                <template v-if="row.whatTail">{{
-                                    row.whatTail
-                                }}</template>
-                            </span>
-                        </div>
+                <Panel
+                    v-if="galleries.length"
+                    class="col-span-2"
+                    :title="$t('dashboard.galleries')"
+                    :count="galleries.length"
+                >
+                    <div
+                        v-for="row in galleries"
+                        :key="`${row.projectId}${row.what}`"
+                        class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none"
+                    >
+                        <Link class="text-[13px] font-medium tracking-[-0.01em]" :href="`/auftraege/${row.projectId}`">{{ row.who }}</Link>
+                        <span class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">
+                            {{ row.what }}
+                            <template v-if="row.emphasis">{{ row.emphasis }}</template>
+                            <template v-if="row.whatTail">{{ row.whatTail }}</template>
+                        </span>
                     </div>
-                </section>
+                </Panel>
             </div>
         </div>
     </AdminLayout>

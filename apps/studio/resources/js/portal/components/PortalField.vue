@@ -34,7 +34,6 @@ const INPUT = [
 /* portal.css `.field em`, which is unlayered and therefore reached both marks
    a caption can carry: the hint under the control and the "optional" beside
    the label. Beside is what it was written for; block is what it does. */
-const MARK = 'mt-[7px] block text-[12.5px] leading-[1.45] font-normal not-italic text-faint'
 </script>
 
 <template>
@@ -45,9 +44,9 @@ const MARK = 'mt-[7px] block text-[12.5px] leading-[1.45] font-normal not-italic
   <label :class="cn('mb-5 block text-[10px] leading-none', INPUT, props.class)">
     <span class="mb-2 block text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">
       {{ label }}
-      <em v-if="optional" :class="[MARK, 'ml-1.5 tracking-[0.02em] normal-case']">· {{ optional }}</em>
+      <em v-if="optional" class="mt-[7px] block text-[12.5px] leading-[1.45] font-normal not-italic text-faint ml-1.5 tracking-[0.02em] normal-case">· {{ optional }}</em>
     </span>
     <slot />
-    <em v-if="hint" :class="MARK">{{ hint }}</em>
+    <em v-if="hint" class="mt-[7px] block text-[12.5px] leading-[1.45] font-normal not-italic text-faint">{{ hint }}</em>
   </label>
 </template>

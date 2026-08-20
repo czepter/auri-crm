@@ -24,6 +24,20 @@ export const inputVariants = cva(
   ],
   {
     variants: {
+      /*
+       * crm.css .form input — the admin's field. Not a border on paper but a
+       * sunk surface, because the screens it sits on are dense and a grid of
+       * outlined boxes reads as a grid of boxes. The accent ring is drawn
+       * inside, so a focused field does not push its neighbours.
+       */
+      variant: {
+        default: "",
+        filled: [
+          "rounded-[10px] border-0 bg-sunk px-[11px] py-[7px] text-[13.5px] leading-[1.4] tracking-[-0.01em]",
+          "placeholder:text-[#B0B0B5] hover:border-transparent",
+          "focus:bg-sunk-2 focus:shadow-[inset_0_0_0_2px_var(--accent)]",
+        ],
+      },
       size: {
         /* forms.css .inp */
         default: "px-[11px] py-[9px] text-[13px] leading-[1.35]",
@@ -34,6 +48,7 @@ export const inputVariants = cva(
       },
     },
     defaultVariants: {
+      variant: "default",
       size: "default",
     },
   },

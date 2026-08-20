@@ -72,9 +72,6 @@ function longDate(date: string) {
 /* tokens.css `.chip` with portal.css's size step, and the installment row's
    own two lines. Inline rather than a component: this is the second portal
    screen with a chip on it, and the plan extracts at the third. */
-const CHIP = 'flex-none rounded-[var(--r-sm)] px-[9px] py-1 text-[10.5px] leading-[1.5] font-semibold tracking-[0.04em] uppercase'
-const SNAME = 'min-w-0 flex-1 text-[13px] leading-[1.3] font-semibold tracking-[-0.01em]'
-const SUB = 'mt-0.5 block text-[11.5px] leading-[1.35] font-normal tracking-normal text-muted-foreground'
 </script>
 
 <template>
@@ -87,21 +84,21 @@ const SUB = 'mt-0.5 block text-[11.5px] leading-[1.35] font-normal tracking-norm
       <section class="mt-8">
         <div>
           <h2>{{ project.name }}</h2>
-          <span :class="[CHIP, 'bg-due-bg text-due']">{{ $t('portal.paymentsOpen', { amount: formatEuros(plan.openTotal) }) }}</span>
+          <span class="flex-none rounded-[var(--r-sm)] px-[9px] py-1 text-[10.5px] leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('portal.paymentsOpen', { amount: formatEuros(plan.openTotal) }) }}</span>
         </div>
 
         <div class="flex flex-col gap-1.5">
           <div v-for="installment in plan.installments" :key="installment.id" class="rounded-md border border-border p-3.5">
             <div class="flex items-center gap-3.5">
-              <div :class="SNAME">
+              <div class="min-w-0 flex-1 text-[13px] leading-[1.3] font-semibold tracking-[-0.01em]">
                 {{ installment.label }}
-                <span :class="SUB">{{ longDate(installment.dueOn) }}</span>
+                <span class="mt-0.5 block text-[11.5px] leading-[1.35] font-normal tracking-normal text-muted-foreground">{{ longDate(installment.dueOn) }}</span>
               </div>
               <span
-                :class="[
-                  CHIP,
-                  installment.status === 'paid' ? 'bg-due-bg text-due' : 'bg-muted text-muted-foreground',
-                ]"
+                class="flex-none rounded-[var(--r-sm)] px-[9px] py-1 text-[10.5px] leading-[1.5] font-semibold tracking-[0.04em] uppercase"
+                :class="
+                  installment.status === 'paid' ? 'bg-due-bg text-due' : 'bg-muted text-muted-foreground'
+                "
               >
                 {{ installment.status === 'paid' ? installment.statusLabel : formatEuros(installment.amount) }}
               </span>
@@ -166,8 +163,8 @@ const SUB = 'mt-0.5 block text-[11.5px] leading-[1.35] font-normal tracking-norm
             <div v-if="openInstallments.length" class="mt-3.5 flex flex-col gap-1.5">
               <div v-for="installment in openInstallments" :key="installment.id" class="rounded-md border border-border p-3.5">
                 <div class="flex items-center gap-3.5">
-                  <div :class="SNAME">
-                    {{ installment.label }}<span :class="SUB">{{ formatEuros(installment.amount) }}</span>
+                  <div class="min-w-0 flex-1 text-[13px] leading-[1.3] font-semibold tracking-[-0.01em]">
+                    {{ installment.label }}<span class="mt-0.5 block text-[11.5px] leading-[1.35] font-normal tracking-normal text-muted-foreground">{{ formatEuros(installment.amount) }}</span>
                   </div>
                   <Button
                     type="button"

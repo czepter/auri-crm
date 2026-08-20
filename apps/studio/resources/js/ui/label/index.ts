@@ -28,6 +28,12 @@ export const labelVariants = cva("", {
         "[&_em]:ml-1.5 [&_em]:text-[10px] [&_em]:font-normal [&_em]:normal-case [&_em]:not-italic [&_em]:tracking-[0.02em]",
       ],
       inline: "cursor-pointer select-none font-sans text-[13px] font-normal leading-[1.4] text-foreground",
+      /*
+       * crm.css .field > span — the same caption on the admin's own screens,
+       * where it is lighter and wider: the field below it is denser, and a
+       * semibold caption at 10px would outweigh the value it names.
+       */
+      micro: "pl-0.5 font-sans text-[10.5px] font-normal uppercase leading-none tracking-[0.05em] text-ink-2",
     },
   },
   defaultVariants: {

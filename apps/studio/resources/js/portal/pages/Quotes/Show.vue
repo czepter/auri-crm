@@ -54,7 +54,6 @@ const props = defineProps<{
  * top. Inline rather than a component: the plan extracts at the third screen
  * that needs a pattern, and this is the second in the portal.
  */
-const CHIP = 'flex-none rounded-[var(--r-sm)] px-[9px] py-1 text-[10.5px] leading-[1.5] font-semibold tracking-[0.04em] uppercase'
 
 function chipTone(status: string): string {
   return (
@@ -65,9 +64,6 @@ function chipTone(status: string): string {
   )[status] ?? 'bg-muted text-muted-foreground'
 }
 
-const SUM = '[&>td]:border-t [&>td]:border-border [&>td]:pt-2.5! [&>td]:font-semibold'
-const TAX = '[&>td]:py-0.5! [&>td]:text-muted-foreground'
-const TOTAL = '[&>td]:pt-2! [&>td]:text-[14px]! [&>td]:font-bold'
 
 const form = useForm({})
 
@@ -89,7 +85,7 @@ function accept() {
     <div v-if="quote" class="relative mt-8 block cursor-default rounded-md border border-border p-3.5 text-inherit no-underline">
       <div class="mb-5 flex items-center justify-between">
         <span class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ quote.number ? `${$t('quotes.title')} ${quote.number}` : $t('quotes.title') }}</span>
-        <span :class="[CHIP, chipTone(quote.status)]">{{ quote.statusLabel }}</span>
+        <span class="flex-none rounded-[var(--r-sm)] px-[9px] py-1 text-[10.5px] leading-[1.5] font-semibold tracking-[0.04em] uppercase" :class="chipTone(quote.status)">{{ quote.statusLabel }}</span>
       </div>
 
       <p v-if="quote.validUntil" class="mb-5 text-[11.5px] leading-[1.45] font-normal text-faint">
@@ -111,34 +107,34 @@ function accept() {
           </td>
           <td>{{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.lineTotal) }}</td>
         </tr>
-        <tr v-if="!quote.discountAmount" :class="SUM">
+        <tr v-if="!quote.discountAmount" class="[&>td]:border-t [&>td]:border-border [&>td]:pt-2.5! [&>td]:font-semibold">
           <td>{{ $t('quotes.total') }}</td>
           <td>{{ formatEuros(quote.total) }}</td>
         </tr>
         <template v-else>
-          <tr :class="SUM">
+          <tr class="[&>td]:border-t [&>td]:border-border [&>td]:pt-2.5! [&>td]:font-semibold">
             <td>{{ $t('quotes.total') }}</td>
             <td>{{ formatEuros(quote.total) }}</td>
           </tr>
-          <tr :class="TAX">
+          <tr class="[&>td]:py-0.5! [&>td]:text-muted-foreground">
             <td>{{ $t('quotes.discount') }}</td>
             <td>−{{ formatEuros(quote.discountAmount) }}</td>
           </tr>
-          <tr :class="TOTAL">
+          <tr class="[&>td]:pt-2! [&>td]:text-[14px]! [&>td]:font-bold">
             <td>{{ $t('quotes.net') }}</td>
             <td>{{ formatEuros(quote.net) }}</td>
           </tr>
         </template>
 
-        <tr v-if="quote.vatMode === 'small_business'" :class="TAX">
+        <tr v-if="quote.vatMode === 'small_business'" class="[&>td]:py-0.5! [&>td]:text-muted-foreground">
           <td colspan="2">{{ quote.vatNote }}</td>
         </tr>
         <template v-else-if="quote.vatMode === 'standard'">
-          <tr :class="TAX">
+          <tr class="[&>td]:py-0.5! [&>td]:text-muted-foreground">
             <td>{{ $t('quotes.vat', { rate: basisPointsToPercent(quote.vatRate) }) }}</td>
             <td>{{ formatEuros(quote.vatAmount ?? 0) }}</td>
           </tr>
-          <tr :class="TOTAL">
+          <tr class="[&>td]:pt-2! [&>td]:text-[14px]! [&>td]:font-bold">
             <td>{{ $t('quotes.total') }}</td>
             <td>{{ formatEuros(quote.net + (quote.vatAmount ?? 0)) }}</td>
           </tr>

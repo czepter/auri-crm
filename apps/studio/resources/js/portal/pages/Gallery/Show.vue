@@ -182,8 +182,6 @@ function expiry(iso: string) {
 /* gallery.css, inlined where the same shape recurs on this screen. The sheet
    scopes every rule under [data-theme="gallery"], so nothing here can be
    shared with the portal's own .field / .hint / .err of the same name. */
-const FIELD = 'mt-8 block text-left'
-const CAPTION = 'mb-2 block text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint'
 const INPUT = [
   '[&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-line-hover',
   '[&_input]:bg-muted [&_input]:px-3.5 [&_input]:py-[13px]',
@@ -199,15 +197,10 @@ const COVER_INPUT = [
 ].join(' ')
 /* Without the margin: .gate .hint and .listbar .hint each override it, and
    two margin utilities on one element are decided by bundle order. */
-const HINT = 'text-[12.5px] leading-[1.55] font-normal text-muted-foreground'
-const LAB = 'mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint'
-const WIDE = 'mt-5 ml-0 w-full justify-center px-3.5 py-[13px] text-[14px]'
 const PILL =
   'inline-flex flex-none cursor-pointer items-center gap-[7px] rounded-full border border-border bg-transparent px-3.5 py-2.5 text-[12.5px] leading-none font-medium text-muted-foreground hover:border-line-hover hover:text-foreground'
 const LIST_MENU =
   'z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]'
-const LIST_ROW =
-  'flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-[13px] leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]'
 </script>
 
 <template>
@@ -252,17 +245,20 @@ const LIST_ROW =
           <div class="mx-auto mt-11 mb-8 h-px w-12 bg-[rgba(242,237,233,.45)]" />
 
           <form @submit.prevent="submit">
-            <Label :class="[FIELD, 'mx-auto w-[min(340px,100%)] text-center', COVER_INPUT]">
-              <span :class="CAPTION">{{ $t('gallery.passwordLabel') }}</span>
+            <Label
+              class="mt-8 block text-left"
+              :class="['mx-auto w-[min(340px,100%)] text-center', COVER_INPUT]"
+            >
+              <span class="mb-2 block text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('gallery.passwordLabel') }}</span>
               <Input v-model="form.password" type="password" autocomplete="off" required />
             </Label>
 
-            <Button :class="WIDE" type="submit" :disabled="form.processing">
+            <Button class="mt-5 ml-0 w-full justify-center px-3.5 py-[13px] text-[14px]" type="submit" :disabled="form.processing">
               {{ $t('gallery.passwordOpen') }}
             </Button>
           </form>
 
-          <p :class="[HINT, 'mt-[9px]']">{{ $t('gallery.passwordWhere') }}</p>
+          <p class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground mt-[9px]">{{ $t('gallery.passwordWhere') }}</p>
 
           <div
             v-if="form.errors.password"
@@ -342,7 +338,7 @@ const LIST_ROW =
           </button>
 
           <span v-if="menu === asset.key" :class="['absolute top-12 right-2.5', LIST_MENU]" @click.stop>
-            <label v-for="list in lists" :key="list.id" :class="LIST_ROW">
+            <label v-for="list in lists" :key="list.id" class="flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-[13px] leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]">
               <input
                 type="checkbox"
                 class="m-0 flex-none cursor-pointer accent-[var(--accent)]"
@@ -372,7 +368,7 @@ const LIST_ROW =
 
       <!-- Unlocked over a gallery nobody has published yet: a real state,
            and the studio's link is already out there, so it says so. -->
-      <p v-else :class="[HINT, 'mt-[9px] px-8 py-16']">
+      <p v-else class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground mt-[9px] px-8 py-16">
         {{ assets?.length ? $t('gallery.listEmpty') : $t('gallery.notPublished') }}
       </p>
 
@@ -391,14 +387,14 @@ const LIST_ROW =
         class="mx-auto grid max-w-[1240px] gap-16 border-t border-border px-8 py-16 min-[900px]:grid-cols-[minmax(0,1fr)_320px] [&>div:not(:first-child)]:mt-11"
       >
         <div>
-          <p :class="LAB">{{ $t('gallery.listsTitle') }}</p>
+          <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.listsTitle') }}</p>
 
           <div v-for="(list, index) in lists" :key="list.listId" :class="index > 0 && 'mt-8'">
             <div
               class="mb-3.5 flex flex-wrap items-baseline gap-5 [&_b]:text-[14px] [&_b]:leading-[1.3] [&_b]:font-semibold [&_b]:text-foreground [&_button]:cursor-pointer [&_button]:border-0 [&_button]:bg-none [&_button]:p-0 [&_button]:text-[12.5px] [&_button]:leading-none [&_button]:font-normal [&_button]:text-muted-foreground [&_button:hover]:text-foreground"
             >
               <b>{{ list.name ?? $t('gallery.heart') }}</b>
-              <span :class="[HINT, 'flex-1']">
+              <span class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground flex-1">
                 {{ $t('gallery.ofCount', { picked: list.keys.length, total: assets?.length ?? 0 }) }}
               </span>
               <template v-if="list.name !== null">
@@ -422,7 +418,7 @@ const LIST_ROW =
                 <img :src="`${src}?w=400&fmt=jpeg`" alt="" loading="lazy" />
               </button>
             </div>
-            <p v-else :class="[HINT, 'mt-[9px]']">{{ $t('gallery.listEmpty') }}</p>
+            <p v-else class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground mt-[9px]">{{ $t('gallery.listEmpty') }}</p>
           </div>
 
           <form
@@ -435,7 +431,7 @@ const LIST_ROW =
         </div>
 
         <div>
-          <p :class="LAB">{{ $t('gallery.shareTitle') }}</p>
+          <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.shareTitle') }}</p>
           <div
             class="flex items-center gap-3.5 rounded-md border border-border p-3.5 [&_button]:cursor-pointer [&_button]:border-0 [&_button]:bg-none [&_button]:p-0 [&_button]:text-[12.5px] [&_button]:leading-none [&_button]:font-medium [&_button]:text-action [&_code]:min-w-0 [&_code]:flex-1 [&_code]:overflow-hidden [&_code]:text-[12.5px] [&_code]:text-ellipsis [&_code]:whitespace-nowrap [&_code]:text-muted-foreground"
           >
@@ -456,7 +452,7 @@ const LIST_ROW =
           >
             <div class="flex-1">
               <b>{{ $t(gate.label) }}</b>
-              <div :class="[HINT, 'mt-0.5']">
+              <div class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground mt-0.5">
                 {{ gates?.[gate.on] ? $t('gallery.gateOn') : $t('gallery.gateOff') }}
               </div>
             </div>
@@ -474,8 +470,8 @@ const LIST_ROW =
           </div>
 
           <form v-if="openGate" @submit.prevent="rotate(openGate)">
-            <Label :class="[FIELD, INPUT]">
-              <span :class="CAPTION">{{ $t('gallery.gateNewValue') }}</span>
+            <Label class="mt-8 block text-left" :class="INPUT">
+              <span class="mb-2 block text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('gallery.gateNewValue') }}</span>
               <Input v-model="gateForm.secret" type="text" autocomplete="off" />
             </Label>
             <p
@@ -489,11 +485,11 @@ const LIST_ROW =
             </Button>
           </form>
 
-          <p v-if="freshSecret" :class="[HINT, 'mt-[9px]']"><b>{{ freshSecret }}</b> — {{ $t('gallery.secretOnce') }}</p>
+          <p v-if="freshSecret" class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground mt-[9px]"><b>{{ freshSecret }}</b> — {{ $t('gallery.secretOnce') }}</p>
         </div>
 
         <div v-if="guests">
-          <p :class="LAB">{{ $t('gallery.guestsTitle') }}</p>
+          <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.guestsTitle') }}</p>
           <dl
             class="m-0 grid grid-cols-[1fr_auto] gap-x-5 gap-y-3.5 text-[13.5px] leading-none font-normal [&_dd]:m-0 [&_dd]:tabular-nums [&_dd]:text-foreground [&_dt]:text-muted-foreground"
           >

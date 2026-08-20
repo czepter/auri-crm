@@ -23,9 +23,6 @@ defineProps<{
 /* crm.css .btn — die gefuellte Aktion. */
 
 /* crm.css .filters / .pop / .link. */
-const FILTERS = 'flex items-center gap-2 px-8 pt-4'
-const POP = 'inline-flex cursor-pointer items-center gap-1.5 rounded-lg border-0 bg-sunk-2 px-2.5 py-[5px] text-[12.5px] leading-[1.3] font-normal text-foreground [&_u]:text-ink-2 [&_u]:no-underline after:mt-[-4px] after:text-[11px] after:text-ink-2 after:content-[\'⌄\']'
-const LINK = 'text-[12.5px] leading-[1.47] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline'
 </script>
 
 <template>
@@ -37,12 +34,12 @@ const LINK = 'text-[12.5px] leading-[1.47] tracking-[-0.01em] whitespace-nowrap 
         </Button>
       </PageHead>
 
-      <div :class="FILTERS">
-        <Link :class="POP" href="/dokumentvorlagen">{{ $t('documentTemplates.allTypes') }}</Link>
+      <div class="flex items-center gap-2 px-8 pt-4">
+        <Link class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border-0 bg-sunk-2 px-2.5 py-[5px] text-[12.5px] leading-[1.3] font-normal text-foreground [&_u]:text-ink-2 [&_u]:no-underline after:mt-[-4px] after:text-[11px] after:text-ink-2 after:content-['⌄']" href="/dokumentvorlagen">{{ $t('documentTemplates.allTypes') }}</Link>
         <Link
           v-for="option in types"
           :key="option.value"
-          :class="POP"
+          class="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border-0 bg-sunk-2 px-2.5 py-[5px] text-[12.5px] leading-[1.3] font-normal text-foreground [&_u]:text-ink-2 [&_u]:no-underline after:mt-[-4px] after:text-[11px] after:text-ink-2 after:content-['⌄']"
           :href="`/dokumentvorlagen?type=${option.value}`"
         >
           <u v-if="type === option.value">•</u>{{ option.label }}
@@ -73,7 +70,7 @@ const LINK = 'text-[12.5px] leading-[1.47] tracking-[-0.01em] whitespace-nowrap 
                 <!-- Not "Bearbeiten": overwriting a template that is out
                      would mean a signed contract silently looking different
                      afterwards. -->
-                <Link :class="LINK" :href="`/dokumentvorlagen/${template.id}`">
+                <Link class="text-[12.5px] leading-[1.47] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline" :href="`/dokumentvorlagen/${template.id}`">
                   {{ $t('documentTemplates.newVersion') }}
                 </Link>
               </TableCell>

@@ -143,8 +143,6 @@ const ARROW =
   `absolute top-1/2 grid size-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(255,255,255,.08)] text-foreground hover:bg-[rgba(255,255,255,.16)] max-[860px]:bg-[rgba(255,255,255,.14)] [&_svg]:size-5 [&_svg]:stroke-[1.6] ${SVG}`
 const LIST_MENU =
   'z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]'
-const LIST_ROW =
-  'flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-[13px] leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]'
 /* tokens.css .who decides the face here too — gallery.css only lays the row out. */
 const WHO =
   'mb-1 flex items-baseline gap-2 pr-[18px] text-[13.5px] leading-[1.35] font-semibold tracking-[-0.015em] [&_b]:text-[12.5px] [&_b]:leading-none [&_b]:font-semibold [&_b]:text-foreground [&_span]:text-[11.5px] [&_span]:leading-none [&_span]:font-normal [&_span]:tabular-nums [&_span]:text-faint'
@@ -203,7 +201,7 @@ const WHO =
             </button>
 
             <div v-if="listsOpen" :class="['absolute top-7 left-0', LIST_MENU]">
-              <label v-for="list in lists" :key="list.id" :class="LIST_ROW">
+              <label v-for="list in lists" :key="list.id" class="flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-[13px] leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]">
                 <input
                   type="checkbox"
                   class="m-0 flex-none cursor-pointer accent-[var(--accent)]"

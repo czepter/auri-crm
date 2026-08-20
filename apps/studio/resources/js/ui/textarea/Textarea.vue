@@ -2,11 +2,13 @@
 import type { HTMLAttributes } from "vue"
 import { useVModel } from "@vueuse/core"
 import { cn } from "@/lib/utils"
+import type { InputVariants } from "@/ui/input"
 import { inputVariants } from "@/ui/input"
 
 const props = defineProps<{
   defaultValue?: string | number
   modelValue?: string | number
+  variant?: InputVariants["variant"]
   class?: HTMLAttributes["class"]
 }>()
 
@@ -27,6 +29,14 @@ const modelValue = useVModel(props, "modelValue", emits, {
   <textarea
     v-model="modelValue"
     data-slot="textarea"
-    :class="cn(inputVariants(), 'min-h-[104px] resize-y leading-[1.5]', props.class)"
+    :class="
+      cn(
+        inputVariants({ variant }),
+        variant === 'filled'
+          ? 'min-h-[88px] resize-y'
+          : 'min-h-[104px] resize-y leading-[1.5]',
+        props.class,
+      )
+    "
   />
 </template>

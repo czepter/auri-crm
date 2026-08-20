@@ -61,7 +61,6 @@ const form = computed(() => (props.openThread === null || composing.value ? star
 /* portal.css `.mbox .ref` — the line that names the booking a thread is
    about. Twice on the screen, once per list row and once over the
    conversation, and both take .ref.none when there is no booking to name. */
-const REF = 'mt-1.5 inline-block text-[11px] leading-none font-medium tracking-[0.04em] text-muted-foreground'
 </script>
 
 <template>
@@ -94,7 +93,7 @@ const REF = 'mt-1.5 inline-block text-[11px] leading-none font-medium tracking-[
               <span class="text-[11.5px] leading-none font-normal whitespace-nowrap tabular-nums text-faint">{{ shortDate(row.lastAt) }}</span>
             </span>
             <div v-if="row.snippet" class="mt-[3px] line-clamp-2 text-[13px] leading-[1.5] font-normal text-muted-foreground">{{ row.snippet }}</div>
-            <span :class="[REF, !row.reference && 'text-faint']">
+            <span class="mt-1.5 inline-block text-[11px] leading-none font-medium tracking-[0.04em] text-muted-foreground" :class="!row.reference && 'text-faint'">
               {{ row.reference ?? $t('portal.messagesNoBooking') }}
             </span>
           </Link>
@@ -109,7 +108,7 @@ const REF = 'mt-1.5 inline-block text-[11px] leading-none font-medium tracking-[
         <template v-if="openThread && !composing">
           <div class="border-b border-border pb-5">
             <h2 class="m-0 text-[20px] leading-[1.3] font-bold tracking-[-0.02em]">{{ openThread.subject }}</h2>
-            <span :class="[REF, !openReference && 'text-faint']">
+            <span class="mt-1.5 inline-block text-[11px] leading-none font-medium tracking-[0.04em] text-muted-foreground" :class="!openReference && 'text-faint'">
               {{ openReference ?? $t('portal.messagesNoBooking') }}
             </span>
           </div>

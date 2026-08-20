@@ -37,9 +37,6 @@ const items = [
 /* tokens.css .nav — the sidebar row, reused for the settings rail. */
 /* tokens.css .nav. The two states are written out rather than layered:
    two font-weight utilities on one element are decided by bundle order. */
-const NAV = 'flex items-center gap-2.5 rounded-[7px] px-2.5 py-[9px] text-[14px] leading-none no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted [&_svg]:size-[17px]'
-const OFF = 'font-normal text-muted-foreground [&_svg]:opacity-75'
-const ON = 'font-semibold text-foreground [&_svg]:opacity-100'
 </script>
 
 <template>
@@ -53,7 +50,11 @@ const ON = 'font-semibold text-foreground [&_svg]:opacity-100'
       </div>
       <Link
         v-else
-        :class="[NAV, item.key === active ? ON : OFF]"
+        class="flex items-center gap-2.5 rounded-[7px] px-2.5 py-[9px] text-[14px] leading-none no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted [&_svg]:size-[17px]" :class="
+          item.key === active
+            ? 'font-semibold text-foreground [&_svg]:opacity-100'
+            : 'font-normal text-muted-foreground [&_svg]:opacity-75'
+        "
         :href="item.href!"
       >{{ $t(item.label!) }}</Link>
     </template>

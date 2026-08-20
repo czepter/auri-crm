@@ -3,6 +3,11 @@ import { computed, ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import { Button } from '@/ui/button'
+import { Field } from '@/ui/field'
+import Rail from '@/ui/page/Rail.vue'
+import RailItem from '@/ui/page/RailItem.vue'
+import RailSection from '@/ui/page/RailSection.vue'
+import { Textarea } from '@/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 
@@ -112,43 +117,6 @@ function rotate() {
 
 const threaded = computed(() => props.groups.some((group) => group.rows.length > 0))
 
-/* crm.css .queue — the conversations, grouped by working state. */
-const QUEUE = 'w-58 flex-none overflow-y-auto bg-sunk pt-3.5 max-[1080px]:w-[200px]'
-const QUEUE_H2 = 'm-0 flex items-baseline px-3.5 pb-2 [a+&]:pt-5'
-const QUEUE_B = 'text-[12.5px] leading-none font-semibold tracking-[-0.012em]'
-const QUEUE_N = 'ml-auto text-[11px] leading-[1.47] tabular-nums text-ink-2'
-const QUEUE_A = 'block px-3.5 py-[9px] text-inherit no-underline shadow-[inset_0_1px_0_#ECECEE]'
-const QUEUE_NM = 'block text-[12.5px] leading-[1.47] font-semibold tracking-[-0.012em]'
-const QUEUE_MT = 'mt-px block text-[11.5px] leading-[1.47]'
-
-/* crm.css .detail — the thread itself. */
-const DETAIL = 'min-w-0 flex-1 overflow-y-auto px-[26px] pt-4 pb-5'
-const CRUMB = 'text-[11.5px] leading-[1.47] text-ink-2'
-const TITLE = 'mt-[5px] flex items-start gap-3.5'
-const H1 = 'm-0 mt-0.5 text-[25px] leading-[1.08] font-semibold tracking-[-0.032em]'
-const ACTS = 'ml-auto flex items-center gap-2'
-
-/* crm.css .msg — one message inside the conversation. */
-const MSG = 'py-3 shadow-[inset_0_1px_0_var(--rule)]'
-const MSG_OWN = 'pl-3.5 shadow-[inset_0_1px_0_var(--rule),inset_2px_0_0_var(--sunk-2)]'
-const MSG_HEAD = 'flex items-baseline gap-[9px]'
-const MSG_N = 'text-[13px] leading-[1.47] font-semibold tracking-[-0.012em]'
-const MSG_T = 'ml-auto text-[11.5px] leading-[1.47] tabular-nums text-ink-2'
-const MSG_BODY = 'mt-[5px] max-w-[68ch] text-[13.5px] leading-[1.55]'
-
-/* crm.css .composer / .field / .btn / .btn-2 — the reply, written in place. */
-const COMPOSER = 'mt-4 pt-1 pb-0.5'
-const FIELD = 'flex flex-col gap-1 [&>span]:pl-0.5 [&>span]:text-[10.5px] [&>span]:leading-none [&>span]:font-normal [&>span]:tracking-[0.05em] [&>span]:uppercase [&>span]:text-ink-2'
-const FOOT = 'mt-2.5 flex items-center gap-3'
-
-/* crm.css .rail — who is on the thread, and what it belongs to. */
-const RAIL = 'w-70 flex-none overflow-y-auto bg-sunk px-5 py-4 max-[1080px]:hidden'
-const RAIL_H2 = 'm-0 mb-[9px] text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2'
-const RAIL_P = 'flex items-center gap-2 py-[5px] text-[12.5px] leading-[1.47]'
-const RAIL_ITEM = 'py-2 shadow-[inset_0_1px_0_#ECECEE]'
-const RAIL_N = 'text-[12.5px] leading-[1.47] font-semibold tracking-[-0.012em]'
-const RAIL_M = 'mt-px text-[11.5px] leading-[1.47] text-ink-2'
-
 function receivedAt(iso: string) {
   return new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
@@ -166,60 +134,62 @@ function receivedAt(iso: string) {
     <!-- C-14 (#250): conversations, grouped by working state. A queue on the
          left, the thread on the right, its trace beside it. -->
     <div v-if="threaded" data-tokens="crm" style="display: flex; min-height: 60vh; margin-top: var(--s5)">
-      <div :class="QUEUE">
+      <div class="w-58 flex-none overflow-y-auto bg-sunk pt-3.5 max-[1080px]:w-[200px]">
         <template v-for="group in groups" :key="group.key">
-          <h2 v-if="group.rows.length" :class="QUEUE_H2">
-            <b :class="QUEUE_B">{{ $t(`inbox.group.${group.key}`) }}</b>
-            <span :class="QUEUE_N">{{ group.rows.length }}</span>
+          <h2 v-if="group.rows.length" class="m-0 flex items-baseline px-3.5 pb-2 [a+&]:pt-5">
+            <b class="text-[12.5px] leading-none font-semibold tracking-[-0.012em]">{{ $t(`inbox.group.${group.key}`) }}</b>
+            <span class="ml-auto text-[11px] leading-[1.47] tabular-nums text-ink-2">{{ group.rows.length }}</span>
           </h2>
 
           <a
             v-for="row in group.rows"
             :key="row.id"
             href="#"
-            :class="[QUEUE_A, open?.id === row.id && 'bg-paper']"
+            class="block px-3.5 py-[9px] text-inherit no-underline shadow-[inset_0_1px_0_#ECECEE]" :class="open?.id === row.id && 'bg-paper'"
             @click.prevent="show(row.id)"
           >
-            <span :class="QUEUE_NM">{{ row.who }}</span>
+            <span class="block text-[12.5px] leading-[1.47] font-semibold tracking-[-0.012em]">{{ row.who }}</span>
             <!-- The project name under the sender, not the mail address:
                  which booking a message is about is what one triages on. -->
-            <span :class="[QUEUE_MT, 'text-ink-2']">{{ row.project ?? $t('inbox.general') }}</span>
+            <span class="mt-px block text-[11.5px] leading-[1.47] text-ink-2">{{ row.project ?? $t('inbox.general') }}</span>
             <span
               v-if="row.waitingDays !== null && row.waitingDays >= NOTICEABLE_DAYS"
-              :class="[QUEUE_MT, 'text-action']"
+              class="mt-px block text-[11.5px] leading-[1.47] text-action"
             >{{ $t('inbox.waiting', row.waitingDays) }}</span>
           </a>
         </template>
       </div>
 
-      <div :class="DETAIL">
+      <div class="min-w-0 flex-1 overflow-y-auto px-[26px] pt-4 pb-5">
         <template v-if="open">
-          <div :class="TITLE">
+          <div class="mt-[5px] flex items-start gap-3.5">
             <div>
-              <div :class="CRUMB">{{ $t(`inbox.origin.${open.origin}`) }}</div>
-              <h1 :class="H1">{{ open.subject }}</h1>
+              <div class="text-[11.5px] leading-[1.47] text-ink-2">{{ $t(`inbox.origin.${open.origin}`) }}</div>
+              <h1 class="m-0 mt-0.5 text-[25px] leading-[1.08] font-semibold tracking-[-0.032em]">{{ open.subject }}</h1>
             </div>
-            <div :class="ACTS">
+            <div class="ml-auto flex items-center gap-2">
               <Button variant="pill-muted" type="button" @click="close(open.id)">
                 {{ open.state === 'erledigt' ? $t('inbox.reopen') : $t('inbox.done') }}
               </Button>
             </div>
           </div>
 
-          <div v-for="message in open.messages" :key="message.id" :class="[MSG, message.own && MSG_OWN]">
-            <div :class="MSG_HEAD">
-              <span :class="MSG_N">{{ message.who }}</span>
-              <span :class="MSG_T">{{ receivedAt(message.at) }}</span>
+          <div v-for="message in open.messages" :key="message.id" class="py-3 shadow-[inset_0_1px_0_var(--rule)]" :class="
+              message.own &&
+                'pl-3.5 shadow-[inset_0_1px_0_var(--rule),inset_2px_0_0_var(--sunk-2)]'
+            ">
+            <div class="flex items-baseline gap-[9px]">
+              <span class="text-[13px] leading-[1.47] font-semibold tracking-[-0.012em]">{{ message.who }}</span>
+              <span class="ml-auto text-[11.5px] leading-[1.47] tabular-nums text-ink-2">{{ receivedAt(message.at) }}</span>
             </div>
-            <div :class="MSG_BODY">{{ message.body }}</div>
+            <div class="mt-[5px] max-w-[68ch] text-[13.5px] leading-[1.55]">{{ message.body }}</div>
           </div>
 
-          <form :class="COMPOSER" @submit.prevent="send">
-            <div :class="FIELD">
-              <span>{{ $t('inbox.reply') }}</span>
-              <textarea v-model="reply.body" rows="3" class="mb-3" />
-            </div>
-            <div :class="FOOT">
+          <form class="mt-4 pt-1 pb-0.5" @submit.prevent="send">
+            <Field v-slot="{ id }" dense :label="$t('inbox.reply')">
+              <Textarea :id="id" v-model="reply.body" variant="filled" rows="3" class="mb-3" />
+            </Field>
+            <div class="mt-2.5 flex items-center gap-3">
               <Button variant="pill" class="ml-auto" type="submit" :disabled="reply.processing || !reply.body">
                 {{ $t('inbox.send') }}
               </Button>
@@ -228,18 +198,23 @@ function receivedAt(iso: string) {
         </template>
       </div>
 
-      <aside v-if="open" :class="RAIL">
-        <h2 :class="RAIL_H2">{{ $t('inbox.people') }}</h2>
-        <div v-for="person in open.people" :key="person" :class="RAIL_P">{{ person }}</div>
+      <Rail v-if="open">
+        <RailSection :title="$t('inbox.people')">
+          <div
+            v-for="person in open.people"
+            :key="person"
+            class="flex items-center gap-2 py-[5px] text-[12.5px] leading-[1.47]"
+          >{{ person }}</div>
+        </RailSection>
 
-        <template v-if="open.projectName">
-          <h2 :class="RAIL_H2">{{ $t('inbox.project') }}</h2>
-          <div :class="RAIL_ITEM">
-            <Link :class="RAIL_N" :href="`/auftraege/${open.projectId}`">{{ open.projectName }}</Link>
-            <div v-if="open.shootDate" :class="RAIL_M">{{ receivedAt(open.shootDate) }}</div>
-          </div>
-        </template>
-      </aside>
+        <RailSection v-if="open.projectName" :title="$t('inbox.project')">
+          <RailItem
+            :title="open.projectName"
+            :href="`/auftraege/${open.projectId}`"
+            :meta="open.shootDate ? receivedAt(open.shootDate) : null"
+          />
+        </RailSection>
+      </Rail>
     </div>
 
     <div class="card static" style="margin-top: var(--s5)">

@@ -22,6 +22,8 @@ const props = defineProps<{
   error?: string
   /** `.fld.wide`: the field takes the whole row of a two-column grid. */
   wide?: boolean
+  /** crm.css `.field`: the admin's tighter stack with the quieter caption. */
+  dense?: boolean
   id?: string
   class?: HTMLAttributes["class"]
 }>()
@@ -31,8 +33,8 @@ const id = () => props.id ?? fallback
 </script>
 
 <template>
-  <div :class="cn('flex min-w-0 flex-col gap-1.5', wide && 'col-span-full', props.class)">
-    <Label v-if="label" :for="id()">{{ label }}</Label>
+  <div :class="cn('flex min-w-0 flex-col gap-1.5', dense && 'gap-1', wide && 'col-span-full', props.class)">
+    <Label v-if="label" :for="id()" :variant="dense ? 'micro' : 'field'">{{ label }}</Label>
     <slot :id="id()" />
     <span v-if="hint" class="text-[11.5px] leading-[1.45] text-faint">{{ hint }}</span>
     <p v-if="error" class="text-[11.5px] leading-[1.45] text-destructive">{{ error }}</p>

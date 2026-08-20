@@ -56,9 +56,6 @@ const ROW = [
   'shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none',
   'not-first:border-t not-first:border-muted',
 ].join(' ')
-const AVATAR =
-  'flex size-[26px] flex-none items-center justify-center rounded-full bg-[#FBE9E7] text-[11px] leading-none font-semibold text-[#A2493B]'
-const MAIL = 'mt-px text-[11.5px] leading-[1.3] font-normal text-muted-foreground'
 </script>
 
 <template>
@@ -78,7 +75,7 @@ const MAIL = 'mt-px text-[11.5px] leading-[1.3] font-normal text-muted-foregroun
           {{ $t('leads.contactProjects', { count: model.projectCount + 1 }) }}
         </span>
       </div>
-      <div :class="MAIL">{{ [model.email, model.phone].filter(Boolean).join(' · ') }}</div>
+      <div class="mt-px text-[11.5px] leading-[1.3] font-normal text-muted-foreground">{{ [model.email, model.phone].filter(Boolean).join(' · ') }}</div>
     </div>
     <!-- leading-none again after the size: tailwind-merge treats a new
          text-[…] as clearing the variant's line-height, because Tailwind lets
@@ -110,15 +107,15 @@ const MAIL = 'mt-px text-[11.5px] leading-[1.3] font-normal text-muted-foregroun
           type="button"
           @click="choose(contact)"
         >
-          <span :class="AVATAR">{{ contact.name.slice(0, 1).toUpperCase() }}</span>
+          <span class="flex size-[26px] flex-none items-center justify-center rounded-full bg-[#FBE9E7] text-[11px] leading-none font-semibold text-[#A2493B]">{{ contact.name.slice(0, 1).toUpperCase() }}</span>
           <span>
             <span class="text-[12.5px] leading-[1.25] font-semibold">{{ contact.name }}</span>
-            <span :class="MAIL">{{ contact.email }}</span>
+            <span class="mt-px text-[11.5px] leading-[1.3] font-normal text-muted-foreground">{{ contact.email }}</span>
           </span>
         </Button>
 
         <Button variant="ghost" :class="[ROW, 'bg-muted']" type="button" @click="emit('createNew', term)">
-          <span :class="[AVATAR, 'bg-foreground text-[14px] text-background']">+</span>
+          <span class="flex size-[26px] flex-none items-center justify-center rounded-full bg-[#FBE9E7] text-[11px] leading-none font-semibold text-[#A2493B] bg-foreground text-[14px] text-background">+</span>
           <span class="text-[12.5px] leading-[1.25] font-semibold">{{ $t('leads.contactCreate', { term }) }}</span>
         </Button>
       </div>
