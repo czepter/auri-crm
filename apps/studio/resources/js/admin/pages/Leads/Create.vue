@@ -109,13 +109,14 @@ const FORM = 'max-w-[820px] [&_:is(input,textarea,select)]:w-full [&_:is(input,t
 const BTN_BASE = 'inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] border-0 px-3.5 py-1.5 text-[12.5px] leading-[1.47] font-medium tracking-[-0.01em] whitespace-nowrap no-underline transition-[filter,background-color] duration-[.12s] ease-out'
 const BTN = `${BTN_BASE} bg-action text-white hover:brightness-[1.08]`
 const BTN_2 = `${BTN_BASE} bg-sunk-2 text-foreground hover:bg-[#E9E9EC]`
+const H1 = 'm-0 mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px] max-[640px]:leading-[1.08]'
 </script>
 
 <template>
   <AdminLayout active="anfragen">
-    <div data-theme="crm" class="px-8 py-7">
+    <div data-tokens="crm" class="px-8 py-7">
       <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.05em] uppercase text-ink-2">{{ $t('leads.createKicker') }}</div>
-      <h1>{{ $t('leads.createTitle') }}</h1>
+      <h1 :class="H1">{{ $t('leads.createTitle') }}</h1>
 
       <form :class="[FORM, 'mt-5']" @submit.prevent="submit">
         <div class="mb-5">

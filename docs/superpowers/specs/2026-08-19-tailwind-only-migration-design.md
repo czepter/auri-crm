@@ -1,7 +1,8 @@
 # Tailwind-only — Migration der eigenen Stylesheets
 
-Status: 31 von 91 Dateien migriert, 660 von 2032 Klassenvorkommen
-Datum: 2026-08-19
+Status: 15 von 175 Templates tragen noch eine eigene Klasse — 32 Namen, 71
+Vorkommen. `crm.css` ist bis auf seinen Tokenblock aufgeloest.
+Datum: 2026-08-20
 
 ## Ziel
 
@@ -87,9 +88,8 @@ Screen braucht es nur, wenn er ein `h1` oder ein `svg` selbst setzen will —
 `Staff/Index` etwa will die globale Ueberschrift behalten und bleibt ohne.
 
 `:where()` ist dabei tragend: `:not()` erbt sonst die Spezifitaet seines
-Arguments, und ein blankes `:not([data-tokens] h1)` ueberholt
-`[data-theme="crm"] h1` — womit jede unportierte Seite ihre Ueberschrift
-verliert.
+Arguments, und ein blankes `:not([data-tokens] h1)` ueberholt `.letter h1` —
+womit jede unportierte Seite ihre Ueberschrift verliert.
 
 Verworfen: die Sheets in `@layer components` legen. Das waere der saubere
 Weg, kippt aber vierzehn Regeln, die shadcn-Komponenten absichtlich ueber
@@ -97,8 +97,10 @@ Weg, kippt aber vierzehn Regeln, die shadcn-Komponenten absichtlich ueber
 [data-variant="default"] { margin-left: 0 }` und Verwandte. Gemessen an den
 Baselines: sechs Formularseiten verschoben ihre Buttons.
 
-Erledigt in `crm.css:35`. Dieselben 23 Baselines laufen mit und ohne den
-zweiten Selektor grün durch.
+Erledigt, und inzwischen abgeschlossen: `data-theme="crm"` steht in keinem
+Template mehr, die 476 Regeln sind weg, und `crm.css` deklariert seine Token
+nur noch unter `[data-tokens="crm"]`. Der zweite Selektor war das Geruest
+dafuer, nicht der Endstand.
 
 ## §2 Token-Schicht
 
@@ -192,10 +194,10 @@ beschreibt. Sie müssen vor Phase 2 stehen.
 
 | Phase | Umfang | Ergebnis |
 |---|---|---|
-| 0 | Playwright-Baselines | Netz steht (Admin erledigt, Portal offen) |
+| 0 | Playwright-Baselines | erledigt: 62 Admin-, 17 Portalframes |
 | 1 | Token-Selektor | erledigt, pixelgleich |
-| 2 | Admin-Shell: `AdminLayout` (erledigt), `CommandPalette`, `SettingsNav`, `ProjectHeader` | geteilte Rahmen |
-| 3 | Admin-Screens, absteigend nach Masse | `crm.css` geloescht |
+| 2 | Admin-Shell: `AdminLayout`, `CommandPalette`, `SettingsNav`, `ProjectHeader` | erledigt |
+| 3 | Admin-Screens, absteigend nach Masse | erledigt: `crm.css` traegt nur noch Token |
 | 4 | Portal: 18 Dateien | `portal.css` geloescht |
 | 5 | Galerie: `Gallery/Show`, `Gallery/Download`, `GalleryLightbox` | `gallery.css` geloescht (342 Zeilen) |
 | 6 | Auth-Seiten, Editoren, Reste | Sheets bis auf `:root` geloescht |
@@ -203,17 +205,24 @@ beschreibt. Sie müssen vor Phase 2 stehen.
 ## Was den Rest blockiert
 
 Der Test meldet jede Luecke selbst (`OHNE BASELINE: …`). Vollstaendige Liste,
-Stand dieser Sitzung:
+Stand dieser Sitzung — 15 Templates, 32 Klassennamen, 71 Vorkommen:
 
-| Blocker | betrifft |
+| Datei | Klassen |
 |---|---|
-| unfestgeschriebene Arbeit in 25 Dateien | 830 Vorkommen |
-| kein Studio ohne einen einzigen Zugang | `Setup` — migriert, ohne Bild |
-| kein Aufrufer | `PaymentInstallmentsEditor` — toter Code |
-| Kontext gehoert einer fremden Datei | `CrewStack` 2 |
+| `Projects/Quotes` | 17 |
+| `PaymentInstallmentsEditor` | 7 |
+| `Posteingang` (die drei Karten unter dem Faden) | 7 |
+| `Projects/Shoots` | 3 |
+| `pdf/shoot-timeline.blade.php` | 3 |
+| `CrewStack` | 2 |
+| `Settings/Numbering`, `DocumentPreviewPane`, `Metric` | je 1–2 |
+| `PortalWrap`, `Contracts/Show`, `Quotes/Show`, `ui/field/Field` | `wide` |
+| `GalleryLightbox`, `Gallery/Show` | `open`, `cover` |
 
-Portal und Auth sind fertig. Alles, was jetzt noch Klassen traegt, liegt in
-den 25 Dateien mit unfestgeschriebener Arbeit — bis auf drei Faelle:
+Nicht in der Liste, weil unfestgeschrieben: `Auswertungen` steht im
+Arbeitsbaum bereits auf Utilities um.
+
+Vier Faelle sind keine Restarbeit, sondern haengen an etwas:
 
 `Setup` verlangt ein Studio ohne einen einzigen Mitarbeiterzugang; den
 herzustellen hiesse, alle Zugaenge zu loeschen. Die Huelle ist dieselbe wie
@@ -225,19 +234,21 @@ Migration.
 
 `CrewStack` haengt an Regeln, die anderen Dateien gehoeren: `.card:hover
 .stack .av` und `.srow .stack` faerben und ruecken die Gesichter aus dem
-Kontext heraus. Solange `Projects/Shoots` und die Kartenlisten
-unfestgeschrieben sind, waere jede Uebersetzung hier eine Wette darauf, was
-dort spaeter steht.
+Kontext heraus. Solange `Projects/Shoots` und die Kartenlisten stehen, waere
+jede Uebersetzung hier eine Wette darauf, was dort spaeter steht.
 
-Fuer die Galerie legt `E2eSeeder` jetzt echte Bytes an:
-`GalleryImageController` rechnet jede Variante aus dem Original auf der
-s3-Platte und antwortet ohne eines 404, also sechs einfarbige JPEGs — ein
-Foto waere huebscher, und die Baseline haenge dann an der Version eines
-JPEG-Encoders.
+`wide` traegt in vier Dateien zwei Bedeutungen — `.fld.wide` spannt eine
+Spalte, `PortalWrap`s `wide` die Seitenbreite. Wer den einen Namen aufloest,
+muss den anderen mitnehmen, sonst bleibt eine Regel ohne Aufrufer stehen.
 
-Kein Frame haengt mehr an den Demodaten eines Entwicklers. Das war vorher
-der stille Fehler: `migrate:fresh --seed=E2eSeeder` legt genau die Fixtures
-an und sonst nichts, die Baselines waren auf einem CI-Lauf also gar nicht
+Fuer die Galerie legt `E2eSeeder` echte Bytes an: `GalleryImageController`
+rechnet jede Variante aus dem Original auf der s3-Platte und antwortet ohne
+eines 404, also sechs einfarbige JPEGs — ein Foto waere huebscher, und die
+Baseline haenge dann an der Version eines JPEG-Encoders.
+
+Kein Frame haengt an den Demodaten eines Entwicklers. Das war vorher der
+stille Fehler: `migrate:fresh --seed=E2eSeeder` legt genau die Fixtures an und
+sonst nichts, die Baselines waren auf einem CI-Lauf also gar nicht
 reproduzierbar.
 
 Teilweise abgedeckt, migriert wird trotzdem: `Payments/Show` (Bankblock und
@@ -245,6 +256,19 @@ Stripe-Spalte brauchen ausgefuellte Studioeinstellungen), `Contracts/Show`
 (das eingebettete Dokument ist 404, weil kein Artefakt gerendert wurde),
 `Questionnaire` (Auswahlfeld, Ja/Nein-Zeile und Fehlermeldung: das Fixture
 hat ein Feld, und es ist ein Textfeld).
+
+Drei Stellen sind beim Aufloesen von `crm.css` aufgefallen und bewusst
+uebernommen worden, weil die Baseline sie so zeigt:
+
+- `<select class="form">` in `Projects/Show` bekam nie die Feldoptik —
+  `.form input` will einen Nachfahren, das Element ist selbst `.form`. Steht
+  jetzt als `max-w-[820px]` da, also weiter als nackte OS-Auswahl.
+- Die `.line`-Reihen im Shooting-Editor waren nie flex: die Regel heisst
+  `.composer .line` / `.editing .line`, der Container traegt `form`. Die
+  Felder stapeln.
+- Die Ueberschrift in `Leads/Show` misst 32px, nicht die 25px aus
+  `.detail .title h1` — die Klasse `.detail` war beim Portieren schon weg,
+  gegriffen hat nur noch die Elementregel.
 
 ## Namenskollisionen
 

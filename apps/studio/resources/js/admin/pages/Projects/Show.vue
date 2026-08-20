@@ -137,25 +137,119 @@ function togglePortal() {
 function complete(task: App.Crm.Data.TaskRowData) {
     router.post(`/aufgaben/${task.id}/erledigt`, {}, { preserveScroll: true });
 }
+
+/* crm.css .work — the wide column and the head that stays on it. */
+const WORK = "min-w-0 flex-1 px-[26px] pt-5 pb-7";
+const H1 =
+    "m-0 mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]";
+const SEC = "mb-5";
+
+/* crm.css .btn / .btn-2 / .link. */
+const BTN_BASE =
+    "inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] border-0 px-3.5 py-1.5 text-[12.5px] leading-[1.47] font-medium tracking-[-0.01em] whitespace-nowrap no-underline transition-[filter,background-color] duration-[.12s] ease-out";
+const BTN = `${BTN_BASE} bg-action text-white hover:brightness-[1.08]`;
+const BTN_2 = `${BTN_BASE} bg-sunk-2 text-foreground hover:bg-[#E9E9EC]`;
+const LINK =
+    "text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline";
+
+/* crm.css .band — the master data across, each value with its proof. */
+const BAND = "mb-5 flex";
+const CELL =
+    "min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none";
+const LAB = "text-[10.5px] tracking-[0.06em] uppercase text-ink-2";
+const DERIVED = "tracking-normal normal-case text-mark";
+const VAL =
+    "mt-[5px] text-[17px] leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums";
+const VAL_PLAIN =
+    "mt-[5px] text-[15px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums";
+const SUB = "mt-[3px] text-[11.5px] text-ink-2";
+/* on and off exclude each other rather than stacking: two background
+   utilities in one class list are decided by the order in the generated CSS,
+   not by the order they are written in. */
+const SWITCH =
+    "relative h-6 w-10 flex-none cursor-pointer rounded-[var(--r-pill)] after:absolute after:top-[3px] after:left-[3px] after:size-[18px] after:rounded-full after:bg-paper after:transition-transform after:duration-[.16s] after:ease-out after:content-['']";
+const SWITCH_ON = "bg-action after:translate-x-4";
+const SWITCH_OFF = "bg-sunk-2";
+
+/* crm.css .form / .field — the fields the head opens into. */
+const INPUTS =
+    "[&_:is(input,textarea,select)]:w-full [&_:is(input,textarea,select)]:rounded-[10px] [&_:is(input,textarea,select)]:border-0 [&_:is(input,textarea,select)]:bg-sunk [&_:is(input,textarea,select)]:px-[11px] [&_:is(input,textarea,select)]:py-[7px] [&_:is(input,textarea,select)]:text-[13.5px] [&_:is(input,textarea,select)]:leading-[1.4] [&_:is(input,textarea,select)]:font-normal [&_:is(input,textarea,select)]:tracking-[-0.01em] [&_:is(input,textarea,select)]:text-foreground [&_:is(input,textarea,select)]:outline-0 [&_:is(input,textarea)::placeholder]:text-[#B0B0B5] [&_:is(input,textarea,select):focus]:bg-sunk-2 [&_:is(input,textarea,select):focus]:shadow-[inset_0_0_0_2px_var(--accent)] [&_textarea]:min-h-[88px] [&_textarea]:resize-y";
+const FORM = `max-w-[820px] ${INPUTS}`;
+const FIELD =
+    "flex flex-col gap-1 [&>span]:pl-0.5 [&>span]:text-[10.5px] [&>span]:leading-none [&>span]:font-normal [&>span]:tracking-[0.05em] [&>span]:uppercase [&>span]:text-ink-2 [&_input]:w-full";
+const FIELD_GROW = `${FIELD} min-w-[148px] flex-1`;
+const DATEPICKER = "w-[148px] [&_input]:pr-8";
+const SHOOTBLOCK = "pt-3.5 pb-4 shadow-[inset_0_1px_0_var(--rule)]";
+
+/* crm.css .rowset — the shoots, the time on the left. */
+const ROW =
+    "flex items-center gap-3.5 py-[11px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap";
+const WHEN =
+    "w-[150px] flex-none text-[13px] leading-[1.47] font-semibold tracking-[-0.012em] tabular-nums";
+const ST = "block text-[11.5px] leading-[1.47] font-normal text-ink-2";
+const WHAT = "min-w-0 flex-1 text-[13.5px] leading-[1.47]";
+const WHAT_S = "text-[12px] leading-[1.47] text-ink-2";
+const RIGHT =
+    "w-[118px] flex-none text-right text-[12px] leading-[1.47] text-ink-2";
+
+/* crm.css .quote — the scope, line by line. */
+const QR =
+    "flex items-baseline gap-3.5 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
+const TI = "min-w-0 flex-1 text-[13.5px] leading-[1.47]";
+const TAG = "ml-[3px] text-[11.5px] text-action";
+const QTY =
+    "w-14 flex-none text-right text-[12.5px] leading-[1.47] tabular-nums text-ink-2";
+const AMT = "w-28 flex-none text-right text-[13px] leading-[1.47] tabular-nums";
+const WAS = "mt-0.5 block text-[11.5px] font-normal text-action";
+const QUOTE_META =
+    "mt-[7px] text-[12px] text-ink-2 [&_em]:not-italic [&_em]:text-action";
+
+/* crm.css .todo — what is still open. */
+const TASK =
+    "flex items-center gap-3 py-[7px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
+const BOX = "size-[15px] flex-none rounded-[5px] bg-sunk-2";
+const TASK_T = "text-[13.5px] leading-[1.47]";
+const AUD =
+    "text-[10.5px] leading-[1.47] tracking-[0.05em] uppercase text-ink-2";
+const DUE = "ml-auto text-[12px] leading-[1.47] tabular-nums";
+
+/* crm.css .composer / .stream — the note and the trace it lands in. */
+const COMPOSER = `mt-4 pt-1 pb-0.5 ${FORM}`;
+const FOOT = "mt-2.5 flex items-center gap-3";
+const EV = "relative flex gap-3.5 py-2.5 shadow-[inset_0_1px_0_var(--rule)]";
+const EV_T = "w-[110px] flex-none text-[12px] leading-[1.3] tabular-nums text-ink-2";
+const EV_C = "min-w-0 flex-1 text-[13px] leading-[1.47]";
+
+/* crm.css .rail — the trace column Page.vue holds. */
+const RAIL_H2 =
+    "m-0 mb-[9px] text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2";
+const RAIL_P = "flex items-center gap-2 py-[5px] text-[12.5px] leading-[1.47]";
+const RAIL_ST = "ml-auto text-[11.5px] leading-[1.47] text-[#3F6B4A]";
+const RAIL_K = "flex gap-2.5 py-[5px] text-[12.5px] leading-[1.47]";
+const RAIL_K_1 = "w-[74px] flex-none text-ink-2";
+const RAIL_ITEM = "py-2 shadow-[inset_0_1px_0_#ECECEE]";
+const RAIL_N =
+    "text-[12.5px] leading-[1.47] font-semibold tracking-[-0.012em]";
+const RAIL_M = "mt-px text-[11.5px] leading-[1.47] text-ink-2";
 </script>
 
 <template>
     <AdminLayout active="projekte">
         <Page>
             <template #right>
-                <h2>{{ $t("lead.people") }}</h2>
+                <h2 :class="RAIL_H2">{{ $t("lead.people") }}</h2>
                 <div
                     v-for="(person, index) in people"
                     :key="person.id"
-                    class="p"
+                    :class="RAIL_P"
                 >
-                    <Link class="n" :href="`/kontakte/${person.id}`">{{
+                    <Link :href="`/kontakte/${person.id}`">{{
                         person.name
                     }}</Link>
                     <select
                         v-if="editing"
                         v-model="edit.people[index].role"
-                        class="form"
+                        class="max-w-[820px]"
                     >
                         <option
                             v-for="option in roles"
@@ -165,36 +259,38 @@ function complete(task: App.Crm.Data.TaskRowData) {
                             {{ $t(`contacts.role.${option.value}`) }}
                         </option>
                     </select>
-                    <span v-else class="st">{{
+                    <span v-else :class="RAIL_ST">{{
                         $t(`contacts.role.${person.role}`)
                     }}</span>
                 </div>
 
                 <template v-if="paymentPlan">
-                    <h2>{{ $t("dashboard.payments") }}</h2>
+                    <h2 :class="RAIL_H2">{{ $t("dashboard.payments") }}</h2>
                     <div
                         v-for="instalment in paymentPlan.installments"
                         :key="instalment.id"
-                        class="k"
+                        :class="RAIL_K"
                     >
-                        <span>{{ day(instalment.dueOn) }}</span>
+                        <span :class="RAIL_K_1">{{
+                            day(instalment.dueOn)
+                        }}</span>
                         <span>{{ euro(instalment.amount) }}</span>
                     </div>
                 </template>
 
                 <template v-if="galleries.length">
-                    <h2>{{ $t("contacts.galleries") }}</h2>
+                    <h2 :class="RAIL_H2">{{ $t("contacts.galleries") }}</h2>
                     <div
                         v-for="gallery in galleries"
                         :key="gallery.id"
-                        class="item"
+                        :class="RAIL_ITEM"
                     >
                         <Link
-                            class="n"
+                            :class="RAIL_N"
                             :href="`/galerien/${gallery.id}/medien`"
                             >{{ gallery.title ?? "—" }}</Link
                         >
-                        <div v-if="gallery.expiresAt" class="m">
+                        <div v-if="gallery.expiresAt" :class="RAIL_M">
                             {{
                                 $t("contacts.expiresOn", {
                                     date: day(gallery.expiresAt),
@@ -204,68 +300,59 @@ function complete(task: App.Crm.Data.TaskRowData) {
                     </div>
                 </template>
 
-                <h2>{{ $t("project.documents") }}</h2>
-                <div class="item">
-                    <Link class="n" :href="`/auftraege/${header.id}/vertrag`">{{
-                        $t("project.contract")
-                    }}</Link>
-                </div>
-                <div class="item">
+                <h2 :class="RAIL_H2">{{ $t("project.documents") }}</h2>
+                <div :class="RAIL_ITEM">
                     <Link
-                        class="n"
+                        :class="RAIL_N"
+                        :href="`/auftraege/${header.id}/vertrag`"
+                        >{{ $t("project.contract") }}</Link
+                    >
+                </div>
+                <div :class="RAIL_ITEM">
+                    <Link
+                        :class="RAIL_N"
                         :href="`/auftraege/${header.id}/frageboegen`"
                         >{{ $t("project.forms") }}</Link
                     >
                 </div>
-                <div class="item">
+                <div :class="RAIL_ITEM">
                     <Link
-                        class="n"
+                        :class="RAIL_N"
                         :href="`/auftraege/${header.id}/nachrichten`"
                         >{{ $t("project.messages") }}</Link
                     >
                 </div>
             </template>
 
-            <div data-theme="crm" style="display: flex; align-items: stretch">
-                <div class="work">
-                    <div class="crumb">
+            <div data-tokens="crm" style="display: flex; align-items: stretch">
+                <div :class="WORK">
+                    <div>
                         <Link href="/projekte">{{ $t("projects.title") }}</Link>
                     </div>
 
-                    <div
-                        class="title"
-                        style="
-                            position: sticky;
-                            top: 0;
-                            z-index: 5;
-                            background: var(--paper);
-                        "
-                    >
+                    <div class="sticky top-0 z-[5] bg-paper">
                         <div>
                             <input
                                 v-if="editing"
                                 v-model="edit.name"
-                                class="form"
+                                class="max-w-[820px]"
                                 type="text"
                                 style="font-size: 22px"
                             />
-                            <h1
-                               
-                                v-else
-                            >
+                            <h1 v-else :class="H1">
                                 {{ header.names }}
                             </h1>
                         </div>
 
-                        <div v-if="editing" class="acts">
+                        <div v-if="editing">
                             <a
-                                class="link"
+                                :class="LINK"
                                 href="#"
                                 @click.prevent="editing = false"
                                 >{{ $t("common.cancel") }}</a
                             >
                             <button
-                                class="btn"
+                                :class="BTN"
                                 type="button"
                                 :disabled="edit.processing"
                                 @click="save"
@@ -274,22 +361,22 @@ function complete(task: App.Crm.Data.TaskRowData) {
                             </button>
                         </div>
 
-                        <div v-else class="acts">
+                        <div v-else>
                             <a
-                                class="link"
+                                :class="LINK"
                                 href="#"
                                 @click.prevent="editing = true"
                                 >{{ $t("lead.edit") }}</a
                             >
                             <Link
                                 v-if="header.canManageQuotes"
-                                class="link"
+                                :class="LINK"
                                 :href="`/auftraege/${header.id}/angebote`"
                             >
                                 {{ $t("project.quotes") }}
                             </Link>
                             <Link
-                                class="btn"
+                                :class="BTN"
                                 :href="`/auftraege/${header.id}/shootings`"
                                 >{{ $t("project.shoots") }}</Link
                             >
@@ -298,13 +385,13 @@ function complete(task: App.Crm.Data.TaskRowData) {
 
                     <!-- Master data across, six values on one line, each with its proof
              underneath — not a phase tile that a seventh phase would break. -->
-                    <div class="band" style="margin-top: var(--s5)">
-                        <div class="cell">
-                            <div class="lab">{{ $t("project.position") }}</div>
+                    <div :class="BAND" style="margin-top: var(--s5)">
+                        <div :class="CELL">
+                            <div :class="LAB">{{ $t("project.position") }}</div>
                             <select
                                 v-if="editing && stage"
                                 v-model="edit.stage"
-                                class="form"
+                                class="max-w-[820px]"
                             >
                                 <option
                                     v-for="option in stages"
@@ -314,57 +401,58 @@ function complete(task: App.Crm.Data.TaskRowData) {
                                     {{ option.label }}
                                 </option>
                             </select>
-                            <div v-else class="val plain">
+                            <div v-else :class="VAL_PLAIN">
                                 {{ figures.phase.value ?? "—" }}
                             </div>
-                            <div v-if="figures.phase.proof" class="sub">
+                            <div v-if="figures.phase.proof" :class="SUB">
                                 {{ figures.phase.proof }}
                             </div>
                         </div>
-                        <div class="cell">
-                            <div class="lab">
+                        <div :class="CELL">
+                            <div :class="LAB">
                                 {{ $t("project.mainDateLabel") }}
-                                <span v-if="editing" class="derived">
+                                <span v-if="editing" :class="DERIVED">
                                     · {{ $t("project.fromShoots") }}</span
                                 >
                             </div>
-                            <div class="val plain">
+                            <div :class="VAL_PLAIN">
                                 {{ day(figures.nextDate.value) }}
                             </div>
-                            <div class="sub">
+                            <div :class="SUB">
                                 {{ $t("board.shootCount", shoots.length) }}
                             </div>
                         </div>
-                        <div class="cell">
-                            <div class="lab">
+                        <div :class="CELL">
+                            <div :class="LAB">
                                 {{ $t("board.colValue") }}
-                                <span v-if="editing" class="derived">
+                                <span v-if="editing" :class="DERIVED">
                                     · {{ $t("project.fromScope") }}</span
                                 >
                             </div>
-                            <div class="val">
+                            <div :class="VAL">
                                 {{ euro(figures.value.value) }}
                             </div>
-                            <div v-if="figures.value.proof" class="sub">
+                            <div v-if="figures.value.proof" :class="SUB">
                                 {{ figures.value.proof }}
                             </div>
                         </div>
-                        <div class="cell">
-                            <div class="lab">
+                        <div :class="CELL">
+                            <div :class="LAB">
                                 {{ $t("project.openAmount") }}
-                                <span v-if="editing" class="derived">
+                                <span v-if="editing" :class="DERIVED">
                                     · {{ $t("project.fromPayments") }}</span
                                 >
                             </div>
                             <div
-                                class="val"
-                                :class="{
-                                    warn: Number(figures.open.value ?? 0) > 0,
-                                }"
+                                :class="[
+                                    VAL,
+                                    Number(figures.open.value ?? 0) > 0 &&
+                                        'text-action',
+                                ]"
                             >
                                 {{ euro(figures.open.value) }}
                             </div>
-                            <div v-if="figures.open.proof" class="sub">
+                            <div v-if="figures.open.proof" :class="SUB">
                                 {{
                                     $t(
                                         "project.instalments",
@@ -373,12 +461,12 @@ function complete(task: App.Crm.Data.TaskRowData) {
                                 }}
                             </div>
                         </div>
-                        <div v-if="sourceLabel" class="cell">
-                            <div class="lab">{{ $t("leads.source") }}</div>
+                        <div v-if="sourceLabel" :class="CELL">
+                            <div :class="LAB">{{ $t("leads.source") }}</div>
                             <select
                                 v-if="editing"
                                 v-model="edit.source"
-                                class="form"
+                                class="max-w-[820px]"
                             >
                                 <option
                                     v-for="option in sources"
@@ -388,14 +476,14 @@ function complete(task: App.Crm.Data.TaskRowData) {
                                     {{ option.label }}
                                 </option>
                             </select>
-                            <div v-else class="val plain">
+                            <div v-else :class="VAL_PLAIN">
                                 {{ sourceLabel }}
                             </div>
                             <input
                                 v-if="editing && edit.source === 'other'"
                                 v-model="edit.source_other"
                                 type="text"
-                                class="form"
+                                class="max-w-[820px]"
                                 list="source-presets"
                                 style="margin-top: 6px"
                             />
@@ -407,18 +495,16 @@ function complete(task: App.Crm.Data.TaskRowData) {
                                 />
                             </datalist>
                         </div>
-                        <div class="cell">
-                            <div class="lab">{{ $t("project.portal") }}</div>
+                        <div :class="CELL">
+                            <div :class="LAB">{{ $t("project.portal") }}</div>
                             <!-- The figure and the switch that changes it, in one cell: this
                  is the one key value that is a decision rather than a
                  derivation, so it is the one with a control. -->
                             <div
-                                class="val plain"
-                                style="
-                                    display: flex;
-                                    align-items: center;
-                                    gap: var(--s3);
-                                "
+                                :class="[
+                                    VAL_PLAIN,
+                                    'flex items-center gap-3',
+                                ]"
                             >
                                 {{
                                     figures.portal.value === "on"
@@ -427,10 +513,12 @@ function complete(task: App.Crm.Data.TaskRowData) {
                                 }}
                                 <span
                                     v-if="header.canManagePortalVisibility"
-                                    class="sw"
-                                    :class="{
-                                        on: figures.portal.value === 'on',
-                                    }"
+                                    :class="[
+                                        SWITCH,
+                                        figures.portal.value === 'on'
+                                            ? SWITCH_ON
+                                            : SWITCH_OFF,
+                                    ]"
                                     role="button"
                                     :aria-label="$t('project.portalToggle')"
                                     @click="togglePortal"
@@ -439,22 +527,22 @@ function complete(task: App.Crm.Data.TaskRowData) {
                         </div>
                     </div>
 
-                    <section v-if="editing || shoots.length" class="sec">
+                    <section v-if="editing || shoots.length" :class="SEC">
                         <h2>{{ $t("lead.dates") }}</h2>
-                        <div v-if="editing" class="form">
+                        <div v-if="editing" :class="FORM">
                             <div
                                 v-for="shoot in edit.shoots"
                                 :key="shoot.id"
-                                class="shootblock"
+                                :class="SHOOTBLOCK"
                             >
-                                <div class="line">
-                                    <label class="field"
+                                <div>
+                                    <label :class="FIELD"
                                         ><span>{{
                                             $t("project.shootDate")
                                         }}</span
-                                        ><DatePicker v-model="shoot.date"
+                                        ><DatePicker v-model="shoot.date" :class="DATEPICKER"
                                     /></label>
-                                    <label class="field"
+                                    <label :class="FIELD"
                                         ><span>{{
                                             $t("project.callTime")
                                         }}</span
@@ -462,15 +550,15 @@ function complete(task: App.Crm.Data.TaskRowData) {
                                             v-model="shoot.call_time"
                                             type="time"
                                     /></label>
-                                    <label class="field"
+                                    <label :class="FIELD"
                                         ><span>{{ $t("project.endTime") }}</span
                                         ><input
                                             v-model="shoot.end_time"
                                             type="time"
                                     /></label>
                                 </div>
-                                <div class="line">
-                                    <label class="field grow"
+                                <div>
+                                    <label :class="FIELD_GROW"
                                         ><span>{{
                                             $t("project.venueName")
                                         }}</span
@@ -478,7 +566,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
                                             v-model="shoot.venue_name"
                                             type="text"
                                     /></label>
-                                    <label class="field grow"
+                                    <label :class="FIELD_GROW"
                                         ><span>{{
                                             $t("project.venueCity")
                                         }}</span
@@ -490,25 +578,25 @@ function complete(task: App.Crm.Data.TaskRowData) {
                             </div>
                         </div>
 
-                        <div v-else-if="shoots.length" class="rowset">
+                        <div v-else-if="shoots.length">
                             <div
                                 v-for="shoot in shoots"
                                 :key="shoot.id"
-                                class="r"
+                                :class="ROW"
                             >
-                                <span class="when">
+                                <span :class="WHEN">
                                     {{ day(shoot.date) }}
-                                    <span class="st">{{
+                                    <span :class="ST">{{
                                         shoot.statusLabel
                                     }}</span>
                                 </span>
-                                <span class="what">
+                                <span :class="WHAT">
                                     {{ shoot.label ?? shoot.kind }}
-                                    <span v-if="shoot.venue" class="s">
+                                    <span v-if="shoot.venue" :class="WHAT_S">
                                         · {{ shoot.venue }}</span
                                     >
                                 </span>
-                                <span class="right">{{
+                                <span :class="RIGHT">{{
                                     shoot.crew
                                         .map((member) => member.name)
                                         .join(", ") || "—"
@@ -521,22 +609,22 @@ function complete(task: App.Crm.Data.TaskRowData) {
              locked: the order changes in conversation and the document lags
              behind. Forbid the change and the scope is simply wrong while the
              work happens anyway. -->
-                    <section v-if="scope.items.length" class="sec">
+                    <section v-if="scope.items.length" :class="SEC">
                         <h2>{{ $t("project.scope") }}</h2>
-                        <div class="quote">
+                        <div>
                             <div
                                 v-for="item in scope.items"
                                 :key="item.id"
-                                class="qr"
+                                :class="QR"
                             >
-                                <span class="ti">
+                                <span :class="TI">
                                     {{ item.title }}
-                                    <span v-if="item.state" class="tag">{{
+                                    <span v-if="item.state" :class="TAG">{{
                                         $t(`project.scope_${item.state}`)
                                     }}</span>
                                 </span>
-                                <span class="qty">{{ item.quantity }}×</span>
-                                <span class="amt">
+                                <span :class="QTY">{{ item.quantity }}×</span>
+                                <span :class="AMT">
                                     {{
                                         item.unitPrice === null
                                             ? $t("packages.included")
@@ -544,43 +632,46 @@ function complete(task: App.Crm.Data.TaskRowData) {
                                     }}
                                     <span
                                         v-if="item.state === 'changed'"
-                                        class="was"
+                                        :class="WAS"
                                         >{{ euro(item.wasUnitPrice) }}</span
                                     >
                                 </span>
                             </div>
                         </div>
 
-                        <p v-if="scope.delta" class="meta">
+                        <p v-if="scope.delta" :class="QUOTE_META">
                             <em>{{
                                 $t("project.scopeDelta", {
                                     amount: euro(Math.abs(scope.delta)),
                                 })
                             }}</em>
                             <Link
-                                class="link"
+                                :class="[LINK, 'ml-3']"
                                 :href="`/auftraege/${header.id}/angebote`"
-                                style="margin-left: var(--s3)"
                             >
                                 {{ $t("project.sendAddendum") }}
                             </Link>
                         </p>
                     </section>
 
-                    <section v-if="open.length" class="sec">
+                    <section v-if="open.length" :class="SEC">
                         <h2>{{ $t("project.openItems") }}</h2>
-                        <div class="todo">
-                            <div v-for="task in open" :key="task.id" class="r">
+                        <div>
+                            <div v-for="task in open" :key="task.id" :class="TASK">
                                 <button
-                                    class="b"
+                                    :class="BOX"
                                     type="button"
                                     @click="complete(task)"
                                 />
-                                <span class="t">{{ task.title }}</span>
-                                <span class="aud">{{ task.audience }}</span>
+                                <span :class="TASK_T">{{ task.title }}</span>
+                                <span :class="AUD">{{ task.audience }}</span>
                                 <span
-                                    class="due"
-                                    :class="{ warn: task.isOverdue }"
+                                    :class="[
+                                        DUE,
+                                        task.isOverdue
+                                            ? 'text-action'
+                                            : 'text-ink-2',
+                                    ]"
                                     >{{
                                         task.dueOn ? day(task.dueOn) : ""
                                     }}</span
@@ -589,18 +680,19 @@ function complete(task: App.Crm.Data.TaskRowData) {
                         </div>
                     </section>
 
-                    <section class="sec">
+                    <section :class="SEC">
                         <h2>{{ $t("lead.notes") }}</h2>
 
-                        <form class="composer form" @submit.prevent="addNote">
+                        <form :class="COMPOSER" @submit.prevent="addNote">
                             <textarea
                                 v-model="note.body"
                                 rows="2"
+                                class="mb-3"
                                 :placeholder="$t('lead.notePlaceholder')"
                             />
-                            <div class="foot">
+                            <div :class="FOOT">
                                 <button
-                                    class="btn-2"
+                                    :class="BTN_2"
                                     type="submit"
                                     :disabled="!note.body || note.processing"
                                 >
@@ -611,16 +703,16 @@ function complete(task: App.Crm.Data.TaskRowData) {
 
                         <!-- Notes and the audit trail in one trace: what happened and what
                somebody wrote about it are read together or not at all. -->
-                        <div class="stream">
+                        <div>
                             <div
                                 v-for="note in notes"
                                 :key="note.id"
-                                class="ev"
+                                :class="EV"
                             >
-                                <span class="t">{{ day(note.writtenAt) }}</span>
-                                <span class="c"
+                                <span :class="EV_T">{{ day(note.writtenAt) }}</span>
+                                <span :class="EV_C"
                                     >{{ note.body }}
-                                    <span class="by"
+                                    <span class="text-ink-2"
                                         >— {{ note.author }}</span
                                     ></span
                                 >
@@ -628,12 +720,12 @@ function complete(task: App.Crm.Data.TaskRowData) {
                             <div
                                 v-for="(entry, index) in activity"
                                 :key="index"
-                                class="ev sys"
+                                :class="EV"
                             >
-                                <span class="t">{{ day(entry.at) }}</span>
-                                <span class="c">
+                                <span :class="EV_T">{{ day(entry.at) }}</span>
+                                <span :class="[EV_C, 'text-ink-2']">
                                     {{ entry.label }}
-                                    <span v-if="entry.actorName" class="by">
+                                    <span v-if="entry.actorName">
                                         — {{ entry.actorName }}</span
                                     >
                                 </span>
@@ -641,12 +733,12 @@ function complete(task: App.Crm.Data.TaskRowData) {
                             <div
                                 v-for="task in done"
                                 :key="task.id"
-                                class="ev sys"
+                                :class="EV"
                             >
-                                <span class="t">{{
+                                <span :class="EV_T">{{
                                     task.dueOn ? day(task.dueOn) : ""
                                 }}</span>
-                                <span class="c">{{ task.title }}</span>
+                                <span :class="[EV_C, 'text-ink-2']">{{ task.title }}</span>
                             </div>
                         </div>
                     </section>

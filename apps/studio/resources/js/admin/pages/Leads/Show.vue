@@ -215,7 +215,7 @@ const QUEUE_MT = "mt-px text-[11.5px] leading-[1.47]";
 
 /* crm.css .detail — the case itself and its section grammar. */
 const H1 =
-    "m-0 mt-0.5 text-[25px] leading-[1.08] font-semibold tracking-[-0.032em]";
+    "m-0 mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]";
 const DETAIL = "min-w-0 flex-1 overflow-y-auto px-[26px] pt-4 pb-5";
 const CRUMB =
     "text-[11.5px] leading-[1.47] text-ink-2 [&_kbd]:ml-[3px] [&_kbd]:rounded-[5px] [&_kbd]:bg-sunk-2 [&_kbd]:px-1.5 [&_kbd]:py-0.5 [&_kbd]:text-[11px] [&_kbd]:leading-none [&_kbd]:font-medium";

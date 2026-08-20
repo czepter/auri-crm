@@ -180,8 +180,11 @@ function complete(task: App.Crm.Data.TaskRowData) {
     router.post(`/aufgaben/${task.id}/erledigt`, {}, { preserveScroll: true });
 }
 
-/* crm.css, inlined. The token scope on the wrapper stays — data-theme="crm"
-   is both selector prefix and token scope, and only the first is going. */
+/* crm.css, inlined. */
+const HROW =
+    "flex items-center gap-3 px-8 pt-[22px] max-[640px]:px-5 max-[640px]:pt-4";
+const H1 =
+    "m-0 mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px] max-[640px]:leading-[1.08]";
 const BTN_BASE =
     "inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] border-0 px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] leading-[1.45] whitespace-nowrap no-underline transition-[filter,background-color] duration-[.12s] ease-out";
 const BTN = `${BTN_BASE} bg-action text-white hover:brightness-[1.08]`;
@@ -205,15 +208,15 @@ const FLAG =
 
 <template>
     <AdminLayout active="uebersicht">
-        <div data-theme="crm">
-            <div class="flex items-center gap-3 px-8 pt-[22px]">
+        <div data-tokens="crm">
+            <div :class="HROW">
                 <div>
                     <div
                         class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.05em] uppercase text-ink-2"
                     >
                         {{ heading }}
                     </div>
-                    <h1>{{ $t("dashboard.title") }}</h1>
+                    <h1 :class="H1">{{ $t("dashboard.title") }}</h1>
                 </div>
 
                 <!-- Unbeantwortet, not ungelesen: ThreadParticipant carries no

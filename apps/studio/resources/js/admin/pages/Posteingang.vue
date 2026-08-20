@@ -112,6 +112,46 @@ function rotate() {
 
 const threaded = computed(() => props.groups.some((group) => group.rows.length > 0))
 
+/* crm.css .queue — the conversations, grouped by working state. */
+const QUEUE = 'w-58 flex-none overflow-y-auto bg-sunk pt-3.5 max-[1080px]:w-[200px]'
+const QUEUE_H2 = 'm-0 flex items-baseline px-3.5 pb-2 [a+&]:pt-5'
+const QUEUE_B = 'text-[12.5px] leading-none font-semibold tracking-[-0.012em]'
+const QUEUE_N = 'ml-auto text-[11px] leading-[1.47] tabular-nums text-ink-2'
+const QUEUE_A = 'block px-3.5 py-[9px] text-inherit no-underline shadow-[inset_0_1px_0_#ECECEE]'
+const QUEUE_NM = 'text-[12.5px] leading-[1.47] font-semibold tracking-[-0.012em]'
+const QUEUE_MT = 'mt-px text-[11.5px] leading-[1.47]'
+
+/* crm.css .detail — the thread itself. */
+const DETAIL = 'min-w-0 flex-1 overflow-y-auto px-[26px] pt-4 pb-5'
+const CRUMB = 'text-[11.5px] leading-[1.47] text-ink-2'
+const TITLE = 'mt-[5px] flex items-start gap-3.5'
+const H1 = 'm-0 mt-0.5 text-[25px] leading-[1.08] font-semibold tracking-[-0.032em]'
+const ACTS = 'ml-auto flex items-center gap-2'
+
+/* crm.css .msg — one message inside the conversation. */
+const MSG = 'py-3 shadow-[inset_0_1px_0_var(--rule)]'
+const MSG_OWN = 'pl-3.5 shadow-[inset_0_1px_0_var(--rule),inset_2px_0_0_var(--sunk-2)]'
+const MSG_HEAD = 'flex items-baseline gap-[9px]'
+const MSG_N = 'text-[13px] leading-[1.47] font-semibold tracking-[-0.012em]'
+const MSG_T = 'ml-auto text-[11.5px] leading-[1.47] tabular-nums text-ink-2'
+const MSG_BODY = 'mt-[5px] max-w-[68ch] text-[13.5px] leading-[1.55]'
+
+/* crm.css .composer / .field / .btn / .btn-2 — the reply, written in place. */
+const COMPOSER = 'mt-4 pt-1 pb-0.5'
+const FIELD = 'flex flex-col gap-1 [&>span]:pl-0.5 [&>span]:text-[10.5px] [&>span]:leading-none [&>span]:font-normal [&>span]:tracking-[0.05em] [&>span]:uppercase [&>span]:text-ink-2'
+const FOOT = 'mt-2.5 flex items-center gap-3'
+const BTN_BASE = 'inline-flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] border-0 px-3.5 py-1.5 text-[12.5px] leading-[1.47] font-medium tracking-[-0.01em] whitespace-nowrap no-underline transition-[filter,background-color] duration-[.12s] ease-out'
+const BTN = `${BTN_BASE} bg-action text-white hover:brightness-[1.08]`
+const BTN_2 = `${BTN_BASE} bg-sunk-2 text-foreground hover:bg-[#E9E9EC]`
+
+/* crm.css .rail — who is on the thread, and what it belongs to. */
+const RAIL = 'w-70 flex-none overflow-y-auto bg-sunk px-5 py-4 max-[1080px]:hidden'
+const RAIL_H2 = 'm-0 mb-[9px] text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2'
+const RAIL_P = 'flex items-center gap-2 py-[5px] text-[12.5px] leading-[1.47]'
+const RAIL_ITEM = 'py-2 shadow-[inset_0_1px_0_#ECECEE]'
+const RAIL_N = 'text-[12.5px] leading-[1.47] font-semibold tracking-[-0.012em]'
+const RAIL_M = 'mt-px text-[11.5px] leading-[1.47] text-ink-2'
+
 function receivedAt(iso: string) {
   return new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
@@ -128,64 +168,62 @@ function receivedAt(iso: string) {
 
     <!-- C-14 (#250): conversations, grouped by working state. A queue on the
          left, the thread on the right, its trace beside it. -->
-    <div v-if="threaded" data-theme="crm" style="display: flex; min-height: 60vh; margin-top: var(--s5)">
-      <div class="queue">
+    <div v-if="threaded" data-tokens="crm" style="display: flex; min-height: 60vh; margin-top: var(--s5)">
+      <div :class="QUEUE">
         <template v-for="group in groups" :key="group.key">
-          <h2 v-if="group.rows.length">
-            <b>{{ $t(`inbox.group.${group.key}`) }}</b>
-            <span class="n">{{ group.rows.length }}</span>
+          <h2 v-if="group.rows.length" :class="QUEUE_H2">
+            <b :class="QUEUE_B">{{ $t(`inbox.group.${group.key}`) }}</b>
+            <span :class="QUEUE_N">{{ group.rows.length }}</span>
           </h2>
 
           <a
             v-for="row in group.rows"
             :key="row.id"
             href="#"
-            :class="{ on: open?.id === row.id }"
+            :class="[QUEUE_A, open?.id === row.id && 'bg-paper']"
             @click.prevent="show(row.id)"
           >
-            <span class="nm">{{ row.who }}</span>
+            <span :class="QUEUE_NM">{{ row.who }}</span>
             <!-- The project name under the sender, not the mail address:
                  which booking a message is about is what one triages on. -->
-            <span class="mt">{{ row.project ?? $t('inbox.general') }}</span>
+            <span :class="[QUEUE_MT, 'text-ink-2']">{{ row.project ?? $t('inbox.general') }}</span>
             <span
               v-if="row.waitingDays !== null && row.waitingDays >= NOTICEABLE_DAYS"
-              class="mt warn"
+              :class="[QUEUE_MT, 'text-action']"
             >{{ $t('inbox.waiting', row.waitingDays) }}</span>
           </a>
         </template>
       </div>
 
-      <!-- detail und title bleiben: [data-theme="crm"] .detail .title h1 setzt die
-           25px der Überschrift, und eine Elementregel schlägt jede Utility. -->
-      <div class="detail">
+      <div :class="DETAIL">
         <template v-if="open">
-          <div class="title">
+          <div :class="TITLE">
             <div>
-              <div class="crumb">{{ $t(`inbox.origin.${open.origin}`) }}</div>
-              <h1>{{ open.subject }}</h1>
+              <div :class="CRUMB">{{ $t(`inbox.origin.${open.origin}`) }}</div>
+              <h1 :class="H1">{{ open.subject }}</h1>
             </div>
-            <div class="acts">
-              <button class="btn-2" type="button" @click="close(open.id)">
+            <div :class="ACTS">
+              <button :class="BTN_2" type="button" @click="close(open.id)">
                 {{ open.state === 'erledigt' ? $t('inbox.reopen') : $t('inbox.done') }}
               </button>
             </div>
           </div>
 
-          <div class="msg" v-for="message in open.messages" :key="message.id" :class="{ own: message.own }">
-            <div class="head">
-              <span class="n">{{ message.who }}</span>
-              <span class="t">{{ receivedAt(message.at) }}</span>
+          <div v-for="message in open.messages" :key="message.id" :class="[MSG, message.own && MSG_OWN]">
+            <div :class="MSG_HEAD">
+              <span :class="MSG_N">{{ message.who }}</span>
+              <span :class="MSG_T">{{ receivedAt(message.at) }}</span>
             </div>
-            <div class="body">{{ message.body }}</div>
+            <div :class="MSG_BODY">{{ message.body }}</div>
           </div>
 
-          <form class="composer" @submit.prevent="send">
-            <div class="field">
+          <form :class="COMPOSER" @submit.prevent="send">
+            <div :class="FIELD">
               <span>{{ $t('inbox.reply') }}</span>
-              <textarea v-model="reply.body" rows="3" />
+              <textarea v-model="reply.body" rows="3" class="mb-3" />
             </div>
-            <div class="foot">
-              <button class="btn" type="submit" :disabled="reply.processing || !reply.body">
+            <div :class="FOOT">
+              <button :class="[BTN, 'ml-auto']" type="submit" :disabled="reply.processing || !reply.body">
                 {{ $t('inbox.send') }}
               </button>
             </div>
@@ -193,15 +231,15 @@ function receivedAt(iso: string) {
         </template>
       </div>
 
-      <aside v-if="open" class="rail">
-        <h2>{{ $t('inbox.people') }}</h2>
-        <div v-for="person in open.people" :key="person" class="p">{{ person }}</div>
+      <aside v-if="open" :class="RAIL">
+        <h2 :class="RAIL_H2">{{ $t('inbox.people') }}</h2>
+        <div v-for="person in open.people" :key="person" :class="RAIL_P">{{ person }}</div>
 
         <template v-if="open.projectName">
-          <h2>{{ $t('inbox.project') }}</h2>
-          <div class="item">
-            <Link class="n" :href="`/auftraege/${open.projectId}`">{{ open.projectName }}</Link>
-            <div v-if="open.shootDate" class="m">{{ receivedAt(open.shootDate) }}</div>
+          <h2 :class="RAIL_H2">{{ $t('inbox.project') }}</h2>
+          <div :class="RAIL_ITEM">
+            <Link :class="RAIL_N" :href="`/auftraege/${open.projectId}`">{{ open.projectName }}</Link>
+            <div v-if="open.shootDate" :class="RAIL_M">{{ receivedAt(open.shootDate) }}</div>
           </div>
         </template>
       </aside>
