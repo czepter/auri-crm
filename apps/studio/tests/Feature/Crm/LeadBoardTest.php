@@ -3,6 +3,7 @@
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
+use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -296,4 +297,16 @@ it('lets the url outrank what the user last chose, and remembers a choice', func
 
 it('falls back to the board when the user has chosen nothing', function () {
     expect(boardProps()['view'])->toBe('board');
+});
+
+// A booked record is a project and stands at /projekte. Leaving it here too
+// shows the same case twice, under two vocabularies.
+it('leaves booked cases off the board', function () {
+    $lead = leadOn('2026-06-14', LeadStage::ContractSent);
+    Job::factory()->for($lead->project)->create();
+
+    leadOn('2026-07-11', LeadStage::New, name: 'Petersen');
+
+    expect(collect(boardProps()['columns'])->pluck('cards')->flatten(1)->pluck('stage')->all())
+        ->toBe([LeadStage::New->value]);
 });

@@ -3,6 +3,7 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Catalog\Models\Package;
+use App\Crm\Actions\AdvanceLeadStage;
 use App\Crm\Actions\BookProject;
 use App\Crm\Actions\CheckDateAvailability;
 use App\Crm\Actions\DeriveProjectPosition;
@@ -13,10 +14,10 @@ use App\Crm\Data\ProjectRowData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\CrewRole;
+use App\Crm\Enums\FormFieldType;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
-use App\Crm\Enums\FormFieldType;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -48,6 +49,7 @@ class ProjectController extends Controller
     public function __construct(
         private readonly DeriveProjectPosition $position,
         private readonly CheckDateAvailability $availability,
+        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /**
@@ -65,6 +67,10 @@ class ProjectController extends Controller
 
         $projects = Project::query()
             ->visibleTo(auth('staff')->user())
+            // Booked only. An unbooked project is an inquiry and belongs on
+            // the board at /anfragen; listing it here shows the same record
+            // twice under two vocabularies.
+            ->whereHas('job')
             ->with(['primaryShoot', 'lead', 'job', 'shoots', 'contacts'])
             ->get()
             ->sortBy(fn (Project $project) => $project->primaryShoot?->date?->toDateString() ?? '9999-99-99')
@@ -145,8 +151,11 @@ class ProjectController extends Controller
                 ->map(fn (LeadSource $source) => ['value' => $source->value, 'label' => $source->label()])->all(),
             'roles' => collect(ProjectContactRole::cases())
                 ->map(fn (ProjectContactRole $role) => ['value' => $role->value, 'label' => $role->value])->all(),
+            'presets' => ['source' => $this->settings->leadPresets('source')],
             'stage' => $project->lead?->stage->value,
             'source' => $project->lead?->source->value,
+            'sourceOther' => $project->lead?->source_other,
+            'sourceLabel' => $project->lead?->sourceLabel(),
             'galleries' => $project->galleries()->get()->map(fn ($gallery) => [
                 'id' => $gallery->public_id,
                 'title' => $gallery->title,
@@ -171,7 +180,7 @@ class ProjectController extends Controller
      * have their own form at their own section. Nobody should have to unlock
      * the whole record to write one line.
      */
-    public function update(Request $request, Project $project): RedirectResponse
+    public function update(Request $request, Project $project, AdvanceLeadStage $advance): RedirectResponse
     {
         $this->authorize('manageShoots', $project);
 
@@ -179,6 +188,7 @@ class ProjectController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'stage' => ['nullable', Rule::enum(LeadStage::class)],
             'source' => ['nullable', Rule::enum(LeadSource::class)],
+            'source_other' => ['nullable', 'string', 'max:120'],
             'people' => ['array'],
             'people.*.id' => ['required', 'string', 'size:24'],
             'people.*.role' => ['required', Rule::enum(ProjectContactRole::class)],
@@ -191,14 +201,22 @@ class ProjectController extends Controller
             'shoots.*.venue_city' => ['nullable', 'string', 'max:255'],
         ]);
 
-        DB::transaction(function () use ($project, $validated) {
+        DB::transaction(function () use ($project, $validated, $advance) {
             $project->update(['name' => $validated['name']]);
 
             if ($project->lead !== null) {
                 $project->lead->update(array_filter([
-                    'stage' => $validated['stage'] ?? null,
                     'source' => $validated['source'] ?? null,
-                ]));
+                ]) + ['source_other' => $validated['source_other'] ?? null]);
+
+                // Through the action, not as a column: it is the only writer
+                // of the stage, and "Gebucht" set here has to book the project
+                // exactly as the board's own move does.
+                $stage = isset($validated['stage']) ? LeadStage::from($validated['stage']) : null;
+
+                if ($stage !== null && $stage !== $project->lead->stage) {
+                    $advance($project->lead, $stage, auth('staff')->user());
+                }
             }
 
             foreach ($validated['people'] ?? [] as $person) {

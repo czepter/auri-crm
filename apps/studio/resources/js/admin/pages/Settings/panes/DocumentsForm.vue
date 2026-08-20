@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import { basisPointsToPercent, percentToBasisPoints } from '@/admin/lib/money'
-import { Input } from '@/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Textarea } from '@/ui/textarea'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
@@ -43,7 +43,10 @@ defineExpose({ form, submit })
           :hint="$t('settings.quoteValidityHint')"
           :error="form.errors.quote_validity_days"
         >
-          <Input id="d-gueltigkeit" v-model.number="form.quote_validity_days" class="tabular-nums" type="number" min="0" />
+          <InputGroup>
+            <InputGroupInput id="d-gueltigkeit" v-model.number="form.quote_validity_days" class="tabular-nums" type="number" min="0" />
+            <InputGroupAddon align="inline-end">{{ $t('common.unitDays') }}</InputGroupAddon>
+          </InputGroup>
         </Field>
       </div>
     </div>
@@ -53,10 +56,16 @@ defineExpose({ form, submit })
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.paymentTermLabel')" id="d-zahlungsziel" :error="form.errors.payment_term_days" :hint="$t('settings.paymentTermHint')">
-            <Input id="d-zahlungsziel" v-model.number="form.payment_term_days" class="tabular-nums" type="number" min="0" />
+            <InputGroup>
+              <InputGroupInput id="d-zahlungsziel" v-model.number="form.payment_term_days" class="tabular-nums" type="number" min="0" />
+              <InputGroupAddon align="inline-end">{{ $t('common.unitDays') }}</InputGroupAddon>
+            </InputGroup>
           </Field>
-          <Field :label="$t('settings.depositPercentageLabel')" id="d-anzahlung" :error="form.errors.deposit_percentage" :hint="$t('settings.depositPercentageHint')">
-            <Input id="d-anzahlung" v-model="form.deposit_percentage" class="tabular-nums" type="text" inputmode="decimal" />
+          <Field :label="$t('settings.depositPercentageLabel')" id="d-anzahlung" :error="form.errors.deposit_percentage">
+            <InputGroup>
+              <InputGroupInput id="d-anzahlung" v-model="form.deposit_percentage" class="tabular-nums" type="text" inputmode="decimal" />
+              <InputGroupAddon align="inline-end">{{ $t('common.unitPercent') }}</InputGroupAddon>
+            </InputGroup>
           </Field>
         </div>
       </div>

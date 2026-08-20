@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, watch } from 'vue'
-import { router, useForm } from '@inertiajs/vue3'
+import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectHeader from '@/admin/components/ProjectHeader.vue'
 import { Button } from '@/ui/button'
@@ -49,39 +49,39 @@ onBeforeUnmount(clearPoll)
   <AdminLayout active="anfragen">
     <ProjectHeader :header="header" active="contract" />
 
-    <div class="card static" style="max-width: 640px; margin-top: var(--s5)">
-      <div class="cardhead"><span class="kick">{{ $t('project.contract') }}</span></div>
+    <div class="relative mt-6 block max-w-[640px] cursor-default rounded-md border border-border p-2.5 text-inherit no-underline">
+      <div class="mb-4 flex items-center justify-between"><span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('project.contract') }}</span></div>
 
-      <div v-if="contract" class="tiles">
-        <div class="fact">
-          <div class="l">{{ $t('project.contractTemplate') }}</div>
-          <div class="v">{{ contract.templateName }}</div>
-          <div class="s">v{{ contract.templateVersion }}</div>
+      <div v-if="contract" class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-2.5">
+        <div class="rounded-md bg-muted px-4 pt-3.5 pb-4">
+          <div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('project.contractTemplate') }}</div>
+          <div class="mt-[9px] text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ contract.templateName }}</div>
+          <div class="mt-1 text-[12.5px] leading-[1.3] tabular-nums text-muted-foreground">v{{ contract.templateVersion }}</div>
         </div>
-        <div class="fact">
-          <div class="l">{{ $t('project.contractStatus') }}</div>
-          <div class="v">{{ contract.statusLabel }}</div>
+        <div class="rounded-md bg-muted px-4 pt-3.5 pb-4">
+          <div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('project.contractStatus') }}</div>
+          <div class="mt-[9px] text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ contract.statusLabel }}</div>
         </div>
       </div>
-      <p v-else class="hint">{{ $t('project.contractNone') }}</p>
+      <p v-else-if="!header.canManageContracts || !templates.length" class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('project.contractNone') }}</p>
 
-      <p v-if="contract?.status === 'pending'" class="hint">{{ $t('project.contractPending') }}</p>
+      <p v-if="contract?.status === 'pending'" class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('project.contractPending') }}</p>
 
       <Button as="a"
         v-if="contract?.downloadUrl" variant="ghost"
         :href="contract.downloadUrl"
         download
-        style="margin-top: var(--s3)"
+        class="mt-2.5"
       >
         {{ $t('project.contractDownload') }}
       </Button>
 
       <form
         v-if="header.canManageContracts && templates.length"
-        style="margin-top: var(--s4)"
+        class="mt-4"
         @submit.prevent="generate"
       >
-        <div class="fld grp">
+        <div class="mb-6 flex min-w-0 flex-col gap-1.5">
           <Label for="template">{{ $t('project.contractTemplate') }}</Label>
           <Select :model-value="form.template" @update:model-value="(value) => (form.template = String(value))">
             <SelectTrigger id="template">
@@ -98,7 +98,9 @@ onBeforeUnmount(clearPoll)
           {{ $t('project.contractGenerate') }}
         </Button>
       </form>
-      <p v-else-if="header.canManageContracts" class="hint">{{ $t('project.contractNoTemplates') }}</p>
+      <Button v-else-if="header.canManageContracts" :as="Link" href="/dokumentvorlagen/neu" class="mt-4">
+        {{ $t('documentTemplates.create') }}
+      </Button>
     </div>
   </AdminLayout>
 </template>

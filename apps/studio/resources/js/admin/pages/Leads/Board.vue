@@ -2,6 +2,15 @@
 import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/ui/alert-dialog'
 
 type Card = App.Crm.Data.LeadCardData
 type Column = { stage: string; label: string; cards: Card[]; total: number }
@@ -73,8 +82,24 @@ function reset() {
   insertAt.value = null
 }
 
+// The move to "Gebucht" is the booking (AdvanceLeadStage): the job is
+// written, the shoots go to booked and the card leaves this board for
+// /projekte. Every other move is a stage correction and asks nothing.
+const booking = ref<string | null>(null)
+
 function move(leadId: string, stage: string) {
+  if (stage === 'booked') {
+    booking.value = leadId
+
+    return
+  }
+
   router.post(`/anfragen/${leadId}/stufe`, { stage }, { preserveScroll: true })
+}
+
+function book() {
+  router.post(`/anfragen/${booking.value}/stufe`, { stage: 'booked' }, { preserveScroll: true })
+  booking.value = null
 }
 
 // Without a mouse, and that is not optional: dragging a row across six
@@ -266,6 +291,19 @@ const STAGE_DOT = ['bg-foreground', 'bg-[#5F5F63]', 'bg-[#A1A1A6]', 'bg-action',
           {{ column.label }}
         </div>
       </div>
+
+      <AlertDialog :open="booking !== null" @update:open="(open: boolean) => { if (!open) booking = null }">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{{ $t('board.bookTitle') }}</AlertDialogTitle>
+          </AlertDialogHeader>
+          <p>{{ $t('board.bookConsequence') }}</p>
+          <AlertDialogFooter>
+            <AlertDialogAction @click="book">{{ $t('board.book') }}</AlertDialogAction>
+            <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   </AdminLayout>
 </template>

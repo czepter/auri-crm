@@ -32,9 +32,11 @@ use App\Http\Controllers\Staff\DevLoginController;
 use App\Http\Controllers\Staff\InvitationController;
 use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
+use App\Http\Controllers\Staff\NotificationController;
 use App\Http\Controllers\Staff\OAuthAuthorizationController;
 use App\Http\Controllers\Staff\OAuthTokenController;
 use App\Http\Controllers\Staff\PasswordResetController;
+use App\Http\Controllers\Staff\ProfileController;
 use App\Http\Controllers\Staff\SessionController;
 use App\Http\Controllers\Staff\SetupController;
 use App\Media\Http\Controllers\FailedAssetController;
@@ -105,6 +107,11 @@ Route::middleware('guest:staff')->group(function () {
     Route::get('/passwort/neu/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
     Route::post('/passwort/neu', [PasswordResetController::class, 'update'])->name('password.update');
 });
+
+// Neither guest nor staff: the person following it is reading the new inbox,
+// which may not be the browser holding the session.
+Route::get('/profil/e-mail-bestaetigen/{token}', [ProfileController::class, 'confirmEmail'])
+    ->name('profile.email.confirm');
 
 Route::middleware('audience:staff')->group(function () {
     Route::post('/logout', [SessionController::class, 'destroy']);
@@ -189,6 +196,25 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/dokumentvorlagen/{documentTemplate}', [DocumentTemplateController::class, 'update'])
             ->name('document-templates.update');
 
+        // T-11's inbox. The in_app transport has written rows since E-07;
+        // this is the first screen that reads them.
+        Route::get('/benachrichtigungen', [NotificationController::class, 'index'])
+            ->name('notifications.index');
+        Route::post('/benachrichtigungen/gelesen', [NotificationController::class, 'markRead'])
+            ->name('notifications.read');
+
+        // The person, not the studio — /einstellungen is the studio's, this
+        // is the account whoever is signed in holds. Ungated: everybody with
+        // a session has one.
+        Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/profil', [ProfileController::class, 'update'])->name('profile.update');
+        Route::put('/profil/passwort', [ProfileController::class, 'updatePassword'])
+            ->name('profile.password');
+        Route::post('/profil/wiederherstellungscodes', [ProfileController::class, 'regenerateRecoveryCodes'])
+            ->name('profile.recovery-codes');
+        Route::patch('/profil/benachrichtigungen', [ProfileController::class, 'updateNotifications'])
+            ->name('profile.notifications');
+
         Route::get('/team', [InvitationController::class, 'index'])->name('staff.index');
         Route::post('/team/einladungen', [InvitationController::class, 'store'])->name('staff.invite');
         Route::delete('/team/einladungen/{invitation}', [InvitationController::class, 'destroy'])
@@ -247,6 +273,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen/dokumente', [StudioSettingsController::class, 'updateDocuments'])->name('settings.documents.update');
         Route::patch('/einstellungen/allgemein', [StudioSettingsController::class, 'updateGeneral'])->name('settings.general.update');
         Route::patch('/einstellungen/email', [StudioSettingsController::class, 'updateMail'])->name('settings.mail.update');
+        Route::patch('/einstellungen/erfassung', [StudioSettingsController::class, 'updateCapture'])->name('settings.capture.update');
 
         Route::get('/einstellungen/nummernkreise', [NumberRangeController::class, 'index'])
             ->name('number-ranges.index');

@@ -31,6 +31,13 @@ class CaptureInquiryData extends Data
         public ?string $inquiry_text,
         public ?string $referred_by_contact_id,
         /**
+         * What "Sonstige" actually was. Only ever set beside the Other case
+         * of its own field — Project and Lead clear it otherwise.
+         */
+        public ?string $type_other = null,
+        public ?string $source_other = null,
+        public ?string $captured_via_other = null,
+        /**
          * C-09 (#244): one row per person — name, mail, phone — because
          * `contacts` holds the three in one row. A partner used to arrive as
          * a bare name and could never be reached; every further person is a
@@ -62,6 +69,9 @@ class CaptureInquiryData extends Data
             'type' => ['required', Rule::enum(ProjectType::class)],
             'source' => ['required', Rule::enum(LeadSource::class)],
             'captured_via' => ['required', Rule::enum(CaptureChannel::class)],
+            'type_other' => ['nullable', 'string', 'max:120'],
+            'source_other' => ['nullable', 'string', 'max:120'],
+            'captured_via_other' => ['nullable', 'string', 'max:120'],
 
             // Nullable and never checked against existing bookings. The
             // availability warning is advisory by design — see

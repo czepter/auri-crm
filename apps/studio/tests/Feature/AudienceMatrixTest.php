@@ -32,6 +32,12 @@ const PUBLIC_ROUTES = [
         'passwort/vergessen',
         'passwort/neu/{token}',
         'passwort/neu',
+        // The profile screen's e-mail change, confirmed from the new inbox —
+        // which may not be the browser holding the session, so no audience.
+        // The single-use token in the path is the whole credential; it signs
+        // nobody in, it swaps one column. Same story as the portal's own
+        // e-mail-bestaetigen/{token} below.
+        'profil/e-mail-bestaetigen/{token}',
         // N-04's token exchange: the MCP client calls this directly,
         // off-browser, with no staff session to hold an `audience:` guard —
         // the single-use authorization code and its PKCE verifier are the

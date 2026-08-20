@@ -87,6 +87,18 @@ it('labels each source from the enum rather than echoing the column', function (
         ->and($sources[0]['label'])->toBe(LeadSource::Referral->label());
 });
 
+it('splits Sonstige on its detail rather than pooling every odd source', function () {
+    Lead::factory()->create(['source' => LeadSource::Other, 'source_other' => 'Zeitungsartikel', 'stage' => LeadStage::New]);
+    Lead::factory()->count(2)->create(['source' => LeadSource::Other, 'source_other' => 'Firmenevent', 'stage' => LeadStage::New]);
+
+    $sources = collect(BookingFunnel::bySource(now()->subYear(), now()));
+
+    expect($sources)->toHaveCount(2)
+        ->and($sources->firstWhere('source', 'other:Firmenevent')['captured'])->toBe(2)
+        ->and($sources->firstWhere('source', 'other:Zeitungsartikel')['label'])
+        ->toBe('Sonstige — Zeitungsartikel');
+});
+
 it('names who referred the work', function () {
     $referrer = Contact::factory()->create(['name' => 'Marie Vogt']);
     Lead::factory()->count(2)->create(['referred_by_contact_id' => $referrer->id, 'stage' => LeadStage::New]);

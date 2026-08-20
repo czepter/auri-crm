@@ -39,6 +39,7 @@ class LeadBoardController extends Controller
 
         $leads = Lead::query()
             ->open()
+            ->unbooked()
             ->with(['project.contacts', 'project.shoots', 'project.primaryShoot', 'project.latestQuote'])
             ->orderByDesc('stage_entered_at')
             ->get();

@@ -15,7 +15,9 @@ use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Http\Controllers\Controller;
 use App\Quotes\Data\QuoteData;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\RecordVisit;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -52,7 +54,10 @@ class LeadCaseController extends Controller
         'angenommen' => [LeadStage::QuoteAccepted, LeadStage::ContractSent, LeadStage::Booked],
     ];
 
-    public function __construct(private readonly CheckDateAvailability $availability) {}
+    public function __construct(
+        private readonly CheckDateAvailability $availability,
+        private readonly StudioSettingsResolver $settings,
+    ) {}
 
     public function show(Lead $lead): Response
     {
@@ -76,13 +81,15 @@ class LeadCaseController extends Controller
                 'projectId' => $project->public_id,
                 'name' => $project->name,
                 'type' => $project->type->value,
-                'typeLabel' => $project->type->label(),
+                'typeOther' => $project->type_other,
+                'typeLabel' => $project->typeLabel(),
                 'source' => $lead->source->value,
-                'sourceLabel' => $lead->source->label(),
+                'sourceOther' => $lead->source_other,
+                'sourceLabel' => $lead->sourceLabel(),
                 'stage' => $lead->stage->value,
                 'stageLabel' => $lead->stage->label(),
                 'inquiryText' => $lead->inquiry_text,
-                'capturedVia' => $lead->captured_via,
+                'capturedVia' => $lead->capturedViaLabel(),
                 'capturedAt' => $lead->created_at->toIso8601String(),
                 'booked' => $project->job()->exists(),
             ],
@@ -125,6 +132,10 @@ class LeadCaseController extends Controller
                 ->map(fn (ProjectType $type) => ['value' => $type->value, 'label' => $type->label()])->all(),
             'sources' => collect(LeadSource::cases())
                 ->map(fn (LeadSource $source) => ['value' => $source->value, 'label' => $source->label()])->all(),
+            'presets' => [
+                'type' => $this->settings->leadPresets('type'),
+                'source' => $this->settings->leadPresets('source'),
+            ],
             'week' => $this->week($project, $primary?->date?->format('Y-m-d')),
             'conflicts' => $this->availability->forDate($primary?->date?->format('Y-m-d'), $project),
         ]);
@@ -156,7 +167,9 @@ class LeadCaseController extends Controller
 
         $validated = $request->validate([
             'type' => ['required', Rule::enum(ProjectType::class)],
+            'type_other' => ['nullable', 'string', 'max:120'],
             'source' => ['required', Rule::enum(LeadSource::class)],
+            'source_other' => ['nullable', 'string', 'max:120'],
             'inquiry_text' => ['nullable', 'string', 'max:10000'],
             'people' => ['array'],
             'people.*.id' => ['required', 'string', 'size:24'],
@@ -177,9 +190,13 @@ class LeadCaseController extends Controller
         abort_if($booked && ($validated['shoots'] ?? []) !== [], 422);
 
         DB::transaction(function () use ($project, $lead, $validated, $booked) {
-            $project->update(['type' => $validated['type']]);
+            $project->update([
+                'type' => $validated['type'],
+                'type_other' => $validated['type_other'] ?? null,
+            ]);
             $lead->update([
                 'source' => $validated['source'],
+                'source_other' => $validated['source_other'] ?? null,
                 'inquiry_text' => $validated['inquiry_text'] ?? null,
             ]);
 
@@ -223,6 +240,7 @@ class LeadCaseController extends Controller
     {
         $leads = Lead::query()
             ->open()
+            ->unbooked()
             ->with(['project.contacts', 'project.primaryShoot'])
             ->get();
 
@@ -253,7 +271,7 @@ class LeadCaseController extends Controller
             return [];
         }
 
-        $from = \Carbon\CarbonImmutable::parse($date)->subDays(3);
+        $from = CarbonImmutable::parse($date)->subDays(3);
 
         return Shoot::query()
             ->with('project')

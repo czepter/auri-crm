@@ -25,11 +25,21 @@ class NotificationPreferences
             return false;
         }
 
+        return ! $this->enabled($notifiable, $notification::class, $channel);
+    }
+
+    /**
+     * The same lookup by class name rather than by instance — what a
+     * preferences screen renders its checkboxes from, where no notification
+     * has been constructed and none should have to be.
+     */
+    public function enabled(Model $notifiable, string $notificationClass, string $channel): bool
+    {
         $row = NotificationPreference::query()
             ->where('notifiable_type', $notifiable->getMorphClass())
             ->where('notifiable_id', $notifiable->getKey())
             ->where('channel', $channel)
-            ->whereIn('notification_class', [$notification::class, '*'])
+            ->whereIn('notification_class', [$notificationClass, '*'])
             ->get()
             // An exact class match says more than the wildcard: a staff
             // member who turned off "Angebot versendet" specifically, but
@@ -37,7 +47,7 @@ class NotificationPreferences
             ->sortBy(fn (NotificationPreference $row) => $row->notification_class === '*' ? 1 : 0)
             ->first();
 
-        return $row !== null && ! $row->enabled;
+        return $row === null || $row->enabled;
     }
 
     /**

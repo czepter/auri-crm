@@ -4,6 +4,7 @@ use App\Crm\Actions\AdvanceLeadStage;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Events\LeadLost;
 use App\Crm\Events\LeadStageChanged;
+use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Models\AuditLog;
 use App\Models\User;
@@ -111,3 +112,24 @@ it('refuses to lose a lead twice', function () {
 
     app(AdvanceLeadStage::class)->markLost($lead, 'Nochmal');
 })->throws(DomainException::class);
+
+// "Gebucht" is the booking, not a label for one: without the job the record
+// stands in neither list — /anfragen leaves booked ones out, /projekte reads
+// the job.
+it('books the project when the lead reaches gebucht', function () {
+    $lead = Lead::factory()->atStage(LeadStage::ContractSent)->create();
+
+    app(AdvanceLeadStage::class)($lead, LeadStage::Booked, User::factory()->create());
+
+    expect($lead->project->job()->exists())->toBeTrue();
+});
+
+it('leaves an existing job alone when the stage catches up', function () {
+    $lead = Lead::factory()->atStage(LeadStage::ContractSent)->create();
+    $job = Job::factory()->for($lead->project)->create();
+
+    app(AdvanceLeadStage::class)($lead, LeadStage::Booked, User::factory()->create());
+
+    expect($lead->project->job()->count())->toBe(1)
+        ->and($lead->project->job->is($job))->toBeTrue();
+});

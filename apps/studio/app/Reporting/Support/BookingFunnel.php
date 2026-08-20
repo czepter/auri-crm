@@ -53,6 +53,9 @@ class BookingFunnel
      * the studio will actually invoice, and a quote can be accepted at one
      * figure and planned at another.
      *
+     * "Sonstige" splits on its free-text detail: a bucket holding
+     * Tierfotografie beside Firmenevent answers nothing.
+     *
      * The label comes from LeadSource, not from a parallel i18n namespace:
      * the enum already names each case in German for the lead board, and a
      * second list of the same five words is a second thing to keep in step.
@@ -63,20 +66,25 @@ class BookingFunnel
     {
         return Lead::query()
             ->selectRaw('leads.source')
+            ->selectRaw('leads.source_other')
             ->selectRaw('count(*) as captured')
             ->selectRaw('count(*) filter (where leads.stage = ?) as booked', [LeadStage::Booked->value])
             ->selectRaw('coalesce(sum(payment_plans.total), 0) as revenue')
             ->leftJoin('jobs', 'jobs.project_id', '=', 'leads.project_id')
             ->leftJoin('payment_plans', 'payment_plans.job_id', '=', 'jobs.id')
             ->whereBetween('leads.created_at', [$from, $to])
-            ->groupBy('leads.source')
+            ->groupBy('leads.source', 'leads.source_other')
             ->orderByDesc('captured')
             ->get()
             // `source` arrives as a LeadSource, not a string: Lead casts the
             // column, and a raw select does not opt out of that.
             ->map(fn ($row) => [
-                'source' => $row->source->value,
-                'label' => $row->source->label(),
+                // The detail rides in the key too: "Sonstige" split three ways
+                // is three rows, and a row needs a key of its own.
+                'source' => $row->source->value.($row->source_other === null ? '' : ':'.$row->source_other),
+                'label' => $row->source_other === null
+                    ? $row->source->label()
+                    : $row->source->label().' — '.$row->source_other,
                 'captured' => (int) $row->captured,
                 'booked' => (int) $row->booked,
                 'revenue' => (int) $row->revenue,

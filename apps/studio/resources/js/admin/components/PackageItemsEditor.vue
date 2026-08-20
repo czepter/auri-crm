@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Field } from '@/ui/field'
 import { Label } from '@/ui/label'
 
@@ -56,14 +57,17 @@ function removeRow(index: number) {
           <Label :for="`item-price-${index}`">
             {{ $t('packages.itemPrice') }}
           </Label>
-          <Input
-            :id="`item-price-${index}`"
-            v-model="item.unitPrice"
-            class="tabular-nums"
-            type="text"
-            inputmode="decimal"
-            :placeholder="$t('packages.itemPriceHint')"
-          />
+          <InputGroup>
+            <InputGroupInput
+              :id="`item-price-${index}`"
+              v-model="item.unitPrice"
+              class="tabular-nums"
+              type="text"
+              inputmode="decimal"
+              :placeholder="$t('packages.itemPriceHint')"
+            />
+            <InputGroupAddon align="inline-end">{{ $t('common.unitEuro') }}</InputGroupAddon>
+          </InputGroup>
         </Field>
       </div>
     </div>

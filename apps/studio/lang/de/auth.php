@@ -29,4 +29,9 @@ return [
     // which of the three it was is not something to tell the browser.
     'mfa_invalid' => 'Dieser Code ist nicht gültig.',
 
+    // Der Bestätigungslink aus der Profil-Mail — abgelaufen, verbraucht und
+    // nie existiert sind dieselbe Antwort.
+    'link_dead' => 'Dieser Link gilt nicht mehr. Bitte die Adresse erneut ändern.',
+    'email_taken' => 'Diese Adresse wird inzwischen von einem anderen Zugang benutzt.',
+
 ];

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -54,14 +53,8 @@ class MfaEnrollmentController extends Controller
             throw ValidationException::withMessages(['code' => __('auth.mfa_invalid')]);
         }
 
-        $recoveryCodes = collect(range(1, 8))
-            ->map(fn () => Str::lower(Str::random(5).'-'.Str::random(5)))
-            ->all();
-
-        $user->forceFill([
-            'mfa_confirmed_at' => now(),
-            'mfa_recovery_codes' => $recoveryCodes,
-        ])->save();
+        $user->forceFill(['mfa_confirmed_at' => now()])->save();
+        $recoveryCodes = $user->regenerateRecoveryCodes();
 
         AuditLogger::record('staff.mfa.enrolled', $user);
 

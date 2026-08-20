@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import { Button } from '@/ui/button'
@@ -110,6 +110,8 @@ function rotate() {
   router.post('/posteingang/adresse-erneuern', {}, { preserveScroll: true })
 }
 
+const threaded = computed(() => props.groups.some((group) => group.rows.length > 0))
+
 function receivedAt(iso: string) {
   return new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
@@ -117,9 +119,16 @@ function receivedAt(iso: string) {
 
 <template>
   <AdminLayout active="posteingang">
+    <div class="hrow">
+      <div>
+        <div class="kick">{{ $t('inbox.kicker') }}</div>
+        <h1>{{ $t('inbox.title') }}</h1>
+      </div>
+    </div>
+
     <!-- C-14 (#250): conversations, grouped by working state. A queue on the
          left, the thread on the right, its trace beside it. -->
-    <div data-theme="crm" style="display: flex; min-height: 60vh">
+    <div v-if="threaded" data-theme="crm" style="display: flex; min-height: 60vh; margin-top: var(--s5)">
       <div class="queue">
         <template v-for="group in groups" :key="group.key">
           <h2 v-if="group.rows.length">
@@ -146,6 +155,8 @@ function receivedAt(iso: string) {
         </template>
       </div>
 
+      <!-- detail und title bleiben: [data-theme="crm"] .detail .title h1 setzt die
+           25px der Überschrift, und eine Elementregel schlägt jede Utility. -->
       <div class="detail">
         <template v-if="open">
           <div class="title">
@@ -180,8 +191,6 @@ function receivedAt(iso: string) {
             </div>
           </form>
         </template>
-
-        <p v-else class="hint">{{ $t('inbox.noThreads') }}</p>
       </div>
 
       <aside v-if="open" class="rail">
@@ -196,13 +205,6 @@ function receivedAt(iso: string) {
           </div>
         </template>
       </aside>
-    </div>
-
-    <div class="hrow">
-      <div>
-        <div class="kick">{{ $t('inbox.kicker') }}</div>
-        <h1>{{ $t('inbox.title') }}</h1>
-      </div>
     </div>
 
     <div class="card static" style="margin-top: var(--s5)">
@@ -241,15 +243,15 @@ function receivedAt(iso: string) {
       <div class="cardhead"><span class="kick">{{ $t('inbox.unfiledTitle') }}</span></div>
 
       <div class="msg" style="gap: var(--s4); margin-top: var(--s3)">
-        <div v-for="row in unfiled" :key="row.id" class="msgrow">
-          <div class="msgtxt">
-            <div class="msgwho">
+        <div v-for="row in unfiled" :key="row.id" >
+          <div>
+            <div>
               {{ row.subject }}
               <em>{{ receivedAt(row.startedAt) }}</em>
             </div>
             <div v-if="row.snippet" class="msgbody" style="-webkit-line-clamp: unset">{{ row.snippet }}</div>
 
-            <div style="margin-top: var(--s3)">
+            <div class="mt-2.5">
               <template v-if="filing === row.id">
                 <Select v-model="chosenProject">
                   <SelectTrigger><SelectValue :placeholder="$t('inbox.chooseProject')" /></SelectTrigger>
@@ -275,28 +277,26 @@ function receivedAt(iso: string) {
       </div>
     </div>
 
-    <div class="card static" style="margin-top: var(--s4)">
+    <div v-if="pending.length" class="card static" style="margin-top: var(--s4)">
       <div class="cardhead"><span class="kick">{{ $t('inbox.triageTitle') }}</span></div>
 
-      <p v-if="!pending.length" class="hint">{{ $t('inbox.triageEmpty') }}</p>
-
-      <div v-else class="msg" style="gap: var(--s4); margin-top: var(--s3)">
-        <div v-for="row in pending" :key="row.id" class="msgrow">
-          <div class="msgtxt">
-            <div class="msgwho">
+      <div class="mt-2.5">
+        <div v-for="row in pending" :key="row.id" >
+          <div>
+            <div>
               {{ row.from }}
               <em>{{ receivedAt(row.receivedAt) }}</em>
               <em> · {{ row.stateLabel }}</em>
               <em v-if="row.reason"> · {{ $t(`inbox.reason.${row.reason}`) }}</em>
             </div>
-            <div v-if="row.subject" class="msgwho">{{ row.subject }}</div>
+            <div v-if="row.subject">{{ row.subject }}</div>
             <div class="msgbody" style="-webkit-line-clamp: unset">{{ row.body }}</div>
 
             <!-- Quarantined mail is shown and never attachable: it failed
                  DMARC, so the sender is not established, and attaching it
                  would put an unverified stranger into a client conversation
                  by hand instead of automatically. -->
-            <div v-if="row.state !== 'quarantined'" style="margin-top: var(--s3)">
+            <div v-if="row.state !== 'quarantined'" class="mt-2.5">
               <template v-if="attaching === row.id">
                 <Select v-model="chosenThread">
                   <SelectTrigger><SelectValue :placeholder="$t('inbox.chooseThread')" /></SelectTrigger>

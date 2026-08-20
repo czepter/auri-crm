@@ -117,6 +117,28 @@ it('saves occasion, source, text and the people from the case itself', function 
         ->and($contact->fresh()->email)->toBe('s.brandt@example.test');
 });
 
+it('saves the Sonstige detail from the case and drops it with the case', function () {
+    $lead = caseFor();
+
+    test()->patch("/anfragen/{$lead->public_id}", [
+        'type' => 'other',
+        'type_other' => 'Tierfotografie',
+        'source' => 'other',
+        'source_other' => 'Zeitungsartikel',
+    ])->assertRedirect();
+
+    expect($lead->project->fresh()->type_other)->toBe('Tierfotografie')
+        ->and($lead->fresh()->source_other)->toBe('Zeitungsartikel');
+
+    test()->patch("/anfragen/{$lead->public_id}", [
+        'type' => 'wedding',
+        'source' => 'website',
+    ])->assertRedirect();
+
+    expect($lead->project->fresh()->type_other)->toBeNull()
+        ->and($lead->fresh()->source_other)->toBeNull();
+});
+
 it('moves the shoot while it is an inquiry', function () {
     $lead = caseFor();
     $shoot = $lead->project->primaryShoot;

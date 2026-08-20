@@ -5,6 +5,7 @@ namespace App\Settings\Http\Controllers;
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
 use App\Settings\Data\PortalSettingsData;
+use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,6 +33,10 @@ class PortalSettingsController extends Controller
 
         return Inertia::render('Settings/Portal', [
             'settings' => PortalSettingsData::fromResolver($settings),
+            // The pane's preview draws the portal head, which is the
+            // studio's logo, pair and accent — none of which belongs in
+            // PortalSettingsData, all of which this DTO already carries.
+            'branding' => StudioSettingsData::fromResolver($settings),
         ]);
     }
 

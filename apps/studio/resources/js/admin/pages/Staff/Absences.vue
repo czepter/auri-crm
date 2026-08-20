@@ -52,7 +52,7 @@ function add() {
 
 <template>
   <AdminLayout active="abwesenheiten">
-    <div class="hrow" style="margin-bottom: var(--s5)">
+    <div class="mb-6 flex items-center gap-4">
       <h1>{{ $t('absences.title') }}</h1>
 
       <!-- The add form used to sit permanently at the foot of the page, below
@@ -73,8 +73,8 @@ function add() {
           </DialogHeader>
 
           <DialogBody>
-            <form id="absence-create-form" class="fgrid" @submit.prevent="add">
-              <div v-if="canManageCrew" class="fld wide">
+            <form id="absence-create-form" class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4" @submit.prevent="add">
+              <div v-if="canManageCrew" class="col-span-full flex min-w-0 flex-col gap-1.5">
                 <Label for="new-user">{{ $t('absences.person') }}</Label>
                 <Select
                   :model-value="toOption(newForm.user)"
@@ -89,7 +89,7 @@ function add() {
                   </SelectContent>
                 </Select>
               </div>
-              <div class="fld wide">
+              <div class="col-span-full flex min-w-0 flex-col gap-1.5">
                 <Label for="new-category">{{ $t('absences.category') }}</Label>
                 <Select :model-value="newForm.category" @update:model-value="(value) => (newForm.category = String(value))">
                   <SelectTrigger id="new-category">
@@ -102,15 +102,15 @@ function add() {
                   </SelectContent>
                 </Select>
               </div>
-              <div class="fld">
+              <div class="flex min-w-0 flex-col gap-1.5">
                 <Label for="new-starts">{{ $t('absences.startsOn') }}</Label>
                 <DatePicker id="new-starts" v-model="newForm.starts_on" />
-                <p v-if="newForm.errors.starts_on" class="err">{{ newForm.errors.starts_on }}</p>
+                <p v-if="newForm.errors.starts_on" class="text-[11.5px] leading-[1.45] text-destructive">{{ newForm.errors.starts_on }}</p>
               </div>
-              <div class="fld">
+              <div class="flex min-w-0 flex-col gap-1.5">
                 <Label for="new-ends">{{ $t('absences.endsOn') }}</Label>
                 <DatePicker id="new-ends" v-model="newForm.ends_on" />
-                <p v-if="newForm.errors.ends_on" class="err">{{ newForm.errors.ends_on }}</p>
+                <p v-if="newForm.errors.ends_on" class="text-[11.5px] leading-[1.45] text-destructive">{{ newForm.errors.ends_on }}</p>
               </div>
             </form>
           </DialogBody>
@@ -128,20 +128,18 @@ function add() {
     </div>
 
 
-    <section class="dsec" style="margin-top: 0">
-      <div class="panel">
-        <p v-if="absences.length === 0" class="hint" style="padding: var(--s3)">{{ $t('absences.empty') }}</p>
-
-        <div v-for="absence in absences" :key="absence.id" class="trow" style="align-items: flex-start">
-          <span class="pavatar">{{ absence.userName.slice(0, 1) }}</span>
-          <span class="pinfo">
-            <span class="pname">{{ absence.userName }}</span>
-            <span v-if="!absence.canManage" class="psub">{{ absence.categoryLabel }} · {{ absence.startsOn }} – {{ absence.endsOn }}</span>
+    <section>
+      <div v-if="absences.length" class="overflow-hidden rounded-md border border-border">
+        <div v-for="absence in absences" :key="absence.id" class="flex items-start gap-2.5 border-t border-border p-2.5 text-inherit no-underline transition-[background-color] duration-[.12s] ease-out first:border-t-0 hover:bg-muted">
+          <span class="flex size-8 flex-none items-center justify-center rounded-full bg-muted text-[11px] leading-none font-semibold text-muted-foreground">{{ absence.userName.slice(0, 1) }}</span>
+          <span class="min-w-0 flex-1">
+            <span class="block text-[13px] leading-[1.3] font-semibold">{{ absence.userName }}</span>
+            <span v-if="!absence.canManage" class="mt-px block text-[12px] leading-[1.3] font-normal text-muted-foreground">{{ absence.categoryLabel }} · {{ absence.startsOn }} – {{ absence.endsOn }}</span>
           </span>
 
           <template v-if="absence.canManage">
-            <form class="fgrid grp" style="flex: 1" @submit.prevent="save(absence.id)">
-              <div class="fld">
+            <form class="mb-6 grid flex-1 grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4" @submit.prevent="save(absence.id)">
+              <div class="flex min-w-0 flex-col gap-1.5">
                 <Label :for="`category-${absence.id}`">{{ $t('absences.category') }}</Label>
                 <Select
                   :model-value="rowForms[absence.id].category"
@@ -157,17 +155,17 @@ function add() {
                   </SelectContent>
                 </Select>
               </div>
-              <div class="fld">
+              <div class="flex min-w-0 flex-col gap-1.5">
                 <Label :for="`starts-${absence.id}`">{{ $t('absences.startsOn') }}</Label>
                 <DatePicker :id="`starts-${absence.id}`" v-model="rowForms[absence.id].starts_on" />
-                <p v-if="rowForms[absence.id].errors.starts_on" class="err">{{ rowForms[absence.id].errors.starts_on }}</p>
+                <p v-if="rowForms[absence.id].errors.starts_on" class="text-[11.5px] leading-[1.45] text-destructive">{{ rowForms[absence.id].errors.starts_on }}</p>
               </div>
-              <div class="fld">
+              <div class="flex min-w-0 flex-col gap-1.5">
                 <Label :for="`ends-${absence.id}`">{{ $t('absences.endsOn') }}</Label>
                 <DatePicker :id="`ends-${absence.id}`" v-model="rowForms[absence.id].ends_on" />
-                <p v-if="rowForms[absence.id].errors.ends_on" class="err">{{ rowForms[absence.id].errors.ends_on }}</p>
+                <p v-if="rowForms[absence.id].errors.ends_on" class="text-[11.5px] leading-[1.45] text-destructive">{{ rowForms[absence.id].errors.ends_on }}</p>
               </div>
-              <div class="fld" style="justify-content: flex-end; flex-direction: row; gap: var(--s2)">
+              <div class="flex min-w-0 flex-row justify-end gap-1.5">
                 <Button
                   type="submit"
                   :disabled="!rowForms[absence.id].isDirty || rowForms[absence.id].processing"

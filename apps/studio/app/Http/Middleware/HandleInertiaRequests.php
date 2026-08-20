@@ -62,8 +62,14 @@ class HandleInertiaRequests extends Middleware
             // date. Fine at a studio's volume; if the board ever pages, these
             // become one grouped query instead.
             'nav' => $user === null ? null : [
-                'leads' => fn () => Lead::query()->open()->count(),
-                'projects' => fn () => Project::query()->count(),
+                'leads' => fn () => Lead::query()->open()->unbooked()->count(),
+                // T-11's bell. Lazy like its neighbours, so a partial reload
+                // that does not ask for it pays nothing.
+                'unread' => fn () => $user->inAppNotifications()->whereNull('read_at')->count(),
+                // The same two filters /projekte itself applies: booked only,
+                // and only what this role may see. A badge that counts rows
+                // the list refuses to show is worse than no badge.
+                'projects' => fn () => Project::query()->visibleTo($user)->whereHas('job')->count(),
             ],
             // C-03 (#237): what this user last opened. Shared rather than
             // passed per page, because the palette is chrome and opens over

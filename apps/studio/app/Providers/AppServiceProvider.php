@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Automation\Listeners\FireAutomationRulesForEvent;
 use App\Catalog\Models\Package;
 use App\Contracts\Events\ContractSigned;
+use App\Crm\Events\LeadCaptured;
 use App\Crm\Events\ProjectBooked;
 use App\Crm\Listeners\ApplyTemplatesOnBooking;
 use App\Crm\Listeners\BookProjectOnContractAndDeposit;
@@ -20,6 +21,7 @@ use App\Documents\Models\DocumentTemplate;
 use App\Gallery\Listeners\RecomputeGalleryBalanceSettled;
 use App\Gallery\Models\Gallery;
 use App\Integration\Listeners\DispatchWebhookNotifications;
+use App\Notifications\Listeners\NotifyStudioOfDomainEvent;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\NotificationPreferences;
 use App\Notifications\Support\QuietHours;
@@ -141,6 +143,13 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(ContractSigned::class, [DispatchWebhookNotifications::class, 'handleContractSigned']);
         Event::listen(InstallmentPaid::class, [DispatchWebhookNotifications::class, 'handleInstallmentPaid']);
         Event::listen(InstallmentOverdue::class, [DispatchWebhookNotifications::class, 'handleInstallmentOverdue']);
+
+        // T-11: the studio's own inbox. Three of the six events the profile
+        // screen lists have a domain event; the other three call NotifyStudio
+        // from their action — see the listener's own docblock.
+        Event::listen(LeadCaptured::class, [NotifyStudioOfDomainEvent::class, 'handleLeadCaptured']);
+        Event::listen(ContractSigned::class, [NotifyStudioOfDomainEvent::class, 'handleContractSigned']);
+        Event::listen(InstallmentPaid::class, [NotifyStudioOfDomainEvent::class, 'handleInstallmentPaid']);
 
         // E-08: one wildcard subscription rather than one Event::listen()
         // per event class — an AutomationRule's own event_class column is

@@ -6,6 +6,8 @@ use App\Crm\Data\FormInstanceFieldData;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
 use App\Http\Controllers\Controller;
+use App\Notifications\Actions\NotifyStudio;
+use App\Notifications\Studio\QuestionnaireSubmitted;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,6 +36,8 @@ use Inertia\Response;
  */
 class QuestionnaireController extends Controller
 {
+    public function __construct(private readonly NotifyStudio $notifyStudio) {}
+
     public function show(string $project, string $questionnaire): Response
     {
         $contact = auth('portal')->user();
@@ -88,6 +92,11 @@ class QuestionnaireController extends Controller
                 subject: $instance->public_id,
                 projectId: $instance->project_id,
             );
+
+            // T-11. On any change, not only on the last one: a questionnaire
+            // has no "handed in" state, so the studio is told the answers
+            // moved and reads the current ones on the screen.
+            ($this->notifyStudio)(new QuestionnaireSubmitted($instance));
         }
 
         return back();

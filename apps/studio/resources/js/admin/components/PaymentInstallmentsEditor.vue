@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
-import { Input } from '@/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
 
@@ -41,14 +41,17 @@ function setStatus(installment: PaymentInstallmentRow, value: unknown) {
         </div>
         <div class="fld">
           <Label :for="`installment-amount-${index}`">{{ $t('payments.amount') }}</Label>
-          <Input
-            :id="`installment-amount-${index}`"
-            v-model="installment.amount"
-            class="tabular-nums"
-            type="text"
-            inputmode="decimal"
-            required
-          />
+          <InputGroup>
+            <InputGroupInput
+              :id="`installment-amount-${index}`"
+              v-model="installment.amount"
+              class="tabular-nums"
+              type="text"
+              inputmode="decimal"
+              required
+            />
+            <InputGroupAddon align="inline-end">{{ $t('common.unitEuro') }}</InputGroupAddon>
+          </InputGroup>
         </div>
         <div class="fld">
           <Label :for="`installment-status-${index}`">{{ $t('payments.status') }}</Label>

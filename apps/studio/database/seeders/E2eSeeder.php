@@ -4,22 +4,22 @@ namespace Database\Seeders;
 
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
+use App\Contracts\Enums\ContractStatus;
+use App\Contracts\Models\Contract;
+use App\Contracts\Models\ContractSignature;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\ShootStatus;
+use App\Crm\Models\Contact;
 use App\Crm\Models\FormField;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
 use App\Crm\Models\FormTemplate;
-use App\Crm\Models\Contact;
+use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
-use App\Crm\Models\Job;
 use App\Crm\Models\Shoot;
-use App\Contracts\Enums\ContractStatus;
-use App\Contracts\Models\Contract;
-use App\Contracts\Models\ContractSignature;
 use App\Documents\Models\DocumentTemplate;
 use App\Engagement\Actions\PostMessage;
 use App\Engagement\Actions\StartThread;
@@ -28,16 +28,16 @@ use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryVersion;
 use App\Models\StaffInvitation;
 use App\Models\User;
-use App\Quotes\Enums\QuoteStatus;
-use App\Quotes\Models\Quote;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Settings\Models\StudioSettings;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * Accounts used only by the Playwright suite. Never registered in
@@ -243,6 +243,15 @@ class E2eSeeder extends Seeder
             ['name' => 'E2E Buchung'],
             ['type' => ProjectType::Wedding, 'portal_visible' => true],
         );
+
+        // The quote editor's fixture. It sits on this project rather than on
+        // the inquiry above because /projekte lists booked projects only, and
+        // that list is how the visual suite reaches the editor.
+        $draft = Quote::firstOrCreate(['project_id' => $project->id, 'status' => QuoteStatus::Draft]);
+
+        if ($draft->wasRecentlyCreated) {
+            QuoteItem::factory()->for($draft)->create();
+        }
 
         // The gallery and the conversation guard themselves and are seeded
         // whether or not the project is new — they were added after the

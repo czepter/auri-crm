@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import { basisPointsToPercent, percentToBasisPoints } from '@/admin/lib/money'
-import { Input } from '@/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Textarea } from '@/ui/textarea'
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
 import { Label } from '@/ui/label'
@@ -58,7 +58,10 @@ defineExpose({ form, submit })
           :hint="$t('settings.vatRateHint')"
           :error="form.errors.vat_rate"
         >
-          <Input id="v-satz" v-model="form.vat_rate" class="tabular-nums" type="text" inputmode="decimal" />
+          <InputGroup>
+            <InputGroupInput id="v-satz" v-model="form.vat_rate" class="tabular-nums" type="text" inputmode="decimal" />
+            <InputGroupAddon align="inline-end">{{ $t('common.unitPercent') }}</InputGroupAddon>
+          </InputGroup>
         </Field>
       </div>
     </div>

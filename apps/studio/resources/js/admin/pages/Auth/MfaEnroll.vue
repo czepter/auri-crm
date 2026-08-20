@@ -41,8 +41,7 @@ function submit() {
         {{ $t('auth.mfaSecretLabel') }}
       </Button>
       <code
-        class="overflow-hidden rounded-md border border-border"
-        class="mt-1.5 block px-[11px] py-[9px] font-mono text-[13px] tracking-[0.12em]"
+        class="mt-1.5 block overflow-hidden rounded-md border border-border px-[11px] py-[9px] font-mono text-[13px] tracking-[0.12em]"
       >
         {{ secret }}
       </code>

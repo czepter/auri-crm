@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Textarea } from '@/ui/textarea'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
@@ -110,7 +111,10 @@ defineExpose({ form, submit })
       <div class="mb-6">
         <Field :error="form.errors.gallery_default_expiry_days" v-slot="{ id }">
           <Label :for="id">{{ $t('portalSettings.galleryExpiryLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
-          <Input :id v-model="form.gallery_default_expiry_days" type="number" min="1" />
+          <InputGroup>
+            <InputGroupInput :id v-model="form.gallery_default_expiry_days" class="tabular-nums" type="number" min="1" />
+            <InputGroupAddon align="inline-end">{{ $t('common.unitDays') }}</InputGroupAddon>
+          </InputGroup>
         </Field>
       </div>
       <div class="mb-6">
@@ -150,7 +154,10 @@ defineExpose({ form, submit })
             <Input :id v-model="form.dsgvo_request_recipient" type="email" />
           </Field>
           <Field :label="$t('portalSettings.dsgvoDeadlineLabel')" id="po-dsgvo-frist">
-            <Input id="po-dsgvo-frist" v-model="form.dsgvo_request_deadline_days" type="number" min="1" />
+            <InputGroup>
+              <InputGroupInput id="po-dsgvo-frist" v-model="form.dsgvo_request_deadline_days" class="tabular-nums" type="number" min="1" />
+              <InputGroupAddon align="inline-end">{{ $t('common.unitDays') }}</InputGroupAddon>
+            </InputGroup>
           </Field>
         </div>
       </div>

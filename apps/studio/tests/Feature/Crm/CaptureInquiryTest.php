@@ -276,3 +276,31 @@ it('skips a person row left blank', function () {
 
     expect(Project::first()->contacts)->toHaveCount(1);
 });
+
+// "Sonstige" alone is not a fact: the detail beside it is what the funnel
+// splits on, and it must not survive a switch back to a named case.
+it('keeps the detail behind Sonstige and drops it when the case changes', function () {
+    $this->actingAs($this->staff, 'staff')->post('/anfragen', payload([
+        'type' => ProjectType::Other->value,
+        'type_other' => 'Tierfotografie',
+        'source' => LeadSource::Other->value,
+        'source_other' => 'Zeitungsartikel',
+        'captured_via' => CaptureChannel::Other->value,
+        'captured_via_other' => 'Brief',
+    ]))->assertRedirect('/anfragen');
+
+    $project = Project::sole();
+    $lead = Lead::sole();
+
+    expect($project->type_other)->toBe('Tierfotografie')
+        ->and($lead->source_other)->toBe('Zeitungsartikel')
+        ->and($lead->captured_via_other)->toBe('Brief')
+        ->and($project->typeLabel())->toBe('Sonstige — Tierfotografie');
+
+    $project->update(['type' => ProjectType::Wedding]);
+    $lead->update(['source' => LeadSource::Website]);
+
+    expect($project->fresh()->type_other)->toBeNull()
+        ->and($lead->fresh()->source_other)->toBeNull()
+        ->and($lead->fresh()->captured_via_other)->toBe('Brief');
+});

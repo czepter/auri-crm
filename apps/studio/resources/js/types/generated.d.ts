@@ -616,6 +616,9 @@ mailFromAddress: string,
 mailReplyTo: string | null,
 mailSignature: string | null,
 mailBcc: string | null,
+leadTypePresets: string[],
+leadSourcePresets: string[],
+leadChannelPresets: string[],
 };
 }
 namespace Enums {

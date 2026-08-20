@@ -34,6 +34,11 @@ services:
       AWS_SECRET_ACCESS_KEY: studio-media-secret
       AWS_DEFAULT_REGION: us-east-1
       AWS_BUCKET: media
+      # The portal answers on its own port here, so the admin surface cannot
+      # let config/portal.php fall back to its own APP_URL — that composes
+      # /zugang/{token} onto :8000, where the portal routes do not exist.
+      # docker-compose.coolify.yml sets the deployed equivalent.
+      PORTAL_URL: http://localhost:${PORTAL_PORT:-8001}
       # F-11: empty by default, same as apps/studio/.env.example — the SDK
       # stays fully inert (config/sentry.php) until a developer opts in by
       # setting this in their own shell or root .env, e.g. to
@@ -128,7 +133,13 @@ services:
       <<: *studio-environment
       APP_SURFACE: portal
       APP_URL: http://localhost:${PORTAL_PORT:-8001}
-    command: php artisan serve --host=0.0.0.0 --port=8000
+    # --no-reload because `artisan serve` otherwise hands the php -S child
+    # only ServeCommand::$passthroughVariables and drops the rest, leaving
+    # apps/studio/.env — one file for all three surfaces — as the only APP_URL
+    # a request ever sees. Every link this surface mails would carry the
+    # admin's host. Nothing is lost: the built-in server re-reads .env per
+    # request anyway, so only the watcher goes.
+    command: php artisan serve --host=0.0.0.0 --port=8000 --no-reload
     ports:
       - "127.0.0.1:${PORTAL_PORT:-8001}:8000"
     depends_on:
@@ -155,7 +166,7 @@ services:
       <<: *studio-environment
       APP_SURFACE: api
       APP_URL: http://localhost:${API_PORT:-8002}
-    command: php artisan serve --host=0.0.0.0 --port=8000
+    command: php artisan serve --host=0.0.0.0 --port=8000 --no-reload
     ports:
       - "127.0.0.1:${API_PORT:-8002}:8000"
     depends_on:

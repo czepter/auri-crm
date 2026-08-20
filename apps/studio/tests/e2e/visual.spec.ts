@@ -38,7 +38,7 @@ async function arrive(page: Page): Promise<void> {
 }
 
 /** E2eSeeder's own project, the one with a quote still in draft on it. */
-const DRAFT_QUOTE_PROJECT = 'Meier & Kowalski \u2014 Hochzeit'
+const DRAFT_QUOTE_PROJECT = 'E2E Buchung'
 
 const ROUTES = [
   '/',
@@ -53,6 +53,8 @@ const ROUTES = [
   '/einstellungen',
   // The settings shell keeps its pane in the query, so each one is its own
   // frame. `capture` is left out on purpose — it is uncommitted work.
+  '/einstellungen?pane=legal',
+  '/einstellungen?pane=bank',
   '/einstellungen?pane=vat',
   '/einstellungen?pane=documents',
   '/einstellungen?pane=email',
@@ -72,6 +74,11 @@ const ROUTES = [
   '/einstellungen/portal',
   '/einstellungen/verfuegbarkeit',
   '/einstellungen/zahlungen',
+  '/benachrichtigungen',
+  // The person's own account, as opposed to the studio's settings above.
+  '/profil',
+  '/profil?pane=sicherheit',
+  '/profil?pane=benachrichtigungen',
   '/kalender',
   '/kontakte',
   '/pakete',
@@ -262,6 +269,15 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
         animations: 'disabled',
       })
     }
+
+    // The upload screen. Its own route, not a tab.
+    await page.goto(`${media}/medien`)
+    await page.waitForLoadState('networkidle')
+    await page.waitForFunction(() => document.fonts.status === 'loaded')
+    await expect.soft(page).toHaveScreenshot('galerie-medien.png', {
+      fullPage: true,
+      animations: 'disabled',
+    })
   } else {
     console.log('OHNE BASELINE: galerie-datensatz — keine Galerie verlinkt')
   }

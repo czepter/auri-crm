@@ -10,6 +10,7 @@ use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Models\Lead;
 use App\Http\Controllers\Controller;
+use App\Settings\Support\StudioSettingsResolver;
 use BackedEnum;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -17,7 +18,7 @@ use Inertia\Response;
 
 class InquiryCaptureController extends Controller
 {
-    public function create(): Response
+    public function create(StudioSettingsResolver $settings): Response
     {
         $this->authorize('create', Lead::class);
 
@@ -29,6 +30,14 @@ class InquiryCaptureController extends Controller
             // inquiries did the website bring us" unanswerable the first
             // time someone picked it by hand for a phone call.
             'channels' => self::options(CaptureChannel::staffSelectable()),
+            // Suggestions for the three "Sonstige" details, kept in the
+            // settings so the studio's own recurring wording is one keystroke
+            // rather than retyped at every call.
+            'presets' => [
+                'type' => $settings->leadPresets('type'),
+                'source' => $settings->leadPresets('source'),
+                'channel' => $settings->leadPresets('channel'),
+            ],
         ]);
     }
 

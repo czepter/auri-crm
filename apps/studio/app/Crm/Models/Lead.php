@@ -32,12 +32,14 @@ class Lead extends Model
     protected $fillable = [
         'project_id',
         'source',
+        'source_other',
         'stage',
         'stage_entered_at',
         'lost_at',
         'lost_reason',
         'inquiry_text',
         'captured_via',
+        'captured_via_other',
         'captured_by_id',
         'referred_by_contact_id',
     ];
@@ -51,6 +53,34 @@ class Lead extends Model
             'stage_entered_at' => 'immutable_datetime',
             'lost_at' => 'immutable_datetime',
         ];
+    }
+
+    public function sourceLabel(): string
+    {
+        return $this->source_other === null
+            ? $this->source->label()
+            : $this->source->label().' — '.$this->source_other;
+    }
+
+    public function capturedViaLabel(): string
+    {
+        return $this->captured_via_other === null
+            ? $this->captured_via->label()
+            : $this->captured_via->label().' — '.$this->captured_via_other;
+    }
+
+    /** Same rule as Project::booted() — a detail exists only under "Sonstige". */
+    protected static function booted(): void
+    {
+        static::saving(function (self $lead) {
+            if ($lead->source !== LeadSource::Other) {
+                $lead->source_other = null;
+            }
+
+            if ($lead->captured_via !== CaptureChannel::Other) {
+                $lead->captured_via_other = null;
+            }
+        });
     }
 
     public function isLost(): bool
@@ -85,6 +115,17 @@ class Lead extends Model
     public function scopeOpen(Builder $query): void
     {
         $query->whereNull('lost_at');
+    }
+
+    /**
+     * Not booked yet, so still an inquiry. The Job is the seam — a booked
+     * record is a project and lives at /projekte, which reads the same fact.
+     * The funnel's own reads (the API snapshot, Auswertungen) keep counting
+     * booked leads: a funnel without its end is not a funnel.
+     */
+    public function scopeUnbooked(Builder $query): void
+    {
+        $query->whereDoesntHave('project.job');
     }
 
     protected static function newFactory(): Factory

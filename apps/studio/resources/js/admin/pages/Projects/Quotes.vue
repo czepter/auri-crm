@@ -8,7 +8,7 @@ import ValidUntilField from '@/admin/components/ValidUntilField.vue'
 import { basisPointsToPercent, centsToEuros, eurosToCents, formatEuros, percentToBasisPoints } from '@/admin/lib/money'
 import { NONE, fromOption, toOption } from '@/lib/select'
 import { Button } from '@/ui/button'
-import { Input } from '@/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
@@ -250,18 +250,17 @@ function chipClass(status: string): string {
             </Select>
           </div>
           <div v-if="editForms[quote.id].discountType" class="fld">
-            <Label :for="`quote-discount-value-${quote.id}`">
-              {{
-                editForms[quote.id].discountType === 'percentage'
-                  ? $t('quotes.discountValuePercent')
-                  : $t('quotes.discountValueEuros')
-              }}
-            </Label>
-            <Input
-              :id="`quote-discount-value-${quote.id}`"
-              v-model="editForms[quote.id].discountValue" class="tabular-nums"
-              type="text"
-              inputmode="decimal" />
+            <Label :for="`quote-discount-value-${quote.id}`">{{ $t('quotes.discountValue') }}</Label>
+            <InputGroup>
+              <InputGroupInput
+                :id="`quote-discount-value-${quote.id}`"
+                v-model="editForms[quote.id].discountValue" class="tabular-nums"
+                type="text"
+                inputmode="decimal" />
+              <InputGroupAddon align="inline-end">
+                {{ editForms[quote.id].discountType === 'percentage' ? $t('common.unitPercent') : $t('common.unitEuro') }}
+              </InputGroupAddon>
+            </InputGroup>
           </div>
           <div class="fld wide">
             <div class="formfoot" style="margin-top: 0">
@@ -277,6 +276,6 @@ function chipClass(status: string): string {
       </template>
     </div>
 
-    <p v-if="!quotes.length" class="hint">{{ $t('quotes.empty') }}</p>
+    <p v-if="!quotes.length && !header.canManageQuotes" class="hint">{{ $t('quotes.empty') }}</p>
   </AdminLayout>
 </template>

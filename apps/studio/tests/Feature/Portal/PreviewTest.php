@@ -5,6 +5,8 @@ use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
+use App\Models\User;
+use App\Portal\Actions\ConsumeClientAccess;
 use App\Portal\Models\ClientAccess;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -12,7 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 /** A preview link, as ContactController::previewPortal() mints one. */
-function previewLink(Contact $contact, ?App\Models\User $staff = null): string
+function previewLink(Contact $contact, ?User $staff = null): string
 {
     $token = bin2hex(random_bytes(32));
 
@@ -20,7 +22,7 @@ function previewLink(Contact $contact, ?App\Models\User $staff = null): string
         'contact_id' => $contact->id,
         'token_hash' => ClientAccess::hash($token),
         'expires_at' => now()->addMinutes(ClientAccess::VALID_FOR_MINUTES),
-        'preview_by_id' => ($staff ?? App\Models\User::factory()->create())->id,
+        'preview_by_id' => ($staff ?? User::factory()->create())->id,
     ]);
 
     return "/zugang/{$token}";
@@ -84,7 +86,7 @@ it('spends a preview link exactly once', function () {
     // From a browser that never held the first session — the signed-out case
     // is the one that matters, and /zugang is behind `guest:portal`, so a
     // second click in the SAME browser lands on the home rather than here.
-    expect(app(App\Portal\Actions\ConsumeClientAccess::class)($token))->toBeNull();
+    expect(app(ConsumeClientAccess::class)($token))->toBeNull();
 });
 
 it('refuses a preview link once it has expired', function () {
@@ -111,7 +113,7 @@ it('refuses a preview link for a contact whose access the studio revoked', funct
 it('audits the entry as a preview, naming the staff member behind it', function () {
     useSurface(Surface::PORTAL);
 
-    $staff = App\Models\User::factory()->create();
+    $staff = User::factory()->create();
     $contact = Contact::factory()->create();
 
     test()->get(previewLink($contact, $staff))->assertRedirect('/');
@@ -156,9 +158,16 @@ it('mints a preview link for an owner and refuses everyone else', function () {
 
     $contact = Contact::factory()->create();
 
-    test()->actingAs(staffMember(StaffRole::Owner), 'staff')
+    // As the button sends it: an Inertia XHR, which may not follow a redirect
+    // onto the portal's own origin — so the link has to come back as a
+    // location rather than a Location.
+    $response = test()->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->withHeader('X-Inertia', 'true')
         ->post("/kontakte/{$contact->public_id}/portal-vorschau")
-        ->assertRedirectContains('/zugang/');
+        ->assertStatus(409);
+
+    expect($response->headers->get('X-Inertia-Location'))
+        ->toStartWith(config('portal.url').'/zugang/');
 
     expect(ClientAccess::query()->whereNotNull('preview_by_id')->count())->toBe(1)
         ->and(AuditLog::where('event', 'portal.preview_issued')->count())->toBe(1);

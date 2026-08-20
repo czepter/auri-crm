@@ -2,9 +2,8 @@
 
 namespace App\Settings\Support;
 
-use App\Settings\Enums\FontPair;
-
 use App\Models\User;
+use App\Settings\Enums\FontPair;
 use App\Settings\Models\StudioSettings;
 use App\Support\AuditLogger;
 use Illuminate\Http\UploadedFile;
@@ -183,6 +182,17 @@ class StudioSettingsResolver
         $days = $this->row()->working_days;
 
         return empty($days) ? [1, 2, 3, 4, 5, 6, 7] : $days;
+    }
+
+    /**
+     * The details this studio keeps typing under "Sonstige" at capture —
+     * offered as suggestions on the three fields, never as a closed list.
+     *
+     * @return list<string>
+     */
+    public function leadPresets(string $kind): array
+    {
+        return $this->row()->{"lead_{$kind}_presets"} ?? [];
     }
 
     /**

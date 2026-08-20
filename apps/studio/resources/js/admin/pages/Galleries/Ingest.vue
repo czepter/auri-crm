@@ -86,9 +86,9 @@ function formatSize(bytes: number): string {
 
 <template>
   <AdminLayout active="">
-    <div class="hrow">
+    <div class="flex items-center gap-4">
       <div>
-        <div class="kick">{{ $t('media.kicker') }}</div>
+        <div class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('media.kicker') }}</div>
         <h1>{{ target.galleryTitle }}</h1>
       </div>
       <Button as="a" variant="ghost" :href="`/auftraege/${target.projectId}`">
@@ -104,68 +104,71 @@ function formatSize(bytes: number): string {
       </Button>
     </div>
 
-    <div class="meta row">
-      <span v-if="target.shootLabel" class="d">{{ target.shootLabel }}</span>
-      <span class="v">{{ target.galleryTitle }}</span>
+    <div class="mt-2.5 flex flex-row gap-6 [&_span]:inline-flex [&_span]:items-center [&_span]:bg-[length:13px_13px] [&_span]:bg-[position:0_center] [&_span]:bg-no-repeat [&_span]:pl-[19px] [&_span]:text-[12.5px] [&_span]:leading-[1.35] [&_span]:font-normal [&_span]:text-muted-foreground">
+      <span v-if="target.shootLabel" class="bg-icon-date">{{ target.shootLabel }}</span>
+      <span class="bg-icon-venue">{{ target.galleryTitle }}</span>
     </div>
 
-    <div v-if="fileList.length > 0" class="card static" style="margin: var(--s5) 0 0">
-      <div class="cardhead">
-        <span class="kick">{{ $t(transferring ? 'media.transferring' : 'media.filesLabel') }}</span>
-        <span class="chip now">{{ overallPercent }} %</span>
+    <div v-if="fileList.length > 0" class="relative block cursor-default rounded-md border border-border p-2.5 text-inherit no-underline mt-6">
+      <div class="mb-4 flex items-center justify-between">
+        <span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t(transferring ? 'media.transferring' : 'media.filesLabel') }}</span>
+        <span class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ overallPercent }} %</span>
       </div>
-      <span class="bar big"><i :style="{ width: `${overallPercent}%` }" /></span>
-      <div class="hint" style="margin-top: var(--s4)">{{ $t('media.resumeHint') }}</div>
+      <span class="block h-1.5 overflow-hidden rounded-[2px] bg-muted [&>i]:block [&>i]:h-full [&>i]:rounded-[2px] [&>i]:bg-foreground"><i :style="{ width: `${overallPercent}%` }" /></span>
+      <div class="text-[11.5px] leading-[1.45] font-normal text-faint mt-4">{{ $t('media.resumeHint') }}</div>
     </div>
 
     <!-- G-04: the needs-attention tray — Failed assets from this gallery's own
          ingest history, never just the current transfer's own client-side
          errors above. -->
-    <div v-if="failedAssets.length > 0" class="dsec">
-      <div class="dlab warn">{{ $t('media.needsAttention') }} · {{ $t('media.needsAttentionCount', failedAssets.length) }}</div>
-      <div class="panel">
-        <div v-for="asset in failedAssets" :key="asset.publicId" class="trow">
-          <span class="tfile">{{ asset.filename }}</span>
-          <span class="treason">{{ asset.error }}</span>
-          <a class="tretry" href="#" @click.prevent="retryFailedAsset(asset)">{{ $t('media.retryProcessing') }}</a>
+    <div v-if="failedAssets.length > 0" class="mt-8 first-of-type:mt-6">
+      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('media.needsAttention') }} · {{ $t('media.needsAttentionCount', failedAssets.length) }}</div>
+      <div class="overflow-hidden rounded-md border border-border">
+        <div v-for="asset in failedAssets" :key="asset.publicId" class="flex items-center gap-2.5 border-t border-border p-2.5 text-inherit no-underline transition-[background-color] duration-[.12s] ease-out first:border-t-0 hover:bg-muted">
+          <span class="text-[13px] leading-[1.3] font-medium text-foreground">{{ asset.filename }}</span>
+          <span class="text-[12.5px] leading-[1.3] font-normal text-muted-foreground">{{ asset.error }}</span>
+          <a class="ml-auto text-[12.5px] leading-none font-medium text-faint" href="#" @click.prevent="retryFailedAsset(asset)">{{ $t('media.retryProcessing') }}</a>
         </div>
       </div>
     </div>
 
-    <div class="split" style="margin-top: var(--s6)">
-      <div class="stackcol">
-        <div class="card static">
-          <div class="cardhead">
-            <span class="kick">{{ $t('media.filesLabel') }}</span>
-            <span class="chip next">{{ partsDone }} {{ $t('media.of') }} {{ partsTotal }}</span>
+    <div class="mt-8 grid grid-cols-[minmax(0,1fr)_296px] items-start gap-8">
+      <div class="flex flex-col gap-6">
+        <div class="relative block cursor-default rounded-md border border-border p-2.5 text-inherit no-underline">
+          <div class="mb-4 flex items-center justify-between">
+            <span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('media.filesLabel') }}</span>
+            <span class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-muted text-muted-foreground">{{ partsDone }} {{ $t('media.of') }} {{ partsTotal }}</span>
           </div>
 
-          <p v-if="fileList.length === 0" class="hint">{{ $t('media.empty') }}</p>
+          <p v-if="fileList.length === 0" class="text-[11.5px] leading-[1.45] font-normal text-faint">
+            {{ $t('media.empty') }}
+          </p>
 
-          <div v-else class="flist">
-            <div v-for="entry in fileList" :key="keyOf(entry.file)" class="frow" :class="{ queued: entry.status === 'queued' }">
-              <span class="fname">{{ entry.file.name }}</span>
-              <span class="fsize">{{ formatSize(entry.file.size) }}</span>
+          <div v-else class="flex flex-col">
+            <div v-for="entry in fileList" :key="keyOf(entry.file)" class="grid grid-cols-[minmax(0,1fr)_84px_76px] items-center gap-x-2.5 gap-y-[7px] py-[7px]"
+              :class="entry.status === 'queued' && '[&>span:first-child]:font-normal [&>span:first-child]:text-muted-foreground'">
+              <span class="min-w-0 overflow-hidden text-[12.5px] leading-[1.3] font-medium text-ellipsis whitespace-nowrap">{{ entry.file.name }}</span>
+              <span class="text-right text-[12px] leading-none font-normal tabular-nums text-faint">{{ formatSize(entry.file.size) }}</span>
 
-              <span v-if="entry.status === 'done'" class="chip done">{{ $t('media.ready') }}</span>
-              <span v-else-if="entry.status === 'error'" class="chip fail">{{ $t('media.failed') }}</span>
-              <span v-else-if="entry.status === 'uploading'" class="chip now">{{ entry.percent }} %</span>
-              <span v-else class="chip next">{{ $t('media.queued') }}</span>
+              <span v-if="entry.status === 'done'" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase justify-self-end bg-ok-bg text-ok">{{ $t('media.ready') }}</span>
+              <span v-else-if="entry.status === 'error'" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase justify-self-end bg-late-bg text-destructive">{{ $t('media.failed') }}</span>
+              <span v-else-if="entry.status === 'uploading'" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase justify-self-end bg-due-bg text-due">{{ entry.percent }} %</span>
+              <span v-else class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase justify-self-end bg-muted text-muted-foreground">{{ $t('media.queued') }}</span>
 
-              <span v-if="entry.status === 'uploading'" class="bar"><i :style="{ width: `${entry.percent}%` }" /></span>
-              <a v-if="entry.status === 'error'" class="tretry" href="#" @click.prevent="retry(entry)">{{ $t('media.retry') }}</a>
+              <span v-if="entry.status === 'uploading'" class="col-start-1 col-end-3 block h-[3px] overflow-hidden rounded-[2px] bg-muted [&>i]:block [&>i]:h-full [&>i]:rounded-[2px] [&>i]:bg-foreground"><i :style="{ width: `${entry.percent}%` }" /></span>
+              <a v-if="entry.status === 'error'" class="ml-auto text-[12.5px] leading-none font-medium text-faint" href="#" @click.prevent="retry(entry)">{{ $t('media.retry') }}</a>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="stackcol">
-        <div class="card static">
-          <div class="cardhead"><span class="kick">{{ $t('media.target') }}</span></div>
-          <div class="tiles">
-            <div class="fact"><div class="l">{{ $t('media.project') }}</div><div class="v">{{ target.projectName }}</div></div>
-            <div v-if="target.shootLabel" class="fact"><div class="l">{{ $t('media.shoot') }}</div><div class="v">{{ target.shootLabel }}</div></div>
-            <div class="fact"><div class="l">{{ $t('media.gallery') }}</div><div class="v">{{ target.galleryTitle }}</div></div>
+      <div class="flex flex-col gap-6">
+        <div class="relative block cursor-default rounded-md border border-border p-2.5 text-inherit no-underline">
+          <div class="mb-4 flex items-center justify-between"><span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('media.target') }}</span></div>
+          <div class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-2.5">
+            <div class="rounded-md bg-muted px-4 pt-3.5 pb-4"><div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('media.project') }}</div><div class="mt-[9px] text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ target.projectName }}</div></div>
+            <div v-if="target.shootLabel" class="rounded-md bg-muted px-4 pt-3.5 pb-4"><div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('media.shoot') }}</div><div class="mt-[9px] text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ target.shootLabel }}</div></div>
+            <div class="rounded-md bg-muted px-4 pt-3.5 pb-4"><div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('media.gallery') }}</div><div class="mt-[9px] text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ target.galleryTitle }}</div></div>
           </div>
         </div>
       </div>

@@ -8,8 +8,8 @@ use App\Contracts\Models\Contract;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootStatus;
-use App\Enums\Capability;
 use App\Engagement\Models\Thread;
+use App\Enums\Capability;
 use App\Gallery\Models\Gallery;
 use App\Models\User;
 use App\Quotes\Models\Quote;
@@ -39,7 +39,7 @@ class Project extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['name', 'type', 'portal_visible'];
+    protected $fillable = ['name', 'type', 'type_other', 'portal_visible'];
 
     /**
      * Mirrors the column default in memory. Without it a freshly created
@@ -55,6 +55,28 @@ class Project extends Model
             'type' => ProjectType::class,
             'portal_visible' => 'boolean',
         ];
+    }
+
+    /** The occasion as a screen shows it — "Sonstige" carries its detail. */
+    public function typeLabel(): string
+    {
+        return $this->type_other === null
+            ? $this->type->label()
+            : $this->type->label().' — '.$this->type_other;
+    }
+
+    /**
+     * A detail belongs to "Sonstige" alone. Cleared here rather than at each
+     * writer, so a type change from the case screen cannot leave the old
+     * free text standing under Hochzeit.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $project) {
+            if ($project->type !== ProjectType::Other) {
+                $project->type_other = null;
+            }
+        });
     }
 
     public function contacts(): BelongsToMany

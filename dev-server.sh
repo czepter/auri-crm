@@ -3,6 +3,10 @@
 # + Laravel (in Docker, per the project's "all PHP runs in Docker" rule) + Vite
 # dev server for HMR. Ctrl+C stops both.
 #
+# The portal comes up alongside it as a plain compose service: it is a second
+# surface on its own port, and links the admin mints into it (portal previews,
+# magic links) 404 without it.
+#
 # The backing services are brought up with `compose up` rather than left to
 # `compose run`'s depends_on: `run` will `start` a pre-existing container as-is,
 # and a container that was stopped while its network got removed comes back with
@@ -17,11 +21,14 @@ cleanup() {
 }
 trap cleanup EXIT
 
-docker compose up -d postgres redis gotenberg
+docker compose up -d postgres redis gotenberg portal
 
 docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
+# --no-reload keeps the compose environment reachable from a served request —
+# see the portal service in docker-compose.yml.
 docker compose run --rm --service-ports -e APP_SURFACE=admin -d --name "$CONTAINER" \
-  php php artisan serve --host=0.0.0.0 --port=8000 >/dev/null
+  php php artisan serve --host=0.0.0.0 --port=8000 --no-reload >/dev/null
 
-echo "Laravel: http://localhost:8000"
+echo "Admin:  http://localhost:8000"
+echo "Portal: http://localhost:${PORTAL_PORT:-8001}"
 pnpm --filter @studio/app dev

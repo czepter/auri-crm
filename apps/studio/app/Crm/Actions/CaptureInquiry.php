@@ -40,6 +40,7 @@ class CaptureInquiry
             $project = Project::create([
                 'name' => $data->project_name,
                 'type' => $data->type,
+                'type_other' => $data->type_other,
                 // Never true at capture: a raw inquiry must not surface in a
                 // client portal the moment it arrives (vision §3.1).
                 'portal_visible' => false,
@@ -75,10 +76,12 @@ class CaptureInquiry
             $lead = Lead::create([
                 'project_id' => $project->id,
                 'source' => $data->source,
+                'source_other' => $data->source_other,
                 'stage' => LeadStage::New,
                 'stage_entered_at' => now(),
                 'inquiry_text' => $data->inquiry_text,
                 'captured_via' => $data->captured_via,
+                'captured_via_other' => $data->captured_via_other,
                 'captured_by_id' => $actor?->id,
                 'referred_by_contact_id' => $referrer?->id,
             ]);

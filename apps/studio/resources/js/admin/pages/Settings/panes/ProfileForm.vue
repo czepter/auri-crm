@@ -1,17 +1,36 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
+
+type Section = 'legal' | 'brand' | 'bank'
 
 const props = withDefaults(defineProps<{
   settings: App.Settings.Data.StudioSettingsData
   // Absent during first-run setup: the pair is fine-tuning, not a thing a
   // studio has to decide before it can work.
   fontPairs?: { value: string; label: string; description: string }[]
-}>(), { fontPairs: () => [] })
+  // The settings screen shows one fieldset per nav entry; onboarding still
+  // collects all three in a single step, so the default is all of them.
+  sections?: Section[]
+}>(), { fontPairs: () => [], sections: () => ['legal', 'brand', 'bank'] })
 const emit = defineEmits<{ saved: [] }>()
+
+// A pane sends only its own fields. tax_number/vat_id are required_without
+// each other, so a brand-only save that carried them along would fail on a
+// field the screen is not showing — the controller's `sometimes` skips the
+// pair when neither key arrives.
+const SECTION_FIELDS: Record<Section, string[]> = {
+  legal: ['legal_name', 'legal_form', 'representative', 'street', 'postcode', 'city', 'country', 'tax_number', 'vat_id', 'register_number', 'register_court'],
+  brand: ['display_name', 'website', 'logo', 'accent_color', 'font_pair'],
+  bank: ['bank_account_holder', 'bank_iban', 'bank_bic'],
+}
+
+const shows = (section: Section) => props.sections.includes(section)
 
 const form = useForm({
   display_name: props.settings.displayName ?? '',
@@ -35,16 +54,33 @@ const form = useForm({
   bank_bic: props.settings.bankBic ?? '',
 })
 
+// The scheme is drawn by the field rather than typed into it, but what is
+// stored stays the whole URL the controller validates `url` against. The
+// setter strips a pasted scheme too — otherwise pasting the address out of a
+// browser bar files it as https://https://….
+const websiteHost = computed({
+  get: () => form.website.replace(/^https?:\/\//, ''),
+  set: (value) => {
+    const host = value.trim().replace(/^https?:\/\//, '')
+    form.website = host === '' ? '' : `https://${host}`
+  },
+})
+
 function onLogoChange(event: Event) {
   form.logo = (event.target as HTMLInputElement).files?.[0] ?? null
 }
 
 function submit() {
+  const sent = new Set<string>(props.sections.flatMap((section) => SECTION_FIELDS[section]))
+
   // Inertia's own documented workaround: a browser cannot send a real PUT
   // or PATCH as multipart/form-data, so a file upload goes over POST with
   // `_method` spoofing the verb Laravel's router actually matches on.
   form
-    .transform((data) => ({ ...data, _method: 'patch' }))
+    .transform((data) => ({
+      ...Object.fromEntries(Object.entries(data).filter(([field]) => sent.has(field))),
+      _method: 'patch',
+    }))
     .post('/einstellungen', { forceFormData: true, preserveScroll: true, onSuccess: () => emit('saved') })
 }
 
@@ -53,8 +89,8 @@ defineExpose({ form, submit })
 
 <template>
   <form id="settings-form" @submit.prevent="submit">
-    <div class="mt-0">
-      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.legalEntity') }}</div>
+    <div v-if="shows('legal')" class="mt-8 first:mt-0">
+      <div v-if="sections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.legalEntity') }}</div>
       <div class="mb-6">
         <Field :label="$t('settings.legalName')" id="p-firma" wide :error="form.errors.legal_name">
           <Input id="p-firma" v-model="form.legal_name" type="text" />
@@ -136,15 +172,18 @@ defineExpose({ form, submit })
       </div>
     </div>
 
-    <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.brand') }}</div>
+    <div v-if="shows('brand')" class="mt-8 first:mt-0">
+      <div v-if="sections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.brand') }}</div>
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.displayName')" id="p-anzeigename" :error="form.errors.display_name">
             <Input id="p-anzeigename" v-model="form.display_name" type="text" />
           </Field>
           <Field :label="$t('settings.website')" id="p-web" :error="form.errors.website">
-            <Input id="p-web" v-model="form.website" type="text" />
+            <InputGroup>
+              <InputGroupAddon>https://</InputGroupAddon>
+              <InputGroupInput id="p-web" v-model="websiteHost" type="text" />
+            </InputGroup>
           </Field>
         </div>
       </div>
@@ -160,20 +199,22 @@ defineExpose({ form, submit })
             </div>
           </Field>
           <Field :label="$t('settings.accentColor')" id="p-akzent" :error="form.errors.accent_color">
-            <div style="display: flex; align-items: center; gap: 10px">
-              <span
-                style="display: inline-block; width: 32px; height: 32px; border-radius: var(--r-sm); border: 1px solid var(--line); flex: none"
-                :style="{ background: form.accent_color || 'transparent' }"
-              ></span>
-              <Input id="p-akzent" v-model="form.accent_color" class="tabular-nums" type="text" placeholder="#B44E22" />
-            </div>
+            <InputGroup>
+              <InputGroupAddon>
+                <span
+                  class="size-4 flex-none rounded-[3px] border border-border"
+                  :style="{ background: form.accent_color || 'transparent' }"
+                />
+              </InputGroupAddon>
+              <InputGroupInput id="p-akzent" v-model="form.accent_color" class="tabular-nums" type="text" placeholder="#B44E22" />
+            </InputGroup>
           </Field>
         </div>
 
         <!-- #234: the pair is shown in itself, not named in a sample line —
              a typeface is judged by reading it. Only the display pair is
              selectable; minimum sizes and contrast stay fixed. -->
-        <Field v-if="fontPairs.length" class="mb-6">
+        <Field v-if="fontPairs.length" class="mt-6">
           <Label>{{ $t('settings.fontPair') }}</Label>
           <div class="grid grid-cols-2 gap-2.5">
             <label v-for="pair in fontPairs" :key="pair.value" class="block cursor-pointer" :data-font="pair.value">
@@ -190,8 +231,8 @@ defineExpose({ form, submit })
       </div>
     </div>
 
-    <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.bank') }}</div>
+    <div v-if="shows('bank')" class="mt-8 first:mt-0">
+      <div v-if="sections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.bank') }}</div>
       <div class="mb-6">
         <Field :label="$t('settings.bankAccountHolder')" id="p-kontoinhaber" wide :error="form.errors.bank_account_holder">
           <Input id="p-kontoinhaber" v-model="form.bank_account_holder" type="text" />

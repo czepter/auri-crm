@@ -2,6 +2,7 @@
 import { NONE, fromOption, toOption } from '@/lib/select'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
 
@@ -64,14 +65,17 @@ function setDiscountType(item: QuoteItemRow, value: unknown) {
           <Label :for="`quote-item-price-${index}`">
             {{ $t('quotes.itemPrice') }}
           </Label>
-          <Input
-            :id="`quote-item-price-${index}`"
-            v-model="item.unitPrice"
-            class="tabular-nums"
-            type="text"
-            inputmode="decimal"
-            :placeholder="$t('quotes.itemPriceHint')"
-          />
+          <InputGroup>
+            <InputGroupInput
+              :id="`quote-item-price-${index}`"
+              v-model="item.unitPrice"
+              class="tabular-nums"
+              type="text"
+              inputmode="decimal"
+              :placeholder="$t('quotes.itemPriceHint')"
+            />
+            <InputGroupAddon align="inline-end">{{ $t('common.unitEuro') }}</InputGroupAddon>
+          </InputGroup>
         </div>
         <div class="flex min-w-0 flex-col gap-1.5">
           <Label :for="`quote-item-discount-type-${index}`">{{ $t('quotes.discountType') }}</Label>
@@ -90,16 +94,19 @@ function setDiscountType(item: QuoteItemRow, value: unknown) {
           </Select>
         </div>
         <div v-if="item.discountType" class="flex min-w-0 flex-col gap-1.5">
-          <Label :for="`quote-item-discount-value-${index}`">
-            {{ item.discountType === 'percentage' ? $t('quotes.discountValuePercent') : $t('quotes.discountValueEuros') }}
-          </Label>
-          <Input
-            :id="`quote-item-discount-value-${index}`"
-            v-model="item.discountValue"
-            class="tabular-nums"
-            type="text"
-            inputmode="decimal"
-          />
+          <Label :for="`quote-item-discount-value-${index}`">{{ $t('quotes.discountValue') }}</Label>
+          <InputGroup>
+            <InputGroupInput
+              :id="`quote-item-discount-value-${index}`"
+              v-model="item.discountValue"
+              class="tabular-nums"
+              type="text"
+              inputmode="decimal"
+            />
+            <InputGroupAddon align="inline-end">
+              {{ item.discountType === 'percentage' ? $t('common.unitPercent') : $t('common.unitEuro') }}
+            </InputGroupAddon>
+          </InputGroup>
         </div>
       </div>
     </div>

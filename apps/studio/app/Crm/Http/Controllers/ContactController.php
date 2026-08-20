@@ -6,11 +6,11 @@ use App\Crm\Data\ContactRowData;
 use App\Crm\Data\ContactSuggestionData;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
-use App\Gallery\Models\Gallery;
-use App\Gallery\Models\GalleryView;
 use App\Engagement\Data\MessageData;
 use App\Engagement\Models\Message;
 use App\Enums\Capability;
+use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryView;
 use App\Http\Controllers\Controller;
 use App\Portal\Models\ClientAccess;
 use App\Portal\Models\DsgvoRequest;
@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class ContactController extends Controller
 {
@@ -206,9 +207,12 @@ class ContactController extends Controller
      *
      * The admin process cannot name a route it does not load, so the URL is
      * composed against config('portal.url') — the two surfaces are separate
-     * hosts.
+     * hosts, and off-origin is also why this leaves as an Inertia location
+     * rather than a redirect(): the button's router.post() is an XHR, and an
+     * XHR carrying X-Inertia may not follow a redirect across origins. It
+     * would spend the token on a request the browser then discards.
      */
-    public function previewPortal(Contact $contact): RedirectResponse
+    public function previewPortal(Contact $contact): HttpResponse
     {
         abort_unless(auth('staff')->user()?->role->allows(Capability::ManageSettings) ?? false, 403);
         abort_if($contact->portal_access_revoked_at !== null, 404);
@@ -230,7 +234,7 @@ class ContactController extends Controller
             subject: $contact->public_id,
         );
 
-        return redirect()->away(config('portal.url')."/zugang/{$token}");
+        return Inertia::location(config('portal.url')."/zugang/{$token}");
     }
 
     /**

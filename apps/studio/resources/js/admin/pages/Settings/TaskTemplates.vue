@@ -2,10 +2,12 @@
 import { ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import SettingsNav from '@/admin/components/SettingsNav.vue'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { NONE, fromOption, toOption } from '@/lib/select'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Checkbox } from '@/ui/checkbox'
@@ -19,12 +21,6 @@ const props = defineProps<{
   previewShootKind: string | null
   preview: { title: string; dueOn: string | null }[] | null
 }>()
-
-// The same disabled "bald" list Settings/Numbering.vue carries: Nummernkreise,
-// Verfügbarkeit, Zahlungen and Benachrichtigungen have their own live route
-// already, so only the panes still living inside Index.vue (and reachable
-// only from there) stay disabled here.
-const comingSoon = ['navVat', 'navDocuments', 'navGeneral'] as const
 
 // One form per template, keyed by its id — an independent draft per row,
 // matching how Settings/Numbering.vue and Settings/Availability.vue edit
@@ -91,45 +87,26 @@ function runPreview() {
 
 <template>
   <AdminLayout active="einstellungen">
-    <div class="hrow">
+    <div class="flex items-center gap-4">
       <div>
-        <div class="kick">{{ $t('settings.kicker') }}</div>
+        <div class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('settings.kicker') }}</div>
         <h1>{{ $t('taskTemplates.title') }}</h1>
       </div>
     </div>
 
     <div style="display: flex; gap: var(--s6); margin-top: var(--s5); align-items: flex-start">
-      <nav style="width: 196px; flex: none; display: flex; flex-direction: column; gap: 2px">
-        <a class="nav" href="/einstellungen">{{ $t('settings.navProfile') }}</a>
-        <a class="nav" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
-        <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
-        <a class="nav" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
-        <a class="nav on" href="/einstellungen/aufgabenvorlagen">{{ $t('settings.navTaskTemplates') }}</a>
-        <a class="nav" href="/einstellungen/fragebogen-vorlagen">{{ $t('settings.navFormTemplates') }}</a>
-        <a class="nav" href="/einstellungen/portal">{{ $t('settings.navPortal') }}</a>
-        <a class="nav" href="/einstellungen/benachrichtigungen">{{ $t('settings.navNotifications') }}</a>
-        <a
-          v-for="key in comingSoon"
-          :key="key"
-          class="nav"
-          href="#"
-          style="pointer-events: none; opacity: 0.5"
-        >
-          {{ $t(`settings.${key}`) }}
-          <span class="chip next" style="margin-left: auto">{{ $t('settings.soon') }}</span>
-        </a>
-      </nav>
+      <SettingsNav active="taskTemplates" />
 
       <div style="flex: 1; min-width: 0; max-width: 620px">
-        <div class="dsec" style="margin-top: 0">
-          <div class="dlab">{{ $t('taskTemplates.previewLabel') }}</div>
+        <div>
+          <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('taskTemplates.previewLabel') }}</div>
           <form id="preview-form" @submit.prevent="runPreview">
-            <div class="fgrid grp">
-              <div class="fld">
+            <div class="mb-6 grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4">
+              <div class="flex min-w-0 flex-col gap-1.5">
                 <Label for="preview-date">{{ $t('taskTemplates.previewDateField') }}</Label>
                 <DatePicker id="preview-date" v-model="previewForm.preview_date" />
               </div>
-              <div class="fld">
+              <div class="flex min-w-0 flex-col gap-1.5">
                 <Label for="preview-kind">{{ $t('taskTemplates.shootKindField') }}</Label>
                 <Select
                   :model-value="toOption(previewForm.preview_shoot_kind)"
@@ -145,36 +122,35 @@ function runPreview() {
                 </Select>
               </div>
             </div>
-            <div class="formfoot">
+            <div class="mt-6 flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0">
               <Button type="submit" :disabled="!previewForm.preview_date">
                 {{ $t('taskTemplates.previewButton') }}
               </Button>
             </div>
           </form>
 
-          <div v-if="preview" class="card static" style="margin-top: var(--s4)">
-            <p v-if="preview.length === 0" class="hint" style="margin: 0">{{ $t('taskTemplates.previewEmpty') }}</p>
-            <div v-for="row in preview" :key="row.title" class="taskrow">
-              <span class="ttext">{{ row.title }}</span>
-              <span class="tdate">{{ row.dueOn ?? '—' }}</span>
+          <div v-if="preview" class="mt-4 relative block cursor-default rounded-md border border-border p-2.5 text-inherit no-underline">
+            <p v-if="preview.length === 0" class="m-0 text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('taskTemplates.previewEmpty') }}</p>
+            <div v-for="row in preview" :key="row.title" class="flex items-center gap-2.5 text-[12.5px] leading-[1.3] font-normal">
+              <span class="min-w-0 flex-1 text-foreground">{{ row.title }}</span>
+              <span class="flex-none text-[12px] tabular-nums text-faint">{{ row.dueOn ?? '—' }}</span>
             </div>
           </div>
         </div>
 
-        <p v-if="templates.length === 0" class="hint">{{ $t('taskTemplates.empty') }}</p>
 
-        <div v-for="template in templates" :key="template.id" class="dsec">
-          <div class="dlab">{{ template.title }}</div>
+        <div v-for="template in templates" :key="template.id" class="mt-8 first-of-type:mt-6">
+          <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ template.title }}</div>
 
           <form :id="`task-template-form-${template.id}`" @submit.prevent="save(template.id)">
-            <div class="fgrid grp">
-              <div class="fld wide">
+            <div class="mb-6 grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4">
+              <div class="col-span-full flex min-w-0 flex-col gap-1.5">
                 <Label :for="`title-${template.id}`">{{ $t('taskTemplates.titleField') }}</Label>
                 <Input :id="`title-${template.id}`" v-model="forms[template.id].title" type="text" maxlength="255" />
-                <p v-if="forms[template.id].errors.title" class="err">{{ forms[template.id].errors.title }}</p>
+                <p v-if="forms[template.id].errors.title" class="text-[11.5px] leading-[1.45] text-destructive">{{ forms[template.id].errors.title }}</p>
               </div>
 
-              <div class="fld">
+              <div class="flex min-w-0 flex-col gap-1.5">
                 <Label :for="`audience-${template.id}`">{{ $t('taskTemplates.audienceField') }}</Label>
                 <Select
                   :model-value="forms[template.id].audience"
@@ -189,14 +165,17 @@ function runPreview() {
                 </Select>
               </div>
 
-              <div class="fld">
+              <div class="flex min-w-0 flex-col gap-1.5">
                 <Label :for="`offset-${template.id}`">{{ $t('taskTemplates.dayOffsetField') }}</Label>
-                <Input :id="`offset-${template.id}`" v-model.number="forms[template.id].day_offset" class="tabular-nums" type="number" />
-                <span class="hint">{{ $t('taskTemplates.dayOffsetHint') }}</span>
-                <p v-if="forms[template.id].errors.day_offset" class="err">{{ forms[template.id].errors.day_offset }}</p>
+                <InputGroup>
+                  <InputGroupInput :id="`offset-${template.id}`" v-model.number="forms[template.id].day_offset" class="tabular-nums" type="number" />
+                  <InputGroupAddon align="inline-end">{{ $t('common.unitDays') }}</InputGroupAddon>
+                </InputGroup>
+                <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('taskTemplates.dayOffsetHint') }}</span>
+                <p v-if="forms[template.id].errors.day_offset" class="text-[11.5px] leading-[1.45] text-destructive">{{ forms[template.id].errors.day_offset }}</p>
               </div>
 
-              <div class="fld">
+              <div class="flex min-w-0 flex-col gap-1.5">
                 <Label :for="`kind-${template.id}`">{{ $t('taskTemplates.shootKindField') }}</Label>
                 <Select
                   :model-value="toOption(forms[template.id].shoot_kind)"
@@ -212,21 +191,21 @@ function runPreview() {
                 </Select>
               </div>
 
-              <div class="fld">
+              <div class="flex min-w-0 flex-col gap-1.5">
                 <Label :for="`sort-${template.id}`">{{ $t('taskTemplates.sortOrderField') }}</Label>
                 <Input :id="`sort-${template.id}`" v-model.number="forms[template.id].sort_order" class="tabular-nums" type="number" min="0" />
-                <p v-if="forms[template.id].errors.sort_order" class="err">{{ forms[template.id].errors.sort_order }}</p>
+                <p v-if="forms[template.id].errors.sort_order" class="text-[11.5px] leading-[1.45] text-destructive">{{ forms[template.id].errors.sort_order }}</p>
               </div>
 
-              <div class="fld">
-                <div class="cbrow">
+              <div class="flex min-w-0 flex-col gap-1.5">
+                <div class="flex items-center gap-2.5">
                   <Checkbox :id="`active-${template.id}`" v-model="forms[template.id].is_active" />
                   <Label variant="inline" :for="`active-${template.id}`">{{ $t('taskTemplates.activeField') }}</Label>
                 </div>
               </div>
             </div>
 
-            <div class="formfoot">
+            <div class="mt-6 flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0">
               <Button
                 type="submit"
                 :disabled="!forms[template.id].isDirty || forms[template.id].processing"
@@ -235,7 +214,7 @@ function runPreview() {
                 <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
                 {{ $t('taskTemplates.save') }}
               </Button>
-              <span v-if="forms[template.id].isDirty" class="chip now">{{ $t('settings.unsaved') }}</span>
+              <span v-if="forms[template.id].isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
               <Button type="button" variant="outline" @click="remove(template.id)">{{ $t('taskTemplates.delete') }}</Button>
             </div>
           </form>
@@ -245,7 +224,7 @@ function runPreview() {
              identical form at the bottom that happens to mean "new" was the
              one thing on this screen you had to read the heading to tell
              apart; as a dialog it announces itself. -->
-        <div class="dsec">
+        <div class="mt-8 first-of-type:mt-6">
           <Dialog v-model:open="adding">
             <DialogTrigger as-child>
               <Button type="button" variant="outline">
@@ -260,14 +239,14 @@ function runPreview() {
               </DialogHeader>
 
               <DialogBody>
-                <form id="task-template-new-form" class="fgrid" @submit.prevent="add">
-                  <div class="fld wide">
+                <form id="task-template-new-form" class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4" @submit.prevent="add">
+                  <div class="col-span-full flex min-w-0 flex-col gap-1.5">
                 <Label for="new-title">{{ $t('taskTemplates.titleField') }}</Label>
                 <Input id="new-title" v-model="newForm.title" type="text" maxlength="255" />
-                <p v-if="newForm.errors.title" class="err">{{ newForm.errors.title }}</p>
+                <p v-if="newForm.errors.title" class="text-[11.5px] leading-[1.45] text-destructive">{{ newForm.errors.title }}</p>
               </div>
 
-              <div class="fld">
+              <div class="flex min-w-0 flex-col gap-1.5">
                 <Label for="new-audience">{{ $t('taskTemplates.audienceField') }}</Label>
                 <Select
                   :model-value="newForm.audience"
@@ -282,13 +261,16 @@ function runPreview() {
                 </Select>
               </div>
 
-              <div class="fld">
+              <div class="flex min-w-0 flex-col gap-1.5">
                 <Label for="new-offset">{{ $t('taskTemplates.dayOffsetField') }}</Label>
-                <Input id="new-offset" v-model.number="newForm.day_offset" class="tabular-nums" type="number" />
-                <p v-if="newForm.errors.day_offset" class="err">{{ newForm.errors.day_offset }}</p>
+                <InputGroup>
+                  <InputGroupInput id="new-offset" v-model.number="newForm.day_offset" class="tabular-nums" type="number" />
+                  <InputGroupAddon align="inline-end">{{ $t('common.unitDays') }}</InputGroupAddon>
+                </InputGroup>
+                <p v-if="newForm.errors.day_offset" class="text-[11.5px] leading-[1.45] text-destructive">{{ newForm.errors.day_offset }}</p>
               </div>
 
-              <div class="fld">
+              <div class="flex min-w-0 flex-col gap-1.5">
                 <Label for="new-kind">{{ $t('taskTemplates.shootKindField') }}</Label>
                 <Select
                   :model-value="toOption(newForm.shoot_kind)"
@@ -304,10 +286,10 @@ function runPreview() {
                 </Select>
               </div>
 
-              <div class="fld">
+              <div class="flex min-w-0 flex-col gap-1.5">
                 <Label for="new-sort">{{ $t('taskTemplates.sortOrderField') }}</Label>
                 <Input id="new-sort" v-model.number="newForm.sort_order" class="tabular-nums" type="number" min="0" />
-                <p v-if="newForm.errors.sort_order" class="err">{{ newForm.errors.sort_order }}</p>
+                <p v-if="newForm.errors.sort_order" class="text-[11.5px] leading-[1.45] text-destructive">{{ newForm.errors.sort_order }}</p>
               </div>
                 </form>
               </DialogBody>

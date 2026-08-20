@@ -20,6 +20,8 @@ use DomainException;
  */
 class AdvanceLeadStage
 {
+    public function __construct(private readonly BookProject $book) {}
+
     public function __invoke(Lead $lead, LeadStage $next, ?User $actor = null): Lead
     {
         if ($lead->isLost()) {
@@ -53,6 +55,15 @@ class AdvanceLeadStage
             subject: $lead->public_id,
             projectId: $lead->project_id,
         );
+
+        // "Gebucht" is the booking, not a label for one. Without this the
+        // stage and the Job disagree, and the two lists that read them —
+        // /anfragen by stage, /projekte by Job — each show the record the
+        // other one is missing. Idempotent: BookProject writes nothing when a
+        // Job already exists (the contract-and-deposit path got there first).
+        if ($next === LeadStage::Booked) {
+            ($this->book)($lead->project, $actor ?? auth('staff')->user());
+        }
 
         LeadStageChanged::dispatch($lead, $from, $next);
 
