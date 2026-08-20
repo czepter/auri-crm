@@ -243,6 +243,16 @@ services:
   gotenberg:
     image: gotenberg/gotenberg:8
     restart: unless-stopped
+    # Only /forms/chromium/convert/html is ever called (App\Support\GotenbergClient),
+    # and supervisor-render runs one process (config/horizon.php), so the stock
+    # six parallel Chromium instances are five more than this stack can use.
+    environment:
+      CHROMIUM_MAX_CONCURRENCY: "2"
+      CHROMIUM_MAX_QUEUE_SIZE: "8"
+      CHROMIUM_RESTART_AFTER: "10"
+      LIBREOFFICE_DISABLE_ROUTES: "true"
+      PDFENGINES_DISABLE_ROUTES: "true"
+    mem_limit: 640m
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:3000/health"]
       interval: 10s
