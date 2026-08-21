@@ -172,11 +172,13 @@ const items = computed(() =>
          its system font stack and its 4/8/12/16/20/28/32 scale. -->
         <div data-tokens="crm" class="flex-none">
             <!-- The phone rules sit on the nav, exactly where crm.css had them.
-           `order` and `sticky` do nothing from here — the nav is a child of
-           this wrapper, not of the flex row — but that is today's behaviour,
-           and no baseline covers 640px to tell a fix from a regression. -->
+           `order` does nothing from here — the nav is a child of this wrapper,
+           not of the flex row — but that is today's behaviour, and no baseline
+           covers 640px to tell a fix from a regression. The desktop `sticky`
+           does work: the wrapper stretches to the flex row, so the nav pins
+           against it while main scrolls. -->
             <nav
-                class="flex w-[214px] flex-col px-3 py-4.5 max-[1080px]:w-14 max-[1080px]:px-2 max-[640px]:sticky max-[640px]:bottom-0 max-[640px]:z-30 max-[640px]:order-2 max-[640px]:w-auto max-[640px]:flex-row max-[640px]:justify-around max-[640px]:bg-paper max-[640px]:px-1 max-[640px]:py-1.5 max-[640px]:shadow-[inset_0_1px_0_var(--rule)] min-h-screen"
+                class="flex w-[214px] flex-col px-3 py-4.5 max-[1080px]:w-14 max-[1080px]:px-2 max-[640px]:sticky max-[640px]:bottom-0 max-[640px]:z-30 max-[640px]:order-2 max-[640px]:w-auto max-[640px]:flex-row max-[640px]:justify-around max-[640px]:bg-paper max-[640px]:px-1 max-[640px]:py-1.5 max-[640px]:shadow-[inset_0_1px_0_var(--rule)] sticky top-0 h-screen overflow-y-auto max-[640px]:top-auto max-[640px]:h-auto max-[640px]:overflow-visible"
             >
                 <Link
                     class="mb-px flex items-center gap-2.25 rounded-lg px-2.5 pb-5.5 text-[17px] leading-none font-semibold tracking-[-0.024em] text-foreground no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk max-[1080px]:hidden"
