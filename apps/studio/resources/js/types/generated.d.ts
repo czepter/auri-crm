@@ -181,21 +181,6 @@ label: string,
 done: boolean,
 }[],
 };
-export type ProductionRowData = {
-projectId: string,
-projectName: string,
-shootId: string,
-shootLabel: string | null,
-kind: string,
-date: string | null,
-callTime: string | null,
-venue: string | null,
-status: string,
-statusLabel: string,
-daysInStatus: number,
-crewCount: number,
-openTasks: number,
-};
 export type ProjectHeaderData = {
 id: string,
 name: string,
