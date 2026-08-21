@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Crm\Models\Lead;
+use App\Crm\Actions\OpenLeads;
 use App\Crm\Models\Project;
 use App\Data\StaffProfileData;
 use App\Settings\Support\StudioSettingsResolver;
@@ -62,7 +62,7 @@ class HandleInertiaRequests extends Middleware
             // date. Fine at a studio's volume; if the board ever pages, these
             // become one grouped query instead.
             'nav' => $user === null ? null : [
-                'leads' => fn () => Lead::query()->open()->unbooked()->count(),
+                'leads' => fn () => app(OpenLeads::class)->count(),
                 // T-11's bell. Lazy like its neighbours, so a partial reload
                 // that does not ask for it pays nothing.
                 'unread' => fn () => $user->inAppNotifications()->whereNull('read_at')->count(),

@@ -158,6 +158,14 @@ value: number | null,
 lastAt: string,
 conflicts: App.Crm.Data.DateConflictData[],
 };
+export type LeadQueueRowData = {
+id: string,
+name: string,
+date: string | null,
+snippet: string | null,
+open: boolean,
+waitingDays: number,
+};
 export type NextShootData = {
 projectId: string,
 projectName: string,

@@ -2,7 +2,6 @@
 
 namespace App\Crm\Data;
 
-use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Lead;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -54,12 +53,7 @@ class LeadCardData extends Data
             id: $project->public_id,
             leadId: $lead->public_id,
             type: $project->type->label(),
-            // Primary contact first, then the rest. Falls back to the project
-            // name for a project whose contacts have not been attached yet.
-            names: $project->contacts
-                ->sortBy(fn ($contact) => $contact->pivot->role === ProjectContactRole::Primary->value ? 0 : 1)
-                ->pluck('name')
-                ->join(' & ') ?: $project->name,
+            names: $project->contactNames(),
             date: $primary?->date?->format('Y-m-d'),
             shootCount: $project->shoots->count(),
             venue: $primary?->venue(),

@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import LeadQueue, { type LeadQueueRow } from '@/admin/components/LeadQueue.vue'
+import LeadQueue from '@/admin/components/LeadQueue.vue'
 import Page from '@/ui/page/Page.vue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 import {
@@ -22,7 +22,7 @@ type Group = { key: string; rows: Card[] }
 const props = defineProps<{
   columns: Column[]
   groups: Group[]
-  queue: { key: string; rows: LeadQueueRow[] }[]
+  queue: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[]
   view: string
 }>()
 

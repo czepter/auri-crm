@@ -2,7 +2,6 @@
 
 namespace App\Crm\Data;
 
-use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Project;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -53,10 +52,7 @@ class ProjectHeaderData extends Data
         return new self(
             id: $project->public_id,
             name: $project->name,
-            names: $project->contacts
-                ->sortBy(fn ($contact) => $contact->pivot->role === ProjectContactRole::Primary->value ? 0 : 1)
-                ->pluck('name')
-                ->join(' & ') ?: $project->name,
+            names: $project->contactNames(),
             type: $project->type->label(),
             position: $position,
             primaryDate: $project->primaryShoot?->date?->format('Y-m-d'),

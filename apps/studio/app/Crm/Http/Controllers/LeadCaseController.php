@@ -3,7 +3,7 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Catalog\Models\Package;
-use App\Crm\Actions\BuildLeadQueue;
+use App\Crm\Actions\OpenLeads;
 use App\Crm\Actions\CheckDateAvailability;
 use App\Crm\Data\InternalNoteData;
 use App\Crm\Data\ShootData;
@@ -49,7 +49,7 @@ class LeadCaseController extends Controller
 {
     public function __construct(
         private readonly CheckDateAvailability $availability,
-        private readonly BuildLeadQueue $queue,
+        private readonly OpenLeads $leads,
         private readonly StudioSettingsResolver $settings,
     ) {}
 
@@ -69,7 +69,7 @@ class LeadCaseController extends Controller
         $primary = $project->primaryShoot;
 
         return Inertia::render('Leads/Show', [
-            'queue' => ($this->queue)($lead),
+            'queue' => $this->leads->queue($lead),
             'lead' => [
                 'id' => $lead->public_id,
                 'projectId' => $project->public_id,

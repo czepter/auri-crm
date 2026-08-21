@@ -1,23 +1,12 @@
-<script lang="ts">
+<script setup lang="ts">
 /*
  * The open inquiries, grouped by working state — the same pane on the board
  * and on a single case, so moving between them does not change what is beside
- * the work. BuildLeadQueue decides the groups; this only reads them.
+ * the work. OpenLeads decides the groups; this only reads them.
  */
-export type LeadQueueRow = {
-    id: string
-    name: string
-    date: string | null
-    snippet: string | null
-    open: boolean
-    waitingDays: number
-}
-</script>
-
-<script setup lang="ts">
 import { Queue, QueueGroup, QueueItem } from "@/ui/queue"
 
-defineProps<{ groups: { key: string; rows: LeadQueueRow[] }[] }>()
+defineProps<{ groups: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[] }>()
 
 // Below this the wait is the normal course of an inquiry; colouring it would
 // mark every row. Same floor the inbox uses.

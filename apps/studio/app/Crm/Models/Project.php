@@ -239,6 +239,19 @@ class Project extends Model
         );
     }
 
+    /**
+     * Primary contact first, then the rest, falling back to the project name
+     * while nobody is attached. Reads the loaded relation: every caller shows
+     * a list and has eager-loaded it.
+     */
+    public function contactNames(): string
+    {
+        return $this->contacts
+            ->sortBy(fn (Contact $contact) => $contact->pivot->role === ProjectContactRole::Primary->value ? 0 : 1)
+            ->pluck('name')
+            ->join(' & ') ?: $this->name;
+    }
+
     public function primaryContact(): ?Contact
     {
         return $this->contacts()

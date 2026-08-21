@@ -287,6 +287,40 @@ it('groups the table and the queue the same way', function () {
         ->and(collect($queue['unbeantwortet']['rows'])->pluck('open')->all())->toBe([false]);
 });
 
+// An inquiry without a date is not the most urgent one. Table and queue stand
+// on one screen, so a row that sits at the top of one and the bottom of the
+// other is the same lead in two places.
+it('sorts an undated inquiry last in the table and in the queue', function () {
+    leadOn(null, name: 'Ohne Termin');
+    leadOn('2026-06-14', name: 'Mit Termin');
+
+    $props = boardProps();
+    $group = collect($props['groups'])->firstWhere('key', 'unbeantwortet');
+    $pane = collect($props['queue'])->firstWhere('key', 'unbeantwortet');
+
+    expect(collect($group['rows'])->pluck('names')->all())->toBe(['Mit Termin', 'Ohne Termin'])
+        ->and(collect($pane['rows'])->pluck('name')->all())->toBe(['Mit Termin', 'Ohne Termin']);
+});
+
+it('names the primary contact first in the queue as well as on the card', function () {
+    $project = leadOn('2026-06-14', name: 'Steffens & Falk')->project;
+    $project->attachContact(
+        Contact::factory()->create(['name' => 'Ruben Falk']),
+        ProjectContactRole::Partner,
+    );
+    $project->attachContact(
+        Contact::factory()->create(['name' => 'Annika Steffens']),
+        ProjectContactRole::Primary,
+    );
+
+    $props = boardProps();
+
+    expect(collect(collect($props['groups'])->firstWhere('key', 'unbeantwortet')['rows'])->pluck('names')->all())
+        ->toBe(['Annika Steffens & Ruben Falk'])
+        ->and(collect(collect($props['queue'])->firstWhere('key', 'unbeantwortet')['rows'])->pluck('name')->all())
+        ->toBe(['Annika Steffens & Ruben Falk']);
+});
+
 it('lets the url outrank what the user last chose, and remembers a choice', function () {
     test()->staff->update(['lead_view' => 'liste']);
 

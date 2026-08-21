@@ -3,7 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from "vue";
 import { Link, router, useForm } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import CaseSection from "@/admin/components/CaseSection.vue";
-import LeadQueue, { type LeadQueueRow } from "@/admin/components/LeadQueue.vue";
+import LeadQueue from "@/admin/components/LeadQueue.vue";
 import NoteThread from "@/admin/components/NoteThread.vue";
 import { Button } from "@/ui/button";
 import { ChoiceGroup } from "@/ui/choice-group";
@@ -17,7 +17,7 @@ import RailSection from "@/ui/page/RailSection.vue";
 import { Textarea } from "@/ui/textarea";
 
 const props = defineProps<{
-    queue: { key: string; rows: LeadQueueRow[] }[];
+    queue: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[];
     lead: {
         id: string;
         projectId: string;
