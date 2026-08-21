@@ -281,6 +281,13 @@ shootKindLabel: string | null,
 isActive: boolean,
 sortOrder: number,
 };
+export type ThreadEntryData = {
+key: string,
+at: string | null,
+body: string,
+author: string | null,
+system: boolean,
+};
 export type TimelineEntryData = {
 id: string,
 time: string,

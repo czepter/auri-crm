@@ -59,15 +59,17 @@ it('never ships request metadata in the admin project payload', function () {
     AuditLogger::record('quote.sent', staffMember(), ['contact' => 'c_secret'], null, $project->id);
 
     $this->actingAs(staffMember(), 'staff');
-    $activity = props("/auftraege/{$project->public_id}")['activity'];
+    $thread = collect(props("/auftraege/{$project->public_id}")['thread'])
+        ->filter(fn ($entry) => $entry['system'])
+        ->values();
 
     // Proves the payload actually carries the event before asserting what's
-    // absent from it — an empty activity array would satisfy the
-    // assertions below for the wrong reason.
-    expect($activity)->toHaveCount(1)
-        ->and($activity[0]['event'])->toBe('quote.sent');
+    // absent from it — an empty trace would satisfy the assertions below for
+    // the wrong reason.
+    expect($thread)->toHaveCount(1)
+        ->and($thread[0]['body'])->toBe(__('activity.quote.sent'));
 
-    $payload = json_encode($activity);
+    $payload = json_encode($thread);
 
     expect($payload)
         ->not->toContain('ip_address')

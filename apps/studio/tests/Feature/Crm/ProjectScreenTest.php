@@ -13,6 +13,7 @@ use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Models\AuditLog;
+use App\Support\AuditLogger;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -208,9 +209,10 @@ it('writes, edits and deletes an internal note', function () {
     $note = InternalNote::sole();
     expect($note->author_id)->toBe($this->staff->id);
 
-    $notes = props("/auftraege/{$this->project->public_id}")['notes'];
-    expect($notes[0]['body'])->toBe('Gegenlicht ab 20 Uhr.')
-        ->and($notes[0]['author'])->toBe($this->staff->name);
+    $written = collect(props("/auftraege/{$this->project->public_id}")['thread'])
+        ->firstWhere('body', 'Gegenlicht ab 20 Uhr.');
+    expect($written['author'])->toBe($this->staff->name)
+        ->and($written['system'])->toBeFalse();
 
     $this->patch("/notizen/{$note->public_id}", ['body' => 'Korrigiert.'])->assertRedirect();
     expect($note->fresh()->body)->toBe('Korrigiert.');
@@ -243,6 +245,27 @@ it('sorts open tasks above finished ones', function () {
     $tasks = props("/auftraege/{$this->project->public_id}")['tasks'];
 
     expect(collect($tasks)->pluck('title')->all())->toBe(['Offen', 'Erledigt']);
+});
+
+// The trace is one order or it is two lists sharing a heading: a note from
+// June must not sit under an event from March because notes were merged last.
+it('orders notes, recorded events and finished tasks into one trace', function () {
+    InternalNote::factory()->for($this->project)->create([
+        'body' => 'Notiz',
+        'author_id' => $this->staff->id,
+        'created_at' => '2026-03-02 09:00:00',
+    ]);
+    // Audit rows are append-only, so the clock moves rather than the row.
+    $this->travelTo('2026-03-01 09:00:00');
+    AuditLogger::record('quote.sent', $this->staff, [], null, $this->project->id);
+    $this->travelBack();
+    Task::factory()->for($this->project)->done()->due('2026-03-03')->create(['title' => 'Erledigt']);
+
+    $thread = props("/auftraege/{$this->project->public_id}")['thread'];
+
+    expect(collect($thread)->pluck('body')->all())
+        ->toBe([__('activity.quote.sent'), 'Notiz', 'Erledigt'])
+        ->and(collect($thread)->pluck('system')->all())->toBe([true, false, true]);
 });
 
 it('never calls a finished task overdue', function () {

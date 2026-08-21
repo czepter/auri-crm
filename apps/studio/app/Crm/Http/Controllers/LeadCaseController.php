@@ -3,9 +3,9 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Catalog\Models\Package;
+use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\OpenLeads;
 use App\Crm\Actions\CheckDateAvailability;
-use App\Crm\Data\InternalNoteData;
 use App\Crm\Data\ProjectPersonData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
@@ -51,6 +51,7 @@ class LeadCaseController extends Controller
     public function __construct(
         private readonly CheckDateAvailability $availability,
         private readonly OpenLeads $leads,
+        private readonly BuildThread $thread,
         private readonly StudioSettingsResolver $settings,
     ) {}
 
@@ -114,9 +115,7 @@ class LeadCaseController extends Controller
             'tasks' => TaskRowData::collect(
                 $project->tasks->sortBy('due_on')->values()->map(TaskRowData::fromTask(...))
             ),
-            'notes' => InternalNoteData::collect(
-                $project->notes->map(InternalNoteData::fromNote(...))
-            ),
+            'thread' => ($this->thread)($project),
             // C-10 (#245): the fixed value lists the edit state offers. Same
             // button rows the capture screen uses.
             'types' => collect(ProjectType::cases())

@@ -23,15 +23,9 @@ const props = defineProps<{
     header: App.Crm.Data.ProjectHeaderData;
     shoots: App.Crm.Data.ShootData[];
     paymentPlan: App.Payments.Data.PaymentPlanData | null;
-    notes: App.Crm.Data.InternalNoteData[];
+    thread: App.Crm.Data.ThreadEntryData[];
     tasks: App.Crm.Data.TaskRowData[];
     shootOptions: { value: string; label: string }[];
-    activity: {
-        event: string;
-        label: string;
-        at: string;
-        actorName: string | null;
-    }[];
     figures: Record<string, Figure>;
     scope: {
         items: {
@@ -67,8 +61,6 @@ function euro(minor: string | number | null) {
 // trace holds the repeat orders instead of dates. Building a head per phase
 // means widening the screen with every phase that turns up.
 const open = computed(() => props.tasks.filter((task) => !task.isDone));
-const done = computed(() => props.tasks.filter((task) => task.isDone));
-
 // C-12 (#248): the same answer #245 gives for the inquiry — one save for the
 // whole state, and the head stays put, so the two screens behave alike.
 const editing = ref(false);
@@ -106,31 +98,6 @@ function save() {
         onSuccess: () => (editing.value = false),
     });
 }
-
-// C-11 (#247): notes and the audit trail are one trace, so they are also one
-// order. Sorted apart they read as two lists that happen to share a heading.
-const thread = computed(() => [
-    ...props.notes.map((note) => ({
-        key: `note-${note.id}`,
-        at: note.writtenAt,
-        body: note.body,
-        author: note.author,
-    })),
-    ...props.activity.map((entry, index) => ({
-        key: `event-${index}`,
-        at: entry.at,
-        body: entry.label,
-        author: entry.actorName,
-        system: true,
-    })),
-    ...done.value.map((task) => ({
-        key: `task-${task.id}`,
-        at: task.dueOn,
-        body: task.title,
-        author: null,
-        system: true,
-    })),
-]);
 
 function togglePortal() {
     router.post(

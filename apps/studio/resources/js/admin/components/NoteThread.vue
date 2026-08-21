@@ -11,24 +11,11 @@ import { dayWithWeekday } from "@/admin/lib/dates";
  * kind made the newest note sit above an event from March.
  */
 const props = defineProps<{
-    entries: {
-        key: string;
-        at: string | null;
-        body: string;
-        author: string | null;
-        system?: boolean;
-    }[];
+    entries: App.Crm.Data.ThreadEntryData[];
     action: string;
 }>();
 
 const me = computed(() => usePage().props.auth.user?.name ?? null);
-
-// Oldest first, so the composer sits where the next line goes.
-const ordered = computed(() =>
-    [...props.entries].sort((a, b) =>
-        (a.at ?? "9999").localeCompare(b.at ?? "9999"),
-    ),
-);
 
 // Tasks carry a due date and nothing else; only a real timestamp gets a clock.
 function timeOf(iso: string | null) {
@@ -55,9 +42,9 @@ function send() {
 <template>
     <div class="max-w-[820px]">
         <div class="flex flex-col gap-1.5">
-            <template v-for="(entry, index) in ordered" :key="entry.key">
+            <template v-for="(entry, index) in entries" :key="entry.key">
                 <div
-                    v-if="dayWithWeekday(entry.at, '') !== dayWithWeekday(ordered[index - 1]?.at, '')"
+                    v-if="dayWithWeekday(entry.at, '') !== dayWithWeekday(entries[index - 1]?.at, '')"
                     class="mt-4 mb-1.5 flex items-center gap-3 first:mt-0"
                 >
                     <span class="h-px flex-1 bg-[var(--rule)]" />

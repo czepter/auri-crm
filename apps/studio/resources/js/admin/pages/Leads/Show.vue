@@ -42,7 +42,7 @@ const props = defineProps<{
     quote: App.Quotes.Data.QuoteData | null;
     packages: { id: string; name: string; itemCount: number; total: number }[];
     tasks: App.Crm.Data.TaskRowData[];
-    notes: App.Crm.Data.InternalNoteData[];
+    thread: App.Crm.Data.ThreadEntryData[];
     types: { value: string; label: string }[];
     sources: { value: string; label: string }[];
     presets: { type: string[]; source: string[] };
@@ -147,15 +147,6 @@ function save() {
 }
 
 const task = useForm({ title: "", audience: "internal", due_on: "" });
-
-const thread = computed(() =>
-    props.notes.map((note) => ({
-        key: note.id,
-        at: note.writtenAt,
-        body: note.body,
-        author: note.author,
-    })),
-);
 
 function addTask() {
     task.post(`/auftraege/${props.lead.projectId}/aufgaben`, {

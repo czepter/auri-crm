@@ -5,10 +5,10 @@ namespace App\Crm\Http\Controllers;
 use App\Catalog\Models\Package;
 use App\Crm\Actions\AdvanceLeadStage;
 use App\Crm\Actions\BookProject;
+use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\CheckDateAvailability;
 use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Data\FormInstanceData;
-use App\Crm\Data\InternalNoteData;
 use App\Crm\Data\ProjectHeaderData;
 use App\Crm\Data\ProjectPersonData;
 use App\Crm\Data\ProjectRowData;
@@ -22,7 +22,6 @@ use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
-use App\Crm\Support\ProjectActivity;
 use App\Data\StaffProfileData;
 use App\Documents\Data\MailTemplateData;
 use App\Documents\Enums\DocumentTemplateType;
@@ -51,6 +50,7 @@ class ProjectController extends Controller
         private readonly DeriveProjectPosition $position,
         private readonly CheckDateAvailability $availability,
         private readonly StudioSettingsResolver $settings,
+        private readonly BuildThread $thread,
     ) {}
 
     /**
@@ -105,9 +105,6 @@ class ProjectController extends Controller
             'paymentPlan' => $project->job?->paymentPlan
                 ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments'))
                 : null,
-            'notes' => InternalNoteData::collect(
-                $project->notes()->with('author')->get()->map(InternalNoteData::fromNote(...))
-            ),
             // Open first and by due date, then the done ones: a card whose top
             // row is something already finished buries the work.
             'tasks' => TaskRowData::collect(
@@ -124,11 +121,11 @@ class ProjectController extends Controller
                     'label' => $shoot->label ?? $shoot->kind->label(),
                 ])
                 ->all(),
-            // Whitelisted by ProjectActivity, admin-only by omission: the
-            // portal's own ProjectController does not render this key. An
-            // internal audit trail on a client page would disclose staff
-            // names and internal event vocabulary to the client.
-            'activity' => ProjectActivity::for($project),
+            // Notes, the whitelisted audit trail and what got done, in one
+            // order. Admin-only by omission: the portal's own ProjectController
+            // does not render this key. An internal trace on a client page
+            // would disclose staff names and internal event vocabulary.
+            'thread' => ($this->thread)($project),
             // C-11 (#247): the key figures, each with the line that proves it.
             'figures' => $this->figures($project),
             // The scope as it actually stands, not a copy of the quote. The
