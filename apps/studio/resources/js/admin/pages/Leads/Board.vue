@@ -14,6 +14,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/ui/alert-dialog'
+import { formatEurosRounded } from '@/admin/lib/money'
 
 type Card = App.Crm.Data.LeadCardData
 type Column = { stage: string; label: string; cards: Card[]; total: number }
@@ -26,7 +27,6 @@ const props = defineProps<{
   view: string
 }>()
 
-const money = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 
 const view = ref(props.view)
 
@@ -189,7 +189,7 @@ const STAGE_DOT = ['bg-foreground', 'bg-[#5F5F63]', 'bg-[#A1A1A6]', 'bg-action',
             <header class="flex items-baseline gap-1.5 pb-2">
               <b class="text-[11px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ column.label }}</b>
               <span class="ml-auto text-[11px] tabular-nums text-ink-2">
-                {{ column.cards.length }}<template v-if="column.total"> · {{ money.format(column.total / 100) }}</template>
+                {{ column.cards.length }}<template v-if="column.total"> · {{ formatEurosRounded(column.total) }}</template>
               </span>
             </header>
 
@@ -273,7 +273,7 @@ const STAGE_DOT = ['bg-foreground', 'bg-[#5F5F63]', 'bg-[#A1A1A6]', 'bg-action',
                   </span>
                 </TableCell>
                 <TableCell align="right">
-                  {{ card.value === null ? '—' : money.format(card.value / 100) }}
+                  {{ card.value === null ? '—' : formatEurosRounded(card.value) }}
                 </TableCell>
                 <TableCell tone="muted" align="right">
                   {{ relative(card.lastAt) }}

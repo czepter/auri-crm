@@ -5,6 +5,7 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ReportCard from '@/admin/components/ReportCard.vue'
 import ReportKpi from '@/admin/components/ReportKpi.vue'
 import { Button } from '@/ui/button'
+import { formatEurosRounded } from '@/admin/lib/money'
 
 const props = defineProps<{
   window: { from: string; to: string }
@@ -33,7 +34,6 @@ const bare = computed(() =>
 
 // Minor units end to end, turned into euros exactly once — the same rule
 // Uebersicht.vue states for its own tiles.
-const money = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 
 function monthLabel(month: string) {
   const [year, index] = month.split('-')
@@ -101,12 +101,12 @@ const bookingRate = computed(() =>
         <em v-if="acceptanceDelta !== null"> · {{ $t('reports.vsPriorPoints', { delta: acceptanceDelta > 0 ? `+${acceptanceDelta}` : acceptanceDelta }) }}</em>
       </ReportKpi>
       <ReportKpi v-if="revenue.projects">
-        <b>{{ money.format(revenue.revenue / 100) }}</b>
+        <b>{{ formatEurosRounded(revenue.revenue) }}</b>
         {{ $t('reports.revenue') }}
         <em v-if="revenueDelta !== null"> · {{ $t('reports.vsPrior', { delta: revenueDelta > 0 ? `+${revenueDelta}` : revenueDelta }) }}</em>
       </ReportKpi>
       <ReportKpi v-if="revenue.averagePerProject !== null">
-        <b>{{ money.format(revenue.averagePerProject / 100) }}</b>
+        <b>{{ formatEurosRounded(revenue.averagePerProject) }}</b>
         {{ $t('reports.averagePerProject') }}
         <em> · {{ $t('reports.bookedProjects', { count: revenue.projects }) }}</em>
       </ReportKpi>
@@ -157,7 +157,7 @@ const bookingRate = computed(() =>
                 <td>{{ row.label }}</td>
                 <td>{{ row.captured }}</td>
                 <td>{{ row.booked }}</td>
-                <td>{{ money.format(row.revenue / 100) }}</td>
+                <td>{{ formatEurosRounded(row.revenue) }}</td>
               </tr>
             </tbody>
           </table>
@@ -190,7 +190,7 @@ const bookingRate = computed(() =>
              question asked twice. -->
         <ReportCard v-if="cashFlow.months.length" :title="$t('reports.cashFlowTitle')">
           <p v-if="cashFlow.overdue" class="text-[11.5px] leading-[1.45] font-normal text-destructive">
-            {{ $t('reports.overdue', { amount: money.format(cashFlow.overdue / 100) }) }}
+            {{ $t('reports.overdue', { amount: formatEurosRounded(cashFlow.overdue) }) }}
           </p>
 
           <table class="mt-2.5 w-full border-collapse text-[13px] leading-[1.5] [&_th]:pb-1.5 [&_th]:text-left [&_th]:text-[12px] [&_th]:leading-none [&_th]:font-medium [&_th]:text-muted-foreground [&_td]:border-t [&_td]:border-border [&_td]:py-1">
@@ -210,11 +210,11 @@ const bookingRate = computed(() =>
                     class="relative isolate block h-[3px] overflow-hidden rounded-[2px] bg-muted px-1.5 py-0.5 before:absolute before:top-0 before:bottom-0 before:left-0 before:right-auto before:-z-10 before:w-[var(--fill)] before:rounded-[3px] before:bg-[var(--accent-weak,rgb(0_0_0/6%))] before:content-['']"
                     :style="{ '--fill': `${(row.due / cashPeak) * 100}%` }"
                   >
-                    {{ row.due ? money.format(row.due / 100) : '—' }}
+                    {{ row.due ? formatEurosRounded(row.due) : '—' }}
                   </span>
                 </td>
-                <td>{{ row.received ? money.format(row.received / 100) : '—' }}</td>
-                <td>{{ row.open ? money.format(row.open / 100) : '—' }}</td>
+                <td>{{ row.received ? formatEurosRounded(row.received) : '—' }}</td>
+                <td>{{ row.open ? formatEurosRounded(row.open) : '—' }}</td>
               </tr>
             </tbody>
           </table>
@@ -234,7 +234,7 @@ const bookingRate = computed(() =>
               <tr v-for="row in perContact" :key="row.name">
                 <td>{{ row.name }}</td>
                 <td>{{ row.projects }}</td>
-                <td>{{ money.format(row.revenue / 100) }}</td>
+                <td>{{ formatEurosRounded(row.revenue) }}</td>
               </tr>
             </tbody>
           </table>

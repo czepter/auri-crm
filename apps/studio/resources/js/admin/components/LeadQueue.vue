@@ -4,6 +4,7 @@
  * and on a single case, so moving between them does not change what is beside
  * the work. OpenLeads decides the groups; this only reads them.
  */
+import { dayWithWeekday } from "@/admin/lib/dates"
 import { Queue, QueueGroup, QueueItem } from "@/ui/queue"
 
 defineProps<{ groups: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[] }>()
@@ -21,16 +22,6 @@ function since(days: number) {
               "day",
           )
 }
-
-function day(iso: string | null) {
-    return iso
-        ? new Date(iso).toLocaleDateString("de-DE", {
-              weekday: "short",
-              day: "2-digit",
-              month: "2-digit",
-          })
-        : null
-}
 </script>
 
 <template>
@@ -47,7 +38,7 @@ function day(iso: string | null) {
                 :name="row.name"
                 :meta="since(row.waitingDays)"
                 :alert="row.waitingDays >= NOTICEABLE_DAYS"
-                :title="day(row.date) ?? $t('board.openDate')"
+                :title="dayWithWeekday(row.date, null) ?? $t('board.openDate')"
                 :snippet="row.snippet"
                 :active="row.open"
                 :href="`/anfragen/${row.id}`"

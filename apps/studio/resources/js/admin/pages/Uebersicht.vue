@@ -7,6 +7,7 @@ import PageHead from "@/ui/page/PageHead.vue";
 import Metric from "@/admin/components/Metric.vue";
 import { Button } from "@/ui/button";
 import type { Tone } from "@/admin/lib/metricDots";
+import { formatEurosRounded } from "@/admin/lib/money";
 
 const props = defineProps<{
     today: string;
@@ -33,12 +34,6 @@ const props = defineProps<{
 // Quote.total and PaymentInstallment.amount are minor units end to end; this
 // is the one place they turn into euros, so no other spot on this screen
 // divides by 100 again.
-const money = new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-});
-
 const heading = computed(() =>
     new Date(props.today).toLocaleDateString("de-DE", {
         weekday: "long",
@@ -219,7 +214,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
                 <Metric
                     v-if="pipeline"
                     :label="$t('dashboard.pipeline')"
-                    :value="money.format(pipeline / 100)"
+                    :value="formatEurosRounded(pipeline)"
                     :dots="pipelineDots"
                 >
                     <p>
@@ -232,7 +227,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
                 <Metric
                     v-if="overdue.total"
                     :label="$t('dashboard.overdueTotal')"
-                    :value="money.format(overdue.total / 100)"
+                    :value="formatEurosRounded(overdue.total)"
                     warn
                     :dots="overdueDots"
                 >

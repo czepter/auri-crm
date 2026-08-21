@@ -21,6 +21,12 @@ export function formatEuros(cents: number): string {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cents / 100)
 }
 
+/** The same money as a headline figure — tiles, column sums, report rows, where cents are noise. */
+export function formatEurosRounded(cents: number): string {
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+    .format(cents / 100)
+}
+
 /**
  * A discount percentage is stored server-side as basis points (0–10000, two
  * decimal places — see App\Quotes\Enums\DiscountType) so the same "never a

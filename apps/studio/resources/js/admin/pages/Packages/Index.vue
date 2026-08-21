@@ -3,10 +3,10 @@ import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { Button } from '@/ui/button'
+import { formatEurosRounded } from '@/admin/lib/money'
 
 defineProps<{ packages: App.Catalog.Data.PackageData[] }>()
 
-const money = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 
 function toggle(pkg: App.Catalog.Data.PackageData) {
   router.post(`/pakete/${pkg.id}/status`, {}, { preserveScroll: true })
@@ -35,7 +35,7 @@ function total(pkg: App.Catalog.Data.PackageData) {
               <Link :href="`/pakete/${pkg.id}`">{{ pkg.name }}</Link>
             </h3>
             <span v-if="!pkg.isActive" class="text-[11.5px] text-ink-2">{{ $t('packages.inactive') }}</span>
-            <span class="ml-auto text-[13px] font-semibold tabular-nums">{{ money.format(total(pkg) / 100) }}</span>
+            <span class="ml-auto text-[13px] font-semibold tabular-nums">{{ formatEurosRounded(total(pkg)) }}</span>
           </header>
 
           <div>
@@ -48,7 +48,7 @@ function total(pkg: App.Catalog.Data.PackageData) {
               <!-- A position without a price is an included service, not a
                    zero: package_items.unit_price is nullable for exactly that. -->
               <span class="w-28 flex-none text-right text-[13px] leading-[1.47] tabular-nums">
-                {{ item.unitPrice === null ? $t('packages.included') : money.format(item.unitPrice / 100) }}
+                {{ item.unitPrice === null ? $t('packages.included') : formatEurosRounded(item.unitPrice) }}
               </span>
             </div>
           </div>

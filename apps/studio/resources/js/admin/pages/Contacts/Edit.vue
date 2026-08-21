@@ -8,6 +8,7 @@ import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
+import { formatEurosRounded } from '@/admin/lib/money'
 
 const { t } = useI18n()
 
@@ -103,7 +104,6 @@ function defaultLabel(key: string) {
   return key === 'messaging_mode' ? t(`portalSettings.messagingMode.${value}`) : String(value ?? '—')
 }
 
-const money = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 
 function day(iso: string | null) {
   return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
@@ -260,7 +260,7 @@ function eraseDsgvoData() {
               </div>
             </div>
             <span v-if="project.value" class="ml-auto text-[12.5px] text-ink-2">
-              {{ money.format(project.value / 100) }}
+              {{ formatEurosRounded(project.value) }}
             </span>
           </div>
         </section>

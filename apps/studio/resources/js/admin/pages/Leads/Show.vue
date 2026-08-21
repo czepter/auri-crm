@@ -15,6 +15,8 @@ import Page from "@/ui/page/Page.vue";
 import Rail from "@/ui/page/Rail.vue";
 import RailSection from "@/ui/page/RailSection.vue";
 import { Textarea } from "@/ui/textarea";
+import { formatEurosRounded } from "@/admin/lib/money";
+import { dayWithWeekday as day } from "@/admin/lib/dates";
 
 const props = defineProps<{
     queue: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[];
@@ -47,22 +49,6 @@ const props = defineProps<{
     week: { date: string; what: string }[];
     conflicts: App.Crm.Data.DateConflictData[];
 }>();
-
-const money = new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-});
-
-function day(iso: string | null) {
-    return iso
-        ? new Date(iso).toLocaleDateString("de-DE", {
-              weekday: "short",
-              day: "2-digit",
-              month: "2-digit",
-          })
-        : "—";
-}
 
 // ↑↓ walks the queue without leaving the screen. Response time is the lever:
 // eight days of silence happen when every step costs a page load.
@@ -500,7 +486,7 @@ const due = computed(() => {
                                 class="w-14 flex-none text-right text-[12.5px] leading-[1.47] tabular-nums text-ink-2"
                             >{{ item.quantity }}×</span>
                             <span class="w-28 flex-none text-right text-[13px] leading-[1.47] tabular-nums">{{
-                                item.unitPrice === null ? "—" : money.format(item.unitPrice / 100)
+                                item.unitPrice === null ? "—" : formatEurosRounded(item.unitPrice)
                             }}</span>
                         </div>
                         <div class="flex items-baseline gap-3.5 pt-2.5 shadow-[inset_0_1px_0_#D8D8DC]">
@@ -509,7 +495,7 @@ const due = computed(() => {
                             }}</span>
                             <span
                                 class="w-28 flex-none text-right text-[15px] leading-[1.47] font-semibold tracking-[-0.018em] tabular-nums"
-                            >{{ money.format(quote.total / 100) }}</span>
+                            >{{ formatEurosRounded(quote.total) }}</span>
                         </div>
                         <p
                             v-if="quote.validUntil"
@@ -531,7 +517,7 @@ const due = computed(() => {
                         >
                             <b>{{ pkg.name }}</b>
                             {{ $t("packages.itemCount", pkg.itemCount) }} ·
-                            {{ money.format(pkg.total / 100) }}
+                            {{ formatEurosRounded(pkg.total) }}
                         </Link>
                     </div>
                 </CaseSection>

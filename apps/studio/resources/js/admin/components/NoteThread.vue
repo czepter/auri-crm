@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { useForm, usePage } from "@inertiajs/vue3";
 import { Textarea } from "@/ui/textarea";
+import { dayWithWeekday } from "@/admin/lib/dates";
 
 /*
  * The internal trace read as what it is: a conversation the studio has with
@@ -28,16 +29,6 @@ const ordered = computed(() =>
         (a.at ?? "9999").localeCompare(b.at ?? "9999"),
     ),
 );
-
-function dayOf(iso: string | null | undefined) {
-    return iso
-        ? new Date(iso).toLocaleDateString("de-DE", {
-              weekday: "short",
-              day: "2-digit",
-              month: "2-digit",
-          })
-        : "";
-}
 
 // Tasks carry a due date and nothing else; only a real timestamp gets a clock.
 function timeOf(iso: string | null) {
@@ -66,13 +57,13 @@ function send() {
         <div class="flex flex-col gap-1.5">
             <template v-for="(entry, index) in ordered" :key="entry.key">
                 <div
-                    v-if="dayOf(entry.at) !== dayOf(ordered[index - 1]?.at)"
+                    v-if="dayWithWeekday(entry.at, '') !== dayWithWeekday(ordered[index - 1]?.at, '')"
                     class="mt-4 mb-1.5 flex items-center gap-3 first:mt-0"
                 >
                     <span class="h-px flex-1 bg-[var(--rule)]" />
                     <span
                         class="text-[10.5px] leading-none tracking-[0.06em] uppercase text-ink-2"
-                    >{{ dayOf(entry.at) }}</span>
+                    >{{ dayWithWeekday(entry.at, '') }}</span>
                     <span class="h-px flex-1 bg-[var(--rule)]" />
                 </div>
 

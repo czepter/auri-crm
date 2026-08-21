@@ -14,6 +14,8 @@ import Page from "@/ui/page/Page.vue";
 import Rail from "@/ui/page/Rail.vue";
 import RailItem from "@/ui/page/RailItem.vue";
 import RailSection from "@/ui/page/RailSection.vue";
+import { formatEurosRounded } from "@/admin/lib/money";
+import { dayWithWeekday as day } from "@/admin/lib/dates";
 
 type Figure = { value: string | null; proof: string | null };
 
@@ -55,24 +57,8 @@ const props = defineProps<{
     sourceLabel: string | null;
 }>();
 
-const money = new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-    maximumFractionDigits: 0,
-});
-
-function day(iso: string | null) {
-    return iso
-        ? new Date(iso).toLocaleDateString("de-DE", {
-              weekday: "short",
-              day: "2-digit",
-              month: "2-digit",
-          })
-        : "—";
-}
-
 function euro(minor: string | number | null) {
-    return minor === null ? "—" : money.format(Number(minor) / 100);
+    return minor === null ? "—" : formatEurosRounded(Number(minor));
 }
 
 // C-11 (#247): the same build in every phase. Before the first shoot the
