@@ -7,6 +7,7 @@ use App\Crm\Actions\AdvanceLeadStage;
 use App\Crm\Actions\BookProject;
 use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\CheckDateAvailability;
+use App\Crm\Actions\ReadProjectScreen;
 use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Data\FormInstanceData;
 use App\Crm\Data\ProjectHeaderData;
@@ -31,9 +32,7 @@ use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Payments\Data\PaymentPlanData;
-use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Quotes\Data\QuoteData;
-use App\Quotes\Enums\QuoteStatus;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use App\Support\RecordVisit;
@@ -51,6 +50,7 @@ class ProjectController extends Controller
         private readonly CheckDateAvailability $availability,
         private readonly StudioSettingsResolver $settings,
         private readonly BuildThread $thread,
+        private readonly ReadProjectScreen $screen,
     ) {}
 
     /**
@@ -127,14 +127,14 @@ class ProjectController extends Controller
             // would disclose staff names and internal event vocabulary.
             'thread' => ($this->thread)($project),
             // C-11 (#247): the key figures, each with the line that proves it.
-            'figures' => $this->figures($project),
+            'figures' => $this->screen->figures($project),
             // The scope as it actually stands, not a copy of the quote. The
             // divergence is the difference between the draft at this project
             // and the accepted quote; nothing is locked, because the order
             // changes in conversation and the document lags behind — forbid
             // it and you get a scope that is wrong while the work happens
             // anyway.
-            'scope' => $this->scope($project),
+            'scope' => $this->screen->scope($project),
             'people' => ProjectPersonData::collect(
                 $project->contacts->map(ProjectPersonData::fromContact(...))
             ),
@@ -233,94 +233,6 @@ class ProjectController extends Controller
         });
 
         return back();
-    }
-
-    /**
-     * The band across the top: phase, next date, value, what is open, source,
-     * portal — each with one line of proof under it.
-     *
-     * Two fields the draft asks for are deliberately not invented. `Phase` as
-     * a maintained value does not exist — it is derived (DeriveProjectPosition)
-     * and stays derived. And the follow-up date is a task with a due date, so
-     * it needs no column of its own: the row in "Offen" is the whole feature.
-     *
-     * @return array<string, array{value: ?string, proof: ?string}>
-     */
-    private function figures(Project $project): array
-    {
-        $accepted = $project->quotes()->where('status', QuoteStatus::Accepted)->latest('id')->first();
-        $plan = $project->job?->paymentPlan;
-        $open = $plan === null ? null : (int) $plan->installments()
-            ->where('status', PaymentInstallmentStatus::Scheduled)
-            ->sum('amount');
-
-        return [
-            'phase' => [
-                'value' => ($this->position)($project)->label,
-                'proof' => $project->lead?->source->label(),
-            ],
-            'nextDate' => [
-                'value' => $project->shoots()->uncancelled()->whereNotNull('date')
-                    ->whereDate('date', '>=', now()->toDateString())
-                    ->orderBy('date')->value('date')?->format('Y-m-d'),
-                'proof' => null,
-            ],
-            'value' => [
-                'value' => $accepted === null ? null : (string) $accepted->total,
-                'proof' => $accepted?->number,
-            ],
-            'open' => [
-                'value' => $open === null ? null : (string) $open,
-                'proof' => $plan === null ? null : (string) $plan->installments()->count(),
-            ],
-            'portal' => [
-                'value' => $project->portal_visible ? 'on' : 'off',
-                'proof' => null,
-            ],
-        ];
-    }
-
-    /**
-     * What was ordered against what stands now.
-     *
-     * The accepted quote is untouched; the current state is a draft quote at
-     * the same project. Every line that differs is marked, the old value
-     * stays under the new one, and the strip states the difference in money.
-     *
-     * @return array{items: list<array<string, mixed>>, delta: int, hasDraft: bool}
-     */
-    private function scope(Project $project): array
-    {
-        $accepted = $project->quotes()->where('status', QuoteStatus::Accepted)->latest('id')->first();
-        $draft = $project->quotes()->where('status', QuoteStatus::Draft)->latest('id')->first();
-        $current = $draft ?? $accepted;
-
-        if ($current === null) {
-            return ['items' => [], 'delta' => 0, 'hasDraft' => false];
-        }
-
-        $before = $accepted?->items->keyBy('title') ?? collect();
-
-        return [
-            'items' => $current->items->map(function ($item) use ($before, $draft) {
-                $was = $before->get($item->title);
-
-                return [
-                    'id' => $item->public_id,
-                    'title' => $item->title,
-                    'quantity' => $item->quantity,
-                    'unitPrice' => $item->unit_price,
-                    // Only a draft can diverge: without one, what stands is
-                    // what was ordered.
-                    'state' => $draft === null || $was !== null && (int) $was->unit_price === (int) $item->unit_price
-                        ? null
-                        : ($was === null ? 'new' : 'changed'),
-                    'wasUnitPrice' => $was?->unit_price,
-                ];
-            })->all(),
-            'delta' => $accepted === null || $draft === null ? 0 : (int) $draft->total - (int) $accepted->total,
-            'hasDraft' => $draft !== null,
-        ];
     }
 
     public function shoots(Project $project): Response
