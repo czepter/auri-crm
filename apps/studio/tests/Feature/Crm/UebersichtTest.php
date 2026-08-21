@@ -21,6 +21,7 @@ use App\Payments\Models\PaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -321,6 +322,31 @@ it('carries the newest inquiries with their occasion and source', function () {
     expect($rows)->toHaveCount(1)
         ->and($rows[0]['id'])->toBe($lead->project->public_id)
         ->and($rows[0]['type'])->toBe($lead->project->type->label());
+});
+
+// The card reads the primary shoot and the latest quote, which the panel's own
+// query has to carry — otherwise the third inquiry costs two queries the first
+// one did not.
+it('reads three inquiries in the same number of queries as one', function () {
+    leadAtStage(LeadStage::New);
+
+    props('/');
+
+    DB::enableQueryLog();
+    props('/');
+    $one = count(DB::getRawQueryLog());
+    DB::flushQueryLog();
+
+    leadAtStage(LeadStage::New);
+    leadAtStage(LeadStage::Contacted);
+
+    props('/');
+    DB::flushQueryLog();
+    props('/');
+    $three = count(DB::getRawQueryLog());
+    DB::disableQueryLog();
+
+    expect($three)->toBe($one);
 });
 
 it('counts threads where the client spoke last', function () {

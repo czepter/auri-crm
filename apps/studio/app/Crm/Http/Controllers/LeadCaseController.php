@@ -6,6 +6,7 @@ use App\Catalog\Models\Package;
 use App\Crm\Actions\OpenLeads;
 use App\Crm\Actions\CheckDateAvailability;
 use App\Crm\Data\InternalNoteData;
+use App\Crm\Data\ProjectPersonData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\LeadSource;
@@ -89,13 +90,9 @@ class LeadCaseController extends Controller
             ],
             // The contact column stands beside the quote, not small underneath
             // it: the phone number is the reason the screen is open.
-            'people' => $project->contacts->map(fn ($contact) => [
-                'id' => $contact->public_id,
-                'name' => $contact->name,
-                'role' => $contact->pivot->role,
-                'email' => $contact->email,
-                'phone' => $contact->phone,
-            ])->all(),
+            'people' => ProjectPersonData::collect(
+                $project->contacts->map(ProjectPersonData::fromContact(...))
+            ),
             'shoots' => ShootData::collect(
                 $project->shoots->map(fn (Shoot $shoot) => ShootData::fromShoot($shoot))
             ),

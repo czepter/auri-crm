@@ -10,6 +10,7 @@ use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Data\FormInstanceData;
 use App\Crm\Data\InternalNoteData;
 use App\Crm\Data\ProjectHeaderData;
+use App\Crm\Data\ProjectPersonData;
 use App\Crm\Data\ProjectRowData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
@@ -137,13 +138,9 @@ class ProjectController extends Controller
             // it and you get a scope that is wrong while the work happens
             // anyway.
             'scope' => $this->scope($project),
-            'people' => $project->contacts->map(fn ($contact) => [
-                'id' => $contact->public_id,
-                'name' => $contact->name,
-                'role' => $contact->pivot->role,
-                'email' => $contact->email,
-                'phone' => $contact->phone,
-            ])->all(),
+            'people' => ProjectPersonData::collect(
+                $project->contacts->map(ProjectPersonData::fromContact(...))
+            ),
             // C-12 (#248): what the edit state offers as fixed choices.
             'stages' => collect(LeadStage::cases())
                 ->map(fn (LeadStage $stage) => ['value' => $stage->value, 'label' => $stage->label()])->all(),

@@ -35,13 +35,7 @@ const props = defineProps<{
         capturedAt: string;
         booked: boolean;
     };
-    people: {
-        id: string;
-        name: string;
-        role: string;
-        email: string | null;
-        phone: string | null;
-    }[];
+    people: App.Crm.Data.ProjectPersonData[];
     shoots: App.Crm.Data.ShootData[];
     quote: App.Quotes.Data.QuoteData | null;
     packages: { id: string; name: string; itemCount: number; total: number }[];

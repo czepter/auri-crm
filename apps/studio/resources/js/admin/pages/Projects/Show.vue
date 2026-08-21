@@ -43,13 +43,7 @@ const props = defineProps<{
         delta: number;
         hasDraft: boolean;
     };
-    people: {
-        id: string;
-        name: string;
-        role: string;
-        email: string | null;
-        phone: string | null;
-    }[];
+    people: App.Crm.Data.ProjectPersonData[];
     galleries: { id: string; title: string | null; expiresAt: string | null }[];
     stages: { value: string; label: string }[];
     sources: { value: string; label: string }[];

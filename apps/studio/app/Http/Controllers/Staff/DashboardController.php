@@ -226,7 +226,7 @@ class DashboardController extends Controller
         return LeadCardData::collect(
             Lead::query()
                 ->open()
-                ->with(['project.contacts', 'project.shoots'])
+                ->with(['project.contacts', 'project.shoots', 'project.primaryShoot', 'project.latestQuote'])
                 ->latest()
                 ->limit(3)
                 ->get()

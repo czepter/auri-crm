@@ -223,6 +223,13 @@ label: string,
 href: string,
 }[],
 };
+export type ProjectPersonData = {
+id: string,
+name: string,
+role: string,
+email: string | null,
+phone: string | null,
+};
 export type ProjectPositionData = {
 source: string,
 value: string | null,
