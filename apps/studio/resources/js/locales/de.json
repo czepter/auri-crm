@@ -78,11 +78,6 @@
     "colStage": "Stufe",
     "colValue": "Wert",
     "colLast": "Zuletzt",
-    "group": {
-      "handelt": "Handelt jemand",
-      "laeuft": "Läuft",
-      "fertig": "Abgeschlossen"
-    },
     "shootCount": "1 Shooting | {count} Shootings"
   },
   "contacts": {
@@ -1136,7 +1131,6 @@
       "angebot": "Angebot draußen",
       "angenommen": "Angenommen"
     },
-    "silentFor": "1 Tag still | {count} Tage still",
     "said": "Was sie schreiben",
     "noText": "Kein Text",
     "noReach": "Keine Kontaktdaten",

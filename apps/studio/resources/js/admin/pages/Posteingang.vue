@@ -7,6 +7,7 @@ import { Field } from '@/ui/field'
 import Rail from '@/ui/page/Rail.vue'
 import RailItem from '@/ui/page/RailItem.vue'
 import RailSection from '@/ui/page/RailSection.vue'
+import { Queue, QueueGroup, QueueItem } from '@/ui/queue'
 import { Textarea } from '@/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
@@ -134,31 +135,27 @@ function receivedAt(iso: string) {
     <!-- C-14 (#250): conversations, grouped by working state. A queue on the
          left, the thread on the right, its trace beside it. -->
     <div v-if="threaded" data-tokens="crm" style="display: flex; min-height: 60vh; margin-top: var(--s5)">
-      <div class="w-58 flex-none overflow-y-auto bg-sunk pt-3.5 max-[1080px]:w-[200px]">
+      <Queue>
         <template v-for="group in groups" :key="group.key">
-          <h2 v-if="group.rows.length" class="m-0 flex items-baseline px-3.5 pb-2 [a+&]:pt-5">
-            <b class="text-[12.5px] leading-none font-semibold tracking-[-0.012em]">{{ $t(`inbox.group.${group.key}`) }}</b>
-            <span class="ml-auto text-[11px] leading-[1.47] tabular-nums text-ink-2">{{ group.rows.length }}</span>
-          </h2>
+          <QueueGroup :title="$t(`inbox.group.${group.key}`)" :count="group.rows.length" />
 
-          <a
+          <!-- The project name under the sender, not the mail address: which
+               booking a message is about is what one triages on. -->
+          <QueueItem
             v-for="row in group.rows"
             :key="row.id"
-            href="#"
-            class="block px-3.5 py-[9px] text-inherit no-underline shadow-[inset_0_1px_0_#ECECEE]" :class="open?.id === row.id && 'bg-paper'"
-            @click.prevent="show(row.id)"
-          >
-            <span class="block text-[12.5px] leading-[1.47] font-semibold tracking-[-0.012em]">{{ row.who }}</span>
-            <!-- The project name under the sender, not the mail address:
-                 which booking a message is about is what one triages on. -->
-            <span class="mt-px block text-[11.5px] leading-[1.47] text-ink-2">{{ row.project ?? $t('inbox.general') }}</span>
-            <span
-              v-if="row.waitingDays !== null && row.waitingDays >= NOTICEABLE_DAYS"
-              class="mt-px block text-[11.5px] leading-[1.47] text-action"
-            >{{ $t('inbox.waiting', row.waitingDays) }}</span>
-          </a>
+            :name="row.who"
+            :meta="row.waitingDays !== null && row.waitingDays >= NOTICEABLE_DAYS
+              ? $t('inbox.waiting', row.waitingDays)
+              : null"
+            :alert="true"
+            :title="row.project ?? $t('inbox.general')"
+            :snippet="row.snippet"
+            :active="open?.id === row.id"
+            @select="show(row.id)"
+          />
         </template>
-      </div>
+      </Queue>
 
       <div class="min-w-0 flex-1 overflow-y-auto px-[26px] pt-4 pb-5">
         <template v-if="open">

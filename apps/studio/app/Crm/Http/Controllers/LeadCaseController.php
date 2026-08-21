@@ -3,12 +3,12 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Catalog\Models\Package;
+use App\Crm\Actions\BuildLeadQueue;
 use App\Crm\Actions\CheckDateAvailability;
 use App\Crm\Data\InternalNoteData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\LeadSource;
-use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
@@ -47,15 +47,9 @@ use Inertia\Response;
  */
 class LeadCaseController extends Controller
 {
-    /** Who owes the next move. Same reading the board's table groups by. */
-    private const GROUPS = [
-        'unbeantwortet' => [LeadStage::New, LeadStage::Contacted],
-        'angebot' => [LeadStage::QuoteSent],
-        'angenommen' => [LeadStage::QuoteAccepted, LeadStage::ContractSent, LeadStage::Booked],
-    ];
-
     public function __construct(
         private readonly CheckDateAvailability $availability,
+        private readonly BuildLeadQueue $queue,
         private readonly StudioSettingsResolver $settings,
     ) {}
 
@@ -75,7 +69,7 @@ class LeadCaseController extends Controller
         $primary = $project->primaryShoot;
 
         return Inertia::render('Leads/Show', [
-            'queue' => $this->queue($lead),
+            'queue' => ($this->queue)($lead),
             'lead' => [
                 'id' => $lead->public_id,
                 'projectId' => $project->public_id,
@@ -236,29 +230,6 @@ class LeadCaseController extends Controller
      * The queue itself. Every open inquiry, so ↑↓ can walk it without the
      * screen having to fetch the next one.
      */
-    private function queue(Lead $open): array
-    {
-        $leads = Lead::query()
-            ->open()
-            ->unbooked()
-            ->with(['project.contacts', 'project.primaryShoot'])
-            ->get();
-
-        return collect(self::GROUPS)->map(fn (array $stages, string $key) => [
-            'key' => $key,
-            'rows' => $leads
-                ->filter(fn (Lead $lead) => in_array($lead->stage, $stages, true))
-                ->sortBy(fn (Lead $lead) => $lead->project->primaryShoot?->date?->toDateString() ?? '9999-99-99')
-                ->map(fn (Lead $lead) => [
-                    'id' => $lead->public_id,
-                    'name' => $lead->project->contacts->pluck('name')->join(' & ') ?: $lead->project->name,
-                    'date' => $lead->project->primaryShoot?->date?->format('Y-m-d'),
-                    'open' => $lead->public_id === $open->public_id,
-                    'waitingDays' => (int) $lead->stage_entered_at->startOfDay()->diffInDays(now()->startOfDay()),
-                ])->values()->all(),
-        ])->values()->all();
-    }
-
     /**
      * What lies around the requested day: every other project's shoots in
      * that week. A date is answered by what is already on it, not by a rule.

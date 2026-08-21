@@ -2,6 +2,8 @@
 import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import LeadQueue, { type LeadQueueRow } from '@/admin/components/LeadQueue.vue'
+import Page from '@/ui/page/Page.vue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 import {
   AlertDialog,
@@ -17,7 +19,12 @@ type Card = App.Crm.Data.LeadCardData
 type Column = { stage: string; label: string; cards: Card[]; total: number }
 type Group = { key: string; rows: Card[] }
 
-const props = defineProps<{ columns: Column[]; groups: Group[]; view: string }>()
+const props = defineProps<{
+  columns: Column[]
+  groups: Group[]
+  queue: { key: string; rows: LeadQueueRow[] }[]
+  view: string
+}>()
 
 const money = new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 
@@ -135,171 +142,179 @@ const STAGE_DOT = ['bg-foreground', 'bg-[#5F5F63]', 'bg-[#A1A1A6]', 'bg-action',
 
 <template>
   <AdminLayout active="anfragen">
-    <div data-tokens="crm" @click="menu = null">
-      <div class="flex items-center gap-3 px-8 pt-[22px]">
-        <h1 class="mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em]">{{ $t('board.title') }}</h1>
+    <Page @click="menu = null">
+      <!-- The same pane a single case stands beside, so moving between the
+           board and one inquiry does not change what is next to the work. -->
+      <template #left>
+        <LeadQueue :groups="queue" />
+      </template>
 
-        <span class="ml-auto flex rounded-lg bg-sunk-2 p-0.5">
-          <button
-            v-for="option in (['board', 'liste'] as const)"
-            :key="option"
-            class="cursor-pointer rounded-[6px] border-0 bg-transparent px-3.5 py-1 text-[12.5px] leading-[1.4] text-foreground transition-colors duration-[120ms] ease-out"
-            :class="view === option ? 'bg-paper font-medium' : 'font-normal'"
-            type="button"
-            @click="choose(option)"
-          >
-            {{ option === 'board' ? $t('board.viewBoard') : $t('board.viewList') }}
-          </button>
-        </span>
+      <div class="min-w-0 flex-1">
+        <div class="flex items-center gap-3 px-8 pt-[22px]">
+          <h1 class="mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em]">{{ $t('board.title') }}</h1>
 
-        <Link
-          class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-action px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-white no-underline transition-[filter,background] duration-[120ms] ease-out hover:brightness-[1.08]"
-          href="/anfragen/neu"
-        >
-          {{ $t('board.create') }}
-        </Link>
-      </div>
-
-      <!-- Board — list columns, no cards. Grey cards on a white ground invert
-           the material order, in which the container carries material and the
-           content stays white. -->
-      <div v-if="view === 'board'" class="flex items-stretch overflow-x-auto px-5 pt-5 pb-7">
-        <section
-          v-for="(column, index) in columns"
-          :key="column.stage"
-          class="flex min-w-0 shrink-0 grow basis-[190px] flex-col gap-2 px-3 [&:not(:first-child)]:shadow-[inset_1px_0_0_#F0F0F2]"
-          :class="target === index && 'rounded-[12px] bg-sunk'"
-          @dragover="onDragOver($event, index, null)"
-          @drop.prevent="onDrop(index)"
-        >
-          <header class="flex items-baseline gap-1.5 pb-2">
-            <b class="text-[11px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ column.label }}</b>
-            <span class="ml-auto text-[11px] tabular-nums text-ink-2">
-              {{ column.cards.length }}<template v-if="column.total"> · {{ money.format(column.total / 100) }}</template>
-            </span>
-          </header>
-
-          <template v-for="(card, row) in column.cards" :key="card.id">
-            <div v-if="target === index && insertAt === row" class="-mx-1.5 h-0.5 rounded-[1px] bg-action" />
-
-            <Link
-              class="relative -mx-1.5 block cursor-grab rounded-lg border border-border px-1.5 py-[9px] text-inherit no-underline shadow-[inset_0_1px_0_#F0F0F2] transition-[background,border-color] duration-[120ms] ease-out first-of-type:shadow-none hover:bg-sunk"
-              :class="moving?.id === card.id && 'cursor-grabbing'"
-              :href="`/anfragen/${card.leadId}`"
-              draggable="true"
-              @dragstart="onDragStart($event, card, index)"
-              @dragend="reset"
-              @dragover="onDragOver($event, index, row)"
-              @keydown="onKey($event, card, index)"
-              @contextmenu="openMenu($event, card)"
+          <span class="ml-auto flex rounded-lg bg-sunk-2 p-0.5">
+            <button
+              v-for="option in (['board', 'liste'] as const)"
+              :key="option"
+              class="cursor-pointer rounded-[6px] border-0 bg-transparent px-3.5 py-1 text-[12.5px] leading-[1.4] text-foreground transition-colors duration-[120ms] ease-out"
+              :class="view === option ? 'bg-paper font-medium' : 'font-normal'"
+              type="button"
+              @click="choose(option)"
             >
-              <span
-                class="text-[13.5px] leading-[1.3] tracking-[-0.014em]"
-                :class="DONE_STAGES.includes(column.stage) || moving?.id === card.id
-                  ? 'font-medium text-ink-2'
-                  : 'font-semibold'"
-              >
-                {{ card.names }}
-              </span>
-              <span class="mt-0.5 text-[12px]" :class="moving?.id === card.id ? 'text-mark' : 'text-ink-2'">
-                {{ shortDate(card.date) ?? $t('board.openDate') }}
-                <template v-if="card.venue"> · {{ card.venue }}</template>
-              </span>
-              <!-- On both affected rows and without naming anyone: who
-                   collides is the other marked row in the same picture. -->
-              <span
-                v-if="card.conflicts.length"
-                class="mt-[3px] text-[11.5px]"
-                :class="moving?.id === card.id ? 'text-mark' : 'text-action'"
-              >
-                {{ $t('board.dateDoubled') }}
-              </span>
-            </Link>
-          </template>
+              {{ option === 'board' ? $t('board.viewBoard') : $t('board.viewList') }}
+            </button>
+          </span>
 
-          <!-- An empty stage keeps its height, or there is no target there. -->
-          <div :class="target === index && 'min-h-11'" />
-        </section>
-      </div>
-
-      <!-- List — grouped by who owes the next move, not by stage. A board
-           shows where something stands, a table shows what is next. -->
-      <Table v-else>
-        <thead>
-          <tr>
-            <TableHead>{{ $t('board.colInquiry') }}</TableHead>
-            <TableHead>{{ $t('board.colDate') }}</TableHead>
-            <TableHead>{{ $t('board.colVenue') }}</TableHead>
-            <TableHead>{{ $t('board.colStage') }}</TableHead>
-            <TableHead align="right">{{ $t('board.colValue') }}</TableHead>
-            <TableHead align="right">{{ $t('board.colLast') }}</TableHead>
-          </tr>
-        </thead>
-        <tbody>
-          <template v-for="group in groupRows" :key="group.key">
-            <TableGroupRow :colspan="6">
-                {{ $t(`board.group.${group.key}`) }}
-            </TableGroupRow>
-            <TableRow v-for="card in group.rows" :key="card.id">
-              <TableCell tone="name">
-                <Link :href="`/anfragen/${card.leadId}`">{{ card.names }}</Link>
-              </TableCell>
-              <TableCell>
-                {{ shortDate(card.date) ?? $t('board.openDate') }}
-                <span v-if="card.conflicts.length" class="text-action"> · {{ $t('board.dateDoubled') }}</span>
-              </TableCell>
-              <TableCell tone="muted">{{ card.venue ?? '—' }}</TableCell>
-              <TableCell>
-                <span class="inline-flex items-baseline gap-[7px] text-[12.5px]">
-                  <s
-                    class="size-1.5 self-center rounded-full no-underline"
-                    :class="STAGE_DOT[columns.findIndex((c) => c.stage === card.stage)] ?? 'bg-foreground'"
-                  />
-                  {{ columns.find((c) => c.stage === card.stage)?.label }}
-                </span>
-              </TableCell>
-              <TableCell align="right">
-                {{ card.value === null ? '—' : money.format(card.value / 100) }}
-              </TableCell>
-              <TableCell tone="muted" align="right">
-                {{ relative(card.lastAt) }}
-              </TableCell>
-            </TableRow>
-          </template>
-        </tbody>
-      </Table>
-
-      <div
-        v-if="menu"
-        class="fixed z-20 w-[208px] rounded-[12px] bg-paper p-[5px] shadow-[0_8px_24px_rgba(0,0,0,0.16)]"
-        :style="{ left: `${menu.x}px`, top: `${menu.y}px` }"
-        @click.stop
-      >
-        <div
-          v-for="column in columns"
-          :key="column.stage"
-          class="rounded-lg px-[9px] py-1.5 text-[12.5px]"
-          :class="column.stage === menu.card.stage
-            ? 'cursor-default text-mark'
-            : 'cursor-pointer hover:bg-sunk'"
-          @click="column.stage !== menu.card.stage && move(menu.card.leadId, column.stage)"
-        >
-          {{ column.label }}
+          <Link
+            class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-action px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-white no-underline transition-[filter,background] duration-[120ms] ease-out hover:brightness-[1.08]"
+            href="/anfragen/neu"
+          >
+            {{ $t('board.create') }}
+          </Link>
         </div>
-      </div>
 
-      <AlertDialog :open="booking !== null" @update:open="(open: boolean) => { if (!open) booking = null }">
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{{ $t('board.bookTitle') }}</AlertDialogTitle>
-          </AlertDialogHeader>
-          <p>{{ $t('board.bookConsequence') }}</p>
-          <AlertDialogFooter>
-            <AlertDialogAction @click="book">{{ $t('board.book') }}</AlertDialogAction>
-            <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+        <!-- Board — list columns, no cards. Grey cards on a white ground invert
+             the material order, in which the container carries material and the
+             content stays white. -->
+        <div v-if="view === 'board'" class="flex items-stretch overflow-x-auto px-5 pt-5 pb-7">
+          <section
+            v-for="(column, index) in columns"
+            :key="column.stage"
+            class="flex min-w-0 shrink-0 grow basis-[190px] flex-col gap-2 px-3 [&:not(:first-child)]:shadow-[inset_1px_0_0_#F0F0F2]"
+            :class="target === index && 'rounded-[12px] bg-sunk'"
+            @dragover="onDragOver($event, index, null)"
+            @drop.prevent="onDrop(index)"
+          >
+            <header class="flex items-baseline gap-1.5 pb-2">
+              <b class="text-[11px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ column.label }}</b>
+              <span class="ml-auto text-[11px] tabular-nums text-ink-2">
+                {{ column.cards.length }}<template v-if="column.total"> · {{ money.format(column.total / 100) }}</template>
+              </span>
+            </header>
+
+            <template v-for="(card, row) in column.cards" :key="card.id">
+              <div v-if="target === index && insertAt === row" class="-mx-1.5 h-0.5 rounded-[1px] bg-action" />
+
+              <Link
+                class="relative -mx-1.5 block cursor-grab rounded-lg border border-border px-1.5 py-[9px] text-inherit no-underline shadow-[inset_0_1px_0_#F0F0F2] transition-[background,border-color] duration-[120ms] ease-out first-of-type:shadow-none hover:bg-sunk"
+                :class="moving?.id === card.id && 'cursor-grabbing'"
+                :href="`/anfragen/${card.leadId}`"
+                draggable="true"
+                @dragstart="onDragStart($event, card, index)"
+                @dragend="reset"
+                @dragover="onDragOver($event, index, row)"
+                @keydown="onKey($event, card, index)"
+                @contextmenu="openMenu($event, card)"
+              >
+                <span
+                  class="text-[13.5px] leading-[1.3] tracking-[-0.014em]"
+                  :class="DONE_STAGES.includes(column.stage) || moving?.id === card.id
+                    ? 'font-medium text-ink-2'
+                    : 'font-semibold'"
+                >
+                  {{ card.names }}
+                </span>
+                <span class="mt-0.5 text-[12px]" :class="moving?.id === card.id ? 'text-mark' : 'text-ink-2'">
+                  {{ shortDate(card.date) ?? $t('board.openDate') }}
+                  <template v-if="card.venue"> · {{ card.venue }}</template>
+                </span>
+                <!-- On both affected rows and without naming anyone: who
+                     collides is the other marked row in the same picture. -->
+                <span
+                  v-if="card.conflicts.length"
+                  class="mt-[3px] text-[11.5px]"
+                  :class="moving?.id === card.id ? 'text-mark' : 'text-action'"
+                >
+                  {{ $t('board.dateDoubled') }}
+                </span>
+              </Link>
+            </template>
+
+            <!-- An empty stage keeps its height, or there is no target there. -->
+            <div :class="target === index && 'min-h-11'" />
+          </section>
+        </div>
+
+        <!-- List — grouped by who owes the next move, not by stage. A board
+             shows where something stands, a table shows what is next. -->
+        <Table v-else>
+          <thead>
+            <tr>
+              <TableHead>{{ $t('board.colInquiry') }}</TableHead>
+              <TableHead>{{ $t('board.colDate') }}</TableHead>
+              <TableHead>{{ $t('board.colVenue') }}</TableHead>
+              <TableHead>{{ $t('board.colStage') }}</TableHead>
+              <TableHead align="right">{{ $t('board.colValue') }}</TableHead>
+              <TableHead align="right">{{ $t('board.colLast') }}</TableHead>
+            </tr>
+          </thead>
+          <tbody>
+            <template v-for="group in groupRows" :key="group.key">
+              <TableGroupRow :colspan="6">
+                  {{ $t(`lead.group.${group.key}`) }}
+              </TableGroupRow>
+              <TableRow v-for="card in group.rows" :key="card.id">
+                <TableCell tone="name">
+                  <Link :href="`/anfragen/${card.leadId}`">{{ card.names }}</Link>
+                </TableCell>
+                <TableCell>
+                  {{ shortDate(card.date) ?? $t('board.openDate') }}
+                  <span v-if="card.conflicts.length" class="text-action"> · {{ $t('board.dateDoubled') }}</span>
+                </TableCell>
+                <TableCell tone="muted">{{ card.venue ?? '—' }}</TableCell>
+                <TableCell>
+                  <span class="inline-flex items-baseline gap-[7px] text-[12.5px]">
+                    <s
+                      class="size-1.5 self-center rounded-full no-underline"
+                      :class="STAGE_DOT[columns.findIndex((c) => c.stage === card.stage)] ?? 'bg-foreground'"
+                    />
+                    {{ columns.find((c) => c.stage === card.stage)?.label }}
+                  </span>
+                </TableCell>
+                <TableCell align="right">
+                  {{ card.value === null ? '—' : money.format(card.value / 100) }}
+                </TableCell>
+                <TableCell tone="muted" align="right">
+                  {{ relative(card.lastAt) }}
+                </TableCell>
+              </TableRow>
+            </template>
+          </tbody>
+        </Table>
+
+        <div
+          v-if="menu"
+          class="fixed z-20 w-[208px] rounded-[12px] bg-paper p-[5px] shadow-[0_8px_24px_rgba(0,0,0,0.16)]"
+          :style="{ left: `${menu.x}px`, top: `${menu.y}px` }"
+          @click.stop
+        >
+          <div
+            v-for="column in columns"
+            :key="column.stage"
+            class="rounded-lg px-[9px] py-1.5 text-[12.5px]"
+            :class="column.stage === menu.card.stage
+              ? 'cursor-default text-mark'
+              : 'cursor-pointer hover:bg-sunk'"
+            @click="column.stage !== menu.card.stage && move(menu.card.leadId, column.stage)"
+          >
+            {{ column.label }}
+          </div>
+        </div>
+
+        <AlertDialog :open="booking !== null" @update:open="(open: boolean) => { if (!open) booking = null }">
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{{ $t('board.bookTitle') }}</AlertDialogTitle>
+            </AlertDialogHeader>
+            <p>{{ $t('board.bookConsequence') }}</p>
+            <AlertDialogFooter>
+              <AlertDialogAction @click="book">{{ $t('board.book') }}</AlertDialogAction>
+              <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </Page>
   </AdminLayout>
 </template>

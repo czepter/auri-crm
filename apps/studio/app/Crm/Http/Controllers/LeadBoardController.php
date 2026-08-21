@@ -2,6 +2,7 @@
 
 namespace App\Crm\Http\Controllers;
 
+use App\Crm\Actions\BuildLeadQueue;
 use App\Crm\Actions\CheckDateAvailability;
 use App\Crm\Data\LeadCardData;
 use App\Crm\Enums\LeadStage;
@@ -26,14 +27,11 @@ use Inertia\Response;
  */
 class LeadBoardController extends Controller
 {
-    /** Who owes the next move, in the table's own three groups. */
-    private const GROUPS = [
-        'handelt' => [LeadStage::New, LeadStage::QuoteAccepted],
-        'laeuft' => [LeadStage::Contacted, LeadStage::QuoteSent, LeadStage::ContractSent],
-        'fertig' => [LeadStage::Booked],
-    ];
-
-    public function __invoke(Request $request, CheckDateAvailability $availability): Response
+    public function __invoke(
+        Request $request,
+        CheckDateAvailability $availability,
+        BuildLeadQueue $queue,
+    ): Response
     {
         $this->authorize('viewAny', Lead::class);
 
@@ -84,7 +82,7 @@ class LeadBoardController extends Controller
             ];
         })->all();
 
-        $groups = collect(self::GROUPS)->map(fn (array $stages, string $key) => [
+        $groups = collect(BuildLeadQueue::GROUPS)->map(fn (array $stages, string $key) => [
             'key' => $key,
             'rows' => $cards
                 ->whereIn('stage', array_map(fn (LeadStage $stage) => $stage->value, $stages))
@@ -96,6 +94,7 @@ class LeadBoardController extends Controller
         return Inertia::render('Leads/Board', [
             'columns' => $columns,
             'groups' => $groups,
+            'queue' => $queue(),
             'view' => $this->view($request),
         ]);
     }

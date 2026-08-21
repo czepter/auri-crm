@@ -267,17 +267,24 @@ it('sums each stage from the quotes actually sent', function () {
 });
 
 // A board shows where something stands; a table shows what is next, so it
-// groups by who owes the next move rather than by the six stages.
-it('groups the table by who owes the next move', function () {
+// groups by working state rather than by the six stages — the same three
+// groups the queue beside it uses, or the two would disagree on one screen.
+it('groups the table and the queue the same way', function () {
     leadOn('2026-06-14', LeadStage::New, name: 'Neu');
     leadOn('2026-07-11', LeadStage::QuoteSent, name: 'Wartet');
     leadOn('2026-08-02', LeadStage::Booked, name: 'Gebucht');
 
-    $groups = collect(boardProps()['groups'])->keyBy('key');
+    $props = boardProps();
+    $groups = collect($props['groups'])->keyBy('key');
+    $queue = collect($props['queue'])->keyBy('key');
 
-    expect(collect($groups['handelt']['rows'])->pluck('names')->all())->toBe(['Neu'])
-        ->and(collect($groups['laeuft']['rows'])->pluck('names')->all())->toBe(['Wartet'])
-        ->and(collect($groups['fertig']['rows'])->pluck('names')->all())->toBe(['Gebucht']);
+    expect(collect($groups['unbeantwortet']['rows'])->pluck('names')->all())->toBe(['Neu'])
+        ->and(collect($groups['angebot']['rows'])->pluck('names')->all())->toBe(['Wartet'])
+        ->and(collect($groups['angenommen']['rows'])->pluck('names')->all())->toBe(['Gebucht'])
+        ->and(collect($queue['unbeantwortet']['rows'])->pluck('name')->all())->toBe(['Neu'])
+        ->and(collect($queue['angebot']['rows'])->pluck('name')->all())->toBe(['Wartet'])
+        ->and(collect($queue['angenommen']['rows'])->pluck('name')->all())->toBe(['Gebucht'])
+        ->and(collect($queue['unbeantwortet']['rows'])->pluck('open')->all())->toBe([false]);
 });
 
 it('lets the url outrank what the user last chose, and remembers a choice', function () {

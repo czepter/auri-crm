@@ -3,6 +3,8 @@ import { computed, onMounted, onUnmounted, ref } from "vue";
 import { Link, router, useForm } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import CaseSection from "@/admin/components/CaseSection.vue";
+import LeadQueue, { type LeadQueueRow } from "@/admin/components/LeadQueue.vue";
+import NoteThread from "@/admin/components/NoteThread.vue";
 import { Button } from "@/ui/button";
 import { ChoiceGroup } from "@/ui/choice-group";
 import { DatePicker } from "@/ui/date-picker";
@@ -14,16 +16,8 @@ import Rail from "@/ui/page/Rail.vue";
 import RailSection from "@/ui/page/RailSection.vue";
 import { Textarea } from "@/ui/textarea";
 
-type QueueRow = {
-    id: string;
-    name: string;
-    date: string | null;
-    open: boolean;
-    waitingDays: number;
-};
-
 const props = defineProps<{
-    queue: { key: string; rows: QueueRow[] }[];
+    queue: { key: string; rows: LeadQueueRow[] }[];
     lead: {
         id: string;
         projectId: string;
@@ -172,17 +166,16 @@ function save() {
     });
 }
 
-// Created in the section they belong to. No dialog: a window takes away the
-// context one reads while writing — the last three notes, the other dates.
-const note = useForm({ body: "" });
 const task = useForm({ title: "", audience: "internal", due_on: "" });
 
-function addNote() {
-    note.post(`/auftraege/${props.lead.projectId}/notizen`, {
-        preserveScroll: true,
-        onSuccess: () => note.reset(),
-    });
-}
+const thread = computed(() =>
+    props.notes.map((note) => ({
+        key: note.id,
+        at: note.writtenAt,
+        body: note.body,
+        author: note.author,
+    })),
+);
 
 function addTask() {
     task.post(`/auftraege/${props.lead.projectId}/aufgaben`, {
@@ -218,43 +211,7 @@ const due = computed(() => {
             <!-- Grouped by working state, not by the six funnel stages: six stages
                  are the view of the funnel, three groups the view of the day. -->
             <template #left>
-                <nav
-                    class="w-58 flex-none overflow-y-auto bg-sunk pt-3.5 max-[1080px]:w-[200px]"
-                >
-                    <template v-for="group in queue" :key="group.key">
-                        <h2
-                            v-if="group.rows.length"
-                            class="m-0 flex items-baseline px-3.5 pb-2 [a+&]:pt-5"
-                        >
-                            <b
-                                class="text-[12.5px] leading-none font-semibold tracking-[-0.012em]"
-                            >{{ $t(`lead.group.${group.key}`) }}</b>
-                            <span
-                                class="ml-auto text-[11px] leading-[1.47] tabular-nums text-ink-2"
-                            >{{ group.rows.length }}</span>
-                        </h2>
-
-                        <Link
-                            v-for="row in group.rows"
-                            :key="row.id"
-                            class="block px-3.5 py-[9px] text-inherit no-underline shadow-[inset_0_1px_0_#ECECEE]"
-                            :class="row.open && 'bg-paper'"
-                            :href="`/anfragen/${row.id}`"
-                        >
-                            <span
-                                class="block text-[12.5px] leading-[1.47] font-semibold tracking-[-0.012em]"
-                            >{{ row.name }}</span>
-                            <span
-                                class="mt-px block text-[11.5px] leading-[1.47]"
-                                :class="row.waitingDays >= 3 ? 'text-action' : 'text-ink-2'"
-                            >
-                                {{ row.date ? day(row.date) : $t("board.openDate") }}
-                                <template v-if="row.waitingDays >= 3">
-                                    · {{ $t("lead.silentFor", row.waitingDays) }}</template>
-                            </span>
-                        </Link>
-                    </template>
-                </nav>
+                <LeadQueue :groups="queue" />
             </template>
 
             <!-- The trace: what lies around the requested day. A date is answered
@@ -643,40 +600,10 @@ const due = computed(() => {
                 </CaseSection>
 
                 <CaseSection :title="$t('lead.notes')">
-                    <!-- Above the log, so the last notes stay visible: that context is
-                         exactly what a window would take away. -->
-                    <form class="pt-1 pb-0.5" @submit.prevent="addNote">
-                        <Textarea
-                            v-model="note.body"
-                            variant="filled"
-                            rows="2"
-                            :placeholder="$t('lead.notePlaceholder')"
-                        />
-                        <div class="mt-2.5 flex items-center gap-3">
-                            <Button
-                                variant="pill-muted"
-                                type="submit"
-                                :disabled="!note.body || note.processing"
-                            >
-                                {{ $t("lead.addNote") }}
-                            </Button>
-                        </div>
-                    </form>
-                    <div>
-                        <div
-                            v-for="note in notes"
-                            :key="note.id"
-                            class="flex gap-3.5 py-[7px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
-                        >
-                            <span
-                                class="w-[150px] flex-none text-[12.5px] leading-[1.47] tabular-nums text-ink-2"
-                            >{{ day(note.writtenAt) }}</span>
-                            <span class="min-w-0 flex-1 text-[13px] leading-[1.47]"
-                                >{{ note.body }}
-                                <span class="text-ink-2">— {{ note.author }}</span></span
-                            >
-                        </div>
-                    </div>
+                    <NoteThread
+                        :entries="thread"
+                        :action="`/auftraege/${lead.projectId}/notizen`"
+                    />
                 </CaseSection>
             </main>
         </Page>
