@@ -302,6 +302,18 @@ it('sorts an undated inquiry last in the table and in the queue', function () {
         ->and(collect($pane['rows'])->pluck('name')->all())->toBe(['Mit Termin', 'Ohne Termin']);
 });
 
+// The pane links to /anfragen/{lead}, which binds the lead's public id — not
+// the project's, which the card next to it carries.
+it('links a queue row to the case it stands for', function () {
+    $lead = leadOn('2026-06-14', name: 'Neu');
+
+    $row = collect(collect(boardProps()['queue'])->firstWhere('key', 'unbeantwortet')['rows'])->first();
+
+    expect($row['id'])->toBe($lead->public_id);
+
+    test()->actingAs(test()->staff, 'staff')->get("/anfragen/{$row['id']}")->assertOk();
+});
+
 it('names the primary contact first in the queue as well as on the card', function () {
     $project = leadOn('2026-06-14', name: 'Steffens & Falk')->project;
     $project->attachContact(

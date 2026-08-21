@@ -26,7 +26,9 @@ class LeadQueueRowData extends Data
     public static function fromLead(Lead $lead, ?Lead $open = null): self
     {
         return new self(
-            id: $lead->project->public_id,
+            // The lead's own id: the pane links to /anfragen/{lead}, and the
+            // project's id 404s there.
+            id: $lead->public_id,
             name: $lead->project->contactNames(),
             date: $lead->project->primaryShoot?->date?->format('Y-m-d'),
             // Two lines at the pane's width. Longer runs under the next row
