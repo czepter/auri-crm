@@ -31,6 +31,11 @@ class ShootData extends Data
         public ?string $callTime,
         public ?string $endTime,
         public ?string $venue,
+        // Beside the joined line the two parts it was joined from: the edit
+        // state writes them separately, and splitting the line back apart on
+        // the client cut "Berlin, Mitte" in the wrong place.
+        public ?string $venueName,
+        public ?string $venueCity,
         public string $status,
         public string $statusLabel,
         public bool $isPrimary,
@@ -64,6 +69,8 @@ class ShootData extends Data
             callTime: $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
             endTime: $shoot->end_time === null ? null : substr((string) $shoot->end_time, 0, 5),
             venue: $shoot->venue(),
+            venueName: $shoot->venue_name,
+            venueCity: $shoot->venue_city,
             status: $shoot->status->value,
             statusLabel: $shoot->status->label(),
             isPrimary: $shoot->is_primary,

@@ -5,6 +5,8 @@ import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import CaseSection from "@/admin/components/CaseSection.vue";
 import LeadQueue from "@/admin/components/LeadQueue.vue";
 import NoteThread from "@/admin/components/NoteThread.vue";
+import ShootFields from "@/admin/components/ShootFields.vue";
+import ShootRow from "@/admin/components/ShootRow.vue";
 import { Button } from "@/ui/button";
 import { ChoiceGroup } from "@/ui/choice-group";
 import { DatePicker } from "@/ui/date-picker";
@@ -118,8 +120,8 @@ const edit = useForm({
         : props.shoots.map((shoot) => ({
               id: shoot.id,
               date: shoot.date ?? "",
-              venue_name: shoot.venue?.split(", ")[0] ?? "",
-              venue_city: shoot.venue?.split(", ")[1] ?? "",
+              venue_name: shoot.venueName ?? "",
+              venue_city: shoot.venueCity ?? "",
               call_time: shoot.callTime ?? "",
               end_time: shoot.endTime ?? "",
           })),
@@ -402,66 +404,15 @@ const due = computed(() => {
                          leave the edit state rather than standing there locked with a
                          reason, and the read view keeps them. -->
                     <div v-if="editing && !lead.booked" class="max-w-[820px]">
-                        <div
+                        <ShootFields
                             v-for="shoot in edit.shoots"
                             :key="shoot.id"
-                            class="pt-3.5 pb-4 shadow-[inset_0_1px_0_var(--rule)]"
-                        >
-                            <div class="flex gap-3 [&+&]:mt-3">
-                                <Field v-slot="{ id }" dense :label="$t('project.shootDate')">
-                                    <DatePicker :id="id" v-model="shoot.date" class="w-[148px] [&_input]:pr-8" />
-                                </Field>
-                                <Field v-slot="{ id }" dense :label="$t('project.callTime')">
-                                    <Input :id="id" v-model="shoot.call_time" variant="filled" type="time" />
-                                </Field>
-                                <Field v-slot="{ id }" dense :label="$t('project.endTime')">
-                                    <Input :id="id" v-model="shoot.end_time" variant="filled" type="time" />
-                                </Field>
-                            </div>
-                            <div class="flex gap-3 [&+&]:mt-3">
-                                <Field
-                                    v-slot="{ id }"
-                                    dense
-                                    class="min-w-[148px] flex-1"
-                                    :label="$t('project.venueName')"
-                                >
-                                    <Input :id="id" v-model="shoot.venue_name" variant="filled" type="text" />
-                                </Field>
-                                <Field
-                                    v-slot="{ id }"
-                                    dense
-                                    class="min-w-[148px] flex-1"
-                                    :label="$t('project.venueCity')"
-                                >
-                                    <Input :id="id" v-model="shoot.venue_city" variant="filled" type="text" />
-                                </Field>
-                            </div>
-                        </div>
+                            :shoot="shoot"
+                        />
                     </div>
 
                     <div v-else>
-                        <div
-                            v-for="shoot in shoots"
-                            :key="shoot.id"
-                            class="flex items-center gap-3.5 py-[11px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none max-[640px]:flex-wrap"
-                        >
-                            <span
-                                class="w-[150px] flex-none text-[13px] leading-[1.47] font-semibold tracking-[-0.012em] tabular-nums"
-                            >
-                                {{ day(shoot.date) }}
-                                <span class="block text-[11.5px] leading-[1.47] font-normal text-ink-2">{{
-                                    shoot.statusLabel
-                                }}</span>
-                            </span>
-                            <span class="min-w-0 flex-1 text-[13.5px] leading-[1.47]">
-                                {{ shoot.label ?? shoot.kind }}
-                                <span v-if="shoot.venue" class="text-[12px] leading-[1.47] text-ink-2">
-                                    · {{ shoot.venue }}</span>
-                            </span>
-                            <span class="w-[118px] flex-none text-right text-[12px] leading-[1.47] text-ink-2">{{
-                                shoot.crew.map((member) => member.name).join(", ") || "—"
-                            }}</span>
-                        </div>
+                        <ShootRow v-for="shoot in shoots" :key="shoot.id" :shoot="shoot" />
                     </div>
                 </CaseSection>
 

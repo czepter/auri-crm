@@ -238,6 +238,22 @@ it('renders the tasks card with the audience the field carries', function () {
         ->and($tasks[0]['isOverdue'])->toBeTrue();
 });
 
+// The edit state writes venue_name and venue_city separately, so the screen
+// gets them separately. Splitting the joined line back apart cut a name that
+// carries its own comma in the wrong place.
+it('carries the venue in its two parts beside the joined line', function () {
+    Shoot::factory()->for($this->project)->create([
+        'venue_name' => 'Gut Basthorst, Hof 2',
+        'venue_city' => 'Basthorst',
+    ]);
+
+    $shoot = props("/auftraege/{$this->project->public_id}")['shoots'][0];
+
+    expect($shoot['venue'])->toBe('Gut Basthorst, Hof 2, Basthorst')
+        ->and($shoot['venueName'])->toBe('Gut Basthorst, Hof 2')
+        ->and($shoot['venueCity'])->toBe('Basthorst');
+});
+
 it('sorts open tasks above finished ones', function () {
     Task::factory()->for($this->project)->done()->create(['title' => 'Erledigt']);
     Task::factory()->for($this->project)->due(now()->addDays(30)->format('Y-m-d'))->create(['title' => 'Offen']);
