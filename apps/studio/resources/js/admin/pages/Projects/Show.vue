@@ -5,7 +5,7 @@ import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import { Button } from "@/ui/button";
 import BandCell from "@/admin/components/BandCell.vue";
 import BandValue from "@/admin/components/BandValue.vue";
-import StreamRow from "@/admin/components/StreamRow.vue";
+import NoteThread from "@/admin/components/NoteThread.vue";
 import { DatePicker } from "@/ui/date-picker";
 import { Field } from "@/ui/field";
 import { Input } from "@/ui/input";
@@ -14,7 +14,6 @@ import Page from "@/ui/page/Page.vue";
 import Rail from "@/ui/page/Rail.vue";
 import RailItem from "@/ui/page/RailItem.vue";
 import RailSection from "@/ui/page/RailSection.vue";
-import { Textarea } from "@/ui/textarea";
 
 type Figure = { value: string | null; proof: string | null };
 
@@ -128,14 +127,30 @@ function save() {
     });
 }
 
-const note = useForm({ body: "" });
-
-function addNote() {
-    note.post(`/auftraege/${props.header.id}/notizen`, {
-        preserveScroll: true,
-        onSuccess: () => note.reset(),
-    });
-}
+// C-11 (#247): notes and the audit trail are one trace, so they are also one
+// order. Sorted apart they read as two lists that happen to share a heading.
+const thread = computed(() => [
+    ...props.notes.map((note) => ({
+        key: `note-${note.id}`,
+        at: note.writtenAt,
+        body: note.body,
+        author: note.author,
+    })),
+    ...props.activity.map((entry, index) => ({
+        key: `event-${index}`,
+        at: entry.at,
+        body: entry.label,
+        author: entry.actorName,
+        system: true,
+    })),
+    ...done.value.map((task) => ({
+        key: `task-${task.id}`,
+        at: task.dueOn,
+        body: task.title,
+        author: null,
+        system: true,
+    })),
+]);
 
 function togglePortal() {
     router.post(
@@ -541,50 +556,11 @@ function complete(task: App.Crm.Data.TaskRowData) {
                     <section class="mb-5">
                         <h2>{{ $t("lead.notes") }}</h2>
 
-                        <form class="mt-4 max-w-[820px] pt-1 pb-0.5" @submit.prevent="addNote">
-                            <Textarea
-                                v-model="note.body"
-                                variant="filled"
-                                rows="2"
-                                class="mb-3"
-                                :placeholder="$t('lead.notePlaceholder')"
-                            />
-                            <div class="mt-2.5 flex items-center gap-3">
-                                <Button
-                                    variant="pill-muted"
-                                    type="submit"
-                                    :disabled="!note.body || note.processing"
-                                >
-                                    {{ $t("lead.addNote") }}
-                                </Button>
-                            </div>
-                        </form>
-
-                        <!-- Notes and the audit trail in one trace: what happened and what
-                             somebody wrote about it are read together or not at all. -->
-                        <div>
-                            <StreamRow v-for="note in notes" :key="note.id" :when="day(note.writtenAt)">
-                                {{ note.body }}
-                                <span class="text-ink-2">— {{ note.author }}</span>
-                            </StreamRow>
-                            <StreamRow
-                                v-for="(entry, index) in activity"
-                                :key="index"
-                                system
-                                :when="day(entry.at)"
-                            >
-                                {{ entry.label }}
-                                <span v-if="entry.actorName"> — {{ entry.actorName }}</span>
-                            </StreamRow>
-                            <StreamRow
-                                v-for="task in done"
-                                :key="task.id"
-                                system
-                                :when="task.dueOn ? day(task.dueOn) : ''"
-                            >
-                                {{ task.title }}
-                            </StreamRow>
-                        </div>
+                        <NoteThread
+                            class="mt-4"
+                            :entries="thread"
+                            :action="`/auftraege/${header.id}/notizen`"
+                        />
                     </section>
                 </div>
             </div>

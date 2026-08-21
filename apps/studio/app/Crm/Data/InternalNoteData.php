@@ -24,7 +24,7 @@ class InternalNoteData extends Data
             // I-03: a note written through the api surface has no staff
             // author — see the migration that dropped author_id's NOT NULL.
             author: $note->author?->name ?? 'API',
-            writtenAt: $note->created_at->format('Y-m-d'),
+            writtenAt: $note->created_at->toIso8601String(),
         );
     }
 }
