@@ -139,7 +139,7 @@ function submit() {
          states its scope, because "14 Blöcke · 9 Platzhalter" is what says
          whether this is a page or a contract. The blank one is the last card
          and carries no surface: it is a choice, not the default. -->
-    <section v-if="chosen === null" data-tokens="crm">
+    <section v-if="chosen === null" data-tokens>
       <div class="grid grid-cols-3 gap-3">
         <a
           v-for="starter in starters" :key="starter.key"

@@ -152,7 +152,7 @@ function eraseDsgvoData() {
     <!-- C-18 (#254): built like a contact card, because a contact is opened
          and read, not edited. The sheet holds what the person is; the trace
          holds what the studio has switched on for them. -->
-    <div data-tokens="crm" class="flex items-start">
+    <div data-tokens class="flex items-start">
       <div class="max-w-[760px] px-8 pt-7 pb-8">
         <!-- The head carries the name and nothing else. No avatar: initials
              in a circle repeat the name beside them, and a picture has

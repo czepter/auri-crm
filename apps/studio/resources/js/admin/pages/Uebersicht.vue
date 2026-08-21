@@ -190,7 +190,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
 
 <template>
     <AdminLayout active="uebersicht">
-        <div data-tokens="crm">
+        <div data-tokens>
             <PageHead :kicker="heading" :title="$t('dashboard.title')">
 
                 <!-- Unbeantwortet, not ungelesen: ThreadParticipant carries no

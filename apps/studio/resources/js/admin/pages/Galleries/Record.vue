@@ -87,7 +87,7 @@ function shown() {
 
 <template>
   <AdminLayout active="projekte">
-    <div data-tokens="crm">
+    <div data-tokens>
       <div class="max-w-none px-8 pt-7">
         <div class="flex items-center gap-5"><h1 class="m-0 text-[28px] leading-[1.08] font-semibold tracking-[-0.032em]">{{ gallery.title ?? '—' }}</h1></div>
 

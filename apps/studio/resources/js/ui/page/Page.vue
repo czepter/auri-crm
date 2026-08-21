@@ -4,7 +4,7 @@
          .rail are the flex children themselves. No wrapper of our own around
          them: one would take the stretch and leave the column at the height of
          its content, with the grey ending mid-screen. -->
-    <div class="flex items-stretch" data-tokens="crm">
+    <div class="flex items-stretch min-h-full">
         <slot name="left" />
         <slot />
         <slot name="right" />

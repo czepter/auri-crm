@@ -21,7 +21,7 @@ function total(pkg: App.Catalog.Data.PackageData) {
 
 <template>
   <AdminLayout active="pakete">
-    <div data-tokens="crm">
+    <div data-tokens>
       <PageHead :title="$t('packages.title')">
         <Button :as="Link" variant="pill" class="ml-auto" href="/pakete/neu">{{ $t('packages.create') }}</Button>
       </PageHead>

@@ -32,7 +32,7 @@ function day(iso: string) {
 
 <template>
   <AdminLayout active="kontakte">
-    <div data-tokens="crm">
+    <div data-tokens>
       <PageHead :title="$t('contacts.title')" />
 
       <Table v-if="contacts.length">

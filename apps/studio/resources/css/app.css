@@ -57,9 +57,9 @@
   --color-action: var(--accent);
   --color-action-foreground: var(--bg);
 
-  /* The admin's own five. They are declared only under data-tokens="crm", so
-     `bg-sunk` outside that scope resolves to nothing — which is correct: no
-     other surface has a sunk surface to name. */
+  /* The admin's own five. crm.css declares them on :root and only admin.css
+     imports it, so they are the admin's everywhere and absent from the portal
+     build — which is correct: no other surface has a sunk surface to name. */
   --color-paper: var(--paper);
   --color-sunk: var(--sunk);
   --color-sunk-2: var(--sunk-2);

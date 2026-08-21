@@ -25,7 +25,7 @@ function day(iso: string) {
     <!-- The first screen on the CRM sheet (C-01, #235). Its own theme root
          rather than the layout's, so the screens that have not been ported
          keep the stylesheet they were built on. -->
-    <div data-tokens="crm">
+    <div data-tokens>
       <PageHead :title="$t('projects.title')" />
 
       <Table v-if="projects.length">

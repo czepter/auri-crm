@@ -134,7 +134,7 @@ function receivedAt(iso: string) {
 
     <!-- C-14 (#250): conversations, grouped by working state. A queue on the
          left, the thread on the right, its trace beside it. -->
-    <div v-if="threaded" data-tokens="crm" style="display: flex; min-height: 60vh; margin-top: var(--s5)">
+    <div v-if="threaded" data-tokens style="display: flex; min-height: 60vh; margin-top: var(--s5)">
       <Queue>
         <template v-for="group in groups" :key="group.key">
           <QueueGroup :title="$t(`inbox.group.${group.key}`)" :count="group.rows.length" />

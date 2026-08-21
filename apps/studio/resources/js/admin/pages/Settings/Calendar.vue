@@ -21,7 +21,7 @@ function regenerate() {
 
 <template>
   <AdminLayout active="einstellungen">
-    <div data-tokens="crm">
+    <div data-tokens>
       <div class="flex items-center gap-3 px-8 pt-[22px]">
         <h1 class="mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em]">{{ $t('calendar.subscribe') }}</h1>
       </div>

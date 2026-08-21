@@ -32,7 +32,7 @@ const unread = computed(() => props.notifications.filter((row) => row.readAt ===
 
 <template>
   <AdminLayout active="benachrichtigungen">
-    <div data-tokens="crm">
+    <div data-tokens>
       <PageHead :title="$t('notifications.title')">
         <Button
           v-if="unread > 0"

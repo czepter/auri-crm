@@ -241,7 +241,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
 
             <div
                 class="flex min-w-0 flex-1 items-stretch"
-                data-tokens="crm"
+                data-tokens
             >
                 <div class="min-w-0 flex-1 px-[26px] pt-5 pb-7">
                     <div class="text-[11px] tracking-[0.05em] uppercase text-ink-2">

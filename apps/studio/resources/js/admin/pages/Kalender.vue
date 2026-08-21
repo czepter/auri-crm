@@ -69,7 +69,7 @@ function shortDate(date: string | null) {
 
 <template>
   <AdminLayout active="kalender">
-    <div data-tokens="crm">
+    <div data-tokens>
       <div class="flex items-center gap-3 px-8 pt-[22px]">
         <div>
           <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.05em] uppercase text-ink-2">{{ label }}</div>

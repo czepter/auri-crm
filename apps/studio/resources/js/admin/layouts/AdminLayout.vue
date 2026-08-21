@@ -167,10 +167,11 @@ const items = computed(() =>
 
 <template>
     <div class="flex min-h-screen max-[640px]:flex-col">
-        <!-- data-tokens, not data-theme: the sidebar has moved to Tailwind and no
-         longer wants crm.css's rules, but it still wants the admin's palette,
-         its system font stack and its 4/8/12/16/20/28/32 scale. -->
-        <div data-tokens="crm" class="flex-none">
+        <!-- The marker alone, no value: the palette is on :root since crm.css
+         stopped scoping it. What is left for the attribute to do is take the
+         nav out of tokens.css's unlayered svg reset, which no utility can
+         outrank. -->
+        <div data-tokens class="flex-none">
             <!-- The phone rules sit on the nav, exactly where crm.css had them.
            `order` does nothing from here — the nav is a child of this wrapper,
            not of the flex row — but that is today's behaviour, and no baseline

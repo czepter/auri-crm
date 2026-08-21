@@ -27,7 +27,7 @@ defineProps<{
 
 <template>
   <AdminLayout active="dokumentvorlagen">
-    <div data-tokens="crm">
+    <div data-tokens>
       <PageHead :title="$t('documentTemplates.title')">
         <Button :as="Link" variant="pill" class="ml-auto" href="/dokumentvorlagen/neu">
           {{ $t('documentTemplates.create') }}

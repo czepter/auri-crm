@@ -109,7 +109,7 @@ function submit() {
 
 <template>
   <AdminLayout active="anfragen">
-    <div data-tokens="crm" class="px-8 py-7">
+    <div data-tokens class="px-8 py-7">
       <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.05em] uppercase text-ink-2">{{ $t('leads.createKicker') }}</div>
       <h1 class="m-0 mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px] max-[640px]:leading-[1.08]">{{ $t('leads.createTitle') }}</h1>
 
