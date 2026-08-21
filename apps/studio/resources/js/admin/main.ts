@@ -13,15 +13,15 @@ const i18n = createI18n({
   locale: 'de',
   fallbackLocale: 'de',
   messages: { de },
-  datetimeFormats: {
-    de: {
-      short: { day: '2-digit', month: '2-digit', year: 'numeric' },
-    },
-  },
-  numberFormats: {
-    de: {
-      currency: { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 },
-    },
+  // A key with no entry rendered as itself — 'lead.group.xyz' in the middle of
+  // a screen — and shipped that way. In dev it stops the render instead; in
+  // production the key still stands rather than taking the page down with it.
+  missing: (_locale, key) => {
+    if (import.meta.env.DEV) {
+      throw new Error(`Fehlender Übersetzungsschlüssel: ${key}`)
+    }
+
+    return key
   },
 })
 

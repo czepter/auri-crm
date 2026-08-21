@@ -9,7 +9,14 @@ const i18n = createI18n({
   locale: 'de',
   fallbackLocale: 'de',
   messages: { de },
-  datetimeFormats: { de: { short: { day: '2-digit', month: '2-digit', year: 'numeric' } } },
+  // Same rule the admin entrypoint carries: loud in dev, harmless in production.
+  missing: (_locale, key) => {
+    if (import.meta.env.DEV) {
+      throw new Error(`Fehlender Übersetzungsschlüssel: ${key}`)
+    }
+
+    return key
+  },
 })
 
 // The glob is relative to this file, so the portal bundle can only ever
