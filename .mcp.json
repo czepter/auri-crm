@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "shadcn-vue": {
+      "command": "pnpm",
+      "args": ["--filter", "@studio/app", "exec", "shadcn-vue", "mcp"]
+    }
+  }
+}
