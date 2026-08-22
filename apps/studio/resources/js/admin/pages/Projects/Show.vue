@@ -12,7 +12,7 @@ import { DatePicker } from "@/ui/date-picker";
 import { Field } from "@/ui/field";
 import { Input } from "@/ui/input";
 import { NativeSelect } from "@/ui/native-select";
-import Page from "@/ui/page/Page.vue";
+import ProjectShell from "@/admin/components/ProjectShell.vue";
 import Rail from "@/ui/page/Rail.vue";
 import RailItem from "@/ui/page/RailItem.vue";
 import RailSection from "@/ui/page/RailSection.vue";
@@ -116,8 +116,8 @@ function complete(task: App.Crm.Data.TaskRowData) {
 
 <template>
     <AdminLayout active="projekte">
-        <Page>
-            <template #right>
+        <ProjectShell :header="header" active="overview">
+            <template #rail>
                 <Rail>
                     <RailSection :title="$t('lead.people')">
                         <div
@@ -171,84 +171,47 @@ function complete(task: App.Crm.Data.TaskRowData) {
                         />
                     </RailSection>
 
-                    <RailSection :title="$t('project.documents')">
-                        <RailItem
-                            :title="$t('project.contract')"
-                            :href="`/auftraege/${header.id}/vertrag`"
-                        />
-                        <RailItem
-                            :title="$t('project.forms')"
-                            :href="`/auftraege/${header.id}/frageboegen`"
-                        />
-                        <RailItem
-                            :title="$t('project.messages')"
-                            :href="`/auftraege/${header.id}/nachrichten`"
-                        />
-                    </RailSection>
                 </Rail>
             </template>
 
-            <div
-                class="flex min-w-0 flex-1 items-stretch"
-                data-tokens
-            >
-                <div class="min-w-0 flex-1 px-[26px] pt-5 pb-7">
-                    <div class="text-[11px] tracking-[0.05em] uppercase text-ink-2">
-                        <Link href="/projekte">{{ $t("projects.title") }}</Link>
-                    </div>
+            <template #title>
+                <Input
+                    v-if="editing"
+                    v-model="edit.name"
+                    class="max-w-[820px] text-[22px]"
+                    type="text"
+                />
+                <h1 v-else class="m-0 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]">
+                    {{ header.names }}
+                </h1>
+            </template>
 
-                    <div class="sticky top-0 z-[5] flex items-center gap-3 bg-paper">
-                        <div>
-                            <Input
-                                v-if="editing"
-                                v-model="edit.name"
-                                class="max-w-[820px] text-[22px]"
-                                type="text"
-                            />
-                            <h1 v-else class="m-0 mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]">
-                                {{ header.names }}
-                            </h1>
-                        </div>
+            <template #actions>
+                <template v-if="editing">
+                    <a
+                        class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+                        href="#"
+                        @click.prevent="editing = false"
+                        >{{ $t("common.cancel") }}</a
+                    >
+                    <Button
+                        variant="pill"
+                        type="button"
+                        :disabled="edit.processing"
+                        @click="save"
+                    >
+                        {{ $t("common.save") }}
+                    </Button>
+                </template>
 
-                        <div v-if="editing" class="ml-auto flex items-center gap-2">
-                            <a
-                                class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
-                                href="#"
-                                @click.prevent="editing = false"
-                                >{{ $t("common.cancel") }}</a
-                            >
-                            <Button
-                                variant="pill"
-                                type="button"
-                                :disabled="edit.processing"
-                                @click="save"
-                            >
-                                {{ $t("common.save") }}
-                            </Button>
-                        </div>
-
-                        <div v-else class="ml-auto flex items-center gap-2">
-                            <a
-                                class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
-                                href="#"
-                                @click.prevent="editing = true"
-                                >{{ $t("lead.edit") }}</a
-                            >
-                            <Link
-                                v-if="header.canManageQuotes"
-                                class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
-                                :href="`/auftraege/${header.id}/angebote`"
-                            >
-                                {{ $t("project.quotes") }}
-                            </Link>
-                            <Button
-                                :as="Link"
-                                variant="pill"
-                                :href="`/auftraege/${header.id}/shootings`"
-                                >{{ $t("project.shoots") }}</Button
-                            >
-                        </div>
-                    </div>
+                <a
+                    v-else
+                    class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+                    href="#"
+                    @click.prevent="editing = true"
+                    >{{ $t("lead.edit") }}</a
+                >
+            </template>
 
                     <!-- Master data across, six values on one line, each with its proof
              underneath — not a phase tile that a seventh phase would break. -->
@@ -455,8 +418,6 @@ function complete(task: App.Crm.Data.TaskRowData) {
                             :action="`/auftraege/${header.id}/notizen`"
                         />
                     </section>
-                </div>
-            </div>
-        </Page>
+        </ProjectShell>
     </AdminLayout>
 </template>

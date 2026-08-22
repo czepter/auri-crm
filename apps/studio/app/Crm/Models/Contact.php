@@ -5,6 +5,7 @@ namespace App\Crm\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Engagement\Models\Thread;
+use App\Settings\Support\StudioSettingsResolver;
 use Database\Factories\Crm\ContactFactory;
 use Illuminate\Auth\Authenticatable as AuthenticatableTrait;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -49,6 +50,30 @@ class Contact extends Model implements Authenticatable
     use Notifiable;
 
     protected $fillable = ['name', 'email', 'phone', 'street', 'postcode', 'city'];
+
+    /**
+     * Neuanlage: the studio's greeting is written onto the contact as their
+     * own text, so it can be rewritten for them later without touching
+     * anybody else's. Only the greeting travels — the switches beside it stay
+     * three-valued and keep inheriting (P-09, #228).
+     *
+     * A caller that names portal_overrides itself, even as null, keeps what
+     * it named; an import bringing its own greetings is not overwritten.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (self $contact) {
+            if (array_key_exists('portal_overrides', $contact->getAttributes())) {
+                return;
+            }
+
+            $welcome = app(StudioSettingsResolver::class)->portalWelcomeText();
+
+            if (filled($welcome)) {
+                $contact->portal_overrides = ['welcome' => $welcome];
+            }
+        });
+    }
 
     protected function casts(): array
     {

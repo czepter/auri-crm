@@ -3,8 +3,9 @@
 namespace App\Portal\Http\Controllers;
 
 use App\Contracts\Models\Contract;
-use App\Crm\Models\Project;
+use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\FormInstance;
+use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
@@ -52,7 +53,14 @@ class ProjectController extends Controller
         $shared = [
             'contact' => ['name' => $contact->name],
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
-            'studio' => ['name' => $studio->displayName(), 'messagingEnabled' => $settings->messagingEnabled($contact)],
+            // The same contact block the home screen carries: the person to
+            // write to stands on every client screen, so it is composed the
+            // same way on all of them.
+            'studio' => [
+                'name' => $studio->displayName(),
+                'messagingEnabled' => $settings->messagingEnabled($contact),
+                ...$settings->contactLine(),
+            ],
         ];
 
         return $editable
@@ -164,6 +172,14 @@ class ProjectController extends Controller
                 // studio chases and the client is not chased in their own
                 // portal.
                 'status' => $shoot->status->label(),
+                // The same fact as a mark the eye reads before the word.
+                // Three states, because colour on this surface is a signal
+                // and a fourth would make it decoration again.
+                'state' => match ($shoot->status) {
+                    ShootStatus::Ready, ShootStatus::Delivered, ShootStatus::Archived => 'done',
+                    ShootStatus::Prep, ShootStatus::Shot, ShootStatus::Culling, ShootStatus::Editing => 'open',
+                    default => 'neutral',
+                },
             ])->all(),
             // The entry point that was missing entirely: a strip of the
             // delivered pictures and a way into all of them.

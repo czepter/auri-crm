@@ -20,7 +20,7 @@ class ClientMessagePosted extends StudioEventNotification
     }
 
     /* A thread that names no booking yet is read in the Posteingang — the
-       same split /posteingang/faden/{thread} already makes. */
+       same split /posteingang/unterhaltung/{thread} already makes. */
     public function url(): string
     {
         $project = $this->message->thread->project;

@@ -29,7 +29,7 @@ class ContractData extends Data
             templateName: $contract->template->name,
             templateVersion: $contract->template->version,
             renderedAt: $contract->rendered_at?->toIso8601String(),
-            downloadUrl: $contract->artifact_path === null ? null : $downloadUrl,
+            downloadUrl: $contract->hasArtifact() ? $downloadUrl : null,
         );
     }
 }

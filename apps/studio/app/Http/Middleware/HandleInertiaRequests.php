@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Crm\Actions\OpenLeads;
 use App\Crm\Models\Project;
 use App\Data\StaffProfileData;
+use App\Portal\Support\PortalSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\RecordVisit;
 use App\Support\Surface;
@@ -89,18 +90,81 @@ class HandleInertiaRequests extends Middleware
             // own paths are few and stable enough not to need it.
             ...(Surface::current() === Surface::PORTAL ? [
                 'portalBranding' => fn () => [
-                    'displayName' => app(StudioSettingsResolver::class)->displayName(),
+                    // Falls back the same way `brand` above does. The
+                    // wordmark stands on every screen of this surface, and a
+                    // studio that has not been through onboarding yet would
+                    // otherwise wear a bare dot where its name goes.
+                    'displayName' => app(StudioSettingsResolver::class)->displayName() ?? config('app.name'),
                     'logoUrl' => app(StudioSettingsResolver::class)->logoPath() !== null
                         ? '/branding/logo'
                         : null,
                     'accentColor' => app(StudioSettingsResolver::class)->attributes()['accent_color'],
+                    'address' => $this->studioAddress(),
                 ],
                 'portalLegal' => fn () => [
                     'impressumUrl' => '/impressum',
                     'datenschutzUrl' => app(StudioSettingsResolver::class)->legalDatenschutzUrl(),
                     'agbUrl' => app(StudioSettingsResolver::class)->legalAgbUrl(),
                 ],
+                // The header stands on every screen and its links are the
+                // same four everywhere, so what decides them is shared
+                // rather than passed per page. Null with nobody signed in:
+                // the sign-in screen has no navigation to draw.
+                'portalNav' => fn () => $this->portalNav($request),
             ] : []),
+        ];
+    }
+
+    /**
+     * T-02's postal particulars as the one line a footer wears. Composed
+     * from the parts a studio filled in rather than demanding all of them:
+     * a studio with a city and no street still has an address to name.
+     */
+    private function studioAddress(): ?string
+    {
+        $attributes = app(StudioSettingsResolver::class)->attributes();
+
+        $street = $attributes['street'];
+        $city = implode(' ', array_filter([$attributes['postcode'], $attributes['city']]));
+
+        $line = implode(', ', array_filter([$street, $city]));
+
+        return $line === '' ? null : $line;
+    }
+
+    /**
+     * What the portal header and its mobile twin need to draw themselves:
+     * whether the mailbox exists for this contact at all, and how many
+     * conversations are waiting on them.
+     *
+     * The count asks the same question HomeController's own "pending" does —
+     * whoever wrote the newest line owes the next one — off latestMessage's
+     * single indexed lookup rather than a second definition of "unread".
+     *
+     * ponytail: two queries per portal request, counted in PHP over every
+     * thread this contact has. A client has a handful; make it one aggregate
+     * query if anybody ever has hundreds.
+     *
+     * @return array{messaging: bool, unread: int}|null
+     */
+    private function portalNav(Request $request): ?array
+    {
+        $contact = $request->user('portal');
+
+        if ($contact === null) {
+            return null;
+        }
+
+        $unread = $contact->threads()
+            ->with('latestMessage')
+            ->get()
+            ->filter(fn ($thread) => $thread->latestMessage !== null
+                && $thread->latestMessage->contact_id === null)
+            ->count();
+
+        return [
+            'messaging' => app(PortalSettings::class)->messagingEnabled($contact),
+            'unread' => $unread,
         ];
     }
 }

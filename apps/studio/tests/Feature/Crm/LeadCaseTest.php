@@ -86,7 +86,8 @@ it('shows the week around the requested day, and says so when it is free', funct
     $week = props("/anfragen/{$lead->public_id}")['week'];
 
     expect($week)->toHaveCount(1)
-        ->and($week[0]['what'])->toBe('Petersen');
+        ->and($week[0]['what'])->toBe('Petersen')
+        ->and($week[0]['projectId'])->toBe($other->public_id);
 });
 
 // C-10 (#245): editing is a state of the view, so it posts back to the same

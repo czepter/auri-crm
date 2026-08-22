@@ -6,12 +6,22 @@ use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\CrewAssignment;
+use App\Crm\Models\FormAnswer;
+use App\Crm\Models\FormInstance;
+use App\Crm\Models\FormInstanceField;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
+use App\Engagement\Models\Message;
+use App\Engagement\Models\Thread;
+use App\Contracts\Enums\ContractStatus;
+use App\Contracts\Models\Contract;
+use App\Contracts\Models\ContractSignature;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
 use App\Models\AuditLog;
 use App\Support\AuditLogger;
 use App\Models\User;
@@ -48,6 +58,75 @@ it('shows only the tabs whose feature exists', function () {
     $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
 
     expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots', 'messages', 'forms', 'quotes', 'contract']);
+});
+
+it('names its tabs with keys the catalogue answers', function () {
+    // The labels used to be German strings in PHP, which made this the one
+    // navigation in the product no locale could reach.
+    $catalogue = json_decode(file_get_contents(resource_path('js/locales/de.json')), true);
+
+    $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
+
+    foreach (array_column($tabs, 'label') as $key) {
+        expect(data_get($catalogue, $key))->toBeString("{$key} is missing from de.json");
+    }
+});
+
+it('counts the threads waiting for an answer', function () {
+    // The rule the inbox already uses: whoever wrote the last line owes the
+    // next one. A thread the studio answered last is not waiting.
+    $waiting = Thread::factory()->for($this->project)->create();
+    Message::factory()->for($waiting)->create();
+
+    $answered = Thread::factory()->for($this->project)->create();
+    Message::factory()->for($answered)->create();
+    Message::factory()->for($answered)->fromStaff($this->staff)->create();
+
+    $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
+
+    expect(collect($tabs)->firstWhere('key', 'messages')['count'])->toBe(1);
+});
+
+it('counts the questionnaires the client has not answered', function () {
+    // Shared and untouched is the one that waits. A questionnaire the studio
+    // keeps to itself is nobody's homework, and one with an answer on it has
+    // been started.
+    FormInstance::factory()->for($this->project)->create()->forceFill(['shared_at' => now()])->save();
+
+    $started = FormInstance::factory()->for($this->project)->create();
+    $started->forceFill(['shared_at' => now()])->save();
+    FormAnswer::factory()->for(FormInstanceField::factory()->for($started))->create();
+
+    FormInstance::factory()->for($this->project)->create();
+
+    $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
+
+    expect(collect($tabs)->firstWhere('key', 'forms')['count'])->toBe(1);
+});
+
+it('counts the quotes the client has not answered', function () {
+    // Sent and still open. A draft has not left the studio, and an accepted
+    // or superseded one is settled either way.
+    Quote::factory()->for($this->project)->create(['status' => QuoteStatus::Sent, 'sent_at' => now()]);
+    Quote::factory()->for($this->project)->create();
+    Quote::factory()->for($this->project)->create(['status' => QuoteStatus::Accepted, 'sent_at' => now(), 'accepted_at' => now()]);
+
+    $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
+
+    expect(collect($tabs)->firstWhere('key', 'quotes')['count'])->toBe(1);
+});
+
+it('counts the contracts still waiting for a signature', function () {
+    // A contract in front of the client and unsigned is the one that waits.
+    // Signed is done, and one that never rendered is the studio's own problem.
+    Contract::factory()->for($this->project)->create(['status' => ContractStatus::Rendered]);
+
+    $signed = Contract::factory()->for($this->project)->create(['status' => ContractStatus::Rendered]);
+    ContractSignature::factory()->for($signed)->create();
+
+    $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
+
+    expect(collect($tabs)->firstWhere('key', 'contract')['count'])->toBe(1);
 });
 
 it('agrees with the board about an unbooked project', function () {

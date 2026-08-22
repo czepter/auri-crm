@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * One render of one exact App\Documents\Models\DocumentTemplate version
@@ -67,6 +68,15 @@ class Contract extends Model
     public function signature(): HasOne
     {
         return $this->hasOne(ContractSignature::class);
+    }
+
+    /**
+     * The column and the disk can disagree — EraseContactDsgvo deletes the
+     * file and leaves the path, so every read of the bytes asks here first.
+     */
+    public function hasArtifact(): bool
+    {
+        return $this->artifact_path !== null && Storage::disk('local')->exists($this->artifact_path);
     }
 
     protected static function newFactory(): Factory

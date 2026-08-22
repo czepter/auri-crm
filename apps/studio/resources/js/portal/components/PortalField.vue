@@ -3,17 +3,15 @@ import type { HTMLAttributes } from "vue"
 import { cn } from "@/lib/utils"
 
 /*
- * portal.css `.field`, as a component. Not a variant of `ui/field`: that one
- * is a column around a shadcn control and leaves the control alone, this one
- * wraps its control in a <label> and restyles the input itself — full width,
- * 12px of padding, a 16px face. Folding the two together would mean choosing
- * whose input wins, and the portal's is the one eighteen screens were built
- * against.
+ * mockups/redesign/portal-einstellungen.html `.fld`, as a component. Not a
+ * variant of `ui/field`: that one is a column around a shadcn control and
+ * leaves the control alone, this one restyles the control itself — the
+ * portal's field is a hairline box on paper, sentence-case caption above it,
+ * where the admin's is a sunk surface under a caption in caps.
  *
- * The input rules are descendant variants rather than classes on the control,
- * because `.field input` reached whatever the slot happened to hold — an
- * Input, a DatePicker, a native date field — and the call sites do not all
- * know which.
+ * The control rules are descendant variants rather than classes on the
+ * control, because the slot holds whatever the call site had: an Input, a
+ * Textarea, a DatePicker, a native select.
  */
 const props = defineProps<{
   label: string
@@ -23,30 +21,33 @@ const props = defineProps<{
   class?: HTMLAttributes["class"]
 }>()
 
-const INPUT = [
-  '[&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-line-hover',
-  '[&_input]:bg-background [&_input]:px-3.5 [&_input]:py-3 [&_input]:font-sans',
-  '[&_input]:text-[16px] [&_input]:leading-[1.2] [&_input]:font-medium [&_input]:text-foreground',
+const CONTROL = [
+  '[&_input]:w-full [&_input]:rounded-[var(--r-sm)] [&_input]:border [&_input]:border-line-hover',
+  '[&_input]:bg-background [&_input]:px-[13px] [&_input]:py-[11px] [&_input]:font-sans',
+  '[&_input]:text-[14.5px] [&_input]:leading-[1.5] [&_input]:font-normal [&_input]:text-foreground',
+  '[&_input:focus]:border-muted-foreground',
+  '[&_textarea]:w-full [&_textarea]:rounded-[var(--r-sm)] [&_textarea]:border [&_textarea]:border-line-hover',
+  '[&_textarea]:bg-background [&_textarea]:px-[13px] [&_textarea]:py-[11px] [&_textarea]:font-sans',
+  '[&_textarea]:text-[14.5px] [&_textarea]:leading-[1.6] [&_textarea]:text-foreground',
+  '[&_textarea:focus]:border-muted-foreground',
+  '[&_select]:w-full [&_select]:rounded-[var(--r-sm)] [&_select]:border [&_select]:border-line-hover',
+  '[&_select]:bg-background [&_select]:px-[13px] [&_select]:py-[11px] [&_select]:text-[14.5px]',
   // the room the calendar button needs, claimed at the same level as above
   '[&_[data-slot=date-picker]_input]:pr-9',
 ].join(' ')
-
-/* portal.css `.field em`, which is unlayered and therefore reached both marks
-   a caption can carry: the hint under the control and the "optional" beside
-   the label. Beside is what it was written for; block is what it does. */
 </script>
 
 <template>
-  <!-- text-[10px]/leading-none on the wrapper, not only on the caption: a
-       control is inline-level, so the label's own strut is part of the line
-       box it sits in. At the inherited 15px/1.55 a textarea gains 4px of
-       descender space it never had. -->
-  <label :class="cn('mb-5 block text-[10px] leading-none', INPUT, props.class)">
-    <span class="mb-2 block text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">
+  <!-- leading-none on the wrapper, not only on the caption: a control is
+       inline-level, so the label's own strut is part of the line box it sits
+       in. At the inherited 15px/1.6 a textarea gains 5px of descender space
+       it never had. -->
+  <label :class="cn('block text-[13px] leading-none', CONTROL, props.class)">
+    <span class="mb-[7px] block text-[13px] leading-none font-normal text-muted-foreground">
       {{ label }}
-      <em v-if="optional" class="mt-[7px] block text-[12.5px] leading-[1.45] font-normal not-italic text-faint ml-1.5 tracking-[0.02em] normal-case">· {{ optional }}</em>
+      <em v-if="optional" class="font-normal not-italic">· {{ optional }}</em>
     </span>
     <slot />
-    <em v-if="hint" class="mt-[7px] block text-[12.5px] leading-[1.45] font-normal not-italic text-faint">{{ hint }}</em>
+    <em v-if="hint" class="mt-[7px] block text-[12.5px] leading-[1.45] font-normal not-italic text-muted-foreground">{{ hint }}</em>
   </label>
 </template>

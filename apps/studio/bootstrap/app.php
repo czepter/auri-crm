@@ -29,7 +29,10 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Sentry\Laravel\Integration as SentryIntegration;
+use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -120,4 +123,39 @@ return Application::configure(basePath: dirname(__DIR__))
         // config/sentry.php). Queued job failures go through the same
         // report() call, via Illuminate\Queue\Worker.
         SentryIntegration::handles($exceptions);
+
+        /*
+         * The two closed doors a client actually meets, on the surface they
+         * meet them on. Every "not yours" on the portal is a 404 by design
+         * (see ProjectController), and a client who follows a stale link out
+         * of a two-year-old mail was landing on the framework's bare white
+         * page with the studio's name nowhere on it.
+         *
+         * Only the portal, and only these two: a 500 in local development
+         * has to stay the framework's own page, or debugging the portal
+         * means reading a friendly sentence instead of a stack trace.
+         */
+        $exceptions->respond(function (SymfonyResponse $response, Throwable $exception, Request $request) {
+            $handled = [403, 404];
+
+            if (Surface::current() !== Surface::PORTAL || ! in_array($response->getStatusCode(), $handled, true)) {
+                return $response;
+            }
+
+            // An API client asking for JSON gets JSON. Inertia's own XHR is
+            // not that, and Inertia::render answers it in its own protocol.
+            if ($request->expectsJson() && ! $request->header('X-Inertia')) {
+                return $response;
+            }
+
+            // Route model binding throws before HandleInertiaRequests runs —
+            // it is appended to the `web` group, behind SubstituteBindings —
+            // so the root view this surface uses has to be named again here
+            // rather than assumed to have been set.
+            Inertia::setRootView('app-'.Surface::PORTAL);
+
+            return Inertia::render('Error', ['status' => $response->getStatusCode()])
+                ->toResponse($request)
+                ->setStatusCode($response->getStatusCode());
+        });
     })->create();

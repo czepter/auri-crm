@@ -2,6 +2,7 @@
 import { useForm } from '@inertiajs/vue3'
 import { ref, watch } from 'vue'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import PageHead from '@/ui/page/PageHead.vue'
 import ContactTypeahead from '@/admin/components/ContactTypeahead.vue'
 import ConflictNote from '@/admin/components/ConflictNote.vue'
 import { Button } from '@/ui/button'
@@ -109,11 +110,10 @@ function submit() {
 
 <template>
   <AdminLayout active="anfragen">
-    <div data-tokens class="px-8 py-7">
-      <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.05em] uppercase text-ink-2">{{ $t('leads.createKicker') }}</div>
-      <h1 class="m-0 mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px] max-[640px]:leading-[1.08]">{{ $t('leads.createTitle') }}</h1>
+    <div data-tokens>
+      <PageHead :kicker="$t('leads.createKicker')" :title="$t('leads.createTitle')" />
 
-      <form class="mt-5 max-w-[820px]" @submit.prevent="submit">
+      <form class="max-w-[820px] px-8 pt-7 pb-8" @submit.prevent="submit">
         <div class="mb-5">
           <Field :label="$t('leads.contact')" :error="form.errors.contact_name">
             <ContactTypeahead v-model="contact" @create-new="startCreating" />

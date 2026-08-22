@@ -2,7 +2,11 @@ import { createApp, h, type DefineComponent } from 'vue'
 import { createInertiaApp } from '@inertiajs/vue3'
 import { createI18n } from 'vue-i18n'
 import de from '../locales/de.json'
-import '../../css/portal.css'
+import '../../css/app.css'
+// The client's own gallery is served by this surface and is the one screen
+// on it with a stylesheet: a dark theme with its own component vocabulary,
+// scoped under [data-theme="gallery"].
+import '../../css/gallery.css'
 
 const i18n = createI18n({
   legacy: false,

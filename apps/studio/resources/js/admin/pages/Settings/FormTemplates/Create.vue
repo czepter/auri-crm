@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import PageHead from '@/ui/page/PageHead.vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Field } from '@/ui/field'
@@ -22,10 +23,10 @@ function submit() {
 
 <template>
   <AdminLayout active="einstellungen">
-    <div style="max-width: 480px">
-      <h1>{{ $t('formTemplates.createTitle') }}</h1>
+    <div data-tokens>
+      <PageHead :kicker="$t('settings.kicker')" :title="$t('formTemplates.createTitle')" />
 
-      <form style="margin-top: var(--s5)" @submit.prevent="submit">
+      <form class="max-w-[480px] px-8 pt-7 pb-8" @submit.prevent="submit">
         <Field id="name" class="mb-6" :label="$t('formTemplates.nameField')" :error="form.errors.name">
           <Input id="name" v-model="form.name" type="text" required maxlength="255" />
         </Field>

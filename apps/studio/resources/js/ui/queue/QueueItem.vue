@@ -60,7 +60,7 @@ function click(event: MouseEvent) {
 
         <span
             v-if="snippet"
-            class="mt-0.5 line-clamp-2 block text-[11.5px] leading-[1.47] text-ink-2"
+            class="mt-0.5 line-clamp-2 text-[11.5px] leading-[1.47] text-ink-2"
         >
             {{ snippet }}
         </span>

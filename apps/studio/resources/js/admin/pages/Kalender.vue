@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import PageHead from '@/ui/page/PageHead.vue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 
 const props = defineProps<{
@@ -70,12 +71,7 @@ function shortDate(date: string | null) {
 <template>
   <AdminLayout active="kalender">
     <div data-tokens>
-      <div class="flex items-center gap-3 px-8 pt-[22px]">
-        <div>
-          <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.05em] uppercase text-ink-2">{{ label }}</div>
-          <h1 class="mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em]">{{ $t('calendar.title') }}</h1>
-        </div>
-
+      <PageHead :kicker="label" :title="$t('calendar.title')">
         <span class="ml-auto flex rounded-lg bg-sunk-2 p-0.5">
           <button
             v-for="option in (['monat', 'liste'] as const)"
@@ -98,7 +94,7 @@ function shortDate(date: string | null) {
         >
           {{ step[0] }}
         </button>
-      </div>
+      </PageHead>
 
       <div v-if="view === 'monat'" class="grid grid-cols-7 px-8 py-5">
         <div

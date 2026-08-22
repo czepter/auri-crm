@@ -49,6 +49,7 @@ class ProfileController extends Controller
             'user' => [
                 'name' => $user->name,
                 'email' => $user->email,
+                'phone' => $user->phone,
                 'role' => $user->role->label(),
             ],
             'pendingEmail' => UserEmailChange::query()->live()
@@ -76,13 +77,14 @@ class ProfileController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:64'],
             'email' => [
                 'required', 'email', 'max:255',
                 Rule::unique('users', 'email')->ignore($user->id),
             ],
         ]);
 
-        $user->update(['name' => $data['name']]);
+        $user->update(['name' => $data['name'], 'phone' => ($data['phone'] ?? '') ?: null]);
 
         $newEmail = mb_strtolower($data['email']);
 

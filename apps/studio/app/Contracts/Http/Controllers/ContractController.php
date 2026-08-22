@@ -2,6 +2,7 @@
 
 namespace App\Contracts\Http\Controllers;
 
+use App\Contracts\Actions\EnsureContractArtifact;
 use App\Contracts\Data\ContractData;
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
@@ -22,14 +23,18 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * The project's own contract tab: pick a current template, generate a render,
- * see it once it lands. Never renders inline — store() only ever dispatches
- * RenderContractJob onto the `render` queue and returns; the screen finds out
- * a render finished the same way every Inertia screen finds out anything
- * changed, by asking again.
+ * see it once it lands. store() dispatches RenderContractJob onto the
+ * `render` queue and returns, so requesting a contract stays instant.
+ *
+ * show() is the second way the bytes can come about: EnsureContractArtifact
+ * builds them inline when there are none, which is what stops a contract from
+ * sitting at "wird erstellt" forever when a render was lost. It is a no-op for
+ * a contract that already has its file, which is every contract by the second
+ * look.
  */
 class ContractController extends Controller
 {
-    public function show(Project $project): Response
+    public function show(Project $project, EnsureContractArtifact $ensure): Response
     {
         $this->authorize('view', $project);
 
@@ -45,7 +50,7 @@ class ContractController extends Controller
                 ->orderBy('name')->get()
                 ->map(fn (DocumentTemplate $t) => ['value' => $t->public_id, 'label' => "{$t->name} · v{$t->version}"])
                 ->values(),
-            'contract' => $this->contractData($project),
+            'contract' => $this->contractData($project, $ensure),
         ]);
     }
 
@@ -92,18 +97,23 @@ class ContractController extends Controller
     {
         $this->authorize('view', $contract->project);
 
-        abort_if($contract->artifact_path === null, 404);
+        abort_if(! $contract->hasArtifact(), 404);
 
         return Storage::disk('local')->response($contract->artifact_path, "vertrag-{$contract->public_id}.pdf");
     }
 
-    private function contractData(Project $project): ?ContractData
+    private function contractData(Project $project, EnsureContractArtifact $ensure): ?ContractData
     {
         $contract = $project->latestContract()->with('template')->first();
 
         if ($contract === null) {
             return null;
         }
+
+        // rescue(), not a bare call: Gotenberg being down is a contract that
+        // is not there yet, not a project tab that will not open.
+        rescue(fn () => $ensure($contract));
+        $contract->refresh();
 
         return ContractData::fromModel($contract, "/vertraege/{$contract->public_id}/pdf");
     }

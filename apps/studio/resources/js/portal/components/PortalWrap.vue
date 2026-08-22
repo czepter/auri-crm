@@ -3,19 +3,20 @@ import type { HTMLAttributes } from "vue"
 import { cn } from "@/lib/utils"
 
 /*
- * portal.css `.pwrap` and `.pwrap.wide`, as a component. Six screens open
- * with the same <main>, and the only thing they disagree on is whether the
- * column is a reading width or a working one.
+ * mockups/redesign/tokens.css `.page`. One measure for every screen on this
+ * surface — nothing sets a width of its own, and the screens that want a
+ * narrower column (the account's 680px, a project's 880px band, the
+ * inquiry's 620px letter) narrow inside it rather than beside it.
+ *
+ * `grow` is what makes it the child that takes up the slack in
+ * PortalShell's column, so a short screen still puts its footer at the
+ * bottom of the window.
  */
-const props = defineProps<{
-  /** `.pwrap.wide` — 1060px, for the screens that put two columns side by side. */
-  wide?: boolean
-  class?: HTMLAttributes["class"]
-}>()
+const props = defineProps<{ class?: HTMLAttributes["class"] }>()
 </script>
 
 <template>
-  <main :class="cn('mx-auto px-8 pt-11 pb-16', wide ? 'max-w-[1060px]' : 'max-w-[740px]', props.class)">
+  <main :class="cn('mx-auto w-full max-w-[var(--page)] grow px-6', props.class)">
     <slot />
   </main>
 </template>

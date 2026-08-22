@@ -171,3 +171,34 @@ it('shows the studio\'s reply beside the client\'s own message', function () {
         ->and($props['openThread']['messages'][1]['author'])->toBe('Christian')
         ->and($props['openThread']['messages'][1]['fromStaff'])->toBeTrue();
 });
+
+it('marks only the threads the studio wrote last as waiting on the client', function () {
+    [$project, $contact] = bookedContact();
+    $staff = App\Models\User::factory()->create(['name' => 'Christian']);
+
+    $answered = app(App\Engagement\Actions\StartThread::class)($project, $contact, 'Beantwortet', 'Frage.');
+    app(App\Engagement\Actions\PostMessage::class)($answered, $staff, 'Antwort vom Studio.');
+    app(App\Engagement\Actions\StartThread::class)(null, $contact, 'Offen', 'Noch keine Antwort.');
+
+    $props = test()->actingAs($contact, 'portal')
+        ->get('/nachrichten')
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect(collect($props['threads'])->pluck('waiting', 'subject')->all())
+        ->toEqual(['Beantwortet' => true, 'Offen' => false]);
+});
+
+it('opens the conversation ?unterhaltung= names rather than the newest one', function () {
+    [$project, $contact] = bookedContact();
+
+    $older = app(App\Engagement\Actions\StartThread::class)($project, $contact, 'Zum Ablauf', 'Text.');
+    app(App\Engagement\Actions\StartThread::class)(null, $contact, 'Im Herbst frei?', 'Text.');
+
+    $props = test()->actingAs($contact, 'portal')
+        ->get("/nachrichten?unterhaltung={$older->public_id}")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect($props['openThread']['subject'])->toBe('Zum Ablauf');
+});

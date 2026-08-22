@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import ProjectHeader from '@/admin/components/ProjectHeader.vue'
+import ProjectShell from '@/admin/components/ProjectShell.vue'
 import QuoteItemsEditor, { type QuoteItemRow } from '@/admin/components/QuoteItemsEditor.vue'
 import ValidUntilField from '@/admin/components/ValidUntilField.vue'
 import { basisPointsToPercent, centsToEuros, eurosToCents, formatEuros, percentToBasisPoints } from '@/admin/lib/money'
@@ -104,178 +104,178 @@ function chipClass(status: string): string {
 
 <template>
   <AdminLayout active="anfragen">
-    <ProjectHeader :header="header" active="quotes" />
+    <ProjectShell :header="header" active="quotes">
+        <div class="hrow" style="margin-bottom: var(--s4)">
+          <span class="kick" style="margin-bottom: 0">{{ $t('quotes.title') }}</span>
+          <!-- Two questions — until when, and from which package — and then the
+               quote itself opens below for editing. That is a doorway, not a
+               section of the page, and it was sitting on top of the quotes it
+               was about to join. -->
+          <Dialog v-if="header.canManageQuotes" v-model:open="creating">
+            <DialogTrigger as-child>
+              <Button type="button">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+                {{ $t('quotes.create') }}
+              </Button>
+            </DialogTrigger>
 
-    <div class="hrow" style="margin-bottom: var(--s4)">
-      <span class="kick" style="margin-bottom: 0">{{ $t('quotes.title') }}</span>
-      <!-- Two questions — until when, and from which package — and then the
-           quote itself opens below for editing. That is a doorway, not a
-           section of the page, and it was sitting on top of the quotes it
-           was about to join. -->
-      <Dialog v-if="header.canManageQuotes" v-model:open="creating">
-        <DialogTrigger as-child>
-          <Button type="button">
-            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
-            {{ $t('quotes.create') }}
-          </Button>
-        </DialogTrigger>
+            <DialogContent class="max-w-[480px]">
+              <DialogHeader>
+                <DialogTitle>{{ $t('quotes.create') }}</DialogTitle>
+              </DialogHeader>
 
-        <DialogContent class="max-w-[480px]">
-          <DialogHeader>
-            <DialogTitle>{{ $t('quotes.create') }}</DialogTitle>
-          </DialogHeader>
+              <DialogBody>
+                <form id="quote-create-form" class="fgrid" @submit.prevent="create">
+                  <ValidUntilField id="valid_until" v-model="createForm.valid_until" />
+                  <div class="fld">
+                    <Label for="package">{{ $t('quotes.fromPackage') }}</Label>
+                    <Select
+                      :model-value="toOption(createForm.package)"
+                      @update:model-value="(value) => (createForm.package = fromOption(value))"
+                    >
+                      <SelectTrigger id="package">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem :value="NONE">{{ $t('quotes.blank') }}</SelectItem>
+                        <SelectItem v-for="pkg in packages" :key="pkg.value" :value="pkg.value">{{ pkg.label }}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </form>
+              </DialogBody>
 
-          <DialogBody>
-            <form id="quote-create-form" class="fgrid" @submit.prevent="create">
-              <ValidUntilField id="valid_until" v-model="createForm.valid_until" />
+              <DialogFooter>
+                <Button type="submit" form="quote-create-form" :disabled="createForm.processing">
+                  {{ $t('common.save') }}
+                </Button>
+                <DialogClose as-child>
+                  <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        <!-- Depth behind the Angebot & Vertrag tab: only the quote half exists so
+             far — no tax breakdown beyond Q-04's own VAT row, no PDF link,
+             Vertrag card, Nachtrag or payment plan yet (all Q-07 and later). A
+             superseded quote renders in this same loop rather than being hidden
+             or 404ing: Project::quotes() already returns every quote, and this
+             card is what "stays reachable and reads as superseded" means here. -->
+        <div v-for="quote in quotes" :key="quote.id" class="card static" style="margin-bottom: var(--s4)">
+          <div class="cardhead">
+            <span class="kick">{{ quote.number ? `${$t('quotes.title')} ${quote.number}` : $t('quotes.title') }}</span>
+            <span :class="['chip', chipClass(quote.status)]">{{ quote.statusLabel }}</span>
+          </div>
+
+          <table class="qt">
+            <tr v-for="item in quote.items" :key="item.id" :class="{ incl: item.isIncluded }">
+              <td>
+                {{ item.title }}
+                <div v-if="item.isIncluded || item.description" class="d">
+                  {{ item.isIncluded ? $t('quotes.included') : item.description }}
+                </div>
+              </td>
+              <td>{{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.lineTotal) }}</td>
+            </tr>
+            <!-- No discount on this quote: the single sum row Q-02 already rendered, unchanged. -->
+            <tr v-if="!quote.discountAmount" class="sum">
+              <td>{{ $t('quotes.total') }}</td>
+              <td>{{ formatEuros(quote.total) }}</td>
+            </tr>
+            <template v-else>
+              <tr class="sum">
+                <td>{{ $t('quotes.total') }}</td>
+                <td>{{ formatEuros(quote.total) }}</td>
+              </tr>
+              <tr class="tax">
+                <td>{{ $t('quotes.discount') }}</td>
+                <td>−{{ formatEuros(quote.discountAmount) }}</td>
+              </tr>
+              <tr class="total">
+                <td>{{ $t('quotes.net') }}</td>
+                <td>{{ formatEuros(quote.net) }}</td>
+              </tr>
+            </template>
+
+            <!-- Q-04: only a quote Q-06 has already sent carries these — a draft's
+                 vatMode is always null (see QuoteData), so nothing prints here
+                 until that story ships. Vocabulary and order match mockup
+                 04-angebot's accepted-quote card: a muted §19 note with no rate
+                 shown at all, or a muted rate row followed by the final total
+                 including it. -->
+            <tr v-if="quote.vatMode === 'small_business'" class="tax">
+              <td colspan="2">{{ quote.vatNote }}</td>
+            </tr>
+            <template v-else-if="quote.vatMode === 'standard'">
+              <tr class="tax">
+                <td>{{ $t('quotes.vat', { rate: basisPointsToPercent(quote.vatRate) }) }}</td>
+                <td>{{ formatEuros(quote.vatAmount ?? 0) }}</td>
+              </tr>
+              <tr class="total">
+                <td>{{ $t('quotes.total') }}</td>
+                <td>{{ formatEuros(quote.net + (quote.vatAmount ?? 0)) }}</td>
+              </tr>
+            </template>
+          </table>
+
+          <!-- Editing and sending both stay behind canManageQuotes, and both
+               stay behind status === 'draft' — the UI half of Q-06's
+               immutability rule, Quote::booted()'s guard being the half that
+               still holds even if this condition were ever wrong or bypassed. -->
+          <template v-if="header.canManageQuotes && quote.status === 'draft'">
+            <div class="dsec">
+              <div class="dlab">{{ $t('quotes.items') }}</div>
+              <QuoteItemsEditor v-model="editForms[quote.id].items" />
+            </div>
+
+            <form class="fgrid" @submit.prevent="save(quote.id)">
+              <ValidUntilField :id="`quote-valid-${quote.id}`" v-model="editForms[quote.id].valid_until" />
               <div class="fld">
-                <Label for="package">{{ $t('quotes.fromPackage') }}</Label>
+                <Label :for="`quote-discount-type-${quote.id}`">{{ $t('quotes.discountType') }}</Label>
                 <Select
-                  :model-value="toOption(createForm.package)"
-                  @update:model-value="(value) => (createForm.package = fromOption(value))"
+                  :model-value="toOption(editForms[quote.id].discountType)"
+                  @update:model-value="(value) => setDiscountType(quote.id, value)"
                 >
-                  <SelectTrigger id="package">
+                  <SelectTrigger :id="`quote-discount-type-${quote.id}`">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem :value="NONE">{{ $t('quotes.blank') }}</SelectItem>
-                    <SelectItem v-for="pkg in packages" :key="pkg.value" :value="pkg.value">{{ pkg.label }}</SelectItem>
+                    <SelectItem :value="NONE">{{ $t('quotes.discountNone') }}</SelectItem>
+                    <SelectItem value="percentage">{{ $t('quotes.discountPercentage') }}</SelectItem>
+                    <SelectItem value="amount">{{ $t('quotes.discountAmount') }}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+              <div v-if="editForms[quote.id].discountType" class="fld">
+                <Label :for="`quote-discount-value-${quote.id}`">{{ $t('quotes.discountValue') }}</Label>
+                <InputGroup>
+                  <InputGroupInput
+                    :id="`quote-discount-value-${quote.id}`"
+                    v-model="editForms[quote.id].discountValue" class="tabular-nums"
+                    type="text"
+                    inputmode="decimal" />
+                  <InputGroupAddon align="inline-end">
+                    {{ editForms[quote.id].discountType === 'percentage' ? $t('common.unitPercent') : $t('common.unitEuro') }}
+                  </InputGroupAddon>
+                </InputGroup>
+              </div>
+              <div class="fld wide">
+                <div class="formfoot" style="margin-top: 0">
+                  <Button type="submit" :disabled="editForms[quote.id].processing">
+                    {{ $t('common.save') }}
+                  </Button>
+                  <Button type="button" :disabled="sendForms[quote.id].processing" @click="send(quote.id)">
+                    {{ $t('quotes.send') }}
+                  </Button>
+                </div>
+              </div>
             </form>
-          </DialogBody>
-
-          <DialogFooter>
-            <Button type="submit" form="quote-create-form" :disabled="createForm.processing">
-              {{ $t('common.save') }}
-            </Button>
-            <DialogClose as-child>
-              <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-
-    <!-- Depth behind the Angebot & Vertrag tab: only the quote half exists so
-         far — no tax breakdown beyond Q-04's own VAT row, no PDF link,
-         Vertrag card, Nachtrag or payment plan yet (all Q-07 and later). A
-         superseded quote renders in this same loop rather than being hidden
-         or 404ing: Project::quotes() already returns every quote, and this
-         card is what "stays reachable and reads as superseded" means here. -->
-    <div v-for="quote in quotes" :key="quote.id" class="card static" style="margin-bottom: var(--s4)">
-      <div class="cardhead">
-        <span class="kick">{{ quote.number ? `${$t('quotes.title')} ${quote.number}` : $t('quotes.title') }}</span>
-        <span :class="['chip', chipClass(quote.status)]">{{ quote.statusLabel }}</span>
-      </div>
-
-      <table class="qt">
-        <tr v-for="item in quote.items" :key="item.id" :class="{ incl: item.isIncluded }">
-          <td>
-            {{ item.title }}
-            <div v-if="item.isIncluded || item.description" class="d">
-              {{ item.isIncluded ? $t('quotes.included') : item.description }}
-            </div>
-          </td>
-          <td>{{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.lineTotal) }}</td>
-        </tr>
-        <!-- No discount on this quote: the single sum row Q-02 already rendered, unchanged. -->
-        <tr v-if="!quote.discountAmount" class="sum">
-          <td>{{ $t('quotes.total') }}</td>
-          <td>{{ formatEuros(quote.total) }}</td>
-        </tr>
-        <template v-else>
-          <tr class="sum">
-            <td>{{ $t('quotes.total') }}</td>
-            <td>{{ formatEuros(quote.total) }}</td>
-          </tr>
-          <tr class="tax">
-            <td>{{ $t('quotes.discount') }}</td>
-            <td>−{{ formatEuros(quote.discountAmount) }}</td>
-          </tr>
-          <tr class="total">
-            <td>{{ $t('quotes.net') }}</td>
-            <td>{{ formatEuros(quote.net) }}</td>
-          </tr>
-        </template>
-
-        <!-- Q-04: only a quote Q-06 has already sent carries these — a draft's
-             vatMode is always null (see QuoteData), so nothing prints here
-             until that story ships. Vocabulary and order match mockup
-             04-angebot's accepted-quote card: a muted §19 note with no rate
-             shown at all, or a muted rate row followed by the final total
-             including it. -->
-        <tr v-if="quote.vatMode === 'small_business'" class="tax">
-          <td colspan="2">{{ quote.vatNote }}</td>
-        </tr>
-        <template v-else-if="quote.vatMode === 'standard'">
-          <tr class="tax">
-            <td>{{ $t('quotes.vat', { rate: basisPointsToPercent(quote.vatRate) }) }}</td>
-            <td>{{ formatEuros(quote.vatAmount ?? 0) }}</td>
-          </tr>
-          <tr class="total">
-            <td>{{ $t('quotes.total') }}</td>
-            <td>{{ formatEuros(quote.net + (quote.vatAmount ?? 0)) }}</td>
-          </tr>
-        </template>
-      </table>
-
-      <!-- Editing and sending both stay behind canManageQuotes, and both
-           stay behind status === 'draft' — the UI half of Q-06's
-           immutability rule, Quote::booted()'s guard being the half that
-           still holds even if this condition were ever wrong or bypassed. -->
-      <template v-if="header.canManageQuotes && quote.status === 'draft'">
-        <div class="dsec">
-          <div class="dlab">{{ $t('quotes.items') }}</div>
-          <QuoteItemsEditor v-model="editForms[quote.id].items" />
+          </template>
         </div>
 
-        <form class="fgrid" @submit.prevent="save(quote.id)">
-          <ValidUntilField :id="`quote-valid-${quote.id}`" v-model="editForms[quote.id].valid_until" />
-          <div class="fld">
-            <Label :for="`quote-discount-type-${quote.id}`">{{ $t('quotes.discountType') }}</Label>
-            <Select
-              :model-value="toOption(editForms[quote.id].discountType)"
-              @update:model-value="(value) => setDiscountType(quote.id, value)"
-            >
-              <SelectTrigger :id="`quote-discount-type-${quote.id}`">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem :value="NONE">{{ $t('quotes.discountNone') }}</SelectItem>
-                <SelectItem value="percentage">{{ $t('quotes.discountPercentage') }}</SelectItem>
-                <SelectItem value="amount">{{ $t('quotes.discountAmount') }}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div v-if="editForms[quote.id].discountType" class="fld">
-            <Label :for="`quote-discount-value-${quote.id}`">{{ $t('quotes.discountValue') }}</Label>
-            <InputGroup>
-              <InputGroupInput
-                :id="`quote-discount-value-${quote.id}`"
-                v-model="editForms[quote.id].discountValue" class="tabular-nums"
-                type="text"
-                inputmode="decimal" />
-              <InputGroupAddon align="inline-end">
-                {{ editForms[quote.id].discountType === 'percentage' ? $t('common.unitPercent') : $t('common.unitEuro') }}
-              </InputGroupAddon>
-            </InputGroup>
-          </div>
-          <div class="fld wide">
-            <div class="formfoot" style="margin-top: 0">
-              <Button type="submit" :disabled="editForms[quote.id].processing">
-                {{ $t('common.save') }}
-              </Button>
-              <Button type="button" :disabled="sendForms[quote.id].processing" @click="send(quote.id)">
-                {{ $t('quotes.send') }}
-              </Button>
-            </div>
-          </div>
-        </form>
-      </template>
-    </div>
-
-    <p v-if="!quotes.length && !header.canManageQuotes" class="hint">{{ $t('quotes.empty') }}</p>
+        <p v-if="!quotes.length && !header.canManageQuotes" class="hint">{{ $t('quotes.empty') }}</p>
+    </ProjectShell>
   </AdminLayout>
 </template>

@@ -5,17 +5,13 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 import { Button } from '@/ui/button'
+import { groupContacts } from '@/admin/lib/contactQueue'
 
 const props = defineProps<{ contacts: App.Crm.Data.ContactRowData[] }>()
 
 // C-15 (#251): grouped by standing, not alphabetically. Who the studio is
 // working with right now is the question this screen is opened with.
-const GROUPS = ['running', 'past', 'none'] as const
-
-const groups = computed(() =>
-  GROUPS.map((key) => ({ key, rows: props.contacts.filter((contact) => contact.standing === key) }))
-    .filter((group) => group.rows.length),
-)
+const groups = computed(() => groupContacts(props.contacts))
 
 function day(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })

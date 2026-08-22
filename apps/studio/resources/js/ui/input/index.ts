@@ -14,7 +14,7 @@ export { default as Input } from "./Input.vue"
  */
 export const inputVariants = cva(
   [
-    "w-full min-w-0 appearance-none rounded-md border border-input bg-background font-sans font-normal text-foreground",
+    "w-full min-w-0 appearance-none rounded-[var(--r-sm)] border border-input bg-background font-sans font-normal text-foreground",
     "transition-[border-color] duration-[120ms] ease-out",
     "placeholder:text-faint hover:border-line-hover",
     "focus:border-ring focus:outline-none",
@@ -33,7 +33,7 @@ export const inputVariants = cva(
       variant: {
         default: "",
         filled: [
-          "rounded-[10px] border-0 bg-sunk px-[11px] py-[7px] text-[13.5px] leading-[1.4] tracking-[-0.01em]",
+          "rounded-[var(--r-sm)] border-0 bg-sunk px-[11px] py-[7px] text-[13.5px] leading-[1.4] tracking-[-0.01em]",
           "placeholder:text-[#B0B0B5] hover:border-transparent",
           "focus:bg-sunk-2 focus:shadow-[inset_0_0_0_2px_var(--accent)]",
         ],

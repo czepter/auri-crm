@@ -37,6 +37,11 @@
   --r:8px;          /* cards, buttons, nav items */
   --r-sm:5px;       /* count chips */
 
+  /* The easing the portal's entrance moves on. Declared here rather than on
+     the theme that uses it, because app.css names it from a @theme animation
+     that is global. */
+  --ease:cubic-bezier(.22, .61, .36, 1);
+
   --font:'Instrument Sans', system-ui, sans-serif;
 
   /* #234: the display face and the two corrections it needs. A pair is
@@ -51,11 +56,50 @@
 
 /* portal — same bones, more air. The theme is a spacing scale and a radius,
    not a separate component set, which is what lets both surfaces share every
-   rule below. */
+   rule below.
+
+   The values come from mockups/redesign/tokens.css, which stays the source
+   of truth for this surface the way mockups/_shared does for the admin.
+   Three of them are decisions rather than numbers:
+
+   --muted and --faint collapse onto one grey. The ramp near-black / mid /
+   light is every generator's default, and its third step measured 2.83:1 on
+   white — set, of all things, on the smallest text in the product. Size
+   carries the hierarchy here: 11px caps against 86px serif.
+
+   --s8 upward have no counterpart in the admin. A tool is read at a desk and
+   wants density; this surface is read once a year and wants a page.
+
+   --page and --read are the two measures every screen picks between. Nothing
+   on this surface sets a width of its own. */
 [data-theme="portal"] {
-  --hover:#FAFAF9;
-  --s3:14px; --s4:20px; --s5:32px; --s6:44px; --s7:64px;
-  --r:10px;
+  --hover:#F4F4F3;
+  --sunk:#F4F4F3;
+  --muted:#5C5C58;
+  --faint:#5C5C58;
+  --ink-2:#5C5C58;
+  --mark:#8D8D89;
+  --line-hover:#DCDCD9;
+  --accent:#B4462A;
+  --accent-bg:#FBE9E2;
+
+  --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+  --s8:72px; --s9:112px; --s10:160px;
+
+  --r:14px;
+  --r-sm:9px;
+  --r-pill:999px;
+
+  --page:1180px;
+  --read:720px;
+  --band:72px;
+}
+
+/* The step between one section of a portal screen and the next. 72px is the
+   measure a page read at arm's length wants; on a 390px screen it puts two
+   rows on the first viewport and the third below the fold. */
+@media (max-width:700px) {
+  [data-theme="portal"] { --band:40px; }
 }
 
 /* gallery — chrome recedes, photographs carry the page. Ported from
@@ -79,6 +123,13 @@
   --ok:#7FB98C;    --ok-bg:#16211A;
   --due:#D9B25C;   --due-bg:#241D0E;
   --late:#E88379;  --late-bg:#2A1512;
+
+  /* The scale and radius this surface was drawn against, pinned rather than
+     inherited. It is nested inside [data-theme="portal"] — the portal serves
+     the client's own gallery — and would otherwise follow the portal's scale
+     wherever that goes next. */
+  --s3:14px; --s4:20px; --s5:32px; --s6:44px; --s7:64px;
+  --r:10px;
 }
 
 * { box-sizing:border-box; }
@@ -122,7 +173,7 @@ h1:not(:where([data-tokens] h1)) { font:700 24px/1 var(--font); letter-spacing:-
    `default` and `ghost` variants, with the same padding, weight and colour —
    a button and a field could not credibly be two different kinds of thing.
    The rules further down that reach a button by context (.cardhead below,
-   .formfoot, portal.css .wide) select on [data-slot="button"] instead. */
+   .formfoot) select on [data-slot="button"] instead. */
 
 .tabs { display:flex; gap:var(--s5); margin:var(--s4) 0 var(--s5); }
 .tabs a { font:400 13px/1 var(--font); color:var(--muted); text-decoration:none; }

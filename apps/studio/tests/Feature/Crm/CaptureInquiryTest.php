@@ -93,6 +93,18 @@ it('reuses an existing contact rather than creating a second one', function () {
         ->and(Project::sole()->primaryContact()->id)->toBe($existing->id);
 });
 
+it('shows a new project in the portal when the contact says so', function () {
+    $existing = Contact::factory()->create([
+        'email' => 'a.steffens@posteo.de',
+        'portal_overrides' => ['portal_visible' => true],
+    ]);
+
+    $this->actingAs($this->staff, 'staff')
+        ->post('/anfragen', payload(['contact_id' => $existing->public_id]));
+
+    expect(Project::sole()->portal_visible)->toBeTrue();
+});
+
 it('saves without a partner', function () {
     $this->actingAs($this->staff, 'staff')
         ->post('/anfragen', payload(['people' => []]))

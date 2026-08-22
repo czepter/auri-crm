@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 
 // T-08: rendered by EnsurePortalMaintenanceClosure instead of whatever route
@@ -13,14 +14,18 @@ defineProps<{ message: string | null }>()
 </script>
 
 <template>
-  <PortalHeader />
+  <PortalShell>
+    <PortalHeader />
 
-  <PortalWrap>
-    <div class="mt-11">
-      <h1>{{ $t('portal.maintenanceTitle') }}</h1>
-      <p class="mt-5 max-w-[56ch] text-[16px] leading-[1.6] font-normal text-muted-foreground">{{ message ?? $t('portal.maintenanceDefaultMessage') }}</p>
-    </div>
-  </PortalWrap>
+    <PortalWrap class="flex items-center py-24">
+      <div class="animate-rise motion-reduce:animate-none w-full max-w-[620px]">
+        <h1 class="font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
+          {{ $t('portal.maintenanceTitle') }}
+        </h1>
+        <p class="mt-6 max-w-[52ch] text-[17px] leading-[1.55] text-muted-foreground">{{ message ?? $t('portal.maintenanceDefaultMessage') }}</p>
+      </div>
+    </PortalWrap>
 
-  <PortalFooter />
+    <PortalFooter />
+  </PortalShell>
 </template>

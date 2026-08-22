@@ -34,7 +34,7 @@ class SignContract
             return $existing;
         }
 
-        abort_unless($contract->status === ContractStatus::Rendered && $contract->artifact_path !== null, 422);
+        abort_unless($contract->status === ContractStatus::Rendered && $contract->hasArtifact(), 422);
 
         $hash = hash('sha256', Storage::disk('local')->get($contract->artifact_path));
         $templateVersion = $contract->template->version;

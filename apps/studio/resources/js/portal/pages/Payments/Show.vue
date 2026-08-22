@@ -3,6 +3,9 @@ import { router } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalLabel from '@/portal/components/PortalLabel.vue'
+import PortalRow from '@/portal/components/PortalRow.vue'
+import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { Button } from '@/ui/button'
 
@@ -69,120 +72,110 @@ function longDate(date: string) {
   return new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-/* tokens.css `.chip` with portal.css's size step, and the installment row's
-   own two lines. Inline rather than a component: this is the second portal
-   screen with a chip on it, and the plan extracts at the third. */
+const switcher = computed(() => ({ label: props.project.name, toAll: props.showSwitcher }))
+
+const BAND = 'max-w-[880px] border-t border-border pt-12'
 </script>
 
 <template>
-  <PortalHeader :contact="contact" :show-switcher="showSwitcher" />
+  <PortalShell>
+    <PortalHeader :switcher="switcher" />
 
-  <PortalWrap wide>
-    <h1>{{ $t('portal.paymentsTitle') }}</h1>
-
-    <template v-if="plan">
-      <section class="mt-8">
-        <div>
-          <h2>{{ project.name }}</h2>
-          <span class="flex-none rounded-[var(--r-sm)] px-[9px] py-1 text-[10.5px] leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('portal.paymentsOpen', { amount: formatEuros(plan.openTotal) }) }}</span>
-        </div>
-
-        <div class="flex flex-col gap-1.5">
-          <div v-for="installment in plan.installments" :key="installment.id" class="rounded-md border border-border p-3.5">
-            <div class="flex items-center gap-3.5">
-              <div class="min-w-0 flex-1 text-[13px] leading-[1.3] font-semibold tracking-[-0.01em]">
-                {{ installment.label }}
-                <span class="mt-0.5 block text-[11.5px] leading-[1.35] font-normal tracking-normal text-muted-foreground">{{ longDate(installment.dueOn) }}</span>
-              </div>
-              <span
-                class="flex-none rounded-[var(--r-sm)] px-[9px] py-1 text-[10.5px] leading-[1.5] font-semibold tracking-[0.04em] uppercase"
-                :class="
-                  installment.status === 'paid' ? 'bg-due-bg text-due' : 'bg-muted text-muted-foreground'
-                "
-              >
-                {{ installment.status === 'paid' ? installment.statusLabel : formatEuros(installment.amount) }}
-              </span>
-            </div>
-            <!-- M-06: only once the PDF exists. Between issue and render the
-                 number is on the row above as the transfer reference, but
-                 there is nothing to download yet. -->
-            <a
-              v-if="installment.hasInvoiceDocument"
-              class="text-[11.5px] leading-[1.45] font-normal text-faint"
-              :href="`/projekte/${project.id}/zahlungen/${installment.id}/rechnung`"
-              target="_blank"
-            >{{ $t('portal.invoiceDownload', { number: installment.invoiceNumber }) }}</a>
-          </div>
-        </div>
+    <PortalWrap class="pb-40">
+      <section class="pt-[var(--band)]">
+        <p class="animate-rise motion-reduce:animate-none mb-4 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ project.name }}</p>
+        <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
+          {{ $t('portal.paymentsTitle') }}
+        </h1>
+        <p v-if="plan && plan.openTotal" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-4 text-[17px] tabular-nums text-action">
+          {{ $t('portal.paymentsOpen', { amount: formatEuros(plan.openTotal) }) }}
+        </p>
       </section>
 
-      <!-- "Überweisen" renders whenever the studio filed an IBAN, Stripe on
-           or off (T-07's own acceptance: a client can always see what to pay,
-           to which account and under which reference). Bank details are
-           optional in settings, and half a transfer block — labels with
-           nothing behind them — is worse than none. No mockup was drawn for
-           this screen — structure and tokens follow Contracts/Show.vue's own
-           split layout. -->
-      <div class="mt-8 grid grid-cols-[minmax(0,1fr)_352px] items-stretch gap-11">
-        <div v-if="bankDetails.iban" class="sticky top-5 flex max-h-[calc(100vh-20px-44px)] flex-col gap-5 overflow-y-auto">
-          <div class="relative block cursor-default rounded-md border border-border p-3.5 text-inherit no-underline">
-            <div class="mb-5 flex items-center justify-between">
-              <span class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.transferTitle') }}</span>
-            </div>
-            <dl class="mt-3.5 text-[12.5px] leading-[1.6] font-normal text-muted-foreground">
-              <div><strong>{{ $t('portal.transferAccountHolder') }}:</strong> {{ bankDetails.accountHolder }}</div>
-              <div><strong>{{ $t('portal.transferIban') }}:</strong> {{ bankDetails.iban }}</div>
-              <div><strong>{{ $t('portal.transferBic') }}:</strong> {{ bankDetails.bic }}</div>
-              <!-- M-06: each open installment transfers under its own
-                   invoice number. `plan.reference` is the pre-M-06 fallback
-                   and is null for every plan created since. -->
-              <div v-for="installment in referencedInstallments" :key="installment.id">
-                <strong>{{ $t('portal.transferReference') }}:</strong>
-                {{ installment.invoiceNumber }} ({{ installment.label }})
-              </div>
-              <div v-if="!referencedInstallments.length && plan.reference">
-                <strong>{{ $t('portal.transferReference') }}:</strong> {{ plan.reference }}
-              </div>
-              <div v-else-if="!referencedInstallments.length" class="text-[11.5px] leading-[1.45] font-normal text-faint">
-                {{ $t('portal.transferReferencePending') }}
-              </div>
-            </dl>
-          </div>
-        </div>
+      <template v-if="plan">
+        <p v-if="paymentStatus" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-8 max-w-[880px] rounded-md bg-sunk p-6 text-[15px]">
+          {{ paymentStatus === 'success' ? $t('portal.payNowSuccess') : $t('portal.payNowCancelled') }}
+        </p>
 
-        <div v-if="stripeEnabled" class="sticky top-5 flex max-h-[calc(100vh-20px-44px)] flex-col gap-5 overflow-y-auto">
-          <div class="relative block cursor-default rounded-md border border-border p-3.5 text-inherit no-underline">
-            <div class="mb-5 flex items-center justify-between">
-              <span class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.payNowTitle') }}</span>
-            </div>
-
-            <p v-if="paymentStatus === 'success'" class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('portal.payNowSuccess') }}</p>
-            <p v-else-if="paymentStatus === 'cancelled'" class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('portal.payNowCancelled') }}</p>
-
-
-            <div v-if="openInstallments.length" class="mt-3.5 flex flex-col gap-1.5">
-              <div v-for="installment in openInstallments" :key="installment.id" class="rounded-md border border-border p-3.5">
-                <div class="flex items-center gap-3.5">
-                  <div class="min-w-0 flex-1 text-[13px] leading-[1.3] font-semibold tracking-[-0.01em]">
-                    {{ installment.label }}<span class="mt-0.5 block text-[11.5px] leading-[1.35] font-normal tracking-normal text-muted-foreground">{{ formatEuros(installment.amount) }}</span>
-                  </div>
+        <!-- One list, not two. The card-payment block used to repeat every open
+             installment a second time under its own heading. -->
+        <section class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12">
+          <div :class="BAND">
+            <PortalLabel class="mb-6">{{ $t('portal.installmentsTitle') }}</PortalLabel>
+            <PortalRow
+              v-for="installment in plan.installments"
+              :key="installment.id"
+              :title="installment.label"
+              :state="installment.status === 'paid' ? 'done' : 'open'"
+              :note="installment.status === 'paid'
+                ? installment.statusLabel
+                : $t('portal.dueOn', { date: longDate(installment.dueOn) })"
+              :aside="formatEuros(installment.amount)"
+              :aside-open="installment.status !== 'paid'"
+            >
+              <template #action>
+                <span class="flex flex-wrap items-center gap-4">
+                  <!-- M-06: only once the PDF exists. Between issue and render
+                       the number is the transfer reference below, but there is
+                       nothing to download yet. -->
+                  <a
+                    v-if="installment.hasInvoiceDocument"
+                    class="text-[13px] whitespace-nowrap text-muted-foreground hover:text-foreground"
+                    :href="`/projekte/${project.id}/zahlungen/${installment.id}/rechnung`"
+                    target="_blank"
+                  >{{ $t('portal.invoiceDownload', { number: installment.invoiceNumber }) }}</a>
                   <Button
+                    v-if="stripeEnabled && installment.status !== 'paid'"
+                    variant="portal-chip"
                     type="button"
                     :disabled="payingId === installment.id"
                     @click="payNow(installment.id)"
                   >
                     {{ $t('portal.payNowButton') }}
                   </Button>
-                </div>
-              </div>
-            </div>
+                </span>
+              </template>
+            </PortalRow>
           </div>
-        </div>
-      </div>
-    </template>
+        </section>
 
-    <p v-else class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('portal.paymentsNone') }}</p>
-  </PortalWrap>
+        <!-- "Überweisen" renders whenever the studio filed an IBAN, Stripe on
+             or off (T-07's own acceptance: a client can always see what to pay,
+             to which account and under which reference). Bank details are
+             optional in settings, and half a transfer block — labels with
+             nothing behind them — is worse than none. -->
+        <section v-if="bankDetails.iban" class="animate-rise [animation-delay:320ms] motion-reduce:animate-none mt-12">
+          <div :class="BAND">
+            <PortalLabel class="mb-6">{{ $t('portal.transferTitle') }}</PortalLabel>
+            <dl class="m-0 grid max-w-[560px] grid-cols-[148px_1fr] gap-x-6 gap-y-3 max-[700px]:grid-cols-1 max-[700px]:gap-y-0">
+              <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.transferAccountHolder') }}</dt>
+              <dd class="m-0 text-[14.5px]">{{ bankDetails.accountHolder }}</dd>
+              <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.transferIban') }}</dt>
+              <dd class="m-0 text-[14.5px] tabular-nums">{{ bankDetails.iban }}</dd>
+              <dt v-if="bankDetails.bic" class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.transferBic') }}</dt>
+              <dd v-if="bankDetails.bic" class="m-0 text-[14.5px] tabular-nums">{{ bankDetails.bic }}</dd>
 
-  <PortalFooter />
+              <!-- M-06: each open installment transfers under its own invoice
+                   number. `plan.reference` is the pre-M-06 fallback and is null
+                   for every plan created since. -->
+              <template v-for="installment in referencedInstallments" :key="installment.id">
+                <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.transferReference') }}</dt>
+                <dd class="m-0 text-[14.5px] tabular-nums">{{ installment.invoiceNumber }} ({{ installment.label }})</dd>
+              </template>
+              <template v-if="!referencedInstallments.length">
+                <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.transferReference') }}</dt>
+                <dd class="m-0 text-[14.5px] tabular-nums">
+                  {{ plan.reference ?? $t('portal.transferReferencePending') }}
+                </dd>
+              </template>
+            </dl>
+          </div>
+        </section>
+      </template>
+
+      <p v-else class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 text-[15px] text-muted-foreground">{{ $t('portal.paymentsNone') }}</p>
+    </PortalWrap>
+
+    <PortalFooter />
+  </PortalShell>
 </template>

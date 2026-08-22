@@ -1,13 +1,11 @@
 <?php
 
+use App\Contracts\Actions\EnsureContractArtifact;
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
 use App\Contracts\Models\Contract;
 use App\Documents\Models\DocumentTemplate;
-use App\Documents\Support\DocumentMergeDataBuilder;
-use App\Documents\Support\DocumentRenderer;
 use App\Settings\Support\StudioSettingsResolver;
-use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Http\Client\RequestException;
@@ -47,7 +45,7 @@ it('resolves merge fields from the project at render time and stores the artifac
     $project = contractProject();
     $contract = Contract::factory()->for($project)->for($template, 'template')->create();
 
-    (new RenderContractJob($contract))->handle(app(GotenbergClient::class), app(StudioSettingsResolver::class), app(DocumentMergeDataBuilder::class), app(DocumentRenderer::class));
+    (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class));
 
     Http::assertSent(function (HttpRequest $request) {
         $body = (string) $request->body();
@@ -82,7 +80,7 @@ it('resolves studio.* merge fields from T-02\'s settings row, including the one 
     ]);
     $contract = Contract::factory()->for(contractProject())->for($template, 'template')->create();
 
-    (new RenderContractJob($contract))->handle(app(GotenbergClient::class), app(StudioSettingsResolver::class), app(DocumentMergeDataBuilder::class), app(DocumentRenderer::class));
+    (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class));
 
     $expectedLogoPath = (new StudioSettingsResolver)->logoPath();
     expect($expectedLogoPath)->not->toBeNull();
@@ -108,7 +106,7 @@ it('renders the configured Widerruf text when T-05\'s setting is switched on', f
     $template = DocumentTemplate::factory()->create(['body' => '<p>{{ settings.widerrufText }}</p>']);
     $contract = Contract::factory()->for(contractProject())->for($template, 'template')->create();
 
-    (new RenderContractJob($contract))->handle(app(GotenbergClient::class), app(StudioSettingsResolver::class), app(DocumentMergeDataBuilder::class), app(DocumentRenderer::class));
+    (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class));
 
     Http::assertSent(fn (HttpRequest $request) => str_contains(
         (string) $request->body(),
@@ -127,7 +125,7 @@ it('renders nothing for the Widerruf merge field when the setting is switched of
     $template = DocumentTemplate::factory()->create(['body' => '<p>Vor[{{ settings.widerrufText }}]Nach</p>']);
     $contract = Contract::factory()->for(contractProject())->for($template, 'template')->create();
 
-    (new RenderContractJob($contract))->handle(app(GotenbergClient::class), app(StudioSettingsResolver::class), app(DocumentMergeDataBuilder::class), app(DocumentRenderer::class));
+    (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class));
 
     Http::assertSent(function (HttpRequest $request) {
         $body = (string) $request->body();
@@ -143,7 +141,7 @@ it('marks the contract failed and keeps the exception when Gotenberg errors', fu
 
     $contract = Contract::factory()->for(contractProject())->create();
 
-    expect(fn () => (new RenderContractJob($contract))->handle(app(GotenbergClient::class), app(StudioSettingsResolver::class), app(DocumentMergeDataBuilder::class), app(DocumentRenderer::class)))
+    expect(fn () => (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class)))
         ->toThrow(RequestException::class);
 
     $contract->refresh();
@@ -157,14 +155,14 @@ it('never re-renders an already-rendered contract', function () {
     Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-first', 200)]);
 
     $contract = Contract::factory()->for(contractProject())->create();
-    (new RenderContractJob($contract))->handle(app(GotenbergClient::class), app(StudioSettingsResolver::class), app(DocumentMergeDataBuilder::class), app(DocumentRenderer::class));
+    (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class));
 
     Http::assertSentCount(1);
 
     // A second attempt at the same, now-rendered contract — a retried job, or
     // two dispatches racing — must never call Gotenberg again.
     Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-second', 200)]);
-    (new RenderContractJob($contract->fresh()))->handle(app(GotenbergClient::class), app(StudioSettingsResolver::class), app(DocumentMergeDataBuilder::class), app(DocumentRenderer::class));
+    (new RenderContractJob($contract->fresh()))->handle(app(EnsureContractArtifact::class));
 
     Http::assertNothingSent();
 });

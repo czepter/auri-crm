@@ -230,7 +230,7 @@ class LeadCaseController extends Controller
      * What lies around the requested day: every other project's shoots in
      * that week. A date is answered by what is already on it, not by a rule.
      *
-     * @return list<array{date: string, what: string}>
+     * @return list<array{date: string, what: string, projectId: string}>
      */
     private function week(Project $project, ?string $date): array
     {
@@ -251,6 +251,7 @@ class LeadCaseController extends Controller
             ->map(fn (Shoot $shoot) => [
                 'date' => $shoot->date->format('Y-m-d'),
                 'what' => $shoot->project->name,
+                'projectId' => $shoot->project->public_id,
             ])
             ->all();
     }

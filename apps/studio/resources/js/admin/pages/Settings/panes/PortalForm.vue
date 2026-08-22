@@ -8,8 +8,23 @@ import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
 
-const props = defineProps<{ settings: App.Settings.Data.PortalSettingsData }>()
+type Section = 'portal' | 'home' | 'privacy'
+
+const props = withDefaults(defineProps<{
+  settings: App.Settings.Data.PortalSettingsData
+  sections?: Section[]
+}>(), { sections: () => ['portal', 'home', 'privacy'] })
 const emit = defineEmits<{ saved: [] }>()
+
+// A pane sends only its own fields; the controller's `sometimes` leaves the
+// rest of the row untouched.
+const SECTION_FIELDS: Record<Section, string[]> = {
+  portal: ['portal_maintenance_enabled', 'portal_maintenance_message', 'portal_accept_quotes_enabled', 'portal_sign_contracts_enabled', 'portal_payment_status_enabled', 'portal_messaging_mode'],
+  home: ['portal_welcome_inquiry', 'portal_welcome_text', 'portal_welcome_many', 'portal_contact_phone', 'portal_contact_email', 'portal_contact_response_time'],
+  privacy: ['dsgvo_request_recipient', 'dsgvo_request_deadline_days', 'portal_legal_datenschutz_url', 'portal_legal_agb_url'],
+}
+
+const shows = (section: Section) => props.sections.includes(section)
 
 const form = useForm({
   portal_maintenance_enabled: props.settings.maintenanceEnabled,
@@ -23,11 +38,6 @@ const form = useForm({
   portal_messaging_mode: props.settings.messagingMode,
   portal_welcome_inquiry: props.settings.welcomeInquiry ?? '',
   portal_welcome_many: props.settings.welcomeMany ?? '',
-  gallery_default_expiry_days: props.settings.galleryExpiryDays ?? '',
-  gallery_default_requires_settled_balance: props.settings.galleryRequiresSettledBalance,
-  gallery_default_downloads_enabled: props.settings.galleryDownloadsEnabled,
-  gallery_default_lists_enabled: props.settings.galleryListsEnabled,
-  gallery_default_comments_enabled: props.settings.galleryCommentsEnabled,
   dsgvo_request_recipient: props.settings.dsgvoRecipient ?? '',
   dsgvo_request_deadline_days: props.settings.dsgvoDeadlineDays,
   portal_contact_phone: props.settings.contactPhone ?? '',
@@ -36,8 +46,10 @@ const form = useForm({
 })
 
 function submit() {
+  const sent = new Set<string>(props.sections.flatMap((section) => SECTION_FIELDS[section]))
+
   form
-    .transform((data) => ({
+    .transform((data) => Object.fromEntries(Object.entries({
       ...data,
       portal_maintenance_message: data.portal_maintenance_message || null,
       portal_welcome_text: data.portal_welcome_text || null,
@@ -49,8 +61,7 @@ function submit() {
       portal_contact_phone: data.portal_contact_phone || null,
       portal_contact_email: data.portal_contact_email || null,
       portal_contact_response_time: data.portal_contact_response_time || null,
-      gallery_default_expiry_days: data.gallery_default_expiry_days === '' ? null : data.gallery_default_expiry_days,
-    }))
+    }).filter(([field]) => sent.has(field))))
     .patch('/einstellungen/portal', { preserveScroll: true, onSuccess: () => emit('saved') })
 }
 
@@ -62,8 +73,8 @@ defineExpose({ form, submit })
     <!-- T-08: a temporary closure, worded and switched separately from
          A-04's hide-project/revoke-contact forms — never a third
          catch-all access control. -->
-    <div class="mt-0">
-      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('portalSettings.maintenanceSection') }}</div>
+    <div v-if="shows('portal')" class="mt-0">
+      <div v-if="sections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('portalSettings.maintenanceSection') }}</div>
       <div class="mb-6">
         <div class="flex items-center gap-2.5">
           <Checkbox id="cb-portal-maintenance-enabled" v-model="form.portal_maintenance_enabled" />
@@ -79,8 +90,8 @@ defineExpose({ form, submit })
       </div>
     </div>
 
-    <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('portalSettings.homeSection') }}</div>
+    <div v-if="shows('home')" class="mt-8 first-of-type:mt-6">
+      <div v-if="sections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('portalSettings.homeSection') }}</div>
       <!-- P-09 (#228): three rooms, three texts. One sentence cannot greet
            somebody who has not booked anything, a couple with one wedding
            and a venue with forty dates a year. -->
@@ -104,49 +115,10 @@ defineExpose({ form, submit })
       </div>
     </div>
 
-    <!-- P-09: what a new gallery starts as. These live per gallery today and
-         nowhere as a default, so a studio re-enters them on every delivery. -->
-    <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('portalSettings.gallerySection') }}</div>
-      <div class="mb-6">
-        <Field :error="form.errors.gallery_default_expiry_days" v-slot="{ id }">
-          <Label :for="id">{{ $t('portalSettings.galleryExpiryLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
-          <InputGroup>
-            <InputGroupInput :id v-model="form.gallery_default_expiry_days" class="tabular-nums" type="number" min="1" />
-            <InputGroupAddon align="inline-end">{{ $t('common.unitDays') }}</InputGroupAddon>
-          </InputGroup>
-        </Field>
-      </div>
-      <div class="mb-6">
-        <div class="flex items-center gap-2.5">
-          <Checkbox id="cb-gallery-balance" v-model="form.gallery_default_requires_settled_balance" />
-          <Label variant="inline" for="cb-gallery-balance">{{ $t('portalSettings.galleryBalanceLabel') }}</Label>
-        </div>
-      </div>
-      <div class="mb-6">
-        <div class="flex items-center gap-2.5">
-          <Checkbox id="cb-gallery-downloads" v-model="form.gallery_default_downloads_enabled" />
-          <Label variant="inline" for="cb-gallery-downloads">{{ $t('portalSettings.galleryDownloadsLabel') }}</Label>
-        </div>
-      </div>
-      <div class="mb-6">
-        <div class="flex items-center gap-2.5">
-          <Checkbox id="cb-gallery-lists" v-model="form.gallery_default_lists_enabled" />
-          <Label variant="inline" for="cb-gallery-lists">{{ $t('portalSettings.galleryListsLabel') }}</Label>
-        </div>
-      </div>
-      <div class="mb-6">
-        <div class="flex items-center gap-2.5">
-          <Checkbox id="cb-gallery-comments" v-model="form.gallery_default_comments_enabled" />
-          <Label variant="inline" for="cb-gallery-comments">{{ $t('portalSettings.galleryCommentsLabel') }}</Label>
-        </div>
-      </div>
-    </div>
-
     <!-- P-05 (#224) put subject access and erasure in the portal; both are
          requests with a legal deadline, so both need somewhere to land. -->
-    <div class="mt-8 first-of-type:mt-6">
-      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('portalSettings.dsgvoSection') }}</div>
+    <div v-if="shows('privacy')" class="mt-8 first-of-type:mt-6">
+      <div v-if="sections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('portalSettings.dsgvoSection') }}</div>
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :error="form.errors.dsgvo_request_recipient" v-slot="{ id }">
@@ -165,7 +137,7 @@ defineExpose({ form, submit })
 
     <!-- The portal footer's contact line had no source: portalBranding
          carries only the logo, the accent colour and the display name. -->
-    <div class="mt-8 first-of-type:mt-6">
+    <div v-if="shows('home')" class="mt-8 first-of-type:mt-6">
       <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('portalSettings.contactSection') }}</div>
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
@@ -187,7 +159,7 @@ defineExpose({ form, submit })
       </div>
     </div>
 
-    <div class="mt-8 first-of-type:mt-6">
+    <div v-if="shows('privacy')" class="mt-8 first-of-type:mt-6">
       <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('portalSettings.legalSection') }}</div>
       <div class="mb-6">
         <div class="grid grid-cols-2 gap-4">
@@ -206,7 +178,7 @@ defineExpose({ form, submit })
     <!-- T-08: every switch below defaults to off — a studio opts the
          portal into each capability, whether or not the feature behind
          it already ships elsewhere. -->
-    <div class="mt-8 first-of-type:mt-6">
+    <div v-if="shows('portal')" class="mt-8 first-of-type:mt-6">
       <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('portalSettings.capabilitiesSection') }}</div>
       <div class="mb-6">
         <div class="flex items-center gap-2.5">

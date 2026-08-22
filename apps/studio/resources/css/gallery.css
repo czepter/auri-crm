@@ -6,12 +6,10 @@
  *
  * Every rule stays scoped under [data-theme="gallery"] rather than declared
  * bare the way the mockup's own gallery.css does: the mockup is a standalone
- * document that never loads portal.css, but this bundle is shared with the
- * client portal, and portal.css already owns `.field`, `.hint`, `.err` and
- * the button's `.wide` for its own screens (the contract-signing form,
- * mainly). The
- * gate screens set data-theme="gallery" on their own root element, so the
- * extra specificity here is free and never leaks into a portal page.
+ * document, this bundle is shared with the client portal, and names as
+ * common as `.field`, `.hint` and `.err` would otherwise reach a portal
+ * screen. The gate screens set data-theme="gallery" on their own root
+ * element, so the extra specificity here is free and never leaks out.
  */
 
 /*

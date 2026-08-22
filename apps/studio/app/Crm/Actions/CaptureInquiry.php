@@ -14,6 +14,7 @@ use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\User;
+use App\Portal\Support\PortalSettings;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
 
@@ -32,6 +33,8 @@ use Illuminate\Support\Facades\DB;
  */
 class CaptureInquiry
 {
+    public function __construct(private readonly PortalSettings $portal) {}
+
     public function __invoke(CaptureInquiryData $data, ?User $actor): Project
     {
         return DB::transaction(function () use ($data, $actor) {
@@ -41,9 +44,10 @@ class CaptureInquiry
                 'name' => $data->project_name,
                 'type' => $data->type,
                 'type_other' => $data->type_other,
-                // Never true at capture: a raw inquiry must not surface in a
-                // client portal the moment it arrives (vision §3.1).
-                'portal_visible' => false,
+                // Off for a stranger (vision §3.1), on for a client the
+                // studio already shows its work to — that is this contact's
+                // own portal_visible override, not a per-booking decision.
+                'portal_visible' => $this->portal->projectsVisibleByDefault($contact),
             ]);
 
             $project->attachContact($contact, ProjectContactRole::Primary);

@@ -375,11 +375,11 @@ class E2eSeeder extends Seeder
     {
         $contact = $project->contacts()->first();
 
-        if ($contact === null || $contact->threads()->where('subject', 'E2E Faden')->exists()) {
+        if ($contact === null || $contact->threads()->where('subject', 'E2E Unterhaltung')->exists()) {
             return;
         }
 
-        $thread = app(StartThread::class)($project, $contact, 'E2E Faden', 'Passt der Termin so?');
+        $thread = app(StartThread::class)($project, $contact, 'E2E Unterhaltung', 'Passt der Termin so?');
 
         app(PostMessage::class)($thread, User::query()->firstOrFail(), 'Ja, der Termin steht.');
     }

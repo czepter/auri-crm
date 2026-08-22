@@ -2,8 +2,10 @@
 import { computed } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { basisPointsToPercent, formatEuros } from '@/admin/lib/money'
+import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { Button } from '@/ui/button'
 
@@ -47,24 +49,6 @@ const props = defineProps<{
   quote: Quote | null
 }>()
 
-// The mockup's own three chip states (tokens.css), the same mapping the
-// admin quotes screen uses.
-/*
- * tokens.css `.chip` and its four tones, with portal.css's own size step on
- * top. Inline rather than a component: the plan extracts at the third screen
- * that needs a pattern, and this is the second in the portal.
- */
-
-function chipTone(status: string): string {
-  return (
-    {
-      sent: 'bg-due-bg text-due',
-      accepted: 'bg-ok-bg text-ok',
-    } as Record<string, string>
-  )[status] ?? 'bg-muted text-muted-foreground'
-}
-
-
 const form = useForm({})
 
 // AcceptQuote's own re-check rejects under a 'quote' key, not a field this
@@ -74,97 +58,110 @@ const rejection = computed(() => (form.errors as Record<string, string>).quote)
 function accept() {
   form.post(`/projekte/${props.project.id}/angebot/annehmen`, { preserveScroll: true })
 }
+
+const switcher = computed(() => ({ label: props.project.name, toAll: props.showSwitcher }))
+
+// The dot says the same thing the label does, one beat earlier. Warm means
+// this one is waiting on the client.
+const state = computed(() => (props.quote?.status === 'accepted' ? 'done' : 'open'))
+
+const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1.5] [&>td:last-child]:text-right [&>td:last-child]:tabular-nums [&>td:last-child]:whitespace-nowrap'
 </script>
 
 <template>
-  <PortalHeader :contact="contact" :show-switcher="showSwitcher" />
+  <PortalShell>
+    <PortalHeader :switcher="switcher" />
 
-  <PortalWrap>
-    <h1>{{ $t('portal.quoteTitle') }}</h1>
+    <PortalWrap class="pb-40">
+      <section class="pt-[var(--band)]">
+        <p class="animate-rise motion-reduce:animate-none mb-4 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ project.name }}</p>
+        <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
+          {{ $t('portal.quoteTitle') }}
+        </h1>
+      </section>
 
-    <div v-if="quote" class="relative mt-8 block cursor-default rounded-md border border-border p-3.5 text-inherit no-underline">
-      <div class="mb-5 flex items-center justify-between">
-        <span class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ quote.number ? `${$t('quotes.title')} ${quote.number}` : $t('quotes.title') }}</span>
-        <span class="flex-none rounded-[var(--r-sm)] px-[9px] py-1 text-[10.5px] leading-[1.5] font-semibold tracking-[0.04em] uppercase" :class="chipTone(quote.status)">{{ quote.statusLabel }}</span>
-      </div>
+      <div v-if="quote" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 max-w-[680px] border-t border-border pt-8">
+        <!-- The heading above already says "Angebot"; only a number adds
+             anything here. -->
+        <div class="flex flex-wrap items-baseline justify-between gap-4">
+          <span v-if="quote.number" class="text-[11px] leading-none font-semibold tracking-[0.17em] uppercase tabular-nums text-muted-foreground">
+            {{ quote.number }}
+          </span>
+          <span class="ml-auto inline-flex items-center gap-2 text-[13px] text-muted-foreground">
+            <PortalDot :state="state" />{{ quote.statusLabel }}
+            <template v-if="quote.validUntil && quote.status === 'sent'">
+              · {{ $t('quotes.validUntil') }} {{ quote.validUntil }}
+            </template>
+          </span>
+        </div>
 
-      <p v-if="quote.validUntil" class="mb-5 text-[11.5px] leading-[1.45] font-normal text-faint">
-        {{ $t('quotes.validUntil') }} {{ quote.validUntil }}
-      </p>
+        <table class="mt-8 w-full border-collapse">
+          <tr v-for="item in quote.items" :key="item.id" :class="[ROW, item.isIncluded && '[&>td]:text-muted-foreground']">
+            <td>
+              {{ item.title }}
+              <div v-if="item.isIncluded || item.description" class="text-[13px] leading-[1.45] text-muted-foreground">
+                {{ item.isIncluded ? $t('quotes.included') : item.description }}
+              </div>
+            </td>
+            <td>{{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.lineTotal) }}</td>
+          </tr>
 
-      <table
-        class="w-full border-collapse [&_td]:py-2 [&_td]:align-top [&_td]:text-[13px] [&_td]:leading-[1.4] [&_td]:font-normal [&_td:last-child]:text-right [&_td:last-child]:tabular-nums [&_td:last-child]:whitespace-nowrap"
-      >
-        <tr v-for="item in quote.items" :key="item.id" :class="item.isIncluded && '[&>td]:text-muted-foreground [&>td:last-child]:text-faint'">
-          <td>
-            {{ item.title }}
-            <div
-              v-if="item.isIncluded || item.description"
-              class="text-[11.5px] leading-[1.4] font-normal text-muted-foreground"
-            >
-              {{ item.isIncluded ? $t('quotes.included') : item.description }}
-            </div>
-          </td>
-          <td>{{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.lineTotal) }}</td>
-        </tr>
-        <tr v-if="!quote.discountAmount" class="[&>td]:border-t [&>td]:border-border [&>td]:pt-2.5! [&>td]:font-semibold">
-          <td>{{ $t('quotes.total') }}</td>
-          <td>{{ formatEuros(quote.total) }}</td>
-        </tr>
-        <template v-else>
-          <tr class="[&>td]:border-t [&>td]:border-border [&>td]:pt-2.5! [&>td]:font-semibold">
+          <tr :class="[ROW, '[&>td]:border-t [&>td]:border-border [&>td]:pt-3! [&>td]:font-semibold']">
             <td>{{ $t('quotes.total') }}</td>
             <td>{{ formatEuros(quote.total) }}</td>
           </tr>
-          <tr class="[&>td]:py-0.5! [&>td]:text-muted-foreground">
-            <td>{{ $t('quotes.discount') }}</td>
-            <td>−{{ formatEuros(quote.discountAmount) }}</td>
+          <template v-if="quote.discountAmount">
+            <tr :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
+              <td>{{ $t('quotes.discount') }}</td>
+              <td>−{{ formatEuros(quote.discountAmount) }}</td>
+            </tr>
+            <tr :class="[ROW, '[&>td]:pt-2! [&>td]:font-serif [&>td]:text-[22px]!']">
+              <td>{{ $t('quotes.net') }}</td>
+              <td>{{ formatEuros(quote.net) }}</td>
+            </tr>
+          </template>
+
+          <tr v-if="quote.vatMode === 'small_business'" :class="[ROW, '[&>td]:py-1! [&>td]:text-[13px]! [&>td]:text-muted-foreground']">
+            <td colspan="2">{{ quote.vatNote }}</td>
           </tr>
-          <tr class="[&>td]:pt-2! [&>td]:text-[14px]! [&>td]:font-bold">
-            <td>{{ $t('quotes.net') }}</td>
-            <td>{{ formatEuros(quote.net) }}</td>
-          </tr>
+          <template v-else-if="quote.vatMode === 'standard'">
+            <tr :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
+              <td>{{ $t('quotes.vat', { rate: basisPointsToPercent(quote.vatRate) }) }}</td>
+              <td>{{ formatEuros(quote.vatAmount ?? 0) }}</td>
+            </tr>
+            <tr :class="[ROW, '[&>td]:pt-2! [&>td]:font-serif [&>td]:text-[22px]!']">
+              <td>{{ $t('quotes.total') }}</td>
+              <td>{{ formatEuros(quote.net + (quote.vatAmount ?? 0)) }}</td>
+            </tr>
+          </template>
+        </table>
+
+        <p v-if="quote.status === 'accepted'" class="mt-8 text-[14.5px] text-muted-foreground">
+          {{ $t('portal.quoteAccepted', { date: quote.acceptedAt }) }}
+        </p>
+
+        <template v-else-if="quote.status === 'sent'">
+          <p v-if="quote.expired" class="mt-8 text-[14.5px] text-destructive">{{ $t('portal.quoteExpired') }}</p>
+          <p v-if="rejection" class="mt-8 text-[14.5px] text-destructive">{{ rejection }}</p>
+
+          <!-- T-08: the button is the affordance — it never renders once the
+               switch is off, matching the 404 the accept route itself gives. -->
+          <Button
+            v-if="canAccept"
+            class="mt-8"
+            variant="portal"
+            type="button"
+            :disabled="form.processing"
+            @click="accept"
+          >
+            {{ $t('portal.quoteAccept') }}
+          </Button>
         </template>
+      </div>
 
-        <tr v-if="quote.vatMode === 'small_business'" class="[&>td]:py-0.5! [&>td]:text-muted-foreground">
-          <td colspan="2">{{ quote.vatNote }}</td>
-        </tr>
-        <template v-else-if="quote.vatMode === 'standard'">
-          <tr class="[&>td]:py-0.5! [&>td]:text-muted-foreground">
-            <td>{{ $t('quotes.vat', { rate: basisPointsToPercent(quote.vatRate) }) }}</td>
-            <td>{{ formatEuros(quote.vatAmount ?? 0) }}</td>
-          </tr>
-          <tr class="[&>td]:pt-2! [&>td]:text-[14px]! [&>td]:font-bold">
-            <td>{{ $t('quotes.total') }}</td>
-            <td>{{ formatEuros(quote.net + (quote.vatAmount ?? 0)) }}</td>
-          </tr>
-        </template>
-      </table>
+      <p v-else class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 text-[15px] text-muted-foreground">{{ $t('portal.quoteNone') }}</p>
+    </PortalWrap>
 
-      <p v-if="quote.status === 'accepted'" class="mt-5 text-[12.5px] leading-[1.6] font-normal text-muted-foreground">
-        {{ $t('portal.quoteAccepted', { date: quote.acceptedAt }) }}
-      </p>
-
-      <template v-else-if="quote.status === 'sent'">
-        <p v-if="quote.expired" class="mt-5 text-[11.5px] leading-[1.45] text-destructive">{{ $t('portal.quoteExpired') }}</p>
-        <p v-if="rejection" class="mt-5 text-[11.5px] leading-[1.45] text-destructive">{{ rejection }}</p>
-
-        <!-- T-08: the button is the affordance — it never renders once the
-             switch is off, matching the 404 the accept route itself gives. -->
-        <Button
-          v-if="canAccept"
-          class="wide mt-5"
-          type="button"
-          :disabled="form.processing"
-          @click="accept"
-        >
-          {{ $t('portal.quoteAccept') }}
-        </Button>
-      </template>
-    </div>
-
-    <p v-else class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('portal.quoteNone') }}</p>
-  </PortalWrap>
-
-  <PortalFooter />
+    <PortalFooter />
+  </PortalShell>
 </template>

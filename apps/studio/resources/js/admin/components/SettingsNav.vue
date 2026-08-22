@@ -12,7 +12,7 @@ defineProps<{ active: string }>()
 const items = [
   { group: 'settings.groupStudio' },
   { key: 'brand', href: '/einstellungen', label: 'settings.brand' },
-  { key: 'legal', href: '/einstellungen?pane=legal', label: 'settings.navLegal' },
+  { key: 'legal', href: '/einstellungen?pane=legal', label: 'settings.legalEntity' },
   { key: 'bank', href: '/einstellungen?pane=bank', label: 'settings.bank' },
   { key: 'general', href: '/einstellungen?pane=general', label: 'settings.navGeneral' },
 
@@ -30,6 +30,9 @@ const items = [
 
   { group: 'settings.groupPortal' },
   { key: 'portal', href: '/einstellungen/portal', label: 'settings.navPortal' },
+  { key: 'home', href: '/einstellungen/portal?pane=home', label: 'portalSettings.homeSection' },
+  { key: 'galleries', href: '/einstellungen/galerien', label: 'settings.navGalleries' },
+  { key: 'privacy', href: '/einstellungen/portal?pane=privacy', label: 'portalSettings.dsgvoSection' },
   { key: 'email', href: '/einstellungen?pane=email', label: 'settings.navMail' },
   { key: 'notifications', href: '/einstellungen/benachrichtigungen', label: 'settings.navNotifications' },
 ]
@@ -40,7 +43,7 @@ const items = [
 </script>
 
 <template>
-  <nav style="width: 196px; flex: none; display: flex; flex-direction: column; gap: 2px">
+  <nav class="flex w-[196px] flex-none flex-col gap-0.5">
     <template v-for="item in items" :key="item.key ?? item.group">
       <div
         v-if="item.group"

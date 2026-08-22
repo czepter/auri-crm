@@ -46,6 +46,7 @@ use App\Payments\Http\Controllers\PaymentInstallmentController;
 use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
 use App\Reporting\Http\Controllers\ReportController;
+use App\Settings\Http\Controllers\GallerySettingsController;
 use App\Settings\Http\Controllers\NotificationSettingsController;
 use App\Settings\Http\Controllers\NumberRangeController;
 use App\Settings\Http\Controllers\PaymentSettingsController;
@@ -236,11 +237,11 @@ Route::middleware('audience:staff')->group(function () {
         // C-14 (#250): the reply and the "done" mark, from the screen the
         // conversation is read on. Thread-scoped, because a conversation that
         // names no booking still has to be answerable.
-        Route::post('/posteingang/faden/{thread}/antwort', [InboxController::class, 'reply'])
+        Route::post('/posteingang/unterhaltung/{thread}/antwort', [InboxController::class, 'reply'])
             ->name('inbox.reply');
-        Route::post('/posteingang/faden/{thread}/erledigt', [InboxController::class, 'close'])
+        Route::post('/posteingang/unterhaltung/{thread}/erledigt', [InboxController::class, 'close'])
             ->name('inbox.close');
-        Route::post('/posteingang/faden/{thread}/zuordnen', [InboxController::class, 'file'])
+        Route::post('/posteingang/unterhaltung/{thread}/zuordnen', [InboxController::class, 'file'])
             ->name('inbox.thread.file');
 
         // S-13 + M-07. One screen: how the studio is doing, and what is
@@ -328,6 +329,11 @@ Route::middleware('audience:staff')->group(function () {
             ->name('settings.portal.edit');
         Route::patch('/einstellungen/portal', [PortalSettingsController::class, 'update'])
             ->name('settings.portal.update');
+
+        Route::get('/einstellungen/galerien', [GallerySettingsController::class, 'edit'])
+            ->name('settings.galleries.edit');
+        Route::patch('/einstellungen/galerien', [GallerySettingsController::class, 'update'])
+            ->name('settings.galleries.update');
 
         // T-11: quiet hours only — see NotificationSettingsController's own
         // doc comment for why no per-event toggle grid ships in this route

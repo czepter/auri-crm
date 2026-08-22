@@ -22,8 +22,13 @@ export { default as Button } from "./Button.vue"
  * right of its row. Dropping it here would move every one of them, so it
  * stays, and the places that opted out (.formfoot, .btn.wide) still opt out.
  */
+/*
+ * The icon rules are on the base rather than on tokens.css's element reset:
+ * that reset excludes [data-tokens], so a button's mark would arrive
+ * unstroked on every screen that has moved to Tailwind.
+ */
 export const buttonVariants = cva(
-  "inline-flex shrink-0 cursor-pointer items-center gap-[7px] font-sans no-underline outline-none disabled:cursor-default disabled:opacity-50",
+  "inline-flex shrink-0 cursor-pointer items-center gap-[7px] font-sans no-underline outline-none disabled:cursor-default disabled:opacity-50 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.75] [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]",
   {
     variants: {
       variant: {
@@ -39,6 +44,24 @@ export const buttonVariants = cva(
          * kind of button as the portal, it is only drawn denser and rounder
          * on a surface that stands open all day.
          */
+        /*
+         * mockups/redesign/tokens.css .btn and .btn.ghost — the portal's own
+         * pair. Ink, not the warm accent: on that surface the accent is a
+         * signal that something is open, and a button wearing it would read
+         * as one more thing waiting. The warm fill is what it turns into
+         * under the pointer, which is the one moment it is about to act.
+         *
+         * No ml-auto, unlike `default`: these sit where their layout puts
+         * them.
+         */
+        portal:
+          "gap-2.5 rounded-[var(--r-pill)] border-0 bg-foreground px-[26px] py-[15px] text-[14.5px] font-semibold leading-none tracking-[-0.005em] text-background transition-[transform,background-color] duration-200 ease-[var(--ease)] hover:-translate-y-px hover:bg-action active:translate-y-0 [&_svg]:size-[15px] [&_svg]:stroke-[1.6]",
+        "portal-ghost":
+          "gap-2.5 rounded-[var(--r-pill)] border-0 bg-transparent px-[26px] py-[15px] text-[14.5px] font-semibold leading-none text-foreground shadow-[inset_0_0_0_1px_var(--line-hover)] transition-colors duration-200 ease-[var(--ease)] hover:bg-foreground hover:text-background hover:shadow-none [&_svg]:size-[15px] [&_svg]:stroke-[1.6]",
+        /* mockups/redesign/tokens.css .chip — the quiet portal action, and
+           the only one that ever stands next to another of its kind. */
+        "portal-chip":
+          "gap-2 rounded-[var(--r-pill)] border border-line-hover bg-transparent px-[15px] py-2.5 text-[13px] leading-none font-medium text-foreground transition-colors duration-200 ease-[var(--ease)] hover:border-foreground hover:bg-foreground hover:text-background [&_svg]:size-3.5 [&_svg]:stroke-[1.5]",
         pill: "gap-1.5 rounded-[var(--r-pill)] border-0 bg-action px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-white transition-[filter,background-color] duration-[.12s] ease-out hover:brightness-[1.08]",
         "pill-muted":
           "gap-1.5 rounded-[var(--r-pill)] border-0 bg-sunk-2 px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-[filter,background-color] duration-[.12s] ease-out hover:bg-[#E9E9EC]",

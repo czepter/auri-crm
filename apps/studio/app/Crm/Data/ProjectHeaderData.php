@@ -2,7 +2,9 @@
 
 namespace App\Crm\Data;
 
+use App\Contracts\Enums\ContractStatus;
 use App\Crm\Models\Project;
+use App\Quotes\Enums\QuoteStatus;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -18,7 +20,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 #[TypeScript]
 class ProjectHeaderData extends Data
 {
-    /** @param  list<array{key: string, label: string, href: string}>  $tabs */
+    /** @param  list<array{key: string, label: string, href: string, count: int|null}>  $tabs */
     public function __construct(
         public string $id,
         public string $name,
@@ -84,13 +86,50 @@ class ProjectHeaderData extends Data
             // mockup 04's own tab order (mockups/_shared/layout.js's
             // PROJECT_TABS).
             tabs: [
-                ['key' => 'overview', 'label' => 'Übersicht', 'href' => "/auftraege/{$project->public_id}"],
-                ['key' => 'shoots', 'label' => 'Shootings', 'href' => "/auftraege/{$project->public_id}/shootings"],
-                ['key' => 'messages', 'label' => 'Kommunikation', 'href' => "/auftraege/{$project->public_id}/nachrichten"],
-                ['key' => 'forms', 'label' => 'Fragebögen', 'href' => "/auftraege/{$project->public_id}/frageboegen"],
-                ['key' => 'quotes', 'label' => 'Angebot', 'href' => "/auftraege/{$project->public_id}/angebote"],
-                ['key' => 'contract', 'label' => 'Vertrag', 'href' => "/auftraege/{$project->public_id}/vertrag"],
+                ['key' => 'overview', 'label' => 'project.overview', 'href' => "/auftraege/{$project->public_id}", 'count' => null],
+                ['key' => 'shoots', 'label' => 'project.shoots', 'href' => "/auftraege/{$project->public_id}/shootings", 'count' => null],
+                ['key' => 'messages', 'label' => 'project.messages', 'href' => "/auftraege/{$project->public_id}/nachrichten", 'count' => self::waitingThreads($project)],
+                ['key' => 'forms', 'label' => 'project.forms', 'href' => "/auftraege/{$project->public_id}/frageboegen", 'count' => self::unansweredForms($project)],
+                ['key' => 'quotes', 'label' => 'project.quotes', 'href' => "/auftraege/{$project->public_id}/angebote", 'count' => $project->quotes()->where('status', QuoteStatus::Sent)->count()],
+                ['key' => 'contract', 'label' => 'project.contract', 'href' => "/auftraege/{$project->public_id}/vertrag", 'count' => self::unsignedContracts($project)],
             ],
         );
+    }
+
+    /**
+     * The rule the inbox reads by: whoever wrote the last line owes the next
+     * one. A thread the studio answered last is settled, and one with no
+     * message at all has nobody owing anything.
+     */
+    private static function waitingThreads(Project $project): int
+    {
+        return $project->threads()
+            ->whereHas('latestMessage', fn ($message) => $message->whereNotNull('contact_id'))
+            ->count();
+    }
+
+    /**
+     * Shared and untouched. A questionnaire the studio keeps for itself is
+     * nobody's homework, and one answer anywhere on it means it has been
+     * started.
+     */
+    private static function unansweredForms(Project $project): int
+    {
+        return $project->formInstances()
+            ->shared()
+            ->whereDoesntHave('fields.answers')
+            ->count();
+    }
+
+    /**
+     * In front of the client and unsigned. A contract that never rendered is
+     * the studio's own problem and says nothing about what the client owes.
+     */
+    private static function unsignedContracts(Project $project): int
+    {
+        return $project->contracts()
+            ->where('status', ContractStatus::Rendered)
+            ->whereDoesntHave('signature')
+            ->count();
     }
 }

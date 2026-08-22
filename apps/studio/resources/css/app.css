@@ -24,6 +24,9 @@
 @theme inline {
   --radius-md: var(--r);
   --font-sans: var(--font);
+  /* #234's display pair, as a utility. Which family it resolves to is the
+     studio's setting, so a screen writes `font-serif` and never a family. */
+  --font-serif: var(--font-display);
 
   --color-background: var(--bg);
   --color-foreground: var(--ink);
@@ -75,6 +78,11 @@
   --color-due-bg: var(--due-bg);
   --color-late-bg: var(--late-bg);
 
+  /* The measure a case is read at. Past it a row is wider than it is
+     readable: the eye loses the line between a task and its date, and six
+     key figures stand a hand apart. The board is the exception and says so. */
+  --container-case: 1180px;
+
   /* tokens.css .meta .d and .meta .q. They belong here rather than in a class
      attribute: a data URI with a viewBox in it is 400 characters of escaping
      that nobody reads twice. */
@@ -89,6 +97,22 @@
 @layer base {
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/*
+ * The portal's one orchestrated page load, as theme rather than as a
+ * stylesheet: `animate-rise` is the utility, the delay is an arbitrary value
+ * at the call site, and `motion-reduce:animate-none` turns it off. Not
+ * scattered micro-interactions — the screens there are read, and something
+ * that moves while it is being read is a second thing to attend to.
+ */
+@theme {
+  --animate-rise: portal-rise .9s var(--ease) both;
+
+  @keyframes portal-rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
   }
 }
 

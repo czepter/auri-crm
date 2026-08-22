@@ -99,7 +99,26 @@ class HomeController extends Controller
                 default => 'open',
             },
             'openAmount' => $this->openAmount($project),
+            // A booking with a delivered picture wears it. One without gets
+            // its year set in the display face instead of an empty grey
+            // rectangle, which on paper reads as an image that failed.
+            'cover' => $this->cover($project),
         ];
+    }
+
+    /** The first asset of this booking's first published gallery, or nothing. */
+    private function cover(Project $project): ?string
+    {
+        foreach ($project->galleries as $gallery) {
+            $version = $gallery->currentVersion;
+            $first = $version?->assets[0]['key'] ?? null;
+
+            if ($first !== null) {
+                return "/galerie-bilder/{$version->public_id}/{$first}";
+            }
+        }
+
+        return null;
     }
 
     private function openAmount(Project $project): ?int
@@ -170,7 +189,7 @@ class HomeController extends Controller
                     'overdue' => false,
                     'booking' => $thread->project?->name,
                     'subject' => $thread->subject,
-                    'href' => "/nachrichten?faden={$thread->public_id}",
+                    'href' => "/nachrichten?unterhaltung={$thread->public_id}",
                 ];
             }
         }

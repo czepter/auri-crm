@@ -3,13 +3,12 @@
 namespace App\Crm\Data;
 
 use App\Crm\Models\Lead;
-use Illuminate\Support\Str;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
- * A row in the queue pane: who, when, how long they have waited, and enough
- * of the inquiry to recognise it. The card beside it carries the rest.
+ * A row in the queue pane: who, when, how long they have waited, and what
+ * they wrote. The card beside it carries the rest.
  */
 #[TypeScript]
 class LeadQueueRowData extends Data
@@ -18,7 +17,7 @@ class LeadQueueRowData extends Data
         public string $id,
         public string $name,
         public ?string $date,
-        public ?string $snippet,
+        public ?string $text,
         public bool $open,
         public int $waitingDays,
     ) {}
@@ -31,9 +30,10 @@ class LeadQueueRowData extends Data
             id: $lead->public_id,
             name: $lead->project->contactNames(),
             date: $lead->project->primaryShoot?->date?->format('Y-m-d'),
-            // Two lines at the pane's width. Longer runs under the next row
-            // and the group stops being scannable.
-            snippet: Str::limit((string) $lead->inquiry_text, 90) ?: null,
+            // Whole text, not the two lines the pane draws: the search in
+            // the pane reads this and would otherwise stop at 90 characters.
+            // The row clamps its own height.
+            text: $lead->inquiry_text ?: null,
             open: $open !== null && $lead->public_id === $open->public_id,
             waitingDays: (int) $lead->stage_entered_at->startOfDay()->diffInDays(now()->startOfDay()),
         );

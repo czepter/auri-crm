@@ -162,7 +162,7 @@ export type LeadQueueRowData = {
 id: string,
 name: string,
 date: string | null,
-snippet: string | null,
+text: string | null,
 open: boolean,
 waitingDays: number,
 };
@@ -206,6 +206,7 @@ tabs: {
 key: string,
 label: string,
 href: string,
+count: number | null,
 }[],
 };
 export type ProjectPersonData = {
@@ -536,6 +537,14 @@ export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'superseded' | 'expire
 }
 namespace Settings {
 namespace Data {
+export type GallerySettingsData = {
+id: string,
+expiryDays: number | null,
+requiresSettledBalance: boolean,
+downloadsEnabled: boolean,
+listsEnabled: boolean,
+commentsEnabled: boolean,
+};
 export type NumberRangeData = {
 id: string,
 documentType: string,
@@ -569,11 +578,6 @@ paymentStatusEnabled: boolean,
 messagingMode: string,
 welcomeInquiry: string | null,
 welcomeMany: string | null,
-galleryExpiryDays: number | null,
-galleryRequiresSettledBalance: boolean,
-galleryDownloadsEnabled: boolean,
-galleryListsEnabled: boolean,
-galleryCommentsEnabled: boolean,
 dsgvoRecipient: string | null,
 dsgvoDeadlineDays: number,
 contactPhone: string | null,

@@ -1,10 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
+import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
-import PortalWrap from '@/portal/components/PortalWrap.vue'
+import PortalLabel from '@/portal/components/PortalLabel.vue'
 import PortalPerson from '@/portal/components/PortalPerson.vue'
+import PortalRow from '@/portal/components/PortalRow.vue'
+import PortalShell from '@/portal/components/PortalShell.vue'
+import PortalWrap from '@/portal/components/PortalWrap.vue'
+import { reachable, type Studio } from '@/portal/lib/studio'
 import { formatEuros } from '@/admin/lib/money'
 
 type Phase = 'open' | 'upcoming' | 'delivered'
@@ -28,6 +33,7 @@ type Booking = {
   venue: string | null
   phase: Phase
   openAmount: number | null
+  cover: string | null
 }
 
 const props = defineProps<{
@@ -39,7 +45,7 @@ const props = defineProps<{
   bookings: Booking[]
   phaseCounts: Partial<Record<Phase, number>>
   galleries: { id: string; title: string | null; count: number; expiresAt: string | null; cover: string | null }[]
-  studio: { name: string | null; messagingEnabled: boolean }
+  studio: Studio
 }>()
 
 // P-02: the filter only earns its place once there is a stock to filter. At
@@ -77,134 +83,181 @@ function shortDate(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
+function phaseState(phase: Phase) {
+  return phase === 'delivered' ? 'done' : phase === 'open' ? 'open' : 'neutral'
+}
+
+const FILTER_PILL
+  = 'cursor-pointer rounded-[var(--r-pill)] border border-line-hover px-[15px] py-2.5 text-[13px] leading-none font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground'
 </script>
 
 <template>
-  <PortalHeader :contact="contact" />
+  <PortalShell>
+    <PortalHeader />
 
-  <PortalWrap wide>
-    <h1>{{ contact.name }}</h1>
-    <p v-if="welcomeText" class="mt-5 max-w-[56ch] text-[16px] leading-[1.6] font-normal text-muted-foreground">{{ welcomeText }}</p>
+    <PortalWrap class="pb-[var(--band)]">
+      <section class="pt-[var(--band)]">
+        <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(38px,14.3px+6.08vw,86px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
+          {{ contact.name }}
+        </h1>
+        <p v-if="welcomeText" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-6 max-w-[52ch] text-[17px] leading-[1.55] text-muted-foreground">
+          {{ welcomeText }}
+        </p>
+      </section>
 
-    <div class="mt-11 grid items-start gap-11 min-[1080px]:grid-cols-[minmax(0,1fr)_320px]">
-      <div>
-        <!-- Equal-ranked, by year. No booking type is privileged. -->
-        <section v-if="bookings.length">
-          <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.bookingsTitle') }}</p>
+      <!-- Two columns from 1080px: what the client reads through on the left,
+           what concerns them alongside. Below that one column with the open
+           items first — on a phone "is anything waiting on us?" is answered
+           before the archive. -->
+      <div class="grid items-start gap-[var(--band)] pt-[var(--band)] min-[1080px]:grid-cols-[minmax(0,1fr)_348px] min-[1080px]:gap-x-12">
+        <div class="order-first grid gap-12 min-[1080px]:sticky min-[1080px]:top-[88px] min-[1080px]:order-none min-[1080px]:col-start-2">
+          <!-- Absent when nothing is open. An empty box would say the studio
+               has nothing for them, which is a different statement. -->
+          <section v-if="pending.length" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none">
+            <PortalLabel class="mb-6">{{ $t('portal.pendingTitle') }}</PortalLabel>
+            <!-- An instalment is money already owed; a quote's total is a
+                 figure, not a debt. Only the first wears the action colour. -->
+            <div class="border-t border-border">
+              <PortalRow
+                v-for="(row, index) in pending"
+                :key="index"
+                :href="row.href"
+                :title="row.kind === 'message' ? (row.subject ?? $t('portal.pending.message')) : $t(`portal.pending.${row.kind}`)"
+                state="open"
+                :note="row.dueOn
+                  ? $t(row.kind === 'quote' ? 'portal.validUntil' : 'portal.dueOn', { date: shortDate(row.dueOn) })
+                  : row.kind === 'message' ? $t('portal.pending.message') : null"
+                :where="row.booking"
+                :aside="row.amount ? formatEuros(row.amount) : null"
+                :aside-open="row.kind === 'installment'"
+              />
+            </div>
+          </section>
 
-          <div v-if="showFilters" class="mb-5 flex flex-wrap gap-1.5">
-            <button class="rounded-full border border-border px-[13px] py-[7px] text-[13px] text-muted-foreground hover:border-line-hover hover:text-foreground" :class="filter === 'all' && 'border-foreground bg-foreground font-semibold text-background'" type="button" @click="filter = 'all'">
-              {{ $t('portal.filterAll') }}<span class="ml-[5px] tabular-nums opacity-55">{{ bookings.length }}</span>
-            </button>
-            <button
-              v-for="phase in (['open', 'upcoming', 'delivered'] as Phase[])"
-              v-show="phaseCounts[phase]"
-              :key="phase"
-              class="rounded-full border border-border px-[13px] py-[7px] text-[13px] text-muted-foreground hover:border-line-hover hover:text-foreground"
-              :class="filter === phase && 'border-foreground bg-foreground font-semibold text-background'"
-              type="button"
-              @click="filter = phase"
-            >
-              {{ $t(`portal.phase.${phase}`) }}<span class="ml-[5px] tabular-nums opacity-55">{{ phaseCounts[phase] }}</span>
-            </button>
-          </div>
+          <!-- A person, not a contact form. Absent when there is nobody to
+               name: a label over an empty card is not an empty state. -->
+          <section v-if="reachable(studio)" class="animate-rise [animation-delay:320ms] motion-reduce:animate-none">
+            <PortalLabel class="mb-6">{{ $t('portal.contactTitle') }}</PortalLabel>
+            <PortalPerson :studio="studio" message-href="/nachrichten" />
+          </section>
+        </div>
 
-          <template v-for="[year, rows] in years" :key="year">
-            <div class="mt-8 mb-3.5 flex items-baseline gap-3.5 text-[13px] leading-none font-semibold tabular-nums">
-              <span>{{ year === 'offen' ? $t('portal.dateOpen') : year }}</span>
+        <div class="grid gap-[var(--band)] min-[1080px]:col-start-1 min-[1080px]:row-start-1">
+          <!-- Equal-ranked, by year. No booking type is privileged. -->
+          <section v-if="bookings.length" class="animate-rise [animation-delay:320ms] motion-reduce:animate-none">
+            <PortalLabel>{{ $t('portal.bookingsTitle') }}</PortalLabel>
+
+            <div v-if="showFilters" class="mt-6 flex flex-wrap gap-2">
               <button
-                v-if="rows.length > ROLLUP_FROM"
-                class="cursor-pointer border-0 bg-transparent p-0 text-[12.5px] leading-none font-normal text-muted-foreground hover:text-foreground"
+                :class="[FILTER_PILL, filter === 'all' && 'border-foreground! bg-foreground font-semibold text-background!']"
                 type="button"
-                @click="opened[year] = !opened[year]"
+                @click="filter = 'all'"
               >
-                {{ opened[year] ? $t('portal.foldYear') : $t('portal.unfoldYear') }}
+                {{ $t('portal.filterAll') }}<span class="ml-[5px] tabular-nums opacity-55">{{ bookings.length }}</span>
               </button>
-              <span class="ml-auto text-[12px] leading-none font-normal text-faint">{{ $t('portal.bookingCount', rows.length) }}</span>
+              <button
+                v-for="phase in (['open', 'upcoming', 'delivered'] as Phase[])"
+                v-show="phaseCounts[phase]"
+                :key="phase"
+                :class="[FILTER_PILL, filter === phase && 'border-foreground! bg-foreground font-semibold text-background!']"
+                type="button"
+                @click="filter = phase"
+              >
+                {{ $t(`portal.phase.${phase}`) }}<span class="ml-[5px] tabular-nums opacity-55">{{ phaseCounts[phase] }}</span>
+              </button>
             </div>
 
-            <div v-if="!folded(year, rows)" class="border-t border-border">
-              <Link v-for="booking in rows" :key="booking.id" class="flex items-center gap-5 border-b border-border py-5 text-foreground no-underline hover:bg-muted" :href="`/projekte/${booking.id}`">
-                <span class="min-w-0 flex-1">
-                  <span class="mb-[3px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ booking.type }}</span>
-                  <h3 class="m-0 text-[15px] leading-[1.3] font-semibold">{{ booking.name }}</h3>
-                  <div class="mt-0.5 text-[12.5px] leading-[1.4] font-normal tabular-nums text-muted-foreground">
-                    {{ [booking.date ? shortDate(booking.date) : $t('portal.dateOpen'), booking.venue].filter(Boolean).join(' · ') }}
-                  </div>
+            <template v-for="[year, rows] in years" :key="year">
+              <div class="flex items-baseline gap-4 pt-8 pb-3 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
+                <span>{{ year === 'offen' ? $t('portal.dateOpen') : year }}</span>
+                <button
+                  v-if="rows.length > ROLLUP_FROM"
+                  class="cursor-pointer border-0 bg-transparent p-0 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground hover:text-foreground"
+                  type="button"
+                  @click="opened[year] = !opened[year]"
+                >
+                  {{ opened[year] ? $t('portal.foldYear') : $t('portal.unfoldYear') }}
+                </button>
+                <i class="h-px flex-1 bg-border" />
+              </div>
+
+              <template v-if="!folded(year, rows)">
+                <Link
+                  v-for="booking in rows"
+                  :key="booking.id"
+                  class="group -mx-4 grid grid-cols-[116px_1fr_auto_22px] items-center gap-6 rounded-[var(--r-sm)] border-b border-border p-4 text-inherit no-underline transition-colors duration-200 hover:bg-sunk max-[700px]:grid-cols-[86px_1fr] max-[700px]:gap-4"
+                  :href="`/projekte/${booking.id}`"
+                >
+                  <img
+                    v-if="booking.cover"
+                    class="h-[78px] w-[116px] rounded-[10px] bg-sunk object-cover max-[700px]:h-[62px] max-[700px]:w-[86px]"
+                    :src="`${booking.cover}?w=400&fmt=jpeg`"
+                    alt=""
+                    loading="lazy"
+                  />
+                  <span
+                    v-else
+                    class="grid h-[78px] w-[116px] place-items-center rounded-[10px] border border-border bg-sunk font-serif text-[26px] leading-none tracking-[-0.02em] text-muted-foreground max-[700px]:h-[62px] max-[700px]:w-[86px] max-[700px]:text-[19px]"
+                  >{{ booking.year ?? '—' }}</span>
+
+                  <span class="min-w-0">
+                    <span class="mb-1.5 block text-[10.5px] leading-none font-semibold tracking-[0.15em] uppercase text-muted-foreground">{{ booking.type }}</span>
+                    <span class="block font-serif text-[23px] leading-[1.2] tracking-[-0.012em] max-[700px]:text-[20px]">{{ booking.name }}</span>
+                    <span class="mt-[5px] block text-[13.5px] tabular-nums text-muted-foreground">
+                      {{ [booking.date ? shortDate(booking.date) : $t('portal.dateOpen'), booking.venue].filter(Boolean).join(' · ') }}
+                    </span>
+                  </span>
+
+                  <span class="inline-flex items-center gap-2 text-[12.5px] whitespace-nowrap text-muted-foreground max-[700px]:col-start-2 max-[700px]:mt-1.5">
+                    <PortalDot :state="phaseState(booking.phase)" />
+                    {{ $t(`portal.phase.${booking.phase}`) }}
+                    <template v-if="booking.openAmount">
+                      · {{ $t('portal.paymentsOpen', { amount: formatEuros(booking.openAmount) }) }}
+                    </template>
+                  </span>
+
+                  <!-- A pointer affordance. On a phone the whole row is the
+                       target, so it goes rather than being placed twice. -->
+                  <span class="justify-self-end text-mark transition-[color,transform] duration-300 group-hover:translate-x-[3px] group-hover:text-foreground max-[700px]:hidden">
+                    <svg class="size-[18px] fill-none stroke-current stroke-[1.4]" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" /></svg>
+                  </span>
+                </Link>
+              </template>
+            </template>
+          </section>
+
+          <p v-else class="animate-rise [animation-delay:320ms] motion-reduce:animate-none text-[15px] text-muted-foreground">{{ $t('portal.nothingShared') }}</p>
+
+          <!-- Straight to the pictures, no detour through the booking. The one
+               reason a client opens this portal again after three years. -->
+          <section v-if="galleries.length" class="animate-rise [animation-delay:320ms] motion-reduce:animate-none">
+            <PortalLabel>{{ $t('portal.galleriesTitle') }}</PortalLabel>
+            <div class="mt-6 grid grid-cols-[repeat(auto-fill,minmax(196px,1fr))] gap-4">
+              <a v-for="gallery in galleries" :key="gallery.id" class="group text-inherit no-underline" :href="`/galerien/${gallery.id}`">
+                <span class="block overflow-hidden rounded-md bg-sunk">
+                  <img
+                    v-if="gallery.cover"
+                    :src="`${gallery.cover}?w=800&fmt=jpeg`"
+                    alt=""
+                    loading="lazy"
+                    class="block h-[152px] w-full object-cover transition-transform duration-1000 ease-[var(--ease)] group-hover:scale-[1.04]"
+                  />
+                  <span v-else class="block h-[152px]" />
                 </span>
-                <span class="text-right text-[12.5px] leading-[1.4] font-normal whitespace-nowrap text-muted-foreground">
-                  {{ $t(`portal.phase.${booking.phase}`) }}
-                  <template v-if="booking.openAmount">
-                    · {{ $t('portal.paymentsOpen', { amount: formatEuros(booking.openAmount) }) }}
+                <b class="mt-3 block font-serif text-[19px] leading-[1.25] font-normal tracking-[-0.01em]">{{ gallery.title }}</b>
+                <span class="block text-[13px] tabular-nums text-muted-foreground">
+                  {{ $t('portal.imageCount', gallery.count) }}
+                  <template v-if="gallery.expiresAt">
+                    · {{ $t('gallery.onlineUntil', { date: shortDate(gallery.expiresAt) }) }}
                   </template>
                 </span>
-              </Link>
+              </a>
             </div>
-          </template>
-        </section>
-
-        <p v-else class="text-[11.5px] leading-[1.45] text-faint">{{ $t('portal.nothingShared') }}</p>
-
-        <section v-if="galleries.length" class="mt-11">
-          <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.galleriesTitle') }}</p>
-          <div class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-5">
-            <a v-for="gallery in galleries" :key="gallery.id" class="text-foreground no-underline" :href="`/galerien/${gallery.id}`">
-              <span class="mb-3.5 block aspect-4/3 overflow-hidden rounded-md bg-muted">
-                <img
-                  v-if="gallery.cover"
-                  :src="`${gallery.cover}?w=800&fmt=jpeg`"
-                  alt=""
-                  loading="lazy"
-                  class="block size-full object-cover"
-                />
-              </span>
-              <b class="block text-[14px] leading-[1.3] font-semibold">{{ gallery.title }}</b>
-              <span class="mt-1.5 flex flex-col gap-[3px] text-[12px] leading-[1.4] font-normal tabular-nums text-muted-foreground">
-                {{ $t('portal.imageCount', gallery.count) }}
-                <template v-if="gallery.expiresAt">
-                  · {{ $t('gallery.onlineUntil', { date: shortDate(gallery.expiresAt) }) }}
-                </template>
-              </span>
-            </a>
-          </div>
-        </section>
+          </section>
+        </div>
       </div>
+    </PortalWrap>
 
-      <div class="order-first flex flex-col min-[1080px]:order-none">
-        <!-- Absent when nothing is open. An empty box would say the studio
-             has nothing for them, which is a different statement. -->
-        <section v-if="pending.length">
-          <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.pendingTitle') }}</p>
-          <div class="border-t border-border">
-            <a v-for="(row, index) in pending" :key="index" class="flex items-center gap-5 border-b border-border py-5 text-foreground no-underline hover:bg-muted" :href="row.href">
-              <span style="flex: 1">
-                <h3 class="m-0 flex-1 text-[14px] leading-[1.3] font-semibold">{{ row.kind === 'message' ? row.subject : $t(`portal.pending.${row.kind}`) }}</h3>
-                <div v-if="row.dueOn" class="mt-0.5 text-[12.5px] leading-[1.4] font-normal text-muted-foreground">
-                  {{ $t(row.kind === 'quote' ? 'portal.validUntil' : 'portal.dueOn', { date: shortDate(row.dueOn) }) }}
-                </div>
-                <div v-else-if="row.kind === 'message'" class="mt-0.5 text-[12.5px] leading-[1.4] font-normal text-muted-foreground">{{ $t('portal.pending.message') }}</div>
-                <div v-if="row.booking" class="mt-0.5 text-[12.5px] leading-[1.4] font-normal text-muted-foreground">{{ row.booking }}</div>
-              </span>
-              <span
-                v-if="row.amount"
-                class="text-[14px] leading-none font-semibold tabular-nums whitespace-nowrap"
-                :class="row.overdue && 'text-destructive'"
-              >
-                {{ formatEuros(row.amount) }}
-              </span>
-            </a>
-          </div>
-        </section>
-
-        <section class="mt-11 first:mt-0">
-          <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.contactTitle') }}</p>
-          <PortalPerson :name="studio.name">
-            <Link v-if="studio.messagingEnabled" href="/nachrichten">{{ $t('portal.messagesLinkTitle') }}</Link>
-          </PortalPerson>
-        </section>
-      </div>
-    </div>
-  </PortalWrap>
-
-  <PortalFooter />
+    <PortalFooter />
+  </PortalShell>
 </template>

@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
-import PortalWrap from '@/portal/components/PortalWrap.vue'
+import PortalShell from '@/portal/components/PortalShell.vue'
 
 // § 5 TMG. Reads straight through StudioSettingsResolver's T-02 columns —
 // the same particulars RenderContractJob's `studio.*` merge fields already
@@ -10,7 +11,7 @@ import PortalWrap from '@/portal/components/PortalWrap.vue'
 // carries (Firmierung, Straße & Hausnummer, ...) rather than a duplicate
 // set: one JSON file, one i18n instance, shared by both the admin and
 // portal bundles.
-defineProps<{
+const props = defineProps<{
   name: string | null
   legalForm: string | null
   street: string | null
@@ -24,36 +25,42 @@ defineProps<{
   representative: string | null
   website: string | null
 }>()
+
+// A legal notice is a list of particulars, not nine cards. Empty ones are
+// absent rather than blank: what a studio has not filed is not a gap on this
+// page, it is simply not one of its particulars.
+const facts = computed(() => [
+  { key: 'settings.legalForm', value: props.legalForm },
+  { key: 'settings.street', value: props.street },
+  { key: 'settings.city', value: [props.postcode, props.city].filter(Boolean).join(' ') || null },
+  { key: 'settings.country', value: props.country },
+  { key: 'settings.representative', value: props.representative },
+  { key: 'settings.taxNumber', value: props.taxNumber },
+  { key: 'settings.vatId', value: props.vatId },
+  { key: 'settings.registerNumber', value: props.registerNumber },
+  { key: 'settings.registerCourt', value: props.registerCourt },
+  { key: 'settings.website', value: props.website },
+].filter((fact) => fact.value))
 </script>
 
 <template>
-  <PortalHeader />
+  <PortalShell>
+    <PortalHeader />
 
-  <PortalWrap>
-    <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('portal.impressumTitle') }}</div>
-    <h1 v-if="name">{{ name }}</h1>
+    <main class="mx-auto w-full max-w-[668px] grow px-6 pt-[var(--band)] pb-28">
+      <p class="animate-rise motion-reduce:animate-none mb-4 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ $t('portal.impressumTitle') }}</p>
+      <h1 v-if="name" class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
+        {{ name }}
+      </h1>
 
-    <div class="mt-8 grid grid-cols-3 gap-3.5">
-      <div v-if="legalForm" class="rounded-md bg-muted px-5 pt-3.5 pb-5"><div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('settings.legalForm') }}</div><div class="mt-2.25 text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ legalForm }}</div></div>
-      <div v-if="street" class="rounded-md bg-muted px-5 pt-3.5 pb-5"><div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('settings.street') }}</div><div class="mt-2.25 text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ street }}</div></div>
-      <div v-if="postcode || city" class="rounded-md bg-muted px-5 pt-3.5 pb-5">
-        <div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('settings.city') }}</div><div class="mt-2.25 text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ [postcode, city].filter(Boolean).join(' ') }}</div>
-      </div>
-      <div v-if="country" class="rounded-md bg-muted px-5 pt-3.5 pb-5"><div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('settings.country') }}</div><div class="mt-2.25 text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ country }}</div></div>
-      <div v-if="representative" class="rounded-md bg-muted px-5 pt-3.5 pb-5">
-        <div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('settings.representative') }}</div><div class="mt-2.25 text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ representative }}</div>
-      </div>
-      <div v-if="taxNumber" class="rounded-md bg-muted px-5 pt-3.5 pb-5"><div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('settings.taxNumber') }}</div><div class="mt-2.25 text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ taxNumber }}</div></div>
-      <div v-if="vatId" class="rounded-md bg-muted px-5 pt-3.5 pb-5"><div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('settings.vatId') }}</div><div class="mt-2.25 text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ vatId }}</div></div>
-      <div v-if="registerNumber" class="rounded-md bg-muted px-5 pt-3.5 pb-5">
-        <div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('settings.registerNumber') }}</div><div class="mt-2.25 text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ registerNumber }}</div>
-      </div>
-      <div v-if="registerCourt" class="rounded-md bg-muted px-5 pt-3.5 pb-5">
-        <div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('settings.registerCourt') }}</div><div class="mt-2.25 text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ registerCourt }}</div>
-      </div>
-      <div v-if="website" class="rounded-md bg-muted px-5 pt-3.5 pb-5"><div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('settings.website') }}</div><div class="mt-2.25 text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ website }}</div></div>
-    </div>
-  </PortalWrap>
+      <dl class="animate-rise [animation-delay:230ms] motion-reduce:animate-none m-0 mt-12 grid grid-cols-[148px_1fr] gap-x-6 gap-y-3 border-t border-border pt-8 max-[700px]:grid-cols-1 max-[700px]:gap-y-0">
+        <template v-for="fact in facts" :key="fact.key">
+          <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t(fact.key) }}</dt>
+          <dd class="m-0 text-[14.5px] tabular-nums">{{ fact.value }}</dd>
+        </template>
+      </dl>
+    </main>
 
-  <PortalFooter />
+    <PortalFooter />
+  </PortalShell>
 </template>

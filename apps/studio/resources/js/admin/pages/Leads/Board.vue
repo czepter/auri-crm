@@ -4,6 +4,7 @@ import { Link, router } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import LeadQueue from "@/admin/components/LeadQueue.vue";
 import Page from "@/ui/page/Page.vue";
+import PageHead from "@/ui/page/PageHead.vue";
 import {
     Table,
     TableCell,
@@ -21,6 +22,7 @@ import {
     AlertDialogTitle,
 } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/admin/lib/money";
+import { Button } from "@/ui/button";
 
 type Card = App.Crm.Data.LeadCardData;
 type Column = { stage: string; label: string; cards: Card[]; total: number };
@@ -183,15 +185,9 @@ const STAGE_DOT = [
 
 <template>
     <AdminLayout active="anfragen">
-        <Page @click="menu = null">
-            <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-3 px-8 pt-[22px]">
-                    <h1
-                        class="mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em]"
-                    >
-                        {{ $t("board.title") }}
-                    </h1>
-
+        <Page wide @click="menu = null">
+            <div data-tokens class="min-w-0 flex-1">
+                <PageHead :title="$t('board.title')">
                     <span class="ml-auto flex rounded-lg bg-sunk-2 p-0.5">
                         <button
                             v-for="option in ['board', 'liste'] as const"
@@ -213,13 +209,10 @@ const STAGE_DOT = [
                         </button>
                     </span>
 
-                    <Link
-                        class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-action px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-white no-underline transition-[filter,background] duration-[120ms] ease-out hover:brightness-[1.08]"
-                        href="/anfragen/neu"
-                    >
+                    <Button :as="Link" variant="pill" href="/anfragen/neu">
                         {{ $t("board.create") }}
-                    </Link>
-                </div>
+                    </Button>
+                </PageHead>
 
                 <!-- Board — list columns, no cards. Grey cards on a white ground invert
              the material order, in which the container carries material and the
@@ -277,7 +270,7 @@ const STAGE_DOT = [
                                 @contextmenu="openMenu($event, card)"
                             >
                                 <span
-                                    class="text-[13.5px] leading-[1.3] tracking-[-0.014em]"
+                                    class="block text-[13.5px] leading-[1.3] tracking-[-0.014em]"
                                     :class="
                                         DONE_STAGES.includes(column.stage) ||
                                         moving?.id === card.id
@@ -288,7 +281,7 @@ const STAGE_DOT = [
                                     {{ card.names }}
                                 </span>
                                 <span
-                                    class="mt-0.5 text-[12px]"
+                                    class="mt-0.5 block text-[12px]"
                                     :class="
                                         moving?.id === card.id
                                             ? 'text-mark'
@@ -307,7 +300,7 @@ const STAGE_DOT = [
                      collides is the other marked row in the same picture. -->
                                 <span
                                     v-if="card.conflicts.length"
-                                    class="mt-[3px] text-[11.5px]"
+                                    class="mt-[3px] block text-[11.5px]"
                                     :class="
                                         moving?.id === card.id
                                             ? 'text-mark'

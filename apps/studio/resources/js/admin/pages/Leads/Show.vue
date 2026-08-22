@@ -48,21 +48,25 @@ const props = defineProps<{
     types: { value: string; label: string }[];
     sources: { value: string; label: string }[];
     presets: { type: string[]; source: string[] };
-    week: { date: string; what: string }[];
+    week: { date: string; what: string; projectId: string }[];
     conflicts: App.Crm.Data.DateConflictData[];
 }>();
 
 // ↑↓ walks the queue without leaving the screen. Response time is the lever:
-// eight days of silence happen when every step costs a page load.
-const flat = computed(() => props.queue.flatMap((group) => group.rows));
+// eight days of silence happen when every step costs a page load. The pane
+// hands over what its filter left standing, so the arrows reach what is on
+// screen and nothing else.
+const reachable = ref<App.Crm.Data.LeadQueueRowData[]>([]);
 
 function step(by: number) {
-    const at = flat.value.findIndex((row) => row.open);
-    const next = flat.value[at + by];
+    const at = reachable.value.findIndex((row) => row.open);
+    const next = reachable.value[at + by];
 
     if (next) {
         router.get(
-            `/anfragen/${next.id}`,
+            // The pane keeps q and wartet in the URL; carrying them means a
+            // step does not land on an unfiltered pane.
+            `/anfragen/${next.id}${window.location.search}`,
             {},
             { preserveScroll: true, preserveState: true },
         );
@@ -184,23 +188,26 @@ const due = computed(() => {
             <!-- Grouped by working state, not by the six funnel stages: six stages
                  are the view of the funnel, three groups the view of the day. -->
             <template #left>
-                <LeadQueue :groups="queue" />
+                <LeadQueue :groups="queue" @update:rows="reachable = $event" />
             </template>
 
             <!-- The trace: what lies around the requested day. A date is answered
                  by what is already on it. -->
             <template #right>
-                <Rail>
+                <Rail data-tokens>
                     <RailSection :title="$t('lead.week')">
                         <template v-if="week.length">
-                            <div
+                            <Link
                                 v-for="entry in week"
                                 :key="`${entry.date}${entry.what}`"
-                                class="flex gap-2.5 py-1.5 text-[12.5px] leading-[1.47] shadow-[inset_0_1px_0_#ECECEE] first:shadow-none"
+                                :href="`/auftraege/${entry.projectId}`"
+                                class="group -mx-2 flex gap-2.5 rounded-lg px-2 py-1.5 text-[12.5px] leading-[1.47] shadow-[inset_0_1px_0_#ECECEE] transition-colors first:shadow-none hover:bg-paper"
                             >
                                 <span class="w-[62px] flex-none font-semibold tabular-nums">{{ day(entry.date) }}</span>
-                                <span class="text-ink-2">{{ entry.what }}</span>
-                            </div>
+                                <span class="text-ink-2 transition-colors group-hover:text-foreground">{{
+                                    entry.what
+                                }}</span>
+                            </Link>
                         </template>
                         <div
                             v-else
@@ -224,7 +231,7 @@ const due = computed(() => {
                 </Rail>
             </template>
 
-            <main class="min-w-0 flex-1 overflow-y-auto px-[26px] pt-4 pb-5">
+            <main data-tokens class="min-w-0 flex-1 overflow-y-auto px-[26px] pt-4 pb-5">
                 <!-- Opened from the palette, the phase is the one word that is
                      missing, so the breadcrumb carries it. -->
                 <div
@@ -354,9 +361,12 @@ const due = computed(() => {
                                 :key="person.id"
                                 class="[&+&]:mt-[13px]"
                             >
-                                <div class="text-[13px] leading-[1.35] font-semibold tracking-[-0.012em]">
+                                <Link
+                                    class="block text-[13px] leading-[1.35] font-semibold tracking-[-0.012em] text-foreground no-underline underline-offset-[3px] hover:underline"
+                                    :href="`/kontakte/${person.id}`"
+                                >
                                     {{ person.name }}
-                                </div>
+                                </Link>
                                 <div
                                     class="mt-0.5 text-[10.5px] leading-[1.35] tracking-[0.05em] uppercase text-ink-2"
                                 >

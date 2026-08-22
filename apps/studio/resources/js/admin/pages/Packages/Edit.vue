@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import PageHead from '@/ui/page/PageHead.vue'
 import PackageItemsEditor, { type PackageItemRow } from '@/admin/components/PackageItemsEditor.vue'
 import { centsToEuros, eurosToCents } from '@/admin/lib/money'
 import { Button } from '@/ui/button'
@@ -40,10 +41,10 @@ function submit() {
 
 <template>
   <AdminLayout active="pakete">
-    <div style="max-width: 640px">
-      <h1>{{ $t('packages.editTitle') }}</h1>
+    <div data-tokens>
+      <PageHead :title="$t('packages.editTitle')" />
 
-      <form style="margin-top: var(--s5)" @submit.prevent="submit">
+      <form class="max-w-[640px] px-8 pt-7 pb-8" @submit.prevent="submit">
         <Field id="name" class="mb-6" :label="$t('packages.name')" :error="form.errors.name">
           <Input id="name" v-model="form.name" type="text" required />
         </Field>

@@ -1,26 +1,51 @@
 <script setup lang="ts">
 import { computed, onMounted, watch } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
-import { Button } from '@/ui/button'
+import PortalTabbar from '@/portal/components/PortalTabbar.vue'
 
-// T-08's own branding read: logo and accent colour, shared portal-wide by
-// HandleInertiaRequests (`portalBranding`) rather than passed down per page,
-// since every portal screen wears the same chrome. `contact` stays this
-// component's own prop, not a shared one: it is null on the sign-in,
-// Impressum and Maintenance screens, which have nobody signed in to name.
-withDefaults(defineProps<{ contact?: { name: string } | null; showSwitcher?: boolean }>(), {
-  contact: null,
-  showSwitcher: false,
+/*
+ * mockups/redesign/tokens.css `.bar`. One definition, every screen — before
+ * this each page carried its own, and a client moving between two of them
+ * had to find the navigation again.
+ *
+ * Over a title image it is the same bar with `over`: transparent and light
+ * instead of paper, not a second component.
+ *
+ * Branding and the nav's own two facts (is there a mailbox, is anything
+ * waiting) are shared portal-wide by HandleInertiaRequests rather than
+ * passed down per page, because every screen wears the same chrome.
+ * `switcher` stays a prop: only the screens that stand inside one booking
+ * have a name to put there.
+ */
+withDefaults(defineProps<{
+  /** Laid over a title image: transparent ground, white type. */
+  over?: boolean
+  /** The booking this screen stands in. Links back to all of them when the client has more than one. */
+  switcher?: { label: string; toAll: boolean } | null
+  /**
+   * A sub-screen carries its own head below 980px — see PortalSubhead. The
+   * bar steps aside there; the tabbar below it does not, which is why this
+   * is a prop rather than the caller dropping the component.
+   */
+  subhead?: boolean
+}>(), {
+  over: false,
+  switcher: null,
+  subhead: false,
 })
 
 type Branding = { displayName: string | null; logoUrl: string | null; accentColor: string | null }
+type Nav = { messaging: boolean; unread: number }
 
 const branding = computed(() => usePage().props.portalBranding as Branding | undefined)
+const nav = computed(() => usePage().props.portalNav as Nav | null | undefined)
 
 // P-09 (#228): impersonation nobody can forget they are in. Every write is
 // refused anyway (EnsureAudience), but a studio owner should not have to
 // discover that by being refused.
 const preview = computed(() => usePage().props.portalPreview === true)
+
+const path = computed(() => new URL(usePage().url, 'http://x').pathname)
 
 // Every portal screen mounts this component once, so applying the accent
 // colour here — rather than in each page — is enough to cover the whole
@@ -38,49 +63,84 @@ watch(branding, applyAccent)
 </script>
 
 <template>
-  <div
-    v-if="preview"
-    class="flex items-center justify-center gap-5 border-b border-border bg-due-bg px-8 py-[9px] text-[12.5px] leading-none font-medium text-due"
-  >
-    <span>{{ $t('portal.previewBanner') }}</span>
-    <a class="text-due underline" href="/vorschau-beenden">{{ $t('portal.previewLeave') }}</a>
-  </div>
+  <div :class="[over ? 'absolute inset-x-0 top-0 z-30' : 'sticky top-0 z-30', subhead && 'max-[979px]:hidden']">
+    <div
+      v-if="preview"
+      class="flex items-center justify-center gap-5 border-b border-border bg-due-bg px-6 py-2.5 text-[12.5px] leading-none font-medium text-due"
+    >
+      <span>{{ $t('portal.previewBanner') }}</span>
+      <a class="text-due underline" href="/vorschau-beenden">{{ $t('portal.previewLeave') }}</a>
+    </div>
 
-  <header class="border-b border-border">
-    <div class="mx-auto flex max-w-[1060px] items-center gap-5 px-8 py-5">
-      <span class="flex items-baseline gap-2.25 text-[19px] leading-[1.1] font-bold tracking-[-0.035em] text-foreground">
-        <img v-if="branding?.logoUrl" :src="branding.logoUrl" alt="" class="h-[22px] w-auto" />
-        <i v-else class="size-[7px] flex-none rounded-full bg-action" />
-        <template v-if="branding?.displayName">{{ branding.displayName }}</template>
-      </span>
-      <div
-        v-if="contact"
-        class="ml-auto flex items-center gap-5 text-[13px] leading-none font-normal text-muted-foreground"
-      >
+    <div
+      :class="
+        over
+          ? 'text-white'
+          : 'border-b border-border bg-[color-mix(in_srgb,var(--bg)_88%,transparent)] backdrop-blur-[12px]'
+      "
+    >
+      <div class="mx-auto flex max-w-[var(--page)] items-center gap-6 px-6 py-4">
         <Link
-          v-if="showSwitcher"
-          class="inline-flex items-center gap-1.5 text-muted-foreground no-underline hover:text-foreground"
+          class="flex flex-none items-center gap-2.25 text-[15px] leading-none font-semibold tracking-[-0.012em] text-inherit no-underline"
           href="/"
         >
-          {{ $t('portal.allProjects') }}
+          <img v-if="branding?.logoUrl" :src="branding.logoUrl" alt="" class="h-[18px] w-auto" />
+          <i v-else class="size-[7px] flex-none rounded-full bg-action" />
+          <span>{{ branding?.displayName }}</span>
         </Link>
-        <span>{{ $t('portal.signedInAs') }} <b class="font-semibold text-foreground">{{ contact.name }}</b></span>
-        <!-- The ghost button is a shade heavier and a shade padded than the
-             row it stands in; .pme used to flatten both. -->
-        <Button
-          class="gap-1.5 py-0 font-normal [&_svg]:opacity-100"
-          variant="ghost"
-          type="button"
-          @click="router.post('/abmelden')"
+
+        <!-- The running booking's name is the switcher. A client with one
+             booking sees only the name — no dead menu.
+             ponytail: a link back to all bookings, not the mockup's dropdown
+             panel; that needs every booking shared on every request. Build it
+             when a client with a dozen bookings complains about the detour. -->
+        <component
+          :is="switcher?.toAll ? Link : 'span'"
+          v-if="switcher"
+          :href="switcher.toAll ? '/' : undefined"
+          :class="[
+            'inline-flex flex-none items-center gap-2.25 rounded-[var(--r-pill)] border px-4 py-2 text-[13.5px] leading-none font-medium whitespace-nowrap no-underline',
+            over
+              ? 'border-white/28 bg-[rgba(12,10,9,.28)] text-white backdrop-blur-[10px] hover:bg-[rgba(12,10,9,.5)]'
+              : 'border-line-hover text-foreground hover:bg-sunk',
+          ]"
         >
-          <svg viewBox="0 0 24 24">
-            <path d="M15 17l5-5-5-5" />
-            <path d="M20 12H9" />
-            <path d="M12 20H6a2 2 0 01-2-2V6a2 2 0 012-2h6" />
-          </svg>
-          {{ $t('portal.signOut') }}
-        </Button>
+          {{ switcher.label }}
+        </component>
+
+        <nav
+          v-if="nav"
+          class="ml-auto flex items-center gap-6 text-[13.5px] leading-none max-[760px]:hidden [&_a]:no-underline"
+        >
+          <Link :class="path === '/' || path.startsWith('/projekte') ? 'font-semibold' : 'opacity-72 hover:opacity-100'" href="/">
+            {{ $t('portal.navBookings') }}
+          </Link>
+          <Link
+            v-if="nav.messaging"
+            class="inline-flex items-center gap-2"
+            :class="path.startsWith('/nachrichten') ? 'font-semibold' : 'opacity-72 hover:opacity-100'"
+            href="/nachrichten"
+          >
+            {{ $t('portal.messagesTitle') }}
+            <span
+              v-if="nav.unread"
+              class="min-w-[18px] rounded-[var(--r-pill)] bg-action px-[5px] text-center text-[11px] leading-[18px] font-semibold text-white"
+            >{{ nav.unread }}</span>
+          </Link>
+          <Link :class="path.startsWith('/einstellungen') ? 'font-semibold' : 'opacity-72 hover:opacity-100'" href="/einstellungen">
+            {{ $t('portal.accountTitle') }}
+          </Link>
+          <button
+            class="cursor-pointer border-0 bg-transparent p-0 text-[13.5px] leading-none font-normal text-inherit opacity-72 hover:opacity-100"
+            type="button"
+            @click="router.post('/abmelden')"
+          >
+            {{ $t('portal.signOut') }}
+          </button>
+        </nav>
       </div>
     </div>
-  </header>
+  </div>
+
+  <PortalTabbar v-if="nav" :messaging="nav.messaging" :unread="nav.unread" />
 </template>

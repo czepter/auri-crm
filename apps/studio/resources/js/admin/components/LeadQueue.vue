@@ -3,15 +3,57 @@
  * The open inquiries, grouped by working state — the same pane on the board
  * and on a single case, so moving between them does not change what is beside
  * the work. OpenLeads decides the groups; this only reads them.
+ *
+ * Narrowing it is the pane's own business: every open inquiry is already in
+ * the props, so the term and the switch never go to the server. They do go in
+ * the URL, so the pane a link opens is the pane the sender was looking at.
  */
+import { computed, ref, watch } from "vue"
 import { dayWithWeekday } from "@/admin/lib/dates"
+import { NOTICEABLE_DAYS, filterQueue } from "@/admin/lib/leadQueue"
+import { Input } from "@/ui/input"
 import { Queue, QueueGroup, QueueItem } from "@/ui/queue"
+import { Switch } from "@/ui/switch"
 
-defineProps<{ groups: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[] }>()
+const props = defineProps<{
+    groups: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[]
+}>()
 
-// Below this the wait is the normal course of an inquiry; colouring it would
-// mark every row. Same floor the inbox uses.
-const NOTICEABLE_DAYS = 3
+const emit = defineEmits<{ "update:rows": [App.Crm.Data.LeadQueueRowData[]] }>()
+
+const initial = new URLSearchParams(window.location.search)
+const term = ref(initial.get("q") ?? "")
+const waiting = ref(initial.get("wartet") === "1")
+
+const query = computed(() => {
+    const params = new URLSearchParams()
+
+    if (term.value) params.set("q", term.value)
+    if (waiting.value) params.set("wartet", "1")
+
+    const written = params.toString()
+
+    return written ? `?${written}` : ""
+})
+
+const shown = computed(() => filterQueue(props.groups, term.value, waiting.value))
+
+// Replace rather than push: a history entry per keystroke makes the back
+// button unusable. Set and delete on the live URL, because the board keeps
+// its own ?ansicht= there.
+watch(query, () => {
+    const url = new URL(window.location.href)
+
+    term.value ? url.searchParams.set("q", term.value) : url.searchParams.delete("q")
+    waiting.value ? url.searchParams.set("wartet", "1") : url.searchParams.delete("wartet")
+
+    history.replaceState(history.state, "", url)
+})
+
+// What ↑↓ beside the pane may reach — the rows still standing, not all of them.
+watch(shown, (groups) => emit("update:rows", groups.flatMap((group) => group.rows)), {
+    immediate: true,
+})
 
 // Same wording the board's table carries in its Zuletzt column.
 function since(days: number) {
@@ -26,7 +68,32 @@ function since(days: number) {
 
 <template>
     <Queue>
-        <template v-for="group in groups" :key="group.key">
+        <div class="flex flex-col gap-2 px-3.5 pb-3">
+            <div class="flex items-center gap-2">
+                <span
+                    id="queue-waiting"
+                    class="cursor-pointer text-[12.5px] leading-none font-semibold tracking-[-0.012em]"
+                    @click="waiting = !waiting"
+                >
+                    {{ $t("lead.waiting") }}
+                </span>
+
+                <Switch
+                    v-model="waiting"
+                    aria-labelledby="queue-waiting"
+                    class="ml-auto"
+                />
+            </div>
+
+            <Input
+                v-model="term"
+                size="sm"
+                type="search"
+                :placeholder="$t('lead.search')"
+            />
+        </div>
+
+        <template v-for="group in shown" :key="group.key">
             <QueueGroup
                 :title="$t(`lead.group.${group.key}`)"
                 :count="group.rows.length"
@@ -39,9 +106,9 @@ function since(days: number) {
                 :meta="since(row.waitingDays)"
                 :alert="row.waitingDays >= NOTICEABLE_DAYS"
                 :title="dayWithWeekday(row.date, null) ?? $t('board.openDate')"
-                :snippet="row.snippet"
+                :snippet="row.text"
                 :active="row.open"
-                :href="`/anfragen/${row.id}`"
+                :href="`/anfragen/${row.id}${query}`"
             />
         </template>
     </Queue>
