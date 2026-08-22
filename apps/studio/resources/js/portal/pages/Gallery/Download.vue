@@ -4,6 +4,7 @@ import { router, useForm, usePage } from '@inertiajs/vue3'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
 
 type Branding = { displayName: string | null }
 
@@ -111,7 +112,6 @@ const INPUT = [
 ].join(' ')
 const OPT = [
   'flex cursor-pointer items-center gap-5 border-b border-border py-5',
-  '[&>input]:m-0 [&>input]:flex-none [&>input]:cursor-pointer [&>input]:accent-[var(--accent)]',
   '[&>span]:flex-1',
   '[&_b]:text-[14px] [&_b]:leading-[1.3] [&_b]:font-semibold [&_b]:text-foreground [&_b]:[display:block]',
   '[&_b+span]:text-[12.5px] [&_b+span]:leading-[1.4] [&_b+span]:font-normal [&_b+span]:text-muted-foreground',
@@ -211,21 +211,21 @@ const OPT = [
 
       <section class="mt-16">
         <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.whatLabel') }}</p>
-        <div class="flex flex-col">
+        <RadioGroup v-model="chosenList" class="gap-0">
           <label v-for="option in selections" :key="option.id" :class="OPT">
-            <input v-model="chosenList" type="radio" :value="option.id" />
+            <RadioGroupItem :value="option.id" />
             <span>
               <b>{{ option.name ?? (option.id ? $t('gallery.heart') : $t('gallery.everything')) }}</b>
               <span>{{ $t('portal.imageCount', option.count) }}</span>
             </span>
             <span class="text-[12.5px] leading-none font-normal whitespace-nowrap tabular-nums text-muted-foreground">{{ size(option.sizes[chosenSize] ?? 0) }}</span>
           </label>
-        </div>
+        </RadioGroup>
       </section>
 
       <section class="mt-16">
         <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.sizeLabel') }}</p>
-        <div class="flex flex-col">
+        <RadioGroup v-model="chosenSize" class="gap-0">
           <!-- ZipBuildSize::Web is "Zum Teilen" to a client; the enum value
                stays what it is. de.json wins over any class name. -->
           <label
@@ -233,14 +233,14 @@ const OPT = [
             :key="option"
             :class="[OPT, !available(option) && 'cursor-default [&_b+span]:text-faint! [&_b]:text-faint!']"
           >
-            <input v-model="chosenSize" type="radio" :value="option" :disabled="!available(option)" />
+            <RadioGroupItem :value="option" :disabled="!available(option)" />
             <span>
               <b>{{ $t(`gallery.size.${option}`) }}</b>
               <span>{{ $t(`gallery.sizeHint.${option}`) }}</span>
             </span>
             <span class="text-[12.5px] leading-none font-normal whitespace-nowrap tabular-nums text-muted-foreground">{{ size(selection?.sizes[option] ?? 0) }}</span>
           </label>
-        </div>
+        </RadioGroup>
 
         <Button
           type="button"

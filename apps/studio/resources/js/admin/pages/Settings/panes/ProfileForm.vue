@@ -6,6 +6,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
+import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
 
 type Section = 'legal' | 'brand' | 'bank'
 
@@ -216,17 +217,21 @@ defineExpose({ form, submit })
              selectable; minimum sizes and contrast stay fixed. -->
         <Field v-if="fontPairs.length" class="mt-6">
           <Label>{{ $t('settings.fontPair') }}</Label>
-          <div class="grid grid-cols-2 gap-2.5">
-            <label v-for="pair in fontPairs" :key="pair.value" class="block cursor-pointer" :data-font="pair.value">
-              <input class="peer absolute opacity-0 pointer-events-none" v-model="form.font_pair" type="radio" :value="pair.value" />
-              <span
-                class="block rounded-md bg-muted px-4 pt-4 pb-6 shadow-[inset_0_0_0_1px_transparent] peer-checked:shadow-[inset_0_0_0_2px_var(--accent)]"
-              >
-                <b class="block font-normal text-[26px] leading-[var(--display-leading)] font-[family-name:var(--font-display)] tracking-[var(--display-tracking)] text-foreground">{{ settings.displayName || pair.label }}</b>
-                <em class="mt-2 block font-sans text-[12.5px] leading-[1.5] font-normal not-italic text-muted-foreground">{{ pair.description }}</em>
-              </span>
+          <RadioGroup v-model="form.font_pair" class="grid grid-cols-2 gap-2.5">
+            <!-- The card is the radio: a <label> forwards its click to the
+                 button reka renders, so the whole sample is the hit area and
+                 the dot itself has nothing to draw. -->
+            <label
+              v-for="pair in fontPairs"
+              :key="pair.value"
+              class="block cursor-pointer rounded-md bg-muted px-4 pt-4 pb-6 shadow-[inset_0_0_0_1px_transparent] has-[[data-state=checked]]:shadow-[inset_0_0_0_2px_var(--accent)]"
+              :data-font="pair.value"
+            >
+              <RadioGroupItem :value="pair.value" class="sr-only" />
+              <b class="block font-normal text-[26px] leading-[var(--display-leading)] font-[family-name:var(--font-display)] tracking-[var(--display-tracking)] text-foreground">{{ settings.displayName || pair.label }}</b>
+              <em class="mt-2 block font-sans text-[12.5px] leading-[1.5] font-normal not-italic text-muted-foreground">{{ pair.description }}</em>
             </label>
-          </div>
+          </RadioGroup>
         </Field>
       </div>
     </div>

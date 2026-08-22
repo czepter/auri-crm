@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 import { usePage } from '@inertiajs/vue3'
+import { Input } from '@/ui/input'
 
 /**
  * C-03 (#237): the search is a tool in the sidebar, not a field in a header.
@@ -57,8 +58,8 @@ function when(at: string) {
     class="mx-auto mt-[12vh] mb-auto w-[min(560px,calc(100vw-48px))] rounded-md border-0 bg-paper p-0 text-foreground backdrop:bg-[rgba(29,29,31,0.28)] backdrop:backdrop-blur-[3px]"
   >
     <!-- upper third: the list grows downward, the eye stays -->
-    <input
-      class="block w-full border-0 px-5.5 py-4.5 font-sans text-[20px] leading-[1.3] font-normal tracking-[-0.022em] text-foreground shadow-[inset_0_-1px_0_var(--rule)] outline-0 placeholder:text-[#B0B0B5]"
+    <Input
+      class="rounded-none border-0 bg-transparent px-5.5 py-4.5 text-[20px] leading-[1.3] tracking-[-0.022em] shadow-[inset_0_-1px_0_var(--rule)] placeholder:text-[#B0B0B5]"
       type="search"
       :placeholder="$t('palette.placeholder')"
       autofocus

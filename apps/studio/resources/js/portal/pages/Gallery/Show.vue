@@ -5,6 +5,7 @@ import { router, useForm, usePage } from '@inertiajs/vue3'
 import GalleryLightbox from '@/portal/components/GalleryLightbox.vue'
 import { ALL, countOf, selections, visible } from '@/portal/lib/gallerySelections'
 import { Button } from '@/ui/button'
+import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 
@@ -335,11 +336,9 @@ const COVER_INPUT = [
 
           <span v-if="menu === asset.key" class="absolute top-12 right-2.5 z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]" @click.stop>
             <label v-for="list in lists" :key="list.id" class="flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-[13px] leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]">
-              <input
-                type="checkbox"
-                class="m-0 flex-none cursor-pointer accent-[var(--accent)]"
-                :checked="onList(list, asset.key)"
-                @change="toggle(list, asset.key)"
+              <Checkbox
+                :model-value="onList(list, asset.key)"
+                @update:model-value="toggle(list, asset.key)"
               />
               {{ list.name ?? $t('gallery.heart') }}
               <span class="ml-auto text-[11.5px] tabular-nums text-muted-foreground">{{ list.keys.length }}</span>
@@ -417,11 +416,8 @@ const COVER_INPUT = [
             <p v-else class="text-[12.5px] leading-[1.55] font-normal text-muted-foreground mt-[9px]">{{ $t('gallery.listEmpty') }}</p>
           </div>
 
-          <form
-            class="mt-8 flex items-center gap-3.5 [&_input]:flex-1 [&_input]:rounded-md [&_input]:border [&_input]:border-line-hover [&_input]:bg-muted [&_input]:px-3 [&_input]:py-[11px] [&_input]:text-[13.5px] [&_input]:leading-[1.2] [&_input]:font-normal [&_input]:text-foreground"
-            @submit.prevent="addList"
-          >
-            <input v-model="listForm.name" type="text" :placeholder="$t('gallery.newListName')" />
+          <form class="mt-8 flex items-center gap-3.5" @submit.prevent="addList">
+            <Input v-model="listForm.name" class="flex-1" type="text" :placeholder="$t('gallery.newListName')" />
             <Button type="submit" variant="ghost" :disabled="!listForm.name">{{ $t('gallery.newList') }}</Button>
           </form>
         </div>

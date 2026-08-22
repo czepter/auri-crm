@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
-import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalField from '@/portal/components/PortalField.vue'
+import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalShell from '@/portal/components/PortalShell.vue'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
+import { NativeSelect } from '@/ui/native-select'
 import { Textarea } from '@/ui/textarea'
 
 type Field = App.Crm.Data.FormInstanceFieldData
@@ -44,58 +46,64 @@ function errorFor(id: string) {
 </script>
 
 <template>
-  <PortalHeader :contact="contact" />
+  <PortalShell>
+    <PortalHeader :switcher="{ label: project.name, toAll: false }" />
 
-  <main data-tokens class="mx-auto max-w-[620px]">
-    <div class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ project.name }}</div>
-    <h1 class="m-0 text-[34px] leading-none font-bold tracking-[-0.04em]">{{ questionnaire.name }}</h1>
+    <!-- The letter measure: this is a page somebody reads and answers, not a
+         screen they scan. -->
+    <main class="mx-auto w-full max-w-[668px] grow px-6 pt-[var(--band)] pb-28">
+      <p class="animate-rise motion-reduce:animate-none mb-4 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ project.name }}</p>
+      <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
+        {{ questionnaire.name }}
+      </h1>
 
-    <form class="mt-11" @submit.prevent="submit">
-      <template v-for="field in questionnaire.fields" :key="field.id">
-        <div v-if="field.type === 'boolean'">
-          <label class="flex cursor-pointer items-start gap-3.5 text-[13.5px] leading-[1.5] font-normal [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action">
+      <form class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 grid gap-6" @submit.prevent="submit">
+        <template v-for="field in questionnaire.fields" :key="field.id">
+          <label
+            v-if="field.type === 'boolean'"
+            class="flex cursor-pointer items-start gap-3.5 text-[14.5px] leading-[1.5] [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action"
+          >
             <Checkbox
               :model-value="isChecked(field.id)"
               @update:model-value="form.answers[field.id] = isChecked(field.id) ? '' : 'ja'"
             />
             <span>{{ field.label }}</span>
           </label>
-        </div>
 
-        <PortalField
-          v-else
-          :label="field.label"
-          :optional="field.required ? undefined : $t('settings.optional')"
-        >
-
-          <select v-if="field.type === 'select'" v-model="form.answers[field.id]">
-            <option value="" />
-            <option v-for="option in field.options ?? []" :key="option" :value="option">{{ option }}</option>
-          </select>
-
-          <!-- name_list is a list of people typed one per line; nothing in
-               the schema splits it, so nothing here pretends to. -->
-          <Textarea
-            v-else-if="field.type === 'text' || field.type === 'name_list'"
-            v-model="form.answers[field.id]"
-            rows="3"
-          />
-
-          <Input
+          <PortalField
             v-else
-            v-model="form.answers[field.id]"
-            :type="field.type === 'date' ? 'date' : field.type === 'time' ? 'time' : 'text'"
-          />
-        </PortalField>
+            :label="field.label"
+            :optional="field.required ? undefined : $t('settings.optional')"
+          >
+            <NativeSelect v-if="field.type === 'select'" v-model="form.answers[field.id]">
+              <option value="" />
+              <option v-for="option in field.options ?? []" :key="option" :value="option">{{ option }}</option>
+            </NativeSelect>
 
-        <p v-if="errorFor(field.id)" class="text-[11.5px] leading-[1.45] text-destructive">{{ errorFor(field.id) }}</p>
-      </template>
+            <!-- name_list is a list of people typed one per line; nothing in
+                 the schema splits it, so nothing here pretends to. -->
+            <Textarea
+              v-else-if="field.type === 'text' || field.type === 'name_list'"
+              v-model="form.answers[field.id]"
+              rows="3"
+            />
 
-      <div class="mt-8 flex items-center gap-5 [&_[data-slot=button][data-variant=default]]:ml-0">
-        <Button type="submit" :disabled="form.processing">{{ $t('common.save') }}</Button>
-      </div>
-    </form>
-  </main>
+            <Input
+              v-else
+              v-model="form.answers[field.id]"
+              :type="field.type === 'date' ? 'date' : field.type === 'time' ? 'time' : 'text'"
+            />
 
-  <PortalFooter />
+            <span v-if="errorFor(field.id)" class="mt-[7px] block text-[12.5px] leading-[1.45] text-destructive">{{ errorFor(field.id) }}</span>
+          </PortalField>
+        </template>
+
+        <Button class="mt-2 justify-self-start" variant="portal" type="submit" :disabled="form.processing">
+          {{ $t('common.save') }}
+        </Button>
+      </form>
+    </main>
+
+    <PortalFooter />
+  </PortalShell>
 </template>

@@ -2,6 +2,9 @@
 import { ref } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import PageHead from '@/ui/page/PageHead.vue'
+import { Input } from '@/ui/input'
+import { ChoiceGroup } from '@/ui/choice-group'
 
 const props = defineProps<{
   gallery: {
@@ -88,14 +91,14 @@ function shown() {
 <template>
   <AdminLayout active="projekte">
     <div data-tokens>
-      <div class="max-w-none px-8 pt-7">
-        <div class="flex items-center gap-5"><h1 class="m-0 text-[28px] leading-[1.08] font-semibold tracking-[-0.032em]">{{ gallery.title ?? '—' }}</h1></div>
+      <PageHead :title="gallery.title ?? '—'" />
 
+      <div class="max-w-none px-8 pt-7">
         <!-- Link, password and code stand in clear and are set here: both are
              handed to guests anyway, and a studio that cannot look one up
              sets a new one on every enquiry (C-17, #253). -->
         <div class="mb-5 flex items-start gap-[26px] pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
-          <div class="ml-auto flex min-w-0 flex-col gap-2">
+          <div class="flex min-w-0 flex-1 flex-col gap-2">
             <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.link') }}</div>
             <div class="mt-1.5 text-[17px] leading-none font-semibold tracking-[-0.018em] tabular-nums"><a class="text-[17px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline" :href="gallery.url">{{ gallery.url }}</a></div>
 
@@ -117,12 +120,12 @@ function shown() {
 
           <div class="flex min-w-0 flex-col gap-2">
             <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('gallery.gateView') }}</div>
-            <div class="mt-1.5 text-[17px] leading-none font-semibold tracking-[-0.018em] tabular-nums"><input v-model="secrets.view_password" class="w-[190px] px-[9px] py-[5px] text-[17px] tracking-[-0.018em]" type="text" @blur="saveSecrets" /></div>
+            <Input v-model="secrets.view_password" class="w-[190px]" type="text" @blur="saveSecrets" />
           </div>
 
           <div class="flex min-w-0 flex-col gap-2">
             <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('gallery.gateDownload') }}</div>
-            <div class="mt-1.5 text-[17px] leading-none font-semibold tracking-[-0.018em] tabular-nums"><input v-model="secrets.download_pin" class="w-[92px] px-[9px] py-[5px] text-[17px] tracking-[-0.018em]" type="text" @blur="saveSecrets" /></div>
+            <Input v-model="secrets.download_pin" class="w-[110px]" type="text" @blur="saveSecrets" />
           </div>
         </div>
 
@@ -196,9 +199,7 @@ function shown() {
         </div>
 
         <div class="min-w-0 flex-1 pt-5 pr-8 pb-7">
-          <!-- 3px hoch: .bar trifft hier auch die Fortschrittsbalken-Regel, und die
-           Kinder stehen ueber ihren Container hinaus. Gemessen, nicht gewollt. -->
-          <div class="mb-4 flex h-[3px] items-center gap-3 overflow-hidden rounded-[2px] bg-[#F5F5F4]">
+          <div class="mb-4 flex items-center gap-3">
             <h2 class="m-0 text-[17px] leading-[1.2] font-semibold tracking-[-0.022em]">{{ $t('galleryRecord.images') }}</h2>
             <span class="text-[12px] text-ink-2">{{ shown().length }}</span>
             <Link class="ml-auto flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-sunk-2 px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-foreground no-underline transition-[filter,background] duration-[120ms] ease-out hover:bg-[#E9E9EC]" :href="`/galerien/${gallery.id}/medien`">
@@ -230,32 +231,29 @@ function shown() {
         <div class="w-80 flex-none pt-5 pr-4 pb-7 pl-8">
           <div class="mb-4 flex flex-col gap-1">
             <span class="pl-0.5 text-[10.5px] leading-none font-normal tracking-[0.05em] uppercase text-ink-2">{{ $t('galleryRecord.cover') }}</span>
-            <div class="flex flex-wrap gap-1.5">
-              <label v-for="option in COVERS" :key="option" class="relative">
-                <input v-model="design.design.cover" class="peer absolute opacity-0 pointer-events-none" type="radio" :value="option" @change="saveDesign" />
-                <span class="inline-block cursor-pointer rounded-full bg-sunk px-3 py-1.5 text-[12.5px] text-foreground peer-checked:bg-foreground peer-checked:text-paper">{{ $t(`galleryRecord.cover_${option}`) }}</span>
-              </label>
-            </div>
+            <ChoiceGroup
+              v-model="design.design.cover"
+              :options="COVERS.map((option) => ({ value: option, label: $t(`galleryRecord.cover_${option}`) }))"
+              @update:model-value="saveDesign"
+            />
           </div>
 
           <div class="mb-4 flex flex-col gap-1">
             <span class="pl-0.5 text-[10.5px] leading-none font-normal tracking-[0.05em] uppercase text-ink-2">{{ $t('galleryRecord.colour') }}</span>
-            <div class="flex flex-wrap gap-1.5">
-              <label v-for="option in COLOURS" :key="option" class="relative">
-                <input v-model="design.design.colour" class="peer absolute opacity-0 pointer-events-none" type="radio" :value="option" @change="saveDesign" />
-                <span class="inline-block cursor-pointer rounded-full bg-sunk px-3 py-1.5 text-[12.5px] text-foreground peer-checked:bg-foreground peer-checked:text-paper">{{ $t(`galleryRecord.colour_${option}`) }}</span>
-              </label>
-            </div>
+            <ChoiceGroup
+              v-model="design.design.colour"
+              :options="COLOURS.map((option) => ({ value: option, label: $t(`galleryRecord.colour_${option}`) }))"
+              @update:model-value="saveDesign"
+            />
           </div>
 
           <div class="flex flex-col gap-1">
             <span class="pl-0.5 text-[10.5px] leading-none font-normal tracking-[0.05em] uppercase text-ink-2">{{ $t('galleryRecord.grid') }}</span>
-            <div class="flex flex-wrap gap-1.5">
-              <label v-for="option in GRIDS" :key="option" class="relative">
-                <input v-model="design.design.grid" class="peer absolute opacity-0 pointer-events-none" type="radio" :value="option" @change="saveDesign" />
-                <span class="inline-block cursor-pointer rounded-full bg-sunk px-3 py-1.5 text-[12.5px] text-foreground peer-checked:bg-foreground peer-checked:text-paper">{{ $t(`galleryRecord.grid_${option}`) }}</span>
-              </label>
-            </div>
+            <ChoiceGroup
+              v-model="design.design.grid"
+              :options="GRIDS.map((option) => ({ value: option, label: $t(`galleryRecord.grid_${option}`) }))"
+              @update:model-value="saveDesign"
+            />
           </div>
         </div>
 

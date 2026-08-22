@@ -199,12 +199,11 @@ function complete(task: App.Crm.Data.TaskRowData) {
 
                     <div class="sticky top-0 z-[5] flex items-center gap-3 bg-paper">
                         <div>
-                            <input
+                            <Input
                                 v-if="editing"
                                 v-model="edit.name"
-                                class="max-w-[820px]"
+                                class="max-w-[820px] text-[22px]"
                                 type="text"
-                                style="font-size: 22px"
                             />
                             <h1 v-else class="m-0 mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]">
                                 {{ header.names }}

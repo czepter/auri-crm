@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
+import { Checkbox } from '@/ui/checkbox'
+import { Input } from '@/ui/input'
 
 type Asset = { key: string; width: number | null; height: number | null; src: string }
 type Comment = { key: string; body: string; author: string; own: boolean; createdAt: string }
@@ -205,11 +207,9 @@ function time(iso: string) {
 
             <div v-if="listsOpen" class="absolute top-7 left-0 z-5 w-[216px] rounded-md border border-border bg-muted p-1.5 shadow-[0_20px_48px_-16px_rgba(0,0,0,.6)]">
               <label v-for="list in lists" :key="list.id" class="flex cursor-pointer items-center gap-2.5 rounded-[var(--r-sm)] px-2.5 py-[9px] text-[13px] leading-none font-medium text-foreground hover:bg-[rgba(255,255,255,.06)]">
-                <input
-                  type="checkbox"
-                  class="m-0 flex-none cursor-pointer accent-[var(--accent)]"
-                  :checked="list.keys.includes(asset.key)"
-                  @change="toggleList(list)"
+                <Checkbox
+                  :model-value="list.keys.includes(asset.key)"
+                  @update:model-value="toggleList(list)"
                 />
                 {{ list.name ?? $t('gallery.heart') }}
                 <span class="ml-auto text-[11.5px] tabular-nums text-muted-foreground">{{ list.keys.length }}</span>
@@ -250,11 +250,8 @@ function time(iso: string) {
           </p>
         </div>
 
-        <form
-          class="[&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-line-hover [&_input]:bg-muted [&_input]:px-3 [&_input]:py-[11px] [&_input]:text-[13.5px] [&_input]:leading-[1.2] [&_input]:font-normal [&_input]:text-foreground"
-          @submit.prevent="sendComment"
-        >
-          <input v-model="draft" type="text" :placeholder="$t('gallery.commentPlaceholder')" />
+        <form @submit.prevent="sendComment">
+          <Input v-model="draft" type="text" :placeholder="$t('gallery.commentPlaceholder')" />
         </form>
       </aside>
     </div>
