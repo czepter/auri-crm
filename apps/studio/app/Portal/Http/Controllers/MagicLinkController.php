@@ -43,6 +43,11 @@ class MagicLinkController extends Controller
             return redirect('/anmelden')->with('status', __('portal.link_dead'));
         }
 
+        // Whatever session this browser was holding is not this link's. Kept
+        // it would carry the previous contact's `portal_preview` flag into a
+        // real client's session.
+        $request->session()->invalidate();
+
         Auth::guard('portal')->login($access->contact);
 
         // A fresh session id, so a token that was ever visible in a URL bar,

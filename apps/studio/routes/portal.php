@@ -36,12 +36,15 @@ Route::middleware('portal.maintenance')->group(function () {
     Route::middleware('guest:portal')->group(function () {
         Route::get('/anmelden', [MagicLinkController::class, 'create'])->name('portal.login');
         Route::post('/anmelden', [MagicLinkController::class, 'store'])->name('portal.login.request');
-
-        // The link itself. Single use, fifteen minutes, and the token in the
-        // path is the whole of the credential — so it is spent the moment it
-        // works.
-        Route::get('/zugang/{token}', [MagicLinkController::class, 'consume'])->name('portal.access');
     });
+
+    // The link itself. Single use, fifteen minutes, and the token in the
+    // path is the whole of the credential — so it is spent the moment it
+    // works. Deliberately outside `guest:portal`: behind it an already signed
+    // in browser was bounced to '/' with the token unspent, so a studio member
+    // previewing a second client kept seeing the first, and a shared browser
+    // showed one client another's portal.
+    Route::get('/zugang/{token}', [MagicLinkController::class, 'consume'])->name('portal.access');
 
     Route::middleware('audience:portal')->group(function () {
         Route::post('/abmelden', [MagicLinkController::class, 'destroy'])->name('portal.logout');

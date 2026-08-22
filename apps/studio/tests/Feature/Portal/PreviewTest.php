@@ -83,10 +83,23 @@ it('spends a preview link exactly once', function () {
 
     expect(ClientAccess::sole()->consumed_at)->not->toBeNull();
 
-    // From a browser that never held the first session — the signed-out case
-    // is the one that matters, and /zugang is behind `guest:portal`, so a
-    // second click in the SAME browser lands on the home rather than here.
     expect(app(ConsumeClientAccess::class)($token))->toBeNull();
+});
+
+// The link is the whole credential, so it outranks whatever session the
+// browser is holding. Behind `guest:portal` it did not: a studio member
+// previewing a second client kept landing on the first, with the second link
+// left unspent.
+it('signs the browser in as the link\'s contact, whoever it was holding', function () {
+    useSurface(Surface::PORTAL);
+
+    $holding = Contact::factory()->create();
+    $wanted = Contact::factory()->create();
+
+    test()->actingAs($holding, 'portal')->get(previewLink($wanted))->assertRedirect('/');
+
+    expect(ClientAccess::sole()->consumed_at)->not->toBeNull()
+        ->and(auth('portal')->id())->toBe($wanted->id);
 });
 
 it('refuses a preview link once it has expired', function () {
@@ -158,15 +171,13 @@ it('mints a preview link for an owner and refuses everyone else', function () {
 
     $contact = Contact::factory()->create();
 
-    // As the button sends it: an Inertia XHR, which may not follow a redirect
-    // onto the portal's own origin — so the link has to come back as a
-    // location rather than a Location.
+    // As the button sends it: a form POST into a second tab, so the answer
+    // is a redirect that tab follows onto the portal's own origin.
     $response = test()->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->withHeader('X-Inertia', 'true')
         ->post("/kontakte/{$contact->public_id}/portal-vorschau")
-        ->assertStatus(409);
+        ->assertStatus(302);
 
-    expect($response->headers->get('X-Inertia-Location'))
+    expect($response->headers->get('Location'))
         ->toStartWith(config('portal.url').'/zugang/');
 
     expect(ClientAccess::query()->whereNotNull('preview_by_id')->count())->toBe(1)
