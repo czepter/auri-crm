@@ -3,6 +3,7 @@
 use App\Crm\Models\Project;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
+use App\Media\Enums\AssetStatus;
 use App\Media\Models\Asset;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -42,6 +43,59 @@ it('lists the sets with their counts', function () {
     expect(collect($props['sets'])->pluck('name')->all())->toBe(['Highlights', 'Trauung'])
         ->and(collect($props['sets'])->firstWhere('name', 'Trauung')['count'])->toBe(1)
         ->and($props['figures']['assets'])->toBe(2);
+});
+
+// Fix round 1, Critical: a Failed row has no key, so it must never reach the
+// picture grid — it has nothing a <img> or a set badge could show.
+it('keeps a Failed asset out of the pictures, its set count, and the total', function () {
+    $gallery = managedGallery();
+    $highlights = GallerySet::where('gallery_id', $gallery->id)->where('name', 'Highlights')->first();
+
+    Asset::factory()->create([
+        'gallery_id' => $gallery->id, 'gallery_set_id' => $highlights->id,
+        'status' => AssetStatus::Failed, 'key' => null, 'filename' => 'c.jpg', 'error' => 'corrupt file',
+    ]);
+
+    $props = props("/galerien/{$gallery->public_id}");
+
+    expect(collect($props['assets'])->pluck('filename'))->not->toContain('c.jpg')
+        ->and(collect($props['sets'])->firstWhere('name', 'Highlights')['count'])->toBe(1)
+        ->and($props['figures']['assets'])->toBe(2);
+});
+
+// Fix round 1, Important: figures.assets is what the studio counts pictures
+// by; publish() is what a client actually receives. They must agree, or a
+// Failed row makes the photographer chase a picture that was never there.
+it('keeps figures.assets equal to what publishing actually snapshots', function () {
+    $gallery = managedGallery();
+    $highlights = GallerySet::where('gallery_id', $gallery->id)->where('name', 'Highlights')->first();
+
+    Asset::factory()->create([
+        'gallery_id' => $gallery->id, 'gallery_set_id' => $highlights->id,
+        'status' => AssetStatus::Failed, 'key' => null, 'filename' => 'c.jpg', 'error' => 'corrupt file',
+    ]);
+
+    $version = $gallery->fresh()->publish();
+
+    $props = props("/galerien/{$gallery->public_id}");
+
+    expect($props['figures']['assets'])->toBe(count($version->assets));
+});
+
+// Fix round 1, Important: the exact assetCount bug fixed on GalleryRowData,
+// four lines above the siblings block in the same controller.
+it('shows a sibling gallery its real picture count', function () {
+    $project = Project::factory()->create();
+    $gallery = Gallery::factory()->for($project)->create(['title' => 'Erste Galerie']);
+    $sibling = Gallery::factory()->for($project)->create(['title' => 'Zweite Galerie']);
+    $siblingSet = GallerySet::where('gallery_id', $sibling->id)->first();
+
+    Asset::factory()->create(['gallery_id' => $sibling->id, 'gallery_set_id' => $siblingSet->id]);
+    Asset::factory()->create(['gallery_id' => $sibling->id, 'gallery_set_id' => $siblingSet->id]);
+
+    $props = props("/galerien/{$gallery->public_id}");
+
+    expect(collect($props['siblings'])->firstWhere('id', $sibling->public_id)['assetCount'])->toBe(2);
 });
 
 // C-17 (#253) stored them recoverably so this screen could show them.

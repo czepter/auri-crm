@@ -67,10 +67,18 @@ class Asset extends Model
         return $this->hasMany(AssetDerivative::class);
     }
 
-    /** Was der Entwurf zeigt. Versionsgebundene Leser (ZIP, Bildauslieferung) fragen das nie. */
+    /**
+     * Was der Entwurf zeigt. Versionsgebundene Leser (ZIP, Bildauslieferung)
+     * fragen das nie.
+     *
+     * status=Ready gehoert hierher, nicht in jeden einzelnen Aufrufer: ein
+     * Failed-Datensatz hat keinen key, keine Masse, nichts, das ein Raster
+     * oder ein Snapshot zeigen koennte. G-04's Tray fragt selbst nach
+     * status, nicht nach diesem Scope.
+     */
     public function scopeInDraft(Builder $query): void
     {
-        $query->whereNull('removed_from_draft_at');
+        $query->whereNull('removed_from_draft_at')->where('status', AssetStatus::Ready);
     }
 
     protected static function newFactory(): Factory

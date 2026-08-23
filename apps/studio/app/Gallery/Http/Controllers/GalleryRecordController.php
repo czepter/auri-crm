@@ -77,11 +77,12 @@ class GalleryRecordController extends Controller
             // the ones one flips between.
             'siblings' => $gallery->project_id === null ? [] : Gallery::query()
                 ->where('project_id', $gallery->project_id)
+                ->withCount(['assetRows as asset_count' => fn ($query) => $query->inDraft()])
                 ->get()
                 ->map(fn (Gallery $other) => [
                     'id' => $other->public_id,
                     'title' => $other->title,
-                    'assetCount' => count($other->assets ?? []),
+                    'assetCount' => $other->asset_count,
                     'open' => $other->id === $gallery->id,
                 ])->all(),
             'figures' => [

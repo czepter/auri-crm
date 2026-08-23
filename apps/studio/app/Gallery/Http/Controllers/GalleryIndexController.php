@@ -33,6 +33,7 @@ class GalleryIndexController extends Controller
 
         $galleries = Gallery::query()
             ->with(['project', 'currentVersion'])
+            ->withCount(['assetRows as asset_count' => fn ($query) => $query->inDraft()])
             // Die eine Ausnahme von der Projektsichtbarkeit: eine Galerie ohne
             // Buchung hat nichts, woran ein Filter greifen könnte.
             ->where(fn ($query) => $query

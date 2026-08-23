@@ -241,7 +241,7 @@ function setName(setId: string) {
           <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2.5">
             <figure v-for="asset in shown()" :key="asset.id" class="relative m-0">
               <img v-if="asset.src" class="block aspect-3/2 w-full rounded-lg object-cover" :src="`${asset.src}?w=400&fmt=jpeg`" alt="" loading="lazy" />
-              <span v-if="setName(asset.setId)" class="absolute top-[7px] left-[7px] flex gap-1 text-[10.5px] text-paper"><span class="rounded-full bg-[rgba(29,29,31,0.62)] px-[7px] py-0.5">{{ setName(asset.setId) }}</span></span>
+              <span class="absolute top-[7px] left-[7px] flex gap-1 text-[10.5px] text-paper"><span class="rounded-full bg-[rgba(29,29,31,0.62)] px-[7px] py-0.5">{{ setName(asset.setId) }}</span></span>
             </figure>
           </div>
 
