@@ -10,6 +10,7 @@ use App\Quotes\Actions\SendQuote;
 use App\Quotes\Models\Quote;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
+use Carbon\CarbonInterval;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -104,8 +105,9 @@ class QuoteController extends Controller
 
         $quote->recalculateTotal();
 
-        AuditLogger::record(
+        AuditLogger::recordThrottled(
             event: 'quote.updated',
+            within: CarbonInterval::minutes(15),
             actor: auth('staff')->user(),
             subject: $quote->public_id,
             projectId: $quote->project_id,

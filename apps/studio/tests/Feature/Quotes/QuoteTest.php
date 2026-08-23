@@ -949,3 +949,35 @@ describe('Q-07: Project::latestQuote()', function () {
         expect($project->fresh()->latestQuote->id)->toBe($revision->fresh()->id);
     });
 });
+
+// --- Autosave: the audit entry is throttled, not dropped ----------------
+
+it('writes one quote.updated for a burst of autosaves, and one again after the window', function () {
+    $user = quoteOwner();
+    $quote = Quote::factory()->create();
+
+    $payload = ['items' => [['title' => 'Reportage', 'description' => null, 'quantity' => 1, 'unit_price' => 440000]]];
+
+    $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", $payload);
+    $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", $payload);
+
+    expect(AuditLog::where('event', 'quote.updated')->where('subject', $quote->public_id)->count())->toBe(1);
+
+    $this->travel(16)->minutes();
+    $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", $payload);
+
+    expect(AuditLog::where('event', 'quote.updated')->where('subject', $quote->public_id)->count())->toBe(2);
+});
+
+it('does not let one quote\'s autosave suppress another quote\'s entry', function () {
+    $user = quoteOwner();
+    $first = Quote::factory()->create();
+    $second = Quote::factory()->create();
+
+    $payload = ['items' => [['title' => 'Reportage', 'description' => null, 'quantity' => 1, 'unit_price' => 440000]]];
+
+    $this->actingAs($user, 'staff')->patch("/angebote/{$first->public_id}", $payload);
+    $this->actingAs($user, 'staff')->patch("/angebote/{$second->public_id}", $payload);
+
+    expect(AuditLog::where('event', 'quote.updated')->count())->toBe(2);
+});
