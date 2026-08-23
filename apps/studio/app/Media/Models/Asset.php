@@ -5,8 +5,10 @@ namespace App\Media\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
 use App\Media\Enums\AssetStatus;
 use Database\Factories\Media\AssetFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -33,9 +35,9 @@ class Asset extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'public_id', 'gallery_id', 'checksum', 'status', 'error', 'key',
-        'filename', 'byte_size', 'width', 'height', 'taken_at',
-        'camera_make', 'camera_model', 'phash', 'blurhash',
+        'public_id', 'gallery_id', 'gallery_set_id', 'checksum', 'status', 'error',
+        'removed_from_draft_at', 'key', 'filename', 'byte_size', 'width', 'height',
+        'taken_at', 'camera_make', 'camera_model', 'phash', 'blurhash',
     ];
 
     protected function casts(): array
@@ -46,6 +48,7 @@ class Asset extends Model
             'width' => 'integer',
             'height' => 'integer',
             'taken_at' => 'datetime',
+            'removed_from_draft_at' => 'datetime',
         ];
     }
 
@@ -54,9 +57,20 @@ class Asset extends Model
         return $this->belongsTo(Gallery::class);
     }
 
+    public function set(): BelongsTo
+    {
+        return $this->belongsTo(GallerySet::class, 'gallery_set_id');
+    }
+
     public function derivatives(): HasMany
     {
         return $this->hasMany(AssetDerivative::class);
+    }
+
+    /** Was der Entwurf zeigt. Versionsgebundene Leser (ZIP, Bildauslieferung) fragen das nie. */
+    public function scopeInDraft(Builder $query): void
+    {
+        $query->whereNull('removed_from_draft_at');
     }
 
     protected static function newFactory(): Factory
