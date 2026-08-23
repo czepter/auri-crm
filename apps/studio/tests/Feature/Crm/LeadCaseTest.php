@@ -8,6 +8,7 @@ use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\User;
+use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -182,4 +183,30 @@ it('refuses to move a shoot once the project is booked', function () {
     ])->assertStatus(422);
 
     expect($lead->project->primaryShoot->fresh()->date->format('Y-m-d'))->toBe('2026-09-05');
+});
+
+// --- The quote block carries every version, not only the current one ----
+
+it('sends the superseded quote versions alongside the current one', function () {
+    $lead = caseFor();
+    $old = Quote::factory()->for($lead->project)->create([
+        'status' => QuoteStatus::Superseded,
+        'number' => 'AN-2026-001',
+        'net' => 298000,
+    ]);
+    Quote::factory()->for($lead->project)->create(['status' => QuoteStatus::Sent, 'net' => 257200]);
+
+    $props = props("/anfragen/{$lead->public_id}");
+
+    expect($props['supersededQuotes'])->toHaveCount(1)
+        ->and($props['supersededQuotes'][0]['id'])->toBe($old->public_id)
+        ->and($props['supersededQuotes'][0]['number'])->toBe('AN-2026-001')
+        ->and($props['supersededQuotes'][0]['net'])->toBe(298000);
+});
+
+it('sends an empty superseded list when a project has only one quote', function () {
+    $lead = caseFor();
+    Quote::factory()->for($lead->project)->create();
+
+    expect(props("/anfragen/{$lead->public_id}")['supersededQuotes'])->toBe([]);
 });

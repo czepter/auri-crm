@@ -4,8 +4,8 @@ namespace App\Crm\Http\Controllers;
 
 use App\Catalog\Models\Package;
 use App\Crm\Actions\BuildThread;
-use App\Crm\Actions\OpenLeads;
 use App\Crm\Actions\CheckDateAvailability;
+use App\Crm\Actions\OpenLeads;
 use App\Crm\Data\ProjectPersonData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
@@ -16,6 +16,8 @@ use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Http\Controllers\Controller;
 use App\Quotes\Data\QuoteData;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\RecordVisit;
 use Carbon\CarbonImmutable;
@@ -98,6 +100,17 @@ class LeadCaseController extends Controller
                 $project->shoots->map(fn (Shoot $shoot) => ShootData::fromShoot($shoot))
             ),
             'quote' => $project->latestQuote === null ? null : QuoteData::fromModel($project->latestQuote),
+            // Die ersetzten Fassungen tragen in der Übersicht nur ihren Preis:
+            // was in ihnen stand, steht im Angebot selbst.
+            'supersededQuotes' => $project->quotes()
+                ->where('status', QuoteStatus::Superseded)
+                ->latest()
+                ->get()
+                ->map(fn (Quote $quote) => [
+                    'id' => $quote->public_id,
+                    'number' => $quote->number,
+                    'net' => $quote->net,
+                ])->all(),
             // Without a quote, the active packages with their item count and
             // sum — the next move is choosing one, so the screen offers the
             // choice rather than an empty section.
