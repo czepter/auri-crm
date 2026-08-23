@@ -27,4 +27,12 @@ return [
     */
 
     'last_set' => 'Die Galerie braucht ein Set.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Veröffentlichen
+    |--------------------------------------------------------------------------
+    */
+
+    'empty_draft' => 'Die Galerie hat noch keine Bilder.',
 ];

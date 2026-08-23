@@ -73,6 +73,14 @@ it('closes the gate on withdrawal and leaves the version standing', function () 
         ->and($this->gallery->fresh()->versions()->count())->toBe(1);
 });
 
+it('refuses to publish a gallery with no draft assets', function () {
+    $empty = Gallery::factory()->create();
+
+    $this->post("/galerien/{$empty->public_id}/veroeffentlichen")->assertSessionHasErrors('gallery');
+
+    expect($empty->fresh()->currentVersion)->toBeNull();
+});
+
 it('keeps publishing away from a role that may not show things to clients', function () {
     // Editor, not SecondShooter: Editor holds ManageShoots (reaches
     // manageMedia) but not ManagePortalAccess, so this pins publish() to
