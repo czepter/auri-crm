@@ -29,6 +29,7 @@ use App\Gallery\Http\Controllers\GalleryLightroomExportController;
 use App\Gallery\Http\Controllers\GalleryIndexController;
 use App\Gallery\Http\Controllers\GalleryPresetController;
 use App\Gallery\Http\Controllers\GalleryRecordController;
+use App\Gallery\Http\Controllers\GallerySetController;
 use App\Http\Controllers\Staff\AbsenceController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
@@ -460,6 +461,16 @@ Route::middleware('audience:staff')->group(function () {
             ->name('galleries.update');
         Route::post('/galerien/{gallery}/vorlage', [GalleryPresetController::class, 'storeFromGallery'])
             ->name('galleries.preset.store');
+        Route::post('/galerien/{gallery}/sets', [GallerySetController::class, 'store'])
+            ->name('galleries.sets.store');
+        // Above /sets/{gallerySet}, sonst schluckt die Bindung "reihenfolge"
+        // als public_id.
+        Route::patch('/galerien/{gallery}/sets/reihenfolge', [GallerySetController::class, 'reorder'])
+            ->name('galleries.sets.reorder');
+        Route::patch('/galerien/{gallery}/sets/{gallerySet}', [GallerySetController::class, 'update'])
+            ->name('galleries.sets.update');
+        Route::delete('/galerien/{gallery}/sets/{gallerySet}', [GallerySetController::class, 'destroy'])
+            ->name('galleries.sets.destroy');
         Route::get('/galerien/{gallery}/medien', [MediaIngestController::class, 'show'])
             ->name('galleries.media');
         Route::post('/galerien/{gallery}/uploads', [MultipartUploadController::class, 'store'])
