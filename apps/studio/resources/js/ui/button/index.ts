@@ -27,6 +27,9 @@ export { default as Button } from "./Button.vue"
  * that reset excludes [data-tokens], so a button's mark would arrive
  * unstroked on every screen that has moved to Tailwind.
  */
+const PORTAL
+  = "gap-2.5 rounded-[var(--r-pill)] border-0 px-[26px] py-[15px] text-[14.5px] font-semibold leading-none duration-200 ease-[var(--ease)] [&_svg]:size-[15px] [&_svg]:stroke-[1.6]"
+
 export const buttonVariants = cva(
   "inline-flex shrink-0 cursor-pointer items-center gap-[7px] font-sans no-underline outline-none disabled:cursor-default disabled:opacity-50 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.75] [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]",
   {
@@ -54,10 +57,8 @@ export const buttonVariants = cva(
          * No ml-auto, unlike `default`: these sit where their layout puts
          * them.
          */
-        portal:
-          "gap-2.5 rounded-[var(--r-pill)] border-0 bg-foreground px-[26px] py-[15px] text-[14.5px] font-semibold leading-none tracking-[-0.005em] text-background transition-[transform,background-color] duration-200 ease-[var(--ease)] hover:-translate-y-px hover:bg-action active:translate-y-0 [&_svg]:size-[15px] [&_svg]:stroke-[1.6]",
-        "portal-ghost":
-          "gap-2.5 rounded-[var(--r-pill)] border-0 bg-transparent px-[26px] py-[15px] text-[14.5px] font-semibold leading-none text-foreground shadow-[inset_0_0_0_1px_var(--line-hover)] transition-colors duration-200 ease-[var(--ease)] hover:bg-foreground hover:text-background hover:shadow-none [&_svg]:size-[15px] [&_svg]:stroke-[1.6]",
+        portal: `${PORTAL} bg-foreground tracking-[-0.005em] text-background transition-[transform,background-color] hover:-translate-y-px hover:bg-action active:translate-y-0`,
+        "portal-ghost": `${PORTAL} bg-transparent text-foreground shadow-[inset_0_0_0_1px_var(--line-hover)] transition-colors hover:bg-foreground hover:text-background hover:shadow-none`,
         /* mockups/redesign/tokens.css .chip — the quiet portal action, and
            the only one that ever stands next to another of its kind. */
         "portal-chip":

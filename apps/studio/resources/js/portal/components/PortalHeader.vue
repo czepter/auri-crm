@@ -45,7 +45,7 @@ const nav = computed(() => usePage().props.portalNav as Nav | null | undefined)
 // discover that by being refused.
 const preview = computed(() => usePage().props.portalPreview === true)
 
-const path = computed(() => new URL(usePage().url, 'http://x').pathname)
+const path = computed(() => usePage().url.split('?')[0])
 
 // Every portal screen mounts this component once, so applying the accent
 // colour here — rather than in each page — is enough to cover the whole
@@ -142,5 +142,5 @@ watch(branding, applyAccent)
     </div>
   </div>
 
-  <PortalTabbar v-if="nav" :messaging="nav.messaging" :unread="nav.unread" />
+  <PortalTabbar />
 </template>

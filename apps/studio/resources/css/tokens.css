@@ -67,11 +67,11 @@
    white — set, of all things, on the smallest text in the product. Size
    carries the hierarchy here: 11px caps against 86px serif.
 
-   --s8 upward have no counterpart in the admin. A tool is read at a desk and
-   wants density; this surface is read once a year and wants a page.
+   --s8 has no counterpart in the admin. A tool is read at a desk and wants
+   density; this surface is read once a year and wants a page.
 
-   --page and --read are the two measures every screen picks between. Nothing
-   on this surface sets a width of its own. */
+   --page is the measure every screen picks. Nothing on this surface sets a
+   width of its own. */
 [data-theme="portal"] {
   --hover:#F4F4F3;
   --sunk:#F4F4F3;
@@ -84,14 +84,13 @@
   --accent-bg:#FBE9E2;
 
   --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
-  --s8:72px; --s9:112px; --s10:160px;
+  --s8:72px;
 
   --r:14px;
   --r-sm:9px;
   --r-pill:999px;
 
   --page:1180px;
-  --read:720px;
   --band:72px;
 }
 

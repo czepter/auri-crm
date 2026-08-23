@@ -72,14 +72,13 @@ function longDate(date: string) {
   return new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-const switcher = computed(() => ({ label: props.project.name, toAll: props.showSwitcher }))
 
 const BAND = 'max-w-[880px] border-t border-border pt-12'
 </script>
 
 <template>
   <PortalShell>
-    <PortalHeader :switcher="switcher" />
+    <PortalHeader :switcher="{ label: project.name, toAll: showSwitcher }" />
 
     <PortalWrap class="pb-40">
       <section class="pt-[var(--band)]">

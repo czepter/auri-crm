@@ -58,14 +58,13 @@ function longDate(iso: string) {
 
 const venue = [props.project.venueName, props.project.venueCity].filter(Boolean).join(', ')
 
-const switcher = computed(() => ({ label: props.project.name, toAll: props.showSwitcher }))
 
 const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
 </script>
 
 <template>
   <PortalShell>
-    <PortalHeader :switcher="switcher" />
+    <PortalHeader :switcher="{ label: project.name, toAll: showSwitcher }" />
 
     <!-- The first day in the portal. There are two names, a wished-for date and
          a kind; there are no pictures, appointments, quote, contract or

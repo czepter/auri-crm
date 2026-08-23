@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, watch } from 'vue'
+import { onBeforeUnmount, watch } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import PortalField from '@/portal/components/PortalField.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
@@ -69,12 +69,11 @@ function sign() {
   form.post(`/projekte/${props.project.id}/vertrag/unterschreiben`, { preserveScroll: true })
 }
 
-const switcher = computed(() => ({ label: props.project.name, toAll: props.showSwitcher }))
 </script>
 
 <template>
   <PortalShell>
-    <PortalHeader :switcher="switcher" />
+    <PortalHeader :switcher="{ label: project.name, toAll: showSwitcher }" />
 
     <PortalWrap class="pb-40">
       <section class="pt-[var(--band)]">

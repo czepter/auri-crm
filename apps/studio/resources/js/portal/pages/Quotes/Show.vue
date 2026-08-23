@@ -59,7 +59,6 @@ function accept() {
   form.post(`/projekte/${props.project.id}/angebot/annehmen`, { preserveScroll: true })
 }
 
-const switcher = computed(() => ({ label: props.project.name, toAll: props.showSwitcher }))
 
 // The dot says the same thing the label does, one beat earlier. Warm means
 // this one is waiting on the client.
@@ -70,7 +69,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
 
 <template>
   <PortalShell>
-    <PortalHeader :switcher="switcher" />
+    <PortalHeader :switcher="{ label: project.name, toAll: showSwitcher }" />
 
     <PortalWrap class="pb-40">
       <section class="pt-[var(--band)]">

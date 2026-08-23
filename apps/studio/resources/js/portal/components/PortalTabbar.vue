@@ -11,12 +11,12 @@ import { Link, usePage } from '@inertiajs/vue3'
  * "Abmelden" is not one of them. It lives in the settings, where the rest of
  * the access does.
  */
-defineProps<{ messaging: boolean; unread: number }>()
+const nav = computed(() => usePage().props.portalNav as { messaging: boolean; unread: number } | null | undefined)
 
-const path = computed(() => new URL(usePage().url, 'http://x').pathname)
+const path = computed(() => usePage().url.split('?')[0])
 
-function on(match: (path: string) => boolean) {
-  return match(path.value) ? 'font-semibold text-foreground' : 'text-muted-foreground'
+function on(active: boolean) {
+  return active ? 'font-semibold text-foreground' : 'text-muted-foreground'
 }
 
 const LINK
@@ -25,22 +25,23 @@ const LINK
 
 <template>
   <nav
+    v-if="nav"
     class="fixed inset-x-0 bottom-0 z-40 grid auto-cols-fr grid-flow-col border-t border-border bg-[color-mix(in_srgb,var(--bg)_92%,transparent)] pb-[env(safe-area-inset-bottom)] backdrop-blur-[16px] min-[761px]:hidden"
   >
-    <Link :class="[LINK, on((p) => p === '/' || p.startsWith('/projekte'))]" href="/">
+    <Link :class="[LINK, on(path === '/' || path.startsWith('/projekte'))]" href="/">
       <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10" /></svg>
       {{ $t('portal.navBookings') }}
     </Link>
 
-    <Link v-if="messaging" :class="[LINK, on((p) => p.startsWith('/nachrichten'))]" href="/nachrichten">
+    <Link v-if="nav.messaging" :class="[LINK, on(path.startsWith('/nachrichten'))]" href="/nachrichten">
       <span class="relative">
         <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4zM4 7l8 6 8-6" /></svg>
-        <i v-if="unread" class="absolute -top-px -right-[5px] size-[7px] rounded-full bg-action" />
+        <i v-if="nav.unread" class="absolute -top-px -right-[5px] size-[7px] rounded-full bg-action" />
       </span>
       {{ $t('portal.messagesTitle') }}
     </Link>
 
-    <Link :class="[LINK, on((p) => p.startsWith('/einstellungen'))]" href="/einstellungen">
+    <Link :class="[LINK, on(path.startsWith('/einstellungen'))]" href="/einstellungen">
       <svg viewBox="0 0 24 24">
         <circle cx="12" cy="12" r="3" />
         <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" />

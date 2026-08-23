@@ -93,7 +93,6 @@ const daysLeft = computed(() => {
 
 const heroImage = computed(() => props.project.gallery?.strip[0] ?? null)
 
-const switcher = computed(() => ({ label: props.project.name, toAll: props.showSwitcher }))
 
 const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
 
@@ -124,7 +123,7 @@ function documentNote(document: Document) {
     <!-- The picture first. The old screen opened on the paperwork and read
          like a file. -->
     <header v-if="heroImage" class="relative h-[78vh] min-h-[640px] overflow-hidden bg-sunk max-[820px]:h-[62vh] max-[820px]:min-h-[440px]">
-      <PortalHeader over :switcher="switcher" />
+      <PortalHeader over :switcher="{ label: project.name, toAll: showSwitcher }" />
 
       <img class="size-full object-cover object-[50%_42%]" :src="`${heroImage}?w=2400&fmt=jpeg`" alt="" />
 
@@ -146,7 +145,7 @@ function documentNote(document: Document) {
       </div>
     </header>
 
-    <PortalHeader v-else :switcher="switcher" />
+    <PortalHeader v-else :switcher="{ label: project.name, toAll: showSwitcher }" />
 
     <PortalWrap class="pb-40">
       <!-- No photograph yet: the head is typographic, the same way the inquiry

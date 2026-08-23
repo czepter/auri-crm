@@ -41,7 +41,7 @@ const composing = ref(props.openThread === null)
  * asked for. The URL is what distinguishes the two: ?unterhaltung= is there
  * only when a row was tapped.
  */
-const chosen = computed(() => new URL(usePage().url, 'http://x').searchParams.has('unterhaltung'))
+const chosen = computed(() => usePage().url.includes('unterhaltung='))
 const subscreen = computed(() => chosen.value || composing.value)
 
 const reply = useForm({ body: '' })
