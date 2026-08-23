@@ -38,8 +38,7 @@ const can = computed(() => page.props.auth.can ?? []);
 //
 // Only entries with a screen behind them appear, which is the same ruling C-06
 // applies to its tabs and S-01 to the Übersicht: an item that goes nowhere
-// teaches staff to distrust the nav. Galerien is in the draft's own sidebar
-// and absent here for exactly that reason — the admin gallery record is #254.
+// teaches staff to distrust the nav.
 //
 // From S-06 the same rule covers authority: a nav item this role would be
 // refused is absent rather than rendered into a 403.
@@ -71,6 +70,13 @@ const items = computed(() =>
             href: "/projekte",
             count: nav.value?.projects,
             icon: '<path d="M4 8h16v12H4z"/><path d="M9 8V5h6v3"/><path d="M4 13h16"/>',
+        },
+        {
+            key: "galerien",
+            label: "Galerien",
+            href: "/galerien",
+            needs: "manage_shoots",
+            icon: '<rect x="3" y="3" width="13" height="13" rx="2"/><path d="M8 21h11a2 2 0 0 0 2-2V8"/>',
         },
         {
             key: "kontakte",

@@ -25,6 +25,7 @@ use App\Documents\Http\Controllers\DocumentTemplateController;
 use App\Engagement\Http\Controllers\InboxController;
 use App\Engagement\Http\Controllers\ThreadController;
 use App\Gallery\Http\Controllers\GalleryLightroomExportController;
+use App\Gallery\Http\Controllers\GalleryIndexController;
 use App\Gallery\Http\Controllers\GalleryRecordController;
 use App\Http\Controllers\Staff\AbsenceController;
 use App\Http\Controllers\Staff\DashboardController;
@@ -436,6 +437,7 @@ Route::middleware('audience:staff')->group(function () {
         // C-19 (#255): the gallery as a record with five tabs, not a data
         // sheet with switches. Above /galerien/{gallery}/medien, which stays
         // the ingest screen it always was.
+        Route::get('/galerien', [GalleryIndexController::class, 'index'])->name('galleries.index');
         Route::get('/galerien/{gallery}', [GalleryRecordController::class, 'show'])
             ->name('galleries.show');
         Route::patch('/galerien/{gallery}', [GalleryRecordController::class, 'update'])

@@ -385,6 +385,18 @@ export type AbsenceCategory = 'unavailable' | 'holiday' | 'other';
 export type Capability = 'manage_leads' | 'manage_contacts' | 'view_all_projects' | 'book_project' | 'manage_shoots' | 'manage_crew' | 'manage_tasks' | 'manage_notes' | 'manage_messages' | 'manage_staff' | 'manage_packages' | 'manage_portal_access' | 'manage_quotes' | 'manage_contracts' | 'manage_settings' | 'manage_form_templates' | 'manage_dsgvo';
 export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' | 'assistant';
 }
+namespace Gallery {
+namespace Data {
+export type GalleryRowData = {
+id: string,
+title: string | null,
+projectName: string | null,
+assetCount: number,
+version: number | null,
+expiresAt: string | null,
+};
+}
+}
 namespace Integration {
 namespace Data {
 export type ContactReadData = {
