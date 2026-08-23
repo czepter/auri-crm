@@ -1,99 +1,88 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+import { reactive, watch } from 'vue'
+import { router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
-import QuoteItemsEditor, { type QuoteItemRow } from '@/admin/components/QuoteItemsEditor.vue'
+import QuoteTable, { type QuoteRow } from '@/admin/components/QuoteTable.vue'
 import ValidUntilField from '@/admin/components/ValidUntilField.vue'
-import { basisPointsToPercent, centsToEuros, eurosToCents, formatEuros, percentToBasisPoints } from '@/admin/lib/money'
-import { NONE, fromOption, toOption } from '@/lib/select'
+import { debounced } from '@/admin/lib/autosave'
+import { basisPointsToPercent, centsToEuros, eurosToCents, formatDiscount, formatEuros, parseDiscount } from '@/admin/lib/money'
 import { Button } from '@/ui/button'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
-import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
-
-type DiscountType = '' | 'percentage' | 'amount'
-
-/** discountType/discountValue -> the string a discount's own type expects (percent or euros), and back. */
-function discountValueToField(type: string | null, value: number | null): string {
-  return type === 'percentage' ? basisPointsToPercent(value) : centsToEuros(value)
-}
-
-function discountFieldToValue(type: string, value: string): number | null {
-  return type === 'percentage' ? percentToBasisPoints(value) : eurosToCents(value)
-}
 
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
   quotes: App.Quotes.Data.QuoteData[]
-  packages: { value: string; label: string }[]
 }>()
 
-const creating = ref(false)
-const createForm = useForm({ valid_until: '', package: '' })
+type Draft = { validUntil: string; discount: string; rows: QuoteRow[] }
 
-function create() {
-  createForm.post(`/auftraege/${props.header.id}/angebote`, {
-    preserveScroll: true,
-    onSuccess: () => {
-      createForm.reset()
-      creating.value = false
-    },
-  })
+function draftOf(quote: App.Quotes.Data.QuoteData): Draft {
+  return {
+    validUntil: quote.validUntil ?? '',
+    discount: formatDiscount(quote.discountType, quote.discountValue),
+    rows: quote.items.map((item) => ({
+      title: item.title,
+      description: item.description ?? '',
+      quantity: item.quantity,
+      unitPrice: centsToEuros(item.unitPrice),
+      discount: formatDiscount(item.discountType, item.discountValue),
+    })),
+  }
 }
 
-// One edit form per quote, keyed by its id — several drafts stay independent
-// rather than fighting over one form's state.
-const editForms = Object.fromEntries(
-  props.quotes.map((quote) => [
-    quote.id,
-    useForm({
-      valid_until: quote.validUntil ?? '',
-      discountType: (quote.discountType ?? '') as '' | 'percentage' | 'amount',
-      discountValue: discountValueToField(quote.discountType, quote.discountValue),
-      items: quote.items.map(
-        (item): QuoteItemRow => ({
-          title: item.title,
-          description: item.description ?? '',
-          quantity: item.quantity,
-          unitPrice: centsToEuros(item.unitPrice),
-          discountType: (item.discountType ?? '') as '' | 'percentage' | 'amount',
-          discountValue: discountValueToField(item.discountType, item.discountValue),
-        }),
-      ),
-    }),
-  ]),
+// Keyed by quote id and filled on demand rather than built once at setup: a
+// partial reload that adds a quote used to leave the map behind.
+const drafts = reactive<Record<string, Draft>>({})
+
+watch(
+  () => props.quotes,
+  (quotes) => {
+    for (const quote of quotes) {
+      if (quote.status === 'draft' && !drafts[quote.id]) {
+        drafts[quote.id] = draftOf(quote)
+      }
+    }
+  },
+  { immediate: true, deep: false },
 )
 
-function setDiscountType(quoteId: string, value: unknown) {
-  editForms[quoteId].discountType = fromOption(value) as DiscountType
-}
+const save = debounced((quoteId: string) => {
+  const draft = drafts[quoteId]
+  const quoteDiscount = parseDiscount(draft.discount)
 
-function save(quoteId: string) {
-  editForms[quoteId]
-    .transform((data) => ({
-      valid_until: data.valid_until,
-      discount_type: data.discountType || null,
-      discount_value: data.discountType ? discountFieldToValue(data.discountType, data.discountValue) : null,
-      items: data.items.map((item: QuoteItemRow) => ({
-        title: item.title,
-        description: item.description || null,
-        quantity: item.quantity,
-        unit_price: eurosToCents(item.unitPrice),
-        discount_type: item.discountType || null,
-        discount_value: item.discountType ? discountFieldToValue(item.discountType, item.discountValue) : null,
-      })),
-    }))
-    .patch(`/angebote/${quoteId}`, { preserveScroll: true })
-}
+  router.patch(
+    `/angebote/${quoteId}`,
+    {
+      valid_until: draft.validUntil || null,
+      discount_type: quoteDiscount.type || null,
+      discount_value: quoteDiscount.value,
+      items: draft.rows.map((row) => {
+        const discount = parseDiscount(row.discount)
 
-// Q-06: one Send per quote, keyed the same way editForms is — a project can
-// hold several drafts at once, each sent independently.
-const sendForms = Object.fromEntries(props.quotes.map((quote) => [quote.id, useForm({})]))
+        return {
+          title: row.title,
+          description: row.description || null,
+          quantity: row.quantity,
+          unit_price: eurosToCents(row.unitPrice),
+          discount_type: discount.type || null,
+          discount_value: discount.value,
+        }
+      }),
+    },
+    // Die Zeile, in der getippt wird, überlebt die Antwort; zurück kommen nur
+    // die serverseitig gerechneten Summen.
+    { preserveScroll: true, preserveState: true, only: ['quotes'] },
+  )
+}, 600)
+
+function create() {
+  router.post(`/auftraege/${props.header.id}/angebote`, {}, { preserveScroll: true })
+}
 
 function send(quoteId: string) {
-  sendForms[quoteId].post(`/angebote/${quoteId}/versenden`, { preserveScroll: true })
+  router.post(`/angebote/${quoteId}/versenden`, {}, { preserveScroll: true })
 }
 
 /** draft/sent/accepted/superseded/expired -> the mockup's own three chip states (tokens.css). */
@@ -107,54 +96,10 @@ function chipClass(status: string): string {
     <ProjectShell :header="header" active="quotes">
         <div class="hrow" style="margin-bottom: var(--s4)">
           <span class="kick" style="margin-bottom: 0">{{ $t('quotes.title') }}</span>
-          <!-- Two questions — until when, and from which package — and then the
-               quote itself opens below for editing. That is a doorway, not a
-               section of the page, and it was sitting on top of the quotes it
-               was about to join. -->
-          <Dialog v-if="header.canManageQuotes" v-model:open="creating">
-            <DialogTrigger as-child>
-              <Button type="button">
-                <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
-                {{ $t('quotes.create') }}
-              </Button>
-            </DialogTrigger>
-
-            <DialogContent class="max-w-[480px]">
-              <DialogHeader>
-                <DialogTitle>{{ $t('quotes.create') }}</DialogTitle>
-              </DialogHeader>
-
-              <DialogBody>
-                <form id="quote-create-form" class="fgrid" @submit.prevent="create">
-                  <ValidUntilField id="valid_until" v-model="createForm.valid_until" />
-                  <div class="fld">
-                    <Label for="package">{{ $t('quotes.fromPackage') }}</Label>
-                    <Select
-                      :model-value="toOption(createForm.package)"
-                      @update:model-value="(value) => (createForm.package = fromOption(value))"
-                    >
-                      <SelectTrigger id="package">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem :value="NONE">{{ $t('quotes.blank') }}</SelectItem>
-                        <SelectItem v-for="pkg in packages" :key="pkg.value" :value="pkg.value">{{ pkg.label }}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </form>
-              </DialogBody>
-
-              <DialogFooter>
-                <Button type="submit" form="quote-create-form" :disabled="createForm.processing">
-                  {{ $t('common.save') }}
-                </Button>
-                <DialogClose as-child>
-                  <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
-                </DialogClose>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button v-if="header.canManageQuotes" type="button" @click="create">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+            {{ $t('quotes.create') }}
+          </Button>
         </div>
 
         <!-- Depth behind the Angebot & Vertrag tab: only the quote half exists so
@@ -169,7 +114,40 @@ function chipClass(status: string): string {
             <span :class="['chip', chipClass(quote.status)]">{{ quote.statusLabel }}</span>
           </div>
 
-          <table class="qt">
+          <!-- Editing stays behind canManageQuotes and behind status === 'draft'
+               — the UI half of Q-06's immutability rule, Quote::booted()'s guard
+               being the half that still holds even if this condition were ever
+               wrong or bypassed. Ein Entwurf ist die Tabelle; erst ab Versendet
+               tritt das gelesene Dokument an ihre Stelle. -->
+          <template v-if="header.canManageQuotes && quote.status === 'draft' && drafts[quote.id]">
+            <QuoteTable v-model="drafts[quote.id].rows" @change="save(quote.id)" />
+
+            <div class="fgrid" style="margin-top: var(--s4)">
+              <ValidUntilField
+                :id="`quote-valid-${quote.id}`"
+                v-model="drafts[quote.id].validUntil"
+                @blur.capture="save(quote.id)"
+              />
+              <div class="fld">
+                <Label :for="`quote-discount-${quote.id}`">{{ $t('quotes.discount') }}</Label>
+                <Input
+                  :id="`quote-discount-${quote.id}`"
+                  v-model="drafts[quote.id].discount"
+                  class="tabular-nums"
+                  type="text"
+                  inputmode="decimal"
+                  @blur="save(quote.id)"
+                />
+              </div>
+              <div class="fld wide">
+                <div class="formfoot" style="margin-top: 0">
+                  <Button type="button" @click="send(quote.id)">{{ $t('quotes.send') }}</Button>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <table v-else class="qt">
             <tr v-for="item in quote.items" :key="item.id" :class="{ incl: item.isIncluded }">
               <td>
                 {{ item.title }}
@@ -219,60 +197,6 @@ function chipClass(status: string): string {
               </tr>
             </template>
           </table>
-
-          <!-- Editing and sending both stay behind canManageQuotes, and both
-               stay behind status === 'draft' — the UI half of Q-06's
-               immutability rule, Quote::booted()'s guard being the half that
-               still holds even if this condition were ever wrong or bypassed. -->
-          <template v-if="header.canManageQuotes && quote.status === 'draft'">
-            <div class="dsec">
-              <div class="dlab">{{ $t('quotes.items') }}</div>
-              <QuoteItemsEditor v-model="editForms[quote.id].items" />
-            </div>
-
-            <form class="fgrid" @submit.prevent="save(quote.id)">
-              <ValidUntilField :id="`quote-valid-${quote.id}`" v-model="editForms[quote.id].valid_until" />
-              <div class="fld">
-                <Label :for="`quote-discount-type-${quote.id}`">{{ $t('quotes.discountType') }}</Label>
-                <Select
-                  :model-value="toOption(editForms[quote.id].discountType)"
-                  @update:model-value="(value) => setDiscountType(quote.id, value)"
-                >
-                  <SelectTrigger :id="`quote-discount-type-${quote.id}`">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem :value="NONE">{{ $t('quotes.discountNone') }}</SelectItem>
-                    <SelectItem value="percentage">{{ $t('quotes.discountPercentage') }}</SelectItem>
-                    <SelectItem value="amount">{{ $t('quotes.discountAmount') }}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div v-if="editForms[quote.id].discountType" class="fld">
-                <Label :for="`quote-discount-value-${quote.id}`">{{ $t('quotes.discountValue') }}</Label>
-                <InputGroup>
-                  <InputGroupInput
-                    :id="`quote-discount-value-${quote.id}`"
-                    v-model="editForms[quote.id].discountValue" class="tabular-nums"
-                    type="text"
-                    inputmode="decimal" />
-                  <InputGroupAddon align="inline-end">
-                    {{ editForms[quote.id].discountType === 'percentage' ? '%' : '€' }}
-                  </InputGroupAddon>
-                </InputGroup>
-              </div>
-              <div class="fld wide">
-                <div class="formfoot" style="margin-top: 0">
-                  <Button type="submit" :disabled="editForms[quote.id].processing">
-                    {{ $t('common.save') }}
-                  </Button>
-                  <Button type="button" :disabled="sendForms[quote.id].processing" @click="send(quote.id)">
-                    {{ $t('quotes.send') }}
-                  </Button>
-                </div>
-              </div>
-            </form>
-          </template>
         </div>
 
         <p v-if="!quotes.length && !header.canManageQuotes" class="hint">{{ $t('quotes.empty') }}</p>
