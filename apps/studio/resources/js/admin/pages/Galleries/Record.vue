@@ -68,6 +68,7 @@ const publishState = computed(() => ({
   deviates: props.gallery.deviates,
   withdrawn: props.gallery.withdrawn,
   published: props.figures.published,
+  assets: props.figures.assets,
 }))
 const publishLabel = computed(() => publishLabelKey(publishState.value))
 const showPublish = computed(() => props.gallery.canPublish && showPublishRule(publishState.value))

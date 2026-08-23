@@ -54,6 +54,12 @@ async function trayProgress() {
   return match ? { done: Number(match[1]), total: Number(match[2]), percent: match[3] } : null
 }
 
+// picked() awaits the duplicate precheck before the tray ever mounts — the
+// loop below reads a null trayProgress() as "every file settled", so
+// starting it before the tray exists breaks out on the very first poll,
+// before a byte has moved.
+await page.getByText(SUMMARY).first().waitFor({ state: 'visible', timeout: 30_000 })
+
 const started = Date.now()
 let taken = 0
 while (Date.now() - started < 20 * 60_000) {
