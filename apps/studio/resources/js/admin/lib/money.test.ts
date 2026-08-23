@@ -1,21 +1,37 @@
 import { describe, expect, it } from 'vitest'
-import { centsToEuros, eurosToCents, formatEuros, formatEurosRounded } from './money'
+import { formatDiscount, parseDiscount } from './money'
 
-describe('formatting minor units', () => {
-  // A price keeps its cents; a headline figure drops them. The two are not
-  // interchangeable — a 12,50 € item read as "13 €" is a different price.
-  it('keeps cents on a price and drops them on a figure', () => {
-    expect(formatEuros(1250)).toBe('12,50\u00a0€')
-    expect(formatEurosRounded(1250)).toBe('13\u00a0€')
-    expect(formatEurosRounded(440000)).toBe('4.400\u00a0€')
+describe('parseDiscount', () => {
+  it('reads a trailing percent sign as a percentage in basis points', () => {
+    expect(parseDiscount('10%')).toEqual({ type: 'percentage', value: 1000 })
+    expect(parseDiscount('10 %')).toEqual({ type: 'percentage', value: 1000 })
+    expect(parseDiscount('10,5%')).toEqual({ type: 'percentage', value: 1050 })
+  })
+
+  it('reads everything else as an amount in cents', () => {
+    expect(parseDiscount('50')).toEqual({ type: 'amount', value: 5000 })
+    expect(parseDiscount('50,00')).toEqual({ type: 'amount', value: 5000 })
+  })
+
+  it('reads an empty cell as no discount', () => {
+    expect(parseDiscount('')).toEqual({ type: '', value: null })
+    expect(parseDiscount('   ')).toEqual({ type: '', value: null })
+  })
+
+  it('reads what is not a number as no discount rather than as NaN', () => {
+    expect(parseDiscount('abc')).toEqual({ type: '', value: null })
+    expect(parseDiscount('%')).toEqual({ type: '', value: null })
   })
 })
 
-describe('the form boundary', () => {
-  it('reads a comma as a decimal point and stores minor units', () => {
-    expect(eurosToCents('12,50')).toBe(1250)
-    expect(eurosToCents('  ')).toBeNull()
-    expect(centsToEuros(1250)).toBe('12.50')
-    expect(centsToEuros(null)).toBe('')
+describe('formatDiscount', () => {
+  it('round-trips through parseDiscount', () => {
+    expect(parseDiscount(formatDiscount('percentage', 1000))).toEqual({ type: 'percentage', value: 1000 })
+    expect(parseDiscount(formatDiscount('amount', 5000))).toEqual({ type: 'amount', value: 5000 })
+  })
+
+  it('renders no discount as an empty cell', () => {
+    expect(formatDiscount(null, null)).toBe('')
+    expect(formatDiscount('percentage', null)).toBe('')
   })
 })
