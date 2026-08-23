@@ -13,7 +13,12 @@ return new class extends Migration
             $table->tenantId();
             $table->publicId();
 
-            $table->foreignId('project_id')->constrained()->cascadeOnDelete();
+            // Nullable: nicht jede Galerie gehört zu einer Buchung. Eine ohne
+            // Projekt ist studiointern und außerhalb des Portals —
+            // GalleryAccessSession bindet den Kundenzugang an
+            // visibleProjects(), was ohne Projekt nie greift. Sie ist über
+            // Link und Passwort erreichbar, in keiner Kundenansicht.
+            $table->foreignId('project_id')->nullable()->constrained()->cascadeOnDelete();
 
             // Nullable: a delivery gallery frequently spans the whole project
             // rather than one shoot (G-05) — the wedding-day gallery, for a

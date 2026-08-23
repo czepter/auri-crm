@@ -89,7 +89,7 @@ function formatSize(bytes: number): string {
   <AdminLayout active="">
     <div data-tokens>
       <PageHead :kicker="$t('media.kicker')" :title="target.galleryTitle">
-        <Button as="a" class="ml-auto" variant="ghost" :href="`/auftraege/${target.projectId}`">
+        <Button v-if="target.projectId" as="a" class="ml-auto" variant="ghost" :href="`/auftraege/${target.projectId}`">
           {{ $t('media.backToProject') }}
         </Button>
         <!-- the file input stays hidden and the label is the button, which is
@@ -164,7 +164,7 @@ function formatSize(bytes: number): string {
             <div class="relative block cursor-default rounded-md border border-border p-2.5 text-inherit no-underline">
               <div class="mb-4 flex items-center justify-between"><span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('media.target') }}</span></div>
               <div class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-2.5">
-                <div class="rounded-md bg-muted px-4 pt-3.5 pb-4"><div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('media.project') }}</div><div class="mt-[9px] text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ target.projectName }}</div></div>
+                <div v-if="target.projectName" class="rounded-md bg-muted px-4 pt-3.5 pb-4"><div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('media.project') }}</div><div class="mt-[9px] text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ target.projectName }}</div></div>
                 <div v-if="target.shootLabel" class="rounded-md bg-muted px-4 pt-3.5 pb-4"><div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('media.shoot') }}</div><div class="mt-[9px] text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ target.shootLabel }}</div></div>
                 <div class="rounded-md bg-muted px-4 pt-3.5 pb-4"><div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('media.gallery') }}</div><div class="mt-[9px] text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ target.galleryTitle }}</div></div>
               </div>

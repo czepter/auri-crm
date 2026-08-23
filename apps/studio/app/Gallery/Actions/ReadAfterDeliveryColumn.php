@@ -76,6 +76,9 @@ class ReadAfterDeliveryColumn
     private function expiringGalleries(?Builder $visible): Collection
     {
         return Gallery::query()
+            // Eine Galerie ohne Buchung hat in einer Spalte ueber Buchungen
+            // nichts verloren.
+            ->whereNotNull('project_id')
             ->whereNotNull('expires_at')
             ->where('expires_at', '<=', now()->addDays(self::EXPIRY_WINDOW_DAYS))
             ->when($visible !== null, fn ($query) => $query->whereIn('project_id', $visible))

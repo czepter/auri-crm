@@ -18,8 +18,10 @@ class MediaIngestTargetData extends Data
     public function __construct(
         public string $galleryId,
         public string $galleryTitle,
-        public string $projectId,
-        public string $projectName,
+        // Nullable seit eine Galerie ohne Buchung stehen darf; die "Ziel"-Karte
+        // lässt die Zeile dann weg.
+        public ?string $projectId,
+        public ?string $projectName,
         public ?string $shootId,
         public ?string $shootLabel,
         public int $partSize,
@@ -30,8 +32,8 @@ class MediaIngestTargetData extends Data
         return new self(
             galleryId: $gallery->public_id,
             galleryTitle: $gallery->title ?? 'Entwurf',
-            projectId: $gallery->project->public_id,
-            projectName: $gallery->project->name,
+            projectId: $gallery->project?->public_id,
+            projectName: $gallery->project?->name,
             shootId: $gallery->shoot?->public_id,
             shootLabel: $gallery->shoot?->label,
             partSize: StartOrResumeMultipartUpload::PART_SIZE,
