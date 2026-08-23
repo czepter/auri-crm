@@ -60,7 +60,7 @@ defineExpose({ form, submit })
         >
           <InputGroup>
             <InputGroupInput id="v-satz" v-model="form.vat_rate" class="tabular-nums" type="text" inputmode="decimal" />
-            <InputGroupAddon align="inline-end">{{ $t('common.unitPercent') }}</InputGroupAddon>
+            <InputGroupAddon align="inline-end">%</InputGroupAddon>
           </InputGroup>
         </Field>
       </div>

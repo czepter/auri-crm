@@ -257,7 +257,7 @@ function chipClass(status: string): string {
                     type="text"
                     inputmode="decimal" />
                   <InputGroupAddon align="inline-end">
-                    {{ editForms[quote.id].discountType === 'percentage' ? $t('common.unitPercent') : $t('common.unitEuro') }}
+                    {{ editForms[quote.id].discountType === 'percentage' ? '%' : '€' }}
                   </InputGroupAddon>
                 </InputGroup>
               </div>

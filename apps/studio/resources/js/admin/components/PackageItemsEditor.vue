@@ -66,7 +66,7 @@ function removeRow(index: number) {
               inputmode="decimal"
               :placeholder="$t('packages.itemPriceHint')"
             />
-            <InputGroupAddon align="inline-end">{{ $t('common.unitEuro') }}</InputGroupAddon>
+            <InputGroupAddon align="inline-end">€</InputGroupAddon>
           </InputGroup>
         </Field>
       </div>

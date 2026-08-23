@@ -19,6 +19,13 @@ const form = useForm({
   gallery_default_comments_enabled: props.settings.commentsEnabled,
 })
 
+const GATES = [
+  { field: 'gallery_default_requires_settled_balance', label: 'gallerySettings.balanceLabel' },
+  { field: 'gallery_default_downloads_enabled', label: 'gallerySettings.downloadsLabel' },
+  { field: 'gallery_default_lists_enabled', label: 'gallerySettings.listsLabel' },
+  { field: 'gallery_default_comments_enabled', label: 'gallerySettings.commentsLabel' },
+] as const
+
 function submit() {
   form
     .transform((data) => ({
@@ -59,29 +66,9 @@ function submit() {
                 </InputGroup>
               </Field>
             </div>
-            <div class="mb-6">
-              <div class="flex items-center gap-2.5">
-                <Checkbox id="cb-gallery-balance" v-model="form.gallery_default_requires_settled_balance" />
-                <Label variant="inline" for="cb-gallery-balance">{{ $t('gallerySettings.balanceLabel') }}</Label>
-              </div>
-            </div>
-            <div class="mb-6">
-              <div class="flex items-center gap-2.5">
-                <Checkbox id="cb-gallery-downloads" v-model="form.gallery_default_downloads_enabled" />
-                <Label variant="inline" for="cb-gallery-downloads">{{ $t('gallerySettings.downloadsLabel') }}</Label>
-              </div>
-            </div>
-            <div class="mb-6">
-              <div class="flex items-center gap-2.5">
-                <Checkbox id="cb-gallery-lists" v-model="form.gallery_default_lists_enabled" />
-                <Label variant="inline" for="cb-gallery-lists">{{ $t('gallerySettings.listsLabel') }}</Label>
-              </div>
-            </div>
-            <div class="mb-6">
-              <div class="flex items-center gap-2.5">
-                <Checkbox id="cb-gallery-comments" v-model="form.gallery_default_comments_enabled" />
-                <Label variant="inline" for="cb-gallery-comments">{{ $t('gallerySettings.commentsLabel') }}</Label>
-              </div>
+            <div v-for="gate in GATES" :key="gate.field" class="mb-6 flex items-center gap-2.5">
+              <Checkbox :id="`cb-gallery-${gate.field}`" v-model="form[gate.field]" />
+              <Label variant="inline" :for="`cb-gallery-${gate.field}`">{{ $t(gate.label) }}</Label>
             </div>
           </form>
         </div>

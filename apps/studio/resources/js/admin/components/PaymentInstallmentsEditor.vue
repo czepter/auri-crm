@@ -50,7 +50,7 @@ function setStatus(installment: PaymentInstallmentRow, value: unknown) {
               inputmode="decimal"
               required
             />
-            <InputGroupAddon align="inline-end">{{ $t('common.unitEuro') }}</InputGroupAddon>
+            <InputGroupAddon align="inline-end">€</InputGroupAddon>
           </InputGroup>
         </div>
         <div class="fld">

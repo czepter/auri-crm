@@ -64,7 +64,7 @@ defineExpose({ form, submit })
           <Field :label="$t('settings.depositPercentageLabel')" id="d-anzahlung" :error="form.errors.deposit_percentage">
             <InputGroup>
               <InputGroupInput id="d-anzahlung" v-model="form.deposit_percentage" class="tabular-nums" type="text" inputmode="decimal" />
-              <InputGroupAddon align="inline-end">{{ $t('common.unitPercent') }}</InputGroupAddon>
+              <InputGroupAddon align="inline-end">%</InputGroupAddon>
             </InputGroup>
           </Field>
         </div>

@@ -74,7 +74,7 @@ function setDiscountType(item: QuoteItemRow, value: unknown) {
               inputmode="decimal"
               :placeholder="$t('quotes.itemPriceHint')"
             />
-            <InputGroupAddon align="inline-end">{{ $t('common.unitEuro') }}</InputGroupAddon>
+            <InputGroupAddon align="inline-end">€</InputGroupAddon>
           </InputGroup>
         </div>
         <div class="flex min-w-0 flex-col gap-1.5">
@@ -104,7 +104,7 @@ function setDiscountType(item: QuoteItemRow, value: unknown) {
               inputmode="decimal"
             />
             <InputGroupAddon align="inline-end">
-              {{ item.discountType === 'percentage' ? $t('common.unitPercent') : $t('common.unitEuro') }}
+              {{ item.discountType === 'percentage' ? '%' : '€' }}
             </InputGroupAddon>
           </InputGroup>
         </div>

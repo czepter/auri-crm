@@ -175,7 +175,7 @@ function submit() {
                         class="tabular-nums"
                         readonly
                       />
-                      <InputGroupAddon align="inline-end">{{ $t('common.unitPercent') }}</InputGroupAddon>
+                      <InputGroupAddon align="inline-end">%</InputGroupAddon>
                     </InputGroup>
                   </div>
                   <div class="flex min-w-0 flex-col gap-1.5">
