@@ -4,6 +4,7 @@ namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Actions\DeleteGallerySet;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryGridPref;
 use App\Gallery\Models\GallerySet;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
@@ -59,6 +60,23 @@ class GallerySetController extends Controller
         foreach ($validated['order'] as $position => $publicId) {
             $gallery->sets()->where('public_id', $publicId)->update(['position' => $position]);
         }
+
+        return back();
+    }
+
+    public function density(Request $request, Gallery $gallery, GallerySet $gallerySet): RedirectResponse
+    {
+        $this->authorize('manageMedia', $gallery);
+        abort_unless($gallerySet->gallery_id === $gallery->id, 404);
+
+        $validated = $request->validate([
+            'density' => ['required', Rule::in(['small', 'medium', 'large'])],
+        ]);
+
+        GalleryGridPref::query()->updateOrCreate(
+            ['user_id' => auth('staff')->id(), 'gallery_set_id' => $gallerySet->id],
+            ['density' => $validated['density']],
+        );
 
         return back();
     }

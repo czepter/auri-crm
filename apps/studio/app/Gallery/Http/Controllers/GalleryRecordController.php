@@ -5,6 +5,7 @@ namespace App\Gallery\Http\Controllers;
 use App\Gallery\Models\AssetComment;
 use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryGridPref;
 use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Models\GalleryView;
@@ -51,6 +52,10 @@ class GalleryRecordController extends Controller
         $version = $gallery->currentVersion;
         $sets = $gallery->sets()->withCount(['assets' => fn ($query) => $query->inDraft()])->get();
         $assets = $gallery->assetRows()->inDraft()->with('set')->get();
+        $densities = GalleryGridPref::query()
+            ->where('user_id', auth('staff')->id())
+            ->whereIn('gallery_set_id', $sets->pluck('id'))
+            ->pluck('density', 'gallery_set_id');
 
         return Inertia::render('Galleries/Record', [
             'gallery' => [
@@ -101,6 +106,7 @@ class GalleryRecordController extends Controller
                 'count' => $set->assets_count,
                 'sortKey' => $set->sort_key,
                 'sortDir' => $set->sort_dir,
+                'density' => $densities[$set->id] ?? GalleryGridPref::DEFAULT_DENSITY,
             ])->all(),
             'assets' => $assets->map(fn (Asset $asset) => [
                 'id' => $asset->public_id,

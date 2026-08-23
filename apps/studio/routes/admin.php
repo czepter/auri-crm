@@ -472,6 +472,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('galleries.sets.reorder');
         Route::patch('/galerien/{gallery}/sets/{gallerySet}', [GallerySetController::class, 'update'])
             ->name('galleries.sets.update');
+        Route::patch('/galerien/{gallery}/sets/{gallerySet}/dichte', [GallerySetController::class, 'density'])
+            ->name('galleries.sets.density');
         Route::delete('/galerien/{gallery}/sets/{gallerySet}', [GallerySetController::class, 'destroy'])
             ->name('galleries.sets.destroy');
         Route::get('/galerien/{gallery}/medien', [MediaIngestController::class, 'show'])
