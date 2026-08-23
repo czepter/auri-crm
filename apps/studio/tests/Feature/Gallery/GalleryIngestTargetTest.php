@@ -143,3 +143,17 @@ it('backfills gallery_set_id left null on a multipart upload written before the 
 
     expect(MultipartUpload::find($uploadId)->gallery_set_id)->toBe($set->id);
 });
+
+it('has no ingest page of its own any more', function () {
+    $gallery = Gallery::factory()->create();
+
+    $this->get("/galerien/{$gallery->public_id}/medien")->assertNotFound();
+});
+
+it('lands a fresh gallery on its own record', function () {
+    $response = $this->post('/galerien', ['title' => 'Fotobox', 'is_external' => false]);
+
+    $gallery = Gallery::latest('id')->first();
+
+    $response->assertRedirect("/galerien/{$gallery->public_id}");
+});

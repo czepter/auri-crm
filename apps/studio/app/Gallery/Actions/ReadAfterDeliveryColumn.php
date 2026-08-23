@@ -91,7 +91,7 @@ class ReadAfterDeliveryColumn
                 what: 'Galerie läuft',
                 emphasis: 'am '.$gallery->expires_at->format('d.m.').' ab',
                 whatTail: null,
-                action: RowActionData::link('Album anbieten', "/galerien/{$gallery->public_id}/medien"),
+                action: RowActionData::link('Album anbieten', "/galerien/{$gallery->public_id}"),
             ));
     }
 }

@@ -25,6 +25,8 @@ export interface UploadSession {
   partSize: number
   /** Part numbers (1-based) the bucket already has, per ListParts — see StartOrResumeMultipartUpload. */
   donePartNumbers: Set<number>
+  /** The set this session actually targets — a resumed row keeps the one it was started against, which can differ from the set requested here. */
+  gallerySetId: string
 }
 
 /** The XSRF-TOKEN cookie Laravel's session middleware sets, copied into the header it looks for on a raw fetch — the same thing axios (and so Inertia's own requests) does automatically. */
@@ -57,19 +59,28 @@ export function partRange(partNumber: number, partSize: number, fileSize: number
 const UPLOADS_BASE = '/uploads'
 
 /** Starts a fresh session, or resumes the one already in progress for this exact file — see the fingerprint's own doc comment. $createUrl is the gallery-scoped POST route (galleries.uploads.store). */
-export async function startOrResumeUpload(createUrl: string, file: File, gallerySetId: string): Promise<UploadSession> {
+export async function startOrResumeUpload(
+  createUrl: string,
+  file: File,
+  gallerySetId: string,
+  replacesAssetId?: string,
+): Promise<UploadSession> {
   const response = await fetch(createUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...xsrfHeader() },
     credentials: 'same-origin',
-    body: JSON.stringify({ ...fingerprintOf(file), gallery_set_id: gallerySetId }),
+    body: JSON.stringify({ ...fingerprintOf(file), gallery_set_id: gallerySetId, replaces_asset_id: replacesAssetId }),
   })
 
-  const data = await asJson<{ upload: { public_id: string; part_size: number }; parts: { part_number: number }[] }>(response)
+  const data = await asJson<{
+    upload: { public_id: string; part_size: number; gallery_set_id: string }
+    parts: { part_number: number }[]
+  }>(response)
 
   return {
     publicId: data.upload.public_id,
     partSize: data.upload.part_size,
+    gallerySetId: data.upload.gallery_set_id,
     donePartNumbers: new Set(data.parts.map((part) => part.part_number)),
   }
 }
@@ -121,14 +132,19 @@ export interface UploadProgress {
  * ponytail: one part at a time, no parallel chunk uploads. Add bounded
  * concurrency if a 30 GB transfer over a single stream measures too slow in
  * practice — nothing here forecloses it, since each part is independent.
+ *
+ * Returns the set the session actually landed in — see UploadSession's own
+ * doc comment. A caller compares this against the set it asked for to catch
+ * a resumed upload quietly finishing somewhere else.
  */
 export async function uploadFile(
   createUrl: string,
   file: File,
   onProgress: (progress: UploadProgress) => void,
   gallerySetId: string,
-): Promise<void> {
-  const session = await startOrResumeUpload(createUrl, file, gallerySetId)
+  replacesAssetId?: string,
+): Promise<{ gallerySetId: string }> {
+  const session = await startOrResumeUpload(createUrl, file, gallerySetId, replacesAssetId)
   const total = partCount(file.size, session.partSize)
 
   let done = session.donePartNumbers.size
@@ -147,4 +163,6 @@ export async function uploadFile(
   }
 
   await completeUpload(session.publicId)
+
+  return { gallerySetId: session.gallerySetId }
 }

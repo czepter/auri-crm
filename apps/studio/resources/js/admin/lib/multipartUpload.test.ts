@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { fingerprintOf, partCount, partRange } from './multipartUpload'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fingerprintOf, partCount, partRange, startOrResumeUpload } from './multipartUpload'
 
 describe('fingerprintOf', () => {
   it('reads name, size and lastModified straight off the File — never a storage path, since the browser is never given one', () => {
@@ -36,5 +36,44 @@ describe('partRange', () => {
 
   it('caps the last part at the file size rather than overrunning it', () => {
     expect(partRange(3, partSize, 20 * 1024 * 1024)).toEqual([16 * 1024 * 1024, 20 * 1024 * 1024])
+  })
+})
+
+describe('startOrResumeUpload', () => {
+  beforeEach(() => vi.stubGlobal('document', { cookie: '' }))
+  afterEach(() => vi.unstubAllGlobals())
+
+  // A resumed session keeps the set it was started against — the response
+  // can name a different set than the one this call asked for, and the
+  // caller (Images.vue) uses that to warn when an upload lands elsewhere.
+  it('surfaces the set the session actually landed in, not just the one requested', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ upload: { public_id: 'u1', part_size: 8, gallery_set_id: 'other-set' }, parts: [] }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const file = new File(['x'], 'a.jpg')
+    const session = await startOrResumeUpload('/uploads', file, 'requested-set')
+
+    expect(session.gallerySetId).toBe('other-set')
+  })
+
+  it('sends replaces_asset_id only when one is given', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ upload: { public_id: 'u1', part_size: 8, gallery_set_id: 's1' }, parts: [] }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const file = new File(['x'], 'a.jpg')
+    await startOrResumeUpload('/uploads', file, 's1', 'asset-42')
+
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    expect(body.replaces_asset_id).toBe('asset-42')
+
+    await startOrResumeUpload('/uploads', file, 's1')
+    const bodyWithout = JSON.parse(fetchMock.mock.calls[1][1].body)
+    expect(bodyWithout.replaces_asset_id).toBeUndefined()
   })
 })

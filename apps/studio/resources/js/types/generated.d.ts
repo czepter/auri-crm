@@ -470,16 +470,6 @@ publicId: string,
 filename: string,
 error: string,
 };
-export type MediaIngestTargetData = {
-galleryId: string,
-galleryTitle: string,
-projectId: string | null,
-projectName: string | null,
-shootId: string | null,
-shootLabel: string | null,
-partSize: number,
-gallerySetId: string | null,
-};
 }
 namespace Enums {
 export type AssetStatus = 'ready' | 'failed';

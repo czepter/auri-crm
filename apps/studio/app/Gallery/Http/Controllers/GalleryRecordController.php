@@ -11,6 +11,8 @@ use App\Gallery\Models\GallerySet;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Models\GalleryView;
 use App\Http\Controllers\Controller;
+use App\Media\Data\FailedAssetData;
+use App\Media\Enums\AssetStatus;
 use App\Media\Models\Asset;
 use App\Media\Models\DownloadEvent;
 use App\Media\Models\ZipBuild;
@@ -163,6 +165,12 @@ class GalleryRecordController extends Controller
                     'count' => $list->items->count(),
                 ])->all(),
             'activity' => $this->activity($gallery, $version),
+            // G-04's "needs attention" tray, formerly the ingest screen's
+            // own section — the pictures tab is the only place uploading
+            // happens now, so this is where a failed upload gets noticed.
+            'failedAssets' => FailedAssetData::collect(
+                Asset::query()->where('gallery_id', $gallery->id)->where('status', AssetStatus::Failed)->oldest()->get(),
+            ),
         ]);
     }
 

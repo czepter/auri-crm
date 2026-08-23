@@ -34,11 +34,10 @@ it('refuses a role without ManageShoots', function () {
     expect($viewer->can('manageMedia', $gallery))->toBeFalse();
 });
 
-it('serves the ingest screen for a gallery with no project', function () {
+it('serves the record for a gallery with no project', function () {
     $gallery = Gallery::factory()->create(['project_id' => null]);
 
-    $props = props("/galerien/{$gallery->public_id}/medien");
+    $props = props("/galerien/{$gallery->public_id}");
 
-    expect($props['target']['projectId'])->toBeNull()
-        ->and($props['target']['projectName'])->toBeNull();
+    expect($props['siblings'])->toBe([]);
 });

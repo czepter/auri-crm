@@ -104,10 +104,6 @@ class GalleryIndexController extends Controller
             subject: $gallery->public_id,
         );
 
-        // Eine externe Galerie hat keinen Ingest — dort liegt nichts, was man
-        // hochladen könnte.
-        return redirect($gallery->is_external
-            ? "/galerien/{$gallery->public_id}"
-            : "/galerien/{$gallery->public_id}/medien");
+        return redirect("/galerien/{$gallery->public_id}");
     }
 }

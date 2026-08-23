@@ -46,6 +46,7 @@ const props = defineProps<{
     comments: { who: string | null; what: string; on: string }[]
     views: { who: string | null; on: string }[]
   }
+  failedAssets: { publicId: string; filename: string; error: string }[]
 }>()
 
 const tab = ref<'bilder' | 'gestaltung' | 'einstellungen' | 'aktivitaet'>('bilder')
@@ -243,7 +244,7 @@ function megabytes(bytes: number) {
              — a version is a published selection, so it is a statement
              about pictures and belongs here, not with the permissions. -->
         <div v-if="tab === 'bilder'" class="min-w-0 flex-1">
-          <Images :gallery="gallery" :sets="sets" :assets="assets" :active-set-id="activeSetId" />
+          <Images :gallery="gallery" :sets="sets" :assets="assets" :active-set-id="activeSetId" :failed-assets="failedAssets" />
 
           <h2 class="mt-7 px-8">{{ $t('galleryRecord.versions') }}</h2>
           <div class="px-8 pb-8">

@@ -11,7 +11,7 @@ beforeEach(function () {
     $this->actingAs(User::factory()->withMfa()->create(), 'staff');
 });
 
-it('creates a gallery and sends the user to the ingest screen', function () {
+it('creates a gallery and sends the user to its record', function () {
     $project = Project::factory()->create();
 
     $response = $this->post('/galerien', [
@@ -26,7 +26,7 @@ it('creates a gallery and sends the user to the ingest screen', function () {
 
     $gallery = Gallery::sole();
 
-    $response->assertRedirect("/galerien/{$gallery->public_id}/medien");
+    $response->assertRedirect("/galerien/{$gallery->public_id}");
 
     expect($gallery->title)->toBe('Trauung')
         ->and($gallery->project_id)->toBe($project->id)

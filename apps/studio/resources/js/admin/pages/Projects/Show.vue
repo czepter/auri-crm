@@ -162,7 +162,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
                             v-for="gallery in galleries"
                             :key="gallery.id"
                             :title="gallery.title ?? '—'"
-                            :href="`/galerien/${gallery.id}/medien`"
+                            :href="`/galerien/${gallery.id}`"
                             :meta="
                                 gallery.expiresAt
                                     ? $t('contacts.expiresOn', { date: day(gallery.expiresAt) })

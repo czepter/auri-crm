@@ -1,9 +1,14 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import { useVirtualList } from '@vueuse/core'
 import { applyClick, type SelectionState } from '@/admin/lib/gallerySelection'
+import { uploadFile } from '@/admin/lib/multipartUpload'
 import AssetLightbox from '@/admin/components/gallery/AssetLightbox.vue'
+import DropZone from '@/admin/components/gallery/DropZone.vue'
+import DuplicateDialog from '@/admin/components/gallery/DuplicateDialog.vue'
+import UploadTray, { type TrayRow } from '@/admin/components/gallery/UploadTray.vue'
 import { NativeSelect } from '@/ui/native-select'
 
 interface AssetRow {
@@ -27,7 +32,10 @@ const props = defineProps<{
   sets: SetRow[]
   assets: AssetRow[]
   activeSetId: string | null
+  failedAssets: { publicId: string; filename: string; error: string }[]
 }>()
+
+const { t } = useI18n()
 
 const COLUMNS: Record<string, number> = { small: 10, medium: 7, large: 4 }
 
@@ -106,6 +114,100 @@ function step(by: number) {
 
   lightbox.value = shown.value[index + by] ?? lightbox.value
 }
+
+function retryFailed(publicId: string) {
+  router.post(`/medien/${publicId}/wiederholen`, {}, { preserveScroll: true })
+}
+
+const tray = ref<TrayRow[]>([])
+const pending = ref<File[]>([])
+const duplicates = ref<{ filename: string; size: number; assetId: string }[]>([])
+
+function keyOf(file: File): string {
+  return `${file.name}:${file.size}`
+}
+
+async function picked(files: File[]) {
+  pending.value = files
+
+  const response = await fetch(`/galerien/${props.gallery.id}/uploads/pruefen`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ files: files.map((file) => ({ filename: file.name, size: file.size })) }),
+  })
+
+  duplicates.value = (await response.json()).duplicates
+
+  if (duplicates.value.length === 0) {
+    await run(files, new Map())
+  }
+}
+
+async function run(files: File[], replacements: Map<string, string>) {
+  // Uploading is disabled whenever Alle is open (DropZone below), so a real
+  // set is always the one showing by the time this runs.
+  const targetSetId = activeSet.value!.id
+
+  tray.value = files.map((file) => ({ key: keyOf(file), name: file.name, size: file.size, status: 'queued', percent: 0 }))
+
+  for (const file of files) {
+    const row = tray.value.find((entry) => entry.key === keyOf(file))!
+    row.status = 'uploading'
+
+    try {
+      const result = await uploadFile(
+        `/galerien/${props.gallery.id}/uploads`,
+        file,
+        ({ partsDone, partsTotal }) => (row.percent = partsTotal === 0 ? 0 : Math.round((partsDone / partsTotal) * 100)),
+        targetSetId,
+        replacements.get(keyOf(file)),
+      )
+      row.status = 'done'
+
+      // A resumed session keeps the set it was started against — surface it
+      // rather than let the file quietly land somewhere the photographer
+      // never asked to look.
+      if (result.gallerySetId !== targetSetId) {
+        row.redirectedTo = setNames.value.get(result.gallerySetId) ?? result.gallerySetId
+      }
+    } catch {
+      row.status = 'error'
+    }
+  }
+
+  router.reload({ only: ['assets', 'sets'] })
+}
+
+function skipDuplicates() {
+  const names = new Set(duplicates.value.map((row) => `${row.filename}:${row.size}`))
+
+  duplicates.value = []
+  void run(pending.value.filter((file) => !names.has(keyOf(file))), new Map())
+}
+
+function replaceDuplicates() {
+  const map = new Map(duplicates.value.map((row) => [`${row.filename}:${row.size}`, row.assetId]))
+
+  duplicates.value = []
+  void run(pending.value, map)
+}
+
+const transferring = computed(() => tray.value.some((row) => row.status === 'uploading' || row.status === 'queued'))
+
+function guardUnload(event: BeforeUnloadEvent) {
+  event.preventDefault()
+}
+
+watch(transferring, (on) => (on ? window.addEventListener('beforeunload', guardUnload) : window.removeEventListener('beforeunload', guardUnload)))
+
+// beforeunload only catches the hard exit. Inertia swaps the page without
+// reloading, and the running transfer dies with this component.
+const stopInertiaGuard = router.on('before', () => (transferring.value ? window.confirm(t('media.leaveWhileUploading')) : true))
+
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', guardUnload)
+  stopInertiaGuard()
+})
 </script>
 
 <template>
@@ -165,6 +267,26 @@ function step(by: number) {
         </div>
       </div>
     </div>
+
+    <DropZone class="mt-3" :disabled="activeSet === null" @files="picked" />
+
+    <div v-if="failedAssets.length > 0" class="mt-6">
+      <div class="mb-2 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">
+        {{ $t('media.needsAttention') }} · {{ $t('media.needsAttentionCount', failedAssets.length) }}
+      </div>
+      <div class="overflow-hidden rounded-md border border-border">
+        <div v-for="asset in failedAssets" :key="asset.publicId" class="flex items-center gap-2.5 border-t border-border p-2.5 text-[12.5px] first:border-t-0">
+          <span class="font-medium text-foreground">{{ asset.filename }}</span>
+          <span class="text-ink-2">{{ asset.error }}</span>
+          <button class="ml-auto cursor-pointer border-0 bg-transparent text-[12.5px] text-faint" type="button" @click="retryFailed(asset.publicId)">
+            {{ $t('media.retryProcessing') }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <UploadTray :rows="tray" />
+    <DuplicateDialog :open="duplicates.length > 0" :duplicates="duplicates" @skip="skipDuplicates" @replace="replaceDuplicates" />
 
     <div
       v-if="selection.selected.size > 0"

@@ -331,7 +331,8 @@ class E2eSeeder extends Seeder
 
         foreach (range(1, 6) as $index) {
             $key = "galleries/e2e/{$gallery->public_id}/{$index}.jpg";
-            $disk->put($key, self::flatJpeg($index));
+            $bytes = self::flatJpeg($index);
+            $disk->put($key, $bytes);
 
             Asset::create([
                 'gallery_id' => $gallery->id,
@@ -339,6 +340,7 @@ class E2eSeeder extends Seeder
                 'status' => AssetStatus::Ready,
                 'key' => $key,
                 'filename' => basename($key),
+                'byte_size' => strlen($bytes),
                 'width' => self::IMAGE_WIDTH,
                 'height' => self::IMAGE_HEIGHT,
             ]);

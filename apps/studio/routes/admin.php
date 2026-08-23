@@ -46,7 +46,6 @@ use App\Http\Controllers\Staff\ProfileController;
 use App\Http\Controllers\Staff\SessionController;
 use App\Http\Controllers\Staff\SetupController;
 use App\Media\Http\Controllers\FailedAssetController;
-use App\Media\Http\Controllers\MediaIngestController;
 use App\Media\Http\Controllers\MultipartUploadController;
 use App\Media\Http\Controllers\UploadPrecheckController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
@@ -451,8 +450,8 @@ Route::middleware('audience:staff')->group(function () {
         // chunked uploader (resources/js/admin/lib/multipartUpload.ts), not
         // Inertia — see MultipartUploadController.
         // C-19 (#255): the gallery as a record with five tabs, not a data
-        // sheet with switches. Above /galerien/{gallery}/medien, which stays
-        // the ingest screen it always was.
+        // sheet with switches. Uploading lives in the Bilder tab itself now
+        // — no separate ingest screen.
         Route::get('/galerien', [GalleryIndexController::class, 'index'])->name('galleries.index');
         // /galerien/neu bleibt über /galerien/{gallery}, aus demselben Grund
         // wie /pakete/neu über /pakete/{package}.
@@ -476,8 +475,6 @@ Route::middleware('audience:staff')->group(function () {
             ->name('galleries.sets.density');
         Route::delete('/galerien/{gallery}/sets/{gallerySet}', [GallerySetController::class, 'destroy'])
             ->name('galleries.sets.destroy');
-        Route::get('/galerien/{gallery}/medien', [MediaIngestController::class, 'show'])
-            ->name('galleries.media');
         Route::post('/galerien/{gallery}/uploads', [MultipartUploadController::class, 'store'])
             ->name('galleries.uploads.store');
         Route::put('/uploads/{multipartUpload}/teile/{partNumber}', [MultipartUploadController::class, 'uploadPart'])

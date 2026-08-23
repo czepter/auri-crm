@@ -27,6 +27,7 @@ const assets = [
 ]
 
 const gallery = { id: 'g1' }
+const base = { gallery, sets, assets, failedAssets: [] }
 
 describe('Images', () => {
   // useVirtualList only fills its window against a real element size, which
@@ -34,7 +35,7 @@ describe('Images', () => {
   // way, so these check the header (title, count) and the density control
   // rather than the (virtualized) pictures themselves.
   it('Alle: heads with the gallery total and leaves the density control out — it is not a set (R21)', async () => {
-    const html = await render({ gallery, sets, assets, activeSetId: null })
+    const html = await render({ ...base, activeSetId: null })
 
     expect(html).toContain(de.gallery.all)
     expect(html).toContain('>2<')
@@ -42,7 +43,7 @@ describe('Images', () => {
   })
 
   it('a single set: heads with its own name, count and the density control', async () => {
-    const html = await render({ gallery, sets, assets, activeSetId: 'a' })
+    const html = await render({ ...base, activeSetId: 'a' })
 
     expect(html).toContain('Highlights')
     expect(html).toContain('>1<')
@@ -50,8 +51,36 @@ describe('Images', () => {
   })
 
   it('leaves the selection bar out while nothing is selected', async () => {
-    const html = await render({ gallery, sets, assets, activeSetId: null })
+    const html = await render({ ...base, activeSetId: null })
 
     expect(html).not.toContain(de.galleryRecord.moveTo)
+  })
+
+  // Uploading has no target while Alle is open — there is no set to upload
+  // into, so the drop zone disables itself rather than offering a picker
+  // that would 404 or silently pick one for the photographer.
+  it('disables the drop zone with a reason while Alle is open', async () => {
+    const html = await render({ ...base, activeSetId: null })
+
+    expect(html).toContain(de.media.pickSetFirst)
+    expect(html).not.toContain(de.media.dropHere)
+  })
+
+  it('offers the drop zone once a real set is open', async () => {
+    const html = await render({ ...base, activeSetId: 'a' })
+
+    expect(html).toContain(de.media.dropHere)
+    expect(html).not.toContain(de.media.pickSetFirst)
+  })
+
+  it('surfaces a Failed asset with its retry action', async () => {
+    const html = await render({
+      ...base,
+      activeSetId: 'a',
+      failedAssets: [{ publicId: 'f1', filename: 'IMG_1.jpg', error: 'defekt' }],
+    })
+
+    expect(html).toContain('IMG_1.jpg')
+    expect(html).toContain(de.media.retryProcessing)
   })
 })
