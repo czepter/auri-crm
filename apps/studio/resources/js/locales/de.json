@@ -9,9 +9,7 @@
     "close": "Schließen",
     "calendar": "Kalender",
     "unitMinutes": "Min.",
-    "unitDays": "Tage",
-    "unitPercent": "%",
-    "unitEuro": "€"
+    "unitDays": "Tage"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -86,7 +84,6 @@
   },
   "contacts": {
     "title": "Kontakte",
-    "search": "Suchen",
     "name": "Name",
     "email": "E-Mail",
     "phone": "Telefon",
@@ -1151,26 +1148,21 @@
     "buildFailed": "Beim Vorbereiten ist etwas schiefgegangen. Bitte noch einmal versuchen."
   },
   "media": {
-    "kicker": "Medien · Import",
-    "backToProject": "Zum Projekt",
     "pickFiles": "Dateien auswählen",
-    "transferring": "Übertragung läuft",
     "filesLabel": "Dateien",
-    "of": "von",
-    "target": "Ziel",
-    "project": "Projekt",
-    "shoot": "Shooting",
-    "gallery": "Galerie",
     "ready": "Bereit",
     "queued": "Wartet",
-    "uploading": "Läuft",
     "failed": "Fehler",
-    "retry": "Erneut übertragen",
-    "empty": "Keine Dateien ausgewählt.",
-    "resumeHint": "Mit denselben Dateien fortsetzbar.",
     "needsAttention": "Prüfung erforderlich",
     "needsAttentionCount": "1 Datei | {count} Dateien",
-    "retryProcessing": "Erneut versuchen"
+    "retryProcessing": "Erneut versuchen",
+    "dropHere": "Bilder hierher ziehen",
+    "pickSetFirst": "Erst ein Set wählen",
+    "duplicatesFound": "{count} Datei liegt schon hier | {count} Dateien liegen schon hier",
+    "replace": "Ersetzen",
+    "skipDuplicates": "Überspringen",
+    "landedIn": "in {set}",
+    "leaveWhileUploading": "Der Upload läuft noch. Seite verlassen?"
   },
   "palette": {
     "search": "Suchen",
@@ -1213,7 +1205,6 @@
     "audienceClient": "Kunde",
     "addTask": "Aufgabe anlegen",
     "people": "Personen",
-    "search": "Suchen",
     "waiting": "Wartet"
   },
   "galleryRecord": {
@@ -1227,9 +1218,15 @@
     "downloaded": "Heruntergeladen",
     "viewed": "Aufgerufen",
     "blockedByBalance": "Gesperrt bis die Rechnung beglichen ist.",
-    "ingest": "Bilder hochladen",
     "versions": "Fassungen",
     "cover": "Titelbild",
+    "density": {
+      "small": "Klein",
+      "medium": "Mittel",
+      "large": "Groß"
+    },
+    "selected": "{count} ausgewählt | {count} ausgewählt",
+    "moveTo": "Verschieben nach",
     "cover_full": "Ganzflächig",
     "cover_split": "Geteilt",
     "cover_plain": "Ohne Bild",
@@ -1254,14 +1251,26 @@
     "tab": {
       "bilder": "Bilder",
       "gestaltung": "Gestaltung",
-      "download": "Download",
-      "freigaben": "Freigaben",
-      "aktivitaet": "Aktivität"
+      "aktivitaet": "Aktivität",
+      "einstellungen": "Einstellungen"
     },
     "sheet": {
       "downloads": "Downloads",
       "marks": "Markierungen",
       "views": "Zugriffe"
-    }
+    },
+    "sets": "Sets",
+    "addSet": "Set anlegen",
+    "removeSet": "{name} löschen?",
+    "deleteSet": "Löschen",
+    "removeSetPictures": "Bilder mit löschen",
+    "tabIcon": {
+      "bilder": "▦",
+      "gestaltung": "✎",
+      "einstellungen": "⚙",
+      "aktivitaet": "◷"
+    },
+    "downloadsHeading": "Download",
+    "sharingHeading": "Freigaben"
   }
 }
