@@ -4,6 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Visus\Cuid2\Cuid2;
 
 return new class extends Migration
 {
@@ -37,13 +38,29 @@ return new class extends Migration
         });
 
         // Jede bestehende Galerie bekommt ihr Fach, bevor der Fremdschlüssel
-        // an assets not null wird (Task 2).
-        DB::statement(<<<'SQL'
-            insert into gallery_sets (tenant_id, public_id, gallery_id, name, position, created_at, updated_at)
-            select tenant_id, md5(random()::text || id::text), id, 'Highlights', 0, now(), now()
-            from galleries
-            where is_external = false
-        SQL);
+        // an assets not null wird (Task 2). Zeilenweise und an GallerySet
+        // vorbei, direkt auf die Tabelle: die public_id trägt denselben
+        // Cuid2 wie jede andere, aber die Migration hängt nicht von der
+        // heutigen Form des Models ab.
+        $now = now();
+
+        $galleries = DB::table('galleries')
+            ->where('is_external', false)
+            ->select(['id', 'tenant_id'])
+            ->orderBy('id')
+            ->get();
+
+        foreach ($galleries as $gallery) {
+            DB::table('gallery_sets')->insert([
+                'tenant_id' => $gallery->tenant_id,
+                'public_id' => (string) new Cuid2,
+                'gallery_id' => $gallery->id,
+                'name' => 'Highlights',
+                'position' => 0,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
     }
 
     public function down(): void
