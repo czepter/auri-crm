@@ -11,6 +11,7 @@
 import { computed, ref, watch } from "vue"
 import { dayWithWeekday } from "@/admin/lib/dates"
 import { NOTICEABLE_DAYS, filterQueue } from "@/admin/lib/leadQueue"
+import { useQueueQuery } from "@/admin/lib/queueQuery"
 import { Input } from "@/ui/input"
 import { Queue, QueueGroup, QueueItem } from "@/ui/queue"
 import { Switch } from "@/ui/switch"
@@ -25,30 +26,12 @@ const initial = new URLSearchParams(window.location.search)
 const term = ref(initial.get("q") ?? "")
 const waiting = ref(initial.get("wartet") === "1")
 
-const query = computed(() => {
-    const params = new URLSearchParams()
-
-    if (term.value) params.set("q", term.value)
-    if (waiting.value) params.set("wartet", "1")
-
-    const written = params.toString()
-
-    return written ? `?${written}` : ""
-})
+const query = useQueueQuery(() => ({
+    q: term.value || null,
+    wartet: waiting.value ? "1" : null,
+}))
 
 const shown = computed(() => filterQueue(props.groups, term.value, waiting.value))
-
-// Replace rather than push: a history entry per keystroke makes the back
-// button unusable. Set and delete on the live URL, because the board keeps
-// its own ?ansicht= there.
-watch(query, () => {
-    const url = new URL(window.location.href)
-
-    term.value ? url.searchParams.set("q", term.value) : url.searchParams.delete("q")
-    waiting.value ? url.searchParams.set("wartet", "1") : url.searchParams.delete("wartet")
-
-    history.replaceState(history.state, "", url)
-})
 
 // What ↑↓ beside the pane may reach — the rows still standing, not all of them.
 watch(shown, (groups) => emit("update:rows", groups.flatMap((group) => group.rows)), {
@@ -89,7 +72,7 @@ function since(days: number) {
                 v-model="term"
                 size="sm"
                 type="search"
-                :placeholder="$t('lead.search')"
+                :placeholder="$t('common.search')"
             />
         </div>
 

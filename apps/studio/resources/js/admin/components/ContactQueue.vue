@@ -8,8 +8,9 @@
  * props. The term does go in the URL, so the pane a link opens is the pane
  * the sender was looking at.
  */
-import { computed, ref, watch } from "vue"
+import { computed, ref } from "vue"
 import { groupContacts } from "@/admin/lib/contactQueue"
+import { useQueueQuery } from "@/admin/lib/queueQuery"
 import { dayWithWeekday } from "@/admin/lib/dates"
 import { Input } from "@/ui/input"
 import { Queue, QueueGroup, QueueItem } from "@/ui/queue"
@@ -21,19 +22,9 @@ const props = defineProps<{
 
 const term = ref(new URLSearchParams(window.location.search).get("q") ?? "")
 
-const query = computed(() => (term.value ? `?q=${encodeURIComponent(term.value)}` : ""))
+const query = useQueueQuery(() => ({ q: term.value || null }))
 
 const shown = computed(() => groupContacts(props.contacts, term.value))
-
-// Replace rather than push: a history entry per keystroke makes the back
-// button unusable.
-watch(term, () => {
-    const url = new URL(window.location.href)
-
-    term.value ? url.searchParams.set("q", term.value) : url.searchParams.delete("q")
-
-    history.replaceState(history.state, "", url)
-})
 
 function reach(contact: App.Crm.Data.ContactRowData) {
     return [contact.email, contact.phone].filter(Boolean).join(" · ") || null
@@ -47,7 +38,7 @@ function reach(contact: App.Crm.Data.ContactRowData) {
                 v-model="term"
                 size="sm"
                 type="search"
-                :placeholder="$t('contacts.search')"
+                :placeholder="$t('common.search')"
             />
         </div>
 

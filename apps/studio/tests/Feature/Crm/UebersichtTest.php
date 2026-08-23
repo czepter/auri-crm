@@ -123,7 +123,16 @@ it('puts an absence in the week as its own entry', function () {
 
     expect($week)->toHaveCount(1)
         ->and($week[0]['what'])->toBe('Nina Brandt')
-        ->and($week[0]['away'])->toBeTrue();
+        ->and($week[0]['away'])->toBeTrue()
+        ->and($week[0]['href'])->toBeNull();
+});
+
+it('links a shooting day in the week to its project', function () {
+    $project = Project::factory()->create();
+    Job::factory()->for($project)->create();
+    Shoot::factory()->for($project)->on(now()->addDays(2)->format('Y-m-d'))->create();
+
+    expect(props('/')['week'][0]['href'])->toBe('/auftraege/'.$project->public_id.'/shootings');
 });
 
 it('lists what is owed, overdue first by date', function () {

@@ -12,7 +12,7 @@ import { formatEurosRounded } from "@/admin/lib/money";
 const props = defineProps<{
     today: string;
     nextShoot: App.Crm.Data.NextShootData | null;
-    week: { when: string; what: string; away: boolean }[];
+    week: { when: string; what: string; away: boolean; href: string | null }[];
     tasks: App.Crm.Data.TaskRowData[];
     openTasks: number;
     inquiries: App.Crm.Data.DomainRowData[];
@@ -258,6 +258,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
                 <Metric
                     v-if="heroDay"
                     :label="$t('dashboard.nextShoot')"
+                    :href="`/auftraege/${nextShoot!.projectId}/shootings`"
                     :day="heroDay"
                     :dots="readinessDots"
                 >
@@ -364,12 +365,14 @@ function complete(task: App.Crm.Data.TaskRowData) {
                         >
                             {{ weekWhen(entry.when) }}
                         </span>
-                        <span
+                        <component
+                            :is="entry.href ? Link : 'span'"
+                            :href="entry.href"
                             class="text-[13px] font-medium tracking-[-0.01em]"
                             :class="entry.away && 'font-normal text-ink-2'"
                         >
                             {{ entry.away ? $t("dashboard.away", { name: entry.what }) : entry.what }}
-                        </span>
+                        </component>
                     </div>
                 </Panel>
 

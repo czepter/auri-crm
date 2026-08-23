@@ -144,7 +144,7 @@ class DashboardController extends Controller
      * abwesend` announced above the week said nothing about which day it
      * costs, which is the only thing anyone reads that line for.
      *
-     * @return list<array{when: string, what: string, away: bool}>
+     * @return list<array{when: string, what: string, away: bool, href: string|null}>
      */
     private function week(User $viewer): array
     {
@@ -167,6 +167,7 @@ class DashboardController extends Controller
                 'time' => $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
                 'what' => $shoot->project->name,
                 'away' => false,
+                'href' => '/auftraege/'.$shoot->project->public_id.'/shootings',
             ]);
 
         $absences = Absence::query()
@@ -182,6 +183,7 @@ class DashboardController extends Controller
                 // nobody thinks to look in.
                 'what' => $absence->user->name,
                 'away' => true,
+                'href' => null,
             ]);
 
         return $shoots->concat($absences)
@@ -191,6 +193,7 @@ class DashboardController extends Controller
                 'when' => $entry['date'].($entry['time'] === null ? '' : ' '.$entry['time']),
                 'what' => $entry['what'],
                 'away' => $entry['away'],
+                'href' => $entry['href'],
             ])
             ->all();
     }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { Link } from '@inertiajs/vue3'
 import { drawDots, type Tone } from '@/admin/lib/metricDots'
 
 /**
@@ -22,6 +23,7 @@ const props = defineProps<{
   dots: Tone[]
   /** The "Als nächstes" form: a date plate instead of a number. */
   day?: { number: string; weekday: string; what: string; who: string }
+  href?: string
 }>()
 
 const proof = computed(() => drawDots(props.dots))
@@ -37,9 +39,14 @@ const DOT: Record<string, string> = {
 </script>
 
 <template>
-  <div
-    class="flex min-h-[130px] flex-col rounded-md bg-sunk"
-    :class="day ? 'overflow-hidden p-0' : 'px-[17px] pt-[15px] pb-3.5'"
+  <component
+    :is="href ? Link : 'div'"
+    :href="href"
+    class="flex min-h-[130px] flex-col rounded-md bg-sunk no-underline text-foreground"
+    :class="[
+      day ? 'overflow-hidden p-0' : 'px-[17px] pt-[15px] pb-3.5',
+      href && 'hover:bg-mark',
+    ]"
   >
     <template v-if="day">
       <div class="flex items-start gap-[11px] px-[17px] pt-[15px]">
@@ -89,5 +96,5 @@ const DOT: Record<string, string> = {
       </div>
       <slot />
     </div>
-  </div>
+  </component>
 </template>
