@@ -22,6 +22,9 @@ return new class extends Migration
             $table->timestampTz('removed_from_draft_at')->nullable()->after('error');
         });
 
+        // Nullable for now: IngestCompletedUpload does not yet choose a set on
+        // write. Task 4 rewrites it to do so and flips this column not null
+        // once every writer sets it.
         DB::statement(<<<'SQL'
             update assets a
                set gallery_set_id = s.id
@@ -29,10 +32,6 @@ return new class extends Migration
              where s.gallery_id = a.gallery_id
                and s.position = 0
         SQL);
-
-        Schema::table('assets', function (Blueprint $table) {
-            $table->foreignId('gallery_set_id')->nullable(false)->change();
-        });
     }
 
     public function down(): void
