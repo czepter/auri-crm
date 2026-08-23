@@ -53,16 +53,18 @@ describe('applyClick', () => {
     expect(second.anchor).toBe('b')
   })
 
-  it('adds without clearing on meta', () => {
+  it('adds without clearing on meta, and moves the anchor to the clicked id', () => {
     const next = applyClick({ selected: new Set(['a']), anchor: 'a' }, IDS, 'd', { meta: true })
 
     expect([...next.selected]).toEqual(['a', 'd'])
+    expect(next.anchor).toBe('d')
   })
 
   it('removes an already-selected id on meta instead of adding it again', () => {
-    const next = applyClick({ selected: new Set(['a', 'd']), anchor: 'd' }, IDS, 'd', { meta: true })
+    const next = applyClick({ selected: new Set(['a', 'd']), anchor: 'a' }, IDS, 'd', { meta: true })
 
     expect([...next.selected]).toEqual(['a'])
+    expect(next.anchor).toBe('d')
   })
 
   it('falls back to a plain click when shift has no anchor', () => {
