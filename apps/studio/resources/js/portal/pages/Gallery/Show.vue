@@ -30,6 +30,7 @@ const props = defineProps<{
     url: string
   }
   unlocked: boolean
+  offers: { downloads: boolean; lists: boolean; comments: boolean }
   assets: Asset[] | null
   // Everything below is null for a guest. They keep the heart, which is the
   // same thing as an unnamed list; they have no link of their own to share
@@ -306,7 +307,7 @@ const COVER_INPUT = [
           </button>
         </span>
 
-        <Button as="a" :href="`/galerien/${gallery.id}/download`">{{ $t('gallery.downloadLink') }}</Button>
+        <Button v-if="offers.downloads" as="a" :href="`/galerien/${gallery.id}/download`">{{ $t('gallery.downloadLink') }}</Button>
       </div>
 
       <!-- columns, not grid: a photo wall wants the original proportions, and
@@ -325,7 +326,7 @@ const COVER_INPUT = [
           <!-- The list menu replaces the single heart as soon as a client is
                signed in; a guest never sees it. -->
           <button
-            v-if="lists?.length"
+            v-if="offers.lists && lists?.length"
             class="absolute top-2.5 right-2.5 z-4 grid size-8 scale-90 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(12,10,9,.5)] text-white opacity-0 backdrop-blur-[8px] transition-[opacity,transform] duration-[.22s] ease-out group-hover:scale-100 group-hover:opacity-100 aria-expanded:scale-100 aria-expanded:opacity-100 [&_svg]:size-4 [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.5]"
             type="button"
             :aria-expanded="menu === asset.key"
@@ -373,12 +374,13 @@ const COVER_INPUT = [
         :title="gallery.title"
         :assets="shown"
         :lists="lists"
+        :offers="offers"
       />
 
       <!-- The couple's own half of their gallery, under the pictures. A
            guest never receives any of it. -->
       <section
-        v-if="lists"
+        v-if="offers.lists && lists"
         class="mx-auto grid max-w-[1240px] gap-16 border-t border-border px-8 py-16 min-[900px]:grid-cols-[minmax(0,1fr)_320px] [&>div:not(:first-child)]:mt-11"
       >
         <div>

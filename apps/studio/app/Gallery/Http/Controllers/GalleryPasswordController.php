@@ -65,6 +65,14 @@ class GalleryPasswordController extends Controller
                 'url' => url("/galerien/{$gallery->public_id}"),
             ],
             'unlocked' => $unlocked,
+            // A button for something the gallery does not offer is a 403 with
+            // extra steps — the routes already refuse it (gallery.feature:),
+            // this is so the screen never draws it.
+            'offers' => [
+                'downloads' => $gallery->downloads_enabled,
+                'lists' => $gallery->lists_enabled,
+                'comments' => $gallery->comments_enabled,
+            ],
             // Null while locked, and null for a gallery nobody has published
             // yet — an unlocked gate over an empty gallery is a real state,
             // not an error, so the screen says so rather than 404ing a link

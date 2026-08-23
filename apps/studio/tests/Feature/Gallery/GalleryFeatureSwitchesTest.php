@@ -44,6 +44,20 @@ describe('on the portal surface', function () {
             'body' => 'Schön',
         ])->assertForbidden();
     });
+
+    it('tells the screen which offers stand', function () {
+        $gallery = Gallery::factory()->create([
+            'downloads_enabled' => false,
+            'lists_enabled' => true,
+            'comments_enabled' => false,
+        ]);
+
+        $offers = props("/galerien/{$gallery->public_id}")['offers'];
+
+        expect($offers['downloads'])->toBeFalse()
+            ->and($offers['lists'])->toBeTrue()
+            ->and($offers['comments'])->toBeFalse();
+    });
 });
 
 describe('on the api surface', function () {

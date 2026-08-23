@@ -15,6 +15,7 @@ const props = defineProps<{
   // G-01 (#229): two roles, one screen. A guest gets the heart; a signed-in
   // client gets their lists — null is the guest.
   lists: List[] | null
+  offers: { downloads: boolean; lists: boolean; comments: boolean }
 }>()
 
 const open = defineModel<number | null>({ required: true })
@@ -194,7 +195,7 @@ function time(iso: string) {
         <div class="flex flex-wrap items-start gap-8">
           <!-- A client sees their lists behind one button; a guest sees the
                heart. Same place, same gesture, one menu instead of a toggle. -->
-          <div v-if="lists?.length" class="relative">
+          <div v-if="offers.lists && lists?.length" class="relative">
             <button
               type="button"
               class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
@@ -218,7 +219,7 @@ function time(iso: string) {
           </div>
 
           <button
-            v-else
+            v-else-if="offers.lists"
             type="button"
             class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
             :class="isFavorite ? 'text-action [&_svg]:fill-current' : 'text-muted-foreground [&_svg]:fill-none'"
@@ -228,13 +229,13 @@ function time(iso: string) {
             {{ isFavorite ? $t('gallery.unfavorite') : $t('gallery.favorite') }}
           </button>
 
-          <a class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]" :href="`${base}/download`">
+          <a v-if="offers.downloads" class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-4 [&_svg]:stroke-[1.5] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]" :href="`${base}/download`">
             <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
             {{ $t('gallery.download') }}
           </a>
         </div>
 
-        <div class="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto">
+        <div v-if="offers.comments" class="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto">
           <div v-for="(comment, index) in forAsset" :key="index">
             <!-- tokens.css .who decides the face here too — gallery.css only lays the row out. -->
             <div
@@ -250,7 +251,7 @@ function time(iso: string) {
           </p>
         </div>
 
-        <form @submit.prevent="sendComment">
+        <form v-if="offers.comments" @submit.prevent="sendComment">
           <Input v-model="draft" type="text" :placeholder="$t('gallery.commentPlaceholder')" />
         </form>
       </aside>
