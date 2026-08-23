@@ -229,6 +229,16 @@ venue: string | null,
 position: string,
 contact: string | null,
 };
+export type ProjectSuggestionData = {
+id: string,
+name: string,
+contactName: string | null,
+galleryDefaults: {
+downloads: boolean | null,
+lists: boolean | null,
+comments: boolean | null,
+},
+};
 export type RowActionData = {
 label: string,
 kind: string,

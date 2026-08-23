@@ -16,6 +16,7 @@ use App\Crm\Http\Controllers\LeadBoardController;
 use App\Crm\Http\Controllers\LeadCaseController;
 use App\Crm\Http\Controllers\LeadStageController;
 use App\Crm\Http\Controllers\ProjectController;
+use App\Crm\Http\Controllers\ProjectSearchController;
 use App\Crm\Http\Controllers\ShootController;
 use App\Crm\Http\Controllers\ShotListItemController;
 use App\Crm\Http\Controllers\TaskController;
@@ -376,6 +377,7 @@ Route::middleware('audience:staff')->group(function () {
         // path, not /auftraege: a Job is what a booked project becomes, and
         // the list covers every project whether or not one exists yet.
         Route::get('/projekte', [ProjectController::class, 'index'])->name('projects.index');
+        Route::get('/projekte/suche', ProjectSearchController::class)->name('projects.search');
 
         // The project screen. Shoot and crew mutations hang off /shootings
         // rather than under the project, because the shoot's public id already

@@ -270,6 +270,7 @@
     "title": "Projekte",
     "name": "Projekt",
     "contact": "Kontakt",
+    "searchPlaceholder": "Projekt suchen",
     "empty": "Keine Projekte."
   },
   "calendar": {
