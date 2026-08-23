@@ -48,3 +48,13 @@ it('shows a projectless gallery to every role that may manage media', function (
     expect(collect(props('/galerien')['galleries'])->pluck('id'))
         ->toContain($orphan->public_id);
 });
+
+// Der Sichtbarkeitszweig der Abfrage. Keine Rolle traegt ManageShoots ohne
+// ViewAllProjects, also ist der Crew-Pfad von visibleTo hier nicht erreichbar;
+// pruefbar bleibt, dass eine Galerie mit Buchung ueberhaupt durch ihn kommt.
+it('carries a gallery whose booking this role may see', function () {
+    $gallery = Gallery::factory()->for(Project::factory())->create();
+
+    expect(collect(props('/galerien')['galleries'])->pluck('id'))
+        ->toContain($gallery->public_id);
+});

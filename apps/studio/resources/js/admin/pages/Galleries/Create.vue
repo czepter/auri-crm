@@ -5,7 +5,7 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { ChoiceGroup } from '@/ui/choice-group'
 import ProjectTypeahead from '@/admin/components/ProjectTypeahead.vue'
-import { birthValues } from '@/admin/lib/galleryBirth'
+import { birthValues, expiryOn } from '@/admin/lib/galleryBirth'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
@@ -44,24 +44,6 @@ const form = useForm({
   design: null as Record<string, string> | null,
 })
 
-function expiryFrom(chosen: App.Gallery.Data.GalleryPresetData | null) {
-  const days =
-    chosen === null || chosen.expiryMode === 'inherit'
-      ? props.studioDefaults.expiryDays
-      : chosen.expiryMode === 'never'
-        ? null
-        : chosen.expiryDays
-
-  if (days === null) {
-    return ''
-  }
-
-  const date = new Date()
-  date.setDate(date.getDate() + days)
-
-  return date.toISOString().slice(0, 10)
-}
-
 watch([preset, project], () => {
   const born = birthValues(preset.value, project.value, props.studioDefaults)
 
@@ -71,15 +53,27 @@ watch([preset, project], () => {
   form.requires_settled_balance =
     preset.value?.requiresSettledBalance ?? props.studioDefaults.requiresSettledBalance
   form.design = preset.value?.design ?? null
-  form.expires_at = expiryFrom(preset.value)
+  form.expires_at = expiryOn(preset.value, props.studioDefaults, new Date())
 })
 
+// Eine externe Galerie liegt anderswo: sie hat weder eine Frist noch einen
+// Download, den dieses System regeln koennte, also reist davon nichts mit.
 function submit() {
   form
     .transform((data) => ({
       ...data,
       project_id: project.value?.id ?? null,
       is_external: mode.value === 'external',
+      ...(mode.value === 'external'
+        ? {
+            expires_at: '',
+            design: null,
+            requires_settled_balance: false,
+            downloads_enabled: true,
+            lists_enabled: true,
+            comments_enabled: true,
+          }
+        : {}),
     }))
     .post('/galerien')
 }

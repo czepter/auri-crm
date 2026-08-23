@@ -149,7 +149,7 @@ function create() {
               </div>
 
               <div class="mt-4 flex items-center gap-4">
-                <Button type="button" @click="save(preset.id)">{{ $t('galleryPresets.save') }}</Button>
+                <Button type="button" @click="save(preset.id)">{{ $t('common.save') }}</Button>
                 <Button type="button" variant="pill-muted" @click="remove(preset.id)">{{ $t('galleryPresets.delete') }}</Button>
               </div>
             </div>

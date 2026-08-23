@@ -13,6 +13,7 @@ use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -68,7 +69,10 @@ class GalleryIndexController extends Controller
         $this->authorize('create', Gallery::class);
 
         $validated = $request->validate([
-            'project_id' => ['nullable', 'string'],
+            // Ueber visibleTo aufgeloest, wie der Index: was diese Rolle nicht
+            // sieht, ist kein Ziel. findByPublicId lieferte auf einen
+            // Tippfehler null und damit still eine projektlose Galerie.
+            'project_id' => ['nullable', 'string', Rule::exists('projects', 'public_id')],
             'title' => ['required', 'string', 'max:200'],
             'is_external' => ['required', 'boolean'],
             'external_url' => ['nullable', 'url', 'max:2000', 'required_if:is_external,true'],
@@ -82,7 +86,10 @@ class GalleryIndexController extends Controller
 
         $project = ($validated['project_id'] ?? null) === null
             ? null
-            : Project::findByPublicId($validated['project_id']);
+            : Project::query()
+                ->visibleTo(auth('staff')->user())
+                ->where('public_id', $validated['project_id'])
+                ->firstOrFail();
 
         $gallery = Gallery::create([
             ...Arr::except($validated, ['project_id']),

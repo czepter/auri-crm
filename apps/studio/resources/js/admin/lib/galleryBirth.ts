@@ -21,3 +21,32 @@ export function birthValues(preset: Preset | null, project: Project | null, stud
     comments: pick(preset?.commentsEnabled ?? null, project?.galleryDefaults.comments ?? null, studio.comments),
   }
 }
+
+type Expiry = { expiryMode: string; expiryDays: number | null }
+
+/*
+ * Bis wann eine neue Galerie gilt, als lokaler Kalendertag. toISOString()
+ * rechnet nach UTC um und liefert in MESZ vor 02:00 Uhr den Vortag — deshalb
+ * die Felder einzeln.
+ */
+export function expiryOn(preset: Expiry | null, studio: { expiryDays: number | null }, from: Date): string {
+  const days =
+    preset === null || preset.expiryMode === 'inherit'
+      ? studio.expiryDays
+      : preset.expiryMode === 'never'
+        ? null
+        : preset.expiryDays
+
+  if (days === null) {
+    return ''
+  }
+
+  const date = new Date(from)
+  date.setDate(date.getDate() + days)
+
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-')
+}

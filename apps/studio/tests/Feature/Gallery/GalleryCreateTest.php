@@ -72,3 +72,17 @@ it('refuses an external gallery without a url', function () {
         'is_external' => true,
     ])->assertSessionHasErrors('external_url');
 });
+
+// Die Zuordnung laeuft ueber visibleTo, wie der Index. Eine Rolle mit
+// ManageShoots ohne ViewAllProjects gibt es in StaffRole nicht, also hat der
+// Sichtbarkeitszweig kein Subjekt — pruefbar bleibt, dass eine Id, die diese
+// Abfrage nicht findet, ein Fehler ist und keine projektlose Galerie.
+it('refuses an unknown project id instead of dropping the project', function () {
+    $this->post('/galerien', [
+        'project_id' => 'nicht-vorhanden',
+        'title' => 'Tippfehler',
+        'is_external' => false,
+    ])->assertSessionHasErrors('project_id');
+
+    expect(Gallery::count())->toBe(0);
+});

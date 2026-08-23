@@ -13,9 +13,7 @@ use App\Models\User;
  *
  * Without one there is nothing to route through, so the capability decides
  * alone — a role whose project view is narrowed still sees every projectless
- * gallery in the studio. That is the price of a gallery outside the bookings,
- * and the answer to disliking it is to stop making them, not to invent a
- * filter with nothing to filter on.
+ * gallery in the studio. That is the price of a gallery outside the bookings.
  */
 class GalleryPolicy
 {
