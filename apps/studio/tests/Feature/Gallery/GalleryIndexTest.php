@@ -2,6 +2,7 @@
 
 use App\Crm\Models\Project;
 use App\Gallery\Models\Gallery;
+use App\Media\Models\Asset;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -14,10 +15,8 @@ beforeEach(function () {
 
 it('lists a gallery with its booking, its count and its version', function () {
     $project = Project::factory()->create(['name' => 'Basthorst 2026']);
-    $gallery = Gallery::factory()->for($project)->create([
-        'title' => 'Trauung',
-        'assets' => [['key' => 'galleries/g1/a.jpg', 'width' => 200, 'height' => 100]],
-    ]);
+    $gallery = Gallery::factory()->for($project)->create(['title' => 'Trauung']);
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'width' => 200, 'height' => 100]);
     $gallery->publish();
 
     $row = collect(props('/galerien')['galleries'])->firstWhere('id', $gallery->public_id);

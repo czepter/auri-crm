@@ -24,7 +24,7 @@ class GalleryRowData extends Data
             id: $gallery->public_id,
             title: $gallery->title,
             projectName: $gallery->project?->name,
-            assetCount: count($gallery->assets ?? []),
+            assetCount: $gallery->assetRows()->inDraft()->count(),
             version: $gallery->currentVersion?->version,
             expiresAt: $gallery->expires_at?->format('Y-m-d'),
         );

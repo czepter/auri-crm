@@ -33,8 +33,8 @@ const props = defineProps<{
     downloaded: number
     viewed: number
   }
-  sets: { name: string | null; count: number }[]
-  assets: { key: string; set: string | null; src: string | null }[]
+  sets: { id: string; name: string; count: number; sortKey: string; sortDir: string }[]
+  assets: { id: string; key: string; setId: string; src: string | null; filename: string; width: number; height: number; isCover: boolean }[]
   versions: { version: number; publishedAt: string | null; assetCount: number }[]
   builds: { id: string; size: string; status: string; parts: number; bytes: number }[]
   lists: { id: string; name: string | null; owner: string | null; count: number }[]
@@ -111,7 +111,11 @@ function megabytes(bytes: number) {
 }
 
 function shown() {
-  return activeSet.value === null ? props.assets : props.assets.filter((asset) => asset.set === activeSet.value)
+  return activeSet.value === null ? props.assets : props.assets.filter((asset) => asset.setId === activeSet.value)
+}
+
+function setName(setId: string) {
+  return props.sets.find((entry) => entry.id === setId)?.name ?? null
 }
 </script>
 
@@ -214,12 +218,12 @@ function shown() {
             {{ $t('gallery.all') }}<span class="ml-auto text-[11.5px] tabular-nums text-ink-2">{{ figures.assets }}</span>
           </a>
           <a
-            v-for="set in sets.filter((entry) => entry.name !== null)"
-            :key="set.name!"
+            v-for="set in sets"
+            :key="set.id"
             href="#"
             class="mb-0.5 flex items-baseline gap-2 rounded-lg px-2.5 py-2 text-[13px] text-foreground no-underline"
-            :class="activeSet === set.name && 'bg-sunk-2 font-semibold'"
-            @click.prevent="activeSet = set.name"
+            :class="activeSet === set.id && 'bg-sunk-2 font-semibold'"
+            @click.prevent="activeSet = set.id"
           >
             {{ set.name }}<span class="ml-auto text-[11.5px] tabular-nums text-ink-2">{{ set.count }}</span>
           </a>
@@ -235,9 +239,9 @@ function shown() {
           </div>
 
           <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2.5">
-            <figure v-for="asset in shown()" :key="asset.key" class="relative m-0">
+            <figure v-for="asset in shown()" :key="asset.id" class="relative m-0">
               <img v-if="asset.src" class="block aspect-3/2 w-full rounded-lg object-cover" :src="`${asset.src}?w=400&fmt=jpeg`" alt="" loading="lazy" />
-              <span v-if="asset.set" class="absolute top-[7px] left-[7px] flex gap-1 text-[10.5px] text-paper"><span class="rounded-full bg-[rgba(29,29,31,0.62)] px-[7px] py-0.5">{{ asset.set }}</span></span>
+              <span v-if="setName(asset.setId)" class="absolute top-[7px] left-[7px] flex gap-1 text-[10.5px] text-paper"><span class="rounded-full bg-[rgba(29,29,31,0.62)] px-[7px] py-0.5">{{ setName(asset.setId) }}</span></span>
             </figure>
           </div>
 
@@ -296,7 +300,7 @@ function shown() {
             <div class="grid grid-cols-3 gap-1.5 p-2.5">
               <img
                 v-for="asset in assets.slice(1, 7)"
-                :key="asset.key"
+                :key="asset.id"
                 class="block aspect-3/2 w-full rounded-[3px] object-cover"
                 :src="`${asset.src}?w=400&fmt=jpeg`"
                 alt=""

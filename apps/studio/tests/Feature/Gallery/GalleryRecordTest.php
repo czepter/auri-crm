@@ -2,6 +2,8 @@
 
 use App\Crm\Models\Project;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
+use App\Media\Models\Asset;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -14,27 +16,31 @@ beforeEach(function () {
 
 function managedGallery(): Gallery
 {
-    $gallery = Gallery::factory()->for(Project::factory())->create([
-        'title' => 'Hochzeitstag',
-        'assets' => [
-            ['key' => 'galleries/g1/a.jpg', 'width' => 4000, 'height' => 3000, 'set' => 'Trauung'],
-            ['key' => 'galleries/g1/b.jpg', 'width' => 4000, 'height' => 3000],
-        ],
+    $gallery = Gallery::factory()->for(Project::factory())->create(['title' => 'Hochzeitstag']);
+    $highlights = GallerySet::where('gallery_id', $gallery->id)->first();
+    $trauung = GallerySet::factory()->for($gallery)->create(['name' => 'Trauung', 'position' => 1]);
+
+    Asset::factory()->create([
+        'gallery_id' => $gallery->id, 'gallery_set_id' => $trauung->id,
+        'key' => 'galleries/g1/a.jpg', 'filename' => 'a.jpg', 'width' => 4000, 'height' => 3000,
     ]);
+    Asset::factory()->create([
+        'gallery_id' => $gallery->id, 'gallery_set_id' => $highlights->id,
+        'key' => 'galleries/g1/b.jpg', 'filename' => 'b.jpg', 'width' => 4000, 'height' => 3000,
+    ]);
+
     $gallery->publish();
 
     return $gallery->fresh();
 }
 
-// C-19 (#255): sets are a key on the asset entry, so they travel with the
-// picture and land in the version snapshot for free.
-it('groups the pictures into sets, with the unnamed ones in their own group', function () {
+it('lists the sets with their counts', function () {
     $gallery = managedGallery();
 
     $props = props("/galerien/{$gallery->public_id}");
 
-    expect(collect($props['sets'])->pluck('name')->all())->toContain('Trauung')
-        ->and(collect($props['sets'])->firstWhere('name', null)['count'])->toBe(1)
+    expect(collect($props['sets'])->pluck('name')->all())->toBe(['Highlights', 'Trauung'])
+        ->and(collect($props['sets'])->firstWhere('name', 'Trauung')['count'])->toBe(1)
         ->and($props['figures']['assets'])->toBe(2);
 });
 

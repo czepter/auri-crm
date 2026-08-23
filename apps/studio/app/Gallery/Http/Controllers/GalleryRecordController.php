@@ -9,6 +9,7 @@ use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Models\GalleryView;
 use App\Http\Controllers\Controller;
+use App\Media\Models\Asset;
 use App\Media\Models\DownloadEvent;
 use App\Media\Models\ZipBuild;
 use App\Support\RecordVisit;
@@ -48,7 +49,8 @@ class GalleryRecordController extends Controller
         RecordVisit::record('galerie', $gallery->public_id, $gallery->title ?? $gallery->project?->name ?? '');
 
         $version = $gallery->currentVersion;
-        $assets = collect($gallery->assets ?? []);
+        $sets = $gallery->sets()->withCount(['assets' => fn ($query) => $query->inDraft()])->get();
+        $assets = $gallery->assetRows()->inDraft()->with('set')->get();
 
         return Inertia::render('Galleries/Record', [
             'gallery' => [
@@ -92,16 +94,22 @@ class GalleryRecordController extends Controller
                     ->count(),
                 'viewed' => GalleryView::query()->where('gallery_id', $gallery->id)->count(),
             ],
-            // Sets are a key on the asset entry (see the migration): an entry
-            // without one is in the unnamed set, which is what "Alle Bilder"
-            // already means.
-            'sets' => $assets->groupBy(fn (array $asset) => $asset['set'] ?? '')
-                ->map(fn ($group, $name) => ['name' => $name === '' ? null : $name, 'count' => $group->count()])
-                ->values()->all(),
-            'assets' => $assets->map(fn (array $asset) => [
-                'key' => $asset['key'],
-                'set' => $asset['set'] ?? null,
-                'src' => $version === null ? null : "/galerie-bilder/{$version->public_id}/{$asset['key']}",
+            'sets' => $sets->map(fn ($set) => [
+                'id' => $set->public_id,
+                'name' => $set->name,
+                'count' => $set->assets_count,
+                'sortKey' => $set->sort_key,
+                'sortDir' => $set->sort_dir,
+            ])->all(),
+            'assets' => $assets->map(fn (Asset $asset) => [
+                'id' => $asset->public_id,
+                'key' => $asset->key,
+                'setId' => $asset->set->public_id,
+                'filename' => $asset->filename,
+                'width' => $asset->width,
+                'height' => $asset->height,
+                'isCover' => $asset->id === $gallery->cover_asset_id,
+                'src' => $version === null ? null : "/galerie-bilder/{$version->public_id}/{$asset->key}",
             ])->all(),
             'versions' => $gallery->versions()->orderByDesc('version')->get()
                 ->map(fn (GalleryVersion $row) => [
