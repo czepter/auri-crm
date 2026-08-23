@@ -5,6 +5,7 @@ import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import { Button } from "@/ui/button";
 import BandCell from "@/admin/components/BandCell.vue";
 import BandValue from "@/admin/components/BandValue.vue";
+import LineItems from "@/admin/components/LineItems.vue";
 import NoteThread from "@/admin/components/NoteThread.vue";
 import ShootFields from "@/admin/components/ShootFields.vue";
 import ShootRow from "@/admin/components/ShootRow.vue";
@@ -339,34 +340,19 @@ function complete(task: App.Crm.Data.TaskRowData) {
                          work happens anyway. -->
                     <section v-if="scope.items.length" class="mb-5">
                         <h2>{{ $t("project.scope") }}</h2>
-                        <div>
-                            <div
-                                v-for="item in scope.items"
-                                :key="item.id"
-                                class="flex items-baseline gap-3.5 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
-                            >
-                                <span class="min-w-0 flex-1 text-[13.5px] leading-[1.47]">
-                                    {{ item.title }}
-                                    <span v-if="item.state" class="ml-[3px] text-[11.5px] text-action">{{
-                                        $t(`project.scope_${item.state}`)
-                                    }}</span>
-                                </span>
+                        <LineItems :items="scope.items">
+                            <template #note="{ item }">
+                                <span v-if="item.state" class="ml-[3px] text-[11.5px] text-action">{{
+                                    $t(`project.scope_${item.state}`)
+                                }}</span>
+                            </template>
+                            <template #priceNote="{ item }">
                                 <span
-                                    class="w-14 flex-none text-right text-[12.5px] leading-[1.47] tabular-nums text-ink-2"
-                                >{{ item.quantity }}×</span>
-                                <span class="w-28 flex-none text-right text-[13px] leading-[1.47] tabular-nums">
-                                    {{
-                                        item.unitPrice === null
-                                            ? $t("packages.included")
-                                            : euro(item.unitPrice)
-                                    }}
-                                    <span
-                                        v-if="item.state === 'changed'"
-                                        class="mt-0.5 block text-[11.5px] font-normal text-action"
-                                    >{{ euro(item.wasUnitPrice) }}</span>
-                                </span>
-                            </div>
-                        </div>
+                                    v-if="item.state === 'changed'"
+                                    class="mt-0.5 block text-[11.5px] font-normal text-action"
+                                >{{ euro(item.wasUnitPrice) }}</span>
+                            </template>
+                        </LineItems>
 
                         <p
                             v-if="scope.delta"

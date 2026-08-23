@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import LineItems from '@/admin/components/LineItems.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { Button } from '@/ui/button'
 import { formatEurosRounded } from '@/admin/lib/money'
@@ -39,18 +40,7 @@ function total(pkg: App.Catalog.Data.PackageData) {
           </header>
 
           <div>
-            <div v-for="item in pkg.items" :key="item.id" class="flex items-baseline gap-3.5 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none">
-              <span class="min-w-0 flex-1 text-[13.5px] leading-[1.47]">
-                {{ item.title }}
-                <span v-if="item.description" class="text-[12px] text-ink-2"> · {{ item.description }}</span>
-              </span>
-              <span class="w-14 flex-none text-right text-[12.5px] leading-[1.47] tabular-nums text-ink-2">{{ item.quantity }}×</span>
-              <!-- A position without a price is an included service, not a
-                   zero: package_items.unit_price is nullable for exactly that. -->
-              <span class="w-28 flex-none text-right text-[13px] leading-[1.47] tabular-nums">
-                {{ item.unitPrice === null ? $t('packages.included') : formatEurosRounded(item.unitPrice) }}
-              </span>
-            </div>
+            <LineItems :items="pkg.items" />
           </div>
 
           <Button variant="pill-muted" class="mt-3" type="button" @click="toggle(pkg)">
