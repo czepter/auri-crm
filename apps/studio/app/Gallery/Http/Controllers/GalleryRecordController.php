@@ -10,6 +10,7 @@ use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GallerySet;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Models\GalleryView;
+use App\Gallery\Support\DraftDeviation;
 use App\Http\Controllers\Controller;
 use App\Media\Data\FailedAssetData;
 use App\Media\Enums\AssetStatus;
@@ -88,6 +89,13 @@ class GalleryRecordController extends Controller
                 'balanceSettled' => $gallery->balance_settled,
                 'requiresSettledBalance' => $gallery->requires_settled_balance,
                 'design' => $gallery->design,
+                // Drives the publish button's label (Veröffentlichen ·
+                // Neu veröffentlichen · Wieder freigeben) — computed fresh
+                // rather than a stored flag a future action can forget to
+                // update (spec decision 23).
+                'deviates' => DraftDeviation::of($gallery),
+                'withdrawn' => $gallery->isWithdrawn(),
+                'canPublish' => auth('staff')->user()->can('publish', $gallery),
                 'offers' => [
                     'downloads' => $gallery->downloads_enabled,
                     'lists' => $gallery->lists_enabled,

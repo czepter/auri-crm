@@ -143,6 +143,33 @@ it('carries the three activity sheets', function () {
         ->toHaveKeys(['downloads', 'marks', 'comments', 'views']);
 });
 
+// Critical 2: Record.vue's publish button follows this flag to choose
+// between Neu veröffentlichen and Wieder freigeben.
+it('flags a draft that moved since the standing version as deviating', function () {
+    $gallery = managedGallery();
+    $highlights = GallerySet::where('gallery_id', $gallery->id)->where('name', 'Highlights')->first();
+
+    Asset::factory()->create([
+        'gallery_id' => $gallery->id, 'gallery_set_id' => $highlights->id,
+        'key' => 'galleries/g1/c.jpg', 'filename' => 'c.jpg',
+    ]);
+
+    expect(props("/galerien/{$gallery->public_id}")['gallery']['deviates'])->toBeTrue();
+});
+
+it('reports an unchanged draft as not deviating', function () {
+    $gallery = managedGallery();
+
+    expect(props("/galerien/{$gallery->public_id}")['gallery']['deviates'])->toBeFalse();
+});
+
+it('reports whether the gallery is withdrawn', function () {
+    $gallery = managedGallery();
+    $gallery->forceFill(['unpublished_at' => now()])->save();
+
+    expect(props("/galerien/{$gallery->public_id}")['gallery']['withdrawn'])->toBeTrue();
+});
+
 it('sets the three offers from the permissions tab', function () {
     $gallery = managedGallery();
 

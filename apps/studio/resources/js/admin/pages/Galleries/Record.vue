@@ -11,6 +11,7 @@ import { Button } from '@/ui/button'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import GalleryRail from '@/admin/components/gallery/GalleryRail.vue'
 import { initialActiveSetId, nextActiveSetId } from '@/admin/lib/gallerySets'
+import { publishLabelKey, showPublish as showPublishRule, showWithdraw as showWithdrawRule } from '@/admin/lib/galleryPublish'
 import Images from '@/admin/pages/Galleries/panes/Images.vue'
 
 const props = defineProps<{
@@ -26,6 +27,9 @@ const props = defineProps<{
     requiresSettledBalance: boolean
     design: Record<string, string> | null
     offers: { downloads: boolean; lists: boolean; comments: boolean }
+    deviates: boolean
+    withdrawn: boolean
+    canPublish: boolean
   }
   siblings: { id: string; title: string | null; assetCount: number; open: boolean }[]
   figures: {
@@ -59,6 +63,23 @@ const sheet = ref<(typeof SHEETS)[number]>('downloads')
 
 const activeSetId = ref<string | null>(initialActiveSetId(props.sets))
 const coverSrc = computed(() => props.assets.find((asset) => asset.isCover)?.src ?? null)
+
+const publishState = computed(() => ({
+  deviates: props.gallery.deviates,
+  withdrawn: props.gallery.withdrawn,
+  published: props.figures.published,
+}))
+const publishLabel = computed(() => publishLabelKey(publishState.value))
+const showPublish = computed(() => props.gallery.canPublish && showPublishRule(publishState.value))
+const showWithdraw = computed(() => props.gallery.canPublish && showWithdrawRule(publishState.value))
+
+function publish() {
+  router.post(`/galerien/${props.gallery.id}/veroeffentlichen`, {}, { preserveScroll: true })
+}
+
+function withdraw() {
+  router.delete(`/galerien/${props.gallery.id}/veroeffentlichung`, { preserveScroll: true })
+}
 
 watch(
   () => props.sets,
@@ -150,7 +171,12 @@ function megabytes(bytes: number) {
 <template>
   <AdminLayout active="galerien">
     <div data-tokens>
-      <PageHead :title="gallery.title ?? '—'" />
+      <PageHead :title="gallery.title ?? '—'">
+        <span v-if="showPublish || showWithdraw" class="ml-auto flex gap-2">
+          <Button v-if="showWithdraw" type="button" variant="pill-muted" @click="withdraw">{{ $t('galleryRecord.withdraw') }}</Button>
+          <Button v-if="showPublish" type="button" @click="publish">{{ $t(publishLabel) }}</Button>
+        </span>
+      </PageHead>
 
       <div class="max-w-none px-8 pt-7">
         <!-- Link, password and code stand in clear and are set here: both are

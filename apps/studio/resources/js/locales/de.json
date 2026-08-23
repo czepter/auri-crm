@@ -1212,6 +1212,10 @@
   },
   "galleryRecord": {
     "saveAsPreset": "Als Vorlage sichern",
+    "publish": "Veröffentlichen",
+    "republish": "Neu veröffentlichen",
+    "reopen": "Wieder freigeben",
+    "withdraw": "Zurücknehmen",
     "link": "Link",
     "published": "Stand",
     "version": "Fassung {version}",
