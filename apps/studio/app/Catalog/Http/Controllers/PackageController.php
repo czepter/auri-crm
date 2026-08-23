@@ -94,6 +94,37 @@ class PackageController extends Controller
         return redirect('/pakete');
     }
 
+    /**
+     * is_active wird übernommen: dupliziert wird, um zu ändern, und die
+     * Entscheidung über die Sichtbarkeit trifft man danach. Der Name
+     * kollidiert mit nichts — packages trägt keinen Unique-Index darauf —, und
+     * mehrfaches Duplizieren zeigt sich am Namen selbst an.
+     */
+    public function duplicate(Package $package): RedirectResponse
+    {
+        $this->authorize('create', Package::class);
+
+        $copy = $package->replicate(['public_id']);
+        $copy->name = "{$package->name} (Kopie)";
+        $copy->save();
+
+        $copy->items()->createMany(
+            collect($package->copyItems())
+                ->values()
+                ->map(fn (array $item, int $index) => [...$item, 'sort_order' => $index])
+                ->all()
+        );
+
+        AuditLogger::record(
+            event: 'package.created',
+            actor: auth('staff')->user(),
+            context: ['name' => $copy->name, 'source' => 'duplicate'],
+            subject: $copy->public_id,
+        );
+
+        return redirect("/pakete/{$copy->public_id}");
+    }
+
     /** Hides the package from the set a new quote may start from. Nothing already built from it moves. */
     public function toggle(Package $package): RedirectResponse
     {

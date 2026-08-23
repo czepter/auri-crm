@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
 import QuoteTable, { type QuoteRow } from '@/admin/components/QuoteTable.vue'
@@ -10,6 +10,7 @@ import { basisPointsToPercent, centsToEuros, eurosToCents, formatDiscount, forma
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
+import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
@@ -53,6 +54,25 @@ watch(
   },
   { immediate: true, deep: false },
 )
+
+const packageForms = reactive<Record<string, ReturnType<typeof useForm<{ name: string }>>>>({})
+
+watch(
+  () => props.quotes,
+  (quotes) => {
+    for (const quote of quotes) {
+      packageForms[quote.id] ??= useForm({ name: '' })
+    }
+  },
+  { immediate: true },
+)
+
+function saveAsPackage(quoteId: string) {
+  packageForms[quoteId].post(`/angebote/${quoteId}/als-paket`, {
+    preserveScroll: true,
+    onSuccess: () => packageForms[quoteId].reset(),
+  })
+}
 
 const save = debounced((quoteId: string) => {
   const draft = drafts[quoteId]
@@ -212,6 +232,44 @@ function chipClass(status: string): string {
               </tr>
             </template>
           </table>
+
+          <Dialog v-if="header.canManageQuotes && packageForms[quote.id]">
+            <DialogTrigger as-child>
+              <Button variant="outline" class="mt-4" type="button">{{ $t('quotes.saveAsPackage') }}</Button>
+            </DialogTrigger>
+
+            <DialogContent class="max-w-[420px]">
+              <DialogHeader>
+                <DialogTitle>{{ $t('quotes.saveAsPackage') }}</DialogTitle>
+              </DialogHeader>
+
+              <DialogBody>
+                <form :id="`as-package-${quote.id}`" class="fgrid" @submit.prevent="saveAsPackage(quote.id)">
+                  <div class="fld">
+                    <Label :for="`package-name-${quote.id}`">{{ $t('quotes.packageName') }}</Label>
+                    <Input
+                      :id="`package-name-${quote.id}`"
+                      v-model="packageForms[quote.id].name"
+                      type="text"
+                      required
+                    />
+                    <p v-if="packageForms[quote.id].errors.name" class="text-[12px] text-destructive">
+                      {{ packageForms[quote.id].errors.name }}
+                    </p>
+                  </div>
+                </form>
+              </DialogBody>
+
+              <DialogFooter>
+                <Button type="submit" :form="`as-package-${quote.id}`" :disabled="packageForms[quote.id].processing">
+                  {{ $t('common.save') }}
+                </Button>
+                <DialogClose as-child>
+                  <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <p v-if="!quotes.length && !header.canManageQuotes" class="hint">{{ $t('quotes.empty') }}</p>

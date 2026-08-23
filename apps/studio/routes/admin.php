@@ -26,8 +26,8 @@ use App\Documents\Http\Controllers\DocumentTemplateController;
 use App\Engagement\Http\Controllers\InboxController;
 use App\Engagement\Http\Controllers\ThreadController;
 use App\Gallery\Http\Controllers\GalleryAssetController;
-use App\Gallery\Http\Controllers\GalleryLightroomExportController;
 use App\Gallery\Http\Controllers\GalleryIndexController;
+use App\Gallery\Http\Controllers\GalleryLightroomExportController;
 use App\Gallery\Http\Controllers\GalleryPresetController;
 use App\Gallery\Http\Controllers\GalleryPublicationController;
 use App\Gallery\Http\Controllers\GalleryRecordController;
@@ -182,6 +182,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/pakete/{package}', [PackageController::class, 'edit'])->name('packages.edit');
         Route::patch('/pakete/{package}', [PackageController::class, 'update'])->name('packages.update');
         Route::post('/pakete/{package}/status', [PackageController::class, 'toggle'])->name('packages.toggle');
+        Route::post('/pakete/{package}/duplizieren', [PackageController::class, 'duplicate'])->name('packages.duplicate');
 
         // /dokumentvorlagen/neu and /dokumentvorlagen/vorschau stay above
         // /dokumentvorlagen/{documentTemplate} for the same reason /pakete/neu
@@ -416,6 +417,7 @@ Route::middleware('audience:staff')->group(function () {
             ->name('quotes.store');
         Route::patch('/angebote/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
         Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
+        Route::post('/angebote/{quote}/als-paket', [QuoteController::class, 'saveAsPackage'])->name('quotes.saveAsPackage');
 
         // E-02: a project's own questionnaires, seeded from a FormTemplate
         // or started blank, then personalised freely — see FormInstance's

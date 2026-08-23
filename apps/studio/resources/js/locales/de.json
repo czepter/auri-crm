@@ -458,7 +458,8 @@
     "itemQuantity": "Menge",
     "itemPrice": "Preis (€)",
     "itemPriceHint": "Leer = inklusive.",
-    "included": "enthalten"
+    "included": "enthalten",
+    "duplicate": "Duplizieren"
   },
   "quotes": {
     "title": "Angebot",
@@ -488,7 +489,9 @@
     "remember": "Merken",
     "groupPackages": "Pakete",
     "groupItems": "Positionen",
-    "groupNew": "Neu"
+    "groupNew": "Neu",
+    "saveAsPackage": "Als Paket sichern",
+    "packageName": "Name"
   },
   "payments": {
     "title": "Zahlungen",

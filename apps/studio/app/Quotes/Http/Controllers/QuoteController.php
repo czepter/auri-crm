@@ -2,6 +2,7 @@
 
 namespace App\Quotes\Http\Controllers;
 
+use App\Catalog\Actions\CreatePackageFromQuote;
 use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
 use App\Crm\Models\Project;
@@ -16,6 +17,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class QuoteController extends Controller
 {
@@ -124,6 +126,39 @@ class QuoteController extends Controller
             actor: auth('staff')->user(),
             subject: $quote->public_id,
             projectId: $quote->project_id,
+        );
+
+        return back();
+    }
+
+    /**
+     * Zwei Prüfungen, weil zwei Dinge berührt werden. Heute hält jede Rolle
+     * beides — getrennt geprüft wird aus dem Grund, den PackagePolicy nennt:
+     * P6/I-01 gibt Token gegen einzelne Fähigkeiten aus.
+     *
+     * Bei jedem Status verfügbar, nicht nur beim Entwurf: gelesen wird nur,
+     * und das brauchbarste Paket ist das angenommene Angebot.
+     */
+    public function saveAsPackage(Request $request, Quote $quote, CreatePackageFromQuote $create): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+        $this->authorize('create', Package::class);
+
+        $validated = $request->validate(['name' => ['required', 'string', 'max:255']]);
+
+        // Am Namen, weil das Formular kein zweites Feld hat, an dem eine
+        // Meldung stehen könnte.
+        if ($quote->items->isEmpty()) {
+            throw ValidationException::withMessages(['name' => __('quotes.emptyPackage')]);
+        }
+
+        $package = $create($quote, $validated['name']);
+
+        AuditLogger::record(
+            event: 'package.created',
+            actor: auth('staff')->user(),
+            context: ['name' => $package->name, 'source' => 'quote'],
+            subject: $package->public_id,
         );
 
         return back();

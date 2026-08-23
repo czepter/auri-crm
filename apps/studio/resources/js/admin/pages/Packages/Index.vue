@@ -13,6 +13,11 @@ function toggle(pkg: App.Catalog.Data.PackageData) {
   router.post(`/pakete/${pkg.id}/status`, {}, { preserveScroll: true })
 }
 
+// Kein preserveScroll: der Weg endet auf der Bearbeiten-Seite des Duplikats.
+function duplicate(pkg: App.Catalog.Data.PackageData) {
+  router.post(`/pakete/${pkg.id}/duplizieren`)
+}
+
 function total(pkg: App.Catalog.Data.PackageData) {
   return pkg.items.reduce((sum, item) => sum + (item.unitPrice ?? 0) * item.quantity, 0)
 }
@@ -45,6 +50,9 @@ function total(pkg: App.Catalog.Data.PackageData) {
 
           <Button variant="pill-muted" class="mt-3" type="button" @click="toggle(pkg)">
             {{ pkg.isActive ? $t('packages.deactivate') : $t('packages.activate') }}
+          </Button>
+          <Button variant="pill-muted" class="mt-3 ml-2" type="button" @click="duplicate(pkg)">
+            {{ $t('packages.duplicate') }}
           </Button>
         </div>
       </div>
