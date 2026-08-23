@@ -11,6 +11,7 @@ use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Engagement\Models\Thread;
+use App\Enums\Capability;
 use App\Gallery\Actions\ReadAfterDeliveryColumn;
 use App\Http\Controllers\Controller;
 use App\Models\Absence;
@@ -90,7 +91,7 @@ class DashboardController extends Controller
             'pipelineStages' => $this->pipelineStages(),
             'overdue' => $this->overdue(),
             'quotes' => QuoteAcceptanceRate::countsForTrailingYear(),
-            'unanswered' => $this->unanswered(),
+            'unanswered' => auth('staff')->user()?->role->allows(Capability::ManageMessages) ? $this->unanswered() : 0,
         ]);
     }
 
@@ -282,11 +283,16 @@ class DashboardController extends Controller
      * so a thread with no messages has no latestMessage and whereHas simply
      * never matches it — no raw SQL, no null-comparison edge to get wrong on
      * a thread that has not had its first message yet.
+     *
+     * The second clause is Thread::workState()'s filed check: a conversation
+     * closed on the client's own last message is finished, not owed, and must
+     * not show here while the Posteingang files it under erledigt.
      */
     private function unanswered(): int
     {
         return Thread::query()
             ->whereHas('latestMessage', fn ($query) => $query->whereNotNull('contact_id'))
+            ->whereDoesntHave('latestMessage', fn ($query) => $query->whereColumn('messages.id', 'threads.closed_message_id'))
             ->count();
     }
 }

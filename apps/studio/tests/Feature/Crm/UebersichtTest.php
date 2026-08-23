@@ -366,6 +366,17 @@ it('counts threads where the client spoke last', function () {
     expect(props('/')['unanswered'])->toBe(1);
 });
 
+it('does not count a thread filed on the client\'s own last message', function () {
+    // Thread::workState() calls this one erledigt: the studio decided the
+    // conversation was finished on the very message it is filed against.
+    $contact = Contact::factory()->create();
+    $thread = Thread::factory()->for(Project::factory())->create();
+    $message = Message::factory()->for($thread)->create(['contact_id' => $contact->id, 'author_id' => null]);
+    $thread->forceFill(['closed_message_id' => $message->id])->save();
+
+    expect(props('/')['unanswered'])->toBe(0);
+});
+
 it('does not count a thread with no messages at all', function () {
     // The obvious edge a naive "max(created_at) over this thread's messages"
     // formulation gets wrong: no message means no newest-message fact to

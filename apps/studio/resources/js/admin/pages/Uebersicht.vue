@@ -189,16 +189,14 @@ function complete(task: App.Crm.Data.TaskRowData) {
             <PageHead :kicker="heading" :title="$t('dashboard.title')">
 
                 <!-- Unbeantwortet, not ungelesen: ThreadParticipant carries no
-             last_read_at and this screen does not add one. Static, because
-             threads exist only per project — routes/admin.php has no
-             cross-project inbox to send this to, and inventing a destination
-             is the same failure as inventing a number. -->
-                <span
+             last_read_at and this screen does not add one. -->
+                <Link
                     v-if="unanswered"
+                    href="/posteingang"
                     class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.05em] uppercase text-ink-2 ml-auto"
                 >
                     {{ $t("dashboard.unanswered", { count: unanswered }) }}
-                </span>
+                </Link>
             </PageHead>
 
             <Button v-if="bare" :as="Link" variant="pill" class="mt-5" href="/anfragen/neu">
