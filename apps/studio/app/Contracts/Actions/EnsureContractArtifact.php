@@ -10,18 +10,17 @@ use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\GotenbergClient;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 /**
  * Renders a contract's PDF if — and only if — there are no bytes yet.
  *
- * The one place a contract is ever built. RenderContractJob calls it from the
- * queue when a render is requested; both contract screens call it when they
- * are about to show a contract that has none, so a row that says "rendered"
- * without an artifact behind it heals on the next look instead of standing
- * there as "wird erstellt" forever.
+ * The one place a contract is ever built, and only ever from
+ * RenderContractJob. A contract screen that finds no bytes dispatches that
+ * job, so a row that says "rendered" without an artifact behind it heals
+ * instead of standing at "wird erstellt" forever — but it heals on the
+ * `render` queue, never while a request waits on Gotenberg.
  *
  * Merge fields resolve here rather than in a controller, which is what makes
  * the artifact a snapshot: everything the template references is pulled off
@@ -43,11 +42,10 @@ class EnsureContractArtifact
     ) {}
 
     /**
-     * ponytail: a contract whose render keeps failing — a template that
-     * cannot resolve, Gotenberg down for a day — pays a Gotenberg call on
-     * every look, and every look waits for it. Back the retry off against
-     * `error` and `rendered_at` if a broken template ever makes a screen
-     * slow enough for anyone to notice.
+     * ponytail: two jobs for the same contract each spend a Gotenberg call
+     * and both write the same path — last one wins, which is the same bytes.
+     * Take a Cache::lock on the contract id if the duplicate calls ever cost
+     * more than the lock would.
      */
     public function __invoke(Contract $contract): Contract
     {
@@ -55,21 +53,7 @@ class EnsureContractArtifact
             return $contract;
         }
 
-        // Two screens opened at once, or a screen racing the queue worker,
-        // would otherwise both spend a Gotenberg call on the same contract
-        // and both write the same path. Whoever misses the lock returns the
-        // row as it stands; the next look picks up what the winner stored.
-        $lock = Cache::lock("contract-render:{$contract->id}", 60);
-
-        if (! $lock->get()) {
-            return $contract->fresh() ?? $contract;
-        }
-
-        try {
-            return $this->render($contract->fresh(['project', 'template']) ?? $contract);
-        } finally {
-            $lock->release();
-        }
+        return $this->render($contract->fresh(['project', 'template']) ?? $contract);
     }
 
     private function render(Contract $contract): Contract

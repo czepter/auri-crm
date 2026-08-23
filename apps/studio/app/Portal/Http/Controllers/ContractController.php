@@ -2,11 +2,12 @@
 
 namespace App\Portal\Http\Controllers;
 
-use App\Contracts\Actions\EnsureContractArtifact;
 use App\Contracts\Actions\SignContract;
 use App\Contracts\Enums\ContractStatus;
+use App\Contracts\Jobs\RenderContractJob;
 use App\Http\Controllers\Controller;
 use App\Settings\Support\StudioSettingsResolver;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -18,11 +19,11 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * The client's read of a rendered contract — mockup 07 — and, since M-02,
  * the signing rail beside it.
  *
- * show() builds the artifact through EnsureContractArtifact when there is
- * none, so a contract whose render was lost is made on the spot rather than
- * leaving the client at "wird erstellt" with nothing behind it. An artifact
- * that exists is never rebuilt, and a signed contract is never touched at
- * all — sign() hashed those exact bytes.
+ * show() dispatches RenderContractJob when there is no artifact, so a
+ * contract whose render was lost is picked up rather than leaving the client
+ * at "wird erstellt" with nothing behind it. An artifact that exists is never
+ * rebuilt, and a signed contract is never touched at all — sign() hashed
+ * those exact bytes.
  *
  * Asks Contact::visibleProjects() the same question ProjectController does,
  * so a project the contact is not on and one the studio has not made
@@ -30,17 +31,18 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ContractController extends Controller
 {
-    public function show(string $project, StudioSettingsResolver $settings, EnsureContractArtifact $ensure): Response
+    public function show(string $project, StudioSettingsResolver $settings): Response
     {
         $contact = auth('portal')->user();
 
         $found = $contact->visibleProjects()->where('projects.public_id', $project)->firstOrFail();
         $contract = $found->latestContract()->with('signature')->first();
 
-        // rescue(), not a bare call: Gotenberg being down is a contract the
-        // client cannot read yet, not a screen they cannot open.
-        if ($contract !== null) {
-            rescue(fn () => $ensure($contract));
+        // rescue(), not a bare call: on a sync queue the render runs here,
+        // and Gotenberg being down is a contract the client cannot read yet,
+        // not a screen they cannot open.
+        if ($contract !== null && ! $contract->hasArtifact() && ! $contract->signature()->exists()) {
+            rescue(fn () => Bus::dispatch((new RenderContractJob($contract))->onQueue('render')));
             $contract->refresh();
         }
 

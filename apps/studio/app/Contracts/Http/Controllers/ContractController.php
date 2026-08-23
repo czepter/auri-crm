@@ -2,7 +2,6 @@
 
 namespace App\Contracts\Http\Controllers;
 
-use App\Contracts\Actions\EnsureContractArtifact;
 use App\Contracts\Data\ContractData;
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
@@ -14,6 +13,7 @@ use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -26,15 +26,14 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  * see it once it lands. store() dispatches RenderContractJob onto the
  * `render` queue and returns, so requesting a contract stays instant.
  *
- * show() is the second way the bytes can come about: EnsureContractArtifact
- * builds them inline when there are none, which is what stops a contract from
- * sitting at "wird erstellt" forever when a render was lost. It is a no-op for
- * a contract that already has its file, which is every contract by the second
- * look.
+ * show() dispatches the same job again when it meets a contract with no
+ * bytes, which is what stops one whose render was lost from sitting at
+ * "wird erstellt" forever. It stays a dispatch: the tab opens now, the PDF
+ * lands on the next look.
  */
 class ContractController extends Controller
 {
-    public function show(Project $project, EnsureContractArtifact $ensure): Response
+    public function show(Project $project): Response
     {
         $this->authorize('view', $project);
 
@@ -50,7 +49,7 @@ class ContractController extends Controller
                 ->orderBy('name')->get()
                 ->map(fn (DocumentTemplate $t) => ['value' => $t->public_id, 'label' => "{$t->name} · v{$t->version}"])
                 ->values(),
-            'contract' => $this->contractData($project, $ensure),
+            'contract' => $this->contractData($project),
         ]);
     }
 
@@ -102,7 +101,7 @@ class ContractController extends Controller
         return Storage::disk('local')->response($contract->artifact_path, "vertrag-{$contract->public_id}.pdf");
     }
 
-    private function contractData(Project $project, EnsureContractArtifact $ensure): ?ContractData
+    private function contractData(Project $project): ?ContractData
     {
         $contract = $project->latestContract()->with('template')->first();
 
@@ -110,10 +109,13 @@ class ContractController extends Controller
             return null;
         }
 
-        // rescue(), not a bare call: Gotenberg being down is a contract that
-        // is not there yet, not a project tab that will not open.
-        rescue(fn () => $ensure($contract));
-        $contract->refresh();
+        // rescue(), not a bare call: on a sync queue the render runs here,
+        // and Gotenberg being down is a contract that is not there yet, not
+        // a project tab that will not open.
+        if (! $contract->hasArtifact() && ! $contract->signature()->exists()) {
+            rescue(fn () => Bus::dispatch((new RenderContractJob($contract))->onQueue('render')));
+            $contract->refresh();
+        }
 
         return ContractData::fromModel($contract, "/vertraege/{$contract->public_id}/pdf");
     }
