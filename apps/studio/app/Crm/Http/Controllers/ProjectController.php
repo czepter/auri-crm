@@ -2,12 +2,16 @@
 
 namespace App\Crm\Http\Controllers;
 
+use App\Catalog\Data\CatalogItemData;
+use App\Catalog\Data\PackageData;
+use App\Catalog\Models\CatalogItem;
+use App\Catalog\Models\Package;
 use App\Crm\Actions\AdvanceLeadStage;
 use App\Crm\Actions\BookProject;
 use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\CheckDateAvailability;
-use App\Crm\Actions\ReadProjectScreen;
 use App\Crm\Actions\DeriveProjectPosition;
+use App\Crm\Actions\ReadProjectScreen;
 use App\Crm\Data\FormInstanceData;
 use App\Crm\Data\ProjectHeaderData;
 use App\Crm\Data\ProjectPersonData;
@@ -250,7 +254,7 @@ class ProjectController extends Controller
         ]);
     }
 
-    public function quotes(Project $project): Response
+    public function quotes(Request $request, Project $project): Response
     {
         $this->authorize('view', $project);
 
@@ -259,6 +263,11 @@ class ProjectController extends Controller
             'quotes' => QuoteData::collect(
                 $project->quotes()->with(['items', 'predecessor'])->get()
             ),
+            // Beide Listen als Prop statt als Suchendpunkt: ein Studio führt
+            // zweistellige Mengen, gefiltert wird in der Suchzeile selbst.
+            'packages' => PackageData::collect(Package::active()->with('items')->orderBy('name')->get()),
+            'catalogItems' => CatalogItemData::collect(CatalogItem::query()->orderBy('title')->get()),
+            'canManageCatalog' => $request->user('staff')?->can('create', Package::class) ?? false,
         ]);
     }
 

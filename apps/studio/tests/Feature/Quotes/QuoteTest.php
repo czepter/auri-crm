@@ -1095,3 +1095,20 @@ it('refuses to write the library for an actor without the catalog capability', f
 
     expect(CatalogItem::count())->toBe(0);
 });
+
+it('sends active packages with their items, the library and the catalog permission to the quotes screen', function () {
+    $project = Project::factory()->create();
+    Package::factory()->has(PackageItem::factory()->count(2), 'items')->create(['name' => 'Hochzeit Basis']);
+    Package::factory()->inactive()->create(['name' => 'Alt']);
+    CatalogItem::create(['title' => 'Zweitfotograf', 'unit_price' => 49000]);
+
+    $props = $this->actingAs(quoteOwner(), 'staff')
+        ->get("/auftraege/{$project->public_id}/angebote")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect(collect($props['packages'])->pluck('name')->all())->toBe(['Hochzeit Basis'])
+        ->and($props['packages'][0]['items'])->toHaveCount(2)
+        ->and($props['catalogItems'][0]['title'])->toBe('Zweitfotograf')
+        ->and($props['canManageCatalog'])->toBeTrue();
+});
