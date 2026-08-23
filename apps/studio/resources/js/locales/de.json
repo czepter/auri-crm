@@ -9,7 +9,9 @@
     "close": "Schließen",
     "calendar": "Kalender",
     "unitMinutes": "Min.",
-    "unitDays": "Tage"
+    "unitDays": "Tage",
+    "unitPercent": "%",
+    "unitEuro": "€"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -84,6 +86,7 @@
   },
   "contacts": {
     "title": "Kontakte",
+    "search": "Suchen",
     "name": "Name",
     "email": "E-Mail",
     "phone": "Telefon",
@@ -1208,6 +1211,7 @@
     "audienceClient": "Kunde",
     "addTask": "Aufgabe anlegen",
     "people": "Personen",
+    "search": "Suchen",
     "waiting": "Wartet"
   },
   "galleryRecord": {
