@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use LogicException;
 
@@ -120,6 +121,34 @@ class Gallery extends Model
         return $this->belongsTo(Asset::class, 'cover_asset_id');
     }
 
+    /**
+     * Die Entwurfsbilder in der Reihenfolge, in der sie ausgeliefert würden:
+     * Sets in ihrer Position, innerhalb eines Sets nach dessen eigener
+     * Regel. Fehlt taken_at — gescannt, exportiert, ohne EXIF —, traegt der
+     * Dateiname die Reihenfolge; created_at waere die Reihenfolge, in der
+     * die Queue fertig wurde, und die ist bei parallelen Workern Zufall.
+     */
+    public function draftAssets(): Collection
+    {
+        return $this->sets()->with(['assets' => fn ($query) => $query->inDraft()])->get()
+            ->flatMap(fn (GallerySet $set) => $set->assets
+                ->sortBy([
+                    // Null sorts first by <=>, but a missing taken_at (scanned,
+                    // exported, no EXIF) is a fallback case, not a "comes
+                    // first" case — it must lose to every dated asset.
+                    [fn (Asset $a, Asset $b) => ($a->{$set->sort_key} === null) <=> ($b->{$set->sort_key} === null), 'asc'],
+                    [$set->sort_key, $set->sort_dir],
+                    ['filename', 'asc'],
+                ])
+                ->map(fn (Asset $asset) => [
+                    'key' => $asset->key,
+                    'set' => $set->name,
+                    'width' => $asset->width,
+                    'height' => $asset->height,
+                ]))
+            ->values();
+    }
+
     /** Was auf der Karte steht: das Shooting antwortet, sonst die Galerie selbst. */
     public function occursOn(): ?CarbonImmutable
     {
@@ -172,7 +201,9 @@ class Gallery extends Model
             return $this->versions()->create([
                 'version' => $next,
                 'title' => $this->title,
-                'assets' => $this->assets,
+                'assets' => $this->draftAssets()->all(),
+                'design' => $this->design,
+                'cover_key' => $this->coverAsset?->key,
                 'published_at' => now(),
             ]);
         });

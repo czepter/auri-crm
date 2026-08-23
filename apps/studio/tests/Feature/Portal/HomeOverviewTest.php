@@ -6,6 +6,8 @@ use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
+use App\Media\Models\Asset;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
@@ -137,11 +139,11 @@ it('offers every live gallery directly, with its cover and count', function () {
     $contact = Contact::factory()->create();
     $project = bookingFor($contact);
 
-    $gallery = Gallery::factory()->for($project)->create([
-        'title' => 'Verlobungsshooting',
-        'assets' => [['key' => 'galleries/g/a.jpg'], ['key' => 'galleries/g/b.jpg']],
-    ]);
-    $gallery->publish();
+    $gallery = Gallery::factory()->for($project)->create(['title' => 'Verlobungsshooting']);
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/a.jpg', 'filename' => 'a.jpg']);
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/b.jpg', 'filename' => 'b.jpg']);
+    $gallery->fresh()->publish();
 
     $galleries = test()->actingAs($contact, 'portal')->get('/')->assertOk()->viewData('page')['props']['galleries'];
 

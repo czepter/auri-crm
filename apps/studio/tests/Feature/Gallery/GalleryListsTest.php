@@ -5,6 +5,8 @@ use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryList;
+use App\Gallery\Models\GallerySet;
+use App\Media\Models\Asset;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -19,15 +21,12 @@ function clientGallery(): array
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
 
-    $gallery = Gallery::factory()->for($project)->create([
-        'title' => 'Verlobungsshooting',
-        'assets' => [
-            ['key' => 'galleries/g/a.jpg'],
-            ['key' => 'galleries/g/b.jpg'],
-            ['key' => 'galleries/g/c.jpg'],
-        ],
-    ]);
-    $gallery->publish();
+    $gallery = Gallery::factory()->for($project)->create(['title' => 'Verlobungsshooting']);
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/a.jpg', 'filename' => 'a.jpg']);
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/b.jpg', 'filename' => 'b.jpg']);
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/c.jpg', 'filename' => 'c.jpg']);
+    $gallery->fresh()->publish();
 
     return [$gallery->fresh(), $contact];
 }
@@ -126,8 +125,9 @@ it('keeps a list across a re-publish', function () {
     test()->actingAs($contact, 'portal')
         ->post("/galerien/{$gallery->public_id}/eure-auswahl/listen/herz/bild", ['key' => 'galleries/g/a.jpg']);
 
-    $gallery->update(['assets' => [['key' => 'galleries/g/a.jpg'], ['key' => 'galleries/g/d.jpg']]]);
-    $gallery->publish();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/d.jpg', 'filename' => 'd.jpg']);
+    $gallery->fresh()->publish();
 
     $props = test()->get("/galerien/{$gallery->public_id}")->assertOk()->viewData('page')['props'];
 
@@ -141,8 +141,8 @@ it('leaves out a key the newest version dropped, without breaking the list', fun
     test()->actingAs($contact, 'portal')->post("{$base}/listen/herz/bild", ['key' => 'galleries/g/a.jpg']);
     test()->post("{$base}/listen/herz/bild", ['key' => 'galleries/g/b.jpg']);
 
-    $gallery->update(['assets' => [['key' => 'galleries/g/b.jpg']]]);
-    $gallery->publish();
+    Asset::where('gallery_id', $gallery->id)->where('key', 'galleries/g/a.jpg')->first()->update(['removed_from_draft_at' => now()]);
+    $gallery->fresh()->publish();
 
     $props = test()->get("/galerien/{$gallery->public_id}")->assertOk()->viewData('page')['props'];
 

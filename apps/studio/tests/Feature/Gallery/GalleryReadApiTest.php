@@ -1,6 +1,8 @@
 <?php
 
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
+use App\Media\Models\Asset;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -25,13 +27,14 @@ it('404s an unknown public_id rather than leaking whether it ever existed', func
 });
 
 it('serves the currently-published version, not the draft, as no-store', function () {
-    $gallery = Gallery::factory()->create(['title' => 'Draft title', 'assets' => [
-        ['key' => 'galleries/g1/a.jpg', 'width' => 4000, 'height' => 3000],
-    ]]);
-    $version = $gallery->publish();
+    $gallery = Gallery::factory()->create(['title' => 'Draft title']);
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    $asset = Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg', 'filename' => 'a.jpg', 'width' => 4000, 'height' => 3000]);
+    $version = $gallery->fresh()->publish();
 
     // Edit-after-publish must not move what this endpoint returns.
-    $gallery->update(['title' => 'Edited after publish', 'assets' => []]);
+    $gallery->update(['title' => 'Edited after publish']);
+    $asset->update(['removed_from_draft_at' => now()]);
 
     $response = $this->getJson("/api/galleries/{$gallery->public_id}")->assertOk();
 

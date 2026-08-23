@@ -3,6 +3,8 @@
 use App\Enums\StaffRole;
 use App\Gallery\Models\AssetComment;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
+use App\Media\Models\Asset;
 use App\Models\User;
 use App\Notifications\Models\InAppNotification;
 use App\Support\Surface;
@@ -14,12 +16,13 @@ beforeEach(fn () => useSurface(Surface::API));
 
 function publishedVersionWithCommentableAssets(array $keys = ['galleries/g1/a.jpg', 'galleries/g1/b.jpg'])
 {
-    $gallery = Gallery::factory()->create(['assets' => collect($keys)
-        ->map(fn (string $key) => ['key' => $key, 'width' => 200, 'height' => 100])
-        ->all(),
-    ]);
+    $gallery = Gallery::factory()->create();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    foreach ($keys as $key) {
+        Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => $key, 'filename' => basename($key), 'width' => 200, 'height' => 100]);
+    }
 
-    return $gallery->publish();
+    return $gallery->fresh()->publish();
 }
 
 it('leaves a comment on an asset a guest has never commented on before', function () {

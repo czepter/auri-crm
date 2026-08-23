@@ -3,7 +3,9 @@
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
 use App\Gallery\Models\GalleryVersion;
+use App\Media\Models\Asset;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -26,53 +28,66 @@ it('has no current version before the first publish', function () {
 });
 
 it('publishing produces an immutable version 1', function () {
-    $gallery = Gallery::factory()->create(['title' => 'Verlobung', 'assets' => ['a1', 'a2']]);
+    $gallery = Gallery::factory()->create(['title' => 'Verlobung']);
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'a1', 'filename' => 'a1']);
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'a2', 'filename' => 'a2']);
 
-    $v1 = $gallery->publish();
+    $v1 = $gallery->fresh()->publish();
 
     expect($v1)->toBeInstanceOf(GalleryVersion::class)
         ->and($v1->version)->toBe(1)
         ->and($v1->title)->toBe('Verlobung')
-        ->and($v1->assets)->toBe(['a1', 'a2'])
+        ->and(collect($v1->assets)->pluck('key')->all())->toBe(['a1', 'a2'])
         ->and($v1->published_at)->not->toBeNull();
 
     expect($gallery->currentVersion()->first()->id)->toBe($v1->id);
 });
 
 it('editing the draft afterwards requires publishing a new version to change what is served', function () {
-    $gallery = Gallery::factory()->create(['title' => 'Verlobung', 'assets' => ['a1']]);
-    $v1 = $gallery->publish();
+    $gallery = Gallery::factory()->create(['title' => 'Verlobung']);
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'a1', 'filename' => 'a1']);
 
-    $gallery->update(['title' => 'Verlobung (korrigiert)', 'assets' => ['a1', 'a2', 'a3']]);
+    $v1 = $gallery->fresh()->publish();
+
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'a2', 'filename' => 'a2']);
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'a3', 'filename' => 'a3']);
+    $gallery->update(['title' => 'Verlobung (korrigiert)']);
 
     // The draft changed, but nothing published moved — v1 still exists, and
     // it is still what a caller reading "the current version" would get.
     $v1->refresh();
     expect($v1->title)->toBe('Verlobung')
-        ->and($v1->assets)->toBe(['a1'])
+        ->and(collect($v1->assets)->pluck('key')->all())->toBe(['a1'])
         ->and($gallery->currentVersion()->first()->id)->toBe($v1->id);
 });
 
 it('publishing again creates a new version and leaves the previous one serving its exact original contents', function () {
-    $gallery = Gallery::factory()->create(['title' => 'Verlobung', 'assets' => ['a1', 'a2']]);
-    $v1 = $gallery->publish();
+    $gallery = Gallery::factory()->create(['title' => 'Verlobung']);
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'a1', 'filename' => 'a1']);
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'a2', 'filename' => 'a2']);
 
-    $gallery->update(['title' => 'Verlobung (korrigiert)', 'assets' => ['a1', 'a2', 'a3']]);
-    $v2 = $gallery->publish();
+    $v1 = $gallery->fresh()->publish();
+
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'a3', 'filename' => 'a3']);
+    $gallery->update(['title' => 'Verlobung (korrigiert)']);
+    $v2 = $gallery->fresh()->publish();
 
     expect($v2->id)->not->toBe($v1->id)
         ->and($v2->version)->toBe(2)
         ->and($v2->title)->toBe('Verlobung (korrigiert)')
-        ->and($v2->assets)->toBe(['a1', 'a2', 'a3']);
+        ->and(collect($v2->assets)->pluck('key')->all())->toBe(['a1', 'a2', 'a3']);
 
     // v1's exact original snapshot — untouched by the edit, untouched by v2.
     $v1->refresh();
     expect($v1->version)->toBe(1)
         ->and($v1->title)->toBe('Verlobung')
-        ->and($v1->assets)->toBe(['a1', 'a2']);
+        ->and(collect($v1->assets)->pluck('key')->all())->toBe(['a1', 'a2']);
 
     expect($gallery->currentVersion()->first()->id)->toBe($v2->id);
-    expect(GalleryVersion::findByPublicId($v1->public_id)->assets)->toBe(['a1', 'a2']);
+    expect(collect(GalleryVersion::findByPublicId($v1->public_id)->assets)->pluck('key')->all())->toBe(['a1', 'a2']);
 });
 
 it('numbers versions off the gallery maximum, not off a counter that could be raced', function () {
@@ -96,4 +111,32 @@ it('scopes versions to their own gallery, not to every gallery in the family of 
     expect($a->versions()->count())->toBe(2)
         ->and($b->versions()->count())->toBe(1)
         ->and($b->currentVersion->version)->toBe(1);
+});
+
+it('snapshots the rows, the design and the cover', function () {
+    $gallery = Gallery::factory()->create(['design' => ['cover' => 'stripe', 'colour' => 'dark', 'grid' => 'dense', 'font' => null]]);
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+
+    $first = Asset::factory()->create([
+        'gallery_id' => $gallery->id, 'gallery_set_id' => $set->id,
+        'key' => 'galleries/g/a.jpg', 'filename' => 'a.jpg', 'taken_at' => '2026-08-22 10:00:00',
+    ]);
+    Asset::factory()->create([
+        'gallery_id' => $gallery->id, 'gallery_set_id' => $set->id,
+        'key' => 'galleries/g/b.jpg', 'filename' => 'b.jpg', 'taken_at' => '2026-08-22 09:00:00',
+    ]);
+    Asset::factory()->create([
+        'gallery_id' => $gallery->id, 'gallery_set_id' => $set->id,
+        'key' => 'galleries/g/c.jpg', 'filename' => 'c.jpg', 'removed_from_draft_at' => now(),
+    ]);
+
+    $gallery->update(['cover_asset_id' => $first->id]);
+
+    $version = $gallery->fresh()->publish();
+
+    expect(collect($version->assets)->pluck('key')->all())
+        ->toBe(['galleries/g/b.jpg', 'galleries/g/a.jpg'])
+        ->and(collect($version->assets)->pluck('set')->unique()->all())->toBe(['Highlights'])
+        ->and($version->cover_key)->toBe('galleries/g/a.jpg')
+        ->and($version->design['colour'])->toBe('dark');
 });

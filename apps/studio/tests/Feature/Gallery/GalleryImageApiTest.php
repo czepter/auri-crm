@@ -1,6 +1,8 @@
 <?php
 
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
+use App\Media\Models\Asset;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -25,11 +27,11 @@ function publishedVersionWithAsset(string $key = 'galleries/g1/a.jpg')
     Storage::fake('s3');
     Storage::disk('s3')->put($key, fakeOriginalBytes());
 
-    $gallery = Gallery::factory()->create(['assets' => [
-        ['key' => $key, 'width' => 200, 'height' => 100],
-    ]]);
+    $gallery = Gallery::factory()->create();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => $key, 'filename' => basename($key), 'width' => 200, 'height' => 100]);
 
-    return $gallery->publish();
+    return $gallery->fresh()->publish();
 }
 
 it('rejects a width outside the allowed set', function () {
@@ -91,13 +93,13 @@ it('keeps serving an old version\'s image after a republish, unchanged', functio
     Storage::fake('s3');
     Storage::disk('s3')->put('galleries/g1/a.jpg', fakeOriginalBytes());
 
-    $gallery = Gallery::factory()->create(['assets' => [
-        ['key' => 'galleries/g1/a.jpg', 'width' => 200, 'height' => 100],
-    ]]);
-    $v1 = $gallery->publish();
+    $gallery = Gallery::factory()->create();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    $asset = Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg', 'filename' => 'a.jpg', 'width' => 200, 'height' => 100]);
+    $v1 = $gallery->fresh()->publish();
 
-    $gallery->update(['assets' => []]);
-    $gallery->publish();
+    $asset->update(['removed_from_draft_at' => now()]);
+    $gallery->fresh()->publish();
 
     $this->get("/api/gallery-versions/{$v1->public_id}/images/galleries/g1/a.jpg?w=400&fmt=webp")
         ->assertOk();
