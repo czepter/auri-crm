@@ -46,9 +46,14 @@ class GalleryPolicy
      * ManagePortalAccess statt ManageShoots: die Faehigkeit entscheidet
      * laut ihrer eigenen Beschreibung bereits, ob eines der Projekte eines
      * Kontakts zeigbereit ist — eine Galerie freizugeben ist dieselbe Frage.
+     * Wie manageMedia routet das ueber ProjectPolicy, sobald ein Projekt
+     * dahintersteht: eine Galerie darf nicht freigebbar sein, wenn ihr
+     * Projekt fuer diese Person unsichtbar ist.
      */
     public function publish(User $user, Gallery $gallery): bool
     {
-        return $user->role->allows(Capability::ManagePortalAccess);
+        return $gallery->project === null
+            ? $user->role->allows(Capability::ManagePortalAccess)
+            : $this->projects->manageVisibility($user, $gallery->project);
     }
 }

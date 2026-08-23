@@ -1,10 +1,12 @@
 <?php
 
+use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
 use App\Media\Models\Asset;
 use App\Models\User;
+use App\Policies\ProjectPolicy;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -82,6 +84,23 @@ it('keeps publishing away from a role that may not show things to clients', func
     $this->actingAs($editor, 'staff')
         ->post("/galerien/{$this->gallery->public_id}/veroeffentlichen")
         ->assertForbidden();
+});
+
+// Important 4: the policy's own docblock says everything with a project
+// routes through ProjectPolicy, the same shape manageMedia already uses —
+// publish() alone checked the bare capability. Not exploitable today (every
+// role holding ManagePortalAccess also holds ViewAllProjects, so ordinary
+// roles can't show the gap end to end), which is exactly why this pins the
+// call itself rather than a role combination that doesn't exist yet.
+it('routes a project-bound gallery\'s publish check through the project policy, like manageMedia', function () {
+    $project = Project::factory()->create();
+    $gallery = Gallery::factory()->create(['project_id' => $project->id]);
+
+    $this->mock(ProjectPolicy::class, function ($mock) {
+        $mock->shouldReceive('manageVisibility')->once()->andReturn(true);
+    });
+
+    expect($this->staff->can('publish', $gallery))->toBeTrue();
 });
 
 it('shuts guests out on withdrawal without touching the standing version', function () {
