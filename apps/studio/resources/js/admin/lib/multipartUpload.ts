@@ -57,12 +57,12 @@ export function partRange(partNumber: number, partSize: number, fileSize: number
 const UPLOADS_BASE = '/uploads'
 
 /** Starts a fresh session, or resumes the one already in progress for this exact file — see the fingerprint's own doc comment. $createUrl is the gallery-scoped POST route (galleries.uploads.store). */
-export async function startOrResumeUpload(createUrl: string, file: File): Promise<UploadSession> {
+export async function startOrResumeUpload(createUrl: string, file: File, gallerySetId: string): Promise<UploadSession> {
   const response = await fetch(createUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...xsrfHeader() },
     credentials: 'same-origin',
-    body: JSON.stringify(fingerprintOf(file)),
+    body: JSON.stringify({ ...fingerprintOf(file), gallery_set_id: gallerySetId }),
   })
 
   const data = await asJson<{ upload: { public_id: string; part_size: number }; parts: { part_number: number }[] }>(response)
@@ -122,12 +122,17 @@ export interface UploadProgress {
  * concurrency if a 30 GB transfer over a single stream measures too slow in
  * practice — nothing here forecloses it, since each part is independent.
  */
-export async function uploadFile(createUrl: string, file: File, onProgress?: (progress: UploadProgress) => void): Promise<void> {
-  const session = await startOrResumeUpload(createUrl, file)
+export async function uploadFile(
+  createUrl: string,
+  file: File,
+  onProgress: (progress: UploadProgress) => void,
+  gallerySetId: string,
+): Promise<void> {
+  const session = await startOrResumeUpload(createUrl, file, gallerySetId)
   const total = partCount(file.size, session.partSize)
 
   let done = session.donePartNumbers.size
-  onProgress?.({ partsDone: done, partsTotal: total })
+  onProgress({ partsDone: done, partsTotal: total })
 
   for (let partNumber = 1; partNumber <= total; partNumber++) {
     if (session.donePartNumbers.has(partNumber)) {
@@ -138,7 +143,7 @@ export async function uploadFile(createUrl: string, file: File, onProgress?: (pr
     await uploadPart(session.publicId, partNumber, file.slice(start, end))
 
     done += 1
-    onProgress?.({ partsDone: done, partsTotal: total })
+    onProgress({ partsDone: done, partsTotal: total })
   }
 
   await completeUpload(session.publicId)

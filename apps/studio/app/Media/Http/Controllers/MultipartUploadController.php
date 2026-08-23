@@ -36,6 +36,7 @@ class MultipartUploadController extends Controller
         $this->authorize('manageMedia', $gallery);
 
         $validated = $request->validate([
+            'gallery_set_id' => ['required', 'string'],
             'filename' => ['required', 'string', 'max:255'],
             'file_size' => ['required', 'integer', 'min:1'],
             // The browser's own File.lastModified: milliseconds since the
@@ -45,8 +46,11 @@ class MultipartUploadController extends Controller
             'content_type' => ['nullable', 'string', 'max:255'],
         ]);
 
+        $set = $gallery->sets()->where('public_id', $validated['gallery_set_id'])->firstOrFail();
+
         ['upload' => $upload, 'parts' => $parts] = ($this->startOrResume)(
             $gallery,
+            $set,
             $validated['filename'],
             $validated['file_size'],
             Carbon::createFromTimestampMs($validated['file_modified_at']),

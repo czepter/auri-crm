@@ -88,6 +88,7 @@ class IngestCompletedUpload
                 : new Asset(['gallery_id' => $upload->gallery_id]);
 
             $asset->fill([
+                'gallery_set_id' => $upload->gallery_set_id,
                 'status' => AssetStatus::Failed,
                 'error' => Str::limit($e->getMessage(), 2000, ''),
                 'filename' => $upload->filename,
@@ -126,6 +127,7 @@ class IngestCompletedUpload
         $asset = Asset::create([
             'public_id' => $assetPublicId,
             'gallery_id' => $upload->gallery_id,
+            'gallery_set_id' => $upload->gallery_set_id,
             'checksum' => $checksum,
             'status' => AssetStatus::Ready,
             'key' => $finalKey,

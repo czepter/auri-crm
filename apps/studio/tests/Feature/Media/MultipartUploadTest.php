@@ -19,10 +19,15 @@ uses(RefreshDatabase::class);
 // staffMember() and mockS3Client() live in tests/Pest.php — see the notes
 // there.
 
-/** @return array{filename: string, file_size: int, file_modified_at: int} */
-function m01FileFingerprint(string $filename = 'IMG_4788.jpg', int $size = 24_800_000, int $modifiedAtMs = 1_749_000_000_000): array
+/** @return array{gallery_set_id: string, filename: string, file_size: int, file_modified_at: int} */
+function m01FileFingerprint(Gallery $gallery, string $filename = 'IMG_4788.jpg', int $size = 24_800_000, int $modifiedAtMs = 1_749_000_000_000): array
 {
-    return ['filename' => $filename, 'file_size' => $size, 'file_modified_at' => $modifiedAtMs];
+    return [
+        'gallery_set_id' => $gallery->sets()->sole()->public_id,
+        'filename' => $filename,
+        'file_size' => $size,
+        'file_modified_at' => $modifiedAtMs,
+    ];
 }
 
 it('starts a fresh multipart upload under the quarantine prefix', function () {
@@ -31,7 +36,7 @@ it('starts a fresh multipart upload under the quarantine prefix', function () {
     app()->instance(S3Client::class, mockS3Client($handler));
 
     $response = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->postJson("/galerien/{$gallery->public_id}/uploads", m01FileFingerprint())
+        ->postJson("/galerien/{$gallery->public_id}/uploads", m01FileFingerprint($gallery))
         ->assertOk();
 
     $response->assertJsonStructure(['upload' => ['public_id', 'part_size'], 'parts']);
@@ -57,7 +62,7 @@ it('never puts a storage path, bucket name or upload id in the response body', f
     app()->instance(S3Client::class, mockS3Client($handler));
 
     $response = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->postJson("/galerien/{$gallery->public_id}/uploads", m01FileFingerprint());
+        ->postJson("/galerien/{$gallery->public_id}/uploads", m01FileFingerprint($gallery));
 
     expect($response->getContent())
         ->not->toContain('super-secret-upload-id')
@@ -74,7 +79,7 @@ it('resumes the same in-progress session for a returning tab, asking the bucket 
     // afresh, which real (non-Octane) request lifecycles get for free but a
     // single test method does not.
     $gallery = Gallery::factory()->create();
-    $fingerprint = m01FileFingerprint();
+    $fingerprint = m01FileFingerprint($gallery);
     $user = staffMember(StaffRole::Owner);
 
     $handler = new MockHandler([
@@ -103,7 +108,7 @@ it('resumes the same in-progress session for a returning tab, asking the bucket 
 
 it('retires a stale session and starts fresh when the bucket no longer knows its uploadId', function () {
     $gallery = Gallery::factory()->create();
-    $fingerprint = m01FileFingerprint();
+    $fingerprint = m01FileFingerprint($gallery);
     $user = staffMember(StaffRole::Owner);
 
     $handler = new MockHandler([
@@ -254,7 +259,7 @@ it('refuses a role without ManageShoots, and lets one with it through', function
     app()->instance(S3Client::class, mockS3Client(new MockHandler([new Result(['UploadId' => 'upload-abc'])])));
 
     $this->actingAs(staffMember($role), 'staff')
-        ->postJson("/galerien/{$gallery->public_id}/uploads", m01FileFingerprint())
+        ->postJson("/galerien/{$gallery->public_id}/uploads", m01FileFingerprint($gallery))
         ->assertStatus($status);
 })->with([
     [StaffRole::Owner, 200],

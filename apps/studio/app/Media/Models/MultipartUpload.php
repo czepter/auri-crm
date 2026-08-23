@@ -33,7 +33,7 @@ class MultipartUpload extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'public_id', 'gallery_id', 'key', 'upload_id', 'filename', 'file_size',
+        'public_id', 'gallery_id', 'gallery_set_id', 'key', 'upload_id', 'filename', 'file_size',
         'file_modified_at', 'part_size', 'status', 'completed_at', 'aborted_at',
         'processed_at', 'asset_id',
     ];

@@ -57,12 +57,14 @@ it('backfills a Highlights set for every non-external gallery already on the tab
     Gallery::factory()->create(['is_external' => true, 'external_url' => 'https://example.test/g']);
     $gallery = Gallery::factory()->create();
 
-    // assets.gallery_set_id (Task 2) foreign-keys into gallery_sets, so rolling
-    // back this migration alone would fail on the dependent constraint —
-    // both migrations roll back and forward together, in dependency order.
+    // assets.gallery_set_id (Task 2) and multipart_uploads.gallery_set_id
+    // (Task 4) both foreign-key into gallery_sets, so rolling back this
+    // migration alone would fail on the dependent constraints — all three
+    // migrations roll back and forward together, in dependency order.
     $paths = [
         'database/migrations/2026_08_24_000100_create_gallery_sets_table.php',
         'database/migrations/2026_08_24_000200_add_set_and_draft_state_to_assets_table.php',
+        'database/migrations/2026_08_24_000400_add_target_set_to_multipart_uploads_table.php',
     ];
 
     Artisan::call('migrate:rollback', ['--path' => $paths, '--force' => true]);

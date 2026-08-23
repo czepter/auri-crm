@@ -35,9 +35,11 @@ async function runUpload(entry: FileState) {
   entry.status = 'uploading'
 
   try {
+    // No set picker on this screen yet — a later task replaces it with one
+    // that names a real target; '' only keeps this compiling until then.
     await uploadFile(`/galerien/${props.target.galleryId}/uploads`, entry.file, ({ partsDone: done, partsTotal: total }) => {
       entry.percent = total === 0 ? 0 : Math.round((done / total) * 100)
-    })
+    }, '')
     entry.status = 'done'
   } catch {
     entry.status = 'error'
