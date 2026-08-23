@@ -6,6 +6,7 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Media\Enums\AssetStatus;
 use App\Media\Models\Asset;
 use App\Media\Models\MultipartUpload;
 use App\Settings\Support\StudioSettingsResolver;
@@ -130,7 +131,11 @@ class Gallery extends Model
      */
     public function draftAssets(): Collection
     {
-        return $this->sets()->with(['assets' => fn ($query) => $query->inDraft()])->get()
+        // inDraft() alone is not enough: a Failed row (never promoted out of
+        // quarantine) has no key. It stays in the draft — G-04's
+        // needs-attention tray needs it there — but must never reach a
+        // published version.
+        return $this->sets()->with(['assets' => fn ($query) => $query->inDraft()->where('status', AssetStatus::Ready)])->get()
             ->flatMap(fn (GallerySet $set) => $set->assets
                 ->sortBy([
                     // Null sorts first by <=>, but a missing taken_at (scanned,

@@ -5,6 +5,7 @@ use App\Crm\Models\Shoot;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
 use App\Gallery\Models\GalleryVersion;
+use App\Media\Enums\AssetStatus;
 use App\Media\Models\Asset;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -139,4 +140,69 @@ it('snapshots the rows, the design and the cover', function () {
         ->and(collect($version->assets)->pluck('set')->unique()->all())->toBe(['Highlights'])
         ->and($version->cover_key)->toBe('galleries/g/a.jpg')
         ->and($version->design['colour'])->toBe('dark');
+});
+
+
+it('excludes a Failed asset from the published snapshot', function () {
+    $gallery = Gallery::factory()->create();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+
+    Asset::factory()->create([
+        'gallery_id' => $gallery->id, 'gallery_set_id' => $set->id,
+        'key' => 'galleries/g/a.jpg', 'filename' => 'a.jpg',
+    ]);
+    Asset::factory()->create([
+        'gallery_id' => $gallery->id, 'gallery_set_id' => $set->id,
+        'status' => AssetStatus::Failed, 'key' => null, 'filename' => 'b.jpg', 'error' => 'corrupt file',
+    ]);
+
+    $version = $gallery->fresh()->publish();
+
+    expect(collect($version->assets)->pluck('key')->all())->toBe(['galleries/g/a.jpg']);
+});
+
+// Insert order (c, a, b) matches neither the expected result nor filename
+// order — a fallback to created_at or to Postgres heap order would pass
+// this test by accident if it also happened to match, so the seed order is
+// deliberately not alphabetical and not the result order either.
+it('sorts a set by its own rule with null taken_at last and filename as the tiebreak', function () {
+    $gallery = Gallery::factory()->create();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/c.jpg', 'filename' => 'c.jpg']);
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/a.jpg', 'filename' => 'a.jpg', 'taken_at' => '2026-08-22 10:00:00']);
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/b.jpg', 'filename' => 'b.jpg']);
+
+    $version = $gallery->fresh()->publish();
+
+    expect(collect($version->assets)->pluck('key')->all())
+        ->toBe(['galleries/g/a.jpg', 'galleries/g/b.jpg', 'galleries/g/c.jpg']);
+});
+
+it("honors a set's sort_dir of desc", function () {
+    $gallery = Gallery::factory()->create();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    $set->update(['sort_dir' => 'desc']);
+
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/a.jpg', 'filename' => 'a.jpg', 'taken_at' => '2026-08-22 09:00:00']);
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/b.jpg', 'filename' => 'b.jpg', 'taken_at' => '2026-08-22 10:00:00']);
+
+    $version = $gallery->fresh()->publish();
+
+    expect(collect($version->assets)->pluck('key')->all())->toBe(['galleries/g/b.jpg', 'galleries/g/a.jpg']);
+});
+
+it('orders sets by position before ordering the pictures within each one', function () {
+    $gallery = Gallery::factory()->create();
+    $highlights = GallerySet::where('gallery_id', $gallery->id)->first();
+    $highlights->update(['position' => 1]);
+    $portraits = GallerySet::factory()->create(['gallery_id' => $gallery->id, 'name' => 'Portraits', 'position' => 0]);
+
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $highlights->id, 'key' => 'galleries/g/a.jpg', 'filename' => 'a.jpg']);
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $portraits->id, 'key' => 'galleries/g/b.jpg', 'filename' => 'b.jpg']);
+
+    $version = $gallery->fresh()->publish();
+
+    expect(collect($version->assets)->pluck('key')->all())->toBe(['galleries/g/b.jpg', 'galleries/g/a.jpg'])
+        ->and(collect($version->assets)->pluck('set')->all())->toBe(['Portraits', 'Highlights']);
 });

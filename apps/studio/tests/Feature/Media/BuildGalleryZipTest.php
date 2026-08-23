@@ -284,8 +284,6 @@ it('resolves the members of a version published by Gallery::publish()', function
     $gallery = Gallery::factory()->create();
     $asset = readyAsset($gallery, 'IMG_0001.jpg', str_repeat('a', 4_000));
 
-    // Not a hand-written fixture: the exact shape publish() writes.
-    $gallery->update(['assets' => [['key' => $asset->key, 'width' => 4000, 'height' => 3000]]]);
     $version = $gallery->publish();
 
     $zipBuild = ZipBuild::factory()->for($version, 'galleryVersion')->create([
