@@ -28,6 +28,57 @@ return new class extends Migration
             $table->string('title')->nullable();
             $table->json('assets')->default('[]');
 
+            // X-02: eine Galerie, die anderswo liegt — die Verwaltung führt
+            // sie, gehostet wird sie nicht hier.
+            $table->boolean('is_external')->default(false);
+            $table->string('external_url')->nullable();
+
+            // G-06's three gates. A null secret means the gate is off — no
+            // separate "required" flag to drift out of sync with it. Every
+            // gate carries its own version, bumped on every rotate() call and
+            // nothing else; that counter, not the secret itself, is what a
+            // granted claim is checked against (App\Gallery\Support\
+            // GalleryAccessSession), so rotating one gate invalidates only
+            // the claims minted before it.
+            //
+            // C-17 (#253): stored recoverably and shown in the admin in
+            // clear. Both values are handed to guests anyway — by mail, by
+            // WhatsApp, over the phone. A studio that cannot look one up sets
+            // a new one on every enquiry and locks out everybody holding the
+            // old. What it costs, unvarnished: a database dump now contains
+            // every gallery password and PIN. Encryption with APP_KEY defends
+            // against the stolen dump, not against an attacker who can run
+            // the application. Staff login passwords and
+            // client_accesses.token_hash are not covered by this and stay
+            // hashes — they are never shown.
+            $table->text('view_password')->nullable();
+            $table->unsignedInteger('view_password_version')->default(1);
+
+            $table->text('download_pin')->nullable();
+            $table->unsignedInteger('download_pin_version')->default(1);
+
+            // The email gate has no secret to hash — it establishes identity,
+            // not possession — so it keeps the boolean the other two don't
+            // need. The version still exists: rotating it forces every
+            // already-verified guest to reverify.
+            $table->boolean('requires_verified_email')->default(false);
+            $table->unsignedInteger('email_verification_version')->default(1);
+
+            // Wann eine ausgelieferte Galerie aufhört, erreichbar zu sein.
+            // Null heißt: bleibt stehen.
+            $table->timestampTz('expires_at')->nullable();
+
+            // C-19 (#255): cover variant, typeface, colour and grid. Null
+            // means "as the studio has it", so a studio changing its own
+            // default still reaches every gallery that never overrode one.
+            $table->jsonb('design')->nullable();
+
+            // P-06's "Aufrufe". DownloadEvent has only ever counted
+            // downloads, so nothing told a couple whether the link they
+            // shared was opened at all. Counted once per visitor session
+            // rather than per request — see GalleryPasswordController.
+            $table->unsignedInteger('view_count')->default(0);
+
             // Ships false-by-default and inert: nothing yet reads this flag to
             // gate anything, because delivery/download flows are future
             // stories. What keeps it non-decorative is
@@ -48,6 +99,7 @@ return new class extends Migration
             $table->timestampsTz();
 
             $table->index(['tenant_id', 'project_id']);
+            $table->index(['tenant_id', 'expires_at']);
         });
     }
 

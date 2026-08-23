@@ -16,7 +16,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use LogicException;
 
 /**
@@ -78,12 +77,9 @@ class Gallery extends Model
             'is_external' => 'boolean',
             // C-17 (#253): recoverable, because both values are handed to
             // guests anyway and a studio that cannot look one up locks out
-            // everybody holding the old one. The legacy hash columns stay
-            // cast as they were until no row still carries one.
+            // everybody holding the old one.
             'view_password' => 'encrypted',
             'download_pin' => 'encrypted',
-            'view_password_hash' => 'hashed',
-            'download_pin_hash' => 'hashed',
             'requires_verified_email' => 'boolean',
             'expires_at' => 'immutable_datetime',
         ];
@@ -158,12 +154,12 @@ class Gallery extends Model
 
     public function requiresViewPassword(): bool
     {
-        return $this->view_password !== null || $this->view_password_hash !== null;
+        return $this->view_password !== null;
     }
 
     public function requiresDownloadPin(): bool
     {
-        return $this->download_pin !== null || $this->download_pin_hash !== null;
+        return $this->download_pin !== null;
     }
 
     public function requiresVerifiedEmail(): bool
@@ -171,28 +167,14 @@ class Gallery extends Model
         return $this->requires_verified_email;
     }
 
-    /**
-     * The stored value first, the legacy hash second. A gallery gated before
-     * C-17 keeps working until somebody rotates it, which is the whole reason
-     * the hash column is still there.
-     */
     public function checkViewPassword(string $password): bool
     {
-        return $this->check($password, $this->view_password, $this->view_password_hash);
+        return $this->view_password !== null && hash_equals($this->view_password, $password);
     }
 
     public function checkDownloadPin(string $pin): bool
     {
-        return $this->check($pin, $this->download_pin, $this->download_pin_hash);
-    }
-
-    private function check(string $given, ?string $stored, ?string $legacyHash): bool
-    {
-        if ($stored !== null) {
-            return hash_equals($stored, $given);
-        }
-
-        return $legacyHash !== null && Hash::check($given, $legacyHash);
+        return $this->download_pin !== null && hash_equals($this->download_pin, $pin);
     }
 
     /**
@@ -205,9 +187,6 @@ class Gallery extends Model
     {
         $this->forceFill([
             'view_password' => $password,
-            // Cleared, or a rotation to null would leave the old gate
-            // standing on the legacy path.
-            'view_password_hash' => null,
             'view_password_version' => $this->view_password_version + 1,
         ])->save();
     }
@@ -217,7 +196,6 @@ class Gallery extends Model
     {
         $this->forceFill([
             'download_pin' => $pin,
-            'download_pin_hash' => null,
             'download_pin_version' => $this->download_pin_version + 1,
         ])->save();
     }
