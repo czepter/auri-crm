@@ -57,21 +57,25 @@ Route::middleware('gallery.pass')->group(function () {
     // The first browser-originated calls this surface serves (the two routes
     // above are only ever hit server-side, by Astro's own SSR fetch, or from
     // a bare <img> src), so they are also what config/cors.php exists for.
-    Route::get('/gallery-versions/{galleryVersion:public_id}/favorites', [AssetFavoriteController::class, 'index'])
-        ->name('api.gallery-versions.favorites.index');
-    Route::post('/gallery-versions/{galleryVersion:public_id}/favorites/{key}', [AssetFavoriteController::class, 'toggle'])
-        ->where('key', '.*')
-        ->name('api.gallery-versions.favorites.toggle');
+    Route::middleware('gallery.feature:lists')->group(function () {
+        Route::get('/gallery-versions/{galleryVersion:public_id}/favorites', [AssetFavoriteController::class, 'index'])
+            ->name('api.gallery-versions.favorites.index');
+        Route::post('/gallery-versions/{galleryVersion:public_id}/favorites/{key}', [AssetFavoriteController::class, 'toggle'])
+            ->where('key', '.*')
+            ->name('api.gallery-versions.favorites.toggle');
+    });
 
     // asset_key travels as a request field on the comment routes, not a path
     // segment, since a comment (unlike a favorite) is never addressed by its
     // own key/guest pair. Same guest-identity gap as the favorite routes,
     // inherited on purpose rather than solved here — see
     // AssetCommentController's own doc comment.
-    Route::get('/gallery-versions/{galleryVersion:public_id}/comments', [AssetCommentController::class, 'index'])
-        ->name('api.gallery-versions.comments.index');
-    Route::post('/gallery-versions/{galleryVersion:public_id}/comments', [AssetCommentController::class, 'store'])
-        ->name('api.gallery-versions.comments.store');
+    Route::middleware('gallery.feature:comments')->group(function () {
+        Route::get('/gallery-versions/{galleryVersion:public_id}/comments', [AssetCommentController::class, 'index'])
+            ->name('api.gallery-versions.comments.index');
+        Route::post('/gallery-versions/{galleryVersion:public_id}/comments', [AssetCommentController::class, 'store'])
+            ->name('api.gallery-versions.comments.store');
+    });
 });
 
 // M-05: the first api-surface consumer of user-facing business logic

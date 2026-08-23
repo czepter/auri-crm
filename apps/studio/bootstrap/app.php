@@ -7,6 +7,7 @@ use App\Gallery\Console\Commands\ImportLegacyGalleriesCommand;
 use App\Http\Middleware\AssignRequestId;
 use App\Http\Middleware\EnsureApiTokenScope;
 use App\Http\Middleware\EnsureAudience;
+use App\Http\Middleware\EnsureGalleryFeature;
 use App\Http\Middleware\EnsureGalleryGate;
 use App\Http\Middleware\EnsureIdempotentWrite;
 use App\Http\Middleware\EnsureNoStaffExists;
@@ -115,6 +116,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'portal.capability' => EnsurePortalCapability::class,
             'gallery.gate' => EnsureGalleryGate::class,
             'gallery.pass' => EnsureGalleryPass::class,
+            'gallery.feature' => EnsureGalleryFeature::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

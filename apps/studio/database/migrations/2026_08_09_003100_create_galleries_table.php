@@ -36,6 +36,15 @@ return new class extends Migration
             $table->boolean('requires_settled_balance')->default(false);
             $table->boolean('balance_settled')->default(false);
 
+            // P-09's three portal switches, on the gallery rather than in the
+            // settings store: they are answered per delivery, and the studio
+            // default only decides what a new one is born with. Not
+            // three-valued — a gallery either offers the thing or it does
+            // not, and there is no level below it to inherit from.
+            $table->boolean('downloads_enabled')->default(true);
+            $table->boolean('lists_enabled')->default(true);
+            $table->boolean('comments_enabled')->default(true);
+
             $table->timestampsTz();
 
             $table->index(['tenant_id', 'project_id']);

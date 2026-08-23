@@ -44,6 +44,7 @@ class Gallery extends Model
         'project_id', 'shoot_id', 'title', 'assets', 'design',
         'requires_settled_balance', 'balance_settled',
         'is_external', 'external_url', 'expires_at',
+        'downloads_enabled', 'lists_enabled', 'comments_enabled',
     ];
 
     protected $attributes = [
@@ -51,6 +52,9 @@ class Gallery extends Model
         'requires_settled_balance' => false,
         'balance_settled' => false,
         'is_external' => false,
+        'downloads_enabled' => true,
+        'lists_enabled' => true,
+        'comments_enabled' => true,
         'requires_verified_email' => false,
         'view_password_version' => 1,
         'download_pin_version' => 1,
@@ -66,6 +70,9 @@ class Gallery extends Model
             // default still reaches every gallery that never overrode one.
             'design' => 'array',
             'requires_settled_balance' => 'boolean',
+            'downloads_enabled' => 'boolean',
+            'lists_enabled' => 'boolean',
+            'comments_enabled' => 'boolean',
             'balance_settled' => 'boolean',
             'is_external' => 'boolean',
             // C-17 (#253): recoverable, because both values are handed to
