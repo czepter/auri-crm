@@ -29,6 +29,7 @@ use App\Gallery\Http\Controllers\GalleryAssetController;
 use App\Gallery\Http\Controllers\GalleryLightroomExportController;
 use App\Gallery\Http\Controllers\GalleryIndexController;
 use App\Gallery\Http\Controllers\GalleryPresetController;
+use App\Gallery\Http\Controllers\GalleryPublicationController;
 use App\Gallery\Http\Controllers\GalleryRecordController;
 use App\Gallery\Http\Controllers\GallerySetController;
 use App\Http\Controllers\Staff\AbsenceController;
@@ -511,6 +512,11 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::post('/galerien/{gallery}/uploads/pruefen', UploadPrecheckController::class)
             ->name('galleries.uploads.precheck');
+
+        Route::post('/galerien/{gallery}/veroeffentlichen', [GalleryPublicationController::class, 'store'])
+            ->name('galleries.publish');
+        Route::delete('/galerien/{gallery}/veroeffentlichung', [GalleryPublicationController::class, 'destroy'])
+            ->name('galleries.withdraw');
 
         // No GET here: the Zahlungen card lives on the project overview
         // itself (ProjectController::show), not a tab of its own — see the

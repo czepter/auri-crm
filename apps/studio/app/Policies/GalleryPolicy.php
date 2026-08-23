@@ -41,4 +41,14 @@ class GalleryPolicy
             ? $user->role->allows(Capability::ManageShoots)
             : $this->projects->manageShoots($user, $gallery->project);
     }
+
+    /**
+     * ManagePortalAccess statt ManageShoots: die Faehigkeit entscheidet
+     * laut ihrer eigenen Beschreibung bereits, ob eines der Projekte eines
+     * Kontakts zeigbereit ist — eine Galerie freizugeben ist dieselbe Frage.
+     */
+    public function publish(User $user, Gallery $gallery): bool
+    {
+        return $user->role->allows(Capability::ManagePortalAccess);
+    }
 }

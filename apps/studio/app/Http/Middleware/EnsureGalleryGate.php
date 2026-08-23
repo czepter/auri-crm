@@ -52,7 +52,17 @@ class EnsureGalleryGate
         // gets a chance to. Letting the request through leaves that entirely
         // to the controller, which resolves the same null and answers with
         // the same response a wrong secret on a real gallery gets.
-        if ($gallery === null || $this->satisfied($gallery, $gate)) {
+        if ($gallery === null) {
+            return $next($request);
+        }
+
+        // A withdrawn gallery (G-14) is closed to every guest before any of
+        // the three gates below are even asked — the studio pulled it back,
+        // not merely locked it, and the version it stood on stays in the
+        // database untouched for the next publish.
+        abort_if($gallery->unpublished_at !== null, 404);
+
+        if ($this->satisfied($gallery, $gate)) {
             return $next($request);
         }
 
