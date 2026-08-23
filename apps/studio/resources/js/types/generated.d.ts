@@ -478,6 +478,7 @@ projectName: string | null,
 shootId: string | null,
 shootLabel: string | null,
 partSize: number,
+gallerySetId: string | null,
 };
 }
 namespace Enums {

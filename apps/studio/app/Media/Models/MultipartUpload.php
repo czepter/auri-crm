@@ -5,6 +5,7 @@ namespace App\Media\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
 use App\Media\Enums\MultipartUploadStatus;
 use Database\Factories\Media\MultipartUploadFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -54,6 +55,11 @@ class MultipartUpload extends Model
     public function gallery(): BelongsTo
     {
         return $this->belongsTo(Gallery::class);
+    }
+
+    public function set(): BelongsTo
+    {
+        return $this->belongsTo(GallerySet::class, 'gallery_set_id');
     }
 
     /**

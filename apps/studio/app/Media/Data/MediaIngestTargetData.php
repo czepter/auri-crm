@@ -25,6 +25,10 @@ class MediaIngestTargetData extends Data
         public ?string $shootId,
         public ?string $shootLabel,
         public int $partSize,
+        // Null only for an external gallery reaching this screen — it owns
+        // no set (Gallery::booted()), and any upload it attempts 404s on
+        // MultipartUploadController::store()'s own set lookup.
+        public ?string $gallerySetId,
     ) {}
 
     public static function fromGallery(Gallery $gallery): self
@@ -37,6 +41,7 @@ class MediaIngestTargetData extends Data
             shootId: $gallery->shoot?->public_id,
             shootLabel: $gallery->shoot?->label,
             partSize: StartOrResumeMultipartUpload::PART_SIZE,
+            gallerySetId: $gallery->sets()->first()?->public_id,
         );
     }
 }

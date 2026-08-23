@@ -61,6 +61,11 @@ class MultipartUploadController extends Controller
             'upload' => [
                 'public_id' => $upload->public_id,
                 'part_size' => $upload->part_size,
+                // The set this session actually targets — a resumed row
+                // keeps the one it was started against, which can differ
+                // from $set (the one this request named) if another tab is
+                // now open on a different one. See StartOrResumeMultipartUpload.
+                'gallery_set_id' => $upload->set->public_id,
             ],
             'parts' => $parts,
         ]);
