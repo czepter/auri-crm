@@ -4,7 +4,7 @@ import { router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import { useVirtualList } from '@vueuse/core'
 import { applyClick, type SelectionState } from '@/admin/lib/gallerySelection'
-import { uploadFile } from '@/admin/lib/multipartUpload'
+import { checkDuplicates, uploadFile } from '@/admin/lib/multipartUpload'
 import AssetLightbox from '@/admin/components/gallery/AssetLightbox.vue'
 import DropZone from '@/admin/components/gallery/DropZone.vue'
 import DuplicateDialog from '@/admin/components/gallery/DuplicateDialog.vue'
@@ -88,6 +88,8 @@ function click(asset: AssetRow, event: MouseEvent) {
 }
 
 function moveTo(setId: string) {
+  if (setId === '') return
+
   router.post(
     `/galerien/${props.gallery.id}/bilder/verschieben`,
     { asset_ids: [...selection.value.selected], gallery_set_id: setId },
@@ -121,22 +123,31 @@ function retryFailed(publicId: string) {
 
 const tray = ref<TrayRow[]>([])
 const pending = ref<File[]>([])
+// Captured once, at pick time — DropZone is disabled whenever Alle is open,
+// but the duplicate dialog can stay open across a set switch, and reading
+// activeSet again once the photographer resolves it would chase a set that
+// moved out from under the upload.
+const pendingSetId = ref<string | null>(null)
 const duplicates = ref<{ filename: string; size: number; assetId: string }[]>([])
+const precheckError = ref(false)
 
 function keyOf(file: File): string {
   return `${file.name}:${file.size}`
 }
 
 async function picked(files: File[]) {
+  if (files.length === 0 || activeSet.value === null) return
+
   pending.value = files
+  pendingSetId.value = activeSet.value.id
+  precheckError.value = false
 
-  const response = await fetch(`/galerien/${props.gallery.id}/uploads/pruefen`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({ files: files.map((file) => ({ filename: file.name, size: file.size })) }),
-  })
-
-  duplicates.value = (await response.json()).duplicates
+  try {
+    duplicates.value = await checkDuplicates(props.gallery.id, files.map((file) => ({ filename: file.name, size: file.size })))
+  } catch {
+    precheckError.value = true
+    return
+  }
 
   if (duplicates.value.length === 0) {
     await run(files, new Map())
@@ -144,9 +155,8 @@ async function picked(files: File[]) {
 }
 
 async function run(files: File[], replacements: Map<string, string>) {
-  // Uploading is disabled whenever Alle is open (DropZone below), so a real
-  // set is always the one showing by the time this runs.
-  const targetSetId = activeSet.value!.id
+  const targetSetId = pendingSetId.value
+  if (targetSetId === null) return
 
   tray.value = files.map((file) => ({ key: keyOf(file), name: file.name, size: file.size, status: 'queued', percent: 0 }))
 
@@ -269,6 +279,7 @@ onUnmounted(() => {
     </div>
 
     <DropZone class="mt-3" :disabled="activeSet === null" @files="picked" />
+    <p v-if="precheckError" class="mt-2 text-[11.5px] text-destructive">{{ $t('media.precheckFailed') }}</p>
 
     <div v-if="failedAssets.length > 0" class="mt-6">
       <div class="mb-2 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">

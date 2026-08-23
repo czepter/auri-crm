@@ -29,8 +29,8 @@ export interface UploadSession {
   gallerySetId: string
 }
 
-/** The XSRF-TOKEN cookie Laravel's session middleware sets, copied into the header it looks for on a raw fetch — the same thing axios (and so Inertia's own requests) does automatically. */
-function xsrfHeader(): Record<string, string> {
+/** The XSRF-TOKEN cookie Laravel's session middleware sets, copied into the header it looks for on a raw fetch — the same thing axios (and so Inertia's own requests) does automatically. Every plain `fetch` in this app needs it; PreventRequestForgery answers a request without it with a 419 HTML body. */
+export function xsrfHeader(): Record<string, string> {
   const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/)
 
   return match ? { 'X-XSRF-TOKEN': decodeURIComponent(match[1]) } : {}
@@ -42,6 +42,23 @@ async function asJson<T>(response: Response): Promise<T> {
   }
 
   return response.json() as Promise<T>
+}
+
+/** The pre-upload duplicate check (G-02): filename + size against the gallery's whole draft, before a single byte travels. */
+export async function checkDuplicates(
+  galleryId: string,
+  files: { filename: string; size: number }[],
+): Promise<{ filename: string; size: number; assetId: string }[]> {
+  const response = await fetch(`/galerien/${galleryId}/uploads/pruefen`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...xsrfHeader() },
+    credentials: 'same-origin',
+    body: JSON.stringify({ files }),
+  })
+
+  const data = await asJson<{ duplicates: { filename: string; size: number; assetId: string }[] }>(response)
+
+  return data.duplicates
 }
 
 /** How many parts $partSize chunks $fileSize bytes into — the last one is whatever remainder is left, same as the server's own fixed part_size. */

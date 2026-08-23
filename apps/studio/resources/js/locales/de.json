@@ -1156,7 +1156,8 @@
     "replace": "Ersetzen",
     "skipDuplicates": "Überspringen",
     "landedIn": "in {set}",
-    "leaveWhileUploading": "Der Upload läuft noch. Seite verlassen?"
+    "leaveWhileUploading": "Der Upload läuft noch. Seite verlassen?",
+    "precheckFailed": "Prüfung fehlgeschlagen"
   },
   "palette": {
     "search": "Suchen",

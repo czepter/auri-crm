@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fingerprintOf, partCount, partRange, startOrResumeUpload } from './multipartUpload'
+import { checkDuplicates, fingerprintOf, partCount, partRange, startOrResumeUpload } from './multipartUpload'
 
 describe('fingerprintOf', () => {
   it('reads name, size and lastModified straight off the File — never a storage path, since the browser is never given one', () => {
@@ -75,5 +75,30 @@ describe('startOrResumeUpload', () => {
     await startOrResumeUpload('/uploads', file, 's1')
     const bodyWithout = JSON.parse(fetchMock.mock.calls[1][1].body)
     expect(bodyWithout.replaces_asset_id).toBeUndefined()
+  })
+})
+
+describe('checkDuplicates', () => {
+  beforeEach(() => vi.stubGlobal('document', { cookie: 'XSRF-TOKEN=tok3n' }))
+  afterEach(() => vi.unstubAllGlobals())
+
+  // Critical 1: this precheck's own fetch was the one raw call in the app
+  // that forgot the header — PreventRequestForgery answered with a 419 HTML
+  // body, `.json()` threw inside an unawaited promise, and no upload ever
+  // started. Pins the header rather than trusting the import stays in place.
+  it('carries the XSRF header a plain fetch needs to survive PreventRequestForgery', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ duplicates: [] }) })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await checkDuplicates('g1', [{ filename: 'a.jpg', size: 10 }])
+
+    expect(fetchMock.mock.calls[0][1].headers['X-XSRF-TOKEN']).toBe('tok3n')
+  })
+
+  it('throws on a non-2xx response instead of handing back a body with no duplicates key', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 419, statusText: 'unknown status' })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(checkDuplicates('g1', [{ filename: 'a.jpg', size: 10 }])).rejects.toThrow('419')
   })
 })
