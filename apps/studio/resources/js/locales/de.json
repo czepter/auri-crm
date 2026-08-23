@@ -489,7 +489,9 @@
     "vat": "USt. {rate} %",
     "send": "Angebot versenden",
     "empty": "Kein Angebot.",
-    "discountValue": "Wert"
+    "discountValue": "Wert",
+    "draft": "Entwurf",
+    "more": "+ {count} weitere"
   },
   "payments": {
     "title": "Zahlungen",

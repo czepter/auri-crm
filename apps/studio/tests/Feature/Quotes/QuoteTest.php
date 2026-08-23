@@ -981,3 +981,16 @@ it('does not let one quote\'s autosave suppress another quote\'s entry', functio
 
     expect(AuditLog::where('event', 'quote.updated')->count())->toBe(2);
 });
+
+// The lead pill creates the quote and fills it, rather than only opening the
+// tab — the store() branch that seeds from a package keeps its caller here.
+it('creates a quote seeded from a package when the lead pill posts one', function () {
+    $project = Project::factory()->create();
+    $package = Package::factory()->has(PackageItem::factory()->count(2), 'items')->create();
+
+    $this->actingAs(quoteOwner(), 'staff')
+        ->post("/auftraege/{$project->public_id}/angebote", ['package' => $package->public_id])
+        ->assertRedirect();
+
+    expect($project->quotes()->sole()->items)->toHaveCount(2);
+});

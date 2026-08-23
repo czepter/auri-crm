@@ -5,6 +5,7 @@ import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import CaseSection from "@/admin/components/CaseSection.vue";
 import LeadQueue from "@/admin/components/LeadQueue.vue";
 import NoteThread from "@/admin/components/NoteThread.vue";
+import QuoteSummary from "@/admin/components/QuoteSummary.vue";
 import ShootFields from "@/admin/components/ShootFields.vue";
 import ShootRow from "@/admin/components/ShootRow.vue";
 import { Button } from "@/ui/button";
@@ -42,6 +43,7 @@ const props = defineProps<{
     people: App.Crm.Data.ProjectPersonData[];
     shoots: App.Crm.Data.ShootData[];
     quote: App.Quotes.Data.QuoteData | null;
+    supersededQuotes: { id: string; number: string | null; net: number }[];
     packages: { id: string; name: string; itemCount: number; total: number }[];
     tasks: App.Crm.Data.TaskRowData[];
     thread: App.Crm.Data.ThreadEntryData[];
@@ -427,35 +429,16 @@ const due = computed(() => {
                 </CaseSection>
 
                 <CaseSection :title="$t('lead.quote')">
-                    <div v-if="quote">
-                        <div
-                            v-for="item in quote.items"
-                            :key="item.id"
-                            class="flex items-baseline gap-3.5 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
-                        >
-                            <span class="min-w-0 flex-1 text-[13.5px] leading-[1.47]">{{ item.title }}</span>
-                            <span
-                                class="w-14 flex-none text-right text-[12.5px] leading-[1.47] tabular-nums text-ink-2"
-                            >{{ item.quantity }}×</span>
-                            <span class="w-28 flex-none text-right text-[13px] leading-[1.47] tabular-nums">{{
-                                item.unitPrice === null ? "—" : formatEurosRounded(item.unitPrice)
-                            }}</span>
-                        </div>
-                        <div class="flex items-baseline gap-3.5 pt-2.5 shadow-[inset_0_1px_0_#D8D8DC]">
-                            <span class="min-w-0 flex-1 text-[13px] leading-[1.47] font-semibold">{{
-                                quote.statusLabel
-                            }}</span>
-                            <span
-                                class="w-28 flex-none text-right text-[15px] leading-[1.47] font-semibold tracking-[-0.018em] tabular-nums"
-                            >{{ formatEurosRounded(quote.total) }}</span>
-                        </div>
-                        <p
-                            v-if="quote.validUntil"
-                            class="mt-[7px] flex flex-col gap-[3px] text-[12px] leading-[1.47] text-ink-2"
-                        >
-                            {{ $t("lead.validUntil", { date: day(quote.validUntil) }) }}
-                        </p>
-                    </div>
+                    <QuoteSummary
+                        v-if="quote"
+                        :quote="quote"
+                        :superseded="supersededQuotes"
+                        :valid-until-label="
+                            quote.validUntil
+                                ? $t('lead.validUntil', { date: day(quote.validUntil) })
+                                : null
+                        "
+                    />
 
                     <!-- No quote yet: the active packages, because the next move is
                          choosing one. An empty section would state the same thing and
@@ -466,6 +449,9 @@ const due = computed(() => {
                             :key="pkg.id"
                             class="cursor-pointer rounded-[var(--r-pill)] border-0 bg-sunk px-[11px] py-[5px] text-[12px] leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2 [&_b]:font-semibold [&_b]:text-foreground"
                             :href="`/auftraege/${lead.projectId}/angebote`"
+                            method="post"
+                            as="button"
+                            :data="{ package: pkg.id }"
                         >
                             <b>{{ pkg.name }}</b>
                             {{ $t("packages.itemCount", pkg.itemCount) }} ·
