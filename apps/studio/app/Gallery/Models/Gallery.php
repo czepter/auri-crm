@@ -100,6 +100,11 @@ class Gallery extends Model
         return $this->hasMany(GalleryVersion::class);
     }
 
+    public function sets(): HasMany
+    {
+        return $this->hasMany(GallerySet::class)->orderBy('position');
+    }
+
     /** The most recently published version, or null before this gallery's first publish() call. */
     public function currentVersion(): HasOne
     {
@@ -217,5 +222,15 @@ class Gallery extends Model
     protected static function newFactory(): Factory
     {
         return GalleryFactory::new();
+    }
+
+    /** An external gallery (X-02) links to assets hosted elsewhere and owns no set to put them in. */
+    protected static function booted(): void
+    {
+        static::created(function (Gallery $gallery) {
+            if (! $gallery->is_external) {
+                $gallery->sets()->create(['name' => 'Highlights', 'position' => 0]);
+            }
+        });
     }
 }
