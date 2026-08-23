@@ -2,7 +2,9 @@
 import { computed, nextTick, ref } from 'vue'
 import { eurosToCents, formatEuros, parseDiscount } from '@/admin/lib/money'
 import { moveRow } from '@/admin/lib/rows'
+import QuoteInsertRow from '@/admin/components/QuoteInsertRow.vue'
 import { Button } from '@/ui/button'
+import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 
@@ -12,7 +14,14 @@ export type QuoteRow = {
   quantity: number
   unitPrice: string
   discount: string
+  remember: boolean
 }
+
+const props = defineProps<{
+  canManageCatalog: boolean
+  packages: App.Catalog.Data.PackageData[]
+  catalogItems: App.Catalog.Data.CatalogItemData[]
+}>()
 
 const rows = defineModel<QuoteRow[]>({ required: true })
 
@@ -45,9 +54,17 @@ function netTotal(row: QuoteRow): number {
 
 const subtotal = computed(() => rows.value.reduce((sum, row) => sum + netTotal(row), 0))
 
-function addRow() {
-  rows.value = [...rows.value, { title: '', description: '', quantity: 1, unitPrice: '', discount: '' }]
-  nextTick(() => titleInputs.value[rows.value.length - 1]?.focus())
+function insert(added: QuoteRow[]) {
+  if (!added.length) {
+    return
+  }
+
+  const first = rows.value.length
+  rows.value = [...rows.value, ...added]
+  emit('change')
+  // In die erste eingefügte Zeile, nicht in die letzte: bei einem Paket
+  // beginnt das Nacharbeiten oben.
+  nextTick(() => titleInputs.value[first]?.focus())
 }
 
 function removeRow(index: number) {
@@ -77,7 +94,7 @@ defineExpose({ subtotal })
 <template>
   <div>
     <div
-      class="grid grid-cols-[24px_1fr_64px_112px_96px_104px_32px] items-center gap-x-3 border-b border-border pb-1.5 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint"
+      class="grid grid-cols-[24px_1fr_64px_112px_96px_104px_32px_32px] items-center gap-x-3 border-b border-border pb-1.5 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint"
     >
       <span />
       <span>{{ $t('quotes.itemTitle') }}</span>
@@ -86,12 +103,13 @@ defineExpose({ subtotal })
       <span class="text-right">{{ $t('quotes.discount') }}</span>
       <span class="text-right">{{ $t('quotes.total') }}</span>
       <span />
+      <span />
     </div>
 
     <div
       v-for="(row, index) in rows"
       :key="index"
-      class="grid grid-cols-[24px_1fr_64px_112px_96px_104px_32px] items-start gap-x-3 border-b border-border/60 py-2"
+      class="grid grid-cols-[24px_1fr_64px_112px_96px_104px_32px_32px] items-start gap-x-3 border-b border-border/60 py-2"
     >
       <!-- Ein Knopf, nicht nur ein Ziehziel: mit der Maus ziehen, mit der
            Tastatur die Pfeiltasten — sonst wäre die Reihenfolge nicht bedienbar. -->
@@ -160,13 +178,26 @@ defineExpose({ subtotal })
 
       <span class="pt-2 text-right text-[13px] tabular-nums">{{ formatEuros(netTotal(row)) }}</span>
 
+      <!-- Angehakt heisst: es gibt einen CatalogItem mit diesem Titel. Der
+           Zustand steht in der Bibliothek, nicht auf der Angebotszeile. -->
+      <Checkbox
+        v-if="canManageCatalog"
+        class="mt-2.5"
+        :model-value="row.remember"
+        :aria-label="$t('quotes.remember')"
+        @update:model-value="(value) => { row.remember = value === true; emit('change') }"
+      />
+      <span v-else />
+
       <Button variant="ghost" tone="accent" type="button" :aria-label="$t('common.remove')" @click="removeRow(index)">
         ×
       </Button>
     </div>
 
     <div class="mt-3 flex items-baseline gap-3">
-      <Button variant="outline" type="button" @click="addRow">{{ $t('quotes.addItem') }}</Button>
+      <div class="max-w-[360px] flex-1">
+        <QuoteInsertRow :packages="props.packages" :catalog-items="props.catalogItems" @insert="insert" />
+      </div>
       <span class="ml-auto text-[17px] font-semibold tabular-nums">{{ formatEuros(subtotal) }}</span>
     </div>
   </div>

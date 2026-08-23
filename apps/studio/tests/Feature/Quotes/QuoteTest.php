@@ -1013,17 +1013,6 @@ it('creates a blank draft straight from the button, taking validity from the stu
         ->and($quote->valid_until)->not->toBeNull();
 });
 
-it('stops sending the package list to the quotes screen', function () {
-    $project = Project::factory()->create();
-
-    $props = $this->actingAs(quoteOwner(), 'staff')
-        ->get("/auftraege/{$project->public_id}/angebote")
-        ->assertOk()
-        ->viewData('page')['props'];
-
-    expect($props)->not->toHaveKey('packages');
-});
-
 // --- Merken: the tick is derived, and it writes the catalog -------------
 
 it('remembers a flagged line, and remembers it only once across quotes', function () {

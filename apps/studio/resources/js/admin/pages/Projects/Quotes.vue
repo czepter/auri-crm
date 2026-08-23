@@ -14,6 +14,9 @@ import { Label } from '@/ui/label'
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
   quotes: App.Quotes.Data.QuoteData[]
+  packages: App.Catalog.Data.PackageData[]
+  catalogItems: App.Catalog.Data.CatalogItemData[]
+  canManageCatalog: boolean
 }>()
 
 type Draft = { validUntil: string; discount: string; rows: QuoteRow[] }
@@ -28,6 +31,9 @@ function draftOf(quote: App.Quotes.Data.QuoteData): Draft {
       quantity: item.quantity,
       unitPrice: centsToEuros(item.unitPrice),
       discount: formatDiscount(item.discountType, item.discountValue),
+      // Abgeleitet statt gespeichert: gemerkt heisst, die Bibliothek führt
+      // diesen Titel.
+      remember: props.catalogItems.some((entry) => entry.title === item.title),
     })),
   }
 }
@@ -68,6 +74,9 @@ const save = debounced((quoteId: string) => {
           unit_price: eurosToCents(row.unitPrice),
           discount_type: discount.type || null,
           discount_value: discount.value,
+          // Ohne die Faehigkeit geht der Schluessel gar nicht erst mit, damit
+          // der Waechter im Controller nicht ohne Anlass greift.
+          ...(props.canManageCatalog ? { remember: row.remember } : {}),
         }
       }),
     },
@@ -120,7 +129,13 @@ function chipClass(status: string): string {
                wrong or bypassed. Ein Entwurf ist die Tabelle; erst ab Versendet
                tritt das gelesene Dokument an ihre Stelle. -->
           <template v-if="header.canManageQuotes && quote.status === 'draft' && drafts[quote.id]">
-            <QuoteTable v-model="drafts[quote.id].rows" @change="save(quote.id)" />
+            <QuoteTable
+              v-model="drafts[quote.id].rows"
+              :can-manage-catalog="canManageCatalog"
+              :packages="packages"
+              :catalog-items="catalogItems"
+              @change="save(quote.id)"
+            />
 
             <div class="fgrid" style="margin-top: var(--s4)">
               <ValidUntilField

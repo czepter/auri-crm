@@ -1,0 +1,80 @@
+import type { QuoteRow } from '@/admin/components/QuoteTable.vue'
+import { centsToEuros, formatEurosRounded } from '@/admin/lib/money'
+
+export type InsertOption = {
+  kind: 'package' | 'item' | 'new'
+  id: string
+  label: string
+  meta: string
+}
+
+/** Treffer am Wortanfang vor Treffer in der Mitte, sonst kein Rang. */
+function rank(title: string, term: string): number {
+  const index = title.toLowerCase().indexOf(term)
+
+  return index < 0 ? Number.POSITIVE_INFINITY : index
+}
+
+function packageTotal(pkg: App.Catalog.Data.PackageData): number {
+  return pkg.items.reduce((sum, item) => sum + (item.unitPrice ?? 0) * item.quantity, 0)
+}
+
+function matched<T>(rows: T[], title: (row: T) => string, needle: string): T[] {
+  return rows
+    .map((row) => ({ row, at: rank(title(row), needle) }))
+    .filter((entry) => entry.at !== Number.POSITIVE_INFINITY)
+    .sort((a, b) => a.at - b.at)
+    .map((entry) => entry.row)
+}
+
+export function insertOptions(
+  term: string,
+  packages: App.Catalog.Data.PackageData[],
+  items: App.Catalog.Data.CatalogItemData[],
+): InsertOption[] {
+  const needle = term.trim().toLowerCase()
+
+  if (needle === '') {
+    return []
+  }
+
+  return [
+    ...matched(packages, (pkg) => pkg.name, needle).map((pkg): InsertOption => ({
+      kind: 'package',
+      id: pkg.id,
+      label: pkg.name,
+      meta: `${pkg.itemCount} · ${formatEurosRounded(packageTotal(pkg))}`,
+    })),
+    ...matched(items, (item) => item.title, needle).map((item): InsertOption => ({
+      kind: 'item',
+      id: item.id,
+      label: item.title,
+      meta: item.unitPrice === null ? '' : formatEurosRounded(item.unitPrice),
+    })),
+    // Steht auch bei Treffern da: derselbe Titel kann eine andere Position meinen.
+    { kind: 'new', id: 'new', label: term.trim(), meta: '' },
+  ]
+}
+
+export function packageRows(pkg: App.Catalog.Data.PackageData): QuoteRow[] {
+  return pkg.items.map((item) => ({
+    title: item.title,
+    description: item.description ?? '',
+    quantity: item.quantity,
+    unitPrice: centsToEuros(item.unitPrice),
+    discount: '',
+    remember: false,
+  }))
+}
+
+/** Eine Zeile aus der Bibliothek ist per Definition gemerkt. */
+export function itemRow(item: App.Catalog.Data.CatalogItemData): QuoteRow {
+  return {
+    title: item.title,
+    description: item.description ?? '',
+    quantity: 1,
+    unitPrice: centsToEuros(item.unitPrice),
+    discount: '',
+    remember: true,
+  }
+}

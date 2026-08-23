@@ -470,7 +470,6 @@
     "includedPrice": "inklusive",
     "total": "Gesamt",
     "items": "Positionen",
-    "addItem": "Position hinzufügen",
     "itemTitle": "Titel",
     "itemDescription": "Beschreibung",
     "itemQuantity": "Menge",
@@ -483,7 +482,13 @@
     "empty": "Kein Angebot.",
     "draft": "Entwurf",
     "more": "+ {count} weitere",
-    "move": "Verschieben"
+    "move": "Verschieben",
+    "insert": "Position oder Paket",
+    "insertNew": "„{term}\" anlegen",
+    "remember": "Merken",
+    "groupPackages": "Pakete",
+    "groupItems": "Positionen",
+    "groupNew": "Neu"
   },
   "payments": {
     "title": "Zahlungen",
