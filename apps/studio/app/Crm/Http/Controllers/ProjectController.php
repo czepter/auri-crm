@@ -2,7 +2,6 @@
 
 namespace App\Crm\Http\Controllers;
 
-use App\Catalog\Models\Package;
 use App\Crm\Actions\AdvanceLeadStage;
 use App\Crm\Actions\BookProject;
 use App\Crm\Actions\BuildThread;
@@ -260,9 +259,6 @@ class ProjectController extends Controller
             'quotes' => QuoteData::collect(
                 $project->quotes()->with(['items', 'predecessor'])->get()
             ),
-            'packages' => Package::active()->orderBy('name')->get()
-                ->map(fn (Package $package) => ['value' => $package->public_id, 'label' => $package->name])
-                ->all(),
         ]);
     }
 

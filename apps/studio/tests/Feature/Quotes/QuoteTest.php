@@ -994,3 +994,29 @@ it('creates a quote seeded from a package when the lead pill posts one', functio
 
     expect($project->quotes()->sole()->items)->toHaveCount(2);
 });
+
+// --- Creating: no dialog, so no questions before the first visible line ---
+
+it('creates a blank draft straight from the button, taking validity from the studio default', function () {
+    $project = Project::factory()->create();
+
+    $this->actingAs(quoteOwner(), 'staff')
+        ->post("/auftraege/{$project->public_id}/angebote")
+        ->assertRedirect();
+
+    $quote = $project->quotes()->sole();
+
+    expect($quote->items)->toHaveCount(0)
+        ->and($quote->valid_until)->not->toBeNull();
+});
+
+it('stops sending the package list to the quotes screen', function () {
+    $project = Project::factory()->create();
+
+    $props = $this->actingAs(quoteOwner(), 'staff')
+        ->get("/auftraege/{$project->public_id}/angebote")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect($props)->not->toHaveKey('packages');
+});
