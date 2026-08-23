@@ -2,6 +2,7 @@
 
 namespace App\Quotes\Http\Controllers;
 
+use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
@@ -13,6 +14,7 @@ use App\Support\AuditLogger;
 use Carbon\CarbonInterval;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 
 class QuoteController extends Controller
@@ -79,7 +81,16 @@ class QuoteController extends Controller
             'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
             'items.*.discount_type' => ['nullable', 'in:percentage,amount', 'required_with:items.*.discount_value'],
             'items.*.discount_value' => ['nullable', 'integer', 'min:1', 'required_with:items.*.discount_type'],
+            'items.*.remember' => ['boolean'],
         ]);
+
+        // Der Schlüssel kommt nur mit, wenn der Bildschirm das Häkchen
+        // gerendert hat. Kommt er trotzdem, ist das kein Bedienschritt, den
+        // man still verwerfen darf.
+        if (collect($validated['items'] ?? [])->contains(fn (array $item) => array_key_exists('remember', $item))
+            && Gate::denies('create', Package::class)) {
+            abort(403);
+        }
 
         $quote->update([
             'valid_until' => $validated['valid_until'] ?? null,
@@ -105,6 +116,8 @@ class QuoteController extends Controller
 
         $quote->recalculateTotal();
 
+        $this->syncCatalog($validated['items'] ?? []);
+
         AuditLogger::recordThrottled(
             event: 'quote.updated',
             within: CarbonInterval::minutes(15),
@@ -128,5 +141,32 @@ class QuoteController extends Controller
         $send($quote, auth('staff')->user());
 
         return back();
+    }
+
+    /**
+     * Das Häkchen ist keine Spalte auf quote_items, sondern die Frage "gibt es
+     * einen Katalogeintrag mit diesem Titel". Eine Zeile ohne den Schlüssel
+     * stellt die Frage nicht und lässt die Bibliothek unberührt.
+     *
+     * @param  list<array<string, mixed>>  $items
+     */
+    private function syncCatalog(array $items): void
+    {
+        foreach ($items as $item) {
+            if (! array_key_exists('remember', $item)) {
+                continue;
+            }
+
+            if ($item['remember']) {
+                CatalogItem::updateOrCreate(
+                    ['title' => $item['title']],
+                    ['description' => $item['description'] ?? null, 'unit_price' => $item['unit_price'] ?? null],
+                );
+
+                continue;
+            }
+
+            CatalogItem::where('title', $item['title'])->delete();
+        }
     }
 }

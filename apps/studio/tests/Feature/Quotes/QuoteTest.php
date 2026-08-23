@@ -1,10 +1,13 @@
 <?php
 
+use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
+use App\Enums\Capability;
+use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Quotes\Actions\ReviseQuote;
@@ -1019,4 +1022,76 @@ it('stops sending the package list to the quotes screen', function () {
         ->viewData('page')['props'];
 
     expect($props)->not->toHaveKey('packages');
+});
+
+// --- Merken: the tick is derived, and it writes the catalog -------------
+
+it('remembers a flagged line, and remembers it only once across quotes', function () {
+    $first = Quote::factory()->create();
+    $second = Quote::factory()->create();
+    $line = ['title' => 'Zweitfotograf', 'description' => 'Zweite Kamera', 'quantity' => 1, 'unit_price' => 49000, 'remember' => true];
+
+    $this->actingAs(quoteOwner(), 'staff')->patch("/angebote/{$first->public_id}", ['items' => [$line]]);
+    $this->actingAs(quoteOwner(), 'staff')->patch("/angebote/{$second->public_id}", ['items' => [$line]]);
+
+    $item = CatalogItem::sole();
+
+    expect($item->title)->toBe('Zweitfotograf')
+        ->and($item->description)->toBe('Zweite Kamera')
+        ->and($item->unit_price)->toBe(49000);
+});
+
+it('updates the remembered price and description, and never the quantity', function () {
+    $quote = Quote::factory()->create();
+    CatalogItem::create(['title' => 'Zweitfotograf', 'description' => null, 'unit_price' => 49000]);
+
+    $this->actingAs(quoteOwner(), 'staff')->patch("/angebote/{$quote->public_id}", [
+        'items' => [['title' => 'Zweitfotograf', 'description' => 'Ganztags', 'quantity' => 3, 'unit_price' => 52000, 'remember' => true]],
+    ]);
+
+    $item = CatalogItem::sole();
+
+    expect($item->unit_price)->toBe(52000)
+        ->and($item->description)->toBe('Ganztags')
+        ->and($item->getAttributes())->not->toHaveKey('quantity');
+});
+
+it('forgets a line whose flag is taken away', function () {
+    $quote = Quote::factory()->create();
+    CatalogItem::create(['title' => 'Zweitfotograf', 'unit_price' => 49000]);
+
+    $this->actingAs(quoteOwner(), 'staff')->patch("/angebote/{$quote->public_id}", [
+        'items' => [['title' => 'Zweitfotograf', 'description' => null, 'quantity' => 1, 'unit_price' => 49000, 'remember' => false]],
+    ]);
+
+    expect(CatalogItem::count())->toBe(0);
+});
+
+it('leaves the library alone when no line carries the flag at all', function () {
+    $quote = Quote::factory()->create();
+    CatalogItem::create(['title' => 'Zweitfotograf', 'unit_price' => 49000]);
+
+    $this->actingAs(quoteOwner(), 'staff')->patch("/angebote/{$quote->public_id}", [
+        'items' => [['title' => 'Reportage', 'description' => null, 'quantity' => 1, 'unit_price' => 189000]],
+    ]);
+
+    expect(CatalogItem::count())->toBe(1);
+});
+
+// The gate exists for API tokens (P6/I-01), not for roles — every role holds
+// ManagePackages today, which is exactly what PackagePolicy explains.
+it('refuses to write the library for an actor without the catalog capability', function () {
+    $role = collect(StaffRole::cases())->first(fn (StaffRole $role) => ! $role->allows(Capability::ManagePackages));
+
+    if ($role === null) {
+        $this->markTestSkipped('Jede Rolle hält ManagePackages — die Trennung existiert nur für API-Token (P6/I-01).');
+    }
+
+    $quote = Quote::factory()->create();
+
+    $this->actingAs(staffMember($role), 'staff')->patch("/angebote/{$quote->public_id}", [
+        'items' => [['title' => 'Zweitfotograf', 'description' => null, 'quantity' => 1, 'unit_price' => 49000, 'remember' => true]],
+    ])->assertForbidden();
+
+    expect(CatalogItem::count())->toBe(0);
 });
