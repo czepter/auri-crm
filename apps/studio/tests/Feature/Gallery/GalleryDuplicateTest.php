@@ -3,6 +3,7 @@
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
 use App\Media\Actions\IngestCompletedUpload;
+use App\Media\Enums\AssetStatus;
 use App\Media\Models\Asset;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -59,6 +60,24 @@ it('ignores what already left the draft', function () {
     ])->assertOk();
 
     expect($response->json('duplicates'))->toBeEmpty();
+});
+
+// A failed ingest still leaves a row carrying filename and byte_size — the
+// precheck must catch a re-pick of the same file just as it would a Ready
+// one, or IngestCompletedUpload converges on the Failed row by checksum,
+// deletes the fresh quarantine object and the tray says Bereit for a
+// picture that never appears (Important 1).
+it('catches a duplicate even when the earlier upload failed', function () {
+    Asset::factory()->create([
+        'gallery_id' => $this->gallery->id, 'gallery_set_id' => $this->set->id,
+        'filename' => 'IMG_0001.jpg', 'byte_size' => 5_460_000, 'status' => AssetStatus::Failed,
+    ]);
+
+    $response = $this->postJson("/galerien/{$this->gallery->public_id}/uploads/pruefen", [
+        'files' => [['filename' => 'IMG_0001.jpg', 'size' => 5_460_000]],
+    ])->assertOk();
+
+    expect($response->json('duplicates'))->toHaveCount(1);
 });
 
 // syntheticJpeg() and completedUpload() live in tests/Pest.php.

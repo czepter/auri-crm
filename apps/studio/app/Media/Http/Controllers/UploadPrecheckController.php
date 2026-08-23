@@ -29,7 +29,11 @@ class UploadPrecheckController extends Controller
 
         $wanted = collect($validated['files'])->keyBy(fn (array $file) => "{$file['filename']}:{$file['size']}");
 
-        $duplicates = $gallery->assetRows()->inDraft()
+        // Not inDraft(): that scope also requires status = Ready, and a
+        // Failed row still carries the checksum, filename and byte_size that
+        // made IngestCompletedUpload converge on it — re-picking the same
+        // file must still be caught, or the bytes travel again for nothing.
+        $duplicates = $gallery->assetRows()->whereNull('removed_from_draft_at')
             ->whereIn('filename', $wanted->pluck('filename'))
             ->get()
             ->filter(fn ($asset) => $wanted->has("{$asset->filename}:{$asset->byte_size}"))
