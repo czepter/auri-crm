@@ -464,11 +464,11 @@ class DemoCrmSeeder extends Seeder
      * ReadAfterDeliveryColumn::EXPIRY_WINDOW_DAYS.
      *
      * expires_at is set directly rather than through Gallery::publish():
-     * publish() only stamps it when config('gallery.retention_days') is set,
-     * and that config defaults to null — every published gallery keeps no
-     * expiry until a studio asks for one. This row needs an expiry to exist
-     * regardless of that setting, so it is written the same way
-     * publish() itself would have, once retention is configured.
+     * publish() only stamps it when gallery_default_expiry_days is set, and
+     * that setting defaults to null — every published gallery keeps no expiry
+     * until a studio asks for one. This row needs an expiry to exist
+     * regardless of that setting, so it is written the same way publish()
+     * itself would have, once retention is configured.
      */
     private function seedReferralAndExpiringGallery(Project $project, Project $referrerProject): void
     {

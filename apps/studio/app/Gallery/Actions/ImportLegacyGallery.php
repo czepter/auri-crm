@@ -121,20 +121,9 @@ class ImportLegacyGallery
                 ->galleryDefaults()['requiresSettledBalance'],
         ]);
 
-        $this->applyDefaultExpiry($gallery);
         $gallery->publish();
 
         return $this->result('backfilled', 'created and published version 1 with '.count($assets).' asset(s).', $gallery);
-    }
-
-    /** P-09: the studio's default validity, applied at publish time by Gallery::publish() unless already set. */
-    private function applyDefaultExpiry(Gallery $gallery): void
-    {
-        $days = app(StudioSettingsResolver::class)->galleryDefaults()['expiryDays'];
-
-        if ($days !== null && $gallery->expires_at === null) {
-            $gallery->update(['expires_at' => now()->addDays($days)]);
-        }
     }
 
     private function resolveProject(array $record): ?Project

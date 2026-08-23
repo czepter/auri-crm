@@ -7,6 +7,7 @@ use App\Concerns\HasPublicId;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Media\Models\MultipartUpload;
+use App\Settings\Support\StudioSettingsResolver;
 use Database\Factories\Gallery\GalleryFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -134,7 +135,7 @@ class Gallery extends Model
         }
 
         return DB::transaction(function () {
-            $retention = config('gallery.retention_days');
+            $retention = app(StudioSettingsResolver::class)->galleryDefaults()['expiryDays'];
 
             if ($retention !== null && $this->expires_at === null) {
                 // Stamped once, on first publish. A second version does not
