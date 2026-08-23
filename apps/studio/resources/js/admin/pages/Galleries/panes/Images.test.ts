@@ -29,7 +29,27 @@ const assets = [
 const gallery = { id: 'g1' }
 const base = { gallery, sets, assets, failedAssets: [] }
 
+// The shape every gallery actually starts in (Gallery::booted() creates
+// exactly one set) — R22 fixed Record.vue handing this pane activeSetId:
+// null here, which left no way to reach the sole set's own controls.
+const soloSet = [{ id: 'a', name: 'Highlights', count: 1, density: 'medium' }]
+const soloAssets = [{ id: '1', key: 'a.jpg', setId: 'a', filename: 'a.jpg', src: '/bild/a', isCover: true }]
+const solo = { gallery, sets: soloSet, assets: soloAssets, failedAssets: [] }
+
 describe('Images', () => {
+  // R22: a freshly created gallery has exactly one set, and GalleryRail
+  // hides Alle along with the rest of its row list while there is only
+  // one — so this is the state every gallery starts in, not an edge case.
+  it('a gallery with only one set: heads with its name, offers the drop zone and the density control', async () => {
+    const html = await render({ ...solo, activeSetId: 'a' })
+
+    expect(html).toContain('Highlights')
+    expect(html).not.toContain(de.gallery.all)
+    expect(html).toContain(de.media.dropHere)
+    expect(html).not.toContain(de.media.pickSetFirst)
+    expect(html).toContain(de.galleryRecord.density.small)
+  })
+
   // useVirtualList only fills its window against a real element size, which
   // an SSR string render never has — the grid body renders empty either
   // way, so these check the header (title, count) and the density control

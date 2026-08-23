@@ -10,6 +10,7 @@ import { Label } from '@/ui/label'
 import { Button } from '@/ui/button'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import GalleryRail from '@/admin/components/gallery/GalleryRail.vue'
+import { initialActiveSetId, nextActiveSetId } from '@/admin/lib/gallerySets'
 import Images from '@/admin/pages/Galleries/panes/Images.vue'
 
 const props = defineProps<{
@@ -56,18 +57,12 @@ const tab = ref<'bilder' | 'gestaltung' | 'einstellungen' | 'aktivitaet'>('bilde
 const SHEETS = ['downloads', 'marks', 'views'] as const
 const sheet = ref<(typeof SHEETS)[number]>('downloads')
 
-const activeSetId = ref<string | null>(null)
+const activeSetId = ref<string | null>(initialActiveSetId(props.sets))
 const coverSrc = computed(() => props.assets.find((asset) => asset.isCover)?.src ?? null)
 
-// Alle (null) always exists; a real set can vanish out from under the
-// active tab when it's deleted, so that falls back to Alle.
 watch(
   () => props.sets,
-  (rows) => {
-    if (activeSetId.value !== null && !rows.some((row) => row.id === activeSetId.value)) {
-      activeSetId.value = null
-    }
-  },
+  (rows) => (activeSetId.value = nextActiveSetId(rows, activeSetId.value)),
 )
 
 const setError = ref<{ id: string; message: string } | null>(null)

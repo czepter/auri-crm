@@ -18,9 +18,10 @@ const percent = computed(() => (props.rows.length === 0 ? 0 : Math.round((done.v
 
 // TrayRow's own status names (done/error) aren't the words shown — those are
 // media.ready and media.failed, the same pair the old ingest screen used.
-const STATUS_KEY: Record<TrayRow['status'], string> = {
+// 'uploading' never reaches this map — the template shows a live percent
+// for it instead, before ever consulting STATUS_KEY.
+const STATUS_KEY: Record<Exclude<TrayRow['status'], 'uploading'>, string> = {
   queued: 'media.queued',
-  uploading: '',
   done: 'media.ready',
   error: 'media.failed',
 }
