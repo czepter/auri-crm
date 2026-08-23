@@ -6,8 +6,10 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Media\Models\Asset;
 use App\Media\Models\MultipartUpload;
 use App\Settings\Support\StudioSettingsResolver;
+use Carbon\CarbonImmutable;
 use Database\Factories\Gallery\GalleryFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -45,6 +47,7 @@ class Gallery extends Model
         'requires_settled_balance', 'balance_settled',
         'is_external', 'external_url', 'expires_at',
         'downloads_enabled', 'lists_enabled', 'comments_enabled',
+        'event_date', 'cover_asset_id', 'cover_focal_x', 'cover_focal_y',
     ];
 
     protected $attributes = [
@@ -82,6 +85,8 @@ class Gallery extends Model
             'download_pin' => 'encrypted',
             'requires_verified_email' => 'boolean',
             'expires_at' => 'immutable_datetime',
+            'event_date' => 'immutable_date',
+            'unpublished_at' => 'immutable_datetime',
         ];
     }
 
@@ -103,6 +108,22 @@ class Gallery extends Model
     public function sets(): HasMany
     {
         return $this->hasMany(GallerySet::class)->orderBy('position');
+    }
+
+    public function assetRows(): HasMany
+    {
+        return $this->hasMany(Asset::class);
+    }
+
+    public function coverAsset(): BelongsTo
+    {
+        return $this->belongsTo(Asset::class, 'cover_asset_id');
+    }
+
+    /** Was auf der Karte steht: das Shooting antwortet, sonst die Galerie selbst. */
+    public function occursOn(): ?CarbonImmutable
+    {
+        return $this->shoot?->date ?? $this->event_date;
     }
 
     /** The most recently published version, or null before this gallery's first publish() call. */
