@@ -77,13 +77,35 @@ it('moves the pictures of a deleted set into the named target', function () {
         ->and(GallerySet::whereKey($feier->id)->exists())->toBeFalse();
 });
 
-it('takes the pictures with it when no target is named', function () {
+// R23: no SoftDeletes anywhere in this schema exists precisely so a
+// published version can still resolve its keys through Asset rows — a
+// destructive set delete must not defeat that by hard-deleting the rows
+// cascadeOnDelete would otherwise take with it.
+it('moves the pictures to the remaining set and marks them removed instead of hard-deleting, when no target is named', function () {
     $feier = GallerySet::factory()->for($this->gallery)->create(['name' => 'Feier', 'position' => 1]);
     $asset = Asset::factory()->create(['gallery_id' => $this->gallery->id, 'gallery_set_id' => $feier->id]);
 
     $this->delete("/galerien/{$this->gallery->public_id}/sets/{$feier->public_id}")->assertRedirect();
 
-    expect(Asset::whereKey($asset->id)->exists())->toBeFalse();
+    expect($asset->fresh()->gallery_set_id)->toBe($this->highlights->id)
+        ->and($asset->fresh()->removed_from_draft_at)->not->toBeNull()
+        ->and(GallerySet::whereKey($feier->id)->exists())->toBeFalse();
+});
+
+// The scenario Important 2 named: a published version's ZIP must still
+// resolve a picture whose set gets deleted with "Bilder mit löschen" later.
+it('keeps a published version resolvable after its set is deleted with its pictures', function () {
+    $feier = GallerySet::factory()->for($this->gallery)->create(['name' => 'Feier', 'position' => 1]);
+    Asset::factory()->create([
+        'gallery_id' => $this->gallery->id, 'gallery_set_id' => $feier->id,
+        'key' => 'galleries/g/a.jpg', 'filename' => 'a.jpg',
+    ]);
+    $this->post("/galerien/{$this->gallery->public_id}/veroeffentlichen");
+
+    $this->delete("/galerien/{$this->gallery->public_id}/sets/{$feier->public_id}")->assertRedirect();
+
+    expect($this->gallery->fresh()->currentVersion->assets)->toHaveCount(1)
+        ->and(Asset::where('key', 'galleries/g/a.jpg')->exists())->toBeTrue();
 });
 
 it('drops the cover when its set is deleted without a target', function () {

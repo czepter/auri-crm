@@ -99,10 +99,12 @@ function startRemove(row: SetRow) {
   removeTarget.value = ''
 }
 
-function confirmRemove() {
-  if (removing.value === null) return
+const DELETE_PICTURES = '__delete__'
 
-  emit('remove', { id: removing.value.id, targetSetId: removeTarget.value || null })
+function confirmRemove() {
+  if (removing.value === null || removeTarget.value === '') return
+
+  emit('remove', { id: removing.value.id, targetSetId: removeTarget.value === DELETE_PICTURES ? null : removeTarget.value })
   removing.value = null
 }
 
@@ -136,6 +138,7 @@ function onDrop(targetId: string) {
         :class="tab === name ? 'text-foreground shadow-[inset_0_-2px_0_var(--ink)]' : 'text-faint'"
         type="button"
         :title="$t(`galleryRecord.tab.${name}`)"
+        :aria-label="$t(`galleryRecord.tab.${name}`)"
         @click="emit('update:tab', name)"
       >
         {{ $t(`galleryRecord.tabIcon.${name}`) }}
@@ -211,16 +214,20 @@ function onDrop(targetId: string) {
         </AlertDialogHeader>
 
         <div class="px-[var(--s5)]">
+          <!-- The empty value is a real placeholder, not a choice: the
+               destructive option must never be what fires just because the
+               photographer clicked confirm without touching the select. -->
           <NativeSelect v-model="removeTarget" class="w-full">
-            <option value="">{{ $t('galleryRecord.removeSetPictures') }}</option>
+            <option value="" disabled>{{ $t('galleryRecord.moveTo') }}</option>
             <option v-for="target in sets.filter((row) => row.id !== removing?.id)" :key="target.id" :value="target.id">
               {{ target.name }}
             </option>
+            <option :value="DELETE_PICTURES">{{ $t('galleryRecord.removeSetPictures') }}</option>
           </NativeSelect>
         </div>
 
         <AlertDialogFooter>
-          <AlertDialogAction tone="destructive" @click="confirmRemove">{{ $t('galleryRecord.deleteSet') }}</AlertDialogAction>
+          <AlertDialogAction tone="destructive" :disabled="removeTarget === ''" @click="confirmRemove">{{ $t('galleryRecord.deleteSet') }}</AlertDialogAction>
           <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
