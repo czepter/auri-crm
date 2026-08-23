@@ -7,6 +7,7 @@ use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryGridPref;
 use App\Gallery\Models\GalleryList;
+use App\Gallery\Models\GallerySet;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Models\GalleryView;
 use App\Http\Controllers\Controller;
@@ -50,8 +51,21 @@ class GalleryRecordController extends Controller
         RecordVisit::record('galerie', $gallery->public_id, $gallery->title ?? $gallery->project?->name ?? '');
 
         $version = $gallery->currentVersion;
-        $sets = $gallery->sets()->withCount(['assets' => fn ($query) => $query->inDraft()])->get();
-        $assets = $gallery->assetRows()->inDraft()->with('set')->get();
+        $sets = $gallery->sets()
+            ->withCount(['assets' => fn ($query) => $query->inDraft()])
+            ->with(['assets' => fn ($query) => $query->inDraft()])
+            ->get();
+
+        // Same order Gallery::draftAssets() produces — sets by position,
+        // each set by its own rule — so Alle in the pictures pane reads the
+        // same order a guest would eventually get.
+        $assets = $sets->flatMap(fn (GallerySet $set) => $set->assets
+            ->sortBy([
+                [fn (Asset $a, Asset $b) => ($a->{$set->sort_key} === null) <=> ($b->{$set->sort_key} === null), 'asc'],
+                [$set->sort_key, $set->sort_dir],
+                ['filename', 'asc'],
+            ])
+            ->each(fn (Asset $asset) => $asset->setRelation('set', $set)));
         $densities = GalleryGridPref::query()
             ->where('user_id', auth('staff')->id())
             ->whereIn('gallery_set_id', $sets->pluck('id'))

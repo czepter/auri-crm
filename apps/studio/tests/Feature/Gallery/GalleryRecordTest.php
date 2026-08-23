@@ -45,6 +45,17 @@ it('lists the sets with their counts', function () {
         ->and($props['figures']['assets'])->toBe(2);
 });
 
+// The Alle view in the pictures pane relies on this order matching what
+// Gallery::draftAssets() would snapshot on publish — sets by position, b.jpg
+// (Highlights, position 0) before a.jpg (Trauung, position 1).
+it('orders assets by set position, the same as draftAssets()', function () {
+    $gallery = managedGallery();
+
+    $props = props("/galerien/{$gallery->public_id}");
+
+    expect(collect($props['assets'])->pluck('filename')->all())->toBe(['b.jpg', 'a.jpg']);
+});
+
 // Fix round 1, Critical: a Failed row has no key, so it must never reach the
 // picture grid — it has nothing a <img> or a set badge could show.
 it('keeps a Failed asset out of the pictures, its set count, and the total', function () {

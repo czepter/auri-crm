@@ -10,6 +10,7 @@ import { Label } from '@/ui/label'
 import { Button } from '@/ui/button'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import GalleryRail from '@/admin/components/gallery/GalleryRail.vue'
+import Images from '@/admin/pages/Galleries/panes/Images.vue'
 
 const props = defineProps<{
   gallery: {
@@ -148,14 +149,6 @@ function day(iso: string | null) {
 function megabytes(bytes: number) {
   return `${Math.round(bytes / 1_000_000)} MB`
 }
-
-function shown() {
-  return activeSetId.value === null ? props.assets : props.assets.filter((asset) => asset.setId === activeSetId.value)
-}
-
-function setName(setId: string) {
-  return props.sets.find((entry) => entry.id === setId)?.name ?? null
-}
 </script>
 
 <template>
@@ -246,27 +239,14 @@ function setName(setId: string) {
           @reorder="reorderSets"
         />
 
-        <!-- Bilder: grid on the right, versions underneath — a version is a
-             published selection, so it is a statement about pictures and
-             belongs here, not with the permissions. -->
-        <div v-if="tab === 'bilder'" class="min-w-0 flex-1 pt-5 pr-8 pb-7">
-          <div class="mb-4 flex items-center gap-3">
-            <h2 class="m-0 text-[17px] leading-[1.2] font-semibold tracking-[-0.022em]">{{ $t('galleryRecord.images') }}</h2>
-            <span class="text-[12px] text-ink-2">{{ shown().length }}</span>
-            <Link class="ml-auto flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-sunk-2 px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-foreground no-underline transition-[filter,background] duration-[120ms] ease-out hover:bg-[#E9E9EC]" :href="`/galerien/${gallery.id}/medien`">
-              {{ $t('galleryRecord.ingest') }}
-            </Link>
-          </div>
+        <!-- Bilder: the pane owns the grid, selection and versions underneath
+             — a version is a published selection, so it is a statement
+             about pictures and belongs here, not with the permissions. -->
+        <div v-if="tab === 'bilder'" class="min-w-0 flex-1">
+          <Images :gallery="gallery" :sets="sets" :assets="assets" :active-set-id="activeSetId" />
 
-          <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2.5">
-            <figure v-for="asset in shown()" :key="asset.id" class="relative m-0">
-              <img v-if="asset.src" class="block aspect-3/2 w-full rounded-lg object-cover" :src="`${asset.src}?w=400&fmt=jpeg`" alt="" loading="lazy" />
-              <span class="absolute top-[7px] left-[7px] flex gap-1 text-[10.5px] text-paper"><span class="rounded-full bg-[rgba(29,29,31,0.62)] px-[7px] py-0.5">{{ setName(asset.setId) }}</span></span>
-            </figure>
-          </div>
-
-          <h2 class="mt-7">{{ $t('galleryRecord.versions') }}</h2>
-          <div>
+          <h2 class="mt-7 px-8">{{ $t('galleryRecord.versions') }}</h2>
+          <div class="px-8 pb-8">
             <div v-for="version in versions" :key="version.version" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
               <span class="w-[62px] flex-none text-[12px] font-semibold tracking-[-0.01em] tabular-nums">{{ $t('galleryRecord.version', { version: version.version }) }}</span>
               <span class="text-[13px] font-medium tracking-[-0.01em]">{{ $t('contacts.assetCount', version.assetCount) }}</span>
