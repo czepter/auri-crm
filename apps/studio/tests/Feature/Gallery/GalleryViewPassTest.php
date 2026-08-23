@@ -1,7 +1,9 @@
 <?php
 
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
 use App\Gallery\Support\GalleryViewPass;
+use App\Media\Models\Asset;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
@@ -15,10 +17,10 @@ beforeEach(function () {
 
 function gatedGallery(string $password = 'basthorst2026'): Gallery
 {
-    $gallery = Gallery::factory()->create(['assets' => [
-        ['key' => 'galleries/g1/a.jpg', 'width' => 4000, 'height' => 3000],
-    ]]);
-    $gallery->publish();
+    $gallery = Gallery::factory()->create();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg', 'width' => 4000, 'height' => 3000]);
+    $gallery->fresh()->publish();
     $gallery->rotateViewPassword($password);
 
     return $gallery->fresh();
@@ -52,7 +54,7 @@ it('refuses the wrong password without saying which gallery exists', function ()
 });
 
 it('hands a pass straight out for a gallery with no password', function () {
-    $gallery = Gallery::factory()->create(['assets' => [['key' => 'a.jpg']]]);
+    $gallery = Gallery::factory()->create();
     $gallery->publish();
 
     $pass = test()->postJson("/api/galleries/{$gallery->public_id}/passwort")->assertOk()->json('pass');

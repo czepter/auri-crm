@@ -114,7 +114,6 @@ class ImportLegacyGallery
             'project_id' => $project->id,
             'shoot_id' => $shoot?->id,
             'title' => $title,
-            'assets' => $assets,
             // P-09 (#228): the studio's own defaults are the starting values,
             // never a lock — rotateViewPassword() and the rest still override
             // per gallery, and a later change to the default deliberately

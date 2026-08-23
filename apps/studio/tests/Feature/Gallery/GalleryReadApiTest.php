@@ -60,11 +60,13 @@ it('serves the currently-published version, not the draft, as no-store', functio
 });
 
 it('serves the latest version after a republish', function () {
-    $gallery = Gallery::factory()->create(['title' => 'v1', 'assets' => []]);
+    $gallery = Gallery::factory()->create(['title' => 'v1']);
     $gallery->publish();
 
-    $gallery->update(['title' => 'v2', 'assets' => [['key' => 'galleries/g1/b.jpg', 'width' => 100, 'height' => 100]]]);
-    $v2 = $gallery->publish();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/b.jpg', 'filename' => 'b.jpg', 'width' => 100, 'height' => 100]);
+    $gallery->update(['title' => 'v2']);
+    $v2 = $gallery->fresh()->publish();
 
     $this->getJson("/api/galleries/{$gallery->public_id}")
         ->assertOk()

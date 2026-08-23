@@ -1,6 +1,8 @@
 <?php
 
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
+use App\Media\Models\Asset;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -66,11 +68,10 @@ describe('on the api surface', function () {
     // The Astro viewer is the second surface the same switch has to cover —
     // a gallery closed on the portal that stays open here is not closed.
     it('refuses a mark from the viewer when the gallery offers no lists', function () {
-        $gallery = Gallery::factory()->create([
-            'lists_enabled' => false,
-            'assets' => [['key' => 'galleries/g1/a.jpg', 'width' => 200, 'height' => 100]],
-        ]);
-        $version = $gallery->publish();
+        $gallery = Gallery::factory()->create(['lists_enabled' => false]);
+        $set = GallerySet::where('gallery_id', $gallery->id)->first();
+        Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg', 'width' => 200, 'height' => 100]);
+        $version = $gallery->fresh()->publish();
 
         $this->postJson(
             "/api/gallery-versions/{$version->public_id}/favorites/galleries/g1/a.jpg",
@@ -79,11 +80,10 @@ describe('on the api surface', function () {
     });
 
     it('refuses a comment from the viewer when the gallery offers no comments', function () {
-        $gallery = Gallery::factory()->create([
-            'comments_enabled' => false,
-            'assets' => [['key' => 'galleries/g1/a.jpg', 'width' => 200, 'height' => 100]],
-        ]);
-        $version = $gallery->publish();
+        $gallery = Gallery::factory()->create(['comments_enabled' => false]);
+        $set = GallerySet::where('gallery_id', $gallery->id)->first();
+        Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg', 'width' => 200, 'height' => 100]);
+        $version = $gallery->fresh()->publish();
 
         $this->postJson("/api/gallery-versions/{$version->public_id}/comments", [
             'asset_key' => 'galleries/g1/a.jpg',

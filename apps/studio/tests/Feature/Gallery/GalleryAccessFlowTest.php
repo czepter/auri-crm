@@ -265,8 +265,7 @@ it('offers everything plus the client\'s own selections, each with both sizes', 
     App\Media\Models\Asset::factory()->for($gallery)->create([
         'key' => 'galleries/g/b.jpg', 'status' => App\Media\Enums\AssetStatus::Ready, 'byte_size' => 6_000_000,
     ]);
-    $gallery->update(['assets' => [['key' => 'galleries/g/a.jpg'], ['key' => 'galleries/g/b.jpg']]]);
-    $gallery->publish();
+    $gallery->fresh()->publish();
 
     $list = App\Gallery\Models\GalleryList::create([
         'gallery_id' => $gallery->id, 'contact_id' => $contact->id, 'name' => 'Album',
@@ -291,7 +290,8 @@ it('offers a guest only everything, never somebody\'s named list', function () {
     $contact = App\Crm\Models\Contact::factory()->create();
     $project->attachContact($contact, App\Crm\Enums\ProjectContactRole::Primary);
 
-    $gallery = Gallery::factory()->for($project)->create(['assets' => [['key' => 'galleries/g/a.jpg']]]);
+    $gallery = Gallery::factory()->for($project)->create();
+    App\Media\Models\Asset::factory()->for($gallery)->create(['key' => 'galleries/g/a.jpg']);
     $gallery->publish();
     App\Gallery\Models\GalleryList::create([
         'gallery_id' => $gallery->id, 'contact_id' => $contact->id, 'name' => 'Album',
@@ -305,7 +305,8 @@ it('offers a guest only everything, never somebody\'s named list', function () {
 it('queues one build per selection and size, and reuses a fresh one', function () {
     Illuminate\Support\Facades\Queue::fake();
 
-    $gallery = Gallery::factory()->create(['assets' => [['key' => 'galleries/g/a.jpg']]]);
+    $gallery = Gallery::factory()->create();
+    App\Media\Models\Asset::factory()->for($gallery)->create(['key' => 'galleries/g/a.jpg']);
     $gallery->publish();
 
     test()->post("/galerien/{$gallery->public_id}/download/vorbereiten", ['size' => 'original'])
@@ -331,7 +332,8 @@ it('queues one build per selection and size, and reuses a fresh one', function (
 it('refuses to prepare a list the visitor does not own', function () {
     Illuminate\Support\Facades\Queue::fake();
 
-    $gallery = Gallery::factory()->create(['assets' => [['key' => 'galleries/g/a.jpg']]]);
+    $gallery = Gallery::factory()->create();
+    App\Media\Models\Asset::factory()->for($gallery)->create(['key' => 'galleries/g/a.jpg']);
     $gallery->publish();
     $list = App\Gallery\Models\GalleryList::create([
         'gallery_id' => $gallery->id,
@@ -348,7 +350,8 @@ it('refuses to prepare a list the visitor does not own', function () {
 
 // One button would be lying about 33 originals at 4,2 GB.
 it('hands back every part of a ready build with its own signed link', function () {
-    $gallery = Gallery::factory()->create(['assets' => [['key' => 'galleries/g/a.jpg']]]);
+    $gallery = Gallery::factory()->create();
+    App\Media\Models\Asset::factory()->for($gallery)->create(['key' => 'galleries/g/a.jpg']);
     $version = $gallery->publish();
 
     $build = App\Media\Models\ZipBuild::create([
@@ -379,7 +382,8 @@ it('never shows a guest the client\'s own archives or what they called them', fu
     $contact = App\Crm\Models\Contact::factory()->create();
     $project->attachContact($contact, App\Crm\Enums\ProjectContactRole::Primary);
 
-    $gallery = Gallery::factory()->for($project)->create(['assets' => [['key' => 'galleries/g/a.jpg']]]);
+    $gallery = Gallery::factory()->for($project)->create();
+    App\Media\Models\Asset::factory()->for($gallery)->create(['key' => 'galleries/g/a.jpg']);
     $version = $gallery->publish();
 
     $list = App\Gallery\Models\GalleryList::create([

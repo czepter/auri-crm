@@ -125,7 +125,7 @@ it('derives a phase per booking and counts them for the filter', function () {
 
     $delivered = bookingFor($contact);
     Shoot::factory()->for($delivered)->on(now()->subYear()->format('Y-m-d'))->create(['is_primary' => true]);
-    Gallery::factory()->for($delivered)->create(['assets' => [['key' => 'a.jpg']]])->publish();
+    Gallery::factory()->for($delivered)->create()->publish();
 
     bookingFor($contact);
 
@@ -157,9 +157,9 @@ it('leaves out a gallery whose link has expired, and one nobody published', func
     $contact = Contact::factory()->create();
     $project = bookingFor($contact);
 
-    Gallery::factory()->for($project)->create(['assets' => [['key' => 'a.jpg']]]);
+    Gallery::factory()->for($project)->create();
 
-    $expired = Gallery::factory()->for($project)->create(['assets' => [['key' => 'b.jpg']]]);
+    $expired = Gallery::factory()->for($project)->create();
     $expired->publish();
     $expired->update(['expires_at' => now()->subDay()]);
 

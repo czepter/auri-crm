@@ -26,11 +26,12 @@ use LogicException;
  * belongs to. shoot_id is nullable because a gallery frequently spans the
  * whole project rather than one shoot (G-05).
  *
- * title and assets here are the working copy — freely editable, never what a
- * guest is served. publish() is the only way their contents reach a
- * GalleryVersion, and once written that row never changes again; see
- * publish() for why, and G-08 (version-scoped caching) for the story that
- * relies on it.
+ * title here is the working copy — freely editable, never what a guest is
+ * served. draftAssets() is its counterpart for pictures, read live off the
+ * assets table rather than stored on this row. publish() is the only way
+ * their contents reach a GalleryVersion, and once written that row never
+ * changes again; see publish() for why, and G-08 (version-scoped caching)
+ * for the story that relies on it.
  *
  * G-06's three gates (view password, download PIN, verified email) live here
  * too, deliberately outside $fillable — the only way to set or clear one is
@@ -44,7 +45,7 @@ class Gallery extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'project_id', 'shoot_id', 'title', 'assets', 'design',
+        'project_id', 'shoot_id', 'title', 'design',
         'requires_settled_balance', 'balance_settled',
         'is_external', 'external_url', 'expires_at',
         'downloads_enabled', 'lists_enabled', 'comments_enabled',
@@ -52,7 +53,6 @@ class Gallery extends Model
     ];
 
     protected $attributes = [
-        'assets' => '[]',
         'requires_settled_balance' => false,
         'balance_settled' => false,
         'is_external' => false,
@@ -68,7 +68,6 @@ class Gallery extends Model
     protected function casts(): array
     {
         return [
-            'assets' => 'array',
             // C-19 (#255): cover variant, typeface, colour and grid. Null
             // means "as the studio has it", so a studio changing its own
             // default still reaches every gallery that never overrode one.

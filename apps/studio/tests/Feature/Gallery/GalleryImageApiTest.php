@@ -49,13 +49,8 @@ it('rejects a format outside the allowed set', function () {
 });
 
 it('404s a key that is not in this version\'s own assets, even if it exists on the disk', function () {
-    Storage::fake('s3');
+    $version = publishedVersionWithAsset();
     Storage::disk('s3')->put('galleries/g1/not-listed.jpg', fakeOriginalBytes());
-
-    $gallery = Gallery::factory()->create(['assets' => [
-        ['key' => 'galleries/g1/a.jpg', 'width' => 200, 'height' => 100],
-    ]]);
-    $version = $gallery->publish();
 
     $this->get("/api/gallery-versions/{$version->public_id}/images/galleries/g1/not-listed.jpg?w=400&fmt=webp")
         ->assertNotFound();

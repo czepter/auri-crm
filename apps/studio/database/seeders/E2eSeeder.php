@@ -25,7 +25,8 @@ use App\Engagement\Actions\PostMessage;
 use App\Engagement\Actions\StartThread;
 use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
-use App\Gallery\Models\GalleryVersion;
+use App\Media\Enums\AssetStatus;
+use App\Media\Models\Asset;
 use App\Models\StaffInvitation;
 use App\Models\User;
 use App\Payments\Models\PaymentInstallment;
@@ -326,21 +327,24 @@ class E2eSeeder extends Seeder
         }
 
         $disk = Storage::disk('s3');
-        $assets = [];
+        $set = $gallery->sets()->first();
 
         foreach (range(1, 6) as $index) {
             $key = "galleries/e2e/{$gallery->public_id}/{$index}.jpg";
             $disk->put($key, self::flatJpeg($index));
-            $assets[] = ['key' => $key, 'width' => self::IMAGE_WIDTH, 'height' => self::IMAGE_HEIGHT];
+
+            Asset::create([
+                'gallery_id' => $gallery->id,
+                'gallery_set_id' => $set->id,
+                'status' => AssetStatus::Ready,
+                'key' => $key,
+                'filename' => basename($key),
+                'width' => self::IMAGE_WIDTH,
+                'height' => self::IMAGE_HEIGHT,
+            ]);
         }
 
-        GalleryVersion::create([
-            'gallery_id' => $gallery->id,
-            'version' => 1,
-            'title' => 'E2E Galerie',
-            'assets' => $assets,
-            'published_at' => now(),
-        ]);
+        $gallery->publish();
     }
 
     /**
