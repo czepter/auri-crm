@@ -54,27 +54,27 @@ const tab = ref<'bilder' | 'gestaltung' | 'einstellungen' | 'aktivitaet'>('bilde
 const SHEETS = ['downloads', 'marks', 'views'] as const
 const sheet = ref<(typeof SHEETS)[number]>('downloads')
 
-const activeSetId = ref<string | null>(props.sets[0]?.id ?? null)
+const activeSetId = ref<string | null>(null)
 const coverSrc = computed(() => props.assets.find((asset) => asset.isCover)?.src ?? null)
 
-// A deleted set can be the active one — the pictures it held moved or went
-// with it, so the tab falls back to whatever set is now first.
+// Alle (null) always exists; a real set can vanish out from under the
+// active tab when it's deleted, so that falls back to Alle.
 watch(
   () => props.sets,
   (rows) => {
-    if (!rows.some((row) => row.id === activeSetId.value)) {
-      activeSetId.value = rows[0]?.id ?? null
+    if (activeSetId.value !== null && !rows.some((row) => row.id === activeSetId.value)) {
+      activeSetId.value = null
     }
   },
 )
 
-const setError = ref<string | null>(null)
+const setError = ref<{ id: string; message: string } | null>(null)
 
 function createSet(name: string) {
   setError.value = null
   router.post(`/galerien/${props.gallery.id}/sets`, { name }, {
     preserveScroll: true,
-    onError: (errors) => { setError.value = errors.name ?? null },
+    onError: (errors) => { if (errors.name) setError.value = { id: 'new', message: errors.name } },
   })
 }
 
@@ -82,7 +82,7 @@ function renameSet({ id, name }: { id: string; name: string }) {
   setError.value = null
   router.patch(`/galerien/${props.gallery.id}/sets/${id}`, { name }, {
     preserveScroll: true,
-    onError: (errors) => { setError.value = errors.name ?? null },
+    onError: (errors) => { if (errors.name) setError.value = { id, message: errors.name } },
   })
 }
 
@@ -91,6 +91,10 @@ function removeSet({ id, targetSetId }: { id: string; targetSetId: string | null
     data: { target_set_id: targetSetId },
     preserveScroll: true,
   })
+}
+
+function reorderSets(order: string[]) {
+  router.patch(`/galerien/${props.gallery.id}/sets/reihenfolge`, { order }, { preserveScroll: true })
 }
 
 const secrets = useForm({
@@ -239,6 +243,7 @@ function setName(setId: string) {
           @create="createSet"
           @rename="renameSet"
           @remove="removeSet"
+          @reorder="reorderSets"
         />
 
         <!-- Bilder: grid on the right, versions underneath — a version is a

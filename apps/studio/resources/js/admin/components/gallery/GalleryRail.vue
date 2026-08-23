@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Input } from '@/ui/input'
 import { NativeSelect } from '@/ui/native-select'
 import {
@@ -24,7 +24,7 @@ const props = defineProps<{
   tab: string
   sets: SetRow[]
   activeSetId: string | null
-  error: string | null
+  error: { id: string; message: string } | null
 }>()
 
 const emit = defineEmits<{
@@ -33,9 +33,12 @@ const emit = defineEmits<{
   create: [string]
   rename: [{ id: string; name: string }]
   remove: [{ id: string; targetSetId: string | null }]
+  reorder: [string[]]
 }>()
 
 const TABS = ['bilder', 'gestaltung', 'einstellungen', 'aktivitaet'] as const
+
+const total = computed(() => props.sets.reduce((sum, row) => sum + row.count, 0))
 
 const editing = ref<string | null>(null)
 const draft = ref('')
@@ -73,7 +76,7 @@ function commitCreate() {
 
 // A row only leaves edit mode once the server has confirmed the new name —
 // props.sets carries it back after that redirect. A 422 leaves props.sets
-// untouched, so the row (and its error) stays open.
+// untouched, so the row (and its error, keyed to the row's own id) stays open.
 watch(
   () => props.sets,
   (rows) => {
@@ -102,6 +105,21 @@ function confirmRemove() {
   emit('remove', { id: removing.value.id, targetSetId: removeTarget.value || null })
   removing.value = null
 }
+
+// Native drag and drop — no library, this is the only reorderable list in
+// the app. The Alle row above is never draggable and never part of order.
+const draggingId = ref<string | null>(null)
+
+function onDrop(targetId: string) {
+  const from = draggingId.value
+
+  draggingId.value = null
+  if (from === null || from === targetId) return
+
+  const ids = props.sets.map((row) => row.id)
+  ids.splice(ids.indexOf(targetId), 0, ...ids.splice(ids.indexOf(from), 1))
+  emit('reorder', ids)
+}
 </script>
 
 <template>
@@ -124,7 +142,7 @@ function confirmRemove() {
       </button>
     </div>
 
-    <template v-if="tab === 'bilder' && sets.length > 1">
+    <template v-if="tab === 'bilder'">
       <div class="flex items-center px-3 pt-3 pb-1.5">
         <span class="text-[9.5px] font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('galleryRecord.sets') }}</span>
         <button class="ml-auto cursor-pointer border-0 bg-transparent text-[11.5px] text-action" type="button" @click="startAdd">
@@ -132,42 +150,57 @@ function confirmRemove() {
         </button>
       </div>
 
-      <div
-        v-for="row in sets"
-        :key="row.id"
-        class="group mx-1.5 flex items-center gap-2 rounded-lg px-3 py-2 text-[12.5px]"
-        :class="activeSetId === row.id && 'bg-sunk-2 font-semibold'"
-        @click="emit('update:activeSetId', row.id)"
-        @dblclick="startRename(row)"
-      >
-        <div v-if="editing === row.id" class="flex-1" @click.stop>
-          <Input
-            v-model="draft"
-            class="h-6 text-[12.5px]"
-            type="text"
-            autofocus
-            @blur="commitRename(row)"
-            @keyup.enter="commitRename(row)"
-            @keyup.esc="editing = null"
-          />
-          <p v-if="error" class="mt-1 text-[11px] text-destructive">{{ error }}</p>
+      <template v-if="sets.length > 1">
+        <div
+          class="mx-1.5 flex items-center gap-2 rounded-lg px-3 py-2 text-[12.5px]"
+          :class="activeSetId === null && 'bg-sunk-2 font-semibold'"
+          @click="emit('update:activeSetId', null)"
+        >
+          {{ $t('gallery.all') }}
+          <span class="ml-auto text-[11px] tabular-nums text-ink-2">{{ total }}</span>
         </div>
-        <template v-else>
-          {{ row.name }}
-          <span class="ml-auto text-[11px] tabular-nums text-ink-2">{{ row.count }}</span>
-          <button
-            class="hidden cursor-pointer border-0 bg-transparent text-[11px] text-faint group-hover:inline"
-            type="button"
-            @click.stop="startRemove(row)"
-          >
-            {{ $t('common.remove') }}
-          </button>
-        </template>
-      </div>
+
+        <div
+          v-for="row in sets"
+          :key="row.id"
+          class="group mx-1.5 flex items-center gap-2 rounded-lg px-3 py-2 text-[12.5px]"
+          :class="activeSetId === row.id && 'bg-sunk-2 font-semibold'"
+          draggable="true"
+          @click="emit('update:activeSetId', row.id)"
+          @dblclick="startRename(row)"
+          @dragstart="draggingId = row.id"
+          @dragover.prevent
+          @drop="onDrop(row.id)"
+        >
+          <div v-if="editing === row.id" class="flex-1" @click.stop>
+            <Input
+              v-model="draft"
+              class="h-6 text-[12.5px]"
+              type="text"
+              autofocus
+              @blur="commitRename(row)"
+              @keyup.enter="commitRename(row)"
+              @keyup.esc="editing = null"
+            />
+            <p v-if="error?.id === row.id" class="mt-1 text-[11px] text-destructive">{{ error.message }}</p>
+          </div>
+          <template v-else>
+            {{ row.name }}
+            <span class="ml-auto text-[11px] tabular-nums text-ink-2">{{ row.count }}</span>
+            <button
+              class="hidden cursor-pointer border-0 bg-transparent text-[11px] text-faint group-hover:inline"
+              type="button"
+              @click.stop="startRemove(row)"
+            >
+              {{ $t('common.remove') }}
+            </button>
+          </template>
+        </div>
+      </template>
 
       <div v-if="adding" class="mx-1.5 px-3 py-2">
         <Input v-model="draft" class="h-6 text-[12.5px]" type="text" autofocus @blur="commitCreate" @keyup.enter="commitCreate" @keyup.esc="adding = false" />
-        <p v-if="error" class="mt-1 text-[11px] text-destructive">{{ error }}</p>
+        <p v-if="error?.id === 'new'" class="mt-1 text-[11px] text-destructive">{{ error.message }}</p>
       </div>
     </template>
 
