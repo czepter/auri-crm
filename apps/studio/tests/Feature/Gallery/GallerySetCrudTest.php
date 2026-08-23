@@ -61,6 +61,8 @@ it('refuses to rename a set into a foreign gallery', function () {
 
     $this->patch("/galerien/{$this->gallery->public_id}/sets/{$other->public_id}", ['name' => 'Beste'])
         ->assertNotFound();
+
+    expect($other->fresh()->name)->toBe('Highlights');
 });
 
 it('moves the pictures of a deleted set into the named target', function () {
@@ -112,6 +114,18 @@ it('refuses a target set from a foreign gallery', function () {
     expect(GallerySet::whereKey($feier->id)->exists())->toBeTrue();
 });
 
+it('refuses a target that is the set being deleted', function () {
+    $feier = GallerySet::factory()->for($this->gallery)->create(['name' => 'Feier', 'position' => 1]);
+    $asset = Asset::factory()->create(['gallery_id' => $this->gallery->id, 'gallery_set_id' => $feier->id]);
+
+    $this->delete("/galerien/{$this->gallery->public_id}/sets/{$feier->public_id}", [
+        'target_set_id' => $feier->public_id,
+    ])->assertNotFound();
+
+    expect(GallerySet::whereKey($feier->id)->exists())->toBeTrue()
+        ->and(Asset::whereKey($asset->id)->exists())->toBeTrue();
+});
+
 it('refuses to delete a set from a foreign gallery', function () {
     $foreignSet = GallerySet::where('gallery_id', Gallery::factory()->create()->id)->first();
 
@@ -151,6 +165,16 @@ it('refuses a reorder list carrying a foreign set', function () {
     $this->patch("/galerien/{$this->gallery->public_id}/sets/reihenfolge", [
         'order' => [$foreign->public_id, $feier->public_id],
     ])->assertSessionHasErrors('order.0');
+
+    expect($feier->fresh()->position)->toBe(1);
+});
+
+it('refuses a reorder payload keyed by name instead of position', function () {
+    $feier = GallerySet::factory()->for($this->gallery)->create(['name' => 'Feier', 'position' => 1]);
+
+    $this->patch("/galerien/{$this->gallery->public_id}/sets/reihenfolge", [
+        'order' => ['a' => $feier->public_id, 'b' => $this->highlights->public_id],
+    ])->assertSessionHasErrors('order');
 
     expect($feier->fresh()->position)->toBe(1);
 });

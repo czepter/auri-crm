@@ -52,7 +52,7 @@ class GallerySetController extends Controller
         $this->authorize('manageMedia', $gallery);
 
         $validated = $request->validate([
-            'order' => ['required', 'array', 'size:'.$gallery->sets()->count()],
+            'order' => ['required', 'list', 'size:'.$gallery->sets()->count()],
             'order.*' => ['required', 'string', 'distinct', Rule::in($gallery->sets()->pluck('public_id'))],
         ]);
 
@@ -78,7 +78,8 @@ class GallerySetController extends Controller
 
         $target = ($validated['target_set_id'] ?? null) === null
             ? null
-            : $gallery->sets()->where('public_id', $validated['target_set_id'])->firstOrFail();
+            : $gallery->sets()->whereKeyNot($gallerySet->id)
+                ->where('public_id', $validated['target_set_id'])->firstOrFail();
 
         $delete($gallerySet, $target);
 
