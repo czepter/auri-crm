@@ -9,6 +9,12 @@ export type AutomationTriggerType = 'event' | 'date_offset';
 }
 namespace Catalog {
 namespace Data {
+export type CatalogItemData = {
+id: string,
+title: string,
+description: string | null,
+unitPrice: number | null,
+};
 export type PackageData = {
 id: string,
 name: string,
