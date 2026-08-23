@@ -25,6 +25,7 @@ use App\Crm\Http\Controllers\TimelineController;
 use App\Documents\Http\Controllers\DocumentTemplateController;
 use App\Engagement\Http\Controllers\InboxController;
 use App\Engagement\Http\Controllers\ThreadController;
+use App\Gallery\Http\Controllers\GalleryAssetController;
 use App\Gallery\Http\Controllers\GalleryLightroomExportController;
 use App\Gallery\Http\Controllers\GalleryIndexController;
 use App\Gallery\Http\Controllers\GalleryPresetController;
@@ -497,6 +498,15 @@ Route::middleware('audience:staff')->group(function () {
         // props rather than driving client-side upload state.
         Route::post('/medien/{asset}/wiederholen', [FailedAssetController::class, 'retry'])
             ->name('assets.retry');
+
+        Route::post('/galerien/{gallery}/bilder/verschieben', [GalleryAssetController::class, 'move'])
+            ->name('galleries.assets.move');
+        Route::delete('/galerien/{gallery}/bilder', [GalleryAssetController::class, 'remove'])
+            ->name('galleries.assets.remove');
+        Route::get('/galerien/{gallery}/bilder/{asset}/original', [GalleryAssetController::class, 'original'])
+            ->name('galleries.assets.original');
+        Route::patch('/galerien/{gallery}/titelbild', [GalleryAssetController::class, 'cover'])
+            ->name('galleries.cover');
 
         // No GET here: the Zahlungen card lives on the project overview
         // itself (ProjectController::show), not a tab of its own — see the
