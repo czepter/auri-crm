@@ -72,9 +72,14 @@ it('closes the gate on withdrawal and leaves the version standing', function () 
 });
 
 it('keeps publishing away from a role that may not show things to clients', function () {
-    $shooter = User::factory()->withMfa()->create(['role' => StaffRole::SecondShooter]);
+    // Editor, not SecondShooter: Editor holds ManageShoots (reaches
+    // manageMedia) but not ManagePortalAccess, so this pins publish() to
+    // the right capability rather than merely to "has no capabilities at
+    // all". SecondShooter holds neither and would pass just as well if
+    // the policy checked ManageShoots by mistake.
+    $editor = User::factory()->withMfa()->create(['role' => StaffRole::Editor]);
 
-    $this->actingAs($shooter, 'staff')
+    $this->actingAs($editor, 'staff')
         ->post("/galerien/{$this->gallery->public_id}/veroeffentlichen")
         ->assertForbidden();
 });

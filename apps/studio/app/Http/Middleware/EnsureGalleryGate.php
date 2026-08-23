@@ -60,7 +60,7 @@ class EnsureGalleryGate
         // the three gates below are even asked — the studio pulled it back,
         // not merely locked it, and the version it stood on stays in the
         // database untouched for the next publish.
-        abort_if($gallery->unpublished_at !== null, 404);
+        abort_if($gallery->isWithdrawn(), 404);
 
         if ($this->satisfied($gallery, $gate)) {
             return $next($request);

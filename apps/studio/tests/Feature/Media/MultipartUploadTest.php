@@ -6,6 +6,7 @@ use App\Gallery\Models\GallerySet;
 use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
 use App\Media\Enums\MultipartUploadStatus;
 use App\Media\Jobs\ProcessIngestedAsset;
+use App\Media\Models\Asset;
 use App\Media\Models\MultipartUpload;
 use Aws\Command;
 use Aws\MockHandler;
@@ -158,6 +159,20 @@ it('refuses a set that belongs to another gallery', function () {
             'filename' => 'IMG_9002.jpg',
             'file_size' => 24_800_000,
             'file_modified_at' => 1_749_000_000_000,
+        ])
+        ->assertNotFound();
+});
+
+it('refuses a replaces_asset_id that belongs to another gallery', function () {
+    $gallery = Gallery::factory()->create();
+    $otherGallery = Gallery::factory()->create();
+    $foreignAsset = Asset::factory()->create(['gallery_id' => $otherGallery->id]);
+    app()->instance(S3Client::class, mockS3Client(new MockHandler));
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->postJson("/galerien/{$gallery->public_id}/uploads", [
+            ...m01FileFingerprint($gallery),
+            'replaces_asset_id' => $foreignAsset->public_id,
         ])
         ->assertNotFound();
 });

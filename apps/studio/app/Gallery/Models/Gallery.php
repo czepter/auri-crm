@@ -154,6 +154,16 @@ class Gallery extends Model
         return $this->shoot?->date ?? $this->event_date;
     }
 
+    /**
+     * G-14: the studio pulled this gallery back. Every guest entry point —
+     * portal and api alike — closes on this, while the versions it stood on
+     * stay in the database for the next publish.
+     */
+    public function isWithdrawn(): bool
+    {
+        return $this->unpublished_at !== null;
+    }
+
     /** The most recently published version, or null before this gallery's first publish() call. */
     public function currentVersion(): HasOne
     {

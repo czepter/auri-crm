@@ -62,6 +62,16 @@ it('hands a pass straight out for a gallery with no password', function () {
     expect($pass)->not->toBeEmpty();
 });
 
+it('refuses to sell a pass for a withdrawn gallery', function () {
+    $gallery = gatedGallery();
+    $gallery->forceFill(['unpublished_at' => now()])->save();
+
+    test()->postJson("/api/galleries/{$gallery->public_id}/passwort", ['password' => 'basthorst2026'])
+        ->assertNotFound();
+
+    expect($gallery->fresh()->versions()->count())->toBe(1);
+});
+
 // Rotation is the answer to a link that travelled too far, and it only is
 // one if the passes already handed out die with the secret.
 it('kills every pass already issued when the studio rotates', function () {

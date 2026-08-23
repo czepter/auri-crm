@@ -64,6 +64,29 @@ it('does not carry a claim from one gallery to another', function () {
         ->and(props("/galerien/{$b->public_id}")['unlocked'])->toBeFalse();
 });
 
+// ---------- G-14: withdrawal closes this entry point, not only the gated ones ----------
+
+it('404s the gate screen for a withdrawn gallery, no password required', function () {
+    $gallery = Gallery::factory()->create();
+    App\Media\Models\Asset::factory()->for($gallery)->create(['key' => 'galleries/g/a.jpg']);
+    $gallery->publish();
+    $gallery->forceFill(['unpublished_at' => now()])->save();
+
+    $this->get("/galerien/{$gallery->public_id}")->assertNotFound();
+
+    expect($gallery->fresh()->versions()->count())->toBe(1);
+});
+
+it('404s the password submission for a withdrawn gallery rather than minting a claim', function () {
+    $gallery = Gallery::factory()->create();
+    $gallery->rotateViewPassword('basthorst2026');
+    $gallery->publish();
+    $gallery->forceFill(['unpublished_at' => now()])->save();
+
+    $this->post("/galerien/{$gallery->public_id}/passwort", ['password' => 'basthorst2026'])
+        ->assertNotFound();
+});
+
 // ---------- reaching "download" requires the view gate first ----------
 
 it('bounces an unauthenticated download request back to the password gate', function () {

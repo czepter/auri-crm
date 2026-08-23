@@ -46,6 +46,11 @@ class GalleryPasswordController extends Controller
 
     public function show(Request $request, Gallery $gallery, GalleryAccessSession $claims): Response
     {
+        // G-14: withdrawn closes this entry point too — it is the one this
+        // whole screen exists behind, so a link that still resolves the
+        // model must not still resolve the gate.
+        abort_if($gallery->isWithdrawn(), 404);
+
         $unlocked = $claims->viewGranted($gallery);
         $version = $unlocked ? $gallery->currentVersion : null;
 
@@ -118,6 +123,8 @@ class GalleryPasswordController extends Controller
     public function store(Request $request, string $gallery, GalleryAccessSession $claims, GallerySecretGate $gate): RedirectResponse
     {
         $model = Gallery::findByPublicId($gallery);
+        abort_if($model !== null && $model->isWithdrawn(), 404);
+
         $requiresPassword = $model === null || $model->requiresViewPassword();
 
         if ($requiresPassword) {

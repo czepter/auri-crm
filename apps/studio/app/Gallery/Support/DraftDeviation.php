@@ -27,7 +27,10 @@ class DraftDeviation
 
         return $draft !== $published
             || $gallery->title !== $version->title
-            || $gallery->design !== $version->design
+            // Loose on purpose: both sides are the same array-cast JSON
+            // column, and a save that re-emits identical settings in a
+            // different key order must not read as a deviation.
+            || $gallery->design != $version->design
             || $gallery->coverAsset?->key !== $version->cover_key;
     }
 }

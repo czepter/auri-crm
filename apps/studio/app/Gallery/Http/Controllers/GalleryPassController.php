@@ -33,6 +33,11 @@ class GalleryPassController extends Controller
     ): JsonResponse {
         $model = Gallery::findByPublicId($gallery);
 
+        // G-14: a pass for a withdrawn gallery would only be rejected one
+        // hop later by EnsureGalleryPass — closing it here instead of
+        // handing out a token that opens nothing.
+        abort_if($model !== null && $model->isWithdrawn(), 404);
+
         // A gallery with no password has nothing to buy a pass with, and one
         // that does not exist must answer exactly as a wrong password does.
         if ($model !== null && ! $model->requiresViewPassword()) {

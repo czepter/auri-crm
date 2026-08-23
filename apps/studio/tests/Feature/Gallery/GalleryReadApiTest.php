@@ -22,6 +22,21 @@ it('404s an external gallery, which owns no version to serve', function () {
     $this->getJson("/api/galleries/{$gallery->public_id}")->assertNotFound();
 });
 
+// G-14: EnsureGalleryPass must close this before ever asking whether a
+// password is required — a withdrawn gallery with no password would
+// otherwise sail straight through to GalleryReadController.
+it('404s a withdrawn gallery on the api surface, even with no password set', function () {
+    $gallery = Gallery::factory()->create();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg']);
+    $gallery->fresh()->publish();
+    $gallery->forceFill(['unpublished_at' => now()])->save();
+
+    $this->getJson("/api/galleries/{$gallery->public_id}")->assertNotFound();
+
+    expect($gallery->fresh()->versions()->count())->toBe(1);
+});
+
 it('404s an unknown public_id rather than leaking whether it ever existed', function () {
     $this->getJson('/api/galleries/nonexistent-cuid')->assertNotFound();
 });

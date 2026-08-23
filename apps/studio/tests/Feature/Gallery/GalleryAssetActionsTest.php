@@ -52,6 +52,27 @@ it('takes a picture out of the draft without touching the row', function () {
         ->and(Asset::whereKey($asset->id)->exists())->toBeTrue();
 });
 
+it('leaves another gallery\'s picture out of a remove', function () {
+    $foreign = Asset::factory()->create();
+
+    $this->delete("/galerien/{$this->gallery->public_id}/bilder", ['asset_ids' => [$foreign->public_id]])
+        ->assertRedirect();
+
+    expect($foreign->fresh()->removed_from_draft_at)->toBeNull();
+});
+
+it('clears the cover when the cover picture leaves the draft', function () {
+    $asset = Asset::factory()->create(['gallery_id' => $this->gallery->id, 'gallery_set_id' => $this->highlights->id]);
+    $this->gallery->update(['cover_asset_id' => $asset->id, 'cover_focal_x' => 58, 'cover_focal_y' => 34]);
+
+    $this->delete("/galerien/{$this->gallery->public_id}/bilder", ['asset_ids' => [$asset->public_id]])
+        ->assertRedirect();
+
+    expect($this->gallery->fresh()->cover_asset_id)->toBeNull()
+        ->and($this->gallery->fresh()->cover_focal_x)->toBeNull()
+        ->and($this->gallery->fresh()->cover_focal_y)->toBeNull();
+});
+
 it('sets the cover and its focal point', function () {
     $asset = Asset::factory()->create(['gallery_id' => $this->gallery->id, 'gallery_set_id' => $this->highlights->id]);
 
@@ -74,7 +95,8 @@ it('drops the focal point when the cover changes', function () {
     ]);
     $this->patch("/galerien/{$this->gallery->public_id}/titelbild", ['asset_id' => $second->public_id]);
 
-    expect($this->gallery->fresh()->cover_focal_x)->toBeNull();
+    expect($this->gallery->fresh()->cover_focal_x)->toBeNull()
+        ->and($this->gallery->fresh()->cover_focal_y)->toBeNull();
 });
 
 it('keeps the focal point when the same cover is saved again without one', function () {

@@ -35,7 +35,17 @@ class EnsureGalleryPass
     {
         $gallery = $this->gallery($request);
 
-        if ($gallery === null || ! $gallery->requiresViewPassword()) {
+        if ($gallery === null) {
+            return $next($request);
+        }
+
+        // G-14: closes GalleryReadController, GalleryImageController and
+        // the favorites/comments routes alike — the same withdrawal check
+        // EnsureGalleryGate applies on the portal surface, for the surface
+        // apps/gallery actually calls.
+        abort_if($gallery->isWithdrawn(), 404);
+
+        if (! $gallery->requiresViewPassword()) {
             return $next($request);
         }
 
