@@ -246,8 +246,9 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     console.log('OHNE BASELINE: auftrag-angebot-editor — kein Angebot im Entwurf')
   }
 
-  // The gallery record has no list of its own — the dashboard links the media
-  // screen under it, so the record's own route is derived from that id.
+  // Whatever gallery the dashboard links first — .../galerien/{id}, its
+  // record route. slice(0, 3) drops anything after the id in case the link
+  // ever grows a sub-path again.
   await page.goto('/')
   await page.waitForLoadState('networkidle')
   const media = await page.locator('a[href^="/galerien/"]').first().getAttribute('href')
@@ -260,8 +261,11 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
       animations: 'disabled',
     })
 
-    // Four more tabs behind the first, all client state.
-    for (const tab of ['Gestaltung', 'Download', 'Freigaben', 'Aktivität']) {
+    // Three more tabs behind the first (Bilder, already shot above) — the
+    // rail's own record redesign folded Download and Freigaben into
+    // Einstellungen, and upload now lives in Bilder rather than its own
+    // /medien route.
+    for (const tab of ['Gestaltung', 'Einstellungen', 'Aktivität']) {
       await page.getByRole('button', { name: tab, exact: true }).click()
       await page.waitForFunction(() => document.fonts.status === 'loaded')
       await expect.soft(page).toHaveScreenshot(`galerie-${tab.toLowerCase()}.png`, {
@@ -269,15 +273,6 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
         animations: 'disabled',
       })
     }
-
-    // The upload screen. Its own route, not a tab.
-    await page.goto(`${media}/medien`)
-    await page.waitForLoadState('networkidle')
-    await page.waitForFunction(() => document.fonts.status === 'loaded')
-    await expect.soft(page).toHaveScreenshot('galerie-medien.png', {
-      fullPage: true,
-      animations: 'disabled',
-    })
   } else {
     console.log('OHNE BASELINE: galerie-datensatz — keine Galerie verlinkt')
   }
