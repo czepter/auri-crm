@@ -65,6 +65,11 @@ class GalleryRecordController extends Controller
                 'balanceSettled' => $gallery->balance_settled,
                 'requiresSettledBalance' => $gallery->requires_settled_balance,
                 'design' => $gallery->design,
+                'offers' => [
+                    'downloads' => $gallery->downloads_enabled,
+                    'lists' => $gallery->lists_enabled,
+                    'comments' => $gallery->comments_enabled,
+                ],
             ],
             // The other galleries of the same booking, as a tab row: they are
             // the ones one flips between.
@@ -206,6 +211,9 @@ class GalleryRecordController extends Controller
             'design.type' => ['nullable', 'string', 'max:32'],
             'design.colour' => ['nullable', 'string', 'max:32'],
             'design.grid' => ['nullable', 'string', 'max:32'],
+            'downloads_enabled' => ['sometimes', 'boolean'],
+            'lists_enabled' => ['sometimes', 'boolean'],
+            'comments_enabled' => ['sometimes', 'boolean'],
         ]);
 
         // Through rotate*(), never a plain write: the version bump is what
@@ -221,6 +229,14 @@ class GalleryRecordController extends Controller
 
         if ($request->has('design')) {
             $gallery->update(['design' => $validated['design'] ?? null]);
+        }
+
+        $offers = array_intersect_key($validated, array_flip([
+            'downloads_enabled', 'lists_enabled', 'comments_enabled',
+        ]));
+
+        if ($offers !== []) {
+            $gallery->update($offers);
         }
 
         return back();

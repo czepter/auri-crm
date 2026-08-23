@@ -71,3 +71,15 @@ it('carries the three activity sheets', function () {
     expect(props("/galerien/{$gallery->public_id}")['activity'])
         ->toHaveKeys(['downloads', 'marks', 'comments', 'views']);
 });
+
+it('sets the three offers from the permissions tab', function () {
+    $gallery = managedGallery();
+
+    expect(props("/galerien/{$gallery->public_id}")['gallery']['offers']['downloads'])->toBeTrue();
+
+    test()->patch("/galerien/{$gallery->public_id}", ['downloads_enabled' => false])->assertRedirect();
+
+    expect($gallery->fresh()->downloads_enabled)->toBeFalse()
+        // Untouched keys stay untouched: the tab saves one row at a time.
+        ->and($gallery->fresh()->lists_enabled)->toBeTrue();
+});

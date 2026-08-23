@@ -5,6 +5,8 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { Input } from '@/ui/input'
 import { ChoiceGroup } from '@/ui/choice-group'
+import { Checkbox } from '@/ui/checkbox'
+import { Label } from '@/ui/label'
 
 const props = defineProps<{
   gallery: {
@@ -18,6 +20,7 @@ const props = defineProps<{
     balanceSettled: boolean
     requiresSettledBalance: boolean
     design: Record<string, string> | null
+    offers: { downloads: boolean; lists: boolean; comments: boolean }
   }
   siblings: { id: string; title: string | null; assetCount: number; open: boolean }[]
   figures: {
@@ -69,6 +72,16 @@ const design = useForm({ design: props.gallery.design ?? { cover: 'full', type: 
 
 function saveDesign() {
   design.patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
+}
+
+const offers = useForm({
+  downloads_enabled: props.gallery.offers.downloads,
+  lists_enabled: props.gallery.offers.lists,
+  comments_enabled: props.gallery.offers.comments,
+})
+
+function saveOffers() {
+  offers.patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
 }
 
 const COVERS = ['full', 'split', 'plain']
@@ -328,6 +341,21 @@ function shown() {
           <div class="min-w-0 flex-1 text-[13.5px]">
             {{ $t('galleryRecord.emailGate') }}
             <div class="mt-0.5 text-[12px] text-ink-2">{{ gallery.requiresVerifiedEmail ? $t('gallery.gateOn') : $t('gallery.gateOff') }}</div>
+          </div>
+        </div>
+
+        <div class="mt-7 flex flex-col gap-2.5">
+          <div class="flex items-center gap-2.5">
+            <Checkbox id="cb-offer-downloads" v-model="offers.downloads_enabled" @update:model-value="saveOffers" />
+            <Label variant="inline" for="cb-offer-downloads">{{ $t('gallerySettings.downloadsLabel') }}</Label>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <Checkbox id="cb-offer-lists" v-model="offers.lists_enabled" @update:model-value="saveOffers" />
+            <Label variant="inline" for="cb-offer-lists">{{ $t('gallerySettings.listsLabel') }}</Label>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <Checkbox id="cb-offer-comments" v-model="offers.comments_enabled" @update:model-value="saveOffers" />
+            <Label variant="inline" for="cb-offer-comments">{{ $t('gallerySettings.commentsLabel') }}</Label>
           </div>
         </div>
 
