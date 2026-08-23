@@ -26,6 +26,7 @@ use App\Engagement\Http\Controllers\InboxController;
 use App\Engagement\Http\Controllers\ThreadController;
 use App\Gallery\Http\Controllers\GalleryLightroomExportController;
 use App\Gallery\Http\Controllers\GalleryIndexController;
+use App\Gallery\Http\Controllers\GalleryPresetController;
 use App\Gallery\Http\Controllers\GalleryRecordController;
 use App\Http\Controllers\Staff\AbsenceController;
 use App\Http\Controllers\Staff\DashboardController;
@@ -335,6 +336,15 @@ Route::middleware('audience:staff')->group(function () {
             ->name('settings.galleries.edit');
         Route::patch('/einstellungen/galerien', [GallerySettingsController::class, 'update'])
             ->name('settings.galleries.update');
+
+        Route::get('/einstellungen/galerie-vorlagen', [GalleryPresetController::class, 'index'])
+            ->name('gallery-presets.index');
+        Route::post('/einstellungen/galerie-vorlagen', [GalleryPresetController::class, 'store'])
+            ->name('gallery-presets.store');
+        Route::patch('/einstellungen/galerie-vorlagen/{galleryPreset}', [GalleryPresetController::class, 'update'])
+            ->name('gallery-presets.update');
+        Route::delete('/einstellungen/galerie-vorlagen/{galleryPreset}', [GalleryPresetController::class, 'destroy'])
+            ->name('gallery-presets.destroy');
 
         // T-11: quiet hours only — see NotificationSettingsController's own
         // doc comment for why no per-event toggle grid ships in this route

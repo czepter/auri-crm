@@ -31,10 +31,13 @@ const items = [
   { group: 'settings.groupPortal' },
   { key: 'portal', href: '/einstellungen/portal', label: 'settings.navPortal' },
   { key: 'home', href: '/einstellungen/portal?pane=home', label: 'portalSettings.homeSection' },
-  { key: 'galleries', href: '/einstellungen/galerien', label: 'settings.navGalleries' },
   { key: 'privacy', href: '/einstellungen/portal?pane=privacy', label: 'portalSettings.dsgvoSection' },
   { key: 'email', href: '/einstellungen?pane=email', label: 'settings.navMail' },
   { key: 'notifications', href: '/einstellungen/benachrichtigungen', label: 'settings.navNotifications' },
+
+  { group: 'settings.groupGalleries' },
+  { key: 'galleries', href: '/einstellungen/galerien', label: 'settings.navGalleryDefaults' },
+  { key: 'galleryPresets', href: '/einstellungen/galerie-vorlagen', label: 'settings.navGalleryPresets' },
 ]
 
 /* tokens.css .nav — the sidebar row, reused for the settings rail. */

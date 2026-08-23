@@ -677,7 +677,9 @@
     "previewMail": "E-Mail",
     "previewMailFrom": "Von",
     "previewMailReplyTo": "Antwort an",
-    "navGalleries": "Galerien"
+    "groupGalleries": "Galerien",
+    "navGalleryDefaults": "Standardwerte",
+    "navGalleryPresets": "Vorlagen"
   },
   "notifications": {
     "title": "Benachrichtigungen",
@@ -1045,6 +1047,21 @@
   "galleries": {
     "title": "Galerien",
     "create": "Galerie anlegen"
+  },
+  "galleryPresets": {
+    "title": "Vorlagen",
+    "none": "Keine",
+    "nameField": "Name",
+    "expiryField": "Ablauf",
+    "mode_inherit": "Studio-Wert",
+    "mode_days": "Tage",
+    "mode_never": "Kein Ablauf",
+    "inherit": "Studio-Wert",
+    "on": "An",
+    "off": "Aus",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "add": "Vorlage hinzufügen"
   },
   "gallery": {
     "passwordLabel": "Galerie-Passwort",

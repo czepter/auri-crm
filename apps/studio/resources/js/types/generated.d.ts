@@ -387,6 +387,17 @@ export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' |
 }
 namespace Gallery {
 namespace Data {
+export type GalleryPresetData = {
+id: string,
+name: string,
+design: Record<string, string> | null,
+expiryMode: string,
+expiryDays: number | null,
+requiresSettledBalance: boolean | null,
+downloadsEnabled: boolean | null,
+listsEnabled: boolean | null,
+commentsEnabled: boolean | null,
+};
 export type GalleryRowData = {
 id: string,
 title: string | null,
