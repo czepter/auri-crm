@@ -458,6 +458,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('galleries.show');
         Route::patch('/galerien/{gallery}', [GalleryRecordController::class, 'update'])
             ->name('galleries.update');
+        Route::post('/galerien/{gallery}/vorlage', [GalleryPresetController::class, 'storeFromGallery'])
+            ->name('galleries.preset.store');
         Route::get('/galerien/{gallery}/medien', [MediaIngestController::class, 'show'])
             ->name('galleries.media');
         Route::post('/galerien/{gallery}/uploads', [MultipartUploadController::class, 'store'])

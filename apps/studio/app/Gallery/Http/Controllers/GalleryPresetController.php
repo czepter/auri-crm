@@ -4,6 +4,7 @@ namespace App\Gallery\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Gallery\Data\GalleryPresetData;
+use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryPreset;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
@@ -45,6 +46,60 @@ class GalleryPresetController extends Controller
         );
 
         return redirect('/einstellungen/galerie-vorlagen');
+    }
+
+    /**
+     * Die Einstellungen einer Galerie als benannte Vorlage sichern — der Weg,
+     * den man tatsaechlich geht: erst eine Galerie einrichten, bis sie sitzt,
+     * dann festhalten, womit die naechste anfangen soll.
+     *
+     * Zwei Tore, weil zwei Dinge beruehrt werden: die Galerie, aus der gelesen
+     * wird, und die Studio-Einstellungen, in die geschrieben wird.
+     */
+    public function storeFromGallery(Request $request, Gallery $gallery): RedirectResponse
+    {
+        $this->authorizeSettings();
+        $this->authorize('manageMedia', $gallery);
+
+        $validated = $request->validate(['name' => ['required', 'string', 'max:120']]);
+
+        $preset = GalleryPreset::create([
+            'name' => $validated['name'],
+            'design' => $gallery->design,
+            'requires_settled_balance' => $gallery->requires_settled_balance,
+            'downloads_enabled' => $gallery->downloads_enabled,
+            'lists_enabled' => $gallery->lists_enabled,
+            'comments_enabled' => $gallery->comments_enabled,
+            ...$this->expiryOf($gallery),
+        ]);
+
+        AuditLogger::record(
+            event: 'gallery_preset.created',
+            actor: auth('staff')->user(),
+            context: ['name' => $preset->name, 'from_gallery' => $gallery->public_id],
+            subject: $preset->public_id,
+        );
+
+        return redirect('/einstellungen/galerie-vorlagen');
+    }
+
+    /**
+     * Die Galerie traegt ein Datum, die Vorlage eine Spanne. Uebersetzt wird
+     * der Abstand zwischen Anlage und Ablauf — das ist, was diese Galerie
+     * mitbekommen hat, und nicht die Restlaufzeit von heute aus.
+     *
+     * @return array{expiry_mode: string, expiry_days: int|null}
+     */
+    private function expiryOf(Gallery $gallery): array
+    {
+        if ($gallery->expires_at === null) {
+            return ['expiry_mode' => 'never', 'expiry_days' => null];
+        }
+
+        return [
+            'expiry_mode' => 'days',
+            'expiry_days' => max(1, $gallery->created_at->diffInDays($gallery->expires_at)),
+        ];
     }
 
     public function update(Request $request, GalleryPreset $galleryPreset): RedirectResponse

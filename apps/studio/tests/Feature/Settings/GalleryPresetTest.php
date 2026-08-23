@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\StaffRole;
+use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryPreset;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -67,4 +68,72 @@ it('answers 404 for a role without ManageSettings', function () {
     $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Assistant]), 'staff');
 
     $this->get('/einstellungen/galerie-vorlagen')->assertNotFound();
+});
+
+// Pixieset kann die Einstellungen einer Galerie als Vorlage sichern. Die
+// Galerie traegt ein absolutes Ablaufdatum, die Vorlage eine Spanne — was die
+// Galerie mitbekommen hat, ist der Abstand zwischen Anlage und Ablauf.
+it('saves a gallery as a named preset', function () {
+    $gallery = Gallery::factory()->create([
+        'design' => ['cover' => 'split', 'type' => 'serif', 'colour' => 'dark', 'grid' => 'dense'],
+        'requires_settled_balance' => true,
+        'downloads_enabled' => false,
+        'lists_enabled' => true,
+        'comments_enabled' => false,
+        'created_at' => now()->subDays(5),
+        'expires_at' => now()->addDays(360),
+    ]);
+
+    $this->post("/galerien/{$gallery->public_id}/vorlage", ['name' => 'Hochzeit'])
+        ->assertRedirect('/einstellungen/galerie-vorlagen');
+
+    $preset = GalleryPreset::sole();
+
+    expect($preset->name)->toBe('Hochzeit')
+        ->and($preset->design['colour'])->toBe('dark')
+        ->and($preset->requires_settled_balance)->toBeTrue()
+        ->and($preset->downloads_enabled)->toBeFalse()
+        ->and($preset->comments_enabled)->toBeFalse()
+        ->and($preset->expiry_mode)->toBe('days')
+        ->and($preset->expiry_days)->toBe(365);
+});
+
+it('says never for a gallery that does not expire', function () {
+    $gallery = Gallery::factory()->create(['expires_at' => null]);
+
+    $this->post("/galerien/{$gallery->public_id}/vorlage", ['name' => 'Ohne Ablauf']);
+
+    expect(GalleryPreset::sole()->expiry_mode)->toBe('never')
+        ->and(GalleryPreset::sole()->expiry_days)->toBeNull();
+});
+
+it('refuses to save a gallery as a preset without ManageSettings', function () {
+    $gallery = Gallery::factory()->create();
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Editor]), 'staff');
+
+    $this->post("/galerien/{$gallery->public_id}/vorlage", ['name' => 'Nein'])->assertNotFound();
+
+    expect(GalleryPreset::count())->toBe(0);
+});
+
+// Ganz oder gar nicht: null heisst Studio-Wert, ein Objekt heisst, die Vorlage
+// legt das Aussehen fest.
+it('keeps a preset design set and clearable', function () {
+    $preset = GalleryPreset::factory()->create();
+
+    $this->patch("/einstellungen/galerie-vorlagen/{$preset->public_id}", [
+        'name' => 'Dunkel',
+        'expiry_mode' => 'inherit',
+        'design' => ['cover' => 'split', 'type' => 'serif', 'colour' => 'dark', 'grid' => 'dense'],
+    ])->assertRedirect();
+
+    expect($preset->fresh()->design['colour'])->toBe('dark');
+
+    $this->patch("/einstellungen/galerie-vorlagen/{$preset->public_id}", [
+        'name' => 'Dunkel',
+        'expiry_mode' => 'inherit',
+        'design' => null,
+    ])->assertRedirect();
+
+    expect($preset->fresh()->design)->toBeNull();
 });

@@ -795,6 +795,8 @@
     "sortOrderField": "Reihenfolge",
     "delete": "Löschen",
     "add": "Vorlage anlegen",
+    "days": "{count} Tage",
+    "designLabel": "Gestaltung festlegen",
     "empty": "Keine Vorlagen.",
     "previewLabel": "Vorschau",
     "previewDateField": "Termin",
@@ -1067,9 +1069,10 @@
     "inherit": "Studio-Wert",
     "on": "An",
     "off": "Aus",
-    "save": "Speichern",
     "delete": "Löschen",
-    "add": "Vorlage hinzufügen"
+    "add": "Vorlage anlegen",
+    "days": "{count} Tage",
+    "designLabel": "Gestaltung festlegen"
   },
   "gallery": {
     "passwordLabel": "Galerie-Passwort",
@@ -1214,6 +1217,7 @@
     "waiting": "Wartet"
   },
   "galleryRecord": {
+    "saveAsPreset": "Als Vorlage sichern",
     "link": "Link",
     "published": "Stand",
     "version": "Fassung {version}",
