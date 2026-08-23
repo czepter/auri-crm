@@ -82,7 +82,7 @@ it('backfills a legacy gallery with its assets and publishes version 1', functio
         ->and($gallery->external_url)->toBeNull()
         ->and($gallery->assets)->toBe(['a1.jpg', 'a2.jpg'])
         ->and($gallery->currentVersion->version)->toBe(1)
-        ->and($gallery->currentVersion->assets)->toBe(['a1.jpg', 'a2.jpg']);
+        ->and(collect($gallery->currentVersion->assets)->pluck('key')->all())->toBe(['a1.jpg', 'a2.jpg']);
 });
 
 it('is idempotent: backfilling the same project/shoot/title twice skips the second time', function () {

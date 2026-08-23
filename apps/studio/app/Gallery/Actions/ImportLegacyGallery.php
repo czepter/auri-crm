@@ -5,6 +5,8 @@ namespace App\Gallery\Actions;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Gallery\Models\Gallery;
+use App\Media\Enums\AssetStatus;
+use App\Media\Models\Asset;
 use App\Settings\Support\StudioSettingsResolver;
 use InvalidArgumentException;
 
@@ -120,6 +122,20 @@ class ImportLegacyGallery
             'requires_settled_balance' => app(StudioSettingsResolver::class)
                 ->galleryDefaults()['requiresSettledBalance'],
         ]);
+
+        // publish() snapshots real Asset rows (Gallery::draftAssets()), not
+        // this legacy assets array — a legacy filename never went through
+        // ingestion, so this is the one place that stands in for it.
+        $set = $gallery->sets()->first();
+        foreach ($assets as $key) {
+            Asset::create([
+                'gallery_id' => $gallery->id,
+                'gallery_set_id' => $set->id,
+                'status' => AssetStatus::Ready,
+                'key' => $key,
+                'filename' => basename($key),
+            ]);
+        }
 
         $gallery->publish();
 
