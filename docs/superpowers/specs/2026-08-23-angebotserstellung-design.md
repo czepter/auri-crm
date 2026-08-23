@@ -164,13 +164,14 @@ legt an beziehungsweise löscht nach Titel.
 
 Kein Fremdschlüssel auf `quote_items`, keine Migration dort. Das Häkchen ist
 abgeleitet, nicht gespeichert — womit es auch keinen Zustand geben kann, der
-mit der Bibliothek auseinanderläuft. Zurückgeschrieben wird nur
-`unit_price`; Menge und Rabatt gehören dem Angebot.
+mit der Bibliothek auseinanderläuft. Zurückgeschrieben werden `unit_price` und
+`description`; Menge und Rabatt gehören dem Angebot.
 
 ### Suchzeile
 
-`resources/js/ui/combobox` fehlt und kommt über die shadcn-vue-Registry;
-`reka-ui` bringt die Primitive mit. Gefiltert wird im Client über die Props
+`resources/js/ui/combobox` fehlt und wird lokal auf den `reka-ui`-Primitiven
+gebaut, wie `ui/select` es vormacht — die konfigurierte Registry führt keine
+Combobox. Gefiltert wird im Client über die Props
 `packages` (jetzt `PackageData[]` statt `{value,label}[]`) und `catalogItems`.
 Kein Suchendpunkt: die Mengen sind zweistellig.
 
