@@ -3,9 +3,16 @@
 namespace App\Gallery\Http\Controllers;
 
 use App\Crm\Models\Project;
+use App\Gallery\Data\GalleryPresetData;
 use App\Gallery\Data\GalleryRowData;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryPreset;
 use App\Http\Controllers\Controller;
+use App\Settings\Support\StudioSettingsResolver;
+use App\Support\AuditLogger;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -36,5 +43,63 @@ class GalleryIndexController extends Controller
         return Inertia::render('Galleries/Index', [
             'galleries' => GalleryRowData::collect($galleries),
         ]);
+    }
+
+    public function create(StudioSettingsResolver $settings): Response
+    {
+        $this->authorize('create', Gallery::class);
+
+        return Inertia::render('Galleries/Create', [
+            'presets' => GalleryPresetData::collect(GalleryPreset::query()->orderBy('name')->get()),
+            // Die unterste Stufe der Geburtskette; die beiden darüber reichen
+            // Vorlage und Projektvorschlag nach.
+            'studioDefaults' => [
+                'downloads' => $settings->galleryDownloadsEnabled(),
+                'lists' => $settings->galleryListsEnabled(),
+                'comments' => $settings->galleryCommentsEnabled(),
+                'expiryDays' => $settings->galleryDefaults()['expiryDays'],
+                'requiresSettledBalance' => $settings->galleryDefaults()['requiresSettledBalance'],
+            ],
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $this->authorize('create', Gallery::class);
+
+        $validated = $request->validate([
+            'project_id' => ['nullable', 'string'],
+            'title' => ['required', 'string', 'max:200'],
+            'is_external' => ['required', 'boolean'],
+            'external_url' => ['nullable', 'url', 'max:2000', 'required_if:is_external,true'],
+            'expires_at' => ['nullable', 'date'],
+            'requires_settled_balance' => ['nullable', 'boolean'],
+            'downloads_enabled' => ['nullable', 'boolean'],
+            'lists_enabled' => ['nullable', 'boolean'],
+            'comments_enabled' => ['nullable', 'boolean'],
+            'design' => ['nullable', 'array'],
+        ]);
+
+        $project = ($validated['project_id'] ?? null) === null
+            ? null
+            : Project::findByPublicId($validated['project_id']);
+
+        $gallery = Gallery::create([
+            ...Arr::except($validated, ['project_id']),
+            'project_id' => $project?->id,
+        ]);
+
+        AuditLogger::record(
+            event: 'gallery.created',
+            actor: auth('staff')->user(),
+            context: ['title' => $gallery->title],
+            subject: $gallery->public_id,
+        );
+
+        // Eine externe Galerie hat keinen Ingest — dort liegt nichts, was man
+        // hochladen könnte.
+        return redirect($gallery->is_external
+            ? "/galerien/{$gallery->public_id}"
+            : "/galerien/{$gallery->public_id}/medien");
     }
 }

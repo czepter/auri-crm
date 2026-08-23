@@ -1047,7 +1047,12 @@
   },
   "galleries": {
     "title": "Galerien",
-    "create": "Galerie anlegen"
+    "create": "Galerie anlegen",
+    "titleField": "Titel",
+    "urlField": "Adresse",
+    "expiryField": "Gültig bis",
+    "mode_internal": "Eigene Galerie",
+    "mode_external": "Externer Link"
   },
   "galleryPresets": {
     "title": "Vorlagen",

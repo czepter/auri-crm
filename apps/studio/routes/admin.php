@@ -450,6 +450,10 @@ Route::middleware('audience:staff')->group(function () {
         // sheet with switches. Above /galerien/{gallery}/medien, which stays
         // the ingest screen it always was.
         Route::get('/galerien', [GalleryIndexController::class, 'index'])->name('galleries.index');
+        // /galerien/neu bleibt über /galerien/{gallery}, aus demselben Grund
+        // wie /pakete/neu über /pakete/{package}.
+        Route::get('/galerien/neu', [GalleryIndexController::class, 'create'])->name('galleries.create');
+        Route::post('/galerien', [GalleryIndexController::class, 'store'])->name('galleries.store');
         Route::get('/galerien/{gallery}', [GalleryRecordController::class, 'show'])
             ->name('galleries.show');
         Route::patch('/galerien/{gallery}', [GalleryRecordController::class, 'update'])
