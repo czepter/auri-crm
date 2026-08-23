@@ -44,9 +44,14 @@ class MultipartUploadController extends Controller
             // where the bytes end up.
             'file_modified_at' => ['required', 'integer', 'min:0'],
             'content_type' => ['nullable', 'string', 'max:255'],
+            'replaces_asset_id' => ['nullable', 'string'],
         ]);
 
         $set = $gallery->sets()->where('public_id', $validated['gallery_set_id'])->firstOrFail();
+
+        $replaces = isset($validated['replaces_asset_id'])
+            ? $gallery->assetRows()->where('public_id', $validated['replaces_asset_id'])->firstOrFail()
+            : null;
 
         ['upload' => $upload, 'parts' => $parts] = ($this->startOrResume)(
             $gallery,
@@ -55,6 +60,7 @@ class MultipartUploadController extends Controller
             $validated['file_size'],
             Carbon::createFromTimestampMs($validated['file_modified_at']),
             $validated['content_type'] ?? null,
+            $replaces?->id,
         );
 
         return response()->json([

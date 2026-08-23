@@ -2,6 +2,7 @@
 
 namespace App\Media\Actions;
 
+use App\Gallery\Models\Gallery;
 use App\Media\Enums\AssetStatus;
 use App\Media\Enums\MultipartUploadStatus;
 use App\Media\Models\Asset;
@@ -152,6 +153,17 @@ class IngestCompletedUpload
                 'key' => $derivativeKey,
                 'bytes' => $derivative['bytes'],
             ]);
+        }
+
+        if ($upload->replaces_asset_id !== null) {
+            $replaced = Asset::find($upload->replaces_asset_id);
+
+            if ($replaced !== null) {
+                $asset->update(['gallery_set_id' => $replaced->gallery_set_id]);
+                $replaced->update(['removed_from_draft_at' => now()]);
+
+                Gallery::where('cover_asset_id', $replaced->id)->update(['cover_asset_id' => $asset->id]);
+            }
         }
 
         return $asset;

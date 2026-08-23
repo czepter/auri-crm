@@ -47,6 +47,7 @@ use App\Http\Controllers\Staff\SetupController;
 use App\Media\Http\Controllers\FailedAssetController;
 use App\Media\Http\Controllers\MediaIngestController;
 use App\Media\Http\Controllers\MultipartUploadController;
+use App\Media\Http\Controllers\UploadPrecheckController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
 use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
@@ -507,6 +508,9 @@ Route::middleware('audience:staff')->group(function () {
             ->name('galleries.assets.original');
         Route::patch('/galerien/{gallery}/titelbild', [GalleryAssetController::class, 'cover'])
             ->name('galleries.cover');
+
+        Route::post('/galerien/{gallery}/uploads/pruefen', UploadPrecheckController::class)
+            ->name('galleries.uploads.precheck');
 
         // No GET here: the Zahlungen card lives on the project overview
         // itself (ProjectController::show), not a tab of its own — see the

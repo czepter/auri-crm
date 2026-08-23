@@ -38,6 +38,7 @@ class StartOrResumeMultipartUpload
         int $fileSize,
         CarbonInterface $fileModifiedAt,
         ?string $contentType,
+        ?int $replacesAssetId = null,
     ): array {
         // Fingerprint excludes the set on purpose: the same file re-picked
         // after a reload is the same upload even if a different set is open
@@ -72,6 +73,7 @@ class StartOrResumeMultipartUpload
             'public_id' => $publicId,
             'gallery_id' => $gallery->id,
             'gallery_set_id' => $set->id,
+            'replaces_asset_id' => $replacesAssetId,
             'key' => $key,
             'upload_id' => $uploadId,
             'filename' => $filename,
