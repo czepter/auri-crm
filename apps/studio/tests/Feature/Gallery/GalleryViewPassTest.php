@@ -62,12 +62,22 @@ it('hands a pass straight out for a gallery with no password', function () {
     expect($pass)->not->toBeEmpty();
 });
 
-it('refuses to sell a pass for a withdrawn gallery', function () {
+// R17: same uniform-failure reasoning as the portal's store() — a 404
+// here would let a garbage password tell a withdrawn gallery apart from
+// one that never existed, exactly what G-07 closes for the latter.
+it('answers a withdrawn gallery exactly as it answers one that never existed', function () {
     $gallery = gatedGallery();
     $gallery->forceFill(['unpublished_at' => now()])->save();
 
-    test()->postJson("/api/galleries/{$gallery->public_id}/passwort", ['password' => 'basthorst2026'])
-        ->assertNotFound();
+    test()->postJson("/api/galleries/{$gallery->public_id}/passwort", ['password' => 'irgendwas'])
+        ->assertStatus(422)
+        ->assertJson(['message' => __('gallery.password_wrong')]);
+
+    RateLimiter::clear('gallery-secret-ip:127.0.0.1');
+
+    test()->postJson('/api/galleries/nonexistent-cuid/passwort', ['password' => 'irgendwas'])
+        ->assertStatus(422)
+        ->assertJson(['message' => __('gallery.password_wrong')]);
 
     expect($gallery->fresh()->versions()->count())->toBe(1);
 });

@@ -77,14 +77,25 @@ it('404s the gate screen for a withdrawn gallery, no password required', functio
     expect($gallery->fresh()->versions()->count())->toBe(1);
 });
 
-it('404s the password submission for a withdrawn gallery rather than minting a claim', function () {
+// R17: store() is the uniform-failure path (unlike show(), which does 404
+// a withdrawn gallery) — a distinct status here would let a garbage
+// password enumerate withdrawn ids, exactly what G-07 closes for a
+// nonexistent one.
+it('answers a withdrawn gallery exactly as it answers one that never existed', function () {
     $gallery = Gallery::factory()->create();
     $gallery->rotateViewPassword('basthorst2026');
     $gallery->publish();
     $gallery->forceFill(['unpublished_at' => now()])->save();
 
-    $this->post("/galerien/{$gallery->public_id}/passwort", ['password' => 'basthorst2026'])
-        ->assertNotFound();
+    $this->post("/galerien/{$gallery->public_id}/passwort", ['password' => 'irgendwas'])
+        ->assertRedirect()
+        ->assertSessionHasErrors(['password' => __('gallery.password_wrong')]);
+
+    $this->post('/galerien/nonexistent-cuid/passwort', ['password' => 'irgendwas'])
+        ->assertRedirect()
+        ->assertSessionHasErrors(['password' => __('gallery.password_wrong')]);
+
+    expect($gallery->fresh()->versions()->count())->toBe(1);
 });
 
 // ---------- reaching "download" requires the view gate first ----------

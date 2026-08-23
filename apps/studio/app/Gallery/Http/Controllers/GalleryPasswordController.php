@@ -123,7 +123,16 @@ class GalleryPasswordController extends Controller
     public function store(Request $request, string $gallery, GalleryAccessSession $claims, GallerySecretGate $gate): RedirectResponse
     {
         $model = Gallery::findByPublicId($gallery);
-        abort_if($model !== null && $model->isWithdrawn(), 404);
+
+        // G-07/G-14: a withdrawn gallery must be indistinguishable from one
+        // that never existed here — unlike show(), this is the uniform-
+        // failure path, and a distinct 404 would let a garbage password
+        // enumerate withdrawn ids. Falling through with $model nulled reuses
+        // the exact same "nonexistent" branch below rather than a second one
+        // that could drift from it.
+        if ($model?->isWithdrawn()) {
+            $model = null;
+        }
 
         $requiresPassword = $model === null || $model->requiresViewPassword();
 
