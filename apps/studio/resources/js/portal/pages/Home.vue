@@ -11,6 +11,7 @@ import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { reachable, type Studio } from '@/portal/lib/studio'
 import { formatEuros } from '@/admin/lib/money'
+import { Button } from '@/ui/button'
 
 type Phase = 'open' | 'upcoming' | 'delivered'
 
@@ -86,9 +87,6 @@ function shortDate(iso: string) {
 function phaseState(phase: Phase) {
   return phase === 'delivered' ? 'done' : phase === 'open' ? 'open' : 'neutral'
 }
-
-const FILTER_PILL
-  = 'cursor-pointer rounded-[var(--r-pill)] border border-line-hover px-[15px] py-2.5 text-[13px] leading-none font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground'
 </script>
 
 <template>
@@ -148,36 +146,39 @@ const FILTER_PILL
             <PortalLabel>{{ $t('portal.bookingsTitle') }}</PortalLabel>
 
             <div v-if="showFilters" class="mt-6 flex flex-wrap gap-2">
-              <button
-                :class="[FILTER_PILL, filter === 'all' && 'border-foreground! bg-foreground font-semibold text-background!']"
+              <Button
+                :data-active="filter === 'all'"
                 type="button"
+                variant="portal-filter"
                 @click="filter = 'all'"
               >
                 {{ $t('portal.filterAll') }}<span class="ml-[5px] tabular-nums opacity-55">{{ bookings.length }}</span>
-              </button>
-              <button
+              </Button>
+              <Button
                 v-for="phase in (['open', 'upcoming', 'delivered'] as Phase[])"
                 v-show="phaseCounts[phase]"
                 :key="phase"
-                :class="[FILTER_PILL, filter === phase && 'border-foreground! bg-foreground font-semibold text-background!']"
+                :data-active="filter === phase"
                 type="button"
+                variant="portal-filter"
                 @click="filter = phase"
               >
                 {{ $t(`portal.phase.${phase}`) }}<span class="ml-[5px] tabular-nums opacity-55">{{ phaseCounts[phase] }}</span>
-              </button>
+              </Button>
             </div>
 
             <template v-for="[year, rows] in years" :key="year">
               <div class="flex items-baseline gap-4 pt-8 pb-3 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
                 <span>{{ year === 'offen' ? $t('portal.dateOpen') : year }}</span>
-                <button
+                <Button
                   v-if="rows.length > ROLLUP_FROM"
-                  class="cursor-pointer border-0 bg-transparent p-0 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground hover:text-foreground"
+                  class="py-0 text-[11px] font-semibold tracking-[0.17em] uppercase"
                   type="button"
+                  variant="ghost"
                   @click="opened[year] = !opened[year]"
                 >
                   {{ opened[year] ? $t('portal.foldYear') : $t('portal.unfoldYear') }}
-                </button>
+                </Button>
                 <i class="h-px flex-1 bg-border" />
               </div>
 

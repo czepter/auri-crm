@@ -36,3 +36,26 @@ export async function signIn(page: Page): Promise<void> {
 
   await expect(page).toHaveURL('/')
 }
+
+/*
+ * Dev-Login where it exists, the MFA round trip otherwise. Locally the suite
+ * runs against a developer's own database — E2eSeeder would write two accounts
+ * and a cast of fixtures into it for no gain, since a baseline only ever
+ * compares a screen against itself.
+ */
+export async function arrive(page: Page): Promise<void> {
+  await page.goto('/login')
+  const dev = page.getByRole('button', { name: 'Dev-Login' })
+  // waitFor, not isVisible: the button is rendered by Inertia after hydration,
+  // and isVisible() answers from the DOM as it stands rather than waiting.
+  const present = await dev
+    .waitFor({ state: 'visible', timeout: 5000 })
+    .then(() => true)
+    .catch(() => false)
+  if (present) {
+    await dev.click()
+    await expect(page).toHaveURL('/')
+    return
+  }
+  await signIn(page)
+}

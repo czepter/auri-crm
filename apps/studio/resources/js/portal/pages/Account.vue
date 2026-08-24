@@ -70,14 +70,14 @@ const ROW = 'flex items-center gap-6 border-b border-border py-6'
            lies down over the block instead of eating half the column. -->
       <div class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 grid gap-8 min-[900px]:grid-cols-[168px_minmax(0,1fr)] min-[900px]:gap-16">
         <nav class="flex gap-x-6 gap-y-2 border-b border-border pb-5 text-[13.5px] leading-none max-[899px]:flex-wrap min-[900px]:sticky min-[900px]:top-24 min-[900px]:flex-col min-[900px]:gap-3.5 min-[900px]:self-start min-[900px]:border-0 min-[900px]:pb-0">
-          <button
+          <Button
             v-for="item in NAV"
             :key="item.key"
-            class="cursor-pointer border-0 bg-transparent p-0 text-left text-inherit"
-            :class="pane === item.key ? 'font-semibold' : 'font-normal opacity-72 hover:opacity-100'"
+            :data-active="pane === item.key"
             type="button"
+            variant="portal-nav"
             @click="pane = item.key"
-          >{{ $t(item.label) }}</button>
+          >{{ $t(item.label) }}</Button>
         </nav>
 
         <div class="min-w-0 max-w-[680px]">

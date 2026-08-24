@@ -2,6 +2,7 @@
 import { computed, onMounted, watch } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
 import PortalTabbar from '@/portal/components/PortalTabbar.vue'
+import { Button } from '@/ui/button'
 
 /*
  * mockups/redesign/tokens.css `.bar`. One definition, every screen — before
@@ -130,13 +131,9 @@ watch(branding, applyAccent)
           <Link :class="path.startsWith('/einstellungen') ? 'font-semibold' : 'opacity-72 hover:opacity-100'" href="/einstellungen">
             {{ $t('portal.accountTitle') }}
           </Link>
-          <button
-            class="cursor-pointer border-0 bg-transparent p-0 text-[13.5px] leading-none font-normal text-inherit opacity-72 hover:opacity-100"
-            type="button"
-            @click="router.post('/abmelden')"
-          >
+          <Button type="button" variant="portal-nav" @click="router.post('/abmelden')">
             {{ $t('portal.signOut') }}
-          </button>
+          </Button>
         </nav>
       </div>
     </div>

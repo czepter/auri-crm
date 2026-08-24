@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
-import { ACCOUNTS, signIn, submitLogin } from './helpers'
+import { expect, test } from '@playwright/test'
+import { ACCOUNTS, arrive, submitLogin } from './helpers'
 
 /*
  * Pixel baselines for the Tailwind-only migration
@@ -13,29 +13,6 @@ import { ACCOUNTS, signIn, submitLogin } from './helpers'
  * four-column grid in crm.css collapses and the baselines would measure the
  * narrow layout instead.
  */
-
-/*
- * Dev-Login where it exists, the MFA round trip otherwise. Locally the suite
- * runs against a developer's own database — E2eSeeder would write two accounts
- * and a cast of fixtures into it for no gain, since a baseline only ever
- * compares a screen against itself.
- */
-async function arrive(page: Page): Promise<void> {
-  await page.goto('/login')
-  const dev = page.getByRole('button', { name: 'Dev-Login' })
-  // waitFor, not isVisible: the button is rendered by Inertia after hydration,
-  // and isVisible() answers from the DOM as it stands rather than waiting.
-  const present = await dev
-    .waitFor({ state: 'visible', timeout: 5000 })
-    .then(() => true)
-    .catch(() => false)
-  if (present) {
-    await dev.click()
-    await expect(page).toHaveURL('/')
-    return
-  }
-  await signIn(page)
-}
 
 /** E2eSeeder's own project, the one with a quote still in draft on it. */
 const DRAFT_QUOTE_PROJECT = 'E2E Buchung'
@@ -326,7 +303,7 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
   // reached by pressing the toggle.
   await page.goto('/kalender')
   await page.waitForLoadState('networkidle')
-  await page.getByRole('button', { name: 'Liste', exact: true }).click()
+  await page.locator('[data-slot="choice-group"]').getByText('Liste', { exact: true }).click()
   await page.waitForFunction(() => document.fonts.status === 'loaded')
   await expect.soft(page).toHaveScreenshot('kalender-liste.png', {
     fullPage: true,

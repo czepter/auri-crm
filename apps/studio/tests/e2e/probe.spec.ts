@@ -1,13 +1,5 @@
-import { expect, test, type Page } from '@playwright/test'
-import { signIn } from './helpers'
-
-async function arrive(page: Page): Promise<void> {
-  await page.goto('/login')
-  const dev = page.getByRole('button', { name: 'Dev-Login' })
-  const present = await dev.waitFor({ state: 'visible', timeout: 5000 }).then(() => true).catch(() => false)
-  if (present) { await dev.click(); await expect(page).toHaveURL('/'); return }
-  await signIn(page)
-}
+import { expect, test } from '@playwright/test'
+import { arrive } from './helpers'
 
 const PROPS = ['display','position','width','height','minHeight','flex','gridTemplateColumns','gap','rowGap','columnGap',
  'margin','padding','border','borderTop','borderRadius','background','backgroundColor','boxShadow','color','opacity',

@@ -2,6 +2,8 @@
 import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { Button } from '@/ui/button'
+import { ChoiceGroup } from '@/ui/choice-group'
 import PageHead from '@/ui/page/PageHead.vue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 
@@ -72,28 +74,25 @@ function shortDate(date: string | null) {
   <AdminLayout active="kalender">
     <div data-tokens>
       <PageHead :kicker="label" :title="$t('calendar.title')">
-        <span class="ml-auto flex rounded-lg bg-sunk-2 p-0.5">
-          <button
-            v-for="option in (['monat', 'liste'] as const)"
-            :key="option"
-            class="cursor-pointer rounded-[6px] border-0 bg-transparent px-3.5 py-1 text-[12.5px] leading-[1.4] text-foreground transition-colors duration-[120ms] ease-out"
-            :class="view === option ? 'bg-paper font-medium' : 'font-normal'"
-            type="button"
-            @click="view = option"
-          >
-            {{ option === 'monat' ? $t('calendar.viewMonth') : $t('calendar.viewList') }}
-          </button>
-        </span>
+        <ChoiceGroup
+          v-model="view"
+          class="ml-auto"
+          :options="[
+            { value: 'monat', label: $t('calendar.viewMonth') },
+            { value: 'liste', label: $t('calendar.viewList') },
+          ]"
+          variant="segmented"
+        />
 
-        <button
+        <Button
           v-for="step in ([['←', previous], ['→', next]] as const)"
           :key="step[0]"
-          class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-sunk-2 px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-[filter,background] duration-[120ms] ease-out hover:bg-[#E9E9EC]"
           type="button"
+          variant="pill-muted"
           @click="go(step[1])"
         >
           {{ step[0] }}
-        </button>
+        </Button>
       </PageHead>
 
       <div v-if="view === 'monat'" class="grid grid-cols-7 px-8 py-5">

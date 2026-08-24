@@ -59,7 +59,7 @@ const tab = ref<'bilder' | 'gestaltung' | 'einstellungen' | 'aktivitaet'>('bilde
 // C-20 (#257): three sheets, because the questions differ — who took
 // something, who marked something, who was here at all.
 const SHEETS = ['downloads', 'marks', 'views'] as const
-const sheet = ref<(typeof SHEETS)[number]>('downloads')
+const sheet = ref<string>('downloads')
 
 const activeSetId = ref<string | null>(initialActiveSetId(props.sets))
 const coverSrc = computed(() => props.assets.find((asset) => asset.isCover)?.src ?? null)
@@ -438,18 +438,11 @@ function megabytes(bytes: number) {
         </div>
 
         <div v-else class="min-w-0 flex-1 px-8 pt-7 pb-8">
-          <span class="flex rounded-lg bg-sunk-2 p-0.5">
-            <button
-              v-for="name in SHEETS"
-              :key="name"
-              class="cursor-pointer rounded-[6px] border-0 bg-transparent px-3.5 py-1 text-[12.5px] leading-[1.4] text-foreground transition-colors duration-[120ms] ease-out"
-              :class="sheet === name ? 'bg-paper font-medium' : 'font-normal'"
-              type="button"
-              @click="sheet = name"
-            >
-              {{ $t(`galleryRecord.sheet.${name}`) }}
-            </button>
-          </span>
+          <ChoiceGroup
+            v-model="sheet"
+            :options="SHEETS.map((name) => ({ value: name, label: $t(`galleryRecord.sheet.${name}`) }))"
+            variant="segmented"
+          />
 
           <table class="mt-4 w-full border-collapse">
             <thead>

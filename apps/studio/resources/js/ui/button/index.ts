@@ -63,6 +63,23 @@ export const buttonVariants = cva(
            the only one that ever stands next to another of its kind. */
         "portal-chip":
           "gap-2 rounded-[var(--r-pill)] border border-line-hover bg-transparent px-[15px] py-2.5 text-[13px] leading-none font-medium text-foreground transition-colors duration-200 ease-[var(--ease)] hover:border-foreground hover:bg-foreground hover:text-background [&_svg]:size-3.5 [&_svg]:stroke-[1.5]",
+        /*
+         * A destination in a portal nav rather than an action: it inherits
+         * the colour of the rail it stands in and answers on opacity, so the
+         * same button reads on the header's ink and on the account page's
+         * paper without a second variant for each.
+         */
+        "portal-nav":
+          "border-0 bg-transparent p-0 text-left text-[13.5px] leading-none font-normal text-inherit opacity-72 transition-opacity hover:opacity-100 data-[active=true]:font-semibold data-[active=true]:opacity-100",
+        /*
+         * The chip's sibling for a filter row: same pill, but the fill marks
+         * the one that is chosen rather than the one under the pointer, so
+         * the two states cannot be confused. The `!` on border and text is
+         * what beats the hover rule at equal specificity, and is the reason
+         * the call sites carried it before this variant existed.
+         */
+        "portal-filter":
+          "rounded-[var(--r-pill)] border border-line-hover px-[15px] py-2.5 text-[13px] leading-none font-medium text-muted-foreground transition-colors hover:border-foreground hover:text-foreground data-[active=true]:border-foreground! data-[active=true]:bg-foreground data-[active=true]:font-semibold data-[active=true]:text-background!",
         pill: "gap-1.5 rounded-[var(--r-pill)] border-0 bg-action px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-white transition-[filter,background-color] duration-[.12s] ease-out hover:brightness-[1.08]",
         "pill-muted":
           "gap-1.5 rounded-[var(--r-pill)] border-0 bg-sunk-2 px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-[filter,background-color] duration-[.12s] ease-out hover:bg-[#E9E9EC]",

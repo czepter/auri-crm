@@ -97,14 +97,15 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
         <section class="mt-18">
           <div class="flex items-baseline gap-4">
             <PortalLabel>{{ $t('portal.notedTitle') }}</PortalLabel>
-            <button
+            <Button
               v-if="!editing"
-              class="ml-auto cursor-pointer border-0 bg-transparent p-0 text-[13px] leading-none font-medium text-muted-foreground underline decoration-line-hover underline-offset-[3px] hover:text-foreground hover:decoration-current"
+              class="ml-auto py-0 underline decoration-line-hover underline-offset-[3px] hover:decoration-current"
               type="button"
+              variant="ghost"
               @click="editing = true"
             >
               {{ $t('common.edit') }}
-            </button>
+            </Button>
           </div>
 
           <template v-if="!editing">
@@ -145,13 +146,14 @@ const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
 
             <div class="mt-2 flex flex-wrap items-center gap-4">
               <Button variant="portal" type="submit" :disabled="form.processing">{{ $t('common.save') }}</Button>
-              <button
-                class="cursor-pointer border-0 bg-transparent p-0 text-[14px] leading-none font-medium text-muted-foreground hover:text-foreground"
+              <Button
+                class="py-0 text-[14px]"
                 type="button"
+                variant="ghost"
                 @click="editing = false"
               >
                 {{ $t('common.cancel') }}
-              </button>
+              </Button>
             </div>
           </form>
         </section>

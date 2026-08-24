@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { Button } from '@/ui/button'
 
 defineProps<{ feedUrl: string }>()
 
@@ -35,12 +36,12 @@ function regenerate() {
             <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('calendar.feedUrl') }}</div>
             <div class="mt-1.5 text-[17px] leading-none font-semibold tracking-[-0.018em] tabular-nums"><code>{{ feedUrl }}</code></div>
             <div class="mt-[7px]">
-              <button class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-sunk-2 px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-[filter,background] duration-[120ms] ease-out hover:bg-[#E9E9EC]" type="button" @click="copy(feedUrl)">
+              <Button type="button" variant="pill-muted" @click="copy(feedUrl)">
                 {{ copied ? $t('gallery.copied') : $t('gallery.copy') }}
-              </button>
-              <button class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-sunk-2 px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-[filter,background] duration-[120ms] ease-out hover:bg-[#E9E9EC] ml-2" type="button" @click="regenerate()">
+              </Button>
+              <Button class="ml-2" type="button" variant="pill-muted" @click="regenerate()">
                 {{ $t('calendar.revoke') }}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

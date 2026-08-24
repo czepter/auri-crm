@@ -31,7 +31,7 @@ export default defineConfig({
     cwd: process.env.CI ? '.' : '../..',
     command: process.env.CI
       ? serve
-      : `docker compose run --rm --service-ports -e APP_SURFACE=admin php ${serve}`,
+      : `docker compose run --rm --service-ports -e APP_SURFACE=admin -e DB_DATABASE=studio_e2e php ${serve}`,
     url: `${baseURL}/up`,
     reuseExistingServer: !process.env.CI,
     env: { APP_SURFACE: 'admin' },

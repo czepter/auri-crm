@@ -290,21 +290,17 @@ const COVER_INPUT = [
           v-if="bar.length > 1"
           class="mx-auto flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          <button
+          <Button
             v-for="selection in bar"
             :key="selection.id"
-            class="inline-flex flex-none cursor-pointer items-center gap-[7px] rounded-full border px-3.5 py-2.5 text-[12.5px] leading-none font-medium hover:border-line-hover hover:text-foreground"
-            :class="
-              active === selection.id
-                ? 'border-foreground bg-foreground font-semibold text-background'
-                : 'border-border bg-transparent text-muted-foreground'
-            "
+            :data-active="active === selection.id"
             type="button"
+            variant="portal-filter"
             @click="active = selection.id"
           >
             {{ selection.label }}
             <span class="tabular-nums opacity-55">{{ countOf(selection, assets?.length ?? 0) }}</span>
-          </button>
+          </Button>
         </span>
 
         <Button v-if="offers.downloads" as="a" :href="`/galerien/${gallery.id}/download`">{{ $t('gallery.downloadLink') }}</Button>

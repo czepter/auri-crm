@@ -446,22 +446,16 @@ function eraseDsgvoData() {
               target="_blank"
             >
               <input type="hidden" name="_token" :value="csrf">
-              <button
-                class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-sunk-2 px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-[filter,background] duration-[120ms] ease-out hover:bg-[#E9E9EC]"
-                type="submit"
-              >
+              <Button type="submit" variant="pill-muted">
                 {{ $t('contacts.portalPreview') }}
-              </button>
+              </Button>
             </form>
 
             <AlertDialog v-if="canRevokePortalAccess && !portalAccessRevokedAt">
               <AlertDialogTrigger as-child>
-                <button
-                  class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-sunk-2 px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-[filter,background] duration-[120ms] ease-out hover:bg-[#E9E9EC]"
-                  type="button"
-                >
+                <Button type="button" variant="pill-muted">
                   {{ $t('contacts.revokePortalAccess') }}
-                </button>
+                </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -510,21 +504,19 @@ function eraseDsgvoData() {
               {{ $t('contacts.dsgvoErased', { date: day(dsgvoErasedAt) }) }}
             </p>
             <template v-else>
-              <a
-                class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-sunk-2 px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-foreground no-underline transition-[filter,background] duration-[120ms] ease-out hover:bg-[#E9E9EC]"
+              <Button
+                as="a"
                 :href="`/kontakte/${contact.id}/dsgvo/export`"
+                variant="pill-muted"
               >
                 {{ $t('contacts.dsgvoExport') }}
-              </a>
+              </Button>
 
               <AlertDialog>
                 <AlertDialogTrigger as-child>
-                  <button
-                    class="ml-2 inline-flex cursor-pointer items-center gap-1.5 rounded-full border-0 bg-sunk-2 px-3.5 py-1.5 text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-[filter,background] duration-[120ms] ease-out hover:bg-[#E9E9EC]"
-                    type="button"
-                  >
+                  <Button class="ml-2" type="button" variant="pill-muted">
                     {{ $t('contacts.dsgvoErase') }}
-                  </button>
+                  </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>

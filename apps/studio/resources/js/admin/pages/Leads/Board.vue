@@ -23,6 +23,7 @@ import {
 } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/admin/lib/money";
 import { Button } from "@/ui/button";
+import { ChoiceGroup } from "@/ui/choice-group";
 
 type Card = App.Crm.Data.LeadCardData;
 type Column = { stage: string; label: string; cards: Card[]; total: number };
@@ -188,26 +189,16 @@ const STAGE_DOT = [
         <Page wide @click="menu = null">
             <div data-tokens class="min-w-0 flex-1">
                 <PageHead :title="$t('board.title')">
-                    <span class="ml-auto flex rounded-lg bg-sunk-2 p-0.5">
-                        <button
-                            v-for="option in ['board', 'liste'] as const"
-                            :key="option"
-                            class="cursor-pointer rounded-[6px] border-0 bg-transparent px-3.5 py-1 text-[12.5px] leading-[1.4] text-foreground transition-colors duration-[120ms] ease-out"
-                            :class="
-                                view === option
-                                    ? 'bg-paper font-medium'
-                                    : 'font-normal'
-                            "
-                            type="button"
-                            @click="choose(option)"
-                        >
-                            {{
-                                option === "board"
-                                    ? $t("board.viewBoard")
-                                    : $t("board.viewList")
-                            }}
-                        </button>
-                    </span>
+                    <ChoiceGroup
+                        v-model="view"
+                        class="ml-auto"
+                        :options="[
+                            { value: 'board', label: $t('board.viewBoard') },
+                            { value: 'liste', label: $t('board.viewList') },
+                        ]"
+                        variant="segmented"
+                        @update:model-value="choose"
+                    />
 
                     <Button :as="Link" variant="pill" href="/anfragen/neu">
                         {{ $t("board.create") }}
