@@ -8,6 +8,9 @@ use App\Media\Enums\MultipartUploadStatus;
 use App\Media\Models\Asset;
 use App\Media\Models\MultipartUpload;
 use App\Models\User;
+use Aws\MockHandler;
+use Aws\Result;
+use Aws\S3\S3Client;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -24,6 +27,7 @@ beforeEach(function () {
 it('starts an upload against a named set', function () {
     $gallery = Gallery::factory()->create();
     $set = GallerySet::factory()->for($gallery)->create(['name' => 'Fotobox', 'position' => 1]);
+    app()->instance(S3Client::class, mockS3Client(new MockHandler([new Result(['UploadId' => 'upload-abc'])])));
 
     $this->postJson("/galerien/{$gallery->public_id}/uploads", [
         'gallery_set_id' => $set->public_id,
