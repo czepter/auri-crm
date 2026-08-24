@@ -1849,6 +1849,27 @@
                     "captured_via": {
                         "$ref": "#/components/schemas/CaptureChannel"
                     },
+                    "type_other": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 120
+                    },
+                    "source_other": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 120
+                    },
+                    "captured_via_other": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 120
+                    },
                     "date": {
                         "type": [
                             "string",
