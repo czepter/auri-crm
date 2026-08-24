@@ -85,4 +85,20 @@ describe('Record', () => {
 
     expect(html).toContain(de.galleryRecord.publish)
   })
+
+  // The old head kept a password field and a six-column counter band in
+  // clear on every gallery, ~290px of cold data before anything you could
+  // act on. Both moved into the ⚙ pane (galerie-fundament layout fix).
+  it('the header renders no password field and no counter band', async () => {
+    const html = await render({
+      ...base,
+      gallery: { ...gallery, viewPassword: 'geheim' },
+      figures: { ...base.figures, marked: 3, downloaded: 2, viewed: 5 },
+    })
+
+    expect(html).not.toContain('geheim')
+    expect(html).not.toContain(de.galleryRecord.marked)
+    expect(html).not.toContain(de.galleryRecord.downloaded)
+    expect(html).not.toContain(de.galleryRecord.viewed)
+  })
 })

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { Link, router, useForm } from '@inertiajs/vue3'
+import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { Input } from '@/ui/input'
@@ -9,6 +9,7 @@ import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
 import { Button } from '@/ui/button'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
+import GalleryAccess from '@/admin/components/gallery/GalleryAccess.vue'
 import GalleryRail from '@/admin/components/gallery/GalleryRail.vue'
 import { initialActiveSetId, nextActiveSetId } from '@/admin/lib/gallerySets'
 import { publishLabelKey, showPublish as showPublishRule, showWithdraw as showWithdrawRule } from '@/admin/lib/galleryPublish'
@@ -116,18 +117,6 @@ function reorderSets(order: string[]) {
   router.patch(`/galerien/${props.gallery.id}/sets/reihenfolge`, { order }, { preserveScroll: true })
 }
 
-const secrets = useForm({
-  view_password: props.gallery.viewPassword ?? '',
-  download_pin: props.gallery.downloadPin ?? '',
-})
-
-function saveSecrets() {
-  secrets.transform((data) => ({
-    view_password: data.view_password === '' ? null : data.view_password,
-    download_pin: data.download_pin === '' ? null : data.download_pin,
-  })).patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
-}
-
 const design = useForm({ design: props.gallery.design ?? { cover: 'full', type: 'serif', colour: 'light', grid: 'wide' } })
 
 function saveDesign() {
@@ -173,81 +162,19 @@ function megabytes(bytes: number) {
   <AdminLayout active="galerien">
     <div data-tokens>
       <PageHead :title="gallery.title ?? '—'">
+        <!-- Stand, chip-styled: the same fact the old counter band spent a
+             whole column on, and the only one of the six worth a glance at
+             every tab (ProjectShell's isBooked chip is the pattern). -->
+        <span
+          v-if="figures.published !== null"
+          class="flex-none rounded-[var(--r-sm)] bg-ok-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-ok"
+        >{{ $t('galleryRecord.version', { version: figures.published }) }}</span>
+
         <span v-if="showPublish || showWithdraw" class="ml-auto flex gap-2">
           <Button v-if="showWithdraw" type="button" variant="pill-muted" @click="withdraw">{{ $t('galleryRecord.withdraw') }}</Button>
           <Button v-if="showPublish" type="button" @click="publish">{{ $t(publishLabel) }}</Button>
         </span>
       </PageHead>
-
-      <div class="max-w-none px-8 pt-7">
-        <!-- Link, password and code stand in clear and are set here: both are
-             handed to guests anyway, and a studio that cannot look one up
-             sets a new one on every enquiry (C-17, #253). -->
-        <div class="mb-5 flex items-start gap-[26px] pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
-          <div class="flex min-w-0 flex-1 flex-col gap-2">
-            <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.link') }}</div>
-            <div class="mt-1.5 text-[17px] leading-none font-semibold tracking-[-0.018em] tabular-nums"><a class="text-[17px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline" :href="gallery.url">{{ gallery.url }}</a></div>
-
-            <div class="mt-2 flex gap-1.5">
-              <Link
-                v-for="sibling in siblings"
-                :key="sibling.id"
-                class="inline-flex items-baseline gap-1.5 rounded-full px-3 py-1.5 text-[13px] no-underline"
-                :class="sibling.open ? 'bg-foreground text-paper' : 'bg-sunk text-foreground'"
-                :href="`/galerien/${sibling.id}`"
-              >
-                {{ sibling.title ?? '—' }}<span
-                  class="text-[11.5px]"
-                  :class="sibling.open ? 'text-[#B9B9BD]' : 'text-ink-2'"
-                >{{ sibling.assetCount }}</span>
-              </Link>
-            </div>
-          </div>
-
-          <div class="flex min-w-0 flex-col gap-2">
-            <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('gallery.gateView') }}</div>
-            <Input v-model="secrets.view_password" class="w-[190px]" type="text" @blur="saveSecrets" />
-          </div>
-
-          <div class="flex min-w-0 flex-col gap-2">
-            <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('gallery.gateDownload') }}</div>
-            <Input v-model="secrets.download_pin" class="w-[110px]" type="text" @blur="saveSecrets" />
-          </div>
-        </div>
-
-        <div class="mb-5 flex">
-          <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
-            <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.published') }}</div>
-            <div class="mt-[5px] text-[17px] leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums">{{ figures.published ? $t('galleryRecord.version', { version: figures.published }) : '—' }}</div>
-          </div>
-          <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
-            <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.images') }}</div>
-            <div class="mt-[5px] text-[17px] leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums">{{ figures.assets }}</div>
-          </div>
-          <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
-            <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.expiry') }}</div>
-            <div class="mt-[5px] text-[15px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ day(figures.expiresAt) }}</div>
-          </div>
-          <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
-            <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.marked') }}</div>
-            <div class="mt-[5px] text-[17px] leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums">{{ figures.marked }}</div>
-          </div>
-          <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
-            <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.downloaded') }}</div>
-            <div class="mt-[5px] text-[17px] leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums">{{ figures.downloaded }}</div>
-          </div>
-          <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
-            <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.viewed') }}</div>
-            <div class="mt-[5px] text-[17px] leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums">{{ figures.viewed }}</div>
-          </div>
-        </div>
-
-        <!-- balance_settled is a state out of the payments, never a switch —
-             it stands as a value beside the block it causes. -->
-        <p v-if="gallery.requiresSettledBalance && !gallery.balanceSettled" class="text-[11.5px] leading-[1.45] text-faint">
-          {{ $t('galleryRecord.blockedByBalance') }}
-        </p>
-      </div>
 
       <div class="flex">
         <GalleryRail
@@ -262,20 +189,11 @@ function megabytes(bytes: number) {
           @reorder="reorderSets"
         />
 
-        <!-- Bilder: the pane owns the grid, selection and versions underneath
-             — a version is a published selection, so it is a statement
-             about pictures and belongs here, not with the permissions. -->
+        <!-- Bilder: the pane owns the grid and selection. Fassungen moved to
+             Einstellungen — the count sits beside the set name and Stand is
+             the header's own chip, so nothing here repeats them. -->
         <div v-if="tab === 'bilder'" class="min-w-0 flex-1">
           <Images :gallery="gallery" :sets="sets" :assets="assets" :active-set-id="activeSetId" :failed-assets="failedAssets" />
-
-          <h2 class="mt-7 px-8">{{ $t('galleryRecord.versions') }}</h2>
-          <div class="px-8 pb-8">
-            <div v-for="version in versions" :key="version.version" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
-              <span class="w-[62px] flex-none text-[12px] font-semibold tracking-[-0.01em] tabular-nums">{{ $t('galleryRecord.version', { version: version.version }) }}</span>
-              <span class="text-[13px] font-medium tracking-[-0.01em]">{{ $t('contacts.assetCount', version.assetCount) }}</span>
-              <span class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ day(version.publishedAt) }}</span>
-            </div>
-          </div>
         </div>
 
         <!-- Gestaltung: choosing without seeing is guessing, so the choice is
@@ -369,7 +287,24 @@ function megabytes(bytes: number) {
         <!-- Einstellungen: Download und Freigaben landen bis Etappe 4 und 5
              im selben Reiter — Anfragen ans System, keine eigene Kachel. -->
         <div v-else-if="tab === 'einstellungen'" class="min-w-0 flex-1 px-8 pt-7 pb-8">
-          <h2 class="mt-0">{{ $t('galleryRecord.downloadsHeading') }}</h2>
+          <!-- balance_settled is a state out of the payments, never a switch —
+               it stands as a value beside the block it causes. -->
+          <p v-if="gallery.requiresSettledBalance && !gallery.balanceSettled" class="mb-5 text-[11.5px] leading-[1.45] text-faint">
+            {{ $t('galleryRecord.blockedByBalance') }}
+          </p>
+
+          <GalleryAccess :gallery="gallery" :siblings="siblings" />
+
+          <h2 class="mt-9">{{ $t('galleryRecord.versions') }}</h2>
+          <div class="mb-9">
+            <div v-for="version in versions" :key="version.version" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
+              <span class="w-[62px] flex-none text-[12px] font-semibold tracking-[-0.01em] tabular-nums">{{ $t('galleryRecord.version', { version: version.version }) }}</span>
+              <span class="text-[13px] font-medium tracking-[-0.01em]">{{ $t('contacts.assetCount', version.assetCount) }}</span>
+              <span class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ day(version.publishedAt) }}</span>
+            </div>
+          </div>
+
+          <h2 class="mt-9">{{ $t('galleryRecord.downloadsHeading') }}</h2>
           <table v-if="builds.length" class="w-full border-collapse">
             <thead>
               <tr>
@@ -392,18 +327,9 @@ function megabytes(bytes: number) {
           <p v-else class="text-[11.5px] leading-[1.45] text-faint">{{ $t('galleryRecord.noBuilds') }}</p>
 
           <h2 class="mt-9">{{ $t('galleryRecord.sharingHeading') }}</h2>
-          <div class="flex items-center gap-4 py-[11px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
-            <div class="min-w-0 flex-1 text-[13.5px]">
-              {{ $t('gallery.gateView') }}
-              <div class="mt-0.5 text-[12px] text-ink-2">{{ gallery.viewPassword ?? $t('gallery.gateOff') }}</div>
-            </div>
-          </div>
-          <div class="flex items-center gap-4 py-[11px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
-            <div class="min-w-0 flex-1 text-[13.5px]">
-              {{ $t('gallery.gateDownload') }}
-              <div class="mt-0.5 text-[12px] text-ink-2">{{ gallery.downloadPin ?? $t('gallery.gateOff') }}</div>
-            </div>
-          </div>
+          <!-- View password and download PIN read out under Zugang above —
+               repeating them here would show the same field twice on one
+               pane. -->
           <div class="flex items-center gap-4 py-[11px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
             <div class="min-w-0 flex-1 text-[13.5px]">
               {{ $t('galleryRecord.emailGate') }}
@@ -438,6 +364,23 @@ function megabytes(bytes: number) {
         </div>
 
         <div v-else class="min-w-0 flex-1 px-8 pt-7 pb-8">
+          <!-- Marked/downloaded/viewed: a look backwards, so they sit above
+               the sheets that spell the same facts out row by row. -->
+          <div class="mb-5 flex">
+            <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
+              <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.marked') }}</div>
+              <div class="mt-[5px] text-[17px] leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums">{{ figures.marked }}</div>
+            </div>
+            <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
+              <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.downloaded') }}</div>
+              <div class="mt-[5px] text-[17px] leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums">{{ figures.downloaded }}</div>
+            </div>
+            <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
+              <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.viewed') }}</div>
+              <div class="mt-[5px] text-[17px] leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums">{{ figures.viewed }}</div>
+            </div>
+          </div>
+
           <ChoiceGroup
             v-model="sheet"
             :options="SHEETS.map((name) => ({ value: name, label: $t(`galleryRecord.sheet.${name}`) }))"

@@ -126,8 +126,8 @@ function onDrop(targetId: string) {
 
 <template>
   <div class="w-[212px] flex-none border-r border-border">
-    <div class="aspect-4/3 bg-muted">
-      <img v-if="coverSrc" class="h-full w-full object-cover" :src="`${coverSrc}?w=420&fmt=jpeg`" alt="" />
+    <div v-if="coverSrc" class="aspect-4/3 bg-muted">
+      <img class="h-full w-full object-cover" :src="`${coverSrc}?w=420&fmt=jpeg`" alt="" />
     </div>
 
     <div class="flex border-b border-border">

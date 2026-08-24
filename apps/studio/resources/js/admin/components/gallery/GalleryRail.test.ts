@@ -36,4 +36,18 @@ describe('GalleryRail', () => {
     expect(html).toContain(de.gallery.all)
     expect(html).toContain('8')
   })
+
+  // An empty grey rectangle is not worth the rail's best position — without
+  // a cover, the rail begins with the icon tabs instead.
+  it('renders no cover thumbnail when there is no cover', async () => {
+    const html = await render({ coverSrc: null, tab: 'bilder', sets: oneSet, activeSetId: 'a', error: null })
+
+    expect(html).not.toContain('<img')
+  })
+
+  it('renders the cover thumbnail once a cover exists', async () => {
+    const html = await render({ coverSrc: '/bild/cover', tab: 'bilder', sets: oneSet, activeSetId: 'a', error: null })
+
+    expect(html).toContain('<img')
+  })
 })

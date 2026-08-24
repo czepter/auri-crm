@@ -241,44 +241,52 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <div v-bind="containerProps" class="h-[calc(100vh-260px)]">
-      <div v-bind="wrapperProps">
-        <div
-          v-for="row in list"
-          :key="row.index"
-          class="mb-1.5 grid gap-1.5"
-          :style="{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }"
-        >
-          <figure
-            v-for="asset in row.data"
-            :key="asset.id"
-            class="relative m-0 cursor-pointer"
-            @click="click(asset, $event)"
-            @dblclick="lightbox = asset"
+    <!-- An empty set has nothing to scroll — the reserved grid height would
+         otherwise sit above the drop zone as a void, the only thing left to
+         act on. -->
+    <DropZone v-if="shown.length === 0" class="h-[calc(100vh-260px)]" :disabled="activeSet === null" @files="picked" />
+
+    <template v-else>
+      <div v-bind="containerProps" class="h-[calc(100vh-260px)]">
+        <div v-bind="wrapperProps">
+          <div
+            v-for="row in list"
+            :key="row.index"
+            class="mb-1.5 grid gap-1.5"
+            :style="{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }"
           >
-            <img
-              v-if="asset.src"
-              class="block aspect-square w-full rounded-md object-cover"
-              :class="selection.selected.has(asset.id) && 'outline-2 -outline-offset-2 outline-foreground'"
-              :src="`${asset.src}?w=400&fmt=jpeg`"
-              alt=""
-              loading="lazy"
-            />
-            <span v-if="asset.isCover" class="absolute bottom-1.5 left-1.5 rounded bg-[rgba(25,25,25,0.7)] px-1.5 py-0.5 text-[8.5px] text-paper">
-              {{ $t('galleryRecord.cover') }}
-            </span>
-            <span
-              v-if="activeSetId === null"
-              class="absolute top-1.5 left-1.5 rounded-full bg-[rgba(25,25,25,0.7)] px-1.5 py-0.5 text-[8.5px] text-paper"
+            <figure
+              v-for="asset in row.data"
+              :key="asset.id"
+              class="relative m-0 cursor-pointer"
+              @click="click(asset, $event)"
+              @dblclick="lightbox = asset"
             >
-              {{ setNames.get(asset.setId) }}
-            </span>
-          </figure>
+              <img
+                v-if="asset.src"
+                class="block aspect-square w-full rounded-md object-cover"
+                :class="selection.selected.has(asset.id) && 'outline-2 -outline-offset-2 outline-foreground'"
+                :src="`${asset.src}?w=400&fmt=jpeg`"
+                alt=""
+                loading="lazy"
+              />
+              <span v-if="asset.isCover" class="absolute bottom-1.5 left-1.5 rounded bg-[rgba(25,25,25,0.7)] px-1.5 py-0.5 text-[8.5px] text-paper">
+                {{ $t('galleryRecord.cover') }}
+              </span>
+              <span
+                v-if="activeSetId === null"
+                class="absolute top-1.5 left-1.5 rounded-full bg-[rgba(25,25,25,0.7)] px-1.5 py-0.5 text-[8.5px] text-paper"
+              >
+                {{ setNames.get(asset.setId) }}
+              </span>
+            </figure>
+          </div>
         </div>
       </div>
-    </div>
 
-    <DropZone class="mt-3" :disabled="activeSet === null" @files="picked" />
+      <DropZone class="mt-3" :disabled="activeSet === null" @files="picked" />
+    </template>
+
     <p v-if="precheckError" class="mt-2 text-[11.5px] text-destructive">{{ $t('media.precheckFailed') }}</p>
 
     <div v-if="failedAssets.length > 0" class="mt-6">

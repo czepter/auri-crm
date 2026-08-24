@@ -93,6 +93,19 @@ describe('Images', () => {
     expect(html).not.toContain(de.media.pickSetFirst)
   })
 
+  // The one-set fixture, empty: an empty gallery starts here, and the drop
+  // zone is the only thing there is to do — it must fill the picture area,
+  // not sit under the grid's reserved height (galerie-fundament layout fix).
+  it('an empty set renders the drop zone inside the picture area, not after a spacer', async () => {
+    const empty = { ...solo, assets: [] }
+    const html = await render({ ...empty, activeSetId: 'a' })
+
+    expect(html).toContain(de.media.dropHere)
+    // useVirtualList's container carries overflow-y: auto — its absence
+    // means the grid's reserved-height wrapper never rendered.
+    expect(html).not.toContain('overflow-y')
+  })
+
   it('surfaces a Failed asset with its retry action', async () => {
     const html = await render({
       ...base,
