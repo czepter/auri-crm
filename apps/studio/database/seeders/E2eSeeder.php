@@ -20,7 +20,6 @@ use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
-use App\Documents\Models\DocumentTemplate;
 use App\Engagement\Actions\PostMessage;
 use App\Engagement\Actions\StartThread;
 use App\Enums\StaffRole;
@@ -286,7 +285,6 @@ class E2eSeeder extends Seeder
         QuoteItem::factory()->for($quote)->create();
 
         $contract = Contract::factory()->for($project)->create([
-            'contract_template_id' => DocumentTemplate::query()->firstOrFail()->id,
             'status' => ContractStatus::Rendered,
         ]);
         ContractSignature::factory()->for($contract)->create(['contact_id' => $contact->id]);
