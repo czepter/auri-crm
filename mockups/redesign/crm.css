@@ -965,6 +965,11 @@ tbody td.grp {
   /* Nur das Tagesgeschäft: die Studio-Gruppe ist Einrichtung, und die richtet
      niemand am Telefon ein. */
   .side a:nth-of-type(n + 8) { display: none; }
+  /* Und von den sieben bleiben unten nur die Zeichen: mit Beschriftung
+     brauchen sie 595px, die Leiste hat 390. Abgeschnitten wäre schlimmer als
+     wortlos — ein Zeichen ohne Wort ist immer noch anklickbar. */
+  .side a { font-size: 0; gap: 0; justify-content: center; padding: 9px 12px; }
+  .side a svg { width: 19px; height: 19px; }
 
   .main { order: 1; }
   .hrow { padding: 16px var(--s5) 0; }
