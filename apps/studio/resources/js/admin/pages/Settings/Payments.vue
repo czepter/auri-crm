@@ -53,7 +53,7 @@ function submit() {
       </PageHead>
 
       <div class="px-8 pt-7 pb-8">
-        <div class="flex items-start gap-8">
+        <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
           <SettingsNav active="payments" />
 
           <form id="payment-settings-form" style="flex: 1; min-width: 0; max-width: 620px" @submit.prevent="submit">

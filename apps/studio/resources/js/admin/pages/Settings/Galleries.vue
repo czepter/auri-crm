@@ -53,7 +53,7 @@ function submit() {
       </PageHead>
 
       <div class="px-8 pt-7 pb-8">
-        <div class="flex items-start gap-8">
+        <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
           <SettingsNav active="galleries" />
 
           <form id="gallery-settings-form" class="max-w-[460px] min-w-0 flex-1" @submit.prevent="submit">

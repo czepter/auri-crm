@@ -107,7 +107,7 @@ function create() {
       <PageHead :kicker="$t('settings.kicker')" :title="$t('galleryPresets.title')" />
 
       <div class="px-8 pt-7 pb-8">
-        <div class="flex items-start gap-8">
+        <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
           <SettingsNav active="galleryPresets" />
 
           <div class="min-w-0 max-w-[620px] flex-1">

@@ -34,7 +34,7 @@ function save(rangeId: string) {
       <PageHead :kicker="$t('settings.kicker')" :title="$t('settings.numberingTitle')" />
 
       <div class="px-8 pt-7 pb-8">
-        <div class="flex items-start gap-8">
+        <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
           <SettingsNav active="numbering" />
 
           <div class="max-w-[620px] min-w-0 flex-1">

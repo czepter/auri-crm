@@ -309,7 +309,7 @@ function megabytes(bytes: number) {
           />
         </span>
 
-        <span class="flex gap-2" :class="!actionStatus && 'ml-auto'">
+        <span class="flex flex-wrap gap-2" :class="!actionStatus && 'ml-auto'">
           <!-- R36: modal (reka-ui's default) runs useHideOthers() the
                moment force-mount mounts the content, aria-hiding #app from
                page load regardless of open state — a Critical fix round

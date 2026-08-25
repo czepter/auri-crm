@@ -18,7 +18,7 @@ defineProps<{ templates: App.Crm.Data.FormTemplateData[] }>()
       </PageHead>
 
       <div class="px-8 pt-7 pb-8">
-        <div class="flex items-start gap-8">
+        <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
           <SettingsNav active="formTemplates" />
 
           <div style="flex: 1; min-width: 0">
