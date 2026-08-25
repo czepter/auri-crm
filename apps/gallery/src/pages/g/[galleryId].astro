@@ -3,8 +3,7 @@ import { draftImageBase, FORMATS, imageUrl, passGate, previewGate, srcSet, versi
 import { callApi } from '../../lib/apiClient'
 import { buyPass, passCookieName, PASS_MAX_AGE_SECONDS } from '../../lib/viewPass'
 import { isPrerelease, signUpForPrerelease, type PrereleaseSignupResult } from '../../lib/prerelease'
-import '../../styles/tokens.css'
-import '../../styles/gallery.css'
+import '../../styles/app.css'
 
 // G-08: never cached. Which GalleryVersion counts as "current" can change
 // the moment a studio owner republishes (Gallery::publish(), G-05), so a
@@ -157,7 +156,7 @@ if (gallery === null && !locked && !prerelease) {
   Astro.response.status = 502
 }
 
-// (SIZES matches .grid's four fixed columns in gallery.css — a masonry, no
+// (SIZES matches .wall's four fixed columns in gallery.css — a masonry, no
 // responsive breakpoints exist in the mockup this screen matches, so none
 // are invented here either.)
 const SIZES = '(max-width: 760px) 50vw, (max-width: 1080px) 33vw, 25vw'
@@ -290,7 +289,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
             )
           }
 
-          <main class="grid" id="raster">
+          <main class="wall" id="raster">
             {gallery.version.assets.map((asset, i) => (
               <a class="tile" href="#" data-lb-open data-index={i}>
                 <picture>

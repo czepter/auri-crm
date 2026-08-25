@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config'
 import node from '@astrojs/node'
+import tailwindcss from '@tailwindcss/vite'
 
 // G-08: the browser never gets a direct storage URL (G-01a's delivery rule),
 // and which GalleryVersion is "current" can change the moment a studio owner
@@ -9,4 +10,7 @@ import node from '@astrojs/node'
 export default defineConfig({
   output: 'server',
   adapter: node({ mode: 'standalone' }),
+  // Dasselbe Tailwind wie im Studio, damit die beiden Oberflächen nicht auf
+  // zwei Systemen für eine Gestaltung auseinanderlaufen.
+  vite: { plugins: [tailwindcss()] },
 })
