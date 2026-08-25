@@ -15,6 +15,7 @@ use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Engagement\Models\ThreadParticipant;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryPrereleaseSignup;
 use App\Media\Models\Asset;
 use App\Models\User;
 use App\Notifications\Models\InAppNotification;
@@ -70,6 +71,19 @@ class EraseContactDsgvo
             }
 
             ClientAccess::where('contact_id', $contact->id)->delete();
+            // By address, not contact_id — GalleryPrereleaseSignup carries
+            // no foreign key to a Contact at all (same reasoning as
+            // GalleryEmailVerification), so this is the one place erasure
+            // can still find it. Global rather than scoped to the projects
+            // above: purgeSoleContactProject's Gallery::delete() already
+            // cascades this away for a sole-contact project, but a shared
+            // project's gallery is never dropped (detachFromSharedProject
+            // only strips this contact's own fingerprints), and a contact
+            // may have signed up for a gallery's pre-release that belongs
+            // to no project of theirs at all.
+            if ($contact->email !== null) {
+                GalleryPrereleaseSignup::where('email', GalleryPrereleaseSignup::normalizeEmail($contact->email))->delete();
+            }
             $contact->tokens()->delete();
             InAppNotification::where('notifiable_type', Contact::class)->where('notifiable_id', $contact->id)->delete();
             NotificationPreference::where('notifiable_type', Contact::class)->where('notifiable_id', $contact->id)->delete();

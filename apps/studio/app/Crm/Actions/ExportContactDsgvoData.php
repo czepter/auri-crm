@@ -5,6 +5,7 @@ namespace App\Crm\Actions;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Engagement\Models\Message;
+use App\Gallery\Models\GalleryPrereleaseSignup;
 use App\Models\AuditLog;
 use App\Notifications\Models\InAppNotification;
 use App\Notifications\Models\NotificationPreference;
@@ -22,6 +23,12 @@ use App\Portal\Models\ClientAccess;
  * contact's public_id or words. Their data is theirs to ask for separately
  * (GDPR Art. 15(4): a subject-access request must not adversely affect the
  * rights of others).
+ *
+ * gallery_prerelease_signups is matched by address, not by a foreign key —
+ * see GalleryPrereleaseSignup's own docblock for why it carries no
+ * contact_id at all. A row here is always pending (a notified or
+ * pre-release-stopped one deletes itself, same source), so this can only
+ * ever show "still waiting", never a history of past ones.
  */
 class ExportContactDsgvoData
 {
@@ -52,6 +59,19 @@ class ExportContactDsgvoData
                     'expires_at' => $access->expires_at?->toIso8601String(),
                     'consumed_at' => $access->consumed_at?->toIso8601String(),
                     'created_at' => $access->created_at?->toIso8601String(),
+                ])->all(),
+            // $contact->email is null once dsgvo_erased_at is set (this
+            // export stays reachable for an already-erased contact — see
+            // ContactDsgvoController::export(), which unlike erase() itself
+            // carries no such guard), and there is no address left to match.
+            'gallery_prerelease_signups' => $contact->email === null ? [] : GalleryPrereleaseSignup::query()
+                ->where('email', GalleryPrereleaseSignup::normalizeEmail($contact->email))
+                ->with('gallery')
+                ->get()
+                ->map(fn (GalleryPrereleaseSignup $signup) => [
+                    'gallery' => $signup->gallery?->public_id,
+                    'gallery_title' => $signup->gallery?->title,
+                    'created_at' => $signup->created_at?->toIso8601String(),
                 ])->all(),
             'api_tokens' => $contact->tokens()->get()->map(fn ($token) => [
                 'name' => $token->name,

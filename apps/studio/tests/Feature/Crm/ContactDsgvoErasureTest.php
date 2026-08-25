@@ -12,6 +12,7 @@ use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryPrereleaseSignup;
 use App\Media\Models\Asset;
 use App\Models\AuditLog;
 use App\Models\User;
@@ -170,6 +171,40 @@ it('deletes client accesses and api tokens, and cannot be run twice', function (
     $this->actingAs($this->owner, 'staff')
         ->post("/kontakte/{$contact->public_id}/dsgvo/loeschen")
         ->assertStatus(409);
+});
+
+// Personal-data fix round 1: GalleryPrereleaseSignup carries no contact_id
+// (same reason ClientAccess above does not need to be the model here),
+// matched by address instead — including on a gallery under a *shared*
+// project, the gap detachFromSharedProject alone would have left open.
+it('deletes a pre-release signup by address, even on a gallery shared with another contact', function () {
+    $contact = Contact::factory()->create(['email' => 'lena@example.test']);
+    $partner = Contact::factory()->create();
+    $project = Project::factory()->create();
+    $project->attachContact($contact, ProjectContactRole::Primary);
+    $project->attachContact($partner, ProjectContactRole::Partner);
+
+    $gallery = Gallery::factory()->for($project)->create();
+    GalleryPrereleaseSignup::create(['gallery_id' => $gallery->id, 'email' => 'Lena@Example.test']);
+
+    $this->actingAs($this->owner, 'staff')->post("/kontakte/{$contact->public_id}/dsgvo/loeschen");
+
+    expect(GalleryPrereleaseSignup::count())->toBe(0)
+        // The shared gallery itself is untouched — only the signup goes.
+        ->and(Gallery::query()->whereKey($gallery->id)->exists())->toBeTrue();
+});
+
+it("shows a contact's own pre-release signups in the DSGVO export, matched by address", function () {
+    $contact = Contact::factory()->create(['email' => 'lena@example.test']);
+    $gallery = Gallery::factory()->create(['title' => 'Vorab-Galerie']);
+    $gallery->forceFill(['prerelease_at' => now()])->save();
+    GalleryPrereleaseSignup::create(['gallery_id' => $gallery->id, 'email' => 'Lena@Example.test']);
+
+    $response = $this->actingAs($this->owner, 'staff')->get("/kontakte/{$contact->public_id}/dsgvo/export");
+
+    $body = json_decode($response->getContent(), true);
+    expect($body['gallery_prerelease_signups'])->toHaveCount(1)
+        ->and($body['gallery_prerelease_signups'][0]['gallery'])->toBe($gallery->public_id);
 });
 
 it('refuses every role but the owner', function (StaffRole $role) {
