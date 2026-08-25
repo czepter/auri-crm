@@ -39,6 +39,14 @@ services:
       # /zugang/{token} onto :8000, where the portal routes do not exist.
       # docker-compose.coolify.yml sets the deployed equivalent.
       PORTAL_URL: http://localhost:${PORTAL_PORT:-8001}
+      # config/services.php's `gallery.url` — apps/gallery, the guest viewer,
+      # on its own port here for the same reason PORTAL_URL is: without it,
+      # Gallery::publicUrl() falls back to its config default
+      # (http://localhost:4321), which happens to match this stack's own
+      # default GALLERY_PORT but would be silently wrong the moment either
+      # port is overridden. docker-compose.coolify.yml sets the deployed
+      # equivalent from ${SERVICE_FQDN_GALLERY_4321}.
+      GALLERY_URL: http://localhost:${GALLERY_PORT:-4321}
       # F-11: empty by default, same as apps/studio/.env.example — the SDK
       # stays fully inert (config/sentry.php) until a developer opts in by
       # setting this in their own shell or root .env, e.g. to
@@ -94,6 +102,11 @@ services:
       AWS_SECRET_ACCESS_KEY: studio-media-secret
       AWS_DEFAULT_REGION: us-east-1
       AWS_BUCKET: media
+      # RenderInvoiceJob and EnsureContractArtifact resolve
+      # DocumentMergeDataBuilder's {{gallery.link}} on this queue — same
+      # reasoning as the php service's own GALLERY_URL, not inherited here
+      # since this block predates the anchor and repeats it by hand.
+      GALLERY_URL: http://localhost:${GALLERY_PORT:-4321}
       # F-11: a failed job on this container's default/mail/render
       # supervisors (config/horizon.php) reports here too — same DSN, same
       # empty-by-default rule as the php service above.
