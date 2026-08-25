@@ -80,6 +80,11 @@ const PUBLIC_ROUTES = [
         // credential, and what it buys is a signed pass (GalleryViewPass) —
         // neither of which reads as `audience:`.
         'api/galleries/{gallery}/passwort',
+        // R39-R42: the pre-release page's own signup — no credential to
+        // hold at all, the address is the whole point of the call. Rate
+        // limited and uniform-response instead, same shape as the inquiry
+        // route above — see GalleryPrereleaseSignupController.
+        'api/galleries/{gallery}/benachrichtigung',
         'api/galleries/{gallery}', 'api/gallery-versions/{galleryVersion}/images/{key}',
         'api/gallery-versions/{galleryVersion}/favorites', 'api/gallery-versions/{galleryVersion}/favorites/{key}',
         'api/gallery-versions/{galleryVersion}/comments',

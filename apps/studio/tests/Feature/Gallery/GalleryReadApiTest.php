@@ -1,5 +1,6 @@
 <?php
 
+use App\Gallery\Actions\PublishGallery;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
 use App\Gallery\Support\GalleryPreviewPass;
@@ -157,4 +158,70 @@ it('still 404s a gallery nobody has published yet when no preview pass is presen
     Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => GallerySet::where('gallery_id', $gallery->id)->first()->id]);
 
     $this->getJson("/api/galleries/{$gallery->public_id}")->assertNotFound();
+});
+
+// ---------- R39/R40: pre-release ----------
+
+it('answers a pre-release gallery with only its title and public_id, no version', function () {
+    $gallery = Gallery::factory()->create(['title' => 'Viola + Chris']);
+    $gallery->forceFill(['prerelease_at' => now()])->save();
+
+    $response = $this->getJson("/api/galleries/{$gallery->public_id}")
+        ->assertOk()
+        ->assertExactJson([
+            'gallery' => [
+                'public_id' => $gallery->public_id,
+                'title' => 'Viola + Chris',
+                'prerelease' => true,
+            ],
+        ]);
+
+    expect($response->headers->get('Cache-Control'))->toContain('no-store');
+});
+
+it('answers a pre-release gallery the same with a password set, since R40 needs none', function () {
+    $gallery = Gallery::factory()->create();
+    $gallery->rotateViewPassword('geheim123');
+    $gallery->forceFill(['prerelease_at' => now()])->save();
+
+    $this->getJson("/api/galleries/{$gallery->public_id}")
+        ->assertOk()
+        ->assertJson(['gallery' => ['prerelease' => true]]);
+});
+
+it('404s a pre-release gallery that was withdrawn — closed beats being prepared', function () {
+    $gallery = Gallery::factory()->create();
+    $gallery->forceFill(['prerelease_at' => now(), 'unpublished_at' => now()])->save();
+
+    $this->getJson("/api/galleries/{$gallery->public_id}")->assertNotFound();
+});
+
+it('stops answering pre-release once the gallery is published', function () {
+    $gallery = Gallery::factory()->create(['title' => 'v1']);
+    $gallery->forceFill(['prerelease_at' => now()])->save();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/a.jpg']);
+    // PublishGallery, not Gallery::publish() directly — clearing
+    // prerelease_at and notifying signups is the action's job, the same
+    // way clearing unpublished_at already is (see PublishGallery itself).
+    app(PublishGallery::class)($gallery->fresh());
+
+    $this->getJson("/api/galleries/{$gallery->public_id}")
+        ->assertOk()
+        ->assertJson(['gallery' => ['version' => ['version' => 1]]]);
+
+    expect($gallery->fresh()->prerelease_at)->toBeNull();
+});
+
+// A preview pass exists to hand a specific person real draft photographs
+// (R31) — pre-release promises the opposite for its own address. The
+// controller's own doc comment spells out why pre-release is checked first.
+it('answers pre-release even for a request carrying a valid preview pass', function () {
+    $gallery = Gallery::factory()->create();
+    $gallery->forceFill(['prerelease_at' => now()])->save();
+    $token = app(GalleryPreviewPass::class)->issue($gallery, GalleryPreviewPass::BUTTON_MINUTES);
+
+    $this->getJson("/api/galleries/{$gallery->public_id}?preview=".urlencode($token))
+        ->assertOk()
+        ->assertJson(['gallery' => ['prerelease' => true]]);
 });

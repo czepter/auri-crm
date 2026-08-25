@@ -3,12 +3,15 @@
 use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryPrereleaseSignup;
 use App\Gallery\Models\GallerySet;
+use App\Gallery\Notifications\GalleryPrereleasePublished;
 use App\Media\Models\Asset;
 use App\Models\User;
 use App\Policies\ProjectPolicy;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 
 uses(RefreshDatabase::class);
 
@@ -109,6 +112,42 @@ it('routes a project-bound gallery\'s publish check through the project policy, 
     });
 
     expect($this->staff->can('publish', $gallery))->toBeTrue();
+});
+
+// ---------- R42: one mail per pre-release signup, on the publish that ends it ----------
+
+it('clears prerelease_at and mails every unnotified signup on publish', function () {
+    Notification::fake();
+    $this->gallery->forceFill(['prerelease_at' => now()])->save();
+    GalleryPrereleaseSignup::query()->insert([
+        'tenant_id' => $this->gallery->tenant_id, 'gallery_id' => $this->gallery->id,
+        'email' => 'anna@example.test', 'created_at' => now(), 'updated_at' => now(),
+    ]);
+
+    $this->post("/galerien/{$this->gallery->public_id}/veroeffentlichen");
+
+    expect($this->gallery->fresh()->prerelease_at)->toBeNull();
+    Notification::assertSentOnDemand(GalleryPrereleasePublished::class);
+    expect(GalleryPrereleaseSignup::sole()->notified_at)->not->toBeNull();
+});
+
+it('never mails a signup twice, even across two publishes', function () {
+    Notification::fake();
+    $this->gallery->forceFill(['prerelease_at' => now()])->save();
+    GalleryPrereleaseSignup::query()->insert([
+        'tenant_id' => $this->gallery->tenant_id, 'gallery_id' => $this->gallery->id,
+        'email' => 'anna@example.test', 'created_at' => now(), 'updated_at' => now(),
+    ]);
+
+    $this->post("/galerien/{$this->gallery->public_id}/veroeffentlichen");
+
+    Asset::factory()->create([
+        'gallery_id' => $this->gallery->id, 'gallery_set_id' => $this->set->id,
+        'key' => 'galleries/g/second.jpg', 'filename' => 'second.jpg',
+    ]);
+    $this->post("/galerien/{$this->gallery->public_id}/veroeffentlichen");
+
+    Notification::assertSentOnDemandTimes(GalleryPrereleasePublished::class, 1);
 });
 
 it('shuts guests out on withdrawal without touching the standing version', function () {
