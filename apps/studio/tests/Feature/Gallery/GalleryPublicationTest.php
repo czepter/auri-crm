@@ -57,7 +57,7 @@ it('writes a second version when the draft moved', function () {
 it('sees a swap of equal count as a change', function () {
     $this->post("/galerien/{$this->gallery->public_id}/veroeffentlichen");
 
-    $this->gallery->assetRows()->update(['removed_from_draft_at' => now()]);
+    $this->gallery->assets()->update(['removed_from_draft_at' => now()]);
     Asset::factory()->create([
         'gallery_id' => $this->gallery->id, 'gallery_set_id' => $this->set->id,
         'key' => 'galleries/g/c.jpg', 'filename' => 'c.jpg',

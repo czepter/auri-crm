@@ -140,7 +140,7 @@ class Gallery extends Model
         return $this->hasMany(GallerySet::class)->orderBy('position');
     }
 
-    public function assetRows(): HasMany
+    public function assets(): HasMany
     {
         return $this->hasMany(Asset::class);
     }

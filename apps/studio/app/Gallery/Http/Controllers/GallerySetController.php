@@ -31,19 +31,17 @@ class GallerySetController extends Controller
         return back();
     }
 
-    public function update(Request $request, Gallery $gallery, GallerySet $gallerySet): RedirectResponse
+    public function update(Request $request, Gallery $gallery, GallerySet $set): RedirectResponse
     {
         $this->authorize('manageMedia', $gallery);
-        abort_unless($gallerySet->gallery_id === $gallery->id, 404);
-
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:80', Rule::unique('gallery_sets', 'name')
-                ->where('gallery_id', $gallery->id)->ignore($gallerySet->id)],
+                ->where('gallery_id', $gallery->id)->ignore($set->id)],
             'sort_key' => ['sometimes', Rule::in(['taken_at', 'filename'])],
             'sort_dir' => ['sometimes', Rule::in(['asc', 'desc'])],
         ]);
 
-        $gallerySet->update($validated);
+        $set->update($validated);
 
         return back();
     }
@@ -64,28 +62,24 @@ class GallerySetController extends Controller
         return back();
     }
 
-    public function density(Request $request, Gallery $gallery, GallerySet $gallerySet): RedirectResponse
+    public function density(Request $request, Gallery $gallery, GallerySet $set): RedirectResponse
     {
         $this->authorize('manageMedia', $gallery);
-        abort_unless($gallerySet->gallery_id === $gallery->id, 404);
-
         $validated = $request->validate([
             'density' => ['required', Rule::in(['small', 'medium', 'large'])],
         ]);
 
         GalleryGridPref::query()->updateOrCreate(
-            ['user_id' => auth('staff')->id(), 'gallery_set_id' => $gallerySet->id],
+            ['user_id' => auth('staff')->id(), 'gallery_set_id' => $set->id],
             ['density' => $validated['density']],
         );
 
         return back();
     }
 
-    public function destroy(Request $request, Gallery $gallery, GallerySet $gallerySet, DeleteGallerySet $delete): RedirectResponse
+    public function destroy(Request $request, Gallery $gallery, GallerySet $set, DeleteGallerySet $delete): RedirectResponse
     {
         $this->authorize('manageMedia', $gallery);
-        abort_unless($gallerySet->gallery_id === $gallery->id, 404);
-
         if ($gallery->sets()->count() === 1) {
             throw ValidationException::withMessages(['set' => __('gallery.last_set')]);
         }
@@ -96,10 +90,10 @@ class GallerySetController extends Controller
 
         $target = ($validated['target_set_id'] ?? null) === null
             ? null
-            : $gallery->sets()->whereKeyNot($gallerySet->id)
+            : $gallery->sets()->whereKeyNot($set->id)
                 ->where('public_id', $validated['target_set_id'])->firstOrFail();
 
-        $delete($gallerySet, $target);
+        $delete($set, $target);
 
         return back();
     }

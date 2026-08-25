@@ -37,7 +37,7 @@ it('refuses a role without ManageShoots', function () {
 it('serves the record for a gallery with no project', function () {
     $gallery = Gallery::factory()->create(['project_id' => null]);
 
-    $props = props("/galerien/{$gallery->public_id}");
+    $props = props("/galerien/{$gallery->public_id}/einstellungen");
 
     expect($props['siblings'])->toBe([]);
 });

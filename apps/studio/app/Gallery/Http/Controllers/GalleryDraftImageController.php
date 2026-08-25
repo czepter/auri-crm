@@ -44,7 +44,7 @@ class GalleryDraftImageController extends Controller
 
         abort_unless(ImageVariant::isAllowed($width, $format), 422);
 
-        $known = $gallery->assetRows()->inDraft()->where('key', $key)->exists();
+        $known = $gallery->assets()->inDraft()->where('key', $key)->exists();
         abort_unless($known, 404);
 
         return response(ImageVariant::deliver($key, $width, $format), 200, [

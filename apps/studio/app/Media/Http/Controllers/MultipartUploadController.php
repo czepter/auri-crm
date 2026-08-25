@@ -50,7 +50,7 @@ class MultipartUploadController extends Controller
         $set = $gallery->sets()->where('public_id', $validated['gallery_set_id'])->firstOrFail();
 
         $replaces = isset($validated['replaces_asset_id'])
-            ? $gallery->assetRows()->where('public_id', $validated['replaces_asset_id'])->firstOrFail()
+            ? $gallery->assets()->where('public_id', $validated['replaces_asset_id'])->firstOrFail()
             : null;
 
         ['upload' => $upload, 'parts' => $parts] = ($this->startOrResume)(

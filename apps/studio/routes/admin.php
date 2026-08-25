@@ -34,6 +34,7 @@ use App\Gallery\Http\Controllers\GalleryPreviewController;
 use App\Gallery\Http\Controllers\GalleryPublicationController;
 use App\Gallery\Http\Controllers\GalleryRecordController;
 use App\Gallery\Http\Controllers\GallerySetController;
+use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Staff\AbsenceController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
@@ -62,6 +63,7 @@ use App\Settings\Http\Controllers\PortalSettingsController;
 use App\Settings\Http\Controllers\StudioClosureController;
 use App\Settings\Http\Controllers\StudioOnboardingController;
 use App\Settings\Http\Controllers\StudioSettingsController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // A full authentication bypass for local inspection — no password, no MFA
@@ -461,7 +463,31 @@ Route::middleware('audience:staff')->group(function () {
         // wie /pakete/neu über /pakete/{package}.
         Route::get('/galerien/neu', [GalleryIndexController::class, 'create'])->name('galleries.create');
         Route::post('/galerien', [GalleryIndexController::class, 'store'])->name('galleries.store');
-        Route::get('/galerien/{gallery}', [GalleryRecordController::class, 'show'])
+        // Bereich, Set und Einstellungsabschnitt stehen im Pfad, nicht in
+        // einem ref(): sonst wirft jedes Neuladen den Menschen zurueck auf
+        // Bilder/Alle und die Zurueck-Taste verlaesst die Galerie. Das
+        // Projekt macht es seit jeher so (/auftraege/{project}/shootings).
+        //
+        // Reihenfolge zaehlt: die beiden spezielleren Pfade stehen ueber
+        // /{bereich?}, sonst schluckt dessen Platzhalter "bilder" und der
+        // Rest des Pfades faellt weg.
+        //
+        // ->missing() statt einer eigenen Pruefung: ein Lesezeichen auf ein
+        // zusammengelegtes Set soll im Bereich landen, nicht aus der Galerie
+        // werfen. Die Bindung selbst bleibt damit die einzige Stelle, die
+        // Sets aufloest.
+        Route::get('/galerien/{gallery}/bilder/{set}', [GalleryRecordController::class, 'set'])
+            ->scopeBindings()
+            // Der Elternteil ist an dieser Stelle schon gebunden — fehlt er,
+            // steht hier kein Modell und 404 ist die richtige Antwort.
+            ->missing(fn (Request $request) => $request->route('gallery') instanceof Gallery
+                ? redirect()->route('galleries.show', [$request->route('gallery'), 'bilder'])
+                : abort(404))
+            ->name('galleries.show.set');
+        Route::get('/galerien/{gallery}/einstellungen/{abschnitt}', [GalleryRecordController::class, 'section'])
+            ->name('galleries.show.section');
+        Route::get('/galerien/{gallery}/{bereich?}', [GalleryRecordController::class, 'show'])
+            ->whereIn('bereich', ['bilder', 'gestaltung', 'einstellungen', 'aktivitaet'])
             ->name('galleries.show');
         Route::patch('/galerien/{gallery}', [GalleryRecordController::class, 'update'])
             ->name('galleries.update');
@@ -478,15 +504,18 @@ Route::middleware('audience:staff')->group(function () {
             ->name('galleries.preview.link');
         Route::post('/galerien/{gallery}/sets', [GallerySetController::class, 'store'])
             ->name('galleries.sets.store');
-        // Above /sets/{gallerySet}, sonst schluckt die Bindung "reihenfolge"
+        // Above /sets/{set}, sonst schluckt die Bindung "reihenfolge"
         // als public_id.
         Route::patch('/galerien/{gallery}/sets/reihenfolge', [GallerySetController::class, 'reorder'])
             ->name('galleries.sets.reorder');
-        Route::patch('/galerien/{gallery}/sets/{gallerySet}', [GallerySetController::class, 'update'])
+        Route::patch('/galerien/{gallery}/sets/{set}', [GallerySetController::class, 'update'])
+            ->scopeBindings()
             ->name('galleries.sets.update');
-        Route::patch('/galerien/{gallery}/sets/{gallerySet}/dichte', [GallerySetController::class, 'density'])
+        Route::patch('/galerien/{gallery}/sets/{set}/dichte', [GallerySetController::class, 'density'])
+            ->scopeBindings()
             ->name('galleries.sets.density');
-        Route::delete('/galerien/{gallery}/sets/{gallerySet}', [GallerySetController::class, 'destroy'])
+        Route::delete('/galerien/{gallery}/sets/{set}', [GallerySetController::class, 'destroy'])
+            ->scopeBindings()
             ->name('galleries.sets.destroy');
         Route::post('/galerien/{gallery}/uploads', [MultipartUploadController::class, 'store'])
             ->name('galleries.uploads.store');
@@ -518,8 +547,10 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/galerien/{gallery}/bilder', [GalleryAssetController::class, 'remove'])
             ->name('galleries.assets.remove');
         Route::get('/galerien/{gallery}/bilder/{asset}/original', [GalleryAssetController::class, 'original'])
+            ->scopeBindings()
             ->name('galleries.assets.original');
         Route::get('/galerien/{gallery}/bilder/{asset}/vorschau', [GalleryAssetController::class, 'preview'])
+            ->scopeBindings()
             ->name('galleries.assets.preview');
         Route::patch('/galerien/{gallery}/titelbild', [GalleryAssetController::class, 'cover'])
             ->name('galleries.cover');

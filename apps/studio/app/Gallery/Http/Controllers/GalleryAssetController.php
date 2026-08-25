@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 class GalleryAssetController extends Controller
 {
     /**
-     * Foreign ids are silently dropped, not refused: $gallery->assetRows()
+     * Foreign ids are silently dropped, not refused: $gallery->assets()
      * already scopes the update to this gallery, so an id from another
      * gallery matches no row and simply does nothing — the same outcome an
      * explicit refusal would produce for the caller, without a second query
@@ -32,7 +32,7 @@ class GalleryAssetController extends Controller
 
         $set = $gallery->sets()->where('public_id', $validated['gallery_set_id'])->firstOrFail();
 
-        $gallery->assetRows()->whereIn('public_id', $validated['asset_ids'])
+        $gallery->assets()->whereIn('public_id', $validated['asset_ids'])
             ->update(['gallery_set_id' => $set->id]);
 
         return back();
@@ -52,9 +52,9 @@ class GalleryAssetController extends Controller
             'asset_ids.*' => ['string'],
         ]);
 
-        $removed = $gallery->assetRows()->whereIn('public_id', $validated['asset_ids'])->get();
+        $removed = $gallery->assets()->whereIn('public_id', $validated['asset_ids'])->get();
 
-        $gallery->assetRows()->whereIn('public_id', $validated['asset_ids'])
+        $gallery->assets()->whereIn('public_id', $validated['asset_ids'])
             ->update(['removed_from_draft_at' => now()]);
 
         if ($removed->contains(fn (Asset $asset) => $asset->id === $gallery->cover_asset_id)) {
@@ -74,7 +74,7 @@ class GalleryAssetController extends Controller
             'focal_y' => ['nullable', 'integer', 'min:0', 'max:100'],
         ]);
 
-        $asset = $gallery->assetRows()->inDraft()->where('public_id', $validated['asset_id'])->firstOrFail();
+        $asset = $gallery->assets()->inDraft()->where('public_id', $validated['asset_id'])->firstOrFail();
         $changed = $asset->id !== $gallery->cover_asset_id;
 
         $gallery->update([
@@ -91,16 +91,13 @@ class GalleryAssetController extends Controller
      * A short-lived signed S3 URL, never the object itself — otherwise this
      * process buffers whatever the original is, RAW files included.
      *
-     * {asset} binds globally by public_id (no scopeBindings() in this app),
-     * so the ownership check below is load-bearing: without it, a
-     * manageMedia grant on any gallery would reach any other gallery's
-     * asset through this route.
+     * Die Route trägt scopeBindings(): {asset} löst nur innerhalb von
+     * Gallery::assets() auf. Ohne das reichte eine manageMedia-Berechtigung
+     * an irgendeiner Galerie über diesen Pfad an jedes fremde Bild.
      */
     public function original(Gallery $gallery, Asset $asset): RedirectResponse
     {
         $this->authorize('manageMedia', $gallery);
-
-        abort_unless($asset->gallery_id === $gallery->id, 404);
 
         return redirect()->away(Storage::disk('s3')->temporaryUrl($asset->key, now()->addMinutes(5)));
     }
@@ -126,7 +123,6 @@ class GalleryAssetController extends Controller
     {
         $this->authorize('manageMedia', $gallery);
 
-        abort_unless($asset->gallery_id === $gallery->id, 404);
         abort_if($asset->key === null, 404);
 
         $width = (int) $request->query('w');

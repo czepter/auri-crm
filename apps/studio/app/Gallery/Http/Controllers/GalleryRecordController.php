@@ -53,28 +53,64 @@ use Inertia\Response;
  */
 class GalleryRecordController extends Controller
 {
-    public function show(Gallery $gallery): Response
+    /** Die Abschnitte der Einstellungen. Kein Modell, nur fünf Wörter. */
+    private const SECTIONS = ['allgemein', 'zugang', 'download', 'listen', 'kommentare'];
+
+    /**
+     * Drei Eingänge, eine Render-Methode. Ein einziger Eingang mit
+     * `?GallerySet $set = null` ginge nicht: Laravels implizite Bindung
+     * überspringt einen Parameter mit Vorgabewert, der Pfadwert käme als
+     * Zeichenkette an — und weil nie gebunden wird, feuerte auch missing()
+     * nicht.
+     */
+    public function show(Gallery $gallery, string $bereich = 'bilder'): Response
+    {
+        return $this->render($gallery, $bereich, null, null);
+    }
+
+    public function set(Gallery $gallery, GallerySet $set): Response
+    {
+        return $this->render($gallery, 'bilder', $set, null);
+    }
+
+    public function section(Gallery $gallery, string $abschnitt): Response|RedirectResponse
+    {
+        // Ein Lesezeichen auf einen umbenannten Abschnitt landet im Bereich,
+        // nicht auf einer Fehlerseite — der Bereich existiert ja weiter.
+        if (! in_array($abschnitt, self::SECTIONS, true)) {
+            return redirect()->route('galleries.show.section', [$gallery, 'allgemein']);
+        }
+
+        return $this->render($gallery, 'einstellungen', null, $abschnitt);
+    }
+
+    private function render(Gallery $gallery, string $bereich, ?GallerySet $set, ?string $abschnitt): Response
     {
         $this->authorize('manageMedia', $gallery);
 
         RecordVisit::record('galerie', $gallery->public_id, $gallery->title ?? $gallery->project?->name ?? '');
 
         $version = $gallery->currentVersion;
+        // Nur die Zähler: die Spalte braucht sie in jedem Bereich, die Zeilen
+        // selbst nur dort, wo Bilder zu sehen sind.
         $sets = $gallery->sets()
             ->withCount(['assets' => fn ($query) => $query->inDraft()])
-            ->with(['assets' => fn ($query) => $query->inDraft()])
             ->get();
 
         // Same order Gallery::draftAssets() produces — sets by position,
         // each set by its own rule — so Alle in the pictures pane reads the
         // same order a guest would eventually get.
-        $assets = $sets->flatMap(fn (GallerySet $set) => $set->assets
-            ->sortBy([
-                [fn (Asset $a, Asset $b) => ($a->{$set->sort_key} === null) <=> ($b->{$set->sort_key} === null), 'asc'],
-                [$set->sort_key, $set->sort_dir],
-                ['filename', 'asc'],
-            ])
-            ->each(fn (Asset $asset) => $asset->setRelation('set', $set)));
+        $assets = function () use ($sets) {
+            $sets->load(['assets' => fn ($query) => $query->inDraft()]);
+
+            return $sets->flatMap(fn (GallerySet $set) => $set->assets
+                ->sortBy([
+                    [fn (Asset $a, Asset $b) => ($a->{$set->sort_key} === null) <=> ($b->{$set->sort_key} === null), 'asc'],
+                    [$set->sort_key, $set->sort_dir],
+                    ['filename', 'asc'],
+                ])
+                ->each(fn (Asset $asset) => $asset->setRelation('set', $set)));
+        };
         $densities = GalleryGridPref::query()
             ->where('user_id', auth('staff')->id())
             ->whereIn('gallery_set_id', $sets->pluck('id'))
@@ -86,7 +122,7 @@ class GalleryRecordController extends Controller
         // A Completed row with processed_at set already resolved into an
         // Asset (Ready or Failed) and is excluded — this is only the gap
         // between "sent" and "ingest concluded".
-        $pendingUploads = MultipartUpload::query()
+        $pendingUploads = fn () => MultipartUpload::query()
             ->where('gallery_id', $gallery->id)
             ->where('status', '!=', MultipartUploadStatus::Aborted)
             ->whereNull('processed_at')
@@ -95,6 +131,12 @@ class GalleryRecordController extends Controller
             ->get();
 
         return Inertia::render('Galleries/Record', [
+            // Bereich, Set und Abschnitt kommen aus dem Pfad, nicht aus einem
+            // ref() — sonst wirft jedes Neuladen den Menschen zurück auf
+            // Bilder/Alle.
+            'area' => $bereich,
+            'activeSetId' => $set?->public_id,
+            'settingsSection' => $abschnitt ?? 'allgemein',
             'gallery' => [
                 'id' => $gallery->public_id,
                 'title' => $gallery->title,
@@ -132,16 +174,16 @@ class GalleryRecordController extends Controller
             ],
             // The other galleries of the same booking, as a tab row: they are
             // the ones one flips between.
-            'siblings' => $gallery->project_id === null ? [] : Gallery::query()
+            'siblings' => $this->inArea(['einstellungen'], $bereich, fn () => $gallery->project_id === null ? [] : Gallery::query()
                 ->where('project_id', $gallery->project_id)
-                ->withCount(['assetRows as asset_count' => fn ($query) => $query->inDraft()])
+                ->withCount(['assets as asset_count' => fn ($query) => $query->inDraft()])
                 ->get()
                 ->map(fn (Gallery $other) => [
                     'id' => $other->public_id,
                     'title' => $other->title,
                     'assetCount' => $other->asset_count,
                     'open' => $other->id === $gallery->id,
-                ])->all(),
+                ])->all()),
             // The More menu's "Vorlage anwenden" — Create.vue's own copy of
             // this list, seen the other direction: birth reads a preset
             // once into a new gallery's form, this writes one into a
@@ -150,7 +192,7 @@ class GalleryRecordController extends Controller
             'presets' => GalleryPresetData::collect(GalleryPreset::query()->orderBy('name')->get()),
             'figures' => [
                 'published' => $version?->version,
-                'assets' => $assets->count(),
+                'assets' => $sets->sum('assets_count'),
                 'expiresAt' => $gallery->expires_at?->format('Y-m-d'),
                 'marked' => $version === null ? 0 : AssetFavorite::query()->where('gallery_version_id', $version->id)->count(),
                 'downloaded' => $version === null ? 0 : DownloadEvent::query()
@@ -166,7 +208,7 @@ class GalleryRecordController extends Controller
                 'sortDir' => $set->sort_dir,
                 'density' => $densities[$set->id] ?? GalleryGridPref::DEFAULT_DENSITY,
             ])->all(),
-            'assets' => $assets->map(fn (Asset $asset) => [
+            'assets' => $this->inArea(['bilder', 'gestaltung'], $bereich, fn () => $assets()->map(fn (Asset $asset) => [
                 'id' => $asset->public_id,
                 'key' => $asset->key,
                 'setId' => $asset->set->public_id,
@@ -180,14 +222,14 @@ class GalleryRecordController extends Controller
                 // resolve against, and the grid must show pictures long
                 // before the first publish.
                 'src' => "/galerien/{$gallery->public_id}/bilder/{$asset->public_id}/vorschau",
-            ])->all(),
-            'versions' => $gallery->versions()->orderByDesc('version')->get()
+            ])->all()),
+            'versions' => $this->inArea(['einstellungen'], $bereich, fn () => $gallery->versions()->orderByDesc('version')->get()
                 ->map(fn (GalleryVersion $row) => [
                     'version' => $row->version,
                     'publishedAt' => $row->published_at?->format('Y-m-d'),
                     'assetCount' => count($row->assets ?? []),
-                ])->all(),
-            'builds' => $version === null ? [] : ZipBuild::query()
+                ])->all()),
+            'builds' => $this->inArea(['aktivitaet'], $bereich, fn () => $version === null ? [] : ZipBuild::query()
                 ->where('gallery_version_id', $version->id)
                 ->with('parts')
                 ->get()
@@ -197,11 +239,11 @@ class GalleryRecordController extends Controller
                     'status' => $build->status->value,
                     'parts' => $build->parts->count(),
                     'bytes' => (int) $build->parts->sum('byte_size'),
-                ])->all(),
+                ])->all()),
             // Lists carry their owner: gallery_lists.contact_id is set and not
             // nullable, so the sheet shows the person and their selections
             // rather than a heap of nameless picks.
-            'lists' => GalleryList::query()
+            'lists' => $this->inArea(['einstellungen'], $bereich, fn () => GalleryList::query()
                 ->where('gallery_id', $gallery->id)
                 ->with(['contact', 'items'])
                 ->get()
@@ -210,25 +252,38 @@ class GalleryRecordController extends Controller
                     'name' => $list->name,
                     'owner' => $list->contact?->name,
                     'count' => $list->items->count(),
-                ])->all(),
-            'activity' => $this->activity($gallery, $version),
+                ])->all()),
+            'activity' => $this->inArea(['aktivitaet'], $bereich, fn () => $this->activity($gallery, $version)),
             // G-04's "needs attention" tray, formerly the ingest screen's
             // own section — the pictures tab is the only place uploading
             // happens now, so this is where a failed upload gets noticed.
-            'failedAssets' => FailedAssetData::collect(
+            'failedAssets' => $this->inArea(['bilder'], $bereich, fn () => FailedAssetData::collect(
                 Asset::query()->where('gallery_id', $gallery->id)->where('status', AssetStatus::Failed)->oldest()->get(),
-            ),
+            )),
             // Kept out of figures.assets and sets[].count on purpose — those
             // stay the truth about pictures that exist; a number that moves
             // before anything was actually uploaded is worse than a second,
             // separate one (see the pictures pane's own pending section).
-            'pendingUploads' => $pendingUploads->map(fn (MultipartUpload $upload) => [
+            'pendingUploads' => $this->inArea(['bilder'], $bereich, fn () => $pendingUploads()->map(fn (MultipartUpload $upload) => [
                 'id' => $upload->public_id,
                 'setId' => $upload->set->public_id,
                 'filename' => $upload->filename,
                 'stage' => $upload->status === MultipartUploadStatus::InProgress ? 'transferring' : 'processing',
-            ])->all(),
+            ])->all()),
         ]);
+    }
+
+    /**
+     * Ein Wert, wenn sein Bereich offen ist, sonst ein Versprechen darauf.
+     * Inertia holt ihn beim Bereichswechsel als Teillieferung nach, statt die
+     * Aktivität und die ZIP-Archive bei jedem Blick auf die Bilder
+     * mitzuschleppen.
+     *
+     * @param  list<string>  $areas
+     */
+    private function inArea(array $areas, string $current, \Closure $value): mixed
+    {
+        return in_array($current, $areas, true) ? $value() : Inertia::optional($value);
     }
 
     /**

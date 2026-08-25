@@ -183,7 +183,7 @@ it('shows a sibling gallery its real picture count', function () {
     Asset::factory()->create(['gallery_id' => $sibling->id, 'gallery_set_id' => $siblingSet->id]);
     Asset::factory()->create(['gallery_id' => $sibling->id, 'gallery_set_id' => $siblingSet->id]);
 
-    $props = props("/galerien/{$gallery->public_id}");
+    $props = props("/galerien/{$gallery->public_id}/einstellungen");
 
     expect(collect($props['siblings'])->firstWhere('id', $sibling->public_id)['assetCount'])->toBe(2);
 });
@@ -218,7 +218,7 @@ it('keeps the look on the gallery, and leaves it null until somebody chooses', f
 it('carries the three activity sheets', function () {
     $gallery = managedGallery();
 
-    expect(props("/galerien/{$gallery->public_id}")['activity'])
+    expect(props("/galerien/{$gallery->public_id}/aktivitaet")['activity'])
         ->toHaveKeys(['downloads', 'marks', 'comments', 'views']);
 });
 
