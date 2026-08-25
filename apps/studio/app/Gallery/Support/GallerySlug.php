@@ -12,13 +12,16 @@ use Illuminate\Support\Str;
  * Bounds: MIN 3 keeps a shared, un-tenanted namespace from filling with
  * meaningless two-letter handles; MAX 60 keeps a link glanceable in an email
  * or a share sheet while comfortably outliving any real gallery title
- * (`galleries.title` itself caps at 200 — a slug is a compressed address,
- * not a mirror of it).
+ * (`galleries.title` itself caps at 255, Laravel's default string length —
+ * a slug is a compressed address, not a mirror of it).
  *
  * RESERVED is the real, current list of static segments `/galerien/`
  * registers above `{gallery}` in routes/admin.php — a slug equal to one
- * would be a gallery that can never reach its own address. Grows only when
- * a new sibling route joins that file.
+ * would be a gallery that can never reach its own address. Grows with the
+ * file; `extern` is in already, ahead of `/galerien/extern/neu` (not yet a
+ * route — routes/admin.php has no such line today — but scheduled for the
+ * next stage), since a gallery could otherwise slug itself into that word
+ * before the route exists to reject it.
  */
 class GallerySlug
 {
@@ -26,7 +29,7 @@ class GallerySlug
 
     public const MAX = 60;
 
-    public const RESERVED = ['neu'];
+    public const RESERVED = ['neu', 'extern'];
 
     public const PATTERN = '/^[a-z0-9]+(-[a-z0-9]+)*$/';
 

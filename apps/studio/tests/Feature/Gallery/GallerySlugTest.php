@@ -69,6 +69,18 @@ it('refuses a reserved word as a slug', function () {
     expect($gallery->fresh()->slug)->not->toBe('neu');
 });
 
+// Not a route yet (routes/admin.php carries no /galerien/extern/neu today),
+// but the spec schedules it for the next stage — reserved ahead of time so
+// a gallery slugged today never blocks that route from ever existing.
+it('refuses extern as a slug, ahead of the route that will need it', function () {
+    $gallery = Gallery::factory()->create();
+
+    test()->patch("/galerien/{$gallery->public_id}", ['slug' => 'extern'])
+        ->assertSessionHasErrors('slug');
+
+    expect($gallery->fresh()->slug)->not->toBe('extern');
+});
+
 it('refuses a slug already taken by another tenant', function () {
     $gallery = Gallery::factory()->create();
 
