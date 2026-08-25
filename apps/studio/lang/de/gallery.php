@@ -43,4 +43,5 @@ return [
     */
 
     'prerelease_unavailable' => 'Pre-release ist nur vor der ersten Veröffentlichung möglich.',
+    'prerelease_signup_refused' => 'Eintrag nicht möglich.',
 ];
