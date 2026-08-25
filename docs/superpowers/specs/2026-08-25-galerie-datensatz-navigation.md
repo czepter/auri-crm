@@ -55,8 +55,8 @@ Offen ist alles, was unten eine Nummer hat.
 | 49 | Parametername | `{gallerySet}` wird `{set}`. Laravels implizites Scoping rät `Gallery::gallerySets()`, und die Relation heißt `sets()`. Trifft sechs Routen, `GallerySetController` und jeden `route()`-Aufruf |
 | 50 | Scoping | `scopeBindings()` auf die ganze Gruppe, nicht nur auf Sets. `{asset}` in `/bilder/{asset}/original` und `/vorschau` bindet heute mandantenweit (`GalleryAssetController.php:94` schreibt es hin). Dafür braucht `Gallery` eine echte `assets(): HasMany`; `draftAssets()` wird ein Filter darauf statt eines eigenen Aufbaus über `sets()->with()` |
 | 51 | Unbekanntes Segment | Umleitung auf den Einstieg des Bereichs: unbekannter Abschnitt auf `allgemein`, gelöschtes Set auf `/bilder`. Ein Set zusammenzulegen ist Aufräumen, kein Grund, alte Lesezeichen zu vergiften |
-| 52 | Controllerform | Ein Controller, eine Methode, Bereich als Argument. Die teuren Teile werden `Inertia::optional()`, der Bereichswechsel damit ein Partial Reload. Vier Methoden mit vier Inertia-Seiten würden eine Hülle vervierfachen, die es schon gibt |
-| 53 | Was immer lädt | Galerie, Titelbild, Sets mit Zählern, beide Navigationszähler. Auf Abruf: `assets`, `activity`, `builds`, `lists`, `versions`, `presets`, `failedAssets`, `pendingUploads` |
+| 52 | Controllerform | Ein Controller, eine Render-Methode, Bereich als Argument. Die teuren Teile werden `Inertia::optional()`, der Bereichswechsel damit ein Partial Reload. Vier Methoden mit vier Inertia-Seiten würden eine Hülle vervierfachen, die es schon gibt. Davor liegen drei schmale Eingänge (`show`, `set`, `section`), weil Laravels implizite Bindung jeden Parameter mit Vorgabewert überspringt: `?GallerySet $set = null` kam als Zeichenkette an, und weil nie gebunden wurde, feuerte auch `missing()` nicht |
+| 53 | Was immer lädt | Galerie, Titelbild, Sets mit Zählern, beide Navigationszähler — dazu `presets`: das *Mehr*-Menü steht im Kopf über allen Bereichen und blendet seinen Eintrag an `presets.length` ein. Auf Abruf: `assets` (Bilder und Gestaltung), `activity` und `builds` (Aktivität), `lists`, `versions` und `siblings` (Einstellungen), `failedAssets` und `pendingUploads` (Bilder) |
 
 ### Zähler
 
@@ -104,9 +104,11 @@ Offen ist alles, was unten eine Nummer hat.
 
 ## Tests
 
-- Scoping: die `public_id` eines fremden Sets und eines fremden Bildes unter
-  der eigenen Galerie-URL antworten 404. Ohne diesen Test fällt `scopeBindings`
-  wieder ab, ohne dass es auffällt.
+- Scoping: die `public_id` eines fremden Bildes unter der eigenen Galerie-URL
+  antwortet 404, die eines fremden Sets landet auf `/bilder` — dieselbe
+  Antwort wie ein gelöschtes Set, also verrät sie nicht, ob es das fremde
+  gibt. Ohne diesen Test fällt `scopeBindings` wieder ab, ohne dass es
+  auffällt.
 - Umleitung: gelöschtes Set → `/bilder`, unbekannter Abschnitt → `allgemein`.
 - Zähler: Entwurf ohne Zähler; nach der ersten Fassung die Fassungszahl;
   zehn Bilder mehr im Entwurf ergeben `220 → 230`; zurückgenommen behält die
@@ -114,8 +116,10 @@ Offen ist alles, was unten eine Nummer hat.
 - Titelbild: nach dem letzten Ingest steht das alphabetisch erste Bild;
   ein zweiter Stapel überschreibt es nicht; Titelbild löschen rückt nach;
   das Set mit dem Titelbild löschen rückt nach.
-- SSR `RecordNav`: ein Set ohne `Alle`, ab zwei mit; ohne `cover` der
-  gestrichelte Platz, und zwar in jedem Bereich.
+- SSR `RecordNav`: Kinder nur im offenen Bereich; ein Set-Name steht wie
+  getippt da, ein Schlüssel geht durch den Katalog; das zweite Zahl nur bei
+  Abweichung; die Breite kommt als Variable, nicht als `style="width"` —
+  sonst schlägt sie jede Klasse und die Spalte klappt nie um.
 
 ## Nicht enthalten
 

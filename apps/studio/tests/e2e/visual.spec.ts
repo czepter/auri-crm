@@ -245,7 +245,14 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     // Links, not buttons: which area is open is a fact of the path now, so
     // each one is a real navigation and the shot has to wait for it.
     for (const tab of ['Gestaltung', 'Einstellungen', 'Aktivität']) {
-      await page.getByRole('link', { name: tab, exact: true }).first().click()
+      // In der Datensatzspalte gesucht, nicht auf der ganzen Seite: die
+      // Seitenleiste trägt ebenfalls einen Eintrag „Einstellungen". Und mit
+      // Präfix statt exakt, weil der zugängliche Name den Zähler enthält —
+      // „Aktivität 41" ist nicht „Aktivität".
+      await page
+        .locator('nav[style*="--record-nav-width"]')
+        .getByRole('link', { name: new RegExp(`^${tab}`) })
+        .click()
       await page.waitForLoadState('networkidle')
       await page.waitForFunction(() => document.fonts.status === 'loaded')
       await expect.soft(page).toHaveScreenshot(`galerie-${tab.toLowerCase()}.png`, {
