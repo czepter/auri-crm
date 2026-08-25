@@ -107,3 +107,88 @@ it('refuses another gallery\'s asset on the draft image route, even with a valid
     $this->get("/api/galleries/{$this->gallery->public_id}/entwurf-bilder/{$foreign->key}?w=400&fmt=jpeg&preview=".urlencode($token))
         ->assertNotFound();
 });
+
+// R35 (fix round 1, Critical 1): the defect that shipped — EnsureGalleryPass
+// treated a valid preview pass as satisfying its whole gate, so a 30-day
+// preview link pasted onto a *published*, password-protected gallery's
+// other routes read and wrote guest comments/favorites and fetched version
+// images, without the password. The pass is scoped to two routes
+// (GalleryReadController, GalleryDraftImageController, both of which check
+// it themselves) and must reach nothing else — not via the query string, on
+// any route in the gallery.pass group.
+it('never lets a valid preview pass open a password-gated gallery\'s comments, favorites or version images', function () {
+    useSurface(Surface::API);
+
+    $set = GallerySet::where('gallery_id', $this->gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $this->gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg']);
+    $version = $this->gallery->fresh()->publish();
+    $this->gallery->rotateViewPassword('geheimnis');
+
+    $token = app(GalleryPreviewPass::class)->issue($this->gallery->fresh(), GalleryPreviewPass::BUTTON_MINUTES);
+    $q = '?preview='.urlencode($token);
+
+    $this->getJson("/api/gallery-versions/{$version->public_id}/images/galleries/g1/a.jpg{$q}")->assertNotFound();
+    $this->postJson("/api/gallery-versions/{$version->public_id}/favorites/galleries/g1/a.jpg{$q}")->assertNotFound();
+    $this->postJson("/api/gallery-versions/{$version->public_id}/comments{$q}", [])->assertNotFound();
+});
+
+// Same boundary, the other closed door: G-14 withdrawal. A preview pass
+// proving the studio meant to show the *draft* is not a reason to reopen a
+// withdrawn gallery's *published* routes.
+it('never lets a valid preview pass open a withdrawn gallery\'s comments, favorites or version images', function () {
+    useSurface(Surface::API);
+
+    $set = GallerySet::where('gallery_id', $this->gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $this->gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg']);
+    $version = $this->gallery->fresh()->publish();
+    $this->gallery->forceFill(['unpublished_at' => now()])->save();
+
+    $token = app(GalleryPreviewPass::class)->issue($this->gallery->fresh(), GalleryPreviewPass::BUTTON_MINUTES);
+    $q = '?preview='.urlencode($token);
+
+    $this->getJson("/api/gallery-versions/{$version->public_id}/images/galleries/g1/a.jpg{$q}")->assertNotFound();
+    $this->postJson("/api/gallery-versions/{$version->public_id}/favorites/galleries/g1/a.jpg{$q}")->assertNotFound();
+    $this->postJson("/api/gallery-versions/{$version->public_id}/comments{$q}", [])->assertNotFound();
+});
+
+// The gallery binding: opens() carries public_id inside the signed
+// payload, so a token minted for one gallery must refuse another's draft —
+// and refuse it exactly as an absent token would (404, not a distinguishable
+// error), on both routes that honour a preview pass at all.
+it('refuses a preview pass minted for a different gallery, on both routes that honour one', function () {
+    useSurface(Surface::API);
+
+    $other = Gallery::factory()->create();
+    $set = GallerySet::where('gallery_id', $other->id)->first();
+    $asset = Asset::factory()->create(['gallery_id' => $other->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g2/a.jpg']);
+
+    $tokenForThisGallery = app(GalleryPreviewPass::class)->issue($this->gallery, GalleryPreviewPass::BUTTON_MINUTES);
+    $q = '?preview='.urlencode($tokenForThisGallery);
+
+    $withToken = $this->getJson("/api/galleries/{$other->public_id}{$q}");
+    $withoutToken = $this->getJson("/api/galleries/{$other->public_id}");
+    expect($withToken->status())->toBe($withoutToken->status())->and($withToken->status())->toBe(404);
+
+    $imageWithToken = $this->get("/api/galleries/{$other->public_id}/entwurf-bilder/{$asset->key}?w=400&fmt=jpeg{$q}");
+    $imageWithoutToken = $this->get("/api/galleries/{$other->public_id}/entwurf-bilder/{$asset->key}?w=400&fmt=jpeg");
+    expect($imageWithToken->status())->toBe($imageWithoutToken->status())->and($imageWithToken->status())->toBe(404);
+});
+
+// Minor (fix round 1): `?preview[]=x` reaches opens(?string) as a raw
+// array — explode() on that fatals into a 500, breaking the uniform-failure
+// rule the rest of this stage worked to establish. Both routes that read
+// the preview query parameter must answer the same 404 an absent or
+// malformed token gets, never a 500.
+it('answers an array preview parameter with a 404, not a 500', function () {
+    useSurface(Surface::API);
+
+    $this->getJson("/api/galleries/{$this->gallery->public_id}?preview[]=x")->assertNotFound();
+
+    Storage::fake('s3');
+    $set = GallerySet::where('gallery_id', $this->gallery->id)->first();
+    $asset = Asset::factory()->create(['gallery_id' => $this->gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg']);
+    Storage::disk('s3')->put($asset->key, 'irrelevant');
+
+    $this->get("/api/galleries/{$this->gallery->public_id}/entwurf-bilder/{$asset->key}?w=400&fmt=jpeg&preview[]=x")
+        ->assertNotFound();
+});

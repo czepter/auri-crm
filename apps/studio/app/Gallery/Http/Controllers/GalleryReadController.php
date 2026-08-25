@@ -23,6 +23,13 @@ use Illuminate\Http\Request;
  * the version branch because it answers a structurally different question
  * (no GalleryVersion exists yet) with a structurally different response.
  *
+ * R35: this is the check for a preview pass, full stop — EnsureGalleryPass
+ * (the `gallery.pass` middleware this route still sits behind) knows
+ * nothing about GalleryPreviewPass. A gallery that also requires a view
+ * password still closes on the middleware before a preview attempt ever
+ * reaches here; a preview pass authorises a look at this one gallery's
+ * draft, not a way around its password.
+ *
  * The image bytes those assets point at are the opposite — see
  * GalleryImageController — because a GalleryVersion, once published, never
  * changes what it contains. A draft's bytes are the opposite of that too:
@@ -41,7 +48,10 @@ class GalleryReadController extends Controller
 {
     public function __invoke(Request $request, Gallery $gallery, GalleryPreviewPass $previewPass): JsonResponse
     {
-        if ($previewPass->opens($gallery, $request->query('preview'))) {
+        // is_string(), not a raw query('preview'): see GalleryDraftImageController's
+        // own comment on why an array here must not reach opens() raw.
+        $preview = $request->query('preview');
+        if ($previewPass->opens($gallery, is_string($preview) ? $preview : null)) {
             return $this->draft($gallery);
         }
 

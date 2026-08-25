@@ -24,6 +24,17 @@ use Illuminate\Support\Facades\Config;
  * protects. The leading "preview" literal folded into the signed payload
  * keeps the two token shapes structurally distinct even though both are
  * HMACs over the same app.key.
+ *
+ * R35: a pass this class opens() true for authorises exactly two things —
+ * reading one gallery's draft (GalleryReadController) and fetching one of
+ * its draft images (GalleryDraftImageController). Nothing else. It is
+ * deliberately not wired into EnsureGalleryPass or any other shared gate:
+ * a Critical fix round found it doing so let a draft-preview link read and
+ * write comments and favourites, and read version images, on that same
+ * gallery's *published*, password-protected side. A future route that
+ * wants to honour this token too must call opens() itself and argue with
+ * this sentence, not inherit the permission by sitting in a middleware
+ * group this pass happens to satisfy.
  */
 class GalleryPreviewPass
 {

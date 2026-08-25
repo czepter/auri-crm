@@ -49,23 +49,28 @@ Route::post('/galleries/{gallery}/passwort', GalleryPassController::class)->name
 // as a signed bearer instead (GalleryViewPass). A gallery with no password
 // needs none. Without this the password protected one screen and left both
 // the asset list and the bytes open to anyone holding an id.
+// R35: a GalleryPreviewPass authorises exactly two things — reading the
+// draft (GalleryReadController, below) and fetching a draft image (here).
+// Standalone, not inside `gallery.pass`: that middleware guards a whole
+// group of version-scoped routes (favorites, comments, version images) a
+// preview pass has no business opening, and this route checks its own pass
+// regardless — see GalleryDraftImageController's own doc comment.
+Route::get('/galleries/{gallery}/entwurf-bilder/{key}', GalleryDraftImageController::class)
+    ->where('key', '.*')
+    ->name('api.galleries.draft-images.show');
+
 Route::middleware('gallery.pass')->group(function () {
     // Implicit binding, not {gallery:public_id}: apps/gallery's own /g/{id}
     // route accepts a slug or a public_id (Gallery::resolveRouteBinding()),
     // and this is the read call it makes with whichever one is in the URL.
+    // R35: its own GalleryPreviewPass check (see the controller) runs
+    // inside this group, so a gallery that also requires a password still
+    // closes a plain preview attempt with no view pass — a preview token
+    // is not a substitute for the password gate on every other route here.
     Route::get('/galleries/{gallery}', GalleryReadController::class)->name('api.galleries.show');
     Route::get('/gallery-versions/{galleryVersion:public_id}/images/{key}', GalleryImageController::class)
         ->where('key', '.*')
         ->name('api.gallery-versions.images.show');
-
-    // R31/spec decision 26: a draft has no GalleryVersion to address image
-    // bytes by, so this is its own route rather than a version id faked up
-    // to satisfy GalleryImageController's shape. Checks its own
-    // GalleryPreviewPass rather than trusting this group's own gate — see
-    // the controller's own doc comment.
-    Route::get('/galleries/{gallery}/entwurf-bilder/{key}', GalleryDraftImageController::class)
-        ->where('key', '.*')
-        ->name('api.galleries.draft-images.show');
 
     // The first browser-originated calls this surface serves (the two routes
     // above are only ever hit server-side, by Astro's own SSR fetch, or from

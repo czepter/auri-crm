@@ -15,9 +15,11 @@ use Illuminate\Http\Response;
  * published — the whole reason its response can claim `immutable`. A draft
  * has no version to address by, and its bytes are the opposite of
  * immutable: a picture can be replaced or pulled from the draft at any
- * moment. So this route is scoped to the Gallery itself, checks its own
- * GalleryPreviewPass on every request rather than deferring to
- * EnsureGalleryPass's password gate, and answers no-store.
+ * moment. So this route is scoped to the Gallery itself, sits outside the
+ * `gallery.pass` middleware group entirely (routes/api.php — R35: that
+ * group's own password gate has no business being satisfiable by a
+ * preview pass), checks its own GalleryPreviewPass on every request, and
+ * answers no-store.
  *
  * $key must belong to this gallery's own draft — not merely exist on the
  * disk — for the same reason GalleryImageController pins $key to the
@@ -29,7 +31,13 @@ class GalleryDraftImageController extends Controller
 {
     public function __invoke(Request $request, Gallery $gallery, string $key, GalleryPreviewPass $pass): Response
     {
-        abort_unless($pass->opens($gallery, $request->query('preview')), 404);
+        // is_string(), not a raw query('preview'): a ?preview[]=x arrives as an
+        // array, and opens(?string) exploding one would fatal into a 500 — the
+        // uniform-failure rule this stage worked to establish. Treated the same
+        // as no token at all, not coerced (PHP's array-to-string cast raises a
+        // warning PHPUnit's own handler turns back into a fatal).
+        $preview = $request->query('preview');
+        abort_unless($pass->opens($gallery, is_string($preview) ? $preview : null), 404);
 
         $width = (int) $request->query('w');
         $format = (string) $request->query('fmt');
