@@ -121,9 +121,13 @@ function onKey(event: KeyboardEvent) {
   if (intent === 'next') step(1)
 }
 
-// Fetched once the first picture opens rather than on page load: a visitor
-// who only scrolls the grid never asks for either.
 watch(open, (value, previous) => {
+  // sendComment reads the asset key at send time, so a draft that outlives
+  // the picture it was typed under would file against the next one.
+  draft.value = ''
+
+  // Fetched once the first picture opens rather than on page load: a visitor
+  // who only scrolls the grid never asks for either.
   if (value !== null && previous === null) load()
 })
 

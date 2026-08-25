@@ -150,6 +150,9 @@ export function initLightbox({ assets, apiBase, imageBase, gate, versionPublicId
 
   const open = (i: number): void => {
     index = i
+    // postComment reads the key at send time, so a draft that outlives the
+    // picture it was typed under would file against the next one.
+    if (commentInput) commentInput.value = ''
     render()
     root.classList.add('open')
     document.body.style.overflow = 'hidden'
