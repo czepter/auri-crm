@@ -174,14 +174,17 @@ Beim Namen genannt, damit die Lücke eine Entscheidung ist und kein Versehen:
   und in `onUnmounted` auf, es gibt nichts zu sichern.
 - **`portal/lib/studio.ts`, `initials.ts`.** `reachable()` ist ein Einzeiler
   mit drei ODER-Zweigen. Ein Test dafür hebt die Zahl und senkt kein Risiko.
+- **Der Stale-Guard aus §3.** `isCurrent(requested, current)` reduziert auf
+  `===`; ein Test dafür kann nicht aus dem Grund brechen, den er zu prüfen
+  behauptet, und bleibt deshalb ungeschrieben.
 
 ## §6 Fertig heißt
 
 - `portal/lib/images.ts` und `portal/lib/lightbox.ts` existieren, je mit
   Nachbartest; `WIDTHS` und `srcSet` stehen in keiner `.vue` mehr
 - Pfeiltasten bewegen das Bild nicht, während der Kommentarentwurf Fokus hat
-- `apps/gallery/src/lib/lightbox.ts` hat einen Nachbartest über Umlauf,
-  Tastenabgabe und Stale-Guard
+- `apps/gallery/src/lib/lightbox.ts` hat einen Nachbartest über Umlauf und
+  Tastenabgabe
 - kein neues Paket in einer `package.json`, beide Vitest-Configs weiter auf
   `environment: 'node'`
 - `pnpm lint` und `pnpm test` grün, Pest grün (`-e APP_SURFACE=admin`)
