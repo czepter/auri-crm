@@ -136,7 +136,10 @@ class GalleryRecordController extends Controller
             // ref() — sonst wirft jedes Neuladen den Menschen zurück auf
             // Bilder/Alle.
             'area' => $bereich,
-            'activeSetId' => $set?->public_id,
+            // Bei genau einem Set ist die nackte URL dieses Set. „Alle"
+            // gibt es dann nicht, und ohne aktives Set wäre die Dropzone
+            // ohne Ziel — das war R22.
+            'activeSetId' => $set?->public_id ?? ($sets->count() === 1 ? $sets->first()->public_id : null),
             'settingsSection' => $abschnitt ?? 'allgemein',
             'nav' => GalleryNavData::build($gallery->loadMissing('coverAsset'), $sets, $version),
             'gallery' => [

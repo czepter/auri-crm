@@ -37,7 +37,7 @@ const soloAssets = [{ id: '1', key: 'a.jpg', setId: 'a', filename: 'a.jpg', src:
 const solo = { gallery, sets: soloSet, assets: soloAssets, failedAssets: [], pendingUploads: [] }
 
 describe('Images', () => {
-  // R22: a freshly created gallery has exactly one set, and GalleryRail
+  // R22: a freshly created gallery has exactly one set, and the record column
   // hides Alle along with the rest of its row list while there is only
   // one — so this is the state every gallery starts in, not an edge case.
   it('a gallery with only one set: heads with its name, offers the drop zone and the density control', async () => {

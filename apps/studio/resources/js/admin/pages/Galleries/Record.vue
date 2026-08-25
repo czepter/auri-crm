@@ -11,8 +11,7 @@ import { Label } from '@/ui/label'
 import { NativeSelect } from '@/ui/native-select'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
-import GalleryRail from '@/admin/components/gallery/GalleryRail.vue'
-import { initialActiveSetId, nextActiveSetId } from '@/admin/lib/gallerySets'
+import GalleryNav from '@/admin/components/gallery/GalleryNav.vue'
 import { publishLabelKey, showPublish as showPublishRule, showWithdraw as showWithdrawRule } from '@/admin/lib/galleryPublish'
 import { xsrfHeader } from '@/admin/lib/multipartUpload'
 import Images from '@/admin/pages/Galleries/panes/Images.vue'
@@ -20,7 +19,10 @@ import Settings from '@/admin/pages/Galleries/panes/Settings.vue'
 
 const { t } = useI18n()
 
-const props = defineProps<{
+// Was nicht zum offenen Bereich gehört, reist nicht mit — Inertia holt es
+// beim Wechsel als Teillieferung nach. Deshalb sind diese Blätter optional
+// und nicht etwa manchmal leer.
+const props = withDefaults(defineProps<{
   gallery: {
     id: string
     title: string | null
@@ -41,7 +43,7 @@ const props = defineProps<{
     isExternal: boolean
     canPublish: boolean
   }
-  siblings: { id: string; title: string | null; assetCount: number; open: boolean }[]
+  siblings?: { id: string; title: string | null; assetCount: number; open: boolean }[]
   presets: App.Gallery.Data.GalleryPresetData[]
   figures: {
     published: number | null
@@ -52,30 +54,42 @@ const props = defineProps<{
     viewed: number
   }
   sets: { id: string; name: string; count: number; sortKey: string; sortDir: string; density: string }[]
-  assets: { id: string; key: string; setId: string; src: string; filename: string; width: number; height: number; isCover: boolean }[]
-  versions: { version: number; publishedAt: string | null; assetCount: number }[]
-  builds: { id: string; size: string; status: string; parts: number; bytes: number }[]
-  lists: { id: string; name: string | null; owner: string | null; count: number }[]
-  activity: {
+  assets?: { id: string; key: string; setId: string; src: string; filename: string; width: number; height: number; isCover: boolean }[]
+  versions?: { version: number; publishedAt: string | null; assetCount: number }[]
+  builds?: { id: string; size: string; status: string; parts: number; bytes: number }[]
+  lists?: { id: string; name: string | null; owner: string | null; count: number }[]
+  activity?: {
     downloads: { who: string; what: string | null; size: string | null; on: string | null }[]
     marks: { who: string | null; what: string; on: string }[]
     comments: { who: string | null; what: string; on: string }[]
     views: { who: string | null; on: string }[]
   }
-  failedAssets: { publicId: string; filename: string; error: string }[]
-  pendingUploads: { id: string; setId: string; filename: string; stage: 'transferring' | 'processing' }[]
-}>()
+  failedAssets?: { publicId: string; filename: string; error: string }[]
+  pendingUploads?: { id: string; setId: string; filename: string; stage: 'transferring' | 'processing' }[]
+  // Bereich, Set und Abschnitt kommen aus dem Pfad. Als ref() warf jedes
+  // Neuladen den Menschen zurück auf Bilder/Alle.
+  nav: App.Gallery.Data.GalleryNavData
+  area: 'bilder' | 'gestaltung' | 'einstellungen' | 'aktivitaet'
+  activeSetId: string | null
+  settingsSection: 'allgemein' | 'zugang' | 'download' | 'listen' | 'kommentare'
+}>(), {
+  siblings: () => [],
+  assets: () => [],
+  versions: () => [],
+  builds: () => [],
+  lists: () => [],
+  activity: () => ({ downloads: [], marks: [], comments: [], views: [] }),
+  failedAssets: () => [],
+  pendingUploads: () => [],
+})
 
-const tab = ref<'bilder' | 'gestaltung' | 'einstellungen' | 'aktivitaet'>('bilder')
-const settingsSection = ref<'allgemein' | 'zugang' | 'download' | 'listen' | 'kommentare'>('allgemein')
+const tab = computed(() => props.area)
 
 // C-20 (#257): three sheets, because the questions differ — who took
 // something, who marked something, who was here at all.
 const SHEETS = ['downloads', 'marks', 'views'] as const
 const sheet = ref<string>('downloads')
 
-const activeSetId = ref<string | null>(initialActiveSetId(props.sets))
-const coverSrc = computed(() => props.assets.find((asset) => asset.isCover)?.src ?? null)
 
 const publishState = computed(() => ({
   deviates: props.gallery.deviates,
@@ -218,11 +232,6 @@ function applyPreset() {
     onSuccess: () => (applyingPreset.value = false),
   })
 }
-
-watch(
-  () => props.sets,
-  (rows) => (activeSetId.value = nextActiveSetId(rows, activeSetId.value)),
-)
 
 const setError = ref<{ id: string; message: string } | null>(null)
 
@@ -389,14 +398,12 @@ function megabytes(bytes: number) {
       </Dialog>
 
       <div class="flex">
-        <GalleryRail
-          v-model:tab="tab"
-          v-model:active-set-id="activeSetId"
-          v-model:settings-section="settingsSection"
-          :cover-src="coverSrc"
-          :sets="sets"
+        <GalleryNav
+          :nav="nav"
+          :area="area"
+          :active-set-id="activeSetId"
           :error="setError"
-          :offers="gallery.offers"
+          :gallery-id="gallery.id"
           @create="createSet"
           @rename="renameSet"
           @remove="removeSet"
@@ -478,7 +485,7 @@ function megabytes(bytes: number) {
 
         <!-- Einstellungen: Pixieset's General Settings shape — a
              sub-navigation in the rail, one labelled section at a time here. -->
-        <div v-else-if="tab === 'einstellungen'" class="min-w-0 flex-1 px-8 pt-7 pb-8">
+        <div v-else-if="tab === 'einstellungen'" class="flex min-w-0 flex-1 px-8 pt-7 pb-8">
           <Settings :gallery="gallery" :siblings="siblings" :versions="versions" :lists="lists" :settings-section="settingsSection" />
         </div>
 

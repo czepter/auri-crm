@@ -9,7 +9,8 @@
     "close": "Schließen",
     "calendar": "Kalender",
     "unitMinutes": "Min.",
-    "unitDays": "Tage"
+    "unitDays": "Tage",
+    "rename": "Umbenennen"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -1304,6 +1305,7 @@
     "slugHint": "Alte Links bleiben gültig.",
     "slugTaken": "Diese Adresse ist schon vergeben.",
     "slugFormat": "Nur Kleinbuchstaben, Ziffern und Bindestriche.",
-    "eventDate": "Termin"
+    "eventDate": "Termin",
+    "chooseCover": "Bild wählen"
   }
 }

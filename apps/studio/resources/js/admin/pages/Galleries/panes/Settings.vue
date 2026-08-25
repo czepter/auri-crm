@@ -5,6 +5,7 @@ import { Input } from '@/ui/input'
 import { DatePicker } from '@/ui/date-picker'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
+import { Link } from '@inertiajs/vue3'
 import GalleryAccess from '@/admin/components/gallery/GalleryAccess.vue'
 import { addressPrefix } from '@/admin/lib/galleryAddress'
 import { decideExpiryOnBlur } from '@/admin/lib/galleryExpiry'
@@ -29,6 +30,18 @@ const props = defineProps<{
   lists: { id: string; name: string | null; owner: string | null; count: number }[]
   settingsSection: 'allgemein' | 'zugang' | 'download' | 'listen' | 'kommentare'
 }>()
+
+const SECTIONS = ['allgemein', 'zugang', 'download', 'listen', 'kommentare'] as const
+
+// Drei der fünf Abschnitte sind Schalter — ihr Zustand steht in der Zeile,
+// die zu ihnen führt, statt erst dahinter.
+const pill = computed<Record<string, boolean | null>>(() => ({
+  allgemein: null,
+  zugang: null,
+  download: props.gallery.offers.downloads,
+  listen: props.gallery.offers.lists,
+  kommentare: props.gallery.offers.comments,
+}))
 
 // Allgemein: the address and the expiry, the two facts a studio actually
 // changes after a gallery already exists.
@@ -79,6 +92,29 @@ function day(iso: string | null) {
 </script>
 
 <template>
+  <!-- Zwei Spalten, und beide tragen etwas: links die Abschnitte mit ihrem
+       Zustand, rechts der eine, an dem gerade gearbeitet wird. Unter 900px
+       legt sich die linke hin — drei Spalten nebeneinander gibt es dort
+       nicht mehr. -->
+  <div class="flex min-w-0 flex-1 gap-5 max-[900px]:flex-col">
+    <nav class="flex w-[184px] flex-none flex-col gap-px max-[900px]:w-full max-[900px]:flex-row max-[900px]:overflow-x-auto">
+      <Link
+        v-for="name in SECTIONS"
+        :key="name"
+        class="flex items-center gap-2 rounded-lg px-3 py-2 text-[12.5px] whitespace-nowrap no-underline"
+        :class="settingsSection === name ? 'bg-sunk-2 font-semibold text-foreground' : 'text-foreground'"
+        :href="`/galerien/${gallery.id}/einstellungen/${name}`"
+      >
+        {{ $t(`galleryRecord.settingsNav.${name}`) }}
+        <span
+          v-if="pill[name] !== null"
+          class="ml-auto rounded-[var(--r-sm)] px-1.5 py-[2px] text-[9.5px] leading-[1.5] font-semibold tracking-[0.04em] uppercase"
+          :class="pill[name] ? 'bg-ok-bg text-ok' : 'bg-sunk-2 text-faint'"
+        >{{ pill[name] ? $t('galleryPresets.on') : $t('galleryPresets.off') }}</span>
+      </Link>
+    </nav>
+
+    <div class="min-w-0 flex-1">
   <!-- balance_settled is a state out of the payments, never a switch —
        it stands as a value beside the block it causes. -->
   <p v-if="gallery.requiresSettledBalance && !gallery.balanceSettled" class="mb-5 text-[11.5px] leading-[1.45] text-faint">
@@ -167,4 +203,6 @@ function day(iso: string | null) {
       <Label variant="inline" for="cb-offer-comments">{{ $t('gallerySettings.commentsLabel') }}</Label>
     </div>
   </template>
+  </div>
+  </div>
 </template>

@@ -213,6 +213,15 @@ key: string,
 label: string,
 href: string,
 count: number | null,
+countTo: number | null,
+children: {
+key: string,
+label: string,
+translate: boolean,
+href: string,
+count: number | null,
+reorderable: boolean,
+}[],
 }[],
 };
 export type ProjectPersonData = {
@@ -403,6 +412,24 @@ export type StaffRole = 'owner' | 'photographer' | 'second_shooter' | 'editor' |
 }
 namespace Gallery {
 namespace Data {
+export type GalleryNavData = {
+cover: string | null,
+tabs: {
+key: string,
+label: string,
+href: string,
+count: number | null,
+countTo: number | null,
+children: {
+key: string,
+label: string,
+translate: boolean,
+href: string,
+count: number | null,
+reorderable: boolean,
+}[],
+}[],
+};
 export type GalleryPresetData = {
 id: string,
 name: string,
