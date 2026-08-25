@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
 import { DatePicker } from '@/ui/date-picker'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
-import { Button } from '@/ui/button'
-import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import GalleryAccess from '@/admin/components/gallery/GalleryAccess.vue'
 import { addressPrefix } from '@/admin/lib/galleryAddress'
 import { decideExpiryOnBlur } from '@/admin/lib/galleryExpiry'
@@ -75,18 +73,6 @@ function saveOffers() {
   offers.patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
 }
 
-// Der Weg, den man tatsaechlich geht: eine Galerie einrichten, bis sie sitzt,
-// und dann festhalten, womit die naechste anfangen soll.
-const savingPreset = ref(false)
-const presetForm = useForm({ name: props.gallery.title ?? '' })
-
-function saveAsPreset() {
-  presetForm.post(`/galerien/${props.gallery.id}/vorlage`, {
-    preserveScroll: true,
-    onSuccess: () => (savingPreset.value = false),
-  })
-}
-
 function day(iso: string | null) {
   return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
 }
@@ -140,35 +126,6 @@ function day(iso: string | null) {
         <span class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ day(version.publishedAt) }}</span>
       </div>
     </div>
-
-    <Dialog v-model:open="savingPreset">
-      <DialogTrigger as-child>
-        <Button type="button" variant="pill-muted">{{ $t('galleryRecord.saveAsPreset') }}</Button>
-      </DialogTrigger>
-
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{{ $t('galleryRecord.saveAsPreset') }}</DialogTitle>
-        </DialogHeader>
-
-        <DialogBody>
-          <form id="gallery-preset-form" class="flex flex-col gap-1.5" @submit.prevent="saveAsPreset">
-            <Label for="preset-name">{{ $t('galleryPresets.nameField') }}</Label>
-            <Input id="preset-name" v-model="presetForm.name" type="text" maxlength="120" />
-            <p v-if="presetForm.errors.name" class="text-[11.5px] leading-[1.45] text-destructive">{{ presetForm.errors.name }}</p>
-          </form>
-        </DialogBody>
-
-        <DialogFooter>
-          <Button type="submit" form="gallery-preset-form" :disabled="presetForm.processing || presetForm.name === ''">
-            {{ $t('common.save') }}
-          </Button>
-          <DialogClose as-child>
-            <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
-          </DialogClose>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   </template>
 
   <GalleryAccess v-else-if="settingsSection === 'zugang'" :gallery="gallery" :siblings="siblings" />

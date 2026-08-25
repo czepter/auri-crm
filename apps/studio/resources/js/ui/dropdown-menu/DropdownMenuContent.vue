@@ -19,7 +19,11 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
 </script>
 
 <template>
-  <DropdownMenuPortal>
+  <!-- force-mount forwards to the Portal, not just the Content: reka-ui's
+       Teleport only mounts once useMounted() flips post-hydration, so a
+       forceMount on Content alone still renders nothing server-side —
+       Presence sees present=true but has nothing to teleport into yet. -->
+  <DropdownMenuPortal :force-mount="props.forceMount">
     <!-- The popover's panel, minus its padding: a menu pads its items. -->
     <DropdownMenuContent
       data-slot="dropdown-menu-panel"
