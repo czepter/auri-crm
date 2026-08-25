@@ -37,6 +37,7 @@ const props = defineProps<{
     offers: { downloads: boolean; lists: boolean; comments: boolean }
     deviates: boolean
     withdrawn: boolean
+    prerelease: boolean
     canPublish: boolean
   }
   siblings: { id: string; title: string | null; assetCount: number; open: boolean }[]
@@ -91,6 +92,19 @@ function publish() {
 
 function withdraw() {
   router.delete(`/galerien/${props.gallery.id}/veroeffentlichung`, { preserveScroll: true })
+}
+
+// R39: only offerable before the first publish — the same state the
+// GalleryPrereleaseController guard checks server-side.
+const showStartPrerelease = computed(() => props.gallery.canPublish && !props.gallery.prerelease && props.figures.published === null)
+const showStopPrerelease = computed(() => props.gallery.canPublish && props.gallery.prerelease)
+
+function startPrerelease() {
+  router.post(`/galerien/${props.gallery.id}/pre-release`, {}, { preserveScroll: true })
+}
+
+function stopPrerelease() {
+  router.delete(`/galerien/${props.gallery.id}/pre-release`, { preserveScroll: true })
 }
 
 // R31: JSON, not Inertia — each mints a pass and hands back the guest url,
@@ -268,6 +282,10 @@ function megabytes(bytes: number) {
           v-if="figures.published !== null"
           class="flex-none rounded-[var(--r-sm)] bg-ok-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-ok"
         >{{ $t('galleryRecord.version', { version: figures.published }) }}</span>
+        <span
+          v-else-if="gallery.prerelease"
+          class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due"
+        >{{ $t('galleryRecord.prereleaseActive') }}</span>
 
         <span v-if="actionStatus" class="ml-auto flex items-center gap-1.5">
           <span class="text-[11.5px]" :class="actionStatus.ok ? 'text-ink-2' : 'text-destructive'">{{ actionStatus.message }}</span>
@@ -303,6 +321,8 @@ function megabytes(bytes: number) {
               <DropdownMenuItem v-if="gallery.canPublish" @select="createPreviewLink">{{ $t('galleryRecord.createPreviewLink') }}</DropdownMenuItem>
               <DropdownMenuItem @select="savingPreset = true">{{ $t('galleryRecord.saveAsPreset') }}</DropdownMenuItem>
               <DropdownMenuItem v-if="presets.length" @select="applyingPreset = true">{{ $t('galleryRecord.applyPreset') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="showStartPrerelease" @select="startPrerelease">{{ $t('galleryRecord.prerelease') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="showStopPrerelease" @select="stopPrerelease">{{ $t('galleryRecord.prereleaseStop') }}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
 

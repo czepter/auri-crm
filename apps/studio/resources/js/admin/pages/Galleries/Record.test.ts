@@ -62,6 +62,7 @@ const gallery = {
   offers: { downloads: true, lists: true, comments: true },
   deviates: true,
   withdrawn: false,
+  prerelease: false,
   canPublish: true,
 }
 
@@ -152,5 +153,30 @@ describe('Record', () => {
     expect(html).not.toContain(de.galleryRecord.marked)
     expect(html).not.toContain(de.galleryRecord.downloaded)
     expect(html).not.toContain(de.galleryRecord.viewed)
+  })
+
+  // R39/R32: the More menu's own entry point into pre-release, offered only
+  // before the first publish — the same condition GalleryPrereleaseController
+  // enforces server-side.
+  it('offers Pre-release in the More menu before any version exists', async () => {
+    const html = await render(base)
+
+    expect(html).toContain(de.galleryRecord.prerelease)
+    expect(html).not.toContain(de.galleryRecord.prereleaseStop)
+  })
+
+  it('hides Pre-release once a version has been published', async () => {
+    const html = await render({ ...base, figures: { ...base.figures, published: 1, assets: 2 } })
+
+    expect(html).not.toContain(de.galleryRecord.prerelease)
+  })
+
+  // The head is the one place the studio can see this state at a glance —
+  // without it, pre-release is invisible outside the More menu.
+  it('shows the pre-release chip in the head while active, and offers to stop it', async () => {
+    const html = await render({ ...base, gallery: { ...gallery, prerelease: true } })
+
+    expect(html).toContain(de.galleryRecord.prereleaseActive)
+    expect(html).toContain(de.galleryRecord.prereleaseStop)
   })
 })
