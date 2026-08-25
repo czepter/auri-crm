@@ -242,8 +242,11 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     // rail's own record redesign folded Download and Freigaben into
     // Einstellungen, and upload now lives in Bilder rather than its own
     // /medien route.
+    // Links, not buttons: which area is open is a fact of the path now, so
+    // each one is a real navigation and the shot has to wait for it.
     for (const tab of ['Gestaltung', 'Einstellungen', 'Aktivität']) {
-      await page.getByRole('button', { name: tab, exact: true }).click()
+      await page.getByRole('link', { name: tab, exact: true }).first().click()
+      await page.waitForLoadState('networkidle')
       await page.waitForFunction(() => document.fonts.status === 'loaded')
       await expect.soft(page).toHaveScreenshot(`galerie-${tab.toLowerCase()}.png`, {
         fullPage: true,

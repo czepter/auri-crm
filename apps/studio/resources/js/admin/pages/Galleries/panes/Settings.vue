@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
+import { Check, Copy } from 'lucide-vue-next'
 import { DatePicker } from '@/ui/date-picker'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
@@ -68,6 +70,33 @@ function saveExpiryOnBlur(text: string) {
 
 const addressPrefixText = computed(() => addressPrefix(props.gallery.url))
 
+// Was auf dem Schirm steht, nicht was gespeichert ist: der Knopf nimmt dem
+// Feld den Fokus, blur speichert, danach sind beide dasselbe.
+const copied = ref(false)
+// Über die id, nicht über einen Template-Ref: InputGroupInput ist eine
+// Komponente, ein Ref darauf gibt die Instanz und select() liefe ins Leere.
+const SLUG_FIELD = 'gallery-slug'
+
+// Verweigert der Browser die Zwischenablage, bleibt der Knopf sonst stumm
+// stehen und niemand merkt, dass nichts kopiert wurde. Dann markiert er
+// stattdessen das Feld — von Hand kopieren geht immer.
+function copyAddress() {
+  copied.value = false
+
+  const fallback = () => document.querySelector<HTMLInputElement>(`#${SLUG_FIELD}`)?.select()
+
+  if (!navigator.clipboard) {
+    fallback()
+
+    return
+  }
+
+  navigator.clipboard
+    .writeText(addressPrefixText.value + general.slug)
+    .then(() => (copied.value = true))
+    .catch(fallback)
+}
+
 // Download: the PIN belongs beside the switch that offers it, not in Zugang.
 const downloadPin = useForm({ download_pin: props.gallery.downloadPin ?? '' })
 
@@ -126,10 +155,22 @@ function day(iso: string | null) {
 
     <div class="mb-5 flex flex-col gap-2 pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
       <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.slugLabel') }}</div>
-      <div class="flex items-center gap-1.5">
-        <span class="text-[13px] whitespace-nowrap text-ink-2">{{ addressPrefixText }}</span>
-        <Input v-model="general.slug" class="w-[220px]" type="text" maxlength="60" @blur="saveGeneral" />
-      </div>
+      <!-- Ein Feld, nicht zwei Dinge nebeneinander: der feste Teil der
+           Adresse ist nichts zum Tippen, und kopiert wird die ganze. -->
+      <InputGroup class="max-w-[440px]">
+        <InputGroupAddon>{{ addressPrefixText }}</InputGroupAddon>
+        <InputGroupInput :id="SLUG_FIELD" v-model="general.slug" type="text" maxlength="60" :aria-label="$t('galleryRecord.slugLabel')" @blur="saveGeneral" />
+        <button
+          class="flex cursor-pointer items-center border-0 bg-transparent pr-[11px] pl-1.5 text-ink-2 hover:text-foreground [&_svg]:size-[15px]"
+          type="button"
+          :aria-label="$t('gallery.copy')"
+          :title="$t('gallery.copy')"
+          @click="copyAddress"
+        >
+          <Check v-if="copied" class="text-ok" />
+          <Copy v-else />
+        </button>
+      </InputGroup>
       <p v-if="general.errors.slug" class="text-[11.5px] leading-[1.45] text-destructive">{{ general.errors.slug }}</p>
       <!-- The one fact nobody could derive from a text field: changing
            the address does not break a link already in an inbox. -->
