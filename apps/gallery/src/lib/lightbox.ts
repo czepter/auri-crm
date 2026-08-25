@@ -21,6 +21,27 @@ export interface LightboxData {
 
 const STAGE_WIDTH = 1600
 
+export type KeyIntent = 'close' | 'prev' | 'next' | null
+
+/**
+ * The comment field owns the arrows while it holds focus — a guest moving the
+ * caret back over a typo would otherwise flip to the next picture. Escape
+ * closes regardless.
+ */
+export function keyIntent(key: string, typing: boolean): KeyIntent {
+  if (key === 'Escape') return 'close'
+  if (typing) return null
+  if (key === 'ArrowLeft') return 'prev'
+  if (key === 'ArrowRight') return 'next'
+
+  return null
+}
+
+/** Both ends wrap: the last picture's next is the first. */
+export function stepIndex(index: number, delta: number, length: number): number {
+  return (index + delta + length) % length
+}
+
 export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle, pass }: LightboxData): void {
   const root = document.getElementById('lightbox')
   if (!root || assets.length === 0) return
@@ -121,7 +142,7 @@ export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle, p
     document.body.style.overflow = ''
   }
 
-  const step = (delta: number): void => open((index + delta + assets.length) % assets.length)
+  const step = (delta: number): void => open(stepIndex(index, delta, assets.length))
 
   document.querySelectorAll<HTMLElement>('.tile[data-lb-open]').forEach((tile) => {
     const i = Number(tile.dataset.index)
@@ -177,12 +198,12 @@ export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle, p
 
   document.addEventListener('keydown', (event) => {
     if (!root.classList.contains('open')) return
-    if (event.key === 'Escape') close()
-    // The comment field owns Escape/arrows while it holds focus — a guest
-    // typing "hi" would otherwise flip through images on every "i".
-    if (document.activeElement === commentInput) return
-    if (event.key === 'ArrowLeft') step(-1)
-    if (event.key === 'ArrowRight') step(1)
+
+    const intent = keyIntent(event.key, document.activeElement === commentInput)
+
+    if (intent === 'close') close()
+    if (intent === 'prev') step(-1)
+    if (intent === 'next') step(1)
   })
 
   void fetchFavorites(apiBase, versionPublicId, pass).then((keys) => {
