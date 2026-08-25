@@ -5,11 +5,12 @@ namespace App\Gallery\Http\Controllers;
 use App\Gallery\Actions\ConsumeGalleryEmailVerification;
 use App\Gallery\Actions\RequestGalleryEmailVerification;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryGuest;
 use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Support\GalleryAccessSession;
-use App\Gallery\Support\GalleryVisitor;
 use App\Gallery\Support\GallerySecretGate;
+use App\Gallery\Support\GalleryVisitor;
 use App\Http\Controllers\Controller;
 use App\Media\Enums\AssetStatus;
 use App\Media\Enums\ZipBuildScope;
@@ -312,13 +313,32 @@ class GalleryDownloadController extends Controller
             ->all();
     }
 
+    /**
+     * Wer hier herunterlädt. Die Kennung des bestätigten Gastes statt der
+     * Sitzungs-ID: download_events.requester_identifier meint damit zum
+     * ersten Mal einen Menschen — dieselbe Kennung, unter der auch seine
+     * Herzen und Kommentare liegen —, und ein fertiges ZIP weiß, wem es
+     * Bescheid zu sagen hat.
+     *
+     * Ohne bestätigte Adresse bleibt es die Sitzung: eine Galerie ohne
+     * Adressprüfung lässt herunterladen, ohne je nach einer zu fragen.
+     */
     private function partUrl(Request $request, Gallery $gallery, ZipBuildPart $part): string
     {
         return URL::temporarySignedRoute('gallery.download.part', now()->addHours(self::PARTS_LIVE_HOURS), [
             'gallery' => $gallery->public_id,
             'zipBuildPart' => $part->public_id,
-            'guestId' => $request->session()->getId(),
+            'guestId' => $this->requester($request, $gallery),
         ]);
+    }
+
+    private function requester(Request $request, Gallery $gallery): string
+    {
+        $email = app(GalleryAccessSession::class)->verifiedEmail($gallery);
+
+        return $email === null
+            ? $request->session()->getId()
+            : GalleryGuest::identifierFor($gallery, $email);
     }
 
     /**

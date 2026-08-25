@@ -1,6 +1,7 @@
 <?php
 
 use App\Gallery\Actions\ConfirmGalleryGuest;
+use App\Gallery\Actions\ConsumeGalleryEmailVerification;
 use App\Gallery\Models\AssetComment;
 use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
@@ -167,4 +168,35 @@ it('gives the same address the same identifier, and a different gallery a differ
         ->toBe(GalleryGuest::identifierFor($this->gallery, 'anna@example.com'))
         ->and(GalleryGuest::identifierFor($other, 'anna@example.com'))
         ->not->toBe(GalleryGuest::identifierFor($this->gallery, 'anna@example.com'));
+});
+
+// Entscheidung 7: es ist dieselbe Tatsache über denselben Menschen. Der
+// Betrachter trägt sie als signierten Pass, das Portal als Sitzung — der
+// Datensatz dahinter ist einer.
+it('lays down the same guest when the portal spends an email link', function () {
+    $token = 'a'.str_repeat('b', 63);
+
+    GalleryEmailVerification::create([
+        'gallery_id' => $this->gallery->id,
+        'email' => 'anna@example.com',
+        'token_hash' => GalleryEmailVerification::hash($token),
+        'expires_at' => now()->addMinutes(30),
+    ]);
+
+    expect(app(ConsumeGalleryEmailVerification::class)($this->gallery, $token))
+        ->toBe('anna@example.com');
+
+    $guest = GalleryGuest::sole();
+
+    expect($guest->identifier)->toBe(GalleryGuest::identifierFor($this->gallery, 'anna@example.com'))
+        ->and($guest->confirmed_at)->not->toBeNull()
+        // Das Portal fragt nie nach einem Namen — der Vorschlag aus der
+        // Adresse ist besser als „Gast".
+        ->and($guest->name)->toBe('Anna');
+});
+
+it('suggests a name from the address when nobody was asked for one', function () {
+    expect(GalleryGuest::nameFromEmail('anna.mueller1987@example.com'))->toBe('Anna Mueller')
+        ->and(GalleryGuest::nameFromEmail('ben_schulz@example.com'))->toBe('Ben Schulz')
+        ->and(GalleryGuest::nameFromEmail('1987@example.com'))->toBe('1987');
 });

@@ -21,6 +21,9 @@ const apiBase = process.env.API_URL ?? 'http://localhost:8000'
 const publicApi = process.env.PUBLIC_API_URL ?? apiBase
 const { galleryId } = Astro.params
 const requestId = Astro.locals.requestId
+// Der Download wohnt im Portal: dort liegen die PIN, die Adressprüfung und
+// die ZIP-Bände. Ein Pfad auf diesen Host lief ins Leere.
+const downloadUrl = `${(process.env.PUBLIC_PORTAL_URL ?? '').replace(/\/$/, '')}/galerien/${galleryId}/download`
 const cookieName = passCookieName(galleryId!)
 const guestCookie = guestCookieName(galleryId!)
 // Zwei Cookies: der Pass bleibt undurchsichtig und signiert, der Name steht
@@ -362,7 +365,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
             !gallery.draft && (
               <div class="bar">
                 <span class="who"><b>{gallery.title}</b></span>
-                <a class="barbtn solid" href={`/g/${galleryId}/download`}>
+                <a class="barbtn solid" href={downloadUrl}>
                   <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
                   Herunterladen
                 </a>
@@ -452,7 +455,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
                           <span data-lb-favorite-label>Favorit</span>
                         </button>
 
-                        <a class="act" href={`/g/${galleryId}/download`}>
+                        <a class="act" href={downloadUrl}>
                           <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
                           Herunterladen
                         </a>

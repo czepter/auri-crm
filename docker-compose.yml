@@ -227,6 +227,10 @@ services:
       npm_config_store_dir: /pnpm-store
       API_URL: http://api:8000
       PUBLIC_API_URL: http://localhost:${API_PORT:-8002}
+      # Der Download liegt im Portal, nicht hier: dort stehen die PIN, die
+      # Adressprüfung und die ZIP-Bände. Ohne diese Adresse zeigte der Knopf
+      # im Betrachter auf einen Pfad, den dieser Host nicht kennt.
+      PUBLIC_PORTAL_URL: http://localhost:${PORTAL_PORT:-8001}
       # F-11/G-13: empty leaves the SSR process fully inert — no outbound calls
       # at all — same empty-by-default rule as SENTRY_LARAVEL_DSN above.
       SENTRY_DSN: ${GALLERY_SENTRY_DSN:-}

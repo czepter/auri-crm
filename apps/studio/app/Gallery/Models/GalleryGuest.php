@@ -44,6 +44,23 @@ class GalleryGuest extends Model
         return hash_hmac('sha256', mb_strtolower(trim($email)), $gallery->public_id);
     }
 
+    /**
+     * Ein Namensvorschlag aus dem Teil vor dem @, für den Weg, auf dem
+     * niemand nach einem Namen gefragt wurde — das Portal kennt nur die
+     * Adresse. `anna.mueller1987@…` wird `Anna Mueller`.
+     */
+    public static function nameFromEmail(string $email): string
+    {
+        $local = mb_strstr($email, '@', true) ?: $email;
+
+        $words = collect(preg_split('/[._+-]+/', $local) ?: [])
+            ->map(fn (string $part) => preg_replace('/\d+$/', '', $part))
+            ->filter()
+            ->map(fn (string $part) => mb_convert_case($part, MB_CASE_TITLE));
+
+        return $words->isEmpty() ? $local : $words->implode(' ');
+    }
+
     public function isConfirmed(): bool
     {
         return $this->confirmed_at !== null;
