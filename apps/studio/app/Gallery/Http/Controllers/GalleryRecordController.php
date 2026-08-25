@@ -117,6 +117,7 @@ class GalleryRecordController extends Controller
                 // update (spec decision 23).
                 'deviates' => DraftDeviation::of($gallery),
                 'withdrawn' => $gallery->isWithdrawn(),
+                'prerelease' => $gallery->isInPrerelease(),
                 'canPublish' => auth('staff')->user()->can('publish', $gallery),
                 'offers' => [
                     'downloads' => $gallery->downloads_enabled,

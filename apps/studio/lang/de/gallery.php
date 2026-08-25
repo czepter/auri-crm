@@ -35,4 +35,12 @@ return [
     */
 
     'empty_draft' => 'Die Galerie hat noch keine Bilder.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pre-release
+    |--------------------------------------------------------------------------
+    */
+
+    'prerelease_unavailable' => 'Pre-release ist nur vor der ersten Veröffentlichung möglich.',
 ];

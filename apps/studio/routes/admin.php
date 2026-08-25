@@ -28,6 +28,7 @@ use App\Engagement\Http\Controllers\ThreadController;
 use App\Gallery\Http\Controllers\GalleryAssetController;
 use App\Gallery\Http\Controllers\GalleryIndexController;
 use App\Gallery\Http\Controllers\GalleryLightroomExportController;
+use App\Gallery\Http\Controllers\GalleryPrereleaseController;
 use App\Gallery\Http\Controllers\GalleryPresetController;
 use App\Gallery\Http\Controllers\GalleryPreviewController;
 use App\Gallery\Http\Controllers\GalleryPublicationController;
@@ -530,6 +531,13 @@ Route::middleware('audience:staff')->group(function () {
             ->name('galleries.publish');
         Route::delete('/galerien/{gallery}/veroeffentlichung', [GalleryPublicationController::class, 'destroy'])
             ->name('galleries.withdraw');
+
+        // R32/R39: More menu's "Pre-release" — shares the address before
+        // anything is published.
+        Route::post('/galerien/{gallery}/pre-release', [GalleryPrereleaseController::class, 'store'])
+            ->name('galleries.prerelease.start');
+        Route::delete('/galerien/{gallery}/pre-release', [GalleryPrereleaseController::class, 'destroy'])
+            ->name('galleries.prerelease.stop');
 
         // No GET here: the Zahlungen card lives on the project overview
         // itself (ProjectController::show), not a tab of its own — see the

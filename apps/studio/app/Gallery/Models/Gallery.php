@@ -89,6 +89,7 @@ class Gallery extends Model
             'expires_at' => 'immutable_datetime',
             'event_date' => 'immutable_date',
             'unpublished_at' => 'immutable_datetime',
+            'prerelease_at' => 'immutable_datetime',
         ];
     }
 
@@ -191,6 +192,22 @@ class Gallery extends Model
     public function isWithdrawn(): bool
     {
         return $this->unpublished_at !== null;
+    }
+
+    /**
+     * R39: prerelease_at only means anything while nobody has published
+     * yet — a version, once it exists, is the real thing to show, and a
+     * stale flag left set after publish() must not resurrect the "wird
+     * vorbereitet" page for it.
+     */
+    public function isInPrerelease(): bool
+    {
+        return $this->prerelease_at !== null && $this->currentVersion === null;
+    }
+
+    public function prereleaseSignups(): HasMany
+    {
+        return $this->hasMany(GalleryPrereleaseSignup::class);
     }
 
     /** The most recently published version, or null before this gallery's first publish() call. */

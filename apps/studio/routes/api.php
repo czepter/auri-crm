@@ -8,6 +8,7 @@ use App\Gallery\Http\Controllers\AssetCommentController;
 use App\Gallery\Http\Controllers\AssetFavoriteController;
 use App\Gallery\Http\Controllers\GalleryDraftImageController;
 use App\Gallery\Http\Controllers\GalleryImageController;
+use App\Gallery\Http\Controllers\GalleryPrereleaseSignupController;
 use App\Gallery\Http\Controllers\GalleryReadController;
 use App\Http\Controllers\GuestIdentityController;
 use App\Http\Controllers\HealthController;
@@ -42,6 +43,13 @@ Route::post('/mail/eingang', InboundMailController::class)->name('api.mail.inbou
 // GallerySecretGate the portal's gate does — one implementation of "is this
 // the password", rate limits included — and hands back a signed pass.
 Route::post('/galleries/{gallery}/passwort', GalleryPassController::class)->name('api.galleries.pass');
+
+// R39-R42: the pre-release page's signup — public, no password (R40: there
+// is nothing behind this address to protect), uniform response (R41: see
+// the controller's own doc comment), rate-limited the same way the route
+// above is.
+Route::post('/galleries/{gallery}/benachrichtigung', GalleryPrereleaseSignupController::class)
+    ->name('api.galleries.prerelease-signup');
 
 // G-08/G-09/G-12: everything the Astro gallery viewer calls — version
 // metadata, image bytes, favorites, comments. All of it behind
