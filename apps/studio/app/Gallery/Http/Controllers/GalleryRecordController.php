@@ -2,6 +2,7 @@
 
 namespace App\Gallery\Http\Controllers;
 
+use App\Gallery\Data\GalleryNavData;
 use App\Gallery\Data\GalleryPresetData;
 use App\Gallery\Models\AssetComment;
 use App\Gallery\Models\AssetFavorite;
@@ -137,6 +138,7 @@ class GalleryRecordController extends Controller
             'area' => $bereich,
             'activeSetId' => $set?->public_id,
             'settingsSection' => $abschnitt ?? 'allgemein',
+            'nav' => GalleryNavData::build($gallery->loadMissing('coverAsset'), $sets, $version),
             'gallery' => [
                 'id' => $gallery->public_id,
                 'title' => $gallery->title,
