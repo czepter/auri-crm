@@ -2,7 +2,7 @@
 import { draftImageBase, FORMATS, imageUrl, passGate, previewGate, srcSet, versionImageBase, type GalleryAsset } from '../../lib/images'
 import { callApi } from '../../lib/apiClient'
 import { buyPass, passCookieName, PASS_MAX_AGE_SECONDS } from '../../lib/viewPass'
-import { isPrerelease, signUpForPrerelease } from '../../lib/prerelease'
+import { isPrerelease, signUpForPrerelease, type PrereleaseSignupResult } from '../../lib/prerelease'
 import '../../styles/tokens.css'
 import '../../styles/gallery.css'
 
@@ -62,7 +62,14 @@ interface GalleryReadResponse {
 // this one does not need to.
 let pass = Astro.cookies.get(cookieName)?.value ?? null
 let wrongPassword = false
-let signedUp = false
+let signupStatus: PrereleaseSignupResult | null = null
+
+// R44: this render's own timestamp, carried as a hidden field on the
+// signup form below and read back at the top of the next POST to compute
+// `elapsed` server-side — the page ships no client JavaScript, so there is
+// no inline script to stamp it the way PublicInquiryController's snippet
+// does (see GalleryPrereleaseSignupController's own doc comment).
+const renderedAt = Date.now()
 
 // Two forms can post to this same route — the password gate's and R40's
 // signup — distinguished by which field they carry rather than a second
@@ -72,7 +79,17 @@ if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData()
 
   if (form.has('email')) {
-    signedUp = await signUpForPrerelease(apiBase, galleryId!, requestId, String(form.get('email') ?? ''))
+    const submittedAt = Number(form.get('rendered_at') ?? NaN)
+    const elapsed = Number.isFinite(submittedAt) ? Math.floor((Date.now() - submittedAt) / 1000) : null
+
+    signupStatus = await signUpForPrerelease(
+      apiBase,
+      galleryId!,
+      requestId,
+      String(form.get('email') ?? ''),
+      String(form.get('website') ?? ''),
+      elapsed,
+    )
   } else {
     const bought = await buyPass(apiBase, galleryId!, requestId, String(form.get('password') ?? ''))
 
@@ -205,14 +222,31 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
             <div>
               <div class="hair" />
 
-              {signedUp ? (
-                <p class="hint">Eingetragen — wir schreiben, sobald sie online ist.</p>
+              {signupStatus === 'accepted' ? (
+                <p class="hint">Eingetragen.</p>
               ) : (
                 <form method="POST">
                   <div class="field">
                     <label for="email">E-Mail-Adresse</label>
                     <input id="email" name="email" type="email" placeholder="name@beispiel.de" autocomplete="email" required />
                   </div>
+
+                  {// R44: the honeypot — invisible to a person, filled by
+                  // anything that autofills every field on the page. Off
+                  // the tab order and out of the accessibility tree so a
+                  // screen reader never announces it either.
+                  }
+                  <input
+                    type="text"
+                    name="website"
+                    tabindex="-1"
+                    autocomplete="off"
+                    aria-hidden="true"
+                    style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden"
+                  />
+                  <input type="hidden" name="rendered_at" value={renderedAt} />
+
+                  {signupStatus === 'refused' && <p class="err">Eintrag nicht möglich.</p>}
 
                   <button class="btn" type="submit">
                     Benachrichtigen

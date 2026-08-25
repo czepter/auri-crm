@@ -20,22 +20,31 @@ describe('isPrerelease', () => {
 })
 
 describe('signUpForPrerelease', () => {
-  it('posts the address to the gallery\'s own signup route', async () => {
+  it('posts the address, honeypot and elapsed to the gallery\'s own signup route', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ status: 'received' }), { status: 202 }))
     vi.stubGlobal('fetch', fetchMock)
 
-    const ok = await signUpForPrerelease('https://api.example', 'abc', 'req-1', 'anna@example.test')
+    const result = await signUpForPrerelease('https://api.example', 'abc', 'req-1', 'anna@example.test', '', 12)
 
-    expect(ok).toBe(true)
+    expect(result).toBe('accepted')
     const [url, init] = fetchMock.mock.calls[0]
     expect(url).toBe('https://api.example/api/galleries/abc/benachrichtigung')
     expect(init.method).toBe('POST')
-    expect(JSON.parse(init.body)).toEqual({ email: 'anna@example.test' })
+    expect(JSON.parse(init.body)).toEqual({ email: 'anna@example.test', website: '', elapsed: 12 })
   })
 
-  it('reports a malformed address rather than throwing', async () => {
+  // R44: a 429 (rate limited, honeypot filled, too fast) must read as
+  // "refused", not silently collapse into the same result a real
+  // acceptance gets — the page has to tell the two apart.
+  it('reports a refused request rather than treating a 429 as success', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 429 })))
+
+    expect(await signUpForPrerelease('https://api.example', 'abc', 'req-1', 'anna@example.test', '', 12)).toBe('refused')
+  })
+
+  it('reports a malformed address as refused rather than throwing', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('{}', { status: 422 })))
 
-    expect(await signUpForPrerelease('https://api.example', 'abc', 'req-1', 'not-an-email')).toBe(false)
+    expect(await signUpForPrerelease('https://api.example', 'abc', 'req-1', 'not-an-email', '', 12)).toBe('refused')
   })
 })
