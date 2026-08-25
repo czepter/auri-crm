@@ -10,8 +10,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Womit eine neue Galerie geboren wird. Trägt keine Wirkung: gelesen wird die
- * Vorlage einmal, vom Anlegen-Formular, das ihre Werte in die Felder schreibt.
+ * Womit eine neue Galerie geboren wird — und, seit "Vorlage anwenden"
+ * (GalleryPresetController::applyToGallery), womit eine bestehende Galerie
+ * ihr Design und ihre Angebote überschreiben lässt. Gelesen wird die
+ * Vorlage bei jeder Anwendung neu, nie kopiert und vergessen.
  */
 class GalleryPreset extends Model
 {

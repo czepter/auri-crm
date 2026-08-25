@@ -7,11 +7,14 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Eine benannte Startbelegung für neue Galerien. Kein Fremdschlüssel auf
-     * galleries und keiner von dort hierher: die Vorlage füllt beim Anlegen
-     * das Formular und ist danach nicht mehr verbunden. Eine geänderte
-     * Vorlage erreicht bestehende Galerien nicht — sonst verfiele eine längst
-     * ausgelieferte Galerie rückwirkend, weil jemand eine Frist korrigiert.
+     * Eine benannte Startbelegung für neue Galerien, seit "Vorlage anwenden"
+     * auch für bestehende. Kein Fremdschlüssel in beide Richtungen: eine
+     * Galerie trägt nie, welche Vorlage sie zuletzt gelesen hat, also
+     * erreicht eine geänderte Vorlage bestehende Galerien nie von selbst —
+     * nur wenn jemand "Vorlage anwenden" tatsächlich klickt. Ohne diese
+     * Trennung würde eine längst ausgelieferte Galerie rückwirkend
+     * verfallen, weil jemand später an derselben Vorlage eine Frist
+     * korrigiert.
      */
     public function up(): void
     {

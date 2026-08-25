@@ -323,10 +323,9 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
             imageBase,
             gate,
             versionPublicId: gallery.draft ? null : gallery.version.public_id,
-            galleryTitle: gallery.title,
             pass,
           }}>
-            window.__lightboxData = { assets, apiBase, imageBase, gate, versionPublicId, galleryTitle, pass }
+            window.__lightboxData = { assets, apiBase, imageBase, gate, versionPublicId, pass }
           </script>
           <script>
             import { initLightbox } from '../../lib/lightbox'

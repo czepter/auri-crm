@@ -18,7 +18,6 @@ export interface LightboxData {
   // ever needs the result.
   imageBase: string
   gate: string
-  galleryTitle: string
   // R31: a draft has no GalleryVersion to favorite or comment against —
   // AssetFavoriteController/AssetCommentController are both version-scoped
   // — so a draft preview wires image navigation only. The markup those two
