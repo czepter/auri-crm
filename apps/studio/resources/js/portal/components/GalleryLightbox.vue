@@ -25,7 +25,6 @@ const open = defineModel<number | null>({ required: true })
 const favorited = ref(new Set<string>())
 const comments = ref<Comment[]>([])
 const draft = ref('')
-const typing = ref(false)
 const listsOpen = ref(false)
 
 const asset = computed(() => (open.value === null ? null : props.assets[open.value] ?? null))
@@ -111,7 +110,11 @@ function step(by: number) {
 function onKey(event: KeyboardEvent) {
   if (open.value === null) return
 
-  const intent = keyIntent(event.key, typing.value)
+  // Not every keydown target is an element — one dispatched on the window
+  // has no matches() — and an arrow key inside a field belongs to the field.
+  const target = event.target as Element | null
+  const typing = typeof target?.matches === 'function' && target.matches('input, textarea, select')
+  const intent = keyIntent(event.key, typing)
 
   if (intent === 'close') open.value = null
   if (intent === 'prev') step(-1)
@@ -122,8 +125,6 @@ function onKey(event: KeyboardEvent) {
 // who only scrolls the grid never asks for either.
 watch(open, (value, previous) => {
   if (value !== null && previous === null) load()
-  // Unmounting the focused comment field on close does not fire blur, so typing must be reset here.
-  if (value === null) typing.value = false
 })
 
 onMounted(() => window.addEventListener('keydown', onKey))
@@ -257,8 +258,6 @@ function time(iso: string) {
             v-model="draft"
             type="text"
             :placeholder="$t('gallery.commentPlaceholder')"
-            @focus="typing = true"
-            @blur="typing = false"
           />
         </form>
       </aside>

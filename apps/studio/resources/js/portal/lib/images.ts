@@ -18,8 +18,9 @@ export const GRID_WIDTHS = [400, 800, 1200, 1600] as const
 export const STAGE_WIDTHS = [800, 1200, 1600, 2400] as const
 
 /**
- * The portal is same-origin: GalleryController hands the path over ready
- * (`/galerie-bilder/{version}/{key}`) and only the query is built here.
+ * The portal is same-origin: GalleryPasswordController::assets() hands the
+ * path over ready (`/galerie-bilder/{version}/{key}`) and only the query is
+ * built here.
  */
 export function srcSet(src: string, format: Format, widths: readonly number[]): string {
   return widths.map((w) => `${src}?w=${w}&fmt=${format} ${w}w`).join(', ')

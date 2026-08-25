@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { imageUrl, srcSet, WIDTHS } from './images'
+import { FORMATS, imageUrl, srcSet, WIDTHS } from './images'
 
 describe('imageUrl', () => {
   it('points at the version-scoped image-proxy route, never a bucket URL', () => {
@@ -24,5 +24,15 @@ describe('srcSet', () => {
     entries.forEach((entry, i) => {
       expect(entry).toBe(`https://api.example/api/gallery-versions/ver_abc/images/galleries/g1/a.jpg?w=${WIDTHS[i]}&fmt=avif ${WIDTHS[i]}w`)
     })
+  })
+})
+
+describe('the allow-list', () => {
+  // Written out, not imported: a test that reads its expectation from the
+  // thing it checks asserts nothing. These numbers standing twice is the
+  // assertion. App\Gallery\Support\ImageVariant::WIDTHS is the source.
+  it('carries the widths and formats GalleryImageController accepts', () => {
+    expect([...WIDTHS]).toEqual([400, 800, 1200, 1600, 2400])
+    expect([...FORMATS]).toEqual(['avif', 'webp', 'jpeg'])
   })
 })

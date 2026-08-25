@@ -164,8 +164,7 @@ const subtitle = computed(() => {
   return parts.join(' · ')
 })
 
-// The grid deliberately stops below the proxy's largest variant; see
-// GRID_WIDTHS. Its own sizes attribute, which no other screen shares:
+// The grid deliberately stays under the proxy's allow-list.
 const SIZES = '(max-width: 760px) 50vw, (max-width: 1080px) 33vw, 25vw'
 
 // The first published asset carries the cover. Nothing in the schema names
