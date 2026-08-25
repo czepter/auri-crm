@@ -2,6 +2,7 @@
 
 namespace App\Media\Actions;
 
+use App\Gallery\Actions\EnsureGalleryCover;
 use App\Gallery\Models\Gallery;
 use App\Media\Enums\AssetStatus;
 use App\Media\Enums\MultipartUploadStatus;
@@ -44,7 +45,10 @@ class IngestCompletedUpload
     /** components_x, components_y — kornrunner/blurhash's own defaults, matching every reference blurhash implementation's "4x3" example. */
     private const BLURHASH_COMPONENTS = [4, 3];
 
-    public function __construct(private readonly LibvipsDerivativePipeline $vips) {}
+    public function __construct(
+        private readonly LibvipsDerivativePipeline $vips,
+        private readonly EnsureGalleryCover $ensureCover,
+    ) {}
 
     public function __invoke(MultipartUpload $multipartUpload): void
     {
@@ -99,6 +103,19 @@ class IngestCompletedUpload
             $upload->forceFill(['processed_at' => now(), 'asset_id' => $asset->id])->save();
         } finally {
             File::deleteDirectory($workDir);
+
+            // Erst wenn der Stapel durch ist. Parallele Sitzungen werden in
+            // beliebiger Reihenfolge fertig; solange noch eine offen ist,
+            // waere „das erste Bild" das zufaellig schnellste.
+            $stillRunning = MultipartUpload::query()
+                ->where('gallery_id', $upload->gallery_id)
+                ->where('status', '!=', MultipartUploadStatus::Aborted)
+                ->whereNull('processed_at')
+                ->exists();
+
+            if (! $stillRunning && $upload->gallery !== null) {
+                ($this->ensureCover)($upload->gallery);
+            }
         }
     }
 

@@ -176,3 +176,21 @@ it('runs end-to-end through the media.ingest job, not just through the action di
 
     expect(Asset::where('gallery_id', $gallery->id)->count())->toBe(1);
 });
+
+// Entscheidung 60: das Titelbild faellt erst, wenn der Stapel durch ist.
+// Parallele Sitzungen werden in beliebiger Reihenfolge fertig — waehlte der
+// erste fertige Ingest, waere das Titelbild bei jedem Hochladen ein anderes.
+it('waits for the whole batch before taking a cover', function () {
+    $gallery = Gallery::factory()->create();
+    $first = completedUpload($gallery, syntheticJpeg(), 'z.jpg');
+    $second = completedUpload($gallery, syntheticJpeg(310, 210), 'a.jpg');
+
+    app(IngestCompletedUpload::class)($first);
+
+    expect($gallery->fresh()->cover_asset_id)->toBeNull();
+
+    app(IngestCompletedUpload::class)($second);
+
+    expect($gallery->fresh()->cover_asset_id)
+        ->toBe(Asset::where('filename', 'a.jpg')->sole()->id);
+});

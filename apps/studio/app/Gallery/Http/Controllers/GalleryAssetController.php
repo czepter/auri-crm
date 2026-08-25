@@ -2,6 +2,7 @@
 
 namespace App\Gallery\Http\Controllers;
 
+use App\Gallery\Actions\EnsureGalleryCover;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Support\ImageVariant;
 use App\Http\Controllers\Controller;
@@ -43,7 +44,7 @@ class GalleryAssetController extends Controller
      * bleiben, weil BuildGalleryZip die Keys bereits veröffentlichter
      * Versionen über genau diese Zeilen auflöst.
      */
-    public function remove(Request $request, Gallery $gallery): RedirectResponse
+    public function remove(Request $request, Gallery $gallery, EnsureGalleryCover $ensureCover): RedirectResponse
     {
         $this->authorize('manageMedia', $gallery);
 
@@ -59,6 +60,7 @@ class GalleryAssetController extends Controller
 
         if ($removed->contains(fn (Asset $asset) => $asset->id === $gallery->cover_asset_id)) {
             $gallery->update(['cover_asset_id' => null, 'cover_focal_x' => null, 'cover_focal_y' => null]);
+            $ensureCover($gallery->refresh());
         }
 
         return back();

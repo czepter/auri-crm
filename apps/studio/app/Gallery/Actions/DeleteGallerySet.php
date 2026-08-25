@@ -24,6 +24,8 @@ use Illuminate\Support\Facades\DB;
  */
 class DeleteGallerySet
 {
+    public function __construct(private readonly EnsureGalleryCover $ensureCover) {}
+
     public function __invoke(GallerySet $set, ?GallerySet $target): void
     {
         DB::transaction(function () use ($set, $target) {
@@ -38,9 +40,12 @@ class DeleteGallerySet
 
                 // The row survives, so nullOnDelete never fires for it —
                 // mirrors GalleryAssetController::remove()'s own explicit
-                // clear for the single-picture case.
+                // clear for the single-picture case. Danach rueckt das
+                // naechste Bild nach, statt die Galerie ohne Titelbild
+                // stehen zu lassen.
                 if ($removedIds->contains($gallery->cover_asset_id)) {
                     $gallery->update(['cover_asset_id' => null, 'cover_focal_x' => null, 'cover_focal_y' => null]);
+                    ($this->ensureCover)($gallery->refresh());
                 }
             }
 
