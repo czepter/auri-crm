@@ -198,11 +198,14 @@ class Gallery extends Model
      * R39: prerelease_at only means anything while nobody has published
      * yet — a version, once it exists, is the real thing to show, and a
      * stale flag left set after publish() must not resurrect the "wird
-     * vorbereitet" page for it.
+     * vorbereitet" page for it. is_external excluded for the same reason
+     * draft() already refuses an external gallery explicitly (Gallery
+     * ReadController): it owns no draft assets, so "being prepared" names
+     * a state it can never actually be in.
      */
     public function isInPrerelease(): bool
     {
-        return $this->prerelease_at !== null && $this->currentVersion === null;
+        return $this->prerelease_at !== null && $this->currentVersion === null && ! $this->is_external;
     }
 
     public function prereleaseSignups(): HasMany

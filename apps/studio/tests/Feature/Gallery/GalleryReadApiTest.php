@@ -250,3 +250,54 @@ it('still answers only the pre-release payload for the same gallery without a to
             ],
         ]);
 });
+
+// Fix round 1, I3: isInPrerelease() checks currentVersion === null
+// specifically so a stale prerelease_at can never resurrect the teaser
+// once a version exists — this bypasses PublishGallery entirely (which
+// would have cleared the flag itself) to pin the model's own guard rather
+// than the action that happens to also do the clearing.
+it('never answers pre-release once a version exists, even with a stale prerelease_at', function () {
+    $gallery = Gallery::factory()->create(['title' => 'v1']);
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/a.jpg']);
+    $gallery->fresh()->publish();
+    $gallery->forceFill(['prerelease_at' => now()])->save();
+
+    $this->getJson("/api/galleries/{$gallery->public_id}")
+        ->assertOk()
+        ->assertJson(['gallery' => ['version' => ['version' => 1]]]);
+});
+
+// Fix round 1: the state matrix's two missing preview-pass cases. Both
+// read as "no valid pass at all" to GalleryPreviewPass::opens(), so both
+// must fall to the pre-release rung exactly like a request with no token.
+it('answers pre-release, not the version fallback, for a revoked preview pass', function () {
+    $gallery = Gallery::factory()->create();
+    $gallery->forceFill(['prerelease_at' => now()])->save();
+    $token = app(GalleryPreviewPass::class)->issue($gallery, GalleryPreviewPass::BUTTON_MINUTES);
+    $gallery->rotatePreviewPass();
+
+    $this->getJson("/api/galleries/{$gallery->public_id}?preview=".urlencode($token))
+        ->assertOk()
+        ->assertJson(['gallery' => ['prerelease' => true]]);
+});
+
+it('answers pre-release for an expired preview pass', function () {
+    $gallery = Gallery::factory()->create();
+    $gallery->forceFill(['prerelease_at' => now()])->save();
+    $token = app(GalleryPreviewPass::class)->issue($gallery, -1);
+
+    $this->getJson("/api/galleries/{$gallery->public_id}?preview=".urlencode($token))
+        ->assertOk()
+        ->assertJson(['gallery' => ['prerelease' => true]]);
+});
+
+// Fix round 1, Minor: isInPrerelease() excludes is_external — an external
+// gallery owns no draft, so the flag (which the admin controller already
+// refuses to set on one) must never turn its 404 into a teaser either.
+it('never answers pre-release for an external gallery, even with the flag set', function () {
+    $gallery = Gallery::factory()->create(['is_external' => true, 'external_url' => 'https://legacy.example/g/1']);
+    $gallery->forceFill(['prerelease_at' => now()])->save();
+
+    $this->getJson("/api/galleries/{$gallery->public_id}")->assertNotFound();
+});

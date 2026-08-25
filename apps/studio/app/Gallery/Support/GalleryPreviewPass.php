@@ -15,7 +15,9 @@ use Illuminate\Support\Facades\Config;
  * pass included, if one happened to still be open. Opening a revoked link
  * afterwards answers exactly as GalleryReadController answers a guest
  * carrying no pass at all: the currently-published version if one exists,
- * a 404 otherwise.
+ * the pre-release teaser if the gallery is in pre-release (R43 — a
+ * revoked pass is no pass, so it no longer outranks that state either), a
+ * 404 otherwise.
  *
  * A separate class from GalleryViewPass, not a second method on it: solving
  * the password gate proves a guest knows a secret, not that the studio
