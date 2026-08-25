@@ -49,31 +49,37 @@ Route::post('/galleries/{gallery}/passwort', GalleryPassController::class)->name
 // as a signed bearer instead (GalleryViewPass). A gallery with no password
 // needs none. Without this the password protected one screen and left both
 // the asset list and the bytes open to anyone holding an id.
-// R35: a GalleryPreviewPass authorises exactly two things — reading the
-// draft (GalleryReadController, below) and fetching a draft image (here).
-// Standalone, not inside `gallery.pass`: that middleware guards a whole
-// group of version-scoped routes (favorites, comments, version images) a
-// preview pass has no business opening, and this route checks its own pass
-// regardless — see GalleryDraftImageController's own doc comment.
+//
+// R35/R37: a GalleryPreviewPass authorises exactly two things — reading the
+// draft and fetching a draft image — and both routes sit outside this
+// middleware group entirely rather than inside it. Two different reasons
+// land on the same shape: `gallery.pass` guards a whole group of
+// version-scoped routes (favorites, comments, version images) a preview
+// pass has no business opening (R35), and GalleryReadController must honour
+// a preview pass even when the gallery also requires a view password —
+// the whole point of a preview link is to reach someone before the
+// gallery is published, often before there is a reason to know its
+// password at all (R37). Sitting outside the group and checking both
+// kinds of pass itself is what makes that possible without leaking the
+// preview pass into the other routes here. See both controllers' own doc
+// comments, and GuardsGalleryViewPassword for the check GalleryReadController
+// shares with this middleware rather than duplicating.
 Route::get('/galleries/{gallery}/entwurf-bilder/{key}', GalleryDraftImageController::class)
     ->where('key', '.*')
     ->name('api.galleries.draft-images.show');
 
+// Implicit binding, not {gallery:public_id}: apps/gallery's own /g/{id}
+// route accepts a slug or a public_id (Gallery::resolveRouteBinding()),
+// and this is the read call it makes with whichever one is in the URL.
+Route::get('/galleries/{gallery}', GalleryReadController::class)->name('api.galleries.show');
+
 Route::middleware('gallery.pass')->group(function () {
-    // Implicit binding, not {gallery:public_id}: apps/gallery's own /g/{id}
-    // route accepts a slug or a public_id (Gallery::resolveRouteBinding()),
-    // and this is the read call it makes with whichever one is in the URL.
-    // R35: its own GalleryPreviewPass check (see the controller) runs
-    // inside this group, so a gallery that also requires a password still
-    // closes a plain preview attempt with no view pass — a preview token
-    // is not a substitute for the password gate on every other route here.
-    Route::get('/galleries/{gallery}', GalleryReadController::class)->name('api.galleries.show');
     Route::get('/gallery-versions/{galleryVersion:public_id}/images/{key}', GalleryImageController::class)
         ->where('key', '.*')
         ->name('api.gallery-versions.images.show');
 
-    // The first browser-originated calls this surface serves (the two routes
-    // above are only ever hit server-side, by Astro's own SSR fetch, or from
+    // The first browser-originated calls this surface serves (the route
+    // above is only ever hit server-side, by Astro's own SSR fetch, or from
     // a bare <img> src), so they are also what config/cors.php exists for.
     Route::middleware('gallery.feature:lists')->group(function () {
         Route::get('/gallery-versions/{galleryVersion:public_id}/favorites', [AssetFavoriteController::class, 'index'])

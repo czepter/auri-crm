@@ -4,6 +4,8 @@ namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Models\Gallery;
 use App\Gallery\Support\GalleryPreviewPass;
+use App\Gallery\Support\GalleryViewPass;
+use App\Gallery\Support\GuardsGalleryViewPassword;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,12 +25,18 @@ use Illuminate\Http\Request;
  * the version branch because it answers a structurally different question
  * (no GalleryVersion exists yet) with a structurally different response.
  *
- * R35: this is the check for a preview pass, full stop — EnsureGalleryPass
- * (the `gallery.pass` middleware this route still sits behind) knows
- * nothing about GalleryPreviewPass. A gallery that also requires a view
- * password still closes on the middleware before a preview attempt ever
- * reaches here; a preview pass authorises a look at this one gallery's
- * draft, not a way around its password.
+ * R37: a preview pass must open the draft even when the gallery also
+ * carries a view password — the whole point of a preview link is to reach
+ * a couple before the gallery is published, and a studio very often sets
+ * the password at creation, before there is anything to publish. Requiring
+ * both would mean sending the finished gallery's own key alongside a link
+ * meant to precede it. So this route sits outside `gallery.pass`
+ * (routes/api.php) and checks GalleryPreviewPass itself, first — and, once
+ * that fails, falls through to exactly the same withdrawal-and-password
+ * check EnsureGalleryPass applies to every other route in that group
+ * (GuardsGalleryViewPassword, shared with it rather than copied), so a
+ * guest with no preview token sees this route behave exactly as if it were
+ * still inside the middleware group.
  *
  * The image bytes those assets point at are the opposite — see
  * GalleryImageController — because a GalleryVersion, once published, never
@@ -39,14 +47,12 @@ use Illuminate\Http\Request;
  * have no currentVersion, so both 404 here without special-casing either —
  * an external gallery has no draft either, for the same reason draft()
  * refuses it explicitly.
- *
- * A gallery carrying a view password never reaches this method at all —
- * `gallery.ungated` (EnsureUngatedGallery) refuses it one layer up, because
- * the api surface holds no session to check G-06's claim against.
  */
 class GalleryReadController extends Controller
 {
-    public function __invoke(Request $request, Gallery $gallery, GalleryPreviewPass $previewPass): JsonResponse
+    use GuardsGalleryViewPassword;
+
+    public function __invoke(Request $request, Gallery $gallery, GalleryPreviewPass $previewPass, GalleryViewPass $viewPass): JsonResponse
     {
         // is_string(), not a raw query('preview'): see GalleryDraftImageController's
         // own comment on why an array here must not reach opens() raw.
@@ -54,6 +60,8 @@ class GalleryReadController extends Controller
         if ($previewPass->opens($gallery, is_string($preview) ? $preview : null)) {
             return $this->draft($gallery);
         }
+
+        $this->abortUnlessViewable($gallery, $request, $viewPass);
 
         $version = $gallery->currentVersion;
 

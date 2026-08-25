@@ -192,3 +192,38 @@ it('answers an array preview parameter with a 404, not a 500', function () {
     $this->get("/api/galleries/{$this->gallery->public_id}/entwurf-bilder/{$asset->key}?w=400&fmt=jpeg&preview[]=x")
         ->assertNotFound();
 });
+
+// R37 (fix round 2, user ruling): the whole point of a preview link is to
+// reach someone before the gallery is published — often before there is
+// any reason to know its password, since a studio frequently sets one at
+// creation. A preview pass must open the draft on its own, view password
+// or not, and R35's boundary must hold at the very same time: it opens
+// reading the draft and nothing else on that same gallery's published,
+// password-protected side.
+it('opens the draft with a preview pass alone on a gallery that also has a view password, and nothing else', function () {
+    useSurface(Surface::API);
+
+    $this->gallery->rotateViewPassword('geheimnis');
+    $set = GallerySet::where('gallery_id', $this->gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $this->gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg']);
+    $version = $this->gallery->fresh()->publish();
+
+    $token = app(GalleryPreviewPass::class)->issue($this->gallery->fresh(), GalleryPreviewPass::BUTTON_MINUTES);
+    $q = '?preview='.urlencode($token);
+
+    // The pair that proves the boundary is about capability, not the
+    // password: the very same token that opens the draft read below must
+    // still refuse every version-scoped route on this same gallery.
+    $this->getJson("/api/galleries/{$this->gallery->public_id}{$q}")
+        ->assertOk()
+        ->assertJson(['gallery' => ['draft' => true]]);
+
+    $this->getJson("/api/gallery-versions/{$version->public_id}/images/galleries/g1/a.jpg{$q}")->assertNotFound();
+    $this->postJson("/api/gallery-versions/{$version->public_id}/favorites/galleries/g1/a.jpg{$q}")->assertNotFound();
+    $this->postJson("/api/gallery-versions/{$version->public_id}/comments{$q}", [])->assertNotFound();
+
+    // The guest path itself, byte-for-byte: no token and no pass against
+    // this same password-protected gallery is still refused exactly as it
+    // is without any of this stage's work.
+    $this->getJson("/api/galleries/{$this->gallery->public_id}")->assertNotFound();
+});

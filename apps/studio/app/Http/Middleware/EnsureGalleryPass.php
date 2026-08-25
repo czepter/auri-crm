@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Support\GalleryViewPass;
+use App\Gallery\Support\GuardsGalleryViewPassword;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,19 +25,23 @@ use Symfony\Component\HttpFoundation\Response;
  * the gallery and the password version, and worthless the moment the studio
  * rotates. See GalleryViewPass. A gallery with no password needs none.
  *
- * R35: a GalleryPreviewPass (R31) is deliberately NOT checked here. This
- * gate protects every route in the `gallery.pass` group at once — favorites,
- * comments, version images, the asset list — and a preview pass proving the
- * studio meant to show one specific draft is not a reason to open all of
- * them. GalleryReadController and GalleryDraftImageController each verify
- * their own GalleryPreviewPass instead; the latter sits outside this group
- * entirely (routes/api.php) for exactly that reason.
+ * R35/R37: a GalleryPreviewPass (R31) is deliberately NOT checked here, even
+ * though GalleryReadController honours one. This gate protects every route
+ * in the `gallery.pass` group at once — favorites, comments, version images
+ * — and a preview pass proving the studio meant to show one specific draft
+ * is not a reason to open all of them. GalleryReadController and
+ * GalleryDraftImageController each verify their own GalleryPreviewPass
+ * instead, and both sit outside this group entirely (routes/api.php) so
+ * neither route, nor any future one, inherits a permission from sitting
+ * here that its own controller never actually checked for.
  *
  * 404 rather than 401: which galleries carry a password is not something
  * this surface owes an anonymous caller either.
  */
 class EnsureGalleryPass
 {
+    use GuardsGalleryViewPassword;
+
     public function __construct(private readonly GalleryViewPass $pass) {}
 
     public function handle(Request $request, Closure $next): Response
@@ -47,40 +52,9 @@ class EnsureGalleryPass
             return $next($request);
         }
 
-        // G-14: closes GalleryReadController, GalleryImageController and
-        // the favorites/comments routes alike — the same withdrawal check
-        // EnsureGalleryGate applies on the portal surface, for the surface
-        // apps/gallery actually calls.
-        abort_if($gallery->isWithdrawn(), 404);
-
-        if (! $gallery->requiresViewPassword()) {
-            return $next($request);
-        }
-
-        abort_unless($this->pass->opens($gallery, $this->token($request)), 404);
+        $this->abortUnlessViewable($gallery, $request, $this->pass);
 
         return $next($request);
-    }
-
-    /**
-     * A bearer where the caller can set headers, a query parameter where it
-     * cannot.
-     *
-     * The second exists for one reason: `<img src>`. Every tile on the guest
-     * viewer is an image on this surface, and a browser will not attach an
-     * Authorization header to one. The alternatives were worse — proxying
-     * every photograph through the Astro process, on the viewer that exists
-     * because it is the fast one, or signing fifteen variant URLs per asset
-     * and shipping them all down the wire.
-     *
-     * What it costs is a pass in an access log and a Referer. Bounded, and
-     * bounded on purpose: it opens one gallery, for twelve hours, and dies
-     * the moment the studio rotates — which is the same set of limits that
-     * makes rotation the answer to a link that travelled too far.
-     */
-    private function token(Request $request): ?string
-    {
-        return $request->bearerToken() ?? $request->query('pass');
     }
 
     private function gallery(Request $request): ?Gallery
