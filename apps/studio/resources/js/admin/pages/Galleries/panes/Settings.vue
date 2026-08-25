@@ -1,0 +1,199 @@
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import { useForm } from '@inertiajs/vue3'
+import { Input } from '@/ui/input'
+import { DatePicker } from '@/ui/date-picker'
+import { Checkbox } from '@/ui/checkbox'
+import { Label } from '@/ui/label'
+import { Button } from '@/ui/button'
+import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
+import GalleryAccess from '@/admin/components/gallery/GalleryAccess.vue'
+import { addressPrefix } from '@/admin/lib/galleryAddress'
+import { isCompleteDate } from '@/admin/lib/galleryExpiry'
+
+const props = defineProps<{
+  gallery: {
+    id: string
+    title: string | null
+    slug: string
+    url: string
+    eventDate: string | null
+    viewPassword: string | null
+    downloadPin: string | null
+    requiresVerifiedEmail: boolean
+    expiresAt: string | null
+    balanceSettled: boolean
+    requiresSettledBalance: boolean
+    offers: { downloads: boolean; lists: boolean; comments: boolean }
+  }
+  siblings: { id: string; title: string | null; assetCount: number; open: boolean }[]
+  versions: { version: number; publishedAt: string | null; assetCount: number }[]
+  lists: { id: string; name: string | null; owner: string | null; count: number }[]
+  settingsSection: 'allgemein' | 'zugang' | 'download' | 'listen' | 'kommentare'
+}>()
+
+// Allgemein: the address and the expiry, the two facts a studio actually
+// changes after a gallery already exists.
+const general = useForm({ slug: props.gallery.slug, expires_at: props.gallery.expiresAt ?? '' })
+
+function saveGeneral() {
+  general.transform((data) => ({ ...data, expires_at: data.expires_at === '' ? null : data.expires_at }))
+    .patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
+}
+
+// DatePicker fires update:modelValue on every keystroke, not only once a
+// date is complete — see isCompleteDate()'s own doc comment.
+function saveExpiryIfComplete(value: string) {
+  if (isCompleteDate(value)) saveGeneral()
+}
+
+const addressPrefixText = computed(() => addressPrefix(props.gallery.url))
+
+// Download: the PIN belongs beside the switch that offers it, not in Zugang.
+const downloadPin = useForm({ download_pin: props.gallery.downloadPin ?? '' })
+
+function saveDownloadPin() {
+  downloadPin.transform((data) => ({ download_pin: data.download_pin === '' ? null : data.download_pin }))
+    .patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
+}
+
+const offers = useForm({
+  downloads_enabled: props.gallery.offers.downloads,
+  lists_enabled: props.gallery.offers.lists,
+  comments_enabled: props.gallery.offers.comments,
+})
+
+function saveOffers() {
+  offers.patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
+}
+
+// Der Weg, den man tatsaechlich geht: eine Galerie einrichten, bis sie sitzt,
+// und dann festhalten, womit die naechste anfangen soll.
+const savingPreset = ref(false)
+const presetForm = useForm({ name: props.gallery.title ?? '' })
+
+function saveAsPreset() {
+  presetForm.post(`/galerien/${props.gallery.id}/vorlage`, {
+    preserveScroll: true,
+    onSuccess: () => (savingPreset.value = false),
+  })
+}
+
+function day(iso: string | null) {
+  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
+}
+</script>
+
+<template>
+  <!-- balance_settled is a state out of the payments, never a switch —
+       it stands as a value beside the block it causes. -->
+  <p v-if="gallery.requiresSettledBalance && !gallery.balanceSettled" class="mb-5 text-[11.5px] leading-[1.45] text-faint">
+    {{ $t('galleryRecord.blockedByBalance') }}
+  </p>
+
+  <template v-if="settingsSection === 'allgemein'">
+    <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.allgemein') }}</h2>
+
+    <div class="mb-5 flex flex-col gap-2 pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
+      <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.slugLabel') }}</div>
+      <div class="flex items-center gap-1.5">
+        <span class="text-[13px] whitespace-nowrap text-ink-2">{{ addressPrefixText }}</span>
+        <Input v-model="general.slug" class="w-[220px]" type="text" maxlength="60" @blur="saveGeneral" />
+      </div>
+      <p v-if="general.errors.slug" class="text-[11.5px] leading-[1.45] text-destructive">{{ general.errors.slug }}</p>
+      <!-- The one fact nobody could derive from a text field: changing
+           the address does not break a link already in an inbox. -->
+      <p class="text-[11.5px] leading-[1.45] text-faint">{{ $t('galleryRecord.slugHint') }}</p>
+    </div>
+
+    <div class="mb-5 flex items-start gap-[26px] pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
+      <div v-if="gallery.eventDate" class="flex min-w-0 flex-col gap-2">
+        <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.eventDate') }}</div>
+        <div class="mt-[5px] text-[15px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ day(gallery.eventDate) }}</div>
+      </div>
+
+      <div class="flex min-w-0 flex-col gap-2">
+        <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.expiry') }}</div>
+        <DatePicker v-model="general.expires_at" class="w-[150px]" @update:model-value="saveExpiryIfComplete" />
+      </div>
+    </div>
+
+    <h2 class="mt-9">{{ $t('galleryRecord.versions') }}</h2>
+    <div class="mb-9">
+      <div v-for="version in versions" :key="version.version" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
+        <span class="w-[62px] flex-none text-[12px] font-semibold tracking-[-0.01em] tabular-nums">{{ $t('galleryRecord.version', { version: version.version }) }}</span>
+        <span class="text-[13px] font-medium tracking-[-0.01em]">{{ $t('contacts.assetCount', version.assetCount) }}</span>
+        <span class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ day(version.publishedAt) }}</span>
+      </div>
+    </div>
+
+    <Dialog v-model:open="savingPreset">
+      <DialogTrigger as-child>
+        <Button type="button" variant="pill-muted">{{ $t('galleryRecord.saveAsPreset') }}</Button>
+      </DialogTrigger>
+
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{{ $t('galleryRecord.saveAsPreset') }}</DialogTitle>
+        </DialogHeader>
+
+        <DialogBody>
+          <form id="gallery-preset-form" class="flex flex-col gap-1.5" @submit.prevent="saveAsPreset">
+            <Label for="preset-name">{{ $t('galleryPresets.nameField') }}</Label>
+            <Input id="preset-name" v-model="presetForm.name" type="text" maxlength="120" />
+            <p v-if="presetForm.errors.name" class="text-[11.5px] leading-[1.45] text-destructive">{{ presetForm.errors.name }}</p>
+          </form>
+        </DialogBody>
+
+        <DialogFooter>
+          <Button type="submit" form="gallery-preset-form" :disabled="presetForm.processing || presetForm.name === ''">
+            {{ $t('common.save') }}
+          </Button>
+          <DialogClose as-child>
+            <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </template>
+
+  <GalleryAccess v-else-if="settingsSection === 'zugang'" :gallery="gallery" :siblings="siblings" />
+
+  <template v-else-if="settingsSection === 'download'">
+    <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.download') }}</h2>
+    <div class="mb-5 flex items-center gap-2.5">
+      <Checkbox id="cb-offer-downloads" v-model="offers.downloads_enabled" @update:model-value="saveOffers" />
+      <Label variant="inline" for="cb-offer-downloads">{{ $t('gallerySettings.downloadsLabel') }}</Label>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('gallery.gateDownload') }}</div>
+      <Input v-model="downloadPin.download_pin" class="w-[110px]" type="text" @blur="saveDownloadPin" />
+    </div>
+  </template>
+
+  <template v-else-if="settingsSection === 'listen'">
+    <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.listen') }}</h2>
+    <div class="mb-5 flex items-center gap-2.5">
+      <Checkbox id="cb-offer-lists" v-model="offers.lists_enabled" @update:model-value="saveOffers" />
+      <Label variant="inline" for="cb-offer-lists">{{ $t('gallerySettings.listsLabel') }}</Label>
+    </div>
+
+    <div>
+      <div v-for="list in lists" :key="list.id" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
+        <span class="text-[13px] font-medium tracking-[-0.01em]">{{ list.name ?? $t('gallery.heart') }}</span>
+        <span class="w-14 flex-none text-[10.5px] tracking-[0.05em] uppercase text-ink-2">{{ list.owner ?? $t('galleryRecord.guest') }}</span>
+        <span class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ $t('contacts.assetCount', list.count) }}</span>
+      </div>
+      <p v-if="!lists.length" class="text-[11.5px] leading-[1.45] text-faint">{{ $t('gallery.listEmpty') }}</p>
+    </div>
+  </template>
+
+  <template v-else>
+    <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.kommentare') }}</h2>
+    <div class="flex items-center gap-2.5">
+      <Checkbox id="cb-offer-comments" v-model="offers.comments_enabled" @update:model-value="saveOffers" />
+      <Label variant="inline" for="cb-offer-comments">{{ $t('gallerySettings.commentsLabel') }}</Label>
+    </div>
+  </template>
+</template>

@@ -69,11 +69,15 @@ describe('GalleryRail', () => {
     expect(positions).toEqual([...positions].sort((a, b) => a - b))
   })
 
+  // Asserted against the pill's own class + text, not a bare 'An'/'Aus' —
+  // both are two- and three-letter German words the wider catalog is full
+  // of, so a naive toContain would turn red for the wrong reason the moment
+  // any other label on this rail happened to carry one as a substring.
   it('shows Download, Listen and Kommentare as An once their switch is on', async () => {
     const html = await render({ coverSrc: null, tab: 'einstellungen', sets: oneSet, activeSetId: 'a', error: null, settingsSection: 'allgemein', offers })
 
-    expect(html).toContain(de.galleryPresets.on)
-    expect(html).not.toContain(de.galleryPresets.off)
+    expect(html).toMatch(new RegExp(`bg-ok-bg text-ok[^<]*>${de.galleryPresets.on}<`))
+    expect(html).not.toMatch(new RegExp(`bg-sunk-2 text-faint[^<]*>${de.galleryPresets.off}<`))
   })
 
   it('shows Download, Listen and Kommentare as Aus once their switch is off', async () => {
@@ -82,7 +86,7 @@ describe('GalleryRail', () => {
       offers: { downloads: false, lists: false, comments: false },
     })
 
-    expect(html).toContain(de.galleryPresets.off)
-    expect(html).not.toContain(de.galleryPresets.on)
+    expect(html).toMatch(new RegExp(`bg-sunk-2 text-faint[^<]*>${de.galleryPresets.off}<`))
+    expect(html).not.toMatch(new RegExp(`bg-ok-bg text-ok[^<]*>${de.galleryPresets.on}<`))
   })
 })

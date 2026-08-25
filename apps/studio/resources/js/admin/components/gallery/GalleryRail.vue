@@ -19,20 +19,30 @@ export interface SetRow {
   density: string
 }
 
+// Pixieset's General Settings shape: a sub-navigation, only while ⚙ is open.
+// Download/Listen/Kommentare carry the switch's own state as a pill — the
+// same fact GalleryRecord's header chip already reads out elsewhere.
+// Declared ahead of defineProps so SettingsSection can narrow settingsSection
+// to the same five values Record.vue's own ref holds — a plain `string`
+// let the trailing v-else in the template silently mean "Kommentare" for
+// anything unrecognised.
+const SETTINGS_SECTIONS = ['allgemein', 'zugang', 'download', 'listen', 'kommentare'] as const
+type SettingsSection = (typeof SETTINGS_SECTIONS)[number]
+
 const props = defineProps<{
   coverSrc: string | null
   tab: string
   sets: SetRow[]
   activeSetId: string | null
   error: { id: string; message: string } | null
-  settingsSection: string
+  settingsSection: SettingsSection
   offers: { downloads: boolean; lists: boolean; comments: boolean }
 }>()
 
 const emit = defineEmits<{
   'update:tab': [string]
   'update:activeSetId': [string | null]
-  'update:settingsSection': [string]
+  'update:settingsSection': [SettingsSection]
   create: [string]
   rename: [{ id: string; name: string }]
   remove: [{ id: string; targetSetId: string | null }]
@@ -40,11 +50,6 @@ const emit = defineEmits<{
 }>()
 
 const TABS = ['bilder', 'gestaltung', 'einstellungen', 'aktivitaet'] as const
-
-// Pixieset's General Settings shape: a sub-navigation, only while ⚙ is open.
-// Download/Listen/Kommentare carry the switch's own state as a pill — the
-// same fact GalleryRecord's header chip already reads out elsewhere.
-const SETTINGS_SECTIONS = ['allgemein', 'zugang', 'download', 'listen', 'kommentare'] as const
 
 const settingsPill = computed<Record<string, boolean | null>>(() => ({
   allgemein: null,
