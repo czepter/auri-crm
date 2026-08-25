@@ -44,43 +44,47 @@ describe('guestId', () => {
 
 describe('fetchFavorites', () => {
   it('returns the favorited keys the api reports for this guest', async () => {
-    const store = memoryStore()
-    store.setItem('gallery_guest_id', 'guest-1')
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ favorited: ['a.jpg', 'b.jpg'] }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
 
-    const keys = await fetchFavorites('https://api.example', 'ver_abc', null, store)
+    const keys = await fetchFavorites('https://api.example', 'ver_abc', null, 'g.1.2.sig')
 
     expect(keys).toEqual(new Set(['a.jpg', 'b.jpg']))
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://api.example/api/gallery-versions/ver_abc/favorites?guest_id=guest-1',
+      'https://api.example/api/gallery-versions/ver_abc/favorites?guest_pass=g.1.2.sig',
       { headers: {} },
     )
   })
 
+  // Ohne Anmeldung gibt es nichts zu holen — und die api anzurufen, um eine
+  // leere Liste zu bekommen, ist ein Aufruf zu viel.
+  it('asks nothing at all when nobody is signed in', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    expect(await fetchFavorites('https://api.example', 'ver_abc', null, null)).toEqual(new Set())
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('degrades to an empty set on a failed response, rather than throwing', async () => {
-    const store = memoryStore()
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 500 })))
 
-    expect(await fetchFavorites('https://api.example', 'ver_abc', null, store)).toEqual(new Set())
+    expect(await fetchFavorites('https://api.example', 'ver_abc', null, 'g.1.2.sig')).toEqual(new Set())
   })
 
   it('degrades to an empty set when the network call itself rejects', async () => {
-    const store = memoryStore()
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
 
-    expect(await fetchFavorites('https://api.example', 'ver_abc', null, store)).toEqual(new Set())
+    expect(await fetchFavorites('https://api.example', 'ver_abc', null, 'g.1.2.sig')).toEqual(new Set())
   })
 })
 
 describe('toggleFavorite', () => {
-  it('posts the guest id and the encoded key, resolving to the resulting state', async () => {
-    const store = memoryStore()
-    store.setItem('gallery_guest_id', 'guest-1')
+  it('posts the guest pass and the encoded key, resolving to the resulting state', async () => {
     const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ favorited: true }), { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
 
-    const favorited = await toggleFavorite('https://api.example', 'ver_abc', 'galleries/g 1/a.jpg', null, store)
+    const favorited = await toggleFavorite('https://api.example', 'ver_abc', 'galleries/g 1/a.jpg', null, 'g.1.2.sig')
 
     expect(favorited).toBe(true)
     expect(fetchMock).toHaveBeenCalledWith(
@@ -88,7 +92,7 @@ describe('toggleFavorite', () => {
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ guest_id: 'guest-1' }),
+        body: JSON.stringify({ guest_pass: 'g.1.2.sig' }),
       }),
     )
   })

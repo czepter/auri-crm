@@ -29,6 +29,8 @@ export interface LightboxData {
   // G-05 (#242): the view claim this page was served under, for the
   // favorites/comments calls specifically. Null for a gallery with no gate.
   pass: string | null
+  /** Der Gastpass. Ohne ihn antwortet die api auf Herz und Kommentar 403. */
+  guestPass: string | null
 }
 
 const STAGE_WIDTH = 1600
@@ -54,7 +56,7 @@ export function stepIndex(index: number, delta: number, length: number): number 
   return (index + delta + length) % length
 }
 
-export function initLightbox({ assets, apiBase, imageBase, gate, versionPublicId, pass }: LightboxData): void {
+export function initLightbox({ assets, apiBase, imageBase, gate, versionPublicId, pass, guestPass }: LightboxData): void {
   const interactive = versionPublicId !== null
   const root = document.getElementById('lightbox')
   if (!root || assets.length === 0) return
@@ -101,7 +103,7 @@ export function initLightbox({ assets, apiBase, imageBase, gate, versionPublicId
   const flip = (i: number): void => {
     // Only ever called while interactive (favBtn click, tile heart click —
     // both wired inside `if (interactive)` below), so versionPublicId is set.
-    void toggleFavorite(apiBase, versionPublicId as string, assets[i].key, pass).then((on) => {
+    void toggleFavorite(apiBase, versionPublicId as string, assets[i].key, pass, guestPass).then((on) => {
       const key = assets[i].key
       if (on) favorited.add(key)
       else favorited.delete(key)
@@ -208,7 +210,7 @@ export function initLightbox({ assets, apiBase, imageBase, gate, versionPublicId
       if (body === '') return
 
       commentInput.disabled = true
-      void postComment(apiBase, versionPublicId as string, assets[index].key, body, pass)
+      void postComment(apiBase, versionPublicId as string, assets[index].key, body, pass, guestPass)
         .then((comment) => {
           if (comment) {
             commentInput.value = ''
@@ -220,7 +222,7 @@ export function initLightbox({ assets, apiBase, imageBase, gate, versionPublicId
         })
     })
 
-    void fetchFavorites(apiBase, versionPublicId as string, pass).then((keys) => {
+    void fetchFavorites(apiBase, versionPublicId as string, pass, guestPass).then((keys) => {
       favorited = keys
       renderTileHearts()
       if (root.classList.contains('open')) renderFavorite()

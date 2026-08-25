@@ -85,6 +85,14 @@ const PUBLIC_ROUTES = [
         // limited and uniform-response instead, same shape as the inquiry
         // route above — see GalleryPrereleaseSignupController.
         'api/galleries/{gallery}/benachrichtigung',
+        // Die Anmeldung des Gastes. Wie die Gate-Route darüber ist die
+        // Adresse selbst das, was geprüft wird — sechs Ziffern in einer
+        // Mail —, und was sie einbringt, ist ein signierter Pass
+        // (GalleryGuestPass). Keins von beidem liest sich als `audience:`.
+        // Gebremst wird stattdessen je Adresse und Galerie, siehe
+        // GalleryGuestController.
+        'api/galleries/{gallery}/guest',
+        'api/galleries/{gallery}/guest/bestaetigung',
         'api/galleries/{gallery}', 'api/gallery-versions/{galleryVersion}/images/{key}',
         'api/gallery-versions/{galleryVersion}/favorites', 'api/gallery-versions/{galleryVersion}/favorites/{key}',
         'api/gallery-versions/{galleryVersion}/comments',

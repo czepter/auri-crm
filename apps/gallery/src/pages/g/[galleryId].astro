@@ -3,6 +3,7 @@ import { draftImageBase, FORMATS, imageUrl, passGate, previewGate, srcSet, versi
 import { callApi } from '../../lib/apiClient'
 import { buyPass, passCookieName, PASS_MAX_AGE_SECONDS } from '../../lib/viewPass'
 import { isPrerelease, signUpForPrerelease, type PrereleaseSignupResult } from '../../lib/prerelease'
+import { confirm as confirmGuest, guestCookieName, GUEST_MAX_AGE_SECONDS, nameFromEmail, requestCode } from '../../lib/guest'
 import '../../styles/app.css'
 
 // G-08: never cached. Which GalleryVersion counts as "current" can change
@@ -21,6 +22,10 @@ const publicApi = process.env.PUBLIC_API_URL ?? apiBase
 const { galleryId } = Astro.params
 const requestId = Astro.locals.requestId
 const cookieName = passCookieName(galleryId!)
+const guestCookie = guestCookieName(galleryId!)
+// Zwei Cookies: der Pass bleibt undurchsichtig und signiert, der Name steht
+// daneben, damit die Fußzeile ihn ohne Rückfrage zeigen kann.
+const guestNameCookie = `${guestCookie}_wer`
 
 // R40: pre-release's own shape — title and public_id, nothing a picture,
 // a count or a cover could answer, because GalleryReadController never
@@ -63,6 +68,32 @@ let pass = Astro.cookies.get(cookieName)?.value ?? null
 let wrongPassword = false
 let signupStatus: PrereleaseSignupResult | null = null
 
+// Wer hier ist. Ohne bestätigte Adresse kein Herz und kein Kommentar — eine
+// Markierung ohne Absender wäre auf dem nächsten Gerät verloren.
+let guestPass = Astro.cookies.get(guestCookie)?.value ?? null
+let guestName = Astro.cookies.get(guestNameCookie)?.value ?? null
+// Die Adresse, an die gerade ein Code ging: sie füllt das Codeformular und
+// später das Adressfeld vor.
+let pendingEmail: string | null = null
+let codeSent = false
+let codeWrong = false
+let tooManyCodes = false
+
+function rememberGuest(identity: { name: string; pass: string }) {
+  const options = {
+    path: `/g/${galleryId}`,
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    secure: Astro.url.protocol === 'https:',
+    maxAge: GUEST_MAX_AGE_SECONDS,
+  }
+
+  guestPass = identity.pass
+  guestName = identity.name
+  Astro.cookies.set(guestCookie, identity.pass, options)
+  Astro.cookies.set(guestNameCookie, identity.name, options)
+}
+
 // R44: this render's own timestamp, carried as a hidden field on the
 // signup form below and read back at the top of the next POST to compute
 // `elapsed` server-side — the page ships no client JavaScript, so there is
@@ -76,8 +107,46 @@ const renderedAt = Date.now()
 // made yet at this point in the request.
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData()
+  const intent = String(form.get('absicht') ?? '')
 
-  if (form.has('email')) {
+  if (intent === 'anmelden') {
+    pendingEmail = String(form.get('gast_email') ?? '')
+    const name = String(form.get('gast_name') ?? '') || nameFromEmail(pendingEmail)
+
+    codeSent = await requestCode(apiBase, galleryId!, requestId, pendingEmail, name, pass)
+    tooManyCodes = !codeSent
+  } else if (intent === 'bestaetigen') {
+    pendingEmail = String(form.get('gast_email') ?? '')
+
+    const identity = await confirmGuest(
+      apiBase,
+      galleryId!,
+      requestId,
+      {
+        email: pendingEmail,
+        code: String(form.get('code') ?? ''),
+        // Was dieser Browser vor der Anmeldung markiert hat. Steht im
+        // localStorage, das eine serverseitig gerenderte Seite nicht lesen
+        // kann — die drei Zeilen unten legen es ins Formular.
+        anonymousId: String(form.get('anonym') ?? ''),
+      },
+      pass,
+    )
+
+    if (identity === null) {
+      codeSent = true
+      codeWrong = true
+    } else {
+      rememberGuest(identity)
+    }
+  } else if (intent === 'abmelden') {
+    // Beides, nicht nur das Cookie: bliebe die anonyme Kennung liegen, erbte
+    // der Nächste am geteilten Rechner die Markierungen von vorher.
+    Astro.cookies.delete(guestCookie, { path: `/g/${galleryId}` })
+    Astro.cookies.delete(guestNameCookie, { path: `/g/${galleryId}` })
+    guestPass = null
+    guestName = null
+  } else if (form.has('email')) {
     const submittedAt = Number(form.get('rendered_at') ?? NaN)
     const elapsed = Number.isFinite(submittedAt) ? Math.floor((Date.now() - submittedAt) / 1000) : null
 
@@ -112,6 +181,18 @@ if (Astro.request.method === 'POST') {
 // A revoked or expired token reads the same as none at all —
 // GalleryReadController falls through to the ordinary version path — so
 // this page never special-cases "invalid preview token" itself.
+// Derselbe Vorgang über den Link aus der Mail — für den, der sie auf dem
+// Gerät liest, auf dem er auch die Galerie offen hat.
+const confirmToken = Astro.url.searchParams.get('bestaetigung')
+
+if (confirmToken !== null && guestPass === null) {
+  const identity = await confirmGuest(apiBase, galleryId!, requestId, { token: confirmToken }, pass)
+
+  if (identity !== null) {
+    rememberGuest(identity)
+  }
+}
+
 const previewToken = Astro.url.searchParams.get('preview')
 const readPath = `/api/galleries/${galleryId}${previewToken ? `?preview=${encodeURIComponent(previewToken)}` : ''}`
 
@@ -313,7 +394,7 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
                 {
                   // R31: no GalleryVersion means no AssetFavoriteController
                   // to toggle against — the draft grid is view-only.
-                  !gallery.draft && (
+                  !gallery.draft && guestPass !== null && (
                     <button class="fav" type="button" data-fav aria-label="Favorit">
                       <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
                     </button>
@@ -380,7 +461,13 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
                       <div class="cmts" data-lb-comments />
 
                       <div class="write">
-                        <input type="text" data-lb-comment-input placeholder="Kommentar schreiben …" />
+                        {
+                          guestPass === null ? (
+                            <a href="#anmelden">Zum Kommentieren anmelden</a>
+                          ) : (
+                            <input type="text" data-lb-comment-input placeholder="Kommentar schreiben …" />
+                          )
+                        }
                       </div>
                     </>
                   )
@@ -401,9 +488,97 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
             </nav>
           </div>
 
+          {
+            // Ohne bestätigte Adresse gibt es Herz und Kommentar nicht: eine
+            // Markierung ohne Absender wäre auf dem nächsten Gerät verloren,
+            // und unter jedem Kommentar stünde wieder „Gast".
+            !gallery.draft && guestPass === null && (
+              <section class="signin" id="anmelden">
+                {
+                  codeSent ? (
+                    <form method="POST">
+                      <input type="hidden" name="absicht" value="bestaetigen" />
+                      <input type="hidden" name="gast_email" value={pendingEmail ?? ''} />
+                      <input type="hidden" name="anonym" data-anonymous-id value="" />
+                      <p>Wir haben dir sechs Ziffern an {pendingEmail} geschickt.</p>
+                      <div class="row">
+                        <input
+                          type="text"
+                          name="code"
+                          inputmode="numeric"
+                          autocomplete="one-time-code"
+                          maxlength="6"
+                          placeholder="000000"
+                          required
+                        />
+                        <button class="btn" type="submit">Bestätigen</button>
+                      </div>
+                      {codeWrong && <p class="err">Der Code stimmt nicht oder ist abgelaufen.</p>}
+                    </form>
+                  ) : (
+                    <form method="POST">
+                      <input type="hidden" name="absicht" value="anmelden" />
+                      <p>Zum Markieren und Kommentieren trag deine Adresse ein.</p>
+                      <div class="row">
+                        <input type="email" name="gast_email" placeholder="E-Mail" required data-email-source />
+                        <input type="text" name="gast_name" placeholder="Name" required data-name-target />
+                        <button class="btn" type="submit">Weiter</button>
+                      </div>
+                      {tooManyCodes && <p class="err">Zu viele Anfragen. Versuch es später noch einmal.</p>}
+                    </form>
+                  )
+                }
+              </section>
+            )
+          }
+
+          <script is:inline>
+            document.querySelectorAll('[data-anonymous-id]').forEach((field) => {
+              field.value = localStorage.getItem('gallery_guest_id') ?? ''
+            })
+
+            // Der Namensvorschlag entsteht beim Tippen der Adresse und nur,
+            // solange niemand das Namensfeld angefasst hat.
+            const source = document.querySelector('[data-email-source]')
+            const target = document.querySelector('[data-name-target]')
+
+            if (source && target) {
+              target.addEventListener('input', () => (target.dataset.touched = '1'))
+              source.addEventListener('input', () => {
+                if (target.dataset.touched) return
+
+                const local = source.value.split('@')[0] ?? ''
+                target.value = local
+                  .split(/[._+-]+/)
+                  .map((part) => part.replace(/\d+$/, ''))
+                  .filter(Boolean)
+                  .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                  .join(' ')
+              })
+            }
+
+            document.addEventListener('submit', (event) => {
+              if (event.target.querySelector('[name="absicht"]')?.value !== 'abmelden') return
+
+              localStorage.removeItem('gallery_guest_id')
+            })
+          </script>
+
           <footer class="gfoot">
             <span>{gallery.title}</span>
-            <span>{gallery.version.assets.length} Bilder</span>
+            {
+              guestName === null ? (
+                <span>{gallery.version.assets.length} Bilder</span>
+              ) : (
+                <span class="who">
+                  Angemeldet als <b>{guestName}</b>
+                  <form method="POST">
+                    <input type="hidden" name="absicht" value="abmelden" />
+                    <button class="txtbtn" type="submit">Abmelden</button>
+                  </form>
+                </span>
+              )
+            }
           </footer>
 
           {
@@ -421,8 +596,9 @@ const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
             gate,
             versionPublicId: gallery.draft ? null : gallery.version.public_id,
             pass,
+            guestPass,
           }}>
-            window.__lightboxData = { assets, apiBase, imageBase, gate, versionPublicId, pass }
+            window.__lightboxData = { assets, apiBase, imageBase, gate, versionPublicId, pass, guestPass }
           </script>
           <script>
             import { initLightbox } from '../../lib/lightbox'

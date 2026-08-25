@@ -72,10 +72,11 @@ describe('on the api surface', function () {
         $set = GallerySet::where('gallery_id', $gallery->id)->first();
         Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg', 'width' => 200, 'height' => 100]);
         $version = $gallery->fresh()->publish();
+        [$me, $pass] = confirmedGuest($gallery);
 
         $this->postJson(
             "/api/gallery-versions/{$version->public_id}/favorites/galleries/g1/a.jpg",
-            ['guest_id' => 'guest-1'],
+            ['guest_pass' => $pass],
         )->assertForbidden();
     });
 
@@ -84,11 +85,12 @@ describe('on the api surface', function () {
         $set = GallerySet::where('gallery_id', $gallery->id)->first();
         Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg', 'width' => 200, 'height' => 100]);
         $version = $gallery->fresh()->publish();
+        [$me, $pass] = confirmedGuest($gallery);
 
         $this->postJson("/api/gallery-versions/{$version->public_id}/comments", [
             'asset_key' => 'galleries/g1/a.jpg',
             'body' => 'Schön',
-            'guest_id' => 'guest-1',
+            'guest_pass' => $pass,
         ])->assertForbidden();
     });
 });

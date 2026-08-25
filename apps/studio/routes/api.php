@@ -3,11 +3,12 @@
 use App\Crm\Http\Controllers\PublicInquiryController;
 use App\Engagement\Http\Controllers\InboundMailController;
 use App\Enums\Capability;
-use App\Gallery\Http\Controllers\GalleryPassController;
 use App\Gallery\Http\Controllers\AssetCommentController;
 use App\Gallery\Http\Controllers\AssetFavoriteController;
 use App\Gallery\Http\Controllers\GalleryDraftImageController;
+use App\Gallery\Http\Controllers\GalleryGuestController;
 use App\Gallery\Http\Controllers\GalleryImageController;
+use App\Gallery\Http\Controllers\GalleryPassController;
 use App\Gallery\Http\Controllers\GalleryPrereleaseSignupController;
 use App\Gallery\Http\Controllers\GalleryReadController;
 use App\Http\Controllers\GuestIdentityController;
@@ -80,6 +81,16 @@ Route::get('/galleries/{gallery}/entwurf-bilder/{key}', GalleryDraftImageControl
 // route accepts a slug or a public_id (Gallery::resolveRouteBinding()),
 // and this is the read call it makes with whichever one is in the URL.
 Route::get('/galleries/{gallery}', GalleryReadController::class)->name('api.galleries.show');
+
+// Die Anmeldung des Gastes. Hinter dem Ansichtspass, weil sie nur etwas ist,
+// das man in einer offenen Galerie tut — aber vor jedem Herz und jedem
+// Kommentar, denn ohne sie gibt es keinen Absender.
+Route::middleware('gallery.pass')->group(function () {
+    Route::post('/galleries/{gallery}/guest', [GalleryGuestController::class, 'request'])
+        ->name('api.galleries.guest.request');
+    Route::post('/galleries/{gallery}/guest/bestaetigung', [GalleryGuestController::class, 'confirm'])
+        ->name('api.galleries.guest.confirm');
+});
 
 Route::middleware('gallery.pass')->group(function () {
     Route::get('/gallery-versions/{galleryVersion:public_id}/images/{key}', GalleryImageController::class)
