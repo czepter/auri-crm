@@ -508,6 +508,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('galleries.assets.remove');
         Route::get('/galerien/{gallery}/bilder/{asset}/original', [GalleryAssetController::class, 'original'])
             ->name('galleries.assets.original');
+        Route::get('/galerien/{gallery}/bilder/{asset}/vorschau', [GalleryAssetController::class, 'preview'])
+            ->name('galleries.assets.preview');
         Route::patch('/galerien/{gallery}/titelbild', [GalleryAssetController::class, 'cover'])
             ->name('galleries.cover');
 

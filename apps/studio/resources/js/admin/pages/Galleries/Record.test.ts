@@ -69,6 +69,7 @@ const base = {
   lists: [],
   activity: { downloads: [], marks: [], comments: [], views: [] },
   failedAssets: [],
+  pendingUploads: [],
   figures: { published: null, assets: 0, expiresAt: null, marked: 0, downloaded: 0, viewed: 0 },
 }
 

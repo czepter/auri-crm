@@ -1165,7 +1165,10 @@
     "skipDuplicates": "Überspringen",
     "landedIn": "in {set}",
     "leaveWhileUploading": "Der Upload läuft noch. Seite verlassen?",
-    "precheckFailed": "Prüfung fehlgeschlagen"
+    "precheckFailed": "Prüfung fehlgeschlagen",
+    "transferring": "Wird übertragen",
+    "processing": "Wird verarbeitet",
+    "pendingCount": "1 in Bearbeitung | {count} in Bearbeitung"
   },
   "palette": {
     "search": "Suchen",

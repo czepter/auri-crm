@@ -40,7 +40,7 @@ const props = defineProps<{
     viewed: number
   }
   sets: { id: string; name: string; count: number; sortKey: string; sortDir: string; density: string }[]
-  assets: { id: string; key: string; setId: string; src: string | null; filename: string; width: number; height: number; isCover: boolean }[]
+  assets: { id: string; key: string; setId: string; src: string; filename: string; width: number; height: number; isCover: boolean }[]
   versions: { version: number; publishedAt: string | null; assetCount: number }[]
   builds: { id: string; size: string; status: string; parts: number; bytes: number }[]
   lists: { id: string; name: string | null; owner: string | null; count: number }[]
@@ -51,6 +51,7 @@ const props = defineProps<{
     views: { who: string | null; on: string }[]
   }
   failedAssets: { publicId: string; filename: string; error: string }[]
+  pendingUploads: { id: string; setId: string; filename: string; stage: 'transferring' | 'processing' }[]
 }>()
 
 const tab = ref<'bilder' | 'gestaltung' | 'einstellungen' | 'aktivitaet'>('bilder')
@@ -172,7 +173,14 @@ function megabytes(bytes: number) {
              Einstellungen — the count sits beside the set name and Stand is
              the header's own chip, so nothing here repeats them. -->
         <div v-if="tab === 'bilder'" class="min-w-0 flex-1">
-          <Images :gallery="gallery" :sets="sets" :assets="assets" :active-set-id="activeSetId" :failed-assets="failedAssets" />
+          <Images
+            :gallery="gallery"
+            :sets="sets"
+            :assets="assets"
+            :active-set-id="activeSetId"
+            :failed-assets="failedAssets"
+            :pending-uploads="pendingUploads"
+          />
         </div>
 
         <!-- Gestaltung: choosing without seeing is guessing, so the choice is
