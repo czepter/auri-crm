@@ -116,7 +116,7 @@ it('routes a project-bound gallery\'s publish check through the project policy, 
 
 // ---------- R42: one mail per pre-release signup, on the publish that ends it ----------
 
-it('clears prerelease_at and mails every unnotified signup on publish', function () {
+it('clears prerelease_at, mails every unnotified signup on publish, and removes the row', function () {
     Notification::fake();
     $this->gallery->forceFill(['prerelease_at' => now()])->save();
     GalleryPrereleaseSignup::query()->insert([
@@ -127,8 +127,37 @@ it('clears prerelease_at and mails every unnotified signup on publish', function
     $this->post("/galerien/{$this->gallery->public_id}/veroeffentlichen");
 
     expect($this->gallery->fresh()->prerelease_at)->toBeNull();
-    Notification::assertSentOnDemand(GalleryPrereleasePublished::class);
-    expect(GalleryPrereleaseSignup::sole()->notified_at)->not->toBeNull();
+    Notification::assertSentOnDemand(
+        GalleryPrereleasePublished::class,
+        fn ($notification, $channels, $notifiable) => $notifiable->routes['mail'] === 'anna@example.test',
+    );
+    // R45/personal-data decision: notified means gone, not merely marked —
+    // see GalleryPrereleaseSignup's own docblock.
+    expect(GalleryPrereleaseSignup::count())->toBe(0);
+});
+
+// R45: the reopen branch (no draft deviation, nothing new to publish) used
+// to return before notifyPrereleaseSignups() was ever called — a publish
+// that raced a failed one, or simply found nothing to change, silently
+// dropped the whole waiting list.
+it('mails a still-pending signup on a publish that only reopens, writing no new version', function () {
+    Notification::fake();
+    $this->post("/galerien/{$this->gallery->public_id}/veroeffentlichen");
+    $this->delete("/galerien/{$this->gallery->public_id}/veroeffentlichung");
+    // Withdrawal has already rotated the preview pass, not prerelease_at —
+    // set directly, as a signup could only ever have been collected before
+    // this gallery's first (already-happened) publish, so this simulates a
+    // row that survived from before by construction rather than reality.
+    GalleryPrereleaseSignup::query()->insert([
+        'tenant_id' => $this->gallery->tenant_id, 'gallery_id' => $this->gallery->id,
+        'email' => 'late@example.test', 'created_at' => now(), 'updated_at' => now(),
+    ]);
+
+    // Draft unchanged since the first publish: this is the reopen branch.
+    $this->post("/galerien/{$this->gallery->public_id}/veroeffentlichen");
+
+    Notification::assertSentOnDemandTimes(GalleryPrereleasePublished::class, 1);
+    expect(GalleryPrereleaseSignup::count())->toBe(0);
 });
 
 it('never mails a signup twice, even across two publishes', function () {
