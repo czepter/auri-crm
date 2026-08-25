@@ -1,6 +1,7 @@
 <?php
 
 use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Gallery\Models\Gallery;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -36,4 +37,17 @@ it('is the one place the array is built — nothing about it varies by document 
     $second = $builder->fromProject($project, $settings);
 
     expect($first)->toBe($second);
+});
+
+// The gallery link a client clicks from a document has to land on
+// apps/gallery, the guest viewer — never this app's own host, which no
+// guest can open (Gallery::publicUrl()).
+it('points the gallery merge field at the viewer host, not this app', function () {
+    config(['services.gallery.url' => 'http://gallery.test']);
+    $project = contractProject();
+    Gallery::factory()->for($project)->create(['title' => 'Hochzeit Meier', 'slug' => 'hochzeit-meier']);
+
+    $data = (new DocumentMergeDataBuilder)->fromProject($project, new StudioSettingsResolver);
+
+    expect($data['gallery']['link'])->toBe('http://gallery.test/g/hochzeit-meier');
 });

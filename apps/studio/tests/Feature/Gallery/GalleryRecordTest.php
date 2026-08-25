@@ -170,6 +170,23 @@ it('reports whether the gallery is withdrawn', function () {
     expect(props("/galerien/{$gallery->public_id}")['gallery']['withdrawn'])->toBeTrue();
 });
 
+it('rotates the email-verification gate through the same route the two secrets use', function () {
+    $gallery = managedGallery();
+
+    test()->patch("/galerien/{$gallery->public_id}", ['requires_verified_email' => true])->assertRedirect();
+
+    expect($gallery->fresh()->requiresVerifiedEmail())->toBeTrue()
+        ->and($gallery->fresh()->email_verification_version)->toBeGreaterThan(1);
+});
+
+it('lets the studio set the expiry date directly, from the Allgemein section', function () {
+    $gallery = managedGallery();
+
+    test()->patch("/galerien/{$gallery->public_id}", ['expires_at' => '2027-01-01'])->assertRedirect();
+
+    expect($gallery->fresh()->expires_at->format('Y-m-d'))->toBe('2027-01-01');
+});
+
 it('sets the three offers from the permissions tab', function () {
     $gallery = managedGallery();
 

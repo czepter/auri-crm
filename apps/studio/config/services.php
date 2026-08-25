@@ -44,6 +44,14 @@ return [
         'url' => env('GOTENBERG_URL', 'http://gotenberg:3000'),
     ],
 
+    // G-05: apps/gallery is the guest's own delivery viewer — a separate
+    // Astro process (docker-compose.yml's `gallery` service, default port
+    // matching GALLERY_PORT there) — never the studio host this app itself
+    // answers on. Gallery::publicUrl() is the only place this is read.
+    'gallery' => [
+        'url' => env('GALLERY_URL', 'http://localhost:4321'),
+    ],
+
     // M-05: verifies App\Payments\Http\Controllers\StripeWebhookController's
     // inbound deliveries. One deployment-wide value, the same shape as every
     // credential above it on this file — not a studio-editable pair like

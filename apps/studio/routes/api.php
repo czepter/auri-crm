@@ -49,7 +49,10 @@ Route::post('/galleries/{gallery}/passwort', GalleryPassController::class)->name
 // needs none. Without this the password protected one screen and left both
 // the asset list and the bytes open to anyone holding an id.
 Route::middleware('gallery.pass')->group(function () {
-    Route::get('/galleries/{gallery:public_id}', GalleryReadController::class)->name('api.galleries.show');
+    // Implicit binding, not {gallery:public_id}: apps/gallery's own /g/{id}
+    // route accepts a slug or a public_id (Gallery::resolveRouteBinding()),
+    // and this is the read call it makes with whichever one is in the URL.
+    Route::get('/galleries/{gallery}', GalleryReadController::class)->name('api.galleries.show');
     Route::get('/gallery-versions/{galleryVersion:public_id}/images/{key}', GalleryImageController::class)
         ->where('key', '.*')
         ->name('api.gallery-versions.images.show');

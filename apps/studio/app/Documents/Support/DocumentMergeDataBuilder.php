@@ -101,8 +101,8 @@ class DocumentMergeDataBuilder
     /**
      * The newest gallery of this project, or empty strings.
      *
-     * The link is the portal's own address, the same one the couple's screen
-     * copies — never the api surface's, which no guest can open.
+     * The link is apps/gallery's own address (Gallery::publicUrl()) — the
+     * guest viewer, not this app's own host, which no guest can open.
      *
      * @return array<string, string>
      */
@@ -112,7 +112,7 @@ class DocumentMergeDataBuilder
 
         return [
             'title' => $gallery?->title ?? '',
-            'link' => $gallery === null ? '' : url("/galerien/{$gallery->public_id}"),
+            'link' => $gallery?->publicUrl() ?? '',
             'password' => $gallery?->view_password ?? '',
             'downloadPin' => $gallery?->download_pin ?? '',
             'expiresOn' => $gallery?->expires_at?->format('d.m.Y') ?? '',

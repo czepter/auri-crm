@@ -6,6 +6,7 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Gallery\Support\GallerySlug;
 use App\Media\Models\Asset;
 use App\Media\Models\MultipartUpload;
 use App\Settings\Support\StudioSettingsResolver;
@@ -45,7 +46,7 @@ class Gallery extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'project_id', 'shoot_id', 'title', 'design',
+        'project_id', 'shoot_id', 'title', 'slug', 'design',
         'requires_settled_balance', 'balance_settled',
         'is_external', 'external_url', 'expires_at',
         'downloads_enabled', 'lists_enabled', 'comments_enabled',
@@ -98,6 +99,33 @@ class Gallery extends Model
     public function shoot(): BelongsTo
     {
         return $this->belongsTo(Shoot::class);
+    }
+
+    /**
+     * The seam that lets a slug change without ever breaking a link already
+     * sitting in a guest's inbox: a `{gallery}` segment resolves by slug OR
+     * public_id, here and only here, so admin, portal and api routes all
+     * agree without each one carrying its own lookup.
+     */
+    public function resolveRouteBinding($value, $field = null): ?self
+    {
+        return static::findByPublicIdOrSlug($value);
+    }
+
+    public static function findByPublicIdOrSlug(string $value): ?self
+    {
+        return static::query()->where('slug', $value)->orWhere('public_id', $value)->first();
+    }
+
+    /**
+     * apps/gallery's own address for this gallery — a separate host from
+     * the studio this model lives on (config('services.gallery.url')). The
+     * slug wins once set; public_id keeps resolving for ever, so an
+     * already-sent link never breaks.
+     */
+    public function publicUrl(): string
+    {
+        return rtrim((string) config('services.gallery.url'), '/').'/g/'.($this->slug ?? $this->public_id);
     }
 
     public function versions(): HasMany
@@ -288,6 +316,15 @@ class Gallery extends Model
     /** An external gallery (X-02) links to assets hosted elsewhere and owns no set to put them in. */
     protected static function booted(): void
     {
+        static::creating(function (Gallery $gallery) {
+            $gallery->slug ??= GallerySlug::unique(
+                $gallery->title ?? 'galerie',
+                // Global, not tenant-scoped: two studios choosing the same
+                // slug would collide on the same un-tenanted route.
+                fn (string $candidate) => static::query()->withoutGlobalScope('tenant')->where('slug', $candidate)->exists(),
+            );
+        });
+
         static::created(function (Gallery $gallery) {
             if (! $gallery->is_external) {
                 $gallery->sets()->create(['name' => 'Highlights', 'position' => 0]);

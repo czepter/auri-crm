@@ -11,6 +11,7 @@ use App\Gallery\Models\GallerySet;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Models\GalleryView;
 use App\Gallery\Support\DraftDeviation;
+use App\Gallery\Support\GallerySlug;
 use App\Http\Controllers\Controller;
 use App\Media\Data\FailedAssetData;
 use App\Media\Enums\AssetStatus;
@@ -20,6 +21,7 @@ use App\Media\Models\ZipBuild;
 use App\Support\RecordVisit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -78,7 +80,9 @@ class GalleryRecordController extends Controller
             'gallery' => [
                 'id' => $gallery->public_id,
                 'title' => $gallery->title,
-                'url' => url("/galerien/{$gallery->public_id}"),
+                'slug' => $gallery->slug,
+                'url' => $gallery->publicUrl(),
+                'eventDate' => $gallery->occursOn()?->format('Y-m-d'),
                 // C-17 (#253): in clear, because both values are shared with
                 // guests anyway and a studio that cannot read one back is
                 // forced to rotate it on every enquiry.
@@ -249,8 +253,17 @@ class GalleryRecordController extends Controller
         $this->authorize('manageMedia', $gallery);
 
         $validated = $request->validate([
+            'slug' => [
+                'sometimes', 'string',
+                'min:'.GallerySlug::MIN, 'max:'.GallerySlug::MAX,
+                'regex:'.GallerySlug::PATTERN,
+                Rule::unique('galleries', 'slug')->ignore($gallery->id),
+                Rule::notIn(GallerySlug::RESERVED),
+            ],
             'view_password' => ['nullable', 'string', 'min:4', 'max:64'],
             'download_pin' => ['nullable', 'string', 'min:4', 'max:64'],
+            'requires_verified_email' => ['sometimes', 'boolean'],
+            'expires_at' => ['nullable', 'date'],
             'design' => ['nullable', 'array'],
             'design.cover' => ['nullable', 'string', 'max:32'],
             'design.type' => ['nullable', 'string', 'max:32'],
@@ -259,6 +272,10 @@ class GalleryRecordController extends Controller
             'downloads_enabled' => ['sometimes', 'boolean'],
             'lists_enabled' => ['sometimes', 'boolean'],
             'comments_enabled' => ['sometimes', 'boolean'],
+        ], [
+            'slug.regex' => __('galleryRecord.slugFormat'),
+            'slug.unique' => __('galleryRecord.slugTaken'),
+            'slug.not_in' => __('galleryRecord.slugTaken'),
         ]);
 
         // Through rotate*(), never a plain write: the version bump is what
@@ -272,16 +289,20 @@ class GalleryRecordController extends Controller
             $gallery->rotateDownloadPin($validated['download_pin'] ?? null);
         }
 
+        if ($request->has('requires_verified_email')) {
+            $gallery->rotateEmailVerification($validated['requires_verified_email']);
+        }
+
         if ($request->has('design')) {
             $gallery->update(['design' => $validated['design'] ?? null]);
         }
 
-        $offers = array_intersect_key($validated, array_flip([
-            'downloads_enabled', 'lists_enabled', 'comments_enabled',
+        $fields = array_intersect_key($validated, array_flip([
+            'slug', 'expires_at', 'downloads_enabled', 'lists_enabled', 'comments_enabled',
         ]));
 
-        if ($offers !== []) {
-            $gallery->update($offers);
+        if ($fields !== []) {
+            $gallery->update($fields);
         }
 
         return back();

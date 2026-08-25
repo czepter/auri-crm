@@ -67,7 +67,7 @@ class GalleryPasswordController extends Controller
                 'date' => $gallery->shoot?->date?->format('Y-m-d'),
                 'venue' => $gallery->shoot?->venue(),
                 'expiresAt' => $gallery->expires_at?->toIso8601String(),
-                'url' => url("/galerien/{$gallery->public_id}"),
+                'url' => $gallery->publicUrl(),
             ],
             'unlocked' => $unlocked,
             // A button for something the gallery does not offer is a 403 with
@@ -112,7 +112,7 @@ class GalleryPasswordController extends Controller
     }
 
     /**
-     * $gallery arrives as the raw public_id, not an implicit-bound model:
+     * $gallery arrives as the raw slug-or-public_id, not an implicit-bound model:
      * route-model binding 404s before this method ever runs, and a plain 404
      * here would tell a guest guessing passwords "that id doesn't exist" —
      * exactly the enumeration G-07 closes. Resolving it by hand instead lets
@@ -122,7 +122,7 @@ class GalleryPasswordController extends Controller
      */
     public function store(Request $request, string $gallery, GalleryAccessSession $claims, GallerySecretGate $gate): RedirectResponse
     {
-        $model = Gallery::findByPublicId($gallery);
+        $model = Gallery::findByPublicIdOrSlug($gallery);
 
         // G-07/G-14: a withdrawn gallery must be indistinguishable from one
         // that never existed here — unlike show(), this is the uniform-

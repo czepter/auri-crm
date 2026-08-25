@@ -125,7 +125,7 @@ class GalleryDownloadController extends Controller
     }
 
     /**
-     * $gallery arrives as the raw public_id rather than an implicit-bound
+     * $gallery arrives as the raw slug-or-public_id rather than an implicit-bound
      * model, same reasoning as GalleryPasswordController::store: a 404 from
      * route-model binding would tell a PIN-guesser "that id doesn't exist"
      * before this method — or EnsureGalleryGate — ever ran. EnsureGalleryGate
@@ -134,7 +134,7 @@ class GalleryDownloadController extends Controller
      */
     public function storePin(Request $request, string $gallery, GalleryAccessSession $claims, GallerySecretGate $gate): RedirectResponse
     {
-        $model = Gallery::findByPublicId($gallery);
+        $model = Gallery::findByPublicIdOrSlug($gallery);
         $requiresPin = $model === null || $model->requiresDownloadPin();
 
         if ($requiresPin) {
