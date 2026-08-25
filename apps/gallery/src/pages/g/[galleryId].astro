@@ -1,5 +1,5 @@
 ---
-import { FORMATS, imageUrl, srcSet, type GalleryAsset } from '../../lib/images'
+import { draftImageBase, FORMATS, imageUrl, passGate, previewGate, srcSet, versionImageBase, type GalleryAsset } from '../../lib/images'
 import { callApi } from '../../lib/apiClient'
 import { buyPass, passCookieName, PASS_MAX_AGE_SECONDS } from '../../lib/viewPass'
 import '../../styles/tokens.css'
@@ -26,10 +26,15 @@ interface GalleryReadResponse {
   gallery: {
     public_id: string
     title: string
+    // R31/spec decision 26: set once GalleryReadController's own preview
+    // pass check matched. version.public_id is null exactly then — there is
+    // no GalleryVersion behind a draft, see the controller's own doc
+    // comment on draft().
+    draft: boolean
     version: {
-      public_id: string
-      version: number
-      published_at: string
+      public_id: string | null
+      version: number | null
+      published_at: string | null
       assets: GalleryAsset[]
     }
   }
@@ -61,11 +66,19 @@ if (Astro.request.method === 'POST') {
   }
 }
 
+// R31: the head button and "Vorschaulink erzeugen" both hand out this exact
+// shape (Gallery::publicUrl() + '?preview=' + token, GalleryPreviewController).
+// A revoked or expired token reads the same as none at all —
+// GalleryReadController falls through to the ordinary version path — so
+// this page never special-cases "invalid preview token" itself.
+const previewToken = Astro.url.searchParams.get('preview')
+const readPath = `/api/galleries/${galleryId}${previewToken ? `?preview=${encodeURIComponent(previewToken)}` : ''}`
+
 // G-13: every outgoing call this SSR page makes to the api surface goes
 // through callApi, which forwards this request's own X-Request-Id
 // (src/middleware.ts) and reports a 5xx or a timeout as the gallery outage
 // it is from a guest's side — see src/lib/apiClient.ts's own doc comment.
-let response = await callApi(apiBase, `/api/galleries/${galleryId}`, requestId, {
+let response = await callApi(apiBase, readPath, requestId, {
   headers: { Accept: 'application/json' },
 }, pass)
 
@@ -77,7 +90,7 @@ if (response.status === 404 && pass === null) {
 
   if (free !== null) {
     pass = free
-    response = await callApi(apiBase, `/api/galleries/${galleryId}`, requestId, {
+    response = await callApi(apiBase, readPath, requestId, {
       headers: { Accept: 'application/json' },
     }, pass)
   }
@@ -100,6 +113,12 @@ if (gallery === null && !locked) {
 const SIZES = '(max-width: 760px) 50vw, (max-width: 1080px) 33vw, 25vw'
 const FALLBACK_WIDTH = 800
 const cover = gallery?.version.assets[0] ?? null
+
+// R31: the one branch point every image URL on this page goes through —
+// see images.ts's own doc comment on why `base`/`gate` are pre-built here
+// rather than every call site re-deciding "draft or not".
+const imageBase = gallery === null ? '' : gallery.draft ? draftImageBase(gallery.public_id) : versionImageBase(gallery.version.public_id!)
+const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
 ---
 
 <html lang="de">
@@ -145,7 +164,7 @@ const cover = gallery?.version.assets[0] ?? null
           <header class="cover">
             {cover && (
               <img
-                src={imageUrl(publicApi, gallery.version.public_id, cover.key, 2400, 'jpeg', pass)}
+                src={imageUrl(publicApi, imageBase, cover.key, 2400, 'jpeg', gate)}
                 alt=""
               />
             )}
@@ -159,13 +178,19 @@ const cover = gallery?.version.assets[0] ?? null
             </a>
           </header>
 
-          <div class="bar">
-            <span class="who"><b>{gallery.title}</b></span>
-            <a class="barbtn solid" href={`/g/${galleryId}/download`}>
-              <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
-              Herunterladen
-            </a>
-          </div>
+          {
+            // R31: a draft has no ZipBuild to prepare or download — the
+            // studio's own preview is a look, not a delivery.
+            !gallery.draft && (
+              <div class="bar">
+                <span class="who"><b>{gallery.title}</b></span>
+                <a class="barbtn solid" href={`/g/${galleryId}/download`}>
+                  <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
+                  Herunterladen
+                </a>
+              </div>
+            )
+          }
 
           <main class="grid" id="raster">
             {gallery.version.assets.map((asset, i) => (
@@ -174,13 +199,13 @@ const cover = gallery?.version.assets[0] ?? null
                   {FORMATS.filter((f) => f !== 'jpeg').map((format) => (
                     <source
                       type={`image/${format}`}
-                      srcset={srcSet(publicApi, gallery.version.public_id, asset.key, format, pass)}
+                      srcset={srcSet(publicApi, imageBase, asset.key, format, gate)}
                       sizes={SIZES}
                     />
                   ))}
                   <img
-                    src={imageUrl(publicApi, gallery.version.public_id, asset.key, FALLBACK_WIDTH, 'jpeg', pass)}
-                    srcset={srcSet(publicApi, gallery.version.public_id, asset.key, 'jpeg', pass)}
+                    src={imageUrl(publicApi, imageBase, asset.key, FALLBACK_WIDTH, 'jpeg', gate)}
+                    srcset={srcSet(publicApi, imageBase, asset.key, 'jpeg', gate)}
                     sizes={SIZES}
                     width={asset.width ?? undefined}
                     height={asset.height ?? undefined}
@@ -188,9 +213,15 @@ const cover = gallery?.version.assets[0] ?? null
                     loading="lazy"
                   />
                 </picture>
-                <button class="fav" type="button" data-fav aria-label="Favorit">
-                  <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
-                </button>
+                {
+                  // R31: no GalleryVersion means no AssetFavoriteController
+                  // to toggle against — the draft grid is view-only.
+                  !gallery.draft && (
+                    <button class="fav" type="button" data-fav aria-label="Favorit">
+                      <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
+                    </button>
+                  )
+                }
               </a>
             ))}
           </main>
@@ -230,23 +261,33 @@ const cover = gallery?.version.assets[0] ?? null
               </div>
 
               <aside class="rail">
-                <div class="acts">
-                  <button type="button" class="act" data-lb-favorite>
-                    <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
-                    <span data-lb-favorite-label>Favorit</span>
-                  </button>
+                {
+                  // R31: favoriting, downloading and commenting are all
+                  // version-scoped (AssetFavoriteController,
+                  // AssetCommentController, the download route above) — a
+                  // draft has none of the three to offer.
+                  !gallery.draft && (
+                    <>
+                      <div class="acts">
+                        <button type="button" class="act" data-lb-favorite>
+                          <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
+                          <span data-lb-favorite-label>Favorit</span>
+                        </button>
 
-                  <a class="act" href={`/g/${galleryId}/download`}>
-                    <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
-                    Herunterladen
-                  </a>
-                </div>
+                        <a class="act" href={`/g/${galleryId}/download`}>
+                          <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
+                          Herunterladen
+                        </a>
+                      </div>
 
-                <div class="cmts" data-lb-comments />
+                      <div class="cmts" data-lb-comments />
 
-                <div class="write">
-                  <input type="text" data-lb-comment-input placeholder="Kommentar schreiben …" />
-                </div>
+                      <div class="write">
+                        <input type="text" data-lb-comment-input placeholder="Kommentar schreiben …" />
+                      </div>
+                    </>
+                  )
+                }
               </aside>
             </div>
 
@@ -254,7 +295,7 @@ const cover = gallery?.version.assets[0] ?? null
               {gallery.version.assets.map((asset, i) => (
                 <a href="#" data-lb-thumb data-index={i}>
                   <img
-                    src={imageUrl(publicApi, gallery.version.public_id, asset.key, 400, 'jpeg', pass)}
+                    src={imageUrl(publicApi, imageBase, asset.key, 400, 'jpeg', gate)}
                     alt=""
                     loading="lazy"
                   />
@@ -279,11 +320,13 @@ const cover = gallery?.version.assets[0] ?? null
           <script is:inline define:vars={{
             assets: gallery.version.assets,
             apiBase: publicApi,
-            versionPublicId: gallery.version.public_id,
+            imageBase,
+            gate,
+            versionPublicId: gallery.draft ? null : gallery.version.public_id,
             galleryTitle: gallery.title,
             pass,
           }}>
-            window.__lightboxData = { assets, apiBase, versionPublicId, galleryTitle, pass }
+            window.__lightboxData = { assets, apiBase, imageBase, gate, versionPublicId, galleryTitle, pass }
           </script>
           <script>
             import { initLightbox } from '../../lib/lightbox'
