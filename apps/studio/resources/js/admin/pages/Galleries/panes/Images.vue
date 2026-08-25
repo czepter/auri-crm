@@ -16,7 +16,7 @@ interface AssetRow {
   key: string
   setId: string
   filename: string
-  src: string | null
+  src: string
   isCover: boolean
 }
 
@@ -27,12 +27,20 @@ interface SetRow {
   density: string
 }
 
+interface PendingUploadRow {
+  id: string
+  setId: string
+  filename: string
+  stage: 'transferring' | 'processing'
+}
+
 const props = defineProps<{
   gallery: { id: string }
   sets: SetRow[]
   assets: AssetRow[]
   activeSetId: string | null
   failedAssets: { publicId: string; filename: string; error: string }[]
+  pendingUploads: PendingUploadRow[]
 }>()
 
 const { t } = useI18n()
@@ -54,6 +62,10 @@ const shown = computed(() =>
 )
 
 const setNames = computed(() => new Map(props.sets.map((row) => [row.id, row.name])))
+
+const pendingShown = computed(() =>
+  props.activeSetId === null ? props.pendingUploads : props.pendingUploads.filter((upload) => upload.setId === props.activeSetId),
+)
 
 const rows = computed(() => {
   const chunks: AssetRow[][] = []
@@ -214,9 +226,31 @@ watch(transferring, (on) => (on ? window.addEventListener('beforeunload', guardU
 // reloading, and the running transfer dies with this component.
 const stopInertiaGuard = router.on('before', () => (transferring.value ? window.confirm(t('media.leaveWhileUploading')) : true))
 
+// Nothing pushes ingest completion to the browser — a still-transferring or
+// still-queued upload only becomes a visible picture once this reloads and
+// asks again. 5s: fast enough that the studio sees a picture land shortly
+// after G-03 concludes it, slow enough not to hammer the page on a gallery
+// with hundreds queued. Stops the moment nothing is pending — no polling a
+// gallery that has nothing left to wait for.
+let pollTimer: ReturnType<typeof setInterval> | null = null
+
+watch(
+  () => props.pendingUploads.length > 0,
+  (hasPending) => {
+    if (hasPending && pollTimer === null) {
+      pollTimer = setInterval(() => router.reload({ only: ['assets', 'sets', 'pendingUploads', 'failedAssets'] }), 5000)
+    } else if (!hasPending && pollTimer !== null) {
+      clearInterval(pollTimer)
+      pollTimer = null
+    }
+  },
+  { immediate: true },
+)
+
 onUnmounted(() => {
   window.removeEventListener('beforeunload', guardUnload)
   stopInertiaGuard()
+  if (pollTimer !== null) clearInterval(pollTimer)
 })
 </script>
 
@@ -227,6 +261,7 @@ onUnmounted(() => {
         {{ activeSet === null ? $t('gallery.all') : activeSet.name }}
       </h2>
       <span class="text-[12px] text-ink-2">{{ shown.length }}</span>
+      <span v-if="pendingShown.length > 0" class="text-[12px] text-ink-2">{{ $t('media.pendingCount', pendingShown.length) }}</span>
       <div v-if="activeSet !== null" class="ml-auto flex gap-3 text-[11.5px] text-ink-2">
         <button
           v-for="option in ['small', 'medium', 'large']"
@@ -243,11 +278,35 @@ onUnmounted(() => {
 
     <!-- An empty set has nothing to scroll — the reserved grid height would
          otherwise sit above the drop zone as a void, the only thing left to
-         act on. -->
-    <DropZone v-if="shown.length === 0" class="h-[calc(100vh-260px)]" :disabled="activeSet === null" @files="picked" />
+         act on. A set that is empty of pictures but not of pending uploads
+         is not this case — there is something to show. -->
+    <DropZone
+      v-if="shown.length === 0 && pendingShown.length === 0"
+      class="h-[calc(100vh-260px)]"
+      :disabled="activeSet === null"
+      @files="picked"
+    />
 
     <template v-else>
-      <div v-bind="containerProps" class="h-[calc(100vh-260px)]">
+      <!-- Bytes G-03 has not turned into a picture yet — sits above the real
+           grid rather than inside its virtualized rows, since there are only
+           ever a handful of these at once. -->
+      <div
+        v-if="pendingShown.length > 0"
+        class="mb-1.5 grid gap-1.5"
+        :style="{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }"
+      >
+        <div
+          v-for="upload in pendingShown"
+          :key="upload.id"
+          class="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-md bg-muted p-1 text-center"
+        >
+          <span class="text-[8.5px] text-muted-foreground">{{ $t(`media.${upload.stage}`) }}</span>
+          <span class="line-clamp-2 text-[8.5px] text-faint">{{ upload.filename }}</span>
+        </div>
+      </div>
+
+      <div v-if="shown.length > 0" v-bind="containerProps" class="h-[calc(100vh-260px)]">
         <div v-bind="wrapperProps">
           <div
             v-for="row in list"
@@ -263,7 +322,6 @@ onUnmounted(() => {
               @dblclick="lightbox = asset"
             >
               <img
-                v-if="asset.src"
                 class="block aspect-square w-full rounded-md object-cover"
                 :class="selection.selected.has(asset.id) && 'outline-2 -outline-offset-2 outline-foreground'"
                 :src="`${asset.src}?w=400&fmt=jpeg`"
@@ -322,7 +380,7 @@ onUnmounted(() => {
     </div>
 
     <AssetLightbox
-      v-if="lightbox?.src"
+      v-if="lightbox"
       :src="lightbox.src"
       :filename="lightbox.filename"
       @close="lightbox = null"

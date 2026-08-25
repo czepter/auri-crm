@@ -6,6 +6,7 @@ use App\Enums\Capability;
 use App\Gallery\Http\Controllers\GalleryPassController;
 use App\Gallery\Http\Controllers\AssetCommentController;
 use App\Gallery\Http\Controllers\AssetFavoriteController;
+use App\Gallery\Http\Controllers\GalleryDraftImageController;
 use App\Gallery\Http\Controllers\GalleryImageController;
 use App\Gallery\Http\Controllers\GalleryReadController;
 use App\Http\Controllers\GuestIdentityController;
@@ -56,6 +57,15 @@ Route::middleware('gallery.pass')->group(function () {
     Route::get('/gallery-versions/{galleryVersion:public_id}/images/{key}', GalleryImageController::class)
         ->where('key', '.*')
         ->name('api.gallery-versions.images.show');
+
+    // R31/spec decision 26: a draft has no GalleryVersion to address image
+    // bytes by, so this is its own route rather than a version id faked up
+    // to satisfy GalleryImageController's shape. Checks its own
+    // GalleryPreviewPass rather than trusting this group's own gate — see
+    // the controller's own doc comment.
+    Route::get('/galleries/{gallery}/entwurf-bilder/{key}', GalleryDraftImageController::class)
+        ->where('key', '.*')
+        ->name('api.galleries.draft-images.show');
 
     // The first browser-originated calls this surface serves (the two routes
     // above are only ever hit server-side, by Astro's own SSR fetch, or from

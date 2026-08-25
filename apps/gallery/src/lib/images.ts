@@ -23,32 +23,49 @@ export interface GalleryAsset {
 /**
  * One image-proxy URL — never a bucket URL, per G-01a's delivery rule.
  *
- * G-05 (#242): carries the view pass as a query parameter rather than a
- * header, because a browser will not attach one to an `<img>`. See
+ * `base` is the path this asset's bytes are addressed under: a published
+ * version (`/api/gallery-versions/{id}/images`) or, for R31's draft
+ * preview, the gallery's own draft route
+ * (`/api/galleries/{id}/entwurf-bilder`, GalleryDraftImageController) — a
+ * draft has no GalleryVersion to build the first shape from. Callers
+ * compute it once rather than this function branching on a "draft?" flag,
+ * because the two routes also carry different query credentials (see
+ * `gate`).
+ *
+ * `gate` is that credential, pre-formatted as a `&key=value` suffix (or
+ * empty) — a view-password pass on the published path, a GalleryPreviewPass
+ * on the draft one, carried as a query parameter rather than a header
+ * because a browser will not attach one to an `<img>`. See
  * App\Http\Middleware\EnsureGalleryPass for what that costs and why it is
- * bounded. Omitted entirely for a gallery with no gate.
+ * bounded.
  */
-export function imageUrl(
-  apiBase: string,
-  versionPublicId: string,
-  key: string,
-  width: number,
-  format: Format,
-  pass?: string | null,
-): string {
+export function imageUrl(apiBase: string, base: string, key: string, width: number, format: Format, gate = ''): string {
   const path = key.split('/').map(encodeURIComponent).join('/')
-  const gate = pass ? `&pass=${encodeURIComponent(pass)}` : ''
 
-  return `${apiBase}/api/gallery-versions/${versionPublicId}/images/${path}?w=${width}&fmt=${format}${gate}`
+  return `${apiBase}${base}/${path}?w=${width}&fmt=${format}${gate}`
 }
 
 /** The srcset attribute for one format, across every allowed width. */
-export function srcSet(
-  apiBase: string,
-  versionPublicId: string,
-  key: string,
-  format: Format,
-  pass?: string | null,
-): string {
-  return WIDTHS.map((w) => `${imageUrl(apiBase, versionPublicId, key, w, format, pass)} ${w}w`).join(', ')
+export function srcSet(apiBase: string, base: string, key: string, format: Format, gate = ''): string {
+  return WIDTHS.map((w) => `${imageUrl(apiBase, base, key, w, format, gate)} ${w}w`).join(', ')
+}
+
+/** `imageUrl`/`srcSet`'s `base` for a published GalleryVersion. */
+export function versionImageBase(versionPublicId: string): string {
+  return `/api/gallery-versions/${versionPublicId}/images`
+}
+
+/** `imageUrl`/`srcSet`'s `base` for R31's draft preview. */
+export function draftImageBase(galleryPublicId: string): string {
+  return `/api/galleries/${galleryPublicId}/entwurf-bilder`
+}
+
+/** `imageUrl`/`srcSet`'s `gate`, given whichever pass this page is actually holding. */
+export function passGate(pass?: string | null): string {
+  return pass ? `&pass=${encodeURIComponent(pass)}` : ''
+}
+
+/** Same shape as `passGate`, under the query name GalleryDraftImageController and GalleryReadController's draft branch both read. */
+export function previewGate(token?: string | null): string {
+  return token ? `&preview=${encodeURIComponent(token)}` : ''
 }

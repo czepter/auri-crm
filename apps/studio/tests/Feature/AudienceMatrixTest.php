@@ -83,6 +83,11 @@ const PUBLIC_ROUTES = [
         'api/galleries/{gallery}', 'api/gallery-versions/{galleryVersion}/images/{key}',
         'api/gallery-versions/{galleryVersion}/favorites', 'api/gallery-versions/{galleryVersion}/favorites/{key}',
         'api/gallery-versions/{galleryVersion}/comments',
+        // R31: the draft's own image route. Its credential is the
+        // GalleryPreviewPass query parameter, checked on every request by
+        // GalleryDraftImageController itself — the same shape as the
+        // password pass above, not an `audience:` guard.
+        'api/galleries/{gallery}/entwurf-bilder/{key}',
     ],
 
     // The client's way in. Public by necessity — the only person who needs it

@@ -2,11 +2,13 @@
 
 namespace App\Gallery\Http\Controllers;
 
+use App\Gallery\Data\GalleryPresetData;
 use App\Gallery\Models\AssetComment;
 use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryGridPref;
 use App\Gallery\Models\GalleryList;
+use App\Gallery\Models\GalleryPreset;
 use App\Gallery\Models\GallerySet;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Models\GalleryView;
@@ -15,8 +17,10 @@ use App\Gallery\Support\GallerySlug;
 use App\Http\Controllers\Controller;
 use App\Media\Data\FailedAssetData;
 use App\Media\Enums\AssetStatus;
+use App\Media\Enums\MultipartUploadStatus;
 use App\Media\Models\Asset;
 use App\Media\Models\DownloadEvent;
+use App\Media\Models\MultipartUpload;
 use App\Media\Models\ZipBuild;
 use App\Support\RecordVisit;
 use Illuminate\Http\RedirectResponse;
@@ -76,6 +80,20 @@ class GalleryRecordController extends Controller
             ->whereIn('gallery_set_id', $sets->pluck('id'))
             ->pluck('density', 'gallery_set_id');
 
+        // Bytes the studio already sent that G-03 has not turned into an
+        // Asset yet — still transferring (in_progress), or landed and
+        // waiting on the media.ingest queue (completed, processed_at null).
+        // A Completed row with processed_at set already resolved into an
+        // Asset (Ready or Failed) and is excluded — this is only the gap
+        // between "sent" and "ingest concluded".
+        $pendingUploads = MultipartUpload::query()
+            ->where('gallery_id', $gallery->id)
+            ->where('status', '!=', MultipartUploadStatus::Aborted)
+            ->whereNull('processed_at')
+            ->with('set')
+            ->oldest()
+            ->get();
+
         return Inertia::render('Galleries/Record', [
             'gallery' => [
                 'id' => $gallery->public_id,
@@ -118,6 +136,12 @@ class GalleryRecordController extends Controller
                     'assetCount' => $other->asset_count,
                     'open' => $other->id === $gallery->id,
                 ])->all(),
+            // The More menu's "Vorlage anwenden" — Create.vue's own copy of
+            // this list, seen the other direction: birth reads a preset
+            // once into a new gallery's form, this writes one into a
+            // gallery that already exists (GalleryPresetController::
+            // applyToGallery).
+            'presets' => GalleryPresetData::collect(GalleryPreset::query()->orderBy('name')->get()),
             'figures' => [
                 'published' => $version?->version,
                 'assets' => $assets->count(),
@@ -144,7 +168,12 @@ class GalleryRecordController extends Controller
                 'width' => $asset->width,
                 'height' => $asset->height,
                 'isCover' => $asset->id === $gallery->cover_asset_id,
-                'src' => $version === null ? null : "/galerie-bilder/{$version->public_id}/{$asset->key}",
+                // The draft's own image route (GalleryAssetController::preview),
+                // not the version-scoped guest one — a gallery the studio is
+                // still assembling has no GalleryVersion for that route to
+                // resolve against, and the grid must show pictures long
+                // before the first publish.
+                'src' => "/galerien/{$gallery->public_id}/bilder/{$asset->public_id}/vorschau",
             ])->all(),
             'versions' => $gallery->versions()->orderByDesc('version')->get()
                 ->map(fn (GalleryVersion $row) => [
@@ -183,6 +212,16 @@ class GalleryRecordController extends Controller
             'failedAssets' => FailedAssetData::collect(
                 Asset::query()->where('gallery_id', $gallery->id)->where('status', AssetStatus::Failed)->oldest()->get(),
             ),
+            // Kept out of figures.assets and sets[].count on purpose — those
+            // stay the truth about pictures that exist; a number that moves
+            // before anything was actually uploaded is worse than a second,
+            // separate one (see the pictures pane's own pending section).
+            'pendingUploads' => $pendingUploads->map(fn (MultipartUpload $upload) => [
+                'id' => $upload->public_id,
+                'setId' => $upload->set->public_id,
+                'filename' => $upload->filename,
+                'stage' => $upload->status === MultipartUploadStatus::InProgress ? 'transferring' : 'processing',
+            ])->all(),
         ]);
     }
 

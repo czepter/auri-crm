@@ -27,14 +27,14 @@ const assets = [
 ]
 
 const gallery = { id: 'g1' }
-const base = { gallery, sets, assets, failedAssets: [] }
+const base = { gallery, sets, assets, failedAssets: [], pendingUploads: [] }
 
 // The shape every gallery actually starts in (Gallery::booted() creates
 // exactly one set) — R22 fixed Record.vue handing this pane activeSetId:
 // null here, which left no way to reach the sole set's own controls.
 const soloSet = [{ id: 'a', name: 'Highlights', count: 1, density: 'medium' }]
 const soloAssets = [{ id: '1', key: 'a.jpg', setId: 'a', filename: 'a.jpg', src: '/bild/a', isCover: true }]
-const solo = { gallery, sets: soloSet, assets: soloAssets, failedAssets: [] }
+const solo = { gallery, sets: soloSet, assets: soloAssets, failedAssets: [], pendingUploads: [] }
 
 describe('Images', () => {
   // R22: a freshly created gallery has exactly one set, and GalleryRail
@@ -115,5 +115,67 @@ describe('Images', () => {
 
     expect(html).toContain('IMG_1.jpg')
     expect(html).toContain(de.media.retryProcessing)
+  })
+
+  // The gap between "bytes are up" and "asset exists" — G-03's own ingest
+  // queue, not yet an Asset row. Placeholder tiles, not a hidden picture,
+  // so a gallery holding uploads that have not reached the grid yet does
+  // not read as empty.
+  it('shows a pending upload as a placeholder tile, not a picture', async () => {
+    const html = await render({
+      ...base,
+      activeSetId: 'a',
+      pendingUploads: [{ id: 'u1', setId: 'a', filename: 'IMG_9.jpg', stage: 'processing' }],
+    })
+
+    expect(html).toContain('IMG_9.jpg')
+    expect(html).toContain(de.media.processing)
+  })
+
+  it('labels a still-transferring upload differently from one waiting on ingest', async () => {
+    const html = await render({
+      ...base,
+      activeSetId: 'a',
+      pendingUploads: [{ id: 'u1', setId: 'a', filename: 'IMG_9.jpg', stage: 'transferring' }],
+    })
+
+    expect(html).toContain(de.media.transferring)
+    expect(html).not.toContain(de.media.processing)
+  })
+
+  // The set header count stays the truth about pictures that exist — a
+  // pending upload sits beside it as a second, honest number rather than
+  // inflating the first one before anything was actually ingested.
+  it('keeps the picture count and the pending count apart in the header', async () => {
+    const html = await render({
+      ...base,
+      activeSetId: 'a',
+      pendingUploads: [{ id: 'u1', setId: 'a', filename: 'IMG_9.jpg', stage: 'processing' }],
+    })
+
+    expect(html).toContain('>1<')
+    expect(html).toContain(de.media.pendingCount.split(' | ')[0])
+  })
+
+  it('leaves the pending count out while nothing is pending', async () => {
+    const html = await render({ ...base, activeSetId: 'a' })
+
+    expect(html).not.toContain(de.media.processing)
+    expect(html).not.toContain(de.media.transferring)
+  })
+
+  // A set with no pictures yet but an upload in flight is not the empty
+  // state — the drop zone must not swallow the whole picture area while
+  // there is a placeholder tile to show.
+  it('a set with only a pending upload does not fall back to the full-height drop zone', async () => {
+    const html = await render({
+      ...solo,
+      activeSetId: 'a',
+      assets: [],
+      pendingUploads: [{ id: 'u1', setId: 'a', filename: 'IMG_9.jpg', stage: 'processing' }],
+    })
+
+    expect(html).toContain('IMG_9.jpg')
+    expect(html).toContain(de.media.dropHere)
   })
 })

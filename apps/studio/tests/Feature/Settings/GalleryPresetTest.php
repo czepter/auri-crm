@@ -137,3 +137,41 @@ it('keeps a preset design set and clearable', function () {
 
     expect($preset->fresh()->design)->toBeNull();
 });
+
+// "Vorlage anwenden" (More menu): the reverse direction from birthValues() —
+// an existing gallery already carries real values, so a preset field left
+// null (inherit) must leave the gallery's own value untouched rather than
+// falling back to a studio default that has no rung to fall through to here.
+it('applies a preset\'s design and offers to an existing gallery', function () {
+    $gallery = Gallery::factory()->create([
+        'design' => ['cover' => 'full', 'type' => 'serif', 'colour' => 'light', 'grid' => 'wide'],
+        'downloads_enabled' => true,
+        'lists_enabled' => true,
+        'comments_enabled' => true,
+    ]);
+    $preset = GalleryPreset::factory()->create([
+        'design' => ['cover' => 'split', 'type' => 'sans', 'colour' => 'dark', 'grid' => 'dense'],
+        'downloads_enabled' => false,
+        'lists_enabled' => null,
+        'comments_enabled' => null,
+    ]);
+
+    $this->post("/galerien/{$gallery->public_id}/vorlage-anwenden", ['gallery_preset_id' => $preset->public_id])
+        ->assertRedirect();
+
+    $fresh = $gallery->fresh();
+    expect($fresh->design['colour'])->toBe('dark')
+        ->and($fresh->downloads_enabled)->toBeFalse()
+        // Left null (inherit) on the preset — the gallery's own value survives.
+        ->and($fresh->lists_enabled)->toBeTrue()
+        ->and($fresh->comments_enabled)->toBeTrue();
+});
+
+it('refuses to apply a preset without manageMedia', function () {
+    $gallery = Gallery::factory()->create();
+    $preset = GalleryPreset::factory()->create();
+    $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Assistant]), 'staff');
+
+    $this->post("/galerien/{$gallery->public_id}/vorlage-anwenden", ['gallery_preset_id' => $preset->public_id])
+        ->assertForbidden();
+});

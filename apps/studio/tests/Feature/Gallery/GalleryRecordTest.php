@@ -4,7 +4,9 @@ use App\Crm\Models\Project;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
 use App\Media\Enums\AssetStatus;
+use App\Media\Enums\MultipartUploadStatus;
 use App\Media\Models\Asset;
+use App\Media\Models\MultipartUpload;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -34,6 +36,83 @@ function managedGallery(): Gallery
 
     return $gallery->fresh();
 }
+
+// The bug this closes: every other test in this file publishes inside
+// managedGallery(), so $version === null never reached GalleryRecordController
+// before — an unpublished draft's pictures rendered as null src and an empty
+// grid despite the assets existing (see GalleryAssetController::preview).
+it('gives a draft asset a real src before the gallery has ever been published', function () {
+    $gallery = Gallery::factory()->for(Project::factory())->create(['title' => 'Hochzeitstag']);
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    $asset = Asset::factory()->create([
+        'gallery_id' => $gallery->id, 'gallery_set_id' => $set->id,
+        'key' => 'galleries/g1/a.jpg', 'filename' => 'a.jpg',
+    ]);
+
+    $props = props("/galerien/{$gallery->public_id}");
+
+    expect($gallery->fresh()->currentVersion)->toBeNull()
+        ->and($props['assets'][0]['src'])->toBe("/galerien/{$gallery->public_id}/bilder/{$asset->public_id}/vorschau");
+});
+
+// The other half of the same defect: the record only ever asked
+// `assets`, so 44 completed-but-unprocessed uploads read as zero pictures
+// and an empty grid — technically true about Asset rows, useless to
+// whoever is looking at it.
+it('reports a still-transferring upload as pending, distinct from one waiting on ingest', function () {
+    $gallery = Gallery::factory()->for(Project::factory())->create();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+
+    MultipartUpload::factory()->create([
+        'gallery_id' => $gallery->id, 'gallery_set_id' => $set->id,
+        'filename' => 'transferring.jpg', 'status' => MultipartUploadStatus::InProgress,
+    ]);
+    MultipartUpload::factory()->create([
+        'gallery_id' => $gallery->id, 'gallery_set_id' => $set->id,
+        'filename' => 'queued.jpg', 'status' => MultipartUploadStatus::Completed, 'processed_at' => null,
+    ]);
+
+    $pending = collect(props("/galerien/{$gallery->public_id}")['pendingUploads'])->keyBy('filename');
+
+    expect($pending['transferring.jpg']['stage'])->toBe('transferring')
+        ->and($pending['queued.jpg']['stage'])->toBe('processing');
+});
+
+it('leaves a concluded or aborted upload out of pendingUploads', function () {
+    $gallery = Gallery::factory()->for(Project::factory())->create();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    $asset = Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id]);
+
+    MultipartUpload::factory()->create([
+        'gallery_id' => $gallery->id, 'gallery_set_id' => $set->id,
+        'status' => MultipartUploadStatus::Completed, 'processed_at' => now(), 'asset_id' => $asset->id,
+    ]);
+    MultipartUpload::factory()->create([
+        'gallery_id' => $gallery->id, 'gallery_set_id' => $set->id,
+        'status' => MultipartUploadStatus::Aborted,
+    ]);
+
+    expect(props("/galerien/{$gallery->public_id}")['pendingUploads'])->toBe([]);
+});
+
+// figures.assets and sets[].count stay the truth about pictures that
+// exist — a pending upload must never inflate either before ingest
+// actually concludes it.
+it('keeps a pending upload out of figures.assets and the set counts', function () {
+    $gallery = Gallery::factory()->for(Project::factory())->create();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+
+    MultipartUpload::factory()->create([
+        'gallery_id' => $gallery->id, 'gallery_set_id' => $set->id,
+        'status' => MultipartUploadStatus::InProgress,
+    ]);
+
+    $props = props("/galerien/{$gallery->public_id}");
+
+    expect($props['figures']['assets'])->toBe(0)
+        ->and($props['sets'][0]['count'])->toBe(0)
+        ->and($props['pendingUploads'])->toHaveCount(1);
+});
 
 it('lists the sets with their counts', function () {
     $gallery = managedGallery();

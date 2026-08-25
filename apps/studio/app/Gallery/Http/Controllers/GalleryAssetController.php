@@ -3,10 +3,12 @@
 namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Models\Gallery;
+use App\Gallery\Support\ImageVariant;
 use App\Http\Controllers\Controller;
 use App\Media\Models\Asset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
 
 class GalleryAssetController extends Controller
@@ -101,5 +103,40 @@ class GalleryAssetController extends Controller
         abort_unless($asset->gallery_id === $gallery->id, 404);
 
         return redirect()->away(Storage::disk('s3')->temporaryUrl($asset->key, now()->addMinutes(5)));
+    }
+
+    /**
+     * The grid's own image bytes before a gallery has ever published — the
+     * one gap GalleryImageController leaves, since it is scoped to a
+     * GalleryVersion and a draft has none. Same encode-and-cache as the
+     * guest route (ImageVariant::deliver), same ownership guard as
+     * original() above, load-bearing for the same reason.
+     *
+     * A Failed asset has no key to serve — 404 rather than a broken <img>,
+     * since the pictures pane never renders one of those as a tile anyway.
+     *
+     * `private`, not `public`: unlike the guest route, reaching this one
+     * requires a staff session, so a shared cache must not be allowed to
+     * hand the bytes to anyone who later asks for the same URL. The bytes
+     * themselves are as immutable as the guest route's — the asset's key
+     * never changes for a given checksum — so the browser's own cache may
+     * still keep them forever.
+     */
+    public function preview(Request $request, Gallery $gallery, Asset $asset): Response
+    {
+        $this->authorize('manageMedia', $gallery);
+
+        abort_unless($asset->gallery_id === $gallery->id, 404);
+        abort_if($asset->key === null, 404);
+
+        $width = (int) $request->query('w');
+        $format = (string) $request->query('fmt');
+
+        abort_unless(ImageVariant::isAllowed($width, $format), 422);
+
+        return response(ImageVariant::deliver($asset->key, $width, $format), 200, [
+            'Content-Type' => ImageVariant::mimeType($format),
+            'Cache-Control' => 'private, max-age=31536000, immutable',
+        ]);
     }
 }

@@ -2,6 +2,7 @@
 
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GallerySet;
+use App\Gallery\Support\GalleryPreviewPass;
 use App\Media\Models\Asset;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -86,4 +87,74 @@ it('serves the latest version after a republish', function () {
     $this->getJson("/api/galleries/{$gallery->public_id}")
         ->assertOk()
         ->assertJson(['gallery' => ['title' => 'v2', 'version' => ['public_id' => $v2->public_id, 'version' => 2]]]);
+});
+
+// R31/spec decision 26: the whole point of the preview pass — a gallery
+// nobody has published yet, the exact case the button above 404s on, opens
+// once the request carries a pass for it.
+it('serves the draft instead of 404ing once a valid preview pass is presented', function () {
+    $gallery = Gallery::factory()->create(['title' => 'Entwurf viola-chris']);
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg', 'width' => 4000, 'height' => 3000]);
+
+    $token = app(GalleryPreviewPass::class)->issue($gallery, GalleryPreviewPass::BUTTON_MINUTES);
+
+    $this->getJson("/api/galleries/{$gallery->public_id}?preview=".urlencode($token))
+        ->assertOk()
+        ->assertJson([
+            'gallery' => [
+                'public_id' => $gallery->public_id,
+                'title' => 'Entwurf viola-chris',
+                'draft' => true,
+                'version' => [
+                    'public_id' => null,
+                    'assets' => [
+                        ['key' => 'galleries/g1/a.jpg', 'width' => 4000, 'height' => 3000],
+                    ],
+                ],
+            ],
+        ]);
+});
+
+// The exact production case this preview exists for: 22 draft pictures, no
+// published version — must answer 200 with an empty grid, never a 404,
+// once the pictures do exist there is nothing structurally different about
+// an empty one.
+it('answers a picture-less draft with an empty asset list, not a 404', function () {
+    $gallery = Gallery::factory()->create();
+    $token = app(GalleryPreviewPass::class)->issue($gallery, GalleryPreviewPass::BUTTON_MINUTES);
+
+    $this->getJson("/api/galleries/{$gallery->public_id}?preview=".urlencode($token))
+        ->assertOk()
+        ->assertJson(['gallery' => ['draft' => true, 'version' => ['assets' => []]]]);
+});
+
+it('404s an external gallery even with a valid preview pass, same as the published path', function () {
+    $gallery = Gallery::factory()->create(['is_external' => true, 'external_url' => 'https://legacy.example/g/1']);
+    $token = app(GalleryPreviewPass::class)->issue($gallery, GalleryPreviewPass::BUTTON_MINUTES);
+
+    $this->getJson("/api/galleries/{$gallery->public_id}?preview=".urlencode($token))->assertNotFound();
+});
+
+it('falls back to the published version when the preview pass is stale, not to the draft', function () {
+    $gallery = Gallery::factory()->create(['title' => 'v1']);
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg']);
+    $version = $gallery->fresh()->publish();
+
+    $token = app(GalleryPreviewPass::class)->issue($gallery, GalleryPreviewPass::BUTTON_MINUTES);
+    $gallery->rotatePreviewPass();
+
+    $this->getJson("/api/galleries/{$gallery->public_id}?preview=".urlencode($token))
+        ->assertOk()
+        ->assertJson(['gallery' => ['draft' => false, 'version' => ['public_id' => $version->public_id]]]);
+});
+
+// A guest carrying nothing must see byte-identical behaviour to before
+// GalleryPreviewPass existed — the 404 on an unpublished gallery, unchanged.
+it('still 404s a gallery nobody has published yet when no preview pass is presented', function () {
+    $gallery = Gallery::factory()->create();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => GallerySet::where('gallery_id', $gallery->id)->first()->id]);
+
+    $this->getJson("/api/galleries/{$gallery->public_id}")->assertNotFound();
 });

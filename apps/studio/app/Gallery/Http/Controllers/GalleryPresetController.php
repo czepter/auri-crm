@@ -84,6 +84,43 @@ class GalleryPresetController extends Controller
     }
 
     /**
+     * Ein Datenschutz-Vorlage-Wert (design, downloads_enabled, lists_enabled,
+     * comments_enabled) ist bei einer neuen Galerie eine Kette aus Vorlage,
+     * Projekt und Studio-Vorgabe (galleryBirth.ts, birthValues()) — hier
+     * gibt es keine solche Kette mehr, die Galerie traegt schon einen
+     * echten Wert. "Erben" (null auf der Vorlage) heisst deshalb: diesen
+     * Wert unangetastet lassen, nicht ihn auf die Studio-Vorgabe zuruecksetzen.
+     * Nur was die Vorlage tatsaechlich setzt, wird uebernommen.
+     *
+     * expiry_mode/expiry_days bleiben aussen vor — die Vorlage traegt eine
+     * Spanne ab Anlage, keinen absoluten Ablauf, und "Vorlage anwenden"
+     * uebernimmt laut Auftrag nur Gestaltung und Angebote.
+     */
+    public function applyToGallery(Request $request, Gallery $gallery): RedirectResponse
+    {
+        $this->authorize('manageMedia', $gallery);
+
+        $validated = $request->validate(['gallery_preset_id' => ['required', 'string']]);
+        $preset = GalleryPreset::query()->where('public_id', $validated['gallery_preset_id'])->firstOrFail();
+
+        $gallery->update(array_filter([
+            'design' => $preset->design,
+            'downloads_enabled' => $preset->downloads_enabled,
+            'lists_enabled' => $preset->lists_enabled,
+            'comments_enabled' => $preset->comments_enabled,
+        ], fn ($value) => $value !== null));
+
+        AuditLogger::record(
+            event: 'gallery_preset.applied',
+            actor: auth('staff')->user(),
+            context: ['preset' => $preset->public_id],
+            subject: $gallery->public_id,
+        );
+
+        return back();
+    }
+
+    /**
      * Die Galerie traegt ein Datum, die Vorlage eine Spanne. Uebersetzt wird
      * der Abstand zwischen Anlage und Ablauf — das ist, was diese Galerie
      * mitbekommen hat, und nicht die Restlaufzeit von heute aus.

@@ -5,9 +5,15 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
+import { NativeSelect } from '@/ui/native-select'
+import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import GalleryRail from '@/admin/components/gallery/GalleryRail.vue'
 import { initialActiveSetId, nextActiveSetId } from '@/admin/lib/gallerySets'
 import { publishLabelKey, showPublish as showPublishRule, showWithdraw as showWithdrawRule } from '@/admin/lib/galleryPublish'
+import { xsrfHeader } from '@/admin/lib/multipartUpload'
 import Images from '@/admin/pages/Galleries/panes/Images.vue'
 import Settings from '@/admin/pages/Galleries/panes/Settings.vue'
 
@@ -31,6 +37,7 @@ const props = defineProps<{
     canPublish: boolean
   }
   siblings: { id: string; title: string | null; assetCount: number; open: boolean }[]
+  presets: App.Gallery.Data.GalleryPresetData[]
   figures: {
     published: number | null
     assets: number
@@ -40,7 +47,7 @@ const props = defineProps<{
     viewed: number
   }
   sets: { id: string; name: string; count: number; sortKey: string; sortDir: string; density: string }[]
-  assets: { id: string; key: string; setId: string; src: string | null; filename: string; width: number; height: number; isCover: boolean }[]
+  assets: { id: string; key: string; setId: string; src: string; filename: string; width: number; height: number; isCover: boolean }[]
   versions: { version: number; publishedAt: string | null; assetCount: number }[]
   builds: { id: string; size: string; status: string; parts: number; bytes: number }[]
   lists: { id: string; name: string | null; owner: string | null; count: number }[]
@@ -51,6 +58,7 @@ const props = defineProps<{
     views: { who: string | null; on: string }[]
   }
   failedAssets: { publicId: string; filename: string; error: string }[]
+  pendingUploads: { id: string; setId: string; filename: string; stage: 'transferring' | 'processing' }[]
 }>()
 
 const tab = ref<'bilder' | 'gestaltung' | 'einstellungen' | 'aktivitaet'>('bilder')
@@ -80,6 +88,51 @@ function publish() {
 
 function withdraw() {
   router.delete(`/galerien/${props.gallery.id}/veroeffentlichung`, { preserveScroll: true })
+}
+
+// R31: JSON, not Inertia — each mints a pass and hands back the guest url,
+// nothing here reloads the page.
+async function mintPreviewUrl(path: string): Promise<string | null> {
+  const response = await fetch(`/galerien/${props.gallery.id}/${path}`, {
+    method: 'POST',
+    headers: { ...xsrfHeader(), Accept: 'application/json' },
+  })
+
+  return response.ok ? ((await response.json()) as { url: string }).url : null
+}
+
+async function openPreview() {
+  const url = await mintPreviewUrl('vorschau')
+  if (url) window.open(url, '_blank')
+}
+
+async function createPreviewLink() {
+  const url = await mintPreviewUrl('vorschau-link')
+  if (url) await navigator.clipboard?.writeText(url)
+}
+
+function copyLink() {
+  void navigator.clipboard?.writeText(props.gallery.url)
+}
+
+const savingPreset = ref(false)
+const presetForm = useForm({ name: props.gallery.title ?? '' })
+
+function saveAsPreset() {
+  presetForm.post(`/galerien/${props.gallery.id}/vorlage`, {
+    preserveScroll: true,
+    onSuccess: () => (savingPreset.value = false),
+  })
+}
+
+const applyingPreset = ref(false)
+const applyForm = useForm({ gallery_preset_id: '' })
+
+function applyPreset() {
+  applyForm.post(`/galerien/${props.gallery.id}/vorlage-anwenden`, {
+    preserveScroll: true,
+    onSuccess: () => (applyingPreset.value = false),
+  })
 }
 
 watch(
@@ -147,11 +200,82 @@ function megabytes(bytes: number) {
           class="flex-none rounded-[var(--r-sm)] bg-ok-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-ok"
         >{{ $t('galleryRecord.version', { version: figures.published }) }}</span>
 
-        <span v-if="showPublish || showWithdraw" class="ml-auto flex gap-2">
+        <span class="ml-auto flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger as-child>
+              <Button type="button" variant="pill-muted">{{ $t('galleryRecord.more') }}</Button>
+            </DropdownMenuTrigger>
+            <!-- force-mount + data-[state=closed]:hidden rather than the
+                 default open-only mount: Record.test.ts SSR-renders this
+                 page as a string, and Presence unmounts closed content
+                 entirely — the only way the menu's own rules (canPublish
+                 gating the preview link, presets.length gating "Vorlage
+                 anwenden") stay pinned by a test that can fail. -->
+            <DropdownMenuContent force-mount class="data-[state=closed]:hidden">
+              <DropdownMenuItem @select="copyLink">{{ $t('galleryRecord.copyLink') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="gallery.canPublish" @select="createPreviewLink">{{ $t('galleryRecord.createPreviewLink') }}</DropdownMenuItem>
+              <DropdownMenuItem @select="savingPreset = true">{{ $t('galleryRecord.saveAsPreset') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="presets.length" @select="applyingPreset = true">{{ $t('galleryRecord.applyPreset') }}</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button type="button" variant="pill-muted" @click="openPreview">{{ $t('galleryRecord.preview') }}</Button>
           <Button v-if="showWithdraw" type="button" variant="pill-muted" @click="withdraw">{{ $t('galleryRecord.withdraw') }}</Button>
           <Button v-if="showPublish" type="button" @click="publish">{{ $t(publishLabel) }}</Button>
         </span>
       </PageHead>
+
+      <Dialog v-model:open="savingPreset">
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{{ $t('galleryRecord.saveAsPreset') }}</DialogTitle>
+          </DialogHeader>
+
+          <DialogBody>
+            <form id="gallery-preset-form" class="flex flex-col gap-1.5" @submit.prevent="saveAsPreset">
+              <Label for="preset-name">{{ $t('galleryPresets.nameField') }}</Label>
+              <Input id="preset-name" v-model="presetForm.name" type="text" maxlength="120" />
+              <p v-if="presetForm.errors.name" class="text-[11.5px] leading-[1.45] text-destructive">{{ presetForm.errors.name }}</p>
+            </form>
+          </DialogBody>
+
+          <DialogFooter>
+            <Button type="submit" form="gallery-preset-form" :disabled="presetForm.processing || presetForm.name === ''">
+              {{ $t('common.save') }}
+            </Button>
+            <DialogClose as-child>
+              <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog v-model:open="applyingPreset">
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{{ $t('galleryRecord.applyPreset') }}</DialogTitle>
+          </DialogHeader>
+
+          <DialogBody>
+            <form id="gallery-preset-apply-form" class="flex flex-col gap-1.5" @submit.prevent="applyPreset">
+              <Label for="preset-apply">{{ $t('galleryRecord.applyPresetField') }}</Label>
+              <NativeSelect id="preset-apply" v-model="applyForm.gallery_preset_id">
+                <option value="" disabled>{{ $t('galleryPresets.none') }}</option>
+                <option v-for="preset in presets" :key="preset.id" :value="preset.id">{{ preset.name }}</option>
+              </NativeSelect>
+            </form>
+          </DialogBody>
+
+          <DialogFooter>
+            <Button type="submit" form="gallery-preset-apply-form" :disabled="applyForm.processing || applyForm.gallery_preset_id === ''">
+              {{ $t('galleryRecord.applyPreset') }}
+            </Button>
+            <DialogClose as-child>
+              <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div class="flex">
         <GalleryRail
@@ -172,7 +296,14 @@ function megabytes(bytes: number) {
              Einstellungen — the count sits beside the set name and Stand is
              the header's own chip, so nothing here repeats them. -->
         <div v-if="tab === 'bilder'" class="min-w-0 flex-1">
-          <Images :gallery="gallery" :sets="sets" :assets="assets" :active-set-id="activeSetId" :failed-assets="failedAssets" />
+          <Images
+            :gallery="gallery"
+            :sets="sets"
+            :assets="assets"
+            :active-set-id="activeSetId"
+            :failed-assets="failedAssets"
+            :pending-uploads="pendingUploads"
+          />
         </div>
 
         <!-- Gestaltung: choosing without seeing is guessing, so the choice is

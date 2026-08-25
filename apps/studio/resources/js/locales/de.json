@@ -1165,7 +1165,10 @@
     "skipDuplicates": "Überspringen",
     "landedIn": "in {set}",
     "leaveWhileUploading": "Der Upload läuft noch. Seite verlassen?",
-    "precheckFailed": "Prüfung fehlgeschlagen"
+    "precheckFailed": "Prüfung fehlgeschlagen",
+    "transferring": "Wird übertragen",
+    "processing": "Wird verarbeitet",
+    "pendingCount": "1 in Bearbeitung | {count} in Bearbeitung"
   },
   "palette": {
     "search": "Suchen",
@@ -1212,10 +1215,16 @@
   },
   "galleryRecord": {
     "saveAsPreset": "Als Vorlage sichern",
+    "applyPreset": "Vorlage anwenden",
+    "applyPresetField": "Vorlage",
     "publish": "Veröffentlichen",
     "republish": "Neu veröffentlichen",
     "reopen": "Wieder freigeben",
     "withdraw": "Zurücknehmen",
+    "preview": "Vorschau",
+    "more": "Mehr",
+    "copyLink": "Direktlink kopieren",
+    "createPreviewLink": "Vorschaulink erzeugen",
     "access": "Zugang",
     "link": "Link",
     "published": "Stand",

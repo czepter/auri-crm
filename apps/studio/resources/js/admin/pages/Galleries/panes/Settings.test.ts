@@ -42,7 +42,6 @@ describe('Settings', () => {
     expect(html).toContain('http://localhost:4321/g/')
     expect(html).toContain('hochzeit-bahlmann')
     expect(html).toContain(de.galleryRecord.slugHint)
-    expect(html).toContain(de.galleryRecord.saveAsPreset)
   })
 
   it('Zugang carries the link and the view password', async () => {

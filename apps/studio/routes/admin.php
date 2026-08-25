@@ -29,6 +29,7 @@ use App\Gallery\Http\Controllers\GalleryAssetController;
 use App\Gallery\Http\Controllers\GalleryIndexController;
 use App\Gallery\Http\Controllers\GalleryLightroomExportController;
 use App\Gallery\Http\Controllers\GalleryPresetController;
+use App\Gallery\Http\Controllers\GalleryPreviewController;
 use App\Gallery\Http\Controllers\GalleryPublicationController;
 use App\Gallery\Http\Controllers\GalleryRecordController;
 use App\Gallery\Http\Controllers\GallerySetController;
@@ -465,6 +466,15 @@ Route::middleware('audience:staff')->group(function () {
             ->name('galleries.update');
         Route::post('/galerien/{gallery}/vorlage', [GalleryPresetController::class, 'storeFromGallery'])
             ->name('galleries.preset.store');
+        Route::post('/galerien/{gallery}/vorlage-anwenden', [GalleryPresetController::class, 'applyToGallery'])
+            ->name('galleries.preset.apply');
+        // R31: JSON, not Inertia — the head button opens the returned url in
+        // a new tab, the More menu item copies it, neither wants a page
+        // reload out of this call.
+        Route::post('/galerien/{gallery}/vorschau', [GalleryPreviewController::class, 'button'])
+            ->name('galleries.preview.button');
+        Route::post('/galerien/{gallery}/vorschau-link', [GalleryPreviewController::class, 'link'])
+            ->name('galleries.preview.link');
         Route::post('/galerien/{gallery}/sets', [GallerySetController::class, 'store'])
             ->name('galleries.sets.store');
         // Above /sets/{gallerySet}, sonst schluckt die Bindung "reihenfolge"
@@ -508,6 +518,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('galleries.assets.remove');
         Route::get('/galerien/{gallery}/bilder/{asset}/original', [GalleryAssetController::class, 'original'])
             ->name('galleries.assets.original');
+        Route::get('/galerien/{gallery}/bilder/{asset}/vorschau', [GalleryAssetController::class, 'preview'])
+            ->name('galleries.assets.preview');
         Route::patch('/galerien/{gallery}/titelbild', [GalleryAssetController::class, 'cover'])
             ->name('galleries.cover');
 
