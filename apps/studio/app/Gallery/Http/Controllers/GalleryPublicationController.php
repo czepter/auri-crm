@@ -32,6 +32,15 @@ class GalleryPublicationController extends Controller
 
         $gallery->forceFill(['unpublished_at' => now()])->save();
 
+        // R38: withdrawal is the one gesture that means "stop showing this
+        // to people outside" — a preview link already sitting in a couple's
+        // inbox must stop opening the draft the same moment, not keep
+        // working as the longest-lived credential left standing. The
+        // studio's own pass dies with it too and that is correct: minting
+        // a fresh one after "withdraw to rework, then preview" is a single
+        // click, the same click this ability already gates.
+        $gallery->rotatePreviewPass();
+
         AuditLogger::record(
             event: 'gallery.withdrawn',
             actor: auth('staff')->user(),

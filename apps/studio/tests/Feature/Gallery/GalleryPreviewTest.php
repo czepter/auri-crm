@@ -227,3 +227,23 @@ it('opens the draft with a preview pass alone on a gallery that also has a view 
     // is without any of this stage's work.
     $this->getJson("/api/galleries/{$this->gallery->public_id}")->assertNotFound();
 });
+
+// R38: withdrawal is the one gesture that means "stop showing this to
+// people outside" — a preview link already sitting in an inbox must die
+// with it, on both routes that ever honoured the token at all.
+it('refuses an outstanding preview token on both routes once the gallery is withdrawn', function () {
+    Storage::fake('s3');
+    $set = GallerySet::where('gallery_id', $this->gallery->id)->first();
+    $asset = Asset::factory()->create(['gallery_id' => $this->gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg']);
+    $this->gallery->fresh()->publish();
+
+    $token = app(GalleryPreviewPass::class)->issue($this->gallery->fresh(), GalleryPreviewPass::BUTTON_MINUTES);
+    $q = '?preview='.urlencode($token);
+
+    $this->delete("/galerien/{$this->gallery->public_id}/veroeffentlichung")->assertRedirect();
+
+    useSurface(Surface::API);
+
+    $this->getJson("/api/galleries/{$this->gallery->public_id}{$q}")->assertNotFound();
+    $this->get("/api/galleries/{$this->gallery->public_id}/entwurf-bilder/{$asset->key}?w=400&fmt=jpeg{$q}")->assertNotFound();
+});
