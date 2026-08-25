@@ -1,5 +1,6 @@
 <?php
 
+use App\Crm\Models\Project;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryPrereleaseSignup;
 use App\Gallery\Models\GallerySet;
@@ -26,6 +27,11 @@ afterEach(function () {
     Asset::query()->delete();
     GallerySet::query()->delete();
     Gallery::query()->delete();
+    // Gallery::factory() defaults project_id to Project::factory(), which
+    // creates a real, committed project row this test's own connection
+    // never rolls back — without this, it outlives the process and pollutes
+    // every RefreshDatabase test that assumes an empty projects table.
+    Project::query()->delete();
     DB::purge('pgsql_second');
 });
 
