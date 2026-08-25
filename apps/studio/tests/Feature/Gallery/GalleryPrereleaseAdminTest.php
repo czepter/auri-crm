@@ -2,6 +2,7 @@
 
 use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryPrereleaseSignup;
 use App\Gallery\Models\GallerySet;
 use App\Media\Models\Asset;
 use App\Models\User;
@@ -27,6 +28,18 @@ it('stops pre-release', function () {
     $this->delete("/galerien/{$this->gallery->public_id}/pre-release")->assertRedirect();
 
     expect($this->gallery->fresh()->prerelease_at)->toBeNull();
+});
+
+// Personal-data fix round 1: GalleryPrereleaseSignup's own docblock — the
+// waiting list belongs to this pre-release window, not to the gallery for
+// ever.
+it('deletes every pending signup when pre-release stops', function () {
+    $this->gallery->forceFill(['prerelease_at' => now()])->save();
+    GalleryPrereleaseSignup::create(['gallery_id' => $this->gallery->id, 'email' => 'anna@example.test']);
+
+    $this->delete("/galerien/{$this->gallery->public_id}/pre-release");
+
+    expect(GalleryPrereleaseSignup::count())->toBe(0);
 });
 
 it('refuses to start pre-release once the gallery is published', function () {

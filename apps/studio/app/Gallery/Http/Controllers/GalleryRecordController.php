@@ -118,6 +118,11 @@ class GalleryRecordController extends Controller
                 'deviates' => DraftDeviation::of($gallery),
                 'withdrawn' => $gallery->isWithdrawn(),
                 'prerelease' => $gallery->isInPrerelease(),
+                // Minor fix round 1: Pre-release is unreachable for an external
+                // gallery (GalleryPrereleaseController::store() 422s it), but
+                // Record.vue had no way to know that and offered the control
+                // anyway. isExternal lets the menu item hide itself instead.
+                'isExternal' => $gallery->is_external,
                 'canPublish' => auth('staff')->user()->can('publish', $gallery),
                 'offers' => [
                     'downloads' => $gallery->downloads_enabled,

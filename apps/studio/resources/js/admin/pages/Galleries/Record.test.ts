@@ -63,6 +63,7 @@ const gallery = {
   deviates: true,
   withdrawn: false,
   prerelease: false,
+  isExternal: false,
   canPublish: true,
 }
 
@@ -171,12 +172,24 @@ describe('Record', () => {
     expect(html).not.toContain(de.galleryRecord.prerelease)
   })
 
+  // Minor fix round 1: the control 422s for an external gallery
+  // (GalleryPrereleaseController::store()'s own guard) — offering a
+  // control that cannot succeed is the defect R25 already ruled out once.
+  it('hides Pre-release for an external gallery', async () => {
+    const html = await render({ ...base, gallery: { ...gallery, isExternal: true } })
+
+    expect(html).not.toContain(de.galleryRecord.prerelease)
+  })
+
   // The head is the one place the studio can see this state at a glance —
   // without it, pre-release is invisible outside the More menu.
   it('shows the pre-release chip in the head while active, and offers to stop it', async () => {
     const html = await render({ ...base, gallery: { ...gallery, prerelease: true } })
 
-    expect(html).toContain(de.galleryRecord.prereleaseActive)
+    // bg-due-bg is the chip's own class, not shared with the More menu's
+    // "Pre-release beenden" item — both contain the substring "Pre-release",
+    // so the plain label alone would pass whether or not the chip rendered.
+    expect(html).toContain('bg-due-bg')
     expect(html).toContain(de.galleryRecord.prereleaseStop)
   })
 })

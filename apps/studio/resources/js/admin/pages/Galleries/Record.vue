@@ -38,6 +38,7 @@ const props = defineProps<{
     deviates: boolean
     withdrawn: boolean
     prerelease: boolean
+    isExternal: boolean
     canPublish: boolean
   }
   siblings: { id: string; title: string | null; assetCount: number; open: boolean }[]
@@ -96,7 +97,7 @@ function withdraw() {
 
 // R39: only offerable before the first publish — the same state the
 // GalleryPrereleaseController guard checks server-side.
-const showStartPrerelease = computed(() => props.gallery.canPublish && !props.gallery.prerelease && props.figures.published === null)
+const showStartPrerelease = computed(() => props.gallery.canPublish && !props.gallery.isExternal && !props.gallery.prerelease && props.figures.published === null)
 const showStopPrerelease = computed(() => props.gallery.canPublish && props.gallery.prerelease)
 
 function startPrerelease() {
@@ -285,7 +286,7 @@ function megabytes(bytes: number) {
         <span
           v-else-if="gallery.prerelease"
           class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due"
-        >{{ $t('galleryRecord.prereleaseActive') }}</span>
+        >{{ $t('galleryRecord.prerelease') }}</span>
 
         <span v-if="actionStatus" class="ml-auto flex items-center gap-1.5">
           <span class="text-[11.5px]" :class="actionStatus.ok ? 'text-ink-2' : 'text-destructive'">{{ actionStatus.message }}</span>
