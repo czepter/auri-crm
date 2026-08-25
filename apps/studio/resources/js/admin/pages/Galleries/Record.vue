@@ -4,6 +4,7 @@ import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { Input } from '@/ui/input'
+import { DatePicker } from '@/ui/date-picker'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
@@ -12,6 +13,7 @@ import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHea
 import GalleryAccess from '@/admin/components/gallery/GalleryAccess.vue'
 import GalleryRail from '@/admin/components/gallery/GalleryRail.vue'
 import { initialActiveSetId, nextActiveSetId } from '@/admin/lib/gallerySets'
+import { addressPrefix } from '@/admin/lib/galleryAddress'
 import { publishLabelKey, showPublish as showPublishRule, showWithdraw as showWithdrawRule } from '@/admin/lib/galleryPublish'
 import Images from '@/admin/pages/Galleries/panes/Images.vue'
 
@@ -19,7 +21,9 @@ const props = defineProps<{
   gallery: {
     id: string
     title: string | null
+    slug: string
     url: string
+    eventDate: string | null
     viewPassword: string | null
     downloadPin: string | null
     requiresVerifiedEmail: boolean
@@ -56,6 +60,7 @@ const props = defineProps<{
 }>()
 
 const tab = ref<'bilder' | 'gestaltung' | 'einstellungen' | 'aktivitaet'>('bilder')
+const settingsSection = ref<'allgemein' | 'zugang' | 'download' | 'listen' | 'kommentare'>('allgemein')
 
 // C-20 (#257): three sheets, because the questions differ — who took
 // something, who marked something, who was here at all.
@@ -133,6 +138,25 @@ function saveOffers() {
   offers.patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
 }
 
+// Allgemein: the address and the expiry, the two facts a studio actually
+// changes after a gallery already exists.
+const general = useForm({ slug: props.gallery.slug, expires_at: props.gallery.expiresAt ?? '' })
+
+function saveGeneral() {
+  general.transform((data) => ({ ...data, expires_at: data.expires_at === '' ? null : data.expires_at }))
+    .patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
+}
+
+const addressPrefixText = computed(() => addressPrefix(props.gallery.url))
+
+// Download: the PIN belongs beside the switch that offers it, not in Zugang.
+const downloadPin = useForm({ download_pin: props.gallery.downloadPin ?? '' })
+
+function saveDownloadPin() {
+  downloadPin.transform((data) => ({ download_pin: data.download_pin === '' ? null : data.download_pin }))
+    .patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
+}
+
 // Der Weg, den man tatsaechlich geht: eine Galerie einrichten, bis sie sitzt,
 // und dann festhalten, womit die naechste anfangen soll.
 const savingPreset = ref(false)
@@ -180,9 +204,11 @@ function megabytes(bytes: number) {
         <GalleryRail
           v-model:tab="tab"
           v-model:active-set-id="activeSetId"
+          v-model:settings-section="settingsSection"
           :cover-src="coverSrc"
           :sets="sets"
           :error="setError"
+          :offers="gallery.offers"
           @create="createSet"
           @rename="renameSet"
           @remove="removeSet"
@@ -250,42 +276,13 @@ function megabytes(bytes: number) {
             </div>
 
             <div class="mt-4 flex items-center gap-3">
-              <Dialog v-model:open="savingPreset">
-                <DialogTrigger as-child>
-                  <Button type="button" variant="pill-muted">{{ $t('galleryRecord.saveAsPreset') }}</Button>
-                </DialogTrigger>
-
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{{ $t('galleryRecord.saveAsPreset') }}</DialogTitle>
-                  </DialogHeader>
-
-                  <DialogBody>
-                    <form id="gallery-preset-form" class="flex flex-col gap-1.5" @submit.prevent="saveAsPreset">
-                      <Label for="preset-name">{{ $t('galleryPresets.nameField') }}</Label>
-                      <Input id="preset-name" v-model="presetForm.name" type="text" maxlength="120" />
-                      <p v-if="presetForm.errors.name" class="text-[11.5px] leading-[1.45] text-destructive">{{ presetForm.errors.name }}</p>
-                    </form>
-                  </DialogBody>
-
-                  <DialogFooter>
-                    <Button type="submit" form="gallery-preset-form" :disabled="presetForm.processing || presetForm.name === ''">
-                      {{ $t('common.save') }}
-                    </Button>
-                    <DialogClose as-child>
-                      <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
-                    </DialogClose>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-
               <a class="ml-auto text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline" :href="gallery.url">{{ $t('galleryRecord.openLive') }}</a>
             </div>
           </div>
         </div>
 
-        <!-- Einstellungen: Download und Freigaben landen bis Etappe 4 und 5
-             im selben Reiter — Anfragen ans System, keine eigene Kachel. -->
+        <!-- Einstellungen: Pixieset's General Settings shape — a
+             sub-navigation in the rail, one labelled section at a time here. -->
         <div v-else-if="tab === 'einstellungen'" class="min-w-0 flex-1 px-8 pt-7 pb-8">
           <!-- balance_settled is a state out of the payments, never a switch —
                it stands as a value beside the block it causes. -->
@@ -293,74 +290,111 @@ function megabytes(bytes: number) {
             {{ $t('galleryRecord.blockedByBalance') }}
           </p>
 
-          <GalleryAccess :gallery="gallery" :siblings="siblings" />
+          <template v-if="settingsSection === 'allgemein'">
+            <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.allgemein') }}</h2>
 
-          <h2 class="mt-9">{{ $t('galleryRecord.versions') }}</h2>
-          <div class="mb-9">
-            <div v-for="version in versions" :key="version.version" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
-              <span class="w-[62px] flex-none text-[12px] font-semibold tracking-[-0.01em] tabular-nums">{{ $t('galleryRecord.version', { version: version.version }) }}</span>
-              <span class="text-[13px] font-medium tracking-[-0.01em]">{{ $t('contacts.assetCount', version.assetCount) }}</span>
-              <span class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ day(version.publishedAt) }}</span>
+            <div class="mb-5 flex flex-col gap-2 pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
+              <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.slugLabel') }}</div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-[13px] whitespace-nowrap text-ink-2">{{ addressPrefixText }}</span>
+                <Input v-model="general.slug" class="w-[220px]" type="text" maxlength="60" @blur="saveGeneral" />
+              </div>
+              <p v-if="general.errors.slug" class="text-[11.5px] leading-[1.45] text-destructive">{{ general.errors.slug }}</p>
+              <!-- The one fact nobody could derive from a text field: changing
+                   the address does not break a link already in an inbox. -->
+              <p class="text-[11.5px] leading-[1.45] text-faint">{{ $t('galleryRecord.slugHint') }}</p>
             </div>
-          </div>
 
-          <h2 class="mt-9">{{ $t('galleryRecord.downloadsHeading') }}</h2>
-          <table v-if="builds.length" class="w-full border-collapse">
-            <thead>
-              <tr>
-                <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('gallery.sizeLabel') }}</th>
-                <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.parts') }}</th>
-                <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2 text-right">{{ $t('galleryRecord.size') }}</th>
-                <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.state') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="build in builds" :key="build.id">
-                <td class="px-8 py-2.5 align-baseline text-[13.5px] font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_#F0F0F2]">{{ $t(`gallery.size.${build.size}`) }}</td>
-                <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ build.parts }}</td>
-                <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-right tabular-nums">{{ megabytes(build.bytes) }}</td>
-                <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ build.status }}</td>
-              </tr>
-            </tbody>
-          </table>
+            <div class="mb-5 flex items-start gap-[26px] pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
+              <div v-if="gallery.eventDate" class="flex min-w-0 flex-col gap-2">
+                <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.eventDate') }}</div>
+                <div class="mt-[5px] text-[15px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ day(gallery.eventDate) }}</div>
+              </div>
 
-          <p v-else class="text-[11.5px] leading-[1.45] text-faint">{{ $t('galleryRecord.noBuilds') }}</p>
-
-          <h2 class="mt-9">{{ $t('galleryRecord.sharingHeading') }}</h2>
-          <!-- View password and download PIN read out under Zugang above —
-               repeating them here would show the same field twice on one
-               pane. -->
-          <div class="flex items-center gap-4 py-[11px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
-            <div class="min-w-0 flex-1 text-[13.5px]">
-              {{ $t('galleryRecord.emailGate') }}
-              <div class="mt-0.5 text-[12px] text-ink-2">{{ gallery.requiresVerifiedEmail ? $t('gallery.gateOn') : $t('gallery.gateOff') }}</div>
+              <div class="flex min-w-0 flex-col gap-2">
+                <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.expiry') }}</div>
+                <DatePicker v-model="general.expires_at" class="w-[150px]" @update:model-value="saveGeneral" />
+              </div>
             </div>
-          </div>
 
-          <div class="mt-7 flex flex-col gap-2.5">
-            <div class="flex items-center gap-2.5">
+            <h2 class="mt-9">{{ $t('galleryRecord.versions') }}</h2>
+            <div class="mb-9">
+              <div v-for="version in versions" :key="version.version" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
+                <span class="w-[62px] flex-none text-[12px] font-semibold tracking-[-0.01em] tabular-nums">{{ $t('galleryRecord.version', { version: version.version }) }}</span>
+                <span class="text-[13px] font-medium tracking-[-0.01em]">{{ $t('contacts.assetCount', version.assetCount) }}</span>
+                <span class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ day(version.publishedAt) }}</span>
+              </div>
+            </div>
+
+            <Dialog v-model:open="savingPreset">
+              <DialogTrigger as-child>
+                <Button type="button" variant="pill-muted">{{ $t('galleryRecord.saveAsPreset') }}</Button>
+              </DialogTrigger>
+
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{{ $t('galleryRecord.saveAsPreset') }}</DialogTitle>
+                </DialogHeader>
+
+                <DialogBody>
+                  <form id="gallery-preset-form" class="flex flex-col gap-1.5" @submit.prevent="saveAsPreset">
+                    <Label for="preset-name">{{ $t('galleryPresets.nameField') }}</Label>
+                    <Input id="preset-name" v-model="presetForm.name" type="text" maxlength="120" />
+                    <p v-if="presetForm.errors.name" class="text-[11.5px] leading-[1.45] text-destructive">{{ presetForm.errors.name }}</p>
+                  </form>
+                </DialogBody>
+
+                <DialogFooter>
+                  <Button type="submit" form="gallery-preset-form" :disabled="presetForm.processing || presetForm.name === ''">
+                    {{ $t('common.save') }}
+                  </Button>
+                  <DialogClose as-child>
+                    <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </template>
+
+          <GalleryAccess v-else-if="settingsSection === 'zugang'" :gallery="gallery" :siblings="siblings" />
+
+          <template v-else-if="settingsSection === 'download'">
+            <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.download') }}</h2>
+            <div class="mb-5 flex items-center gap-2.5">
               <Checkbox id="cb-offer-downloads" v-model="offers.downloads_enabled" @update:model-value="saveOffers" />
               <Label variant="inline" for="cb-offer-downloads">{{ $t('gallerySettings.downloadsLabel') }}</Label>
             </div>
-            <div class="flex items-center gap-2.5">
+
+            <div class="flex flex-col gap-2">
+              <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('gallery.gateDownload') }}</div>
+              <Input v-model="downloadPin.download_pin" class="w-[110px]" type="text" @blur="saveDownloadPin" />
+            </div>
+          </template>
+
+          <template v-else-if="settingsSection === 'listen'">
+            <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.listen') }}</h2>
+            <div class="mb-5 flex items-center gap-2.5">
               <Checkbox id="cb-offer-lists" v-model="offers.lists_enabled" @update:model-value="saveOffers" />
               <Label variant="inline" for="cb-offer-lists">{{ $t('gallerySettings.listsLabel') }}</Label>
             </div>
+
+            <div>
+              <div v-for="list in lists" :key="list.id" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
+                <span class="text-[13px] font-medium tracking-[-0.01em]">{{ list.name ?? $t('gallery.heart') }}</span>
+                <span class="w-14 flex-none text-[10.5px] tracking-[0.05em] uppercase text-ink-2">{{ list.owner ?? $t('galleryRecord.guest') }}</span>
+                <span class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ $t('contacts.assetCount', list.count) }}</span>
+              </div>
+              <p v-if="!lists.length" class="text-[11.5px] leading-[1.45] text-faint">{{ $t('gallery.listEmpty') }}</p>
+            </div>
+          </template>
+
+          <template v-else>
+            <h2 class="mt-0">{{ $t('galleryRecord.settingsNav.kommentare') }}</h2>
             <div class="flex items-center gap-2.5">
               <Checkbox id="cb-offer-comments" v-model="offers.comments_enabled" @update:model-value="saveOffers" />
               <Label variant="inline" for="cb-offer-comments">{{ $t('gallerySettings.commentsLabel') }}</Label>
             </div>
-          </div>
-
-          <h2 class="mt-7">{{ $t('gallery.listsTitle') }}</h2>
-          <div>
-            <div v-for="list in lists" :key="list.id" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
-              <span class="text-[13px] font-medium tracking-[-0.01em]">{{ list.name ?? $t('gallery.heart') }}</span>
-              <span class="w-14 flex-none text-[10.5px] tracking-[0.05em] uppercase text-ink-2">{{ list.owner ?? $t('galleryRecord.guest') }}</span>
-              <span class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ $t('contacts.assetCount', list.count) }}</span>
-            </div>
-            <p v-if="!lists.length" class="text-[11.5px] leading-[1.45] text-faint">{{ $t('gallery.listEmpty') }}</p>
-          </div>
+          </template>
         </div>
 
         <div v-else class="min-w-0 flex-1 px-8 pt-7 pb-8">
@@ -426,6 +460,29 @@ function megabytes(bytes: number) {
               </template>
             </tbody>
           </table>
+
+          <!-- Fertige ZIP-Archive: Tatsachen über Vergangenes, keine
+               Einstellung — verlässt deshalb den ⚙-Reiter. -->
+          <h2 class="mt-9">{{ $t('galleryRecord.downloadsHeading') }}</h2>
+          <table v-if="builds.length" class="w-full border-collapse">
+            <thead>
+              <tr>
+                <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('gallery.sizeLabel') }}</th>
+                <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.parts') }}</th>
+                <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2 text-right">{{ $t('galleryRecord.size') }}</th>
+                <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.state') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="build in builds" :key="build.id">
+                <td class="px-8 py-2.5 align-baseline text-[13.5px] font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_#F0F0F2]">{{ $t(`gallery.size.${build.size}`) }}</td>
+                <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ build.parts }}</td>
+                <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-right tabular-nums">{{ megabytes(build.bytes) }}</td>
+                <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ build.status }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p v-else class="text-[11.5px] leading-[1.45] text-faint">{{ $t('galleryRecord.noBuilds') }}</p>
         </div>
       </div>
     </div>

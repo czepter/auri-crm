@@ -25,11 +25,14 @@ const props = defineProps<{
   sets: SetRow[]
   activeSetId: string | null
   error: { id: string; message: string } | null
+  settingsSection: string
+  offers: { downloads: boolean; lists: boolean; comments: boolean }
 }>()
 
 const emit = defineEmits<{
   'update:tab': [string]
   'update:activeSetId': [string | null]
+  'update:settingsSection': [string]
   create: [string]
   rename: [{ id: string; name: string }]
   remove: [{ id: string; targetSetId: string | null }]
@@ -37,6 +40,19 @@ const emit = defineEmits<{
 }>()
 
 const TABS = ['bilder', 'gestaltung', 'einstellungen', 'aktivitaet'] as const
+
+// Pixieset's General Settings shape: a sub-navigation, only while ⚙ is open.
+// Download/Listen/Kommentare carry the switch's own state as a pill — the
+// same fact GalleryRecord's header chip already reads out elsewhere.
+const SETTINGS_SECTIONS = ['allgemein', 'zugang', 'download', 'listen', 'kommentare'] as const
+
+const settingsPill = computed<Record<string, boolean | null>>(() => ({
+  allgemein: null,
+  zugang: null,
+  download: props.offers.downloads,
+  listen: props.offers.lists,
+  kommentare: props.offers.comments,
+}))
 
 const total = computed(() => props.sets.reduce((sum, row) => sum + row.count, 0))
 
@@ -204,6 +220,23 @@ function onDrop(targetId: string) {
       <div v-if="adding" class="mx-1.5 px-3 py-2">
         <Input v-model="draft" class="h-6 text-[12.5px]" type="text" autofocus @blur="commitCreate" @keyup.enter="commitCreate" @keyup.esc="adding = false" />
         <p v-if="error?.id === 'new'" class="mt-1 text-[11px] text-destructive">{{ error.message }}</p>
+      </div>
+    </template>
+
+    <template v-else-if="tab === 'einstellungen'">
+      <div
+        v-for="name in SETTINGS_SECTIONS"
+        :key="name"
+        class="mx-1.5 flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-[12.5px]"
+        :class="settingsSection === name && 'bg-sunk-2 font-semibold'"
+        @click="emit('update:settingsSection', name)"
+      >
+        {{ $t(`galleryRecord.settingsNav.${name}`) }}
+        <span
+          v-if="settingsPill[name] !== null"
+          class="ml-auto rounded-[var(--r-sm)] px-1.5 py-[2px] text-[9.5px] leading-[1.5] font-semibold tracking-[0.04em] uppercase"
+          :class="settingsPill[name] ? 'bg-ok-bg text-ok' : 'bg-sunk-2 text-faint'"
+        >{{ settingsPill[name] ? $t('galleryPresets.on') : $t('galleryPresets.off') }}</span>
       </div>
     </template>
 

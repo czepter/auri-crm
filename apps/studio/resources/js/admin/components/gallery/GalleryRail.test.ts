@@ -22,16 +22,18 @@ const twoSets = [
   { id: 'b', name: 'Trauung', count: 5, density: 'medium' },
 ]
 
+const offers = { downloads: true, lists: true, comments: true }
+
 describe('GalleryRail', () => {
   it('offers + Set on a fresh gallery, before a second set can exist', async () => {
-    const html = await render({ coverSrc: null, tab: 'bilder', sets: oneSet, activeSetId: 'a', error: null })
+    const html = await render({ coverSrc: null, tab: 'bilder', sets: oneSet, activeSetId: 'a', error: null, settingsSection: 'allgemein', offers })
 
     expect(html).toContain(de.galleryRecord.addSet)
     expect(html).not.toContain(de.gallery.all)
   })
 
   it('shows Alle with the gallery total once a second set exists', async () => {
-    const html = await render({ coverSrc: null, tab: 'bilder', sets: twoSets, activeSetId: null, error: null })
+    const html = await render({ coverSrc: null, tab: 'bilder', sets: twoSets, activeSetId: null, error: null, settingsSection: 'allgemein', offers })
 
     expect(html).toContain(de.gallery.all)
     expect(html).toContain('8')
@@ -40,14 +42,47 @@ describe('GalleryRail', () => {
   // An empty grey rectangle is not worth the rail's best position — without
   // a cover, the rail begins with the icon tabs instead.
   it('renders no cover thumbnail when there is no cover', async () => {
-    const html = await render({ coverSrc: null, tab: 'bilder', sets: oneSet, activeSetId: 'a', error: null })
+    const html = await render({ coverSrc: null, tab: 'bilder', sets: oneSet, activeSetId: 'a', error: null, settingsSection: 'allgemein', offers })
 
     expect(html).not.toContain('<img')
   })
 
   it('renders the cover thumbnail once a cover exists', async () => {
-    const html = await render({ coverSrc: '/bild/cover', tab: 'bilder', sets: oneSet, activeSetId: 'a', error: null })
+    const html = await render({ coverSrc: '/bild/cover', tab: 'bilder', sets: oneSet, activeSetId: 'a', error: null, settingsSection: 'allgemein', offers })
 
     expect(html).toContain('<img')
+  })
+
+  it('shows the settings sub-navigation only while ⚙ is the active tab', async () => {
+    const html = await render({ coverSrc: null, tab: 'bilder', sets: oneSet, activeSetId: 'a', error: null, settingsSection: 'allgemein', offers })
+
+    expect(html).not.toContain(de.galleryRecord.settingsNav.zugang)
+  })
+
+  it('lists Allgemein, Zugang, Download, Listen and Kommentare in order once ⚙ is open', async () => {
+    const html = await render({ coverSrc: null, tab: 'einstellungen', sets: oneSet, activeSetId: 'a', error: null, settingsSection: 'allgemein', offers })
+
+    const positions = ['allgemein', 'zugang', 'download', 'listen', 'kommentare']
+      .map((name) => html.indexOf(de.galleryRecord.settingsNav[name as keyof typeof de.galleryRecord.settingsNav]))
+
+    expect(positions.every((position) => position !== -1)).toBe(true)
+    expect(positions).toEqual([...positions].sort((a, b) => a - b))
+  })
+
+  it('shows Download, Listen and Kommentare as An once their switch is on', async () => {
+    const html = await render({ coverSrc: null, tab: 'einstellungen', sets: oneSet, activeSetId: 'a', error: null, settingsSection: 'allgemein', offers })
+
+    expect(html).toContain(de.galleryPresets.on)
+    expect(html).not.toContain(de.galleryPresets.off)
+  })
+
+  it('shows Download, Listen and Kommentare as Aus once their switch is off', async () => {
+    const html = await render({
+      coverSrc: null, tab: 'einstellungen', sets: oneSet, activeSetId: 'a', error: null, settingsSection: 'allgemein',
+      offers: { downloads: false, lists: false, comments: false },
+    })
+
+    expect(html).toContain(de.galleryPresets.off)
+    expect(html).not.toContain(de.galleryPresets.on)
   })
 })

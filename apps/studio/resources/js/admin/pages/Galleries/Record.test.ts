@@ -39,7 +39,9 @@ function render(props: Record<string, unknown>) {
 const gallery = {
   id: 'g1',
   title: 'Hochzeit Bahlmann',
-  url: 'https://example.test/galerien/g1',
+  slug: 'hochzeit-bahlmann',
+  url: 'https://example.test/g/hochzeit-bahlmann',
+  eventDate: null,
   viewPassword: null,
   downloadPin: null,
   requiresVerifiedEmail: false,

@@ -1,26 +1,37 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
+import { Checkbox } from '@/ui/checkbox'
+import { Label } from '@/ui/label'
+import { Button } from '@/ui/button'
 
 const props = defineProps<{
-  gallery: { id: string; url: string; viewPassword: string | null; downloadPin: string | null; expiresAt: string | null }
+  gallery: { id: string; url: string; viewPassword: string | null; requiresVerifiedEmail: boolean }
   siblings: { id: string; title: string | null; assetCount: number; open: boolean }[]
 }>()
 
-const secrets = useForm({
-  view_password: props.gallery.viewPassword ?? '',
-  download_pin: props.gallery.downloadPin ?? '',
-})
+const secret = useForm({ view_password: props.gallery.viewPassword ?? '' })
 
-function saveSecrets() {
-  secrets.transform((data) => ({
+function saveSecret() {
+  secret.transform((data) => ({
     view_password: data.view_password === '' ? null : data.view_password,
-    download_pin: data.download_pin === '' ? null : data.download_pin,
   })).patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
 }
 
-function day(iso: string | null) {
-  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
+const emailGate = useForm({ requires_verified_email: props.gallery.requiresVerifiedEmail })
+
+function saveEmailGate() {
+  emailGate.patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
+}
+
+const copied = ref(false)
+
+function copy() {
+  navigator.clipboard
+    ?.writeText(props.gallery.url)
+    .then(() => (copied.value = true))
+    .catch(() => (copied.value = false))
 }
 </script>
 
@@ -30,7 +41,10 @@ function day(iso: string | null) {
   <div class="mb-5 flex items-start gap-[26px] pb-5 shadow-[inset_0_-1px_0_var(--rule)]">
     <div class="flex min-w-0 flex-1 flex-col gap-2">
       <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.link') }}</div>
-      <div class="mt-1.5 text-[17px] leading-none font-semibold tracking-[-0.018em] tabular-nums"><a class="text-[17px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline" :href="gallery.url">{{ gallery.url }}</a></div>
+      <div class="mt-1.5 flex items-center gap-2.5">
+        <a class="text-[17px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline" :href="gallery.url">{{ gallery.url }}</a>
+        <Button type="button" variant="pill-muted" @click="copy">{{ copied ? $t('gallery.copied') : $t('gallery.copy') }}</Button>
+      </div>
 
       <div v-if="siblings.length" class="mt-2 flex gap-1.5">
         <Link
@@ -50,17 +64,12 @@ function day(iso: string | null) {
 
     <div class="flex min-w-0 flex-col gap-2">
       <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('gallery.gateView') }}</div>
-      <Input v-model="secrets.view_password" class="w-[190px]" type="text" @blur="saveSecrets" />
+      <Input v-model="secret.view_password" class="w-[190px]" type="text" @blur="saveSecret" />
     </div>
+  </div>
 
-    <div class="flex min-w-0 flex-col gap-2">
-      <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('gallery.gateDownload') }}</div>
-      <Input v-model="secrets.download_pin" class="w-[110px]" type="text" @blur="saveSecrets" />
-    </div>
-
-    <div class="flex min-w-0 flex-col gap-2">
-      <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.expiry') }}</div>
-      <div class="mt-[5px] text-[15px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ day(gallery.expiresAt) }}</div>
-    </div>
+  <div class="flex items-center gap-2.5">
+    <Checkbox id="cb-email-gate" v-model="emailGate.requires_verified_email" @update:model-value="saveEmailGate" />
+    <Label variant="inline" for="cb-email-gate">{{ $t('galleryRecord.emailGate') }}</Label>
   </div>
 </template>

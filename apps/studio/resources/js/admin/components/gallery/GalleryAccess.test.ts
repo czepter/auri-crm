@@ -6,8 +6,9 @@ import de from '@/locales/de.json'
 import GalleryAccess from './GalleryAccess.vue'
 
 // SSR string render through the real compiler and the real i18n catalog —
-// pins that the ⚙ pane's access block carries the link and both secret
-// fields once it moved out of the record head (galerie-fundament layout fix).
+// pins that Zugang carries the link and the view password. The download PIN
+// moved to the Download section (galerie-einstellungen redesign); a
+// regression that brought it back here would go unnoticed without this.
 function render(props: Record<string, unknown>) {
   const i18n = createI18n({ legacy: false, locale: 'de', messages: { de } })
   const app = createSSRApp(GalleryAccess, props)
@@ -17,20 +18,31 @@ function render(props: Record<string, unknown>) {
 
 const gallery = {
   id: 'g1',
-  url: 'https://example.test/galerien/g1',
+  url: 'https://example.test/g/unser-tag',
   viewPassword: 'geheim',
-  downloadPin: '4711',
-  expiresAt: null,
+  requiresVerifiedEmail: false,
 }
 
 describe('GalleryAccess', () => {
-  it('renders the link and both secret fields', async () => {
+  it('renders the link, a copy action and the view password', async () => {
     const html = await render({ gallery, siblings: [] })
 
     expect(html).toContain(gallery.url)
     expect(html).toContain('geheim')
-    expect(html).toContain('4711')
     expect(html).toContain(de.gallery.gateView)
-    expect(html).toContain(de.gallery.gateDownload)
+    expect(html).toContain(de.gallery.copy)
+  })
+
+  it('carries no download PIN field — that moved to the Download section', async () => {
+    const html = await render({ gallery: { ...gallery, downloadPin: '4711' }, siblings: [] })
+
+    expect(html).not.toContain(de.gallery.gateDownload)
+    expect(html).not.toContain('4711')
+  })
+
+  it('offers the E-Mail-Nachweis switch', async () => {
+    const html = await render({ gallery, siblings: [] })
+
+    expect(html).toContain(de.galleryRecord.emailGate)
   })
 })

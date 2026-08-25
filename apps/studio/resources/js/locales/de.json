@@ -1279,6 +1279,17 @@
       "aktivitaet": "◷"
     },
     "downloadsHeading": "Download",
-    "sharingHeading": "Freigaben"
+    "settingsNav": {
+      "allgemein": "Allgemein",
+      "zugang": "Zugang",
+      "download": "Download",
+      "listen": "Listen",
+      "kommentare": "Kommentare"
+    },
+    "slugLabel": "Adresse",
+    "slugHint": "Alte Links bleiben gültig.",
+    "slugTaken": "Diese Adresse ist schon vergeben.",
+    "slugFormat": "Nur Kleinbuchstaben, Ziffern und Bindestriche.",
+    "eventDate": "Termin"
   }
 }
