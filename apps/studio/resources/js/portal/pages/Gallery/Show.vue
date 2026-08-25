@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { router, useForm, usePage } from '@inertiajs/vue3'
 import GalleryLightbox from '@/portal/components/GalleryLightbox.vue'
 import { ALL, countOf, selections, visible } from '@/portal/lib/gallerySelections'
+import { GRID_WIDTHS, srcSet } from '@/portal/lib/images'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
@@ -163,15 +164,9 @@ const subtitle = computed(() => {
   return parts.join(' · ')
 })
 
-// G-08's own allowed widths (App\Gallery\Support\ImageVariant::WIDTHS). The
-// grid is at most four columns of a 1440px page, so the two largest exist
-// for retina rather than for layout.
-const WIDTHS = [400, 800, 1200, 1600]
+// The grid deliberately stops below the proxy's largest variant; see
+// GRID_WIDTHS. Its own sizes attribute, which no other screen shares:
 const SIZES = '(max-width: 760px) 50vw, (max-width: 1080px) 33vw, 25vw'
-
-function srcSet(asset: Asset, format: string) {
-  return WIDTHS.map((w) => `${asset.src}?w=${w}&fmt=${format} ${w}w`).join(', ')
-}
 
 // The first published asset carries the cover. Nothing in the schema names
 // one, so "the first" is the studio's own ordering rather than a guess.
@@ -343,11 +338,11 @@ const COVER_INPUT = [
           </span>
 
           <picture>
-            <source type="image/avif" :srcset="srcSet(asset, 'avif')" :sizes="SIZES" />
-            <source type="image/webp" :srcset="srcSet(asset, 'webp')" :sizes="SIZES" />
+            <source type="image/avif" :srcset="srcSet(asset.src, 'avif', GRID_WIDTHS)" :sizes="SIZES" />
+            <source type="image/webp" :srcset="srcSet(asset.src, 'webp', GRID_WIDTHS)" :sizes="SIZES" />
             <img
               :src="`${asset.src}?w=800&fmt=jpeg`"
-              :srcset="srcSet(asset, 'jpeg')"
+              :srcset="srcSet(asset.src, 'jpeg', GRID_WIDTHS)"
               :sizes="SIZES"
               :width="asset.width ?? undefined"
               :height="asset.height ?? undefined"

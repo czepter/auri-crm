@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
+import { srcSet, STAGE_WIDTHS } from '@/portal/lib/images'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
 
@@ -122,12 +123,6 @@ watch(open, (value, previous) => {
 onMounted(() => window.addEventListener('keydown', onKey))
 onUnmounted(() => window.removeEventListener('keydown', onKey))
 
-const WIDTHS = [800, 1200, 1600, 2400]
-
-function srcSet(one: Asset) {
-  return WIDTHS.map((w) => `${one.src}?w=${w}&fmt=jpeg ${w}w`).join(', ')
-}
-
 function time(iso: string) {
   return new Date(iso).toLocaleString('de-DE', {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -176,7 +171,7 @@ function time(iso: string) {
         >
           <svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6" /></svg>
         </button>
-        <img :src="`${asset.src}?w=1600&fmt=jpeg`" :srcset="srcSet(asset)" sizes="72vw" alt="" />
+        <img :src="`${asset.src}?w=1600&fmt=jpeg`" :srcset="srcSet(asset.src, 'jpeg', STAGE_WIDTHS)" sizes="72vw" alt="" />
         <button
           type="button"
           class="absolute top-1/2 grid size-10 -translate-y-1/2 cursor-pointer place-items-center rounded-full border-0 bg-[rgba(255,255,255,.08)] text-foreground hover:bg-[rgba(255,255,255,.16)] max-[860px]:bg-[rgba(255,255,255,.14)] [&_svg]:size-5 [&_svg]:stroke-[1.6] [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round] right-0"
