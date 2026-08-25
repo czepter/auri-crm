@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -8,7 +9,7 @@ import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
 import { NativeSelect } from '@/ui/native-select'
-import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
+import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import GalleryRail from '@/admin/components/gallery/GalleryRail.vue'
 import { initialActiveSetId, nextActiveSetId } from '@/admin/lib/gallerySets'
@@ -16,6 +17,8 @@ import { publishLabelKey, showPublish as showPublishRule, showWithdraw as showWi
 import { xsrfHeader } from '@/admin/lib/multipartUpload'
 import Images from '@/admin/pages/Galleries/panes/Images.vue'
 import Settings from '@/admin/pages/Galleries/panes/Settings.vue'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   gallery: {
@@ -101,18 +104,40 @@ async function mintPreviewUrl(path: string): Promise<string | null> {
   return response.ok ? ((await response.json()) as { url: string }).url : null
 }
 
+// Minor (fix round 1): a failed mint (403, stale CSRF, network) used to be a
+// silent no-op — no tab, nothing copied, nothing said — and a successful
+// copy gave no confirmation either, so the studio could not tell one from
+// the other. actionStatus is the one place both outcomes surface, next to
+// the buttons that triggered them.
+const actionStatus = ref<{ ok: boolean; message: string } | null>(null)
+let actionStatusTimer: ReturnType<typeof setTimeout> | undefined
+
+function flashStatus(ok: boolean, message: string) {
+  actionStatus.value = { ok, message }
+  clearTimeout(actionStatusTimer)
+  actionStatusTimer = setTimeout(() => (actionStatus.value = null), 3000)
+}
+
 async function openPreview() {
   const url = await mintPreviewUrl('vorschau')
   if (url) window.open(url, '_blank')
+  else flashStatus(false, t('galleryRecord.actionFailed'))
 }
 
 async function createPreviewLink() {
   const url = await mintPreviewUrl('vorschau-link')
-  if (url) await navigator.clipboard?.writeText(url)
+  if (url) {
+    await navigator.clipboard?.writeText(url)
+    flashStatus(true, t('gallery.copied'))
+  } else {
+    flashStatus(false, t('galleryRecord.actionFailed'))
+  }
 }
 
 function copyLink() {
-  void navigator.clipboard?.writeText(props.gallery.url)
+  navigator.clipboard?.writeText(props.gallery.url)
+    .then(() => flashStatus(true, t('gallery.copied')))
+    .catch(() => flashStatus(false, t('galleryRecord.actionFailed')))
 }
 
 const savingPreset = ref(false)
@@ -127,6 +152,26 @@ function saveAsPreset() {
 
 const applyingPreset = ref(false)
 const applyForm = useForm({ gallery_preset_id: '' })
+
+// Important (fix round 1): downloads/lists/comments go live the instant
+// this posts on an already-published gallery — unlike design, which only
+// creates a draft deviation until the next Veröffentlichen. The dialog
+// names exactly what the chosen preset will overwrite, the same way
+// Create.vue's own fields already do by reflecting the preset's values.
+const selectedPreset = computed(() => props.presets.find((row) => row.id === applyForm.gallery_preset_id) ?? null)
+const presetChanges = computed(() => {
+  const preset = selectedPreset.value
+  if (!preset) return []
+
+  const onOff = (value: boolean) => t(value ? 'galleryPresets.on' : 'galleryPresets.off')
+  const changes: string[] = []
+  if (preset.design !== null) changes.push(t('galleryRecord.tab.gestaltung'))
+  if (preset.downloadsEnabled !== null) changes.push(`${t('galleryRecord.settingsNav.download')}: ${onOff(preset.downloadsEnabled)}`)
+  if (preset.listsEnabled !== null) changes.push(`${t('galleryRecord.settingsNav.listen')}: ${onOff(preset.listsEnabled)}`)
+  if (preset.commentsEnabled !== null) changes.push(`${t('galleryRecord.settingsNav.kommentare')}: ${onOff(preset.commentsEnabled)}`)
+
+  return changes
+})
 
 function applyPreset() {
   applyForm.post(`/galerien/${props.gallery.id}/vorlage-anwenden`, {
@@ -200,8 +245,16 @@ function megabytes(bytes: number) {
           class="flex-none rounded-[var(--r-sm)] bg-ok-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-ok"
         >{{ $t('galleryRecord.version', { version: figures.published }) }}</span>
 
-        <span class="ml-auto flex gap-2">
-          <DropdownMenu>
+        <span v-if="actionStatus" class="ml-auto text-[11.5px]" :class="actionStatus.ok ? 'text-ink-2' : 'text-destructive'">{{ actionStatus.message }}</span>
+
+        <span class="flex gap-2" :class="!actionStatus && 'ml-auto'">
+          <!-- R36: modal (reka-ui's default) runs useHideOthers() the
+               moment force-mount mounts the content, aria-hiding #app from
+               page load regardless of open state — a Critical fix round
+               caught this hiding the whole record screen from assistive
+               tech, permanently. A small action menu has no business
+               trapping focus or hiding the page behind it either way. -->
+          <DropdownMenu :modal="false">
             <DropdownMenuTrigger as-child>
               <Button type="button" variant="pill-muted">{{ $t('galleryRecord.more') }}</Button>
             </DropdownMenuTrigger>
@@ -260,9 +313,12 @@ function megabytes(bytes: number) {
             <form id="gallery-preset-apply-form" class="flex flex-col gap-1.5" @submit.prevent="applyPreset">
               <Label for="preset-apply">{{ $t('galleryRecord.applyPresetField') }}</Label>
               <NativeSelect id="preset-apply" v-model="applyForm.gallery_preset_id">
-                <option value="" disabled>{{ $t('galleryPresets.none') }}</option>
+                <option value="" disabled>{{ $t('galleryRecord.applyPresetPlaceholder') }}</option>
                 <option v-for="preset in presets" :key="preset.id" :value="preset.id">{{ preset.name }}</option>
               </NativeSelect>
+              <p v-if="presetChanges.length" class="text-[11.5px] leading-[1.45] text-faint">
+                {{ $t('galleryRecord.applyPresetChanges') }} {{ presetChanges.join(' · ') }}
+              </p>
             </form>
           </DialogBody>
 
