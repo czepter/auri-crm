@@ -122,6 +122,8 @@ function onKey(event: KeyboardEvent) {
 // who only scrolls the grid never asks for either.
 watch(open, (value, previous) => {
   if (value !== null && previous === null) load()
+  // Unmounting the focused comment field on close does not fire blur, so typing must be reset here.
+  if (value === null) typing.value = false
 })
 
 onMounted(() => window.addEventListener('keydown', onKey))
