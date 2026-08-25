@@ -2,11 +2,13 @@
 
 namespace App\Gallery\Http\Controllers;
 
+use App\Gallery\Data\GalleryPresetData;
 use App\Gallery\Models\AssetComment;
 use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryGridPref;
 use App\Gallery\Models\GalleryList;
+use App\Gallery\Models\GalleryPreset;
 use App\Gallery\Models\GallerySet;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Models\GalleryView;
@@ -134,6 +136,12 @@ class GalleryRecordController extends Controller
                     'assetCount' => $other->asset_count,
                     'open' => $other->id === $gallery->id,
                 ])->all(),
+            // The More menu's "Vorlage anwenden" — Create.vue's own copy of
+            // this list, seen the other direction: birth reads a preset
+            // once into a new gallery's form, this writes one into a
+            // gallery that already exists (GalleryPresetController::
+            // applyToGallery).
+            'presets' => GalleryPresetData::collect(GalleryPreset::query()->orderBy('name')->get()),
             'figures' => [
                 'published' => $version?->version,
                 'assets' => $assets->count(),
