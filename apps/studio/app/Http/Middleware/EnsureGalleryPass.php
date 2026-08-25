@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryVersion;
+use App\Gallery\Support\GalleryPreviewPass;
 use App\Gallery\Support\GalleryViewPass;
 use Closure;
 use Illuminate\Http\Request;
@@ -24,18 +25,34 @@ use Symfony\Component\HttpFoundation\Response;
  * the gallery and the password version, and worthless the moment the studio
  * rotates. See GalleryViewPass. A gallery with no password needs none.
  *
+ * A GalleryPreviewPass (R31) satisfies this gate too, checked first and
+ * ahead of both the withdrawal check and the password gate: it proves the
+ * studio itself handed out this exact look at the gallery, a stronger claim
+ * than merely knowing the password, and withdrawal (G-14) only ever meant
+ * "stop showing guests the published version" — a studio reworking a draft
+ * behind a withdrawn gallery must still be able to preview it.
+ * GalleryReadController still makes the actual draft-vs-version decision —
+ * this only decides whether the request reaches it at all.
+ *
  * 404 rather than 401: which galleries carry a password is not something
  * this surface owes an anonymous caller either.
  */
 class EnsureGalleryPass
 {
-    public function __construct(private readonly GalleryViewPass $pass) {}
+    public function __construct(
+        private readonly GalleryViewPass $pass,
+        private readonly GalleryPreviewPass $previewPass,
+    ) {}
 
     public function handle(Request $request, Closure $next): Response
     {
         $gallery = $this->gallery($request);
 
         if ($gallery === null) {
+            return $next($request);
+        }
+
+        if ($this->previewPass->opens($gallery, $request->query('preview'))) {
             return $next($request);
         }
 

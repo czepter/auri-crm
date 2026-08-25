@@ -64,6 +64,7 @@ class Gallery extends Model
         'view_password_version' => 1,
         'download_pin_version' => 1,
         'email_verification_version' => 1,
+        'preview_pass_version' => 1,
     ];
 
     protected function casts(): array
@@ -306,6 +307,19 @@ class Gallery extends Model
             'requires_verified_email' => $required,
             'email_verification_version' => $this->email_verification_version + 1,
         ])->save();
+    }
+
+    /**
+     * R31: the counter a draft-preview pass (GalleryPreviewPass) is checked
+     * against — both the head button's short pass and "Vorschaulink
+     * erzeugen"'s long one share it, so bumping it is the whole of what
+     * revoking a preview link means. Called only when a new link is minted:
+     * a fresh link is meant to survive across sessions, so nothing else
+     * bumps it early and kills a link nobody asked to replace yet.
+     */
+    public function rotatePreviewPass(): void
+    {
+        $this->forceFill(['preview_pass_version' => $this->preview_pass_version + 1])->save();
     }
 
     protected static function newFactory(): Factory
