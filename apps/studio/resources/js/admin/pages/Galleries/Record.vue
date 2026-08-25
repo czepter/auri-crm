@@ -108,14 +108,18 @@ async function mintPreviewUrl(path: string): Promise<string | null> {
 // silent no-op — no tab, nothing copied, nothing said — and a successful
 // copy gave no confirmation either, so the studio could not tell one from
 // the other. actionStatus is the one place both outcomes surface, next to
-// the buttons that triggered them.
-const actionStatus = ref<{ ok: boolean; message: string } | null>(null)
+// the buttons that triggered them. `url` is set only when a link exists but
+// could not be copied — shown selectable rather than lost, and left on
+// screen (no auto-clear) until the next action replaces it.
+const actionStatus = ref<{ ok: boolean; message: string; url?: string } | null>(null)
 let actionStatusTimer: ReturnType<typeof setTimeout> | undefined
 
-function flashStatus(ok: boolean, message: string) {
-  actionStatus.value = { ok, message }
+function flashStatus(ok: boolean, message: string, url?: string) {
   clearTimeout(actionStatusTimer)
-  actionStatusTimer = setTimeout(() => (actionStatus.value = null), 3000)
+  actionStatus.value = { ok, message, url }
+  if (!url) {
+    actionStatusTimer = setTimeout(() => (actionStatus.value = null), 3000)
+  }
 }
 
 async function openPreview() {
@@ -124,13 +128,33 @@ async function openPreview() {
   else flashStatus(false, t('galleryRecord.actionFailed'))
 }
 
+// Fix round 3: `await navigator.clipboard?.writeText(url)` used to await
+// undefined outright when the browser offered no Clipboard API (any
+// non-secure context) — the optional chain short-circuits the call, but
+// `await` sits outside it, so execution reached flashStatus(true, …)
+// regardless and reported a copy that never happened, onto a link that
+// then existed nowhere at all. Checked explicitly instead, and the link
+// itself is shown when it cannot be copied — a link the studio can select
+// beats a message about one it cannot.
 async function createPreviewLink() {
   const url = await mintPreviewUrl('vorschau-link')
-  if (url) {
-    await navigator.clipboard?.writeText(url)
-    flashStatus(true, t('gallery.copied'))
-  } else {
+  if (!url) {
     flashStatus(false, t('galleryRecord.actionFailed'))
+    return
+  }
+
+  if (!navigator.clipboard) {
+    flashStatus(false, t('galleryRecord.actionFailed'), url)
+    return
+  }
+
+  try {
+    await navigator.clipboard.writeText(url)
+    flashStatus(true, t('gallery.copied'))
+  } catch {
+    // Permission denied, same as no API at all: the link still exists,
+    // still shown, still nothing lost.
+    flashStatus(false, t('galleryRecord.actionFailed'), url)
   }
 }
 
@@ -245,7 +269,17 @@ function megabytes(bytes: number) {
           class="flex-none rounded-[var(--r-sm)] bg-ok-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-ok"
         >{{ $t('galleryRecord.version', { version: figures.published }) }}</span>
 
-        <span v-if="actionStatus" class="ml-auto text-[11.5px]" :class="actionStatus.ok ? 'text-ink-2' : 'text-destructive'">{{ actionStatus.message }}</span>
+        <span v-if="actionStatus" class="ml-auto flex items-center gap-1.5">
+          <span class="text-[11.5px]" :class="actionStatus.ok ? 'text-ink-2' : 'text-destructive'">{{ actionStatus.message }}</span>
+          <Input
+            v-if="actionStatus.url"
+            :model-value="actionStatus.url"
+            readonly
+            type="text"
+            class="w-[220px] text-[11.5px]"
+            @focus="($event.target as HTMLInputElement).select()"
+          />
+        </span>
 
         <span class="flex gap-2" :class="!actionStatus && 'ml-auto'">
           <!-- R36: modal (reka-ui's default) runs useHideOthers() the
