@@ -37,22 +37,26 @@ use Illuminate\Http\Request;
  * guest with no preview token sees this route behave exactly as if it were
  * still inside the middleware group.
  *
- * R39/R40: pre-release sits ahead of both. The order below —
- * withdrawal, pre-release, preview pass, password — is a ladder of "who is
- * allowed to see more than the last rung", each one closing off before the
- * next is even asked:
+ * R43 (corrects R39/R40): the order below — withdrawal, preview pass,
+ * pre-release, password — is a ladder of "who is allowed to see more than
+ * the last rung", each one closing off before the next is even asked:
  *   1. withdrawn always 404s, no exception (R39, "closed beats being
- *      prepared") — checked first so nothing below can override it.
- *   2. pre-release, once active, answers with the teaser response and
- *      nothing else — including to a request carrying an otherwise-valid
- *      preview pass. R40 draws the line at "no protected content behind
- *      this link, ever"; a preview pass exists to hand specific people real
- *      draft photographs (R31), which is exactly what pre-release promises
- *      the general address will not do. A studio wanting to show someone
- *      the draft while pre-release is up takes the gallery out of
- *      pre-release first, rather than this route silently picking a
- *      winner between two "before publish" states.
- *   3. preview pass, R37's already-established exception to the password.
+ *      prepared") — checked first so nothing below can override it. R38
+ *      already revokes every outstanding preview pass the moment a gallery
+ *      is withdrawn, so a token that still verifies past this line cannot
+ *      exist — withdrawal does not need its own case in the preview-pass
+ *      branch to win.
+ *   2. preview pass. An explicit credential — issued deliberately, pinned
+ *      to one gallery, expiring, revocable — beats pre-release, which is
+ *      only that gallery's public default. A preview-token holder is
+ *      already entitled to the draft (that is the entire purpose of the
+ *      token); pre-release was never protecting anything from them. R39's
+ *      original ordering put pre-release first on the reasoning that both
+ *      are "before publish" — too coarse: one is a state, the other is a
+ *      key, and a specific key beats a default or it is not a key.
+ *   3. pre-release, once active, answers with the teaser response and
+ *      nothing else for every request that reaches this rung — no preview
+ *      pass, no assets, nothing R40 does not name.
  *   4. the ordinary password-gated version path.
  * The next state added here should read this list and say which rung it
  * occupies, rather than guessing at an interaction with the others.
@@ -73,19 +77,21 @@ class GalleryReadController extends Controller
 
     public function __invoke(Request $request, Gallery $gallery, GalleryPreviewPass $previewPass, GalleryViewPass $viewPass): JsonResponse
     {
-        // G-14/R39: withdrawal wins over every other state below, pre-release
-        // included — see this class's own doc comment for the full order.
+        // G-14/R39: withdrawal wins over every other state below — see this
+        // class's own doc comment for the full order.
         abort_if($gallery->isWithdrawn(), 404);
 
-        if ($gallery->isInPrerelease()) {
-            return $this->prerelease($gallery);
-        }
-
-        // is_string(), not a raw query('preview'): see GalleryDraftImageController's
-        // own comment on why an array here must not reach opens() raw.
+        // R43: a preview pass outranks pre-release — a specific credential
+        // beats that gallery's public default. is_string(), not a raw
+        // query('preview'): see GalleryDraftImageController's own comment
+        // on why an array here must not reach opens() raw.
         $preview = $request->query('preview');
         if ($previewPass->opens($gallery, is_string($preview) ? $preview : null)) {
             return $this->draft($gallery);
+        }
+
+        if ($gallery->isInPrerelease()) {
+            return $this->prerelease($gallery);
         }
 
         $this->abortUnlessViewable($gallery, $request, $viewPass);

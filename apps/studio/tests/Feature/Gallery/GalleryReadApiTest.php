@@ -160,7 +160,7 @@ it('still 404s a gallery nobody has published yet when no preview pass is presen
     $this->getJson("/api/galleries/{$gallery->public_id}")->assertNotFound();
 });
 
-// ---------- R39/R40: pre-release ----------
+// ---------- R39/R40/R43: pre-release ----------
 
 it('answers a pre-release gallery with only its title and public_id, no version', function () {
     $gallery = Gallery::factory()->create(['title' => 'Viola + Chris']);
@@ -213,15 +213,40 @@ it('stops answering pre-release once the gallery is published', function () {
     expect($gallery->fresh()->prerelease_at)->toBeNull();
 });
 
-// A preview pass exists to hand a specific person real draft photographs
-// (R31) — pre-release promises the opposite for its own address. The
-// controller's own doc comment spells out why pre-release is checked first.
-it('answers pre-release even for a request carrying a valid preview pass', function () {
+// R43: a preview pass is an explicit credential — issued deliberately,
+// pinned to one gallery, expiring, revocable — and outranks pre-release,
+// which is only that gallery's public default. The token holder is
+// already entitled to the draft; pre-release was never protecting
+// anything from them.
+it('opens the draft for a valid preview pass even while pre-release is active', function () {
     $gallery = Gallery::factory()->create();
     $gallery->forceFill(['prerelease_at' => now()])->save();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/a.jpg']);
     $token = app(GalleryPreviewPass::class)->issue($gallery, GalleryPreviewPass::BUTTON_MINUTES);
 
     $this->getJson("/api/galleries/{$gallery->public_id}?preview=".urlencode($token))
         ->assertOk()
-        ->assertJson(['gallery' => ['prerelease' => true]]);
+        ->assertJson(['gallery' => ['draft' => true, 'version' => ['assets' => [
+            ['key' => 'galleries/g/a.jpg'],
+        ]]]]);
+});
+
+// The swap above must not open the public path: the same gallery, without
+// a token, still answers the teaser only — no assets, no draft flag.
+it('still answers only the pre-release payload for the same gallery without a token', function () {
+    $gallery = Gallery::factory()->create();
+    $gallery->forceFill(['prerelease_at' => now()])->save();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/a.jpg']);
+
+    $this->getJson("/api/galleries/{$gallery->public_id}")
+        ->assertOk()
+        ->assertExactJson([
+            'gallery' => [
+                'public_id' => $gallery->public_id,
+                'title' => $gallery->title,
+                'prerelease' => true,
+            ],
+        ]);
 });
