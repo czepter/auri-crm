@@ -67,8 +67,8 @@ function drop(targetKey: string) {
 
 <template>
   <nav
-    class="flex flex-none flex-col gap-0.5 border-r border-border px-2.5 py-4 max-[640px]:w-full max-[640px]:flex-wrap max-[640px]:self-start max-[640px]:border-r-0 max-[640px]:border-b max-[640px]:px-5 max-[640px]:py-2.5"
-    :style="{ width: `${width}px` }"
+    class="flex w-[var(--record-nav-width)] flex-none flex-col gap-0.5 border-r border-border px-2.5 py-4 max-[640px]:w-full max-[640px]:flex-row max-[640px]:flex-wrap max-[640px]:self-start max-[640px]:border-r-0 max-[640px]:border-b max-[640px]:px-5 max-[640px]:py-2.5"
+    :style="{ '--record-nav-width': `${width}px` }"
   >
     <slot name="above" />
 

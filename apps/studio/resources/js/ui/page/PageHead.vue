@@ -9,9 +9,9 @@ defineProps<{ title: string; kicker?: string }>()
 
 <template>
     <div
-        class="flex items-center gap-3 px-8 pt-[22px] max-[640px]:px-5 max-[640px]:pt-4"
+        class="flex items-center gap-3 px-8 pt-[22px] max-[640px]:flex-wrap max-[640px]:px-5 max-[640px]:pt-4"
     >
-        <div>
+        <div class="max-[640px]:w-full">
             <div
                 v-if="kicker"
                 class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.05em] uppercase text-ink-2"

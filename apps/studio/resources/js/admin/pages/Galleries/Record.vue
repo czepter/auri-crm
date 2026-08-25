@@ -397,7 +397,7 @@ function megabytes(bytes: number) {
         </DialogContent>
       </Dialog>
 
-      <div class="flex">
+      <div class="flex max-[640px]:flex-col">
         <GalleryNav
           :nav="nav"
           :area="area"

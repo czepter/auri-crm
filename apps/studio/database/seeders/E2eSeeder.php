@@ -23,6 +23,7 @@ use App\Crm\Models\Shoot;
 use App\Engagement\Actions\PostMessage;
 use App\Engagement\Actions\StartThread;
 use App\Enums\StaffRole;
+use App\Gallery\Actions\EnsureGalleryCover;
 use App\Gallery\Models\Gallery;
 use App\Media\Enums\AssetStatus;
 use App\Media\Models\Asset;
@@ -343,6 +344,11 @@ class E2eSeeder extends Seeder
                 'height' => self::IMAGE_HEIGHT,
             ]);
         }
+
+        // Der Seeder schreibt Assets direkt, geht also am Ingest vorbei —
+        // ohne das stünde die eine Galerie der Suite als einzige ohne
+        // Titelbild da, was es sonst nirgends mehr gibt.
+        app(EnsureGalleryCover::class)($gallery->refresh());
 
         $gallery->publish();
     }

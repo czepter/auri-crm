@@ -76,7 +76,7 @@ Offen ist alles, was unten eine Nummer hat.
 | 60 | Wann gesetzt | Wenn `cover_asset_id` null ist **und** keine Upload-Sitzung dieser Galerie mehr offen ist. Kein `batch_id`, kein verzögerter Job: `multipart_uploads` kennt keinen Stapel, und „keine offene Sitzung mehr" ist derselbe Zeitpunkt |
 | 61 | Gelöschtes Titelbild | Rückt nach, nach derselben Regel. Eine Galerie ohne Titelbild ist kein Zustand, den jemand absichtlich herstellt |
 | 62 | Wo die Regel steht | Eine Action `EnsureGalleryCover`, gerufen aus `IngestCompletedUpload`, `GalleryAssetController::remove` und `GallerySetController::destroy`. Dazu `on delete set null` als Netz. Ein Auslöser mehr darf keine zweite Kopie der Regel bedeuten |
-| 63 | Leerer Zustand | Ein gestrichelter Platz in der Form, die das Bild bekommt, mit eigener Aktion *Bild wählen*. Kein Satz darüber, dass keins gesetzt ist, und kein Wort im Statuschip — sonst steht dasselbe zweimal da |
+| 63 | Leerer Zustand | Gibt es nicht. Aus 59 und 61 folgt: eine Galerie mit Bildern hat ein Titelbild, und ohne Bilder wäre nichts zu wählen. Ein Platzhalter *Bild wählen* wäre Oberfläche für einen Zustand, den niemand erreicht. Bestandsgalerien, die ein Nachziehen bräuchten, gibt es nicht — der `E2eSeeder` schreibt am Ingest vorbei und ruft die Action deshalb selbst |
 | 64 | Klick | Führt nach *Gestaltung*. Ein Bild, das aussieht wie ein Knopf, muss einer sein |
 
 ### Schmale Schirme
@@ -84,7 +84,7 @@ Offen ist alles, was unten eine Nummer hat.
 | # | Frage | Entscheidung |
 |---|---|---|
 | 65 | Umfang | Record, Übersicht und beide Einstellungsseiten (`Settings/Galleries.vue`, `GalleryPresets.vue`). Damit fällt „kein responsiver Umbau" aus Entscheidung 9 für den ganzen Galeriebereich weg |
-| 66 | Bruchpunkte | 900px für die Spalten: Navigation legt sich hin und scrollt seitwärts, Sets in eine zweite Zeile, Einstellungen einspaltig. 640px für Raster und Tabellen: Raster vierspaltig, Leichtansicht Vollbild, Kopfaktionen zu einem `…`-Menü, Aktivitätstabellen werden Listen (`thead { display: none }` steht schon in `crm.css`) |
+| 66 | Bruchpunkte | 640px für die Datensatzspalte, weil `ProjectShell` diese Grenze schon fährt und ein geteiltes Bauteil nicht zwei haben kann. 900px für die zweite Spalte der Einstellungen — dort stehen sonst drei nebeneinander. Unter 640px halbiert sich außerdem die Rasterdichte: vier Kacheln auf 390px sind 85px breit und damit kein Bild mehr. Die Kopfaktionen bleiben nebeneinander statt zu einem `…`-Menü zu werden — drei Pillen passen auf eine Zeile, und ein Menü zu bauen, das nichts einspart, wäre Arbeit gegen den Nutzer |
 | 67 | Schnitt | Eine Etappe, ein Baseline-Lauf am Schluss. Der Umbau fasst dieselben Dateien an wie die Navigation; zwei Etappen hieße, 54 Screenshots zweimal zu prüfen. Der Lauf gehört an denselben Tag wie die Prüfung — `E2eSeeder` sät relativ zu `now()` |
 
 ## Betroffene Stellen
@@ -98,7 +98,7 @@ Offen ist alles, was unten eine Nummer hat.
 | `Gallery/Data/GalleryNavData.php` | neu — Titelbild, vier Einträge, Sets als `children`, beide Zähler |
 | `Gallery/Http/Controllers/GalleryRecordController.php` | Bereich als Argument, teure Props `optional()` |
 | `Gallery/Models/Gallery.php` | `assets(): HasMany`, `draftAssets()` als Filter darauf |
-| `Gallery/Actions/EnsureGalleryCover.php` | neu |
+| `Gallery/Actions/EnsureGalleryCover.php` | neu — gerufen aus `IngestCompletedUpload`, `GalleryAssetController::remove`, `DeleteGallerySet`, `E2eSeeder` |
 | `routes/admin.php` | Segmente, `{set}`, `scopeBindings()`, Umleitungen |
 | `admin/pages/Galleries/Record.vue` | `tab`/`activeSetId`-Refs entfallen, kommen aus der Route |
 

@@ -2,7 +2,7 @@
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
-import { useVirtualList } from '@vueuse/core'
+import { useMediaQuery, useVirtualList } from '@vueuse/core'
 import { applyClick, type SelectionState } from '@/admin/lib/gallerySelection'
 import { checkDuplicates, uploadFile } from '@/admin/lib/multipartUpload'
 import AssetLightbox from '@/admin/components/gallery/AssetLightbox.vue'
@@ -46,13 +46,20 @@ const props = defineProps<{
 const { t } = useI18n()
 
 const COLUMNS: Record<string, number> = { small: 10, medium: 7, large: 4 }
+// Auf 390px sind vier Kacheln 85px breit — das ist kein Bild mehr, das ist
+// ein Punkt. Unter 640px die Haelfte, mindestens zwei.
+const narrow = useMediaQuery('(max-width: 640px)')
 
 // gallery_grid_prefs is keyed per set, and Alle is not a set — the combined
 // view renders at the default density rather than writing to a row that
 // does not represent it (R21).
 const activeSet = computed(() => props.sets.find((row) => row.id === props.activeSetId) ?? null)
 const density = computed(() => activeSet.value?.density ?? 'medium')
-const columns = computed(() => COLUMNS[density.value] ?? COLUMNS.medium)
+const columns = computed(() => {
+  const full = COLUMNS[density.value] ?? COLUMNS.medium
+
+  return narrow.value ? Math.max(2, Math.floor(full / 2)) : full
+})
 
 // The backend already orders `assets` the way Gallery::draftAssets() would
 // (sets by position, each set by its own rule) — filtering to one set keeps

@@ -117,18 +117,12 @@ function confirmRemove() {
     @reorder="(order) => emit('reorder', order)"
   >
     <!-- Das Titelbild ist kein Bereich, sondern das Gesicht des Datensatzes.
-         Fehlt es, steht dort ein Loch in der Form, die das Bild bekommt — ein
-         Satz darüber sagt weniger. -->
-    <template #above>
-      <Link :href="`/galerien/${galleryId}/gestaltung`" class="mb-3 block no-underline">
-        <img v-if="nav.cover" class="aspect-4/3 w-full rounded-[var(--r-sm)] object-cover" :src="`${nav.cover}?w=420&fmt=jpeg`" alt="" />
-        <span
-          v-else
-          class="flex aspect-4/3 w-full flex-col items-center justify-center gap-1 rounded-[var(--r-sm)] border border-dashed border-border bg-sunk text-[11px] text-ink-2"
-        >
-          {{ $t('galleryRecord.cover') }}
-          <b class="text-[11.5px] font-semibold text-action">{{ $t('galleryRecord.chooseCover') }}</b>
-        </span>
+         Ein leerer Zustand steht hier nicht: das erste Bild wird Titelbild
+         und beim Löschen rückt das nächste nach, also fehlt es nur, wenn es
+         gar keine Bilder gibt — und dann wäre auch nichts zu wählen. -->
+    <template v-if="nav.cover" #above>
+      <Link :href="`/galerien/${galleryId}/gestaltung`" class="mb-3 block no-underline max-[640px]:mb-2 max-[640px]:w-full">
+        <img class="aspect-4/3 w-full rounded-[var(--r-sm)] object-cover max-[640px]:aspect-[16/5]" :src="`${nav.cover}?w=400&fmt=jpeg`" alt="" />
       </Link>
     </template>
 

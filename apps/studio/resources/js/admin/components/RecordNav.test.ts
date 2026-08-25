@@ -72,7 +72,9 @@ describe('RecordNav', () => {
   })
 
   it('takes the width it is given', async () => {
-    expect(await render({ tabs: tabs([]), active: 'bilder', width: 212 })).toContain('width:212px')
-    expect(await render({ tabs: tabs([]), active: 'bilder' })).toContain('width:150px')
+    // Als Variable, nicht als style="width:212px" — ein Inline-Wert schlägt
+    // jede Klasse, und die Spalte klappte unter 640px nie um.
+    expect(await render({ tabs: tabs([]), active: 'bilder', width: 212 })).toContain('--record-nav-width:212px')
+    expect(await render({ tabs: tabs([]), active: 'bilder' })).toContain('--record-nav-width:150px')
   })
 })
