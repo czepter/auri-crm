@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { srcSet, STAGE_WIDTHS } from '@/portal/lib/images'
+import { keyIntent, stepIndex } from '@/portal/lib/lightbox'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
 
@@ -24,6 +25,7 @@ const open = defineModel<number | null>({ required: true })
 const favorited = ref(new Set<string>())
 const comments = ref<Comment[]>([])
 const draft = ref('')
+const typing = ref(false)
 const listsOpen = ref(false)
 
 const asset = computed(() => (open.value === null ? null : props.assets[open.value] ?? null))
@@ -102,16 +104,18 @@ async function sendComment() {
 function step(by: number) {
   if (open.value === null) return
 
-  open.value = (open.value + by + props.assets.length) % props.assets.length
+  open.value = stepIndex(open.value, by, props.assets.length)
   listsOpen.value = false
 }
 
 function onKey(event: KeyboardEvent) {
   if (open.value === null) return
 
-  if (event.key === 'Escape') open.value = null
-  if (event.key === 'ArrowRight') step(1)
-  if (event.key === 'ArrowLeft') step(-1)
+  const intent = keyIntent(event.key, typing.value)
+
+  if (intent === 'close') open.value = null
+  if (intent === 'prev') step(-1)
+  if (intent === 'next') step(1)
 }
 
 // Fetched once the first picture opens rather than on page load: a visitor
@@ -247,7 +251,13 @@ function time(iso: string) {
         </div>
 
         <form v-if="offers.comments" @submit.prevent="sendComment">
-          <Input v-model="draft" type="text" :placeholder="$t('gallery.commentPlaceholder')" />
+          <Input
+            v-model="draft"
+            type="text"
+            :placeholder="$t('gallery.commentPlaceholder')"
+            @focus="typing = true"
+            @blur="typing = false"
+          />
         </form>
       </aside>
     </div>
