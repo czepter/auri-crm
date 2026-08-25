@@ -9,7 +9,7 @@ import { Button } from '@/ui/button'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import GalleryAccess from '@/admin/components/gallery/GalleryAccess.vue'
 import { addressPrefix } from '@/admin/lib/galleryAddress'
-import { isCompleteDate } from '@/admin/lib/galleryExpiry'
+import { decideExpiryOnBlur } from '@/admin/lib/galleryExpiry'
 
 const props = defineProps<{
   gallery: {
@@ -41,10 +41,18 @@ function saveGeneral() {
     .patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
 }
 
-// DatePicker fires update:modelValue on every keystroke, not only once a
-// date is complete — see isCompleteDate()'s own doc comment.
-function saveExpiryIfComplete(value: string) {
-  if (isCompleteDate(value)) saveGeneral()
+// R30: save on the settled value DatePicker's own blur emit carries, never
+// on update:modelValue — that fires every keystroke and cannot tell a
+// deliberate clear from a half-typed date. decideExpiryOnBlur() is the
+// three-way call; a false decision leaves general.expires_at untouched, so
+// the next saveGeneral() (any other field's blur) can't smuggle a half-typed
+// date through either.
+function saveExpiryOnBlur(text: string) {
+  const decision = decideExpiryOnBlur(text)
+  if (!decision.save) return
+
+  general.expires_at = decision.value ?? ''
+  saveGeneral()
 }
 
 const addressPrefixText = computed(() => addressPrefix(props.gallery.url))
@@ -114,7 +122,13 @@ function day(iso: string | null) {
 
       <div class="flex min-w-0 flex-col gap-2">
         <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.expiry') }}</div>
-        <DatePicker v-model="general.expires_at" class="w-[150px]" @update:model-value="saveExpiryIfComplete" />
+        <!-- One-way, not v-model: general.expires_at must hold only a
+             settled value — see saveGeneral()'s own doc, and the note on
+             saveExpiryOnBlur() above. update:modelValue would otherwise write
+             every keystroke's partial parse into it, and a later blur on the
+             address field above would PATCH that half-typed date's null
+             straight through as this gallery's new expiry. -->
+        <DatePicker :model-value="general.expires_at" class="w-[150px]" @blur="saveExpiryOnBlur" />
       </div>
     </div>
 
