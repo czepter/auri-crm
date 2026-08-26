@@ -51,7 +51,8 @@ Die Identität geht denselben Weg. Kein neuer Mechanismus.
 | 17 | Der angemeldete Kunde | Wird nicht nach einer Adresse gefragt: sie steht in seinem Konto, und ihn erneut zu fragen wäre dieselbe Frage zum zweiten Mal. Verlangt das Studio einen Nachweis, gilt das nicht — dann ist die Adresse ein Tor und kein Zustellziel |
 | 18 | Wer auf ein Archiv wartet | Eigene Tabelle `zip_build_waiters`. Ein `ZipBuild` ist über `(gallery_version_id, scope, size)` eindeutig, damit zwei Gäste nicht zweimal 14 GB packen lassen — genau deshalb kann die Zustelladresse nicht an ihm hängen |
 | 19 | Wann die Nachricht geht | In `BuildGalleryZip`, sobald der Status auf `Ready` steht: dort wird die Tatsache wahr. `notified_at` steht vor dem Versand, damit ein Bau, der nach einem Fehlschlag erneut durchläuft, niemanden zweimal anschreibt |
-| 20 | Worauf der Link zeigt | Auf den Download-Schirm, nicht auf ein Band. Die Bänder tragen signierte Adressen mit 24 Stunden Frist, die eine Mail überleben würde, und wie viele es sind, weiß der Schirm besser |
+| 20 | Zweimal bestätigen, Betrachter und Portal | So gewollt. Es sind zwei Anwendungen auf zwei Hosts: das Cookie liegt hier, die Sitzung dort, und ein Cookie überquert diese Grenze nicht. Den Pass als Abfrageparameter mitzureichen lehnt dieses Repo für den Ansichtspass ausdrücklich ab („a pass in a URL ends up in an access log, a Referer and a bookmark"), und ein Einmal-Token wäre Maschinerie für eine Grenze, die es geben soll. Geteilt wird die Zeile in `gallery_guests`, nicht die Anmeldung |
+| 21 | Worauf der Link zeigt | Auf den Download-Schirm, nicht auf ein Band. Die Bänder tragen signierte Adressen mit 24 Stunden Frist, die eine Mail überleben würde, und wie viele es sind, weiß der Schirm besser |
 | 10 | Reihenfolge beim Download | Erst die PIN, wo das Studio eine gesetzt hat, dann die Adresse. Von jemandem eine Adresse einzusammeln, den man gleich abweist, ist Erhebung ohne Zweck |
 | 11 | Reichweite der Anmeldung | Je Galerie. Eine Bestätigung, die für die Galerie einer anderen Hochzeit mitgilt, ist eine Einwilligung, die niemand gegeben hat. Kennt der Browser schon eine Adresse, steht sie im Feld — Tippen gespart, Bestätigung trotzdem |
 | 12 | Was am Kommentar steht | Der Name, nicht die Adresse. Eine Galerie mit fünfzig Gästen wäre sonst eine Adressliste. Beim Anmelden zwei Felder, „Name" und „E-Mail"; der Name kommt aus dem Teil vor dem `@` vorbelegt (Punkte und Unterstriche werden Leerzeichen, angehängte Ziffern fallen weg, Anfangsbuchstaben groß) und bleibt änderbar |
@@ -86,13 +87,6 @@ Index, weil jede Herz- und Kommentarabfrage darüber sucht.
   meint damit zum ersten Mal einen Menschen statt einer Session-ID.
 
 ## Nicht enthalten
-
-- Ein Gast, der sich im Betrachter angemeldet hat, bestätigt im Portal erneut.
-  Das Cookie liegt auf dem Galerie-Host, die Portal-Sitzung auf einem anderen,
-  und ein Cookie überquert diese Grenze nicht. Die Auswege — den Pass als
-  Abfrageparameter mitgeben oder ein kurzlebiges Einmal-Token bauen — sind
-  beide eine eigene Entscheidung; den ersten lehnt dieses Repo für den
-  Ansichtspass ausdrücklich ab
 
 - Ein Konto für Gäste. Eine bestätigte Adresse ist kein Login
 - Zusammenführen zweier Adressen desselben Menschen
