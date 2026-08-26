@@ -76,6 +76,11 @@ class BuildGalleryZip
             }
 
             $zipBuild->update(['status' => ZipBuildStatus::Ready, 'error' => null]);
+
+            // Hier wird die Tatsache wahr, also geht hier die Nachricht raus.
+            // Ein Bau über 14 GB dauert Minuten — niemand sitzt so lange vor
+            // der Seite und lädt neu.
+            app(NotifyZipWaiters::class)($zipBuild);
         } catch (Throwable $e) {
             // ponytail: volumes already uploaded before the failing one stay
             // on the bucket, orphaned under this build's own prefix — no

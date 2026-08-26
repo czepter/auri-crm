@@ -45,6 +45,24 @@ class GalleryGuest extends Model
     }
 
     /**
+     * Findet oder legt den Gast dieser Galerie an. Drei Wege führen hierher —
+     * der Code im Betrachter, das Mail-Tor des Portals und die Zustelladresse
+     * beim Download —, und alle drei meinen dieselbe Zeile.
+     */
+    public static function forGallery(Gallery $gallery, string $email, ?string $name = null): self
+    {
+        $email = mb_strtolower(trim($email));
+        $guest = self::query()->firstOrNew(['gallery_id' => $gallery->id, 'email' => $email]);
+
+        $guest->forceFill([
+            'name' => $name ?? $guest->name ?? self::nameFromEmail($email),
+            'identifier' => self::identifierFor($gallery, $email),
+        ])->save();
+
+        return $guest;
+    }
+
+    /**
      * Ein Namensvorschlag aus dem Teil vor dem @, für den Weg, auf dem
      * niemand nach einem Namen gefragt wurde — das Portal kennt nur die
      * Adresse. `anna.mueller1987@…` wird `Anna Mueller`.

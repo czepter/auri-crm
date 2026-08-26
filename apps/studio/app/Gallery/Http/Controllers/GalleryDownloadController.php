@@ -21,6 +21,7 @@ use App\Media\Models\Asset;
 use App\Media\Models\AssetDerivative;
 use App\Media\Models\ZipBuild;
 use App\Media\Models\ZipBuildPart;
+use App\Media\Models\ZipBuildWaiter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -120,6 +121,8 @@ class GalleryDownloadController extends Controller
         $build->fill(['status' => ZipBuildStatus::Building, 'error' => null])->save();
         $build->parts()->delete();
 
+        $this->waitFor($build, $gallery, $claims);
+
         BuildZip::dispatch($build);
 
         return back();
@@ -162,9 +165,28 @@ class GalleryDownloadController extends Controller
      * sender; without a per-IP cap, one visitor could do the same across
      * every gallery it can reach.
      */
-    public function requestEmail(Request $request, Gallery $gallery, RequestGalleryEmailVerification $issue): RedirectResponse
-    {
+    public function requestEmail(
+        Request $request,
+        Gallery $gallery,
+        RequestGalleryEmailVerification $issue,
+        GalleryAccessSession $claims,
+    ): RedirectResponse {
         $validated = $request->validate(['email' => ['required', 'email', 'max:255']]);
+
+        // Verlangt das Studio keinen Nachweis, ist die Adresse kein Tor,
+        // sondern nur das Ziel für die fertige Mail. Einen Code zu schicken,
+        // den das Studio abgewählt hat, wäre Reibung ohne Auftrag.
+        if (! $gallery->requiresVerifiedEmail()) {
+            GalleryGuest::forGallery($gallery, $validated['email']);
+            $claims->grant(
+                $gallery,
+                GalleryAccessSession::EMAIL,
+                $gallery->email_verification_version,
+                ['email' => $validated['email']],
+            );
+
+            return back();
+        }
 
         $ipKey = 'gallery-email-ip:'.($request->ip() ?? 'unknown');
         $galleryKey = 'gallery-email-gallery:'.$gallery->public_id;
@@ -332,9 +354,40 @@ class GalleryDownloadController extends Controller
         ]);
     }
 
+    /**
+     * Wer auf dieses Archiv wartet. Ein ZipBuild gehört niemandem — zwei
+     * Gäste, die dasselbe anfordern, teilen sich die Bände —, also hängt die
+     * Zustelladresse an einer eigenen Zeile und nicht am Bau.
+     */
+    private function waitFor(ZipBuild $build, Gallery $gallery, GalleryAccessSession $claims): void
+    {
+        $email = $claims->verifiedEmail($gallery) ?? $this->clientEmail($gallery);
+
+        if ($email === null) {
+            return;
+        }
+
+        ZipBuildWaiter::query()->firstOrCreate([
+            'zip_build_id' => $build->id,
+            'gallery_guest_id' => GalleryGuest::forGallery($gallery, $email)->id,
+        ]);
+    }
+
+    /** Die Adresse eines angemeldeten Kunden dieser Galerie, sonst null. */
+    private function clientEmail(Gallery $gallery): ?string
+    {
+        $contact = auth('portal')->user();
+
+        return $contact !== null
+            && $gallery->project_id !== null
+            && $contact->visibleProjects()->whereKey($gallery->project_id)->exists()
+                ? $contact->email
+                : null;
+    }
+
     private function requester(Request $request, Gallery $gallery): string
     {
-        $email = app(GalleryAccessSession::class)->verifiedEmail($gallery);
+        $email = app(GalleryAccessSession::class)->verifiedEmail($gallery) ?? $this->clientEmail($gallery);
 
         return $email === null
             ? $request->session()->getId()
@@ -374,13 +427,29 @@ class GalleryDownloadController extends Controller
         return $build->updated_at->gt(now()->subHours(self::PARTS_LIVE_HOURS));
     }
 
+    /**
+     * Erst die PIN, dann die Adresse.
+     *
+     * Die PIN entscheidet, ob überhaupt jemand herunterladen darf — von
+     * jemandem eine Adresse einzusammeln, den man gleich abweist, ist
+     * Erhebung ohne Zweck.
+     *
+     * Eine Adresse verlangt der Download seither immer: ein Archiv über
+     * 14 GB wird im Hintergrund gepackt, und ohne Adresse hat das fertige
+     * niemanden, dem es Bescheid sagt (GalleryZipReady). Ob sie **bestätigt**
+     * sein muss, entscheidet weiterhin das Studio — siehe requestEmail().
+     */
     private function step(Gallery $gallery, GalleryAccessSession $claims): string
     {
         $hasPin = ! $gallery->requiresDownloadPin()
             || $claims->has($gallery, GalleryAccessSession::DOWNLOAD, $gallery->download_pin_version);
 
-        $hasEmail = ! $gallery->requiresVerifiedEmail()
-            || $claims->has($gallery, GalleryAccessSession::EMAIL, $gallery->email_verification_version);
+        // Ein angemeldeter Kunde hat seine Adresse im Konto — ihn danach zu
+        // fragen wäre dieselbe Frage zum zweiten Mal. Verlangt das Studio
+        // einen Nachweis, gilt das nicht: dann ist die Adresse ein Tor und
+        // kein Zustellziel.
+        $hasEmail = $claims->has($gallery, GalleryAccessSession::EMAIL, $gallery->email_verification_version)
+            || (! $gallery->requiresVerifiedEmail() && $this->clientEmail($gallery) !== null);
 
         return match (true) {
             ! $hasPin => 'pin',

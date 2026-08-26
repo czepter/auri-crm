@@ -31,10 +31,7 @@ class RequestGalleryGuestCode
 
         // Der Name wird bei jeder Anforderung mitgeführt: wer sich vertippt
         // hat, korrigiert ihn, indem er es noch einmal versucht.
-        GalleryGuest::query()->updateOrCreate(
-            ['gallery_id' => $gallery->id, 'email' => $email],
-            ['name' => $name, 'identifier' => GalleryGuest::identifierFor($gallery, $email)],
-        );
+        GalleryGuest::forGallery($gallery, $email, $name);
 
         $token = bin2hex(random_bytes(32));
         $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);

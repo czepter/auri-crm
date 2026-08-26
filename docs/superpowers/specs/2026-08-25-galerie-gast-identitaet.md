@@ -48,6 +48,10 @@ Die Identität geht denselben Weg. Kein neuer Mechanismus.
 | 7 | Ein Mailschritt oder zwei | Einer. Wer sich fürs Markieren angemeldet hat, ist auch für den Download angemeldet. Zweimal nach derselben Adresse zu fragen liest sich wie ein Fehler |
 | 8 | Was gesperrt ist | Herz, Kommentar und Download. Ansehen bleibt frei |
 | 9 | Was aus `requires_verified_email` wird | Bleibt, und entscheidet genau eine Sache: ob die Adresse vor dem Download **bestätigt** sein muss. Eine **Zustelladresse** verlangt der Download unabhängig davon — sonst hat das fertige ZIP kein Ziel. Wer schon markiert oder kommentiert hat, ist ohnehin bestätigt; für den ändert der Schalter nichts |
+| 17 | Der angemeldete Kunde | Wird nicht nach einer Adresse gefragt: sie steht in seinem Konto, und ihn erneut zu fragen wäre dieselbe Frage zum zweiten Mal. Verlangt das Studio einen Nachweis, gilt das nicht — dann ist die Adresse ein Tor und kein Zustellziel |
+| 18 | Wer auf ein Archiv wartet | Eigene Tabelle `zip_build_waiters`. Ein `ZipBuild` ist über `(gallery_version_id, scope, size)` eindeutig, damit zwei Gäste nicht zweimal 14 GB packen lassen — genau deshalb kann die Zustelladresse nicht an ihm hängen |
+| 19 | Wann die Nachricht geht | In `BuildGalleryZip`, sobald der Status auf `Ready` steht: dort wird die Tatsache wahr. `notified_at` steht vor dem Versand, damit ein Bau, der nach einem Fehlschlag erneut durchläuft, niemanden zweimal anschreibt |
+| 20 | Worauf der Link zeigt | Auf den Download-Schirm, nicht auf ein Band. Die Bänder tragen signierte Adressen mit 24 Stunden Frist, die eine Mail überleben würde, und wie viele es sind, weiß der Schirm besser |
 | 10 | Reihenfolge beim Download | Erst die PIN, wo das Studio eine gesetzt hat, dann die Adresse. Von jemandem eine Adresse einzusammeln, den man gleich abweist, ist Erhebung ohne Zweck |
 | 11 | Reichweite der Anmeldung | Je Galerie. Eine Bestätigung, die für die Galerie einer anderen Hochzeit mitgilt, ist eine Einwilligung, die niemand gegeben hat. Kennt der Browser schon eine Adresse, steht sie im Feld — Tippen gespart, Bestätigung trotzdem |
 | 12 | Was am Kommentar steht | Der Name, nicht die Adresse. Eine Galerie mit fünfzig Gästen wäre sonst eine Adressliste. Beim Anmelden zwei Felder, „Name" und „E-Mail"; der Name kommt aus dem Teil vor dem `@` vorbelegt (Punkte und Unterstriche werden Leerzeichen, angehängte Ziffern fallen weg, Anfangsbuchstaben groß) und bleibt änderbar |
@@ -57,6 +61,11 @@ Die Identität geht denselben Weg. Kein neuer Mechanismus.
 | 16 | Wie sie reist | Signiertes Token von der api, HttpOnly-Cookie auf der Herkunft des Betrachters, Bearer bei jedem Aufruf. Genau der Weg, den `GalleryViewPass` schon geht |
 
 ## Datenmodell
+
+### Neu: `zip_build_waiters`
+
+`zip_build_id`, `gallery_guest_id`, `notified_at`. Eindeutig über
+`(tenant_id, zip_build_id, gallery_guest_id)`.
 
 ### Neu: `gallery_guests`
 
@@ -78,8 +87,13 @@ Index, weil jede Herz- und Kommentarabfrage darüber sucht.
 
 ## Nicht enthalten
 
-- Die Benachrichtigung „dein ZIP ist fertig". Sie gibt es noch nicht; diese
-  Arbeit legt nur die Adresse hin, an die sie einmal geht
+- Ein Gast, der sich im Betrachter angemeldet hat, bestätigt im Portal erneut.
+  Das Cookie liegt auf dem Galerie-Host, die Portal-Sitzung auf einem anderen,
+  und ein Cookie überquert diese Grenze nicht. Die Auswege — den Pass als
+  Abfrageparameter mitgeben oder ein kurzlebiges Einmal-Token bauen — sind
+  beide eine eigene Entscheidung; den ersten lehnt dieses Repo für den
+  Ansichtspass ausdrücklich ab
+
 - Ein Konto für Gäste. Eine bestätigte Adresse ist kein Login
 - Zusammenführen zweier Adressen desselben Menschen
 - Namensänderung rückwirkend an alten Kommentaren — der Name wird beim

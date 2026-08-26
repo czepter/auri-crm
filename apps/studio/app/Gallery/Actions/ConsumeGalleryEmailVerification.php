@@ -46,16 +46,8 @@ class ConsumeGalleryEmailVerification
                 subject: $verification->public_id,
             );
 
-            $guest = GalleryGuest::query()->firstOrNew([
-                'gallery_id' => $gallery->id,
-                'email' => $verification->email,
-            ]);
-
-            $guest->forceFill([
-                'name' => $guest->name ?? GalleryGuest::nameFromEmail($verification->email),
-                'identifier' => GalleryGuest::identifierFor($gallery, $verification->email),
-                'confirmed_at' => $guest->confirmed_at ?? now(),
-            ])->save();
+            $guest = GalleryGuest::forGallery($gallery, $verification->email);
+            $guest->forceFill(['confirmed_at' => $guest->confirmed_at ?? now()])->save();
 
             return $verification->email;
         });
