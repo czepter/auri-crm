@@ -38,3 +38,12 @@ export function applyClick(state: SelectionState, ids: string[], id: string, mod
 
   return { selected: new Set([id]), anchor: id }
 }
+
+// Alle ist kein Set, hat also kein Ziel — mit genau einem Set gibt es aber
+// nur eine moegliche Antwort, und danach zu fragen waere eine Frage ohne
+// Wahl. Erst ab zwei Sets muss der Fotograf entscheiden.
+export function uploadTarget(sets: { id: string }[], activeSetId: string | null): string | null {
+  if (activeSetId !== null) return activeSetId
+
+  return sets.length === 1 ? sets[0].id : null
+}

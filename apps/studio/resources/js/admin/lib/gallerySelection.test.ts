@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyClick, range, toggle } from './gallerySelection'
+import { applyClick, range, toggle, uploadTarget } from './gallerySelection'
 
 const IDS = ['a', 'b', 'c', 'd', 'e']
 
@@ -71,5 +71,13 @@ describe('applyClick', () => {
     const next = applyClick({ selected: new Set(), anchor: null }, IDS, 'c', { shift: true })
 
     expect([...next.selected]).toEqual(['c'])
+  })
+})
+
+describe('uploadTarget', () => {
+  it('takes the open set, falls back to the only set, and gives up on two', () => {
+    expect(uploadTarget([{ id: 'a' }, { id: 'b' }], 'b')).toBe('b')
+    expect(uploadTarget([{ id: 'a' }], null)).toBe('a')
+    expect(uploadTarget([{ id: 'a' }, { id: 'b' }], null)).toBeNull()
   })
 })

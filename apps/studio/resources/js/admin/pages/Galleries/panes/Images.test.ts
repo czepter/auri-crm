@@ -40,13 +40,12 @@ describe('Images', () => {
   // R22: a freshly created gallery has exactly one set, and the record column
   // hides Alle along with the rest of its row list while there is only
   // one — so this is the state every gallery starts in, not an edge case.
-  it('a gallery with only one set: heads with its name, offers the drop zone and the density control', async () => {
+  it('a gallery with only one set: heads with its name, offers the upload action and the density control', async () => {
     const html = await render({ ...solo, activeSetId: 'a' })
 
     expect(html).toContain('Highlights')
     expect(html).not.toContain(de.gallery.all)
-    expect(html).toContain(de.media.dropHere)
-    expect(html).not.toContain(de.media.pickSetFirst)
+    expect(html).toContain(de.media.upload)
     expect(html).toContain(de.galleryRecord.density.small)
   })
 
@@ -76,21 +75,18 @@ describe('Images', () => {
     expect(html).not.toContain(de.galleryRecord.moveTo)
   })
 
-  // Uploading has no target while Alle is open — there is no set to upload
-  // into, so the drop zone disables itself rather than offering a picker
-  // that would 404 or silently pick one for the photographer.
-  it('disables the drop zone with a reason while Alle is open', async () => {
+  // Alle hat kein Zielset, nimmt Bilder aber trotzdem an — das Ziel klaert
+  // uploadTarget, notfalls ueber den Set-Dialog.
+  it('offers the upload action while Alle is open', async () => {
     const html = await render({ ...base, activeSetId: null })
 
-    expect(html).toContain(de.media.pickSetFirst)
-    expect(html).not.toContain(de.media.dropHere)
+    expect(html).toContain(de.media.upload)
   })
 
-  it('offers the drop zone once a real set is open', async () => {
+  it('offers the upload action once a real set is open', async () => {
     const html = await render({ ...base, activeSetId: 'a' })
 
-    expect(html).toContain(de.media.dropHere)
-    expect(html).not.toContain(de.media.pickSetFirst)
+    expect(html).toContain(de.media.upload)
   })
 
   // The one-set fixture, empty: an empty gallery starts here, and the drop
@@ -176,6 +172,6 @@ describe('Images', () => {
     })
 
     expect(html).toContain('IMG_9.jpg')
-    expect(html).toContain(de.media.dropHere)
+    expect(html).not.toContain(de.media.dropHere)
   })
 })

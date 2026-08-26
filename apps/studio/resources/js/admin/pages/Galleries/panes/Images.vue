@@ -3,12 +3,14 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import { useMediaQuery, useVirtualList } from '@vueuse/core'
-import { applyClick, type SelectionState } from '@/admin/lib/gallerySelection'
+import { applyClick, uploadTarget, type SelectionState } from '@/admin/lib/gallerySelection'
 import { checkDuplicates, uploadFile } from '@/admin/lib/multipartUpload'
 import AssetLightbox from '@/admin/components/gallery/AssetLightbox.vue'
 import DropZone from '@/admin/components/gallery/DropZone.vue'
 import DuplicateDialog from '@/admin/components/gallery/DuplicateDialog.vue'
+import SetPickerDialog from '@/admin/components/gallery/SetPickerDialog.vue'
 import UploadTray, { type TrayRow } from '@/admin/components/gallery/UploadTray.vue'
+import { Input } from '@/ui/input'
 import { NativeSelect } from '@/ui/native-select'
 
 interface AssetRow {
@@ -116,6 +118,16 @@ function moveTo(setId: string) {
   )
 }
 
+// Genau eines: ein Titelbild ist eines, und aus zwei markierten Bildern
+// eines zu waehlen waere geraten.
+function setCover() {
+  router.patch(
+    `/galerien/${props.gallery.id}/titelbild`,
+    { asset_id: [...selection.value.selected][0] },
+    { preserveScroll: true, onSuccess: () => (selection.value = { selected: new Set(), anchor: null }) },
+  )
+}
+
 function remove() {
   router.delete(`/galerien/${props.gallery.id}/bilder`, {
     data: { asset_ids: [...selection.value.selected] },
@@ -142,10 +154,9 @@ function retryFailed(publicId: string) {
 
 const tray = ref<TrayRow[]>([])
 const pending = ref<File[]>([])
-// Captured once, at pick time — DropZone is disabled whenever Alle is open,
-// but the duplicate dialog can stay open across a set switch, and reading
-// activeSet again once the photographer resolves it would chase a set that
-// moved out from under the upload.
+// Captured once, at pick time — the duplicate dialog can stay open across a
+// set switch, and reading activeSet again once the photographer resolves it
+// would chase a set that moved out from under the upload.
 const pendingSetId = ref<string | null>(null)
 const duplicates = ref<{ filename: string; size: number; assetId: string }[]>([])
 const precheckError = ref(false)
@@ -154,11 +165,34 @@ function keyOf(file: File): string {
   return `${file.name}:${file.size}`
 }
 
-async function picked(files: File[]) {
-  if (files.length === 0 || activeSet.value === null) return
+// Alle ist offen und die Galerie hat mehrere Sets: die Dateien warten hier,
+// bis der Fotograf eines gewaehlt hat.
+const awaitingSet = ref<File[]>([])
+const dragging = ref(false)
 
+async function picked(files: File[]) {
+  if (files.length === 0) return
+
+  const target = uploadTarget(props.sets, props.activeSetId)
+
+  if (target === null) {
+    awaitingSet.value = files
+    return
+  }
+
+  await start(files, target)
+}
+
+function chooseSet(setId: string) {
+  const files = awaitingSet.value
+
+  awaitingSet.value = []
+  void start(files, setId)
+}
+
+async function start(files: File[], setId: string) {
   pending.value = files
-  pendingSetId.value = activeSet.value.id
+  pendingSetId.value = setId
   precheckError.value = false
 
   try {
@@ -262,24 +296,42 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="relative px-6 pt-5 pb-7">
+  <div class="relative px-6 pt-5 pb-7" @dragover.prevent="dragging = true">
+    <!-- Die ganze Flaeche nimmt Bilder an, nicht nur der Kasten am Ende —
+         das Overlay faengt dragleave einmal ab statt bei jeder Kachel. -->
+    <div
+      v-if="dragging"
+      class="absolute inset-0 z-40 flex items-center justify-center rounded-lg border-2 border-dashed border-action bg-background/90 text-[14px] font-semibold"
+      @dragover.prevent
+      @dragleave="dragging = false"
+      @drop.prevent="dragging = false; picked(Array.from($event.dataTransfer?.files ?? []))"
+    >
+      {{ $t('media.dropHere') }}
+    </div>
+
     <div class="mb-3 flex items-center gap-3">
       <h2 class="m-0 text-[17px] leading-[1.2] font-semibold tracking-[-0.022em]">
         {{ activeSet === null ? $t('gallery.all') : activeSet.name }}
       </h2>
       <span class="text-[12px] text-ink-2">{{ shown.length }}</span>
       <span v-if="pendingShown.length > 0" class="text-[12px] text-ink-2">{{ $t('media.pendingCount', pendingShown.length) }}</span>
-      <div v-if="activeSet !== null" class="ml-auto flex gap-3 text-[11.5px] text-ink-2">
-        <button
-          v-for="option in ['small', 'medium', 'large']"
-          :key="option"
-          class="cursor-pointer border-0 bg-transparent text-[11.5px]"
-          :class="density === option ? 'font-semibold text-foreground' : 'text-ink-2'"
-          type="button"
-          @click="setDensity(option)"
-        >
-          {{ $t(`galleryRecord.density.${option}`) }}
-        </button>
+      <div class="ml-auto flex items-center gap-3 text-[11.5px] text-ink-2">
+        <template v-if="activeSet !== null">
+          <button
+            v-for="option in ['small', 'medium', 'large']"
+            :key="option"
+            class="cursor-pointer border-0 bg-transparent text-[11.5px]"
+            :class="density === option ? 'font-semibold text-foreground' : 'text-ink-2'"
+            type="button"
+            @click="setDensity(option)"
+          >
+            {{ $t(`galleryRecord.density.${option}`) }}
+          </button>
+        </template>
+        <label class="cursor-pointer">
+          {{ $t('media.upload') }}
+          <Input type="file" multiple class="hidden" @change="picked(Array.from(($event.target as HTMLInputElement).files ?? []))" />
+        </label>
       </div>
     </div>
 
@@ -287,12 +339,7 @@ onUnmounted(() => {
          otherwise sit above the drop zone as a void, the only thing left to
          act on. A set that is empty of pictures but not of pending uploads
          is not this case — there is something to show. -->
-    <DropZone
-      v-if="shown.length === 0 && pendingShown.length === 0"
-      class="h-[calc(100vh-260px)]"
-      :disabled="activeSet === null"
-      @files="picked"
-    />
+    <DropZone v-if="shown.length === 0 && pendingShown.length === 0" class="h-[calc(100vh-137px)]" @files="picked" />
 
     <template v-else>
       <!-- Bytes G-03 has not turned into a picture yet — sits above the real
@@ -313,7 +360,10 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div v-if="shown.length > 0" v-bind="containerProps" class="h-[calc(100vh-260px)]">
+      <!-- 137px = Seitenkopf ueber der Flaeche (109) plus pb-7 darunter. Die
+           Zahl hielt frueher zusaetzlich den Kasten am Ende frei; den gibt es
+           nicht mehr, also endet das Raster wieder am Fensterrand. -->
+      <div v-if="shown.length > 0" v-bind="containerProps" class="h-[calc(100vh-137px)]">
         <div v-bind="wrapperProps">
           <div
             v-for="row in list"
@@ -348,8 +398,6 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
-
-      <DropZone class="mt-3" :disabled="activeSet === null" @files="picked" />
     </template>
 
     <p v-if="precheckError" class="mt-2 text-[11.5px] text-destructive">{{ $t('media.precheckFailed') }}</p>
@@ -370,6 +418,7 @@ onUnmounted(() => {
     </div>
 
     <UploadTray :rows="tray" />
+    <SetPickerDialog :open="awaitingSet.length > 0" :sets="sets" @choose="chooseSet" @cancel="awaitingSet = []" />
     <DuplicateDialog :open="duplicates.length > 0" :duplicates="duplicates" @skip="skipDuplicates" @replace="replaceDuplicates" />
 
     <div
@@ -381,6 +430,14 @@ onUnmounted(() => {
         <option value="">{{ $t('galleryRecord.moveTo') }}</option>
         <option v-for="row in sets" :key="row.id" :value="row.id">{{ row.name }}</option>
       </NativeSelect>
+      <button
+        v-if="selection.selected.size === 1"
+        class="cursor-pointer border-0 bg-transparent text-paper"
+        type="button"
+        @click="setCover"
+      >
+        {{ $t('galleryRecord.setCover') }}
+      </button>
       <button class="cursor-pointer border-0 bg-transparent text-paper" type="button" @click="remove">
         {{ $t('common.remove') }}
       </button>

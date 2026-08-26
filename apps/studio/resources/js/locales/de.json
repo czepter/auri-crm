@@ -1151,7 +1151,7 @@
     "buildFailed": "Beim Vorbereiten ist etwas schiefgegangen. Bitte noch einmal versuchen."
   },
   "media": {
-    "pickFiles": "Dateien auswählen",
+    "upload": "Hochladen",
     "filesLabel": "Dateien",
     "ready": "Bereit",
     "queued": "Wartet",
@@ -1160,7 +1160,7 @@
     "needsAttentionCount": "1 Datei | {count} Dateien",
     "retryProcessing": "Erneut versuchen",
     "dropHere": "Bilder hierher ziehen",
-    "pickSetFirst": "Erst ein Set wählen",
+    "chooseSet": "Set wählen",
     "duplicatesFound": "{count} Datei liegt schon hier | {count} Dateien liegen schon hier",
     "replace": "Ersetzen",
     "skipDuplicates": "Überspringen",
@@ -1243,6 +1243,7 @@
     "blockedByBalance": "Gesperrt bis die Rechnung beglichen ist.",
     "versions": "Fassungen",
     "cover": "Titelbild",
+    "setCover": "Titelbild setzen",
     "density": {
       "small": "Klein",
       "medium": "Mittel",
