@@ -15,8 +15,13 @@ const baseURL = `http://127.0.0.1:${hostPort}`
 // been run before is not a suite. E2eSeeder is the single source of e2e
 // fixtures; locally, `php artisan migrate:fresh --seed` brings the demo cast
 // back for browsing.
+// cache:clear gehoert zu migrate:fresh. Der StudioSettingsResolver legt die
+// Studio-Einstellungen in Redis ab, und Redis ueberlebt die frische Datenbank
+// — der Name im Kopf jedes Screenshots war danach der, den die
+// Entwicklungsanwendung zuletzt gesetzt hatte, nicht der geseedete.
 const serve =
   'sh -c "php artisan migrate:fresh --force' +
+  ' && php artisan cache:clear' +
   ' && php artisan db:seed --class=E2eSeeder --force' +
   ' && php artisan serve --host=0.0.0.0 --port=8000"'
 
