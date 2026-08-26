@@ -77,7 +77,8 @@ Offen ist alles, was unten eine Nummer hat.
 | 61 | Gelöschtes Titelbild | Rückt nach, nach derselben Regel. Eine Galerie ohne Titelbild ist kein Zustand, den jemand absichtlich herstellt |
 | 62 | Wo die Regel steht | Eine Action `EnsureGalleryCover`, gerufen aus `IngestCompletedUpload`, `GalleryAssetController::remove` und `GallerySetController::destroy`. Dazu `on delete set null` als Netz. Ein Auslöser mehr darf keine zweite Kopie der Regel bedeuten |
 | 63 | Leerer Zustand | Gibt es nicht. Aus 59 und 61 folgt: eine Galerie mit Bildern hat ein Titelbild, und ohne Bilder wäre nichts zu wählen. Ein Platzhalter *Bild wählen* wäre Oberfläche für einen Zustand, den niemand erreicht. Bestandsgalerien, die ein Nachziehen bräuchten, gibt es nicht — der `E2eSeeder` schreibt am Ingest vorbei und ruft die Action deshalb selbst |
-| 64 | Klick | Führt nach *Gestaltung*. Ein Bild, das aussieht wie ein Knopf, muss einer sein |
+| 64 | Klick | Führt zu den **Bildern**. Dort wird gewählt, welches Bild es ist — die Auswahlleiste setzt es auf genau einer Markierung. *Gestaltung* entscheidet, wie es aufgemacht wird; ein Bild ist ein Bild. Ursprünglich stand hier *Gestaltung*, aber dort gibt es die Bildwahl nicht, und ein Knopf, der auf einen Schirm ohne die versprochene Steuerung führt, ist schlimmer als keiner |
+| 68 | Die Vorschau in *Gestaltung* | Zeigt das gesetzte Titelbild, nicht `assets[0]`. Sie log, sobald jemand ein anderes wählte. Ohne Titelbild greift dieselbe Regel wie im Betrachter: das erste. Die Reihe darunter lässt es aus — zweimal dasselbe Bild ist keine Vorschau |
 
 ### Schmale Schirme
 

@@ -85,6 +85,13 @@ const props = withDefaults(defineProps<{
 
 const tab = computed(() => props.area)
 
+// Was der Gast oben sieht, ist das Titelbild — nicht das erste Bild der
+// Liste. Solange keins gesetzt ist, greift dieselbe Regel wie im Betrachter:
+// das erste. Der Rest der Vorschau ist die Reihe darunter, also alles ohne
+// das Titelbild.
+const cover = computed(() => props.assets.find((asset) => asset.isCover) ?? props.assets[0])
+const beneath = computed(() => props.assets.filter((asset) => asset.id !== cover.value?.id).slice(0, 6))
+
 // C-20 (#257): three sheets, because the questions differ — who took
 // something, who marked something, who was here at all.
 const SHEETS = ['downloads', 'marks', 'views'] as const
@@ -459,7 +466,7 @@ function megabytes(bytes: number) {
           <div class="min-w-0 flex-1 bg-sunk px-8 pt-5 pb-7">
             <div class="overflow-hidden rounded-[12px] bg-paper">
               <div class="relative">
-                <img v-if="assets[0]?.src" class="block aspect-video w-full object-cover" :src="`${assets[0].src}?w=1200&fmt=jpeg`" alt="" />
+                <img v-if="cover?.src" class="block aspect-video w-full object-cover" :src="`${cover.src}?w=1200&fmt=jpeg`" alt="" />
                 <div class="absolute inset-x-0 bottom-0 bg-[linear-gradient(transparent,rgba(20,16,14,0.55))] px-5 py-[22px] text-center text-paper">
                   <b class="block text-[19px] leading-[1.2] font-semibold tracking-[0.04em] uppercase">{{ gallery.title }}</b>
                   <span class="text-[11.5px] opacity-85">{{ $t('contacts.assetCount', figures.assets) }}</span>
@@ -467,7 +474,7 @@ function megabytes(bytes: number) {
               </div>
               <div class="grid grid-cols-3 gap-1.5 p-2.5">
                 <img
-                  v-for="asset in assets.slice(1, 7)"
+                  v-for="asset in beneath"
                   :key="asset.id"
                   class="block aspect-3/2 w-full rounded-[3px] object-cover"
                   :src="`${asset.src}?w=400&fmt=jpeg`"

@@ -119,9 +119,13 @@ function confirmRemove() {
     <!-- Das Titelbild ist kein Bereich, sondern das Gesicht des Datensatzes.
          Ein leerer Zustand steht hier nicht: das erste Bild wird Titelbild
          und beim Löschen rückt das nächste nach, also fehlt es nur, wenn es
-         gar keine Bilder gibt — und dann wäre auch nichts zu wählen. -->
+         gar keine Bilder gibt — und dann wäre auch nichts zu wählen.
+
+         Der Klick führt zu den Bildern und nicht zur Gestaltung: dort wird
+         gewählt, welches es ist. Die Gestaltung entscheidet, wie es
+         aufgemacht wird — ein Bild ist ein Bild. -->
     <template v-if="nav.cover" #above>
-      <Link :href="`/galerien/${galleryId}/gestaltung`" class="mb-3 block no-underline max-[640px]:mb-2 max-[640px]:w-full">
+      <Link :href="`/galerien/${galleryId}/bilder`" class="mb-3 block no-underline max-[640px]:mb-2 max-[640px]:w-full">
         <img class="aspect-4/3 w-full rounded-[var(--r-sm)] object-cover max-[640px]:aspect-[16/5]" :src="`${nav.cover}?w=400&fmt=jpeg`" alt="" />
       </Link>
     </template>

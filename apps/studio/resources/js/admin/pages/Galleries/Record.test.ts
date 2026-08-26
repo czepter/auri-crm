@@ -98,7 +98,42 @@ const base = {
   },
 }
 
+const picture = (id: string, isCover = false) => ({
+  id, key: `k/${id}`, setId: 's1', src: `/galerien/g1/bilder/${id}/vorschau`,
+  filename: `${id}.jpg`, width: 400, height: 300, isCover,
+})
+
 describe('Record', () => {
+  // Die Vorschau zeigte assets[0] und log damit, sobald jemand ein anderes
+  // Bild zum Titelbild machte.
+  it('shows the chosen cover at the top of Gestaltung, not the first picture', async () => {
+    const html = await render({
+      ...base,
+      area: 'gestaltung',
+      assets: [picture('a'), picture('b', true), picture('c')],
+    })
+
+    expect(html).toContain('/galerien/g1/bilder/b/vorschau?w=1200')
+    expect(html).not.toContain('/galerien/g1/bilder/a/vorschau?w=1200')
+  })
+
+  it('falls back to the first picture while nothing is chosen', async () => {
+    const html = await render({ ...base, area: 'gestaltung', assets: [picture('a'), picture('b')] })
+
+    expect(html).toContain('/galerien/g1/bilder/a/vorschau?w=1200')
+  })
+
+  // Das Titelbild steht nicht zweimal da: oben gross, darunter der Rest.
+  it('leaves the cover out of the row beneath it', async () => {
+    const html = await render({
+      ...base,
+      area: 'gestaltung',
+      assets: [picture('a'), picture('b', true), picture('c')],
+    })
+
+    expect(html).not.toContain('/galerien/g1/bilder/b/vorschau?w=400')
+    expect(html).toContain('/galerien/g1/bilder/c/vorschau?w=400')
+  })
   // The coordinator's fix: PublishGallery refuses an empty draft, so a
   // control that can only fail must not be offered — the first thing anyone
   // does with a fresh gallery is try this button.
