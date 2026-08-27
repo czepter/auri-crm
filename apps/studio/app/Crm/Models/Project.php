@@ -127,10 +127,14 @@ class Project extends Model
         return $this->hasMany(Contract::class)->latest();
     }
 
-    /** The one a screen shows: the most recent render, whatever its status. */
+    /**
+     * The one a screen shows: the most recent render, whatever its status —
+     * but only once it has gone out. Seit Verträge Fassungen haben, liegt vor
+     * der versendeten ein Entwurf, und das Portal liest diese Relation.
+     */
     public function latestContract(): HasOne
     {
-        return $this->hasOne(Contract::class)->latestOfMany();
+        return $this->hasOne(Contract::class)->whereNotNull('sent_at')->latestOfMany();
     }
 
     public function shoots(): HasMany

@@ -59,7 +59,7 @@ class EnsureContractArtifact
     private function render(Contract $contract): Contract
     {
         $resolved = MergeFieldResolver::resolve(
-            $contract->template->body,
+            $contract->resolvedBody(),
             $this->mergeData->fromProject($contract->project, $this->settings),
         );
 

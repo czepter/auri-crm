@@ -51,6 +51,11 @@ class SignContract
                 'user_agent' => $userAgent === null ? null : substr($userAgent, 0, 500),
             ]);
 
+            // The studio's own list of who still has to sign, kept in step
+            // with the evidence by the one writer of that evidence.
+            $contract->signers()->where('contact_id', $contact->id)
+                ->whereNull('signed_at')->update(['signed_at' => now()]);
+
             // actor is null, not $contact — AuditLog::actor_id is a foreign
             // key to staff users, and a Contact is never one. The same shape
             // App\Portal\Actions\ConsumeClientAccess uses.
