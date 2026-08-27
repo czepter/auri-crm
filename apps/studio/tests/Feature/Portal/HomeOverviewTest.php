@@ -74,6 +74,7 @@ it('gathers what is open across every booking, each naming where it came from', 
 it('says nothing is open when nothing is', function () {
     $contact = Contact::factory()->create();
     $project = bookingFor($contact);
+    bookingFor($contact);
 
     dueInstallment($project, 150000, '2026-07-27')->update(['status' => PaymentInstallmentStatus::Paid]);
 
@@ -90,6 +91,7 @@ it('hides money from the home while the payment-status switch is off', function 
 
     $contact = Contact::factory()->create();
     dueInstallment(bookingFor($contact), 150000, '2026-07-27');
+    bookingFor($contact);
 
     $props = test()->actingAs($contact, 'portal')->get('/')->assertOk()->viewData('page')['props'];
 
@@ -99,6 +101,7 @@ it('hides money from the home while the payment-status switch is off', function 
 it('counts a thread the studio answered last as waiting on the client', function () {
     $contact = Contact::factory()->create();
     $project = bookingFor($contact);
+    bookingFor($contact);
 
     $thread = app(App\Engagement\Actions\StartThread::class)($project, $contact, 'Ablauf', 'Frage.');
     app(App\Engagement\Actions\PostMessage::class)($thread, App\Models\User::factory()->create(), 'Antwort.');
@@ -111,6 +114,7 @@ it('counts a thread the studio answered last as waiting on the client', function
 it('does not count a thread the client spoke on last', function () {
     $contact = Contact::factory()->create();
     app(App\Engagement\Actions\StartThread::class)(bookingFor($contact), $contact, 'Ablauf', 'Frage.');
+    bookingFor($contact);
 
     $props = test()->actingAs($contact, 'portal')->get('/')->assertOk()->viewData('page')['props'];
 
@@ -138,6 +142,7 @@ it('derives a phase per booking and counts them for the filter', function () {
 it('offers every live gallery directly, with its cover and count', function () {
     $contact = Contact::factory()->create();
     $project = bookingFor($contact);
+    bookingFor($contact);
 
     $gallery = Gallery::factory()->for($project)->create(['title' => 'Verlobungsshooting']);
     $set = GallerySet::where('gallery_id', $gallery->id)->first();
@@ -156,6 +161,7 @@ it('offers every live gallery directly, with its cover and count', function () {
 it('leaves out a gallery whose link has expired, and one nobody published', function () {
     $contact = Contact::factory()->create();
     $project = bookingFor($contact);
+    bookingFor($contact);
 
     Gallery::factory()->for($project)->create();
 

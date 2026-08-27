@@ -95,7 +95,7 @@ it('refuses a thread without a booking while messaging is booking-only', functio
     expect(Thread::count())->toBe(1);
 });
 
-// One sentence cannot greet three different rooms.
+// One sentence cannot greet two different rooms.
 it('greets each opening state with its own text', function () {
     StudioSettings::query()->update([
         'portal_welcome_inquiry' => 'Wir haben eure Anfrage.',
@@ -109,13 +109,11 @@ it('greets each opening state with its own text', function () {
 
     expect(test()->actingAs($contact, 'portal')->get('/')->viewData('page')['props']['welcomeText'])->toBe('Wir haben eure Anfrage.');
 
-    $first = Project::factory()->create(['portal_visible' => true]);
-    $first->attachContact($contact, ProjectContactRole::Primary);
-
-    expect(test()->actingAs($contact, 'portal')->get('/')->viewData('page')['props']['welcomeText'])->toBe('Schön, dass ihr da seid.');
-
-    $second = Project::factory()->create(['portal_visible' => true]);
-    $second->attachContact($contact, ProjectContactRole::Primary);
+    // A single booking is opened directly, so the home's other room is the
+    // one with several.
+    foreach ([Project::factory()->create(['portal_visible' => true]), Project::factory()->create(['portal_visible' => true])] as $project) {
+        $project->attachContact($contact, ProjectContactRole::Primary);
+    }
 
     expect(test()->actingAs($contact, 'portal')->get('/')->viewData('page')['props']['welcomeText'])->toBe('Alle eure Termine auf einen Blick.');
 });

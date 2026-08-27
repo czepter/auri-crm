@@ -165,6 +165,9 @@ class HandleInertiaRequests extends Middleware
         return [
             'messaging' => app(PortalSettings::class)->messagingEnabled($contact),
             'unread' => $unread,
+            // The home of a client with one booking is that booking, so the
+            // nav naming a list would name something they never see.
+            'oneBooking' => $contact->visibleProjects()->count() === 1,
         ];
     }
 }

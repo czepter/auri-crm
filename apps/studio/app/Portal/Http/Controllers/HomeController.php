@@ -12,6 +12,7 @@ use App\Payments\Models\PaymentInstallment;
 use App\Portal\Support\PortalSettings;
 use App\Quotes\Enums\QuoteStatus;
 use App\Settings\Support\StudioSettingsResolver;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -35,7 +36,7 @@ use Inertia\Response;
  */
 class HomeController extends Controller
 {
-    public function __invoke(StudioSettingsResolver $studio, PortalSettings $settings): Response
+    public function __invoke(StudioSettingsResolver $studio, PortalSettings $settings): Response|RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -48,20 +49,22 @@ class HomeController extends Controller
             ])
             ->get();
 
+        // A single booking is no list to pick from — the overview would be
+        // one card standing between the client and their own screen.
+        if ($projects->count() === 1) {
+            return redirect()->route('portal.projects.show', $projects->first()->public_id);
+        }
+
         $bookings = $projects->map(fn (Project $project) => $this->booking($project))
             ->sortByDesc(fn (array $booking) => [$booking['year'] ?? 0, $booking['date'] ?? ''])
             ->values();
 
         return Inertia::render('Home', [
             'contact' => ['name' => $contact->name],
-            // P-09 (#228): three rooms, three texts. A sentence written for
-            // one booking reads as a mistake to a venue with forty and to
-            // somebody who has not booked anything at all.
-            'welcomeText' => $settings->welcomeText($contact, match (true) {
-                $bookings->isEmpty() => 'inquiry',
-                $bookings->count() > 1 => 'many',
-                default => 'single',
-            }),
+            // P-09 (#228): a sentence written for somebody who has not
+            // booked anything reads as a mistake to a venue with forty. The
+            // third room, the single booking, no longer lands here.
+            'welcomeText' => $settings->welcomeText($contact, $bookings->isEmpty() ? 'inquiry' : 'many'),
             'pending' => $this->pending($contact, $projects, $settings),
             'bookings' => $bookings->all(),
             'phaseCounts' => $bookings->countBy('phase')->all(),

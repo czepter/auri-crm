@@ -21,7 +21,7 @@ import { Button } from '@/ui/button'
 withDefaults(defineProps<{
   /** Laid over a title image: transparent ground, white type. */
   over?: boolean
-  /** The booking this screen stands in. Links back to all of them when the client has more than one. */
+  /** The booking this screen stands in. Absent from the bar unless there are others to go back to. */
   switcher?: { label: string; toAll: boolean } | null
   /**
    * A sub-screen carries its own head below 980px — see PortalSubhead. The
@@ -36,7 +36,7 @@ withDefaults(defineProps<{
 })
 
 type Branding = { displayName: string | null; logoUrl: string | null; accentColor: string | null }
-type Nav = { messaging: boolean; unread: number }
+type Nav = { messaging: boolean; unread: number; oneBooking: boolean }
 
 const branding = computed(() => usePage().props.portalBranding as Branding | undefined)
 const nav = computed(() => usePage().props.portalNav as Nav | null | undefined)
@@ -90,15 +90,15 @@ watch(branding, applyAccent)
           <span>{{ branding?.displayName }}</span>
         </Link>
 
-        <!-- The running booking's name is the switcher. A client with one
-             booking sees only the name — no dead menu.
+        <!-- The way back to the other bookings, named after the one you
+             are in. A client who has only this one is shown nothing: a badge
+             that leads nowhere reads as a label they cannot place.
              ponytail: a link back to all bookings, not the mockup's dropdown
              panel; that needs every booking shared on every request. Build it
              when a client with a dozen bookings complains about the detour. -->
-        <component
-          :is="switcher?.toAll ? Link : 'span'"
-          v-if="switcher"
-          :href="switcher.toAll ? '/' : undefined"
+        <Link
+          v-if="switcher?.toAll"
+          href="/"
           :class="[
             'inline-flex flex-none items-center gap-2.25 rounded-[var(--r-pill)] border px-4 py-2 text-[13.5px] leading-none font-medium whitespace-nowrap no-underline',
             over
@@ -107,14 +107,14 @@ watch(branding, applyAccent)
           ]"
         >
           {{ switcher.label }}
-        </component>
+        </Link>
 
         <nav
           v-if="nav"
           class="ml-auto flex items-center gap-6 text-[13.5px] leading-none max-[760px]:hidden [&_a]:no-underline"
         >
           <Link :class="path === '/' || path.startsWith('/projekte') ? 'font-semibold' : 'opacity-72 hover:opacity-100'" href="/">
-            {{ $t('portal.navBookings') }}
+            {{ nav.oneBooking ? $t('portal.navBooking') : $t('portal.navBookings') }}
           </Link>
           <Link
             v-if="nav.messaging"

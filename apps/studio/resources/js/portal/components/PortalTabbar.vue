@@ -11,7 +11,7 @@ import { Link, usePage } from '@inertiajs/vue3'
  * "Abmelden" is not one of them. It lives in the settings, where the rest of
  * the access does.
  */
-const nav = computed(() => usePage().props.portalNav as { messaging: boolean; unread: number } | null | undefined)
+const nav = computed(() => usePage().props.portalNav as { messaging: boolean; unread: number; oneBooking: boolean } | null | undefined)
 
 const path = computed(() => usePage().url.split('?')[0])
 
@@ -30,7 +30,7 @@ const LINK
   >
     <Link :class="[LINK, on(path === '/' || path.startsWith('/projekte'))]" href="/">
       <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10" /></svg>
-      {{ $t('portal.navBookings') }}
+      {{ nav.oneBooking ? $t('portal.navBooking') : $t('portal.navBookings') }}
     </Link>
 
     <Link v-if="nav.messaging" :class="[LINK, on(path.startsWith('/nachrichten'))]" href="/nachrichten">

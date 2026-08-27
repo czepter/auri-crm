@@ -32,8 +32,12 @@ it('opens the client\'s own portal, marked as a preview', function () {
     useSurface(Surface::PORTAL);
 
     $contact = Contact::factory()->create();
-    $project = Project::factory()->create(['portal_visible' => true]);
-    $project->attachContact($contact, ProjectContactRole::Primary);
+
+    // Two, so the preview lands on the home instead of being sent into the
+    // one booking.
+    foreach ([Project::factory()->create(['portal_visible' => true]), Project::factory()->create(['portal_visible' => true])] as $project) {
+        $project->attachContact($contact, ProjectContactRole::Primary);
+    }
 
     test()->get(previewLink($contact))->assertRedirect('/');
 
