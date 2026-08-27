@@ -10,14 +10,16 @@ import { Label } from '@/ui/label'
 // Shared by Create and Edit, so the two forms cannot drift into building a
 // form field two different ways. optionsText is a newline-separated string
 // rather than the array FormField.options actually is — a textarea can only
-// bind a string, and only "select" ever reads it; the page transforms it back
-// to an array (or null) on submit, the same shape PackageItemsEditor's page
-// transforms euros back to cents.
+// bind a string; "select" reads it as its choices and "file" as its allowed
+// formats. The page transforms it back on submit, the same shape
+// PackageItemsEditor's page transforms euros back to cents.
 export type FormFieldRow = {
   label: string
   type: string
   required: boolean
   optionsText: string
+  fileMaxSize?: number
+  fileMultiple?: boolean
 }
 
 const props = defineProps<{ fieldTypes: { value: string; label: string }[] }>()
@@ -30,7 +32,7 @@ const fields = defineModel<FormFieldRow[]>({ required: true })
 const editingIndex = ref<number | null>(null)
 
 function addField(type: string) {
-  fields.value = [...fields.value, { label: '', type, required: false, optionsText: '' }]
+  fields.value = [...fields.value, { label: '', type, required: false, optionsText: '', fileMaxSize: 10, fileMultiple: false }]
   editingIndex.value = fields.value.length - 1
 }
 
@@ -47,21 +49,35 @@ function typeLabel(type: string): string {
 <template>
   <div>
     <div class="flex flex-col gap-1.5">
-      <div v-for="(field, index) in fields" :key="index" class="group/qbrow flex items-start gap-2.5 rounded-lg border border-border bg-background p-2.5 hover:border-line-hover">
+      <div v-for="(field, index) in fields" :key="index" class="group/qbrow flex items-start gap-2.5 rounded-xl border border-border bg-background p-2.5 hover:border-line-hover">
         <span class="mt-0.5 h-[22px] w-3.5 flex-none cursor-grab bg-icon-grip bg-center bg-no-repeat bg-[length:12px_18px] opacity-45 group-hover/qbrow:opacity-80"></span>
 
         <div v-if="editingIndex === index" class="flex-1">
-          <div class="mb-6 grid grid-cols-2 gap-x-6 gap-y-4">
+          <div class="grid grid-cols-2 gap-x-6 gap-y-4">
             <Field wide>
               <Label :for="`field-label-${index}`">{{ $t('formTemplates.labelField') }}</Label>
               <Input :id="`field-label-${index}`" v-model="field.label" type="text" maxlength="255" />
             </Field>
 
-            <div v-if="field.type === 'select'" class="col-span-full flex min-w-0 flex-col gap-1.5">
-              <Label :for="`field-options-${index}`">{{ $t('formTemplates.optionsField') }}</Label>
+            <div v-if="field.type === 'select' || field.type === 'file'" class="col-span-full flex min-w-0 flex-col gap-1.5">
+              <Label :for="`field-options-${index}`">{{ field.type === 'file' ? $t('formTemplates.formatsField') : $t('formTemplates.optionsField') }}</Label>
               <Textarea :id="`field-options-${index}`" v-model="field.optionsText" rows="3" />
-              <span class="text-[11.5px] leading-[1.45] text-faint">{{ $t('formTemplates.optionsHint') }}</span>
+              <span class="text-[11.5px] leading-[1.45] text-faint">{{ field.type === 'file' ? $t('formTemplates.formatsHint') : $t('formTemplates.optionsHint') }}</span>
             </div>
+
+            <template v-if="field.type === 'file'">
+              <Field>
+                <Label :for="`field-max-size-${index}`">{{ $t('formTemplates.maxSizeField') }}</Label>
+                <Input :id="`field-max-size-${index}`" v-model.number="field.fileMaxSize" type="number" min="1" :max="25" />
+              </Field>
+
+              <Field>
+                <div class="flex items-center gap-2.5">
+                  <Checkbox :id="`field-multiple-${index}`" v-model="field.fileMultiple" />
+                  <Label variant="inline" :for="`field-multiple-${index}`">{{ $t('formTemplates.multipleField') }}</Label>
+                </div>
+              </Field>
+            </template>
 
             <Field>
               <div class="flex items-center gap-2.5">
@@ -71,22 +87,24 @@ function typeLabel(type: string): string {
             </Field>
           </div>
 
-          <div class="mt-6 flex items-center gap-4">
+          <div class="mt-4 flex items-center gap-2.5">
             <Button variant="outline" type="button" @click="editingIndex = null">{{ $t('formTemplates.done') }}</Button>
             <Button variant="outline" tone="accent" type="button" @click="removeField(index)">{{ $t('common.remove') }}</Button>
           </div>
         </div>
 
-        <div v-else class="flex-1">
-          <div class="text-[13px] leading-[1.4] font-medium">{{ field.label || $t('formTemplates.untitled') }}</div>
-          <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
-            <span class="block rounded-[5px] bg-muted px-[7px] py-0.5 text-[10px] leading-[1.5] font-semibold tracking-[0.05em] uppercase text-muted-foreground">{{ typeLabel(field.type) }}</span>
-            <span v-if="field.required" class="block rounded-[5px] bg-muted px-[7px] py-0.5 text-[10px] leading-[1.5] font-semibold tracking-[0.05em] uppercase text-muted-foreground">{{ $t('formTemplates.requiredChip') }}</span>
-            <span v-if="field.type === 'select' && field.optionsText" class="text-[11.5px] leading-[1.5] text-faint">{{ field.optionsText.split('\n').filter(Boolean).join(', ') }}</span>
-            <span v-if="field.type === 'name_list'" class="text-[11.5px] leading-[1.5] text-faint">{{ $t('formTemplates.nameListHint') }}</span>
+        <template v-else>
+          <div class="min-w-0 flex-1">
+            <div class="text-[13px] leading-[1.4] font-medium">{{ field.label || $t('formTemplates.untitled') }}</div>
+            <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <span class="block rounded-[5px] bg-muted px-[7px] py-0.5 text-[10px] leading-[1.5] font-semibold tracking-[0.05em] uppercase text-muted-foreground">{{ typeLabel(field.type) }}</span>
+              <span v-if="field.required" class="block rounded-[5px] bg-muted px-[7px] py-0.5 text-[10px] leading-[1.5] font-semibold tracking-[0.05em] uppercase text-muted-foreground">{{ $t('formTemplates.requiredChip') }}</span>
+              <span v-if="(field.type === 'select' || field.type === 'file') && field.optionsText" class="text-[11.5px] leading-[1.5] text-faint">{{ field.optionsText.split('\n').filter(Boolean).join(', ') }}</span>
+              <span v-if="field.type === 'name_list'" class="text-[11.5px] leading-[1.5] text-faint">{{ $t('formTemplates.nameListHint') }}</span>
+            </div>
           </div>
-          <Button class="opacity-0 transition-opacity duration-[120ms] ease-out group-hover/qbrow:opacity-100" as="a" variant="outline" href="#" @click.prevent="editingIndex = index">{{ $t('formTemplates.edit') }}</Button>
-        </div>
+          <Button as="a" variant="outline" href="#" @click.prevent="editingIndex = index">{{ $t('formTemplates.edit') }}</Button>
+        </template>
       </div>
     </div>
 

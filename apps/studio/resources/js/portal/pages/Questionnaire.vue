@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3'
+import { router, useForm } from '@inertiajs/vue3'
 import PortalField from '@/portal/components/PortalField.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
@@ -7,7 +7,8 @@ import PortalShell from '@/portal/components/PortalShell.vue'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
-import { NativeSelect } from '@/ui/native-select'
+import { NONE, fromOption, toOption } from '@/lib/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Textarea } from '@/ui/textarea'
 
 type Field = App.Crm.Data.FormInstanceFieldData
@@ -23,8 +24,30 @@ const props = defineProps<{
 // by them or by the studio off a phone call — so revising is editing rather
 // than starting over.
 const form = useForm<{ answers: Record<string, string> }>({
-  answers: Object.fromEntries(props.questionnaire.fields.map((f) => [f.id, f.currentAnswer ?? ''])),
+  answers: Object.fromEntries(
+    props.questionnaire.fields.filter((f) => f.type !== 'file').map((f) => [f.id, f.currentAnswer ?? '']),
+  ),
 })
+
+// A file goes up on its own rather than with the form's one submit: bytes are
+// not something anybody retypes when the rest of the page fails validation.
+function upload(fieldId: string, event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  router.post(
+    `/projekte/${props.project.id}/fragebogen/${props.questionnaire.id}/datei`,
+    { field: fieldId, file },
+    { preserveScroll: true, onFinish: () => (input.value = '') },
+  )
+}
+
+function removeFile(fileId: string) {
+  router.delete(`/projekte/${props.project.id}/fragebogen/${props.questionnaire.id}/datei/${fileId}`, {
+    preserveScroll: true,
+  })
+}
 
 function submit() {
   form.patch(`/projekte/${props.project.id}/fragebogen/${props.questionnaire.id}`, { preserveScroll: true })
@@ -75,10 +98,32 @@ function errorFor(id: string) {
             :label="field.label"
             :optional="field.required ? undefined : $t('settings.optional')"
           >
-            <NativeSelect v-if="field.type === 'select'" v-model="form.answers[field.id]">
-              <option value="" />
-              <option v-for="option in field.options ?? []" :key="option" :value="option">{{ option }}</option>
-            </NativeSelect>
+            <template v-if="field.type === 'file'">
+              <div v-for="file in field.files" :key="file.id" class="flex items-center gap-3 text-[14.5px] leading-[1.5]">
+                <span>{{ file.name }}</span>
+                <button class="text-[12.5px] underline underline-offset-2" type="button" @click="removeFile(file.id)">
+                  {{ $t('common.remove') }}
+                </button>
+              </div>
+              <input
+                class="block text-[13.5px] leading-[1.5]"
+                type="file"
+                :accept="(field.fileFormats ?? []).map((f) => `.${f}`).join(',')"
+                @change="upload(field.id, $event)"
+              />
+            </template>
+
+            <Select
+              v-else-if="field.type === 'select'"
+              :model-value="toOption(form.answers[field.id])"
+              @update:model-value="(value) => form.answers[field.id] = fromOption(value)"
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="NONE">{{ $t('portal.none') }}</SelectItem>
+                <SelectItem v-for="option in field.options ?? []" :key="option" :value="option">{{ option }}</SelectItem>
+              </SelectContent>
+            </Select>
 
             <!-- name_list is a list of people typed one per line; nothing in
                  the schema splits it, so nothing here pretends to. -->

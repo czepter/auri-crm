@@ -1,35 +1,100 @@
 <script setup lang="ts">
-import { onBeforeUnmount, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
+import DocumentEditor from '@/admin/components/DocumentEditor.vue'
+import DocumentPreviewPane from '@/admin/components/DocumentPreviewPane.vue'
+import Rail from '@/ui/page/Rail.vue'
+import Section from '@/ui/page/Section.vue'
 import { Button } from '@/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { NONE, fromOption, toOption } from '@/lib/select'
+import { dayWithWeekday } from '@/admin/lib/dates'
+import { htmlToBlocks } from '@/admin/documents/blocks/importHtml'
+import { serialize } from '@/admin/documents/blocks/serialize'
+import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
 
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
   templates: { value: string; label: string }[]
   contract: App.Contracts.Data.ContractData | null
+  versions: App.Contracts.Data.ContractData[]
+  contacts: { value: string; label: string }[]
+  palette: PaletteEntry[]
+  mergeFields: { path: string; sample: string }[]
 }>()
 
-const form = useForm({ template: props.templates[0]?.value ?? '' })
+const generate = useForm({ template: props.templates[0]?.value ?? '' })
+const signer = useForm({ contact: '' })
 
-function generate() {
-  form.post(`/auftraege/${props.header.id}/vertraege`, { preserveScroll: true })
+const doc = ref<EditorDocument>(blocksOf(props.contract))
+
+function blocksOf(contract: App.Contracts.Data.ContractData | null): EditorDocument {
+  if (contract === null) return { blocks: [] }
+
+  return (contract.blocks as EditorDocument | null) ?? htmlToBlocks(contract.body)
 }
 
-// The request that triggers a render returns immediately — this is the
-// screen reacting to completion on a later request, rather than blocking on
-// the queued job. Polls only while a render is actually in flight.
+// Saving against a sent Fassung answers with a new one — a different id, a
+// different wording of record. The editor follows that row rather than
+// keeping the document it was opened with.
+watch(() => props.contract?.id, () => (doc.value = blocksOf(props.contract)))
+
+const samples = computed(() =>
+  Object.fromEntries(props.mergeFields.map((field) => [field.path, field.sample])),
+)
+
+// The preview reckons against this project by default; the sample values are
+// the fallback for judging a placeholder that has nothing behind it yet.
+const previewProject = ref<string | null>(props.header.id)
+
+const signed = computed(() => props.versions.find((version) => version.state === 'valid' && version.signers.some((s) => s.signedAt)))
+
+const saving = ref(false)
+
+function save() {
+  saving.value = true
+  router.patch(
+    `/vertraege/${props.contract!.id}`,
+    { body: serialize(doc.value, 'print'), blocks: doc.value },
+    { preserveScroll: true, onFinish: () => (saving.value = false) },
+  )
+}
+
+function send() {
+  router.post(`/vertraege/${props.contract!.id}/versenden`, {}, { preserveScroll: true })
+}
+
+function addSigner() {
+  signer.post(`/vertraege/${props.contract!.id}/unterzeichner`, {
+    preserveScroll: true,
+    onSuccess: () => signer.reset(),
+  })
+}
+
+function removeSigner(id: string) {
+  router.delete(`/unterzeichner/${id}`, { preserveScroll: true })
+}
+
+function remind(id: string) {
+  router.post(`/unterzeichner/${id}/erinnerung`, {}, { preserveScroll: true })
+}
+
+/** entwurf/gültig/ersetzt -> die drei Zustände, die tokens.css als Chip kennt. */
+function chipClass(state: string): string {
+  return ({ valid: 'done', superseded: 'off' } as Record<string, string>)[state] ?? 'now'
+}
+
+function day(value: string | null): string {
+  return dayWithWeekday(value, '') ?? ''
+}
+
+// The request that triggers a render returns immediately — this is the screen
+// reacting to completion on a later request. Polls only while a render is
+// actually in flight.
 let timer: ReturnType<typeof setInterval> | undefined
-
-function poll() {
-  clearPoll()
-  timer = setInterval(() => {
-    router.reload({ only: ['contract'] })
-  }, 2000)
-}
 
 function clearPoll() {
   if (timer) clearInterval(timer)
@@ -38,7 +103,13 @@ function clearPoll() {
 
 watch(
   () => props.contract?.status,
-  (status) => (status === 'pending' ? poll() : clearPoll()),
+  (status) => {
+    clearPoll()
+
+    if (status !== 'pending') return
+
+    timer = setInterval(() => router.reload({ only: ['contract', 'versions'] }), 2000)
+  },
   { immediate: true },
 )
 
@@ -48,59 +119,153 @@ onBeforeUnmount(clearPoll)
 <template>
   <AdminLayout active="anfragen">
     <ProjectShell :header="header" active="contract">
-        <div class="relative mt-6 block max-w-[640px] cursor-default rounded-md border border-border p-2.5 text-inherit no-underline">
-          <div class="mb-4 flex items-center justify-between"><span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('project.contract') }}</span></div>
+      <template v-if="contract" #actions>
+        <span class="text-[11.5px] text-ink-2">{{ contract.templateName }} · v{{ contract.templateVersion }}</span>
+        <span :class="['chip', chipClass(contract.state)]">
+          {{ $t('project.contractVersionLabel', { version: contract.version }) }} · {{ contract.stateLabel }}
+        </span>
 
-          <div v-if="contract" class="grid grid-cols-[repeat(3,minmax(0,1fr))] gap-2.5">
-            <div class="rounded-md bg-muted px-4 pt-3.5 pb-4">
-              <div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('project.contractTemplate') }}</div>
-              <div class="mt-[9px] text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ contract.templateName }}</div>
-              <div class="mt-1 text-[12.5px] leading-[1.3] tabular-nums text-muted-foreground">v{{ contract.templateVersion }}</div>
-            </div>
-            <div class="rounded-md bg-muted px-4 pt-3.5 pb-4">
-              <div class="text-[9.5px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">{{ $t('project.contractStatus') }}</div>
-              <div class="mt-[9px] text-[16px] leading-[1.2] font-medium tracking-[-0.02em] tabular-nums">{{ contract.statusLabel }}</div>
-            </div>
-          </div>
-          <p v-else-if="!header.canManageContracts || !templates.length" class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('project.contractNone') }}</p>
+        <Button v-if="contract.downloadUrl" as="a" variant="outline" :href="contract.downloadUrl" download>
+          {{ $t('project.contractDownload') }}
+        </Button>
 
-          <p v-if="contract?.status === 'pending'" class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('project.contractPending') }}</p>
-
-          <Button as="a"
-            v-if="contract?.downloadUrl" variant="ghost"
-            :href="contract.downloadUrl"
-            download
-            class="mt-2.5"
-          >
-            {{ $t('project.contractDownload') }}
+        <template v-if="header.canManageContracts">
+          <Button variant="outline" type="button" :disabled="saving" @click="save">
+            {{ $t('project.contractSave') }}
           </Button>
+          <Button v-if="contract.state === 'draft'" variant="pill" type="button" @click="send">
+            {{ $t('project.contractSend') }}
+          </Button>
+        </template>
+      </template>
 
-          <form
-            v-if="header.canManageContracts && templates.length"
-            class="mt-4"
-            @submit.prevent="generate"
-          >
-            <div class="mb-6 flex min-w-0 flex-col gap-1.5">
-              <Label for="template">{{ $t('project.contractTemplate') }}</Label>
-              <Select :model-value="form.template" @update:model-value="(value) => (form.template = String(value))">
-                <SelectTrigger id="template">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem v-for="option in templates" :key="option.value" :value="option.value">
-                    {{ option.label }}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button type="submit" :disabled="form.processing">
-              {{ $t('project.contractGenerate') }}
+      <template #rail>
+        <Rail v-if="contract">
+          <h3 class="m-0 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">
+            {{ $t('project.contractSigners') }}
+          </h3>
+
+          <ul class="mt-3 flex list-none flex-col gap-2.5 p-0">
+            <li v-for="entry in contract.signers" :key="entry.id" class="flex flex-col gap-0.5">
+              <div class="flex items-baseline gap-2">
+                <span class="text-[12.5px] font-medium">{{ entry.name }}</span>
+                <span v-if="entry.role" class="text-[11px] text-faint">{{ entry.role }}</span>
+              </div>
+              <span v-if="entry.signedAt" class="text-[11px] text-ok">
+                {{ $t('project.contractSigned', { date: day(entry.signedAt) }) }}
+              </span>
+              <span v-else-if="entry.remindedAt" class="text-[11px] text-ink-2">
+                {{ $t('project.contractReminded', { date: day(entry.remindedAt) }) }}
+              </span>
+              <span v-else class="text-[11px] text-faint">{{ $t('project.contractSignerPending') }}</span>
+
+              <div v-if="header.canManageContracts && !entry.signedAt" class="flex gap-2">
+                <button type="button" class="text-[11px] text-ink-2 underline" @click="remind(entry.id)">
+                  {{ $t('project.contractRemind') }}
+                </button>
+                <button type="button" class="text-[11px] text-ink-2 underline" @click="removeSigner(entry.id)">
+                  {{ $t('common.remove') }}
+                </button>
+              </div>
+            </li>
+          </ul>
+
+          <form v-if="header.canManageContracts && contacts.length" class="mt-3 flex flex-col gap-1.5" @submit.prevent="addSigner">
+            <Select :model-value="signer.contact" @update:model-value="(value) => (signer.contact = String(value))">
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="option in contacts" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <Button type="submit" variant="outline" :disabled="!signer.contact || signer.processing">
+              {{ $t('project.contractSignerAdd') }}
             </Button>
           </form>
-          <Button v-else-if="header.canManageContracts" :as="Link" href="/dokumentvorlagen/neu" class="mt-4">
-            {{ $t('documentTemplates.create') }}
-          </Button>
+
+          <h3 class="mt-7 m-0 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">
+            {{ $t('project.contractVersions') }}
+          </h3>
+
+          <ul class="mt-3 flex list-none flex-col gap-2.5 p-0">
+            <li v-for="version in versions" :key="version.id" class="flex flex-col gap-0.5">
+              <span class="text-[11px] text-faint">{{ day(version.sentAt ?? version.renderedAt) }}</span>
+              <div class="flex items-baseline gap-2">
+                <span class="text-[12.5px]">{{ $t('project.contractVersionLabel', { version: version.version }) }}</span>
+                <span :class="['chip', chipClass(version.state)]">{{ version.stateLabel }}</span>
+              </div>
+              <a v-if="version.downloadUrl" class="text-[11px] text-ink-2 underline" :href="version.downloadUrl" download>
+                {{ $t('project.contractDownload') }}
+              </a>
+            </li>
+          </ul>
+        </Rail>
+      </template>
+
+      <template v-if="contract">
+        <p v-if="signed && contract.state === 'draft'" class="text-[11.5px] leading-[1.45] text-faint">
+          {{ $t('project.contractHoldsUntilSent', { version: signed.version }) }}
+        </p>
+
+        <div class="mt-4 grid min-h-0 grid-cols-[minmax(0,1fr)_7px_minmax(0,1fr)] gap-0 max-[1100px]:grid-cols-[minmax(0,1fr)]">
+          <section class="flex min-w-0 flex-col">
+            <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
+              <span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('documentTemplates.body') }}</span>
+              <span class="ml-auto text-[11.5px] leading-[1.45] text-faint">{{ $t('documentTemplates.bodyHint') }}</span>
+            </div>
+            <div class="mx-auto mt-6 w-full max-w-[520px] rounded-[2px] border border-border bg-white px-10 pb-10">
+              <div class="-mx-10 mb-6 border-b border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-[10px] leading-[1.4] font-medium tracking-[0.06em] uppercase text-faint">{{ $t('documentTemplates.letterhead') }}</div>
+              <DocumentEditor :key="contract.id" v-model="doc" :palette="palette" :merge-fields="mergeFields" />
+              <div class="-mx-10 -mb-10 mt-6 border-t border-dashed border-line-hover bg-[#FCFBFA] px-3 py-[9px] text-[10px] leading-[1.4] font-medium tracking-[0.06em] uppercase text-faint">{{ $t('documentTemplates.footer') }}</div>
+            </div>
+          </section>
+
+          <div class="flex items-center justify-center before:block before:h-full before:w-px before:bg-border before:content-[''] max-[1100px]:hidden" />
+
+          <DocumentPreviewPane type="contract" :doc="doc" :samples="samples" :project="previewProject">
+            <Select
+              :model-value="toOption(previewProject)"
+              @update:model-value="(value) => (previewProject = fromOption(value) || null)"
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="header.id">{{ $t('project.contractProjectData') }}</SelectItem>
+                <SelectItem :value="NONE">{{ $t('documentTemplates.previewSamples') }}</SelectItem>
+              </SelectContent>
+            </Select>
+          </DocumentPreviewPane>
         </div>
+      </template>
+
+      <Section v-else :title="$t('project.contract')">
+        <p
+          v-if="!header.canManageContracts || !templates.length"
+          class="text-[11.5px] leading-[1.45] text-faint"
+        >{{ $t('project.contractNone') }}</p>
+
+        <form v-if="header.canManageContracts && templates.length" @submit.prevent="generate.post(`/auftraege/${header.id}/vertraege`, { preserveScroll: true })">
+          <div class="mb-6 flex min-w-0 max-w-[280px] flex-col gap-1.5">
+            <Label for="template">{{ $t('project.contractTemplate') }}</Label>
+            <Select :model-value="generate.template" @update:model-value="(value) => (generate.template = String(value))">
+              <SelectTrigger id="template">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="option in templates" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <Button type="submit" :disabled="generate.processing">
+            {{ $t('project.contractGenerate') }}
+          </Button>
+        </form>
+        <Button v-else-if="header.canManageContracts" :as="Link" href="/dokumentvorlagen/neu">
+          {{ $t('documentTemplates.create') }}
+        </Button>
+      </Section>
     </ProjectShell>
   </AdminLayout>
 </template>

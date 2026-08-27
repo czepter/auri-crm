@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
@@ -8,7 +8,9 @@ import { chipClass, dayAndMonth, weekday } from '@/admin/lib/shoots'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
+import Section from '@/ui/page/Section.vue'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { TimePicker } from '@/ui/time-picker'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
@@ -17,7 +19,7 @@ import { Dialog, DialogBody, DialogClose, DialogContent, DialogDescription, Dial
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
   shoots: App.Crm.Data.ShootData[]
-  staff: App.Data.StaffProfileData[]
+  crewAvailability: Record<string, App.Crm.Data.CrewCandidateData[]>
   crewRoles: { value: string; label: string }[]
 }>()
 
@@ -66,6 +68,28 @@ const kinds = [
   { value: 'other', label: 'Sonstiges' },
 ]
 
+const today = new Date().toISOString().slice(0, 10)
+
+const filter = ref<'all' | 'upcoming' | 'cancelled'>('all')
+
+const upcoming = computed(() =>
+  props.shoots.filter((shoot) => !shoot.isCancelled && (shoot.date === null || shoot.date >= today))
+)
+const cancelled = computed(() => props.shoots.filter((shoot) => shoot.isCancelled))
+
+const filters = computed(() => [
+  { key: 'all' as const, label: 'project.filterAll', count: props.shoots.length },
+  { key: 'upcoming' as const, label: 'project.filterUpcoming', count: upcoming.value.length },
+  { key: 'cancelled' as const, label: 'project.filterCancelled', count: cancelled.value.length },
+])
+
+const visible = computed(() => {
+  if (filter.value === 'upcoming') return upcoming.value
+  if (filter.value === 'cancelled') return cancelled.value
+
+  return props.shoots
+})
+
 function create() {
   form.post(`/auftraege/${props.header.id}/shootings`, {
     preserveScroll: true,
@@ -109,10 +133,29 @@ function designatePrimary(shoot: App.Crm.Data.ShootData) {
   router.post(`/shootings/${shoot.id}/haupttermin`, {}, { preserveScroll: true })
 }
 
-function assign(shoot: App.Crm.Data.ShootData, user: string, role: string) {
-  if (user) {
-    router.post(`/shootings/${shoot.id}/crew`, { user, role }, { preserveScroll: true })
-  }
+const assigning = ref<App.Crm.Data.ShootData | null>(null)
+const crewUser = ref('')
+const crewRole = ref(props.crewRoles[0].value)
+
+function openAssign(shoot: App.Crm.Data.ShootData) {
+  assigning.value = shoot
+  crewUser.value = ''
+  crewRole.value = props.crewRoles[0].value
+}
+
+const assignedIds = computed(() => new Set(assigning.value?.crew.map((member) => member.userId) ?? []))
+// CrewAvailability answered this for the shoot's own day, for everybody —
+// not only for those already on it.
+const candidates = computed(() => (assigning.value ? props.crewAvailability[assigning.value.id] ?? [] : []))
+
+function confirmAssign() {
+  const shoot = assigning.value
+  if (!shoot || !crewUser.value) return
+
+  router.post(`/shootings/${shoot.id}/crew`, { user: crewUser.value, role: crewRole.value }, {
+    preserveScroll: true,
+    onSuccess: () => (assigning.value = null),
+  })
 }
 
 function unassign(member: App.Crm.Data.CrewMemberData) {
@@ -131,16 +174,26 @@ const TONE: Record<string, string> = {
 <template>
   <AdminLayout active="anfragen">
     <ProjectShell :header="header" active="shoots">
-        <div class="mb-4 flex items-center gap-4">
-          <span class="text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">
-            {{ $t('board.shootCount', header.shootCount) }}
-          </span>
+        <div class="mb-4 flex items-center gap-2.5">
+          <div class="inline-flex gap-0.5 rounded-full bg-sunk-2 p-0.5">
+            <button
+              v-for="tab in filters"
+              :key="tab.key"
+              type="button"
+              class="rounded-full px-2.5 py-1 text-[11.5px] leading-none text-ink-2"
+              :class="filter === tab.key && 'bg-paper font-semibold text-foreground'"
+              @click="filter = tab.key"
+            >
+              {{ $t(tab.label) }} {{ tab.count }}
+            </button>
+          </div>
+
           <!-- Adding an occasion is a discrete act against a list you are reading:
                inline, the form pushed every existing shoot down the page and the
                list you were comparing against scrolled out of sight. -->
           <Dialog v-if="header.canManageShoots" v-model:open="adding">
             <DialogTrigger as-child>
-              <Button type="button">
+              <Button type="button" class="ml-auto">
                 <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
                 {{ $t('project.addShoot') }}
               </Button>
@@ -184,11 +237,11 @@ const TONE: Record<string, string> = {
                   <div class="grid grid-cols-2 gap-4">
                     <div class="flex min-w-0 flex-col gap-1.5">
                       <Label for="call_time">{{ $t('project.callTime') }}</Label>
-                      <Input id="call_time" v-model="form.call_time" class="tabular-nums" type="time" />
+                      <TimePicker id="call_time" v-model="form.call_time" />
                     </div>
                     <div class="flex min-w-0 flex-col gap-1.5">
                       <Label for="end_time">{{ $t('project.endTime') }}</Label>
-                      <Input id="end_time" v-model="form.end_time" class="tabular-nums" type="time" />
+                      <TimePicker id="end_time" v-model="form.end_time" />
                       <p v-if="form.errors.end_time" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.end_time }}</p>
                     </div>
                   </div>
@@ -223,9 +276,9 @@ const TONE: Record<string, string> = {
              in and gains no controls back. -->
         <div class="flex flex-col gap-1.5">
           <section
-            v-for="shoot in shoots"
+            v-for="shoot in visible"
             :key="shoot.id"
-            class="rounded-md border border-border p-2.5"
+            class="rounded-md border border-border p-2.5 [&>section]:mt-5"
             :class="{ open: !shoot.isCancelled && shoot.isPrimary, cancelled: shoot.isCancelled }"
           >
             <div class="flex items-center gap-2.5">
@@ -251,129 +304,66 @@ const TONE: Record<string, string> = {
             </div>
 
             <template v-else>
-              <div class="mt-2.5 flex flex-col gap-4">
-                <div v-for="member in shoot.crew" :key="member.id" class="flex items-center gap-2.5">
-                  <span class="flex size-8 flex-none items-center justify-center rounded-full bg-muted text-[11px] leading-none font-semibold text-muted-foreground">{{ member.initials }}</span>
-                  <div class="min-w-0 flex-1">
-                    <div class="block text-[13px] leading-[1.3] font-semibold">{{ member.name }}</div>
-                  </div>
-                  <div class="flex flex-none gap-1">
-                    <Select
-                      v-if="header.canManageCrew"
-                      :model-value="member.role"
-                      @update:model-value="(value) => assign(shoot, member.userId, String(value))"
-                    >
-                      <SelectTrigger size="sm" :aria-label="$t('project.crewRole', { name: member.name })">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem v-for="role in crewRoles" :key="role.value" :value="role.value">
-                          {{ role.label }}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button v-if="header.canManageCrew" type="button" variant="outline" @click="unassign(member)">
+              <Section :title="$t('project.crew')">
+                <template #actions>
+                  <Button v-if="header.canManageCrew" type="button" variant="outline" @click="openAssign(shoot)">
+                    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+                    {{ $t('project.crew') }}
+                  </Button>
+                </template>
+
+                <div class="flex flex-col gap-1">
+                  <div v-for="member in shoot.crew" :key="member.id" class="flex items-center gap-2.5 py-1">
+                    <span class="flex size-[22px] flex-none items-center justify-center rounded-full bg-sunk-2 text-[9.5px] leading-none font-semibold text-ink-2">{{ member.initials }}</span>
+                    <span class="min-w-0 flex-1 text-[12.5px] leading-[1.35]">{{ member.name }}</span>
+                    <span class="text-[11.5px] leading-[1.35] text-ink-2">{{ member.roleLabel }}</span>
+                    <Button v-if="header.canManageCrew" type="button" variant="ghost" @click="unassign(member)">
                       {{ $t('project.unassign') }}
                     </Button>
                   </div>
                 </div>
-              </div>
 
-              <!-- T-10: CheckDateAvailability's third source, already narrowed by
-                   ProjectController::shootsOf() to this shoot's date and this
-                   shoot's own crew. Warns, same as every other conflict that
-                   action produces — the assignment above stays exactly as
-                   possible whether or not this shows. -->
-              <div v-if="shoot.crewConflicts.length" class="mt-2.5">
-                <div v-for="conflict in shoot.crewConflicts" :key="conflict.personId ?? undefined" class="mt-1.5 flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[12.5px] leading-[1.3] font-medium text-destructive">
+                <!-- T-10: CheckDateAvailability's third source, already narrowed by
+                     ProjectController::shootsOf() to this shoot's date and this
+                     shoot's own crew. Warns, same as every other conflict that
+                     action produces — the assignment above stays exactly as
+                     possible whether or not this shows. -->
+                <div
+                  v-for="conflict in shoot.crewConflicts"
+                  :key="conflict.personId ?? undefined"
+                  class="mt-2 flex items-center gap-1.5 text-[11.5px] leading-[1.35] font-medium text-due"
+                >
                   {{ $t('project.crewAbsence', { label: conflict.label }) }}
                 </div>
-              </div>
+              </Section>
 
-              <div v-if="header.canManageShoots || header.canManageCrew" class="mt-2.5 flex items-center gap-2.5 [&_[data-slot=button][data-variant=default]]:ml-0">
-                <!-- These two are menus of actions, not fields: nothing stores
-                     what was picked, so model-value is pinned to '' and the
-                     control falls straight back to its own name. That is what the
-                     <option value=""> label did on the native select. -->
-                <Select
-                  v-if="header.canManageShoots"
-                  model-value=""
-                  :disabled="!shoot.forwardStatuses.length"
-                  @update:model-value="(value) => advance(shoot, String(value))"
-                >
-                  <SelectTrigger size="sm" style="width: auto" :aria-label="$t('project.advance')">
-                    <SelectValue :placeholder="$t('project.advance')" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="status in shoot.forwardStatuses" :key="status.value" :value="status.value">
-                      {{ status.label }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+              <Section v-if="shoot.date || shoot.timeline.length" :title="$t('project.timeline')">
+                <template #actions>
+                  <Button v-if="header.canManageShoots" type="button" variant="outline" @click="toggleTimelineEdit(shoot)">
+                    {{ $t(editingTimeline === shoot.id ? 'project.timelineDone' : 'project.timelineEdit') }}
+                  </Button>
+                  <Button as="a" variant="outline" :href="shoot.pdfUrl" download>{{ $t('project.timelinePdf') }}</Button>
+                  <Button as="a" variant="outline" :href="shoot.icsUrl" download>{{ $t('project.timelineIcs') }}</Button>
+                </template>
 
-                <Select
-                  v-if="header.canManageCrew"
-                  model-value=""
-                  @update:model-value="(value) => assign(shoot, String(value), crewRoles[0].value)"
-                >
-                  <SelectTrigger size="sm" style="width: auto" :aria-label="$t('project.assignCrew')">
-                    <SelectValue :placeholder="$t('project.assignCrew')" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="member in staff" :key="member.id" :value="member.id">
-                      {{ member.name }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Button v-if="!shoot.isPrimary && header.canManageShoots" type="button" variant="outline" @click="designatePrimary(shoot)">
-                  {{ $t('project.makePrimary') }}
-                </Button>
-
-                <Button
-                  v-if="header.canManageShoots"
-                  type="button"
-                  variant="outline"
-                  tone="accent"
-                  @click="openCancel(shoot)"
-                >
-                  {{ $t('project.cancel') }}
-                </Button>
-              </div>
-
-              <!-- E-04: the day-of schedule. Read-only structure matches mockup
-                   04's .tl block exactly — editing and export sit in their own
-                   formfoot below it, the same grammar the crew section above
-                   already uses. -->
-              <div
-                v-if="shoot.timeline.length"
-                style="margin-top: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--line)"
-              >
-                <div v-for="entry in shoot.timeline" :key="entry.id" class="grid grid-cols-[52px_15px_1fr] items-start gap-2.5"
-                  :class="entry.isTransit && '[&_.tlname]:text-[12px] [&_.tlname]:font-normal [&_.tlname]:text-faint'">
-                  <div class="pt-[9px] text-[12px] leading-[1.5] font-semibold tabular-nums">{{ entry.time }}</div>
-                  <div class="tlrail"><span class="dot"></span></div>
-                  <div class="min-w-0 py-2">
-                    <div class="tlname text-[13px] leading-[1.35] font-semibold tracking-[-0.01em]">{{ entry.title }}</div>
-                    <div v-if="entry.location" class="mt-0.5 text-[12.5px] leading-[1.35] font-normal text-muted-foreground">{{ entry.location }}</div>
-                    <div v-if="entry.note" class="mt-[3px] text-[11.5px] leading-[1.35] font-normal text-faint">{{ entry.note }}</div>
-                  </div>
+                <div v-for="entry in shoot.timeline" :key="entry.id" class="flex gap-3 py-1.5 text-[12.5px] leading-[1.35]"
+                  :class="entry.isTransit && 'text-ink-2 italic'">
+                  <span class="w-[52px] flex-none tabular-nums text-ink-2">{{ entry.time }}</span>
+                  <span class="min-w-0 flex-1">
+                    {{ entry.title }}
+                    <span v-if="entry.location" class="ml-1.5 text-ink-2">{{ entry.location }}</span>
+                    <span v-if="entry.note" class="ml-1.5 text-faint">{{ entry.note }}</span>
+                  </span>
                 </div>
-              </div>
 
-              <div v-if="shoot.date" class="mt-2.5 flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0">
-                <Button v-if="header.canManageShoots" type="button" variant="ghost" @click="toggleTimelineEdit(shoot)">
-                  {{ $t(editingTimeline === shoot.id ? 'project.timelineDone' : 'project.timelineEdit') }}
-                </Button>
-                <Button as="a" variant="ghost" :href="shoot.pdfUrl" download>{{ $t('project.timelinePdf') }}</Button>
-                <Button as="a" variant="ghost" :href="shoot.icsUrl" download>{{ $t('project.timelineIcs') }}</Button>
-              </div>
-
-              <div v-if="shoot.date && editingTimeline === shoot.id && header.canManageShoots" class="relative mt-2.5 block cursor-default rounded-md border border-border p-2.5 text-inherit no-underline">
-                <form class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4" @submit.prevent="addTimelineEntry(shoot)">
+                <form
+                  v-if="shoot.date && editingTimeline === shoot.id && header.canManageShoots"
+                  class="mt-2.5 grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4"
+                  @submit.prevent="addTimelineEntry(shoot)"
+                >
                   <div class="flex min-w-0 flex-col gap-1.5">
                     <Label for="tl-time">{{ $t('project.timelineTime') }}</Label>
-                    <Input id="tl-time" v-model="timelineForm.time" class="tabular-nums" type="time" required />
+                    <TimePicker id="tl-time" v-model="timelineForm.time" required />
                   </div>
                   <div class="col-span-full flex min-w-0 flex-col gap-1.5">
                     <Label for="tl-title">{{ $t('project.timelineTitle') }}</Label>
@@ -391,30 +381,54 @@ const TONE: Record<string, string> = {
                     </Label>
                     <Input id="tl-note" v-model="timelineForm.note" type="text" />
                   </div>
-                  <div class="col-span-full flex min-w-0 flex-col gap-1.5">
-                    <div class="flex items-center gap-1.5">
-                      <Checkbox id="tl-transit" v-model="timelineForm.is_transit" />
-                      <Label variant="inline" for="tl-transit">{{ $t('project.timelineTransit') }}</Label>
-                    </div>
+                  <div class="col-span-full flex items-center gap-1.5">
+                    <Checkbox id="tl-transit" v-model="timelineForm.is_transit" />
+                    <Label variant="inline" for="tl-transit">{{ $t('project.timelineTransit') }}</Label>
                   </div>
 
-                  <div class="col-span-full flex min-w-0 flex-col gap-1.5">
-                    <div class="flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0">
-                      <Button type="submit" :disabled="timelineForm.processing">
-                        {{ $t('common.save') }}
-                      </Button>
-                    </div>
+                  <div class="col-span-full flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0">
+                    <Button type="submit" :disabled="timelineForm.processing">
+                      {{ $t('common.save') }}
+                    </Button>
                   </div>
                 </form>
 
-                <div v-if="shoot.timeline.length" style="margin-top: var(--s4); display: flex; flex-direction: column; gap: var(--s2)">
+                <div v-if="editingTimeline === shoot.id && header.canManageShoots" class="mt-4 flex flex-col gap-2">
                   <div v-for="entry in shoot.timeline" :key="entry.id" class="flex items-center gap-4">
                     <span>{{ entry.time }} · {{ entry.title }}</span>
-                    <Button type="button" variant="outline" tone="accent" style="margin-left: auto" @click="removeTimelineEntry(entry)">
+                    <Button type="button" variant="outline" tone="accent" class="ml-auto" @click="removeTimelineEntry(entry)">
                       {{ $t('project.timelineRemove') }}
                     </Button>
                   </div>
                 </div>
+              </Section>
+
+              <div v-if="header.canManageShoots" class="mt-5 flex items-center gap-2.5 [&_[data-slot=button][data-variant=default]]:ml-0">
+                <!-- A menu of actions, not a field: nothing stores what was
+                     picked, so model-value is pinned to '' and the control falls
+                     straight back to its own name. -->
+                <Select
+                  model-value=""
+                  :disabled="!shoot.forwardStatuses.length"
+                  @update:model-value="(value) => advance(shoot, String(value))"
+                >
+                  <SelectTrigger size="sm" style="width: auto" :aria-label="$t('project.advance')">
+                    <SelectValue :placeholder="$t('project.advance')" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="status in shoot.forwardStatuses" :key="status.value" :value="status.value">
+                      {{ status.label }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button v-if="!shoot.isPrimary" type="button" variant="outline" @click="designatePrimary(shoot)">
+                  {{ $t('project.makePrimary') }}
+                </Button>
+
+                <Button type="button" variant="outline" tone="accent" @click="openCancel(shoot)">
+                  {{ $t('project.cancel') }}
+                </Button>
               </div>
             </template>
           </section>
@@ -448,6 +462,65 @@ const TONE: Record<string, string> = {
                    portal show in place of the shoot afterwards -->
               <Button type="submit" form="shoot-cancel-form" tone="destructive" :disabled="!cancelReason.trim()">
                 {{ $t('project.cancel') }}
+              </Button>
+              <DialogClose as-child>
+                <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          :open="assigning !== null"
+          @update:open="(open) => { if (!open) assigning = null }"
+        >
+          <DialogContent class="max-w-[440px]">
+            <DialogHeader>
+              <DialogTitle>{{ $t('project.assignCrew') }}</DialogTitle>
+              <DialogDescription v-if="assigning">
+                {{ assigning.label ?? assigning.kind }}
+              </DialogDescription>
+            </DialogHeader>
+
+            <DialogBody>
+              <div class="flex flex-col gap-0.5">
+                <button
+                  v-for="member in candidates"
+                  :key="member.id"
+                  type="button"
+                  class="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-[12.5px] leading-[1.35] hover:bg-muted"
+                  :class="crewUser === member.id && 'bg-muted'"
+                  @click="crewUser = member.id"
+                >
+                  <span class="min-w-0 flex-1">{{ member.name }}</span>
+                  <span v-if="assignedIds.has(member.id)" class="text-[11.5px] text-ink-2">{{ $t('project.crewAssigned') }}</span>
+                  <span v-else-if="member.status === 'absent'" class="text-[11.5px] text-due">
+                    {{ $t('project.crewAway') }} · {{ member.note }}
+                  </span>
+                  <span v-else-if="member.status === 'busy'" class="text-[11.5px] text-ink-2">
+                    {{ $t('project.crewBusy') }} · {{ member.note }}
+                  </span>
+                </button>
+              </div>
+
+              <div class="mt-4 flex min-w-0 flex-col gap-1.5">
+                <Label for="crew-role">{{ $t('project.crewRoleLabel') }}</Label>
+                <Select :model-value="crewRole" @update:model-value="(value) => (crewRole = String(value))">
+                  <SelectTrigger id="crew-role">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="role in crewRoles" :key="role.value" :value="role.value">
+                      {{ role.label }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </DialogBody>
+
+            <DialogFooter>
+              <Button type="button" :disabled="!crewUser" @click="confirmAssign">
+                {{ $t('common.save') }}
               </Button>
               <DialogClose as-child>
                 <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>

@@ -7,6 +7,7 @@ import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { Textarea } from '@/ui/textarea'
+import Section from '@/ui/page/Section.vue'
 
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
@@ -55,16 +56,16 @@ function scheduledLabel(iso: string) {
 <template>
   <AdminLayout active="anfragen">
     <ProjectShell :header="header" active="messages">
-        <template v-if="thread">
-          <div class="mb-4 flex items-center gap-4">
-            <span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('project.messagesSubject', { subject: thread.subject }) }}</span>
-          </div>
+        <Section v-if="thread" :title="$t('project.history')">
+          <template #actions>
+            <span class="text-[12.5px] leading-[1.47] tracking-[-0.01em]">{{ thread.subject }}</span>
+          </template>
 
           <div
             v-for="message in thread.messages"
             :key="message.id"
-            class="py-3 shadow-[inset_0_1px_0_var(--rule)]"
-            :class="message.fromStaff && 'pl-3.5 shadow-[inset_0_1px_0_var(--rule),inset_2px_0_0_var(--sunk-2)]'"
+            class="py-3"
+            :class="message.fromStaff && 'pl-3.5 shadow-[inset_2px_0_0_var(--sunk-2)]'"
           >
             <div class="flex items-baseline gap-[9px]">
               <span class="text-[13px] leading-[1.47] font-semibold tracking-[-0.012em]">{{ message.author }}</span>
@@ -75,14 +76,14 @@ function scheduledLabel(iso: string) {
                  with the one control that still applies to it. -->
             <div v-if="message.scheduledFor" class="mt-1.5 flex items-baseline gap-2 text-[11.5px] leading-[1.47] text-ink-2">
               {{ $t('project.messagesScheduledFor', { when: scheduledLabel(message.scheduledFor) }) }}
-              <Button type="button" variant="ghost" class="py-0 text-[11.5px]" @click="cancelScheduled(message.id)">
+              <Button type="button" variant="ghost" class="py-0 text-[11.5px] text-ink-2" @click="cancelScheduled(message.id)">
                 {{ $t('project.messagesCancelScheduled') }}
               </Button>
             </div>
           </div>
 
-          <form v-if="header.canManageMessages" class="mt-4 pt-1 pb-0.5" @submit.prevent="send">
-            <div v-if="usableTemplates.length" class="mb-2.5 flex flex-wrap items-center gap-2">
+          <form v-if="header.canManageMessages" class="mt-[18px]" @submit.prevent="send">
+            <div v-if="usableTemplates.length" class="mb-2.5 flex flex-wrap items-center gap-1.5">
               <Button
                 v-for="template in usableTemplates" :key="template.id"
                 type="button" variant="pill-muted"
@@ -94,6 +95,9 @@ function scheduledLabel(iso: string) {
             <p v-for="template in brokenTemplates" :key="template.id" class="m-0 mb-1.5 text-[11.5px] leading-[1.47] text-destructive">
               {{ $t('project.messagesTemplateBroken', { name: template.name, fields: template.unknownFields.join(', ') }) }}
             </p>
+            <p v-if="thread.recipients.length" class="m-0 mb-1.5 text-[11.5px] leading-[1.47] text-ink-2">
+              {{ $t('project.messagesTo', { names: thread.recipients.join(', ') }) }}
+            </p>
             <Field v-slot="{ id }" dense :error="reply.errors.body">
               <Textarea
                 :id="id"
@@ -102,7 +106,7 @@ function scheduledLabel(iso: string) {
                 rows="4"
                 :placeholder="$t('project.messagesReplyPlaceholder')" />
             </Field>
-            <div class="mt-2.5 flex items-center gap-3">
+            <div class="mt-2.5 flex items-center gap-2.5">
               <!-- Native datetime-local: a picker library for one optional field
                    is a dependency this screen does not need. -->
               <Input
@@ -118,7 +122,7 @@ function scheduledLabel(iso: string) {
             </div>
             <p v-if="reply.errors.scheduled_for" class="m-0 mt-1.5 text-[11.5px] leading-[1.47] text-destructive">{{ reply.errors.scheduled_for }}</p>
           </form>
-        </template>
+        </Section>
 
         <p v-else class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('project.messagesEmpty') }}</p>
     </ProjectShell>
