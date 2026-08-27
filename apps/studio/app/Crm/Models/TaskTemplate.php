@@ -6,6 +6,7 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\TaskAudience;
+use App\Crm\Support\TaskAnchors;
 use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
 use Database\Factories\Crm\TaskTemplateFactory;
@@ -72,13 +73,7 @@ class TaskTemplate extends Model
             return null;
         }
 
-        $workingDays = $settings->workingDays();
-
-        while (! in_array($date->dayOfWeekIso, $workingDays, true)) {
-            $date = $date->addDay();
-        }
-
-        return $date;
+        return TaskAnchors::workingDay($date, $settings);
     }
 
     protected static function newFactory(): Factory

@@ -102,6 +102,11 @@ class ApplyTaskTemplates
                 'title' => $template->title,
                 'audience' => $template->audience,
                 'due_on' => $template->dueFor($shoot, $this->settings)?->format('Y-m-d'),
+                // The offset the template counted is kept, not spent: a shoot
+                // that moves takes its tasks along, and a template applied to
+                // a dateless shoot gets its day the moment one is entered.
+                'due_anchor' => 'shoot:'.$shoot->public_id,
+                'due_offset_days' => $template->day_offset,
             ],
         );
     }

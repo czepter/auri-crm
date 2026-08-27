@@ -14,6 +14,9 @@ use App\Crm\Models\FormTemplate;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
+use App\Crm\Actions\RescheduleAnchoredTasks;
+use App\Crm\Events\LeadStageChanged;
+use App\Crm\Events\ShootStatusChanged;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
@@ -123,6 +126,17 @@ class AppServiceProvider extends ServiceProvider
         // Registered by hand: auto-discovery only scans app/Listeners, and the
         // CRM keeps its listeners beside the events they answer to.
         Event::listen(ProjectBooked::class, ApplyTemplatesOnBooking::class);
+
+        // T-15: an anchored due date is written onto tasks.due_on, so every
+        // list keeps reading one column. These three are where an anchor can
+        // move — a stage entered, a status entered, a shoot date corrected.
+        Event::listen(LeadStageChanged::class, fn (LeadStageChanged $event) => app(RescheduleAnchoredTasks::class)($event->lead->project));
+        Event::listen(ShootStatusChanged::class, fn (ShootStatusChanged $event) => app(RescheduleAnchoredTasks::class)($event->shoot->project));
+        Shoot::saved(function (Shoot $shoot) {
+            if ($shoot->wasChanged('date')) {
+                app(RescheduleAnchoredTasks::class)($shoot->project);
+            }
+        });
 
         // P-05b: one listener, two triggers, converging on the same
         // BookProject the manual button calls — see the class docblock.
