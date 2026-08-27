@@ -3,8 +3,12 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Crm\Actions\OpenLeads;
+use App\Crm\Actions\WorkflowColumns;
 use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\ProjectType;
+use App\Crm\Enums\StageKind;
 use App\Crm\Models\Lead;
+use App\Crm\Models\TaskTemplate;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,7 +29,7 @@ use Inertia\Response;
  */
 class LeadBoardController extends Controller
 {
-    public function __invoke(Request $request, OpenLeads $leads): Response
+    public function __invoke(Request $request, OpenLeads $leads, WorkflowColumns $workflow): Response
     {
         $this->authorize('viewAny', Lead::class);
 
@@ -52,6 +56,16 @@ class LeadBoardController extends Controller
             'groups' => $leads->groups(),
             'queue' => $leads->queue(),
             'view' => $this->view($request),
+            // Only fetched when the panel opens (a partial reload asking for
+            // it), and only for whoever may edit the templates at all.
+            'workflow' => Inertia::optional(
+                fn () => $request->user('staff')->can('viewAny', TaskTemplate::class)
+                    ? $workflow(
+                        ProjectType::tryFrom((string) $request->query('workflow_typ')) ?? ProjectType::Wedding,
+                        StageKind::Lead,
+                    )
+                    : null,
+            ),
         ]);
     }
 

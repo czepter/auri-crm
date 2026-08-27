@@ -13,6 +13,7 @@ use App\Crm\Actions\CheckDateAvailability;
 use App\Crm\Actions\CrewAvailability;
 use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Actions\ReadProjectScreen;
+use App\Crm\Actions\WorkflowColumns;
 use App\Crm\Data\FormInstanceData;
 use App\Crm\Data\ProjectGalleryData;
 use App\Crm\Data\ProjectHeaderData;
@@ -22,12 +23,15 @@ use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\CrewRole;
 use App\Crm\Enums\FormFieldType;
+use App\Crm\Enums\ProjectType;
+use App\Crm\Enums\StageKind;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\TaskTemplate;
 use App\Crm\Support\TaskAnchors;
 use App\Documents\Data\MailTemplateData;
 use App\Documents\Enums\DocumentTemplateType;
@@ -77,6 +81,9 @@ class ProjectController extends Controller
             // twice under two vocabularies.
             ->whereHas('job')
             ->with(['primaryShoot', 'lead', 'job', 'shoots', 'contacts'])
+            // What the workflow produced, as the list's own column: a workflow
+            // nobody can see the effect of is a settings screen again.
+            ->withCount(['tasks', 'tasks as open_tasks_count' => fn ($query) => $query->whereNull('completed_at')])
             ->get()
             ->sortBy(fn (Project $project) => $project->primaryShoot?->date?->toDateString() ?? '9999-99-99')
             ->values();
@@ -84,6 +91,14 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Index', [
             'projects' => ProjectRowData::collect(
                 $projects->map(fn (Project $project) => ProjectRowData::fromProject($project, $this->position))
+            ),
+            'workflow' => Inertia::optional(
+                fn () => request()->user('staff')->can('viewAny', TaskTemplate::class)
+                    ? app(WorkflowColumns::class)(
+                        ProjectType::tryFrom((string) request()->query('workflow_typ')) ?? ProjectType::Wedding,
+                        StageKind::Project,
+                    )
+                    : null,
             ),
         ]);
     }

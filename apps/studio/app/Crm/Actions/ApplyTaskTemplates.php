@@ -2,42 +2,67 @@
 
 namespace App\Crm\Actions;
 
+use App\Crm\Enums\DueAnchor;
 use App\Crm\Enums\ShootKind;
+use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\StageKind;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
+use App\Crm\Support\TaskAnchors;
 use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
 
 /**
- * Turns the studio's standing templates into the tasks a booked project owes.
+ * Turns the studio's standing templates into the tasks a project owes when it
+ * reaches a stage.
  *
- * Offsets are relative to each shoot's own date rather than the project's: a
- * project with an engagement session and a wedding needs its "confirm timeline"
- * task against the shoot it belongs to. E-08 solves the same anchoring problem
- * generally, and this is the shape it will grow out of.
+ * A template belongs to one stage of one pipeline, and to one project type or
+ * to all of them — the workflow the studio drew. Which day the task lands on is
+ * TaskAnchors' answer, not this class's: the offset is kept alongside the
+ * anchor so a shoot that moves takes its tasks along.
  *
- * Idempotent by the unique index on (task_template_id, shoot_id) rather than by
- * a check here. P-05b adds a second booking trigger and E-08 will re-apply
- * templates, so the guarantee belongs where both paths meet it.
+ * Idempotent by two unique indexes on tasks — (task_template_id, shoot_id), and
+ * (task_template_id, project_id) where the shoot is null — rather than by a
+ * check here. Re-entering a stage is ordinary (a mis-drop on the board, and
+ * corrections are allowed to go backwards), so the guarantee belongs where
+ * every path meets it.
  */
 class ApplyTaskTemplates
 {
-    public function __construct(private readonly StudioSettingsResolver $settings) {}
+    public function __construct(
+        private readonly StudioSettingsResolver $settings,
+        private readonly TaskAnchors $anchors,
+    ) {}
 
+    /** Booking is the project pipeline's first stage. */
     public function __invoke(Project $project): void
     {
-        $templates = TaskTemplate::query()->active()->orderBy('sort_order')->get();
+        $this->forStage($project, StageKind::Project, ShootStatus::Booked->value);
+    }
+
+    public function forStage(Project $project, StageKind $kind, string $stage): void
+    {
+        $templates = TaskTemplate::query()
+            ->active()
+            ->forStage($project->type, $kind, $stage)
+            ->get();
 
         if ($templates->isEmpty()) {
             return;
         }
 
-        // Cancelled shoots owe nothing: the occasion is not happening.
-        $shoots = $project->shoots()->uncancelled()->get();
+        if ($kind === StageKind::Lead) {
+            foreach ($templates as $template) {
+                $this->applyOne($project, null, $template, 'stage:'.$stage);
+            }
 
-        foreach ($shoots as $shoot) {
+            return;
+        }
+
+        // Cancelled shoots owe nothing: the occasion is not happening.
+        foreach ($project->shoots()->uncancelled()->get() as $shoot) {
             $applicable = $templates->filter(fn (TaskTemplate $t) => $t->appliesTo($shoot));
 
             // Two passes: every task exists before any of them is asked to
@@ -48,7 +73,14 @@ class ApplyTaskTemplates
             $created = [];
 
             foreach ($applicable as $template) {
-                $created[$template->id] = $this->applyOne($project, $shoot, $template);
+                $created[$template->id] = $this->applyOne(
+                    $project,
+                    $shoot,
+                    $template,
+                    $template->anchor === DueAnchor::StageEntry
+                        ? 'shoot:'.$shoot->public_id.':'.$stage
+                        : 'shoot:'.$shoot->public_id,
+                );
             }
 
             foreach ($applicable as $template) {
@@ -70,8 +102,8 @@ class ApplyTaskTemplates
     /**
      * T-14's settings screen: what the active set would produce for a shoot
      * on the given date, without booking anything. Built on an unsaved Shoot
-     * so it walks through the exact same appliesTo()/dueFor() calls __invoke()
-     * uses on a real one — the settings screen and a real booking can never
+     * so it walks through the exact same appliesTo()/dueFor() calls a real
+     * booking uses — the settings screen and a real booking can never
      * disagree about what a date produces, because there is only one place
      * that computes it.
      *
@@ -91,21 +123,21 @@ class ApplyTaskTemplates
             ->all();
     }
 
-    private function applyOne(Project $project, Shoot $shoot, TaskTemplate $template): Task
+    private function applyOne(Project $project, ?Shoot $shoot, TaskTemplate $template, string $anchor): Task
     {
         // updateOrCreate rather than create: re-applying must not duplicate,
         // and must not silently reset a due date somebody moved by hand — so
         // only the columns the template owns are written on the way in.
         return $project->tasks()->updateOrCreate(
-            ['task_template_id' => $template->id, 'shoot_id' => $shoot->id],
+            ['task_template_id' => $template->id, 'shoot_id' => $shoot?->id],
             [
                 'title' => $template->title,
                 'audience' => $template->audience,
-                'due_on' => $template->dueFor($shoot, $this->settings)?->format('Y-m-d'),
+                'due_on' => $this->anchors->dueOn($project, $anchor, $template->day_offset)?->format('Y-m-d'),
                 // The offset the template counted is kept, not spent: a shoot
                 // that moves takes its tasks along, and a template applied to
                 // a dateless shoot gets its day the moment one is entered.
-                'due_anchor' => 'shoot:'.$shoot->public_id,
+                'due_anchor' => $anchor,
                 'due_offset_days' => $template->day_offset,
             ],
         );

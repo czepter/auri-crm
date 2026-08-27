@@ -4,8 +4,13 @@ namespace App\Crm\Http\Controllers;
 
 use App\Crm\Actions\ApplyTaskTemplates;
 use App\Crm\Data\TaskTemplateData;
+use App\Crm\Enums\DueAnchor;
+use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootKind;
+use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\StageKind;
 use App\Crm\Enums\TaskAudience;
+use App\Crm\Rules\StageOfKind;
 use App\Crm\Models\TaskTemplate;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
@@ -71,7 +76,7 @@ class TaskTemplateController extends Controller
             subject: $template->public_id,
         );
 
-        return redirect('/einstellungen/aufgabenvorlagen');
+        return back();
     }
 
     public function update(Request $request, TaskTemplate $taskTemplate): RedirectResponse
@@ -87,7 +92,7 @@ class TaskTemplateController extends Controller
             subject: $taskTemplate->public_id,
         );
 
-        return redirect('/einstellungen/aufgabenvorlagen');
+        return back();
     }
 
     public function destroy(TaskTemplate $taskTemplate): RedirectResponse
@@ -106,15 +111,30 @@ class TaskTemplateController extends Controller
             subject: $taskTemplate->public_id,
         );
 
-        return redirect('/einstellungen/aufgabenvorlagen');
+        return back();
     }
 
+    /**
+     * The workflow panel sends the stage it is editing; T-14's settings screen
+     * has no stages and sends none. Absent means what the column defaults to
+     * in the database — applied at booking, counted from the shoot's date.
+     */
     private function validated(Request $request): array
     {
+        $request->merge([
+            'stage_kind' => $request->input('stage_kind', StageKind::Project->value),
+            'stage' => $request->input('stage', ShootStatus::Booked->value),
+            'anchor' => $request->input('anchor', DueAnchor::ShootDate->value),
+        ]);
+
         return $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'audience' => ['required', Rule::enum(TaskAudience::class)],
+            'project_type' => ['nullable', Rule::enum(ProjectType::class)],
+            'stage_kind' => ['required', Rule::enum(StageKind::class)],
+            'stage' => ['required', 'string', new StageOfKind($request->input('stage_kind'))],
             'day_offset' => ['required', 'integer'],
+            'anchor' => ['required', Rule::enum(DueAnchor::class)],
             'shoot_kind' => ['nullable', Rule::enum(ShootKind::class)],
             'is_active' => ['required', 'boolean'],
             'sort_order' => ['required', 'integer', 'min:0'],

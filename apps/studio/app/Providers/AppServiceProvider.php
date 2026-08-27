@@ -8,6 +8,7 @@ use App\Contracts\Events\ContractSigned;
 use App\Crm\Events\LeadCaptured;
 use App\Crm\Events\ProjectBooked;
 use App\Crm\Listeners\ApplyTemplatesOnBooking;
+use App\Crm\Listeners\ApplyTemplatesOnStage;
 use App\Crm\Listeners\BookProjectOnContractAndDeposit;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormTemplate;
@@ -126,6 +127,11 @@ class AppServiceProvider extends ServiceProvider
         // Registered by hand: auto-discovery only scans app/Listeners, and the
         // CRM keeps its listeners beside the events they answer to.
         Event::listen(ProjectBooked::class, ApplyTemplatesOnBooking::class);
+
+        // Every other stage of both pipelines. Booking stays above: it is
+        // reachable without a lead stage ever changing.
+        Event::listen(LeadStageChanged::class, [ApplyTemplatesOnStage::class, 'handleLeadStage']);
+        Event::listen(ShootStatusChanged::class, [ApplyTemplatesOnStage::class, 'handleShootStatus']);
 
         // T-15: an anchored due date is written onto tasks.due_on, so every
         // list keeps reading one column. These three are where an anchor can

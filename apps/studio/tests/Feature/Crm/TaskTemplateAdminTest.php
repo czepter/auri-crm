@@ -45,6 +45,7 @@ it('creates a template and leaves an audit row naming the actor', function () {
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
+        ->from('/einstellungen/aufgabenvorlagen')
         ->post('/einstellungen/aufgabenvorlagen', [
             'title' => 'Technik-Check',
             'audience' => 'internal',
@@ -83,6 +84,7 @@ it("edits a template's offset and it reaches the next booking, never one already
     app(BookProject::class)($alreadyBooked, $owner);
 
     $this->actingAs($owner, 'staff')
+        ->from('/einstellungen/aufgabenvorlagen')
         ->patch("/einstellungen/aufgabenvorlagen/{$template->public_id}", [
             'title' => $template->title,
             'audience' => $template->audience->value,
@@ -112,6 +114,7 @@ it('deactivating a template leaves the tasks it already created alone', function
     $task = Task::sole();
 
     $this->actingAs($owner, 'staff')
+        ->from('/einstellungen/aufgabenvorlagen')
         ->patch("/einstellungen/aufgabenvorlagen/{$template->public_id}", [
             'title' => $template->title,
             'audience' => $template->audience->value,
@@ -137,6 +140,7 @@ it('deletes a template without touching the tasks it already created', function 
     app(BookProject::class)($project, $owner);
 
     $this->actingAs($owner, 'staff')
+        ->from('/einstellungen/aufgabenvorlagen')
         ->delete("/einstellungen/aufgabenvorlagen/{$template->public_id}")
         ->assertRedirect('/einstellungen/aufgabenvorlagen');
 
