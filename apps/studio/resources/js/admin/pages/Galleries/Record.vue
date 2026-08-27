@@ -8,7 +8,7 @@ import { ChoiceGroup } from '@/ui/choice-group'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
-import { NativeSelect } from '@/ui/native-select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 import GalleryNav from '@/admin/components/gallery/GalleryNav.vue'
@@ -383,10 +383,12 @@ function megabytes(bytes: number) {
           <DialogBody>
             <form id="gallery-preset-apply-form" class="flex flex-col gap-1.5" @submit.prevent="applyPreset">
               <Label for="preset-apply">{{ $t('galleryRecord.applyPresetField') }}</Label>
-              <NativeSelect id="preset-apply" v-model="applyForm.gallery_preset_id">
-                <option value="" disabled>{{ $t('galleryRecord.applyPresetPlaceholder') }}</option>
-                <option v-for="preset in presets" :key="preset.id" :value="preset.id">{{ preset.name }}</option>
-              </NativeSelect>
+              <Select v-model="applyForm.gallery_preset_id">
+                <SelectTrigger id="preset-apply"><SelectValue :placeholder="$t('galleryRecord.applyPresetPlaceholder')" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="preset in presets" :key="preset.id" :value="preset.id">{{ preset.name }}</SelectItem>
+                </SelectContent>
+              </Select>
               <p v-if="presetChanges.length" class="text-[11.5px] leading-[1.45] text-faint">
                 {{ $t('galleryRecord.applyPresetChanges') }} {{ presetChanges.join(' · ') }}
               </p>

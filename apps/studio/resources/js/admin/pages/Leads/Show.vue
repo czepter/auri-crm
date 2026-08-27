@@ -13,10 +13,10 @@ import { ChoiceGroup } from "@/ui/choice-group";
 import { DatePicker } from "@/ui/date-picker";
 import { Field } from "@/ui/field";
 import { Input } from "@/ui/input";
-import { NativeSelect } from "@/ui/native-select";
 import Page from "@/ui/page/Page.vue";
 import Rail from "@/ui/page/Rail.vue";
 import RailSection from "@/ui/page/RailSection.vue";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import { Textarea } from "@/ui/textarea";
 import { formatEurosRounded } from "@/admin/lib/money";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
@@ -473,10 +473,13 @@ const due = computed(() => {
                                 <Input :id="id" v-model="task.title" variant="filled" type="text" />
                             </Field>
                             <Field v-slot="{ id }" dense :label="$t('lead.taskAudience')">
-                                <NativeSelect :id="id" v-model="task.audience" variant="filled">
-                                    <option value="internal">{{ $t("lead.audienceInternal") }}</option>
-                                    <option value="client">{{ $t("lead.audienceClient") }}</option>
-                                </NativeSelect>
+                                <Select v-model="task.audience">
+                                    <SelectTrigger :id="id" variant="filled"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="internal">{{ $t("lead.audienceInternal") }}</SelectItem>
+                                        <SelectItem value="client">{{ $t("lead.audienceClient") }}</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </Field>
                             <Field v-slot="{ id }" dense :label="$t('lead.taskDue')">
                                 <DatePicker :id="id" v-model="task.due_on" class="w-[148px] [&_input]:pr-8" />

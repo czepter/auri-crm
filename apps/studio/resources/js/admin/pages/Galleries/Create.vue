@@ -10,7 +10,8 @@ import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
-import { NativeSelect } from '@/ui/native-select'
+import { NONE, fromOption, toOption } from '@/lib/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
 const props = defineProps<{
   presets: App.Gallery.Data.GalleryPresetData[]
@@ -109,10 +110,16 @@ function submit() {
           <template v-else>
             <div class="flex flex-col gap-1.5">
               <Label for="gallery-preset">{{ $t('galleryPresets.title') }}</Label>
-              <NativeSelect id="gallery-preset" v-model="presetId">
-                <option value="">{{ $t('galleryPresets.none') }}</option>
-                <option v-for="row in presets" :key="row.id" :value="row.id">{{ row.name }}</option>
-              </NativeSelect>
+              <Select
+                :model-value="toOption(presetId)"
+                @update:model-value="(value) => presetId = fromOption(value)"
+              >
+                <SelectTrigger id="gallery-preset"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem :value="NONE">{{ $t('galleryPresets.none') }}</SelectItem>
+                  <SelectItem v-for="row in presets" :key="row.id" :value="row.id">{{ row.name }}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div class="flex flex-col gap-1.5">

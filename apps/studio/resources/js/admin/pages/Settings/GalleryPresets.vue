@@ -8,7 +8,8 @@ import { Checkbox } from '@/ui/checkbox'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
-import { NativeSelect } from '@/ui/native-select'
+import { NONE, fromOption, toOption } from '@/lib/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
 const props = defineProps<{ presets: App.Gallery.Data.GalleryPresetData[] }>()
 
@@ -138,9 +139,12 @@ function create() {
 
                 <div class="flex min-w-0 flex-col gap-1.5">
                   <Label :for="`mode-${preset.id}`">{{ $t('galleryPresets.expiryField') }}</Label>
-                  <NativeSelect :id="`mode-${preset.id}`" v-model="forms[preset.id].expiry_mode">
-                    <option v-for="mode in MODES" :key="mode" :value="mode">{{ $t(`galleryPresets.mode_${mode}`) }}</option>
-                  </NativeSelect>
+                  <Select v-model="forms[preset.id].expiry_mode">
+                    <SelectTrigger :id="`mode-${preset.id}`"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="mode in MODES" :key="mode" :value="mode">{{ $t(`galleryPresets.mode_${mode}`) }}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div v-if="forms[preset.id].expiry_mode === 'days'" class="flex min-w-0 flex-col gap-1.5">
@@ -156,30 +160,54 @@ function create() {
 
                 <div class="flex min-w-0 flex-col gap-1.5">
                   <Label :for="`balance-${preset.id}`">{{ $t('gallerySettings.balanceLabel') }}</Label>
-                  <NativeSelect :id="`balance-${preset.id}`" v-model="forms[preset.id].requires_settled_balance">
-                    <option v-for="state in TRISTATE" :key="state.value" :value="state.value">{{ $t(`galleryPresets.${state.key}`) }}</option>
-                  </NativeSelect>
+                  <Select
+                    :model-value="toOption(forms[preset.id].requires_settled_balance)"
+                    @update:model-value="(value) => forms[preset.id].requires_settled_balance = fromOption(value)"
+                  >
+                    <SelectTrigger :id="`balance-${preset.id}`"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="state in TRISTATE" :key="state.value" :value="toOption(state.value)">{{ $t(`galleryPresets.${state.key}`) }}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div class="flex min-w-0 flex-col gap-1.5">
                   <Label :for="`downloads-${preset.id}`">{{ $t('gallerySettings.downloadsLabel') }}</Label>
-                  <NativeSelect :id="`downloads-${preset.id}`" v-model="forms[preset.id].downloads_enabled">
-                    <option v-for="state in TRISTATE" :key="state.value" :value="state.value">{{ $t(`galleryPresets.${state.key}`) }}</option>
-                  </NativeSelect>
+                  <Select
+                    :model-value="toOption(forms[preset.id].downloads_enabled)"
+                    @update:model-value="(value) => forms[preset.id].downloads_enabled = fromOption(value)"
+                  >
+                    <SelectTrigger :id="`downloads-${preset.id}`"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="state in TRISTATE" :key="state.value" :value="toOption(state.value)">{{ $t(`galleryPresets.${state.key}`) }}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div class="flex min-w-0 flex-col gap-1.5">
                   <Label :for="`lists-${preset.id}`">{{ $t('gallerySettings.listsLabel') }}</Label>
-                  <NativeSelect :id="`lists-${preset.id}`" v-model="forms[preset.id].lists_enabled">
-                    <option v-for="state in TRISTATE" :key="state.value" :value="state.value">{{ $t(`galleryPresets.${state.key}`) }}</option>
-                  </NativeSelect>
+                  <Select
+                    :model-value="toOption(forms[preset.id].lists_enabled)"
+                    @update:model-value="(value) => forms[preset.id].lists_enabled = fromOption(value)"
+                  >
+                    <SelectTrigger :id="`lists-${preset.id}`"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="state in TRISTATE" :key="state.value" :value="toOption(state.value)">{{ $t(`galleryPresets.${state.key}`) }}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div class="flex min-w-0 flex-col gap-1.5">
                   <Label :for="`comments-${preset.id}`">{{ $t('gallerySettings.commentsLabel') }}</Label>
-                  <NativeSelect :id="`comments-${preset.id}`" v-model="forms[preset.id].comments_enabled">
-                    <option v-for="state in TRISTATE" :key="state.value" :value="state.value">{{ $t(`galleryPresets.${state.key}`) }}</option>
-                  </NativeSelect>
+                  <Select
+                    :model-value="toOption(forms[preset.id].comments_enabled)"
+                    @update:model-value="(value) => forms[preset.id].comments_enabled = fromOption(value)"
+                  >
+                    <SelectTrigger :id="`comments-${preset.id}`"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="state in TRISTATE" :key="state.value" :value="toOption(state.value)">{{ $t(`galleryPresets.${state.key}`) }}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -235,9 +263,12 @@ function create() {
 
                 <div class="flex min-w-0 flex-col gap-1.5">
                   <Label for="new-preset-mode">{{ $t('galleryPresets.expiryField') }}</Label>
-                  <NativeSelect id="new-preset-mode" v-model="newForm.expiry_mode">
-                    <option v-for="mode in MODES" :key="mode" :value="mode">{{ $t(`galleryPresets.mode_${mode}`) }}</option>
-                  </NativeSelect>
+                  <Select v-model="newForm.expiry_mode">
+                    <SelectTrigger id="new-preset-mode"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem v-for="mode in MODES" :key="mode" :value="mode">{{ $t(`galleryPresets.mode_${mode}`) }}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div v-if="newForm.expiry_mode === 'days'" class="flex min-w-0 flex-col gap-1.5">

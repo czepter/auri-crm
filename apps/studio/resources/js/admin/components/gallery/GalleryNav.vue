@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
-import { NativeSelect } from '@/ui/native-select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -183,13 +183,15 @@ function confirmRemove() {
         <!-- Der leere Wert ist ein echter Platzhalter, keine Wahl: die
              zerstörende Möglichkeit darf nie die sein, die feuert, weil
              jemand bestätigt hat, ohne das Feld anzufassen. -->
-        <NativeSelect v-model="removeTarget" class="w-full">
-          <option value="" disabled>{{ $t('galleryRecord.moveTo') }}</option>
-          <option v-for="target in sets.filter((row) => row.key !== removing?.id)" :key="target.key" :value="target.key">
-            {{ target.label }}
-          </option>
-          <option :value="DELETE_PICTURES">{{ $t('galleryRecord.removeSetPictures') }}</option>
-        </NativeSelect>
+        <Select v-model="removeTarget">
+          <SelectTrigger class="w-full"><SelectValue :placeholder="$t('galleryRecord.moveTo')" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="target in sets.filter((row) => row.key !== removing?.id)" :key="target.key" :value="target.key">
+              {{ target.label }}
+            </SelectItem>
+            <SelectItem :value="DELETE_PICTURES">{{ $t('galleryRecord.removeSetPictures') }}</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <AlertDialogFooter>

@@ -8,7 +8,6 @@ import DocumentPreviewPane from '@/admin/components/DocumentPreviewPane.vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
-import { NativeSelect } from '@/ui/native-select'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { NONE, fromOption, toOption } from '@/lib/select'
 import { serialize } from '@/admin/documents/blocks/serialize'
@@ -199,10 +198,16 @@ function submit() {
           />
 
           <DocumentPreviewPane :type="form.type" :doc="doc" :samples="samples" :project="project">
-            <NativeSelect v-model="project">
-              <option :value="null">{{ $t('documentTemplates.previewSamples') }}</option>
-              <option v-for="option in projects" :key="option.id" :value="option.id">{{ option.name }}</option>
-            </NativeSelect>
+            <Select
+              :model-value="toOption(project)"
+              @update:model-value="(value) => project = fromOption(value) || null"
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="NONE">{{ $t('documentTemplates.previewSamples') }}</SelectItem>
+                <SelectItem v-for="option in projects" :key="option.id" :value="option.id">{{ option.name }}</SelectItem>
+              </SelectContent>
+            </Select>
           </DocumentPreviewPane>
         </div>
       </div>

@@ -19,6 +19,7 @@ export type EditableShoot = {
 import { DatePicker } from "@/ui/date-picker";
 import { Field } from "@/ui/field";
 import { Input } from "@/ui/input";
+import { TimePicker } from "@/ui/time-picker";
 
 defineProps<{ shoot: EditableShoot }>();
 </script>
@@ -30,10 +31,10 @@ defineProps<{ shoot: EditableShoot }>();
                 <DatePicker :id="id" v-model="shoot.date" class="w-[148px] [&_input]:pr-8" />
             </Field>
             <Field v-slot="{ id }" dense :label="$t('project.callTime')">
-                <Input :id="id" v-model="shoot.call_time" variant="filled" type="time" />
+                <TimePicker :id="id" v-model="shoot.call_time" variant="filled" />
             </Field>
             <Field v-slot="{ id }" dense :label="$t('project.endTime')">
-                <Input :id="id" v-model="shoot.end_time" variant="filled" type="time" />
+                <TimePicker :id="id" v-model="shoot.end_time" variant="filled" />
             </Field>
         </div>
         <div class="flex gap-3 [&+&]:mt-3">

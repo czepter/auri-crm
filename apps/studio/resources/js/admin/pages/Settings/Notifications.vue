@@ -4,7 +4,7 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import SettingsNav from '@/admin/components/SettingsNav.vue'
 import { Button } from '@/ui/button'
-import { Input } from '@/ui/input'
+import { TimePicker } from '@/ui/time-picker'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
 
@@ -15,7 +15,7 @@ const props = defineProps<{
 }>()
 
 // "HH:MM:SS" from the database (Postgres time column) down to the "HH:MM"
-// <input type="time"> and StudioSettingsController's own date_format:H:i
+// the TimePicker and StudioSettingsController's own date_format:H:i
 // validation both expect.
 function toInputTime(value: string | null): string {
   return value?.slice(0, 5) ?? ''
@@ -75,19 +75,17 @@ function submit() {
                 <div class="grid grid-cols-2 gap-4">
                   <div class="flex min-w-0 flex-col gap-1.5">
                     <Label for="n-ruhe-von">{{ $t('notificationSettings.quietHoursStartLabel') }}</Label>
-                    <Input
+                    <TimePicker
                       id="n-ruhe-von"
                       v-model="form.quiet_hours_start"
-                      type="time"
                       :disabled="!form.quiet_hours_enabled" />
                     <p v-if="form.errors.quiet_hours_start" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.quiet_hours_start }}</p>
                   </div>
                   <div class="flex min-w-0 flex-col gap-1.5">
                     <Label for="n-ruhe-bis">{{ $t('notificationSettings.quietHoursEndLabel') }}</Label>
-                    <Input
+                    <TimePicker
                       id="n-ruhe-bis"
                       v-model="form.quiet_hours_end"
-                      type="time"
                       :disabled="!form.quiet_hours_enabled" />
                     <p v-if="form.errors.quiet_hours_end" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.quiet_hours_end }}</p>
                   </div>

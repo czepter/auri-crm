@@ -11,7 +11,7 @@ import DuplicateDialog from '@/admin/components/gallery/DuplicateDialog.vue'
 import SetPickerDialog from '@/admin/components/gallery/SetPickerDialog.vue'
 import UploadTray, { type TrayRow } from '@/admin/components/gallery/UploadTray.vue'
 import { Input } from '@/ui/input'
-import { NativeSelect } from '@/ui/native-select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
 interface AssetRow {
   id: string
@@ -426,10 +426,16 @@ onUnmounted(() => {
       class="fixed bottom-6 left-1/2 flex -translate-x-1/2 items-center gap-4 rounded-full bg-foreground px-5 py-2.5 text-[12.5px] text-paper"
     >
       <b>{{ $t('galleryRecord.selected', selection.selected.size) }}</b>
-      <NativeSelect class="h-7 border-0 bg-transparent text-paper" @change="moveTo(($event.target as HTMLSelectElement).value)">
-        <option value="">{{ $t('galleryRecord.moveTo') }}</option>
-        <option v-for="row in sets" :key="row.id" :value="row.id">{{ row.name }}</option>
-      </NativeSelect>
+      <!-- Die Auswahl ist eine Aktion, kein Zustand: der Wert bleibt leer,
+           damit der Auslöser nach dem Verschieben wieder sein Label zeigt. -->
+      <Select :model-value="undefined" @update:model-value="(value) => moveTo(String(value))">
+        <SelectTrigger class="h-7 w-auto border-0 bg-transparent py-0 text-paper data-[placeholder]:text-paper">
+          <SelectValue :placeholder="$t('galleryRecord.moveTo')" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="row in sets" :key="row.id" :value="row.id">{{ row.name }}</SelectItem>
+        </SelectContent>
+      </Select>
       <button
         v-if="selection.selected.size === 1"
         class="cursor-pointer border-0 bg-transparent text-paper"
