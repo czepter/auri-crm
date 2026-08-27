@@ -36,15 +36,30 @@ namespace Contracts {
 namespace Data {
 export type ContractData = {
 id: string,
+version: number,
+state: string,
+stateLabel: string,
 status: string,
 statusLabel: string,
 templateName: string,
 templateVersion: number,
+body: string,
+blocks: Record<string, any> | null,
 renderedAt: string | null,
+sentAt: string | null,
 downloadUrl: string | null,
+signers: App.Contracts.Data.ContractSignerData[],
+};
+export type ContractSignerData = {
+id: string,
+name: string,
+role: string | null,
+signedAt: string | null,
+remindedAt: string | null,
 };
 }
 namespace Enums {
+export type ContractState = 'draft' | 'valid' | 'superseded';
 export type ContractStatus = 'pending' | 'rendered' | 'failed';
 }
 }
@@ -79,6 +94,12 @@ name: string,
 email: string | null,
 phone: string | null,
 projectCount: number,
+};
+export type CrewCandidateData = {
+id: string,
+name: string,
+status: string,
+note: string | null,
 };
 export type CrewMemberData = {
 id: string,
@@ -132,6 +153,16 @@ required: boolean,
 options: string[] | null,
 currentAnswer: string | null,
 answeredAt: string | null,
+fileFormats: string[] | null,
+fileMaxSize: number | null,
+fileMultiple: boolean,
+files: App.Crm.Data.FormInstanceFileData[],
+};
+export type FormInstanceFileData = {
+id: string,
+name: string,
+size: number,
+uploadedAt: string,
 };
 export type FormTemplateData = {
 id: string,
@@ -186,6 +217,16 @@ readiness: {
 label: string,
 done: boolean,
 }[],
+};
+export type ProjectGalleryData = {
+id: string,
+title: string | null,
+shootId: string | null,
+state: string,
+assetCount: number,
+version: number | null,
+expiresAt: string | null,
+inPortal: boolean,
 };
 export type ProjectHeaderData = {
 id: string,
@@ -292,11 +333,14 @@ title: string,
 dueOn: string | null,
 isOverdue: boolean,
 isDone: boolean,
+shootId: string | null,
 shootLabel: string | null,
 audience: string,
 audienceLabel: string,
 isBlocked: boolean,
 blockedBy: string | null,
+completedOn: string | null,
+dueAnchorLabel: string | null,
 };
 export type TaskTemplateData = {
 id: string,
@@ -329,7 +373,7 @@ namespace Enums {
 export type BookedVia = 'manual' | 'contract';
 export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'web_form' | 'other';
 export type CrewRole = 'lead_photographer' | 'second_shooter' | 'assistant';
-export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list';
+export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list' | 'file';
 export type LeadSource = 'referral' | 'website' | 'instagram' | 'wedding_fair' | 'other';
 export type LeadStage = 'new' | 'contacted' | 'quote_sent' | 'quote_accepted' | 'contract_sent' | 'booked';
 export type ProjectContactRole = 'primary' | 'partner' | 'payer' | 'planner' | 'vendor';
@@ -399,6 +443,7 @@ export type ThreadData = {
 id: string,
 subject: string,
 messages: App.Engagement.Data.MessageData[],
+recipients: string[],
 };
 }
 namespace Enums {
@@ -556,6 +601,8 @@ namespace Data {
 export type QuoteData = {
 id: string,
 predecessorId: string | null,
+isAddendum: boolean,
+predecessorNumber: string | null,
 status: string,
 statusLabel: string,
 currency: string,
@@ -571,6 +618,8 @@ vatMode: string | null,
 vatRate: number | null,
 vatNote: string | null,
 vatAmount: number | null,
+intro: string | null,
+outro: string | null,
 items: App.Quotes.Data.QuoteItemData[],
 };
 export type QuoteItemData = {
