@@ -284,6 +284,8 @@ date: string | null,
 venue: string | null,
 position: string,
 contact: string | null,
+openTasks: number,
+taskCount: number,
 };
 export type ProjectSuggestionData = {
 id: string,
@@ -347,7 +349,12 @@ id: string,
 title: string,
 audience: string,
 audienceLabel: string,
+projectType: string | null,
+stageKind: string,
+stage: string,
 dayOffset: number,
+anchor: string,
+anchorLabel: string,
 shootKind: string | null,
 shootKindLabel: string | null,
 isActive: boolean,
@@ -373,6 +380,7 @@ namespace Enums {
 export type BookedVia = 'manual' | 'contract';
 export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'web_form' | 'other';
 export type CrewRole = 'lead_photographer' | 'second_shooter' | 'assistant';
+export type DueAnchor = 'stage' | 'shoot';
 export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list' | 'file';
 export type LeadSource = 'referral' | 'website' | 'instagram' | 'wedding_fair' | 'other';
 export type LeadStage = 'new' | 'contacted' | 'quote_sent' | 'quote_accepted' | 'contract_sent' | 'booked';
@@ -380,6 +388,7 @@ export type ProjectContactRole = 'primary' | 'partner' | 'payer' | 'planner' | '
 export type ProjectType = 'wedding' | 'portrait' | 'other';
 export type ShootKind = 'engagement' | 'wedding' | 'reception' | 'portrait' | 'other';
 export type ShootStatus = 'requested' | 'booked' | 'prep' | 'shot' | 'culling' | 'editing' | 'ready' | 'delivered' | 'archived';
+export type StageKind = 'lead' | 'project';
 export type TaskAudience = 'internal' | 'client';
 }
 }

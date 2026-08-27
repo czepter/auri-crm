@@ -4,6 +4,7 @@ namespace App\Crm\Actions;
 
 use App\Crm\Data\TaskTemplateData;
 use App\Crm\Enums\DueAnchor;
+use App\Crm\Enums\HasLabel;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\StageKind;
@@ -47,7 +48,7 @@ class WorkflowColumns
     }
 
     /**
-     * @param  list<\App\Crm\Enums\HasLabel&\BackedEnum>  $cases
+     * @param  list<HasLabel&\BackedEnum>  $cases
      * @return list<array{value: string, label: string}>
      */
     private function options(array $cases): array

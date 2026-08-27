@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { Link, router } from "@inertiajs/vue3";
+import { Link, router, usePage } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import LeadQueue from "@/admin/components/LeadQueue.vue";
 import Page from "@/ui/page/Page.vue";
 import PageHead from "@/ui/page/PageHead.vue";
+import WorkflowPanel from "@/admin/components/WorkflowPanel.vue";
 import {
     Table,
     TableCell,
@@ -34,6 +35,7 @@ const props = defineProps<{
     groups: Group[];
     queue: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[];
     view: string;
+    workflow?: Record<string, unknown> | null;
 }>();
 
 const view = ref(props.view);
@@ -56,6 +58,15 @@ function choose(next: string) {
 
 // Grey rather than faded: opacity would have pushed the text under the
 // legibility floor, the same trap as a third grey.
+// Drei Typen, drei Farben aus den Tokens. Ueber das Label statt ueber den
+// Wert, weil LeadCardData den Typ als Beschriftung traegt — type_other haengt
+// dort schon dran.
+const TYPE_DOT: Record<string, string> = {
+    Hochzeit: "bg-action",
+    Portrait: "bg-ok",
+    Sonstige: "bg-faint",
+};
+
 const DONE_STAGES = ["contract_sent", "booked"];
 
 function shortDate(date: string | null) {
@@ -182,6 +193,18 @@ const STAGE_DOT = [
     "bg-action",
     "bg-mark",
 ];
+// Die Spalten kommen erst beim Oeffnen mit — ein Board laedt sie sonst bei
+// jedem Aufruf mit, ohne dass sie jemand sieht.
+const workflowOpen = ref(false);
+const workflowAllowed = computed(() =>
+    (usePage().props.auth.can ?? []).includes("manage_tasks"),
+);
+
+function openWorkflow() {
+    workflowOpen.value = true;
+    router.reload({ only: ["workflow"] });
+}
+
 </script>
 
 <template>
@@ -189,9 +212,23 @@ const STAGE_DOT = [
         <Page wide @click="menu = null">
             <div data-tokens class="min-w-0 flex-1">
                 <PageHead :title="$t('board.title')">
+                    <button
+                        v-if="workflowAllowed"
+                        class="ml-auto flex cursor-pointer items-center gap-1.5 border-0 bg-transparent text-[13px] font-medium text-muted-foreground"
+                        type="button"
+                        @click="openWorkflow"
+                    >
+                        <svg class="size-[15px] fill-none stroke-current stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]" viewBox="0 0 24 24">
+                            <rect x="5" y="4" width="14" height="17" rx="2" />
+                            <path d="M9 3h6v3H9z" />
+                            <path d="M9 11h6M9 15h4" />
+                        </svg>
+                        {{ $t("board.workflows") }}
+                    </button>
+
                     <ChoiceGroup
                         v-model="view"
-                        class="ml-auto"
+                        class=""
                         :options="[
                             { value: 'board', label: $t('board.viewBoard') },
                             { value: 'liste', label: $t('board.viewList') },
@@ -205,22 +242,22 @@ const STAGE_DOT = [
                     </Button>
                 </PageHead>
 
-                <!-- Board — list columns, no cards. Grey cards on a white ground invert
-             the material order, in which the container carries material and the
-             content stays white. -->
+                <!-- Die Spalte traegt das Material, die Karte bleibt weiss
+             darauf. Weiss auf Weiss liess keine Spalte als Behaelter lesen —
+             sichtbar wurde sie erst an ihrer Trennlinie. -->
                 <div
                     v-if="view === 'board'"
-                    class="flex items-stretch overflow-x-auto px-5 pt-5 pb-7"
+                    class="flex items-stretch gap-2.5 overflow-x-auto px-5 pt-5 pb-7"
                 >
                     <section
                         v-for="(column, index) in columns"
                         :key="column.stage"
-                        class="flex min-w-0 shrink-0 grow basis-[190px] flex-col gap-2 px-3 [&:not(:first-child)]:shadow-[inset_1px_0_0_#F0F0F2]"
-                        :class="target === index && 'rounded-[12px] bg-sunk'"
+                        class="flex min-w-0 shrink-0 grow basis-[200px] flex-col gap-2 rounded-xl bg-sunk p-2.5"
+                        :class="target === index && 'bg-sunk-2'"
                         @dragover="onDragOver($event, index, null)"
                         @drop.prevent="onDrop(index)"
                     >
-                        <header class="flex items-baseline gap-1.5 pb-2">
+                        <header class="flex items-baseline gap-1.5 px-1 pt-0.5 pb-1">
                             <b
                                 class="text-[11px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2"
                                 >{{ column.label }}</b
@@ -248,7 +285,7 @@ const STAGE_DOT = [
                             />
 
                             <Link
-                                class="relative -mx-1.5 block cursor-grab rounded-lg border border-border px-1.5 py-[9px] text-inherit no-underline shadow-[inset_0_1px_0_#F0F0F2] transition-[background,border-color] duration-[120ms] ease-out first-of-type:shadow-none hover:bg-sunk"
+                                class="relative block cursor-grab rounded-lg border border-border bg-paper px-2.5 py-[9px] text-inherit no-underline transition-[background,border-color] duration-[120ms] ease-out hover:border-line-hover"
                                 :class="
                                     moving?.id === card.id && 'cursor-grabbing'
                                 "
@@ -287,18 +324,29 @@ const STAGE_DOT = [
                                         · {{ card.venue }}</template
                                     >
                                 </span>
-                                <!-- On both affected rows and without naming anyone: who
-                     collides is the other marked row in the same picture. -->
-                                <span
-                                    v-if="card.conflicts.length"
-                                    class="mt-[3px] block text-[11.5px]"
-                                    :class="
-                                        moving?.id === card.id
-                                            ? 'text-mark'
-                                            : 'text-action'
-                                    "
-                                >
-                                    {{ $t("board.dateDoubled") }}
+                                <!-- Der Auftragstyp als Punkt und als Wort:
+                     die Farbe zum Ueberfliegen, das Wort zum Lesen.
+                     Die Warnung darunter trug bislang dieselbe
+                     Akzentfarbe wie der Punkt einer Hochzeit — sie
+                     steht deshalb jetzt auf --late.
+
+                     Auf beiden betroffenen Zeilen und ohne jemanden zu
+                     nennen: wer kollidiert, ist die andere markierte
+                     Zeile im selben Bild. -->
+                                <span class="mt-1.5 flex items-center gap-1.5">
+                                    <span
+                                        class="size-1.5 flex-none rounded-full"
+                                        :class="TYPE_DOT[card.type] ?? 'bg-faint'"
+                                    />
+                                    <span class="text-[11.5px] leading-none text-muted-foreground">
+                                        {{ card.type }}
+                                    </span>
+                                    <span
+                                        v-if="card.conflicts.length"
+                                        class="ml-auto text-[11.5px] leading-none text-destructive"
+                                    >
+                                        {{ $t("board.dateDoubled") }}
+                                    </span>
                                 </span>
                             </Link>
                         </template>
@@ -439,6 +487,12 @@ const STAGE_DOT = [
                     </AlertDialogContent>
                 </AlertDialog>
             </div>
+
+            <WorkflowPanel
+                v-if="workflowOpen"
+                :workflow="workflow as never"
+                @close="workflowOpen = false"
+            />
         </Page>
     </AdminLayout>
 </template>

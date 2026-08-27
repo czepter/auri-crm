@@ -81,7 +81,8 @@
     "colStage": "Stufe",
     "colValue": "Wert",
     "colLast": "Zuletzt",
-    "shootCount": "1 Shooting | {count} Shootings"
+    "shootCount": "1 Shooting | {count} Shootings",
+    "workflows": "Workflows"
   },
   "contacts": {
     "title": "Kontakte",
@@ -325,7 +326,9 @@
     "name": "Projekt",
     "contact": "Kontakt",
     "searchPlaceholder": "Projekt suchen",
-    "empty": "Keine Projekte."
+    "empty": "Keine Projekte.",
+    "openTasks": "Offene Aufgaben",
+    "openTasksOf": "{open} von {total}"
   },
   "calendar": {
     "title": "Kalender",
@@ -1374,5 +1377,12 @@
     "slugTaken": "Diese Adresse ist schon vergeben.",
     "slugFormat": "Nur Kleinbuchstaben, Ziffern und Bindestriche.",
     "eventDate": "Termin"
+  },
+  "workflow": {
+    "title": "Workflows",
+    "done": "Fertig",
+    "addTask": "Aufgabe",
+    "taskTitle": "Aufgabe",
+    "anchorField": "Fällig ab"
   }
 }
