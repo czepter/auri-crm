@@ -133,9 +133,27 @@ class FormTemplateController extends Controller
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.type' => ['required', Rule::enum(FormFieldType::class)],
             'fields.*.required' => ['required', 'boolean'],
-            'fields.*.options' => ['nullable', 'array'],
-            'fields.*.options.*' => ['string', 'max:255'],
+            ...$this->optionRules($request),
         ]);
+    }
+
+    /**
+     * The options column carries two shapes — select's choices, a file
+     * field's upload config — so the rules for it depend on the type in the
+     * same row. See FormFieldType::optionRules().
+     */
+    private function optionRules(Request $request): array
+    {
+        $fields = (array) $request->input('fields', []);
+
+        return collect(array_keys($fields))
+            ->mapWithKeys(function (int|string $index) use ($request) {
+                $type = $request->input("fields.{$index}.type");
+
+                return (FormFieldType::tryFrom(is_string($type) ? $type : '') ?? FormFieldType::Text)
+                    ->optionRules("fields.{$index}");
+            })
+            ->all();
     }
 
     /**
@@ -148,7 +166,9 @@ class FormTemplateController extends Controller
      */
     private function fieldRows(array $fields): array
     {
-        return collect($fields)->values()->map(fn (array $field, int $index) => [
+        // sortKeys because validated() hands the rows back in rule order, not
+        // in list order, once a row carries its own type-dependent options rules.
+        return collect($fields)->sortKeys()->values()->map(fn (array $field, int $index) => [
             'label' => $field['label'],
             'type' => $field['type'],
             'required' => $field['required'],

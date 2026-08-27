@@ -13,7 +13,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Visus\Cuid2\Cuid2;
 
 /**
  * One question on a FormInstance. Shaped after FormField on purpose — same
@@ -48,6 +51,79 @@ class FormInstanceField extends Model
     public function answers(): HasMany
     {
         return $this->hasMany(FormAnswer::class);
+    }
+
+    public function files(): HasMany
+    {
+        return $this->hasMany(FormInstanceFile::class)->orderBy('id');
+    }
+
+    /**
+     * A "Datei" field's configuration, stored in the same options column
+     * select keeps its choices in. Defaults fill in for a field seeded from
+     * a template that never configured one.
+     *
+     * @return array{formats: list<string>, maxSize: int, multiple: bool}
+     */
+    public function fileOptions(): array
+    {
+        return [
+            'formats' => $this->options['formats'] ?? FormFieldType::FILE_FORMATS,
+            'maxSize' => (int) ($this->options['maxSize'] ?? FormFieldType::FILE_MAX_MB),
+            'multiple' => (bool) ($this->options['multiple'] ?? false),
+        ];
+    }
+
+    /**
+     * The upload rules this field's own configuration implies. Both surfaces
+     * validate through here, so a format or size the studio never allowed is
+     * rejected wherever the file arrives from.
+     *
+     * @return list<mixed>
+     */
+    public function fileRules(): array
+    {
+        $options = $this->fileOptions();
+
+        return [
+            'required',
+            'file',
+            'mimes:'.implode(',', $options['formats']),
+            'max:'.($options['maxSize'] * 1024),
+        ];
+    }
+
+    /**
+     * Stores one uploaded file against this field. A single-file field keeps
+     * exactly one: the new upload replaces what was there, bytes and all.
+     */
+    public function attachFile(UploadedFile $file, Contact|User|null $actor = null): FormInstanceFile
+    {
+        if (! $this->fileOptions()['multiple']) {
+            $this->files()->get()->each->purge();
+        }
+
+        // Guessed from the bytes, not from the name the client sent — that
+        // name is echoed back to a browser and never trusted as a path.
+        $key = (string) new Cuid2;
+
+        $path = Storage::disk('local')->putFileAs(
+            "form-instance-files/{$this->public_id}",
+            $file,
+            $key.'.'.$file->extension(),
+        );
+
+        return $this->files()->create([
+            'path' => $path,
+            'name' => $file->getClientOriginalName(),
+            'mime' => $file->getMimeType(),
+            'size' => $file->getSize(),
+            ...match (true) {
+                $actor instanceof Contact => ['contact_id' => $actor->id],
+                $actor instanceof User => ['author_id' => $actor->id],
+                default => [],
+            },
+        ]);
     }
 
     /** The latest answer version, or null before this field has ever been answered. */

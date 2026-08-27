@@ -3,17 +3,21 @@
 namespace App\Portal\Http\Controllers;
 
 use App\Crm\Data\FormInstanceFieldData;
+use App\Crm\Enums\FormFieldType;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
+use App\Crm\Models\FormInstanceFile;
 use App\Http\Controllers\Controller;
 use App\Notifications\Actions\NotifyStudio;
 use App\Notifications\Studio\QuestionnaireSubmitted;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * P-03 (#222)'s last open piece. The inquiry screen linked to a
@@ -75,6 +79,10 @@ class QuestionnaireController extends Controller
         $changed = 0;
 
         foreach ($instance->fields as $field) {
+            if ($field->type === FormFieldType::File) {
+                continue;
+            }
+
             $value = $this->normalise($answers[$field->public_id] ?? null);
 
             if ($value === $field->currentAnswer?->value) {
@@ -103,6 +111,73 @@ class QuestionnaireController extends Controller
     }
 
     /**
+     * A file answering a question. Uploaded on its own rather than with the
+     * form's one submit — bytes are not something a client retypes when the
+     * rest of the page fails validation.
+     */
+    public function download(string $project, string $questionnaire, string $file): StreamedResponse
+    {
+        $instance = $this->find($project, $questionnaire);
+
+        $found = FormInstanceFile::query()
+            ->whereIn('form_instance_field_id', $instance->fields->pluck('id'))
+            ->where('public_id', $file)
+            ->firstOrFail();
+
+        return Storage::disk('local')->download($found->path, $found->name);
+    }
+
+    public function upload(Request $request, string $project, string $questionnaire): RedirectResponse
+    {
+        $contact = auth('portal')->user();
+        $instance = $this->find($project, $questionnaire);
+
+        $field = $instance->fields
+            ->firstWhere('public_id', $request->input('field'));
+
+        abort_if($field === null || $field->type !== FormFieldType::File, 404);
+
+        $request->validate(['file' => $field->fileRules()]);
+
+        $file = $field->attachFile($request->file('file'), $contact);
+
+        AuditLogger::record(
+            event: 'portal.questionnaire.file_uploaded',
+            context: ['contact' => $contact->public_id, 'name' => $file->name],
+            subject: $instance->public_id,
+            projectId: $instance->project_id,
+        );
+
+        ($this->notifyStudio)(new QuestionnaireSubmitted($instance));
+
+        return back();
+    }
+
+    /** Scoped through the questionnaire, so a file id from another booking is a 404 and not a delete. */
+    public function destroyFile(string $project, string $questionnaire, string $file): RedirectResponse
+    {
+        $contact = auth('portal')->user();
+        $instance = $this->find($project, $questionnaire);
+
+        $row = FormInstanceFile::query()
+            ->where('public_id', $file)
+            ->whereIn('form_instance_field_id', $instance->fields->pluck('id'))
+            ->firstOrFail();
+
+        $name = $row->name;
+        $row->purge();
+
+        AuditLogger::record(
+            event: 'portal.questionnaire.file_deleted',
+            context: ['contact' => $contact->public_id, 'name' => $name],
+            subject: $instance->public_id,
+            projectId: $instance->project_id,
+        );
+
+        return back();
+    }
+
+    /**
      * A required question is required of the client too, and the check lives
      * here rather than in the validate() call above because the rules are
      * per row of data this request does not name — the fields come from the
@@ -112,7 +187,9 @@ class QuestionnaireController extends Controller
     {
         $missing = $instance->fields
             ->filter(fn (FormInstanceField $field) => $field->required)
-            ->filter(fn (FormInstanceField $field) => $this->normalise($answers[$field->public_id] ?? null) === null)
+            ->filter(fn (FormInstanceField $field) => $field->type === FormFieldType::File
+                ? $field->files->isEmpty()
+                : $this->normalise($answers[$field->public_id] ?? null) === null)
             ->mapWithKeys(fn (FormInstanceField $field) => [
                 "answers.{$field->public_id}" => __('validation.required', ['attribute' => $field->label]),
             ])
@@ -141,7 +218,7 @@ class QuestionnaireController extends Controller
             ->shared()
             ->where('project_id', $found->id)
             ->where('public_id', $questionnaire)
-            ->with(['project', 'fields.currentAnswer'])
+            ->with(['project', 'fields.currentAnswer', 'fields.files'])
             ->firstOrFail();
     }
 }
