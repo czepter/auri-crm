@@ -7,8 +7,10 @@ use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
+use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Actions\SendQuote;
+use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
@@ -18,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 
 class QuoteController extends Controller
 {
@@ -32,6 +35,7 @@ class QuoteController extends Controller
             // quote may start from (Package::scopeActive()) is a validation
             // fact about this form's input, not a missing-record error.
             'package' => ['nullable', 'string', Rule::exists('packages', 'public_id')->where('is_active', true)],
+            'addendum_to' => ['nullable', 'string'],
         ]);
 
         // T-05's fallback: Package carries no default_validity_days column
@@ -42,8 +46,17 @@ class QuoteController extends Controller
         // StudioSettingsResolver::quoteValidityDays()).
         $validUntil = $validated['valid_until'] ?? now()->addDays($settings->quoteValidityDays())->toDateString();
 
+        // Der Nachtrag lässt seinen Vorgänger angenommen, anders als die
+        // Revision, die ihn auf superseded setzt (ReviseQuote).
+        $predecessor = ! empty($validated['addendum_to'])
+            ? $project->quotes()->where('public_id', $validated['addendum_to'])
+                ->where('status', QuoteStatus::Accepted)->firstOrFail()
+            : null;
+
         $quote = $project->quotes()->create([
             'valid_until' => $validUntil,
+            'is_addendum' => $predecessor !== null,
+            'predecessor_id' => $predecessor?->id,
         ]);
 
         if (! empty($validated['package'])) {
@@ -74,6 +87,8 @@ class QuoteController extends Controller
 
         $validated = $request->validate([
             'valid_until' => ['nullable', 'date'],
+            'intro' => ['nullable', 'string', 'max:5000'],
+            'outro' => ['nullable', 'string', 'max:5000'],
             'discount_type' => ['nullable', 'in:percentage,amount', 'required_with:discount_value'],
             'discount_value' => ['nullable', 'integer', 'min:1', 'required_with:discount_type'],
             'items' => ['array'],
@@ -96,6 +111,8 @@ class QuoteController extends Controller
 
         $quote->update([
             'valid_until' => $validated['valid_until'] ?? null,
+            'intro' => $validated['intro'] ?? null,
+            'outro' => $validated['outro'] ?? null,
             'discount_type' => $validated['discount_type'] ?? null,
             'discount_value' => $validated['discount_value'] ?? null,
         ]);
@@ -203,5 +220,15 @@ class QuoteController extends Controller
 
             CatalogItem::where('title', $item['title'])->delete();
         }
+    }
+
+    public function download(Quote $quote, RenderQuotePdf $render): Response
+    {
+        $this->authorize('manageQuotes', $quote->project);
+
+        return response($render($quote), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.($quote->number ?? $quote->public_id).'.pdf"',
+        ]);
     }
 }

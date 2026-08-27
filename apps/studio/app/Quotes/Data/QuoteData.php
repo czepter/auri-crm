@@ -13,6 +13,10 @@ class QuoteData extends Data
     public function __construct(
         public string $id,
         public ?string $predecessorId,
+        // Nachtrag statt Revision: der Vorgänger bleibt angenommen, dieses
+        // Angebot führt nur, was dazukommt.
+        public bool $isAddendum,
+        public ?string $predecessorNumber,
         public string $status,
         public string $statusLabel,
         public string $currency,
@@ -33,6 +37,11 @@ class QuoteData extends Data
         public ?int $vatRate,
         public ?string $vatNote,
         public ?int $vatAmount,
+        // Anschreiben, roh mit Merge-Feldern — aufgelöst wird erst beim
+        // Rendern (App\Quotes\Actions\RenderQuotePdf), damit der Schirm
+        // bearbeitet, was gespeichert ist.
+        public ?string $intro,
+        public ?string $outro,
         public array $items,
     ) {}
 
@@ -44,6 +53,8 @@ class QuoteData extends Data
             // way every other cross-model FK this Data layer exposes is —
             // by public_id, never the raw predecessor_id column.
             predecessorId: $quote->predecessor?->public_id,
+            isAddendum: $quote->is_addendum,
+            predecessorNumber: $quote->predecessor?->number,
             status: $quote->status->value,
             statusLabel: $quote->status->label(),
             currency: $quote->currency,
@@ -59,6 +70,8 @@ class QuoteData extends Data
             vatRate: $quote->vat_rate,
             vatNote: $quote->vat_note,
             vatAmount: $quote->vat_amount,
+            intro: $quote->intro,
+            outro: $quote->outro,
             items: $quote->items->map(QuoteItemData::fromModel(...))->all(),
         );
     }
