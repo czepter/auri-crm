@@ -10,9 +10,11 @@ use App\Crm\Actions\AdvanceLeadStage;
 use App\Crm\Actions\BookProject;
 use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\CheckDateAvailability;
+use App\Crm\Actions\CrewAvailability;
 use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Actions\ReadProjectScreen;
 use App\Crm\Data\FormInstanceData;
+use App\Crm\Data\ProjectGalleryData;
 use App\Crm\Data\ProjectHeaderData;
 use App\Crm\Data\ProjectPersonData;
 use App\Crm\Data\ProjectRowData;
@@ -26,14 +28,13 @@ use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
-use App\Data\StaffProfileData;
+use App\Crm\Support\TaskAnchors;
 use App\Documents\Data\MailTemplateData;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Data\QuoteData;
 use App\Settings\Support\StudioSettingsResolver;
@@ -87,7 +88,7 @@ class ProjectController extends Controller
         ]);
     }
 
-    public function show(Project $project): Response
+    public function show(Project $project, TaskAnchors $anchors): Response
     {
         $this->authorize('view', $project);
 
@@ -118,12 +119,8 @@ class ProjectController extends Controller
                     ->get()
                     ->map(TaskRowData::fromTask(...))
             ),
-            'shootOptions' => $project->shoots()->uncancelled()->get()
-                ->map(fn ($shoot) => [
-                    'value' => $shoot->public_id,
-                    'label' => $shoot->label ?? $shoot->kind->label(),
-                ])
-                ->all(),
+            'shootOptions' => $this->shootOptions($project),
+            'anchors' => $anchors->forProject($project),
             // Notes, the whitelisted audit trail and what got done, in one
             // order. Admin-only by omission: the portal's own ProjectController
             // does not render this key. An internal trace on a client page
@@ -238,20 +235,71 @@ class ProjectController extends Controller
         return back();
     }
 
-    public function shoots(Project $project): Response
+    public function shoots(Project $project, CrewAvailability $crew): Response
     {
         $this->authorize('view', $project);
 
         return Inertia::render('Projects/Shoots', [
             'header' => $this->header($project),
             'shoots' => ShootData::collect($this->shootsOf($project)),
-            // Who can be put on a shooting day, and in what capacity. Both
-            // lists are the studio's, not one shoot's.
-            'staff' => StaffProfileData::collect(User::query()->orderBy('name')->get()),
+            // Wer an dem Tag kann, nicht nur wer existiert: frei, abwesend
+            // oder auf einem anderen Shooting.
+            'crewAvailability' => $crew->forProject($project),
             'crewRoles' => collect(CrewRole::cases())
                 ->map(fn (CrewRole $role) => ['value' => $role->value, 'label' => $role->label()])
                 ->all(),
         ]);
+    }
+
+    /**
+     * Die Aufgaben eines Projekts als eigener Bereich: auf der Übersicht steht
+     * nur, was offen ist, hier auch das Erledigte und wonach gefiltert wird.
+     */
+    public function tasks(Project $project, TaskAnchors $anchors): Response
+    {
+        $this->authorize('view', $project);
+
+        return Inertia::render('Projects/Tasks', [
+            'header' => $this->header($project),
+            'tasks' => TaskRowData::collect(
+                $project->tasks()
+                    ->with(['project', 'shoot'])
+                    ->orderByRaw('completed_at is not null')
+                    ->byDueDate()
+                    ->get()
+                    ->map(TaskRowData::fromTask(...))
+            ),
+            'shootOptions' => $this->shootOptions($project),
+            'anchors' => $anchors->forProject($project),
+        ]);
+    }
+
+    /**
+     * Die Galerien am Projekt. /galerien führt die des Studios; hier stehen
+     * die dieses Auftrags neben den Shootings, die noch keine haben.
+     */
+    public function galleries(Project $project): Response
+    {
+        $this->authorize('view', $project);
+
+        return Inertia::render('Projects/Galleries', [
+            'header' => $this->header($project),
+            'galleries' => ProjectGalleryData::collect(
+                $project->galleries()->with(['shoot', 'currentVersion'])->get()
+            ),
+            'shoots' => ShootData::collect($this->shootsOf($project)),
+        ]);
+    }
+
+    /** @return list<array{value: string, label: string}> */
+    private function shootOptions(Project $project): array
+    {
+        return $project->shoots()->uncancelled()->get()
+            ->map(fn (Shoot $shoot) => [
+                'value' => $shoot->public_id,
+                'label' => $shoot->label ?? $shoot->kind->label(),
+            ])
+            ->all();
     }
 
     public function quotes(Request $request, Project $project): Response
@@ -263,6 +311,9 @@ class ProjectController extends Controller
             'quotes' => QuoteData::collect(
                 $project->quotes()->with(['items', 'predecessor'])->get()
             ),
+            'paymentPlan' => $project->job?->paymentPlan
+                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments'))
+                : null,
             // Beide Listen als Prop statt als Suchendpunkt: ein Studio führt
             // zweistellige Mengen, gefiltert wird in der Suchzeile selbst.
             'packages' => PackageData::collect(Package::active()->with('items')->orderBy('name')->get()),

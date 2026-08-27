@@ -83,6 +83,12 @@ Route::middleware('portal.maintenance')->group(function () {
         // table.
         Route::get('/projekte/{project}/fragebogen/{questionnaire}', [QuestionnaireController::class, 'show'])
             ->name('portal.questionnaires.show');
+        Route::post('/projekte/{project}/fragebogen/{questionnaire}/datei', [QuestionnaireController::class, 'upload'])
+            ->name('portal.questionnaire.upload');
+        Route::get('/projekte/{project}/fragebogen/{questionnaire}/datei/{file}', [QuestionnaireController::class, 'download'])
+            ->name('portal.questionnaire.file.download');
+        Route::delete('/projekte/{project}/fragebogen/{questionnaire}/datei/{file}', [QuestionnaireController::class, 'destroyFile'])
+            ->name('portal.questionnaire.file.destroy');
         Route::patch('/projekte/{project}/fragebogen/{questionnaire}', [QuestionnaireController::class, 'update'])
             ->name('portal.questionnaires.update');
 

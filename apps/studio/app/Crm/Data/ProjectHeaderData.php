@@ -88,6 +88,8 @@ class ProjectHeaderData extends Data
             tabs: [
                 ['key' => 'overview', 'label' => 'project.overview', 'href' => "/auftraege/{$project->public_id}", 'count' => null, 'countTo' => null, 'children' => []],
                 ['key' => 'shoots', 'label' => 'project.shoots', 'href' => "/auftraege/{$project->public_id}/shootings", 'count' => null, 'countTo' => null, 'children' => []],
+                ['key' => 'tasks', 'label' => 'project.tasks', 'href' => "/auftraege/{$project->public_id}/aufgaben", 'count' => $project->tasks()->whereNull('completed_at')->count(), 'countTo' => $project->tasks()->count(), 'children' => []],
+                ['key' => 'galleries', 'label' => 'contacts.galleries', 'href' => "/auftraege/{$project->public_id}/galerien", 'count' => $project->galleries()->count(), 'countTo' => null, 'children' => []],
                 ['key' => 'messages', 'label' => 'project.messages', 'href' => "/auftraege/{$project->public_id}/nachrichten", 'count' => self::waitingThreads($project), 'countTo' => null, 'children' => []],
                 ['key' => 'forms', 'label' => 'project.forms', 'href' => "/auftraege/{$project->public_id}/frageboegen", 'count' => self::unansweredForms($project), 'countTo' => null, 'children' => []],
                 ['key' => 'quotes', 'label' => 'project.quotes', 'href' => "/auftraege/{$project->public_id}/angebote", 'count' => $project->quotes()->where('status', QuoteStatus::Sent)->count(), 'countTo' => null, 'children' => []],

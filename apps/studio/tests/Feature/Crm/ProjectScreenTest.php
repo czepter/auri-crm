@@ -57,7 +57,7 @@ it('shows only the tabs whose feature exists', function () {
     // Fragebögen is E-02.
     $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
 
-    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots', 'messages', 'forms', 'quotes', 'contract']);
+    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots', 'tasks', 'galleries', 'messages', 'forms', 'quotes', 'contract']);
 });
 
 it('names its tabs with keys the catalogue answers', function () {

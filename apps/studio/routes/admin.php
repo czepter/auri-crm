@@ -2,6 +2,7 @@
 
 use App\Catalog\Http\Controllers\PackageController;
 use App\Contracts\Http\Controllers\ContractController;
+use App\Contracts\Http\Controllers\ContractSignerController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
 use App\Crm\Http\Controllers\ContactController;
@@ -397,6 +398,10 @@ Route::middleware('audience:staff')->group(function () {
             ->name('projects.update');
         Route::get('/auftraege/{project}/shootings', [ProjectController::class, 'shoots'])
             ->name('projects.shoots');
+        Route::get('/auftraege/{project}/aufgaben', [ProjectController::class, 'tasks'])
+            ->name('projects.tasks');
+        Route::get('/auftraege/{project}/galerien', [ProjectController::class, 'galleries'])
+            ->name('projects.galleries');
         Route::post('/auftraege/{project}/buchung', [ProjectController::class, 'book'])
             ->name('projects.book');
         Route::post('/auftraege/{project}/portal-sichtbarkeit', [ProjectController::class, 'togglePortalVisibility'])
@@ -422,6 +427,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/angebote/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
         Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
         Route::post('/angebote/{quote}/als-paket', [QuoteController::class, 'saveAsPackage'])->name('quotes.saveAsPackage');
+        Route::get('/angebote/{quote}/pdf', [QuoteController::class, 'download'])->name('quotes.download');
 
         // E-02: a project's own questionnaires, seeded from a FormTemplate
         // or started blank, then personalised freely — see FormInstance's
@@ -443,6 +449,12 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::patch('/frageboegen-felder/{formInstanceField}/antwort', [FormInstanceController::class, 'answer'])
             ->name('form-instance-fields.answer');
+        Route::post('/frageboegen-felder/{formInstanceField}/datei', [FormInstanceController::class, 'upload'])
+            ->name('form-instance-fields.upload');
+        Route::get('/fragebogen-dateien/{file}', [FormInstanceController::class, 'download'])
+            ->name('form-instance-files.download');
+        Route::delete('/fragebogen-dateien/{file}', [FormInstanceController::class, 'destroyFile'])
+            ->name('form-instance-files.destroy');
 
         Route::get('/auftraege/{project}/vertrag', [ContractController::class, 'show'])
             ->name('projects.contract');
@@ -450,6 +462,18 @@ Route::middleware('audience:staff')->group(function () {
             ->name('contracts.store');
         Route::get('/vertraege/{contract}/pdf', [ContractController::class, 'download'])
             ->name('contracts.download');
+        // Eine Fassung wird gesichert, nicht überschrieben: der unterschriebene
+        // Stand bleibt abrufbar, bis die neue versendet ist.
+        Route::patch('/vertraege/{contract}', [ContractController::class, 'update'])
+            ->name('contracts.update');
+        Route::post('/vertraege/{contract}/versenden', [ContractController::class, 'send'])
+            ->name('contracts.send');
+        Route::post('/vertraege/{contract}/unterzeichner', [ContractSignerController::class, 'store'])
+            ->name('contract-signers.store');
+        Route::delete('/unterzeichner/{signer}', [ContractSignerController::class, 'destroy'])
+            ->name('contract-signers.destroy');
+        Route::post('/unterzeichner/{signer}/erinnerung', [ContractSignerController::class, 'remind'])
+            ->name('contract-signers.remind');
 
         // G-02: app-proxied multipart ingest into a gallery's quarantine
         // prefix. galleries.uploads.* is a JSON API for the browser's own
@@ -626,6 +650,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('tasks.store');
         Route::post('/aufgaben/{task}/erledigt', [TaskController::class, 'complete'])
             ->name('tasks.complete');
+        Route::post('/aufgaben/{task}/wieder-oeffnen', [TaskController::class, 'reopen'])
+            ->name('tasks.reopen');
         // S-12: what this task waits on. Its own route rather than a field on
         // completion, because changing a dependency and finishing the work
         // are different decisions taken at different moments.
