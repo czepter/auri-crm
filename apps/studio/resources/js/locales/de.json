@@ -1383,7 +1383,8 @@
     "done": "Fertig",
     "addTask": "Aufgabe",
     "taskTitle": "Aufgabe",
-    "anchorField": "Fällig ab"
+    "anchorField": "Fällig ab",
+    "typeSection": "Projekttyp"
   },
   "stages": {
     "title": "Projekt-Einstellungen",

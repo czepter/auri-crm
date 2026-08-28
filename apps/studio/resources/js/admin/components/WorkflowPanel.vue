@@ -4,7 +4,7 @@ import { router, useForm } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
-import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
+import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Label } from '@/ui/label'
@@ -113,64 +113,72 @@ function meta(template: App.Crm.Data.TaskTemplateData) {
 </script>
 
 <template>
-  <div v-if="workflow" data-tokens>
-    <!-- Legt sich auf den Inhalt, nicht auf den Seitenkopf: die Spalten stehen
-         ueber den Spalten, die sie steuern. -->
-    <div class="absolute inset-x-0 bottom-0 top-[70px] z-40 bg-[rgb(25_25_25/0.26)]" @click="emit('close')" />
-
-    <div class="absolute inset-x-[18px] bottom-[18px] top-[106px] z-50 flex flex-col overflow-hidden rounded-xl border border-border bg-paper shadow-[0_24px_64px_rgb(25_25_25/0.22)]">
-      <div class="flex items-center gap-3.5 border-b border-border px-5 py-4">
-        <h2 class="m-0 text-[16px] leading-[1.2] font-semibold tracking-[-0.022em]">{{ $t('workflow.title') }}</h2>
-
-        <div class="flex gap-[3px] rounded-[9px] border border-border p-[3px]">
-          <button
-            v-for="type in workflow.types"
-            :key="type.value"
-            class="cursor-pointer rounded-md border-0 px-3 py-[5px] text-[13px]"
-            :class="type.value === workflow.type ? 'bg-foreground font-semibold text-paper' : 'bg-transparent font-medium text-muted-foreground'"
-            type="button"
-            @click="chooseType(type.value)"
-          >{{ type.label }}</button>
-        </div>
-
-        <Button class="ml-auto" type="button" @click="emit('close')">{{ $t('workflow.done') }}</Button>
+  <!-- Dieselbe Flaeche wie StageSettings, aus demselben Grund: die Aufgaben
+       einer Stufe werden auf der Liste gelesen, also auch dort bearbeitet.
+       Fest statt im Fluss, damit die Liste darunter ihre Scrollposition
+       behaelt. -->
+  <div v-if="workflow" data-tokens class="fixed inset-0 z-40 overflow-y-auto bg-background">
+    <div class="mx-auto w-full max-w-[720px] px-6 pb-16">
+      <div class="flex items-center gap-4 py-[18px]">
+        <button
+          :aria-label="$t('workflow.done')"
+          class="inline-flex cursor-pointer border-0 bg-transparent p-1 text-ink-2"
+          type="button"
+          @click="emit('close')"
+        >
+          <svg class="size-[18px] fill-none stroke-current stroke-[1.75] [stroke-linecap:round]" viewBox="0 0 24 24">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+        <span class="text-[16px] leading-[1.3] font-semibold tracking-[-0.015em]">{{ $t('workflow.title') }}</span>
+        <Button type="button" @click="emit('close')">{{ $t('workflow.done') }}</Button>
       </div>
 
-      <div class="flex flex-1 items-stretch gap-2.5 overflow-x-auto p-[18px_18px_20px]">
-        <section
-          v-for="column in workflow.columns"
-          :key="column.stage"
-          class="flex min-w-0 flex-[1_0_216px] flex-col gap-2 rounded-xl bg-sunk p-2.5"
-        >
-          <header class="flex items-baseline gap-1.5 px-1 pt-0.5 pb-1">
-            <b class="text-[11px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">{{ column.label }}</b>
-            <span class="ml-auto text-[11px] tabular-nums text-ink-2">{{ column.templates.length || '—' }}</span>
-          </header>
+      <div class="pt-10">
+        <section class="mb-11">
+          <h2 class="text-[15px] leading-[1.3] font-semibold tracking-[-0.015em]">{{ $t('workflow.typeSection') }}</h2>
 
-          <button
-            v-for="template in column.templates"
-            :key="template.id"
-            class="block cursor-pointer rounded-lg border border-border bg-paper px-2.5 py-[9px] text-left"
-            :class="!template.isActive && 'opacity-50'"
-            type="button"
-            @click="open(column, template)"
-          >
-            <span class="block text-[13.5px] leading-[1.3] font-semibold tracking-[-0.014em]">{{ template.title }}</span>
-            <span class="mt-[3px] block text-[12px] leading-[1.35] tabular-nums text-ink-2">{{ meta(template) }}</span>
-            <span class="mt-1.5 flex items-center gap-1.5">
-              <span class="size-1.5 flex-none rounded-full" :class="template.audience === 'client' ? 'bg-action' : 'bg-faint'" />
-              <span class="text-[11.5px] leading-none text-muted-foreground">{{ template.audienceLabel }}</span>
-            </span>
-          </button>
+          <div class="mt-3.5 flex flex-wrap gap-2">
+            <button
+              v-for="type in workflow.types"
+              :key="type.value"
+              class="inline-flex cursor-pointer items-center gap-[7px] rounded-full border-0 bg-sunk-2 px-3.5 py-2 text-[13px] leading-[1.2] transition-colors hover:bg-[#E9E9EC]"
+              :class="type.value === workflow.type ? 'font-semibold text-foreground' : 'text-ink-2'"
+              type="button"
+              @click="chooseType(type.value)"
+            >
+              {{ type.label }}
+            </button>
+          </div>
+        </section>
 
-          <button
-            class="flex cursor-pointer items-center gap-1.5 rounded-lg border-0 bg-transparent px-1 py-[7px] text-[12.5px] font-medium text-faint"
-            type="button"
-            @click="open(column, null)"
-          >
-            <svg class="size-3.5 fill-none stroke-current stroke-2 [stroke-linecap:round]" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+        <section v-for="column in workflow.columns" :key="column.stage" class="mb-11">
+          <h2 class="text-[15px] leading-[1.3] font-semibold tracking-[-0.015em]">{{ column.label }}</h2>
+
+          <div v-if="column.templates.length" class="mt-3.5 flex flex-col gap-2 rounded-xl bg-sunk p-3">
+            <button
+              v-for="template in column.templates"
+              :key="template.id"
+              class="cursor-pointer rounded-lg border border-border bg-background px-3 py-2.5 text-left transition-colors hover:border-line-hover"
+              :class="!template.isActive && 'opacity-50'"
+              type="button"
+              @click="open(column, template)"
+            >
+              <span class="flex items-baseline gap-2.5">
+                <span class="min-w-0 flex-1 text-[13.5px] leading-[1.3] font-semibold tracking-[-0.014em]">{{ template.title }}</span>
+                <span class="flex-none text-[12px] tabular-nums text-ink-2">{{ meta(template) }}</span>
+              </span>
+              <span class="mt-1.5 flex items-center gap-1.5">
+                <span class="size-1.5 flex-none rounded-full" :class="template.audience === 'client' ? 'bg-action' : 'bg-faint'" />
+                <span class="text-[11.5px] leading-none text-muted-foreground">{{ template.audienceLabel }}</span>
+              </span>
+            </button>
+          </div>
+
+          <Button class="mt-3.5 ml-0" type="button" variant="ghost" @click="open(column, null)">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></svg>
             {{ $t('workflow.addTask') }}
-          </button>
+          </Button>
         </section>
       </div>
     </div>
@@ -182,10 +190,10 @@ function meta(template: App.Crm.Data.TaskTemplateData) {
         </DialogHeader>
 
         <DialogBody>
-          <form id="workflow-task-form" class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4" @submit.prevent="submit">
-            <div class="col-span-full flex min-w-0 flex-col gap-1.5">
+          <form id="workflow-task-form" class="grid gap-4" @submit.prevent="submit">
+            <div class="flex min-w-0 flex-col gap-1.5">
               <Label for="workflow-title">{{ $t('taskTemplates.titleField') }}</Label>
-              <Input id="workflow-title" v-model="form.title" type="text" maxlength="255" />
+              <Input id="workflow-title" v-model="form.title" maxlength="255" type="text" />
               <p v-if="form.errors.title" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.title }}</p>
             </div>
 
@@ -229,19 +237,16 @@ function meta(template: App.Crm.Data.TaskTemplateData) {
               <p v-if="form.errors.day_offset" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.day_offset }}</p>
             </div>
 
-            <div class="col-span-full flex items-center gap-2.5">
+            <div class="flex items-center gap-2.5">
               <Checkbox id="workflow-active" v-model="form.is_active" />
-              <Label variant="inline" for="workflow-active">{{ $t('taskTemplates.activeField') }}</Label>
+              <Label for="workflow-active" variant="inline">{{ $t('taskTemplates.activeField') }}</Label>
             </div>
           </form>
         </DialogBody>
 
         <DialogFooter>
-          <Button type="submit" form="workflow-task-form" :disabled="form.processing">{{ $t('taskTemplates.save') }}</Button>
-          <DialogClose as-child>
-            <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
-          </DialogClose>
-          <Button v-if="editing" class="ml-auto" variant="ghost" type="button" @click="remove">{{ $t('taskTemplates.delete') }}</Button>
+          <Button class="ml-0" form="workflow-task-form" type="submit">{{ $t('taskTemplates.save') }}</Button>
+          <Button v-if="editing" class="ml-auto" type="button" variant="outline" @click="remove">{{ $t('taskTemplates.delete') }}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
