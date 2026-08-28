@@ -79,6 +79,14 @@ function open(column: Column, template: App.Crm.Data.TaskTemplateData | null) {
   form.reset()
 }
 
+// Die Schreibrouten kehren mit back() zurueck, und ein gewoehnlicher Besuch
+// traegt das Panel-Prop nicht — ohne das Nachladen stuende die Liste nach dem
+// Speichern leer da.
+function reload() {
+  close()
+  router.reload({ only: ['workflow'] })
+}
+
 function submit() {
   const payload = form.transform((data) => ({
     ...data,
@@ -86,7 +94,7 @@ function submit() {
     shoot_kind: data.shoot_kind || null,
   }))
 
-  const done = { preserveScroll: true, onSuccess: () => close() }
+  const done = { preserveScroll: true, onSuccess: () => reload() }
 
   editing.value
     ? payload.patch(`/einstellungen/aufgabenvorlagen/${editing.value.id}`, done)
@@ -96,7 +104,7 @@ function submit() {
 function remove() {
   router.delete(`/einstellungen/aufgabenvorlagen/${editing.value!.id}`, {
     preserveScroll: true,
-    onSuccess: () => close(),
+    onSuccess: () => reload(),
   })
 }
 
