@@ -135,7 +135,9 @@ function drop(pipeline: Pipeline, target: Stage) {
        the list keeps its scroll position underneath. -->
   <div data-tokens class="fixed inset-0 z-40 overflow-y-auto bg-background">
     <div class="mx-auto w-full max-w-[720px] px-6 pb-16">
-      <div class="flex items-center gap-4 py-[18px]">
+      <!-- Bleibt stehen: die Liste ist so lang wie das Studio Stufen hat, und
+           der Weg hier heraus darf nicht nach oben scrollen. -->
+      <div class="sticky top-0 z-10 flex items-center gap-4 bg-background py-[18px]">
         <button
           :aria-label="$t('stages.done')"
           class="inline-flex cursor-pointer border-0 bg-transparent p-1 text-ink-2"
