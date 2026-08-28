@@ -200,6 +200,15 @@ const STAGE_DOT = [
                         @update:model-value="choose"
                     />
 
+                    <Button
+                        v-if="$page.props.auth.can.includes('manage_settings')"
+                        :as="Link"
+                        variant="pill-muted"
+                        href="/einstellungen/stufen"
+                    >
+                        {{ $t("settings.navStages") }}
+                    </Button>
+
                     <Button :as="Link" variant="pill" href="/anfragen/neu">
                         {{ $t("board.create") }}
                     </Button>

@@ -26,7 +26,17 @@ function day(iso: string) {
          rather than the layout's, so the screens that have not been ported
          keep the stylesheet they were built on. -->
     <div data-tokens>
-      <PageHead :title="$t('projects.title')" />
+      <PageHead :title="$t('projects.title')">
+        <Button
+          v-if="$page.props.auth.can.includes('manage_settings')"
+          :as="Link"
+          class="ml-auto"
+          variant="pill-muted"
+          href="/einstellungen/stufen"
+        >
+          {{ $t('settings.navStages') }}
+        </Button>
+      </PageHead>
 
       <Table v-if="projects.length">
         <thead>
