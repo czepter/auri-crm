@@ -26,7 +26,7 @@ class ProjectReadData extends Data
         return new self(
             id: $project->public_id,
             name: $project->name,
-            type: $project->type->value,
+            type: $project->type->key,
             portalVisible: $project->portal_visible,
             updatedAt: $project->updated_at->toIso8601String(),
         );

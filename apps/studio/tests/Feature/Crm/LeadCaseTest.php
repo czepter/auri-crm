@@ -114,7 +114,7 @@ it('saves occasion, source, text and the people from the case itself', function 
 
     expect($lead->fresh()->inquiry_text)->toBe('Neu diktiert.')
         ->and($lead->fresh()->source->value)->toBe('website')
-        ->and($lead->project->fresh()->type->value)->toBe('portrait')
+        ->and($lead->project->fresh()->type->key)->toBe('portrait')
         ->and($contact->fresh()->name)->toBe('Sarah Brandt-Erdmann')
         ->and($contact->fresh()->email)->toBe('s.brandt@example.test');
 });

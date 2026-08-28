@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Staff;
 use App\Crm\Data\LeadCardData;
 use App\Crm\Data\NextShootData;
 use App\Crm\Data\TaskRowData;
-use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\Stage;
 use App\Crm\Models\Task;
+use App\Crm\Support\CrmVocabulary;
 use App\Engagement\Models\Thread;
 use App\Enums\Capability;
 use App\Gallery\Actions\ReadAfterDeliveryColumn;
@@ -104,10 +106,10 @@ class DashboardController extends Controller
      */
     private function pipelineStages(): array
     {
-        $order = array_column(LeadStage::cases(), 'value');
+        $order = app(CrmVocabulary::class)->ordered(StagePipeline::Lead)->pluck('key')->all();
 
         return Lead::query()->open()->pluck('stage')
-            ->map(fn (LeadStage $stage) => $stage->value)
+            ->map(fn (?Stage $stage) => $stage?->key)
             ->sortBy(fn (string $stage) => array_search($stage, $order, true))
             ->values()
             ->all();

@@ -5,9 +5,12 @@ namespace App\Crm\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Enums\ShootKind;
-use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\StagePipeline;
+use App\Crm\Support\CrmVocabulary;
+use BackedEnum;
 use Database\Factories\Crm\ShootFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -45,16 +48,36 @@ class Shoot extends Model
     ];
 
     protected $attributes = [
-        'status' => ShootStatus::Requested->value,
+        'status' => 'requested',
         'is_primary' => false,
         'sort_order' => 0,
     ];
+
+    /**
+     * The stage row behind the stored key. See Lead::stage() for why this is
+     * an accessor rather than a cast class.
+     */
+    protected function status(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $value === null
+                ? null
+                : app(CrmVocabulary::class)->byKey(StagePipeline::Project, $value),
+            set: fn (Stage|BackedEnum|string|null $value) => match (true) {
+                $value === null => null,
+                $value instanceof Stage => $value->key,
+                $value instanceof BackedEnum => (string) $value->value,
+                default => $value,
+            },
+            // Or an assigned enum would be handed back unchanged: Eloquent keeps
+            // whatever object was set, and the seed enums are objects.
+        )->withoutObjectCaching();
+    }
 
     protected function casts(): array
     {
         return [
             'kind' => ShootKind::class,
-            'status' => ShootStatus::class,
             'date' => 'immutable_date',
             'status_entered_at' => 'immutable_datetime',
             'cancelled_at' => 'immutable_datetime',

@@ -1,5 +1,8 @@
 <?php
 
+use App\Contracts\Enums\ContractStatus;
+use App\Contracts\Models\Contract;
+use App\Contracts\Models\ContractSignature;
 use App\Crm\Enums\CrewRole;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ShootKind;
@@ -17,14 +20,11 @@ use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
-use App\Contracts\Enums\ContractStatus;
-use App\Contracts\Models\Contract;
-use App\Contracts\Models\ContractSignature;
+use App\Models\AuditLog;
+use App\Models\User;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Models\AuditLog;
 use App\Support\AuditLogger;
-use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -163,7 +163,7 @@ it('adds a shoot to a project', function () {
     $shoot = $this->project->shoots()->sole();
 
     expect($shoot->kind)->toBe(ShootKind::Engagement)
-        ->and($shoot->status)->toBe(ShootStatus::Requested)
+        ->and($shoot->status->key)->toBe(ShootStatus::Requested->value)
         ->and($shoot->is_primary)->toBeFalse();
 });
 
@@ -180,7 +180,7 @@ it('advances a shoot from the screen', function () {
     $this->post("/shootings/{$shoot->public_id}/status", ['status' => 'shot'])
         ->assertRedirect();
 
-    expect($shoot->fresh()->status)->toBe(ShootStatus::Shot);
+    expect($shoot->fresh()->status->key)->toBe(ShootStatus::Shot->value);
 });
 
 it('renders a refused transition beside the control rather than failing', function () {
@@ -190,7 +190,7 @@ it('renders a refused transition beside the control rather than failing', functi
         ->post("/shootings/{$shoot->public_id}/status", ['status' => 'booked'])
         ->assertSessionHasErrors('status');
 
-    expect($shoot->fresh()->status)->toBe(ShootStatus::Delivered);
+    expect($shoot->fresh()->status->key)->toBe(ShootStatus::Delivered->value);
 });
 
 it('cancels a shoot with a reason', function () {
@@ -200,7 +200,7 @@ it('cancels a shoot with a reason', function () {
         ->assertRedirect();
 
     expect($shoot->fresh()->isCancelled())->toBeTrue()
-        ->and($shoot->fresh()->status)->toBe(ShootStatus::Prep);
+        ->and($shoot->fresh()->status->key)->toBe(ShootStatus::Prep->value);
 });
 
 it('re-designates the primary shoot in one transaction', function () {
@@ -270,7 +270,7 @@ it('books the project from the screen', function () {
     $this->post("/auftraege/{$this->project->public_id}/buchung")->assertRedirect();
 
     expect($this->project->fresh()->job)->not->toBeNull()
-        ->and($this->project->shoots()->sole()->status)->toBe(ShootStatus::Booked);
+        ->and($this->project->shoots()->sole()->status->key)->toBe(ShootStatus::Booked->value);
 });
 
 it('leaves an already booked project alone when the button is pressed twice', function () {
@@ -415,7 +415,7 @@ it('saves the name, the stage and the shoot blocks from the project screen', fun
         ->assertRedirect();
 
     expect($project->fresh()->name)->toBe('Neu')
-        ->and($lead->fresh()->stage)->toBe(LeadStage::Contacted)
+        ->and($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value)
         ->and($shoot->fresh()->date->format('Y-m-d'))->toBe('2026-06-20')
         ->and($shoot->fresh()->venue_name)->toBe('Gut Basthorst');
 });

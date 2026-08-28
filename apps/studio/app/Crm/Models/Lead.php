@@ -6,10 +6,13 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadSource;
-use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\StagePipeline;
+use App\Crm\Support\CrmVocabulary;
 use App\Models\User;
+use BackedEnum;
 use Database\Factories\Crm\LeadFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -47,12 +50,37 @@ class Lead extends Model
     protected function casts(): array
     {
         return [
-            'stage' => LeadStage::class,
             'source' => LeadSource::class,
             'captured_via' => CaptureChannel::class,
             'stage_entered_at' => 'immutable_datetime',
             'lost_at' => 'immutable_datetime',
         ];
+    }
+
+    /**
+     * The stage row behind the stored key.
+     *
+     * An accessor rather than a cast class: a custom cast keeps whatever
+     * object was assigned to it (Model::$classCastCache), so a factory or
+     * seeder writing one of the seed enums would read that enum back until the
+     * model was refreshed. Normalising on the way in and resolving on the way
+     * out means one type comes back whatever was written.
+     */
+    protected function stage(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $value === null
+                ? null
+                : app(CrmVocabulary::class)->byKey(StagePipeline::Lead, $value),
+            set: fn (Stage|BackedEnum|string|null $value) => match (true) {
+                $value === null => null,
+                $value instanceof Stage => $value->key,
+                $value instanceof BackedEnum => (string) $value->value,
+                default => $value,
+            },
+            // Or an assigned enum would be handed back unchanged: Eloquent keeps
+            // whatever object was set, and the seed enums are objects.
+        )->withoutObjectCaching();
     }
 
     public function sourceLabel(): string

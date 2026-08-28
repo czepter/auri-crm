@@ -330,7 +330,7 @@ it('carries the newest inquiries with their occasion and source', function () {
 
     expect($rows)->toHaveCount(1)
         ->and($rows[0]['id'])->toBe($lead->project->public_id)
-        ->and($rows[0]['type'])->toBe($lead->project->type->label());
+        ->and($rows[0]['type'])->toBe($lead->project->type->name);
 });
 
 // The card reads the primary shoot and the latest quote, which the panel's own

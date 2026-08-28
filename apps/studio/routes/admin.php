@@ -18,8 +18,10 @@ use App\Crm\Http\Controllers\LeadCaseController;
 use App\Crm\Http\Controllers\LeadStageController;
 use App\Crm\Http\Controllers\ProjectController;
 use App\Crm\Http\Controllers\ProjectSearchController;
+use App\Crm\Http\Controllers\ProjectTypeController;
 use App\Crm\Http\Controllers\ShootController;
 use App\Crm\Http\Controllers\ShotListItemController;
+use App\Crm\Http\Controllers\StageController;
 use App\Crm\Http\Controllers\TaskController;
 use App\Crm\Http\Controllers\TaskTemplateController;
 use App\Crm\Http\Controllers\TimelineController;
@@ -308,6 +310,27 @@ Route::middleware('audience:staff')->group(function () {
             ->name('settings.payments.edit');
         Route::patch('/einstellungen/zahlungen', [PaymentSettingsController::class, 'update'])
             ->name('settings.payments.update');
+
+        // The studio's own funnel and the kinds of work it does. One screen
+        // over two entities, because the order of the stages is only readable
+        // beside the pipeline they belong to.
+        Route::get('/einstellungen/stufen', [StageController::class, 'index'])
+            ->name('stages.index');
+        Route::post('/einstellungen/stufen', [StageController::class, 'store'])
+            ->name('stages.store');
+        Route::patch('/einstellungen/stufen/reihenfolge', [StageController::class, 'reorder'])
+            ->name('stages.reorder');
+        Route::patch('/einstellungen/stufen/{stage}', [StageController::class, 'update'])
+            ->name('stages.update');
+        Route::delete('/einstellungen/stufen/{stage}', [StageController::class, 'destroy'])
+            ->name('stages.destroy');
+
+        Route::post('/einstellungen/projekttypen', [ProjectTypeController::class, 'store'])
+            ->name('project-types.store');
+        Route::patch('/einstellungen/projekttypen/{projectType}', [ProjectTypeController::class, 'update'])
+            ->name('project-types.update');
+        Route::delete('/einstellungen/projekttypen/{projectType}', [ProjectTypeController::class, 'destroy'])
+            ->name('project-types.destroy');
 
         // T-14: its own controller and gate (ManageTasks, not ManageSettings —
         // see TaskTemplateController's doc comment), sitting in the settings

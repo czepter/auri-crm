@@ -31,6 +31,7 @@ const items = [
   { key: 'payments', href: '/einstellungen/zahlungen', label: 'settings.navPayments' },
 
   { group: 'settings.groupWork' },
+  { key: 'stages', href: '/einstellungen/stufen', label: 'settings.navStages' },
   { key: 'availability', href: '/einstellungen/verfuegbarkeit', label: 'settings.navAvailability' },
   { key: 'taskTemplates', href: '/einstellungen/aufgabenvorlagen', label: 'settings.navTaskTemplates' },
   { key: 'capture', href: '/einstellungen?pane=capture', label: 'settings.navCapture' },

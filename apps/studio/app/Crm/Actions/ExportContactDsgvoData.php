@@ -124,7 +124,7 @@ class ExportContactDsgvoData
             'role' => $project->pivot->role,
             'lead' => $project->lead ? [
                 'source' => $project->lead->source?->value,
-                'stage' => $project->lead->stage?->value,
+                'stage' => $project->lead->stage?->key,
                 'inquiry_text' => $project->lead->inquiry_text,
                 'stage_entered_at' => $project->lead->stage_entered_at?->toIso8601String(),
             ] : null,

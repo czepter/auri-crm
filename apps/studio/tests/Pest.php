@@ -2,10 +2,15 @@
 
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
+use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
+use App\Crm\Models\Stage;
+use App\Crm\Support\CrmVocabulary;
 use App\Documents\Models\DocumentTemplate;
 use App\Engagement\Models\Thread;
 use App\Enums\StaffRole;
@@ -383,4 +388,16 @@ function confirmedGuest(Gallery $gallery, string $email = 'gast@example.com', st
     ]);
 
     return [$guest, app(GalleryGuestPass::class)->issue($gallery, $guest)];
+}
+
+/**
+ * The Stage row behind one of the seeded default stages. Tests name a stage by
+ * the enum the migration seeds from; the app takes the row.
+ */
+function stage(LeadStage|ShootStatus|string $stage, ?StagePipeline $pipeline = null): Stage
+{
+    $pipeline ??= $stage instanceof ShootStatus ? StagePipeline::Project : StagePipeline::Lead;
+    $key = $stage instanceof BackedEnum ? $stage->value : $stage;
+
+    return app(CrmVocabulary::class)->byKey($pipeline, $key);
 }

@@ -2,9 +2,10 @@
 
 namespace App\Crm\Support;
 
-use App\Crm\Enums\LeadStage;
-use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Project;
+use App\Crm\Models\Stage;
 use App\Models\AuditLog;
 use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
@@ -19,7 +20,10 @@ use Carbon\CarbonImmutable;
  */
 final class TaskAnchors
 {
-    public function __construct(private readonly StudioSettingsResolver $settings) {}
+    public function __construct(
+        private readonly StudioSettingsResolver $settings,
+        private readonly CrmVocabulary $stages,
+    ) {}
 
     /**
      * Every anchor this project can still hang a task on. `on` is null while
@@ -48,8 +52,8 @@ final class TaskAnchors
                 'on' => $shoot->date?->format('Y-m-d'),
             ];
 
-            foreach (ShootStatus::cases() as $status) {
-                $key = 'shoot:'.$shoot->public_id.':'.$status->value;
+            foreach ($this->stages->ordered(StagePipeline::Project) as $status) {
+                $key = 'shoot:'.$shoot->public_id.':'.$status->key;
                 $day = $reached[$key] ?? null;
 
                 if ($day === null && ! $shoot->status->canTransitionTo($status)) {
@@ -58,7 +62,7 @@ final class TaskAnchors
 
                 $options[] = [
                     'value' => $key,
-                    'label' => ($shoot->label ?? $shoot->kind->label()).' · '.$status->label(),
+                    'label' => ($shoot->label ?? $shoot->kind->label()).' · '.$status->name,
                     'group' => $day === null ? 'pending' : 'reached',
                     'on' => $day?->format('Y-m-d'),
                 ];
@@ -67,19 +71,19 @@ final class TaskAnchors
 
         $lead = $project->lead;
 
-        foreach ($lead === null ? [] : LeadStage::cases() as $stage) {
-            $key = 'stage:'.$stage->value;
+        foreach ($lead === null ? [] : $this->stages->ordered(StagePipeline::Lead) as $stage) {
+            $key = 'stage:'.$stage->key;
             $day = $reached[$key] ?? null;
 
             // Ahead of the lead is still reachable; behind it and undated
             // means the funnel skipped it, and a lost lead reaches nothing.
-            if ($day === null && ($lead->isLost() || $stage->position() < $lead->stage->position())) {
+            if ($day === null && ($lead->isLost() || $stage->sort_order < $lead->stage->sort_order)) {
                 continue;
             }
 
             $options[] = [
                 'value' => $key,
-                'label' => $stage->label(),
+                'label' => $stage->name,
                 'group' => $day === null ? 'pending' : 'reached',
                 'on' => $day?->format('Y-m-d'),
             ];
@@ -116,7 +120,7 @@ final class TaskAnchors
         $parts = explode(':', $anchor);
 
         if ($parts[0] === 'stage') {
-            return LeadStage::tryFrom($parts[1])?->label();
+            return app(CrmVocabulary::class)->byKey(StagePipeline::Lead, $parts[1])?->name;
         }
 
         $shoot = $project->shoots->firstWhere('public_id', $parts[1]);
@@ -128,7 +132,7 @@ final class TaskAnchors
         $label = $shoot->label ?? $shoot->kind->label();
 
         return isset($parts[2])
-            ? $label.' · '.(ShootStatus::tryFrom($parts[2])?->label() ?? $parts[2])
+            ? $label.' · '.(app(CrmVocabulary::class)->byKey(StagePipeline::Project, $parts[2])?->name ?? $parts[2])
             : $label;
     }
 
@@ -180,14 +184,14 @@ final class TaskAnchors
         $lead = $project->lead;
 
         if ($lead !== null) {
-            $dates['stage:'.$lead->stage->value] ??= ($lead->stage_entered_at ?? $lead->created_at)->toImmutable()->startOfDay();
-            $dates['stage:'.LeadStage::New->value] ??= $lead->created_at->toImmutable()->startOfDay();
+            $dates['stage:'.$lead->stage->key] ??= ($lead->stage_entered_at ?? $lead->created_at)->toImmutable()->startOfDay();
+            $dates['stage:'.$this->stages->anchored(StagePipeline::Lead, StageAnchor::Entry)?->key] ??= $lead->created_at->toImmutable()->startOfDay();
         }
 
         foreach ($project->shoots as $shoot) {
             $key = 'shoot:'.$shoot->public_id.':';
-            $dates[$key.$shoot->status->value] ??= ($shoot->status_entered_at ?? $shoot->created_at)->toImmutable()->startOfDay();
-            $dates[$key.ShootStatus::Requested->value] ??= $shoot->created_at->toImmutable()->startOfDay();
+            $dates[$key.$shoot->status->key] ??= ($shoot->status_entered_at ?? $shoot->created_at)->toImmutable()->startOfDay();
+            $dates[$key.$this->stages->anchored(StagePipeline::Project, StageAnchor::Entry)?->key] ??= $shoot->created_at->toImmutable()->startOfDay();
         }
 
         return $dates;

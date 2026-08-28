@@ -92,7 +92,7 @@ class HomeController extends Controller
         return [
             'id' => $project->public_id,
             'name' => $project->name,
-            'type' => $project->type->label(),
+            'type' => $project->type->name,
             'date' => $date?->format('Y-m-d'),
             'year' => $date?->year,
             'venue' => $project->primaryShoot?->venue(),

@@ -7,8 +7,9 @@ use App\Crm\Data\CaptureInquiryData;
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\HasLabel;
 use App\Crm\Enums\LeadSource;
-use App\Crm\Enums\ProjectType;
 use App\Crm\Models\Lead;
+use App\Crm\Models\ProjectType;
+use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use App\Settings\Support\StudioSettingsResolver;
 use BackedEnum;
@@ -23,7 +24,10 @@ class InquiryCaptureController extends Controller
         $this->authorize('create', Lead::class);
 
         return Inertia::render('Leads/Create', [
-            'types' => self::options(ProjectType::cases()),
+            'types' => app(CrmVocabulary::class)->types()
+                ->filter(fn (ProjectType $type) => $type->is_active)
+                ->map(fn (ProjectType $type) => ['value' => $type->key, 'label' => $type->name])
+                ->values()->all(),
             'sources' => self::options(LeadSource::cases()),
             // C-08: not cases(). The web-form channel belongs to the public
             // endpoint alone — offering it here would make "how many

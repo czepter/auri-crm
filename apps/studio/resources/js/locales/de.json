@@ -741,7 +741,8 @@
     "previewMailReplyTo": "Antwort an",
     "groupGalleries": "Galerien",
     "navGalleryDefaults": "Standardwerte",
-    "navGalleryPresets": "Vorlagen"
+    "navGalleryPresets": "Vorlagen",
+    "navStages": "Stufen & Typen"
   },
   "notifications": {
     "title": "Benachrichtigungen",
@@ -1374,5 +1375,33 @@
     "slugTaken": "Diese Adresse ist schon vergeben.",
     "slugFormat": "Nur Kleinbuchstaben, Ziffern und Bindestriche.",
     "eventDate": "Termin"
+  },
+  "stages": {
+    "title": "Projekt-Einstellungen",
+    "done": "Fertig",
+    "stagesSection": "{pipeline}stufen",
+    "typesSection": "Projekttypen",
+    "addStage": "Stufe hinzufügen",
+    "addType": "Typ hinzufügen",
+    "editStage": "Stufe bearbeiten",
+    "newStage": "{pipeline}stufe hinzufügen",
+    "nameField": "Name",
+    "colorField": "Farbe",
+    "anchorField": "Verhalten",
+    "anchorNone": "Kein Anker",
+    "positionField": "Position",
+    "positionFirst": "Am Anfang",
+    "positionAfter": "Nach {stage}",
+    "keyField": "Schlüssel",
+    "activeField": "Aktiv",
+    "defaultField": "Standard",
+    "save": "Speichern",
+    "add": "Hinzufügen",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "deleteStage": "Stufe „{name}“ löschen",
+    "deleteStageCount": "{count} Datensätze",
+    "moveToField": "Verschieben nach",
+    "deleteAndMove": "Löschen und verschieben"
   }
 }

@@ -30,7 +30,7 @@ class LeadReadData extends Data
             id: $lead->public_id,
             projectId: $lead->project->public_id,
             source: $lead->source->value,
-            stage: $lead->stage->value,
+            stage: $lead->stage->key,
             isLost: $lead->isLost(),
             updatedAt: $lead->updated_at->toIso8601String(),
         );

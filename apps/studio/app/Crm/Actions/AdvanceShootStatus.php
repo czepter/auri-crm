@@ -2,10 +2,10 @@
 
 namespace App\Crm\Actions;
 
-use App\Crm\Enums\ShootStatus;
 use App\Crm\Events\ShootCancelled;
 use App\Crm\Events\ShootStatusChanged;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\Stage;
 use App\Models\User;
 use App\Support\AuditLogger;
 use DomainException;
@@ -24,7 +24,7 @@ use DomainException;
  */
 class AdvanceShootStatus
 {
-    public function __invoke(Shoot $shoot, ShootStatus $next, ?User $actor = null): Shoot
+    public function __invoke(Shoot $shoot, Stage $next, ?User $actor = null): Shoot
     {
         if ($shoot->isCancelled()) {
             throw new DomainException("Shoot {$shoot->public_id} is cancelled and cannot advance.");
@@ -34,7 +34,7 @@ class AdvanceShootStatus
 
         if (! $from->canTransitionTo($next)) {
             throw new DomainException(
-                "Illegal shoot transition {$from->value} -> {$next->value}."
+                "Illegal shoot transition {$from->key} -> {$next->key}."
             );
         }
 
@@ -46,7 +46,7 @@ class AdvanceShootStatus
         AuditLogger::record(
             event: 'shoot.status_changed',
             actor: $actor ?? auth('staff')->user(),
-            context: ['from' => $from->value, 'to' => $next->value],
+            context: ['from' => $from->key, 'to' => $next->key],
             subject: $shoot->public_id,
             projectId: $shoot->project_id,
         );
@@ -73,7 +73,7 @@ class AdvanceShootStatus
         AuditLogger::record(
             event: 'shoot.cancelled',
             actor: $actor ?? auth('staff')->user(),
-            context: ['status' => $shoot->status->value, 'reason' => $reason],
+            context: ['status' => $shoot->status->key, 'reason' => $reason],
             subject: $shoot->public_id,
             projectId: $shoot->project_id,
         );

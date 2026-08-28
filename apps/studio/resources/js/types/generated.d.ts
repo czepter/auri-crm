@@ -380,6 +380,9 @@ export type ProjectContactRole = 'primary' | 'partner' | 'payer' | 'planner' | '
 export type ProjectType = 'wedding' | 'portrait' | 'other';
 export type ShootKind = 'engagement' | 'wedding' | 'reception' | 'portrait' | 'other';
 export type ShootStatus = 'requested' | 'booked' | 'prep' | 'shot' | 'culling' | 'editing' | 'ready' | 'delivered' | 'archived';
+export type StageAnchor = 'entry' | 'quote_sent' | 'quote_accepted' | 'contract_sent' | 'won' | 'booked' | 'shot' | 'ready' | 'delivered' | 'archived';
+export type StageColor = 'grey' | 'red' | 'amber' | 'olive' | 'green' | 'teal' | 'blue' | 'violet';
+export type StagePipeline = 'lead' | 'project';
 export type TaskAudience = 'internal' | 'client';
 }
 }

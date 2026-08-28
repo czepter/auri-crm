@@ -2,8 +2,10 @@
 
 namespace App\Crm\Data;
 
-use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\Stage;
+use App\Crm\Support\CrmVocabulary;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -71,17 +73,18 @@ class ShootData extends Data
             venue: $shoot->venue(),
             venueName: $shoot->venue_name,
             venueCity: $shoot->venue_city,
-            status: $shoot->status->value,
-            statusLabel: $shoot->status->label(),
+            status: $shoot->status->key,
+            statusLabel: $shoot->status->name,
             isPrimary: $shoot->is_primary,
             isCancelled: $shoot->isCancelled(),
             cancelledReason: $shoot->cancelled_reason,
             crew: $shoot->crew
                 ->map(fn ($assignment) => CrewMemberData::fromAssignment($assignment))
                 ->all(),
-            forwardStatuses: $shoot->isCancelled() ? [] : collect(ShootStatus::cases())
-                ->filter(fn (ShootStatus $status) => $shoot->status->canTransitionTo($status))
-                ->map(fn (ShootStatus $status) => ['value' => $status->value, 'label' => $status->label()])
+            forwardStatuses: $shoot->isCancelled() ? [] : app(CrmVocabulary::class)
+                ->ordered(StagePipeline::Project)
+                ->filter(fn (Stage $status) => $status->is_active && $shoot->status->canTransitionTo($status))
+                ->map(fn (Stage $status) => ['value' => $status->key, 'label' => $status->name])
                 ->values()
                 ->all(),
             timeline: $shoot->timeline->map(TimelineEntryData::fromEntry(...))->all(),

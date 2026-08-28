@@ -3,8 +3,10 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Crm\Actions\OpenLeads;
-use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
+use App\Crm\Models\Stage;
+use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,27 +27,30 @@ use Inertia\Response;
  */
 class LeadBoardController extends Controller
 {
-    public function __invoke(Request $request, OpenLeads $leads): Response
+    public function __invoke(Request $request, OpenLeads $leads, CrmVocabulary $stages): Response
     {
         $this->authorize('viewAny', Lead::class);
 
         $cards = $leads->cards();
 
-        // Grouped in PHP, in LeadStage declaration order. The funnel order is
-        // not the alphabetical order of the stored strings, and encoding it in
-        // SQL means a case expression kept in sync with the enum by hand.
+        // Grouped in PHP, in the studio's own stage order. That order is not
+        // the alphabetical order of the stored keys, and encoding it in SQL
+        // means a case expression kept in sync with the table by hand.
         // The column head carries the count and the sum — the question staff
         // otherwise go to Auswertungen for.
-        $columns = collect(LeadStage::cases())->map(function (LeadStage $stage) use ($cards) {
-            $inStage = $cards->where('stage', $stage->value)->values();
+        $columns = $stages->ordered(StagePipeline::Lead)
+            ->filter(fn (Stage $stage) => $stage->is_active)
+            ->map(function (Stage $stage) use ($cards) {
+                $inStage = $cards->where('stage', $stage->key)->values();
 
-            return [
-                'stage' => $stage->value,
-                'label' => $stage->label(),
-                'cards' => $inStage->all(),
-                'total' => (int) $inStage->sum('value'),
-            ];
-        })->all();
+                return [
+                    'stage' => $stage->key,
+                    'label' => $stage->name,
+                    'color' => $stage->color->css(),
+                    'cards' => $inStage->all(),
+                    'total' => (int) $inStage->sum('value'),
+                ];
+            })->values()->all();
 
         return Inertia::render('Leads/Board', [
             'columns' => $columns,

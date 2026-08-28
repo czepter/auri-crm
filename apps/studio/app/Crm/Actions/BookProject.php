@@ -3,11 +3,13 @@
 namespace App\Crm\Actions;
 
 use App\Crm\Enums\BookedVia;
-use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Events\ProjectBooked;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Support\CrmVocabulary;
 use App\Models\User;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
@@ -25,7 +27,10 @@ use Illuminate\Support\Facades\DB;
  */
 class BookProject
 {
-    public function __construct(private readonly AdvanceShootStatus $advance) {}
+    public function __construct(
+        private readonly AdvanceShootStatus $advance,
+        private readonly CrmVocabulary $stages,
+    ) {}
 
     /**
      * Null when the project already has a job — the no-op writes nothing and
@@ -51,7 +56,9 @@ class BookProject
             return null;
         }
 
-        $job = DB::transaction(function () use ($project, $actor, $via) {
+        $booked = $this->stages->anchored(StagePipeline::Project, StageAnchor::Booked);
+
+        $job = DB::transaction(function () use ($project, $actor, $via, $booked) {
             $job = Job::create([
                 'project_id' => $project->id,
                 'booked_at' => now(),
@@ -63,8 +70,8 @@ class BookProject
                 // A shoot already past booked is left alone: booking must not
                 // undo delivered work, and the action would reject the
                 // backwards move anyway.
-                ->filter(fn (Shoot $shoot) => $shoot->status->canTransitionTo(ShootStatus::Booked))
-                ->each(fn (Shoot $shoot) => ($this->advance)($shoot, ShootStatus::Booked, $actor));
+                ->filter(fn (Shoot $shoot) => $booked !== null && $shoot->status->canTransitionTo($booked))
+                ->each(fn (Shoot $shoot) => ($this->advance)($shoot, $booked, $actor));
 
             AuditLogger::record(
                 event: 'project.booked',

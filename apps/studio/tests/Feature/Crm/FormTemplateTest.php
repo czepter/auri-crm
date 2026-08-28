@@ -35,7 +35,7 @@ it('creates a template shell and lands on its builder', function () {
     $template = FormTemplate::sole();
 
     expect($template->name)->toBe('Familienkonstellation')
-        ->and($template->project_type)->toBe(ProjectType::Wedding)
+        ->and($template->project_type->key)->toBe(ProjectType::Wedding->value)
         ->and($template->is_active)->toBeTrue()
         ->and($template->fields)->toHaveCount(0);
 

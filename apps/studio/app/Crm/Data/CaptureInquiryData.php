@@ -4,7 +4,6 @@ namespace App\Crm\Data;
 
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadSource;
-use App\Crm\Enums\ProjectType;
 use Illuminate\Validation\Rule;
 use Spatie\LaravelData\Data;
 
@@ -24,7 +23,7 @@ class CaptureInquiryData extends Data
         public ?string $contact_email,
         public ?string $contact_phone,
         public string $project_name,
-        public ProjectType $type,
+        public string $type,
         public LeadSource $source,
         public CaptureChannel $captured_via,
         public ?string $date,
@@ -66,7 +65,7 @@ class CaptureInquiryData extends Data
             'people.*.email' => ['nullable', 'email', 'max:255'],
             'people.*.phone' => ['nullable', 'string', 'max:64'],
             'project_name' => ['required', 'string', 'max:255'],
-            'type' => ['required', Rule::enum(ProjectType::class)],
+            'type' => ['required', Rule::exists('project_types', 'key')->where('is_active', true)],
             'source' => ['required', Rule::enum(LeadSource::class)],
             'captured_via' => ['required', Rule::enum(CaptureChannel::class)],
             'type_other' => ['nullable', 'string', 'max:120'],

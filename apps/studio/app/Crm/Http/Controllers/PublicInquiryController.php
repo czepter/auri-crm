@@ -6,7 +6,6 @@ use App\Crm\Actions\CaptureInquiry;
 use App\Crm\Data\CaptureInquiryData;
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadSource;
-use App\Crm\Enums\ProjectType;
 use App\Http\Controllers\Controller;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
@@ -66,7 +65,7 @@ class PublicInquiryController extends Controller
             'contact_phone' => ['nullable', 'string', 'max:64'],
             'partner_name' => ['nullable', 'string', 'max:255'],
             'project_name' => ['nullable', 'string', 'max:255'],
-            'type' => ['required', Rule::enum(ProjectType::class)],
+            'type' => ['required', Rule::exists('project_types', 'key')->where('is_active', true)],
             'source' => ['nullable', Rule::enum(LeadSource::class)],
             'date' => ['nullable', 'date_format:Y-m-d'],
             'inquiry_text' => ['nullable', 'string', 'max:10000'],
@@ -102,7 +101,7 @@ class PublicInquiryController extends Controller
                 : [],
             // A public form should not make a client invent a project name.
             project_name: $validated['project_name'] ?? $validated['contact_name'],
-            type: ProjectType::from($validated['type']),
+            type: $validated['type'],
             source: LeadSource::tryFrom($validated['source'] ?? '') ?? LeadSource::Website,
             captured_via: CaptureChannel::WebForm,
             date: $validated['date'] ?? null,

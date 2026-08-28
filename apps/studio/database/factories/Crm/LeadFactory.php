@@ -7,6 +7,7 @@ use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
+use App\Crm\Models\Stage;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -31,7 +32,7 @@ class LeadFactory extends Factory
     }
 
     /** $daysAgo drives the board's stale colouring, so it is time in stage. */
-    public function atStage(LeadStage $stage, ?int $daysAgo = null): static
+    public function atStage(LeadStage|Stage|string $stage, ?int $daysAgo = null): static
     {
         return $this->state(fn () => [
             'stage' => $stage,
