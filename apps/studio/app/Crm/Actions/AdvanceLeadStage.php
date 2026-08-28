@@ -2,10 +2,11 @@
 
 namespace App\Crm\Actions;
 
-use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\StageAnchor;
 use App\Crm\Events\LeadLost;
 use App\Crm\Events\LeadStageChanged;
 use App\Crm\Models\Lead;
+use App\Crm\Models\Stage;
 use App\Models\User;
 use App\Support\AuditLogger;
 use DomainException;
@@ -22,7 +23,7 @@ class AdvanceLeadStage
 {
     public function __construct(private readonly BookProject $book) {}
 
-    public function __invoke(Lead $lead, LeadStage $next, ?User $actor = null): Lead
+    public function __invoke(Lead $lead, Stage $next, ?User $actor = null): Lead
     {
         if ($lead->isLost()) {
             throw new DomainException("Lead {$lead->public_id} is lost and cannot advance.");
@@ -32,7 +33,7 @@ class AdvanceLeadStage
 
         if (! $from->canTransitionTo($next)) {
             throw new DomainException(
-                "Illegal lead transition {$from->value} -> {$next->value}."
+                "Illegal lead transition {$from->key} -> {$next->key}."
             );
         }
 
@@ -51,7 +52,7 @@ class AdvanceLeadStage
         AuditLogger::record(
             event: 'lead.stage_changed',
             actor: $actor ?? auth('staff')->user(),
-            context: ['from' => $from->value, 'to' => $next->value],
+            context: ['from' => $from->key, 'to' => $next->key],
             subject: $lead->public_id,
             projectId: $lead->project_id,
         );
@@ -61,7 +62,7 @@ class AdvanceLeadStage
         // /anfragen by stage, /projekte by Job — each show the record the
         // other one is missing. Idempotent: BookProject writes nothing when a
         // Job already exists (the contract-and-deposit path got there first).
-        if ($next === LeadStage::Booked) {
+        if ($next->anchor === StageAnchor::Won) {
             ($this->book)($lead->project, $actor ?? auth('staff')->user());
         }
 
@@ -87,7 +88,7 @@ class AdvanceLeadStage
         AuditLogger::record(
             event: 'lead.lost',
             actor: $actor ?? auth('staff')->user(),
-            context: ['stage' => $lead->stage->value, 'reason' => $reason],
+            context: ['stage' => $lead->stage->key, 'reason' => $reason],
             subject: $lead->public_id,
             projectId: $lead->project_id,
         );

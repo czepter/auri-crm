@@ -3,7 +3,7 @@
 namespace App\Crm\Listeners;
 
 use App\Crm\Actions\ApplyTaskTemplates;
-use App\Crm\Enums\StageKind;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Events\LeadStageChanged;
 use App\Crm\Events\ShootStatusChanged;
 
@@ -21,11 +21,11 @@ class ApplyTemplatesOnStage
 
     public function handleLeadStage(LeadStageChanged $event): void
     {
-        ($this->apply)->forStage($event->lead->project, StageKind::Lead, $event->to->value);
+        ($this->apply)->forStage($event->lead->project, StagePipeline::Lead, $event->to->key);
     }
 
     public function handleShootStatus(ShootStatusChanged $event): void
     {
-        ($this->apply)->forStage($event->shoot->project, StageKind::Project, $event->to->value);
+        ($this->apply)->forStage($event->shoot->project, StagePipeline::Project, $event->to->key);
     }
 }

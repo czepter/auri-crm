@@ -10,10 +10,11 @@ use App\Crm\Data\ProjectPersonData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\LeadSource;
-use App\Crm\Enums\ProjectType;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
+use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
+use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use App\Quotes\Data\QuoteData;
 use App\Quotes\Enums\QuoteStatus;
@@ -78,14 +79,14 @@ class LeadCaseController extends Controller
                 'id' => $lead->public_id,
                 'projectId' => $project->public_id,
                 'name' => $project->name,
-                'type' => $project->type->value,
+                'type' => $project->type->key,
                 'typeOther' => $project->type_other,
                 'typeLabel' => $project->typeLabel(),
                 'source' => $lead->source->value,
                 'sourceOther' => $lead->source_other,
                 'sourceLabel' => $lead->sourceLabel(),
-                'stage' => $lead->stage->value,
-                'stageLabel' => $lead->stage->label(),
+                'stage' => $lead->stage->key,
+                'stageLabel' => $lead->stage->name,
                 'inquiryText' => $lead->inquiry_text,
                 'capturedVia' => $lead->capturedViaLabel(),
                 'capturedAt' => $lead->created_at->toIso8601String(),
@@ -131,8 +132,9 @@ class LeadCaseController extends Controller
             'thread' => ($this->thread)($project),
             // C-10 (#245): the fixed value lists the edit state offers. Same
             // button rows the capture screen uses.
-            'types' => collect(ProjectType::cases())
-                ->map(fn (ProjectType $type) => ['value' => $type->value, 'label' => $type->label()])->all(),
+            'types' => app(CrmVocabulary::class)->types()
+                ->filter(fn (ProjectType $type) => $type->is_active)
+                ->map(fn (ProjectType $type) => ['value' => $type->key, 'label' => $type->name])->values()->all(),
             'sources' => collect(LeadSource::cases())
                 ->map(fn (LeadSource $source) => ['value' => $source->value, 'label' => $source->label()])->all(),
             'presets' => [
@@ -169,7 +171,7 @@ class LeadCaseController extends Controller
         $this->authorize('manageShoots', $project);
 
         $validated = $request->validate([
-            'type' => ['required', Rule::enum(ProjectType::class)],
+            'type' => ['required', Rule::exists('project_types', 'key')->where('is_active', true)],
             'type_other' => ['nullable', 'string', 'max:120'],
             'source' => ['required', Rule::enum(LeadSource::class)],
             'source_other' => ['nullable', 'string', 'max:120'],

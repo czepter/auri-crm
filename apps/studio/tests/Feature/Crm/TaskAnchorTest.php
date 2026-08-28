@@ -28,10 +28,10 @@ it('reads the day a stage was entered from the ledger, not from where the lead s
     $lead = Lead::factory()->for($project)->create(['stage' => LeadStage::QuoteSent]);
 
     $this->travelTo('2026-08-03 09:00:00');
-    app(AdvanceLeadStage::class)($lead, LeadStage::ContractSent, staffMember(StaffRole::Owner));
+    app(AdvanceLeadStage::class)($lead, stage(LeadStage::ContractSent), staffMember(StaffRole::Owner));
     $this->travelBack();
 
-    app(AdvanceLeadStage::class)($lead, LeadStage::Booked, staffMember(StaffRole::Owner));
+    app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), staffMember(StaffRole::Owner));
 
     expect(app(TaskAnchors::class)->dueOn($project->fresh(), 'stage:contract_sent', 0)?->format('Y-m-d'))
         ->toBe('2026-08-03');

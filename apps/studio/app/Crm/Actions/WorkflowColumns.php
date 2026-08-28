@@ -5,11 +5,13 @@ namespace App\Crm\Actions;
 use App\Crm\Data\TaskTemplateData;
 use App\Crm\Enums\DueAnchor;
 use App\Crm\Enums\HasLabel;
-use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootKind;
-use App\Crm\Enums\StageKind;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Enums\TaskAudience;
+use App\Crm\Models\ProjectType;
+use App\Crm\Models\Stage;
 use App\Crm\Models\TaskTemplate;
+use App\Crm\Support\CrmVocabulary;
 
 /**
  * The workflow panel's payload: one column per stage of one pipeline, holding
@@ -20,30 +22,36 @@ use App\Crm\Models\TaskTemplate;
  */
 class WorkflowColumns
 {
+    public function __construct(private readonly CrmVocabulary $vocabulary) {}
+
     /** @return array<string, mixed> */
-    public function __invoke(ProjectType $type, StageKind $kind): array
+    public function __invoke(ProjectType $type, StagePipeline $pipeline): array
     {
         $templates = TaskTemplate::query()
-            ->where('stage_kind', $kind)
+            ->where('pipeline', $pipeline)
             ->orderBy('sort_order')
             ->get()
             // Null project_type belongs to every column of every type.
-            ->filter(fn (TaskTemplate $t) => $t->project_type === null || $t->project_type === $type);
+            ->filter(fn (TaskTemplate $t) => $t->project_type === null || $t->project_type === $type->key);
 
         return [
-            'type' => $type->value,
-            'stageKind' => $kind->value,
-            'types' => $this->options(ProjectType::cases()),
+            'type' => $type->key,
+            'pipeline' => $pipeline->value,
+            'types' => $this->vocabulary->types()
+                ->map(fn (ProjectType $type) => ['value' => $type->key, 'label' => $type->name])
+                ->all(),
             'audiences' => $this->options(TaskAudience::cases()),
             'anchors' => $this->options(DueAnchor::cases()),
             'shootKinds' => $this->options(ShootKind::cases()),
-            'columns' => array_map(fn (array $stage) => [
-                'stage' => $stage['value'],
-                'label' => $stage['label'],
-                'templates' => TaskTemplateData::collect(
-                    $templates->where('stage', $stage['value'])->values()
-                ),
-            ], $kind->stages()),
+            'columns' => $this->vocabulary->ordered($pipeline)
+                ->map(fn (Stage $stage) => [
+                    'stage' => $stage->key,
+                    'label' => $stage->name,
+                    'templates' => TaskTemplateData::collect(
+                        $templates->where('stage', $stage->key)->values()
+                    ),
+                ])
+                ->all(),
         ];
     }
 

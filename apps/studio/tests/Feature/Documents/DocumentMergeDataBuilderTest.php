@@ -15,7 +15,7 @@ it('builds the same merge data shape any document type resolves against', functi
     $data = (new DocumentMergeDataBuilder)->fromProject($project, new StudioSettingsResolver);
 
     expect($data['project']['name'])->toBe('Hochzeit Meier & Kowalski')
-        ->and($data['project']['type'])->toBe($project->type->label())
+        ->and($data['project']['type'])->toBe($project->type->name)
         ->and($data['contact']['name'])->toBe('Lena Meier')
         ->and($data['contact']['email'])->toBe('lena@example.test')
         ->and($data['job']['bookedAt'])->toBe('14.06.2026')

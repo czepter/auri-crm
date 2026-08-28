@@ -5,13 +5,13 @@ namespace App\Crm\Http\Controllers;
 use App\Crm\Actions\ApplyTaskTemplates;
 use App\Crm\Data\TaskTemplateData;
 use App\Crm\Enums\DueAnchor;
-use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootKind;
-use App\Crm\Enums\ShootStatus;
-use App\Crm\Enums\StageKind;
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Enums\TaskAudience;
-use App\Crm\Rules\StageOfKind;
 use App\Crm\Models\TaskTemplate;
+use App\Crm\Rules\StageOfPipeline;
+use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
 use Carbon\CarbonImmutable;
@@ -121,18 +121,20 @@ class TaskTemplateController extends Controller
      */
     private function validated(Request $request): array
     {
+        $booked = app(CrmVocabulary::class)->anchored(StagePipeline::Project, StageAnchor::Booked);
+
         $request->merge([
-            'stage_kind' => $request->input('stage_kind', StageKind::Project->value),
-            'stage' => $request->input('stage', ShootStatus::Booked->value),
+            'pipeline' => $request->input('pipeline', StagePipeline::Project->value),
+            'stage' => $request->input('stage', $booked?->key),
             'anchor' => $request->input('anchor', DueAnchor::ShootDate->value),
         ]);
 
         return $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'audience' => ['required', Rule::enum(TaskAudience::class)],
-            'project_type' => ['nullable', Rule::enum(ProjectType::class)],
-            'stage_kind' => ['required', Rule::enum(StageKind::class)],
-            'stage' => ['required', 'string', new StageOfKind($request->input('stage_kind'))],
+            'project_type' => ['nullable', 'string', Rule::exists('project_types', 'key')],
+            'pipeline' => ['required', Rule::enum(StagePipeline::class)],
+            'stage' => ['required', 'string', new StageOfPipeline($request->input('pipeline'))],
             'day_offset' => ['required', 'integer'],
             'anchor' => ['required', Rule::enum(DueAnchor::class)],
             'shoot_kind' => ['nullable', Rule::enum(ShootKind::class)],

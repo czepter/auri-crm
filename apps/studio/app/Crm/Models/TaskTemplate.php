@@ -5,9 +5,8 @@ namespace App\Crm\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Enums\DueAnchor;
-use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootKind;
-use App\Crm\Enums\StageKind;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Support\TaskAnchors;
 use App\Settings\Support\StudioSettingsResolver;
@@ -27,7 +26,7 @@ class TaskTemplate extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['title', 'audience', 'project_type', 'stage_kind', 'stage', 'day_offset', 'anchor', 'shoot_kind', 'is_active', 'sort_order', 'depends_on_template_id'];
+    protected $fillable = ['title', 'audience', 'project_type', 'pipeline', 'stage', 'day_offset', 'anchor', 'shoot_kind', 'is_active', 'sort_order', 'depends_on_template_id'];
 
     protected $attributes = ['is_active' => true, 'sort_order' => 0];
 
@@ -35,8 +34,7 @@ class TaskTemplate extends Model
     {
         return [
             'audience' => TaskAudience::class,
-            'project_type' => ProjectType::class,
-            'stage_kind' => StageKind::class,
+            'pipeline' => StagePipeline::class,
             'anchor' => DueAnchor::class,
             'shoot_kind' => ShootKind::class,
             'is_active' => 'boolean',
@@ -48,10 +46,14 @@ class TaskTemplate extends Model
         $query->where('is_active', true);
     }
 
-    /** The set one stage of one project type owes, in the order it is shown. */
-    public function scopeForStage(Builder $query, ProjectType $type, StageKind $kind, string $stage): void
+    /**
+     * The set one stage of one project type owes, in the order it is shown.
+     * The type is its key, as projects.type holds it — a null one belongs to
+     * every type.
+     */
+    public function scopeForStage(Builder $query, string $type, StagePipeline $pipeline, string $stage): void
     {
-        $query->where('stage_kind', $kind)
+        $query->where('pipeline', $pipeline)
             ->where('stage', $stage)
             ->where(fn (Builder $q) => $q->whereNull('project_type')->orWhere('project_type', $type))
             ->orderBy('sort_order');

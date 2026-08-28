@@ -184,6 +184,7 @@ export type LeadCardData = {
 id: string,
 leadId: string,
 type: string,
+typeKey: string,
 names: string,
 date: string | null,
 shootCount: number,
@@ -350,7 +351,7 @@ title: string,
 audience: string,
 audienceLabel: string,
 projectType: string | null,
-stageKind: string,
+pipeline: string,
 stage: string,
 dayOffset: number,
 anchor: string,
@@ -388,7 +389,9 @@ export type ProjectContactRole = 'primary' | 'partner' | 'payer' | 'planner' | '
 export type ProjectType = 'wedding' | 'portrait' | 'other';
 export type ShootKind = 'engagement' | 'wedding' | 'reception' | 'portrait' | 'other';
 export type ShootStatus = 'requested' | 'booked' | 'prep' | 'shot' | 'culling' | 'editing' | 'ready' | 'delivered' | 'archived';
-export type StageKind = 'lead' | 'project';
+export type StageAnchor = 'entry' | 'quote_sent' | 'quote_accepted' | 'contract_sent' | 'won' | 'booked' | 'shot' | 'ready' | 'delivered' | 'archived';
+export type StageColor = 'grey' | 'red' | 'amber' | 'olive' | 'green' | 'teal' | 'blue' | 'violet';
+export type StagePipeline = 'lead' | 'project';
 export type TaskAudience = 'internal' | 'client';
 }
 }

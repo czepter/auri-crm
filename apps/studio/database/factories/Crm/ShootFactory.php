@@ -6,6 +6,7 @@ use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\Stage;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -38,7 +39,7 @@ class ShootFactory extends Factory
     }
 
     /** Places a shoot mid-pipeline, optionally stale, without transitioning it. */
-    public function atStatus(ShootStatus $status, int $daysAgo = 0): static
+    public function atStatus(ShootStatus|Stage|string $status, int $daysAgo = 0): static
     {
         return $this->state(fn () => [
             'status' => $status,

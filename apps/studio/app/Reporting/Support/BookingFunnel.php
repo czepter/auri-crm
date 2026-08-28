@@ -2,8 +2,10 @@
 
 namespace App\Reporting\Support;
 
-use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
+use App\Crm\Support\CrmVocabulary;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -22,6 +24,17 @@ use Illuminate\Support\Facades\DB;
 class BookingFunnel
 {
     /**
+     * The key of the stage that means the lead was won. Read rather than
+     * hardcoded: a studio may rename "Gebucht", and the funnel is counted on
+     * the anchor it carries. Null keeps the filter from matching anything,
+     * which is the honest answer when no stage claims the anchor.
+     */
+    private static function wonKey(): ?string
+    {
+        return app(CrmVocabulary::class)->anchored(StagePipeline::Lead, StageAnchor::Won)?->key;
+    }
+
+    /**
      * Captured and booked per month for a window, oldest first.
      *
      * @return list<array{month: string, captured: int, booked: int, rate: int|null}>
@@ -31,7 +44,7 @@ class BookingFunnel
         $rows = Lead::query()
             ->selectRaw("to_char(date_trunc('month', leads.created_at), 'YYYY-MM') as month")
             ->selectRaw('count(*) as captured')
-            ->selectRaw('count(*) filter (where leads.stage = ?) as booked', [LeadStage::Booked->value])
+            ->selectRaw('count(*) filter (where leads.stage = ?) as booked', [self::wonKey()])
             ->whereBetween('leads.created_at', [$from, $to])
             ->groupBy('month')
             ->orderBy('month')
@@ -68,7 +81,7 @@ class BookingFunnel
             ->selectRaw('leads.source')
             ->selectRaw('leads.source_other')
             ->selectRaw('count(*) as captured')
-            ->selectRaw('count(*) filter (where leads.stage = ?) as booked', [LeadStage::Booked->value])
+            ->selectRaw('count(*) filter (where leads.stage = ?) as booked', [self::wonKey()])
             ->selectRaw('coalesce(sum(payment_plans.total), 0) as revenue')
             ->leftJoin('jobs', 'jobs.project_id', '=', 'leads.project_id')
             ->leftJoin('payment_plans', 'payment_plans.job_id', '=', 'jobs.id')

@@ -3,11 +3,18 @@ import { computed, ref } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import StageSettings from '@/admin/components/StageSettings.vue'
 import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import WorkflowPanel from '@/admin/components/WorkflowPanel.vue'
 import { Button } from '@/ui/button'
 
-defineProps<{ projects: App.Crm.Data.ProjectRowData[]; workflow?: Record<string, unknown> | null }>()
+defineProps<{
+  projects: App.Crm.Data.ProjectRowData[]
+  stageSettings: InstanceType<typeof StageSettings>['$props'] | null
+  workflow?: Record<string, unknown> | null
+}>()
+
+const stagesOpen = ref(false)
 
 // Die Spalten kommen erst beim Oeffnen mit — sonst laedt jede Liste sie mit,
 // ohne dass sie jemand sieht.
@@ -39,19 +46,13 @@ function day(iso: string) {
          keep the stylesheet they were built on. -->
     <div data-tokens>
       <PageHead :title="$t('projects.title')">
-        <button
-          v-if="workflowAllowed"
-          class="ml-auto flex cursor-pointer items-center gap-1.5 border-0 bg-transparent text-[13px] font-medium text-muted-foreground"
-          type="button"
-          @click="openWorkflow"
-        >
-          <svg class="size-[15px] fill-none stroke-current stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]" viewBox="0 0 24 24">
-            <rect x="5" y="4" width="14" height="17" rx="2" />
-            <path d="M9 3h6v3H9z" />
-            <path d="M9 11h6M9 15h4" />
-          </svg>
+        <Button v-if="stageSettings" class="ml-auto" type="button" variant="pill-muted" @click="stagesOpen = true">
+          {{ $t('stages.entry') }}
+        </Button>
+
+        <Button v-if="workflowAllowed" type="button" variant="pill-muted" @click="openWorkflow">
           {{ $t('board.workflows') }}
-        </button>
+        </Button>
       </PageHead>
 
       <Table v-if="projects.length">
@@ -84,6 +85,7 @@ function day(iso: string) {
       <Button v-else :as="Link" variant="pill" class="mt-5" href="/anfragen/neu">
         {{ $t('leads.createKicker') }}
       </Button>
+      <StageSettings v-if="stagesOpen && stageSettings" v-bind="stageSettings" @close="stagesOpen = false" />
 
       <WorkflowPanel v-if="workflowOpen" :workflow="workflow as never" @close="workflowOpen = false" />
     </div>

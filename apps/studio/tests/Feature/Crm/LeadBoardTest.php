@@ -198,7 +198,7 @@ it('advances a lead using the identifier the card carries', function () {
         ->post("/anfragen/{$card['leadId']}/stufe", ['stage' => 'contacted'])
         ->assertRedirect('/anfragen');
 
-    expect($lead->fresh()->stage)->toBe(LeadStage::Contacted);
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value);
 });
 
 it('advances a lead from the board', function () {
@@ -208,7 +208,7 @@ it('advances a lead from the board', function () {
         ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => 'contacted'])
         ->assertRedirect('/anfragen');
 
-    expect($lead->fresh()->stage)->toBe(LeadStage::Contacted);
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value);
 });
 
 // Dragging left is the board's undo for a mis-drop, so the same endpoint takes
@@ -220,7 +220,7 @@ it('moves a lead backward from the board', function () {
         ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => 'new'])
         ->assertRedirect('/anfragen');
 
-    expect($lead->fresh()->stage)->toBe(LeadStage::New);
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::New->value);
 });
 
 it('refuses a move to the stage the card already sits in', function () {
@@ -230,7 +230,7 @@ it('refuses a move to the stage the card already sits in', function () {
         ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => 'quote_sent'])
         ->assertSessionHasErrors('stage');
 
-    expect($lead->fresh()->stage)->toBe(LeadStage::QuoteSent);
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::QuoteSent->value);
 });
 
 it('binds the stage route on the public id, not the primary key', function () {

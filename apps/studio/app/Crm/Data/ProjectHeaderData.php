@@ -55,7 +55,7 @@ class ProjectHeaderData extends Data
             id: $project->public_id,
             name: $project->name,
             names: $project->contactNames(),
-            type: $project->type->label(),
+            type: $project->type->name,
             position: $position,
             primaryDate: $project->primaryShoot?->date?->format('Y-m-d'),
             shootCount: $project->shoots->reject->isCancelled()->count(),

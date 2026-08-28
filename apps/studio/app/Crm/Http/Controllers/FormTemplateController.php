@@ -4,8 +4,9 @@ namespace App\Crm\Http\Controllers;
 
 use App\Crm\Data\FormTemplateData;
 use App\Crm\Enums\FormFieldType;
-use App\Crm\Enums\ProjectType;
 use App\Crm\Models\FormTemplate;
+use App\Crm\Models\ProjectType;
+use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
@@ -51,7 +52,7 @@ class FormTemplateController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'project_type' => ['nullable', Rule::enum(ProjectType::class)],
+            'project_type' => ['nullable', Rule::exists('project_types', 'key')->where('is_active', true)],
         ]);
 
         $template = FormTemplate::create($validated);
@@ -127,7 +128,7 @@ class FormTemplateController extends Controller
     {
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'project_type' => ['nullable', Rule::enum(ProjectType::class)],
+            'project_type' => ['nullable', Rule::exists('project_types', 'key')->where('is_active', true)],
             'is_active' => ['required', 'boolean'],
             'fields' => ['array'],
             'fields.*.label' => ['required', 'string', 'max:255'],
@@ -179,8 +180,9 @@ class FormTemplateController extends Controller
 
     private function projectTypeOptions(): array
     {
-        return collect(ProjectType::cases())
-            ->map(fn (ProjectType $type) => ['value' => $type->value, 'label' => $type->label()])
-            ->all();
+        return app(CrmVocabulary::class)->types()
+            ->filter(fn (ProjectType $type) => $type->is_active)
+            ->map(fn (ProjectType $type) => ['value' => $type->key, 'label' => $type->name])
+            ->values()->all();
     }
 }

@@ -5,8 +5,9 @@ namespace App\Integration\Http\Controllers;
 use App\Crm\Actions\AdvanceLeadStage;
 use App\Crm\Actions\CaptureInquiry;
 use App\Crm\Data\CaptureInquiryData;
-use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
+use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use DomainException;
@@ -35,25 +36,28 @@ class LeadController extends Controller
 
         return response()->json([
             'project' => ['id' => $project->public_id, 'name' => $project->name],
-            'lead' => ['id' => $lead->public_id, 'stage' => $lead->stage->value, 'source' => $lead->source->value],
+            'lead' => ['id' => $lead->public_id, 'stage' => $lead->stage->key, 'source' => $lead->source->value],
         ], 201);
     }
 
-    public function advanceStage(Request $request, Lead $lead, AdvanceLeadStage $advance): JsonResponse
+    public function advanceStage(Request $request, Lead $lead, AdvanceLeadStage $advance, CrmVocabulary $stages): JsonResponse
     {
         $validated = $request->validate([
-            'stage' => ['required', Rule::enum(LeadStage::class)],
+            'stage' => [
+                'required',
+                Rule::exists('stages', 'key')->where('pipeline', StagePipeline::Lead->value)->where('is_active', true),
+            ],
         ]);
 
         try {
-            $advance($lead, LeadStage::from($validated['stage']), $this->actor($request));
+            $advance($lead, $stages->byKey(StagePipeline::Lead, $validated['stage']), $this->actor($request));
         } catch (DomainException $e) {
             // Same mapping LeadStageController gives the board: a rejected
             // transition is a validation failure, not a 500.
             throw ValidationException::withMessages(['stage' => $e->getMessage()]);
         }
 
-        return response()->json(['id' => $lead->public_id, 'stage' => $lead->stage->value]);
+        return response()->json(['id' => $lead->public_id, 'stage' => $lead->stage->key]);
     }
 
     /** N-04: null for an ApiToken (or any other non-User) caller, the consenting staff member otherwise. */

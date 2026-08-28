@@ -10,18 +10,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('task_templates', function (Blueprint $table) {
-            // Null applies to every type. A crew briefing is owed for all of
-            // them; "Familienliste" only for a wedding.
+            // The project type's key, as projects.type holds it. Null applies
+            // to every type: a crew briefing is owed for all of them,
+            // "Familienliste" only for a wedding.
             $table->string('project_type')->nullable()->after('audience');
 
-            // Which pipeline the stage below belongs to, and the stage itself.
-            // The default backfills every existing row to what it already
-            // meant: applied at booking, counted from the shoot's date.
-            $table->string('stage_kind')->default('project')->after('project_type');
-            $table->string('stage')->default('booked')->after('stage_kind');
+            // Which pipeline the stage below belongs to, and the stage's own
+            // key — the same one leads.stage and shoots.status hold. The
+            // defaults backfill every existing row to what it already meant:
+            // applied at booking, counted from the shoot's date.
+            $table->string('pipeline')->default('project')->after('project_type');
+            $table->string('stage')->default('booked')->after('pipeline');
             $table->string('anchor')->default('shoot')->after('day_offset');
 
-            $table->index(['tenant_id', 'stage_kind', 'stage']);
+            $table->index(['tenant_id', 'pipeline', 'stage']);
         });
 
         // The tasks table already guarantees one task per template per shoot.
@@ -37,8 +39,8 @@ return new class extends Migration
         DB::statement('DROP INDEX tasks_template_project_unique');
 
         Schema::table('task_templates', function (Blueprint $table) {
-            $table->dropIndex(['tenant_id', 'stage_kind', 'stage']);
-            $table->dropColumn(['project_type', 'stage_kind', 'stage', 'anchor']);
+            $table->dropIndex(['tenant_id', 'pipeline', 'stage']);
+            $table->dropColumn(['project_type', 'pipeline', 'stage', 'anchor']);
         });
     }
 };

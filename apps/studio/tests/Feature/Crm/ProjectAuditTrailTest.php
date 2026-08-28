@@ -16,7 +16,7 @@ uses(RefreshDatabase::class);
 it('files a shoot status change under its project', function () {
     $shoot = Shoot::factory()->create();
 
-    app(AdvanceShootStatus::class)($shoot, ShootStatus::Booked, actor: staffMember());
+    app(AdvanceShootStatus::class)($shoot, stage(ShootStatus::Booked), actor: staffMember());
 
     expect(AuditLog::where('event', 'shoot.status_changed')->sole()->project_id)
         ->toBe($shoot->project_id);

@@ -17,7 +17,7 @@ type Column = { stage: string; label: string; templates: App.Crm.Data.TaskTempla
 const props = defineProps<{
   workflow?: {
     type: string
-    stageKind: string
+    pipeline: string
     types: Option[]
     audiences: Option[]
     anchors: Option[]
@@ -43,7 +43,7 @@ const form = useForm({
   title: '',
   audience: 'internal',
   project_type: '',
-  stage_kind: '',
+  pipeline: '',
   stage: '',
   day_offset: 0,
   anchor: 'stage',
@@ -55,7 +55,7 @@ const form = useForm({
 // Nur im Projekt-Zweig gibt es einen Termin, gegen den ein Versatz zaehlen
 // kann. In den Lead-Phasen bleibt der Phasenwechsel der einzige Anker.
 const anchors = computed(() =>
-  props.workflow?.stageKind === 'lead'
+  props.workflow?.pipeline === 'lead'
     ? props.workflow.anchors.filter((anchor) => anchor.value === 'stage')
     : (props.workflow?.anchors ?? []),
 )
@@ -68,7 +68,7 @@ function open(column: Column, template: App.Crm.Data.TaskTemplateData | null) {
     title: template?.title ?? '',
     audience: template?.audience ?? 'internal',
     project_type: template?.projectType ?? '',
-    stage_kind: props.workflow!.stageKind,
+    pipeline: props.workflow!.pipeline,
     stage: column.stage,
     day_offset: template?.dayOffset ?? 0,
     anchor: template?.anchor ?? anchors.value[0].value,

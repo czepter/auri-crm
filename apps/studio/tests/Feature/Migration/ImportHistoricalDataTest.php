@@ -38,7 +38,7 @@ it('plans every row of a clean import as creatable, with none unmapped', functio
         ->and($plan->contracts['errors'])->toBe([]);
 
     $project = $plan->projects['toCreate'][0];
-    expect($project['type'])->toBe(ProjectType::Wedding)
+    expect($project['type']->key)->toBe(ProjectType::Wedding->value)
         ->and($project['primary_contact_ref'])->toBe('c1');
 
     $job = $plan->jobs['toCreate'][0];
@@ -68,7 +68,7 @@ it('commits a clean plan into real, linked records', function () {
 
     $project = Project::sole();
     expect($project->name)->toBe('Meier & Kowalski — Hochzeit')
-        ->and($project->type)->toBe(ProjectType::Wedding)
+        ->and($project->type->key)->toBe(ProjectType::Wedding->value)
         ->and($project->primaryContact()->name)->toBe('Lena Meier');
 
     $job = Job::sole();

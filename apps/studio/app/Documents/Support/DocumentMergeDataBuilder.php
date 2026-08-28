@@ -42,7 +42,7 @@ class DocumentMergeDataBuilder
         return [
             'project' => [
                 'name' => $project->name,
-                'type' => $project->type->label(),
+                'type' => $project->type->name,
             ],
             'contact' => [
                 'name' => $contact?->name ?? '',

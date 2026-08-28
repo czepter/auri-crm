@@ -33,8 +33,8 @@ it('moves every uncancelled shoot to booked', function () {
 
     app(BookProject::class)($project, User::factory()->create());
 
-    expect($requested->fresh()->status)->toBe(ShootStatus::Booked)
-        ->and($alsoRequested->fresh()->status)->toBe(ShootStatus::Booked);
+    expect($requested->fresh()->status->key)->toBe(ShootStatus::Booked->value)
+        ->and($alsoRequested->fresh()->status->key)->toBe(ShootStatus::Booked->value);
 });
 
 it('leaves a shoot already past booked untouched', function () {
@@ -44,7 +44,7 @@ it('leaves a shoot already past booked untouched', function () {
 
     app(BookProject::class)($project, User::factory()->create());
 
-    expect($delivered->fresh()->status)->toBe(ShootStatus::Delivered);
+    expect($delivered->fresh()->status->key)->toBe(ShootStatus::Delivered->value);
 });
 
 it('leaves a cancelled shoot untouched', function () {
@@ -53,7 +53,7 @@ it('leaves a cancelled shoot untouched', function () {
 
     app(BookProject::class)($project, User::factory()->create());
 
-    expect($cancelled->fresh()->status)->toBe(ShootStatus::Requested);
+    expect($cancelled->fresh()->status->key)->toBe(ShootStatus::Requested->value);
 });
 
 it('routes the shoots through the pipeline rather than mass updating them', function () {
@@ -88,7 +88,7 @@ it('is a no-op on a project that already has a job', function () {
     expect($result)->toBeNull()
         ->and(Job::count())->toBe(1)
         ->and(Job::sole()->is($existing))->toBeTrue()
-        ->and($shoot->fresh()->status)->toBe(ShootStatus::Requested)
+        ->and($shoot->fresh()->status->key)->toBe(ShootStatus::Requested->value)
         ->and(AuditLog::where('event', 'project.booked')->count())->toBe(0);
 });
 

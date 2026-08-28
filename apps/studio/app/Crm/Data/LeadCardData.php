@@ -26,6 +26,9 @@ class LeadCardData extends Data
         // are not interchangeable — one field each is what keeps them apart.
         public string $leadId,
         public string $type,
+        // Der Schluessel neben dem Namen: das Board faerbt seinen Punkt danach,
+        // und den Namen darf das Studio aendern.
+        public string $typeKey,
         public string $names,
         public ?string $date,
         public int $shootCount,
@@ -52,13 +55,14 @@ class LeadCardData extends Data
         return new self(
             id: $project->public_id,
             leadId: $lead->public_id,
-            type: $project->type->label(),
+            type: $project->type->name,
+            typeKey: $project->type->key,
             names: $project->contactNames(),
             date: $primary?->date?->format('Y-m-d'),
             shootCount: $project->shoots->count(),
             venue: $primary?->venue(),
             source: $lead->source->label(),
-            stage: $lead->stage->value,
+            stage: $lead->stage->key,
             daysInStage: (int) $lead->stage_entered_at->startOfDay()->diffInDays(now()->startOfDay()),
             value: $project->latestQuote?->total,
             lastAt: $lead->stage_entered_at->toIso8601String(),

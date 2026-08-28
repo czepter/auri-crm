@@ -23,15 +23,16 @@ use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\CrewRole;
 use App\Crm\Enums\FormFieldType;
-use App\Crm\Enums\ProjectType;
-use App\Crm\Enums\StageKind;
 use App\Crm\Enums\LeadSource;
-use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\Stage;
 use App\Crm\Models\TaskTemplate;
+use App\Crm\Support\CrmVocabulary;
+use App\Crm\Support\StageSettingsPayload;
 use App\Crm\Support\TaskAnchors;
 use App\Documents\Data\MailTemplateData;
 use App\Documents\Enums\DocumentTemplateType;
@@ -92,14 +93,18 @@ class ProjectController extends Controller
             'projects' => ProjectRowData::collect(
                 $projects->map(fn (Project $project) => ProjectRowData::fromProject($project, $this->position))
             ),
-            'workflow' => Inertia::optional(
-                fn () => request()->user('staff')->can('viewAny', TaskTemplate::class)
-                    ? app(WorkflowColumns::class)(
-                        ProjectType::tryFrom((string) request()->query('workflow_typ')) ?? ProjectType::Wedding,
-                        StageKind::Project,
-                    )
-                    : null,
-            ),
+            'stageSettings' => app(StageSettingsPayload::class)(),
+            'workflow' => Inertia::optional(function () {
+                if (! request()->user('staff')->can('viewAny', TaskTemplate::class)) {
+                    return null;
+                }
+
+                $vocabulary = app(CrmVocabulary::class);
+                $type = $vocabulary->type((string) request()->query('workflow_typ'))
+                    ?? $vocabulary->types()->first();
+
+                return app(WorkflowColumns::class)($type, StagePipeline::Project);
+            }),
         ]);
     }
 
@@ -154,14 +159,15 @@ class ProjectController extends Controller
                 $project->contacts->map(ProjectPersonData::fromContact(...))
             ),
             // C-12 (#248): what the edit state offers as fixed choices.
-            'stages' => collect(LeadStage::cases())
-                ->map(fn (LeadStage $stage) => ['value' => $stage->value, 'label' => $stage->label()])->all(),
+            'stages' => app(CrmVocabulary::class)->ordered(StagePipeline::Lead)
+                ->filter(fn (Stage $stage) => $stage->is_active)
+                ->map(fn (Stage $stage) => ['value' => $stage->key, 'label' => $stage->name])->values()->all(),
             'sources' => collect(LeadSource::cases())
                 ->map(fn (LeadSource $source) => ['value' => $source->value, 'label' => $source->label()])->all(),
             'roles' => collect(ProjectContactRole::cases())
                 ->map(fn (ProjectContactRole $role) => ['value' => $role->value, 'label' => $role->value])->all(),
             'presets' => ['source' => $this->settings->leadPresets('source')],
-            'stage' => $project->lead?->stage->value,
+            'stage' => $project->lead?->stage->key,
             'source' => $project->lead?->source->value,
             'sourceOther' => $project->lead?->source_other,
             'sourceLabel' => $project->lead?->sourceLabel(),
@@ -195,7 +201,7 @@ class ProjectController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'stage' => ['nullable', Rule::enum(LeadStage::class)],
+            'stage' => ['nullable', Rule::exists('stages', 'key')->where('pipeline', StagePipeline::Lead->value)],
             'source' => ['nullable', Rule::enum(LeadSource::class)],
             'source_other' => ['nullable', 'string', 'max:120'],
             'people' => ['array'],
@@ -221,9 +227,11 @@ class ProjectController extends Controller
                 // Through the action, not as a column: it is the only writer
                 // of the stage, and "Gebucht" set here has to book the project
                 // exactly as the board's own move does.
-                $stage = isset($validated['stage']) ? LeadStage::from($validated['stage']) : null;
+                $stage = isset($validated['stage'])
+                    ? app(CrmVocabulary::class)->byKey(StagePipeline::Lead, $validated['stage'])
+                    : null;
 
-                if ($stage !== null && $stage !== $project->lead->stage) {
+                if ($stage !== null && ! $stage->is($project->lead->stage)) {
                     $advance($project->lead, $stage, auth('staff')->user());
                 }
             }

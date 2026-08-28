@@ -51,13 +51,13 @@ it('creates the whole graph from one post', function () {
     $shoot = Shoot::sole();
 
     expect($project->name)->toBe('Steffens & Falk — Hochzeit')
-        ->and($project->type)->toBe(ProjectType::Wedding)
+        ->and($project->type->key)->toBe(ProjectType::Wedding->value)
         ->and($project->portal_visible)->toBeFalse()
-        ->and($lead->stage)->toBe(LeadStage::New)
+        ->and($lead->stage->key)->toBe(LeadStage::New->value)
         ->and($lead->captured_by_id)->toBe($this->staff->id)
         ->and($lead->project_id)->toBe($project->id)
         ->and($shoot->is_primary)->toBeTrue()
-        ->and($shoot->status)->toBe(ShootStatus::Requested)
+        ->and($shoot->status->key)->toBe(ShootStatus::Requested->value)
         ->and($shoot->date->format('Y-m-d'))->toBe('2026-06-14');
 });
 
@@ -227,7 +227,7 @@ it('records who referred a client when the source is a referral', function () {
         contact_phone: null,
         people: [],
         project_name: 'Steffens & Falk',
-        type: ProjectType::Wedding,
+        type: ProjectType::Wedding->value,
         source: LeadSource::Referral,
         captured_via: CaptureChannel::Phone,
         date: null,
@@ -248,7 +248,7 @@ it('leaves the referrer null when nobody recorded one', function () {
         contact_phone: null,
         people: [],
         project_name: 'Ohne Vermittler',
-        type: ProjectType::Wedding,
+        type: ProjectType::Wedding->value,
         source: LeadSource::Referral,
         captured_via: CaptureChannel::Phone,
         date: null,

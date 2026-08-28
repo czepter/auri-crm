@@ -1,6 +1,7 @@
 <?php
 
 use App\Crm\Actions\CheckDateAvailability;
+use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -143,6 +144,11 @@ it('does not query once per date', function () {
     bookedOn('2026-08-22', 'Vehse & Rieck');
     StudioClosure::factory()->spanning('2026-12-24', '2026-12-31')->create();
 
+    // The stage table is read once per request and memoised (CrmVocabulary);
+    // warming it here keeps that one-off read out of the count, which is
+    // about growth per date rather than about fixed lookups.
+    stage(ShootStatus::Booked);
+
     DB::enableQueryLog();
     $result = app(CheckDateAvailability::class)->forDates([
         '2026-06-14', '2026-08-22', '2026-09-05', '2026-03-14',
@@ -162,6 +168,10 @@ it('does not query once per date', function () {
 
 it('runs the same fixed number of queries whether or not any closure is in range', function () {
     bookedOn('2026-06-14');
+    // The stage table is read once per request and memoised (CrmVocabulary);
+    // warming it here keeps that one-off read out of the count, which is
+    // about growth per date rather than about fixed lookups.
+    stage(ShootStatus::Booked);
 
     DB::enableQueryLog();
     app(CheckDateAvailability::class)->forDates(['2026-06-14', '2026-08-22', '2026-09-05', '2026-03-14']);
@@ -181,6 +191,10 @@ it('runs the same fixed number of queries whether or not any closure is in range
 
 it('runs the same fixed number of queries whether or not any absence is in range', function () {
     bookedOn('2026-06-14');
+    // The stage table is read once per request and memoised (CrmVocabulary);
+    // warming it here keeps that one-off read out of the count, which is
+    // about growth per date rather than about fixed lookups.
+    stage(ShootStatus::Booked);
 
     DB::enableQueryLog();
     app(CheckDateAvailability::class)->forDates(['2026-06-14', '2026-08-22', '2026-09-05', '2026-03-14']);

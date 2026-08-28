@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 uses(RefreshDatabase::class);
 
 it('starts as requested', function () {
-    expect(Shoot::factory()->create()->status)->toBe(ShootStatus::Requested);
+    expect(Shoot::factory()->create()->status->key)->toBe(ShootStatus::Requested->value);
 });
 
 it('stores the date as a date and the times as times', function () {

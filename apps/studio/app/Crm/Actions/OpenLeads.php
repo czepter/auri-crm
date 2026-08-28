@@ -5,8 +5,11 @@ namespace App\Crm\Actions;
 use App\Crm\Data\DateConflictData;
 use App\Crm\Data\LeadCardData;
 use App\Crm\Data\LeadQueueRowData;
-use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
+use App\Crm\Models\Stage;
+use App\Crm\Support\CrmVocabulary;
 use Illuminate\Support\Collection;
 
 /**
@@ -21,11 +24,7 @@ use Illuminate\Support\Collection;
  */
 class OpenLeads
 {
-    private const GROUPS = [
-        'unbeantwortet' => [LeadStage::New, LeadStage::Contacted],
-        'angebot' => [LeadStage::QuoteSent],
-        'angenommen' => [LeadStage::QuoteAccepted, LeadStage::ContractSent, LeadStage::Booked],
-    ];
+    private const GROUPS = ['unbeantwortet', 'angebot', 'angenommen'];
 
     /** @var Collection<int, Lead>|null */
     private ?Collection $leads = null;
@@ -36,7 +35,10 @@ class OpenLeads
     /** @var array<string, list<DateConflictData>>|null */
     private ?array $conflicts = null;
 
-    public function __construct(private readonly CheckDateAvailability $availability) {}
+    public function __construct(
+        private readonly CheckDateAvailability $availability,
+        private readonly CrmVocabulary $stages,
+    ) {}
 
     /** @return Collection<int, LeadCardData> */
     public function cards(): Collection
@@ -78,10 +80,10 @@ class OpenLeads
     /** @return list<array{key: string, rows: list<mixed>}> */
     private function grouped(callable $row): array
     {
-        return collect(self::GROUPS)->map(fn (array $stages, string $key) => [
+        return collect(self::GROUPS)->map(fn (string $key) => [
             'key' => $key,
             'rows' => $this->leads()
-                ->filter(fn (Lead $lead) => in_array($lead->stage, $stages, true))
+                ->filter(fn (Lead $lead) => $this->group($lead->stage) === $key)
                 // Undated last. An inquiry without a date is not the most
                 // urgent one, and both views sort through this one line.
                 ->sortBy(fn (Lead $lead) => $lead->project->primaryShoot?->date?->toDateString() ?? '9999-99-99')
@@ -89,6 +91,29 @@ class OpenLeads
                 ->values()
                 ->all(),
         ])->values()->all();
+    }
+
+    /**
+     * Which of the three the stage falls in, read off the anchors rather than
+     * a list of stage keys: a studio that inserts "Vorgespräch" before the
+     * offer has added an unanswered inquiry, and nothing here should need
+     * telling. A stage before the offer anchor is unanswered, one at or past
+     * acceptance is accepted, the span between them is the offer.
+     */
+    private function group(?Stage $stage): ?string
+    {
+        if ($stage === null) {
+            return null;
+        }
+
+        $sent = $this->stages->anchored(StagePipeline::Lead, StageAnchor::QuoteSent)?->sort_order;
+        $accepted = $this->stages->anchored(StagePipeline::Lead, StageAnchor::QuoteAccepted)?->sort_order;
+
+        return match (true) {
+            $accepted !== null && $stage->sort_order >= $accepted => 'angenommen',
+            $sent !== null && $stage->sort_order >= $sent => 'angebot',
+            default => 'unbeantwortet',
+        };
     }
 
     /** @return Collection<int, Lead> */

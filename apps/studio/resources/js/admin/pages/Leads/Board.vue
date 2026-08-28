@@ -5,6 +5,7 @@ import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import LeadQueue from "@/admin/components/LeadQueue.vue";
 import Page from "@/ui/page/Page.vue";
 import PageHead from "@/ui/page/PageHead.vue";
+import StageSettings from "@/admin/components/StageSettings.vue";
 import WorkflowPanel from "@/admin/components/WorkflowPanel.vue";
 import {
     Table,
@@ -35,10 +36,12 @@ const props = defineProps<{
     groups: Group[];
     queue: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[];
     view: string;
+    stageSettings: InstanceType<typeof StageSettings>["$props"] | null;
     workflow?: Record<string, unknown> | null;
 }>();
 
 const view = ref(props.view);
+const stagesOpen = ref(false);
 
 // The switch writes the URL without a navigation and stores the choice, so a
 // link stays shareable and the next visit opens on the same one.
@@ -58,13 +61,12 @@ function choose(next: string) {
 
 // Grey rather than faded: opacity would have pushed the text under the
 // legibility floor, the same trap as a third grey.
-// Drei Typen, drei Farben aus den Tokens. Ueber das Label statt ueber den
-// Wert, weil LeadCardData den Typ als Beschriftung traegt — type_other haengt
-// dort schon dran.
+// Ueber den Schluessel, nicht ueber den Namen: den Namen aendert das Studio.
+// Ein selbst angelegter Typ bekommt den grauen Punkt, bis project_types eine
+// eigene Farbe traegt — dort gehoert sie hin, nicht in diese Tabelle.
 const TYPE_DOT: Record<string, string> = {
-    Hochzeit: "bg-action",
-    Portrait: "bg-ok",
-    Sonstige: "bg-faint",
+    wedding: "bg-action",
+    portrait: "bg-ok",
 };
 
 const DONE_STAGES = ["contract_sent", "booked"];
@@ -212,23 +214,9 @@ function openWorkflow() {
         <Page wide @click="menu = null">
             <div data-tokens class="min-w-0 flex-1">
                 <PageHead :title="$t('board.title')">
-                    <button
-                        v-if="workflowAllowed"
-                        class="ml-auto flex cursor-pointer items-center gap-1.5 border-0 bg-transparent text-[13px] font-medium text-muted-foreground"
-                        type="button"
-                        @click="openWorkflow"
-                    >
-                        <svg class="size-[15px] fill-none stroke-current stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]" viewBox="0 0 24 24">
-                            <rect x="5" y="4" width="14" height="17" rx="2" />
-                            <path d="M9 3h6v3H9z" />
-                            <path d="M9 11h6M9 15h4" />
-                        </svg>
-                        {{ $t("board.workflows") }}
-                    </button>
-
                     <ChoiceGroup
                         v-model="view"
-                        class=""
+                        class="ml-auto"
                         :options="[
                             { value: 'board', label: $t('board.viewBoard') },
                             { value: 'liste', label: $t('board.viewList') },
@@ -236,6 +224,24 @@ function openWorkflow() {
                         variant="segmented"
                         @update:model-value="choose"
                     />
+
+                    <Button
+                        v-if="stageSettings"
+                        variant="pill-muted"
+                        type="button"
+                        @click="stagesOpen = true"
+                    >
+                        {{ $t("stages.entry") }}
+                    </Button>
+
+                    <Button
+                        v-if="workflowAllowed"
+                        variant="pill-muted"
+                        type="button"
+                        @click="openWorkflow"
+                    >
+                        {{ $t("board.workflows") }}
+                    </Button>
 
                     <Button :as="Link" variant="pill" href="/anfragen/neu">
                         {{ $t("board.create") }}
@@ -336,7 +342,7 @@ function openWorkflow() {
                                 <span class="mt-1.5 flex items-center gap-1.5">
                                     <span
                                         class="size-1.5 flex-none rounded-full"
-                                        :class="TYPE_DOT[card.type] ?? 'bg-faint'"
+                                        :class="TYPE_DOT[card.typeKey] ?? 'bg-faint'"
                                     />
                                     <span class="text-[11.5px] leading-none text-muted-foreground">
                                         {{ card.type }}
@@ -487,6 +493,12 @@ function openWorkflow() {
                     </AlertDialogContent>
                 </AlertDialog>
             </div>
+
+            <StageSettings
+                v-if="stagesOpen && stageSettings"
+                v-bind="stageSettings"
+                @close="stagesOpen = false"
+            />
 
             <WorkflowPanel
                 v-if="workflowOpen"

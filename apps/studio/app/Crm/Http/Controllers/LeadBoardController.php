@@ -4,11 +4,13 @@ namespace App\Crm\Http\Controllers;
 
 use App\Crm\Actions\OpenLeads;
 use App\Crm\Actions\WorkflowColumns;
-use App\Crm\Enums\LeadStage;
-use App\Crm\Enums\ProjectType;
-use App\Crm\Enums\StageKind;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
+use App\Crm\Models\ProjectType as ProjectTypeModel;
+use App\Crm\Models\Stage;
 use App\Crm\Models\TaskTemplate;
+use App\Crm\Support\CrmVocabulary;
+use App\Crm\Support\StageSettingsPayload;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,44 +31,57 @@ use Inertia\Response;
  */
 class LeadBoardController extends Controller
 {
-    public function __invoke(Request $request, OpenLeads $leads, WorkflowColumns $workflow): Response
-    {
+    public function __invoke(
+        Request $request,
+        OpenLeads $leads,
+        CrmVocabulary $stages,
+        StageSettingsPayload $settings,
+        WorkflowColumns $workflow,
+    ): Response {
         $this->authorize('viewAny', Lead::class);
 
         $cards = $leads->cards();
 
-        // Grouped in PHP, in LeadStage declaration order. The funnel order is
-        // not the alphabetical order of the stored strings, and encoding it in
-        // SQL means a case expression kept in sync with the enum by hand.
+        // Grouped in PHP, in the studio's own stage order. That order is not
+        // the alphabetical order of the stored keys, and encoding it in SQL
+        // means a case expression kept in sync with the table by hand.
         // The column head carries the count and the sum — the question staff
         // otherwise go to Auswertungen for.
-        $columns = collect(LeadStage::cases())->map(function (LeadStage $stage) use ($cards) {
-            $inStage = $cards->where('stage', $stage->value)->values();
+        $columns = $stages->ordered(StagePipeline::Lead)
+            ->filter(fn (Stage $stage) => $stage->is_active)
+            ->map(function (Stage $stage) use ($cards) {
+                $inStage = $cards->where('stage', $stage->key)->values();
 
-            return [
-                'stage' => $stage->value,
-                'label' => $stage->label(),
-                'cards' => $inStage->all(),
-                'total' => (int) $inStage->sum('value'),
-            ];
-        })->all();
+                return [
+                    'stage' => $stage->key,
+                    'label' => $stage->name,
+                    'color' => $stage->color->css(),
+                    'cards' => $inStage->all(),
+                    'total' => (int) $inStage->sum('value'),
+                ];
+            })->values()->all();
 
         return Inertia::render('Leads/Board', [
             'columns' => $columns,
             'groups' => $leads->groups(),
             'queue' => $leads->queue(),
             'view' => $this->view($request),
+            'stageSettings' => $settings(),
             // Only fetched when the panel opens (a partial reload asking for
             // it), and only for whoever may edit the templates at all.
             'workflow' => Inertia::optional(
                 fn () => $request->user('staff')->can('viewAny', TaskTemplate::class)
-                    ? $workflow(
-                        ProjectType::tryFrom((string) $request->query('workflow_typ')) ?? ProjectType::Wedding,
-                        StageKind::Lead,
-                    )
+                    ? $workflow($this->workflowType($request, $stages), StagePipeline::Lead)
                     : null,
             ),
         ]);
+    }
+
+    /** The type the panel is showing, or the studio's first one. */
+    private function workflowType(Request $request, CrmVocabulary $stages): ProjectTypeModel
+    {
+        return $stages->type((string) $request->query('workflow_typ'))
+            ?? $stages->types()->first();
     }
 
     /**

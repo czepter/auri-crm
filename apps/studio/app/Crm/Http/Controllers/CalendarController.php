@@ -5,17 +5,17 @@ namespace App\Crm\Http\Controllers;
 use App\Crm\Data\CalendarDayData;
 use App\Crm\Data\CalendarEntryData;
 use App\Crm\Data\ShootData;
-use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\StageAnchor;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
-use App\Models\Absence;
-use App\Settings\Models\StudioClosure;
-use Carbon\CarbonImmutable;
-use Illuminate\Http\Request;
 use App\Crm\Support\ShootCalendar;
 use App\Http\Controllers\Controller;
+use App\Models\Absence;
 use App\Models\User;
+use App\Settings\Models\StudioClosure;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -82,7 +82,7 @@ class CalendarController extends Controller
                 entries: [
                     ...$shoots->filter(fn (Shoot $shoot) => $shoot->date->toDateString() === $date)
                         ->map(fn (Shoot $shoot) => new CalendarEntryData(
-                            kind: $shoot->status === ShootStatus::Requested ? 'hold' : 'shoot',
+                            kind: $shoot->status?->anchor === StageAnchor::Entry ? 'hold' : 'shoot',
                             time: $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
                             what: $shoot->project->name,
                             who: $shoot->crew->map(fn ($assignment) => $assignment->user->name)->join(', ') ?: null,
@@ -136,7 +136,7 @@ class CalendarController extends Controller
     public function subscription(): InertiaResponse
     {
         return Inertia::render('Settings/Calendar', [
-            'feedUrl' => url("/kalender/".auth('staff')->user()->calendarToken()."/shootings.ics"),
+            'feedUrl' => url('/kalender/'.auth('staff')->user()->calendarToken().'/shootings.ics'),
         ]);
     }
 

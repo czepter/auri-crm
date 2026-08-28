@@ -4,9 +4,11 @@ namespace App\Crm\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
-use App\Crm\Enums\ProjectType;
+use App\Crm\Support\CrmVocabulary;
+use BackedEnum;
 use Database\Factories\Crm\FormTemplateFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -30,10 +32,28 @@ class FormTemplate extends Model
 
     protected $attributes = ['is_active' => true];
 
+    /**
+     * The type row behind the stored key, or null for a template that applies
+     * to every type. An accessor for the reason Lead::stage() is one.
+     */
+    protected function projectType(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $value === null
+                ? null
+                : app(CrmVocabulary::class)->type($value),
+            set: fn (ProjectType|BackedEnum|string|null $value) => match (true) {
+                $value === null, $value === '' => null,
+                $value instanceof ProjectType => $value->key,
+                $value instanceof BackedEnum => (string) $value->value,
+                default => $value,
+            },
+        )->withoutObjectCaching();
+    }
+
     protected function casts(): array
     {
         return [
-            'project_type' => ProjectType::class,
             'is_active' => 'boolean',
         ];
     }

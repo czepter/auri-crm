@@ -4,12 +4,13 @@ namespace App\Crm\Actions;
 
 use App\Crm\Enums\DueAnchor;
 use App\Crm\Enums\ShootKind;
-use App\Crm\Enums\ShootStatus;
-use App\Crm\Enums\StageKind;
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
+use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\TaskAnchors;
 use App\Settings\Support\StudioSettingsResolver;
 use Carbon\CarbonImmutable;
@@ -34,26 +35,31 @@ class ApplyTaskTemplates
     public function __construct(
         private readonly StudioSettingsResolver $settings,
         private readonly TaskAnchors $anchors,
+        private readonly CrmVocabulary $vocabulary,
     ) {}
 
-    /** Booking is the project pipeline's first stage. */
+    /** Booking is the stage the project pipeline is anchored on. */
     public function __invoke(Project $project): void
     {
-        $this->forStage($project, StageKind::Project, ShootStatus::Booked->value);
+        $booked = $this->vocabulary->anchored(StagePipeline::Project, StageAnchor::Booked);
+
+        if ($booked !== null) {
+            $this->forStage($project, StagePipeline::Project, $booked->key);
+        }
     }
 
-    public function forStage(Project $project, StageKind $kind, string $stage): void
+    public function forStage(Project $project, StagePipeline $pipeline, string $stage): void
     {
         $templates = TaskTemplate::query()
             ->active()
-            ->forStage($project->type, $kind, $stage)
+            ->forStage($project->type?->key ?? '', $pipeline, $stage)
             ->get();
 
         if ($templates->isEmpty()) {
             return;
         }
 
-        if ($kind === StageKind::Lead) {
+        if ($pipeline === StagePipeline::Lead) {
             foreach ($templates as $template) {
                 $this->applyOne($project, null, $template, 'stage:'.$stage);
             }

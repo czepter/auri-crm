@@ -42,7 +42,7 @@ it('puts a public submission on the lead board as a new lead with no captor', fu
 
     $lead = Lead::sole();
 
-    expect($lead->stage)->toBe(LeadStage::New)
+    expect($lead->stage->key)->toBe(LeadStage::New->value)
         ->and($lead->captured_via)->toBe(CaptureChannel::WebForm)
         ->and($lead->captured_by_id)->toBeNull()
         ->and($lead->source)->toBe(LeadSource::Website)

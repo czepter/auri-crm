@@ -60,7 +60,7 @@ it('advances a lead stage, reusing AdvanceLeadStage exactly like the board', fun
         ->postJson("/api/leads/{$lead->public_id}/stage", ['stage' => LeadStage::Contacted->value]);
 
     $response->assertOk()->assertJson(['id' => $lead->public_id, 'stage' => 'contacted']);
-    expect($lead->fresh()->stage)->toBe(LeadStage::Contacted);
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value);
 });
 
 it('rejects an illegal stage transition the same way the board does', function () {
@@ -74,7 +74,7 @@ it('rejects an illegal stage transition the same way the board does', function (
         ->assertUnprocessable()
         ->assertJsonValidationErrors('stage');
 
-    expect($lead->fresh()->stage)->toBe(LeadStage::Booked);
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::Booked->value);
 });
 
 it('refuses to advance a stage without the manage_leads scope', function () {
@@ -86,7 +86,7 @@ it('refuses to advance a stage without the manage_leads scope', function () {
         ->postJson("/api/leads/{$lead->public_id}/stage", ['stage' => LeadStage::Contacted->value])
         ->assertForbidden();
 
-    expect($lead->fresh()->stage)->toBe(LeadStage::New);
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::New->value);
 });
 
 it('404s advancing a stage for a lead public_id from another tenant or that does not exist', function () {

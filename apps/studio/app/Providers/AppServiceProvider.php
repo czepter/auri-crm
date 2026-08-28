@@ -5,8 +5,11 @@ namespace App\Providers;
 use App\Automation\Listeners\FireAutomationRulesForEvent;
 use App\Catalog\Models\Package;
 use App\Contracts\Events\ContractSigned;
+use App\Crm\Actions\RescheduleAnchoredTasks;
 use App\Crm\Events\LeadCaptured;
+use App\Crm\Events\LeadStageChanged;
 use App\Crm\Events\ProjectBooked;
+use App\Crm\Events\ShootStatusChanged;
 use App\Crm\Listeners\ApplyTemplatesOnBooking;
 use App\Crm\Listeners\ApplyTemplatesOnStage;
 use App\Crm\Listeners\BookProjectOnContractAndDeposit;
@@ -15,12 +18,12 @@ use App\Crm\Models\FormTemplate;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
-use App\Crm\Actions\RescheduleAnchoredTasks;
-use App\Crm\Events\LeadStageChanged;
-use App\Crm\Events\ShootStatusChanged;
+use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\Stage;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
+use App\Crm\Support\CrmVocabulary;
 use App\Documents\Models\DocumentTemplate;
 use App\Gallery\Listeners\RecomputeGalleryBalanceSettled;
 use App\Gallery\Models\Gallery;
@@ -42,7 +45,9 @@ use App\Policies\InternalNotePolicy;
 use App\Policies\LeadPolicy;
 use App\Policies\PackagePolicy;
 use App\Policies\ProjectPolicy;
+use App\Policies\ProjectTypePolicy;
 use App\Policies\ShootPolicy;
+use App\Policies\StagePolicy;
 use App\Policies\TaskPolicy;
 use App\Policies\TaskTemplatePolicy;
 use App\Support\PersonalAccessToken;
@@ -100,6 +105,8 @@ class AppServiceProvider extends ServiceProvider
         // test can swap it for an S3Client wired to Aws\MockHandler instead
         // of a live bucket.
         $this->app->singleton(S3Client::class, fn () => Storage::disk('s3')->getClient());
+
+        $this->app->singleton(CrmVocabulary::class);
     }
 
     /**
@@ -123,6 +130,14 @@ class AppServiceProvider extends ServiceProvider
         // G-01: the api surface's tokens carry this app's own tenant_id and
         // public_id — see App\Support\PersonalAccessToken's own docblock.
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+
+        // The stage table is read through one memoised instance per request
+        // (CrmVocabulary) and dropped the moment a stage is written, so a
+        // rename lands in the same request that saved it.
+        Stage::saved(fn () => app(CrmVocabulary::class)->forget());
+        Stage::deleted(fn () => app(CrmVocabulary::class)->forget());
+        ProjectType::saved(fn () => app(CrmVocabulary::class)->forget());
+        ProjectType::deleted(fn () => app(CrmVocabulary::class)->forget());
 
         // Registered by hand: auto-discovery only scans app/Listeners, and the
         // CRM keeps its listeners beside the events they answer to.
@@ -232,6 +247,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Package::class, PackagePolicy::class);
         Gate::policy(DocumentTemplate::class, DocumentTemplatePolicy::class);
         Gate::policy(TaskTemplate::class, TaskTemplatePolicy::class);
+        Gate::policy(Stage::class, StagePolicy::class);
+        Gate::policy(ProjectType::class, ProjectTypePolicy::class);
         Gate::policy(Gallery::class, GalleryPolicy::class);
         Gate::policy(FormTemplate::class, FormTemplatePolicy::class);
 
