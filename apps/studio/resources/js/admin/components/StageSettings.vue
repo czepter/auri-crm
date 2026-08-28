@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
 import { Button } from '@/ui/button'
@@ -25,7 +25,7 @@ type Pipeline = {
   stages: Stage[]
 }
 
-defineProps<{
+const props = defineProps<{
   pipelines: Pipeline[]
   types: { id: string; key: string; name: string; isActive: boolean; isDefault: boolean }[]
   colors: { value: string; label: string; css: string }[]
@@ -111,19 +111,69 @@ function createType() {
   })
 }
 
-// Drag to reorder, on the chips themselves — the order is the meaning, so it
-// is edited where it is read rather than in a number field. Native drag
-// events: a list this short needs no library.
-const dragging = ref<{ pipeline: string; id: string } | null>(null)
+// Drag to reorder, on the chips themselves — the order IS the meaning, so it
+// is edited where it is read rather than in a number field.
+//
+// Pointer events rather than HTML5 drag-and-drop: that API has no touch at
+// all, needs a dataTransfer payload to start a drag in some browsers, and
+// fires a click on the chip afterwards — which here would open the edit
+// dialog on every drop. One pointer stream answers all three, and a list of
+// nine chips needs no library for it.
+const rows = ref(clone(props.pipelines))
 
-function drop(pipeline: Pipeline, target: Stage) {
-  const held = dragging.value
-  dragging.value = null
+watch(() => props.pipelines, (next) => {
+  if (held.value === null) rows.value = clone(next)
+}, { deep: true })
 
-  if (held === null || held.pipeline !== pipeline.value || held.id === target.id) return
+function clone(pipelines: Pipeline[]) {
+  return pipelines.map((pipeline) => ({ ...pipeline, stages: [...pipeline.stages] }))
+}
 
-  const order = pipeline.stages.map((stage) => stage.id).filter((id) => id !== held.id)
-  order.splice(order.indexOf(target.id), 0, held.id)
+const held = ref<{ pipeline: string; id: string; x: number; y: number; moved: boolean } | null>(null)
+
+function grab(event: PointerEvent, pipeline: Pipeline, stage: Stage) {
+  if (event.button !== 0) return
+
+  held.value = { pipeline: pipeline.value, id: stage.id, x: event.clientX, y: event.clientY, moved: false }
+  ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
+}
+
+function move(event: PointerEvent) {
+  const drag = held.value
+  if (drag === null) return
+
+  // Four pixels of slack: a press that wanders by one is a click on the way
+  // to the edit dialog, not a drag.
+  if (!drag.moved && Math.hypot(event.clientX - drag.x, event.clientY - drag.y) < 4) return
+  drag.moved = true
+
+  const over = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-stage]')
+  if (over === null || over === undefined || over.dataset.pipeline !== drag.pipeline) return
+
+  const stages = rows.value.find((row) => row.value === drag.pipeline)?.stages
+  const from = stages?.findIndex((stage) => stage.id === drag.id) ?? -1
+  const to = stages?.findIndex((stage) => stage.id === over.dataset.stage) ?? -1
+
+  if (stages === undefined || from < 0 || to < 0 || from === to) return
+
+  stages.splice(to, 0, ...stages.splice(from, 1))
+}
+
+function release(pipeline: Pipeline, stage: Stage) {
+  const drag = held.value
+  held.value = null
+
+  if (drag === null) return
+
+  // A press that never moved is the way into the dialog. The chip carries
+  // both gestures because it is the only thing on the row worth touching.
+  if (!drag.moved) {
+    editStage(pipeline, stage)
+
+    return
+  }
+
+  const order = rows.value.find((row) => row.value === pipeline.value)?.stages.map((one) => one.id) ?? []
 
   router.patch('/stufen/reihenfolge', { pipeline: pipeline.value, order }, { preserveScroll: true })
 }
@@ -151,7 +201,7 @@ function drop(pipeline: Pipeline, target: Stage) {
       </div>
 
       <div class="pt-10">
-            <section v-for="pipeline in pipelines" :key="pipeline.value" class="mb-11">
+            <section v-for="pipeline in rows" :key="pipeline.value" class="mb-11">
               <h2 class="text-[15px] leading-[1.3] font-semibold tracking-[-0.015em]">
                 {{ $t('stages.stagesSection', { pipeline: pipeline.label }) }}
               </h2>
@@ -160,14 +210,18 @@ function drop(pipeline: Pipeline, target: Stage) {
                 <button
                   v-for="stage in pipeline.stages"
                   :key="stage.id"
-                  class="inline-flex cursor-pointer items-center gap-[7px] rounded-full border border-border bg-background px-3 py-1.5 text-[10.5px] leading-[1.4] font-semibold tracking-[0.05em] uppercase transition-colors hover:border-line-hover"
-                  :class="stage.isActive ? 'text-ink-2' : 'text-faint'"
-                  draggable="true"
+                  class="inline-flex touch-none cursor-grab items-center gap-[7px] rounded-full border border-border bg-background px-3 py-1.5 text-[10.5px] leading-[1.4] font-semibold tracking-[0.05em] uppercase transition-[border-color,opacity] select-none hover:border-line-hover active:cursor-grabbing"
+                  :class="[
+                    stage.isActive ? 'text-ink-2' : 'text-faint',
+                    held?.id === stage.id && held?.moved ? 'opacity-40' : '',
+                  ]"
+                  :data-pipeline="pipeline.value"
+                  :data-stage="stage.id"
                   type="button"
-                  @click="editStage(pipeline, stage)"
-                  @dragstart="dragging = { pipeline: pipeline.value, id: stage.id }"
-                  @dragover.prevent
-                  @drop.prevent="drop(pipeline, stage)"
+                  @pointercancel="held = null"
+                  @pointerdown="grab($event, pipeline, stage)"
+                  @pointermove="move"
+                  @pointerup="release(pipeline, stage)"
                 >
                   <span class="size-1.5 flex-none rounded-full" :style="{ background: stage.css }"></span>
                   {{ stage.name }}

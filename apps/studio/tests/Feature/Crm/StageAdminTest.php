@@ -65,6 +65,20 @@ it('renames a stage without moving the records standing on it', function () {
         ->and($lead->fresh()->stage->name)->toBe('Kostenvoranschlag');
 });
 
+it('leaves a pipeline alone when the order names another pipeline\'s stages', function () {
+    $lead = Stage::ordered(StagePipeline::Lead)->pluck('public_id')->all();
+
+    $this->patch('/stufen/reihenfolge', [
+        'pipeline' => StagePipeline::Project->value,
+        'order' => $lead,
+    ])->assertRedirect();
+
+    expect(Stage::ordered(StagePipeline::Project)->pluck('key')->all())
+        ->toBe(array_column(ShootStatus::cases(), 'value'))
+        ->and(Stage::ordered(StagePipeline::Lead)->pluck('key')->all())
+        ->toBe(array_column(LeadStage::cases(), 'value'));
+});
+
 it('reorders a pipeline', function () {
     $order = Stage::ordered(StagePipeline::Project)->pluck('public_id')->all();
     [$order[0], $order[1]] = [$order[1], $order[0]];
