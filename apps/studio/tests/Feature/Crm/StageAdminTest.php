@@ -18,27 +18,35 @@ beforeEach(function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff');
 });
 
-it('renders both pipelines and the types', function () {
-    $this->get('/einstellungen/stufen')
+it('hands both lists the funnel they order', function () {
+    foreach (['/anfragen', '/projekte'] as $list) {
+        $this->get($list)
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->has('stageSettings.pipelines', 2)
+                ->has('stageSettings.pipelines.0.stages', count(LeadStage::cases()))
+                ->has('stageSettings.pipelines.1.stages', count(ShootStatus::cases()))
+                ->has('stageSettings.types', 3)
+                ->has('stageSettings.colors', 8));
+    }
+});
+
+it('withholds the funnel from a role that may not configure it', function () {
+    $this->actingAs(staffMember(StaffRole::SecondShooter), 'staff')
+        ->get('/anfragen')
         ->assertOk()
-        ->assertInertia(fn ($page) => $page
-            ->component('Settings/Stages')
-            ->has('pipelines', 2)
-            ->has('pipelines.0.stages', count(LeadStage::cases()))
-            ->has('pipelines.1.stages', count(ShootStatus::cases()))
-            ->has('types', 3)
-            ->has('colors', 8));
+        ->assertInertia(fn ($page) => $page->where('stageSettings', null));
 });
 
 it('adds a stage after the one it was placed behind', function () {
     $contacted = stage(LeadStage::Contacted);
 
-    $this->post('/einstellungen/stufen', [
+    $this->post('/stufen', [
         'pipeline' => StagePipeline::Lead->value,
         'name' => 'Vorgespräch',
         'color' => 'blue',
         'after' => $contacted->public_id,
-    ])->assertRedirect('/einstellungen/stufen');
+    ])->assertRedirect();
 
     expect(Stage::ordered(StagePipeline::Lead)->pluck('key')->all())
         ->toBe(['new', 'contacted', 'vorgesprach', 'quote_sent', 'quote_accepted', 'contract_sent', 'booked']);
@@ -47,7 +55,7 @@ it('adds a stage after the one it was placed behind', function () {
 it('renames a stage without moving the records standing on it', function () {
     $lead = Lead::factory()->atStage(LeadStage::QuoteSent)->create();
 
-    $this->patch('/einstellungen/stufen/'.stage(LeadStage::QuoteSent)->public_id, [
+    $this->patch('/stufen/'.stage(LeadStage::QuoteSent)->public_id, [
         'name' => 'Kostenvoranschlag',
         'color' => 'teal',
         'is_active' => true,
@@ -61,7 +69,7 @@ it('reorders a pipeline', function () {
     $order = Stage::ordered(StagePipeline::Project)->pluck('public_id')->all();
     [$order[0], $order[1]] = [$order[1], $order[0]];
 
-    $this->patch('/einstellungen/stufen/reihenfolge', [
+    $this->patch('/stufen/reihenfolge', [
         'pipeline' => StagePipeline::Project->value,
         'order' => $order,
     ])->assertRedirect();
@@ -73,7 +81,7 @@ it('moves the records along when a stage is deleted', function () {
     $extra = Stage::factory()->pipeline(StagePipeline::Lead)->create(['sort_order' => 2]);
     $lead = Lead::factory()->atStage($extra->key)->create();
 
-    $this->delete('/einstellungen/stufen/'.$extra->public_id, [
+    $this->delete('/stufen/'.$extra->public_id, [
         'move_to' => stage(LeadStage::Contacted)->public_id,
     ])->assertRedirect();
 
@@ -84,7 +92,7 @@ it('moves the records along when a stage is deleted', function () {
 it('refuses to delete a stage the app branches on', function () {
     $booked = stage(LeadStage::Booked);
 
-    $this->delete('/einstellungen/stufen/'.$booked->public_id)
+    $this->delete('/stufen/'.$booked->public_id)
         ->assertSessionHasErrors('move_to');
 
     expect(Stage::anchored(StagePipeline::Lead, StageAnchor::Won))->not->toBeNull();
@@ -94,17 +102,17 @@ it('refuses to delete a stage with records and no target', function () {
     $extra = Stage::factory()->pipeline(StagePipeline::Lead)->create(['sort_order' => 2]);
     Lead::factory()->atStage($extra->key)->create();
 
-    $this->delete('/einstellungen/stufen/'.$extra->public_id)->assertSessionHasErrors('move_to');
+    $this->delete('/stufen/'.$extra->public_id)->assertSessionHasErrors('move_to');
 
     expect(Stage::query()->find($extra->id))->not->toBeNull();
 });
 
 it('adds a project type and keeps one default', function () {
-    $this->post('/einstellungen/projekttypen', ['name' => 'Elopement'])->assertRedirect();
+    $this->post('/projekttypen', ['name' => 'Elopement'])->assertRedirect();
 
     $added = ProjectType::query()->where('key', 'elopement')->sole();
 
-    $this->patch('/einstellungen/projekttypen/'.$added->public_id, [
+    $this->patch('/projekttypen/'.$added->public_id, [
         'name' => 'Elopement',
         'is_active' => true,
         'is_default' => true,
@@ -118,7 +126,7 @@ it('refuses to delete a type that projects still carry', function () {
     $type = ProjectType::query()->where('key', 'wedding')->sole();
     Project::factory()->create(['type' => $type->key]);
 
-    $this->delete('/einstellungen/projekttypen/'.$type->public_id)->assertSessionHasErrors('type');
+    $this->delete('/projekttypen/'.$type->public_id)->assertSessionHasErrors('type');
 
     expect(ProjectType::query()->where('key', 'wedding')->exists())->toBeTrue();
 });

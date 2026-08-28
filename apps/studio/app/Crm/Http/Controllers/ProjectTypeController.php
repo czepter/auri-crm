@@ -36,7 +36,7 @@ class ProjectTypeController extends Controller
             subject: $type->public_id,
         );
 
-        return redirect('/einstellungen/stufen');
+        return back();
     }
 
     public function update(Request $request, ProjectType $projectType): RedirectResponse
@@ -58,7 +58,7 @@ class ProjectTypeController extends Controller
             $projectType->update($validated);
         });
 
-        return redirect('/einstellungen/stufen');
+        return back();
     }
 
     public function destroy(ProjectType $projectType): RedirectResponse
@@ -86,7 +86,7 @@ class ProjectTypeController extends Controller
 
         $projectType->delete();
 
-        return redirect('/einstellungen/stufen');
+        return back();
     }
 
     /** A slug of the name, unique and fixed at creation — see StageController::key(). */

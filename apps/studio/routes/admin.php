@@ -311,25 +311,23 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen/zahlungen', [PaymentSettingsController::class, 'update'])
             ->name('settings.payments.update');
 
-        // The studio's own funnel and the kinds of work it does. One screen
-        // over two entities, because the order of the stages is only readable
-        // beside the pipeline they belong to.
-        Route::get('/einstellungen/stufen', [StageController::class, 'index'])
-            ->name('stages.index');
-        Route::post('/einstellungen/stufen', [StageController::class, 'store'])
+        // The studio's own funnel and the kinds of work it does. No page of
+        // their own: the overlay that edits them opens over /anfragen and
+        // /projekte, which is where the stages are read.
+        Route::post('/stufen', [StageController::class, 'store'])
             ->name('stages.store');
-        Route::patch('/einstellungen/stufen/reihenfolge', [StageController::class, 'reorder'])
+        Route::patch('/stufen/reihenfolge', [StageController::class, 'reorder'])
             ->name('stages.reorder');
-        Route::patch('/einstellungen/stufen/{stage}', [StageController::class, 'update'])
+        Route::patch('/stufen/{stage}', [StageController::class, 'update'])
             ->name('stages.update');
-        Route::delete('/einstellungen/stufen/{stage}', [StageController::class, 'destroy'])
+        Route::delete('/stufen/{stage}', [StageController::class, 'destroy'])
             ->name('stages.destroy');
 
-        Route::post('/einstellungen/projekttypen', [ProjectTypeController::class, 'store'])
+        Route::post('/projekttypen', [ProjectTypeController::class, 'store'])
             ->name('project-types.store');
-        Route::patch('/einstellungen/projekttypen/{projectType}', [ProjectTypeController::class, 'update'])
+        Route::patch('/projekttypen/{projectType}', [ProjectTypeController::class, 'update'])
             ->name('project-types.update');
-        Route::delete('/einstellungen/projekttypen/{projectType}', [ProjectTypeController::class, 'destroy'])
+        Route::delete('/projekttypen/{projectType}', [ProjectTypeController::class, 'destroy'])
             ->name('project-types.destroy');
 
         // T-14: its own controller and gate (ManageTasks, not ManageSettings —

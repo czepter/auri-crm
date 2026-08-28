@@ -30,6 +30,7 @@ use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Crm\Support\CrmVocabulary;
+use App\Crm\Support\StageSettingsPayload;
 use App\Crm\Support\TaskAnchors;
 use App\Documents\Data\MailTemplateData;
 use App\Documents\Enums\DocumentTemplateType;
@@ -87,6 +88,7 @@ class ProjectController extends Controller
             'projects' => ProjectRowData::collect(
                 $projects->map(fn (Project $project) => ProjectRowData::fromProject($project, $this->position))
             ),
+            'stageSettings' => app(StageSettingsPayload::class)(),
         ]);
     }
 

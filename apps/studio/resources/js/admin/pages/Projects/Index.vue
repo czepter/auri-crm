@@ -1,11 +1,18 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { ref } from 'vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import StageSettings from '@/admin/components/StageSettings.vue'
 import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Button } from '@/ui/button'
 
-defineProps<{ projects: App.Crm.Data.ProjectRowData[] }>()
+defineProps<{
+  projects: App.Crm.Data.ProjectRowData[]
+  stageSettings: InstanceType<typeof StageSettings>['$props'] | null
+}>()
+
+const stagesOpen = ref(false)
 
 function day(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
@@ -27,14 +34,8 @@ function day(iso: string) {
          keep the stylesheet they were built on. -->
     <div data-tokens>
       <PageHead :title="$t('projects.title')">
-        <Button
-          v-if="$page.props.auth.can.includes('manage_settings')"
-          :as="Link"
-          class="ml-auto"
-          variant="pill-muted"
-          href="/einstellungen/stufen"
-        >
-          {{ $t('settings.navStages') }}
+        <Button v-if="stageSettings" class="ml-auto" type="button" variant="pill-muted" @click="stagesOpen = true">
+          {{ $t('stages.entry') }}
         </Button>
       </PageHead>
 
@@ -64,6 +65,7 @@ function day(iso: string) {
       <Button v-else :as="Link" variant="pill" class="mt-5" href="/anfragen/neu">
         {{ $t('leads.createKicker') }}
       </Button>
+      <StageSettings v-if="stagesOpen && stageSettings" v-bind="stageSettings" @close="stagesOpen = false" />
     </div>
   </AdminLayout>
 </template>

@@ -741,8 +741,7 @@
     "previewMailReplyTo": "Antwort an",
     "groupGalleries": "Galerien",
     "navGalleryDefaults": "Standardwerte",
-    "navGalleryPresets": "Vorlagen",
-    "navStages": "Stufen & Typen"
+    "navGalleryPresets": "Vorlagen"
   },
   "notifications": {
     "title": "Benachrichtigungen",
@@ -1378,6 +1377,7 @@
   },
   "stages": {
     "title": "Projekt-Einstellungen",
+    "entry": "Stufen & Typen",
     "done": "Fertig",
     "stagesSection": "{pipeline}stufen",
     "typesSection": "Projekttypen",

@@ -7,6 +7,7 @@ use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Stage;
 use App\Crm\Support\CrmVocabulary;
+use App\Crm\Support\StageSettingsPayload;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,7 +28,7 @@ use Inertia\Response;
  */
 class LeadBoardController extends Controller
 {
-    public function __invoke(Request $request, OpenLeads $leads, CrmVocabulary $stages): Response
+    public function __invoke(Request $request, OpenLeads $leads, CrmVocabulary $stages, StageSettingsPayload $settings): Response
     {
         $this->authorize('viewAny', Lead::class);
 
@@ -57,6 +58,7 @@ class LeadBoardController extends Controller
             'groups' => $leads->groups(),
             'queue' => $leads->queue(),
             'view' => $this->view($request),
+            'stageSettings' => $settings(),
         ]);
     }
 

@@ -5,6 +5,7 @@ import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import LeadQueue from "@/admin/components/LeadQueue.vue";
 import Page from "@/ui/page/Page.vue";
 import PageHead from "@/ui/page/PageHead.vue";
+import StageSettings from "@/admin/components/StageSettings.vue";
 import {
     Table,
     TableCell,
@@ -34,9 +35,11 @@ const props = defineProps<{
     groups: Group[];
     queue: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[];
     view: string;
+    stageSettings: InstanceType<typeof StageSettings>["$props"] | null;
 }>();
 
 const view = ref(props.view);
+const stagesOpen = ref(false);
 
 // The switch writes the URL without a navigation and stores the choice, so a
 // link stays shareable and the next visit opens on the same one.
@@ -201,12 +204,12 @@ const STAGE_DOT = [
                     />
 
                     <Button
-                        v-if="$page.props.auth.can.includes('manage_settings')"
-                        :as="Link"
+                        v-if="stageSettings"
                         variant="pill-muted"
-                        href="/einstellungen/stufen"
+                        type="button"
+                        @click="stagesOpen = true"
                     >
-                        {{ $t("settings.navStages") }}
+                        {{ $t("stages.entry") }}
                     </Button>
 
                     <Button :as="Link" variant="pill" href="/anfragen/neu">
@@ -448,6 +451,12 @@ const STAGE_DOT = [
                     </AlertDialogContent>
                 </AlertDialog>
             </div>
+
+            <StageSettings
+                v-if="stagesOpen && stageSettings"
+                v-bind="stageSettings"
+                @close="stagesOpen = false"
+            />
         </Page>
     </AdminLayout>
 </template>

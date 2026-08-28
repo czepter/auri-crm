@@ -3,12 +3,9 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Crm\Actions\DeleteStage;
-use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StageColor;
 use App\Crm\Enums\StagePipeline;
-use App\Crm\Models\ProjectType;
 use App\Crm\Models\Stage;
-use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
 use DomainException;
@@ -16,45 +13,18 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Inertia\Inertia;
-use Inertia\Response;
 
 /**
  * The studio's own funnel: what the two pipelines are called, in what order,
  * in what colour, and which project types exist.
  *
- * The screen is one sheet over the app rather than a pane in the settings
- * shell — it is read as "what are our stages", not as a form, and both
- * pipelines have to be visible at once for the order to mean anything.
+ * No screen of its own. The stages are read on /anfragen and /projekte, so
+ * they are edited there too, in an overlay over the list they order —
+ * StageSettingsPayload puts them on those two pages. These are the writes
+ * behind it, and each one returns to the page that sent it.
  */
 class StageController extends Controller
 {
-    public function index(CrmVocabulary $vocabulary): Response
-    {
-        $this->authorize('viewAny', Stage::class);
-
-        return Inertia::render('Settings/Stages', [
-            'pipelines' => collect(StagePipeline::cases())->map(fn (StagePipeline $pipeline) => [
-                'value' => $pipeline->value,
-                'label' => $pipeline->label(),
-                'stages' => $vocabulary->ordered($pipeline)->map($this->row(...))->values()->all(),
-                'anchors' => collect(StageAnchor::for($pipeline))
-                    ->map(fn (StageAnchor $anchor) => ['value' => $anchor->value, 'label' => $anchor->label()])
-                    ->all(),
-            ])->all(),
-            'types' => $vocabulary->types()->map(fn (ProjectType $type) => [
-                'id' => $type->public_id,
-                'key' => $type->key,
-                'name' => $type->name,
-                'isActive' => $type->is_active,
-                'isDefault' => $type->is_default,
-            ])->values()->all(),
-            'colors' => collect(StageColor::cases())
-                ->map(fn (StageColor $color) => ['value' => $color->value, 'label' => $color->label(), 'css' => $color->css()])
-                ->all(),
-        ]);
-    }
-
     public function store(Request $request): RedirectResponse
     {
         $this->authorize('create', Stage::class);
@@ -92,7 +62,7 @@ class StageController extends Controller
             subject: $stage->public_id,
         );
 
-        return redirect('/einstellungen/stufen');
+        return back();
     }
 
     public function update(Request $request, Stage $stage): RedirectResponse
@@ -109,7 +79,7 @@ class StageController extends Controller
 
         $stage->update($validated);
 
-        return redirect('/einstellungen/stufen');
+        return back();
     }
 
     public function reorder(Request $request): RedirectResponse
@@ -128,7 +98,7 @@ class StageController extends Controller
             $stages->get($publicId)?->update(['sort_order' => $position]);
         }
 
-        return redirect('/einstellungen/stufen');
+        return back();
     }
 
     public function destroy(Request $request, Stage $stage, DeleteStage $delete): RedirectResponse
@@ -151,7 +121,7 @@ class StageController extends Controller
             throw ValidationException::withMessages(['move_to' => $e->getMessage()]);
         }
 
-        return redirect('/einstellungen/stufen');
+        return back();
     }
 
     /** @return array<string, mixed> */
