@@ -66,6 +66,7 @@ use App\Settings\Http\Controllers\PortalSettingsController;
 use App\Settings\Http\Controllers\StudioClosureController;
 use App\Settings\Http\Controllers\StudioOnboardingController;
 use App\Settings\Http\Controllers\StudioSettingsController;
+use App\Templates\Http\Controllers\TemplateHubController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -191,11 +192,15 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/pakete/{package}/status', [PackageController::class, 'toggle'])->name('packages.toggle');
         Route::post('/pakete/{package}/duplizieren', [PackageController::class, 'duplicate'])->name('packages.duplicate');
 
+        Route::get('/vorlagen', [TemplateHubController::class, 'index'])->name('templates.index');
+
         // /dokumentvorlagen/neu and /dokumentvorlagen/vorschau stay above
         // /dokumentvorlagen/{documentTemplate} for the same reason /pakete/neu
         // does. T-12 generalises M-01's /vertragsvorlagen into one screen
         // family covering every App\Documents\Enums\DocumentTemplateType.
-        Route::get('/dokumentvorlagen', [DocumentTemplateController::class, 'index'])->name('document-templates.index');
+        // Every kind of template is listed on /vorlagen (TemplateHubController).
+        // What stays here is the editor and its writers.
+        Route::redirect('/dokumentvorlagen', '/vorlagen?typ=dokumente')->name('document-templates.index');
         Route::get('/dokumentvorlagen/neu', [DocumentTemplateController::class, 'create'])->name('document-templates.create');
         // T-18: the wizard's template step, and the only writer that takes a
         // starter key rather than a body. Same capability as creating one by
@@ -333,7 +338,7 @@ Route::middleware('audience:staff')->group(function () {
         // T-14: its own controller and gate (ManageTasks, not ManageSettings —
         // see TaskTemplateController's doc comment), sitting in the settings
         // section the same way Numbering and Availability do.
-        Route::get('/einstellungen/aufgabenvorlagen', [TaskTemplateController::class, 'index'])
+        Route::redirect('/einstellungen/aufgabenvorlagen', '/vorlagen?typ=aufgaben')
             ->name('task-templates.index');
         Route::post('/einstellungen/aufgabenvorlagen', [TaskTemplateController::class, 'store'])
             ->name('task-templates.store');
@@ -345,7 +350,7 @@ Route::middleware('audience:staff')->group(function () {
         // E-01: FormTemplate builder — a questionnaire's questions, built
         // once and reused across projects. /neu stays above /{formTemplate}
         // for the same reason /pakete/neu does.
-        Route::get('/einstellungen/fragebogen-vorlagen', [FormTemplateController::class, 'index'])
+        Route::redirect('/einstellungen/fragebogen-vorlagen', '/vorlagen?typ=fragebogen')
             ->name('form-templates.index');
         Route::get('/einstellungen/fragebogen-vorlagen/neu', [FormTemplateController::class, 'create'])
             ->name('form-templates.create');
@@ -368,7 +373,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen/galerien', [GallerySettingsController::class, 'update'])
             ->name('settings.galleries.update');
 
-        Route::get('/einstellungen/galerie-vorlagen', [GalleryPresetController::class, 'index'])
+        Route::redirect('/einstellungen/galerie-vorlagen', '/vorlagen?typ=galerien')
             ->name('gallery-presets.index');
         Route::post('/einstellungen/galerie-vorlagen', [GalleryPresetController::class, 'store'])
             ->name('gallery-presets.store');

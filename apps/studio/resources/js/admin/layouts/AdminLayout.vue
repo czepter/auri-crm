@@ -130,12 +130,20 @@ const items = computed(() =>
             icon: '<path d="M21 8.5v7l-9 4.5-9-4.5v-7L12 4z"/><path d="M3 8.5 12 13l9-4.5M12 13v7"/>',
         },
         {
-            key: "dokumentvorlagen",
-            label: "Dokumentvorlagen",
-            href: "/dokumentvorlagen",
-            needs: "manage_contracts",
+            // Vier Arten unter einem Eintrag (TemplateHubController). Wer nur
+            // eine davon führen darf, sieht ihn deshalb auch — der Hub zeigt
+            // nur die Arten, für die es reicht.
+            key: "vorlagen",
+            label: "Vorlagen",
+            href: "/vorlagen",
+            needs: [
+                "manage_tasks",
+                "manage_form_templates",
+                "manage_contracts",
+                "manage_settings",
+            ],
             studio: true,
-            icon: '<path d="M6 3h7l5 5v13H6z"/><path d="M13 3v5h5"/><path d="M9 13h6M9 17h4"/>',
+            icon: '<rect x="4" y="3" width="12" height="16" rx="2"/><path d="M8 8h4M8 12h4M19 7v12a2 2 0 0 1-2 2H8"/>',
         },
         {
             key: "team",
@@ -166,7 +174,9 @@ const items = computed(() =>
     ].filter(
         (item) =>
             !item.needs ||
-            can.value.includes(item.needs as App.Enums.Capability),
+            [item.needs]
+                .flat()
+                .some((need) => can.value.includes(need as App.Enums.Capability)),
     ),
 );
 </script>

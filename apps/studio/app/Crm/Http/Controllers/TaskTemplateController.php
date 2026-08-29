@@ -2,8 +2,6 @@
 
 namespace App\Crm\Http\Controllers;
 
-use App\Crm\Actions\ApplyTaskTemplates;
-use App\Crm\Data\TaskTemplateData;
 use App\Crm\Enums\DueAnchor;
 use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\StageAnchor;
@@ -14,12 +12,9 @@ use App\Crm\Rules\StageOfPipeline;
 use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
-use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Inertia\Inertia;
-use Inertia\Response;
 
 /**
  * T-14: CRUD over the studio's standing task templates, and a preview of what
@@ -33,36 +28,6 @@ use Inertia\Response;
  */
 class TaskTemplateController extends Controller
 {
-    public function index(Request $request, ApplyTaskTemplates $apply): Response
-    {
-        $this->authorize('viewAny', TaskTemplate::class);
-
-        $validated = $request->validate([
-            'preview_date' => ['nullable', 'date'],
-            'preview_shoot_kind' => ['nullable', Rule::enum(ShootKind::class)],
-        ]);
-
-        $templates = TaskTemplate::query()->orderBy('sort_order')->get();
-
-        return Inertia::render('Settings/TaskTemplates', [
-            'templates' => TaskTemplateData::collect($templates),
-            'audiences' => collect(TaskAudience::cases())
-                ->map(fn (TaskAudience $audience) => ['value' => $audience->value, 'label' => $audience->label()])
-                ->all(),
-            'shootKinds' => collect(ShootKind::cases())
-                ->map(fn (ShootKind $kind) => ['value' => $kind->value, 'label' => $kind->label()])
-                ->all(),
-            'previewDate' => $validated['preview_date'] ?? null,
-            'previewShootKind' => $validated['preview_shoot_kind'] ?? null,
-            'preview' => isset($validated['preview_date'])
-                ? $apply->preview(
-                    CarbonImmutable::parse($validated['preview_date']),
-                    isset($validated['preview_shoot_kind']) ? ShootKind::from($validated['preview_shoot_kind']) : null,
-                )
-                : null,
-        ]);
-    }
-
     public function store(Request $request): RedirectResponse
     {
         $this->authorize('create', TaskTemplate::class);

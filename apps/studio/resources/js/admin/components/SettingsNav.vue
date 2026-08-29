@@ -32,9 +32,7 @@ const items = [
 
   { group: 'settings.groupWork' },
   { key: 'availability', href: '/einstellungen/verfuegbarkeit', label: 'settings.navAvailability' },
-  { key: 'taskTemplates', href: '/einstellungen/aufgabenvorlagen', label: 'settings.navTaskTemplates' },
   { key: 'capture', href: '/einstellungen?pane=capture', label: 'settings.navCapture' },
-  { key: 'formTemplates', href: '/einstellungen/fragebogen-vorlagen', label: 'settings.navFormTemplates' },
 
   { group: 'settings.groupPortal' },
   { key: 'portal', href: '/einstellungen/portal', label: 'settings.navPortal' },
@@ -45,7 +43,6 @@ const items = [
 
   { group: 'settings.groupGalleries' },
   { key: 'galleries', href: '/einstellungen/galerien', label: 'settings.navGalleryDefaults' },
-  { key: 'galleryPresets', href: '/einstellungen/galerie-vorlagen', label: 'settings.navGalleryPresets' },
 ]
 
 /* tokens.css .nav — the sidebar row, reused for the settings rail. */

@@ -3,7 +3,6 @@
 namespace App\Gallery\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
-use App\Gallery\Data\GalleryPresetData;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryPreset;
 use App\Http\Controllers\Controller;
@@ -11,8 +10,6 @@ use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Inertia\Inertia;
-use Inertia\Response;
 
 /**
  * Eigener Screen neben den Studio-Standardwerten, nicht ein zweiter Abschnitt
@@ -22,15 +19,6 @@ use Inertia\Response;
 class GalleryPresetController extends Controller
 {
     use AuthorizesStaffSettings;
-
-    public function index(): Response
-    {
-        $this->authorizeSettings();
-
-        return Inertia::render('Settings/GalleryPresets', [
-            'presets' => GalleryPresetData::collect(GalleryPreset::query()->orderBy('name')->get()),
-        ]);
-    }
 
     public function store(Request $request): RedirectResponse
     {

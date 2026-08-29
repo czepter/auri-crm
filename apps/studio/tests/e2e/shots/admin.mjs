@@ -68,9 +68,9 @@ await visit(page, `${ADMIN}/anfragen`)
 ids.project = await firstHref(page, /^\/auftraege\/[a-z0-9]+/)
 await visit(page, `${ADMIN}/pakete`)
 ids.package = await firstHref(page, /^\/pakete\/(?!neu)/)
-await visit(page, `${ADMIN}/dokumentvorlagen`)
+await visit(page, `${ADMIN}/vorlagen?typ=dokumente`)
 ids.documentTemplate = await firstHref(page, /^\/dokumentvorlagen\/(?!neu|vorschau)/)
-await visit(page, `${ADMIN}/einstellungen/fragebogen-vorlagen`)
+await visit(page, `${ADMIN}/vorlagen?typ=fragebogen`)
 ids.formTemplate = await firstHref(page, /fragebogen-vorlagen\/(?!neu)/)
 console.log('discovered:', ids)
 await writeFile(`${OUT}/ids.json`, JSON.stringify(ids, null, 2))
@@ -93,15 +93,17 @@ const screens = [
   ['pakete', '/pakete'],
   ['pakete-neu', '/pakete/neu'],
   ['paket-detail', ids.package],
-  ['dokumentvorlagen', '/dokumentvorlagen'],
+  ['vorlagen', '/vorlagen'],
+  ['vorlagen-aufgaben', '/vorlagen?typ=aufgaben'],
+  ['vorlagen-fragebogen', '/vorlagen?typ=fragebogen'],
+  ['vorlagen-dokumente', '/vorlagen?typ=dokumente'],
+  ['vorlagen-galerien', '/vorlagen?typ=galerien'],
   ['dokumentvorlagen-neu', '/dokumentvorlagen/neu'],
   ['dokumentvorlage-detail', ids.documentTemplate],
   ['einstellungen', '/einstellungen'],
   ['einstellungen-nummernkreise', '/einstellungen/nummernkreise'],
   ['einstellungen-verfuegbarkeit', '/einstellungen/verfuegbarkeit'],
   ['einstellungen-zahlungen', '/einstellungen/zahlungen'],
-  ['einstellungen-aufgabenvorlagen', '/einstellungen/aufgabenvorlagen'],
-  ['einstellungen-fragebogen-vorlagen', '/einstellungen/fragebogen-vorlagen'],
   ['einstellungen-fragebogen-vorlagen-neu', '/einstellungen/fragebogen-vorlagen/neu'],
   ['einstellungen-fragebogen-vorlage-detail', ids.formTemplate],
   ['einstellungen-portal', '/einstellungen/portal'],

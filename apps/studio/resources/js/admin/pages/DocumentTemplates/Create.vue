@@ -86,10 +86,10 @@ function submit() {
 </script>
 
 <template>
-  <AdminLayout active="dokumentvorlagen">
+  <AdminLayout active="vorlagen">
     <div data-tokens>
       <PageHead :kicker="$t('documentTemplates.title')" :title="$t('documentTemplates.createTitle')">
-        <Button as="a" class="ml-auto" href="/dokumentvorlagen" variant="ghost">{{ $t('common.cancel') }}</Button>
+        <Button as="a" class="ml-auto" href="/vorlagen?typ=dokumente" variant="ghost">{{ $t('common.cancel') }}</Button>
         <!-- Nothing to save until a starting point is chosen, and a back that
              returns to the choice rather than leaving the screen. -->
         <Button v-if="chosen !== null" type="button" variant="ghost" @click="chosen = null">

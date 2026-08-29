@@ -67,7 +67,7 @@ it('refuses a mode the resolution does not know', function () {
 it('answers 404 for a role without ManageSettings', function () {
     $this->actingAs(User::factory()->withMfa()->create(['role' => StaffRole::Assistant]), 'staff');
 
-    $this->get('/einstellungen/galerie-vorlagen')->assertNotFound();
+    $this->get('/vorlagen?typ=galerien')->assertNotFound();
 });
 
 // Pixieset kann die Einstellungen einer Galerie als Vorlage sichern. Die

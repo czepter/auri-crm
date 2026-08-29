@@ -22,7 +22,7 @@ function submit() {
 </script>
 
 <template>
-  <AdminLayout active="einstellungen">
+  <AdminLayout active="vorlagen">
     <div data-tokens>
       <PageHead :kicker="$t('settings.kicker')" :title="$t('formTemplates.createTitle')" />
 
@@ -47,7 +47,7 @@ function submit() {
 
         <div class="mt-6 flex items-center gap-4">
           <Button type="submit" class="ml-0" :disabled="form.processing">{{ $t('common.save') }}</Button>
-          <Button as="a" href="/einstellungen/fragebogen-vorlagen" variant="ghost">{{ $t('common.cancel') }}</Button>
+          <Button as="a" href="/vorlagen?typ=fragebogen" variant="ghost">{{ $t('common.cancel') }}</Button>
         </div>
       </form>
     </div>

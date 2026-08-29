@@ -52,7 +52,7 @@ test('a template written in blocks previews with sample data and survives a relo
   await expect(page.getByText('aktuell')).toBeVisible({ timeout: 10000 })
 
   await page.getByRole('button', { name: 'Speichern' }).click()
-  await expect(page).toHaveURL('/dokumentvorlagen')
+  await expect(page).toHaveURL('/vorlagen?typ=dokumente')
 
   await page.getByRole('link', { name: 'Fotovertrag Hochzeit' }).click()
   await expect(page.locator('.codex-editor')).toContainText('Vertrag mit')

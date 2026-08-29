@@ -37,10 +37,10 @@ function submit() {
 </script>
 
 <template>
-  <AdminLayout active="dokumentvorlagen">
+  <AdminLayout active="vorlagen">
     <div data-tokens>
       <PageHead :kicker="`${$t('documentTemplates.title')} · ${template.typeLabel}`" :title="template.name">
-        <Button as="a" class="ml-auto" href="/dokumentvorlagen" variant="ghost">{{ $t('common.cancel') }}</Button>
+        <Button as="a" class="ml-auto" href="/vorlagen?typ=dokumente" variant="ghost">{{ $t('common.cancel') }}</Button>
         <Button variant="pill" type="button" :disabled="form.processing" @click="submit">{{ $t('common.save') }}</Button>
       </PageHead>
 

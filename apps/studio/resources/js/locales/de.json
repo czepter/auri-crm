@@ -612,7 +612,9 @@
     "newVersion": "Neue Fassung",
     "starterScope": "{blocks} Blöcke · {fields} Platzhalter",
     "previewSamples": "Beispielwerte",
-    "blockOnly": "nur {types}"
+    "blockOnly": "nur {types}",
+    "zoom_fit": "Seitenbreite",
+    "zoom_full": "100 %"
   },
   "settings": {
     "kicker": "Einstellungen",
@@ -648,7 +650,7 @@
     "navVat": "Zahlungsdaten & USt",
     "navNumbering": "Nummernkreise",
     "navAvailability": "Verfügbarkeit",
-    "navDocuments": "Dokumente",
+    "navDocuments": "Belege & Fristen",
     "navMail": "E-Mail",
     "navPayments": "Zahlungen",
     "navTaskTemplates": "Aufgabenvorlagen",
@@ -683,7 +685,7 @@
     "numberingChangeWarning": "Gilt nur für noch nicht ausgestellte Dokumente.",
     "numberingPreview": "Nächste Nummer",
     "numberingSave": "Speichern",
-    "documentsTitle": "Dokumente",
+    "documentsTitle": "Belege & Fristen",
     "documentsQuoteLabel": "Angebot",
     "quoteValidityLabel": "Gültigkeit",
     "quoteValidityHint": "Tage ab Erstellung. Nur, wenn das Angebot keine eigene Gültigkeit trägt.",
@@ -1428,5 +1430,27 @@
     "deleteStageCount": "{count} Datensätze",
     "moveToField": "Verschieben nach",
     "deleteAndMove": "Löschen und verschieben"
+  },
+  "templates": {
+    "title": "Vorlagen",
+    "search": "Vorlagen durchsuchen",
+    "create": "Vorlage anlegen",
+    "all": "Alle",
+    "tasks": "Aufgaben",
+    "forms": "Fragebögen",
+    "documents": "Dokumente",
+    "galleries": "Galerien",
+    "empty": "Keine Vorlagen.",
+    "offsetBefore": "{count} Tage vor Termin",
+    "offsetAfter": "{count} Tage nach Termin",
+    "offsetSame": "am Termintag",
+    "inUse": "{count} im Umlauf",
+    "version": "Fassung {version}",
+    "questions": "keine Fragen | 1 Frage | {count} Fragen",
+    "required": "{count} Pflicht",
+    "noExpiry": "Kein Ablauf",
+    "select": "Vorlage wählen",
+    "more": "{count} weitere",
+    "kindLabel": "Art"
   }
 }

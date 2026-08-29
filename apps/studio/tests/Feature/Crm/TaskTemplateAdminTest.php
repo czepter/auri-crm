@@ -1,7 +1,6 @@
 <?php
 
 use App\Crm\Actions\BookProject;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
@@ -20,11 +19,11 @@ it('renders every template, active and inactive both, with a preview when a date
     TaskTemplate::factory()->inactive()->create(['title' => 'Nicht mehr in Gebrauch']);
 
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get('/einstellungen/aufgabenvorlagen?preview_date=2026-06-14')
+        ->get('/vorlagen?typ=aufgaben&preview_date=2026-06-14')
         ->assertOk()
         ->viewData('page')['props'];
 
-    expect($props['templates'])->toHaveCount(2)
+    expect($props['taskTemplates'])->toHaveCount(2)
         ->and($props['preview'])->toHaveCount(1)
         ->and($props['preview'][0]['title'])->toBe('Crew-Briefing verschicken')
         ->and($props['preview'][0]['dueOn'])->toBe('2026-06-13');
@@ -34,7 +33,7 @@ it('renders no preview until a date is asked for', function () {
     TaskTemplate::factory()->create();
 
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get('/einstellungen/aufgabenvorlagen')
+        ->get('/vorlagen?typ=aufgaben')
         ->assertOk()
         ->viewData('page')['props'];
 
@@ -149,9 +148,9 @@ it('deletes a template without touching the tasks it already created', function 
         ->and(Task::sole()->task_template_id)->toBeNull();
 });
 
-it('opens the screen to every role that manages tasks — the whole crew today', function (StaffRole $role, int $status) {
+it('opens the hub to every role that manages tasks — the whole crew today', function (StaffRole $role, int $status) {
     $this->actingAs(staffMember($role), 'staff')
-        ->get('/einstellungen/aufgabenvorlagen')
+        ->get('/vorlagen?typ=aufgaben')
         ->assertStatus($status);
 })->with([
     [StaffRole::Owner, 200],
@@ -167,7 +166,7 @@ it('reaches on ManageTasks alone — the same role a ManageSettings-only pane 40
     // Photographer has no ManageSettings (AuthorizesStaffSettings 404s it out
     // of every other T-0x settings pane), but does have ManageTasks.
     $this->actingAs($photographer, 'staff')->get('/einstellungen')->assertNotFound();
-    $this->actingAs($photographer, 'staff')->get('/einstellungen/aufgabenvorlagen')->assertOk();
+    $this->actingAs($photographer, 'staff')->get('/vorlagen?typ=aufgaben')->assertOk();
 });
 
 it('declares an audience on every task-template route, same as every other admin route', function () {
@@ -187,7 +186,7 @@ it('carries no integer identifier in the props', function () {
     TaskTemplate::factory()->create();
 
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get('/einstellungen/aufgabenvorlagen')
+        ->get('/vorlagen?typ=aufgaben')
         ->assertOk()
         ->viewData('page')['props'];
 
