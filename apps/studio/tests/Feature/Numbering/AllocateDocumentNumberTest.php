@@ -169,11 +169,13 @@ it('never hands out the same quote number twice under real concurrent access', f
     $tenantId = config('tenancy.tenant_id');
     $year = 2222;
     $attempts = 20;
+    $database = config('database.connections.pgsql.database');
 
-    $pool = Process::pool(function ($pool) use ($tenantId, $year, $attempts) {
+    $pool = Process::pool(function ($pool) use ($tenantId, $year, $attempts, $database) {
         for ($i = 0; $i < $attempts; $i++) {
             $pool->as($i)->path(base_path())->timeout(30)->command([
                 'php', 'tests/Support/allocate_document_number_cli.php', $tenantId, (string) $year, 'quote',
+                $database,
             ]);
         }
     })->start();
@@ -214,11 +216,13 @@ it('never hands out the same number twice for a second document type under real 
     $tenantId = config('tenancy.tenant_id');
     $year = 2223;
     $attempts = 20;
+    $database = config('database.connections.pgsql.database');
 
-    $pool = Process::pool(function ($pool) use ($tenantId, $year, $attempts) {
+    $pool = Process::pool(function ($pool) use ($tenantId, $year, $attempts, $database) {
         for ($i = 0; $i < $attempts; $i++) {
             $pool->as($i)->path(base_path())->timeout(30)->command([
                 'php', 'tests/Support/allocate_document_number_cli.php', $tenantId, (string) $year, 'contract',
+                $database,
             ]);
         }
     })->start();
