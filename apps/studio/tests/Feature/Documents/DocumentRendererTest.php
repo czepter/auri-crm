@@ -48,3 +48,24 @@ it('still produces a valid document shell when no letterhead or footer is config
 
     expect($html)->toContain('<html')->and($html)->toContain('<p>Vertragstext</p>');
 });
+
+it('sets the paper typography once, in the file that goes to Gotenberg and to the preview', function () {
+    $html = (new DocumentRenderer)->wrap(DocumentTemplateType::Contract, '<p>Vertragstext</p>', new StudioSettingsResolver);
+
+    expect($html)->toContain('font-size: 10.5pt')
+        ->and($html)->toContain("font-family: 'Instrument Sans'")
+        ->and($html)->toContain('lang="de"');
+});
+
+it('embeds the house face rather than linking it — Gotenberg cannot reach /fonts', function () {
+    $html = (new DocumentRenderer)->wrap(DocumentTemplateType::Contract, '<p>Vertragstext</p>', new StudioSettingsResolver);
+
+    expect($html)->toContain('src:url(data:font/woff2;base64,')
+        ->and($html)->not->toContain('/fonts/instrument-sans-latin.woff2');
+});
+
+it('keeps a mail free of the paper stylesheet, where a page size means nothing', function () {
+    $html = (new DocumentRenderer)->wrap(DocumentTemplateType::Mail, '<p>Hallo</p>', new StudioSettingsResolver);
+
+    expect($html)->not->toContain('font-size: 10.5pt');
+});

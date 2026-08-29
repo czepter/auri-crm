@@ -91,6 +91,29 @@
 .doc-image-tool { display: flex; flex-direction: column; gap: var(--s2); }
 .doc-image-preview { max-width: 100%; border-radius: 4px; }
 
+/* Vertragsbausteine: Zeilentabellen, Unterschriften, Klausel, Ankreuzliste.
+   Die Eingabemaske, nicht das Ergebnis — was im Dokument steht, setzt
+   DocumentRenderer::STYLE. */
+.doc-rows { display: flex; flex-direction: column; gap: 2px; }
+.doc-rows-head, .doc-rows-line { display: grid; gap: var(--s2); align-items: center; }
+.doc-rows-head { padding: 0 2px 2px; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--faint); }
+.doc-rows-line .doc-editable { padding: 5px 7px; border: 1px solid var(--line); border-radius: var(--r-sm); }
+.doc-rows-line .doc-editable:focus { border-color: var(--accent); outline: none; }
+.doc-num { text-align: right; font-variant-numeric: tabular-nums; }
+.doc-rowbtn { padding: 4px 8px; border: 1px solid var(--line); border-radius: var(--r-sm); background: none; color: var(--muted); cursor: pointer; }
+.doc-rowbtn:hover { border-color: var(--line-hover); color: var(--ink); }
+.doc-rowadd { align-self: flex-start; margin-top: var(--s2); }
+.doc-signature-tool, .doc-checklist-tool { display: flex; flex-direction: column; gap: var(--s2); }
+.doc-check-line { display: flex; align-items: center; gap: var(--s3); }
+.doc-check-line .doc-editable { flex: 1; padding: 5px 7px; border: 1px solid var(--line); border-radius: var(--r-sm); }
+.doc-clause-tool { display: flex; flex-direction: column; gap: var(--s1); }
+.doc-clause-title { font-weight: 600; }
+.doc-fineprint { font-size: 12px; line-height: 1.5; color: var(--muted); }
+.doc-pagebreak-tool {
+  padding: var(--s2) 0; border-top: 1px dashed var(--line-hover);
+  font-size: 11px; letter-spacing: .04em; text-transform: uppercase; color: var(--faint); text-align: center;
+}
+
 /* rendered document blocks — the classes serialize.ts emits */
 .doc-rule { border: 0; border-top: 1px solid var(--line); margin: var(--s5) 0; }
 .doc-table { width: 100%; border-collapse: collapse; }

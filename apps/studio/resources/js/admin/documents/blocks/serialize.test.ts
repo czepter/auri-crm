@@ -114,7 +114,7 @@ describe('safety and unknown input', () => {
   })
 
   it('skips a block type it does not know rather than emitting garbage', () => {
-    expect(serialize(doc({ type: 'signature', data: {} }, { type: 'paragraph', data: { text: 'da' } }), 'print'))
+    expect(serialize(doc({ type: 'attachment', data: {} }, { type: 'paragraph', data: { text: 'da' } }), 'print'))
       .toBe('<p>da</p>')
   })
 
@@ -128,5 +128,62 @@ describe('safety and unknown input', () => {
 
     expect(serialize(doc({ type: 'paragraph', data: { text: `Hallo ${chip}` } }), 'print'))
       .toBe('<p>Hallo {{ contact.name }}</p>')
+  })
+
+  it('renders a line-item table and leaves out a column nothing fills', () => {
+    const block = {
+      type: 'lineItems',
+      data: {
+        rows: [
+          { qty: '1', label: 'Reportage', unit: '', total: '2.400,00 €' },
+          { qty: '1', label: 'Zweitfotograf', unit: '', total: '600,00 €' },
+        ],
+      },
+    }
+
+    const html = serialize(doc(block), 'print')
+
+    expect(html).toContain('<th>Leistung</th>')
+    expect(html).toContain('<td class="doc-num">2.400,00 €</td>')
+    expect(html).not.toContain('Einzelpreis')
+  })
+
+  it('skips a row block whose every cell is empty rather than emitting a bare header', () => {
+    expect(serialize(doc({ type: 'schedule', data: { rows: [{ time: '', item: '', place: '' }] } }), 'print')).toBe('')
+  })
+
+  it('renders a signature block with one line per party', () => {
+    const html = serialize(
+      doc({
+        type: 'signature',
+        data: { place: 'Hamburg, 14.06.2026', parties: [{ role: 'Fotograf', name: 'Alex Nordlicht' }] },
+      }),
+      'print',
+    )
+
+    expect(html).toContain('<p class="doc-signature-place">Hamburg, 14.06.2026</p>')
+    expect(html).toContain('<span class="doc-signature-role">Fotograf</span>')
+  })
+
+  it('leaves the clause unnumbered in the body — the stylesheet counts', () => {
+    expect(serialize(doc({ type: 'clause', data: { title: 'Nutzungsrechte', text: 'Privat.' } }), 'print'))
+      .toBe('<section class="doc-clause"><h3>Nutzungsrechte</h3><p>Privat.</p></section>')
+  })
+
+  it('marks a ticked option with a filled box', () => {
+    expect(serialize(doc({ type: 'checklist', data: { items: [{ text: 'Social Media', checked: true }, { text: 'Print', checked: false }] } }), 'print'))
+      .toBe('<ul class="doc-checklist"><li>☒ Social Media</li><li>☐ Print</li></ul>')
+  })
+
+  it('drops the page break in a mail, where there is no page to break', () => {
+    expect(serialize(doc({ type: 'pagebreak', data: {} }), 'mail')).toBe('')
+    expect(serialize(doc({ type: 'pagebreak', data: {} }), 'print')).toBe('<div class="doc-pagebreak"></div>')
+  })
+
+  it('turns a merge chip inside a row cell back into its placeholder', () => {
+    const chip = '<span class="doc-mf" data-mf="quote.validUntil" contenteditable="false">30.09.2026</span>'
+
+    expect(serialize(doc({ type: 'paymentPlan', data: { rows: [{ label: 'Anzahlung', due: chip, amount: '' }] } }), 'print'))
+      .toContain('<td>{{ quote.validUntil }}</td>')
   })
 })

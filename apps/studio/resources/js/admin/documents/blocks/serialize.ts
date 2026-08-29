@@ -1,3 +1,4 @@
+import { rowSpec } from './rowSpecs'
 import type { EditorBlock, EditorDocument, SerializeProfile } from './types'
 
 // Blocks -> HTML. Pure, no DOM, so it runs identically in the browser and in
@@ -130,6 +131,84 @@ function serializeBlock(block: EditorBlock, profile: SerializeProfile): string {
 
       return `<figure><img src="${escapeText(url)}" alt="${caption}">${figcaption}</figure>`
     }
+
+    // Die Zeilenbausteine teilen eine Tabelle: Kopfzeile aus der
+    // Spezifikation, Zellen aus den gespeicherten Zeilen. Eine Spalte, die
+    // in keiner Zeile etwas trägt, fällt weg — sonst steht in jedem Angebot
+    // eine leere Spalte "Einzelpreis", weil eine Pauschale keinen hat.
+    case 'lineItems':
+    case 'paymentPlan':
+    case 'usageRights':
+    case 'schedule':
+    case 'deliverables':
+    case 'cancellation': {
+      const spec = rowSpec(block.type)
+
+      if (spec === undefined) return ''
+
+      const rows: Record<string, string>[] = data.rows ?? []
+      const columns = spec.columns.filter((column) =>
+        rows.some((row) => String(row[column.key] ?? '').trim() !== ''),
+      )
+
+      if (columns.length === 0) return ''
+
+      const head = columns
+        .map((column) => `<th${column.numeric ? ' class="doc-num"' : ''}>${escapeText(column.label)}</th>`)
+        .join('')
+      const body = rows
+        .map((row) =>
+          `<tr>${columns
+            .map((column) => `<td${column.numeric ? ' class="doc-num"' : ''}>${inline(row[column.key])}</td>`)
+            .join('')}</tr>`,
+        )
+        .join('')
+
+      return `<table class="doc-table doc-${block.type}"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`
+    }
+
+    case 'signature': {
+      const parties: { role?: string; name?: string }[] = data.parties ?? []
+      const place = String(data.place ?? '').trim()
+      const dateline = place === '' ? '' : `<p class="doc-signature-place">${inline(place)}</p>`
+      const lines = parties
+        .map(
+          (party) =>
+            '<div class="doc-signature-line"><span class="doc-signature-rule"></span>' +
+            `<span class="doc-signature-role">${escapeText(String(party.role ?? ''))}</span>` +
+            `<span class="doc-signature-name">${inline(party.name)}</span></div>`,
+        )
+        .join('')
+
+      return `${dateline}<div class="doc-signature">${lines}</div>`
+    }
+
+    // Die Nummer zählt im Dokument hoch (DocumentRenderer setzt den Counter),
+    // damit eine eingeschobene Klausel keine Handarbeit auslöst.
+    case 'clause':
+      return (
+        '<section class="doc-clause">' +
+        `<h3>${inline(data.title)}</h3><p>${inline(data.text)}</p></section>`
+      )
+
+    case 'checklist': {
+      const items: { text?: string; checked?: boolean }[] = data.items ?? []
+
+      return (
+        '<ul class="doc-checklist">' +
+        items
+          .map((item) => `<li>${item.checked ? '☒' : '☐'} ${inline(item.text)}</li>`)
+          .join('') +
+        '</ul>'
+      )
+    }
+
+    case 'finePrint':
+      return `<p class="doc-fineprint">${inline(data.text)}</p>`
+
+    // Im Postfach gibt es keine Seite, die umbrechen könnte.
+    case 'pagebreak':
+      return profile === 'mail' ? '' : '<div class="doc-pagebreak"></div>'
 
     // What a pre-editor body is imported into. Verbatim by definition — this
     // is the same staff-authored HTML the textarea accepted before.
