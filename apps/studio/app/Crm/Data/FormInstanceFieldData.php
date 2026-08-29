@@ -11,7 +11,8 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 class FormInstanceFieldData extends Data
 {
     /**
-     * @param  ?list<string>  $options
+     * @param  ?array<array-key, mixed>  $options
+     * @param  ?array{help: ?string, suggestions: list<string>, minutesPerGroup: int}  $groupPhotos
      * @param  ?list<string>  $fileFormats
      * @param  list<FormInstanceFileData>  $files
      */
@@ -24,6 +25,9 @@ class FormInstanceFieldData extends Data
         public ?array $options,
         public ?string $currentAnswer,
         public ?string $answeredAt,
+        // Only a "Gruppenfotos" field fills this; its answer stays in
+        // currentAnswer, as JSON.
+        public ?array $groupPhotos,
         // Only a "Datei" field fills these; everything else leaves them null
         // and its answer in currentAnswer, where it has always been.
         public ?array $fileFormats,
@@ -35,6 +39,7 @@ class FormInstanceFieldData extends Data
     public static function fromModel(FormInstanceField $field): self
     {
         $isFile = $field->type === FormFieldType::File;
+        $isGroupPhotos = $field->type === FormFieldType::GroupPhotos;
         $fileOptions = $isFile ? $field->fileOptions() : null;
         $files = $isFile ? $field->files : collect();
 
@@ -44,13 +49,14 @@ class FormInstanceFieldData extends Data
             type: $field->type->value,
             typeLabel: $field->type->label(),
             required: $field->required,
-            options: $isFile ? null : $field->options,
+            options: $isFile || $isGroupPhotos ? null : $field->options,
             currentAnswer: $field->currentAnswer?->value,
             // A file field is answered by having a file, so the progress the
             // studio reads counts one the same way it counts the other.
             answeredAt: $isFile
                 ? $files->last()?->created_at->toIso8601String()
                 : $field->currentAnswer?->created_at->toIso8601String(),
+            groupPhotos: $isGroupPhotos ? $field->groupPhotoOptions() : null,
             fileFormats: $fileOptions['formats'] ?? null,
             fileMaxSize: $fileOptions['maxSize'] ?? null,
             fileMultiple: $fileOptions['multiple'] ?? false,

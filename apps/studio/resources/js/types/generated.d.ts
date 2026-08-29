@@ -134,7 +134,7 @@ label: string,
 type: string,
 typeLabel: string,
 required: boolean,
-options: string[] | null,
+options: Record<string | number, any> | null,
 };
 export type FormInstanceData = {
 id: string,
@@ -150,9 +150,14 @@ label: string,
 type: string,
 typeLabel: string,
 required: boolean,
-options: string[] | null,
+options: Record<string | number, any> | null,
 currentAnswer: string | null,
 answeredAt: string | null,
+groupPhotos: {
+help: string | null,
+suggestions: string[],
+minutesPerGroup: number,
+} | null,
 fileFormats: string[] | null,
 fileMaxSize: number | null,
 fileMultiple: boolean,
@@ -382,7 +387,7 @@ export type BookedVia = 'manual' | 'contract';
 export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'web_form' | 'other';
 export type CrewRole = 'lead_photographer' | 'second_shooter' | 'assistant';
 export type DueAnchor = 'stage' | 'shoot';
-export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list' | 'file';
+export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list' | 'group_photos' | 'file';
 export type LeadSource = 'referral' | 'website' | 'instagram' | 'wedding_fair' | 'other';
 export type LeadStage = 'new' | 'contacted' | 'quote_sent' | 'quote_accepted' | 'contract_sent' | 'booked';
 export type ProjectContactRole = 'primary' | 'partner' | 'payer' | 'planner' | 'vendor';

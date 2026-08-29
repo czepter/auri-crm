@@ -4,6 +4,7 @@ import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
 import FormFieldsEditor, { type FormFieldRow } from '@/admin/components/FormFieldsEditor.vue'
+import GroupPhotoField from '@/portal/components/GroupPhotoField.vue'
 import Section from '@/ui/page/Section.vue'
 import { dayAndMonth } from '@/admin/lib/shoots'
 import { Button } from '@/ui/button'
@@ -49,9 +50,11 @@ const editForms = Object.fromEntries(
           label: field.label,
           type: field.type,
           required: field.required,
-          optionsText: (field.type === 'file' ? field.fileFormats ?? [] : field.options ?? []).join('\n'),
+          optionsText: rowOptionsText(field),
           fileMaxSize: field.fileMaxSize ?? 10,
           fileMultiple: field.fileMultiple,
+          helpText: field.groupPhotos?.help ?? '',
+          minutesPerGroup: field.groupPhotos?.minutesPerGroup ?? 2,
         }),
       ),
     }),
@@ -75,8 +78,16 @@ function save(instanceId: string) {
     })
 }
 
-// select stores its choices and file its allowed formats in the one options
-// column — see FormFieldType::optionRules().
+function rowOptionsText(field: App.Crm.Data.FormInstanceFieldData): string {
+  if (field.type === 'file') return (field.fileFormats ?? []).join('\n')
+  if (field.type === 'group_photos') return (field.groupPhotos?.suggestions ?? []).join('\n')
+
+  return (field.options ?? []).join('\n')
+}
+
+// select stores its choices, file its allowed formats and group_photos its
+// builder configuration in the one options column — see
+// FormFieldType::optionRules().
 function fieldOptions(field: FormFieldRow) {
   const list = field.optionsText.split('\n').map((o) => o.trim()).filter(Boolean)
 
@@ -84,7 +95,24 @@ function fieldOptions(field: FormFieldRow) {
     return { formats: list, maxSize: field.fileMaxSize ?? 10, multiple: field.fileMultiple ?? false }
   }
 
+  if (field.type === 'group_photos') {
+    return { help: field.helpText?.trim() || null, suggestions: list, minutesPerGroup: field.minutesPerGroup ?? 2 }
+  }
+
   return field.type === 'select' ? list : null
+}
+
+// Eine Gruppenfotos-Antwort ist JSON. Das Studio liest sie hier als Liste;
+// gebaut wird sie im Portal.
+function shotPlan(field: App.Crm.Data.FormInstanceFieldData): { name: string; members: string[] }[] {
+  if (field.type !== 'group_photos' || !field.currentAnswer) return []
+
+  try {
+    const groups = JSON.parse(field.currentAnswer).groups
+    return Array.isArray(groups) ? groups : []
+  } catch {
+    return []
+  }
 }
 
 function uploadTo(fieldId: string, event: Event) {
@@ -199,7 +227,17 @@ function answered(instance: App.Crm.Data.FormInstanceData): number {
             </template>
 
             <template v-else>
-              <Textarea v-model="answerForms[field.id].value" rows="2" class="mt-1.5" />
+              <!-- E-03 gilt auch am Telefon: das Studio schreibt denselben
+                   Plan mit, den das Paar im Portal baut. -->
+              <GroupPhotoField
+                v-if="field.type === 'group_photos'"
+                v-model="answerForms[field.id].value"
+                class="mt-2.5"
+                :suggestions="field.groupPhotos?.suggestions ?? []"
+                :minutes-per-group="field.groupPhotos?.minutesPerGroup ?? 2"
+              />
+              <Textarea v-else v-model="answerForms[field.id].value" rows="2" class="mt-1.5" />
+
               <div class="mt-1.5 flex items-center gap-4">
                 <Button variant="outline" type="button" :disabled="answerForms[field.id].processing" @click="answer(field.id)">
                   {{ $t('formInstances.saveAnswer') }}
@@ -219,7 +257,14 @@ function answered(instance: App.Crm.Data.FormInstanceData): number {
               <span v-if="field.answeredAt" class="ml-auto text-[11.5px] leading-[1.45] text-ink-2">{{ dayAndMonth(field.answeredAt) }}</span>
               <span v-else class="ml-auto text-[11.5px] leading-[1.45] text-faint">{{ $t('formInstances.open') }}</span>
             </div>
-            <div v-if="field.currentAnswer" class="mt-0.5 text-[13px] leading-[1.47] whitespace-pre-line">{{ field.currentAnswer }}</div>
+            <ol v-if="field.type === 'group_photos'" class="mt-0.5 flex flex-col gap-0.5">
+              <li v-for="(shot, index) in shotPlan(field)" :key="index" class="flex items-baseline gap-2.5 text-[13px] leading-[1.47]">
+                <span class="w-4 flex-none text-faint">{{ index + 1 }}</span>
+                <span class="grow">{{ shot.name }}</span>
+                <span class="flex-none text-[11.5px] text-ink-2">{{ shot.members.join(', ') }}</span>
+              </li>
+            </ol>
+            <div v-else-if="field.currentAnswer" class="mt-0.5 text-[13px] leading-[1.47] whitespace-pre-line">{{ field.currentAnswer }}</div>
             <div v-for="file in field.files" :key="file.id" class="mt-0.5 text-[13px] leading-[1.47]">{{ file.name }}</div>
           </div>
         </template>

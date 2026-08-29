@@ -23,20 +23,6 @@ use Inertia\Response;
  */
 class FormTemplateController extends Controller
 {
-    public function index(): Response
-    {
-        $this->authorize('viewAny', FormTemplate::class);
-
-        $templates = FormTemplate::query()
-            ->withCount('fields')
-            ->orderBy('name')
-            ->get();
-
-        return Inertia::render('Settings/FormTemplates/Index', [
-            'templates' => FormTemplateData::collect($templates),
-        ]);
-    }
-
     public function create(): Response
     {
         $this->authorize('create', FormTemplate::class);
@@ -139,9 +125,10 @@ class FormTemplateController extends Controller
     }
 
     /**
-     * The options column carries two shapes — select's choices, a file
-     * field's upload config — so the rules for it depend on the type in the
-     * same row. See FormFieldType::optionRules().
+     * The options column carries three shapes — select's choices, a file
+     * field's upload config, a Gruppenfotos builder configuration — so the
+     * rules for it depend on the type in the same row. See
+     * FormFieldType::optionRules().
      */
     private function optionRules(Request $request): array
     {

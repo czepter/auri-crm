@@ -134,10 +134,14 @@ class FormInstanceController extends Controller
         $this->authorize('manageForms', $formInstanceField->formInstance->project);
 
         $validated = $request->validate([
-            'value' => ['nullable', 'string', 'max:5000'],
+            'value' => ['nullable', 'string', 'max:20000'],
         ]);
 
-        $formInstanceField->answer($validated['value'] ?? null, auth('staff')->user());
+        $value = $formInstanceField->type === FormFieldType::GroupPhotos
+            ? FormInstanceField::normaliseGroupPhotos($validated['value'] ?? null)
+            : $validated['value'] ?? null;
+
+        $formInstanceField->answer($value, auth('staff')->user());
 
         AuditLogger::record(
             event: 'form_instance_field.answered',
@@ -151,9 +155,10 @@ class FormInstanceController extends Controller
     }
 
     /**
-     * The options column carries two shapes — select's choices, a file
-     * field's upload config — so the rules for it depend on the type in the
-     * same row. See FormFieldType::optionRules().
+     * The options column carries three shapes — select's choices, a file
+     * field's upload config, a Gruppenfotos builder configuration — so the
+     * rules for it depend on the type in the same row. See
+     * FormFieldType::optionRules().
      */
     private function optionRules(Request $request): array
     {

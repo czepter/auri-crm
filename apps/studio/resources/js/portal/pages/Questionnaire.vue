@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3'
+import GroupPhotoField from '@/portal/components/GroupPhotoField.vue'
 import PortalField from '@/portal/components/PortalField.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
@@ -97,6 +98,7 @@ function errorFor(id: string) {
             v-else
             :label="field.label"
             :optional="field.required ? undefined : $t('settings.optional')"
+            :hint="field.groupPhotos?.help ?? undefined"
           >
             <template v-if="field.type === 'file'">
               <div v-for="file in field.files" :key="file.id" class="flex items-center gap-3 text-[14.5px] leading-[1.5]">
@@ -124,6 +126,15 @@ function errorFor(id: string) {
                 <SelectItem v-for="option in field.options ?? []" :key="option" :value="option">{{ option }}</SelectItem>
               </SelectContent>
             </Select>
+
+            <!-- Gruppenfotos bauen ihre Antwort selbst und legen sie als JSON
+                 in dieselbe Textspalte wie jede andere. -->
+            <GroupPhotoField
+              v-else-if="field.type === 'group_photos'"
+              v-model="form.answers[field.id]"
+              :suggestions="field.groupPhotos?.suggestions ?? []"
+              :minutes-per-group="field.groupPhotos?.minutesPerGroup ?? 2"
+            />
 
             <!-- name_list is a list of people typed one per line; nothing in
                  the schema splits it, so nothing here pretends to. -->

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Button } from '@/ui/button'
 import { Checkbox } from '@/ui/checkbox'
 import { Input } from '@/ui/input'
@@ -20,7 +21,11 @@ export type FormFieldRow = {
   optionsText: string
   fileMaxSize?: number
   fileMultiple?: boolean
+  helpText?: string
+  minutesPerGroup?: number
 }
+
+const { t } = useI18n()
 
 const props = defineProps<{ fieldTypes: { value: string; label: string }[] }>()
 
@@ -32,8 +37,13 @@ const fields = defineModel<FormFieldRow[]>({ required: true })
 const editingIndex = ref<number | null>(null)
 
 function addField(type: string) {
-  fields.value = [...fields.value, { label: '', type, required: false, optionsText: '', fileMaxSize: 10, fileMultiple: false }]
-  editingIndex.value = fields.value.length - 1
+  // Der Index vor dem Schreiben: fields.value liest durch das Model, das die
+  // neue Zeile erst nach dem Elternteil kennt — hinterher gelesen öffnete es
+  // die vorige Zeile, bei der ersten gar keine.
+  const added = fields.value.length
+
+  fields.value = [...fields.value, { label: '', type, required: false, optionsText: '', fileMaxSize: 10, fileMultiple: false, helpText: '', minutesPerGroup: 2 }]
+  editingIndex.value = added
 }
 
 function removeField(index: number) {
@@ -43,6 +53,16 @@ function removeField(index: number) {
 
 function typeLabel(type: string): string {
   return props.fieldTypes.find((t) => t.value === type)?.label ?? type
+}
+
+// Drei Typen teilen sich das Textfeld über der einen options-Spalte, und
+// jeder nennt seine Zeilen anders — siehe FormFieldType::optionRules().
+function optionsLabel(type: string): string {
+  return t(type === 'file' ? 'formTemplates.formatsField' : type === 'group_photos' ? 'formTemplates.shotsField' : 'formTemplates.optionsField')
+}
+
+function optionsHint(type: string): string {
+  return t(type === 'file' ? 'formTemplates.formatsHint' : type === 'group_photos' ? 'formTemplates.shotsHint' : 'formTemplates.optionsHint')
 }
 </script>
 
@@ -59,11 +79,21 @@ function typeLabel(type: string): string {
               <Input :id="`field-label-${index}`" v-model="field.label" type="text" maxlength="255" />
             </Field>
 
-            <div v-if="field.type === 'select' || field.type === 'file'" class="col-span-full flex min-w-0 flex-col gap-1.5">
-              <Label :for="`field-options-${index}`">{{ field.type === 'file' ? $t('formTemplates.formatsField') : $t('formTemplates.optionsField') }}</Label>
-              <Textarea :id="`field-options-${index}`" v-model="field.optionsText" rows="3" />
-              <span class="text-[11.5px] leading-[1.45] text-faint">{{ field.type === 'file' ? $t('formTemplates.formatsHint') : $t('formTemplates.optionsHint') }}</span>
+            <div v-if="field.type === 'group_photos'" class="col-span-full flex min-w-0 flex-col gap-1.5">
+              <Label :for="`field-help-${index}`">{{ $t('formTemplates.helpField') }}</Label>
+              <Input :id="`field-help-${index}`" v-model="field.helpText" type="text" maxlength="500" />
             </div>
+
+            <div v-if="field.type === 'select' || field.type === 'file' || field.type === 'group_photos'" class="col-span-full flex min-w-0 flex-col gap-1.5">
+              <Label :for="`field-options-${index}`">{{ optionsLabel(field.type) }}</Label>
+              <Textarea :id="`field-options-${index}`" v-model="field.optionsText" rows="3" />
+              <span class="text-[11.5px] leading-[1.45] text-faint">{{ optionsHint(field.type) }}</span>
+            </div>
+
+            <Field v-if="field.type === 'group_photos'">
+              <Label :for="`field-minutes-${index}`">{{ $t('formTemplates.minutesField') }}</Label>
+              <Input :id="`field-minutes-${index}`" v-model.number="field.minutesPerGroup" type="number" min="1" max="15" />
+            </Field>
 
             <template v-if="field.type === 'file'">
               <Field>
@@ -99,7 +129,7 @@ function typeLabel(type: string): string {
             <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
               <span class="block rounded-[5px] bg-muted px-[7px] py-0.5 text-[10px] leading-[1.5] font-semibold tracking-[0.05em] uppercase text-muted-foreground">{{ typeLabel(field.type) }}</span>
               <span v-if="field.required" class="block rounded-[5px] bg-muted px-[7px] py-0.5 text-[10px] leading-[1.5] font-semibold tracking-[0.05em] uppercase text-muted-foreground">{{ $t('formTemplates.requiredChip') }}</span>
-              <span v-if="(field.type === 'select' || field.type === 'file') && field.optionsText" class="text-[11.5px] leading-[1.5] text-faint">{{ field.optionsText.split('\n').filter(Boolean).join(', ') }}</span>
+              <span v-if="(field.type === 'select' || field.type === 'file' || field.type === 'group_photos') && field.optionsText" class="text-[11.5px] leading-[1.5] text-faint">{{ field.optionsText.split('\n').filter(Boolean).join(', ') }}</span>
               <span v-if="field.type === 'name_list'" class="text-[11.5px] leading-[1.5] text-faint">{{ $t('formTemplates.nameListHint') }}</span>
             </div>
           </div>

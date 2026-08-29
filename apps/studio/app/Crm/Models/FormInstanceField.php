@@ -75,6 +75,70 @@ class FormInstanceField extends Model
     }
 
     /**
+     * A "Gruppenfotos" field's configuration, in the same options column
+     * select keeps its choices in.
+     *
+     * @return array{help: ?string, suggestions: list<string>, minutesPerGroup: int}
+     */
+    public function groupPhotoOptions(): array
+    {
+        $suggestions = array_filter((array) ($this->options['suggestions'] ?? []), 'is_string');
+
+        return [
+            'help' => $this->options['help'] ?? null,
+            'suggestions' => array_values($suggestions),
+            'minutesPerGroup' => (int) ($this->options['minutesPerGroup'] ?? 2),
+        ];
+    }
+
+    /**
+     * A Gruppenfotos answer rides as JSON in the one text column every other
+     * answer uses, so this is the gate on its shape: keys the builder never
+     * wrote are dropped, and a member who is not in the people list cannot
+     * exist — the list the studio prints has to be the list the client saw.
+     */
+    public static function normaliseGroupPhotos(?string $value): ?string
+    {
+        $decoded = json_decode((string) $value, true);
+
+        if (! is_array($decoded)) {
+            return null;
+        }
+
+        $clean = static fn (mixed $raw): ?string => is_string($raw) && trim($raw) !== ''
+            ? mb_substr(trim($raw), 0, 120)
+            : null;
+
+        $people = collect((array) ($decoded['people'] ?? []))
+            ->map($clean)->filter()->unique()
+            ->take(FormFieldType::GROUP_PEOPLE_MAX)->values();
+
+        $groups = collect((array) ($decoded['groups'] ?? []))
+            ->map(function (mixed $group) use ($clean, $people): ?array {
+                $name = is_array($group) ? $clean($group['name'] ?? null) : null;
+
+                if ($name === null) {
+                    return null;
+                }
+
+                return [
+                    'name' => $name,
+                    'members' => collect((array) ($group['members'] ?? []))
+                        ->map($clean)->filter()
+                        ->filter(fn (string $member) => $people->contains($member))
+                        ->unique()->values()->all(),
+                ];
+            })
+            ->filter()->take(FormFieldType::GROUP_SHOTS_MAX)->values();
+
+        if ($people->isEmpty() && $groups->isEmpty()) {
+            return null;
+        }
+
+        return json_encode(['people' => $people->all(), 'groups' => $groups->all()], JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
      * The upload rules this field's own configuration implies. Both surfaces
      * validate through here, so a format or size the studio never allowed is
      * rejected wherever the file arrives from.

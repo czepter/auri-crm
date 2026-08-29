@@ -71,7 +71,10 @@ class QuestionnaireController extends Controller
 
         $answers = $request->validate([
             'answers' => ['array'],
-            'answers.*' => ['nullable', 'string', 'max:5000'],
+            // 20k rather than 5k because a Gruppenfotos plan travels as JSON
+            // through this same map; FormInstanceField::normaliseGroupPhotos()
+            // caps what actually survives.
+            'answers.*' => ['nullable', 'string', 'max:20000'],
         ])['answers'] ?? [];
 
         $this->assertRequiredAnswered($instance, $answers);
@@ -83,7 +86,7 @@ class QuestionnaireController extends Controller
                 continue;
             }
 
-            $value = $this->normalise($answers[$field->public_id] ?? null);
+            $value = $this->valueFor($field, $answers);
 
             if ($value === $field->currentAnswer?->value) {
                 continue;
@@ -178,6 +181,20 @@ class QuestionnaireController extends Controller
     }
 
     /**
+     * What one field's answer is worth once its own type has had a look at
+     * it. Both the required check and the write go through here, so a
+     * Gruppenfotos plan that normalises to nothing counts as unanswered.
+     */
+    private function valueFor(FormInstanceField $field, array $answers): ?string
+    {
+        $raw = $answers[$field->public_id] ?? null;
+
+        return $field->type === FormFieldType::GroupPhotos
+            ? FormInstanceField::normaliseGroupPhotos(is_string($raw) ? $raw : null)
+            : $this->normalise($raw);
+    }
+
+    /**
      * A required question is required of the client too, and the check lives
      * here rather than in the validate() call above because the rules are
      * per row of data this request does not name — the fields come from the
@@ -189,7 +206,7 @@ class QuestionnaireController extends Controller
             ->filter(fn (FormInstanceField $field) => $field->required)
             ->filter(fn (FormInstanceField $field) => $field->type === FormFieldType::File
                 ? $field->files->isEmpty()
-                : $this->normalise($answers[$field->public_id] ?? null) === null)
+                : $this->valueFor($field, $answers) === null)
             ->mapWithKeys(fn (FormInstanceField $field) => [
                 "answers.{$field->public_id}" => __('validation.required', ['attribute' => $field->label]),
             ])

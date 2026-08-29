@@ -30,7 +30,9 @@ const form = useForm({
       label: field.label,
       type: field.type,
       required: field.required,
-      optionsText: (field.options ?? []).join('\n'),
+      optionsText: (field.type === 'group_photos' ? field.options?.suggestions ?? [] : field.options ?? []).join('\n'),
+      helpText: field.type === 'group_photos' ? field.options?.help ?? '' : '',
+      minutesPerGroup: field.type === 'group_photos' ? field.options?.minutesPerGroup ?? 2 : 2,
     }),
   ),
 })
@@ -41,6 +43,18 @@ const projectTypeLabel = computed(
 
 const requiredCount = computed(() => form.fields.filter((f) => f.required).length)
 
+// select legt seine Auswahl und group_photos seine Konfiguration in dieselbe
+// options-Spalte — siehe FormFieldType::optionRules().
+function fieldOptions(field: FormFieldRow) {
+  const list = field.optionsText.split('\n').map((o) => o.trim()).filter(Boolean)
+
+  if (field.type === 'group_photos') {
+    return { help: field.helpText?.trim() || null, suggestions: list, minutesPerGroup: field.minutesPerGroup ?? 2 }
+  }
+
+  return field.type === 'select' ? list : null
+}
+
 function submit() {
   form
     .transform((data) => ({
@@ -50,7 +64,7 @@ function submit() {
         label: field.label,
         type: field.type,
         required: field.required,
-        options: field.type === 'select' ? field.optionsText.split('\n').map((o) => o.trim()).filter(Boolean) : null,
+        options: fieldOptions(field),
       })),
     }))
     .patch(`/einstellungen/fragebogen-vorlagen/${props.template.id}`)
@@ -58,7 +72,7 @@ function submit() {
 </script>
 
 <template>
-  <AdminLayout active="einstellungen">
+  <AdminLayout active="vorlagen">
     <div data-tokens>
       <PageHead :kicker="$t('formTemplates.kicker')" :title="form.name || $t('formTemplates.untitled')">
         <Button class="ml-auto" type="submit" form="form-template-form" :disabled="form.processing" variant="pill">

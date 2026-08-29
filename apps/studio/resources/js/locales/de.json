@@ -904,6 +904,10 @@
     "nameListHint": "Name + Beziehung je Zeile",
     "optionsField": "Antwortmöglichkeiten",
     "optionsHint": "Eine Möglichkeit pro Zeile.",
+    "helpField": "Hilfetext",
+    "shotsField": "Vorgeschlagene Bilder",
+    "shotsHint": "Ein Bild pro Zeile.",
+    "minutesField": "Minuten je Bild",
     "edit": "Bearbeiten",
     "done": "Fertig",
     "save": "Speichern",
@@ -911,6 +915,15 @@
     "formatsHint": "Ein Format pro Zeile: pdf, jpg, jpeg, png, heic, webp, docx",
     "maxSizeField": "Maximale Größe (MB)",
     "multipleField": "Mehrere Dateien erlaubt"
+  },
+  "groupPhotos": {
+    "people": "Personen",
+    "name": "Name",
+    "shots": "Bilder",
+    "ownShot": "Eigenes Bild",
+    "shotMeta": "{count} Personen · {minutes} Min",
+    "total": "ca. {minutes} Min",
+    "counts": "{people} Personen · {shots} Bilder"
   },
   "formInstances": {
     "title": "Fragebögen",
