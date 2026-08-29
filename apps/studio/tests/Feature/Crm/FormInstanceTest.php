@@ -9,6 +9,7 @@ use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -425,8 +426,23 @@ it('hands the studio back a file it stored', function () {
     Storage::fake('local');
     $file = $field->attachFile(UploadedFile::fake()->create('ablauf.pdf', 12, 'application/pdf'), null);
 
-    $this->actingAs(\App\Models\User::factory()->create(), 'staff')
+    $this->actingAs(User::factory()->create(), 'staff')
         ->get("/fragebogen-dateien/{$file->public_id}")
         ->assertOk()
         ->assertDownload('ablauf.pdf');
+});
+
+// Der Schirm zeigt den Fehler jetzt an; vorher sah das Speichern aus, als
+// täte es nichts, wenn eine frisch angelegte Frage noch keinen Titel trug.
+it('refuses a question without a title and names the field', function () {
+    $project = Project::factory()->create();
+    $instance = FormInstance::factory()->for($project)->create();
+
+    $this->actingAs(User::factory()->create(), 'staff')
+        ->from("/auftraege/{$project->public_id}/frageboegen")
+        ->patch("/frageboegen/{$instance->public_id}", [
+            'name' => 'Ablauf',
+            'fields' => [['label' => '', 'type' => 'text', 'required' => false, 'options' => null]],
+        ])
+        ->assertSessionHasErrors('fields.0.label');
 });

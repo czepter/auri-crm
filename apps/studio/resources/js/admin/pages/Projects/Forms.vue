@@ -207,6 +207,12 @@ function answered(instance: App.Crm.Data.FormInstanceData): number {
             <Button type="button" :disabled="editForms[instance.id].processing" @click="save(instance.id)">
               {{ $t('common.save') }}
             </Button>
+            <!-- Eine Frage ohne Titel weist der Server ab. Ohne diese Zeile
+                 sah das Speichern aus, als täte es nichts. -->
+            <span
+              v-if="Object.keys(editForms[instance.id].errors).length"
+              class="text-[11.5px] leading-[1.45] text-destructive"
+            >{{ Object.values(editForms[instance.id].errors)[0] }}</span>
           </div>
 
           <div v-for="field in instance.fields" :key="field.id" class="mt-4">
