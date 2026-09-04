@@ -82,7 +82,7 @@ Two more were local-only: the php image had neither `composer` nor `unzip`, so t
 
 Named explicitly so it does not creep in: project detail (C-06) · internal notes (C-07) · additional shoots beyond the primary · `Shoot.status` transitions (P-03) · `Job` and conversion (P-05) · the production board (P-04) · crew assignment (S-02) · tasks and templates (S-03) · calendar and ICS (S-04) · staff invitations and password reset (S-05) · role-based policies (S-06) · the board's *Liste* and *Kalender* tabs and its filter control · quotes, contracts and anything with a price on it.
 
-Every one has a home in [`../backlog.md`](../backlog.md).
+Every one has a home in [Roadmap-Board](https://github.com/users/czepter/projects/2).
 
 ---
 
