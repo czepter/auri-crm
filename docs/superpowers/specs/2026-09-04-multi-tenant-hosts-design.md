@@ -187,12 +187,19 @@ Einrichtungsassistent, unverändert. E-Mail ist damit nebenbei bestätigt.
 Täglicher Sweep löscht Mandanten ohne Staff, älter als 7 Tage; der Slug wird
 frei.
 
-`auri-crm.de/anmelden` fragt den Slug und leitet auf `{slug}.auri-crm.de/login`.
-Keine Suche per E-Mail, das würde bestätigen, welche Adressen existieren.
+`auri-crm.de/anmelden` fragt E-Mail und Passwort. `users.email` ist nur je
+Mandant unique, also prüft der Apex das Passwort gegen jedes Konto dieser
+Adresse (ohne globalen Scope geladen). Ein Treffer: signierte Übergabe auf
+`{slug}.auri-crm.de/login/uebergabe?signature=…`, 60 Sekunden gültig, einmal
+einlösbar; die Session entsteht auf dem Mandanten-Host, TOTP läuft dort wie
+heute. Mehrere Treffer: Studio-Auswahl, nur die Studios, deren Passwort
+passte. Kein Treffer: eine Meldung, gleich ob Adresse unbekannt oder
+Passwort falsch. Der Apex hält keine Session.
 
 Test `SignupTest`: gesperrter Slug abgelehnt, vergebener Slug abgelehnt,
 Assistent 404 ohne Signatur, 200 mit, Sweep lässt beanspruchte Mandanten
-stehen.
+stehen. Test `ApexLoginTest`: ein Konto leitet um, zwei Konten zeigen die
+Auswahl, Übergabe-Link ist nach dem ersten Einlösen tot.
 
 ## 5. Galerie, Deployment, Umstellung, Leitplanken
 
