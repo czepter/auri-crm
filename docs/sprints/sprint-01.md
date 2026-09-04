@@ -70,7 +70,7 @@ Copied from the plan so the sprint can be closed without re-reading it:
 
 Named explicitly so it does not creep in: the `portal` surface and client guard · the public inquiry endpoint · `packages/contracts` and OpenAPI generation · staff invitation and password reset · real dashboard metrics (zeroes are correct here) · role-based policies (the enum exists; nothing branches on it until there are resources to authorize) · network restriction of the admin surface · Inertia SSR.
 
-Every one of these has a home in [`../backlog.md`](../backlog.md).
+Every one of these has a home in [Roadmap-Board](https://github.com/users/czepter/projects/2).
 
 ---
 
