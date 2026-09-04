@@ -43,7 +43,7 @@ bleibt `tinker`, bis ein Grund für mehr da ist.
 | Mandant auflösen | Middleware setzt `tenancy.tenant_id` je Request, bestehender Scope | stancl/tenancy (auf DB je Mandant gebaut); Deployment je Studio |
 | Routing eigener Domains | zustandslos, `forward_auth` gegen die api | Caddy-Admin-API pushen (Coolify überschreibt die Proxy-Konfiguration) |
 | Wildcard | `*.auri-crm.de` per DNS-01 über Cloudflare | On-Demand auch für Basis-Hosts: Let's Encrypt erlaubt 50 Zertifikate je Domain und Woche, drei je Studio, also etwa 16 Registrierungen pro Woche |
-| Bestandsstudio | wird Mandant mit Slug, alte Hosts leiten 30 Tage um | alte Hosts als eigene Domains behalten |
+| Bestandsdaten | keine: Produktion ist Demo-Seed, wird frisch aufgesetzt | Übernahme mit Slug und Umleitung alter Hosts |
 
 ## 1. Hosts und Edge
 
@@ -214,14 +214,10 @@ verifizierte Galerie-Domains. `PUBLIC_API_URL` bleibt ein Wert.
 **Compose.** `check-coolify-compose.php` lernt die neuen Invarianten
 (`EDGE_BASE_DOMAIN` gesetzt, kein `PORTAL_URL`/`GALLERY_URL` mehr).
 
-**Umstellung, in dieser Reihenfolge.**
-
-1. Migration legt `tenants` an und trägt das bestehende `TENANT_ID` mit dem
-   gewählten Slug ein (Slug: Datenschritt der Migration).
-2. Studio-Images deployen.
-3. Proxy auf Caddy, DNS-Records anlegen, dann alte FQDNs entfernen.
-4. Alte Hosts leiten 30 Tage über eine zweite dynamische Datei auf die
-   Basis-Hosts um, dann weg.
+**Umstellung.** Produktion trägt nur den Demo-Seed. Kein Datenschritt, keine
+Umleitung alter Hosts: Stack neu aufsetzen, Proxy auf Caddy, DNS-Records
+anlegen, `migrate:fresh --seed`. Der Seeder legt den Demo-Mandanten mit Slug
+an; jeder Seeder, der `tenant_id` setzt, nimmt ihn von dort.
 
 **Leitplanken.** `SurfaceIsolationTest`: jede Route jeder Fläche 404 ohne
 aufgelösten Mandanten, Apex-Gruppe `tenantless` als Ausnahme gelistet.
@@ -232,7 +228,7 @@ aufgelösten Mandanten, Apex-Gruppe `tenantless` als Ausnahme gelistet.
 
 Je eigener Plan und PR, in dieser Reihenfolge:
 
-1. Host-basierte Tenancy (§1, §2, Proxy-Wechsel, Umstellung §5).
+1. Host-basierte Tenancy (§1, §2, Proxy-Wechsel, Seeder, Umstellung §5).
 2. Eigene Domains (§3).
 3. Registrierung (§4).
 
