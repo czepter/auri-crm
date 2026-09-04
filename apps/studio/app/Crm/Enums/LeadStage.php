@@ -5,13 +5,13 @@ namespace App\Crm\Enums;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
- * The sales funnel (vision §7). quote_accepted is its own stage because "they
- * said yes, send the contract" is the one funnel moment where the studio is
- * the bottleneck, and folding it into quote_sent hides it.
+ * The stages a fresh studio starts with, and nothing more.
  *
- * Lost is deliberately not a case here. It is reachable from any stage, and a
- * seventh value would erase which stage the lead died in — the number the
- * funnel is actually measured on. See Lead::$lost_at.
+ * The funnel itself lives in the `stages` table now — renamed,
+ * reordered and added to by the studio — and Lead::$stage reads a Stage row,
+ * not a case of this enum. What is left here is the seed the migration writes
+ * and the vocabulary factories and seeders name it by. Behaviour hangs off
+ * StageAnchor; nothing may branch on a case below.
  */
 #[TypeScript]
 enum LeadStage: string implements HasLabel

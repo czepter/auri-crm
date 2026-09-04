@@ -3,6 +3,7 @@
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
+use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -197,7 +198,7 @@ it('advances a lead using the identifier the card carries', function () {
         ->post("/anfragen/{$card['leadId']}/stufe", ['stage' => 'contacted'])
         ->assertRedirect('/anfragen');
 
-    expect($lead->fresh()->stage)->toBe(LeadStage::Contacted);
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value);
 });
 
 it('advances a lead from the board', function () {
@@ -207,7 +208,7 @@ it('advances a lead from the board', function () {
         ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => 'contacted'])
         ->assertRedirect('/anfragen');
 
-    expect($lead->fresh()->stage)->toBe(LeadStage::Contacted);
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value);
 });
 
 // Dragging left is the board's undo for a mis-drop, so the same endpoint takes
@@ -219,7 +220,7 @@ it('moves a lead backward from the board', function () {
         ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => 'new'])
         ->assertRedirect('/anfragen');
 
-    expect($lead->fresh()->stage)->toBe(LeadStage::New);
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::New->value);
 });
 
 it('refuses a move to the stage the card already sits in', function () {
@@ -229,7 +230,7 @@ it('refuses a move to the stage the card already sits in', function () {
         ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => 'quote_sent'])
         ->assertSessionHasErrors('stage');
 
-    expect($lead->fresh()->stage)->toBe(LeadStage::QuoteSent);
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::QuoteSent->value);
 });
 
 it('binds the stage route on the public id, not the primary key', function () {
@@ -266,17 +267,70 @@ it('sums each stage from the quotes actually sent', function () {
 });
 
 // A board shows where something stands; a table shows what is next, so it
-// groups by who owes the next move rather than by the six stages.
-it('groups the table by who owes the next move', function () {
+// groups by working state rather than by the six stages — the same three
+// groups the queue beside it uses, or the two would disagree on one screen.
+it('groups the table and the queue the same way', function () {
     leadOn('2026-06-14', LeadStage::New, name: 'Neu');
     leadOn('2026-07-11', LeadStage::QuoteSent, name: 'Wartet');
     leadOn('2026-08-02', LeadStage::Booked, name: 'Gebucht');
 
-    $groups = collect(boardProps()['groups'])->keyBy('key');
+    $props = boardProps();
+    $groups = collect($props['groups'])->keyBy('key');
+    $queue = collect($props['queue'])->keyBy('key');
 
-    expect(collect($groups['handelt']['rows'])->pluck('names')->all())->toBe(['Neu'])
-        ->and(collect($groups['laeuft']['rows'])->pluck('names')->all())->toBe(['Wartet'])
-        ->and(collect($groups['fertig']['rows'])->pluck('names')->all())->toBe(['Gebucht']);
+    expect(collect($groups['unbeantwortet']['rows'])->pluck('names')->all())->toBe(['Neu'])
+        ->and(collect($groups['angebot']['rows'])->pluck('names')->all())->toBe(['Wartet'])
+        ->and(collect($groups['angenommen']['rows'])->pluck('names')->all())->toBe(['Gebucht'])
+        ->and(collect($queue['unbeantwortet']['rows'])->pluck('name')->all())->toBe(['Neu'])
+        ->and(collect($queue['angebot']['rows'])->pluck('name')->all())->toBe(['Wartet'])
+        ->and(collect($queue['angenommen']['rows'])->pluck('name')->all())->toBe(['Gebucht'])
+        ->and(collect($queue['unbeantwortet']['rows'])->pluck('open')->all())->toBe([false]);
+});
+
+// An inquiry without a date is not the most urgent one. Table and queue stand
+// on one screen, so a row that sits at the top of one and the bottom of the
+// other is the same lead in two places.
+it('sorts an undated inquiry last in the table and in the queue', function () {
+    leadOn(null, name: 'Ohne Termin');
+    leadOn('2026-06-14', name: 'Mit Termin');
+
+    $props = boardProps();
+    $group = collect($props['groups'])->firstWhere('key', 'unbeantwortet');
+    $pane = collect($props['queue'])->firstWhere('key', 'unbeantwortet');
+
+    expect(collect($group['rows'])->pluck('names')->all())->toBe(['Mit Termin', 'Ohne Termin'])
+        ->and(collect($pane['rows'])->pluck('name')->all())->toBe(['Mit Termin', 'Ohne Termin']);
+});
+
+// The pane links to /anfragen/{lead}, which binds the lead's public id — not
+// the project's, which the card next to it carries.
+it('links a queue row to the case it stands for', function () {
+    $lead = leadOn('2026-06-14', name: 'Neu');
+
+    $row = collect(collect(boardProps()['queue'])->firstWhere('key', 'unbeantwortet')['rows'])->first();
+
+    expect($row['id'])->toBe($lead->public_id);
+
+    test()->actingAs(test()->staff, 'staff')->get("/anfragen/{$row['id']}")->assertOk();
+});
+
+it('names the primary contact first in the queue as well as on the card', function () {
+    $project = leadOn('2026-06-14', name: 'Steffens & Falk')->project;
+    $project->attachContact(
+        Contact::factory()->create(['name' => 'Ruben Falk']),
+        ProjectContactRole::Partner,
+    );
+    $project->attachContact(
+        Contact::factory()->create(['name' => 'Annika Steffens']),
+        ProjectContactRole::Primary,
+    );
+
+    $props = boardProps();
+
+    expect(collect(collect($props['groups'])->firstWhere('key', 'unbeantwortet')['rows'])->pluck('names')->all())
+        ->toBe(['Annika Steffens & Ruben Falk'])
+        ->and(collect(collect($props['queue'])->firstWhere('key', 'unbeantwortet')['rows'])->pluck('name')->all())
+        ->toBe(['Annika Steffens & Ruben Falk']);
 });
 
 it('lets the url outrank what the user last chose, and remembers a choice', function () {
@@ -296,4 +350,16 @@ it('lets the url outrank what the user last chose, and remembers a choice', func
 
 it('falls back to the board when the user has chosen nothing', function () {
     expect(boardProps()['view'])->toBe('board');
+});
+
+// A booked record is a project and stands at /projekte. Leaving it here too
+// shows the same case twice, under two vocabularies.
+it('leaves booked cases off the board', function () {
+    $lead = leadOn('2026-06-14', LeadStage::ContractSent);
+    Job::factory()->for($lead->project)->create();
+
+    leadOn('2026-07-11', LeadStage::New, name: 'Petersen');
+
+    expect(collect(boardProps()['columns'])->pluck('cards')->flatten(1)->pluck('stage')->all())
+        ->toBe([LeadStage::New->value]);
 });

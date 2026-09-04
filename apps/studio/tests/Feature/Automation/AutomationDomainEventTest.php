@@ -48,8 +48,10 @@ it('never fires a rule for an event class it does not name', function () {
 
     event(new InstallmentPaid($installment));
 
+    // No run is the whole assertion: a reminder only ever leaves through one.
+    // T-11 now tells the studio about a paid installment off this same event,
+    // so "nothing at all was sent" stopped being the question.
     expect(AutomationRun::count())->toBe(0);
-    Notification::assertNothingSent();
 });
 
 it('never re-fires an event-triggered rule for the same anchor if the event somehow dispatches twice in one day', function () {

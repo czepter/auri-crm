@@ -1,15 +1,15 @@
 /**
- * G-09: the lightbox's guest identity and the two calls its favorite toggle
- * makes.
+ * G-09: the lightbox's two favorite calls.
  *
- * A gallery guest holds no account, and apps/studio's portal-surface session
- * is a different origin from this one, so this browser never sees that
- * cookie. Identity is generated right here instead: a random id, persisted
- * in this browser's own localStorage, sent as a plain request field with
- * every favorite call. See apps/studio's AssetFavoriteController for the
- * server side of that same trust call — forging someone else's guest id only
- * lets you toggle a heart on their behalf, never see or change anything they
- * can.
+ * Die Kennung kommt nicht mehr von hier. Ein Herz braucht seit der
+ * Gast-Identität einen Absender — den signierten Pass aus guest.ts, den der
+ * Server nach einer bestätigten Adresse ausgestellt hat. Ohne ihn antwortet
+ * die api 403, und das ist der Punkt: eine Markierung ohne Absender wäre auf
+ * dem nächsten Gerät verloren.
+ *
+ * Die zufällige UUID unten lebt weiter, aber nur noch für eine Sache: was
+ * jemand vor dem Anmelden markiert hat, wandert beim Bestätigen auf seine
+ * Kennung (ConfirmGalleryGuest::adopt).
  *
  * G-05 (#242): the view claim is a different matter and does travel — as a
  * signed pass the api surface issued for this gallery, minted server-side
@@ -51,11 +51,13 @@ export async function fetchFavorites(
   apiBase: string,
   versionPublicId: string,
   pass?: string | null,
-  store?: GuestIdStore,
+  guestPass?: string | null,
 ): Promise<Set<string>> {
+  if (!guestPass) return new Set()
+
   try {
     const response = await fetch(
-      `${apiBase}${favoritesPath(versionPublicId)}?guest_id=${encodeURIComponent(guestId(store))}`,
+      `${apiBase}${favoritesPath(versionPublicId)}?guest_pass=${encodeURIComponent(guestPass)}`,
       { headers: passHeader(pass) },
     )
     if (!response.ok) return new Set()
@@ -74,12 +76,12 @@ export async function toggleFavorite(
   versionPublicId: string,
   key: string,
   pass?: string | null,
-  store?: GuestIdStore,
+  guestPass?: string | null,
 ): Promise<boolean> {
   const response = await fetch(`${apiBase}${favoritesPath(versionPublicId, key)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...passHeader(pass) },
-    body: JSON.stringify({ guest_id: guestId(store) }),
+    body: JSON.stringify({ guest_pass: guestPass }),
   })
 
   const body: { favorited: boolean } = await response.json()

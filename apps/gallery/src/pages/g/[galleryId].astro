@@ -1,9 +1,10 @@
 ---
-import { FORMATS, imageUrl, srcSet, type GalleryAsset } from '../../lib/images'
+import { draftImageBase, FORMATS, imageUrl, passGate, previewGate, srcSet, versionImageBase, type GalleryAsset } from '../../lib/images'
 import { callApi } from '../../lib/apiClient'
 import { buyPass, passCookieName, PASS_MAX_AGE_SECONDS } from '../../lib/viewPass'
-import '../../styles/tokens.css'
-import '../../styles/gallery.css'
+import { isPrerelease, signUpForPrerelease, type PrereleaseSignupResult } from '../../lib/prerelease'
+import { confirm as confirmGuest, guestCookieName, GUEST_MAX_AGE_SECONDS, nameFromEmail, requestCode } from '../../lib/guest'
+import '../../styles/app.css'
 
 // G-08: never cached. Which GalleryVersion counts as "current" can change
 // the moment a studio owner republishes (Gallery::publish(), G-05), so a
@@ -20,19 +21,45 @@ const apiBase = process.env.API_URL ?? 'http://localhost:8000'
 const publicApi = process.env.PUBLIC_API_URL ?? apiBase
 const { galleryId } = Astro.params
 const requestId = Astro.locals.requestId
+// Der Download wohnt im Portal: dort liegen die PIN, die Adressprüfung und
+// die ZIP-Bände. Ein Pfad auf diesen Host lief ins Leere.
+const downloadUrl = `${(process.env.PUBLIC_PORTAL_URL ?? '').replace(/\/$/, '')}/galerien/${galleryId}/download`
 const cookieName = passCookieName(galleryId!)
+const guestCookie = guestCookieName(galleryId!)
+// Zwei Cookies: der Pass bleibt undurchsichtig und signiert, der Name steht
+// daneben, damit die Fußzeile ihn ohne Rückfrage zeigen kann.
+const guestNameCookie = `${guestCookie}_wer`
+
+// R40: pre-release's own shape — title and public_id, nothing a picture,
+// a count or a cover could answer, because GalleryReadController never
+// sends those while `prerelease` is true. Kept as a separate interface
+// rather than adding optional fields to the one below: this page must
+// never read `.version` off a response that has none.
+interface PrereleaseGallery {
+  public_id: string
+  title: string
+  prerelease: true
+}
+
+interface PublishedGallery {
+  public_id: string
+  title: string
+  prerelease?: false
+  // R31/spec decision 26: set once GalleryReadController's own preview
+  // pass check matched. version.public_id is null exactly then — there is
+  // no GalleryVersion behind a draft, see the controller's own doc
+  // comment on draft().
+  draft: boolean
+  version: {
+    public_id: string | null
+    version: number | null
+    published_at: string | null
+    assets: GalleryAsset[]
+  }
+}
 
 interface GalleryReadResponse {
-  gallery: {
-    public_id: string
-    title: string
-    version: {
-      public_id: string
-      version: number
-      published_at: string
-      assets: GalleryAsset[]
-    }
-  }
+  gallery: PrereleaseGallery | PublishedGallery
 }
 
 // G-05 (#242): the gate, answered here so a guest never leaves the fast
@@ -42,30 +69,141 @@ interface GalleryReadResponse {
 // this one does not need to.
 let pass = Astro.cookies.get(cookieName)?.value ?? null
 let wrongPassword = false
+let signupStatus: PrereleaseSignupResult | null = null
 
+// Wer hier ist. Ohne bestätigte Adresse kein Herz und kein Kommentar — eine
+// Markierung ohne Absender wäre auf dem nächsten Gerät verloren.
+let guestPass = Astro.cookies.get(guestCookie)?.value ?? null
+let guestName = Astro.cookies.get(guestNameCookie)?.value ?? null
+// Die Adresse, an die gerade ein Code ging: sie füllt das Codeformular und
+// später das Adressfeld vor.
+let pendingEmail: string | null = null
+let codeSent = false
+let codeWrong = false
+let tooManyCodes = false
+
+function rememberGuest(identity: { name: string; pass: string }) {
+  const options = {
+    path: `/g/${galleryId}`,
+    httpOnly: true,
+    sameSite: 'lax' as const,
+    secure: Astro.url.protocol === 'https:',
+    maxAge: GUEST_MAX_AGE_SECONDS,
+  }
+
+  guestPass = identity.pass
+  guestName = identity.name
+  Astro.cookies.set(guestCookie, identity.pass, options)
+  Astro.cookies.set(guestNameCookie, identity.name, options)
+}
+
+// R44: this render's own timestamp, carried as a hidden field on the
+// signup form below and read back at the top of the next POST to compute
+// `elapsed` server-side — the page ships no client JavaScript, so there is
+// no inline script to stamp it the way PublicInquiryController's snippet
+// does (see GalleryPrereleaseSignupController's own doc comment).
+const renderedAt = Date.now()
+
+// Two forms can post to this same route — the password gate's and R40's
+// signup — distinguished by which field they carry rather than a second
+// route, since which one is on screen depends on a read this page has not
+// made yet at this point in the request.
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData()
-  const bought = await buyPass(apiBase, galleryId!, requestId, String(form.get('password') ?? ''))
+  const intent = String(form.get('absicht') ?? '')
 
-  if (bought === null) {
-    wrongPassword = true
+  if (intent === 'anmelden') {
+    pendingEmail = String(form.get('gast_email') ?? '')
+    const name = String(form.get('gast_name') ?? '') || nameFromEmail(pendingEmail)
+
+    codeSent = await requestCode(apiBase, galleryId!, requestId, pendingEmail, name, pass)
+    tooManyCodes = !codeSent
+  } else if (intent === 'bestaetigen') {
+    pendingEmail = String(form.get('gast_email') ?? '')
+
+    const identity = await confirmGuest(
+      apiBase,
+      galleryId!,
+      requestId,
+      {
+        email: pendingEmail,
+        code: String(form.get('code') ?? ''),
+        // Was dieser Browser vor der Anmeldung markiert hat. Steht im
+        // localStorage, das eine serverseitig gerenderte Seite nicht lesen
+        // kann — die drei Zeilen unten legen es ins Formular.
+        anonymousId: String(form.get('anonym') ?? ''),
+      },
+      pass,
+    )
+
+    if (identity === null) {
+      codeSent = true
+      codeWrong = true
+    } else {
+      rememberGuest(identity)
+    }
+  } else if (intent === 'abmelden') {
+    // Beides, nicht nur das Cookie: bliebe die anonyme Kennung liegen, erbte
+    // der Nächste am geteilten Rechner die Markierungen von vorher.
+    Astro.cookies.delete(guestCookie, { path: `/g/${galleryId}` })
+    Astro.cookies.delete(guestNameCookie, { path: `/g/${galleryId}` })
+    guestPass = null
+    guestName = null
+  } else if (form.has('email')) {
+    const submittedAt = Number(form.get('rendered_at') ?? NaN)
+    const elapsed = Number.isFinite(submittedAt) ? Math.floor((Date.now() - submittedAt) / 1000) : null
+
+    signupStatus = await signUpForPrerelease(
+      apiBase,
+      galleryId!,
+      requestId,
+      String(form.get('email') ?? ''),
+      String(form.get('website') ?? ''),
+      elapsed,
+    )
   } else {
-    pass = bought
-    Astro.cookies.set(cookieName, bought, {
-      path: `/g/${galleryId}`,
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: Astro.url.protocol === 'https:',
-      maxAge: PASS_MAX_AGE_SECONDS,
-    })
+    const bought = await buyPass(apiBase, galleryId!, requestId, String(form.get('password') ?? ''))
+
+    if (bought === null) {
+      wrongPassword = true
+    } else {
+      pass = bought
+      Astro.cookies.set(cookieName, bought, {
+        path: `/g/${galleryId}`,
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: Astro.url.protocol === 'https:',
+        maxAge: PASS_MAX_AGE_SECONDS,
+      })
+    }
   }
 }
+
+// R31: the head button and "Vorschaulink erzeugen" both hand out this exact
+// shape (Gallery::publicUrl() + '?preview=' + token, GalleryPreviewController).
+// A revoked or expired token reads the same as none at all —
+// GalleryReadController falls through to the ordinary version path — so
+// this page never special-cases "invalid preview token" itself.
+// Derselbe Vorgang über den Link aus der Mail — für den, der sie auf dem
+// Gerät liest, auf dem er auch die Galerie offen hat.
+const confirmToken = Astro.url.searchParams.get('bestaetigung')
+
+if (confirmToken !== null && guestPass === null) {
+  const identity = await confirmGuest(apiBase, galleryId!, requestId, { token: confirmToken }, pass)
+
+  if (identity !== null) {
+    rememberGuest(identity)
+  }
+}
+
+const previewToken = Astro.url.searchParams.get('preview')
+const readPath = `/api/galleries/${galleryId}${previewToken ? `?preview=${encodeURIComponent(previewToken)}` : ''}`
 
 // G-13: every outgoing call this SSR page makes to the api surface goes
 // through callApi, which forwards this request's own X-Request-Id
 // (src/middleware.ts) and reports a 5xx or a timeout as the gallery outage
 // it is from a guest's side — see src/lib/apiClient.ts's own doc comment.
-let response = await callApi(apiBase, `/api/galleries/${galleryId}`, requestId, {
+let response = await callApi(apiBase, readPath, requestId, {
   headers: { Accept: 'application/json' },
 }, pass)
 
@@ -77,29 +215,43 @@ if (response.status === 404 && pass === null) {
 
   if (free !== null) {
     pass = free
-    response = await callApi(apiBase, `/api/galleries/${galleryId}`, requestId, {
+    response = await callApi(apiBase, readPath, requestId, {
       headers: { Accept: 'application/json' },
     }, pass)
   }
 }
 
 const body: GalleryReadResponse | null = response.ok ? await response.json() : null
-const gallery = body?.gallery ?? null
+const result = body?.gallery ?? null
+
+// R39/R40: checked ahead of everything below — GalleryReadController
+// answers this state before it ever looks at a preview pass or a
+// password, so this page mirrors that and never tries to read `.version`
+// off a pre-release response.
+const prerelease = isPrerelease(result)
+const prereleaseGallery = prerelease ? (result as PrereleaseGallery) : null
+const gallery = prerelease ? null : (result as PublishedGallery | null)
 
 // Locked and missing answer the same way on purpose (see GalleryPassController):
 // what this page can tell them apart by is only whether a pass ever worked.
-const locked = gallery === null && response.status === 404
+const locked = gallery === null && !prerelease && response.status === 404
 
-if (gallery === null && !locked) {
+if (gallery === null && !locked && !prerelease) {
   Astro.response.status = 502
 }
 
-// (SIZES matches .grid's four fixed columns in gallery.css — a masonry, no
+// (SIZES matches .wall's four fixed columns in gallery.css — a masonry, no
 // responsive breakpoints exist in the mockup this screen matches, so none
 // are invented here either.)
 const SIZES = '(max-width: 760px) 50vw, (max-width: 1080px) 33vw, 25vw'
 const FALLBACK_WIDTH = 800
 const cover = gallery?.version.assets[0] ?? null
+
+// R31: the one branch point every image URL on this page goes through —
+// see images.ts's own doc comment on why `base`/`gate` are pre-built here
+// rather than every call site re-deciding "draft or not".
+const imageBase = gallery === null ? '' : gallery.draft ? draftImageBase(gallery.public_id) : versionImageBase(gallery.version.public_id!)
+const gate = gallery?.draft ? previewGate(previewToken) : passGate(pass)
 ---
 
 <html lang="de">
@@ -107,7 +259,7 @@ const cover = gallery?.version.assets[0] ?? null
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>{gallery ? gallery.title : 'Galerie'}</title>
+    <title>{gallery?.title ?? prereleaseGallery?.title ?? 'Galerie'}</title>
   </head>
   <body>
     {
@@ -140,12 +292,60 @@ const cover = gallery?.version.assets[0] ?? null
             </div>
           </div>
         </section>
+      ) : prereleaseGallery ? (
+        // R40: no <img>, no counter, no cover — nothing this response
+        // doesn't carry. Same shell as the password gate above (a couple
+        // has to understand why there is nothing to look at yet, which is
+        // the one sentence below), no picture behind either of them here.
+        <section class="gate">
+          <div class="lock">
+            <h1 class="display">{prereleaseGallery.title}</h1>
+            <p class="meta">Die Galerie wird vorbereitet.</p>
+
+            <div>
+              <div class="hair" />
+
+              {signupStatus === 'accepted' ? (
+                <p class="hint">Eingetragen.</p>
+              ) : (
+                <form method="POST">
+                  <div class="field">
+                    <label for="email">E-Mail-Adresse</label>
+                    <input id="email" name="email" type="email" placeholder="name@beispiel.de" autocomplete="email" required />
+                  </div>
+
+                  {// R44: the honeypot — invisible to a person, filled by
+                  // anything that autofills every field on the page. Off
+                  // the tab order and out of the accessibility tree so a
+                  // screen reader never announces it either.
+                  }
+                  <input
+                    type="text"
+                    name="website"
+                    tabindex="-1"
+                    autocomplete="off"
+                    aria-hidden="true"
+                    style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden"
+                  />
+                  <input type="hidden" name="rendered_at" value={renderedAt} />
+
+                  {signupStatus === 'refused' && <p class="err">Eintrag nicht möglich.</p>}
+
+                  <button class="btn" type="submit">
+                    Benachrichtigen
+                    <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        </section>
       ) : gallery ? (
         <>
           <header class="cover">
             {cover && (
               <img
-                src={imageUrl(publicApi, gallery.version.public_id, cover.key, 2400, 'jpeg', pass)}
+                src={imageUrl(publicApi, imageBase, cover.key, 2400, 'jpeg', gate)}
                 alt=""
               />
             )}
@@ -159,28 +359,34 @@ const cover = gallery?.version.assets[0] ?? null
             </a>
           </header>
 
-          <div class="bar">
-            <span class="who"><b>{gallery.title}</b></span>
-            <a class="barbtn solid" href={`/g/${galleryId}/download`}>
-              <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
-              Herunterladen
-            </a>
-          </div>
+          {
+            // R31: a draft has no ZipBuild to prepare or download — the
+            // studio's own preview is a look, not a delivery.
+            !gallery.draft && (
+              <div class="bar">
+                <span class="who"><b>{gallery.title}</b></span>
+                <a class="barbtn solid" href={downloadUrl}>
+                  <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
+                  Herunterladen
+                </a>
+              </div>
+            )
+          }
 
-          <main class="grid" id="raster">
+          <main class="wall" id="raster">
             {gallery.version.assets.map((asset, i) => (
               <a class="tile" href="#" data-lb-open data-index={i}>
                 <picture>
                   {FORMATS.filter((f) => f !== 'jpeg').map((format) => (
                     <source
                       type={`image/${format}`}
-                      srcset={srcSet(publicApi, gallery.version.public_id, asset.key, format, pass)}
+                      srcset={srcSet(publicApi, imageBase, asset.key, format, gate)}
                       sizes={SIZES}
                     />
                   ))}
                   <img
-                    src={imageUrl(publicApi, gallery.version.public_id, asset.key, FALLBACK_WIDTH, 'jpeg', pass)}
-                    srcset={srcSet(publicApi, gallery.version.public_id, asset.key, 'jpeg', pass)}
+                    src={imageUrl(publicApi, imageBase, asset.key, FALLBACK_WIDTH, 'jpeg', gate)}
+                    srcset={srcSet(publicApi, imageBase, asset.key, 'jpeg', gate)}
                     sizes={SIZES}
                     width={asset.width ?? undefined}
                     height={asset.height ?? undefined}
@@ -188,9 +394,15 @@ const cover = gallery?.version.assets[0] ?? null
                     loading="lazy"
                   />
                 </picture>
-                <button class="fav" type="button" data-fav aria-label="Favorit">
-                  <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
-                </button>
+                {
+                  // R31: no GalleryVersion means no AssetFavoriteController
+                  // to toggle against — the draft grid is view-only.
+                  !gallery.draft && guestPass !== null && (
+                    <button class="fav" type="button" data-fav aria-label="Favorit">
+                      <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
+                    </button>
+                  )
+                }
               </a>
             ))}
           </main>
@@ -230,23 +442,39 @@ const cover = gallery?.version.assets[0] ?? null
               </div>
 
               <aside class="rail">
-                <div class="acts">
-                  <button type="button" class="act" data-lb-favorite>
-                    <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
-                    <span data-lb-favorite-label>Favorit</span>
-                  </button>
+                {
+                  // R31: favoriting, downloading and commenting are all
+                  // version-scoped (AssetFavoriteController,
+                  // AssetCommentController, the download route above) — a
+                  // draft has none of the three to offer.
+                  !gallery.draft && (
+                    <>
+                      <div class="acts">
+                        <button type="button" class="act" data-lb-favorite>
+                          <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0112 8a4.5 4.5 0 017 2.5c0 5.1-7 9.5-7 9.5z" /></svg>
+                          <span data-lb-favorite-label>Favorit</span>
+                        </button>
 
-                  <a class="act" href={`/g/${galleryId}/download`}>
-                    <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
-                    Herunterladen
-                  </a>
-                </div>
+                        <a class="act" href={downloadUrl}>
+                          <svg viewBox="0 0 24 24"><path d="M12 4v12M6 11l6 6 6-6M5 20h14" /></svg>
+                          Herunterladen
+                        </a>
+                      </div>
 
-                <div class="cmts" data-lb-comments />
+                      <div class="cmts" data-lb-comments />
 
-                <div class="write">
-                  <input type="text" data-lb-comment-input placeholder="Kommentar schreiben …" />
-                </div>
+                      <div class="write">
+                        {
+                          guestPass === null ? (
+                            <a href="#anmelden">Zum Kommentieren anmelden</a>
+                          ) : (
+                            <input type="text" data-lb-comment-input placeholder="Kommentar schreiben …" />
+                          )
+                        }
+                      </div>
+                    </>
+                  )
+                }
               </aside>
             </div>
 
@@ -254,7 +482,7 @@ const cover = gallery?.version.assets[0] ?? null
               {gallery.version.assets.map((asset, i) => (
                 <a href="#" data-lb-thumb data-index={i}>
                   <img
-                    src={imageUrl(publicApi, gallery.version.public_id, asset.key, 400, 'jpeg', pass)}
+                    src={imageUrl(publicApi, imageBase, asset.key, 400, 'jpeg', gate)}
                     alt=""
                     loading="lazy"
                   />
@@ -263,9 +491,97 @@ const cover = gallery?.version.assets[0] ?? null
             </nav>
           </div>
 
+          {
+            // Ohne bestätigte Adresse gibt es Herz und Kommentar nicht: eine
+            // Markierung ohne Absender wäre auf dem nächsten Gerät verloren,
+            // und unter jedem Kommentar stünde wieder „Gast".
+            !gallery.draft && guestPass === null && (
+              <section class="signin" id="anmelden">
+                {
+                  codeSent ? (
+                    <form method="POST">
+                      <input type="hidden" name="absicht" value="bestaetigen" />
+                      <input type="hidden" name="gast_email" value={pendingEmail ?? ''} />
+                      <input type="hidden" name="anonym" data-anonymous-id value="" />
+                      <p>Wir haben dir sechs Ziffern an {pendingEmail} geschickt.</p>
+                      <div class="row">
+                        <input
+                          type="text"
+                          name="code"
+                          inputmode="numeric"
+                          autocomplete="one-time-code"
+                          maxlength="6"
+                          placeholder="000000"
+                          required
+                        />
+                        <button class="btn" type="submit">Bestätigen</button>
+                      </div>
+                      {codeWrong && <p class="err">Der Code stimmt nicht oder ist abgelaufen.</p>}
+                    </form>
+                  ) : (
+                    <form method="POST">
+                      <input type="hidden" name="absicht" value="anmelden" />
+                      <p>Zum Markieren und Kommentieren trag deine Adresse ein.</p>
+                      <div class="row">
+                        <input type="email" name="gast_email" placeholder="E-Mail" required data-email-source />
+                        <input type="text" name="gast_name" placeholder="Name" required data-name-target />
+                        <button class="btn" type="submit">Weiter</button>
+                      </div>
+                      {tooManyCodes && <p class="err">Zu viele Anfragen. Versuch es später noch einmal.</p>}
+                    </form>
+                  )
+                }
+              </section>
+            )
+          }
+
+          <script is:inline>
+            document.querySelectorAll('[data-anonymous-id]').forEach((field) => {
+              field.value = localStorage.getItem('gallery_guest_id') ?? ''
+            })
+
+            // Der Namensvorschlag entsteht beim Tippen der Adresse und nur,
+            // solange niemand das Namensfeld angefasst hat.
+            const source = document.querySelector('[data-email-source]')
+            const target = document.querySelector('[data-name-target]')
+
+            if (source && target) {
+              target.addEventListener('input', () => (target.dataset.touched = '1'))
+              source.addEventListener('input', () => {
+                if (target.dataset.touched) return
+
+                const local = source.value.split('@')[0] ?? ''
+                target.value = local
+                  .split(/[._+-]+/)
+                  .map((part) => part.replace(/\d+$/, ''))
+                  .filter(Boolean)
+                  .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                  .join(' ')
+              })
+            }
+
+            document.addEventListener('submit', (event) => {
+              if (event.target.querySelector('[name="absicht"]')?.value !== 'abmelden') return
+
+              localStorage.removeItem('gallery_guest_id')
+            })
+          </script>
+
           <footer class="gfoot">
             <span>{gallery.title}</span>
-            <span>{gallery.version.assets.length} Bilder</span>
+            {
+              guestName === null ? (
+                <span>{gallery.version.assets.length} Bilder</span>
+              ) : (
+                <span class="who">
+                  Angemeldet als <b>{guestName}</b>
+                  <form method="POST">
+                    <input type="hidden" name="absicht" value="abmelden" />
+                    <button class="txtbtn" type="submit">Abmelden</button>
+                  </form>
+                </span>
+              )
+            }
           </footer>
 
           {
@@ -279,11 +595,13 @@ const cover = gallery?.version.assets[0] ?? null
           <script is:inline define:vars={{
             assets: gallery.version.assets,
             apiBase: publicApi,
-            versionPublicId: gallery.version.public_id,
-            galleryTitle: gallery.title,
+            imageBase,
+            gate,
+            versionPublicId: gallery.draft ? null : gallery.version.public_id,
             pass,
+            guestPass,
           }}>
-            window.__lightboxData = { assets, apiBase, versionPublicId, galleryTitle, pass }
+            window.__lightboxData = { assets, apiBase, imageBase, gate, versionPublicId, pass, guestPass }
           </script>
           <script>
             import { initLightbox } from '../../lib/lightbox'

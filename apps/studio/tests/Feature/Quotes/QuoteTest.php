@@ -1,10 +1,13 @@
 <?php
 
+use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
+use App\Enums\Capability;
+use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Quotes\Actions\ReviseQuote;
@@ -948,4 +951,153 @@ describe('Q-07: Project::latestQuote()', function () {
 
         expect($project->fresh()->latestQuote->id)->toBe($revision->fresh()->id);
     });
+});
+
+// --- Autosave: the audit entry is throttled, not dropped ----------------
+
+it('writes one quote.updated for a burst of autosaves, and one again after the window', function () {
+    $user = quoteOwner();
+    $quote = Quote::factory()->create();
+
+    $payload = ['items' => [['title' => 'Reportage', 'description' => null, 'quantity' => 1, 'unit_price' => 440000]]];
+
+    $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", $payload);
+    $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", $payload);
+
+    expect(AuditLog::where('event', 'quote.updated')->where('subject', $quote->public_id)->count())->toBe(1);
+
+    $this->travel(16)->minutes();
+    $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", $payload);
+
+    expect(AuditLog::where('event', 'quote.updated')->where('subject', $quote->public_id)->count())->toBe(2);
+});
+
+it('does not let one quote\'s autosave suppress another quote\'s entry', function () {
+    $user = quoteOwner();
+    $first = Quote::factory()->create();
+    $second = Quote::factory()->create();
+
+    $payload = ['items' => [['title' => 'Reportage', 'description' => null, 'quantity' => 1, 'unit_price' => 440000]]];
+
+    $this->actingAs($user, 'staff')->patch("/angebote/{$first->public_id}", $payload);
+    $this->actingAs($user, 'staff')->patch("/angebote/{$second->public_id}", $payload);
+
+    expect(AuditLog::where('event', 'quote.updated')->count())->toBe(2);
+});
+
+// The lead pill creates the quote and fills it, rather than only opening the
+// tab — the store() branch that seeds from a package keeps its caller here.
+it('creates a quote seeded from a package when the lead pill posts one', function () {
+    $project = Project::factory()->create();
+    $package = Package::factory()->has(PackageItem::factory()->count(2), 'items')->create();
+
+    $this->actingAs(quoteOwner(), 'staff')
+        ->post("/auftraege/{$project->public_id}/angebote", ['package' => $package->public_id])
+        ->assertRedirect();
+
+    expect($project->quotes()->sole()->items)->toHaveCount(2);
+});
+
+// --- Creating: no dialog, so no questions before the first visible line ---
+
+it('creates a blank draft straight from the button, taking validity from the studio default', function () {
+    $project = Project::factory()->create();
+
+    $this->actingAs(quoteOwner(), 'staff')
+        ->post("/auftraege/{$project->public_id}/angebote")
+        ->assertRedirect();
+
+    $quote = $project->quotes()->sole();
+
+    expect($quote->items)->toHaveCount(0)
+        ->and($quote->valid_until)->not->toBeNull();
+});
+
+// --- Merken: the tick is derived, and it writes the catalog -------------
+
+it('remembers a flagged line, and remembers it only once across quotes', function () {
+    $first = Quote::factory()->create();
+    $second = Quote::factory()->create();
+    $line = ['title' => 'Zweitfotograf', 'description' => 'Zweite Kamera', 'quantity' => 1, 'unit_price' => 49000, 'remember' => true];
+
+    $this->actingAs(quoteOwner(), 'staff')->patch("/angebote/{$first->public_id}", ['items' => [$line]]);
+    $this->actingAs(quoteOwner(), 'staff')->patch("/angebote/{$second->public_id}", ['items' => [$line]]);
+
+    $item = CatalogItem::sole();
+
+    expect($item->title)->toBe('Zweitfotograf')
+        ->and($item->description)->toBe('Zweite Kamera')
+        ->and($item->unit_price)->toBe(49000);
+});
+
+it('updates the remembered price and description, and never the quantity', function () {
+    $quote = Quote::factory()->create();
+    CatalogItem::create(['title' => 'Zweitfotograf', 'description' => null, 'unit_price' => 49000]);
+
+    $this->actingAs(quoteOwner(), 'staff')->patch("/angebote/{$quote->public_id}", [
+        'items' => [['title' => 'Zweitfotograf', 'description' => 'Ganztags', 'quantity' => 3, 'unit_price' => 52000, 'remember' => true]],
+    ]);
+
+    $item = CatalogItem::sole();
+
+    expect($item->unit_price)->toBe(52000)
+        ->and($item->description)->toBe('Ganztags')
+        ->and($item->getAttributes())->not->toHaveKey('quantity');
+});
+
+it('forgets a line whose flag is taken away', function () {
+    $quote = Quote::factory()->create();
+    CatalogItem::create(['title' => 'Zweitfotograf', 'unit_price' => 49000]);
+
+    $this->actingAs(quoteOwner(), 'staff')->patch("/angebote/{$quote->public_id}", [
+        'items' => [['title' => 'Zweitfotograf', 'description' => null, 'quantity' => 1, 'unit_price' => 49000, 'remember' => false]],
+    ]);
+
+    expect(CatalogItem::count())->toBe(0);
+});
+
+it('leaves the library alone when no line carries the flag at all', function () {
+    $quote = Quote::factory()->create();
+    CatalogItem::create(['title' => 'Zweitfotograf', 'unit_price' => 49000]);
+
+    $this->actingAs(quoteOwner(), 'staff')->patch("/angebote/{$quote->public_id}", [
+        'items' => [['title' => 'Reportage', 'description' => null, 'quantity' => 1, 'unit_price' => 189000]],
+    ]);
+
+    expect(CatalogItem::count())->toBe(1);
+});
+
+// The gate exists for API tokens (P6/I-01), not for roles — every role holds
+// ManagePackages today, which is exactly what PackagePolicy explains.
+it('refuses to write the library for an actor without the catalog capability', function () {
+    $role = collect(StaffRole::cases())->first(fn (StaffRole $role) => ! $role->allows(Capability::ManagePackages));
+
+    if ($role === null) {
+        $this->markTestSkipped('Jede Rolle hält ManagePackages — die Trennung existiert nur für API-Token (P6/I-01).');
+    }
+
+    $quote = Quote::factory()->create();
+
+    $this->actingAs(staffMember($role), 'staff')->patch("/angebote/{$quote->public_id}", [
+        'items' => [['title' => 'Zweitfotograf', 'description' => null, 'quantity' => 1, 'unit_price' => 49000, 'remember' => true]],
+    ])->assertForbidden();
+
+    expect(CatalogItem::count())->toBe(0);
+});
+
+it('sends active packages with their items, the library and the catalog permission to the quotes screen', function () {
+    $project = Project::factory()->create();
+    Package::factory()->has(PackageItem::factory()->count(2), 'items')->create(['name' => 'Hochzeit Basis']);
+    Package::factory()->inactive()->create(['name' => 'Alt']);
+    CatalogItem::create(['title' => 'Zweitfotograf', 'unit_price' => 49000]);
+
+    $props = $this->actingAs(quoteOwner(), 'staff')
+        ->get("/auftraege/{$project->public_id}/angebote")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect(collect($props['packages'])->pluck('name')->all())->toBe(['Hochzeit Basis'])
+        ->and($props['packages'][0]['items'])->toHaveCount(2)
+        ->and($props['catalogItems'][0]['title'])->toBe('Zweitfotograf')
+        ->and($props['canManageCatalog'])->toBeTrue();
 });

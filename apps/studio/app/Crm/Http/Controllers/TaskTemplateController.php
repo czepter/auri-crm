@@ -2,19 +2,19 @@
 
 namespace App\Crm\Http\Controllers;
 
-use App\Crm\Actions\ApplyTaskTemplates;
-use App\Crm\Data\TaskTemplateData;
+use App\Crm\Enums\DueAnchor;
 use App\Crm\Enums\ShootKind;
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\TaskTemplate;
+use App\Crm\Rules\StageOfPipeline;
+use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
-use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Inertia\Inertia;
-use Inertia\Response;
 
 /**
  * T-14: CRUD over the studio's standing task templates, and a preview of what
@@ -28,36 +28,6 @@ use Inertia\Response;
  */
 class TaskTemplateController extends Controller
 {
-    public function index(Request $request, ApplyTaskTemplates $apply): Response
-    {
-        $this->authorize('viewAny', TaskTemplate::class);
-
-        $validated = $request->validate([
-            'preview_date' => ['nullable', 'date'],
-            'preview_shoot_kind' => ['nullable', Rule::enum(ShootKind::class)],
-        ]);
-
-        $templates = TaskTemplate::query()->orderBy('sort_order')->get();
-
-        return Inertia::render('Settings/TaskTemplates', [
-            'templates' => TaskTemplateData::collect($templates),
-            'audiences' => collect(TaskAudience::cases())
-                ->map(fn (TaskAudience $audience) => ['value' => $audience->value, 'label' => $audience->label()])
-                ->all(),
-            'shootKinds' => collect(ShootKind::cases())
-                ->map(fn (ShootKind $kind) => ['value' => $kind->value, 'label' => $kind->label()])
-                ->all(),
-            'previewDate' => $validated['preview_date'] ?? null,
-            'previewShootKind' => $validated['preview_shoot_kind'] ?? null,
-            'preview' => isset($validated['preview_date'])
-                ? $apply->preview(
-                    CarbonImmutable::parse($validated['preview_date']),
-                    isset($validated['preview_shoot_kind']) ? ShootKind::from($validated['preview_shoot_kind']) : null,
-                )
-                : null,
-        ]);
-    }
-
     public function store(Request $request): RedirectResponse
     {
         $this->authorize('create', TaskTemplate::class);
@@ -71,7 +41,7 @@ class TaskTemplateController extends Controller
             subject: $template->public_id,
         );
 
-        return redirect('/einstellungen/aufgabenvorlagen');
+        return back();
     }
 
     public function update(Request $request, TaskTemplate $taskTemplate): RedirectResponse
@@ -87,7 +57,7 @@ class TaskTemplateController extends Controller
             subject: $taskTemplate->public_id,
         );
 
-        return redirect('/einstellungen/aufgabenvorlagen');
+        return back();
     }
 
     public function destroy(TaskTemplate $taskTemplate): RedirectResponse
@@ -106,15 +76,32 @@ class TaskTemplateController extends Controller
             subject: $taskTemplate->public_id,
         );
 
-        return redirect('/einstellungen/aufgabenvorlagen');
+        return back();
     }
 
+    /**
+     * The workflow panel sends the stage it is editing; T-14's settings screen
+     * has no stages and sends none. Absent means what the column defaults to
+     * in the database — applied at booking, counted from the shoot's date.
+     */
     private function validated(Request $request): array
     {
+        $booked = app(CrmVocabulary::class)->anchored(StagePipeline::Project, StageAnchor::Booked);
+
+        $request->merge([
+            'pipeline' => $request->input('pipeline', StagePipeline::Project->value),
+            'stage' => $request->input('stage', $booked?->key),
+            'anchor' => $request->input('anchor', DueAnchor::ShootDate->value),
+        ]);
+
         return $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'audience' => ['required', Rule::enum(TaskAudience::class)],
+            'project_type' => ['nullable', 'string', Rule::exists('project_types', 'key')],
+            'pipeline' => ['required', Rule::enum(StagePipeline::class)],
+            'stage' => ['required', 'string', new StageOfPipeline($request->input('pipeline'))],
             'day_offset' => ['required', 'integer'],
+            'anchor' => ['required', Rule::enum(DueAnchor::class)],
             'shoot_kind' => ['nullable', Rule::enum(ShootKind::class)],
             'is_active' => ['required', 'boolean'],
             'sort_order' => ['required', 'integer', 'min:0'],

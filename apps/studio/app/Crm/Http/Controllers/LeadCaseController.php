@@ -3,19 +3,25 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Catalog\Models\Package;
+use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\CheckDateAvailability;
-use App\Crm\Data\InternalNoteData;
+use App\Crm\Actions\OpenLeads;
+use App\Crm\Data\ProjectPersonData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\LeadSource;
-use App\Crm\Enums\LeadStage;
-use App\Crm\Enums\ProjectType;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
+use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
+use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use App\Quotes\Data\QuoteData;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\RecordVisit;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -45,14 +51,12 @@ use Inertia\Response;
  */
 class LeadCaseController extends Controller
 {
-    /** Who owes the next move. Same reading the board's table groups by. */
-    private const GROUPS = [
-        'unbeantwortet' => [LeadStage::New, LeadStage::Contacted],
-        'angebot' => [LeadStage::QuoteSent],
-        'angenommen' => [LeadStage::QuoteAccepted, LeadStage::ContractSent, LeadStage::Booked],
-    ];
-
-    public function __construct(private readonly CheckDateAvailability $availability) {}
+    public function __construct(
+        private readonly CheckDateAvailability $availability,
+        private readonly OpenLeads $leads,
+        private readonly BuildThread $thread,
+        private readonly StudioSettingsResolver $settings,
+    ) {}
 
     public function show(Lead $lead): Response
     {
@@ -70,35 +74,44 @@ class LeadCaseController extends Controller
         $primary = $project->primaryShoot;
 
         return Inertia::render('Leads/Show', [
-            'queue' => $this->queue($lead),
+            'queue' => $this->leads->queue($lead),
             'lead' => [
                 'id' => $lead->public_id,
                 'projectId' => $project->public_id,
                 'name' => $project->name,
-                'type' => $project->type->value,
-                'typeLabel' => $project->type->label(),
+                'type' => $project->type->key,
+                'typeOther' => $project->type_other,
+                'typeLabel' => $project->typeLabel(),
                 'source' => $lead->source->value,
-                'sourceLabel' => $lead->source->label(),
-                'stage' => $lead->stage->value,
-                'stageLabel' => $lead->stage->label(),
+                'sourceOther' => $lead->source_other,
+                'sourceLabel' => $lead->sourceLabel(),
+                'stage' => $lead->stage->key,
+                'stageLabel' => $lead->stage->name,
                 'inquiryText' => $lead->inquiry_text,
-                'capturedVia' => $lead->captured_via,
+                'capturedVia' => $lead->capturedViaLabel(),
                 'capturedAt' => $lead->created_at->toIso8601String(),
                 'booked' => $project->job()->exists(),
             ],
             // The contact column stands beside the quote, not small underneath
             // it: the phone number is the reason the screen is open.
-            'people' => $project->contacts->map(fn ($contact) => [
-                'id' => $contact->public_id,
-                'name' => $contact->name,
-                'role' => $contact->pivot->role,
-                'email' => $contact->email,
-                'phone' => $contact->phone,
-            ])->all(),
+            'people' => ProjectPersonData::collect(
+                $project->contacts->map(ProjectPersonData::fromContact(...))
+            ),
             'shoots' => ShootData::collect(
                 $project->shoots->map(fn (Shoot $shoot) => ShootData::fromShoot($shoot))
             ),
             'quote' => $project->latestQuote === null ? null : QuoteData::fromModel($project->latestQuote),
+            // Die ersetzten Fassungen tragen in der Übersicht nur ihren Preis:
+            // was in ihnen stand, steht im Angebot selbst.
+            'supersededQuotes' => $project->quotes()
+                ->where('status', QuoteStatus::Superseded)
+                ->latest()
+                ->get()
+                ->map(fn (Quote $quote) => [
+                    'id' => $quote->public_id,
+                    'number' => $quote->number,
+                    'net' => $quote->net,
+                ])->all(),
             // Without a quote, the active packages with their item count and
             // sum — the next move is choosing one, so the screen offers the
             // choice rather than an empty section.
@@ -116,15 +129,18 @@ class LeadCaseController extends Controller
             'tasks' => TaskRowData::collect(
                 $project->tasks->sortBy('due_on')->values()->map(TaskRowData::fromTask(...))
             ),
-            'notes' => InternalNoteData::collect(
-                $project->notes->map(InternalNoteData::fromNote(...))
-            ),
+            'thread' => ($this->thread)($project),
             // C-10 (#245): the fixed value lists the edit state offers. Same
             // button rows the capture screen uses.
-            'types' => collect(ProjectType::cases())
-                ->map(fn (ProjectType $type) => ['value' => $type->value, 'label' => $type->label()])->all(),
+            'types' => app(CrmVocabulary::class)->types()
+                ->filter(fn (ProjectType $type) => $type->is_active)
+                ->map(fn (ProjectType $type) => ['value' => $type->key, 'label' => $type->name])->values()->all(),
             'sources' => collect(LeadSource::cases())
                 ->map(fn (LeadSource $source) => ['value' => $source->value, 'label' => $source->label()])->all(),
+            'presets' => [
+                'type' => $this->settings->leadPresets('type'),
+                'source' => $this->settings->leadPresets('source'),
+            ],
             'week' => $this->week($project, $primary?->date?->format('Y-m-d')),
             'conflicts' => $this->availability->forDate($primary?->date?->format('Y-m-d'), $project),
         ]);
@@ -155,8 +171,10 @@ class LeadCaseController extends Controller
         $this->authorize('manageShoots', $project);
 
         $validated = $request->validate([
-            'type' => ['required', Rule::enum(ProjectType::class)],
+            'type' => ['required', Rule::exists('project_types', 'key')->where('is_active', true)],
+            'type_other' => ['nullable', 'string', 'max:120'],
             'source' => ['required', Rule::enum(LeadSource::class)],
+            'source_other' => ['nullable', 'string', 'max:120'],
             'inquiry_text' => ['nullable', 'string', 'max:10000'],
             'people' => ['array'],
             'people.*.id' => ['required', 'string', 'size:24'],
@@ -177,9 +195,13 @@ class LeadCaseController extends Controller
         abort_if($booked && ($validated['shoots'] ?? []) !== [], 422);
 
         DB::transaction(function () use ($project, $lead, $validated, $booked) {
-            $project->update(['type' => $validated['type']]);
+            $project->update([
+                'type' => $validated['type'],
+                'type_other' => $validated['type_other'] ?? null,
+            ]);
             $lead->update([
                 'source' => $validated['source'],
+                'source_other' => $validated['source_other'] ?? null,
                 'inquiry_text' => $validated['inquiry_text'] ?? null,
             ]);
 
@@ -219,33 +241,11 @@ class LeadCaseController extends Controller
      * The queue itself. Every open inquiry, so ↑↓ can walk it without the
      * screen having to fetch the next one.
      */
-    private function queue(Lead $open): array
-    {
-        $leads = Lead::query()
-            ->open()
-            ->with(['project.contacts', 'project.primaryShoot'])
-            ->get();
-
-        return collect(self::GROUPS)->map(fn (array $stages, string $key) => [
-            'key' => $key,
-            'rows' => $leads
-                ->filter(fn (Lead $lead) => in_array($lead->stage, $stages, true))
-                ->sortBy(fn (Lead $lead) => $lead->project->primaryShoot?->date?->toDateString() ?? '9999-99-99')
-                ->map(fn (Lead $lead) => [
-                    'id' => $lead->public_id,
-                    'name' => $lead->project->contacts->pluck('name')->join(' & ') ?: $lead->project->name,
-                    'date' => $lead->project->primaryShoot?->date?->format('Y-m-d'),
-                    'open' => $lead->public_id === $open->public_id,
-                    'waitingDays' => (int) $lead->stage_entered_at->startOfDay()->diffInDays(now()->startOfDay()),
-                ])->values()->all(),
-        ])->values()->all();
-    }
-
     /**
      * What lies around the requested day: every other project's shoots in
      * that week. A date is answered by what is already on it, not by a rule.
      *
-     * @return list<array{date: string, what: string}>
+     * @return list<array{date: string, what: string, projectId: string}>
      */
     private function week(Project $project, ?string $date): array
     {
@@ -253,7 +253,7 @@ class LeadCaseController extends Controller
             return [];
         }
 
-        $from = \Carbon\CarbonImmutable::parse($date)->subDays(3);
+        $from = CarbonImmutable::parse($date)->subDays(3);
 
         return Shoot::query()
             ->with('project')
@@ -266,6 +266,7 @@ class LeadCaseController extends Controller
             ->map(fn (Shoot $shoot) => [
                 'date' => $shoot->date->format('Y-m-d'),
                 'what' => $shoot->project->name,
+                'projectId' => $shoot->project->public_id,
             ])
             ->all();
     }

@@ -6,12 +6,10 @@
  *
  * Every rule stays scoped under [data-theme="gallery"] rather than declared
  * bare the way the mockup's own gallery.css does: the mockup is a standalone
- * document that never loads portal.css, but this bundle is shared with the
- * client portal, and portal.css already owns `.field`, `.hint`, `.err` and
- * the button's `.wide` for its own screens (the contract-signing form,
- * mainly). The
- * gate screens set data-theme="gallery" on their own root element, so the
- * extra specificity here is free and never leaks into a portal page.
+ * document, this bundle is shared with the client portal, and names as
+ * common as `.field`, `.hint` and `.err` would otherwise reach a portal
+ * screen. The gate screens set data-theme="gallery" on their own root
+ * element, so the extra specificity here is free and never leaks out.
  */
 
 /*
@@ -265,9 +263,6 @@
         font:500 12px/1 var(--font); color:var(--ok); }
 [data-theme="gallery"] .gc svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:2; }
 
-[data-theme="gallery"] .block { margin-top:var(--s7); }
-[data-theme="gallery"] .block .lab { font:600 11px/1 var(--font); letter-spacing:.1em;
-        text-transform:uppercase; color:var(--faint); margin:0 0 var(--s4); }
 
 [data-theme="gallery"] .opts { display:flex; flex-direction:column; }
 [data-theme="gallery"] .opt { display:flex; align-items:center; gap:var(--s4); padding:var(--s4) 0;
@@ -296,8 +291,6 @@
 [data-theme="gallery"] .mine { max-width:1240px; margin:0 auto; padding:var(--s7) var(--s5);
         border-top:1px solid var(--line); display:grid; gap:var(--s7); }
 @media (min-width:900px) { [data-theme="gallery"] .mine { grid-template-columns:minmax(0,1fr) 320px; } }
-[data-theme="gallery"] .mine .block { margin:0; }
-[data-theme="gallery"] .mine .block + .block { margin-top:var(--s6); }
 
 [data-theme="gallery"] .listblock + .listblock { margin-top:var(--s5); }
 [data-theme="gallery"] .listbar { display:flex; align-items:baseline; gap:var(--s4); flex-wrap:wrap;

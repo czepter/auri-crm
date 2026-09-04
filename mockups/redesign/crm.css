@@ -965,6 +965,11 @@ tbody td.grp {
   /* Nur das Tagesgeschäft: die Studio-Gruppe ist Einrichtung, und die richtet
      niemand am Telefon ein. */
   .side a:nth-of-type(n + 8) { display: none; }
+  /* Und von den sieben bleiben unten nur die Zeichen: mit Beschriftung
+     brauchen sie 595px, die Leiste hat 390. Abgeschnitten wäre schlimmer als
+     wortlos — ein Zeichen ohne Wort ist immer noch anklickbar. */
+  .side a { font-size: 0; gap: 0; justify-content: center; padding: 9px 12px; }
+  .side a svg { width: 19px; height: 19px; }
 
   .main { order: 1; }
   .hrow { padding: 16px var(--s5) 0; }
@@ -978,4 +983,129 @@ tbody td.grp {
   .decide .who, .decide .act { width: 100%; justify-content: flex-start; }
   thead { display: none; }        /* eine Tabelle ohne Kopf ist auf 390px eine Liste */
   tbody td { padding: 8px var(--s5); }
+}
+
+/* ---------- Galerie: der Datensatz ---------- */
+
+/* Der Datensatz Galerie trägt dieselbe Spalte wie das Projekt: Wörter statt
+   Glyphen, Zähler auf einer linken Kante ausgerichtet, unter 900px legt sie
+   sich hin und scrollt seitwärts. Der Kommentar in ProjectShell.vue nennt den
+   Grund und lehnt den Streifen über dem Inhalt ausdrücklich ab.
+
+   212px statt der 150px des Projekts: „Getting Ready 38" passt bei 150px nicht
+   in eine Zeile, und das Titelbild darüber braucht die Breite ohnehin.
+
+   Zwei Dinge, die das Projekt nicht hat:
+
+   Das Titelbild sitzt über den Einträgen. Es ist kein Bereich, sondern das
+   Gesicht des Datensatzes — dieselbe Stelle, an der ein Kontakt seinen Avatar
+   trägt. Beim Projekt steht dort nichts, weil ein Projekt kein Gesicht hat.
+   Es bleibt in allen vier Bereichen stehen, auch beim Einstellen.
+
+   Die Sets hängen eingerückt unter Bilder. Sie sind kein fünfter Bereich,
+   sondern die Gliederung des ersten; eine zweite Liste darunter wären zwei
+   Navigationen in einer Spalte. Sie stehen offen, solange Bilder aktiv ist,
+   und falten sich weg, sobald woanders gearbeitet wird. */
+
+.rec { display: flex; margin: var(--s4) var(--s7) 0; box-shadow: inset 0 1px 0 var(--rule); }
+
+.recnav { width: 212px; flex: none; padding-top: var(--s4); box-shadow: inset -1px 0 0 var(--rule); }
+.recnav .cover { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--r-sm); }
+/* Der leere Zustand hat die Form, die das Bild bekommt, und trägt seine eigene
+   Aktion. Ein Satz darüber, dass keins gesetzt ist, sagt weniger als das Loch. */
+.recnav .cover-none {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  width: 100%; aspect-ratio: 4 / 3; border-radius: var(--r-sm);
+  background: var(--sunk); border: 1px dashed var(--mark);
+  font-size: 11px; color: var(--ink-2); text-decoration: none;
+}
+.recnav .cover-none b { font: 600 11.5px/1 var(--font); color: var(--accent); }
+/* Der Pfeil steht nur da, wenn der Entwurf von der Fassung abweicht. */
+.recnav .ct .to { color: var(--ink-2); }
+.recnav .items { padding: var(--s3) var(--s2) var(--s6) 0; }
+.recnav .items > label, .recnav .items > a {
+  display: flex; align-items: center; gap: var(--s2);
+  padding: 7px 10px; margin-bottom: 1px; border-radius: 8px;
+  font-size: 13px; color: var(--ink); text-decoration: none; cursor: pointer;
+}
+.recnav .items > label:hover { background: var(--sunk); }
+.recnav .ct { margin-left: auto; font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.recnav .tw { width: 9px; flex: none; font-size: 8px; color: var(--ink-2); }
+
+.recsets { margin: 2px 0 6px 19px; padding-left: 10px; box-shadow: inset 1px 0 0 var(--rule); }
+.recsets a {
+  display: flex; align-items: center; gap: 7px; padding: 5px 9px; margin-bottom: 1px;
+  border-radius: 7px; font-size: 12.5px; color: var(--ink); text-decoration: none;
+}
+.recsets a:hover { background: var(--sunk); }
+.recsets a.on { background: var(--sunk-2); font-weight: 600; }
+.recsets .ct { font-size: 11px; }
+.recsets .grip { color: var(--ink-2); font-size: 9px; cursor: grab; opacity: 0; }
+.recsets a:hover .grip { opacity: 1; }
+.recsets .add { color: var(--accent); font-size: 12px; }
+
+.recbody { flex: 1; min-width: 0; padding: var(--s4) 0 var(--s6) var(--s5); }
+.recbody .bar { display: flex; align-items: baseline; gap: 9px; margin-bottom: var(--s3); }
+.recbody .bar h2 { margin: 0; font: 600 17px/1.2 var(--font); letter-spacing: -.022em; }
+.recbody .bar .n { font-size: 12px; color: var(--ink-2); }
+.recbody .bar .seg { margin-left: auto; }
+.recbody .seg label.on { background: var(--paper); font-weight: 500; }
+
+.recview { display: none; }
+#g-bilder:checked ~ .rec .recview.bilder,
+#g-gestaltung:checked ~ .rec .recview.gestaltung,
+#g-aktivitaet:checked ~ .rec .recview.aktivitaet { display: block; }
+#g-einstellungen:checked ~ .rec .recview.einstellungen { display: flex; }
+
+#g-bilder:checked ~ .rec label[for=g-bilder],
+#g-gestaltung:checked ~ .rec label[for=g-gestaltung],
+#g-einstellungen:checked ~ .rec label[for=g-einstellungen],
+#g-aktivitaet:checked ~ .rec label[for=g-aktivitaet] { background: var(--sunk-2); font-weight: 600; }
+
+/* Aufgeklappt heisst: der Bereich ist aktiv. Kein zweiter Zustand zum Merken. */
+.recsets { display: none; }
+#g-bilder:checked ~ .rec .recsets { display: block; }
+#g-bilder:checked ~ .rec label[for=g-bilder] .tw { transform: rotate(90deg); }
+
+.einstellungen { gap: var(--s5); }
+.einstellungen .subnav { width: 184px; padding: 0; }
+.einstellungen .subnav a { display: flex; align-items: center; }
+.einstellungen .subnav .lab:first-child { padding-top: 0; }
+.einstellungen .subnav .st { margin-left: auto; font-size: 11px; color: var(--ink-2); }
+.einstellungen .pane { flex: 1; min-width: 0; }
+.einstellungen h2 { margin: 0 0 var(--s4); font: 600 17px/1.2 var(--font); letter-spacing: -.022em; }
+.einstellungen .slug { display: flex; align-items: baseline; }
+.einstellungen .slug .pre { font-size: 15px; color: var(--ink-2); }
+.einstellungen .slug input { font-size: 15px; width: 180px; }
+
+/* Unter 640px trägt der Kopf einen Knopf statt dreier — der Titel braucht
+   die Zeile, und Vorschau und Mehr sind keine Handgriffe für unterwegs. */
+.rec-acts { display: contents; }
+.rec-more { display: none; }
+
+.log { font-size: 12.5px; }
+.log .e { display: flex; gap: var(--s3); padding: 8px 0; box-shadow: inset 0 1px 0 var(--rule); }
+.log .e:first-child { box-shadow: none; }
+.log .e .t { width: 92px; flex: none; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 900px) {
+  .rec { display: block; margin: var(--s4) var(--s5) 0; }
+  .recnav { width: 100%; box-shadow: inset 0 -1px 0 var(--rule); }
+  .recnav .cover, .recnav .cover-none { aspect-ratio: 16 / 5; }
+  /* Die vier Bereiche in einer Zeile, die Sets in der zweiten darunter —
+     order und flex-basis, weil die Sets im Baum zwischen Bilder und
+     Gestaltung stehen müssen. */
+  .recnav .items { display: flex; flex-wrap: wrap; gap: 4px; padding: var(--s3) 0; }
+  .recnav .items > label, .recsets a { margin-bottom: 0; white-space: nowrap; }
+  .recsets { order: 1; flex-basis: 100%; min-width: 0; margin: var(--s2) 0 0; padding: 0; box-shadow: none; }
+  #g-bilder:checked ~ .rec .recsets { display: flex; gap: 4px; overflow-x: auto; }
+  .recbody { padding: 0 0 var(--s6); }
+  #g-einstellungen:checked ~ .rec .recview.einstellungen { display: block; }
+  .einstellungen .subnav { width: 100%; margin-bottom: var(--s4); }
+}
+
+@media (max-width: 640px) {
+  .rec-acts { display: none; }
+  .rec-more { display: inline-flex; }
+  .grid-photos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

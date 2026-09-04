@@ -49,25 +49,36 @@ describe('fetchComments', () => {
 })
 
 describe('postComment', () => {
-  it('posts the guest id, asset key and body, resolving to the stored comment', async () => {
-    const store = memoryStore()
-    store.setItem('gallery_guest_id', 'guest-1')
+  it('posts the guest pass, asset key and body, resolving to the stored comment', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ comment: { body: 'Toll!', created_at: '2026-08-10T12:00:00Z' } }), { status: 201 }),
+      new Response(
+        JSON.stringify({ comment: { body: 'Toll!', author: 'Anna Meier', own: true, created_at: '2026-08-10T12:00:00Z' } }),
+        { status: 201 },
+      ),
     )
     vi.stubGlobal('fetch', fetchMock)
 
-    const comment = await postComment('https://api.example', 'ver_abc', 'a.jpg', 'Toll!', null, store)
+    const comment = await postComment('https://api.example', 'ver_abc', 'a.jpg', 'Toll!', null, 'g.1.2.sig')
 
-    expect(comment).toEqual({ body: 'Toll!', author: 'Gast', own: false, createdAt: '2026-08-10T12:00:00Z' })
+    expect(comment).toEqual({ body: 'Toll!', author: 'Anna Meier', own: true, createdAt: '2026-08-10T12:00:00Z' })
     expect(fetchMock).toHaveBeenCalledWith(
       'https://api.example/api/gallery-versions/ver_abc/comments',
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ guest_id: 'guest-1', asset_key: 'a.jpg', body: 'Toll!' }),
+        body: JSON.stringify({ guest_pass: 'g.1.2.sig', asset_key: 'a.jpg', body: 'Toll!' }),
       }),
     )
+  })
+
+  // Ohne Anmeldung gibt es keinen Absender — und einen Aufruf loszuschicken,
+  // von dem feststeht, dass er 403 beantwortet wird, ist einer zu viel.
+  it('does not even ask when nobody is signed in', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    expect(await postComment('https://api.example', 'ver_abc', 'a.jpg', 'Toll!', null, null)).toBeNull()
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it('resolves to null on a failed response, rather than throwing', async () => {

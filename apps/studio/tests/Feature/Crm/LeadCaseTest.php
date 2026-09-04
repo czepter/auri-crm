@@ -8,6 +8,7 @@ use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\User;
+use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -86,7 +87,8 @@ it('shows the week around the requested day, and says so when it is free', funct
     $week = props("/anfragen/{$lead->public_id}")['week'];
 
     expect($week)->toHaveCount(1)
-        ->and($week[0]['what'])->toBe('Petersen');
+        ->and($week[0]['what'])->toBe('Petersen')
+        ->and($week[0]['projectId'])->toBe($other->public_id);
 });
 
 // C-10 (#245): editing is a state of the view, so it posts back to the same
@@ -112,9 +114,31 @@ it('saves occasion, source, text and the people from the case itself', function 
 
     expect($lead->fresh()->inquiry_text)->toBe('Neu diktiert.')
         ->and($lead->fresh()->source->value)->toBe('website')
-        ->and($lead->project->fresh()->type->value)->toBe('portrait')
+        ->and($lead->project->fresh()->type->key)->toBe('portrait')
         ->and($contact->fresh()->name)->toBe('Sarah Brandt-Erdmann')
         ->and($contact->fresh()->email)->toBe('s.brandt@example.test');
+});
+
+it('saves the Sonstige detail from the case and drops it with the case', function () {
+    $lead = caseFor();
+
+    test()->patch("/anfragen/{$lead->public_id}", [
+        'type' => 'other',
+        'type_other' => 'Tierfotografie',
+        'source' => 'other',
+        'source_other' => 'Zeitungsartikel',
+    ])->assertRedirect();
+
+    expect($lead->project->fresh()->type_other)->toBe('Tierfotografie')
+        ->and($lead->fresh()->source_other)->toBe('Zeitungsartikel');
+
+    test()->patch("/anfragen/{$lead->public_id}", [
+        'type' => 'wedding',
+        'source' => 'website',
+    ])->assertRedirect();
+
+    expect($lead->project->fresh()->type_other)->toBeNull()
+        ->and($lead->fresh()->source_other)->toBeNull();
 });
 
 it('moves the shoot while it is an inquiry', function () {
@@ -159,4 +183,30 @@ it('refuses to move a shoot once the project is booked', function () {
     ])->assertStatus(422);
 
     expect($lead->project->primaryShoot->fresh()->date->format('Y-m-d'))->toBe('2026-09-05');
+});
+
+// --- The quote block carries every version, not only the current one ----
+
+it('sends the superseded quote versions alongside the current one', function () {
+    $lead = caseFor();
+    $old = Quote::factory()->for($lead->project)->create([
+        'status' => QuoteStatus::Superseded,
+        'number' => 'AN-2026-001',
+        'net' => 298000,
+    ]);
+    Quote::factory()->for($lead->project)->create(['status' => QuoteStatus::Sent, 'net' => 257200]);
+
+    $props = props("/anfragen/{$lead->public_id}");
+
+    expect($props['supersededQuotes'])->toHaveCount(1)
+        ->and($props['supersededQuotes'][0]['id'])->toBe($old->public_id)
+        ->and($props['supersededQuotes'][0]['number'])->toBe('AN-2026-001')
+        ->and($props['supersededQuotes'][0]['net'])->toBe(298000);
+});
+
+it('sends an empty superseded list when a project has only one quote', function () {
+    $lead = caseFor();
+    Quote::factory()->for($lead->project)->create();
+
+    expect(props("/anfragen/{$lead->public_id}")['supersededQuotes'])->toBe([]);
 });

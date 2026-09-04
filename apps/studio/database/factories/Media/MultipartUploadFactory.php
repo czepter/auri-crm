@@ -3,6 +3,7 @@
 namespace Database\Factories\Media;
 
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
 use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
 use App\Media\Enums\MultipartUploadStatus;
 use App\Media\Models\MultipartUpload;
@@ -22,6 +23,8 @@ class MultipartUploadFactory extends Factory
 
         return [
             'gallery_id' => Gallery::factory(),
+            'gallery_set_id' => fn (array $attributes) => Gallery::find($attributes['gallery_id'])?->sets()->first()?->id
+                ?? GallerySet::factory()->create(['gallery_id' => $attributes['gallery_id']])->id,
             'key' => ReapIncompleteMultipartUploads::QUARANTINE_PREFIX.$publicId.'/'.$filename,
             'upload_id' => fake()->uuid(),
             'filename' => $filename,

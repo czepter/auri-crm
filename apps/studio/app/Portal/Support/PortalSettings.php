@@ -3,6 +3,8 @@
 namespace App\Portal\Support;
 
 use App\Crm\Models\Contact;
+use App\Enums\StaffRole;
+use App\Models\User;
 use App\Settings\Support\StudioSettingsResolver;
 
 /**
@@ -17,9 +19,11 @@ use App\Settings\Support\StudioSettingsResolver;
  *
  * Not everything is overridable and that is deliberate. Maintenance, the
  * legal links, the DSGVO recipient and the footer's contact line stay
- * studio-wide: they are the studio speaking about itself. Visibility stays
- * per booking (projects.portal_visible) and access revocation per contact
- * (contacts.portal_access_revoked_at) — both A-04's, only displayed here.
+ * studio-wide: they are the studio speaking about itself. Access revocation
+ * stays per contact (contacts.portal_access_revoked_at) and the visibility
+ * flag itself per booking (projects.portal_visible) — both A-04's, only
+ * displayed here. 'portal_visible' in OVERRIDABLE is not that flag: it is
+ * the value a booking captured for this contact is born with.
  */
 class PortalSettings
 {
@@ -33,7 +37,7 @@ class PortalSettings
     /** @var list<string> */
     public const OVERRIDABLE = [
         'welcome', 'accept_quotes', 'sign_contracts', 'payment_status', 'messaging_mode',
-        'gallery_downloads', 'gallery_lists', 'gallery_comments',
+        'gallery_downloads', 'gallery_lists', 'gallery_comments', 'portal_visible',
     ];
 
     public function __construct(private readonly StudioSettingsResolver $studio) {}
@@ -105,14 +109,38 @@ class PortalSettings
         } ?? $this->studio->portalWelcomeText();
     }
 
-    /** The footer's contact line, which had no source before P-09. */
+    /**
+     * Whether a booking captured for this contact starts out visible in the
+     * portal. A client the studio already shows its work to should not be
+     * switched on again per booking — a venue with forty dates a year least
+     * of all. Off unless this contact says otherwise: a raw inquiry from a
+     * stranger stays internal (vision §3.1).
+     */
+    public function projectsVisibleByDefault(?Contact $contact = null): bool
+    {
+        return (bool) $this->resolve($contact, 'portal_visible', false);
+    }
+
+    /**
+     * The footer's contact line, which had no source before P-09.
+     *
+     * The number falls back to the owner's own, so a studio that never
+     * opened /einstellungen/portal is still reachable. The address does not:
+     * an owner's login is a credential, not something a client screen may
+     * start showing on its own.
+     */
     public function contactLine(): array
     {
         return [
-            'phone' => $this->studio->portalContactPhone(),
+            'phone' => $this->studio->portalContactPhone() ?? $this->ownerPhone(),
             'email' => $this->studio->portalContactEmail(),
             'responseTime' => $this->studio->portalContactResponseTime(),
         ];
+    }
+
+    private function ownerPhone(): ?string
+    {
+        return User::query()->where('role', StaffRole::Owner)->value('phone');
     }
 
     /**

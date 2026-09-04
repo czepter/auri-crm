@@ -83,7 +83,7 @@ it('records who moved a lead, which is what makes the funnel open', function () 
 
     $row = AuditLog::where('event', 'lead.stage_changed')->sole();
 
-    expect($lead->fresh()->stage)->toBe(LeadStage::Contacted)
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value)
         ->and($row->actor_id)->toBe($nina->id)
         ->and($row->context['from'])->toBe('new')
         ->and($row->context['to'])->toBe('contacted');
@@ -147,7 +147,7 @@ it('lets an editor move post-production but never commit the studio', function (
         ->post("/shootings/{$shoot->public_id}/status", ['status' => 'editing'])
         ->assertRedirect();
 
-    expect($shoot->fresh()->status)->toBe(ShootStatus::Editing);
+    expect($shoot->fresh()->status->key)->toBe(ShootStatus::Editing->value);
 
     // Booking is the line no amount of after-the-fact logging substitutes for.
     $this->post("/auftraege/{$project->public_id}/buchung")->assertForbidden();
@@ -235,13 +235,13 @@ it('opens the package catalog to every staff role', function (StaffRole $role) {
 it('opens contract templates to the roles ManageShoots already trusts, and refuses the crew roles', function (StaffRole $role, int $status) {
     // Narrower than the catalog on purpose — a contract is what a client
     // signs (Capability::ManageContracts's own doc comment).
-    $this->actingAs(staff($role), 'staff')->get('/dokumentvorlagen')->assertStatus($status);
+    $this->actingAs(staff($role), 'staff')->get('/vorlagen?typ=dokumente')->assertStatus($status);
 })->with([
     [StaffRole::Owner, 200],
     [StaffRole::Photographer, 200],
     [StaffRole::Editor, 200],
-    [StaffRole::SecondShooter, 403],
-    [StaffRole::Assistant, 403],
+    [StaffRole::SecondShooter, 404],
+    [StaffRole::Assistant, 404],
 ]);
 
 it('refuses a second shooter the contract tab of a project they are not crewed on', function () {

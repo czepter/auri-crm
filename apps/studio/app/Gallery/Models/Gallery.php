@@ -6,7 +6,11 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Gallery\Support\GallerySlug;
+use App\Media\Models\Asset;
 use App\Media\Models\MultipartUpload;
+use App\Settings\Support\StudioSettingsResolver;
+use Carbon\CarbonImmutable;
 use Database\Factories\Gallery\GalleryFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,8 +18,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use LogicException;
 
 /**
@@ -23,11 +27,12 @@ use LogicException;
  * belongs to. shoot_id is nullable because a gallery frequently spans the
  * whole project rather than one shoot (G-05).
  *
- * title and assets here are the working copy — freely editable, never what a
- * guest is served. publish() is the only way their contents reach a
- * GalleryVersion, and once written that row never changes again; see
- * publish() for why, and G-08 (version-scoped caching) for the story that
- * relies on it.
+ * title here is the working copy — freely editable, never what a guest is
+ * served. draftAssets() is its counterpart for pictures, read live off the
+ * assets table rather than stored on this row. publish() is the only way
+ * their contents reach a GalleryVersion, and once written that row never
+ * changes again; see publish() for why, and G-08 (version-scoped caching)
+ * for the story that relies on it.
  *
  * G-06's three gates (view password, download PIN, verified email) live here
  * too, deliberately outside $fillable — the only way to set or clear one is
@@ -41,43 +46,50 @@ class Gallery extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'project_id', 'shoot_id', 'title', 'assets', 'design',
+        'project_id', 'shoot_id', 'title', 'slug', 'design',
         'requires_settled_balance', 'balance_settled',
         'is_external', 'external_url', 'expires_at',
+        'downloads_enabled', 'lists_enabled', 'comments_enabled',
+        'event_date', 'cover_asset_id', 'cover_focal_x', 'cover_focal_y',
     ];
 
     protected $attributes = [
-        'assets' => '[]',
         'requires_settled_balance' => false,
         'balance_settled' => false,
         'is_external' => false,
+        'downloads_enabled' => true,
+        'lists_enabled' => true,
+        'comments_enabled' => true,
         'requires_verified_email' => false,
         'view_password_version' => 1,
         'download_pin_version' => 1,
         'email_verification_version' => 1,
+        'preview_pass_version' => 1,
     ];
 
     protected function casts(): array
     {
         return [
-            'assets' => 'array',
             // C-19 (#255): cover variant, typeface, colour and grid. Null
             // means "as the studio has it", so a studio changing its own
             // default still reaches every gallery that never overrode one.
             'design' => 'array',
             'requires_settled_balance' => 'boolean',
+            'downloads_enabled' => 'boolean',
+            'lists_enabled' => 'boolean',
+            'comments_enabled' => 'boolean',
             'balance_settled' => 'boolean',
             'is_external' => 'boolean',
             // C-17 (#253): recoverable, because both values are handed to
             // guests anyway and a studio that cannot look one up locks out
-            // everybody holding the old one. The legacy hash columns stay
-            // cast as they were until no row still carries one.
+            // everybody holding the old one.
             'view_password' => 'encrypted',
             'download_pin' => 'encrypted',
-            'view_password_hash' => 'hashed',
-            'download_pin_hash' => 'hashed',
             'requires_verified_email' => 'boolean',
             'expires_at' => 'immutable_datetime',
+            'event_date' => 'immutable_date',
+            'unpublished_at' => 'immutable_datetime',
+            'prerelease_at' => 'immutable_datetime',
         ];
     }
 
@@ -91,9 +103,114 @@ class Gallery extends Model
         return $this->belongsTo(Shoot::class);
     }
 
+    /**
+     * The seam that lets a slug change without ever breaking a link already
+     * sitting in a guest's inbox: a `{gallery}` segment resolves by slug OR
+     * public_id, here and only here, so admin, portal and api routes all
+     * agree without each one carrying its own lookup.
+     */
+    public function resolveRouteBinding($value, $field = null): ?self
+    {
+        return static::findByPublicIdOrSlug($value);
+    }
+
+    public static function findByPublicIdOrSlug(string $value): ?self
+    {
+        return static::query()->where('slug', $value)->orWhere('public_id', $value)->first();
+    }
+
+    /**
+     * apps/gallery's own address for this gallery — a separate host from
+     * the studio this model lives on (config('services.gallery.url')). The
+     * slug wins once set; public_id keeps resolving for ever, so an
+     * already-sent link never breaks.
+     */
+    public function publicUrl(): string
+    {
+        return rtrim((string) config('services.gallery.url'), '/').'/g/'.($this->slug ?? $this->public_id);
+    }
+
     public function versions(): HasMany
     {
         return $this->hasMany(GalleryVersion::class);
+    }
+
+    public function sets(): HasMany
+    {
+        return $this->hasMany(GallerySet::class)->orderBy('position');
+    }
+
+    public function assets(): HasMany
+    {
+        return $this->hasMany(Asset::class);
+    }
+
+    public function coverAsset(): BelongsTo
+    {
+        return $this->belongsTo(Asset::class, 'cover_asset_id');
+    }
+
+    /**
+     * Die Entwurfsbilder in der Reihenfolge, in der sie ausgeliefert würden:
+     * Sets in ihrer Position, innerhalb eines Sets nach dessen eigener
+     * Regel. Fehlt taken_at — gescannt, exportiert, ohne EXIF —, traegt der
+     * Dateiname die Reihenfolge; created_at waere die Reihenfolge, in der
+     * die Queue fertig wurde, und die ist bei parallelen Workern Zufall.
+     */
+    public function draftAssets(): Collection
+    {
+        return $this->sets()->with(['assets' => fn ($query) => $query->inDraft()])->get()
+            ->flatMap(fn (GallerySet $set) => $set->assets
+                ->sortBy([
+                    // Null sorts first by <=>, but a missing taken_at (scanned,
+                    // exported, no EXIF) is a fallback case, not a "comes
+                    // first" case — it must lose to every dated asset.
+                    [fn (Asset $a, Asset $b) => ($a->{$set->sort_key} === null) <=> ($b->{$set->sort_key} === null), 'asc'],
+                    [$set->sort_key, $set->sort_dir],
+                    ['filename', 'asc'],
+                ])
+                ->map(fn (Asset $asset) => [
+                    'key' => $asset->key,
+                    'set' => $set->name,
+                    'width' => $asset->width,
+                    'height' => $asset->height,
+                ]))
+            ->values();
+    }
+
+    /** Was auf der Karte steht: das Shooting antwortet, sonst die Galerie selbst. */
+    public function occursOn(): ?CarbonImmutable
+    {
+        return $this->shoot?->date ?? $this->event_date;
+    }
+
+    /**
+     * G-14: the studio pulled this gallery back. Every guest entry point —
+     * portal and api alike — closes on this, while the versions it stood on
+     * stay in the database for the next publish.
+     */
+    public function isWithdrawn(): bool
+    {
+        return $this->unpublished_at !== null;
+    }
+
+    /**
+     * R39: prerelease_at only means anything while nobody has published
+     * yet — a version, once it exists, is the real thing to show, and a
+     * stale flag left set after publish() must not resurrect the "wird
+     * vorbereitet" page for it. is_external excluded for the same reason
+     * draft() already refuses an external gallery explicitly (Gallery
+     * ReadController): it owns no draft assets, so "being prepared" names
+     * a state it can never actually be in.
+     */
+    public function isInPrerelease(): bool
+    {
+        return $this->prerelease_at !== null && $this->currentVersion === null && ! $this->is_external;
+    }
+
+    public function prereleaseSignups(): HasMany
+    {
+        return $this->hasMany(GalleryPrereleaseSignup::class);
     }
 
     /** The most recently published version, or null before this gallery's first publish() call. */
@@ -127,7 +244,7 @@ class Gallery extends Model
         }
 
         return DB::transaction(function () {
-            $retention = config('gallery.retention_days');
+            $retention = app(StudioSettingsResolver::class)->galleryDefaults()['expiryDays'];
 
             if ($retention !== null && $this->expires_at === null) {
                 // Stamped once, on first publish. A second version does not
@@ -142,7 +259,9 @@ class Gallery extends Model
             return $this->versions()->create([
                 'version' => $next,
                 'title' => $this->title,
-                'assets' => $this->assets,
+                'assets' => $this->draftAssets()->all(),
+                'design' => $this->design,
+                'cover_key' => $this->coverAsset?->key,
                 'published_at' => now(),
             ]);
         });
@@ -150,12 +269,12 @@ class Gallery extends Model
 
     public function requiresViewPassword(): bool
     {
-        return $this->view_password !== null || $this->view_password_hash !== null;
+        return $this->view_password !== null;
     }
 
     public function requiresDownloadPin(): bool
     {
-        return $this->download_pin !== null || $this->download_pin_hash !== null;
+        return $this->download_pin !== null;
     }
 
     public function requiresVerifiedEmail(): bool
@@ -163,28 +282,14 @@ class Gallery extends Model
         return $this->requires_verified_email;
     }
 
-    /**
-     * The stored value first, the legacy hash second. A gallery gated before
-     * C-17 keeps working until somebody rotates it, which is the whole reason
-     * the hash column is still there.
-     */
     public function checkViewPassword(string $password): bool
     {
-        return $this->check($password, $this->view_password, $this->view_password_hash);
+        return $this->view_password !== null && hash_equals($this->view_password, $password);
     }
 
     public function checkDownloadPin(string $pin): bool
     {
-        return $this->check($pin, $this->download_pin, $this->download_pin_hash);
-    }
-
-    private function check(string $given, ?string $stored, ?string $legacyHash): bool
-    {
-        if ($stored !== null) {
-            return hash_equals($stored, $given);
-        }
-
-        return $legacyHash !== null && Hash::check($given, $legacyHash);
+        return $this->download_pin !== null && hash_equals($this->download_pin, $pin);
     }
 
     /**
@@ -197,9 +302,6 @@ class Gallery extends Model
     {
         $this->forceFill([
             'view_password' => $password,
-            // Cleared, or a rotation to null would leave the old gate
-            // standing on the legacy path.
-            'view_password_hash' => null,
             'view_password_version' => $this->view_password_version + 1,
         ])->save();
     }
@@ -209,7 +311,6 @@ class Gallery extends Model
     {
         $this->forceFill([
             'download_pin' => $pin,
-            'download_pin_hash' => null,
             'download_pin_version' => $this->download_pin_version + 1,
         ])->save();
     }
@@ -228,8 +329,40 @@ class Gallery extends Model
         ])->save();
     }
 
+    /**
+     * R31: the counter a draft-preview pass (GalleryPreviewPass) is checked
+     * against — both the head button's short pass and "Vorschaulink
+     * erzeugen"'s long one share it, so bumping it is the whole of what
+     * revoking a preview link means. Called only when a new link is minted:
+     * a fresh link is meant to survive across sessions, so nothing else
+     * bumps it early and kills a link nobody asked to replace yet.
+     */
+    public function rotatePreviewPass(): void
+    {
+        $this->forceFill(['preview_pass_version' => $this->preview_pass_version + 1])->save();
+    }
+
     protected static function newFactory(): Factory
     {
         return GalleryFactory::new();
+    }
+
+    /** An external gallery (X-02) links to assets hosted elsewhere and owns no set to put them in. */
+    protected static function booted(): void
+    {
+        static::creating(function (Gallery $gallery) {
+            $gallery->slug ??= GallerySlug::unique(
+                $gallery->title ?? 'galerie',
+                // Global, not tenant-scoped: two studios choosing the same
+                // slug would collide on the same un-tenanted route.
+                fn (string $candidate) => static::query()->withoutGlobalScope('tenant')->where('slug', $candidate)->exists(),
+            );
+        });
+
+        static::created(function (Gallery $gallery) {
+            if (! $gallery->is_external) {
+                $gallery->sets()->create(['name' => 'Highlights', 'position' => 0]);
+            }
+        });
     }
 }

@@ -29,6 +29,15 @@ $app->make(Kernel::class)->bootstrap();
 [$tenantId, $year] = [$argv[1], (int) $argv[2]];
 $documentType = DocumentType::from($argv[3] ?? DocumentType::Quote->value);
 
+// `artisan test --parallel` moves each worker onto its own database at
+// runtime (studio_test_test_1, _2, …), which is a config value, not an
+// environment variable — this child boots from .env and would otherwise
+// allocate in a database the parent never looks at, leaving it counting zero
+// rows against a race it just watched happen.
+if (isset($argv[4])) {
+    config(['database.connections.pgsql.database' => $argv[4]]);
+}
+
 try {
     $result = app(AllocateDocumentNumber::class)($tenantId, $year, $documentType);
     fwrite(STDOUT, json_encode($result));

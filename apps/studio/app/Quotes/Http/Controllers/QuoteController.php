@@ -2,17 +2,25 @@
 
 namespace App\Quotes\Http\Controllers;
 
+use App\Catalog\Actions\CreatePackageFromQuote;
+use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
+use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Actions\SendQuote;
+use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
+use Carbon\CarbonInterval;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\Response;
 
 class QuoteController extends Controller
 {
@@ -27,6 +35,7 @@ class QuoteController extends Controller
             // quote may start from (Package::scopeActive()) is a validation
             // fact about this form's input, not a missing-record error.
             'package' => ['nullable', 'string', Rule::exists('packages', 'public_id')->where('is_active', true)],
+            'addendum_to' => ['nullable', 'string'],
         ]);
 
         // T-05's fallback: Package carries no default_validity_days column
@@ -37,8 +46,17 @@ class QuoteController extends Controller
         // StudioSettingsResolver::quoteValidityDays()).
         $validUntil = $validated['valid_until'] ?? now()->addDays($settings->quoteValidityDays())->toDateString();
 
+        // Der Nachtrag lässt seinen Vorgänger angenommen, anders als die
+        // Revision, die ihn auf superseded setzt (ReviseQuote).
+        $predecessor = ! empty($validated['addendum_to'])
+            ? $project->quotes()->where('public_id', $validated['addendum_to'])
+                ->where('status', QuoteStatus::Accepted)->firstOrFail()
+            : null;
+
         $quote = $project->quotes()->create([
             'valid_until' => $validUntil,
+            'is_addendum' => $predecessor !== null,
+            'predecessor_id' => $predecessor?->id,
         ]);
 
         if (! empty($validated['package'])) {
@@ -69,6 +87,8 @@ class QuoteController extends Controller
 
         $validated = $request->validate([
             'valid_until' => ['nullable', 'date'],
+            'intro' => ['nullable', 'string', 'max:5000'],
+            'outro' => ['nullable', 'string', 'max:5000'],
             'discount_type' => ['nullable', 'in:percentage,amount', 'required_with:discount_value'],
             'discount_value' => ['nullable', 'integer', 'min:1', 'required_with:discount_type'],
             'items' => ['array'],
@@ -78,10 +98,21 @@ class QuoteController extends Controller
             'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
             'items.*.discount_type' => ['nullable', 'in:percentage,amount', 'required_with:items.*.discount_value'],
             'items.*.discount_value' => ['nullable', 'integer', 'min:1', 'required_with:items.*.discount_type'],
+            'items.*.remember' => ['boolean'],
         ]);
+
+        // Der Schlüssel kommt nur mit, wenn der Bildschirm das Häkchen
+        // gerendert hat. Kommt er trotzdem, ist das kein Bedienschritt, den
+        // man still verwerfen darf.
+        if (collect($validated['items'] ?? [])->contains(fn (array $item) => array_key_exists('remember', $item))
+            && Gate::denies('create', Package::class)) {
+            abort(403);
+        }
 
         $quote->update([
             'valid_until' => $validated['valid_until'] ?? null,
+            'intro' => $validated['intro'] ?? null,
+            'outro' => $validated['outro'] ?? null,
             'discount_type' => $validated['discount_type'] ?? null,
             'discount_value' => $validated['discount_value'] ?? null,
         ]);
@@ -104,11 +135,47 @@ class QuoteController extends Controller
 
         $quote->recalculateTotal();
 
-        AuditLogger::record(
+        $this->syncCatalog($validated['items'] ?? []);
+
+        AuditLogger::recordThrottled(
             event: 'quote.updated',
+            within: CarbonInterval::minutes(15),
             actor: auth('staff')->user(),
             subject: $quote->public_id,
             projectId: $quote->project_id,
+        );
+
+        return back();
+    }
+
+    /**
+     * Zwei Prüfungen, weil zwei Dinge berührt werden. Heute hält jede Rolle
+     * beides — getrennt geprüft wird aus dem Grund, den PackagePolicy nennt:
+     * P6/I-01 gibt Token gegen einzelne Fähigkeiten aus.
+     *
+     * Bei jedem Status verfügbar, nicht nur beim Entwurf: gelesen wird nur,
+     * und das brauchbarste Paket ist das angenommene Angebot.
+     */
+    public function saveAsPackage(Request $request, Quote $quote, CreatePackageFromQuote $create): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+        $this->authorize('create', Package::class);
+
+        $validated = $request->validate(['name' => ['required', 'string', 'max:255']]);
+
+        // Am Namen, weil das Formular kein zweites Feld hat, an dem eine
+        // Meldung stehen könnte.
+        if ($quote->items->isEmpty()) {
+            throw ValidationException::withMessages(['name' => __('quotes.emptyPackage')]);
+        }
+
+        $package = $create($quote, $validated['name']);
+
+        AuditLogger::record(
+            event: 'package.created',
+            actor: auth('staff')->user(),
+            context: ['name' => $package->name, 'source' => 'quote'],
+            subject: $package->public_id,
         );
 
         return back();
@@ -126,5 +193,42 @@ class QuoteController extends Controller
         $send($quote, auth('staff')->user());
 
         return back();
+    }
+
+    /**
+     * Das Häkchen ist keine Spalte auf quote_items, sondern die Frage "gibt es
+     * einen Katalogeintrag mit diesem Titel". Eine Zeile ohne den Schlüssel
+     * stellt die Frage nicht und lässt die Bibliothek unberührt.
+     *
+     * @param  list<array<string, mixed>>  $items
+     */
+    private function syncCatalog(array $items): void
+    {
+        foreach ($items as $item) {
+            if (! array_key_exists('remember', $item)) {
+                continue;
+            }
+
+            if ($item['remember']) {
+                CatalogItem::updateOrCreate(
+                    ['title' => $item['title']],
+                    ['description' => $item['description'] ?? null, 'unit_price' => $item['unit_price'] ?? null],
+                );
+
+                continue;
+            }
+
+            CatalogItem::where('title', $item['title'])->delete();
+        }
+    }
+
+    public function download(Quote $quote, RenderQuotePdf $render): Response
+    {
+        $this->authorize('manageQuotes', $quote->project);
+
+        return response($render($quote), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.($quote->number ?? $quote->public_id).'.pdf"',
+        ]);
     }
 }

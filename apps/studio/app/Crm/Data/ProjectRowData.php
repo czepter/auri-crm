@@ -27,6 +27,8 @@ class ProjectRowData extends Data
         public ?string $venue,
         public string $position,
         public ?string $contact,
+        public int $openTasks,
+        public int $taskCount,
     ) {}
 
     public static function fromProject(Project $project, DeriveProjectPosition $position): self
@@ -40,6 +42,8 @@ class ProjectRowData extends Data
             venue: $shoot?->venue(),
             position: $position($project)->label,
             contact: $project->primaryContact()?->name,
+            openTasks: (int) ($project->open_tasks_count ?? 0),
+            taskCount: (int) ($project->tasks_count ?? 0),
         );
     }
 }

@@ -5,6 +5,8 @@ namespace App\Engagement\Actions;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Engagement\Models\Thread;
+use App\Notifications\Actions\NotifyStudio;
+use App\Notifications\Studio\ClientMessagePosted;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -20,15 +22,21 @@ use Illuminate\Support\Facades\DB;
  */
 class StartThread
 {
+    public function __construct(private readonly NotifyStudio $notifyStudio) {}
+
     public function __invoke(?Project $project, Contact $contact, string $subject, string $body): Thread
     {
-        return DB::transaction(function () use ($project, $contact, $subject, $body) {
+        [$thread, $message] = DB::transaction(function () use ($project, $contact, $subject, $body) {
             $thread = Thread::create(['project_id' => $project?->id, 'subject' => $subject]);
 
             $thread->participants()->create(['contact_id' => $contact->id]);
-            $thread->messages()->create(['contact_id' => $contact->id, 'body' => $body]);
 
-            return $thread;
+            return [$thread, $thread->messages()->create(['contact_id' => $contact->id, 'body' => $body])];
         });
+
+        // Outside the transaction, same rule PostMessage's own note gives.
+        ($this->notifyStudio)(new ClientMessagePosted($message));
+
+        return $thread;
     }
 }

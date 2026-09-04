@@ -6,10 +6,13 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\CrewAssignment;
 use App\Enums\StaffRole;
+use App\Notifications\Models\InAppNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 /**
@@ -36,12 +39,14 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
         'password',
         'role',
         'mfa_secret',
         'mfa_confirmed_at',
         'mfa_recovery_codes',
         'lead_view',
+        'digest_frequency',
     ];
 
     // calendar_token is a live credential — anyone holding it can read this
@@ -63,12 +68,38 @@ class User extends Authenticatable
             'mfa_secret' => 'encrypted',
             'mfa_recovery_codes' => 'encrypted:array',
             'mfa_confirmed_at' => 'immutable_datetime',
+            'digest_sent_at' => 'immutable_datetime',
         ];
     }
 
     public function hasConfirmedMfa(): bool
     {
         return $this->mfa_confirmed_at !== null;
+    }
+
+    /**
+     * Eight fresh single-use codes, replacing whatever is left of the old
+     * set. Written by enrollment and by the profile screen's "neu erzeugen",
+     * and returned rather than read back — the column is encrypted and the
+     * codes are shown exactly once.
+     *
+     * @return list<string>
+     */
+    public function regenerateRecoveryCodes(): array
+    {
+        $codes = collect(range(1, 8))
+            ->map(fn () => Str::lower(Str::random(5).'-'.Str::random(5)))
+            ->all();
+
+        $this->forceFill(['mfa_recovery_codes' => $codes])->save();
+
+        return $codes;
+    }
+
+    /** T-11's inbox: what the in_app transport wrote for this person. */
+    public function inAppNotifications(): MorphMany
+    {
+        return $this->morphMany(InAppNotification::class, 'notifiable')->latest();
     }
 
     public function crewAssignments(): HasMany

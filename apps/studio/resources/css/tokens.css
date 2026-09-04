@@ -37,6 +37,11 @@
   --r:8px;          /* cards, buttons, nav items */
   --r-sm:5px;       /* count chips */
 
+  /* The easing the portal's entrance moves on. Declared here rather than on
+     the theme that uses it, because app.css names it from a @theme animation
+     that is global. */
+  --ease:cubic-bezier(.22, .61, .36, 1);
+
   --font:'Instrument Sans', system-ui, sans-serif;
 
   /* #234: the display face and the two corrections it needs. A pair is
@@ -51,11 +56,49 @@
 
 /* portal — same bones, more air. The theme is a spacing scale and a radius,
    not a separate component set, which is what lets both surfaces share every
-   rule below. */
+   rule below.
+
+   The values come from mockups/redesign/tokens.css, which stays the source
+   of truth for this surface the way mockups/_shared does for the admin.
+   Three of them are decisions rather than numbers:
+
+   --muted and --faint collapse onto one grey. The ramp near-black / mid /
+   light is every generator's default, and its third step measured 2.83:1 on
+   white — set, of all things, on the smallest text in the product. Size
+   carries the hierarchy here: 11px caps against 86px serif.
+
+   --s8 has no counterpart in the admin. A tool is read at a desk and wants
+   density; this surface is read once a year and wants a page.
+
+   --page is the measure every screen picks. Nothing on this surface sets a
+   width of its own. */
 [data-theme="portal"] {
-  --hover:#FAFAF9;
-  --s3:14px; --s4:20px; --s5:32px; --s6:44px; --s7:64px;
-  --r:10px;
+  --hover:#F4F4F3;
+  --sunk:#F4F4F3;
+  --muted:#5C5C58;
+  --faint:#5C5C58;
+  --ink-2:#5C5C58;
+  --mark:#8D8D89;
+  --line-hover:#DCDCD9;
+  --accent:#B4462A;
+  --accent-bg:#FBE9E2;
+
+  --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+  --s8:72px;
+
+  --r:14px;
+  --r-sm:9px;
+  --r-pill:999px;
+
+  --page:1180px;
+  --band:72px;
+}
+
+/* The step between one section of a portal screen and the next. 72px is the
+   measure a page read at arm's length wants; on a 390px screen it puts two
+   rows on the first viewport and the third below the fold. */
+@media (max-width:700px) {
+  [data-theme="portal"] { --band:40px; }
 }
 
 /* gallery — chrome recedes, photographs carry the page. Ported from
@@ -79,6 +122,13 @@
   --ok:#7FB98C;    --ok-bg:#16211A;
   --due:#D9B25C;   --due-bg:#241D0E;
   --late:#E88379;  --late-bg:#2A1512;
+
+  /* The scale and radius this surface was drawn against, pinned rather than
+     inherited. It is nested inside [data-theme="portal"] — the portal serves
+     the client's own gallery — and would otherwise follow the portal's scale
+     wherever that goes next. */
+  --s3:14px; --s4:20px; --s5:32px; --s6:44px; --s7:64px;
+  --r:10px;
 }
 
 * { box-sizing:border-box; }
@@ -92,14 +142,18 @@ body {
 }
 
 /* one icon system: 1.75 stroke, round caps, currentColor wherever it can inherit */
-svg { flex:none; stroke:currentColor; stroke-width:1.75; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+/* The bare element selectors below sit outside every layer, so they beat any
+   Tailwind utility on the same property regardless of specificity. Screens
+   that have moved to Tailwind mark themselves with data-tokens and are
+   excluded here, or an icon there could never set its own stroke.
+
+   :where() around the exclusion, because :not() otherwise inherits its
+   argument's specificity — a bare :not([data-tokens] h1) outranks
+   .letter h1 and resets the heading on every unported screen. */
+svg:not(:where([data-tokens] svg)) { flex:none; stroke:currentColor; stroke-width:1.75; fill:none; stroke-linecap:round; stroke-linejoin:round; }
 
 /* ---------- shell ---------- */
 
-.app { display:flex; min-height:100vh; }
-
-/* no border between sidebar and content — a 48px gutter does the separating */
-.side { width:204px; flex:none; padding:var(--s5) var(--s3) var(--s4); display:flex; flex-direction:column; }
 .brand { font:700 19px/1 var(--font); letter-spacing:-.035em; padding:0 var(--s3) var(--s5); color:var(--ink); text-decoration:none; }
 .nav { display:flex; align-items:center; gap:var(--s3); padding:9px var(--s3); border-radius:7px;
        font:400 14px/1 var(--font); color:var(--muted); text-decoration:none; transition:background .12s ease-out; }
@@ -108,22 +162,9 @@ svg { flex:none; stroke:currentColor; stroke-width:1.75; fill:none; stroke-linec
 .nav svg { width:17px; height:17px; opacity:.75; }
 .nav.on svg { opacity:1; }
 .nav .ct { margin-left:auto; font-size:12.5px; color:var(--faint); }
-.navlab { font:500 11.5px/1 var(--font); color:var(--faint); padding:var(--s5) var(--s3) var(--s2); }
-.me { margin-top:auto; display:flex; align-items:center; gap:var(--s3); padding:var(--s3); font:500 13px/1 var(--font); }
-.me img { width:26px; height:26px; border-radius:50%; object-fit:cover; background:var(--hover); }
 
-/* users carries no avatar column, so the sidebar face is initials too */
-.me .av { width:26px; height:26px; border-radius:50%; flex:none; display:flex; align-items:center;
-          justify-content:center; background:var(--hover); font:600 10.5px/1 var(--font); color:var(--muted); }
-
-/* The app's .me carries a sign-out control the mockup's two-child row never
-   had, so the name has to give way rather than wrap onto a second line and
-   push the row off its 13px baseline. */
-.me .nm { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-
-.main { flex:1; min-width:0; padding:var(--s5) var(--s5) var(--s5) var(--s7); display:flex; flex-direction:column; }
 .hrow { display:flex; align-items:center; gap:var(--s4); }
-h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
+h1:not(:where([data-tokens] h1)) { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
 
 /* ---------- controls ---------- */
 
@@ -131,7 +172,7 @@ h1 { font:700 24px/1 var(--font); letter-spacing:-.04em; margin:0; }
    `default` and `ghost` variants, with the same padding, weight and colour —
    a button and a field could not credibly be two different kinds of thing.
    The rules further down that reach a button by context (.cardhead below,
-   .formfoot, portal.css .wide) select on [data-slot="button"] instead. */
+   .formfoot) select on [data-slot="button"] instead. */
 
 .tabs { display:flex; gap:var(--s5); margin:var(--s4) 0 var(--s5); }
 .tabs a { font:400 13px/1 var(--font); color:var(--muted); text-decoration:none; }

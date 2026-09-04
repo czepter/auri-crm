@@ -15,7 +15,7 @@ test('a template written in blocks previews with sample data and survives a relo
   await page.getByLabel('Name').fill('Fotovertrag Hochzeit')
 
   // Editor.js focuses its first empty paragraph on mount.
-  const canvas = page.locator('.doc-canvas [contenteditable="true"]').first()
+  const canvas = page.locator('.codex-editor [contenteditable="true"]').first()
   await canvas.click()
   const placeholder = 'Platzhalter'
   await page.keyboard.type(`Vertrag mit ${placeholder}`)
@@ -38,11 +38,11 @@ test('a template written in blocks previews with sample data and survives a relo
   // The chip shows the sample value while editing — this is the seam between
   // the editor and MergeFieldResolver: what serializes back out is
   // `{{ contact.name }}`, resolved server-side to the same sample.
-  await expect(page.locator('.doc-canvas .doc-mf')).toHaveText('Lena Meier')
+  await expect(page.locator('.codex-editor .doc-mf')).toHaveText('Lena Meier')
 
   // The server preview is debounced by 400ms and rendered into a sandboxed
   // iframe, so assert against the frame rather than the page.
-  const preview = page.frameLocator('.doc-previewframe')
+  const preview = page.frameLocator('iframe')
   await expect(preview.getByText('Lena Meier')).toBeVisible({ timeout: 5000 })
 
   // The content assertion above passes on the instant local paint alone: the
@@ -52,9 +52,9 @@ test('a template written in blocks previews with sample data and survives a relo
   await expect(page.getByText('aktuell')).toBeVisible({ timeout: 10000 })
 
   await page.getByRole('button', { name: 'Speichern' }).click()
-  await expect(page).toHaveURL('/dokumentvorlagen')
+  await expect(page).toHaveURL('/vorlagen?typ=dokumente')
 
   await page.getByRole('link', { name: 'Fotovertrag Hochzeit' }).click()
-  await expect(page.locator('.doc-canvas')).toContainText('Vertrag mit')
-  await expect(page.locator('.doc-canvas .doc-mf')).toHaveText('Lena Meier')
+  await expect(page.locator('.codex-editor')).toContainText('Vertrag mit')
+  await expect(page.locator('.codex-editor .doc-mf')).toHaveText('Lena Meier')
 })

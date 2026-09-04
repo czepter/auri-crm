@@ -32,6 +32,12 @@ const PUBLIC_ROUTES = [
         'passwort/vergessen',
         'passwort/neu/{token}',
         'passwort/neu',
+        // The profile screen's e-mail change, confirmed from the new inbox —
+        // which may not be the browser holding the session, so no audience.
+        // The single-use token in the path is the whole credential; it signs
+        // nobody in, it swaps one column. Same story as the portal's own
+        // e-mail-bestaetigen/{token} below.
+        'profil/e-mail-bestaetigen/{token}',
         // N-04's token exchange: the MCP client calls this directly,
         // off-browser, with no staff session to hold an `audience:` guard —
         // the single-use authorization code and its PKCE verifier are the
@@ -74,9 +80,27 @@ const PUBLIC_ROUTES = [
         // credential, and what it buys is a signed pass (GalleryViewPass) —
         // neither of which reads as `audience:`.
         'api/galleries/{gallery}/passwort',
+        // R39-R42: the pre-release page's own signup — no credential to
+        // hold at all, the address is the whole point of the call. Rate
+        // limited and uniform-response instead, same shape as the inquiry
+        // route above — see GalleryPrereleaseSignupController.
+        'api/galleries/{gallery}/benachrichtigung',
+        // Die Anmeldung des Gastes. Wie die Gate-Route darüber ist die
+        // Adresse selbst das, was geprüft wird — sechs Ziffern in einer
+        // Mail —, und was sie einbringt, ist ein signierter Pass
+        // (GalleryGuestPass). Keins von beidem liest sich als `audience:`.
+        // Gebremst wird stattdessen je Adresse und Galerie, siehe
+        // GalleryGuestController.
+        'api/galleries/{gallery}/guest',
+        'api/galleries/{gallery}/guest/bestaetigung',
         'api/galleries/{gallery}', 'api/gallery-versions/{galleryVersion}/images/{key}',
         'api/gallery-versions/{galleryVersion}/favorites', 'api/gallery-versions/{galleryVersion}/favorites/{key}',
         'api/gallery-versions/{galleryVersion}/comments',
+        // R31: the draft's own image route. Its credential is the
+        // GalleryPreviewPass query parameter, checked on every request by
+        // GalleryDraftImageController itself — the same shape as the
+        // password pass above, not an `audience:` guard.
+        'api/galleries/{gallery}/entwurf-bilder/{key}',
     ],
 
     // The client's way in. Public by necessity — the only person who needs it

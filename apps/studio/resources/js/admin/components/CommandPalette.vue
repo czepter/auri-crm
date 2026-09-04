@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
 import { usePage } from '@inertiajs/vue3'
+import { Input } from '@/ui/input'
 
 /**
  * C-03 (#237): the search is a tool in the sidebar, not a field in a header.
@@ -49,15 +50,36 @@ function when(at: string) {
 </script>
 
 <template>
-  <dialog ref="dialog" class="palette" data-theme="crm">
-    <input class="q" type="search" :placeholder="$t('palette.placeholder')" autofocus />
+  <!-- No data-tokens of its own: the dialog is a DOM descendant of the
+       layout's token root, and a modal in the top layer still inherits from
+       where it stands in the tree. -->
+  <dialog
+    ref="dialog"
+    class="mx-auto mt-[12vh] mb-auto w-[min(560px,calc(100vw-48px))] rounded-md border-0 bg-paper p-0 text-foreground backdrop:bg-[rgba(29,29,31,0.28)] backdrop:backdrop-blur-[3px]"
+  >
+    <!-- upper third: the list grows downward, the eye stays -->
+    <Input
+      class="rounded-none border-0 bg-transparent px-5.5 py-4.5 text-[20px] leading-[1.3] tracking-[-0.022em] shadow-[inset_0_-1px_0_var(--rule)] placeholder:text-[#B0B0B5]"
+      type="search"
+      :placeholder="$t('palette.placeholder')"
+      autofocus
+    />
 
-    <div class="results">
-      <div class="lab">{{ $t('palette.recent') }}</div>
-      <a v-for="entry in recent()" :key="entry.href" :href="entry.href">
-        <span class="kind">{{ $t(`palette.kind.${entry.kind}`) }}</span>
-        <span class="n">{{ entry.title }}</span>
-        <span class="m">{{ when(entry.at) }}</span>
+    <div class="max-h-[52vh] overflow-auto pt-1.5 pb-2">
+      <div class="px-5.5 pt-3 pb-1 text-[10.5px] tracking-[0.07em] uppercase text-ink-2">
+        {{ $t('palette.recent') }}
+      </div>
+      <a
+        v-for="entry in recent()"
+        :key="entry.href"
+        class="flex items-baseline gap-3 px-5.5 py-2 text-foreground no-underline hover:bg-sunk focus-visible:bg-sunk focus-visible:outline-0"
+        :href="entry.href"
+      >
+        <span class="w-[62px] flex-none text-[10.5px] tracking-[0.05em] uppercase text-ink-2">
+          {{ $t(`palette.kind.${entry.kind}`) }}
+        </span>
+        <span class="text-[14px] font-medium tracking-[-0.014em]">{{ entry.title }}</span>
+        <span class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ when(entry.at) }}</span>
       </a>
     </div>
   </dialog>

@@ -69,7 +69,7 @@ it('changes when the underlying shoot status changes, with no field to keep in s
 
     expect(positionOf($project)->value)->toBe('booked');
 
-    app(AdvanceShootStatus::class)($shoot, ShootStatus::Shot);
+    app(AdvanceShootStatus::class)($shoot, stage(ShootStatus::Shot));
 
     expect(positionOf($project)->value)->toBe('shot');
 });

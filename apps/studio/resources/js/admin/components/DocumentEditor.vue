@@ -9,6 +9,15 @@ import Table from '@editorjs/table'
 import { buildTools } from '@/admin/documents/blocks/tools'
 import { createMergeFieldTool } from '@/admin/documents/blocks/mergeFieldTool'
 import { CalloutTool, ColumnsTool, ImageTool, RawHtmlTool, SpacerTool } from '@/admin/documents/blocks/customTools'
+import {
+  ChecklistTool,
+  ClauseTool,
+  FinePrintTool,
+  PageBreakTool,
+  SignatureTool,
+  rowsTool,
+} from '@/admin/documents/blocks/contractTools'
+import { ROW_SPECS } from '@/admin/documents/blocks/rowSpecs'
 import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
 
 // The Editor.js shell. Vanilla instance rather than a wrapper package: the
@@ -41,6 +50,14 @@ const registry = {
   spacer: SpacerTool,
   columns: ColumnsTool,
   image: ImageTool,
+  pagebreak: PageBreakTool,
+  clause: ClauseTool,
+  signature: SignatureTool,
+  checklist: ChecklistTool,
+  finePrint: FinePrintTool,
+  // Positionen, Zahlungsplan, Nutzungsrechte, Ablauf, Lieferumfang,
+  // Ausfallstaffel: ein Werkzeug, sechs Spaltensätze.
+  ...Object.fromEntries(ROW_SPECS.map((spec) => [spec.type, rowsTool(spec)])),
 }
 
 // Extracted so onMounted and the palette watcher build an instance exactly
@@ -100,5 +117,5 @@ watch(
 </script>
 
 <template>
-  <div ref="holder" class="doc-canvas"></div>
+  <div ref="holder"></div>
 </template>

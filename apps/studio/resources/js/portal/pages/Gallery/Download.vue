@@ -4,6 +4,7 @@ import { router, useForm, usePage } from '@inertiajs/vue3'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
 
 type Branding = { displayName: string | null }
 
@@ -100,71 +101,95 @@ function available(option: string) {
 function longDate(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE', { day: 'numeric', month: 'long', year: 'numeric' })
 }
+
+/* gallery.css, inlined. Its own .field / .hint / .err are not the portal's of
+   the same name — the sheet scopes every rule under [data-theme="gallery"]. */
+const INPUT = [
+  '[&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-line-hover',
+  '[&_input]:bg-muted [&_input]:px-3.5 [&_input]:py-[13px]',
+  '[&_input]:text-[15px] [&_input]:leading-[1.2] [&_input]:font-normal [&_input]:text-foreground',
+  '[&_input::placeholder]:text-faint',
+].join(' ')
+const OPT = [
+  'flex cursor-pointer items-center gap-5 border-b border-border py-5',
+  '[&>span]:flex-1',
+  '[&_b]:text-[14px] [&_b]:leading-[1.3] [&_b]:font-semibold [&_b]:text-foreground [&_b]:[display:block]',
+  '[&_b+span]:text-[12.5px] [&_b+span]:leading-[1.4] [&_b+span]:font-normal [&_b+span]:text-muted-foreground',
+].join(' ')
 </script>
 
 <template>
   <!-- data-theme lives on an ancestor, never on .gpage itself — gallery.css's
        rules are all `[data-theme="gallery"] .foo` descendant selectors,
        matching the mockup's own <html data-theme="gallery"> root. -->
-  <div data-theme="gallery">
+  <div data-theme="gallery" class="min-h-screen bg-background text-foreground">
     <!-- mockup 11: the whole page centers on the pin step -->
-    <div v-if="step === 'pin'" class="gpage wide gcenter">
-      <span class="gmark">{{ studioName }}</span>
-      <div class="kick" style="margin-top: 56px">{{ $t('gallery.pinKicker') }}</div>
-      <h1 class="gtitle">{{ $t('gallery.pinTitle') }}</h1>
+    <div v-if="step === 'pin'" data-tokens class="mx-auto max-w-[560px] px-8 pt-14 pb-11 text-center">
+      <span class="text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-foreground no-underline">{{ studioName }}</span>
+      <div class="mt-14 mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.pinKicker') }}</div>
+      <h1 class="m-0 font-[family-name:var(--font-display)] text-[27px] leading-[1.2] font-semibold tracking-[var(--display-tracking)]">{{ $t('gallery.pinTitle') }}</h1>
 
       <form @submit.prevent="submitPin">
-        <Label class="field">
-          <span>{{ $t('gallery.pinLabel') }}</span>
-          <Input v-model="pinForm.pin" class="pin" type="text" inputmode="numeric" autocomplete="off" required />
+        <Label class="mt-8 text-left [display:block]" :class="[INPUT, '[&_input]:text-center [&_input]:indent-[0.55em] [&_input]:text-[21px] [&_input]:tracking-[0.55em] [&_input]:tabular-nums']">
+          <span class="mb-2 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint [display:block]">{{ $t('gallery.pinLabel') }}</span>
+          <Input v-model="pinForm.pin" type="text" inputmode="numeric" autocomplete="off" required />
         </Label>
 
-        <Button class="wide" type="submit" :disabled="pinForm.processing">
+        <Button class="mt-5 ml-0 w-full justify-center px-3.5 py-[13px] text-[14px]" type="submit" :disabled="pinForm.processing">
           {{ $t('gallery.pinContinue') }}
         </Button>
       </form>
 
-      <div v-if="pinForm.errors.pin" class="err"><b>{{ pinForm.errors.pin }}</b></div>
+      <div v-if="pinForm.errors.pin" class="mt-5 rounded-md border border-[#40251A] bg-late-bg px-3.5 py-3 text-left text-[13px] leading-[1.55] font-normal text-[#E7B190]"><b>{{ pinForm.errors.pin }}</b></div>
 
-      <Button as="a" variant="ghost" class="mid" :href="`/galerien/${gallery.id}`">{{ $t('gallery.backToGallery') }}</Button>
+      <Button as="a" variant="ghost" class="w-full justify-center" :href="`/galerien/${gallery.id}`">
+        {{ $t('gallery.backToGallery') }}
+      </Button>
     </div>
 
     <!-- mockup 12: only the header centers, the field and actions stay left -->
-    <div v-else-if="step === 'email'" class="gpage wide">
-      <div class="gcenter">
-        <span class="gmark">{{ studioName }}</span>
-        <div class="kick" style="margin-top: 56px">{{ $t('gallery.emailKicker') }}</div>
-        <h1 class="gtitle">{{ $t('gallery.emailTitle') }}</h1>
-        <p v-if="gallery.title" class="gsub">{{ gallery.title }}</p>
+    <div v-else-if="step === 'email'" data-tokens class="mx-auto max-w-[560px] px-8 pt-14 pb-11">
+      <div class="text-center">
+        <span class="text-[13px] leading-none font-bold tracking-[0.18em] whitespace-nowrap uppercase text-foreground no-underline">{{ studioName }}</span>
+        <div class="mt-14 mb-[5px] text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.emailKicker') }}</div>
+        <h1 class="m-0 font-[family-name:var(--font-display)] text-[27px] leading-[1.2] font-semibold tracking-[var(--display-tracking)]">{{ $t('gallery.emailTitle') }}</h1>
+        <p v-if="gallery.title" class="mt-1.5 text-[14px] leading-[1.6] font-normal text-muted-foreground">{{ gallery.title }}</p>
       </div>
 
-      <p v-if="status" class="hint">{{ status }}</p>
+      <p v-if="status" class="mt-[9px] text-[12.5px] leading-[1.55] font-normal text-muted-foreground">{{ status }}</p>
 
       <form v-else @submit.prevent="submitEmail">
-        <Label class="field">
-          <span>{{ $t('gallery.emailLabel') }}</span>
+        <Label class="mt-8 text-left [display:block]" :class="INPUT">
+          <span class="mb-2 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint [display:block]">{{ $t('gallery.emailLabel') }}</span>
           <Input v-model="emailForm.email" type="email" autocomplete="email" required />
         </Label>
 
-        <Button class="wide" type="submit" :disabled="emailForm.processing">
+        <Button class="mt-5 ml-0 w-full justify-center px-3.5 py-[13px] text-[14px]" type="submit" :disabled="emailForm.processing">
           {{ $t('gallery.emailRequest') }}
         </Button>
       </form>
 
-      <Button as="a" variant="ghost" class="mid" :href="`/galerien/${gallery.id}`">{{ $t('gallery.backToGallery') }}</Button>
+      <Button as="a" variant="ghost" class="w-full justify-center" :href="`/galerien/${gallery.id}`">
+        {{ $t('gallery.backToGallery') }}
+      </Button>
     </div>
 
     <!-- G-03 (#231), mockup galerie-download.html: both gates cleared, so
          the screen finally offers something instead of saying "Alles bereit"
          and stopping there. -->
-    <div v-else class="dlcol">
-      <a class="txtbtn" :href="`/galerien/${gallery.id}`">
+    <!-- .dlcol asked for var(--s8) at the bottom, which is declared nowhere:
+         the whole shorthand was invalid, so the column has never had padding. -->
+    <div v-else data-tokens class="mx-auto max-w-[620px]">
+      <a
+        class="inline-flex cursor-pointer items-center gap-2 border-0 bg-none p-0 text-[13px] leading-none font-medium text-muted-foreground no-underline hover:text-foreground [&_svg]:size-3.5 [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-[1.6] [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
+        :href="`/galerien/${gallery.id}`"
+      >
         <svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
         {{ $t('gallery.backToGallery') }}
       </a>
 
-      <h1 class="gtitle" style="margin-top: var(--s5)">{{ $t('gallery.downloadTitle') }}</h1>
-      <p class="gsub">
+      <h1 class="m-0 font-[family-name:var(--font-display)] text-[27px] leading-[1.2] font-semibold tracking-[var(--display-tracking)] mt-8">{{ $t('gallery.downloadTitle') }}</h1>
+      <p class="mt-1.5 text-[14px] leading-[1.6] font-normal text-muted-foreground">
         {{ [gallery.title, $t('portal.imageCount', gallery.count)].filter(Boolean).join(' · ') }}
         <template v-if="gallery.expiresAt">
           · {{ $t('gallery.onlineUntil', { date: longDate(gallery.expiresAt) }) }}
@@ -173,50 +198,53 @@ function longDate(iso: string) {
 
       <!-- What was asked and answered, rather than forgotten the moment it
            passes. -->
-      <div v-if="gates?.length" class="gates">
-        <span v-for="gate in gates" :key="gate.key" class="gc">
+      <div v-if="gates?.length" class="mt-8 flex flex-wrap gap-5">
+        <span
+          v-for="gate in gates"
+          :key="gate.key"
+          class="inline-flex items-center gap-[7px] text-[12px] leading-none font-medium text-ok [&_svg]:size-3.5 [&_svg]:flex-none [&_svg]:fill-none [&_svg]:stroke-current [&_svg]:stroke-2 [&_svg]:[stroke-linecap:round] [&_svg]:[stroke-linejoin:round]"
+        >
           <svg viewBox="0 0 24 24"><path d="M4 12l6 6L20 6" /></svg>
           {{ gate.value ?? $t(`gallery.${gate.key}`) }}
         </span>
       </div>
 
-      <section class="block">
-        <p class="lab">{{ $t('gallery.whatLabel') }}</p>
-        <div class="opts">
-          <label v-for="option in selections" :key="option.id" class="opt">
-            <input v-model="chosenList" type="radio" :value="option.id" />
+      <section class="mt-16">
+        <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.whatLabel') }}</p>
+        <RadioGroup v-model="chosenList" class="gap-0">
+          <label v-for="option in selections" :key="option.id" :class="OPT">
+            <RadioGroupItem :value="option.id" />
             <span>
               <b>{{ option.name ?? (option.id ? $t('gallery.heart') : $t('gallery.everything')) }}</b>
               <span>{{ $t('portal.imageCount', option.count) }}</span>
             </span>
-            <span class="dlsize">{{ size(option.sizes[chosenSize] ?? 0) }}</span>
+            <span class="text-[12.5px] leading-none font-normal whitespace-nowrap tabular-nums text-muted-foreground">{{ size(option.sizes[chosenSize] ?? 0) }}</span>
           </label>
-        </div>
+        </RadioGroup>
       </section>
 
-      <section class="block">
-        <p class="lab">{{ $t('gallery.sizeLabel') }}</p>
-        <div class="opts">
+      <section class="mt-16">
+        <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.sizeLabel') }}</p>
+        <RadioGroup v-model="chosenSize" class="gap-0">
           <!-- ZipBuildSize::Web is "Zum Teilen" to a client; the enum value
                stays what it is. de.json wins over any class name. -->
           <label
             v-for="option in (['original', 'web'] as const)"
             :key="option"
-            class="opt"
-            :class="{ off: !available(option) }"
+            :class="[OPT, !available(option) && 'cursor-default [&_b+span]:text-faint! [&_b]:text-faint!']"
           >
-            <input v-model="chosenSize" type="radio" :value="option" :disabled="!available(option)" />
+            <RadioGroupItem :value="option" :disabled="!available(option)" />
             <span>
               <b>{{ $t(`gallery.size.${option}`) }}</b>
               <span>{{ $t(`gallery.sizeHint.${option}`) }}</span>
             </span>
-            <span class="dlsize">{{ size(selection?.sizes[option] ?? 0) }}</span>
+            <span class="text-[12.5px] leading-none font-normal whitespace-nowrap tabular-nums text-muted-foreground">{{ size(selection?.sizes[option] ?? 0) }}</span>
           </label>
-        </div>
+        </RadioGroup>
 
         <Button
           type="button"
-          style="margin-top: var(--s5)"
+          class="mt-8"
           :disabled="prepareForm.processing || build?.status === 'building' || !available(chosenSize)"
           @click="prepare"
         >
@@ -226,24 +254,28 @@ function longDate(iso: string) {
 
       <!-- There are parts, not a file: BuildGalleryZip plans volumes, and one
            button would be lying about 4,2 GB. -->
-      <section v-if="build" class="block">
-        <p class="lab">{{ $t('gallery.yourFiles') }}</p>
+      <section v-if="build" class="mt-16">
+        <p class="mb-5 text-[11px] leading-none font-semibold tracking-[0.1em] uppercase text-faint">{{ $t('gallery.yourFiles') }}</p>
 
-        <p v-if="build.status === 'failed'" class="err"><b>{{ $t('gallery.buildFailed') }}</b></p>
+        <p v-if="build.status === 'failed'" class="mt-5 rounded-md border border-[#40251A] bg-late-bg px-3.5 py-3 text-left text-[13px] leading-[1.55] font-normal text-[#E7B190]"><b>{{ $t('gallery.buildFailed') }}</b></p>
 
-        <p v-else-if="build.status === 'building'" class="hint">{{ $t('gallery.preparingHint') }}</p>
+        <p v-else-if="build.status === 'building'" class="mt-[9px] text-[12.5px] leading-[1.55] font-normal text-muted-foreground">{{ $t('gallery.preparing') }}</p>
 
-        <div v-else class="parts">
-          <div v-for="part in build.parts" :key="part.number" class="part">
+        <div v-else class="flex flex-col">
+          <div
+            v-for="part in build.parts"
+            :key="part.number"
+            class="flex items-center gap-5 border-b border-border py-5 [&>span:first-child]:flex-1 [&_b]:text-[13.5px] [&_b]:leading-[1.3] [&_b]:font-semibold [&_b]:text-foreground"
+          >
             <span>
               <b>{{ $t('gallery.partOf', { at: part.number, of: build.partCount }) }}</b>
             </span>
-            <span class="dlsize">{{ size(part.bytes) }}</span>
+            <span class="text-[12.5px] leading-none font-normal whitespace-nowrap tabular-nums text-muted-foreground">{{ size(part.bytes) }}</span>
             <Button as="a" variant="outline" :href="part.url">{{ $t('gallery.download') }}</Button>
           </div>
         </div>
 
-        <p class="hint">{{ $t('gallery.partsLive') }}</p>
+        <p class="mt-[9px] text-[12.5px] leading-[1.55] font-normal text-muted-foreground">{{ $t('gallery.partsLive') }}</p>
       </section>
     </div>
   </div>

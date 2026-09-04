@@ -6,6 +6,8 @@ use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
+use App\Media\Models\Asset;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
@@ -72,6 +74,7 @@ it('gathers what is open across every booking, each naming where it came from', 
 it('says nothing is open when nothing is', function () {
     $contact = Contact::factory()->create();
     $project = bookingFor($contact);
+    bookingFor($contact);
 
     dueInstallment($project, 150000, '2026-07-27')->update(['status' => PaymentInstallmentStatus::Paid]);
 
@@ -88,6 +91,7 @@ it('hides money from the home while the payment-status switch is off', function 
 
     $contact = Contact::factory()->create();
     dueInstallment(bookingFor($contact), 150000, '2026-07-27');
+    bookingFor($contact);
 
     $props = test()->actingAs($contact, 'portal')->get('/')->assertOk()->viewData('page')['props'];
 
@@ -97,6 +101,7 @@ it('hides money from the home while the payment-status switch is off', function 
 it('counts a thread the studio answered last as waiting on the client', function () {
     $contact = Contact::factory()->create();
     $project = bookingFor($contact);
+    bookingFor($contact);
 
     $thread = app(App\Engagement\Actions\StartThread::class)($project, $contact, 'Ablauf', 'Frage.');
     app(App\Engagement\Actions\PostMessage::class)($thread, App\Models\User::factory()->create(), 'Antwort.');
@@ -109,6 +114,7 @@ it('counts a thread the studio answered last as waiting on the client', function
 it('does not count a thread the client spoke on last', function () {
     $contact = Contact::factory()->create();
     app(App\Engagement\Actions\StartThread::class)(bookingFor($contact), $contact, 'Ablauf', 'Frage.');
+    bookingFor($contact);
 
     $props = test()->actingAs($contact, 'portal')->get('/')->assertOk()->viewData('page')['props'];
 
@@ -123,7 +129,7 @@ it('derives a phase per booking and counts them for the filter', function () {
 
     $delivered = bookingFor($contact);
     Shoot::factory()->for($delivered)->on(now()->subYear()->format('Y-m-d'))->create(['is_primary' => true]);
-    Gallery::factory()->for($delivered)->create(['assets' => [['key' => 'a.jpg']]])->publish();
+    Gallery::factory()->for($delivered)->create()->publish();
 
     bookingFor($contact);
 
@@ -136,12 +142,13 @@ it('derives a phase per booking and counts them for the filter', function () {
 it('offers every live gallery directly, with its cover and count', function () {
     $contact = Contact::factory()->create();
     $project = bookingFor($contact);
+    bookingFor($contact);
 
-    $gallery = Gallery::factory()->for($project)->create([
-        'title' => 'Verlobungsshooting',
-        'assets' => [['key' => 'galleries/g/a.jpg'], ['key' => 'galleries/g/b.jpg']],
-    ]);
-    $gallery->publish();
+    $gallery = Gallery::factory()->for($project)->create(['title' => 'Verlobungsshooting']);
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/a.jpg', 'filename' => 'a.jpg']);
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/b.jpg', 'filename' => 'b.jpg']);
+    $gallery->fresh()->publish();
 
     $galleries = test()->actingAs($contact, 'portal')->get('/')->assertOk()->viewData('page')['props']['galleries'];
 
@@ -154,10 +161,11 @@ it('offers every live gallery directly, with its cover and count', function () {
 it('leaves out a gallery whose link has expired, and one nobody published', function () {
     $contact = Contact::factory()->create();
     $project = bookingFor($contact);
+    bookingFor($contact);
 
-    Gallery::factory()->for($project)->create(['assets' => [['key' => 'a.jpg']]]);
+    Gallery::factory()->for($project)->create();
 
-    $expired = Gallery::factory()->for($project)->create(['assets' => [['key' => 'b.jpg']]]);
+    $expired = Gallery::factory()->for($project)->create();
     $expired->publish();
     $expired->update(['expires_at' => now()->subDay()]);
 

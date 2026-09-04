@@ -2,6 +2,8 @@
 import { useForm } from '@inertiajs/vue3'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalShell from '@/portal/components/PortalShell.vue'
+import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { Button } from '@/ui/button'
 
 // T-11: reached from a link in a mail already delivered — see QuoteSent's
@@ -21,22 +23,28 @@ function submit() {
 </script>
 
 <template>
-  <PortalHeader />
+  <PortalShell>
+    <PortalHeader />
 
-  <main class="pwrap">
-    <div class="kick">{{ $t('portal.unsubscribeKicker') }}</div>
-    <h1>{{ $t('portal.unsubscribeTitle') }}</h1>
+    <PortalWrap class="flex items-center py-24">
+      <div class="animate-rise motion-reduce:animate-none w-full max-w-[620px]">
+        <p class="mb-4 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ $t('portal.unsubscribeKicker') }}</p>
+        <h1 class="font-serif text-[clamp(36px,5vw,52px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
+          {{ $t('portal.unsubscribeTitle') }}
+        </h1>
 
-    <p v-if="unsubscribed" class="lede">{{ $t('portal.unsubscribeDone') }}</p>
-    <template v-else>
-      <p class="lede">{{ $t('portal.unsubscribeHint') }}</p>
-      <form @submit.prevent="submit">
-        <Button type="submit" :disabled="form.processing">
-          {{ $t('portal.unsubscribeConfirm') }}
-        </Button>
-      </form>
-    </template>
-  </main>
+        <p class="mt-6 max-w-[52ch] text-[17px] leading-[1.55] text-muted-foreground">
+          {{ unsubscribed ? $t('portal.unsubscribeDone') : $t('portal.unsubscribeHint') }}
+        </p>
 
-  <PortalFooter />
+        <form v-if="!unsubscribed" class="mt-10" @submit.prevent="submit">
+          <Button variant="portal" type="submit" :disabled="form.processing">
+            {{ $t('portal.unsubscribeConfirm') }}
+          </Button>
+        </form>
+      </div>
+    </PortalWrap>
+
+    <PortalFooter />
+  </PortalShell>
 </template>

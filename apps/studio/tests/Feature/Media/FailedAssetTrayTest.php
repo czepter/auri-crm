@@ -13,7 +13,7 @@ uses(RefreshDatabase::class);
 
 // staffMember() and integerIdPaths() live in tests/Pest.php.
 
-it('lists this gallery\'s Failed assets on the ingest screen, and none of another gallery\'s', function () {
+it('lists this gallery\'s Failed assets on its record, and none of another gallery\'s', function () {
     $gallery = Gallery::factory()->create();
     $otherGallery = Gallery::factory()->create();
 
@@ -26,7 +26,7 @@ it('lists this gallery\'s Failed assets on the ingest screen, and none of anothe
     Asset::factory()->for($otherGallery)->create(['status' => AssetStatus::Failed]);
 
     $response = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get("/galerien/{$gallery->public_id}/medien")
+        ->get("/galerien/{$gallery->public_id}")
         ->assertOk();
 
     $props = $response->viewData('page')['props'];
@@ -38,7 +38,7 @@ it('lists this gallery\'s Failed assets on the ingest screen, and none of anothe
         ->and(integerIdPaths($props))->toBe([]);
 });
 
-it('retries a Failed asset and sends the browser back to the ingest screen', function () {
+it('retries a Failed asset and sends the browser back to the record', function () {
     Queue::fake();
 
     $gallery = Gallery::factory()->create();
@@ -46,9 +46,9 @@ it('retries a Failed asset and sends the browser back to the ingest screen', fun
     $upload = MultipartUpload::factory()->for($gallery)->create(['asset_id' => $failed->id, 'processed_at' => now()]);
 
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->from("/galerien/{$gallery->public_id}/medien")
+        ->from("/galerien/{$gallery->public_id}")
         ->post("/medien/{$failed->public_id}/wiederholen")
-        ->assertRedirect("/galerien/{$gallery->public_id}/medien");
+        ->assertRedirect("/galerien/{$gallery->public_id}");
 
     expect(Asset::query()->whereKey($failed->id)->exists())->toBeFalse();
     expect($upload->fresh()->processed_at)->toBeNull();

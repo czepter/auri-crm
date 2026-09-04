@@ -159,3 +159,40 @@ it('leaves copyItems empty for a package with no items', function () {
 
     expect($package->copyItems())->toBe([]);
 });
+
+it('duplicates a package with independent items and a marked name', function () {
+    $original = Package::factory()
+        ->has(PackageItem::factory()->count(2), 'items')
+        ->create(['name' => 'Hochzeit Basis', 'description' => 'Ganztags']);
+
+    $this->actingAs(staffMember(), 'staff')
+        ->post("/pakete/{$original->public_id}/duplizieren")
+        ->assertRedirect();
+
+    $copy = Package::where('name', 'Hochzeit Basis (Kopie)')->sole();
+
+    expect($copy->description)->toBe('Ganztags')
+        ->and($copy->items)->toHaveCount(2)
+        ->and($copy->items->pluck('id')->intersect($original->items->pluck('id')))->toBeEmpty();
+
+    $copy->items->first()->update(['title' => 'Anders']);
+
+    expect($original->items()->first()->title)->not->toBe('Anders');
+});
+
+// Duplicated to be changed — the visibility call comes after.
+it('keeps a deactivated package deactivated in its copy', function () {
+    $original = Package::factory()->inactive()->create(['name' => 'Alt']);
+
+    $this->actingAs(staffMember(), 'staff')->post("/pakete/{$original->public_id}/duplizieren");
+
+    expect(Package::where('name', 'Alt (Kopie)')->sole()->is_active)->toBeFalse();
+});
+
+it('logs a duplicate as a package creation carrying its source', function () {
+    $original = Package::factory()->create(['name' => 'Hochzeit Basis']);
+
+    $this->actingAs(staffMember(), 'staff')->post("/pakete/{$original->public_id}/duplizieren");
+
+    expect(AuditLog::where('event', 'package.created')->sole()->context['source'])->toBe('duplicate');
+});

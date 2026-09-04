@@ -2,7 +2,6 @@
 
 namespace App\Crm\Data;
 
-use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Lead;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -27,6 +26,9 @@ class LeadCardData extends Data
         // are not interchangeable — one field each is what keeps them apart.
         public string $leadId,
         public string $type,
+        // Der Schluessel neben dem Namen: das Board faerbt seinen Punkt danach,
+        // und den Namen darf das Studio aendern.
+        public string $typeKey,
         public string $names,
         public ?string $date,
         public int $shootCount,
@@ -53,18 +55,14 @@ class LeadCardData extends Data
         return new self(
             id: $project->public_id,
             leadId: $lead->public_id,
-            type: $project->type->label(),
-            // Primary contact first, then the rest. Falls back to the project
-            // name for a project whose contacts have not been attached yet.
-            names: $project->contacts
-                ->sortBy(fn ($contact) => $contact->pivot->role === ProjectContactRole::Primary->value ? 0 : 1)
-                ->pluck('name')
-                ->join(' & ') ?: $project->name,
+            type: $project->type->name,
+            typeKey: $project->type->key,
+            names: $project->contactNames(),
             date: $primary?->date?->format('Y-m-d'),
             shootCount: $project->shoots->count(),
             venue: $primary?->venue(),
             source: $lead->source->label(),
-            stage: $lead->stage->value,
+            stage: $lead->stage->key,
             daysInStage: (int) $lead->stage_entered_at->startOfDay()->diffInDays(now()->startOfDay()),
             value: $project->latestQuote?->total,
             lastAt: $lead->stage_entered_at->toIso8601String(),

@@ -16,12 +16,12 @@ it('lists templates with their field count', function () {
     FormTemplate::factory()->inactive()->create(['name' => 'Alt']);
 
     $props = $this->actingAs(staffMember(), 'staff')
-        ->get('/einstellungen/fragebogen-vorlagen')
+        ->get('/vorlagen?typ=fragebogen')
         ->assertOk()
         ->viewData('page')['props'];
 
-    expect(collect($props['templates'])->pluck('name'))->toContain('Familienkonstellation', 'Alt')
-        ->and(collect($props['templates'])->firstWhere('id', $template->public_id)['fieldCount'])->toBe(2);
+    expect(collect($props['formTemplates'])->pluck('name'))->toContain('Familienkonstellation', 'Alt')
+        ->and(collect($props['formTemplates'])->firstWhere('id', $template->public_id)['fieldCount'])->toBe(2);
 });
 
 it('creates a template shell and lands on its builder', function () {
@@ -35,7 +35,7 @@ it('creates a template shell and lands on its builder', function () {
     $template = FormTemplate::sole();
 
     expect($template->name)->toBe('Familienkonstellation')
-        ->and($template->project_type)->toBe(ProjectType::Wedding)
+        ->and($template->project_type->key)->toBe(ProjectType::Wedding->value)
         ->and($template->is_active)->toBeTrue()
         ->and($template->fields)->toHaveCount(0);
 
@@ -128,14 +128,16 @@ it('deletes a template and logs it — nothing references it yet, so nothing to 
 
 it('opens the builder to every role ManageFormTemplates reaches — Owner, Photographer, Editor', function (StaffRole $role, int $status) {
     $this->actingAs(staffMember($role), 'staff')
-        ->get('/einstellungen/fragebogen-vorlagen')
+        ->get('/vorlagen?typ=fragebogen')
         ->assertStatus($status);
 })->with([
     [StaffRole::Owner, 200],
     [StaffRole::Photographer, 200],
     [StaffRole::Editor, 200],
-    [StaffRole::SecondShooter, 403],
-    [StaffRole::Assistant, 403],
+    // Der Hub zeigt nur die Arten, die die Rolle führen darf — eine, die
+    // Fragebögen nicht führt, findet die Ansicht gar nicht erst.
+    [StaffRole::SecondShooter, 404],
+    [StaffRole::Assistant, 404],
 ]);
 
 it('declares an audience on every form-template route, same as every other admin route', function () {

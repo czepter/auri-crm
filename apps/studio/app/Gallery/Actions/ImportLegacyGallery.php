@@ -5,6 +5,8 @@ namespace App\Gallery\Actions;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Gallery\Models\Gallery;
+use App\Media\Enums\AssetStatus;
+use App\Media\Models\Asset;
 use App\Settings\Support\StudioSettingsResolver;
 use InvalidArgumentException;
 
@@ -112,7 +114,6 @@ class ImportLegacyGallery
             'project_id' => $project->id,
             'shoot_id' => $shoot?->id,
             'title' => $title,
-            'assets' => $assets,
             // P-09 (#228): the studio's own defaults are the starting values,
             // never a lock — rotateViewPassword() and the rest still override
             // per gallery, and a later change to the default deliberately
@@ -121,20 +122,23 @@ class ImportLegacyGallery
                 ->galleryDefaults()['requiresSettledBalance'],
         ]);
 
-        $this->applyDefaultExpiry($gallery);
+        // publish() snapshots real Asset rows (Gallery::draftAssets()), not
+        // this legacy assets array — a legacy filename never went through
+        // ingestion, so this is the one place that stands in for it.
+        $set = $gallery->sets()->first();
+        foreach ($assets as $key) {
+            Asset::create([
+                'gallery_id' => $gallery->id,
+                'gallery_set_id' => $set->id,
+                'status' => AssetStatus::Ready,
+                'key' => $key,
+                'filename' => basename($key),
+            ]);
+        }
+
         $gallery->publish();
 
         return $this->result('backfilled', 'created and published version 1 with '.count($assets).' asset(s).', $gallery);
-    }
-
-    /** P-09: the studio's default validity, applied at publish time by Gallery::publish() unless already set. */
-    private function applyDefaultExpiry(Gallery $gallery): void
-    {
-        $days = app(StudioSettingsResolver::class)->galleryDefaults()['expiryDays'];
-
-        if ($days !== null && $gallery->expires_at === null) {
-            $gallery->update(['expires_at' => now()->addDays($days)]);
-        }
     }
 
     private function resolveProject(array $record): ?Project

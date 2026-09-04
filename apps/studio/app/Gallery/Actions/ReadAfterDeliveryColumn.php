@@ -45,9 +45,9 @@ class ReadAfterDeliveryColumn
 
     /**
      * A referral whose project actually became work. Gated on `project.job`
-     * existing via whereHas — an EXISTS subquery, not a join — for the same
-     * reason ReadProductionBoard is: before the Job exists the project is a
-     * pursuit, and thanking someone for a pursuit is premature.
+     * existing via whereHas — an EXISTS subquery, not a join: before the Job
+     * exists the project is a pursuit, and thanking someone for a pursuit is
+     * premature.
      *
      * @return Collection<int, DomainRowData>
      */
@@ -76,6 +76,9 @@ class ReadAfterDeliveryColumn
     private function expiringGalleries(?Builder $visible): Collection
     {
         return Gallery::query()
+            // Eine Galerie ohne Buchung hat in einer Spalte ueber Buchungen
+            // nichts verloren.
+            ->whereNotNull('project_id')
             ->whereNotNull('expires_at')
             ->where('expires_at', '<=', now()->addDays(self::EXPIRY_WINDOW_DAYS))
             ->when($visible !== null, fn ($query) => $query->whereIn('project_id', $visible))
@@ -88,7 +91,7 @@ class ReadAfterDeliveryColumn
                 what: 'Galerie läuft',
                 emphasis: 'am '.$gallery->expires_at->format('d.m.').' ab',
                 whatTail: null,
-                action: RowActionData::link('Album anbieten', "/galerien/{$gallery->public_id}/medien"),
+                action: RowActionData::link('Album anbieten', "/galerien/{$gallery->public_id}"),
             ));
     }
 }

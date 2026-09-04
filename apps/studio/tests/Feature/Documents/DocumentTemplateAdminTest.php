@@ -92,26 +92,14 @@ it('404s editing a superseded version', function () {
 });
 
 it('opens the template list to every role that manages contracts, and refuses the ones that cannot', function (StaffRole $role, int $status) {
-    $this->actingAs(staffMember($role), 'staff')->get('/dokumentvorlagen')->assertStatus($status);
+    $this->actingAs(staffMember($role), 'staff')->get('/vorlagen?typ=dokumente')->assertStatus($status);
 })->with([
     [StaffRole::Owner, 200],
     [StaffRole::Photographer, 200],
     [StaffRole::Editor, 200],
-    [StaffRole::SecondShooter, 403],
-    [StaffRole::Assistant, 403],
+    [StaffRole::SecondShooter, 404],
+    [StaffRole::Assistant, 404],
 ]);
-
-it('filters the index to one document type via the type query parameter', function () {
-    DocumentTemplate::factory()->create(['name' => 'Vertrag A', 'type' => DocumentTemplateType::Contract]);
-    DocumentTemplate::factory()->create(['name' => 'Angebot A', 'type' => DocumentTemplateType::Quote]);
-
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get('/dokumentvorlagen?type=quote')
-        ->assertOk()
-        ->viewData('page')['props'];
-
-    expect(collect($props['templates'])->pluck('name')->all())->toBe(['Angebot A']);
-});
 
 it('stores the editor blocks next to the serialized body', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')

@@ -2,10 +2,15 @@
 
 namespace App\Crm\Http\Controllers;
 
-use App\Crm\Actions\CheckDateAvailability;
-use App\Crm\Data\LeadCardData;
-use App\Crm\Enums\LeadStage;
+use App\Crm\Actions\OpenLeads;
+use App\Crm\Actions\WorkflowColumns;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
+use App\Crm\Models\ProjectType as ProjectTypeModel;
+use App\Crm\Models\Stage;
+use App\Crm\Models\TaskTemplate;
+use App\Crm\Support\CrmVocabulary;
+use App\Crm\Support\StageSettingsPayload;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,77 +31,57 @@ use Inertia\Response;
  */
 class LeadBoardController extends Controller
 {
-    /** Who owes the next move, in the table's own three groups. */
-    private const GROUPS = [
-        'handelt' => [LeadStage::New, LeadStage::QuoteAccepted],
-        'laeuft' => [LeadStage::Contacted, LeadStage::QuoteSent, LeadStage::ContractSent],
-        'fertig' => [LeadStage::Booked],
-    ];
-
-    public function __invoke(Request $request, CheckDateAvailability $availability): Response
-    {
+    public function __invoke(
+        Request $request,
+        OpenLeads $leads,
+        CrmVocabulary $stages,
+        StageSettingsPayload $settings,
+        WorkflowColumns $workflow,
+    ): Response {
         $this->authorize('viewAny', Lead::class);
 
-        $leads = Lead::query()
-            ->open()
-            ->with(['project.contacts', 'project.shoots', 'project.primaryShoot', 'project.latestQuote'])
-            ->orderByDesc('stage_entered_at')
-            ->get();
+        $cards = $leads->cards();
 
-        // One conflict query for the whole board. Resolving per card is the
-        // obvious implementation and is an N+1 nobody notices at eleven cards.
-        $dates = $leads
-            ->map(fn (Lead $lead) => $lead->project->primaryShoot?->date?->format('Y-m-d'))
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
-
-        $conflictsByDate = $availability->forDates($dates);
-
-        $cards = $leads->map(function (Lead $lead) use ($conflictsByDate) {
-            $date = $lead->project->primaryShoot?->date?->format('Y-m-d');
-
-            // Every shoot on that date, minus this project's own — the query
-            // cannot exclude it, because a different card needs that same row.
-            $conflicts = collect($conflictsByDate[$date] ?? [])
-                ->reject(fn ($conflict) => $conflict->projectId === $lead->project->public_id)
-                ->values()
-                ->all();
-
-            return LeadCardData::fromLead($lead, $conflicts);
-        });
-
-        // Grouped in PHP, in LeadStage declaration order. The funnel order is
-        // not the alphabetical order of the stored strings, and encoding it in
-        // SQL means a case expression kept in sync with the enum by hand.
+        // Grouped in PHP, in the studio's own stage order. That order is not
+        // the alphabetical order of the stored keys, and encoding it in SQL
+        // means a case expression kept in sync with the table by hand.
         // The column head carries the count and the sum — the question staff
         // otherwise go to Auswertungen for.
-        $columns = collect(LeadStage::cases())->map(function (LeadStage $stage) use ($cards) {
-            $inStage = $cards->where('stage', $stage->value)->values();
+        $columns = $stages->ordered(StagePipeline::Lead)
+            ->filter(fn (Stage $stage) => $stage->is_active)
+            ->map(function (Stage $stage) use ($cards) {
+                $inStage = $cards->where('stage', $stage->key)->values();
 
-            return [
-                'stage' => $stage->value,
-                'label' => $stage->label(),
-                'cards' => $inStage->all(),
-                'total' => (int) $inStage->sum('value'),
-            ];
-        })->all();
-
-        $groups = collect(self::GROUPS)->map(fn (array $stages, string $key) => [
-            'key' => $key,
-            'rows' => $cards
-                ->whereIn('stage', array_map(fn (LeadStage $stage) => $stage->value, $stages))
-                ->sortBy('date')
-                ->values()
-                ->all(),
-        ])->values()->all();
+                return [
+                    'stage' => $stage->key,
+                    'label' => $stage->name,
+                    'color' => $stage->color->css(),
+                    'cards' => $inStage->all(),
+                    'total' => (int) $inStage->sum('value'),
+                ];
+            })->values()->all();
 
         return Inertia::render('Leads/Board', [
             'columns' => $columns,
-            'groups' => $groups,
+            'groups' => $leads->groups(),
+            'queue' => $leads->queue(),
             'view' => $this->view($request),
+            'stageSettings' => $settings(),
+            // Only fetched when the panel opens (a partial reload asking for
+            // it), and only for whoever may edit the templates at all.
+            'workflow' => Inertia::optional(
+                fn () => $request->user('staff')->can('viewAny', TaskTemplate::class)
+                    ? $workflow($this->workflowType($request, $stages), StagePipeline::Lead)
+                    : null,
+            ),
         ]);
+    }
+
+    /** The type the panel is showing, or the studio's first one. */
+    private function workflowType(Request $request, CrmVocabulary $stages): ProjectTypeModel
+    {
+        return $stages->type((string) $request->query('workflow_typ'))
+            ?? $stages->types()->first();
     }
 
     /**

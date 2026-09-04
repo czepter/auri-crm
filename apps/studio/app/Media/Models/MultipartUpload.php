@@ -5,6 +5,7 @@ namespace App\Media\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
 use App\Media\Enums\MultipartUploadStatus;
 use Database\Factories\Media\MultipartUploadFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -33,7 +34,7 @@ class MultipartUpload extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'public_id', 'gallery_id', 'key', 'upload_id', 'filename', 'file_size',
+        'public_id', 'gallery_id', 'gallery_set_id', 'replaces_asset_id', 'key', 'upload_id', 'filename', 'file_size',
         'file_modified_at', 'part_size', 'status', 'completed_at', 'aborted_at',
         'processed_at', 'asset_id',
     ];
@@ -54,6 +55,11 @@ class MultipartUpload extends Model
     public function gallery(): BelongsTo
     {
         return $this->belongsTo(Gallery::class);
+    }
+
+    public function set(): BelongsTo
+    {
+        return $this->belongsTo(GallerySet::class, 'gallery_set_id');
     }
 
     /**

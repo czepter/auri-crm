@@ -11,6 +11,7 @@ use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\TimelineEntry;
 use App\Documents\Models\DocumentTemplate;
+use App\Engagement\Actions\StartThread;
 use App\Enums\StaffRole;
 use App\Models\User;
 use App\Payments\Models\PaymentInstallment;
@@ -160,7 +161,7 @@ it('never puts an integer identifier into the document template screens', functi
     $user = User::factory()->withMfa()->create();
     $template = DocumentTemplate::factory()->create();
 
-    $listProps = $this->actingAs($user, 'staff')->get('/dokumentvorlagen')->assertOk()->viewData('page')['props'];
+    $listProps = $this->actingAs($user, 'staff')->get('/vorlagen?typ=dokumente')->assertOk()->viewData('page')['props'];
     expect(integerIdPaths($listProps))->toBe([]);
 
     $editProps = $this->get("/dokumentvorlagen/{$template->public_id}")->assertOk()->viewData('page')['props'];
@@ -255,7 +256,7 @@ it('never puts an integer identifier into a project\'s messages tab', function (
     $user = User::factory()->withMfa()->create();
     $project = Project::factory()->create();
     $contact = Contact::factory()->create();
-    app(App\Engagement\Actions\StartThread::class)($project, $contact, 'Thema', 'Nachricht.');
+    app(StartThread::class)($project, $contact, 'Thema', 'Nachricht.');
 
     $props = $this->actingAs($user, 'staff')
         ->get("/auftraege/{$project->public_id}/nachrichten")
@@ -270,13 +271,13 @@ it('never puts an integer identifier into the portal messages screen', function 
     // T-08's "messaging" switch defaults to off — this test exercises the
     // thread screen itself, so the switch is on, the same way the sign and
     // accept tests above turn their own switches on.
-    \Illuminate\Support\Facades\Cache::store('redis')->flush();
-    \App\Settings\Models\StudioSettings::query()->update(['portal_messaging_mode' => 'any']);
+    Cache::store('redis')->flush();
+    StudioSettings::query()->update(['portal_messaging_mode' => 'any']);
 
     $contact = Contact::factory()->create();
     $project = Project::factory()->create(['portal_visible' => true]);
     $project->attachContact($contact, ProjectContactRole::Primary);
-    app(App\Engagement\Actions\StartThread::class)($project, $contact, 'Thema', 'Nachricht.');
+    app(StartThread::class)($project, $contact, 'Thema', 'Nachricht.');
 
     $props = $this->actingAs($contact, 'portal')
         ->get('/nachrichten')

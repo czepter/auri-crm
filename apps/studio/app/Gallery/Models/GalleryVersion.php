@@ -25,12 +25,13 @@ class GalleryVersion extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['gallery_id', 'version', 'title', 'assets', 'published_at'];
+    protected $fillable = ['gallery_id', 'version', 'title', 'assets', 'design', 'cover_key', 'published_at'];
 
     protected function casts(): array
     {
         return [
             'assets' => 'array',
+            'design' => 'array',
             'published_at' => 'immutable_datetime',
         ];
     }

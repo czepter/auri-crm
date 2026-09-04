@@ -7,9 +7,11 @@ use App\Crm\Data\CaptureInquiryData;
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\HasLabel;
 use App\Crm\Enums\LeadSource;
-use App\Crm\Enums\ProjectType;
 use App\Crm\Models\Lead;
+use App\Crm\Models\ProjectType;
+use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
+use App\Settings\Support\StudioSettingsResolver;
 use BackedEnum;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -17,18 +19,29 @@ use Inertia\Response;
 
 class InquiryCaptureController extends Controller
 {
-    public function create(): Response
+    public function create(StudioSettingsResolver $settings): Response
     {
         $this->authorize('create', Lead::class);
 
         return Inertia::render('Leads/Create', [
-            'types' => self::options(ProjectType::cases()),
+            'types' => app(CrmVocabulary::class)->types()
+                ->filter(fn (ProjectType $type) => $type->is_active)
+                ->map(fn (ProjectType $type) => ['value' => $type->key, 'label' => $type->name])
+                ->values()->all(),
             'sources' => self::options(LeadSource::cases()),
             // C-08: not cases(). The web-form channel belongs to the public
             // endpoint alone — offering it here would make "how many
             // inquiries did the website bring us" unanswerable the first
             // time someone picked it by hand for a phone call.
             'channels' => self::options(CaptureChannel::staffSelectable()),
+            // Suggestions for the three "Sonstige" details, kept in the
+            // settings so the studio's own recurring wording is one keystroke
+            // rather than retyped at every call.
+            'presets' => [
+                'type' => $settings->leadPresets('type'),
+                'source' => $settings->leadPresets('source'),
+                'channel' => $settings->leadPresets('channel'),
+            ],
         ]);
     }
 

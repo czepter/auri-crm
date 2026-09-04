@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import PageHead from '@/ui/page/PageHead.vue'
+import SettingsNav from '@/admin/components/SettingsNav.vue'
 import { Button } from '@/ui/button'
-import { Input } from '@/ui/input'
+import { TimePicker } from '@/ui/time-picker'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
 
@@ -13,7 +15,7 @@ const props = defineProps<{
 }>()
 
 // "HH:MM:SS" from the database (Postgres time column) down to the "HH:MM"
-// <input type="time"> and StudioSettingsController's own date_format:H:i
+// the TimePicker and StudioSettingsController's own date_format:H:i
 // validation both expect.
 function toInputTime(value: string | null): string {
   return value?.slice(0, 5) ?? ''
@@ -38,72 +40,62 @@ function submit() {
 
 <template>
   <AdminLayout active="einstellungen">
-    <div class="hrow">
-      <div>
-        <div class="kick">{{ $t('settings.kicker') }}</div>
-        <h1>{{ $t('notificationSettings.title') }}</h1>
-      </div>
-      <span v-if="form.isDirty" class="chip now">{{ $t('settings.unsaved') }}</span>
-      <Button
-        type="submit"
-        form="notification-settings-form"
-        :disabled="!form.isDirty || form.processing"
-        :style="!form.isDirty ? 'opacity:.4' : undefined"
-      >
-        <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
-        {{ $t('common.save') }}
-      </Button>
-    </div>
+    <div data-tokens>
+      <PageHead :kicker="$t('settings.kicker')" :title="$t('notificationSettings.title')">
+        <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
+        <Button
+          class="ml-auto"
+          variant="pill"
+          type="submit"
+          form="notification-settings-form"
+          :disabled="!form.isDirty || form.processing"
+        >
+          {{ $t('common.save') }}
+        </Button>
+      </PageHead>
 
-    <div style="display: flex; gap: var(--s6); margin-top: var(--s5); align-items: flex-start">
-      <nav style="width: 196px; flex: none; display: flex; flex-direction: column; gap: 2px">
-        <a class="nav" href="/einstellungen">{{ $t('settings.navProfile') }}</a>
-        <a class="nav" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
-        <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
-        <a class="nav" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
-        <a class="nav" href="/einstellungen/aufgabenvorlagen">{{ $t('settings.navTaskTemplates') }}</a>
-        <a class="nav" href="/einstellungen/portal">{{ $t('settings.navPortal') }}</a>
-        <a class="nav on" href="/einstellungen/benachrichtigungen">{{ $t('settings.navNotifications') }}</a>
-      </nav>
+      <div class="px-8 pt-7 pb-8">
+        <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
+          <SettingsNav active="notifications" />
 
-      <form id="notification-settings-form" style="flex: 1; min-width: 0; max-width: 460px" @submit.prevent="submit">
-        <!-- T-11: quiet hours only — see NotificationSettingsController's own
-             doc comment for why a per-event toggle grid does not ship here
-             yet. -->
-        <div class="dsec" style="margin-top: 0">
-          <div class="dlab">{{ $t('notificationSettings.quietHoursSection') }}</div>
-          <div class="grp">
-            <div class="cbrow">
-              <Checkbox id="cb-quiet-hours-enabled" v-model="form.quiet_hours_enabled" />
-              <Label variant="inline" for="cb-quiet-hours-enabled">{{ $t('notificationSettings.quietHoursEnabledLabel') }}</Label>
-            </div>
-            <span class="hint">{{ $t('notificationSettings.quietHoursEnabledHint') }}</span>
-          </div>
-          <div class="grp">
-            <div class="two">
-              <div class="fld">
-                <Label for="n-ruhe-von">{{ $t('notificationSettings.quietHoursStartLabel') }}</Label>
-                <Input
-                  id="n-ruhe-von"
-                  v-model="form.quiet_hours_start"
-                  type="time"
-                  :disabled="!form.quiet_hours_enabled" />
-                <p v-if="form.errors.quiet_hours_start" class="err">{{ form.errors.quiet_hours_start }}</p>
+          <form id="notification-settings-form" class="max-w-[460px] min-w-0 flex-1" @submit.prevent="submit">
+            <!-- T-11: quiet hours only — see NotificationSettingsController's own
+                 doc comment for why a per-event toggle grid does not ship here
+                 yet. -->
+            <div>
+              <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('notificationSettings.quietHoursSection') }}</div>
+              <div class="mb-6">
+                <div class="flex items-center gap-2.5">
+                  <Checkbox id="cb-quiet-hours-enabled" v-model="form.quiet_hours_enabled" />
+                  <Label variant="inline" for="cb-quiet-hours-enabled">{{ $t('notificationSettings.quietHoursEnabledLabel') }}</Label>
+                </div>
+                <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('notificationSettings.quietHoursEnabledHint') }}</span>
               </div>
-              <div class="fld">
-                <Label for="n-ruhe-bis">{{ $t('notificationSettings.quietHoursEndLabel') }}</Label>
-                <Input
-                  id="n-ruhe-bis"
-                  v-model="form.quiet_hours_end"
-                  type="time"
-                  :disabled="!form.quiet_hours_enabled" />
-                <p v-if="form.errors.quiet_hours_end" class="err">{{ form.errors.quiet_hours_end }}</p>
+              <div class="mb-6">
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="flex min-w-0 flex-col gap-1.5">
+                    <Label for="n-ruhe-von">{{ $t('notificationSettings.quietHoursStartLabel') }}</Label>
+                    <TimePicker
+                      id="n-ruhe-von"
+                      v-model="form.quiet_hours_start"
+                      :disabled="!form.quiet_hours_enabled" />
+                    <p v-if="form.errors.quiet_hours_start" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.quiet_hours_start }}</p>
+                  </div>
+                  <div class="flex min-w-0 flex-col gap-1.5">
+                    <Label for="n-ruhe-bis">{{ $t('notificationSettings.quietHoursEndLabel') }}</Label>
+                    <TimePicker
+                      id="n-ruhe-bis"
+                      v-model="form.quiet_hours_end"
+                      :disabled="!form.quiet_hours_enabled" />
+                    <p v-if="form.errors.quiet_hours_end" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.quiet_hours_end }}</p>
+                  </div>
+                </div>
+                <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('notificationSettings.quietHoursHint') }}</span>
               </div>
             </div>
-            <span class="hint">{{ $t('notificationSettings.quietHoursHint') }}</span>
-          </div>
+          </form>
         </div>
-      </form>
+      </div>
     </div>
   </AdminLayout>
 </template>

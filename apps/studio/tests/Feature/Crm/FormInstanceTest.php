@@ -9,7 +9,10 @@ use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Project;
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -281,4 +284,165 @@ it('rejects answering a field to a staff member without ManageFormTemplates', fu
         ->assertForbidden();
 
     expect($field->answers()->count())->toBe(0);
+});
+
+// --- E-03: "Datei" fields --------------------------------------------
+
+function fileField(array $options = ['formats' => ['pdf'], 'maxSize' => 5, 'multiple' => false]): FormInstanceField
+{
+    $instance = FormInstance::factory()->for(Project::factory()->create())->create();
+
+    return FormInstanceField::factory()->for($instance, 'formInstance')->create([
+        'label' => 'Ablaufplan eurer Planerin',
+        'type' => FormFieldType::File,
+        'options' => $options,
+    ]);
+}
+
+it('stores an allowed file against a file field', function () {
+    Storage::fake('local');
+    $field = fileField();
+
+    $this->actingAs(staffMember(), 'staff')
+        ->post("/frageboegen-felder/{$field->public_id}/datei", [
+            'file' => UploadedFile::fake()->create('ablauf.pdf', 40, 'application/pdf'),
+        ])
+        ->assertRedirect();
+
+    $stored = $field->files()->sole();
+    expect($stored->name)->toBe('ablauf.pdf')
+        ->and(Storage::disk('local')->exists($stored->path))->toBeTrue();
+});
+
+it('rejects a file whose format the field never allowed', function () {
+    Storage::fake('local');
+    $field = fileField();
+
+    $this->actingAs(staffMember(), 'staff')
+        ->post("/frageboegen-felder/{$field->public_id}/datei", [
+            'file' => UploadedFile::fake()->create('makro.docx', 40, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'),
+        ])
+        ->assertSessionHasErrors('file');
+
+    expect($field->files()->count())->toBe(0)
+        ->and(Storage::disk('local')->allFiles())->toBeEmpty();
+});
+
+it('rejects a file over the size the field allows', function () {
+    Storage::fake('local');
+    $field = fileField(['formats' => ['pdf'], 'maxSize' => 1, 'multiple' => false]);
+
+    $this->actingAs(staffMember(), 'staff')
+        ->post("/frageboegen-felder/{$field->public_id}/datei", [
+            'file' => UploadedFile::fake()->create('gross.pdf', 2048, 'application/pdf'),
+        ])
+        ->assertSessionHasErrors('file');
+
+    expect($field->files()->count())->toBe(0);
+});
+
+it('replaces the file on a single-file field and keeps both on a multiple one', function () {
+    Storage::fake('local');
+    $single = fileField();
+    $many = fileField(['formats' => ['pdf'], 'maxSize' => 5, 'multiple' => true]);
+
+    foreach ([$single, $many] as $field) {
+        foreach (['eins.pdf', 'zwei.pdf'] as $name) {
+            $this->actingAs(staffMember(), 'staff')
+                ->post("/frageboegen-felder/{$field->public_id}/datei", [
+                    'file' => UploadedFile::fake()->create($name, 10, 'application/pdf'),
+                ]);
+        }
+    }
+
+    expect($single->files()->pluck('name')->all())->toBe(['zwei.pdf'])
+        ->and($many->files()->pluck('name')->all())->toBe(['eins.pdf', 'zwei.pdf'])
+        // The replaced upload took its bytes with it: one file per surviving row.
+        ->and(Storage::disk('local')->allFiles())->toHaveCount(3);
+});
+
+it('deletes a file and its bytes', function () {
+    Storage::fake('local');
+    $field = fileField();
+    $file = $field->attachFile(UploadedFile::fake()->create('ablauf.pdf', 10, 'application/pdf'));
+
+    $this->actingAs(staffMember(), 'staff')
+        ->delete("/fragebogen-dateien/{$file->public_id}")
+        ->assertRedirect();
+
+    expect($field->files()->count())->toBe(0)
+        ->and(Storage::disk('local')->exists($file->path))->toBeFalse();
+});
+
+it('rejects uploading to a file field for a staff member without ManageFormTemplates', function () {
+    Storage::fake('local');
+    $field = fileField();
+
+    $this->actingAs(staffMember(StaffRole::SecondShooter), 'staff')
+        ->post("/frageboegen-felder/{$field->public_id}/datei", [
+            'file' => UploadedFile::fake()->create('ablauf.pdf', 10, 'application/pdf'),
+        ])
+        ->assertForbidden();
+
+    expect($field->files()->count())->toBe(0);
+});
+
+it('keeps a file field\'s upload config in the same options column select uses', function () {
+    $project = Project::factory()->create();
+    $instance = FormInstance::factory()->for($project)->create();
+
+    $this->actingAs(staffMember(), 'staff')
+        ->patch("/frageboegen/{$instance->public_id}", [
+            'name' => 'Ablauf',
+            'fields' => [
+                ['label' => 'Ablaufplan', 'type' => 'file', 'required' => true, 'options' => ['formats' => ['pdf', 'jpg'], 'maxSize' => 10, 'multiple' => true]],
+                ['label' => 'Trauzeugen', 'type' => 'select', 'required' => false, 'options' => ['Beide', 'Keine']],
+            ],
+        ])
+        ->assertRedirect();
+
+    expect($instance->fields()->get()->pluck('options')->all())
+        ->toBe([['maxSize' => 10, 'multiple' => true, 'formats' => ['pdf', 'jpg']], ['Beide', 'Keine']]);
+});
+
+it('rejects a file field configured with a format the app does not accept at all', function () {
+    $instance = FormInstance::factory()->for(Project::factory()->create())->create();
+
+    $this->actingAs(staffMember(), 'staff')
+        ->patch("/frageboegen/{$instance->public_id}", [
+            'name' => 'Ablauf',
+            'fields' => [
+                ['label' => 'Ablaufplan', 'type' => 'file', 'required' => true, 'options' => ['formats' => ['exe'], 'maxSize' => 10, 'multiple' => false]],
+            ],
+        ])
+        ->assertSessionHasErrors('fields.0.options.formats.0');
+});
+
+it('hands the studio back a file it stored', function () {
+    $project = Project::factory()->create();
+    $instance = FormInstance::factory()->for($project)->create();
+    $field = FormInstanceField::factory()->for($instance)->create(['type' => FormFieldType::File]);
+
+    Storage::fake('local');
+    $file = $field->attachFile(UploadedFile::fake()->create('ablauf.pdf', 12, 'application/pdf'), null);
+
+    $this->actingAs(User::factory()->create(), 'staff')
+        ->get("/fragebogen-dateien/{$file->public_id}")
+        ->assertOk()
+        ->assertDownload('ablauf.pdf');
+});
+
+// Der Schirm zeigt den Fehler jetzt an; vorher sah das Speichern aus, als
+// täte es nichts, wenn eine frisch angelegte Frage noch keinen Titel trug.
+it('refuses a question without a title and names the field', function () {
+    $project = Project::factory()->create();
+    $instance = FormInstance::factory()->for($project)->create();
+
+    $this->actingAs(User::factory()->create(), 'staff')
+        ->from("/auftraege/{$project->public_id}/frageboegen")
+        ->patch("/frageboegen/{$instance->public_id}", [
+            'name' => 'Ablauf',
+            'fields' => [['label' => '', 'type' => 'text', 'required' => false, 'options' => null]],
+        ])
+        ->assertSessionHasErrors('fields.0.label');
 });

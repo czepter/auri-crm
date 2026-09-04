@@ -4,8 +4,10 @@ namespace App\Portal\Http\Controllers;
 
 use App\Contracts\Actions\SignContract;
 use App\Contracts\Enums\ContractStatus;
+use App\Contracts\Jobs\RenderContractJob;
 use App\Http\Controllers\Controller;
 use App\Settings\Support\StudioSettingsResolver;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -15,9 +17,13 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * The client's read of a rendered contract — mockup 07 — and, since M-02,
- * the signing rail beside it. Reads only the artifact RenderContractJob
- * already stored; nothing here can trigger a render, and sign() never
- * touches the artifact except to hash the bytes already sitting in storage.
+ * the signing rail beside it.
+ *
+ * show() dispatches RenderContractJob when there is no artifact, so a
+ * contract whose render was lost is picked up rather than leaving the client
+ * at "wird erstellt" with nothing behind it. An artifact that exists is never
+ * rebuilt, and a signed contract is never touched at all — sign() hashed
+ * those exact bytes.
  *
  * Asks Contact::visibleProjects() the same question ProjectController does,
  * so a project the contact is not on and one the studio has not made
@@ -30,7 +36,15 @@ class ContractController extends Controller
         $contact = auth('portal')->user();
 
         $found = $contact->visibleProjects()->where('projects.public_id', $project)->firstOrFail();
-        $contract = $found->latestContract()->with(['template', 'signature'])->first();
+        $contract = $found->latestContract()->with('signature')->first();
+
+        // rescue(), not a bare call: on a sync queue the render runs here,
+        // and Gotenberg being down is a contract the client cannot read yet,
+        // not a screen they cannot open.
+        if ($contract !== null && ! $contract->hasArtifact() && ! $contract->signature()->exists()) {
+            rescue(fn () => Bus::dispatch((new RenderContractJob($contract))->onQueue('render')));
+            $contract->refresh();
+        }
 
         return Inertia::render('Contracts/Show', [
             'contact' => ['name' => $contact->name],
@@ -43,9 +57,7 @@ class ContractController extends Controller
             'canSign' => $settings->signContractsEnabled(),
             'contract' => $contract === null ? null : [
                 'status' => $contract->status->value,
-                'templateName' => $contract->template->name,
-                'templateVersion' => $contract->template->version,
-                'downloadUrl' => $contract->status === ContractStatus::Rendered
+                'downloadUrl' => $contract->status === ContractStatus::Rendered && $contract->hasArtifact()
                     ? "/projekte/{$found->public_id}/vertrag/pdf"
                     : null,
                 // Null until SignContract has written the one row a Contract
@@ -96,7 +108,7 @@ class ContractController extends Controller
         $found = $contact->visibleProjects()->where('projects.public_id', $project)->firstOrFail();
         $contract = $found->latestContract()->first();
 
-        abort_if($contract === null || $contract->artifact_path === null, 404);
+        abort_if($contract === null || ! $contract->hasArtifact(), 404);
 
         return Storage::disk('local')->response($contract->artifact_path, "vertrag-{$contract->public_id}.pdf");
     }

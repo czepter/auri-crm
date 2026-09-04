@@ -4,7 +4,6 @@ namespace App\Crm\Data;
 
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadSource;
-use App\Crm\Enums\ProjectType;
 use Illuminate\Validation\Rule;
 use Spatie\LaravelData\Data;
 
@@ -24,12 +23,19 @@ class CaptureInquiryData extends Data
         public ?string $contact_email,
         public ?string $contact_phone,
         public string $project_name,
-        public ProjectType $type,
+        public string $type,
         public LeadSource $source,
         public CaptureChannel $captured_via,
         public ?string $date,
         public ?string $inquiry_text,
         public ?string $referred_by_contact_id,
+        /**
+         * What "Sonstige" actually was. Only ever set beside the Other case
+         * of its own field — Project and Lead clear it otherwise.
+         */
+        public ?string $type_other = null,
+        public ?string $source_other = null,
+        public ?string $captured_via_other = null,
         /**
          * C-09 (#244): one row per person — name, mail, phone — because
          * `contacts` holds the three in one row. A partner used to arrive as
@@ -59,9 +65,12 @@ class CaptureInquiryData extends Data
             'people.*.email' => ['nullable', 'email', 'max:255'],
             'people.*.phone' => ['nullable', 'string', 'max:64'],
             'project_name' => ['required', 'string', 'max:255'],
-            'type' => ['required', Rule::enum(ProjectType::class)],
+            'type' => ['required', Rule::exists('project_types', 'key')->where('is_active', true)],
             'source' => ['required', Rule::enum(LeadSource::class)],
             'captured_via' => ['required', Rule::enum(CaptureChannel::class)],
+            'type_other' => ['nullable', 'string', 'max:120'],
+            'source_other' => ['nullable', 'string', 'max:120'],
+            'captured_via_other' => ['nullable', 'string', 'max:120'],
 
             // Nullable and never checked against existing bookings. The
             // availability warning is advisory by design — see

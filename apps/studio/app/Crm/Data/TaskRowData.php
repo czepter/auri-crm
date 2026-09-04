@@ -21,6 +21,7 @@ class TaskRowData extends Data
         public ?string $dueOn,
         public bool $isOverdue,
         public bool $isDone,
+        public ?string $shootId,
         public ?string $shootLabel,
         public string $audience,
         public string $audienceLabel,
@@ -29,6 +30,12 @@ class TaskRowData extends Data
         // named, because "blocked" without saying by what is a dead end.
         public bool $isBlocked = false,
         public ?string $blockedBy = null,
+        // Erledigtes steht zusammengefaltet mit seinem Tag: das ist die Spur,
+        // nach der gesucht wird, und ein Häkchen ohne Datum ist keine.
+        public ?string $completedOn = null,
+        // Woran die Fälligkeit hängt. Steht anstelle des Datums, solange der
+        // Anker noch nicht eingetreten ist.
+        public ?string $dueAnchorLabel = null,
     ) {}
 
     public static function fromTask(Task $task): self
@@ -49,9 +56,12 @@ class TaskRowData extends Data
             blockedBy: $task->isBlocked() ? $task->dependsOn->title : null,
             // Which occasion it hangs off, so a project with four shoots can
             // tell its four briefings apart.
+            shootId: $task->shoot?->public_id,
             shootLabel: $task->shoot?->label ?? $task->shoot?->kind->label(),
             audience: $task->audience->value,
             audienceLabel: $task->audience->label(),
+            completedOn: $task->completed_at?->format('Y-m-d'),
+            dueAnchorLabel: $task->dueAnchorLabel(),
         );
     }
 }

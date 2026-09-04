@@ -164,6 +164,10 @@ it('rate limits the email verification request per gallery without ever revealin
     Notification::fake();
     $gallery = Gallery::factory()->create();
     $gallery->rotateDownloadPin('4821');
+    // Die Bremse sitzt am Versand des Bestätigungslinks. Ohne diesen Schalter
+    // verschickt der Schirm gar keinen: die Adresse ist dann nur das Ziel für
+    // die fertige Mail und wird sofort angenommen.
+    $gallery->rotateEmailVerification(true);
     test()->post("/galerien/{$gallery->public_id}/passwort", []);
     test()->post("/galerien/{$gallery->public_id}/download/pin", ['pin' => '4821']);
     RateLimiter::clear('gallery-email-gallery:'.$gallery->public_id);

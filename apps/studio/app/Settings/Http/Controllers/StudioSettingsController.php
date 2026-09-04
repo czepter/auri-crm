@@ -5,8 +5,8 @@ namespace App\Settings\Http\Controllers;
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
 use App\Settings\Data\StudioSettingsData;
-use App\Settings\Rules\ValidIban;
 use App\Settings\Enums\FontPair;
+use App\Settings\Rules\ValidIban;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -45,42 +45,50 @@ class StudioSettingsController extends Controller
         ]);
     }
 
+    /**
+     * `sometimes` on every rule, because the screen shows the three
+     * fieldsets — Rechtliches, Marke, Bankverbindung — as three nav
+     * entries with their own save, and each posts only its own fields
+     * (see resources/js/admin/pages/Settings/panes/ProfileForm.vue).
+     * Onboarding still posts all of them in one step; the loop below
+     * writes whatever arrived either way.
+     */
     public function update(Request $request, StudioSettingsResolver $settings): RedirectResponse
     {
         $this->authorizeSettings();
 
         $validated = $request->validate([
-            'display_name' => ['nullable', 'string', 'max:255'],
-            'legal_name' => ['nullable', 'string', 'max:255'],
-            'legal_form' => ['nullable', 'string', 'max:100'],
-            'street' => ['nullable', 'string', 'max:255'],
-            'postcode' => ['nullable', 'string', 'max:20'],
-            'city' => ['nullable', 'string', 'max:255'],
-            'country' => ['nullable', 'string', 'max:100'],
+            'display_name' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'legal_name' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'legal_form' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'street' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'postcode' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'city' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'country' => ['sometimes', 'nullable', 'string', 'max:100'],
             // At least one of the two — a document carrying neither is not
             // invoiceable. required_without on both sides is what makes
             // "at least one" true without a bespoke closure rule.
-            'tax_number' => ['nullable', 'string', 'max:50', 'required_without:vat_id'],
-            'vat_id' => ['nullable', 'string', 'max:50', 'required_without:tax_number'],
-            'register_number' => ['nullable', 'string', 'max:100'],
-            'register_court' => ['nullable', 'string', 'max:255'],
-            'representative' => ['nullable', 'string', 'max:255'],
-            'website' => ['nullable', 'string', 'max:255', 'url'],
-            'accent_color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'tax_number' => ['sometimes', 'nullable', 'string', 'max:50', 'required_without:vat_id'],
+            'vat_id' => ['sometimes', 'nullable', 'string', 'max:50', 'required_without:tax_number'],
+            'register_number' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'register_court' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'representative' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'website' => ['sometimes', 'nullable', 'string', 'max:255', 'url'],
+            'accent_color' => ['sometimes', 'nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             // #234: an enum, never free text — the cases are the pairs this
             // product licensed and self-hosts.
-            'font_pair' => ['nullable', Rule::enum(FontPair::class)],
+            'font_pair' => ['sometimes', 'nullable', Rule::enum(FontPair::class)],
             // SVG deliberately excluded: served inline from this app's own
             // origin (logo(), below), an uploaded SVG can carry a <script>
             // and execute as this app rather than as an image.
-            'logo' => ['nullable', 'file', 'mimes:png', 'max:2048'],
+            'logo' => ['sometimes', 'nullable', 'file', 'mimes:png', 'max:2048'],
             // Optional: a studio that only takes card payments (or none yet
             // during onboarding) has no IBAN to file. What is entered still
             // has to be a real IBAN — the portal's "Überweisen" block hides
             // itself when there is none (portal/pages/Payments/Show.vue).
-            'bank_account_holder' => ['nullable', 'string', 'max:255'],
-            'bank_iban' => ['nullable', 'string', new ValidIban],
-            'bank_bic' => ['nullable', 'string', 'max:11'],
+            'bank_account_holder' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'bank_iban' => ['sometimes', 'nullable', 'string', new ValidIban],
+            'bank_bic' => ['sometimes', 'nullable', 'string', 'max:11'],
         ]);
 
         $actor = auth('staff')->user();
@@ -208,6 +216,38 @@ class StudioSettingsController extends Controller
         $settings->set('working_days', array_values($validated['working_days']), $actor);
 
         return redirect('/einstellungen');
+    }
+
+    /**
+     * The suggestion lists the three "Sonstige" fields at capture offer.
+     * Free text stays free text — these only spare the studio retyping the
+     * kinds of work it does every week.
+     */
+    public function updateCapture(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        $validated = $request->validate([
+            'lead_type_presets' => ['array'],
+            'lead_type_presets.*' => ['nullable', 'string', 'max:120'],
+            'lead_source_presets' => ['array'],
+            'lead_source_presets.*' => ['nullable', 'string', 'max:120'],
+            'lead_channel_presets' => ['array'],
+            'lead_channel_presets.*' => ['nullable', 'string', 'max:120'],
+        ]);
+
+        $actor = auth('staff')->user();
+
+        foreach (['lead_type_presets', 'lead_source_presets', 'lead_channel_presets'] as $key) {
+            $settings->set($key, collect($validated[$key] ?? [])
+                ->map(fn (?string $value) => trim((string) $value))
+                ->filter()
+                ->unique()
+                ->values()
+                ->all(), $actor);
+        }
+
+        return redirect('/einstellungen?pane=capture');
     }
 
     /**

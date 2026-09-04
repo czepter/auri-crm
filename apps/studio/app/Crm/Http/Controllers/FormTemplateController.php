@@ -4,8 +4,9 @@ namespace App\Crm\Http\Controllers;
 
 use App\Crm\Data\FormTemplateData;
 use App\Crm\Enums\FormFieldType;
-use App\Crm\Enums\ProjectType;
 use App\Crm\Models\FormTemplate;
+use App\Crm\Models\ProjectType;
+use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
@@ -22,20 +23,6 @@ use Inertia\Response;
  */
 class FormTemplateController extends Controller
 {
-    public function index(): Response
-    {
-        $this->authorize('viewAny', FormTemplate::class);
-
-        $templates = FormTemplate::query()
-            ->withCount('fields')
-            ->orderBy('name')
-            ->get();
-
-        return Inertia::render('Settings/FormTemplates/Index', [
-            'templates' => FormTemplateData::collect($templates),
-        ]);
-    }
-
     public function create(): Response
     {
         $this->authorize('create', FormTemplate::class);
@@ -51,7 +38,7 @@ class FormTemplateController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'project_type' => ['nullable', Rule::enum(ProjectType::class)],
+            'project_type' => ['nullable', Rule::exists('project_types', 'key')->where('is_active', true)],
         ]);
 
         $template = FormTemplate::create($validated);
@@ -127,15 +114,34 @@ class FormTemplateController extends Controller
     {
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'project_type' => ['nullable', Rule::enum(ProjectType::class)],
+            'project_type' => ['nullable', Rule::exists('project_types', 'key')->where('is_active', true)],
             'is_active' => ['required', 'boolean'],
             'fields' => ['array'],
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.type' => ['required', Rule::enum(FormFieldType::class)],
             'fields.*.required' => ['required', 'boolean'],
-            'fields.*.options' => ['nullable', 'array'],
-            'fields.*.options.*' => ['string', 'max:255'],
+            ...$this->optionRules($request),
         ]);
+    }
+
+    /**
+     * The options column carries three shapes — select's choices, a file
+     * field's upload config, a Gruppenfotos builder configuration — so the
+     * rules for it depend on the type in the same row. See
+     * FormFieldType::optionRules().
+     */
+    private function optionRules(Request $request): array
+    {
+        $fields = (array) $request->input('fields', []);
+
+        return collect(array_keys($fields))
+            ->mapWithKeys(function (int|string $index) use ($request) {
+                $type = $request->input("fields.{$index}.type");
+
+                return (FormFieldType::tryFrom(is_string($type) ? $type : '') ?? FormFieldType::Text)
+                    ->optionRules("fields.{$index}");
+            })
+            ->all();
     }
 
     /**
@@ -148,7 +154,9 @@ class FormTemplateController extends Controller
      */
     private function fieldRows(array $fields): array
     {
-        return collect($fields)->values()->map(fn (array $field, int $index) => [
+        // sortKeys because validated() hands the rows back in rule order, not
+        // in list order, once a row carries its own type-dependent options rules.
+        return collect($fields)->sortKeys()->values()->map(fn (array $field, int $index) => [
             'label' => $field['label'],
             'type' => $field['type'],
             'required' => $field['required'],
@@ -159,8 +167,9 @@ class FormTemplateController extends Controller
 
     private function projectTypeOptions(): array
     {
-        return collect(ProjectType::cases())
-            ->map(fn (ProjectType $type) => ['value' => $type->value, 'label' => $type->label()])
-            ->all();
+        return app(CrmVocabulary::class)->types()
+            ->filter(fn (ProjectType $type) => $type->is_active)
+            ->map(fn (ProjectType $type) => ['value' => $type->key, 'label' => $type->name])
+            ->values()->all();
     }
 }

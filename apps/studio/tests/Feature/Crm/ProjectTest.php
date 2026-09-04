@@ -17,7 +17,7 @@ it('is not visible in the portal until someone says so', function () {
 it('casts its type', function () {
     $project = Project::factory()->create(['type' => ProjectType::Wedding]);
 
-    expect($project->fresh()->type)->toBe(ProjectType::Wedding)
+    expect($project->fresh()->type->key)->toBe(ProjectType::Wedding->value)
         ->and(ProjectType::Wedding->label())->toBe('Hochzeit');
 });
 

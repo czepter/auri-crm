@@ -6,15 +6,18 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Contracts\Models\Contract;
 use App\Crm\Enums\ProjectContactRole;
-use App\Crm\Enums\ProjectType;
-use App\Crm\Enums\ShootStatus;
-use App\Enums\Capability;
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
+use App\Crm\Support\CrmVocabulary;
 use App\Engagement\Models\Thread;
+use App\Enums\Capability;
 use App\Gallery\Models\Gallery;
 use App\Models\User;
 use App\Quotes\Models\Quote;
+use BackedEnum;
 use Database\Factories\Crm\ProjectFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -39,7 +42,7 @@ class Project extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['name', 'type', 'portal_visible'];
+    protected $fillable = ['name', 'type', 'type_other', 'portal_visible'];
 
     /**
      * Mirrors the column default in memory. Without it a freshly created
@@ -52,9 +55,49 @@ class Project extends Model
     protected function casts(): array
     {
         return [
-            'type' => ProjectType::class,
             'portal_visible' => 'boolean',
         ];
+    }
+
+    /**
+     * The type row behind the stored key. An accessor for the reason
+     * Lead::stage() is one.
+     */
+    protected function type(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value) => $value === null
+                ? null
+                : app(CrmVocabulary::class)->type($value),
+            set: fn (ProjectType|BackedEnum|string|null $value) => match (true) {
+                $value === null => null,
+                $value instanceof ProjectType => $value->key,
+                $value instanceof BackedEnum => (string) $value->value,
+                default => $value,
+            },
+        )->withoutObjectCaching();
+    }
+
+    /** The occasion as a screen shows it — "Sonstige" carries its detail. */
+    public function typeLabel(): string
+    {
+        return $this->type_other === null
+            ? $this->type->name
+            : $this->type->name.' — '.$this->type_other;
+    }
+
+    /**
+     * A detail belongs to "Sonstige" alone. Cleared here rather than at each
+     * writer, so a type change from the case screen cannot leave the old
+     * free text standing under Hochzeit.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (self $project) {
+            if (! $project->type?->isCatchAll()) {
+                $project->type_other = null;
+            }
+        });
     }
 
     public function contacts(): BelongsToMany
@@ -105,10 +148,14 @@ class Project extends Model
         return $this->hasMany(Contract::class)->latest();
     }
 
-    /** The one a screen shows: the most recent render, whatever its status. */
+    /**
+     * The one a screen shows: the most recent render, whatever its status —
+     * but only once it has gone out. Seit Verträge Fassungen haben, liegt vor
+     * der versendeten ein Entwurf, und das Portal liest diese Relation.
+     */
     public function latestContract(): HasOne
     {
-        return $this->hasOne(Contract::class)->latestOfMany();
+        return $this->hasOne(Contract::class)->whereNotNull('sent_at')->latestOfMany();
     }
 
     public function shoots(): HasMany
@@ -176,7 +223,7 @@ class Project extends Model
     public function clientMayEditDetails(): bool
     {
         return $this->job === null
-            && ! $this->shoots()->where('status', '!=', ShootStatus::Requested)->exists();
+            && ! $this->shoots()->where('status', '!=', app(CrmVocabulary::class)->anchored(StagePipeline::Project, StageAnchor::Entry)?->key)->exists();
     }
 
     /** The headline occasion — the wedding day, not the engagement shoot. */
@@ -215,6 +262,19 @@ class Project extends Model
                 ->where('crew_assignments.user_id', $user->id)
                 ->select(DB::raw(1))
         );
+    }
+
+    /**
+     * Primary contact first, then the rest, falling back to the project name
+     * while nobody is attached. Reads the loaded relation: every caller shows
+     * a list and has eager-loaded it.
+     */
+    public function contactNames(): string
+    {
+        return $this->contacts
+            ->sortBy(fn (Contact $contact) => $contact->pivot->role === ProjectContactRole::Primary->value ? 0 : 1)
+            ->pluck('name')
+            ->join(' & ') ?: $this->name;
     }
 
     public function primaryContact(): ?Contact

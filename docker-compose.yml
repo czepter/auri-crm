@@ -34,6 +34,19 @@ services:
       AWS_SECRET_ACCESS_KEY: studio-media-secret
       AWS_DEFAULT_REGION: us-east-1
       AWS_BUCKET: media
+      # The portal answers on its own port here, so the admin surface cannot
+      # let config/portal.php fall back to its own APP_URL — that composes
+      # /zugang/{token} onto :8000, where the portal routes do not exist.
+      # docker-compose.coolify.yml sets the deployed equivalent.
+      PORTAL_URL: http://localhost:${PORTAL_PORT:-8001}
+      # config/services.php's `gallery.url` — apps/gallery, the guest viewer,
+      # on its own port here for the same reason PORTAL_URL is: without it,
+      # Gallery::publicUrl() falls back to its config default
+      # (http://localhost:4321), which happens to match this stack's own
+      # default GALLERY_PORT but would be silently wrong the moment either
+      # port is overridden. docker-compose.coolify.yml sets the deployed
+      # equivalent from ${SERVICE_FQDN_GALLERY_4321}.
+      GALLERY_URL: http://localhost:${GALLERY_PORT:-4321}
       # F-11: empty by default, same as apps/studio/.env.example — the SDK
       # stays fully inert (config/sentry.php) until a developer opts in by
       # setting this in their own shell or root .env, e.g. to
@@ -89,6 +102,11 @@ services:
       AWS_SECRET_ACCESS_KEY: studio-media-secret
       AWS_DEFAULT_REGION: us-east-1
       AWS_BUCKET: media
+      # RenderInvoiceJob and EnsureContractArtifact resolve
+      # DocumentMergeDataBuilder's {{gallery.link}} on this queue — same
+      # reasoning as the php service's own GALLERY_URL, not inherited here
+      # since this block predates the anchor and repeats it by hand.
+      GALLERY_URL: http://localhost:${GALLERY_PORT:-4321}
       # F-11: a failed job on this container's default/mail/render
       # supervisors (config/horizon.php) reports here too — same DSN, same
       # empty-by-default rule as the php service above.
@@ -128,7 +146,13 @@ services:
       <<: *studio-environment
       APP_SURFACE: portal
       APP_URL: http://localhost:${PORTAL_PORT:-8001}
-    command: php artisan serve --host=0.0.0.0 --port=8000
+    # --no-reload because `artisan serve` otherwise hands the php -S child
+    # only ServeCommand::$passthroughVariables and drops the rest, leaving
+    # apps/studio/.env — one file for all three surfaces — as the only APP_URL
+    # a request ever sees. Every link this surface mails would carry the
+    # admin's host. Nothing is lost: the built-in server re-reads .env per
+    # request anyway, so only the watcher goes.
+    command: php artisan serve --host=0.0.0.0 --port=8000 --no-reload
     ports:
       - "127.0.0.1:${PORTAL_PORT:-8001}:8000"
     depends_on:
@@ -155,7 +179,7 @@ services:
       <<: *studio-environment
       APP_SURFACE: api
       APP_URL: http://localhost:${API_PORT:-8002}
-    command: php artisan serve --host=0.0.0.0 --port=8000
+    command: php artisan serve --host=0.0.0.0 --port=8000 --no-reload
     ports:
       - "127.0.0.1:${API_PORT:-8002}:8000"
     depends_on:
@@ -203,6 +227,10 @@ services:
       npm_config_store_dir: /pnpm-store
       API_URL: http://api:8000
       PUBLIC_API_URL: http://localhost:${API_PORT:-8002}
+      # Der Download liegt im Portal, nicht hier: dort stehen die PIN, die
+      # Adressprüfung und die ZIP-Bände. Ohne diese Adresse zeigte der Knopf
+      # im Betrachter auf einen Pfad, den dieser Host nicht kennt.
+      PUBLIC_PORTAL_URL: http://localhost:${PORTAL_PORT:-8001}
       # F-11/G-13: empty leaves the SSR process fully inert — no outbound calls
       # at all — same empty-by-default rule as SENTRY_LARAVEL_DSN above.
       SENTRY_DSN: ${GALLERY_SENTRY_DSN:-}

@@ -23,7 +23,6 @@ it('links a legacy gallery to its project without copying any assets', function 
     expect($gallery->project_id)->toBe($project->id)
         ->and($gallery->is_external)->toBeTrue()
         ->and($gallery->external_url)->toBe('https://old-host.example.test/galleries/1234')
-        ->and($gallery->assets)->toBe([])
         ->and($gallery->versions()->count())->toBe(0);
 
     expect($project->galleries)->toHaveCount(1);
@@ -80,9 +79,8 @@ it('backfills a legacy gallery with its assets and publishes version 1', functio
     $gallery = Gallery::sole();
     expect($gallery->is_external)->toBeFalse()
         ->and($gallery->external_url)->toBeNull()
-        ->and($gallery->assets)->toBe(['a1.jpg', 'a2.jpg'])
         ->and($gallery->currentVersion->version)->toBe(1)
-        ->and($gallery->currentVersion->assets)->toBe(['a1.jpg', 'a2.jpg']);
+        ->and(collect($gallery->currentVersion->assets)->pluck('key')->all())->toBe(['a1.jpg', 'a2.jpg']);
 });
 
 it('is idempotent: backfilling the same project/shoot/title twice skips the second time', function () {

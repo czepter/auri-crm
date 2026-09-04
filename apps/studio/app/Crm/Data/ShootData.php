@@ -2,8 +2,10 @@
 
 namespace App\Crm\Data;
 
-use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\Stage;
+use App\Crm\Support\CrmVocabulary;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -31,6 +33,11 @@ class ShootData extends Data
         public ?string $callTime,
         public ?string $endTime,
         public ?string $venue,
+        // Beside the joined line the two parts it was joined from: the edit
+        // state writes them separately, and splitting the line back apart on
+        // the client cut "Berlin, Mitte" in the wrong place.
+        public ?string $venueName,
+        public ?string $venueCity,
         public string $status,
         public string $statusLabel,
         public bool $isPrimary,
@@ -64,17 +71,20 @@ class ShootData extends Data
             callTime: $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
             endTime: $shoot->end_time === null ? null : substr((string) $shoot->end_time, 0, 5),
             venue: $shoot->venue(),
-            status: $shoot->status->value,
-            statusLabel: $shoot->status->label(),
+            venueName: $shoot->venue_name,
+            venueCity: $shoot->venue_city,
+            status: $shoot->status->key,
+            statusLabel: $shoot->status->name,
             isPrimary: $shoot->is_primary,
             isCancelled: $shoot->isCancelled(),
             cancelledReason: $shoot->cancelled_reason,
             crew: $shoot->crew
                 ->map(fn ($assignment) => CrewMemberData::fromAssignment($assignment))
                 ->all(),
-            forwardStatuses: $shoot->isCancelled() ? [] : collect(ShootStatus::cases())
-                ->filter(fn (ShootStatus $status) => $shoot->status->canTransitionTo($status))
-                ->map(fn (ShootStatus $status) => ['value' => $status->value, 'label' => $status->label()])
+            forwardStatuses: $shoot->isCancelled() ? [] : app(CrmVocabulary::class)
+                ->ordered(StagePipeline::Project)
+                ->filter(fn (Stage $status) => $status->is_active && $shoot->status->canTransitionTo($status))
+                ->map(fn (Stage $status) => ['value' => $status->key, 'label' => $status->name])
                 ->values()
                 ->all(),
             timeline: $shoot->timeline->map(TimelineEntryData::fromEntry(...))->all(),

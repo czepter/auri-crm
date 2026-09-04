@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { daysUntil, isoDate, relativeDate, shiftDate } from './dates'
+import { dayWithWeekday, daysUntil, isoDate, relativeDate, shiftDate } from './dates'
 
 describe('shiftDate', () => {
   it('adds weeks as days', () => {
@@ -48,5 +48,17 @@ describe('relativeDate', () => {
 
   it('says nothing about an unparsable date', () => {
     expect(relativeDate('', 'de', today)).toBe('')
+  })
+})
+
+describe('dayWithWeekday', () => {
+  it('reads weekday, day and month', () => {
+    expect(dayWithWeekday('2026-06-14')).toBe('So., 14.06.')
+  })
+
+  it('carries the placeholder the screen asked for when there is no date', () => {
+    expect(dayWithWeekday(null)).toBe('—')
+    expect(dayWithWeekday(null, null)).toBeNull()
+    expect(dayWithWeekday(undefined, '')).toBe('')
   })
 })

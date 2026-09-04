@@ -54,19 +54,10 @@ return new class extends Migration
             // is the same click twice.
             $table->unique(['gallery_list_id', 'asset_key']);
         });
-
-        Schema::table('galleries', function (Blueprint $table) {
-            // P-06's "Aufrufe". DownloadEvent has only ever counted
-            // downloads, so nothing told a couple whether the link they
-            // shared was opened at all. Counted once per visitor session
-            // rather than per request — see GalleryPasswordController.
-            $table->unsignedInteger('view_count')->default(0);
-        });
     }
 
     public function down(): void
     {
-        Schema::table('galleries', fn (Blueprint $table) => $table->dropColumn('view_count'));
         Schema::dropIfExists('gallery_list_items');
         Schema::dropIfExists('gallery_lists');
     }

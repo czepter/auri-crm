@@ -136,7 +136,7 @@ class InboxController extends Controller
     /** The conversation the screen is showing: what was asked for, else the first unanswered one. */
     private function open(Request $request, $threads): ?Thread
     {
-        $asked = (string) $request->query('faden', '');
+        $asked = (string) $request->query('unterhaltung', '');
 
         return $threads->firstWhere('public_id', $asked)
             ?? $threads->first(fn (Thread $thread) => $thread->workState() === 'unbeantwortet')

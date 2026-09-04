@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import PageHead from '@/ui/page/PageHead.vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
+import { Field } from '@/ui/field'
 import { NONE, fromOption, toOption } from '@/lib/select'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Label } from '@/ui/label'
@@ -20,18 +22,15 @@ function submit() {
 </script>
 
 <template>
-  <AdminLayout active="einstellungen">
-    <div style="max-width: 480px">
-      <h1>{{ $t('formTemplates.createTitle') }}</h1>
+  <AdminLayout active="vorlagen">
+    <div data-tokens>
+      <PageHead :kicker="$t('settings.kicker')" :title="$t('formTemplates.createTitle')" />
 
-      <form style="margin-top: var(--s5)" @submit.prevent="submit">
-        <div class="fld grp">
-          <Label for="name">{{ $t('formTemplates.nameField') }}</Label>
+      <form class="max-w-[480px] px-8 pt-7 pb-8" @submit.prevent="submit">
+        <Field id="name" class="mb-6" :label="$t('formTemplates.nameField')" :error="form.errors.name">
           <Input id="name" v-model="form.name" type="text" required maxlength="255" />
-          <p v-if="form.errors.name" class="err">{{ form.errors.name }}</p>
-        </div>
-        <div class="fld grp">
-          <Label for="project-type">{{ $t('formTemplates.projectTypeField') }}</Label>
+        </Field>
+        <Field id="project-type" class="mb-6" :label="$t('formTemplates.projectTypeField')">
           <Select
             :model-value="toOption(form.project_type)"
             @update:model-value="(value) => (form.project_type = fromOption(value))"
@@ -44,11 +43,11 @@ function submit() {
               <SelectItem v-for="type in projectTypes" :key="type.value" :value="type.value">{{ type.label }}</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </Field>
 
-        <div class="formfoot">
-          <Button type="submit" :disabled="form.processing">{{ $t('common.save') }}</Button>
-          <Button as="a" href="/einstellungen/fragebogen-vorlagen" variant="ghost">{{ $t('common.cancel') }}</Button>
+        <div class="mt-6 flex items-center gap-4">
+          <Button type="submit" class="ml-0" :disabled="form.processing">{{ $t('common.save') }}</Button>
+          <Button as="a" href="/vorlagen?typ=fragebogen" variant="ghost">{{ $t('common.cancel') }}</Button>
         </div>
       </form>
     </div>

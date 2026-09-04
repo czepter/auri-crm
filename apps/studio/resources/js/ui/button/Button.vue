@@ -15,7 +15,7 @@ interface Props extends PrimitiveProps {
 /*
  * variant and tone are defaulted here as well as in the cva so the data
  * attributes always render — the stylesheets that still reach a button by
- * context (portal.css .wide, admin-extra.css .qbrow) select on them.
+ * context (admin-extra.css .qbrow) select on them.
  */
 const props = withDefaults(defineProps<Props>(), {
   as: "button",

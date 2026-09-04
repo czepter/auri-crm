@@ -34,8 +34,18 @@ it('allows a legacy raw-html block for every type so imported bodies stay saveab
 });
 
 it('rejects a block type nobody implements', function () {
-    expect(DocumentBlockCatalog::allows(DocumentTemplateType::Contract, 'signature'))->toBeFalse()
+    expect(DocumentBlockCatalog::allows(DocumentTemplateType::Contract, 'attachment'))->toBeFalse()
         ->and(DocumentBlockCatalog::allows(DocumentTemplateType::Quote, 'nonsense'))->toBeFalse();
+});
+
+it('keeps the contract blocks off an email, where a signature line and a page break mean nothing', function () {
+    foreach (['signature', 'clause', 'pagebreak', 'lineItems'] as $blockType) {
+        expect(DocumentBlockCatalog::allows(DocumentTemplateType::Mail, $blockType))->toBeFalse();
+    }
+
+    expect(DocumentBlockCatalog::allows(DocumentTemplateType::Contract, 'signature'))->toBeTrue()
+        ->and(DocumentBlockCatalog::allows(DocumentTemplateType::Quote, 'lineItems'))->toBeTrue()
+        ->and(DocumentBlockCatalog::allows(DocumentTemplateType::Contract, 'lineItems'))->toBeFalse();
 });
 
 it('labels every entry, so the palette never renders a bare key', function () {

@@ -4,8 +4,10 @@ namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Actions\NotifyStudioOfEngagement;
 use App\Gallery\Models\AssetComment;
+use App\Gallery\Models\GalleryGuest;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Notifications\AssetCommented;
+use App\Gallery\Support\IdentifiesGalleryGuest;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,12 +26,21 @@ use Illuminate\Http\Request;
  */
 class AssetCommentController extends Controller
 {
+    use IdentifiesGalleryGuest;
+
     public function __construct(private readonly NotifyStudioOfEngagement $notifyStudio) {}
 
     /** Every comment left on one asset within one version, oldest first. */
     public function index(Request $request, GalleryVersion $galleryVersion): JsonResponse
     {
         $key = (string) $request->query('asset_key', '');
+        $me = $this->guest($request, $galleryVersion);
+
+        // Namen für alle Absender dieses Bildes auf einmal, statt je Zeile
+        // nachzuschlagen. Die Adresse bleibt hier: sichtbar ist der Name.
+        $names = GalleryGuest::query()
+            ->where('gallery_id', $galleryVersion->gallery_id)
+            ->pluck('name', 'identifier');
 
         $known = $key !== '' && collect($galleryVersion->assets)->contains(fn (array $asset) => $asset['key'] === $key);
 
@@ -41,6 +52,8 @@ class AssetCommentController extends Controller
                 ->get()
                 ->map(fn (AssetComment $comment) => [
                     'body' => $comment->body,
+                    'author' => $names[$comment->guest_identifier] ?? null,
+                    'own' => $me !== null && $comment->guest_identifier === $me->identifier,
                     'created_at' => $comment->created_at->toIso8601String(),
                 ])
             : collect();
@@ -51,10 +64,14 @@ class AssetCommentController extends Controller
     public function store(Request $request, GalleryVersion $galleryVersion): JsonResponse
     {
         $validated = $request->validate([
-            'guest_id' => ['required', 'string', 'max:64'],
             'asset_key' => ['required', 'string'],
             'body' => ['required', 'string', 'max:2000'],
         ]);
+
+        // Kein Kommentar ohne Absender: die bestätigte Adresse ist das, was
+        // ihn später wiederfindet und was das Studio antworten lässt.
+        $me = $this->guest($request, $galleryVersion);
+        abort_if($me === null, 403);
 
         $known = collect($galleryVersion->assets)->contains(fn (array $asset) => $asset['key'] === $validated['asset_key']);
         abort_unless($known, 404);
@@ -62,7 +79,7 @@ class AssetCommentController extends Controller
         $comment = AssetComment::create([
             'gallery_version_id' => $galleryVersion->id,
             'asset_key' => $validated['asset_key'],
-            'guest_identifier' => $validated['guest_id'],
+            'guest_identifier' => $me->identifier,
             'body' => $validated['body'],
         ]);
 
@@ -71,6 +88,8 @@ class AssetCommentController extends Controller
         return response()->json([
             'comment' => [
                 'body' => $comment->body,
+                'author' => $me->name,
+                'own' => true,
                 'created_at' => $comment->created_at->toIso8601String(),
             ],
         ], 201);

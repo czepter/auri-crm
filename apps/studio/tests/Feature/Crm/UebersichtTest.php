@@ -21,6 +21,7 @@ use App\Payments\Models\PaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -122,7 +123,16 @@ it('puts an absence in the week as its own entry', function () {
 
     expect($week)->toHaveCount(1)
         ->and($week[0]['what'])->toBe('Nina Brandt')
-        ->and($week[0]['away'])->toBeTrue();
+        ->and($week[0]['away'])->toBeTrue()
+        ->and($week[0]['href'])->toBeNull();
+});
+
+it('links a shooting day in the week to its project', function () {
+    $project = Project::factory()->create();
+    Job::factory()->for($project)->create();
+    Shoot::factory()->for($project)->on(now()->addDays(2)->format('Y-m-d'))->create();
+
+    expect(props('/')['week'][0]['href'])->toBe('/auftraege/'.$project->public_id.'/shootings');
 });
 
 it('lists what is owed, overdue first by date', function () {
@@ -320,7 +330,32 @@ it('carries the newest inquiries with their occasion and source', function () {
 
     expect($rows)->toHaveCount(1)
         ->and($rows[0]['id'])->toBe($lead->project->public_id)
-        ->and($rows[0]['type'])->toBe($lead->project->type->label());
+        ->and($rows[0]['type'])->toBe($lead->project->type->name);
+});
+
+// The card reads the primary shoot and the latest quote, which the panel's own
+// query has to carry — otherwise the third inquiry costs two queries the first
+// one did not.
+it('reads three inquiries in the same number of queries as one', function () {
+    leadAtStage(LeadStage::New);
+
+    props('/');
+
+    DB::enableQueryLog();
+    props('/');
+    $one = count(DB::getRawQueryLog());
+    DB::flushQueryLog();
+
+    leadAtStage(LeadStage::New);
+    leadAtStage(LeadStage::Contacted);
+
+    props('/');
+    DB::flushQueryLog();
+    props('/');
+    $three = count(DB::getRawQueryLog());
+    DB::disableQueryLog();
+
+    expect($three)->toBe($one);
 });
 
 it('counts threads where the client spoke last', function () {
@@ -338,6 +373,17 @@ it('counts threads where the client spoke last', function () {
     Message::factory()->for($answered)->create(['contact_id' => null, 'author_id' => $this->staff->id]);
 
     expect(props('/')['unanswered'])->toBe(1);
+});
+
+it('does not count a thread filed on the client\'s own last message', function () {
+    // Thread::workState() calls this one erledigt: the studio decided the
+    // conversation was finished on the very message it is filed against.
+    $contact = Contact::factory()->create();
+    $thread = Thread::factory()->for(Project::factory())->create();
+    $message = Message::factory()->for($thread)->create(['contact_id' => $contact->id, 'author_id' => null]);
+    $thread->forceFill(['closed_message_id' => $message->id])->save();
+
+    expect(props('/')['unanswered'])->toBe(0);
 });
 
 it('does not count a thread with no messages at all', function () {

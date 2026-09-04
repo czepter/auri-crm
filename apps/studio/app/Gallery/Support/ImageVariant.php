@@ -2,6 +2,7 @@
 
 namespace App\Gallery\Support;
 
+use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
 /**
@@ -11,8 +12,11 @@ use RuntimeException;
  * natively as of PHP 8.1 — no Intervention Image, no second image library
  * for what one already-installed extension does.
  *
- * The encode happens once per width and format: GalleryImageController keeps
- * the result on the `s3` disk and serves it from there afterwards. G-01
+ * The encode happens once per width and format, keyed by the original's own
+ * object key rather than by the GalleryVersion or Gallery asking for it: two
+ * different requests for the same original at the same width and format —
+ * a published version and its own still-open draft, or two versions that
+ * both kept the picture — decode and encode exactly once between them. G-01
  * (#229) is what set the target this had been waiting for — a filmstrip of
  * 33 previews re-decoding 33 originals on every open.
  */
@@ -73,5 +77,31 @@ class ImageVariant
         }
 
         return $encoded;
+    }
+
+    /**
+     * The encoded bytes for $key at $width/$format, from the `s3` disk if
+     * this combination has been asked for before, otherwise produced and
+     * cached there for next time. Callers own confirming that $key is one
+     * this request is allowed to see — this only knows how to fetch it.
+     *
+     * No lock: two requests racing on the same variant both write the same
+     * bytes to the same key.
+     */
+    public static function deliver(string $key, int $width, string $format): string
+    {
+        $disk = Storage::disk('s3');
+        $cached = "variants/{$width}/{$format}/{$key}.{$format}";
+
+        if ($disk->exists($cached)) {
+            return $disk->get($cached);
+        }
+
+        abort_unless($disk->exists($key), 404);
+
+        $variant = self::resizeAndEncode($disk->get($key), $width, $format);
+        $disk->put($cached, $variant);
+
+        return $variant;
     }
 }

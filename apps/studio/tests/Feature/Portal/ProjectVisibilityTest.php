@@ -36,17 +36,16 @@ it('gives a contact with zero visible projects an empty state, not an error', fu
     expect($response->viewData('page')['props']['bookings'])->toBe([]);
 });
 
-// P-01 (#220): the home stopped being a switcher, so a single-booking
-// contact stays on it — it carries what is open, their galleries and their
-// contact, none of which the project screen answers across bookings.
-it('keeps a single-booking contact on the home rather than redirecting', function () {
+// Eine einzige Buchung ist keine Liste zum Auswählen: die Startseite stünde
+// als eine Karte zwischen dem Paar und seinem eigenen Schirm.
+it('sends a single-booking contact straight to that booking', function () {
     $contact = Contact::factory()->create();
     $project = Project::factory()->create(['portal_visible' => true]);
     $project->attachContact($contact, ProjectContactRole::Primary);
 
     $this->actingAs($contact, 'portal');
 
-    expect(props('/')['bookings'])->toHaveCount(1);
+    $this->get('/')->assertRedirect("/projekte/{$project->public_id}");
 });
 
 it('lists every visible project in the switcher for a multi-project contact', function () {

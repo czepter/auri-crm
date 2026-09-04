@@ -21,6 +21,12 @@ export function formatEuros(cents: number): string {
   return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(cents / 100)
 }
 
+/** The same money as a headline figure — tiles, column sums, report rows, where cents are noise. */
+export function formatEurosRounded(cents: number): string {
+  return new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+    .format(cents / 100)
+}
+
 /**
  * A discount percentage is stored server-side as basis points (0–10000, two
  * decimal places — see App\Quotes\Enums\DiscountType) so the same "never a
@@ -35,4 +41,34 @@ export function percentToBasisPoints(value: string): number | null {
 
 export function basisPointsToPercent(bps: number | null): string {
   return bps === null ? '' : (bps / 100).toFixed(2)
+}
+
+export type DiscountField = { type: '' | 'percentage' | 'amount'; value: number | null }
+
+/**
+ * Eine Zelle statt Auswahlfeld plus Wertfeld. Das Prozentzeichen ist die
+ * Angabe der Einheit, nicht Zierde — deshalb entscheidet es über den Typ.
+ */
+export function parseDiscount(input: string): DiscountField {
+  const trimmed = input.trim()
+
+  if (trimmed === '') {
+    return { type: '', value: null }
+  }
+
+  const percent = trimmed.endsWith('%')
+  const number = percent ? trimmed.slice(0, -1) : trimmed
+  const parsed = percent ? percentToBasisPoints(number) : eurosToCents(number)
+
+  return parsed === null || Number.isNaN(parsed)
+    ? { type: '', value: null }
+    : { type: percent ? 'percentage' : 'amount', value: parsed }
+}
+
+export function formatDiscount(type: string | null, value: number | null): string {
+  if (!type || value === null) {
+    return ''
+  }
+
+  return type === 'percentage' ? `${basisPointsToPercent(value)} %` : centsToEuros(value)
 }

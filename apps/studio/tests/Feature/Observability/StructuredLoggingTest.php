@@ -1,8 +1,11 @@
 <?php
 
 use App\Support\RequestId;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+
+uses(RefreshDatabase::class);
 
 it('writes request id, surface, tenant id and the actor\'s public id onto every observability log line', function () {
     $path = storage_path('logs/observability-test-'.Str::random(8).'.log');

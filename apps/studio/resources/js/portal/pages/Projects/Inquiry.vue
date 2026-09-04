@@ -1,18 +1,23 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
+import PortalField from '@/portal/components/PortalField.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalLabel from '@/portal/components/PortalLabel.vue'
+import PortalPerson from '@/portal/components/PortalPerson.vue'
+import PortalRow from '@/portal/components/PortalRow.vue'
+import PortalShell from '@/portal/components/PortalShell.vue'
+import { reachable, type Studio } from '@/portal/lib/studio'
 import { Button } from '@/ui/button'
-import { initials } from '@/portal/lib/initials'
+import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
-import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
 
 const props = defineProps<{
   contact: { name: string }
   showSwitcher: boolean
-  studio: { name: string | null; messagingEnabled: boolean }
+  studio: Studio
   project: {
     id: string
     name: string
@@ -52,113 +57,131 @@ function longDate(iso: string) {
 }
 
 const venue = [props.project.venueName, props.project.venueCity].filter(Boolean).join(', ')
+
+
+const messageHref = computed(() => `/nachrichten?betrifft=${props.project.id}`)
 </script>
 
 <template>
-  <PortalHeader :contact="contact" :show-switcher="showSwitcher" />
+  <PortalShell>
+    <PortalHeader :switcher="{ label: project.name, toAll: showSwitcher }" />
 
-  <main class="letter">
-    <div class="kick">{{ project.type }}</div>
-    <h1>{{ project.name }}</h1>
-    <p v-if="project.date || venue" class="when">
-      {{ [project.date ? longDate(project.date) : $t('portal.dateOpen'), venue].filter(Boolean).join(' · ') }}
-    </p>
-
-    <div class="hair" />
-
-    <!-- One piece of news, in a sentence. No status tiles: at this point
-         there is nothing to put in them. -->
-    <p class="statement">{{ $t('portal.inquiryReceived') }}</p>
-
-    <section class="psec" style="margin-top: var(--s6)">
-      <div style="display: flex; align-items: baseline; gap: var(--s4)">
-        <p class="lab" style="flex: 1">{{ $t('portal.notedTitle') }}</p>
-        <Button v-if="!editing" variant="ghost" type="button" @click="editing = true">
-          {{ $t('common.edit') }}
-        </Button>
-      </div>
-
-      <template v-if="!editing">
-        <dl class="facts">
-          <dt>{{ $t('portal.occasion') }}</dt>
-          <dd>{{ project.type }}</dd>
-          <dt>{{ $t('portal.preferredDate') }}</dt>
-          <dd class="num">{{ project.date ? longDate(project.date) : $t('portal.dateOpen') }}</dd>
-          <dt>{{ $t('portal.place') }}</dt>
-          <dd>{{ venue || '—' }}</dd>
-          <dt>{{ $t('portal.reachUs') }}</dt>
-          <dd>{{ [project.contact.email, project.contact.phone].filter(Boolean).join(' · ') }}</dd>
-        </dl>
-        <blockquote v-if="project.inquiryText" class="quoted">{{ project.inquiryText }}</blockquote>
-      </template>
-
-      <!-- The occasion is not a field: a different occasion is a different
-           booking. -->
-      <form v-else @submit.prevent="save">
-        <Label class="field">
-          <span>{{ $t('portal.preferredDate') }}</span>
-          <Input v-model="form.date" type="date" />
-        </Label>
-        <p v-if="form.errors.date" class="err">{{ form.errors.date }}</p>
-
-        <Label class="field">
-          <span>{{ $t('portal.venueName') }}</span>
-          <Input v-model="form.venue_name" type="text" />
-        </Label>
-
-        <Label class="field">
-          <span>{{ $t('portal.venueCity') }}</span>
-          <Input v-model="form.venue_city" type="text" />
-        </Label>
-
-        <Label class="field">
-          <span>{{ $t('portal.inquiryText') }}</span>
-          <Textarea v-model="form.inquiry_text" rows="5" />
-        </Label>
-
-        <div class="formfoot">
-          <Button type="submit" :disabled="form.processing">{{ $t('common.save') }}</Button>
-          <Button variant="ghost" type="button" @click="editing = false">{{ $t('common.cancel') }}</Button>
-        </div>
-      </form>
-    </section>
-
-
-    <!-- P-03 (#222): the questionnaire the inquiry screen has always linked
-         to and nobody could fill in. Absent until the studio shares one. -->
-    <section v-if="project.questionnaires.length" class="psec">
-      <p class="lab">{{ $t('portal.questionnairesTitle') }}</p>
-      <div class="pend">
-        <a
-          v-for="sheet in project.questionnaires"
-          :key="sheet.id"
-          :href="`/projekte/${project.id}/fragebogen/${sheet.id}`"
-        >
-          <span style="flex: 1">
-            <h3>{{ sheet.name }}</h3>
-            <div class="sub">
-              {{ sheet.openCount
-                ? $t('portal.questionsOpen', { open: sheet.openCount, total: sheet.count })
-                : $t('portal.questionsDone') }}
-            </div>
-          </span>
-        </a>
-      </div>
-    </section>
-
-    <section class="psec" style="margin-top: var(--s7)">
-      <p class="lab">{{ $t('portal.contactTitle') }}</p>
-      <div class="person">
-        <span class="av">{{ initials(studio.name) }}</span>
-        <span>
-          <b>{{ studio.name }}</b>
-          <a v-if="studio.messagingEnabled" class="role" :href="`/nachrichten?betrifft=${project.id}`">
-            {{ $t('portal.messagesLinkTitle') }}
-          </a>
+    <!-- The first day in the portal. There are two names, a wished-for date and
+         a kind; there are no pictures, appointments, quote, contract or
+         payments. So this is a letter, not a dashboard with five empty boxes —
+         a narrower measure than any other screen here, on purpose. -->
+    <main class="mx-auto w-full max-w-[668px] grow px-6 pt-40 pb-28 max-[700px]:pt-[var(--band)]">
+      <p class="animate-rise motion-reduce:animate-none mb-6 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ project.type }}</p>
+      <h1 class="animate-rise [animation-delay:140ms] motion-reduce:animate-none font-serif text-[clamp(42px,6vw,62px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
+        {{ project.name }}
+      </h1>
+      <p class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-6 flex flex-wrap items-center gap-2.5 text-[15px] tabular-nums text-muted-foreground">
+        {{ [project.date ? longDate(project.date) : $t('portal.dateOpen'), venue].filter(Boolean).join(' · ') }}
+        <span class="inline-flex items-center rounded-[var(--r-pill)] bg-[var(--accent-bg)] px-[11px] py-[5px] text-[11.5px] leading-none font-semibold tracking-[0.02em] text-action">
+          {{ $t('portal.notReserved') }}
         </span>
-      </div>
-    </section>
-  </main>
+      </p>
 
-  <PortalFooter />
+      <div class="animate-rise [animation-delay:320ms] motion-reduce:animate-none">
+        <div class="my-18 h-px bg-border" />
+
+        <!-- The only piece of news there is at this point, in a sentence. The
+             same place the countdown stands once it is booked. -->
+        <section>
+          <h2 class="font-serif text-[clamp(24px,3vw,32px)] leading-[1.15] font-normal tracking-[-0.015em]">
+            {{ $t('portal.inquiryReceivedTitle') }}
+          </h2>
+          <p class="mt-4 max-w-[48ch] text-[17px] leading-[1.55] text-muted-foreground">{{ $t('portal.inquiryReceived') }}</p>
+        </section>
+
+        <section class="mt-18">
+          <div class="flex items-baseline gap-4">
+            <PortalLabel>{{ $t('portal.notedTitle') }}</PortalLabel>
+            <Button
+              v-if="!editing"
+              class="ml-auto py-0 underline decoration-line-hover underline-offset-[3px] hover:decoration-current"
+              type="button"
+              variant="ghost"
+              @click="editing = true"
+            >
+              {{ $t('common.edit') }}
+            </Button>
+          </div>
+
+          <template v-if="!editing">
+            <dl class="m-0 mt-4 grid grid-cols-[132px_1fr] gap-x-6 gap-y-3 max-[700px]:grid-cols-1 max-[700px]:gap-y-0">
+              <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.occasion') }}</dt>
+              <dd class="m-0 text-[14.5px]">{{ project.type }}</dd>
+              <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.preferredDate') }}</dt>
+              <dd class="m-0 text-[14.5px] tabular-nums">{{ project.date ? longDate(project.date) : $t('portal.dateOpen') }}</dd>
+              <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.place') }}</dt>
+              <dd class="m-0 text-[14.5px]">{{ venue || '—' }}</dd>
+              <dt class="text-[13px] text-muted-foreground max-[700px]:mt-3">{{ $t('portal.reachUs') }}</dt>
+              <dd class="m-0 text-[14.5px]">{{ [project.contact.email, project.contact.phone].filter(Boolean).join(' · ') }}</dd>
+            </dl>
+            <blockquote v-if="project.inquiryText" class="mt-6 border-l-2 border-line-hover pl-4 text-[16px] leading-[1.6] whitespace-pre-wrap text-muted-foreground">{{ project.inquiryText }}</blockquote>
+          </template>
+
+          <!-- Editing is the same block, not a form somewhere else: the rows
+               stay where they were and only the value becomes a field. The
+               occasion is not one — a different occasion is a different
+               booking. -->
+          <form v-else class="mt-4 grid gap-4" @submit.prevent="save">
+            <PortalField :label="$t('portal.preferredDate')">
+              <DatePicker v-model="form.date" />
+              <span v-if="form.errors.date" class="mt-[7px] block text-[12.5px] leading-[1.45] text-destructive">{{ form.errors.date }}</span>
+            </PortalField>
+
+            <PortalField :label="$t('portal.venueName')">
+              <Input v-model="form.venue_name" type="text" />
+            </PortalField>
+
+            <PortalField :label="$t('portal.venueCity')">
+              <Input v-model="form.venue_city" type="text" />
+            </PortalField>
+
+            <PortalField :label="$t('portal.inquiryText')">
+              <Textarea v-model="form.inquiry_text" rows="5" />
+            </PortalField>
+
+            <div class="mt-2 flex flex-wrap items-center gap-4">
+              <Button variant="portal" type="submit" :disabled="form.processing">{{ $t('common.save') }}</Button>
+              <Button
+                class="py-0 text-[14px]"
+                type="button"
+                variant="ghost"
+                @click="editing = false"
+              >
+                {{ $t('common.cancel') }}
+              </Button>
+            </div>
+          </form>
+        </section>
+
+        <section v-if="reachable(studio)" class="mt-18">
+          <PortalLabel class="mb-4">{{ $t('portal.contactTitle') }}</PortalLabel>
+          <PortalPerson :studio="studio" :message-href="messageHref" />
+        </section>
+
+        <!-- P-03 (#222): the questionnaire the inquiry screen has always linked
+             to and nobody could fill in. Absent until the studio shares one.
+             Drawn as the row the booked project's paperwork uses, so nothing
+             has to be relearned later. -->
+        <section v-if="project.questionnaires.length" class="mt-18 border-t border-border">
+          <PortalRow
+            v-for="sheet in project.questionnaires"
+            :key="sheet.id"
+            :href="`/projekte/${project.id}/fragebogen/${sheet.id}`"
+            :title="sheet.name"
+            :state="sheet.openCount ? 'open' : 'done'"
+            :note="sheet.openCount
+              ? $t('portal.questionsOpen', { open: sheet.openCount, total: sheet.count })
+              : $t('portal.questionsDone')"
+          />
+        </section>
+      </div>
+    </main>
+
+    <PortalFooter />
+  </PortalShell>
 </template>

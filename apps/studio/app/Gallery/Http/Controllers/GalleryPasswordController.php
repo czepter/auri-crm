@@ -46,6 +46,11 @@ class GalleryPasswordController extends Controller
 
     public function show(Request $request, Gallery $gallery, GalleryAccessSession $claims): Response
     {
+        // G-14: withdrawn closes this entry point too — it is the one this
+        // whole screen exists behind, so a link that still resolves the
+        // model must not still resolve the gate.
+        abort_if($gallery->isWithdrawn(), 404);
+
         $unlocked = $claims->viewGranted($gallery);
         $version = $unlocked ? $gallery->currentVersion : null;
 
@@ -62,9 +67,17 @@ class GalleryPasswordController extends Controller
                 'date' => $gallery->shoot?->date?->format('Y-m-d'),
                 'venue' => $gallery->shoot?->venue(),
                 'expiresAt' => $gallery->expires_at?->toIso8601String(),
-                'url' => url("/galerien/{$gallery->public_id}"),
+                'url' => $gallery->publicUrl(),
             ],
             'unlocked' => $unlocked,
+            // A button for something the gallery does not offer is a 403 with
+            // extra steps — the routes already refuse it (gallery.feature:),
+            // this is so the screen never draws it.
+            'offers' => [
+                'downloads' => $gallery->downloads_enabled,
+                'lists' => $gallery->lists_enabled,
+                'comments' => $gallery->comments_enabled,
+            ],
             // Null while locked, and null for a gallery nobody has published
             // yet — an unlocked gate over an empty gallery is a real state,
             // not an error, so the screen says so rather than 404ing a link
@@ -99,7 +112,7 @@ class GalleryPasswordController extends Controller
     }
 
     /**
-     * $gallery arrives as the raw public_id, not an implicit-bound model:
+     * $gallery arrives as the raw slug-or-public_id, not an implicit-bound model:
      * route-model binding 404s before this method ever runs, and a plain 404
      * here would tell a guest guessing passwords "that id doesn't exist" —
      * exactly the enumeration G-07 closes. Resolving it by hand instead lets
@@ -109,7 +122,18 @@ class GalleryPasswordController extends Controller
      */
     public function store(Request $request, string $gallery, GalleryAccessSession $claims, GallerySecretGate $gate): RedirectResponse
     {
-        $model = Gallery::findByPublicId($gallery);
+        $model = Gallery::findByPublicIdOrSlug($gallery);
+
+        // G-07/G-14: a withdrawn gallery must be indistinguishable from one
+        // that never existed here — unlike show(), this is the uniform-
+        // failure path, and a distinct 404 would let a garbage password
+        // enumerate withdrawn ids. Falling through with $model nulled reuses
+        // the exact same "nonexistent" branch below rather than a second one
+        // that could drift from it.
+        if ($model?->isWithdrawn()) {
+            $model = null;
+        }
+
         $requiresPassword = $model === null || $model->requiresViewPassword();
 
         if ($requiresPassword) {

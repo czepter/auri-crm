@@ -2,9 +2,12 @@
 import { computed } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import ProjectHeader from '@/admin/components/ProjectHeader.vue'
+import ProjectShell from '@/admin/components/ProjectShell.vue'
 import { Button } from '@/ui/button'
+import { Field } from '@/ui/field'
+import { Input } from '@/ui/input'
 import { Textarea } from '@/ui/textarea'
+import Section from '@/ui/page/Section.vue'
 
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
@@ -52,69 +55,76 @@ function scheduledLabel(iso: string) {
 
 <template>
   <AdminLayout active="anfragen">
-    <ProjectHeader :header="header" active="messages" />
+    <ProjectShell :header="header" active="messages">
+        <Section v-if="thread" :title="$t('project.history')">
+          <template #actions>
+            <span class="text-[12.5px] leading-[1.47] tracking-[-0.01em]">{{ thread.subject }}</span>
+          </template>
 
-    <template v-if="thread">
-      <div class="hrow" style="margin-bottom: var(--s4)">
-        <span class="kick">{{ $t('project.messagesSubject', { subject: thread.subject }) }}</span>
-      </div>
-
-      <div class="msg" style="gap: var(--s4)">
-        <div v-for="message in thread.messages" :key="message.id" class="msgrow">
-          <div class="msgtxt">
-            <div class="msgwho">
-              {{ message.author }}
-              <em>{{ longDateTime(message.sentAt) }}</em>
+          <div
+            v-for="message in thread.messages"
+            :key="message.id"
+            class="py-3"
+            :class="message.fromStaff && 'pl-3.5 shadow-[inset_2px_0_0_var(--sunk-2)]'"
+          >
+            <div class="flex items-baseline gap-[9px]">
+              <span class="text-[13px] leading-[1.47] font-semibold tracking-[-0.012em]">{{ message.author }}</span>
+              <span class="ml-auto text-[11.5px] leading-[1.47] tabular-nums text-ink-2">{{ longDateTime(message.sentAt) }}</span>
             </div>
-            <div class="msgbody" style="-webkit-line-clamp: unset">{{ message.body }}</div>
+            <div class="mt-[5px] max-w-[68ch] text-[13.5px] leading-[1.55] whitespace-pre-wrap">{{ message.body }}</div>
             <!-- Pending, not sent: shown where it will appear once it goes,
                  with the one control that still applies to it. -->
-            <div v-if="message.scheduledFor" class="hint">
+            <div v-if="message.scheduledFor" class="mt-1.5 flex items-baseline gap-2 text-[11.5px] leading-[1.47] text-ink-2">
               {{ $t('project.messagesScheduledFor', { when: scheduledLabel(message.scheduledFor) }) }}
-              <Button type="button" variant="ghost" @click="cancelScheduled(message.id)">
+              <Button type="button" variant="ghost" class="py-0 text-[11.5px] text-ink-2" @click="cancelScheduled(message.id)">
                 {{ $t('project.messagesCancelScheduled') }}
               </Button>
             </div>
           </div>
-        </div>
 
-        <p v-if="!thread.messages.length" class="hint">{{ $t('project.messagesEmpty') }}</p>
-      </div>
+          <form v-if="header.canManageMessages" class="mt-[18px]" @submit.prevent="send">
+            <div v-if="usableTemplates.length" class="mb-2.5 flex flex-wrap items-center gap-1.5">
+              <Button
+                v-for="template in usableTemplates" :key="template.id"
+                type="button" variant="pill-muted"
+                @click="insertTemplate(template.id)"
+              >
+                {{ template.name }}
+              </Button>
+            </div>
+            <p v-for="template in brokenTemplates" :key="template.id" class="m-0 mb-1.5 text-[11.5px] leading-[1.47] text-destructive">
+              {{ $t('project.messagesTemplateBroken', { name: template.name, fields: template.unknownFields.join(', ') }) }}
+            </p>
+            <p v-if="thread.recipients.length" class="m-0 mb-1.5 text-[11.5px] leading-[1.47] text-ink-2">
+              {{ $t('project.messagesTo', { names: thread.recipients.join(', ') }) }}
+            </p>
+            <Field v-slot="{ id }" dense :error="reply.errors.body">
+              <Textarea
+                :id="id"
+                v-model="reply.body"
+                variant="filled"
+                rows="4"
+                :placeholder="$t('project.messagesReplyPlaceholder')" />
+            </Field>
+            <div class="mt-2.5 flex items-center gap-2.5">
+              <!-- Native datetime-local: a picker library for one optional field
+                   is a dependency this screen does not need. -->
+              <Input
+                v-model="reply.scheduled_for"
+                variant="filled"
+                class="w-auto"
+                type="datetime-local"
+                :aria-label="$t('project.messagesScheduleLabel')"
+              />
+              <Button variant="pill" class="ml-auto" type="submit" :disabled="reply.processing">
+                {{ reply.scheduled_for ? $t('project.messagesSchedule') : $t('project.messagesSend') }}
+              </Button>
+            </div>
+            <p v-if="reply.errors.scheduled_for" class="m-0 mt-1.5 text-[11.5px] leading-[1.47] text-destructive">{{ reply.errors.scheduled_for }}</p>
+          </form>
+        </Section>
 
-      <form v-if="header.canManageMessages" class="composer" @submit.prevent="send">
-        <div v-if="usableTemplates.length" class="hrow" style="margin-bottom: var(--s3)">
-          <Button
-            v-for="template in usableTemplates" :key="template.id"
-            type="button" variant="ghost"
-            @click="insertTemplate(template.id)"
-          >
-            {{ template.name }}
-          </Button>
-        </div>
-        <p v-for="template in brokenTemplates" :key="template.id" class="err">
-          {{ $t('project.messagesTemplateBroken', { name: template.name, fields: template.unknownFields.join(', ') }) }}
-        </p>
-        <Textarea
-          v-model="reply.body"
-          rows="4"
-          :placeholder="$t('project.messagesReplyPlaceholder')" />
-        <p v-if="reply.errors.body" class="err">{{ reply.errors.body }}</p>
-        <div class="formfoot" style="margin-top: 0">
-          <!-- Native datetime-local: a picker library for one optional field
-               is a dependency this screen does not need. -->
-          <input
-            v-model="reply.scheduled_for"
-            type="datetime-local"
-            :aria-label="$t('project.messagesScheduleLabel')"
-          >
-          <Button type="submit" :disabled="reply.processing">
-            {{ reply.scheduled_for ? $t('project.messagesSchedule') : $t('project.messagesSend') }}
-          </Button>
-        </div>
-        <p v-if="reply.errors.scheduled_for" class="err">{{ reply.errors.scheduled_for }}</p>
-      </form>
-    </template>
-
-    <p v-else class="hint">{{ $t('project.messagesEmpty') }}</p>
+        <p v-else class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('project.messagesEmpty') }}</p>
+    </ProjectShell>
   </AdminLayout>
 </template>

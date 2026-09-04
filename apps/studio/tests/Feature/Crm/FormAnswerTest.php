@@ -1,5 +1,6 @@
 <?php
 
+use App\Crm\Enums\FormFieldType;
 use App\Crm\Models\FormAnswer;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
@@ -89,4 +90,26 @@ it('accepts a null value, leaving the question explicitly unanswered rather than
 
     expect($v1->value)->toBeNull()
         ->and($field->currentAnswer->value)->toBeNull();
+});
+
+// Aufnahme durch das Studio: dieselbe Antwort, am Telefon mitgeschrieben.
+// Sie läuft durch dieselbe Normalisierung wie die aus dem Portal.
+it('normalises a group photo plan the studio records itself', function () {
+    $field = FormInstanceField::factory()
+        ->for(FormInstance::factory(), 'formInstance')
+        ->create(['type' => FormFieldType::GroupPhotos, 'options' => ['suggestions' => [], 'minutesPerGroup' => 2]]);
+
+    $this->actingAs(staffMember(), 'staff')
+        ->patch("/frageboegen-felder/{$field->public_id}/antwort", [
+            'value' => json_encode([
+                'people' => ['Anna', 'Jonas'],
+                'groups' => [['name' => 'Trauzeugen', 'members' => ['Anna', 'Niemand']]],
+            ]),
+        ])
+        ->assertRedirect();
+
+    expect(json_decode($field->fresh()->currentAnswer->value, true))->toBe([
+        'people' => ['Anna', 'Jonas'],
+        'groups' => [['name' => 'Trauzeugen', 'members' => ['Anna']]],
+    ]);
 });

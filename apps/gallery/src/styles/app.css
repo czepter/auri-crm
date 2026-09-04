@@ -1,0 +1,33 @@
+/*
+ * Der Einstieg der Galerie-Oberfläche. Bis hierher trug sie nur handgeschriebenes
+ * CSS; das Studio läuft seit dem Umbau auf Tailwind, und zwei Systeme für dieselbe
+ * Gestaltung laufen auseinander — die Bilder im Raster standen zuletzt 165 × 2889px,
+ * weil die eine Zeile fehlte, die Tailwinds Preflight mitbringt.
+ *
+ * Reihenfolge zählt: Preflight zuerst, danach tokens.css und gallery.css, damit die
+ * bestehenden Regeln gewinnen, wo sie etwas sagen. Umgestellt wird die Auszeichnung
+ * schrittweise, nicht in einem Zug.
+ */
+@import "tailwindcss";
+@import "./tokens.css";
+@import "./gallery.css";
+
+/* Die Werte aus tokens.css als Utilities. Beide Systeme zeigen damit auf dieselbe
+   Farbe, statt zwei Grautöne aus derselben Gestaltung nebeneinander zu stellen. */
+@theme inline {
+  --font-sans: var(--sans);
+  --font-serif: var(--serif);
+
+  --color-void: var(--void);
+  --color-void-2: var(--void-2);
+  --color-void-ink: var(--void-ink);
+  --color-void-ink-2: var(--void-ink-2);
+  --color-void-line: var(--void-line);
+  --color-accent: var(--accent);
+
+  --radius-sm: var(--r-sm);
+  --radius-md: var(--r);
+  --radius-pill: var(--r-pill);
+
+  --ease-gallery: var(--ease);
+}

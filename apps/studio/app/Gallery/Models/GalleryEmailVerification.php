@@ -23,9 +23,9 @@ class GalleryEmailVerification extends Model
 
     public const VALID_FOR_MINUTES = 30;
 
-    protected $fillable = ['gallery_id', 'email', 'token_hash', 'expires_at'];
+    protected $fillable = ['gallery_id', 'email', 'token_hash', 'code_hash', 'expires_at'];
 
-    protected $hidden = ['token_hash'];
+    protected $hidden = ['token_hash', 'code_hash'];
 
     protected function casts(): array
     {

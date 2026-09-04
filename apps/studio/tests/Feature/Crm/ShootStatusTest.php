@@ -30,9 +30,9 @@ it('allows a forward skip and refuses a backward move', function () {
 it('advances a shoot and restamps the status entry time', function () {
     $shoot = Shoot::factory()->atStatus(ShootStatus::Booked, daysAgo: 11)->create();
 
-    $advanced = app(AdvanceShootStatus::class)($shoot, ShootStatus::Shot);
+    $advanced = app(AdvanceShootStatus::class)($shoot, stage(ShootStatus::Shot));
 
-    expect($advanced->status)->toBe(ShootStatus::Shot)
+    expect($advanced->status->key)->toBe(ShootStatus::Shot->value)
         ->and($advanced->status_entered_at->isToday())->toBeTrue();
 });
 
@@ -40,10 +40,10 @@ it('emits an event carrying both statuses', function () {
     Event::fake([ShootStatusChanged::class]);
     $shoot = Shoot::factory()->create();
 
-    app(AdvanceShootStatus::class)($shoot, ShootStatus::Booked);
+    app(AdvanceShootStatus::class)($shoot, stage(ShootStatus::Booked));
 
-    Event::assertDispatched(ShootStatusChanged::class, fn ($e) => $e->from === ShootStatus::Requested
-        && $e->to === ShootStatus::Booked
+    Event::assertDispatched(ShootStatusChanged::class, fn ($e) => $e->from->key === ShootStatus::Requested->value
+        && $e->to->key === ShootStatus::Booked->value
         && $e->shoot->is($shoot));
 });
 
@@ -51,7 +51,7 @@ it('writes an audit row naming the transition', function () {
     $actor = User::factory()->create();
     $shoot = Shoot::factory()->create();
 
-    app(AdvanceShootStatus::class)($shoot, ShootStatus::Booked, $actor);
+    app(AdvanceShootStatus::class)($shoot, stage(ShootStatus::Booked), $actor);
 
     $row = AuditLog::where('event', 'shoot.status_changed')->sole();
 
@@ -64,19 +64,19 @@ it('writes an audit row naming the transition', function () {
 it('refuses a backward transition', function () {
     $shoot = Shoot::factory()->atStatus(ShootStatus::Delivered)->create();
 
-    app(AdvanceShootStatus::class)($shoot, ShootStatus::Booked);
+    app(AdvanceShootStatus::class)($shoot, stage(ShootStatus::Booked));
 })->throws(DomainException::class);
 
 it('leaves nothing behind when a transition is refused', function () {
     $shoot = Shoot::factory()->atStatus(ShootStatus::Delivered)->create();
 
     try {
-        app(AdvanceShootStatus::class)($shoot, ShootStatus::Booked);
+        app(AdvanceShootStatus::class)($shoot, stage(ShootStatus::Booked));
     } catch (DomainException) {
         // expected
     }
 
-    expect($shoot->fresh()->status)->toBe(ShootStatus::Delivered)
+    expect($shoot->fresh()->status->key)->toBe(ShootStatus::Delivered->value)
         ->and(AuditLog::where('event', 'shoot.status_changed')->count())->toBe(0);
 });
 
@@ -87,7 +87,7 @@ it('cancels a shoot without changing the status it died in', function () {
     $cancelled = app(AdvanceShootStatus::class)->cancel($shoot, 'Termin abgesagt');
 
     expect($cancelled->isCancelled())->toBeTrue()
-        ->and($cancelled->status)->toBe(ShootStatus::Prep)
+        ->and($cancelled->status->key)->toBe(ShootStatus::Prep->value)
         ->and($cancelled->cancelled_reason)->toBe('Termin abgesagt');
 
     Event::assertDispatched(ShootCancelled::class);
@@ -104,7 +104,7 @@ it('records the status a shoot was cancelled in on the audit row', function () {
 it('refuses to advance a cancelled shoot', function () {
     $shoot = Shoot::factory()->cancelled('Termin abgesagt')->create();
 
-    app(AdvanceShootStatus::class)($shoot, ShootStatus::Shot);
+    app(AdvanceShootStatus::class)($shoot, stage(ShootStatus::Shot));
 })->throws(DomainException::class);
 
 it('refuses to cancel a shoot twice', function () {

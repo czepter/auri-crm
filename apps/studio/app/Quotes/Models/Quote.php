@@ -36,7 +36,7 @@ class Quote extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['project_id', 'predecessor_id', 'status', 'currency', 'valid_until', 'sent_at', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id'];
+    protected $fillable = ['project_id', 'predecessor_id', 'is_addendum', 'status', 'intro', 'outro', 'currency', 'valid_until', 'sent_at', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id'];
 
     // Mirrors every column default in memory (the same reason Project's own
     // $attributes gives for portal_visible): without net and discount_amount
@@ -54,6 +54,7 @@ class Quote extends Model
             'sent_at' => 'immutable_datetime',
             'accepted_at' => 'immutable_datetime',
             'discount_type' => DiscountType::class,
+            'is_addendum' => 'boolean',
         ];
     }
 

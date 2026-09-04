@@ -2,6 +2,7 @@
 
 use App\Catalog\Http\Controllers\PackageController;
 use App\Contracts\Http\Controllers\ContractController;
+use App\Contracts\Http\Controllers\ContractSignerController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
 use App\Crm\Http\Controllers\ContactController;
@@ -16,34 +17,48 @@ use App\Crm\Http\Controllers\LeadBoardController;
 use App\Crm\Http\Controllers\LeadCaseController;
 use App\Crm\Http\Controllers\LeadStageController;
 use App\Crm\Http\Controllers\ProjectController;
+use App\Crm\Http\Controllers\ProjectSearchController;
+use App\Crm\Http\Controllers\ProjectTypeController;
 use App\Crm\Http\Controllers\ShootController;
 use App\Crm\Http\Controllers\ShotListItemController;
+use App\Crm\Http\Controllers\StageController;
 use App\Crm\Http\Controllers\TaskController;
 use App\Crm\Http\Controllers\TaskTemplateController;
 use App\Crm\Http\Controllers\TimelineController;
 use App\Documents\Http\Controllers\DocumentTemplateController;
 use App\Engagement\Http\Controllers\InboxController;
 use App\Engagement\Http\Controllers\ThreadController;
+use App\Gallery\Http\Controllers\GalleryAssetController;
+use App\Gallery\Http\Controllers\GalleryIndexController;
 use App\Gallery\Http\Controllers\GalleryLightroomExportController;
+use App\Gallery\Http\Controllers\GalleryPrereleaseController;
+use App\Gallery\Http\Controllers\GalleryPresetController;
+use App\Gallery\Http\Controllers\GalleryPreviewController;
+use App\Gallery\Http\Controllers\GalleryPublicationController;
 use App\Gallery\Http\Controllers\GalleryRecordController;
+use App\Gallery\Http\Controllers\GallerySetController;
+use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Staff\AbsenceController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
 use App\Http\Controllers\Staff\InvitationController;
 use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
+use App\Http\Controllers\Staff\NotificationController;
 use App\Http\Controllers\Staff\OAuthAuthorizationController;
 use App\Http\Controllers\Staff\OAuthTokenController;
 use App\Http\Controllers\Staff\PasswordResetController;
+use App\Http\Controllers\Staff\ProfileController;
 use App\Http\Controllers\Staff\SessionController;
 use App\Http\Controllers\Staff\SetupController;
 use App\Media\Http\Controllers\FailedAssetController;
-use App\Media\Http\Controllers\MediaIngestController;
 use App\Media\Http\Controllers\MultipartUploadController;
+use App\Media\Http\Controllers\UploadPrecheckController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
 use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
 use App\Reporting\Http\Controllers\ReportController;
+use App\Settings\Http\Controllers\GallerySettingsController;
 use App\Settings\Http\Controllers\NotificationSettingsController;
 use App\Settings\Http\Controllers\NumberRangeController;
 use App\Settings\Http\Controllers\PaymentSettingsController;
@@ -51,6 +66,8 @@ use App\Settings\Http\Controllers\PortalSettingsController;
 use App\Settings\Http\Controllers\StudioClosureController;
 use App\Settings\Http\Controllers\StudioOnboardingController;
 use App\Settings\Http\Controllers\StudioSettingsController;
+use App\Templates\Http\Controllers\TemplateHubController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // A full authentication bypass for local inspection — no password, no MFA
@@ -105,6 +122,11 @@ Route::middleware('guest:staff')->group(function () {
     Route::get('/passwort/neu/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
     Route::post('/passwort/neu', [PasswordResetController::class, 'update'])->name('password.update');
 });
+
+// Neither guest nor staff: the person following it is reading the new inbox,
+// which may not be the browser holding the session.
+Route::get('/profil/e-mail-bestaetigen/{token}', [ProfileController::class, 'confirmEmail'])
+    ->name('profile.email.confirm');
 
 Route::middleware('audience:staff')->group(function () {
     Route::post('/logout', [SessionController::class, 'destroy']);
@@ -168,12 +190,17 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/pakete/{package}', [PackageController::class, 'edit'])->name('packages.edit');
         Route::patch('/pakete/{package}', [PackageController::class, 'update'])->name('packages.update');
         Route::post('/pakete/{package}/status', [PackageController::class, 'toggle'])->name('packages.toggle');
+        Route::post('/pakete/{package}/duplizieren', [PackageController::class, 'duplicate'])->name('packages.duplicate');
+
+        Route::get('/vorlagen', [TemplateHubController::class, 'index'])->name('templates.index');
 
         // /dokumentvorlagen/neu and /dokumentvorlagen/vorschau stay above
         // /dokumentvorlagen/{documentTemplate} for the same reason /pakete/neu
         // does. T-12 generalises M-01's /vertragsvorlagen into one screen
         // family covering every App\Documents\Enums\DocumentTemplateType.
-        Route::get('/dokumentvorlagen', [DocumentTemplateController::class, 'index'])->name('document-templates.index');
+        // Every kind of template is listed on /vorlagen (TemplateHubController).
+        // What stays here is the editor and its writers.
+        Route::redirect('/dokumentvorlagen', '/vorlagen?typ=dokumente')->name('document-templates.index');
         Route::get('/dokumentvorlagen/neu', [DocumentTemplateController::class, 'create'])->name('document-templates.create');
         // T-18: the wizard's template step, and the only writer that takes a
         // starter key rather than a body. Same capability as creating one by
@@ -188,6 +215,25 @@ Route::middleware('audience:staff')->group(function () {
             ->name('document-templates.edit');
         Route::patch('/dokumentvorlagen/{documentTemplate}', [DocumentTemplateController::class, 'update'])
             ->name('document-templates.update');
+
+        // T-11's inbox. The in_app transport has written rows since E-07;
+        // this is the first screen that reads them.
+        Route::get('/benachrichtigungen', [NotificationController::class, 'index'])
+            ->name('notifications.index');
+        Route::post('/benachrichtigungen/gelesen', [NotificationController::class, 'markRead'])
+            ->name('notifications.read');
+
+        // The person, not the studio — /einstellungen is the studio's, this
+        // is the account whoever is signed in holds. Ungated: everybody with
+        // a session has one.
+        Route::get('/profil', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/profil', [ProfileController::class, 'update'])->name('profile.update');
+        Route::put('/profil/passwort', [ProfileController::class, 'updatePassword'])
+            ->name('profile.password');
+        Route::post('/profil/wiederherstellungscodes', [ProfileController::class, 'regenerateRecoveryCodes'])
+            ->name('profile.recovery-codes');
+        Route::patch('/profil/benachrichtigungen', [ProfileController::class, 'updateNotifications'])
+            ->name('profile.notifications');
 
         Route::get('/team', [InvitationController::class, 'index'])->name('staff.index');
         Route::post('/team/einladungen', [InvitationController::class, 'store'])->name('staff.invite');
@@ -210,11 +256,11 @@ Route::middleware('audience:staff')->group(function () {
         // C-14 (#250): the reply and the "done" mark, from the screen the
         // conversation is read on. Thread-scoped, because a conversation that
         // names no booking still has to be answerable.
-        Route::post('/posteingang/faden/{thread}/antwort', [InboxController::class, 'reply'])
+        Route::post('/posteingang/unterhaltung/{thread}/antwort', [InboxController::class, 'reply'])
             ->name('inbox.reply');
-        Route::post('/posteingang/faden/{thread}/erledigt', [InboxController::class, 'close'])
+        Route::post('/posteingang/unterhaltung/{thread}/erledigt', [InboxController::class, 'close'])
             ->name('inbox.close');
-        Route::post('/posteingang/faden/{thread}/zuordnen', [InboxController::class, 'file'])
+        Route::post('/posteingang/unterhaltung/{thread}/zuordnen', [InboxController::class, 'file'])
             ->name('inbox.thread.file');
 
         // S-13 + M-07. One screen: how the studio is doing, and what is
@@ -247,6 +293,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen/dokumente', [StudioSettingsController::class, 'updateDocuments'])->name('settings.documents.update');
         Route::patch('/einstellungen/allgemein', [StudioSettingsController::class, 'updateGeneral'])->name('settings.general.update');
         Route::patch('/einstellungen/email', [StudioSettingsController::class, 'updateMail'])->name('settings.mail.update');
+        Route::patch('/einstellungen/erfassung', [StudioSettingsController::class, 'updateCapture'])->name('settings.capture.update');
 
         Route::get('/einstellungen/nummernkreise', [NumberRangeController::class, 'index'])
             ->name('number-ranges.index');
@@ -269,10 +316,29 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen/zahlungen', [PaymentSettingsController::class, 'update'])
             ->name('settings.payments.update');
 
+        // The studio's own funnel and the kinds of work it does. No page of
+        // their own: the overlay that edits them opens over /anfragen and
+        // /projekte, which is where the stages are read.
+        Route::post('/stufen', [StageController::class, 'store'])
+            ->name('stages.store');
+        Route::patch('/stufen/reihenfolge', [StageController::class, 'reorder'])
+            ->name('stages.reorder');
+        Route::patch('/stufen/{stage}', [StageController::class, 'update'])
+            ->name('stages.update');
+        Route::delete('/stufen/{stage}', [StageController::class, 'destroy'])
+            ->name('stages.destroy');
+
+        Route::post('/projekttypen', [ProjectTypeController::class, 'store'])
+            ->name('project-types.store');
+        Route::patch('/projekttypen/{projectType}', [ProjectTypeController::class, 'update'])
+            ->name('project-types.update');
+        Route::delete('/projekttypen/{projectType}', [ProjectTypeController::class, 'destroy'])
+            ->name('project-types.destroy');
+
         // T-14: its own controller and gate (ManageTasks, not ManageSettings —
         // see TaskTemplateController's doc comment), sitting in the settings
         // section the same way Numbering and Availability do.
-        Route::get('/einstellungen/aufgabenvorlagen', [TaskTemplateController::class, 'index'])
+        Route::redirect('/einstellungen/aufgabenvorlagen', '/vorlagen?typ=aufgaben')
             ->name('task-templates.index');
         Route::post('/einstellungen/aufgabenvorlagen', [TaskTemplateController::class, 'store'])
             ->name('task-templates.store');
@@ -284,7 +350,7 @@ Route::middleware('audience:staff')->group(function () {
         // E-01: FormTemplate builder — a questionnaire's questions, built
         // once and reused across projects. /neu stays above /{formTemplate}
         // for the same reason /pakete/neu does.
-        Route::get('/einstellungen/fragebogen-vorlagen', [FormTemplateController::class, 'index'])
+        Route::redirect('/einstellungen/fragebogen-vorlagen', '/vorlagen?typ=fragebogen')
             ->name('form-templates.index');
         Route::get('/einstellungen/fragebogen-vorlagen/neu', [FormTemplateController::class, 'create'])
             ->name('form-templates.create');
@@ -301,6 +367,20 @@ Route::middleware('audience:staff')->group(function () {
             ->name('settings.portal.edit');
         Route::patch('/einstellungen/portal', [PortalSettingsController::class, 'update'])
             ->name('settings.portal.update');
+
+        Route::get('/einstellungen/galerien', [GallerySettingsController::class, 'edit'])
+            ->name('settings.galleries.edit');
+        Route::patch('/einstellungen/galerien', [GallerySettingsController::class, 'update'])
+            ->name('settings.galleries.update');
+
+        Route::redirect('/einstellungen/galerie-vorlagen', '/vorlagen?typ=galerien')
+            ->name('gallery-presets.index');
+        Route::post('/einstellungen/galerie-vorlagen', [GalleryPresetController::class, 'store'])
+            ->name('gallery-presets.store');
+        Route::patch('/einstellungen/galerie-vorlagen/{galleryPreset}', [GalleryPresetController::class, 'update'])
+            ->name('gallery-presets.update');
+        Route::delete('/einstellungen/galerie-vorlagen/{galleryPreset}', [GalleryPresetController::class, 'destroy'])
+            ->name('gallery-presets.destroy');
 
         // T-11: quiet hours only — see NotificationSettingsController's own
         // doc comment for why no per-event toggle grid ships in this route
@@ -332,6 +412,7 @@ Route::middleware('audience:staff')->group(function () {
         // path, not /auftraege: a Job is what a booked project becomes, and
         // the list covers every project whether or not one exists yet.
         Route::get('/projekte', [ProjectController::class, 'index'])->name('projects.index');
+        Route::get('/projekte/suche', ProjectSearchController::class)->name('projects.search');
 
         // The project screen. Shoot and crew mutations hang off /shootings
         // rather than under the project, because the shoot's public id already
@@ -343,6 +424,10 @@ Route::middleware('audience:staff')->group(function () {
             ->name('projects.update');
         Route::get('/auftraege/{project}/shootings', [ProjectController::class, 'shoots'])
             ->name('projects.shoots');
+        Route::get('/auftraege/{project}/aufgaben', [ProjectController::class, 'tasks'])
+            ->name('projects.tasks');
+        Route::get('/auftraege/{project}/galerien', [ProjectController::class, 'galleries'])
+            ->name('projects.galleries');
         Route::post('/auftraege/{project}/buchung', [ProjectController::class, 'book'])
             ->name('projects.book');
         Route::post('/auftraege/{project}/portal-sichtbarkeit', [ProjectController::class, 'togglePortalVisibility'])
@@ -367,6 +452,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('quotes.store');
         Route::patch('/angebote/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
         Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
+        Route::post('/angebote/{quote}/als-paket', [QuoteController::class, 'saveAsPackage'])->name('quotes.saveAsPackage');
+        Route::get('/angebote/{quote}/pdf', [QuoteController::class, 'download'])->name('quotes.download');
 
         // E-02: a project's own questionnaires, seeded from a FormTemplate
         // or started blank, then personalised freely — see FormInstance's
@@ -388,6 +475,12 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::patch('/frageboegen-felder/{formInstanceField}/antwort', [FormInstanceController::class, 'answer'])
             ->name('form-instance-fields.answer');
+        Route::post('/frageboegen-felder/{formInstanceField}/datei', [FormInstanceController::class, 'upload'])
+            ->name('form-instance-fields.upload');
+        Route::get('/fragebogen-dateien/{file}', [FormInstanceController::class, 'download'])
+            ->name('form-instance-files.download');
+        Route::delete('/fragebogen-dateien/{file}', [FormInstanceController::class, 'destroyFile'])
+            ->name('form-instance-files.destroy');
 
         Route::get('/auftraege/{project}/vertrag', [ContractController::class, 'show'])
             ->name('projects.contract');
@@ -395,20 +488,85 @@ Route::middleware('audience:staff')->group(function () {
             ->name('contracts.store');
         Route::get('/vertraege/{contract}/pdf', [ContractController::class, 'download'])
             ->name('contracts.download');
+        // Eine Fassung wird gesichert, nicht überschrieben: der unterschriebene
+        // Stand bleibt abrufbar, bis die neue versendet ist.
+        Route::patch('/vertraege/{contract}', [ContractController::class, 'update'])
+            ->name('contracts.update');
+        Route::post('/vertraege/{contract}/versenden', [ContractController::class, 'send'])
+            ->name('contracts.send');
+        Route::post('/vertraege/{contract}/unterzeichner', [ContractSignerController::class, 'store'])
+            ->name('contract-signers.store');
+        Route::delete('/unterzeichner/{signer}', [ContractSignerController::class, 'destroy'])
+            ->name('contract-signers.destroy');
+        Route::post('/unterzeichner/{signer}/erinnerung', [ContractSignerController::class, 'remind'])
+            ->name('contract-signers.remind');
 
         // G-02: app-proxied multipart ingest into a gallery's quarantine
         // prefix. galleries.uploads.* is a JSON API for the browser's own
         // chunked uploader (resources/js/admin/lib/multipartUpload.ts), not
         // Inertia — see MultipartUploadController.
         // C-19 (#255): the gallery as a record with five tabs, not a data
-        // sheet with switches. Above /galerien/{gallery}/medien, which stays
-        // the ingest screen it always was.
-        Route::get('/galerien/{gallery}', [GalleryRecordController::class, 'show'])
+        // sheet with switches. Uploading lives in the Bilder tab itself now
+        // — no separate ingest screen.
+        Route::get('/galerien', [GalleryIndexController::class, 'index'])->name('galleries.index');
+        // /galerien/neu bleibt über /galerien/{gallery}, aus demselben Grund
+        // wie /pakete/neu über /pakete/{package}.
+        Route::get('/galerien/neu', [GalleryIndexController::class, 'create'])->name('galleries.create');
+        Route::post('/galerien', [GalleryIndexController::class, 'store'])->name('galleries.store');
+        // Bereich, Set und Einstellungsabschnitt stehen im Pfad, nicht in
+        // einem ref(): sonst wirft jedes Neuladen den Menschen zurueck auf
+        // Bilder/Alle und die Zurueck-Taste verlaesst die Galerie. Das
+        // Projekt macht es seit jeher so (/auftraege/{project}/shootings).
+        //
+        // Reihenfolge zaehlt: die beiden spezielleren Pfade stehen ueber
+        // /{bereich?}, sonst schluckt dessen Platzhalter "bilder" und der
+        // Rest des Pfades faellt weg.
+        //
+        // ->missing() statt einer eigenen Pruefung: ein Lesezeichen auf ein
+        // zusammengelegtes Set soll im Bereich landen, nicht aus der Galerie
+        // werfen. Die Bindung selbst bleibt damit die einzige Stelle, die
+        // Sets aufloest.
+        Route::get('/galerien/{gallery}/bilder/{set}', [GalleryRecordController::class, 'set'])
+            ->scopeBindings()
+            // Der Elternteil ist an dieser Stelle schon gebunden — fehlt er,
+            // steht hier kein Modell und 404 ist die richtige Antwort.
+            ->missing(fn (Request $request) => $request->route('gallery') instanceof Gallery
+                ? redirect()->route('galleries.show', [$request->route('gallery'), 'bilder'])
+                : abort(404))
+            ->name('galleries.show.set');
+        Route::get('/galerien/{gallery}/einstellungen/{abschnitt}', [GalleryRecordController::class, 'section'])
+            ->name('galleries.show.section');
+        Route::get('/galerien/{gallery}/{bereich?}', [GalleryRecordController::class, 'show'])
+            ->whereIn('bereich', ['bilder', 'gestaltung', 'einstellungen', 'aktivitaet'])
             ->name('galleries.show');
         Route::patch('/galerien/{gallery}', [GalleryRecordController::class, 'update'])
             ->name('galleries.update');
-        Route::get('/galerien/{gallery}/medien', [MediaIngestController::class, 'show'])
-            ->name('galleries.media');
+        Route::post('/galerien/{gallery}/vorlage', [GalleryPresetController::class, 'storeFromGallery'])
+            ->name('galleries.preset.store');
+        Route::post('/galerien/{gallery}/vorlage-anwenden', [GalleryPresetController::class, 'applyToGallery'])
+            ->name('galleries.preset.apply');
+        // R31: JSON, not Inertia — the head button opens the returned url in
+        // a new tab, the More menu item copies it, neither wants a page
+        // reload out of this call.
+        Route::post('/galerien/{gallery}/vorschau', [GalleryPreviewController::class, 'button'])
+            ->name('galleries.preview.button');
+        Route::post('/galerien/{gallery}/vorschau-link', [GalleryPreviewController::class, 'link'])
+            ->name('galleries.preview.link');
+        Route::post('/galerien/{gallery}/sets', [GallerySetController::class, 'store'])
+            ->name('galleries.sets.store');
+        // Above /sets/{set}, sonst schluckt die Bindung "reihenfolge"
+        // als public_id.
+        Route::patch('/galerien/{gallery}/sets/reihenfolge', [GallerySetController::class, 'reorder'])
+            ->name('galleries.sets.reorder');
+        Route::patch('/galerien/{gallery}/sets/{set}', [GallerySetController::class, 'update'])
+            ->scopeBindings()
+            ->name('galleries.sets.update');
+        Route::patch('/galerien/{gallery}/sets/{set}/dichte', [GallerySetController::class, 'density'])
+            ->scopeBindings()
+            ->name('galleries.sets.density');
+        Route::delete('/galerien/{gallery}/sets/{set}', [GallerySetController::class, 'destroy'])
+            ->scopeBindings()
+            ->name('galleries.sets.destroy');
         Route::post('/galerien/{gallery}/uploads', [MultipartUploadController::class, 'store'])
             ->name('galleries.uploads.store');
         Route::put('/uploads/{multipartUpload}/teile/{partNumber}', [MultipartUploadController::class, 'uploadPart'])
@@ -433,6 +591,34 @@ Route::middleware('audience:staff')->group(function () {
         // props rather than driving client-side upload state.
         Route::post('/medien/{asset}/wiederholen', [FailedAssetController::class, 'retry'])
             ->name('assets.retry');
+
+        Route::post('/galerien/{gallery}/bilder/verschieben', [GalleryAssetController::class, 'move'])
+            ->name('galleries.assets.move');
+        Route::delete('/galerien/{gallery}/bilder', [GalleryAssetController::class, 'remove'])
+            ->name('galleries.assets.remove');
+        Route::get('/galerien/{gallery}/bilder/{asset}/original', [GalleryAssetController::class, 'original'])
+            ->scopeBindings()
+            ->name('galleries.assets.original');
+        Route::get('/galerien/{gallery}/bilder/{asset}/vorschau', [GalleryAssetController::class, 'preview'])
+            ->scopeBindings()
+            ->name('galleries.assets.preview');
+        Route::patch('/galerien/{gallery}/titelbild', [GalleryAssetController::class, 'cover'])
+            ->name('galleries.cover');
+
+        Route::post('/galerien/{gallery}/uploads/pruefen', UploadPrecheckController::class)
+            ->name('galleries.uploads.precheck');
+
+        Route::post('/galerien/{gallery}/veroeffentlichen', [GalleryPublicationController::class, 'store'])
+            ->name('galleries.publish');
+        Route::delete('/galerien/{gallery}/veroeffentlichung', [GalleryPublicationController::class, 'destroy'])
+            ->name('galleries.withdraw');
+
+        // R32/R39: More menu's "Pre-release" — shares the address before
+        // anything is published.
+        Route::post('/galerien/{gallery}/pre-release', [GalleryPrereleaseController::class, 'store'])
+            ->name('galleries.prerelease.start');
+        Route::delete('/galerien/{gallery}/pre-release', [GalleryPrereleaseController::class, 'destroy'])
+            ->name('galleries.prerelease.stop');
 
         // No GET here: the Zahlungen card lives on the project overview
         // itself (ProjectController::show), not a tab of its own — see the
@@ -490,6 +676,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('tasks.store');
         Route::post('/aufgaben/{task}/erledigt', [TaskController::class, 'complete'])
             ->name('tasks.complete');
+        Route::post('/aufgaben/{task}/wieder-oeffnen', [TaskController::class, 'reopen'])
+            ->name('tasks.reopen');
         // S-12: what this task waits on. Its own route rather than a field on
         // completion, because changing a dependency and finishing the work
         // are different decisions taken at different moments.

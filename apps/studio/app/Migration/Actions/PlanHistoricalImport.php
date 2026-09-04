@@ -4,8 +4,8 @@ namespace App\Migration\Actions;
 
 use App\Contracts\Enums\ContractStatus;
 use App\Crm\Enums\BookedVia;
-use App\Crm\Enums\ProjectType;
 use App\Crm\Models\Contact;
+use App\Crm\Support\CrmVocabulary;
 use App\Migration\Support\ImportPlan;
 use DateTime;
 
@@ -124,10 +124,10 @@ class PlanHistoricalImport
                 continue;
             }
 
-            $type = $typeRaw !== null ? ProjectType::tryFrom(strtolower($typeRaw)) : null;
+            $type = $typeRaw !== null ? app(CrmVocabulary::class)->type(strtolower($typeRaw)) : null;
 
             if ($type === null) {
-                $values = implode(', ', array_column(ProjectType::cases(), 'value'));
+                $values = app(CrmVocabulary::class)->types()->pluck('key')->implode(', ');
                 $errors[] = ['row' => $rowNumber, 'ref' => $ref, 'reason' => "type must be one of: {$values}"];
 
                 continue;

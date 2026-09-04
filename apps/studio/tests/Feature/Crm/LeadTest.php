@@ -13,7 +13,7 @@ uses(RefreshDatabase::class);
 it('starts at the new stage and records when it got there', function () {
     $lead = Lead::factory()->create();
 
-    expect($lead->stage)->toBe(LeadStage::New)
+    expect($lead->stage->key)->toBe(LeadStage::New->value)
         ->and($lead->stage_entered_at)->not->toBeNull()
         ->and($lead->isLost())->toBeFalse();
 });
@@ -52,7 +52,7 @@ it('keeps the stage a lead was lost in', function () {
 
     expect($lead->isLost())->toBeTrue()
         ->and($lead->lost_reason)->toBe('Budget')
-        ->and($lead->stage)->toBe(LeadStage::QuoteSent);
+        ->and($lead->stage->key)->toBe(LeadStage::QuoteSent->value);
 });
 
 it('excludes lost leads from the open scope', function () {

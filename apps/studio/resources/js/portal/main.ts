@@ -2,14 +2,25 @@ import { createApp, h, type DefineComponent } from 'vue'
 import { createInertiaApp } from '@inertiajs/vue3'
 import { createI18n } from 'vue-i18n'
 import de from '../locales/de.json'
-import '../../css/portal.css'
+import '../../css/app.css'
+// The client's own gallery is served by this surface and is the one screen
+// on it with a stylesheet: a dark theme with its own component vocabulary,
+// scoped under [data-theme="gallery"].
+import '../../css/gallery.css'
 
 const i18n = createI18n({
   legacy: false,
   locale: 'de',
   fallbackLocale: 'de',
   messages: { de },
-  datetimeFormats: { de: { short: { day: '2-digit', month: '2-digit', year: 'numeric' } } },
+  // Same rule the admin entrypoint carries: loud in dev, harmless in production.
+  missing: (_locale, key) => {
+    if (import.meta.env.DEV) {
+      throw new Error(`Fehlender Übersetzungsschlüssel: ${key}`)
+    }
+
+    return key
+  },
 })
 
 // The glob is relative to this file, so the portal bundle can only ever
@@ -18,7 +29,7 @@ const i18n = createI18n({
 const pages = import.meta.glob<{ default: DefineComponent }>('./pages/**/*.vue')
 
 createInertiaApp({
-  title: (title) => (title ? `${title} · Atelier Nordlicht` : 'Atelier Nordlicht'),
+  title: (title) => (title ? `${title} · Studio` : 'Studio'),
   resolve: (name) => {
     const page = pages[`./pages/${name}.vue`]
 

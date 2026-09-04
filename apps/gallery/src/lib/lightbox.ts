@@ -12,16 +12,52 @@ import { fetchComments, postComment, type GalleryComment } from './comments'
 export interface LightboxData {
   assets: GalleryAsset[]
   apiBase: string
-  versionPublicId: string
-  galleryTitle: string
-  // G-05 (#242): the view claim this page was served under. Null for a
-  // gallery with no gate; the api needs it on all four routes otherwise.
+  // Already-built base path and query gate for the image bytes — see
+  // images.ts. A published version and R31's draft preview address bytes
+  // under different routes with different credentials; this module only
+  // ever needs the result.
+  imageBase: string
+  gate: string
+  // R31: a draft has no GalleryVersion to favorite or comment against —
+  // AssetFavoriteController/AssetCommentController are both version-scoped
+  // — so a draft preview wires image navigation only. The markup those two
+  // features would occupy is absent from the draft page entirely
+  // ([galleryId].astro), not merely hidden, so every selector below is
+  // optional-chained rather than assumed present. null exactly when
+  // interactive is false.
+  versionPublicId: string | null
+  // G-05 (#242): the view claim this page was served under, for the
+  // favorites/comments calls specifically. Null for a gallery with no gate.
   pass: string | null
+  /** Der Gastpass. Ohne ihn antwortet die api auf Herz und Kommentar 403. */
+  guestPass: string | null
 }
 
 const STAGE_WIDTH = 1600
 
-export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle, pass }: LightboxData): void {
+export type KeyIntent = 'close' | 'prev' | 'next' | null
+
+/**
+ * The comment field owns the arrows while it holds focus — a guest moving the
+ * caret back over a typo would otherwise flip to the next picture. Escape
+ * closes regardless.
+ */
+export function keyIntent(key: string, typing: boolean): KeyIntent {
+  if (key === 'Escape') return 'close'
+  if (typing) return null
+  if (key === 'ArrowLeft') return 'prev'
+  if (key === 'ArrowRight') return 'next'
+
+  return null
+}
+
+/** Both ends wrap: the last picture's next is the first. */
+export function stepIndex(index: number, delta: number, length: number): number {
+  return (index + delta + length) % length
+}
+
+export function initLightbox({ assets, apiBase, imageBase, gate, versionPublicId, pass, guestPass }: LightboxData): void {
+  const interactive = versionPublicId !== null
   const root = document.getElementById('lightbox')
   if (!root || assets.length === 0) return
 
@@ -32,24 +68,27 @@ export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle, p
   const thumbs = Array.from(root.querySelectorAll<HTMLAnchorElement>('[data-lb-thumb]'))
   const commentsList = root.querySelector<HTMLElement>('[data-lb-comments]')
   const commentInput = root.querySelector<HTMLInputElement>('[data-lb-comment-input]')
-  if (!img || !pos || !favBtn || !favLabel) return
+  if (!img || !pos) return
 
   let index = 0
   let favorited = new Set<string>()
 
   const render = (): void => {
     const asset = assets[index]
-    img.src = imageUrl(apiBase, versionPublicId, asset.key, STAGE_WIDTH, 'jpeg', pass)
-    img.srcset = srcSet(apiBase, versionPublicId, asset.key, 'jpeg', pass)
+    img.src = imageUrl(apiBase, imageBase, asset.key, STAGE_WIDTH, 'jpeg', gate)
+    img.srcset = srcSet(apiBase, imageBase, asset.key, 'jpeg', gate)
     pos.textContent = `${index + 1} von ${assets.length}`
     thumbs.forEach((a, i) => a.classList.toggle('on', i === index))
-    renderFavorite()
-    loadComments()
+    if (interactive) {
+      renderFavorite()
+      loadComments()
+    }
   }
 
   const tileHearts = new Map<number, HTMLButtonElement>()
 
   const renderFavorite = (): void => {
+    if (!favBtn || !favLabel) return
     const on = favorited.has(assets[index].key)
     favBtn.classList.toggle('on', on)
     favLabel.textContent = on ? 'Favorit entfernen' : 'Favorit'
@@ -62,7 +101,9 @@ export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle, p
   }
 
   const flip = (i: number): void => {
-    void toggleFavorite(apiBase, versionPublicId, assets[i].key, pass).then((on) => {
+    // Only ever called while interactive (favBtn click, tile heart click —
+    // both wired inside `if (interactive)` below), so versionPublicId is set.
+    void toggleFavorite(apiBase, versionPublicId as string, assets[i].key, pass, guestPass).then((on) => {
       const key = assets[i].key
       if (on) favorited.add(key)
       else favorited.delete(key)
@@ -104,13 +145,16 @@ export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle, p
   // never overwrites that image's own list with a stale one.
   const loadComments = (): void => {
     const key = assets[index].key
-    void fetchComments(apiBase, versionPublicId, key, pass).then((comments) => {
+    void fetchComments(apiBase, versionPublicId as string, key, pass).then((comments) => {
       if (assets[index].key === key) renderComments(comments)
     })
   }
 
   const open = (i: number): void => {
     index = i
+    // postComment reads the key at send time, so a draft that outlives the
+    // picture it was typed under would file against the next one.
+    if (commentInput) commentInput.value = ''
     render()
     root.classList.add('open')
     document.body.style.overflow = 'hidden'
@@ -121,7 +165,7 @@ export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle, p
     document.body.style.overflow = ''
   }
 
-  const step = (delta: number): void => open((index + delta + assets.length) % assets.length)
+  const step = (delta: number): void => open(stepIndex(index, delta, assets.length))
 
   document.querySelectorAll<HTMLElement>('.tile[data-lb-open]').forEach((tile) => {
     const i = Number(tile.dataset.index)
@@ -130,6 +174,8 @@ export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle, p
       event.preventDefault()
       if (Number.isInteger(i)) open(i)
     })
+
+    if (!interactive) return
 
     const heart = tile.querySelector<HTMLButtonElement>('[data-fav]')
 
@@ -155,39 +201,41 @@ export function initLightbox({ assets, apiBase, versionPublicId, galleryTitle, p
   root.querySelector('[data-lb-prev]')?.addEventListener('click', () => step(-1))
   root.querySelector('[data-lb-next]')?.addEventListener('click', () => step(1))
 
-  favBtn.addEventListener('click', () => flip(index))
+  if (interactive) {
+    favBtn?.addEventListener('click', () => flip(index))
 
-  commentInput?.addEventListener('keydown', (event) => {
-    if (event.key !== 'Enter') return
-    const body = commentInput.value.trim()
-    if (body === '') return
+    commentInput?.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter') return
+      const body = commentInput.value.trim()
+      if (body === '') return
 
-    commentInput.disabled = true
-    void postComment(apiBase, versionPublicId, assets[index].key, body, pass)
-      .then((comment) => {
-        if (comment) {
-          commentInput.value = ''
-          loadComments()
-        }
-      })
-      .finally(() => {
-        commentInput.disabled = false
-      })
-  })
+      commentInput.disabled = true
+      void postComment(apiBase, versionPublicId as string, assets[index].key, body, pass, guestPass)
+        .then((comment) => {
+          if (comment) {
+            commentInput.value = ''
+            loadComments()
+          }
+        })
+        .finally(() => {
+          commentInput.disabled = false
+        })
+    })
+
+    void fetchFavorites(apiBase, versionPublicId as string, pass, guestPass).then((keys) => {
+      favorited = keys
+      renderTileHearts()
+      if (root.classList.contains('open')) renderFavorite()
+    })
+  }
 
   document.addEventListener('keydown', (event) => {
     if (!root.classList.contains('open')) return
-    if (event.key === 'Escape') close()
-    // The comment field owns Escape/arrows while it holds focus — a guest
-    // typing "hi" would otherwise flip through images on every "i".
-    if (document.activeElement === commentInput) return
-    if (event.key === 'ArrowLeft') step(-1)
-    if (event.key === 'ArrowRight') step(1)
-  })
 
-  void fetchFavorites(apiBase, versionPublicId, pass).then((keys) => {
-    favorited = keys
-    renderTileHearts()
-    if (root.classList.contains('open')) renderFavorite()
+    const intent = keyIntent(event.key, document.activeElement === commentInput)
+
+    if (intent === 'close') close()
+    if (intent === 'prev') step(-1)
+    if (intent === 'next') step(1)
   })
 }

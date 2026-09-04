@@ -7,6 +7,8 @@ use App\Engagement\Jobs\SendScheduledMessage;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Models\User;
+use App\Notifications\Actions\NotifyStudio;
+use App\Notifications\Studio\ClientMessagePosted;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
@@ -22,7 +24,10 @@ use Illuminate\Support\Facades\DB;
  */
 class PostMessage
 {
-    public function __construct(private readonly SendStaffReply $send) {}
+    public function __construct(
+        private readonly SendStaffReply $send,
+        private readonly NotifyStudio $notifyStudio,
+    ) {}
 
     public function __invoke(Thread $thread, Contact|User $actor, string $body, ?CarbonInterface $scheduledFor = null): Message
     {
@@ -46,6 +51,10 @@ class PostMessage
             $scheduledFor === null
                 ? ($this->send)($message)
                 : SendScheduledMessage::dispatch($message, $scheduledFor->toIso8601String())->delay($scheduledFor);
+        } else {
+            // T-11: the other direction. "Where the studio reads it" above is
+            // a screen somebody has to open — this is what says to open it.
+            ($this->notifyStudio)(new ClientMessagePosted($message));
         }
 
         return $message;

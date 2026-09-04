@@ -36,6 +36,22 @@ class DocumentBlockCatalog
         'image' => ['group' => 'layout', 'label' => 'Bild', 'types' => ['contract', 'quote', 'invoice', 'mail']],
         'callout' => ['group' => 'layout', 'label' => 'Hinweis', 'types' => ['contract', 'quote', 'invoice', 'mail']],
         'spacer' => ['group' => 'layout', 'label' => 'Abstand', 'types' => ['contract', 'quote', 'invoice']],
+        'pagebreak' => ['group' => 'layout', 'label' => 'Seitenumbruch', 'types' => ['contract', 'quote', 'invoice']],
+
+        // Was ein Vertrag über Fließtext hinaus braucht. Die Zeilenbausteine
+        // teilen sich ein Werkzeug (resources/js/admin/documents/blocks/
+        // rowSpecs.ts); unterschiedlich sind nur ihre Spalten.
+        'clause' => ['group' => 'contract', 'label' => 'Klausel', 'types' => ['contract']],
+        'signature' => ['group' => 'contract', 'label' => 'Unterschriften', 'types' => ['contract']],
+        'checklist' => ['group' => 'contract', 'label' => 'Ankreuzliste', 'types' => ['contract', 'quote']],
+        'finePrint' => ['group' => 'contract', 'label' => 'Kleingedrucktes', 'types' => ['contract', 'quote', 'invoice']],
+        'usageRights' => ['group' => 'contract', 'label' => 'Nutzungsrechte', 'types' => ['contract', 'quote']],
+        'cancellation' => ['group' => 'contract', 'label' => 'Ausfallstaffel', 'types' => ['contract', 'quote']],
+
+        'lineItems' => ['group' => 'data', 'label' => 'Positionen', 'types' => ['quote', 'invoice']],
+        'paymentPlan' => ['group' => 'data', 'label' => 'Zahlungsplan', 'types' => ['contract', 'quote', 'invoice']],
+        'deliverables' => ['group' => 'data', 'label' => 'Lieferumfang', 'types' => ['contract', 'quote']],
+        'schedule' => ['group' => 'data', 'label' => 'Ablaufplan', 'types' => ['contract', 'quote']],
         'mergeField' => ['group' => 'data', 'label' => 'Feld', 'types' => ['contract', 'quote', 'invoice', 'mail'], 'inline' => true],
     ];
 

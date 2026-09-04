@@ -4,6 +4,7 @@ use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Engagement\Models\Thread;
+use App\Enums\StaffRole;
 use App\Portal\Support\PortalSettings;
 use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
@@ -94,7 +95,7 @@ it('refuses a thread without a booking while messaging is booking-only', functio
     expect(Thread::count())->toBe(1);
 });
 
-// One sentence cannot greet three different rooms.
+// One sentence cannot greet two different rooms.
 it('greets each opening state with its own text', function () {
     StudioSettings::query()->update([
         'portal_welcome_inquiry' => 'Wir haben eure Anfrage.',
@@ -102,19 +103,35 @@ it('greets each opening state with its own text', function () {
         'portal_welcome_many' => 'Alle eure Termine auf einen Blick.',
     ]);
 
-    $contact = Contact::factory()->create();
+    // Without a greeting of their own — a new contact is given the studio's
+    // as their own, and that one beats all three states.
+    $contact = Contact::factory()->create(['portal_overrides' => null]);
 
     expect(test()->actingAs($contact, 'portal')->get('/')->viewData('page')['props']['welcomeText'])->toBe('Wir haben eure Anfrage.');
 
-    $first = Project::factory()->create(['portal_visible' => true]);
-    $first->attachContact($contact, ProjectContactRole::Primary);
-
-    expect(test()->actingAs($contact, 'portal')->get('/')->viewData('page')['props']['welcomeText'])->toBe('Schön, dass ihr da seid.');
-
-    $second = Project::factory()->create(['portal_visible' => true]);
-    $second->attachContact($contact, ProjectContactRole::Primary);
+    // A single booking is opened directly, so the home's other room is the
+    // one with several.
+    foreach ([Project::factory()->create(['portal_visible' => true]), Project::factory()->create(['portal_visible' => true])] as $project) {
+        $project->attachContact($contact, ProjectContactRole::Primary);
+    }
 
     expect(test()->actingAs($contact, 'portal')->get('/')->viewData('page')['props']['welcomeText'])->toBe('Alle eure Termine auf einen Blick.');
+});
+
+// Neuanlage: the studio's text becomes the contact's own, so it can be
+// rewritten for them without touching anybody else's.
+it('gives a new contact the studio greeting as their own', function () {
+    StudioSettings::query()->update(['portal_welcome_text' => 'Schön, dass ihr da seid.']);
+
+    expect(Contact::factory()->create()->portal_overrides)
+        ->toBe(['welcome' => 'Schön, dass ihr da seid.']);
+});
+
+it('leaves a contact created with their own greeting alone', function () {
+    StudioSettings::query()->update(['portal_welcome_text' => 'Schön, dass ihr da seid.']);
+
+    expect(Contact::factory()->create(['portal_overrides' => ['welcome' => 'Hallo ihr zwei.']])->portal_overrides)
+        ->toBe(['welcome' => 'Hallo ihr zwei.']);
 });
 
 it('lets a contact carry their own greeting whatever state they are in', function () {
@@ -154,4 +171,18 @@ it('clears the whole override set when every row is back on Standard', function 
         ->patch("/kontakte/{$contact->public_id}/portal", ['accept_quotes' => null]);
 
     expect($contact->fresh()->portal_overrides)->toBeNull();
+});
+
+// The studio-wide field wins; the owner's own number is what a studio that
+// never opened /einstellungen/portal is reached on.
+it('takes the contact number from the owner when the studio names none', function () {
+    StudioSettings::query()->update(['portal_contact_phone' => null]);
+    staffMember(StaffRole::Owner)->update(['phone' => '0171 3948820']);
+
+    expect(settings()->contactLine()['phone'])->toBe('0171 3948820');
+
+    StudioSettings::query()->update(['portal_contact_phone' => '030 220120']);
+    Cache::store('redis')->flush();
+
+    expect(settings()->contactLine()['phone'])->toBe('030 220120');
 });

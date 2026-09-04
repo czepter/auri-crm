@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
+import PortalField from '@/portal/components/PortalField.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
+import PortalHeader from '@/portal/components/PortalHeader.vue'
+import PortalShell from '@/portal/components/PortalShell.vue'
+import PortalWrap from '@/portal/components/PortalWrap.vue'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
-import { Label } from '@/ui/label'
 
 const form = useForm({ email: '' })
 const status = computed(() => usePage().props.flash.status)
@@ -15,38 +18,35 @@ function submit() {
 </script>
 
 <template>
-  <div class="pgate">
-    <span class="pmark" style="margin-bottom: var(--s6)">
-      <i />Atelier Nordlicht <em>Fotografie · Hamburg</em>
-    </span>
+  <PortalShell>
+    <!-- Nobody is signed in, so portalNav is null and the bar carries the
+         wordmark alone. -->
+    <PortalHeader />
 
-    <h1>{{ $t('portal.signInTitle') }}</h1>
-    <!-- No password, ever. The client proves an inbox and nothing else. -->
-    <p class="lede">{{ $t('portal.signInHint') }}</p>
+    <PortalWrap class="flex items-center py-24">
+      <div class="animate-rise motion-reduce:animate-none w-full max-w-[440px]">
+        <h1 class="font-serif text-[clamp(38px,5.4vw,56px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
+          {{ $t('portal.signInTitle') }}
+        </h1>
 
-    <!-- The same sentence whatever was typed: known address, unknown address
-         or one that has asked too often. -->
-    <p v-if="status" class="sent">{{ status }}</p>
+        <!-- The same sentence whatever was typed: known address, unknown
+             address or one that has asked too often. -->
+        <p v-if="status" class="mt-10 rounded-md bg-sunk p-6 text-[15px] leading-[1.6]">{{ status }}</p>
 
-    <form v-else @submit.prevent="submit">
-      <div class="fld grp">
-        <Label for="email">{{ $t('portal.email') }}</Label>
-        <Input
-          id="email"
-          v-model="form.email"
-          type="email"
-          autocomplete="email"
-          required
-        />
-        <p v-if="form.errors.email" class="err">{{ form.errors.email }}</p>
+        <form v-else class="mt-10 grid gap-6" @submit.prevent="submit">
+          <PortalField :label="$t('portal.email')">
+            <Input v-model="form.email" type="email" autocomplete="email" required />
+            <span v-if="form.errors.email" class="mt-[7px] block text-[12.5px] leading-[1.45] text-destructive">{{ form.errors.email }}</span>
+          </PortalField>
+
+          <Button class="justify-self-start" variant="portal" type="submit" :disabled="form.processing">
+            {{ $t('portal.sendLink') }}
+          </Button>
+        </form>
       </div>
+    </PortalWrap>
 
-      <Button class="w-full justify-center" type="submit" :disabled="form.processing">
-        {{ $t('portal.sendLink') }}
-      </Button>
-    </form>
-  </div>
-
-  <!-- § 5 TMG: reachable from the one screen a client can see before signing in. -->
-  <PortalFooter />
+    <!-- § 5 TMG: reachable from the one screen a client can see before signing in. -->
+    <PortalFooter />
+  </PortalShell>
 </template>

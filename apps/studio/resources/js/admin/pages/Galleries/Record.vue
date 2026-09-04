@@ -1,13 +1,34 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Link, useForm } from '@inertiajs/vue3'
+import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import PageHead from '@/ui/page/PageHead.vue'
+import { ChoiceGroup } from '@/ui/choice-group'
+import { Button } from '@/ui/button'
+import { Input } from '@/ui/input'
+import { Label } from '@/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/ui/dialog'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
+import GalleryNav from '@/admin/components/gallery/GalleryNav.vue'
+import { publishLabelKey, showPublish as showPublishRule, showWithdraw as showWithdrawRule } from '@/admin/lib/galleryPublish'
+import { xsrfHeader } from '@/admin/lib/multipartUpload'
+import Images from '@/admin/pages/Galleries/panes/Images.vue'
+import Settings from '@/admin/pages/Galleries/panes/Settings.vue'
 
-const props = defineProps<{
+const { t } = useI18n()
+
+// Was nicht zum offenen Bereich gehört, reist nicht mit — Inertia holt es
+// beim Wechsel als Teillieferung nach. Deshalb sind diese Blätter optional
+// und nicht etwa manchmal leer.
+const props = withDefaults(defineProps<{
   gallery: {
     id: string
     title: string | null
+    slug: string
     url: string
+    eventDate: string | null
     viewPassword: string | null
     downloadPin: string | null
     requiresVerifiedEmail: boolean
@@ -15,8 +36,15 @@ const props = defineProps<{
     balanceSettled: boolean
     requiresSettledBalance: boolean
     design: Record<string, string> | null
+    offers: { downloads: boolean; lists: boolean; comments: boolean }
+    deviates: boolean
+    withdrawn: boolean
+    prerelease: boolean
+    isExternal: boolean
+    canPublish: boolean
   }
-  siblings: { id: string; title: string | null; assetCount: number; open: boolean }[]
+  siblings?: { id: string; title: string | null; assetCount: number; open: boolean }[]
+  presets: App.Gallery.Data.GalleryPresetData[]
   figures: {
     published: number | null
     assets: number
@@ -25,41 +53,220 @@ const props = defineProps<{
     downloaded: number
     viewed: number
   }
-  sets: { name: string | null; count: number }[]
-  assets: { key: string; set: string | null; src: string | null }[]
-  versions: { version: number; publishedAt: string | null; assetCount: number }[]
-  builds: { id: string; size: string; status: string; parts: number; bytes: number }[]
-  lists: { id: string; name: string | null; owner: string | null; count: number }[]
-  activity: {
+  sets: { id: string; name: string; count: number; sortKey: string; sortDir: string; density: string }[]
+  assets?: { id: string; key: string; setId: string; src: string; filename: string; width: number; height: number; isCover: boolean }[]
+  versions?: { version: number; publishedAt: string | null; assetCount: number }[]
+  builds?: { id: string; size: string; status: string; parts: number; bytes: number }[]
+  lists?: { id: string; name: string | null; owner: string | null; count: number }[]
+  activity?: {
     downloads: { who: string; what: string | null; size: string | null; on: string | null }[]
     marks: { who: string | null; what: string; on: string }[]
     comments: { who: string | null; what: string; on: string }[]
     views: { who: string | null; on: string }[]
   }
-}>()
+  failedAssets?: { publicId: string; filename: string; error: string }[]
+  pendingUploads?: { id: string; setId: string; filename: string; stage: 'transferring' | 'processing' }[]
+  // Bereich, Set und Abschnitt kommen aus dem Pfad. Als ref() warf jedes
+  // Neuladen den Menschen zurück auf Bilder/Alle.
+  nav: App.Gallery.Data.GalleryNavData
+  area: 'bilder' | 'gestaltung' | 'einstellungen' | 'aktivitaet'
+  activeSetId: string | null
+  settingsSection: 'allgemein' | 'zugang' | 'download' | 'listen' | 'kommentare'
+}>(), {
+  siblings: () => [],
+  assets: () => [],
+  versions: () => [],
+  builds: () => [],
+  lists: () => [],
+  activity: () => ({ downloads: [], marks: [], comments: [], views: [] }),
+  failedAssets: () => [],
+  pendingUploads: () => [],
+})
 
-// C-19 (#255): five motions, five tabs. Four surfaces on one screen would not
-// be management but a heap — and the pictures need the whole width.
-const TABS = ['bilder', 'gestaltung', 'download', 'freigaben', 'aktivitaet'] as const
-const tab = ref<(typeof TABS)[number]>('bilder')
+const tab = computed(() => props.area)
+
+// Was der Gast oben sieht, ist das Titelbild — nicht das erste Bild der
+// Liste. Solange keins gesetzt ist, greift dieselbe Regel wie im Betrachter:
+// das erste. Der Rest der Vorschau ist die Reihe darunter, also alles ohne
+// das Titelbild.
+const cover = computed(() => props.assets.find((asset) => asset.isCover) ?? props.assets[0])
+const beneath = computed(() => props.assets.filter((asset) => asset.id !== cover.value?.id).slice(0, 6))
 
 // C-20 (#257): three sheets, because the questions differ — who took
 // something, who marked something, who was here at all.
 const SHEETS = ['downloads', 'marks', 'views'] as const
-const sheet = ref<(typeof SHEETS)[number]>('downloads')
+const sheet = ref<string>('downloads')
 
-const activeSet = ref<string | null>(null)
 
-const secrets = useForm({
-  view_password: props.gallery.viewPassword ?? '',
-  download_pin: props.gallery.downloadPin ?? '',
+const publishState = computed(() => ({
+  deviates: props.gallery.deviates,
+  withdrawn: props.gallery.withdrawn,
+  published: props.figures.published,
+  assets: props.figures.assets,
+}))
+const publishLabel = computed(() => publishLabelKey(publishState.value))
+const showPublish = computed(() => props.gallery.canPublish && showPublishRule(publishState.value))
+const showWithdraw = computed(() => props.gallery.canPublish && showWithdrawRule(publishState.value))
+
+function publish() {
+  router.post(`/galerien/${props.gallery.id}/veroeffentlichen`, {}, { preserveScroll: true })
+}
+
+function withdraw() {
+  router.delete(`/galerien/${props.gallery.id}/veroeffentlichung`, { preserveScroll: true })
+}
+
+// R39: only offerable before the first publish — the same state the
+// GalleryPrereleaseController guard checks server-side.
+const showStartPrerelease = computed(() => props.gallery.canPublish && !props.gallery.isExternal && !props.gallery.prerelease && props.figures.published === null)
+const showStopPrerelease = computed(() => props.gallery.canPublish && props.gallery.prerelease)
+
+function startPrerelease() {
+  router.post(`/galerien/${props.gallery.id}/pre-release`, {}, { preserveScroll: true })
+}
+
+function stopPrerelease() {
+  router.delete(`/galerien/${props.gallery.id}/pre-release`, { preserveScroll: true })
+}
+
+// R31: JSON, not Inertia — each mints a pass and hands back the guest url,
+// nothing here reloads the page.
+async function mintPreviewUrl(path: string): Promise<string | null> {
+  const response = await fetch(`/galerien/${props.gallery.id}/${path}`, {
+    method: 'POST',
+    headers: { ...xsrfHeader(), Accept: 'application/json' },
+  })
+
+  return response.ok ? ((await response.json()) as { url: string }).url : null
+}
+
+// Minor (fix round 1): a failed mint (403, stale CSRF, network) used to be a
+// silent no-op — no tab, nothing copied, nothing said — and a successful
+// copy gave no confirmation either, so the studio could not tell one from
+// the other. actionStatus is the one place both outcomes surface, next to
+// the buttons that triggered them. `url` is set only when a link exists but
+// could not be copied — shown selectable rather than lost, and left on
+// screen (no auto-clear) until the next action replaces it.
+const actionStatus = ref<{ ok: boolean; message: string; url?: string } | null>(null)
+let actionStatusTimer: ReturnType<typeof setTimeout> | undefined
+
+function flashStatus(ok: boolean, message: string, url?: string) {
+  clearTimeout(actionStatusTimer)
+  actionStatus.value = { ok, message, url }
+  if (!url) {
+    actionStatusTimer = setTimeout(() => (actionStatus.value = null), 3000)
+  }
+}
+
+async function openPreview() {
+  const url = await mintPreviewUrl('vorschau')
+  if (url) window.open(url, '_blank')
+  else flashStatus(false, t('galleryRecord.actionFailed'))
+}
+
+// Fix round 3: `await navigator.clipboard?.writeText(url)` used to await
+// undefined outright when the browser offered no Clipboard API (any
+// non-secure context) — the optional chain short-circuits the call, but
+// `await` sits outside it, so execution reached flashStatus(true, …)
+// regardless and reported a copy that never happened, onto a link that
+// then existed nowhere at all. Checked explicitly instead, and the link
+// itself is shown when it cannot be copied — a link the studio can select
+// beats a message about one it cannot.
+async function createPreviewLink() {
+  const url = await mintPreviewUrl('vorschau-link')
+  if (!url) {
+    flashStatus(false, t('galleryRecord.actionFailed'))
+    return
+  }
+
+  if (!navigator.clipboard) {
+    flashStatus(false, t('galleryRecord.actionFailed'), url)
+    return
+  }
+
+  try {
+    await navigator.clipboard.writeText(url)
+    flashStatus(true, t('gallery.copied'))
+  } catch {
+    // Permission denied, same as no API at all: the link still exists,
+    // still shown, still nothing lost.
+    flashStatus(false, t('galleryRecord.actionFailed'), url)
+  }
+}
+
+function copyLink() {
+  navigator.clipboard?.writeText(props.gallery.url)
+    .then(() => flashStatus(true, t('gallery.copied')))
+    .catch(() => flashStatus(false, t('galleryRecord.actionFailed')))
+}
+
+const savingPreset = ref(false)
+const presetForm = useForm({ name: props.gallery.title ?? '' })
+
+function saveAsPreset() {
+  presetForm.post(`/galerien/${props.gallery.id}/vorlage`, {
+    preserveScroll: true,
+    onSuccess: () => (savingPreset.value = false),
+  })
+}
+
+const applyingPreset = ref(false)
+const applyForm = useForm({ gallery_preset_id: '' })
+
+// Important (fix round 1): downloads/lists/comments go live the instant
+// this posts on an already-published gallery — unlike design, which only
+// creates a draft deviation until the next Veröffentlichen. The dialog
+// names exactly what the chosen preset will overwrite, the same way
+// Create.vue's own fields already do by reflecting the preset's values.
+const selectedPreset = computed(() => props.presets.find((row) => row.id === applyForm.gallery_preset_id) ?? null)
+const presetChanges = computed(() => {
+  const preset = selectedPreset.value
+  if (!preset) return []
+
+  const onOff = (value: boolean) => t(value ? 'galleryPresets.on' : 'galleryPresets.off')
+  const changes: string[] = []
+  if (preset.design !== null) changes.push(t('galleryRecord.tab.gestaltung'))
+  if (preset.downloadsEnabled !== null) changes.push(`${t('galleryRecord.settingsNav.download')}: ${onOff(preset.downloadsEnabled)}`)
+  if (preset.listsEnabled !== null) changes.push(`${t('galleryRecord.settingsNav.listen')}: ${onOff(preset.listsEnabled)}`)
+  if (preset.commentsEnabled !== null) changes.push(`${t('galleryRecord.settingsNav.kommentare')}: ${onOff(preset.commentsEnabled)}`)
+
+  return changes
 })
 
-function saveSecrets() {
-  secrets.transform((data) => ({
-    view_password: data.view_password === '' ? null : data.view_password,
-    download_pin: data.download_pin === '' ? null : data.download_pin,
-  })).patch(`/galerien/${props.gallery.id}`, { preserveScroll: true })
+function applyPreset() {
+  applyForm.post(`/galerien/${props.gallery.id}/vorlage-anwenden`, {
+    preserveScroll: true,
+    onSuccess: () => (applyingPreset.value = false),
+  })
+}
+
+const setError = ref<{ id: string; message: string } | null>(null)
+
+function createSet(name: string) {
+  setError.value = null
+  router.post(`/galerien/${props.gallery.id}/sets`, { name }, {
+    preserveScroll: true,
+    onError: (errors) => { if (errors.name) setError.value = { id: 'new', message: errors.name } },
+  })
+}
+
+function renameSet({ id, name }: { id: string; name: string }) {
+  setError.value = null
+  router.patch(`/galerien/${props.gallery.id}/sets/${id}`, { name }, {
+    preserveScroll: true,
+    onError: (errors) => { if (errors.name) setError.value = { id, message: errors.name } },
+  })
+}
+
+function removeSet({ id, targetSetId }: { id: string; targetSetId: string | null }) {
+  router.delete(`/galerien/${props.gallery.id}/sets/${id}`, {
+    data: { target_set_id: targetSetId },
+    preserveScroll: true,
+  })
+}
+
+function reorderSets(order: string[]) {
+  router.patch(`/galerien/${props.gallery.id}/sets/reihenfolge`, { order }, { preserveScroll: true })
 }
 
 const design = useForm({ design: props.gallery.design ?? { cover: 'full', type: 'serif', colour: 'light', grid: 'wide' } })
@@ -79,300 +286,305 @@ function day(iso: string | null) {
 function megabytes(bytes: number) {
   return `${Math.round(bytes / 1_000_000)} MB`
 }
-
-function shown() {
-  return activeSet.value === null ? props.assets : props.assets.filter((asset) => asset.set === activeSet.value)
-}
 </script>
 
 <template>
-  <AdminLayout active="projekte">
-    <div data-theme="crm">
-      <div class="sheet" style="max-width: none; padding-bottom: 0">
-        <div class="head"><h1>{{ gallery.title ?? '—' }}</h1></div>
+  <AdminLayout active="galerien">
+    <div data-tokens>
+      <PageHead :title="gallery.title ?? '—'">
+        <!-- Stand, chip-styled: the same fact the old counter band spent a
+             whole column on, and the only one of the six worth a glance at
+             every tab (ProjectShell's isBooked chip is the pattern). -->
+        <span
+          v-if="figures.published !== null"
+          class="flex-none rounded-[var(--r-sm)] bg-ok-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-ok"
+        >{{ $t('galleryRecord.version', { version: figures.published }) }}</span>
+        <span
+          v-else-if="gallery.prerelease"
+          class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due"
+        >{{ $t('galleryRecord.prerelease') }}</span>
 
-        <!-- Link, password and code stand in clear and are set here: both are
-             handed to guests anyway, and a studio that cannot look one up
-             sets a new one on every enquiry (C-17, #253). -->
-        <div class="access">
-          <div class="col wide">
-            <div class="lab">{{ $t('galleryRecord.link') }}</div>
-            <div class="val"><a class="link" :href="gallery.url">{{ gallery.url }}</a></div>
+        <span v-if="actionStatus" class="ml-auto flex items-center gap-1.5">
+          <span class="text-[11.5px]" :class="actionStatus.ok ? 'text-ink-2' : 'text-destructive'">{{ actionStatus.message }}</span>
+          <Input
+            v-if="actionStatus.url"
+            :model-value="actionStatus.url"
+            readonly
+            type="text"
+            class="w-[220px] text-[11.5px]"
+            @focus="($event.target as HTMLInputElement).select()"
+          />
+        </span>
 
-            <div class="siblings">
-              <Link
-                v-for="sibling in siblings"
-                :key="sibling.id"
-                :class="{ on: sibling.open }"
-                :href="`/galerien/${sibling.id}`"
-              >
-                {{ sibling.title ?? '—' }}<span>{{ sibling.assetCount }}</span>
-              </Link>
-            </div>
-          </div>
+        <span class="flex flex-wrap gap-2" :class="!actionStatus && 'ml-auto'">
+          <!-- R36: modal (reka-ui's default) runs useHideOthers() the
+               moment force-mount mounts the content, aria-hiding #app from
+               page load regardless of open state — a Critical fix round
+               caught this hiding the whole record screen from assistive
+               tech, permanently. A small action menu has no business
+               trapping focus or hiding the page behind it either way. -->
+          <DropdownMenu :modal="false">
+            <DropdownMenuTrigger as-child>
+              <Button type="button" variant="pill-muted">{{ $t('galleryRecord.more') }}</Button>
+            </DropdownMenuTrigger>
+            <!-- force-mount + data-[state=closed]:hidden rather than the
+                 default open-only mount: Record.test.ts SSR-renders this
+                 page as a string, and Presence unmounts closed content
+                 entirely — the only way the menu's own rules (canPublish
+                 gating the preview link, presets.length gating "Vorlage
+                 anwenden") stay pinned by a test that can fail. -->
+            <DropdownMenuContent force-mount class="data-[state=closed]:hidden">
+              <DropdownMenuItem @select="copyLink">{{ $t('galleryRecord.copyLink') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="gallery.canPublish" @select="createPreviewLink">{{ $t('galleryRecord.createPreviewLink') }}</DropdownMenuItem>
+              <DropdownMenuItem @select="savingPreset = true">{{ $t('galleryRecord.saveAsPreset') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="presets.length" @select="applyingPreset = true">{{ $t('galleryRecord.applyPreset') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="showStartPrerelease" @select="startPrerelease">{{ $t('galleryRecord.prerelease') }}</DropdownMenuItem>
+              <DropdownMenuItem v-if="showStopPrerelease" @select="stopPrerelease">{{ $t('galleryRecord.prereleaseStop') }}</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-          <div class="col">
-            <div class="lab">{{ $t('gallery.gateView') }}</div>
-            <div class="val"><input v-model="secrets.view_password" type="text" @blur="saveSecrets" /></div>
-          </div>
+          <Button type="button" variant="pill-muted" @click="openPreview">{{ $t('galleryRecord.preview') }}</Button>
+          <Button v-if="showWithdraw" type="button" variant="pill-muted" @click="withdraw">{{ $t('galleryRecord.withdraw') }}</Button>
+          <Button v-if="showPublish" type="button" @click="publish">{{ $t(publishLabel) }}</Button>
+        </span>
+      </PageHead>
 
-          <div class="col">
-            <div class="lab">{{ $t('gallery.gateDownload') }}</div>
-            <div class="val"><input v-model="secrets.download_pin" class="s" type="text" @blur="saveSecrets" /></div>
-          </div>
+      <Dialog v-model:open="savingPreset">
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{{ $t('galleryRecord.saveAsPreset') }}</DialogTitle>
+          </DialogHeader>
+
+          <DialogBody>
+            <form id="gallery-preset-form" class="flex flex-col gap-1.5" @submit.prevent="saveAsPreset">
+              <Label for="preset-name">{{ $t('galleryPresets.nameField') }}</Label>
+              <Input id="preset-name" v-model="presetForm.name" type="text" maxlength="120" />
+              <p v-if="presetForm.errors.name" class="text-[11.5px] leading-[1.45] text-destructive">{{ presetForm.errors.name }}</p>
+            </form>
+          </DialogBody>
+
+          <DialogFooter>
+            <Button type="submit" form="gallery-preset-form" :disabled="presetForm.processing || presetForm.name === ''">
+              {{ $t('common.save') }}
+            </Button>
+            <DialogClose as-child>
+              <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog v-model:open="applyingPreset">
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{{ $t('galleryRecord.applyPreset') }}</DialogTitle>
+          </DialogHeader>
+
+          <DialogBody>
+            <form id="gallery-preset-apply-form" class="flex flex-col gap-1.5" @submit.prevent="applyPreset">
+              <Label for="preset-apply">{{ $t('galleryRecord.applyPresetField') }}</Label>
+              <Select v-model="applyForm.gallery_preset_id">
+                <SelectTrigger id="preset-apply"><SelectValue :placeholder="$t('galleryRecord.applyPresetPlaceholder')" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="preset in presets" :key="preset.id" :value="preset.id">{{ preset.name }}</SelectItem>
+                </SelectContent>
+              </Select>
+              <p v-if="presetChanges.length" class="text-[11.5px] leading-[1.45] text-faint">
+                {{ $t('galleryRecord.applyPresetChanges') }} {{ presetChanges.join(' · ') }}
+              </p>
+            </form>
+          </DialogBody>
+
+          <DialogFooter>
+            <Button type="submit" form="gallery-preset-apply-form" :disabled="applyForm.processing || applyForm.gallery_preset_id === ''">
+              {{ $t('galleryRecord.applyPreset') }}
+            </Button>
+            <DialogClose as-child>
+              <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <div class="flex max-[640px]:flex-col">
+        <GalleryNav
+          :nav="nav"
+          :area="area"
+          :active-set-id="activeSetId"
+          :error="setError"
+          :gallery-id="gallery.id"
+          @create="createSet"
+          @rename="renameSet"
+          @remove="removeSet"
+          @reorder="reorderSets"
+        />
+
+        <!-- Bilder: the pane owns the grid and selection. Fassungen moved to
+             Einstellungen — the count sits beside the set name and Stand is
+             the header's own chip, so nothing here repeats them. -->
+        <div v-if="tab === 'bilder'" class="min-w-0 flex-1">
+          <Images
+            :gallery="gallery"
+            :sets="sets"
+            :assets="assets"
+            :active-set-id="activeSetId"
+            :failed-assets="failedAssets"
+            :pending-uploads="pendingUploads"
+          />
         </div>
 
-        <div class="band">
-          <div class="cell">
-            <div class="lab">{{ $t('galleryRecord.published') }}</div>
-            <div class="val">{{ figures.published ? $t('galleryRecord.version', { version: figures.published }) : '—' }}</div>
-          </div>
-          <div class="cell">
-            <div class="lab">{{ $t('galleryRecord.images') }}</div>
-            <div class="val">{{ figures.assets }}</div>
-          </div>
-          <div class="cell">
-            <div class="lab">{{ $t('galleryRecord.expiry') }}</div>
-            <div class="val plain">{{ day(figures.expiresAt) }}</div>
-          </div>
-          <div class="cell">
-            <div class="lab">{{ $t('galleryRecord.marked') }}</div>
-            <div class="val">{{ figures.marked }}</div>
-          </div>
-          <div class="cell">
-            <div class="lab">{{ $t('galleryRecord.downloaded') }}</div>
-            <div class="val">{{ figures.downloaded }}</div>
-          </div>
-          <div class="cell">
-            <div class="lab">{{ $t('galleryRecord.viewed') }}</div>
-            <div class="val">{{ figures.viewed }}</div>
-          </div>
-        </div>
-
-        <!-- balance_settled is a state out of the payments, never a switch —
-             it stands as a value beside the block it causes. -->
-        <p v-if="gallery.requiresSettledBalance && !gallery.balanceSettled" class="hint">
-          {{ $t('galleryRecord.blockedByBalance') }}
-        </p>
-      </div>
-
-      <div class="tabs">
-        <button v-for="name in TABS" :key="name" type="button" :class="{ on: tab === name }" @click="tab = name">
-          {{ $t(`galleryRecord.tab.${name}`) }}
-        </button>
-      </div>
-
-      <!-- Bilder: sets on the left, grid on the right, versions underneath —
-           a version is a published selection, so it is a statement about
-           pictures and belongs here, not with the permissions. -->
-      <div v-if="tab === 'bilder'" style="display: flex">
-        <div class="sets">
-          <a href="#" :class="{ on: activeSet === null }" @click.prevent="activeSet = null">
-            {{ $t('gallery.all') }}<span class="ct">{{ figures.assets }}</span>
-          </a>
-          <a
-            v-for="set in sets.filter((entry) => entry.name !== null)"
-            :key="set.name!"
-            href="#"
-            :class="{ on: activeSet === set.name }"
-            @click.prevent="activeSet = set.name"
-          >
-            {{ set.name }}<span class="ct">{{ set.count }}</span>
-          </a>
-        </div>
-
-        <div class="shelf">
-          <div class="bar">
-            <h2>{{ $t('galleryRecord.images') }}</h2>
-            <span class="n">{{ shown().length }}</span>
-            <Link class="btn-2" :href="`/galerien/${gallery.id}/medien`" style="margin-left: auto">
-              {{ $t('galleryRecord.ingest') }}
-            </Link>
-          </div>
-
-          <div class="grid-photos">
-            <figure v-for="asset in shown()" :key="asset.key">
-              <img v-if="asset.src" :src="`${asset.src}?w=400&fmt=jpeg`" alt="" loading="lazy" />
-              <span v-if="asset.set" class="mark"><span>{{ asset.set }}</span></span>
-            </figure>
-          </div>
-
-          <h2 style="margin-top: var(--s6)">{{ $t('galleryRecord.versions') }}</h2>
-          <div class="list">
-            <div v-for="version in versions" :key="version.version" class="row">
-              <span class="when">{{ $t('galleryRecord.version', { version: version.version }) }}</span>
-              <span class="n">{{ $t('contacts.assetCount', version.assetCount) }}</span>
-              <span class="m">{{ day(version.publishedAt) }}</span>
+        <!-- Gestaltung: choosing without seeing is guessing, so the choice is
+             on the left and the result on the right. -->
+        <div v-else-if="tab === 'gestaltung'" class="flex min-w-0 flex-1">
+          <div class="w-80 flex-none pt-5 pr-4 pb-7 pl-8">
+            <div class="mb-4 flex flex-col gap-1">
+              <span class="pl-0.5 text-[10.5px] leading-none font-normal tracking-[0.05em] uppercase text-ink-2">{{ $t('galleryRecord.cover') }}</span>
+              <ChoiceGroup
+                v-model="design.design.cover"
+                :options="COVERS.map((option) => ({ value: option, label: $t(`galleryRecord.cover_${option}`) }))"
+                @update:model-value="saveDesign"
+              />
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Gestaltung: choosing without seeing is guessing, so the choice is on
-           the left and the result on the right. -->
-      <div v-else-if="tab === 'gestaltung'" style="display: flex">
-        <div class="sets" style="width: 320px">
-          <div class="field" style="margin-bottom: var(--s4)">
-            <span>{{ $t('galleryRecord.cover') }}</span>
-            <div class="choice">
-              <label v-for="option in COVERS" :key="option">
-                <input v-model="design.design.cover" type="radio" :value="option" @change="saveDesign" />
-                <span>{{ $t(`galleryRecord.cover_${option}`) }}</span>
-              </label>
+            <div class="mb-4 flex flex-col gap-1">
+              <span class="pl-0.5 text-[10.5px] leading-none font-normal tracking-[0.05em] uppercase text-ink-2">{{ $t('galleryRecord.colour') }}</span>
+              <ChoiceGroup
+                v-model="design.design.colour"
+                :options="COLOURS.map((option) => ({ value: option, label: $t(`galleryRecord.colour_${option}`) }))"
+                @update:model-value="saveDesign"
+              />
             </div>
-          </div>
 
-          <div class="field" style="margin-bottom: var(--s4)">
-            <span>{{ $t('galleryRecord.colour') }}</span>
-            <div class="choice">
-              <label v-for="option in COLOURS" :key="option">
-                <input v-model="design.design.colour" type="radio" :value="option" @change="saveDesign" />
-                <span>{{ $t(`galleryRecord.colour_${option}`) }}</span>
-              </label>
-            </div>
-          </div>
-
-          <div class="field">
-            <span>{{ $t('galleryRecord.grid') }}</span>
-            <div class="choice">
-              <label v-for="option in GRIDS" :key="option">
-                <input v-model="design.design.grid" type="radio" :value="option" @change="saveDesign" />
-                <span>{{ $t(`galleryRecord.grid_${option}`) }}</span>
-              </label>
-            </div>
-          </div>
-        </div>
-
-        <div class="preview-pane">
-          <div class="frame">
-            <div class="cover">
-              <img v-if="assets[0]?.src" :src="`${assets[0].src}?w=1200&fmt=jpeg`" alt="" />
-              <div class="title">
-                <b>{{ gallery.title }}</b>
-                <span>{{ $t('contacts.assetCount', figures.assets) }}</span>
-              </div>
-            </div>
-            <div class="thumbs">
-              <img
-                v-for="asset in assets.slice(1, 7)"
-                :key="asset.key"
-                :src="`${asset.src}?w=400&fmt=jpeg`"
-                alt=""
-                loading="lazy"
+            <div class="flex flex-col gap-1">
+              <span class="pl-0.5 text-[10.5px] leading-none font-normal tracking-[0.05em] uppercase text-ink-2">{{ $t('galleryRecord.grid') }}</span>
+              <ChoiceGroup
+                v-model="design.design.grid"
+                :options="GRIDS.map((option) => ({ value: option, label: $t(`galleryRecord.grid_${option}`) }))"
+                @update:model-value="saveDesign"
               />
             </div>
           </div>
 
-          <div class="pv-foot">
-            <a class="link" :href="gallery.url">{{ $t('galleryRecord.openLive') }}</a>
-          </div>
-        </div>
-      </div>
+          <div class="min-w-0 flex-1 bg-sunk px-8 pt-5 pb-7">
+            <div class="overflow-hidden rounded-[12px] bg-paper">
+              <div class="relative">
+                <img v-if="cover?.src" class="block aspect-video w-full object-cover" :src="`${cover.src}?w=1200&fmt=jpeg`" alt="" />
+                <div class="absolute inset-x-0 bottom-0 bg-[linear-gradient(transparent,rgba(20,16,14,0.55))] px-5 py-[22px] text-center text-paper">
+                  <b class="block text-[19px] leading-[1.2] font-semibold tracking-[0.04em] uppercase">{{ gallery.title }}</b>
+                  <span class="text-[11.5px] opacity-85">{{ $t('contacts.assetCount', figures.assets) }}</span>
+                </div>
+              </div>
+              <div class="grid grid-cols-3 gap-1.5 p-2.5">
+                <img
+                  v-for="asset in beneath"
+                  :key="asset.id"
+                  class="block aspect-3/2 w-full rounded-[3px] object-cover"
+                  :src="`${asset.src}?w=400&fmt=jpeg`"
+                  alt=""
+                  loading="lazy"
+                />
+              </div>
+            </div>
 
-      <!-- Download: the archives are the fact, so the tab shows them rather
-           than a promise about them. -->
-      <div v-else-if="tab === 'download'" class="sheet">
-        <table v-if="builds.length">
-          <thead>
-            <tr>
-              <th>{{ $t('gallery.sizeLabel') }}</th>
-              <th>{{ $t('galleryRecord.parts') }}</th>
-              <th class="r">{{ $t('galleryRecord.size') }}</th>
-              <th>{{ $t('galleryRecord.state') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="build in builds" :key="build.id">
-              <td class="nm">{{ $t(`gallery.size.${build.size}`) }}</td>
-              <td class="mu">{{ build.parts }}</td>
-              <td class="r">{{ megabytes(build.bytes) }}</td>
-              <td class="mu">{{ build.status }}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <p v-else class="hint">{{ $t('galleryRecord.noBuilds') }}</p>
-      </div>
-
-      <!-- Freigaben: lists carry their owner, because a list always belongs
-           to somebody — the couple or a guest who identified themselves. -->
-      <div v-else-if="tab === 'freigaben'" class="sheet">
-        <div class="setting">
-          <div class="t">
-            {{ $t('gallery.gateView') }}
-            <div class="s">{{ gallery.viewPassword ?? $t('gallery.gateOff') }}</div>
-          </div>
-        </div>
-        <div class="setting">
-          <div class="t">
-            {{ $t('gallery.gateDownload') }}
-            <div class="s">{{ gallery.downloadPin ?? $t('gallery.gateOff') }}</div>
-          </div>
-        </div>
-        <div class="setting">
-          <div class="t">
-            {{ $t('galleryRecord.emailGate') }}
-            <div class="s">{{ gallery.requiresVerifiedEmail ? $t('gallery.gateOn') : $t('gallery.gateOff') }}</div>
+            <div class="mt-4 flex items-center gap-3">
+              <a class="ml-auto text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline" :href="gallery.url">{{ $t('galleryRecord.openLive') }}</a>
+            </div>
           </div>
         </div>
 
-        <h2 style="margin-top: var(--s6)">{{ $t('gallery.listsTitle') }}</h2>
-        <div class="list">
-          <div v-for="list in lists" :key="list.id" class="row">
-            <span class="n">{{ list.name ?? $t('gallery.heart') }}</span>
-            <span class="tag">{{ list.owner ?? $t('galleryRecord.guest') }}</span>
-            <span class="m">{{ $t('contacts.assetCount', list.count) }}</span>
-          </div>
-          <p v-if="!lists.length" class="hint">{{ $t('gallery.listEmpty') }}</p>
+        <!-- Einstellungen: Pixieset's General Settings shape — a
+             sub-navigation in the rail, one labelled section at a time here. -->
+        <div v-else-if="tab === 'einstellungen'" class="flex min-w-0 flex-1 px-8 pt-7 pb-8">
+          <Settings :gallery="gallery" :siblings="siblings" :versions="versions" :lists="lists" :settings-section="settingsSection" />
         </div>
-      </div>
 
-      <div v-else class="sheet">
-        <span class="seg">
-          <button v-for="name in SHEETS" :key="name" type="button" :class="{ on: sheet === name }" @click="sheet = name">
-            {{ $t(`galleryRecord.sheet.${name}`) }}
-          </button>
-        </span>
+        <div v-else class="min-w-0 flex-1 px-8 pt-7 pb-8">
+          <!-- Marked/downloaded/viewed: a look backwards, so they sit above
+               the sheets that spell the same facts out row by row. -->
+          <div class="mb-5 flex">
+            <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
+              <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.marked') }}</div>
+              <div class="mt-[5px] text-[17px] leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums">{{ figures.marked }}</div>
+            </div>
+            <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
+              <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.downloaded') }}</div>
+              <div class="mt-[5px] text-[17px] leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums">{{ figures.downloaded }}</div>
+            </div>
+            <div class="min-w-0 flex-1 px-[18px] shadow-[inset_1px_0_0_var(--rule)] first:pl-0 first:shadow-none">
+              <div class="text-[10.5px] tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.viewed') }}</div>
+              <div class="mt-[5px] text-[17px] leading-[1.2] font-semibold tracking-[-0.02em] tabular-nums">{{ figures.viewed }}</div>
+            </div>
+          </div>
 
-        <table style="margin-top: var(--s4)">
-          <thead>
-            <tr>
-              <th>{{ $t('galleryRecord.who') }}</th>
-              <th>{{ $t('galleryRecord.what') }}</th>
-              <th class="r">{{ $t('galleryRecord.when') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template v-if="sheet === 'downloads'">
-              <tr v-for="(row, index) in activity.downloads" :key="index">
-                <td class="nm">{{ row.who }}</td>
-                <td class="mu">{{ row.what ?? $t('gallery.everything') }} · {{ $t(`gallery.size.${row.size}`) }}</td>
-                <td class="r">{{ day(row.on) }}</td>
+          <ChoiceGroup
+            v-model="sheet"
+            :options="SHEETS.map((name) => ({ value: name, label: $t(`galleryRecord.sheet.${name}`) }))"
+            variant="segmented"
+          />
+
+          <table class="mt-4 w-full border-collapse">
+            <thead>
+              <tr>
+                <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.who') }}</th>
+                <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.what') }}</th>
+                <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2 text-right">{{ $t('galleryRecord.when') }}</th>
               </tr>
-            </template>
+            </thead>
+            <tbody>
+              <template v-if="sheet === 'downloads'">
+                <tr v-for="(row, index) in activity.downloads" :key="index">
+                  <td class="px-8 py-2.5 align-baseline text-[13.5px] font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_#F0F0F2]">{{ row.who }}</td>
+                  <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ row.what ?? $t('gallery.everything') }} · {{ $t(`gallery.size.${row.size}`) }}</td>
+                  <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-right tabular-nums">{{ day(row.on) }}</td>
+                </tr>
+              </template>
 
-            <template v-else-if="sheet === 'marks'">
-              <tr v-for="(row, index) in activity.marks" :key="index">
-                <td class="nm">{{ row.who ?? $t('galleryRecord.guest') }}</td>
-                <td class="mu">{{ row.what }}</td>
-                <td class="r">{{ day(row.on) }}</td>
-              </tr>
-              <tr v-for="(row, index) in activity.comments" :key="`c${index}`">
-                <td class="nm">{{ row.who ?? $t('galleryRecord.guest') }}</td>
-                <td class="mu">{{ row.what }}</td>
-                <td class="r">{{ day(row.on) }}</td>
-              </tr>
-            </template>
+              <template v-else-if="sheet === 'marks'">
+                <tr v-for="(row, index) in activity.marks" :key="index">
+                  <td class="px-8 py-2.5 align-baseline text-[13.5px] font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_#F0F0F2]">{{ row.who ?? $t('galleryRecord.guest') }}</td>
+                  <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ row.what }}</td>
+                  <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-right tabular-nums">{{ day(row.on) }}</td>
+                </tr>
+                <tr v-for="(row, index) in activity.comments" :key="`c${index}`">
+                  <td class="px-8 py-2.5 align-baseline text-[13.5px] font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_#F0F0F2]">{{ row.who ?? $t('galleryRecord.guest') }}</td>
+                  <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ row.what }}</td>
+                  <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-right tabular-nums">{{ day(row.on) }}</td>
+                </tr>
+              </template>
 
-            <template v-else>
-              <tr v-for="(row, index) in activity.views" :key="index">
-                <td class="nm">{{ row.who ?? $t('galleryRecord.guest') }}</td>
-                <td class="mu">—</td>
-                <td class="r">{{ day(row.on) }}</td>
+              <template v-else>
+                <tr v-for="(row, index) in activity.views" :key="index">
+                  <td class="px-8 py-2.5 align-baseline text-[13.5px] font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_#F0F0F2]">{{ row.who ?? $t('galleryRecord.guest') }}</td>
+                  <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">—</td>
+                  <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-right tabular-nums">{{ day(row.on) }}</td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+
+          <!-- Fertige ZIP-Archive: Tatsachen über Vergangenes, keine
+               Einstellung — verlässt deshalb den ⚙-Reiter. -->
+          <h2 class="mt-9">{{ $t('galleryRecord.downloadsHeading') }}</h2>
+          <table v-if="builds.length" class="w-full border-collapse">
+            <thead>
+              <tr>
+                <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('gallery.sizeLabel') }}</th>
+                <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.parts') }}</th>
+                <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2 text-right">{{ $t('galleryRecord.size') }}</th>
+                <th class="px-8 pb-2 text-left text-[11px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2">{{ $t('galleryRecord.state') }}</th>
               </tr>
-            </template>
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              <tr v-for="build in builds" :key="build.id">
+                <td class="px-8 py-2.5 align-baseline text-[13.5px] font-semibold tracking-[-0.014em] shadow-[inset_0_1px_0_#F0F0F2]">{{ $t(`gallery.size.${build.size}`) }}</td>
+                <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ build.parts }}</td>
+                <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-right tabular-nums">{{ megabytes(build.bytes) }}</td>
+                <td class="px-8 py-2.5 align-baseline text-[13px] shadow-[inset_0_1px_0_#F0F0F2] text-ink-2">{{ build.status }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p v-else class="text-[11.5px] leading-[1.45] text-faint">{{ $t('galleryRecord.noBuilds') }}</p>
+        </div>
       </div>
     </div>
   </AdminLayout>

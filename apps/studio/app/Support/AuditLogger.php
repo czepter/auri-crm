@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\AuditLog;
 use App\Models\User;
+use Carbon\CarbonInterval;
 use Illuminate\Support\Facades\Request;
 
 class AuditLogger
@@ -33,6 +34,28 @@ class AuditLogger
             'ip_address' => Request::ip(),
             'user_agent' => substr((string) Request::userAgent(), 0, 500),
         ]);
+    }
+
+    /**
+     * Für Schreibwege, die pro Bedienschritt feuern statt pro Entscheidung —
+     * der Autosave eines Angebotsentwurfs ist einer davon. Ein Entwurf ist
+     * per Definition unfertig; seine Zwischenstände sind keine Historie.
+     */
+    public static function recordThrottled(
+        string $event,
+        CarbonInterval $within,
+        ?User $actor = null,
+        array $context = [],
+        ?string $subject = null,
+        ?int $projectId = null,
+    ): ?AuditLog {
+        $recent = AuditLog::query()
+            ->where('event', $event)
+            ->where('subject', $subject)
+            ->where('created_at', '>=', now()->sub($within))
+            ->exists();
+
+        return $recent ? null : self::record($event, $actor, $context, $subject, $projectId);
     }
 
     private static function sanitize(array $context): array

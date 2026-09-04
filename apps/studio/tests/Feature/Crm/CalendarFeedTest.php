@@ -48,7 +48,7 @@ it('carries the crew member assigned shoots with their call times', function () 
         ->and($body)->toContain('DTEND:20260614T210000Z')
         ->and($body)->toContain('SUMMARY:Hochzeitstag · Meier & Kowalski')
         ->and($body)->toContain('LOCATION:Gut Basthorst')
-        ->and($body)->toContain("UID:{$shoot->public_id}@studio.nordlicht");
+        ->and($body)->toContain("UID:{$shoot->public_id}@".parse_url(config('app.url'), PHP_URL_HOST));
 });
 
 it('shows a shoot with no call time as an all-day event', function () {

@@ -56,7 +56,7 @@ it('updates a contact', function () {
             'email' => $contact->email,
             'phone' => $contact->phone,
         ])
-        ->assertRedirect('/kontakte');
+        ->assertRedirect("/kontakte/{$contact->public_id}");
 
     expect($contact->fresh()->name)->toBe('Annika Steffens');
 });
@@ -83,7 +83,7 @@ it('lets a contact keep its own email', function () {
             'name' => 'Neuer Name',
             'email' => 'mine@example.test',
         ])
-        ->assertRedirect('/kontakte')
+        ->assertRedirect("/kontakte/{$contact->public_id}")
         ->assertSessionHasNoErrors();
 });
 
@@ -92,7 +92,7 @@ it('allows clearing an email', function () {
 
     $this->actingAs($this->staff, 'staff')
         ->patch("/kontakte/{$contact->public_id}", ['name' => $contact->name, 'email' => null])
-        ->assertRedirect('/kontakte');
+        ->assertRedirect("/kontakte/{$contact->public_id}");
 
     expect($contact->fresh()->email)->toBeNull();
 });

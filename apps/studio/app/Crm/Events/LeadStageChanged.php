@@ -2,8 +2,8 @@
 
 namespace App\Crm\Events;
 
-use App\Crm\Enums\LeadStage;
 use App\Crm\Models\Lead;
+use App\Crm\Models\Stage;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
@@ -17,7 +17,7 @@ class LeadStageChanged
 
     public function __construct(
         public readonly Lead $lead,
-        public readonly LeadStage $from,
-        public readonly LeadStage $to,
+        public readonly Stage $from,
+        public readonly Stage $to,
     ) {}
 }

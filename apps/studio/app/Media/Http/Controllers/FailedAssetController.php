@@ -10,8 +10,8 @@ use Illuminate\Http\RedirectResponse;
 
 /**
  * G-04: the "needs attention" tray's one action — re-running ingest for a
- * Failed asset. The tray itself is a section of the ingest screen
- * (MediaIngestController::show), not a screen of its own.
+ * Failed asset. The tray itself is a section of the Bilder tab
+ * (GalleryRecordController::show), not a screen of its own.
  */
 class FailedAssetController extends Controller
 {

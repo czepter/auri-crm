@@ -71,7 +71,7 @@ it('rows a gallery running out, pointing at the gallery', function () {
         ->and($rows->first()->what)->toContain('Galerie läuft')
         ->and($rows->first()->action->label)->toBe('Album anbieten')
         ->and($rows->first()->action->kind)->toBe('link')
-        ->and($rows->first()->action->target)->toBe("/galerien/{$gallery->public_id}/medien");
+        ->and($rows->first()->action->target)->toBe("/galerien/{$gallery->public_id}");
 });
 
 it('does not row a gallery kept indefinitely', function () {
