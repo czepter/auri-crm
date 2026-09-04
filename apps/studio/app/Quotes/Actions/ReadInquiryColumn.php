@@ -17,9 +17,8 @@ use Illuminate\Support\Collection;
  * Mockup 01's *Anfragen & Angebote* column: what the studio owes on an offer
  * it has already made.
  *
- * Derived rather than maintained, like ReadProductionBoard — a quote accepted
- * this morning drops off the column on the next read because there is nothing
- * else for it to do.
+ * Derived rather than maintained — a quote accepted this morning drops off the
+ * column on the next read because there is nothing else for it to do.
  *
  * The first row is gated on the automation trail, not on silence alone. The
  * design's decision 2 is the reason: a quote whose reminder has not gone out

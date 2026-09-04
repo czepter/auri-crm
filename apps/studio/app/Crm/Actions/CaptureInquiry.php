@@ -3,17 +3,19 @@
 namespace App\Crm\Actions;
 
 use App\Crm\Data\CaptureInquiryData;
-use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
-use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootKind;
-use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Events\LeadCaptured;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
+use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
+use App\Crm\Support\CrmVocabulary;
 use App\Models\User;
+use App\Portal\Support\PortalSettings;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
 
@@ -32,6 +34,11 @@ use Illuminate\Support\Facades\DB;
  */
 class CaptureInquiry
 {
+    public function __construct(
+        private readonly PortalSettings $portal,
+        private readonly CrmVocabulary $stages,
+    ) {}
+
     public function __invoke(CaptureInquiryData $data, ?User $actor): Project
     {
         return DB::transaction(function () use ($data, $actor) {
@@ -40,9 +47,11 @@ class CaptureInquiry
             $project = Project::create([
                 'name' => $data->project_name,
                 'type' => $data->type,
-                // Never true at capture: a raw inquiry must not surface in a
-                // client portal the moment it arrives (vision §3.1).
-                'portal_visible' => false,
+                'type_other' => $data->type_other,
+                // Off for a stranger (vision §3.1), on for a client the
+                // studio already shows its work to — that is this contact's
+                // own portal_visible override, not a per-booking decision.
+                'portal_visible' => $this->portal->projectsVisibleByDefault($contact),
             ]);
 
             $project->attachContact($contact, ProjectContactRole::Primary);
@@ -75,10 +84,12 @@ class CaptureInquiry
             $lead = Lead::create([
                 'project_id' => $project->id,
                 'source' => $data->source,
-                'stage' => LeadStage::New,
+                'source_other' => $data->source_other,
+                'stage' => $this->stages->anchored(StagePipeline::Lead, StageAnchor::Entry),
                 'stage_entered_at' => now(),
                 'inquiry_text' => $data->inquiry_text,
                 'captured_via' => $data->captured_via,
+                'captured_via_other' => $data->captured_via_other,
                 'captured_by_id' => $actor?->id,
                 'referred_by_contact_id' => $referrer?->id,
             ]);
@@ -90,7 +101,7 @@ class CaptureInquiry
                 'project_id' => $project->id,
                 'kind' => $this->kindFor($data->type),
                 'date' => $data->date,
-                'status' => ShootStatus::Requested,
+                'status' => $this->stages->anchored(StagePipeline::Project, StageAnchor::Entry),
                 'is_primary' => true,
                 'sort_order' => 0,
             ]);
@@ -147,13 +158,17 @@ class CaptureInquiry
         ]);
     }
 
-    /** The opening shoot of a project takes the project's own shape. */
-    private function kindFor(ProjectType $type): ShootKind
+    /**
+     * The opening shoot of a project takes the project's own shape, where the
+     * two share a name. A studio's own type — "Elopement", "Neugeboren" — has
+     * no ShootKind of its own and opens as sonstige; the shoot's kind is
+     * editable on the project screen, and guessing it from the type's name
+     * would be wrong more often than blank is.
+     */
+    private function kindFor(ProjectType|string|null $type): ShootKind
     {
-        return match ($type) {
-            ProjectType::Wedding => ShootKind::Wedding,
-            ProjectType::Portrait => ShootKind::Portrait,
-            ProjectType::Other => ShootKind::Other,
-        };
+        $key = $type instanceof ProjectType ? $type->key : $type;
+
+        return ShootKind::tryFrom((string) $key) ?? ShootKind::Other;
     }
 }

@@ -2,14 +2,21 @@
 
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
+use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
+use App\Crm\Models\Stage;
+use App\Crm\Support\CrmVocabulary;
 use App\Documents\Models\DocumentTemplate;
 use App\Engagement\Models\Thread;
 use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryGuest;
+use App\Gallery\Support\GalleryGuestPass;
 use App\Media\Enums\MultipartUploadStatus;
 use App\Media\Models\MultipartUpload;
 use App\Models\User;
@@ -360,4 +367,37 @@ function withSecret(string $secret = 'a-tenant-secret'): string
     app()->forgetInstance(StudioSettingsResolver::class);
 
     return $secret;
+}
+
+/**
+ * Ein bestätigter Gast in dieser Galerie und sein signierter Pass.
+ *
+ * Herz und Kommentar verlangen ihn seit der Gast-Identität: ohne Absender
+ * gibt es keine Markierung, die ein zweites Gerät wiederfindet.
+ *
+ * @return array{0: GalleryGuest, 1: string}
+ */
+function confirmedGuest(Gallery $gallery, string $email = 'gast@example.com', string $name = 'Gast Gästin'): array
+{
+    $guest = GalleryGuest::create([
+        'gallery_id' => $gallery->id,
+        'email' => $email,
+        'name' => $name,
+        'identifier' => GalleryGuest::identifierFor($gallery, $email),
+        'confirmed_at' => now(),
+    ]);
+
+    return [$guest, app(GalleryGuestPass::class)->issue($gallery, $guest)];
+}
+
+/**
+ * The Stage row behind one of the seeded default stages. Tests name a stage by
+ * the enum the migration seeds from; the app takes the row.
+ */
+function stage(LeadStage|ShootStatus|string $stage, ?StagePipeline $pipeline = null): Stage
+{
+    $pipeline ??= $stage instanceof ShootStatus ? StagePipeline::Project : StagePipeline::Lead;
+    $key = $stage instanceof BackedEnum ? $stage->value : $stage;
+
+    return app(CrmVocabulary::class)->byKey($pipeline, $key);
 }

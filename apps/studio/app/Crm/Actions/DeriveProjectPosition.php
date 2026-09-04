@@ -49,8 +49,8 @@ class DeriveProjectPosition
             if ($shoot !== null) {
                 return new ProjectPositionData(
                     source: 'shoot',
-                    value: $shoot->status->value,
-                    label: $shoot->status->label(),
+                    value: $shoot->status->key,
+                    label: $shoot->status->name,
                 );
             }
 
@@ -64,8 +64,8 @@ class DeriveProjectPosition
 
         return new ProjectPositionData(
             source: 'lead',
-            value: $lead->stage->value,
-            label: $lead->stage->label(),
+            value: $lead->stage->key,
+            label: $lead->stage->name,
         );
     }
 
@@ -80,7 +80,7 @@ class DeriveProjectPosition
     {
         return $shoots
             ->reject(fn (Shoot $shoot) => $shoot->isCancelled())
-            ->sortBy(fn (Shoot $shoot) => $shoot->status->position())
+            ->sortBy(fn (Shoot $shoot) => $shoot->status->sort_order)
             ->first();
     }
 }

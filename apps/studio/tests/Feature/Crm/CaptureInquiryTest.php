@@ -51,13 +51,13 @@ it('creates the whole graph from one post', function () {
     $shoot = Shoot::sole();
 
     expect($project->name)->toBe('Steffens & Falk — Hochzeit')
-        ->and($project->type)->toBe(ProjectType::Wedding)
+        ->and($project->type->key)->toBe(ProjectType::Wedding->value)
         ->and($project->portal_visible)->toBeFalse()
-        ->and($lead->stage)->toBe(LeadStage::New)
+        ->and($lead->stage->key)->toBe(LeadStage::New->value)
         ->and($lead->captured_by_id)->toBe($this->staff->id)
         ->and($lead->project_id)->toBe($project->id)
         ->and($shoot->is_primary)->toBeTrue()
-        ->and($shoot->status)->toBe(ShootStatus::Requested)
+        ->and($shoot->status->key)->toBe(ShootStatus::Requested->value)
         ->and($shoot->date->format('Y-m-d'))->toBe('2026-06-14');
 });
 
@@ -91,6 +91,18 @@ it('reuses an existing contact rather than creating a second one', function () {
 
     expect(Contact::where('name', 'Annika Steffens')->count())->toBe(1)
         ->and(Project::sole()->primaryContact()->id)->toBe($existing->id);
+});
+
+it('shows a new project in the portal when the contact says so', function () {
+    $existing = Contact::factory()->create([
+        'email' => 'a.steffens@posteo.de',
+        'portal_overrides' => ['portal_visible' => true],
+    ]);
+
+    $this->actingAs($this->staff, 'staff')
+        ->post('/anfragen', payload(['contact_id' => $existing->public_id]));
+
+    expect(Project::sole()->portal_visible)->toBeTrue();
 });
 
 it('saves without a partner', function () {
@@ -215,7 +227,7 @@ it('records who referred a client when the source is a referral', function () {
         contact_phone: null,
         people: [],
         project_name: 'Steffens & Falk',
-        type: ProjectType::Wedding,
+        type: ProjectType::Wedding->value,
         source: LeadSource::Referral,
         captured_via: CaptureChannel::Phone,
         date: null,
@@ -236,7 +248,7 @@ it('leaves the referrer null when nobody recorded one', function () {
         contact_phone: null,
         people: [],
         project_name: 'Ohne Vermittler',
-        type: ProjectType::Wedding,
+        type: ProjectType::Wedding->value,
         source: LeadSource::Referral,
         captured_via: CaptureChannel::Phone,
         date: null,
@@ -275,4 +287,32 @@ it('skips a person row left blank', function () {
         ->assertRedirect();
 
     expect(Project::first()->contacts)->toHaveCount(1);
+});
+
+// "Sonstige" alone is not a fact: the detail beside it is what the funnel
+// splits on, and it must not survive a switch back to a named case.
+it('keeps the detail behind Sonstige and drops it when the case changes', function () {
+    $this->actingAs($this->staff, 'staff')->post('/anfragen', payload([
+        'type' => ProjectType::Other->value,
+        'type_other' => 'Tierfotografie',
+        'source' => LeadSource::Other->value,
+        'source_other' => 'Zeitungsartikel',
+        'captured_via' => CaptureChannel::Other->value,
+        'captured_via_other' => 'Brief',
+    ]))->assertRedirect('/anfragen');
+
+    $project = Project::sole();
+    $lead = Lead::sole();
+
+    expect($project->type_other)->toBe('Tierfotografie')
+        ->and($lead->source_other)->toBe('Zeitungsartikel')
+        ->and($lead->captured_via_other)->toBe('Brief')
+        ->and($project->typeLabel())->toBe('Sonstige — Tierfotografie');
+
+    $project->update(['type' => ProjectType::Wedding]);
+    $lead->update(['source' => LeadSource::Website]);
+
+    expect($project->fresh()->type_other)->toBeNull()
+        ->and($lead->fresh()->source_other)->toBeNull()
+        ->and($lead->fresh()->captured_via_other)->toBe('Brief');
 });

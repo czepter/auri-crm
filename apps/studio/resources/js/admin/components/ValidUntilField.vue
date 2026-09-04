@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { relativeDate, shiftDate } from '@/admin/lib/dates'
 import { Button } from '@/ui/button'
-import { Input } from '@/ui/input'
+import { DatePicker } from '@/ui/date-picker'
 import { Label } from '@/ui/label'
 
 defineProps<{ id: string }>()
@@ -24,9 +24,9 @@ const relative = computed(() => relativeDate(model.value, locale.value))
 </script>
 
 <template>
-  <div class="fld">
+  <div class="flex min-w-0 flex-col gap-1.5">
     <Label :for="id">{{ $t('quotes.validUntil') }}</Label>
-    <Input :id="id" v-model="model" type="date" />
+    <DatePicker :id="id" v-model="model" />
     <div class="flex flex-wrap items-center gap-[6px]">
       <Button
         v-for="preset in PRESETS"
@@ -37,7 +37,7 @@ const relative = computed(() => relativeDate(model.value, locale.value))
       >
         {{ $t(preset.key, { count: preset.count }) }}
       </Button>
-      <span v-if="relative" class="hint">{{ relative }}</span>
+      <span v-if="relative" class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ relative }}</span>
     </div>
   </div>
 </template>

@@ -17,8 +17,15 @@ services:
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
       PORTAL_URL: ${SERVICE_FQDN_PORTAL}
+      GALLERY_URL: ${SERVICE_FQDN_GALLERY_4321}
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/up"]
+      interval: 10s
+      timeout: 3s
+      start_period: 30s
+      retries: 6
     depends_on:
       postgres:
         condition: service_healthy
@@ -46,8 +53,15 @@ services:
       AWS_ENDPOINT: ${SERVICE_FQDN_RUSTFS}
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
+      GALLERY_URL: ${SERVICE_FQDN_GALLERY_4321}
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/up"]
+      interval: 10s
+      timeout: 3s
+      start_period: 30s
+      retries: 6
     depends_on:
       postgres:
         condition: service_healthy
@@ -76,6 +90,12 @@ services:
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/up"]
+      interval: 10s
+      timeout: 3s
+      start_period: 30s
+      retries: 6
     depends_on:
       postgres:
         condition: service_healthy
@@ -94,6 +114,14 @@ services:
       API_URL: http://api:8080
       PUBLIC_API_URL: ${SERVICE_FQDN_API}
       SENTRY_DSN: ${GALLERY_SENTRY_DSN}
+    # Any response, not a 2xx: the only route is /g/:galleryId, so every probe
+    # path 404s and --fail would report a healthy server as down forever.
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:4321/').then(()=>process.exit(0),()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      start_period: 20s
+      retries: 6
     depends_on:
       api:
         condition: service_healthy
@@ -116,6 +144,7 @@ services:
       AWS_ENDPOINT: http://rustfs:9000
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
+      GALLERY_URL: ${SERVICE_FQDN_GALLERY_4321}
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
     healthcheck:
@@ -137,6 +166,11 @@ services:
     image: ghcr.io/czepter/auri-crm/studio:latest
     restart: unless-stopped
     command: php artisan schedule:work
+    # No web server in this container, so the HTTP probe baked into the image
+    # would fail forever. schedule:work is PID 1: if it dies, so does the
+    # container, and restart brings it back.
+    healthcheck:
+      disable: true
     environment:
       APP_SURFACE: admin
       APP_URL: ${SERVICE_FQDN_PORTAL}
@@ -212,6 +246,16 @@ services:
   gotenberg:
     image: gotenberg/gotenberg:8
     restart: unless-stopped
+    # Only /forms/chromium/convert/html is ever called (App\Support\GotenbergClient),
+    # and supervisor-render runs one process (config/horizon.php), so the stock
+    # six parallel Chromium instances are five more than this stack can use.
+    environment:
+      CHROMIUM_MAX_CONCURRENCY: "2"
+      CHROMIUM_MAX_QUEUE_SIZE: "8"
+      CHROMIUM_RESTART_AFTER: "10"
+      LIBREOFFICE_DISABLE_ROUTES: "true"
+      PDFENGINES_DISABLE_ROUTES: "true"
+    mem_limit: 640m
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:3000/health"]
       interval: 10s
@@ -232,6 +276,13 @@ services:
     volumes:
       - rustfsdata:/data
     command: ["/data"]
+    # RustFS serves MinIO's health path — the same one docker-compose.yml probes
+    # against MinIO, so both stacks gate storage on one endpoint.
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   rustfs-init:
     image: minio/mc:latest
@@ -248,7 +299,8 @@ services:
         mc mb --ignore-existing rustfs/"$$AWS_BUCKET"
       '
     depends_on:
-      - rustfs
+      rustfs:
+        condition: service_healthy
 
 volumes:
   pgdata:

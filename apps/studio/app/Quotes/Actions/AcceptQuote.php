@@ -3,6 +3,8 @@
 namespace App\Quotes\Actions;
 
 use App\Crm\Models\Contact;
+use App\Notifications\Actions\NotifyStudio;
+use App\Notifications\Studio\QuoteAccepted;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Support\AuditLogger;
@@ -24,6 +26,8 @@ use Illuminate\Validation\ValidationException;
  */
 class AcceptQuote
 {
+    public function __construct(private readonly NotifyStudio $notifyStudio) {}
+
     public function __invoke(Quote $quote, Contact $contact, string $ip): Quote
     {
         if ($quote->status === QuoteStatus::Accepted) {
@@ -59,6 +63,13 @@ class AcceptQuote
             );
         });
 
-        return $quote->fresh();
+        $accepted = $quote->fresh();
+
+        // Outside the transaction: a mail that has already left cannot be
+        // rolled back. The early returns above never reach here, so a doubled
+        // request announces the acceptance once.
+        ($this->notifyStudio)(new QuoteAccepted($accepted));
+
+        return $accepted;
     }
 }

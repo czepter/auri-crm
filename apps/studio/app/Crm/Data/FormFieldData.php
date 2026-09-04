@@ -9,7 +9,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 #[TypeScript]
 class FormFieldData extends Data
 {
-    /** @param ?list<string> $options */
+    /** @param ?array<array-key, mixed> $options */
     public function __construct(
         public string $id,
         public string $label,

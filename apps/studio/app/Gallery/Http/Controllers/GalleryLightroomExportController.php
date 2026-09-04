@@ -20,11 +20,9 @@ use Illuminate\Support\Str;
  * original filename Lightroom's catalog still has on disk, without a
  * separate column to keep in sync.
  *
- * No mockup shows this button yet: mockups/admin/05-medien.html is the
- * ingest screen, and there is no admin gallery-detail screen built in this
- * codebase to attach one to (only Galleries/Ingest.vue exists). This ships
- * as a route+action a future admin screen can link to, same shape as
- * contracts.download.
+ * No mockup shows this button yet, and the Bilder tab (Galleries/Record.vue)
+ * does not link to it either. This ships as a route+action a future screen
+ * can link to, same shape as contracts.download.
  */
 class GalleryLightroomExportController extends Controller
 {

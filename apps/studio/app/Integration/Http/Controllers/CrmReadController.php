@@ -2,12 +2,14 @@
 
 namespace App\Integration\Http\Controllers;
 
-use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\Stage;
+use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use App\Integration\Data\ContactReadData;
 use App\Integration\Data\JobReadData;
@@ -93,7 +95,7 @@ class CrmReadController extends Controller
 
     /**
      * N-02: the funnel, not the leads that make it up — a count per
-     * LeadStage rather than a page of Lead rows the caller would have to
+     * stage rather than a page of Lead rows the caller would have to
      * tally itself. Same grouping order as LeadBoardController's own board
      * (declaration order, not the stored strings' alphabetical order) and
      * the same `open()` scope: a lost lead left its stage the moment it was
@@ -107,12 +109,12 @@ class CrmReadController extends Controller
             ->selectRaw('count(*) as count')
             ->groupBy('stage')
             ->get()
-            ->mapWithKeys(fn (Lead $lead) => [$lead->stage->value => (int) $lead->count]);
+            ->mapWithKeys(fn (Lead $lead) => [$lead->stage->key => (int) $lead->count]);
 
-        $stages = collect(LeadStage::cases())->map(fn (LeadStage $stage) => [
-            'stage' => $stage->value,
-            'label' => $stage->label(),
-            'count' => $counts[$stage->value] ?? 0,
+        $stages = app(CrmVocabulary::class)->ordered(StagePipeline::Lead)->map(fn (Stage $stage) => [
+            'stage' => $stage->key,
+            'label' => $stage->name,
+            'count' => $counts[$stage->key] ?? 0,
         ])->all();
 
         return response()->json(['data' => $stages]);

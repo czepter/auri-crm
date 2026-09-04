@@ -2,8 +2,10 @@
 
 namespace App\Reporting\Support;
 
-use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
+use App\Crm\Support\CrmVocabulary;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -22,6 +24,17 @@ use Illuminate\Support\Facades\DB;
 class BookingFunnel
 {
     /**
+     * The key of the stage that means the lead was won. Read rather than
+     * hardcoded: a studio may rename "Gebucht", and the funnel is counted on
+     * the anchor it carries. Null keeps the filter from matching anything,
+     * which is the honest answer when no stage claims the anchor.
+     */
+    private static function wonKey(): ?string
+    {
+        return app(CrmVocabulary::class)->anchored(StagePipeline::Lead, StageAnchor::Won)?->key;
+    }
+
+    /**
      * Captured and booked per month for a window, oldest first.
      *
      * @return list<array{month: string, captured: int, booked: int, rate: int|null}>
@@ -31,7 +44,7 @@ class BookingFunnel
         $rows = Lead::query()
             ->selectRaw("to_char(date_trunc('month', leads.created_at), 'YYYY-MM') as month")
             ->selectRaw('count(*) as captured')
-            ->selectRaw('count(*) filter (where leads.stage = ?) as booked', [LeadStage::Booked->value])
+            ->selectRaw('count(*) filter (where leads.stage = ?) as booked', [self::wonKey()])
             ->whereBetween('leads.created_at', [$from, $to])
             ->groupBy('month')
             ->orderBy('month')
@@ -53,6 +66,9 @@ class BookingFunnel
      * the studio will actually invoice, and a quote can be accepted at one
      * figure and planned at another.
      *
+     * "Sonstige" splits on its free-text detail: a bucket holding
+     * Tierfotografie beside Firmenevent answers nothing.
+     *
      * The label comes from LeadSource, not from a parallel i18n namespace:
      * the enum already names each case in German for the lead board, and a
      * second list of the same five words is a second thing to keep in step.
@@ -63,20 +79,25 @@ class BookingFunnel
     {
         return Lead::query()
             ->selectRaw('leads.source')
+            ->selectRaw('leads.source_other')
             ->selectRaw('count(*) as captured')
-            ->selectRaw('count(*) filter (where leads.stage = ?) as booked', [LeadStage::Booked->value])
+            ->selectRaw('count(*) filter (where leads.stage = ?) as booked', [self::wonKey()])
             ->selectRaw('coalesce(sum(payment_plans.total), 0) as revenue')
             ->leftJoin('jobs', 'jobs.project_id', '=', 'leads.project_id')
             ->leftJoin('payment_plans', 'payment_plans.job_id', '=', 'jobs.id')
             ->whereBetween('leads.created_at', [$from, $to])
-            ->groupBy('leads.source')
+            ->groupBy('leads.source', 'leads.source_other')
             ->orderByDesc('captured')
             ->get()
             // `source` arrives as a LeadSource, not a string: Lead casts the
             // column, and a raw select does not opt out of that.
             ->map(fn ($row) => [
-                'source' => $row->source->value,
-                'label' => $row->source->label(),
+                // The detail rides in the key too: "Sonstige" split three ways
+                // is three rows, and a row needs a key of its own.
+                'source' => $row->source->value.($row->source_other === null ? '' : ':'.$row->source_other),
+                'label' => $row->source_other === null
+                    ? $row->source->label()
+                    : $row->source->label().' — '.$row->source_other,
                 'captured' => (int) $row->captured,
                 'booked' => (int) $row->booked,
                 'revenue' => (int) $row->revenue,

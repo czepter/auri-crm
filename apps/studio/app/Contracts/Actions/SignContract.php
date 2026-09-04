@@ -34,7 +34,7 @@ class SignContract
             return $existing;
         }
 
-        abort_unless($contract->status === ContractStatus::Rendered && $contract->artifact_path !== null, 422);
+        abort_unless($contract->status === ContractStatus::Rendered && $contract->hasArtifact(), 422);
 
         $hash = hash('sha256', Storage::disk('local')->get($contract->artifact_path));
         $templateVersion = $contract->template->version;
@@ -50,6 +50,11 @@ class SignContract
                 'ip_address' => $ip,
                 'user_agent' => $userAgent === null ? null : substr($userAgent, 0, 500),
             ]);
+
+            // The studio's own list of who still has to sign, kept in step
+            // with the evidence by the one writer of that evidence.
+            $contract->signers()->where('contact_id', $contact->id)
+                ->whereNull('signed_at')->update(['signed_at' => now()]);
 
             // actor is null, not $contact — AuditLog::actor_id is a foreign
             // key to staff users, and a Contact is never one. The same shape

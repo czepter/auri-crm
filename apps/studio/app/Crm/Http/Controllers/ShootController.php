@@ -5,9 +5,10 @@ namespace App\Crm\Http\Controllers;
 use App\Crm\Actions\AdvanceShootStatus;
 use App\Crm\Actions\DesignatePrimaryShoot;
 use App\Crm\Enums\ShootKind;
-use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
@@ -38,17 +39,20 @@ class ShootController extends Controller
         return back();
     }
 
-    public function advance(Request $request, Shoot $shoot, AdvanceShootStatus $advance): RedirectResponse
+    public function advance(Request $request, Shoot $shoot, AdvanceShootStatus $advance, CrmVocabulary $stages): RedirectResponse
     {
         $this->authorize('update', $shoot);
 
         $validated = $request->validate([
-            'status' => ['required', Rule::enum(ShootStatus::class)],
+            'status' => [
+                'required',
+                Rule::exists('stages', 'key')->where('pipeline', StagePipeline::Project->value)->where('is_active', true),
+            ],
         ]);
 
         return $this->attempt('status', fn () => $advance(
             $shoot,
-            ShootStatus::from($validated['status']),
+            $stages->byKey(StagePipeline::Project, $validated['status']),
             auth('staff')->user(),
         ));
     }

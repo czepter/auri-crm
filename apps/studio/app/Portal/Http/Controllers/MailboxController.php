@@ -28,8 +28,9 @@ use Inertia\Response;
  * exactly the same way as one with; a thread the contact is not a
  * participant on is a 404 either way.
  *
- * No unread state: nothing in the schema records what a client has read, so
- * the mockup's unread dot has no source and is not invented here.
+ * No read state: nothing in the schema records what a client has opened. The
+ * rail's dot answers a question the data can answer instead — is the newest
+ * line the studio's — which is what the header badge has always counted.
  */
 class MailboxController extends Controller
 {
@@ -43,13 +44,13 @@ class MailboxController extends Controller
             ->sortByDesc(fn (Thread $thread) => $thread->latestMessage?->created_at ?? $thread->created_at)
             ->values();
 
-        // ?faden= names the thread to open; without one the newest is open,
+        // ?unterhaltung= names the thread to open; without one the newest is open,
         // which is where a client arriving from a notification mail expects
         // to land. ?betrifft= only preselects the compose field — it is the
         // link a booking screen points at, not a filter.
-        $open = $request->query('faden') === null
+        $open = $request->query('unterhaltung') === null
             ? $threads->first()
-            : $threads->firstWhere('public_id', $request->query('faden'));
+            : $threads->firstWhere('public_id', $request->query('unterhaltung'));
 
         $open?->load(['messages.contact', 'messages.author']);
 
@@ -62,6 +63,11 @@ class MailboxController extends Controller
                 'reference' => $thread->project?->name,
                 'snippet' => $thread->latestMessage?->body,
                 'lastAt' => ($thread->latestMessage?->created_at ?? $thread->created_at)->toIso8601String(),
+                // The same question HandleInertiaRequests::portalNav() counts
+                // for the header badge, per row: whoever wrote the newest line
+                // owes the next one.
+                'waiting' => $thread->latestMessage !== null
+                    && $thread->latestMessage->contact_id === null,
             ])->all(),
             'openThread' => $open === null ? null : ThreadData::fromModel($open),
             'openReference' => $open?->project?->name,
@@ -96,7 +102,7 @@ class MailboxController extends Controller
 
         $thread = $start($project, $contact, $data['subject'], $data['body']);
 
-        return redirect("/nachrichten?faden={$thread->public_id}");
+        return redirect("/nachrichten?unterhaltung={$thread->public_id}");
     }
 
     public function reply(Request $request, string $thread, PostMessage $post): RedirectResponse

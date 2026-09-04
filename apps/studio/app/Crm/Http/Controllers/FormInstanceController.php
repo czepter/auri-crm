@@ -6,13 +6,16 @@ use App\Crm\Actions\SeedFormInstanceFromTemplate;
 use App\Crm\Enums\FormFieldType;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
+use App\Crm\Models\FormInstanceFile;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * E-02: seeding and personalising a project's own questionnaires. Shaped
@@ -75,8 +78,7 @@ class FormInstanceController extends Controller
             'fields.*.label' => ['required', 'string', 'max:255'],
             'fields.*.type' => ['required', Rule::enum(FormFieldType::class)],
             'fields.*.required' => ['required', 'boolean'],
-            'fields.*.options' => ['nullable', 'array'],
-            'fields.*.options.*' => ['string', 'max:255'],
+            ...$this->optionRules($request),
         ]);
 
         $formInstance->update(['name' => $validated['name']]);
@@ -132,10 +134,14 @@ class FormInstanceController extends Controller
         $this->authorize('manageForms', $formInstanceField->formInstance->project);
 
         $validated = $request->validate([
-            'value' => ['nullable', 'string', 'max:5000'],
+            'value' => ['nullable', 'string', 'max:20000'],
         ]);
 
-        $formInstanceField->answer($validated['value'] ?? null, auth('staff')->user());
+        $value = $formInstanceField->type === FormFieldType::GroupPhotos
+            ? FormInstanceField::normaliseGroupPhotos($validated['value'] ?? null)
+            : $validated['value'] ?? null;
+
+        $formInstanceField->answer($value, auth('staff')->user());
 
         AuditLogger::record(
             event: 'form_instance_field.answered',
@@ -143,6 +149,80 @@ class FormInstanceController extends Controller
             context: ['formInstance' => $formInstanceField->formInstance->public_id],
             subject: $formInstanceField->public_id,
             projectId: $formInstanceField->formInstance->project_id,
+        );
+
+        return back();
+    }
+
+    /**
+     * The options column carries three shapes — select's choices, a file
+     * field's upload config, a Gruppenfotos builder configuration — so the
+     * rules for it depend on the type in the same row. See
+     * FormFieldType::optionRules().
+     */
+    private function optionRules(Request $request): array
+    {
+        $fields = (array) $request->input('fields', []);
+
+        return collect(array_keys($fields))
+            ->mapWithKeys(function (int|string $index) use ($request) {
+                $type = $request->input("fields.{$index}.type");
+
+                return (FormFieldType::tryFrom(is_string($type) ? $type : '') ?? FormFieldType::Text)
+                    ->optionRules("fields.{$index}");
+            })
+            ->all();
+    }
+
+    /**
+     * E-03: a file answering a "Datei" field. Type and size come from the
+     * field's own configuration, not from the request — see
+     * FormInstanceField::fileRules().
+     */
+    public function upload(Request $request, FormInstanceField $formInstanceField): RedirectResponse
+    {
+        $this->authorize('manageForms', $formInstanceField->formInstance->project);
+
+        abort_unless($formInstanceField->type === FormFieldType::File, 404);
+
+        $request->validate(['file' => $formInstanceField->fileRules()]);
+
+        $file = $formInstanceField->attachFile($request->file('file'), auth('staff')->user());
+
+        AuditLogger::record(
+            event: 'form_instance_field.file_uploaded',
+            actor: auth('staff')->user(),
+            context: ['formInstance' => $formInstanceField->formInstance->public_id, 'name' => $file->name],
+            subject: $formInstanceField->public_id,
+            projectId: $formInstanceField->formInstance->project_id,
+        );
+
+        return back();
+    }
+
+    /** A real delete, bytes included: form_answers is the append-only ledger, a client's file is not. */
+    public function download(FormInstanceFile $file): StreamedResponse
+    {
+        $this->authorize('manageForms', $file->formInstanceField->formInstance->project);
+
+        return Storage::disk('local')->download($file->path, $file->name);
+    }
+
+    public function destroyFile(FormInstanceFile $file): RedirectResponse
+    {
+        $instance = $file->formInstanceField->formInstance;
+
+        $this->authorize('manageForms', $instance->project);
+
+        $name = $file->name;
+        $file->purge();
+
+        AuditLogger::record(
+            event: 'form_instance_field.file_deleted',
+            actor: auth('staff')->user(),
+            context: ['formInstance' => $instance->public_id, 'name' => $name],
+            subject: $file->formInstanceField->public_id,
+            projectId: $instance->project_id,
         );
 
         return back();
@@ -157,7 +237,9 @@ class FormInstanceController extends Controller
      */
     private function fieldRows(array $fields): array
     {
-        return collect($fields)->values()->map(fn (array $field, int $index) => [
+        // sortKeys because validated() hands the rows back in rule order, not
+        // in list order, once a row carries its own type-dependent options rules.
+        return collect($fields)->sortKeys()->values()->map(fn (array $field, int $index) => [
             'label' => $field['label'],
             'type' => $field['type'],
             'required' => $field['required'],

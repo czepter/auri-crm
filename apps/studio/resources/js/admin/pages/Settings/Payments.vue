@@ -2,21 +2,17 @@
 import { computed } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import PageHead from '@/ui/page/PageHead.vue'
+import SettingsNav from '@/admin/components/SettingsNav.vue'
 import { basisPointsToPercent } from '@/admin/lib/money'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
 
 const props = defineProps<{ settings: App.Settings.Data.PaymentSettingsData }>()
-
-// Every other future group — the same disabled "bald" list Settings/Index.vue
-// and Numbering.vue both render. Zahlungsdaten & USt is T-03's own pane,
-// Nummernkreise is T-04's, Dokumente is T-05's, Zahlungen is this pane,
-// Portal is T-08's own route and Benachrichtigungen is T-11's, so all six
-// drop out of this list.
-const comingSoon: readonly string[] = []
 
 // Keys are write-only (T-07): the server never echoes a stored value back,
 // so this form always starts with them blank. Submitting blank leaves the
@@ -42,180 +38,167 @@ function submit() {
 
 <template>
   <AdminLayout active="einstellungen">
-    <div class="hrow">
-      <div>
-        <div class="kick">{{ $t('settings.kicker') }}</div>
-        <h1>{{ $t('paymentSettings.title') }}</h1>
-      </div>
-      <span v-if="form.isDirty" class="chip now">{{ $t('settings.unsaved') }}</span>
-      <Button
-        type="submit"
-        form="payment-settings-form"
-        :disabled="!form.isDirty || form.processing"
-        :style="!form.isDirty ? 'opacity:.4' : undefined"
-      >
-        <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
-        {{ $t('common.save') }}
-      </Button>
-    </div>
-
-    <div style="display: flex; gap: var(--s6); margin-top: var(--s5); align-items: flex-start">
-      <nav style="width: 196px; flex: none; display: flex; flex-direction: column; gap: 2px">
-        <a class="nav" href="/einstellungen">{{ $t('settings.navProfile') }}</a>
-        <a class="nav" href="/einstellungen/nummernkreise">{{ $t('settings.navNumbering') }}</a>
-        <a class="nav" href="/einstellungen/verfuegbarkeit">{{ $t('settings.navAvailability') }}</a>
-        <a class="nav on" href="/einstellungen/zahlungen">{{ $t('settings.navPayments') }}</a>
-        <a class="nav" href="/einstellungen/aufgabenvorlagen">{{ $t('settings.navTaskTemplates') }}</a>
-        <a class="nav" href="/einstellungen/fragebogen-vorlagen">{{ $t('settings.navFormTemplates') }}</a>
-        <a class="nav" href="/einstellungen/portal">{{ $t('settings.navPortal') }}</a>
-        <a class="nav" href="/einstellungen/benachrichtigungen">{{ $t('settings.navNotifications') }}</a>
-        <a
-          v-for="key in comingSoon"
-          :key="key"
-          class="nav"
-          href="#"
-          style="pointer-events: none; opacity: 0.5"
+    <div data-tokens>
+      <PageHead :kicker="$t('settings.kicker')" :title="$t('paymentSettings.title')">
+        <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
+        <Button
+          class="ml-auto"
+          variant="pill"
+          type="submit"
+          form="payment-settings-form"
+          :disabled="!form.isDirty || form.processing"
         >
-          {{ $t(`settings.${key}`) }}
-          <span class="chip next" style="margin-left: auto">{{ $t('settings.soon') }}</span>
-        </a>
-      </nav>
+          {{ $t('common.save') }}
+        </Button>
+      </PageHead>
 
-      <form id="payment-settings-form" style="flex: 1; min-width: 0; max-width: 620px" @submit.prevent="submit">
-        <div class="dsec" style="margin-top: 0">
-          <div class="dlab">{{ $t('paymentSettings.stripeSection') }}</div>
+      <div class="px-8 pt-7 pb-8">
+        <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
+          <SettingsNav active="payments" />
 
-          <div class="grp">
-            <div class="cbrow">
-              <Checkbox id="cb-payments-stripe-enabled" v-model="form.payments_stripe_enabled" />
-              <Label variant="inline" for="cb-payments-stripe-enabled">{{ $t('paymentSettings.stripeEnabled') }}</Label>
-            </div>
-            <span class="hint">{{ $t('paymentSettings.stripeEnabledHint') }}</span>
-          </div>
+          <form id="payment-settings-form" style="flex: 1; min-width: 0; max-width: 620px" @submit.prevent="submit">
+            <div>
+              <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.stripeSection') }}</div>
 
-          <div class="grp">
-            <div class="fld" style="max-width: 220px">
-              <Label for="ps-mode">{{ $t('paymentSettings.stripeMode') }}</Label>
-              <Select
-                :model-value="form.payments_stripe_mode"
-                @update:model-value="(value) => (form.payments_stripe_mode = String(value))"
-              >
-                <SelectTrigger id="ps-mode">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="test">{{ $t('paymentSettings.stripeModeTest') }}</SelectItem>
-                  <SelectItem value="live">{{ $t('paymentSettings.stripeModeLive') }}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <span class="hint">
-              {{ hasActiveKeys ? $t('paymentSettings.stripeKeyConfigured') : $t('paymentSettings.stripeKeyMissing') }}
-            </span>
-          </div>
-
-          <div class="grp">
-            <div class="dlab" style="font-size: 12px">{{ $t('paymentSettings.stripeTestKeys') }}</div>
-            <div class="two">
-              <div class="fld">
-                <Label for="ps-test-pk">{{ $t('paymentSettings.stripePublishableKey') }}</Label>
-                <Input
-                  id="ps-test-pk"
-                  v-model="form.payments_stripe_test_publishable_key" class="tabular-nums"
-                  type="text"
-                  autocomplete="off"
-                  :placeholder="settings.hasStripeTestKeys ? '••••••••••••' : ''" />
-                <p v-if="form.errors.payments_stripe_test_publishable_key" class="err">
-                  {{ form.errors.payments_stripe_test_publishable_key }}
-                </p>
+              <div class="mb-6">
+                <div class="flex items-center gap-2.5">
+                  <Checkbox id="cb-payments-stripe-enabled" v-model="form.payments_stripe_enabled" />
+                  <Label variant="inline" for="cb-payments-stripe-enabled">{{ $t('paymentSettings.stripeEnabled') }}</Label>
+                </div>
+                <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('paymentSettings.stripeEnabledHint') }}</span>
               </div>
-              <div class="fld">
-                <Label for="ps-test-sk">{{ $t('paymentSettings.stripeSecretKey') }}</Label>
-                <Input
-                  id="ps-test-sk"
-                  v-model="form.payments_stripe_test_secret_key" class="tabular-nums"
-                  type="password"
-                  autocomplete="off"
-                  :placeholder="settings.hasStripeTestKeys ? '••••••••••••' : ''" />
-                <p v-if="form.errors.payments_stripe_test_secret_key" class="err">
-                  {{ form.errors.payments_stripe_test_secret_key }}
-                </p>
-              </div>
-            </div>
-            <span class="hint">{{ $t('paymentSettings.stripeKeyHint') }}</span>
-          </div>
 
-          <div class="grp">
-            <div class="dlab" style="font-size: 12px">{{ $t('paymentSettings.stripeLiveKeys') }}</div>
-            <div class="two">
-              <div class="fld">
-                <Label for="ps-live-pk">{{ $t('paymentSettings.stripePublishableKey') }}</Label>
-                <Input
-                  id="ps-live-pk"
-                  v-model="form.payments_stripe_live_publishable_key" class="tabular-nums"
-                  type="text"
-                  autocomplete="off"
-                  :placeholder="settings.hasStripeLiveKeys ? '••••••••••••' : ''" />
-                <p v-if="form.errors.payments_stripe_live_publishable_key" class="err">
-                  {{ form.errors.payments_stripe_live_publishable_key }}
-                </p>
+              <div class="mb-6">
+                <div class="flex min-w-0 flex-col gap-1.5" style="max-width: 220px">
+                  <Label for="ps-mode">{{ $t('paymentSettings.stripeMode') }}</Label>
+                  <Select
+                    :model-value="form.payments_stripe_mode"
+                    @update:model-value="(value) => (form.payments_stripe_mode = String(value))"
+                  >
+                    <SelectTrigger id="ps-mode">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="test">{{ $t('paymentSettings.stripeModeTest') }}</SelectItem>
+                      <SelectItem value="live">{{ $t('paymentSettings.stripeModeLive') }}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <span class="text-[11.5px] leading-[1.45] font-normal text-faint">
+                  {{ hasActiveKeys ? $t('paymentSettings.stripeKeyConfigured') : $t('paymentSettings.stripeKeyMissing') }}
+                </span>
               </div>
-              <div class="fld">
-                <Label for="ps-live-sk">{{ $t('paymentSettings.stripeSecretKey') }}</Label>
-                <Input
-                  id="ps-live-sk"
-                  v-model="form.payments_stripe_live_secret_key" class="tabular-nums"
-                  type="password"
-                  autocomplete="off"
-                  :placeholder="settings.hasStripeLiveKeys ? '••••••••••••' : ''" />
-                <p v-if="form.errors.payments_stripe_live_secret_key" class="err">
-                  {{ form.errors.payments_stripe_live_secret_key }}
-                </p>
+
+              <div class="mb-6">
+                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint" style="font-size: 12px">{{ $t('paymentSettings.stripeTestKeys') }}</div>
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="flex min-w-0 flex-col gap-1.5">
+                    <Label for="ps-test-pk">{{ $t('paymentSettings.stripePublishableKey') }}</Label>
+                    <Input
+                      id="ps-test-pk"
+                      v-model="form.payments_stripe_test_publishable_key" class="tabular-nums"
+                      type="text"
+                      autocomplete="off"
+                      :placeholder="settings.hasStripeTestKeys ? '••••••••••••' : ''" />
+                    <p v-if="form.errors.payments_stripe_test_publishable_key" class="text-[11.5px] leading-[1.45] text-destructive">
+                      {{ form.errors.payments_stripe_test_publishable_key }}
+                    </p>
+                  </div>
+                  <div class="flex min-w-0 flex-col gap-1.5">
+                    <Label for="ps-test-sk">{{ $t('paymentSettings.stripeSecretKey') }}</Label>
+                    <Input
+                      id="ps-test-sk"
+                      v-model="form.payments_stripe_test_secret_key" class="tabular-nums"
+                      type="password"
+                      autocomplete="off"
+                      :placeholder="settings.hasStripeTestKeys ? '••••••••••••' : ''" />
+                    <p v-if="form.errors.payments_stripe_test_secret_key" class="text-[11.5px] leading-[1.45] text-destructive">
+                      {{ form.errors.payments_stripe_test_secret_key }}
+                    </p>
+                  </div>
+                </div>
+                <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('paymentSettings.stripeKeyHint') }}</span>
+              </div>
+
+              <div class="mb-6">
+                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint" style="font-size: 12px">{{ $t('paymentSettings.stripeLiveKeys') }}</div>
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="flex min-w-0 flex-col gap-1.5">
+                    <Label for="ps-live-pk">{{ $t('paymentSettings.stripePublishableKey') }}</Label>
+                    <Input
+                      id="ps-live-pk"
+                      v-model="form.payments_stripe_live_publishable_key" class="tabular-nums"
+                      type="text"
+                      autocomplete="off"
+                      :placeholder="settings.hasStripeLiveKeys ? '••••••••••••' : ''" />
+                    <p v-if="form.errors.payments_stripe_live_publishable_key" class="text-[11.5px] leading-[1.45] text-destructive">
+                      {{ form.errors.payments_stripe_live_publishable_key }}
+                    </p>
+                  </div>
+                  <div class="flex min-w-0 flex-col gap-1.5">
+                    <Label for="ps-live-sk">{{ $t('paymentSettings.stripeSecretKey') }}</Label>
+                    <Input
+                      id="ps-live-sk"
+                      v-model="form.payments_stripe_live_secret_key" class="tabular-nums"
+                      type="password"
+                      autocomplete="off"
+                      :placeholder="settings.hasStripeLiveKeys ? '••••••••••••' : ''" />
+                    <p v-if="form.errors.payments_stripe_live_secret_key" class="text-[11.5px] leading-[1.45] text-destructive">
+                      {{ form.errors.payments_stripe_live_secret_key }}
+                    </p>
+                  </div>
+                </div>
+                <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('paymentSettings.stripeKeyHint') }}</span>
               </div>
             </div>
-            <span class="hint">{{ $t('paymentSettings.stripeKeyHint') }}</span>
-          </div>
+
+            <div class="mt-8 first-of-type:mt-6">
+              <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.defaultsSection') }}</div>
+              <div class="mb-6">
+                <div class="flex items-center gap-2.5">
+                  <Checkbox id="cb-payments-reminders-enabled" v-model="form.payments_reminders_enabled" />
+                  <Label variant="inline" for="cb-payments-reminders-enabled">{{ $t('paymentSettings.remindersEnabled') }}</Label>
+                </div>
+              </div>
+
+              <!-- Deposit percentage and Zahlungsziel are T-05's own Dokumente
+                   fields (studio_settings.deposit_percentage / payment_term_days)
+                   — read-only here for context, edited there, never a second
+                   writable copy. -->
+              <div class="mb-6">
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="flex min-w-0 flex-col gap-1.5">
+                    <Label>{{ $t('paymentSettings.depositPercent') }}</Label>
+                    <InputGroup class="pointer-events-none bg-muted">
+                      <InputGroupInput
+                        :model-value="basisPointsToPercent(settings.depositPercent)"
+                        class="tabular-nums"
+                        readonly
+                      />
+                      <InputGroupAddon align="inline-end">%</InputGroupAddon>
+                    </InputGroup>
+                  </div>
+                  <div class="flex min-w-0 flex-col gap-1.5">
+                    <Label>{{ $t('paymentSettings.zahlungszielDays') }}</Label>
+                    <InputGroup class="pointer-events-none bg-muted">
+                      <InputGroupInput
+                        :model-value="settings.zahlungszielDays"
+                        class="tabular-nums"
+                        readonly
+                      />
+                      <InputGroupAddon align="inline-end">{{ $t('common.unitDays') }}</InputGroupAddon>
+                    </InputGroup>
+                  </div>
+                </div>
+                <span class="text-[11.5px] leading-[1.45] font-normal text-faint">
+                  {{ $t('paymentSettings.defaultsReadOnlyHint') }}
+                  <a href="/einstellungen">{{ $t('settings.navDocuments') }}</a>
+                </span>
+              </div>
+            </div>
+          </form>
         </div>
-
-        <div class="dsec">
-          <div class="dlab">{{ $t('paymentSettings.defaultsSection') }}</div>
-          <div class="grp">
-            <div class="cbrow">
-              <Checkbox id="cb-payments-reminders-enabled" v-model="form.payments_reminders_enabled" />
-              <Label variant="inline" for="cb-payments-reminders-enabled">{{ $t('paymentSettings.remindersEnabled') }}</Label>
-            </div>
-          </div>
-
-          <!-- Deposit percentage and Zahlungsziel are T-05's own Dokumente
-               fields (studio_settings.deposit_percentage / payment_term_days)
-               — read-only here for context, edited there, never a second
-               writable copy. -->
-          <div class="grp">
-            <div class="two">
-              <div class="fld">
-                <Label>{{ $t('paymentSettings.depositPercent') }}</Label>
-                <Input
-                  :model-value="`${basisPointsToPercent(settings.depositPercent)} %`"
-                  class="pointer-events-none bg-muted tabular-nums"
-                  readonly
-                />
-              </div>
-              <div class="fld">
-                <Label>{{ $t('paymentSettings.zahlungszielDays') }}</Label>
-                <Input
-                  :model-value="settings.zahlungszielDays"
-                  class="pointer-events-none bg-muted tabular-nums"
-                  readonly
-                />
-              </div>
-            </div>
-            <span class="hint">
-              {{ $t('paymentSettings.defaultsReadOnlyHint') }}
-              <a href="/einstellungen">{{ $t('settings.navDocuments') }}</a>
-            </span>
-          </div>
-        </div>
-      </form>
+      </div>
     </div>
   </AdminLayout>
 </template>

@@ -5,21 +5,30 @@ namespace App\Providers;
 use App\Automation\Listeners\FireAutomationRulesForEvent;
 use App\Catalog\Models\Package;
 use App\Contracts\Events\ContractSigned;
+use App\Crm\Actions\RescheduleAnchoredTasks;
+use App\Crm\Events\LeadCaptured;
+use App\Crm\Events\LeadStageChanged;
 use App\Crm\Events\ProjectBooked;
+use App\Crm\Events\ShootStatusChanged;
 use App\Crm\Listeners\ApplyTemplatesOnBooking;
+use App\Crm\Listeners\ApplyTemplatesOnStage;
 use App\Crm\Listeners\BookProjectOnContractAndDeposit;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
+use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\Stage;
 use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
+use App\Crm\Support\CrmVocabulary;
 use App\Documents\Models\DocumentTemplate;
 use App\Gallery\Listeners\RecomputeGalleryBalanceSettled;
 use App\Gallery\Models\Gallery;
 use App\Integration\Listeners\DispatchWebhookNotifications;
+use App\Notifications\Listeners\NotifyStudioOfDomainEvent;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\NotificationPreferences;
 use App\Notifications\Support\QuietHours;
@@ -36,7 +45,9 @@ use App\Policies\InternalNotePolicy;
 use App\Policies\LeadPolicy;
 use App\Policies\PackagePolicy;
 use App\Policies\ProjectPolicy;
+use App\Policies\ProjectTypePolicy;
 use App\Policies\ShootPolicy;
+use App\Policies\StagePolicy;
 use App\Policies\TaskPolicy;
 use App\Policies\TaskTemplatePolicy;
 use App\Support\PersonalAccessToken;
@@ -94,6 +105,8 @@ class AppServiceProvider extends ServiceProvider
         // test can swap it for an S3Client wired to Aws\MockHandler instead
         // of a live bucket.
         $this->app->singleton(S3Client::class, fn () => Storage::disk('s3')->getClient());
+
+        $this->app->singleton(CrmVocabulary::class);
     }
 
     /**
@@ -118,9 +131,33 @@ class AppServiceProvider extends ServiceProvider
         // public_id — see App\Support\PersonalAccessToken's own docblock.
         Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
 
+        // The stage table is read through one memoised instance per request
+        // (CrmVocabulary) and dropped the moment a stage is written, so a
+        // rename lands in the same request that saved it.
+        Stage::saved(fn () => app(CrmVocabulary::class)->forget());
+        Stage::deleted(fn () => app(CrmVocabulary::class)->forget());
+        ProjectType::saved(fn () => app(CrmVocabulary::class)->forget());
+        ProjectType::deleted(fn () => app(CrmVocabulary::class)->forget());
+
         // Registered by hand: auto-discovery only scans app/Listeners, and the
         // CRM keeps its listeners beside the events they answer to.
         Event::listen(ProjectBooked::class, ApplyTemplatesOnBooking::class);
+
+        // Every other stage of both pipelines. Booking stays above: it is
+        // reachable without a lead stage ever changing.
+        Event::listen(LeadStageChanged::class, [ApplyTemplatesOnStage::class, 'handleLeadStage']);
+        Event::listen(ShootStatusChanged::class, [ApplyTemplatesOnStage::class, 'handleShootStatus']);
+
+        // T-15: an anchored due date is written onto tasks.due_on, so every
+        // list keeps reading one column. These three are where an anchor can
+        // move — a stage entered, a status entered, a shoot date corrected.
+        Event::listen(LeadStageChanged::class, fn (LeadStageChanged $event) => app(RescheduleAnchoredTasks::class)($event->lead->project));
+        Event::listen(ShootStatusChanged::class, fn (ShootStatusChanged $event) => app(RescheduleAnchoredTasks::class)($event->shoot->project));
+        Shoot::saved(function (Shoot $shoot) {
+            if ($shoot->wasChanged('date')) {
+                app(RescheduleAnchoredTasks::class)($shoot->project);
+            }
+        });
 
         // P-05b: one listener, two triggers, converging on the same
         // BookProject the manual button calls — see the class docblock.
@@ -141,6 +178,13 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(ContractSigned::class, [DispatchWebhookNotifications::class, 'handleContractSigned']);
         Event::listen(InstallmentPaid::class, [DispatchWebhookNotifications::class, 'handleInstallmentPaid']);
         Event::listen(InstallmentOverdue::class, [DispatchWebhookNotifications::class, 'handleInstallmentOverdue']);
+
+        // T-11: the studio's own inbox. Three of the six events the profile
+        // screen lists have a domain event; the other three call NotifyStudio
+        // from their action — see the listener's own docblock.
+        Event::listen(LeadCaptured::class, [NotifyStudioOfDomainEvent::class, 'handleLeadCaptured']);
+        Event::listen(ContractSigned::class, [NotifyStudioOfDomainEvent::class, 'handleContractSigned']);
+        Event::listen(InstallmentPaid::class, [NotifyStudioOfDomainEvent::class, 'handleInstallmentPaid']);
 
         // E-08: one wildcard subscription rather than one Event::listen()
         // per event class — an AutomationRule's own event_class column is
@@ -203,6 +247,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Package::class, PackagePolicy::class);
         Gate::policy(DocumentTemplate::class, DocumentTemplatePolicy::class);
         Gate::policy(TaskTemplate::class, TaskTemplatePolicy::class);
+        Gate::policy(Stage::class, StagePolicy::class);
+        Gate::policy(ProjectType::class, ProjectTypePolicy::class);
         Gate::policy(Gallery::class, GalleryPolicy::class);
         Gate::policy(FormTemplate::class, FormTemplatePolicy::class);
 

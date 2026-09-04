@@ -84,7 +84,7 @@ class RecordVisit
     {
         return match ($kind) {
             'kontakt' => "/kontakte/{$subjectId}",
-            'galerie' => "/galerien/{$subjectId}/medien",
+            'galerie' => "/galerien/{$subjectId}",
             default => "/auftraege/{$subjectId}",
         };
     }

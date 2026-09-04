@@ -40,10 +40,6 @@ it('updates the maintenance switch, its message, the welcome text and the legal 
             'portal_sign_contracts_enabled' => true,
             'portal_payment_status_enabled' => true,
             'portal_messaging_mode' => 'booking',
-            'gallery_default_requires_settled_balance' => false,
-            'gallery_default_downloads_enabled' => true,
-            'gallery_default_lists_enabled' => true,
-            'gallery_default_comments_enabled' => true,
             'dsgvo_request_deadline_days' => 30,
         ])
         ->assertRedirect('/einstellungen/portal');
@@ -71,10 +67,6 @@ it('rejects a Datenschutz link that is not a URL', function () {
             'portal_sign_contracts_enabled' => false,
             'portal_payment_status_enabled' => false,
             'portal_messaging_mode' => 'off',
-            'gallery_default_requires_settled_balance' => false,
-            'gallery_default_downloads_enabled' => true,
-            'gallery_default_lists_enabled' => true,
-            'gallery_default_comments_enabled' => true,
             'dsgvo_request_deadline_days' => 30,
             'portal_legal_datenschutz_url' => 'not-a-url',
         ])
@@ -106,4 +98,32 @@ it('declares an audience on the portal settings route, same as every other admin
 
     expect($route)->not->toBeNull()
         ->and(collect($route->gatherMiddleware())->contains(fn ($m) => str_starts_with((string) $m, 'audience:')))->toBeTrue();
+});
+
+it('leaves the settings a pane does not show untouched', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen/portal', [
+            'portal_maintenance_enabled' => true,
+            'portal_accept_quotes_enabled' => true,
+            'portal_sign_contracts_enabled' => false,
+            'portal_payment_status_enabled' => false,
+            'portal_messaging_mode' => 'any',
+        ])
+        ->assertRedirect('/einstellungen/portal');
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen/portal', [
+            'dsgvo_request_recipient' => 'datenschutz@atelier-nordlicht.de',
+            'dsgvo_request_deadline_days' => 14,
+        ])
+        ->assertRedirect('/einstellungen/portal');
+
+    $row = StudioSettings::query()->sole();
+
+    expect($row->dsgvo_request_recipient)->toBe('datenschutz@atelier-nordlicht.de')
+        ->and($row->portal_maintenance_enabled)->toBeTrue()
+        ->and($row->portal_messaging_mode)->toBe('any')
+        ->and($row->portal_accept_quotes_enabled)->toBeTrue();
 });

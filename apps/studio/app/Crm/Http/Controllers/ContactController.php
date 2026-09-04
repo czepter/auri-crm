@@ -6,22 +6,25 @@ use App\Crm\Data\ContactRowData;
 use App\Crm\Data\ContactSuggestionData;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
-use App\Gallery\Models\Gallery;
-use App\Gallery\Models\GalleryView;
 use App\Engagement\Data\MessageData;
 use App\Engagement\Models\Message;
 use App\Enums\Capability;
+use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryView;
 use App\Http\Controllers\Controller;
 use App\Portal\Models\ClientAccess;
 use App\Portal\Models\DsgvoRequest;
+use App\Portal\Support\PortalSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use App\Support\RecordVisit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class ContactController extends Controller
 {
@@ -29,22 +32,28 @@ class ContactController extends Controller
     {
         $this->authorize('viewAny', Contact::class);
 
-        // C-15 (#251): a grouped table, and the standing stands on the row.
-        // The projects come along because every column but the name is read
-        // off them — an eager load rather than three counts.
-        $contacts = Contact::query()
-            ->with('projects.primaryShoot')
-            ->orderBy('name')
-            ->get();
-
         return Inertia::render('Contacts/Index', [
-            'contacts' => ContactRowData::collect(
-                $contacts->map(ContactRowData::fromContact(...))
-            ),
+            'contacts' => $this->rows(),
         ]);
     }
 
-    public function edit(Contact $contact, StudioSettingsResolver $settings): Response
+    /**
+     * C-15 (#251): every contact as a row, for the table and for the pane
+     * beside a single contact. The projects come along because every column
+     * but the name is read off them — an eager load rather than three counts.
+     *
+     * @return Collection<int, ContactRowData>
+     */
+    private function rows(): Collection
+    {
+        return Contact::query()
+            ->with('projects.primaryShoot')
+            ->orderBy('name')
+            ->get()
+            ->map(ContactRowData::fromContact(...));
+    }
+
+    public function edit(Contact $contact, StudioSettingsResolver $settings, PortalSettings $portal): Response
     {
         $this->authorize('update', $contact);
 
@@ -53,6 +62,9 @@ class ContactController extends Controller
         $user = auth('staff')->user();
 
         return Inertia::render('Contacts/Edit', [
+            // The pane beside the sheet, as on an inquiry: the whole list,
+            // narrowed in the browser.
+            'contacts' => $this->rows(),
             'contact' => ContactSuggestionData::fromModel($contact->loadCount('projects')),
             // M-06's billing address rides beside ContactSuggestionData
             // rather than inside it: that class is also the typeahead's
@@ -135,6 +147,7 @@ class ContactController extends Controller
                 'gallery_lists' => $settings->galleryListsEnabled(),
                 'gallery_comments' => $settings->galleryCommentsEnabled(),
                 'welcome' => $settings->portalWelcomeText(),
+                'portal_visible' => $portal->projectsVisibleByDefault(),
             ],
             'portalOverrides' => (object) ($contact->portal_overrides ?? []),
             // P-09 (#228): may this person open "Vorschau als Kunde"? The
@@ -184,7 +197,7 @@ class ContactController extends Controller
 
         $contact->update($validated);
 
-        return redirect('/kontakte');
+        return redirect("/kontakte/{$contact->public_id}");
     }
 
     /**
@@ -206,9 +219,12 @@ class ContactController extends Controller
      *
      * The admin process cannot name a route it does not load, so the URL is
      * composed against config('portal.url') — the two surfaces are separate
-     * hosts.
+     * hosts. The button is a form with target="_blank", so this answers a
+     * plain navigation and Inertia::location degrades to the 302 that tab
+     * follows; the header form stays for anything that does send X-Inertia,
+     * which may not follow a redirect across origins.
      */
-    public function previewPortal(Contact $contact): RedirectResponse
+    public function previewPortal(Contact $contact): HttpResponse
     {
         abort_unless(auth('staff')->user()?->role->allows(Capability::ManageSettings) ?? false, 403);
         abort_if($contact->portal_access_revoked_at !== null, 404);
@@ -230,7 +246,7 @@ class ContactController extends Controller
             subject: $contact->public_id,
         );
 
-        return redirect()->away(config('portal.url')."/zugang/{$token}");
+        return Inertia::location(config('portal.url')."/zugang/{$token}");
     }
 
     /**
@@ -252,6 +268,7 @@ class ContactController extends Controller
             'gallery_downloads' => ['nullable', 'boolean'],
             'gallery_lists' => ['nullable', 'boolean'],
             'gallery_comments' => ['nullable', 'boolean'],
+            'portal_visible' => ['nullable', 'boolean'],
             'welcome' => ['nullable', 'string', 'max:2000'],
         ]);
 

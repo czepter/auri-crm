@@ -8,6 +8,13 @@
  * venue wifi opens it and not the portal.
  */
 
+/* Ein <img> trägt width und height als Attribute — das Raster braucht sie für
+   das Seitenverhältnis, damit beim Laden nichts springt. Setzt CSS dann nur
+   die Breite, behält der Browser den Pixelwert aus dem height-Attribut: aus
+   einer Kachel wurden 165 × 2889px. Tailwinds Preflight brachte diese eine
+   Zeile mit; ohne Tailwind steht sie hier. */
+img { max-width: 100%; height: auto; }
+
 /* ── the gate, which is the cover ──────────────────────────────────────── */
 /* Today: a black field with the content glued to the top and a field you
    cannot see. Here the picture is the screen, the password lies on it, and
@@ -119,8 +126,12 @@
 /* ── the wall ─────────────────────────────────────────────────────────── */
 /* Columns rather than grid: a photo wall wants the original proportions, and
    `columns` is the only layout method that keeps them without JS — which
-   matters more here than anywhere, since this page ships none. */
-.grid { max-width: var(--page); margin: 0 auto; padding: var(--s7) var(--s5) var(--s10); columns: 4; column-gap: var(--s3); }
+   matters more here than anywhere, since this page ships none.
+   
+   .wall, nicht .grid: seit Tailwind hier mitläuft, ist .grid dessen eigenes
+   `display: grid` — und auf einem Grid-Container zählt `columns` nicht mehr.
+   Aus dem Raster wurde eine einzige Spalte. */
+.wall { max-width: var(--page); margin: 0 auto; padding: var(--s7) var(--s5) var(--s10); columns: 4; column-gap: var(--s3); }
 .tile { position: relative; display: block; break-inside: avoid; margin-bottom: var(--s3); overflow: hidden; border-radius: 10px; background: var(--void-2); }
 .tile img { width: 100%; display: block; transition: transform 1.2s var(--ease); }
 .tile:hover img { transform: scale(1.03); }
@@ -142,6 +153,28 @@
 .fav svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.5; }
 .fav.on { background: var(--accent); }
 .fav.on svg { fill: currentColor; }
+
+/* Die Anmeldung. Sie steht unter dem Raster und nicht davor: ansehen darf
+   jeder, und wer nur schaut, soll nicht erst ein Formular wegklicken. */
+.signin { max-width: var(--page); margin: 0 auto; padding: 0 var(--s5) var(--s7); }
+.signin p { margin: 0 0 var(--s3); font-size: 13.5px; color: var(--void-ink-2); }
+.signin .row { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.signin input {
+  flex: 1 1 200px; min-width: 0; padding: 13px 15px;
+  border: 1px solid var(--void-line); border-radius: var(--r-sm);
+  background: var(--void-2); color: var(--void-ink);
+  font: 400 14px/1.2 var(--sans);
+}
+.signin input::placeholder { color: #6C625A; }
+.signin input:focus { outline: none; border-color: var(--accent); }
+.signin input[name='code'] { flex: 0 0 140px; letter-spacing: .32em; font-variant-numeric: tabular-nums; }
+.signin .err { margin: var(--s2) 0 0; color: #E4805C; }
+
+.gfoot .who { display: flex; align-items: center; gap: var(--s2); }
+.gfoot .who b { font-weight: 600; color: var(--void-ink); }
+
+.write a { font-size: 12.5px; color: var(--accent); text-decoration: none; }
+.write a:hover { text-decoration: underline; }
 
 .gfoot {
   border-top: 1px solid var(--void-line);
@@ -210,7 +243,7 @@
 .strip a.on { opacity: 1; }
 .strip img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-@media (max-width: 1080px) { .grid { columns: 3; } }
+@media (max-width: 1080px) { .wall { columns: 3; } }
 @media (max-width: 860px) {
   /* The rail becomes a drawer under the picture: the actions stay in thumb
      reach without covering the photograph. */
@@ -218,7 +251,7 @@
   .rail { max-height: 38svh; border-top: 1px solid var(--void-line); padding-top: var(--s4); }
 }
 @media (max-width: 760px) {
-  .grid { columns: 2; padding-top: var(--s6); }
+  .wall { columns: 2; padding-top: var(--s6); }
   .cover { height: 82svh; }
   .covertext { bottom: var(--s8); }
   .bar .who { display: none; }

@@ -3,6 +3,7 @@
 use App\Gallery\Models\Gallery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 uses(RefreshDatabase::class);
 
@@ -90,7 +91,7 @@ it('toggles the email requirement independently of the other two gates', functio
 it('keeps the gate columns out of mass assignment', function () {
     $gallery = Gallery::factory()->create();
 
-    $gallery->update(['view_password_hash' => 'whatever-i-want', 'requires_verified_email' => true]);
+    $gallery->update(['view_password' => 'whatever-i-want', 'requires_verified_email' => true]);
 })->throws(\Illuminate\Database\Eloquent\MassAssignmentException::class);
 
 // C-17 (#253): recoverable, because both values are handed to guests anyway
@@ -109,24 +110,29 @@ it('stores the view password so the studio can read it back, and still checks it
         ->not->toBe('basthorst2026');
 });
 
-it('keeps a gate set before the change working, and clears the old hash on rotation', function () {
+it('lets the old secret go the moment a new one is set', function () {
     $gallery = Gallery::factory()->create();
-    $gallery->forceFill(['view_password_hash' => 'basthorst2026'])->save();
-
-    expect($gallery->fresh()->requiresViewPassword())->toBeTrue()
-        ->and($gallery->fresh()->checkViewPassword('basthorst2026'))->toBeTrue();
+    $gallery->rotateViewPassword('basthorst2026');
 
     $gallery->rotateViewPassword('winsen2027');
 
-    expect($gallery->fresh()->view_password_hash)->toBeNull()
-        ->and($gallery->fresh()->checkViewPassword('basthorst2026'))->toBeFalse();
+    expect($gallery->fresh()->checkViewPassword('basthorst2026'))->toBeFalse()
+        ->and($gallery->fresh()->checkViewPassword('winsen2027'))->toBeTrue();
 });
 
 it('leaves no gate standing when a rotation clears it', function () {
     $gallery = Gallery::factory()->create();
-    $gallery->forceFill(['view_password_hash' => 'basthorst2026'])->save();
+    $gallery->rotateViewPassword('basthorst2026');
 
     $gallery->rotateViewPassword(null);
 
     expect($gallery->fresh()->requiresViewPassword())->toBeFalse();
+});
+
+// Ohne Bestandsdaten hält das Argument nicht mehr, das die Hash-Spalten
+// gehalten hat — sie waren der Rückfallpfad für Galerien, die vor C-17 ein
+// Tor bekamen.
+it('carries no legacy hash columns', function () {
+    expect(Schema::hasColumn('galleries', 'view_password_hash'))->toBeFalse()
+        ->and(Schema::hasColumn('galleries', 'download_pin_hash'))->toBeFalse();
 });

@@ -1,282 +1,396 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+import { reactive, watch } from 'vue'
+import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
-import ProjectHeader from '@/admin/components/ProjectHeader.vue'
-import QuoteItemsEditor, { type QuoteItemRow } from '@/admin/components/QuoteItemsEditor.vue'
+import ProjectShell from '@/admin/components/ProjectShell.vue'
+import QuoteTable, { type QuoteRow } from '@/admin/components/QuoteTable.vue'
 import ValidUntilField from '@/admin/components/ValidUntilField.vue'
-import { basisPointsToPercent, centsToEuros, eurosToCents, formatEuros, percentToBasisPoints } from '@/admin/lib/money'
-import { NONE, fromOption, toOption } from '@/lib/select'
+import Section from '@/ui/page/Section.vue'
+import { debounced } from '@/admin/lib/autosave'
+import { basisPointsToPercent, centsToEuros, eurosToCents, formatDiscount, formatEuros, parseDiscount } from '@/admin/lib/money'
+import { dayWithWeekday } from '@/admin/lib/dates'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Textarea } from '@/ui/textarea'
+import { DatePicker } from '@/ui/date-picker'
 import { Label } from '@/ui/label'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
-
-type DiscountType = '' | 'percentage' | 'amount'
-
-/** discountType/discountValue -> the string a discount's own type expects (percent or euros), and back. */
-function discountValueToField(type: string | null, value: number | null): string {
-  return type === 'percentage' ? basisPointsToPercent(value) : centsToEuros(value)
-}
-
-function discountFieldToValue(type: string, value: string): number | null {
-  return type === 'percentage' ? percentToBasisPoints(value) : eurosToCents(value)
-}
 
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
   quotes: App.Quotes.Data.QuoteData[]
-  packages: { value: string; label: string }[]
+  packages: App.Catalog.Data.PackageData[]
+  catalogItems: App.Catalog.Data.CatalogItemData[]
+  canManageCatalog: boolean
+  paymentPlan: App.Payments.Data.PaymentPlanData | null
 }>()
 
-const creating = ref(false)
-const createForm = useForm({ valid_until: '', package: '' })
+type Draft = { validUntil: string; discount: string; intro: string; outro: string; rows: QuoteRow[] }
 
-function create() {
-  createForm.post(`/auftraege/${props.header.id}/angebote`, {
+function draftOf(quote: App.Quotes.Data.QuoteData): Draft {
+  return {
+    validUntil: quote.validUntil ?? '',
+    discount: formatDiscount(quote.discountType, quote.discountValue),
+    intro: quote.intro ?? '',
+    outro: quote.outro ?? '',
+    rows: quote.items.map((item) => ({
+      title: item.title,
+      description: item.description ?? '',
+      quantity: item.quantity,
+      unitPrice: centsToEuros(item.unitPrice),
+      discount: formatDiscount(item.discountType, item.discountValue),
+      // Abgeleitet statt gespeichert: gemerkt heisst, die Bibliothek führt
+      // diesen Titel.
+      remember: props.catalogItems.some((entry) => entry.title === item.title),
+    })),
+  }
+}
+
+// Keyed by quote id and filled on demand rather than built once at setup: a
+// partial reload that adds a quote used to leave the map behind.
+const drafts = reactive<Record<string, Draft>>({})
+
+watch(
+  () => props.quotes,
+  (quotes) => {
+    for (const quote of quotes) {
+      if (quote.status === 'draft' && !drafts[quote.id]) {
+        drafts[quote.id] = draftOf(quote)
+      }
+    }
+  },
+  { immediate: true, deep: false },
+)
+
+const packageForms = reactive<Record<string, ReturnType<typeof useForm<{ name: string }>>>>({})
+
+watch(
+  () => props.quotes,
+  (quotes) => {
+    for (const quote of quotes) {
+      packageForms[quote.id] ??= useForm({ name: '' })
+    }
+  },
+  { immediate: true },
+)
+
+function saveAsPackage(quoteId: string) {
+  packageForms[quoteId].post(`/angebote/${quoteId}/als-paket`, {
     preserveScroll: true,
-    onSuccess: () => {
-      createForm.reset()
-      creating.value = false
-    },
+    onSuccess: () => packageForms[quoteId].reset(),
   })
 }
 
-// One edit form per quote, keyed by its id — several drafts stay independent
-// rather than fighting over one form's state.
-const editForms = Object.fromEntries(
-  props.quotes.map((quote) => [
-    quote.id,
-    useForm({
-      valid_until: quote.validUntil ?? '',
-      discountType: (quote.discountType ?? '') as '' | 'percentage' | 'amount',
-      discountValue: discountValueToField(quote.discountType, quote.discountValue),
-      items: quote.items.map(
-        (item): QuoteItemRow => ({
-          title: item.title,
-          description: item.description ?? '',
-          quantity: item.quantity,
-          unitPrice: centsToEuros(item.unitPrice),
-          discountType: (item.discountType ?? '') as '' | 'percentage' | 'amount',
-          discountValue: discountValueToField(item.discountType, item.discountValue),
-        }),
-      ),
-    }),
-  ]),
-)
+const save = debounced((quoteId: string) => {
+  const draft = drafts[quoteId]
+  const quoteDiscount = parseDiscount(draft.discount)
 
-function setDiscountType(quoteId: string, value: unknown) {
-  editForms[quoteId].discountType = fromOption(value) as DiscountType
+  router.patch(
+    `/angebote/${quoteId}`,
+    {
+      valid_until: draft.validUntil || null,
+      intro: draft.intro || null,
+      outro: draft.outro || null,
+      discount_type: quoteDiscount.type || null,
+      discount_value: quoteDiscount.value,
+      items: draft.rows.map((row) => {
+        const discount = parseDiscount(row.discount)
+
+        return {
+          title: row.title,
+          description: row.description || null,
+          quantity: row.quantity,
+          unit_price: eurosToCents(row.unitPrice),
+          discount_type: discount.type || null,
+          discount_value: discount.value,
+          // Ohne die Faehigkeit geht der Schluessel gar nicht erst mit, damit
+          // der Waechter im Controller nicht ohne Anlass greift.
+          ...(props.canManageCatalog ? { remember: row.remember } : {}),
+        }
+      }),
+    },
+    // Die Zeile, in der getippt wird, überlebt die Antwort; zurück kommen nur
+    // die serverseitig gerechneten Summen.
+    { preserveScroll: true, preserveState: true, only: ['quotes'] },
+  )
+}, 600)
+
+function create() {
+  router.post(`/auftraege/${props.header.id}/angebote`, {}, { preserveScroll: true })
 }
 
-function save(quoteId: string) {
-  editForms[quoteId]
-    .transform((data) => ({
-      valid_until: data.valid_until,
-      discount_type: data.discountType || null,
-      discount_value: data.discountType ? discountFieldToValue(data.discountType, data.discountValue) : null,
-      items: data.items.map((item: QuoteItemRow) => ({
-        title: item.title,
-        description: item.description || null,
-        quantity: item.quantity,
-        unit_price: eurosToCents(item.unitPrice),
-        discount_type: item.discountType || null,
-        discount_value: item.discountType ? discountFieldToValue(item.discountType, item.discountValue) : null,
-      })),
-    }))
-    .patch(`/angebote/${quoteId}`, { preserveScroll: true })
+function addendum(quoteId: string) {
+  router.post(`/auftraege/${props.header.id}/angebote`, { addendum_to: quoteId }, { preserveScroll: true })
 }
 
-// Q-06: one Send per quote, keyed the same way editForms is — a project can
-// hold several drafts at once, each sent independently.
-const sendForms = Object.fromEntries(props.quotes.map((quote) => [quote.id, useForm({})]))
+const planForm = useForm({ total: '', installments: [{ due_on: '' }] })
+
+function createPlan() {
+  planForm
+    .transform((data) => ({ ...data, total: eurosToCents(data.total) ?? 0 }))
+    .post(`/auftraege/${props.header.id}/zahlungsplan`, { preserveScroll: true })
+}
 
 function send(quoteId: string) {
-  sendForms[quoteId].post(`/angebote/${quoteId}/versenden`, { preserveScroll: true })
+  router.post(`/angebote/${quoteId}/versenden`, {}, { preserveScroll: true })
 }
 
 /** draft/sent/accepted/superseded/expired -> the mockup's own three chip states (tokens.css). */
 function chipClass(status: string): string {
   return ({ sent: 'now', accepted: 'done' } as Record<string, string>)[status] ?? 'next'
 }
+
+/*
+ * Die Summenzeilen als Liste statt als Zweig je Fall: nur so weiss die
+ * letzte Zeile, dass sie die letzte ist — im Mockup trägt allein sie die
+ * Linie und das Gewicht. Q-04 setzt vatMode erst beim Versenden, ein
+ * Entwurf endet deshalb bei Gesamt oder Netto.
+ */
+function summaryRows(quote: App.Quotes.Data.QuoteData) {
+  const rows = quote.discountAmount
+    ? [
+        { label: 'quotes.total', value: formatEuros(quote.total) },
+        { label: 'quotes.discount', value: `−${formatEuros(quote.discountAmount)}` },
+        { label: 'quotes.net', value: formatEuros(quote.net) },
+      ]
+    : [{ label: 'quotes.total', value: formatEuros(quote.total) }]
+
+  if (quote.vatMode === 'standard') {
+    rows.push(
+      { label: 'quotes.vat', value: formatEuros(quote.vatAmount ?? 0) },
+      { label: 'quotes.total', value: formatEuros(quote.net + (quote.vatAmount ?? 0)) },
+    )
+  }
+
+  return rows.map((row, index) => ({ ...row, last: index === rows.length - 1 }))
+}
 </script>
 
 <template>
   <AdminLayout active="anfragen">
-    <ProjectHeader :header="header" active="quotes" />
+    <ProjectShell :header="header" active="quotes">
+      <template v-if="header.canManageQuotes" #actions>
+        <Button type="button" variant="pill" @click="create">
+          <svg class="size-3" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+          {{ $t('quotes.create') }}
+        </Button>
+      </template>
 
-    <div class="hrow" style="margin-bottom: var(--s4)">
-      <span class="kick" style="margin-bottom: 0">{{ $t('quotes.title') }}</span>
-      <!-- Two questions — until when, and from which package — and then the
-           quote itself opens below for editing. That is a doorway, not a
-           section of the page, and it was sitting on top of the quotes it
-           was about to join. -->
-      <Dialog v-if="header.canManageQuotes" v-model:open="creating">
-        <DialogTrigger as-child>
-          <Button type="button">
-            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
-            {{ $t('quotes.create') }}
-          </Button>
-        </DialogTrigger>
+      <!-- Depth behind the Angebot & Vertrag tab: only the quote half exists so
+           far — no tax breakdown beyond Q-04's own VAT row, no PDF link,
+           Vertrag card, Nachtrag or payment plan yet (all Q-07 and later). A
+           superseded quote renders in this same loop rather than being hidden
+           or 404ing: Project::quotes() already returns every quote, and this
+           section is what "stays reachable and reads as superseded" means
+           here. -->
+      <Section
+        v-for="quote in quotes"
+        :key="quote.id"
+        :title="
+          quote.isAddendum
+            ? $t('quotes.addendumTo', { number: quote.predecessorNumber ?? '' })
+            : quote.number
+              ? `${$t('quotes.title')} ${quote.number}`
+              : $t('quotes.title')
+        "
+      >
+        <template #actions>
+          <span :class="['chip', chipClass(quote.status)]">{{ quote.statusLabel }}</span>
 
-        <DialogContent class="max-w-[480px]">
-          <DialogHeader>
-            <DialogTitle>{{ $t('quotes.create') }}</DialogTitle>
-          </DialogHeader>
-
-          <DialogBody>
-            <form id="quote-create-form" class="fgrid" @submit.prevent="create">
-              <ValidUntilField id="valid_until" v-model="createForm.valid_until" />
-              <div class="fld">
-                <Label for="package">{{ $t('quotes.fromPackage') }}</Label>
-                <Select
-                  :model-value="toOption(createForm.package)"
-                  @update:model-value="(value) => (createForm.package = fromOption(value))"
-                >
-                  <SelectTrigger id="package">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem :value="NONE">{{ $t('quotes.blank') }}</SelectItem>
-                    <SelectItem v-for="pkg in packages" :key="pkg.value" :value="pkg.value">{{ pkg.label }}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </form>
-          </DialogBody>
-
-          <DialogFooter>
-            <Button type="submit" form="quote-create-form" :disabled="createForm.processing">
-              {{ $t('common.save') }}
+          <div class="ml-auto flex items-center gap-1.5">
+            <Button as="a" variant="outline" :href="`/angebote/${quote.id}/pdf`" target="_blank">
+              {{ $t('quotes.pdf') }}
             </Button>
-            <DialogClose as-child>
-              <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
 
-    <!-- Depth behind the Angebot & Vertrag tab: only the quote half exists so
-         far — no tax breakdown beyond Q-04's own VAT row, no PDF link,
-         Vertrag card, Nachtrag or payment plan yet (all Q-07 and later). A
-         superseded quote renders in this same loop rather than being hidden
-         or 404ing: Project::quotes() already returns every quote, and this
-         card is what "stays reachable and reads as superseded" means here. -->
-    <div v-for="quote in quotes" :key="quote.id" class="card static" style="margin-bottom: var(--s4)">
-      <div class="cardhead">
-        <span class="kick">{{ quote.number ? `${$t('quotes.title')} ${quote.number}` : $t('quotes.title') }}</span>
-        <span :class="['chip', chipClass(quote.status)]">{{ quote.statusLabel }}</span>
-      </div>
+            <Button
+              v-if="header.canManageQuotes && quote.status === 'accepted'"
+              type="button"
+              variant="outline"
+              @click="addendum(quote.id)"
+            >
+              {{ $t('quotes.addendum') }}
+            </Button>
 
-      <table class="qt">
-        <tr v-for="item in quote.items" :key="item.id" :class="{ incl: item.isIncluded }">
-          <td>
-            {{ item.title }}
-            <div v-if="item.isIncluded || item.description" class="d">
-              {{ item.isIncluded ? $t('quotes.included') : item.description }}
+            <Dialog v-if="header.canManageQuotes && packageForms[quote.id]">
+              <DialogTrigger as-child>
+                <Button variant="outline" type="button">{{ $t('quotes.saveAsPackage') }}</Button>
+              </DialogTrigger>
+
+              <DialogContent class="max-w-[420px]">
+                <DialogHeader>
+                  <DialogTitle>{{ $t('quotes.saveAsPackage') }}</DialogTitle>
+                </DialogHeader>
+
+                <DialogBody>
+                  <form
+                    :id="`as-package-${quote.id}`"
+                    class="grid grid-cols-2 gap-x-5 gap-y-4"
+                    @submit.prevent="saveAsPackage(quote.id)"
+                  >
+                    <div class="col-span-2 flex min-w-0 flex-col gap-1.5">
+                      <Label :for="`package-name-${quote.id}`">{{ $t('quotes.packageName') }}</Label>
+                      <Input
+                        :id="`package-name-${quote.id}`"
+                        v-model="packageForms[quote.id].name"
+                        type="text"
+                        required
+                      />
+                      <p v-if="packageForms[quote.id].errors.name" class="text-[12px] text-destructive">
+                        {{ packageForms[quote.id].errors.name }}
+                      </p>
+                    </div>
+                  </form>
+                </DialogBody>
+
+                <DialogFooter>
+                  <Button type="submit" :form="`as-package-${quote.id}`" :disabled="packageForms[quote.id].processing">
+                    {{ $t('common.save') }}
+                  </Button>
+                  <DialogClose as-child>
+                    <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Button
+              v-if="header.canManageQuotes && quote.status === 'draft'"
+              type="button"
+              variant="pill"
+              @click="send(quote.id)"
+            >
+              {{ $t('quotes.send') }}
+            </Button>
+          </div>
+        </template>
+
+        <!-- Editing stays behind canManageQuotes and behind status === 'draft'
+             — the UI half of Q-06's immutability rule, Quote::booted()'s guard
+             being the half that still holds even if this condition were ever
+             wrong or bypassed. Ein Entwurf ist die Tabelle; erst ab Versendet
+             tritt das gelesene Dokument an ihre Stelle. -->
+        <template v-if="header.canManageQuotes && quote.status === 'draft' && drafts[quote.id]">
+          <QuoteTable
+            v-model="drafts[quote.id].rows"
+            :can-manage-catalog="canManageCatalog"
+            :packages="packages"
+            :catalog-items="catalogItems"
+            @change="save(quote.id)"
+          />
+
+          <div class="mt-4 grid grid-cols-2 gap-x-5 gap-y-4">
+            <ValidUntilField
+              :id="`quote-valid-${quote.id}`"
+              v-model="drafts[quote.id].validUntil"
+              @blur.capture="save(quote.id)"
+            />
+            <div class="flex min-w-0 flex-col gap-1.5">
+              <Label :for="`quote-discount-${quote.id}`">{{ $t('quotes.discount') }}</Label>
+              <Input
+                :id="`quote-discount-${quote.id}`"
+                v-model="drafts[quote.id].discount"
+                class="tabular-nums"
+                type="text"
+                inputmode="decimal"
+                @blur="save(quote.id)"
+              />
             </div>
-          </td>
-          <td>{{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.lineTotal) }}</td>
-        </tr>
-        <!-- No discount on this quote: the single sum row Q-02 already rendered, unchanged. -->
-        <tr v-if="!quote.discountAmount" class="sum">
-          <td>{{ $t('quotes.total') }}</td>
-          <td>{{ formatEuros(quote.total) }}</td>
-        </tr>
+            <div class="col-span-2 flex min-w-0 flex-col gap-1.5">
+              <Label :for="`quote-intro-${quote.id}`">{{ $t('quotes.intro') }}</Label>
+              <Textarea :id="`quote-intro-${quote.id}`" v-model="drafts[quote.id].intro" rows="3" @blur="save(quote.id)" />
+            </div>
+            <div class="col-span-2 flex min-w-0 flex-col gap-1.5">
+              <Label :for="`quote-outro-${quote.id}`">{{ $t('quotes.outro') }}</Label>
+              <Textarea :id="`quote-outro-${quote.id}`" v-model="drafts[quote.id].outro" rows="3" @blur="save(quote.id)" />
+            </div>
+          </div>
+        </template>
+
         <template v-else>
-          <tr class="sum">
-            <td>{{ $t('quotes.total') }}</td>
-            <td>{{ formatEuros(quote.total) }}</td>
-          </tr>
-          <tr class="tax">
-            <td>{{ $t('quotes.discount') }}</td>
-            <td>−{{ formatEuros(quote.discountAmount) }}</td>
-          </tr>
-          <tr class="total">
-            <td>{{ $t('quotes.net') }}</td>
-            <td>{{ formatEuros(quote.net) }}</td>
-          </tr>
+          <p v-if="quote.intro" class="mb-3 text-[12.5px] leading-[1.55] whitespace-pre-line">{{ quote.intro }}</p>
+
+          <div
+            v-for="item in quote.items"
+            :key="item.id"
+            class="flex gap-3 py-[9px] text-[13px]"
+            :class="item.isIncluded ? 'text-ink-2' : 'text-foreground'"
+          >
+            <span class="flex-1">
+              {{ item.title }}
+              <span v-if="item.isIncluded || item.description" class="mt-px block text-[11.5px] text-ink-2">
+                {{ item.isIncluded ? $t('quotes.included') : item.description }}
+              </span>
+            </span>
+            <span class="w-[110px] flex-none text-right font-semibold tabular-nums">
+              {{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.lineTotal) }}
+            </span>
+          </div>
+
+          <div
+            v-for="(row, index) in summaryRows(quote)"
+            :key="`${row.label}-${index}`"
+            class="flex gap-3 py-1.5"
+            :class="row.last ? 'mt-1.5 pt-2.5 font-semibold shadow-[inset_0_1px_0_var(--line)]' : 'text-[12.5px]'"
+          >
+            <span class="flex-1" :class="{ 'text-[13.5px]': row.last }">
+              {{ row.label === 'quotes.vat' ? $t('quotes.vat', { rate: basisPointsToPercent(quote.vatRate) }) : $t(row.label) }}
+            </span>
+            <span class="w-[110px] flex-none text-right tabular-nums" :class="{ 'text-[14px]': row.last }">{{ row.value }}</span>
+          </div>
+
+          <!-- Q-04: nur ein bereits versendetes Angebot trägt den §19-Satz —
+               ein Entwurf hat kein vatMode. -->
+          <p v-if="quote.vatMode === 'small_business'" class="mt-1.5 text-[11.5px] leading-[1.45] text-ink-2">
+            {{ quote.vatNote }}
+          </p>
+
+          <p v-if="quote.outro" class="mt-3 text-[12.5px] leading-[1.55] whitespace-pre-line">{{ quote.outro }}</p>
+        </template>
+      </Section>
+
+      <Section v-if="paymentPlan || header.canManagePaymentPlan" :title="$t('payments.title')">
+        <template v-if="paymentPlan" #actions>
+          <span class="text-[12px] text-ink-2">{{ $t('payments.open', { amount: formatEuros(paymentPlan.openTotal) }) }}</span>
         </template>
 
-        <!-- Q-04: only a quote Q-06 has already sent carries these — a draft's
-             vatMode is always null (see QuoteData), so nothing prints here
-             until that story ships. Vocabulary and order match mockup
-             04-angebot's accepted-quote card: a muted §19 note with no rate
-             shown at all, or a muted rate row followed by the final total
-             including it. -->
-        <tr v-if="quote.vatMode === 'small_business'" class="tax">
-          <td colspan="2">{{ quote.vatNote }}</td>
-        </tr>
-        <template v-else-if="quote.vatMode === 'standard'">
-          <tr class="tax">
-            <td>{{ $t('quotes.vat', { rate: basisPointsToPercent(quote.vatRate) }) }}</td>
-            <td>{{ formatEuros(quote.vatAmount ?? 0) }}</td>
-          </tr>
-          <tr class="total">
-            <td>{{ $t('quotes.total') }}</td>
-            <td>{{ formatEuros(quote.net + (quote.vatAmount ?? 0)) }}</td>
-          </tr>
-        </template>
-      </table>
-
-      <!-- Editing and sending both stay behind canManageQuotes, and both
-           stay behind status === 'draft' — the UI half of Q-06's
-           immutability rule, Quote::booted()'s guard being the half that
-           still holds even if this condition were ever wrong or bypassed. -->
-      <template v-if="header.canManageQuotes && quote.status === 'draft'">
-        <div class="dsec">
-          <div class="dlab">{{ $t('quotes.items') }}</div>
-          <QuoteItemsEditor v-model="editForms[quote.id].items" />
+        <div
+          v-for="installment in paymentPlan?.installments ?? []"
+          :key="installment.id"
+          class="flex gap-3 py-[9px] text-[13px]"
+        >
+          <span class="w-[110px] flex-none text-ink-2">{{ dayWithWeekday(installment.dueOn) }}</span>
+          <span class="flex-1">{{ installment.label }}</span>
+          <span class="text-[12px] text-ink-2">{{ installment.statusLabel }}</span>
+          <span class="w-[110px] flex-none text-right font-semibold tabular-nums">{{ formatEuros(installment.amount) }}</span>
         </div>
 
-        <form class="fgrid" @submit.prevent="save(quote.id)">
-          <ValidUntilField :id="`quote-valid-${quote.id}`" v-model="editForms[quote.id].valid_until" />
-          <div class="fld">
-            <Label :for="`quote-discount-type-${quote.id}`">{{ $t('quotes.discountType') }}</Label>
-            <Select
-              :model-value="toOption(editForms[quote.id].discountType)"
-              @update:model-value="(value) => setDiscountType(quote.id, value)"
-            >
-              <SelectTrigger :id="`quote-discount-type-${quote.id}`">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem :value="NONE">{{ $t('quotes.discountNone') }}</SelectItem>
-                <SelectItem value="percentage">{{ $t('quotes.discountPercentage') }}</SelectItem>
-                <SelectItem value="amount">{{ $t('quotes.discountAmount') }}</SelectItem>
-              </SelectContent>
-            </Select>
+        <form v-if="!paymentPlan && header.canManagePaymentPlan" class="mt-2 grid grid-cols-2 gap-x-5 gap-y-4" @submit.prevent="createPlan">
+          <div class="flex min-w-0 flex-col gap-1.5">
+            <Label for="plan-total">{{ $t('payments.total') }}</Label>
+            <Input id="plan-total" v-model="planForm.total" class="tabular-nums" type="text" inputmode="decimal" required />
           </div>
-          <div v-if="editForms[quote.id].discountType" class="fld">
-            <Label :for="`quote-discount-value-${quote.id}`">
-              {{
-                editForms[quote.id].discountType === 'percentage'
-                  ? $t('quotes.discountValuePercent')
-                  : $t('quotes.discountValueEuros')
-              }}
-            </Label>
-            <Input
-              :id="`quote-discount-value-${quote.id}`"
-              v-model="editForms[quote.id].discountValue" class="tabular-nums"
-              type="text"
-              inputmode="decimal" />
-          </div>
-          <div class="fld wide">
-            <div class="formfoot" style="margin-top: 0">
-              <Button type="submit" :disabled="editForms[quote.id].processing">
-                {{ $t('common.save') }}
-              </Button>
-              <Button type="button" :disabled="sendForms[quote.id].processing" @click="send(quote.id)">
-                {{ $t('quotes.send') }}
-              </Button>
-            </div>
-          </div>
-        </form>
-      </template>
-    </div>
 
-    <p v-if="!quotes.length" class="hint">{{ $t('quotes.empty') }}</p>
+          <div v-for="(installment, index) in planForm.installments" :key="index" class="flex min-w-0 flex-col gap-1.5">
+            <Label :for="`plan-due-${index}`">{{ $t('payments.dueOn') }}</Label>
+            <DatePicker :id="`plan-due-${index}`" v-model="installment.due_on" required />
+          </div>
+
+          <div class="col-span-2 flex items-center gap-1.5">
+            <Button type="button" variant="outline" @click="planForm.installments.push({ due_on: '' })">
+              {{ $t('payments.addInstallment') }}
+            </Button>
+            <Button type="submit" variant="pill" :disabled="planForm.processing">{{ $t('payments.create') }}</Button>
+          </div>
+
+          <p v-if="planForm.errors.installments" class="col-span-2 text-[12px] text-destructive">
+            {{ planForm.errors.installments }}
+          </p>
+        </form>
+      </Section>
+
+      <p v-if="!quotes.length && !header.canManageQuotes" class="mt-10 text-[11.5px] leading-[1.45] text-faint">
+        {{ $t('quotes.empty') }}
+      </p>
+    </ProjectShell>
   </AdminLayout>
 </template>

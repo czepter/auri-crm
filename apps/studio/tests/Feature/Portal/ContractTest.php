@@ -5,6 +5,7 @@ use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
@@ -92,4 +93,30 @@ it('never puts an integer identifier into the portal contract screen', function 
         ->viewData('page')['props'];
 
     expect(integerIdPaths($props))->toBe([]);
+});
+
+// A missing artifact is rebuilt on sight now — see
+// tests/Feature/Contracts/EnsureContractArtifactTest.php. What survives from
+// the rule this test was written for is the case where rebuilding cannot
+// happen: the screen still opens, and it still never links to bytes that are
+// not there.
+it('404s the download and hides the link when the artifact is gone and Gotenberg is down', function () {
+    Storage::fake('local');
+    Http::fake(['*/forms/chromium/convert/html' => Http::response('boom', 500)]);
+
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $contract = renderedContract($project);
+    $contact = Contact::factory()->create();
+    $project->attachContact($contact, ProjectContactRole::Primary);
+
+    Storage::disk('local')->delete($contract->artifact_path);
+
+    $props = $this->actingAs($contact, 'portal')
+        ->get("/projekte/{$project->public_id}/vertrag")
+        ->assertOk()
+        ->viewData('page')['props'];
+
+    expect($props['contract']['downloadUrl'])->toBeNull();
+
+    $this->actingAs($contact, 'portal')->get("/projekte/{$project->public_id}/vertrag/pdf")->assertNotFound();
 });

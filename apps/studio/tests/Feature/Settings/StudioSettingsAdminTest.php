@@ -114,6 +114,21 @@ it('rejects saving with neither Steuernummer nor USt-IdNr present', function () 
     expect(StudioSettings::query()->sole()->tax_number)->toBeNull();
 });
 
+it('saves the Marke fieldset alone without demanding the tax fields it does not show', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')
+        ->from('/einstellungen')
+        ->patch('/einstellungen', ['display_name' => 'Atelier Nordlicht', 'accent_color' => '#B44E22'])
+        ->assertRedirect('/einstellungen')
+        ->assertSessionHasNoErrors();
+
+    $row = StudioSettings::query()->sole();
+
+    expect($row->display_name)->toBe('Atelier Nordlicht')
+        ->and($row->tax_number)->toBeNull();
+});
+
 it('accepts saving with only the USt-IdNr present', function () {
     $owner = staffMember(StaffRole::Owner);
 

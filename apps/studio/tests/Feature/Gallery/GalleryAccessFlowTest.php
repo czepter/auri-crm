@@ -1,11 +1,26 @@
 <?php
 
+use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Models\Contact;
+use App\Crm\Models\Project;
+use App\Gallery\Actions\ConsumeGalleryEmailVerification;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryEmailVerification;
+use App\Gallery\Models\GalleryGuest;
+use App\Gallery\Models\GalleryList;
+use App\Gallery\Models\GalleryListItem;
 use App\Gallery\Notifications\GalleryEmailVerificationLink;
+use App\Media\Enums\AssetStatus;
+use App\Media\Enums\ZipBuildScope;
+use App\Media\Enums\ZipBuildSize;
+use App\Media\Enums\ZipBuildStatus;
+use App\Media\Jobs\BuildZip;
+use App\Media\Models\Asset;
+use App\Media\Models\ZipBuild;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Queue;
 
 uses(RefreshDatabase::class);
 
@@ -64,6 +79,40 @@ it('does not carry a claim from one gallery to another', function () {
         ->and(props("/galerien/{$b->public_id}")['unlocked'])->toBeFalse();
 });
 
+// ---------- G-14: withdrawal closes this entry point, not only the gated ones ----------
+
+it('404s the gate screen for a withdrawn gallery, no password required', function () {
+    $gallery = Gallery::factory()->create();
+    Asset::factory()->for($gallery)->create(['key' => 'galleries/g/a.jpg']);
+    $gallery->publish();
+    $gallery->forceFill(['unpublished_at' => now()])->save();
+
+    $this->get("/galerien/{$gallery->public_id}")->assertNotFound();
+
+    expect($gallery->fresh()->versions()->count())->toBe(1);
+});
+
+// R17: store() is the uniform-failure path (unlike show(), which does 404
+// a withdrawn gallery) — a distinct status here would let a garbage
+// password enumerate withdrawn ids, exactly what G-07 closes for a
+// nonexistent one.
+it('answers a withdrawn gallery exactly as it answers one that never existed', function () {
+    $gallery = Gallery::factory()->create();
+    $gallery->rotateViewPassword('basthorst2026');
+    $gallery->publish();
+    $gallery->forceFill(['unpublished_at' => now()])->save();
+
+    $this->post("/galerien/{$gallery->public_id}/passwort", ['password' => 'irgendwas'])
+        ->assertRedirect()
+        ->assertSessionHasErrors(['password' => __('gallery.password_wrong')]);
+
+    $this->post('/galerien/nonexistent-cuid/passwort', ['password' => 'irgendwas'])
+        ->assertRedirect()
+        ->assertSessionHasErrors(['password' => __('gallery.password_wrong')]);
+
+    expect($gallery->fresh()->versions()->count())->toBe(1);
+});
+
 // ---------- reaching "download" requires the view gate first ----------
 
 it('bounces an unauthenticated download request back to the password gate', function () {
@@ -74,14 +123,36 @@ it('bounces an unauthenticated download request back to the password gate', func
         ->assertRedirect("/galerien/{$gallery->public_id}");
 });
 
+/** Die Zustelladresse, die der Download seither immer verlangt. */
+function leaveAddress(Gallery $gallery, string $email = 'gast@example.test'): void
+{
+    test()->post("/galerien/{$gallery->public_id}/download/email", ['email' => $email]);
+}
+
 it('reaches the download screen once the view gate is satisfied', function () {
     $gallery = Gallery::factory()->create();
     $gallery->rotateViewPassword('basthorst2026');
     $this->post("/galerien/{$gallery->public_id}/passwort", ['password' => 'basthorst2026']);
 
-    $props = props("/galerien/{$gallery->public_id}/download");
+    // Eine Zustelladresse verlangt der Download immer — ohne sie hat das
+    // fertig gepackte Archiv niemanden, dem es Bescheid sagt. Nur ob sie
+    // bestätigt sein muss, entscheidet das Studio.
+    expect(props("/galerien/{$gallery->public_id}/download")['step'])->toBe('email');
 
-    expect($props['step'])->toBe('ready');
+    $this->post("/galerien/{$gallery->public_id}/download/email", ['email' => 'anna@example.test']);
+
+    expect(props("/galerien/{$gallery->public_id}/download")['step'])->toBe('ready');
+});
+
+// Verlangt das Studio keinen Nachweis, ist die Adresse kein Tor: kein Code,
+// keine Mail, sofort weiter.
+it('takes the address without a code when the studio asks for no proof', function () {
+    $gallery = Gallery::factory()->create();
+
+    $this->post("/galerien/{$gallery->public_id}/download/email", ['email' => 'anna@example.test']);
+
+    expect(props("/galerien/{$gallery->public_id}/download")['step'])->toBe('ready')
+        ->and(GalleryGuest::sole()->email)->toBe('anna@example.test');
 });
 
 // ---------- the download PIN gate (mockup 11) ----------
@@ -115,6 +186,7 @@ it('a guest holding only the view password cannot reach a ready download', funct
     expect(props("/galerien/{$gallery->public_id}/download")['step'])->toBe('pin');
 
     $this->post("/galerien/{$gallery->public_id}/download/pin", ['pin' => '4821']);
+    leaveAddress($gallery);
 
     expect(props("/galerien/{$gallery->public_id}/download")['step'])->toBe('ready');
 });
@@ -188,7 +260,7 @@ it('lets one email link be spent only once', function () {
     $this->post("/galerien/{$gallery->public_id}/download/email", ['email' => 'anna@example.test']);
     $verification = GalleryEmailVerification::sole();
 
-    $first = app(App\Gallery\Actions\ConsumeGalleryEmailVerification::class);
+    $first = app(ConsumeGalleryEmailVerification::class);
     // The raw token never left the notification, so reissue one the same way
     // the action itself would have and hash it the same way to compare.
     $raw = 'known-for-the-test';
@@ -240,6 +312,7 @@ it('rotating the view password does not touch a granted download or email claim'
 
     $this->post("/galerien/{$gallery->public_id}/passwort", ['password' => 'basthorst2026']);
     $this->post("/galerien/{$gallery->public_id}/download/pin", ['pin' => '4821']);
+    leaveAddress($gallery);
     expect(props("/galerien/{$gallery->public_id}/download")['step'])->toBe('ready');
 
     $gallery->rotateViewPassword('newpassword');
@@ -254,24 +327,23 @@ it('rotating the view password does not touch a granted download or email claim'
 // ---------- G-03 (#231): the download screen ----------
 
 it('offers everything plus the client\'s own selections, each with both sizes', function () {
-    $project = App\Crm\Models\Project::factory()->create(['portal_visible' => true]);
-    $contact = App\Crm\Models\Contact::factory()->create();
-    $project->attachContact($contact, App\Crm\Enums\ProjectContactRole::Primary);
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $contact = Contact::factory()->create();
+    $project->attachContact($contact, ProjectContactRole::Primary);
 
     $gallery = Gallery::factory()->for($project)->create();
-    $a = App\Media\Models\Asset::factory()->for($gallery)->create([
-        'key' => 'galleries/g/a.jpg', 'status' => App\Media\Enums\AssetStatus::Ready, 'byte_size' => 4_000_000,
+    $a = Asset::factory()->for($gallery)->create([
+        'key' => 'galleries/g/a.jpg', 'status' => AssetStatus::Ready, 'byte_size' => 4_000_000,
     ]);
-    App\Media\Models\Asset::factory()->for($gallery)->create([
-        'key' => 'galleries/g/b.jpg', 'status' => App\Media\Enums\AssetStatus::Ready, 'byte_size' => 6_000_000,
+    Asset::factory()->for($gallery)->create([
+        'key' => 'galleries/g/b.jpg', 'status' => AssetStatus::Ready, 'byte_size' => 6_000_000,
     ]);
-    $gallery->update(['assets' => [['key' => 'galleries/g/a.jpg'], ['key' => 'galleries/g/b.jpg']]]);
-    $gallery->publish();
+    $gallery->fresh()->publish();
 
-    $list = App\Gallery\Models\GalleryList::create([
+    $list = GalleryList::create([
         'gallery_id' => $gallery->id, 'contact_id' => $contact->id, 'name' => 'Album',
     ]);
-    App\Gallery\Models\GalleryListItem::create(['gallery_list_id' => $list->id, 'asset_key' => $a->key]);
+    GalleryListItem::create(['gallery_list_id' => $list->id, 'asset_key' => $a->key]);
 
     $props = test()->actingAs($contact, 'portal')
         ->get("/galerien/{$gallery->public_id}/download")
@@ -287,15 +359,18 @@ it('offers everything plus the client\'s own selections, each with both sizes', 
 
 // A named list belongs to the client — G-02 draws the same line in the grid.
 it('offers a guest only everything, never somebody\'s named list', function () {
-    $project = App\Crm\Models\Project::factory()->create(['portal_visible' => true]);
-    $contact = App\Crm\Models\Contact::factory()->create();
-    $project->attachContact($contact, App\Crm\Enums\ProjectContactRole::Primary);
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $contact = Contact::factory()->create();
+    $project->attachContact($contact, ProjectContactRole::Primary);
 
-    $gallery = Gallery::factory()->for($project)->create(['assets' => [['key' => 'galleries/g/a.jpg']]]);
+    $gallery = Gallery::factory()->for($project)->create();
+    Asset::factory()->for($gallery)->create(['key' => 'galleries/g/a.jpg']);
     $gallery->publish();
-    App\Gallery\Models\GalleryList::create([
+    GalleryList::create([
         'gallery_id' => $gallery->id, 'contact_id' => $contact->id, 'name' => 'Album',
     ]);
+
+    leaveAddress($gallery);
 
     $props = props("/galerien/{$gallery->public_id}/download");
 
@@ -303,39 +378,42 @@ it('offers a guest only everything, never somebody\'s named list', function () {
 });
 
 it('queues one build per selection and size, and reuses a fresh one', function () {
-    Illuminate\Support\Facades\Queue::fake();
+    Queue::fake();
 
-    $gallery = Gallery::factory()->create(['assets' => [['key' => 'galleries/g/a.jpg']]]);
+    $gallery = Gallery::factory()->create();
+    Asset::factory()->for($gallery)->create(['key' => 'galleries/g/a.jpg']);
     $gallery->publish();
+    leaveAddress($gallery);
 
     test()->post("/galerien/{$gallery->public_id}/download/vorbereiten", ['size' => 'original'])
         ->assertRedirect();
 
-    $build = App\Media\Models\ZipBuild::sole();
-    expect($build->scope)->toBe(App\Media\Enums\ZipBuildScope::All)
-        ->and($build->status)->toBe(App\Media\Enums\ZipBuildStatus::Building);
+    $build = ZipBuild::sole();
+    expect($build->scope)->toBe(ZipBuildScope::All)
+        ->and($build->status)->toBe(ZipBuildStatus::Building);
 
-    Illuminate\Support\Facades\Queue::assertPushed(App\Media\Jobs\BuildZip::class, 1);
+    Queue::assertPushed(BuildZip::class, 1);
 
     // A different size is a different archive, not the same one again.
     test()->post("/galerien/{$gallery->public_id}/download/vorbereiten", ['size' => 'web']);
-    expect(App\Media\Models\ZipBuild::count())->toBe(2);
+    expect(ZipBuild::count())->toBe(2);
 
     // A Ready one within the window is not rebuilt.
-    $build->update(['status' => App\Media\Enums\ZipBuildStatus::Ready]);
+    $build->update(['status' => ZipBuildStatus::Ready]);
     test()->post("/galerien/{$gallery->public_id}/download/vorbereiten", ['size' => 'original']);
 
-    Illuminate\Support\Facades\Queue::assertPushed(App\Media\Jobs\BuildZip::class, 2);
+    Queue::assertPushed(BuildZip::class, 2);
 });
 
 it('refuses to prepare a list the visitor does not own', function () {
-    Illuminate\Support\Facades\Queue::fake();
+    Queue::fake();
 
-    $gallery = Gallery::factory()->create(['assets' => [['key' => 'galleries/g/a.jpg']]]);
+    $gallery = Gallery::factory()->create();
+    Asset::factory()->for($gallery)->create(['key' => 'galleries/g/a.jpg']);
     $gallery->publish();
-    $list = App\Gallery\Models\GalleryList::create([
+    $list = GalleryList::create([
         'gallery_id' => $gallery->id,
-        'contact_id' => App\Crm\Models\Contact::factory()->create()->id,
+        'contact_id' => Contact::factory()->create()->id,
         'name' => 'Album',
     ]);
 
@@ -343,24 +421,26 @@ it('refuses to prepare a list the visitor does not own', function () {
         'size' => 'original', 'list' => $list->public_id,
     ])->assertNotFound();
 
-    expect(App\Media\Models\ZipBuild::count())->toBe(0);
+    expect(ZipBuild::count())->toBe(0);
 });
 
 // One button would be lying about 33 originals at 4,2 GB.
 it('hands back every part of a ready build with its own signed link', function () {
-    $gallery = Gallery::factory()->create(['assets' => [['key' => 'galleries/g/a.jpg']]]);
+    $gallery = Gallery::factory()->create();
+    Asset::factory()->for($gallery)->create(['key' => 'galleries/g/a.jpg']);
     $version = $gallery->publish();
 
-    $build = App\Media\Models\ZipBuild::create([
+    $build = ZipBuild::create([
         'gallery_version_id' => $version->id,
-        'scope' => App\Media\Enums\ZipBuildScope::All,
-        'size' => App\Media\Enums\ZipBuildSize::Original,
-        'status' => App\Media\Enums\ZipBuildStatus::Ready,
+        'scope' => ZipBuildScope::All,
+        'size' => ZipBuildSize::Original,
+        'status' => ZipBuildStatus::Ready,
     ]);
     $build->parts()->createMany([
         ['part_number' => 1, 'key' => 'zips/part-1.zip', 'byte_size' => 1_500_000_000],
         ['part_number' => 2, 'key' => 'zips/part-2.zip', 'byte_size' => 900_000_000],
     ]);
+    leaveAddress($gallery);
 
     $props = props("/galerien/{$gallery->public_id}/download");
     $row = collect($props['builds'])->sole();
@@ -375,27 +455,29 @@ it('hands back every part of a ready build with its own signed link', function (
 // couple's curation is not: "Für die Eltern" is their words, and a
 // list-scoped archive is their selection, not a stranger's to download.
 it('never shows a guest the client\'s own archives or what they called them', function () {
-    $project = App\Crm\Models\Project::factory()->create(['portal_visible' => true]);
-    $contact = App\Crm\Models\Contact::factory()->create();
-    $project->attachContact($contact, App\Crm\Enums\ProjectContactRole::Primary);
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $contact = Contact::factory()->create();
+    $project->attachContact($contact, ProjectContactRole::Primary);
 
-    $gallery = Gallery::factory()->for($project)->create(['assets' => [['key' => 'galleries/g/a.jpg']]]);
+    $gallery = Gallery::factory()->for($project)->create();
+    Asset::factory()->for($gallery)->create(['key' => 'galleries/g/a.jpg']);
     $version = $gallery->publish();
 
-    $list = App\Gallery\Models\GalleryList::create([
+    $list = GalleryList::create([
         'gallery_id' => $gallery->id, 'contact_id' => $contact->id, 'name' => 'Für die Eltern',
     ]);
 
     foreach ([null, $list->id] as $listId) {
-        App\Media\Models\ZipBuild::create([
+        ZipBuild::create([
             'gallery_version_id' => $version->id,
-            'scope' => $listId === null ? App\Media\Enums\ZipBuildScope::All : App\Media\Enums\ZipBuildScope::ListSelection,
-            'size' => App\Media\Enums\ZipBuildSize::Original,
+            'scope' => $listId === null ? ZipBuildScope::All : ZipBuildScope::ListSelection,
+            'size' => ZipBuildSize::Original,
             'gallery_list_id' => $listId,
-            'status' => App\Media\Enums\ZipBuildStatus::Ready,
+            'status' => ZipBuildStatus::Ready,
         ]);
     }
 
+    leaveAddress($gallery);
     $asGuest = props("/galerien/{$gallery->public_id}/download");
 
     expect(collect($asGuest['builds'])->pluck('list')->all())->toBe([''])

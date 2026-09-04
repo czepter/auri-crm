@@ -2,6 +2,10 @@
 import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import { Button } from '@/ui/button'
+import { ChoiceGroup } from '@/ui/choice-group'
+import PageHead from '@/ui/page/PageHead.vue'
+import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 
 const props = defineProps<{
   month: string
@@ -68,79 +72,107 @@ function shortDate(date: string | null) {
 
 <template>
   <AdminLayout active="kalender">
-    <div data-theme="crm">
-      <div class="hrow">
-        <div>
-          <div class="kick">{{ label }}</div>
-          <h1>{{ $t('calendar.title') }}</h1>
+    <div data-tokens>
+      <PageHead :kicker="label" :title="$t('calendar.title')">
+        <ChoiceGroup
+          v-model="view"
+          class="ml-auto"
+          :options="[
+            { value: 'monat', label: $t('calendar.viewMonth') },
+            { value: 'liste', label: $t('calendar.viewList') },
+          ]"
+          variant="segmented"
+        />
+
+        <Button
+          v-for="step in ([['←', previous], ['→', next]] as const)"
+          :key="step[0]"
+          type="button"
+          variant="pill-muted"
+          @click="go(step[1])"
+        >
+          {{ step[0] }}
+        </Button>
+      </PageHead>
+
+      <div v-if="view === 'monat'" class="grid grid-cols-7 px-8 py-5">
+        <div
+          v-for="weekday in WEEKDAYS"
+          :key="weekday"
+          class="pb-2 pl-0.5 text-[10.5px] leading-none font-semibold tracking-[0.06em] uppercase text-ink-2"
+        >
+          {{ weekday }}
         </div>
-
-        <span class="seg" style="margin-left: auto">
-          <button type="button" :class="{ on: view === 'monat' }" @click="view = 'monat'">
-            {{ $t('calendar.viewMonth') }}
-          </button>
-          <button type="button" :class="{ on: view === 'liste' }" @click="view = 'liste'">
-            {{ $t('calendar.viewList') }}
-          </button>
-        </span>
-
-        <button class="btn-2" type="button" @click="go(previous)">←</button>
-        <button class="btn-2" type="button" @click="go(next)">→</button>
-      </div>
-
-      <div v-if="view === 'monat'" class="cal" style="padding: var(--s5) var(--s7)">
-        <div v-for="weekday in WEEKDAYS" :key="weekday" class="dow">{{ weekday }}</div>
 
         <div
           v-for="day in days"
           :key="day.date"
-          class="day"
-          :class="{ pale: !day.inMonth, today: day.today }"
+          class="min-h-[104px] px-2 pt-2 pb-2.5 shadow-[inset_0_1px_0_var(--rule),inset_1px_0_0_var(--rule)] [&:nth-child(7n+1)]:shadow-[inset_0_1px_0_var(--rule)]"
         >
-          <span class="n">{{ dayNumber(day.date) }}</span>
+          <span
+            class="text-[12.5px] tabular-nums"
+            :class="day.today
+              ? 'inline-block min-w-5 rounded-full bg-foreground px-[5px] py-px text-center font-semibold text-paper'
+              : day.inMonth ? 'font-semibold' : 'font-normal text-ink-2'"
+          >
+            {{ dayNumber(day.date) }}
+          </span>
 
           <component
             :is="entry.projectId ? Link : 'span'"
             v-for="(entry, index) in entries(day)"
             :key="index"
-            class="e"
-            :class="entry.kind"
+            class="mt-[5px] block text-[11.5px] no-underline"
+            :class="{ hold: 'text-action', away: 'text-ink-2' }[entry.kind ?? ''] ?? 'text-inherit'"
             :href="entry.projectId ? `/auftraege/${entry.projectId}` : undefined"
           >
-            <span v-if="entry.time" class="tm">{{ entry.time }} </span>
+            <span
+              v-if="entry.time"
+              class="tabular-nums"
+              :class="entry.kind === 'away' ? 'font-normal' : 'font-semibold'"
+            >{{ entry.time }} </span>
             {{ entry.what }}
-            <span v-if="entry.who" class="who"> · {{ entry.who }}</span>
+            <!-- The measured values, not the ones crm.css .cal .e .who alone would
+                 suggest: a second .who rule reaches this span as well. -->
+            <span
+              v-if="entry.who"
+              class="pr-[18px] text-[13.5px] leading-[1.35] font-semibold tracking-[-0.015em] text-ink-2"
+            > · {{ entry.who }}</span>
           </component>
 
-          <span v-if="overflow(day)" class="e away">{{ $t('calendar.more', { count: overflow(day) }) }}</span>
+          <span v-if="overflow(day)" class="mt-[5px] block text-[11.5px] text-ink-2">
+            {{ $t('calendar.more', { count: overflow(day) }) }}
+          </span>
         </div>
       </div>
 
-      <table v-else style="margin-top: var(--s5)">
+      <Table v-else>
         <thead>
           <tr>
-            <th>{{ $t('calendar.colDate') }}</th>
-            <th>{{ $t('calendar.colWhat') }}</th>
-            <th>{{ $t('calendar.colVenue') }}</th>
-            <th>{{ $t('calendar.colCrew') }}</th>
-            <th>{{ $t('calendar.colStatus') }}</th>
+            <TableHead>{{ $t('calendar.colDate') }}</TableHead>
+            <TableHead>{{ $t('calendar.colWhat') }}</TableHead>
+            <TableHead>{{ $t('calendar.colVenue') }}</TableHead>
+            <TableHead>{{ $t('calendar.colCrew') }}</TableHead>
+            <TableHead>{{ $t('calendar.colStatus') }}</TableHead>
           </tr>
         </thead>
         <tbody>
           <template v-for="[key, rows] in groups" :key="key">
-            <tr><td class="grp" colspan="5">{{ $t(`calendar.group.${key}`) }}</td></tr>
-            <tr v-for="shoot in rows" :key="shoot.id">
-              <td>{{ shortDate(shoot.date) }}<template v-if="shoot.callTime"> {{ shoot.callTime }}</template></td>
-              <td class="nm">
+            <TableGroupRow :colspan="5">
+                {{ $t(`calendar.group.${key}`) }}
+            </TableGroupRow>
+            <TableRow v-for="shoot in rows" :key="shoot.id">
+              <TableCell>{{ shortDate(shoot.date) }}<template v-if="shoot.callTime"> {{ shoot.callTime }}</template></TableCell>
+              <TableCell tone="name">
                 <Link :href="`/auftraege/${projects[shoot.id].id}`">{{ projects[shoot.id].name }}</Link>
-              </td>
-              <td class="mu">{{ shoot.venue ?? '—' }}</td>
-              <td class="mu">{{ shoot.crew.map((member) => member.name).join(', ') || '—' }}</td>
-              <td :class="{ w: mine.includes(shoot.id) }">{{ shoot.statusLabel }}</td>
-            </tr>
+              </TableCell>
+              <TableCell tone="muted">{{ shoot.venue ?? '—' }}</TableCell>
+              <TableCell tone="muted">{{ shoot.crew.map((member) => member.name).join(', ') || '—' }}</TableCell>
+              <TableCell :class="mine.includes(shoot.id) && 'text-action'">{{ shoot.statusLabel }}</TableCell>
+            </TableRow>
           </template>
         </tbody>
-      </table>
+      </Table>
     </div>
   </AdminLayout>
 </template>

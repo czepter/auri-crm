@@ -25,10 +25,12 @@ export interface UploadSession {
   partSize: number
   /** Part numbers (1-based) the bucket already has, per ListParts — see StartOrResumeMultipartUpload. */
   donePartNumbers: Set<number>
+  /** The set this session actually targets — a resumed row keeps the one it was started against, which can differ from the set requested here. */
+  gallerySetId: string
 }
 
-/** The XSRF-TOKEN cookie Laravel's session middleware sets, copied into the header it looks for on a raw fetch — the same thing axios (and so Inertia's own requests) does automatically. */
-function xsrfHeader(): Record<string, string> {
+/** The XSRF-TOKEN cookie Laravel's session middleware sets, copied into the header it looks for on a raw fetch — the same thing axios (and so Inertia's own requests) does automatically. Every plain `fetch` in this app needs it; PreventRequestForgery answers a request without it with a 419 HTML body. */
+export function xsrfHeader(): Record<string, string> {
   const match = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/)
 
   return match ? { 'X-XSRF-TOKEN': decodeURIComponent(match[1]) } : {}
@@ -40,6 +42,23 @@ async function asJson<T>(response: Response): Promise<T> {
   }
 
   return response.json() as Promise<T>
+}
+
+/** The pre-upload duplicate check (G-02): filename + size against the gallery's whole draft, before a single byte travels. */
+export async function checkDuplicates(
+  galleryId: string,
+  files: { filename: string; size: number }[],
+): Promise<{ filename: string; size: number; assetId: string }[]> {
+  const response = await fetch(`/galerien/${galleryId}/uploads/pruefen`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...xsrfHeader() },
+    credentials: 'same-origin',
+    body: JSON.stringify({ files }),
+  })
+
+  const data = await asJson<{ duplicates: { filename: string; size: number; assetId: string }[] }>(response)
+
+  return data.duplicates
 }
 
 /** How many parts $partSize chunks $fileSize bytes into — the last one is whatever remainder is left, same as the server's own fixed part_size. */
@@ -57,19 +76,28 @@ export function partRange(partNumber: number, partSize: number, fileSize: number
 const UPLOADS_BASE = '/uploads'
 
 /** Starts a fresh session, or resumes the one already in progress for this exact file — see the fingerprint's own doc comment. $createUrl is the gallery-scoped POST route (galleries.uploads.store). */
-export async function startOrResumeUpload(createUrl: string, file: File): Promise<UploadSession> {
+export async function startOrResumeUpload(
+  createUrl: string,
+  file: File,
+  gallerySetId: string,
+  replacesAssetId?: string,
+): Promise<UploadSession> {
   const response = await fetch(createUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json', ...xsrfHeader() },
     credentials: 'same-origin',
-    body: JSON.stringify(fingerprintOf(file)),
+    body: JSON.stringify({ ...fingerprintOf(file), gallery_set_id: gallerySetId, replaces_asset_id: replacesAssetId }),
   })
 
-  const data = await asJson<{ upload: { public_id: string; part_size: number }; parts: { part_number: number }[] }>(response)
+  const data = await asJson<{
+    upload: { public_id: string; part_size: number; gallery_set_id: string }
+    parts: { part_number: number }[]
+  }>(response)
 
   return {
     publicId: data.upload.public_id,
     partSize: data.upload.part_size,
+    gallerySetId: data.upload.gallery_set_id,
     donePartNumbers: new Set(data.parts.map((part) => part.part_number)),
   }
 }
@@ -121,13 +149,23 @@ export interface UploadProgress {
  * ponytail: one part at a time, no parallel chunk uploads. Add bounded
  * concurrency if a 30 GB transfer over a single stream measures too slow in
  * practice — nothing here forecloses it, since each part is independent.
+ *
+ * Returns the set the session actually landed in — see UploadSession's own
+ * doc comment. A caller compares this against the set it asked for to catch
+ * a resumed upload quietly finishing somewhere else.
  */
-export async function uploadFile(createUrl: string, file: File, onProgress?: (progress: UploadProgress) => void): Promise<void> {
-  const session = await startOrResumeUpload(createUrl, file)
+export async function uploadFile(
+  createUrl: string,
+  file: File,
+  onProgress: (progress: UploadProgress) => void,
+  gallerySetId: string,
+  replacesAssetId?: string,
+): Promise<{ gallerySetId: string }> {
+  const session = await startOrResumeUpload(createUrl, file, gallerySetId, replacesAssetId)
   const total = partCount(file.size, session.partSize)
 
   let done = session.donePartNumbers.size
-  onProgress?.({ partsDone: done, partsTotal: total })
+  onProgress({ partsDone: done, partsTotal: total })
 
   for (let partNumber = 1; partNumber <= total; partNumber++) {
     if (session.donePartNumbers.has(partNumber)) {
@@ -138,8 +176,10 @@ export async function uploadFile(createUrl: string, file: File, onProgress?: (pr
     await uploadPart(session.publicId, partNumber, file.slice(start, end))
 
     done += 1
-    onProgress?.({ partsDone: done, partsTotal: total })
+    onProgress({ partsDone: done, partsTotal: total })
   }
 
   await completeUpload(session.publicId)
+
+  return { gallerySetId: session.gallerySetId }
 }

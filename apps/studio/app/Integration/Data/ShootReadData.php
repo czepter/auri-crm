@@ -33,7 +33,7 @@ class ShootReadData extends Data
             kind: $shoot->kind->value,
             label: $shoot->label,
             date: $shoot->date?->format('Y-m-d'),
-            status: $shoot->status->value,
+            status: $shoot->status->key,
             updatedAt: $shoot->updated_at->toIso8601String(),
         );
     }

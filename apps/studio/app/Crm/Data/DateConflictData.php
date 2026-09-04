@@ -2,7 +2,7 @@
 
 namespace App\Crm\Data;
 
-use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\StageAnchor;
 use App\Crm\Models\Shoot;
 use App\Models\Absence;
 use App\Settings\Models\StudioClosure;
@@ -61,7 +61,7 @@ class DateConflictData extends Data
             // `requested` is precisely "somebody asked for this day", and
             // anything past it is a day the studio has committed. A second
             // relation for the same fact would cost a query per read.
-            booked: $shoot->status !== ShootStatus::Requested,
+            booked: $shoot->status?->anchor !== StageAnchor::Entry,
         );
     }
 

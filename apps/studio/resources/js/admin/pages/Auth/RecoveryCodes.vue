@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AuthLayout from '@/admin/layouts/AuthLayout.vue'
 import { router } from '@inertiajs/vue3'
 import { Button } from '@/ui/button'
 
@@ -6,31 +7,17 @@ defineProps<{ codes: string[] }>()
 </script>
 
 <template>
-  <div class="authwrap">
-    <div class="authcard" style="max-width: 420px">
-      <span class="brand">Nordlicht</span>
-      <h1>{{ $t('auth.recoveryTitle') }}</h1>
-      <p class="hint" style="margin-bottom: var(--s5)">{{ $t('auth.recoveryHint') }}</p>
+  <AuthLayout :title="$t('auth.recoveryTitle')" width="max-w-[420px]">
+    <p class="mb-6 text-[11.5px] leading-[1.45] text-faint">{{ $t('auth.recoveryHint') }}</p>
 
-      <ul
-        class="panel"
-        style="
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: var(--s2) var(--s4);
-          padding: var(--s4);
-          margin: 0 0 var(--s5);
-          list-style: none;
-          font-family: ui-monospace, monospace;
-          font-size: 13px;
-        "
-      >
-        <li v-for="code in codes" :key="code">{{ code }}</li>
-      </ul>
+    <ul
+      class="m-0 mb-6 grid list-none grid-cols-2 gap-x-4 gap-y-1.5 overflow-hidden rounded-md border border-border p-4 font-mono text-[13px]"
+    >
+      <li v-for="code in codes" :key="code">{{ code }}</li>
+    </ul>
 
-      <Button type="button" style="width: 100%; justify-content: center" @click="router.visit('/')">
-        {{ $t('auth.recoveryContinue') }}
-      </Button>
-    </div>
-  </div>
+    <Button type="button" class="w-full justify-center" @click="router.visit('/')">
+      {{ $t('auth.recoveryContinue') }}
+    </Button>
+  </AuthLayout>
 </template>

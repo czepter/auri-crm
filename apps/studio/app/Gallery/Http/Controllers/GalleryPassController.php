@@ -18,9 +18,9 @@ use Illuminate\Http\Request;
  * per-IP and per-gallery rate limits that make eighty wedding guests behind
  * one venue NAT work while a distributed guesser does not.
  *
- * $gallery arrives as a raw public_id rather than an implicit-bound model,
- * same reasoning as GalleryPasswordController::store: a 404 from route-model
- * binding would tell a guesser "that id doesn't exist" before the uniform
+ * $gallery arrives as a raw slug-or-public_id rather than an implicit-bound
+ * model, same reasoning as GalleryPasswordController::store: a 404 from
+ * route-model binding would tell a guesser "that id doesn't exist" before the uniform
  * failure below ever ran.
  */
 class GalleryPassController extends Controller
@@ -31,7 +31,16 @@ class GalleryPassController extends Controller
         GallerySecretGate $gate,
         GalleryViewPass $pass,
     ): JsonResponse {
-        $model = Gallery::findByPublicId($gallery);
+        $model = Gallery::findByPublicIdOrSlug($gallery);
+
+        // G-07/G-14: same reasoning as GalleryPasswordController::store — a
+        // 404 here would tell a garbage password apart from one aimed at a
+        // withdrawn gallery, undoing the uniform failure this endpoint
+        // exists for. Nulling $model routes it through the same
+        // "nonexistent" branches below.
+        if ($model?->isWithdrawn()) {
+            $model = null;
+        }
 
         // A gallery with no password has nothing to buy a pass with, and one
         // that does not exist must answer exactly as a wrong password does.

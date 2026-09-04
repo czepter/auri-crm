@@ -24,6 +24,10 @@
         <env name="CACHE_STORE" value="array"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
+        <!-- Sonst ruft jede gerenderte Inertia-Seite die SSR-Hot-URL des
+             laufenden Vite-Servers an, und die Suite faellt genau dann, wenn
+             jemand nebenher entwickelt. -->
+        <env name="INERTIA_SSR_ENABLED" value="false"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>

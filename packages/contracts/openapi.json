@@ -78,10 +78,6 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "guest_id": {
-                                        "type": "string",
-                                        "maxLength": 64
-                                    },
                                     "asset_key": {
                                         "type": "string"
                                     },
@@ -91,7 +87,6 @@
                                     }
                                 },
                                 "required": [
-                                    "guest_id",
                                     "asset_key",
                                     "body"
                                 ]
@@ -113,18 +108,48 @@
                                                 "body": {
                                                     "type": "string"
                                                 },
+                                                "author": {
+                                                    "type": "string"
+                                                },
+                                                "own": {
+                                                    "type": "boolean"
+                                                },
                                                 "created_at": {
                                                     "type": "string"
                                                 }
                                             },
                                             "required": [
                                                 "body",
+                                                "author",
+                                                "own",
                                                 "created_at"
                                             ]
                                         }
                                     },
                                     "required": [
                                         "comment"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
                                     ]
                                 }
                             }
@@ -208,25 +233,6 @@
                         }
                     }
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "guest_id": {
-                                        "type": "string",
-                                        "maxLength": 64
-                                    }
-                                },
-                                "required": [
-                                    "guest_id"
-                                ]
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "200": {
                         "description": "",
@@ -246,8 +252,27 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
+                    "403": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
@@ -862,7 +887,7 @@
         "/pipeline-snapshot": {
             "get": {
                 "operationId": "pipeline-snapshot",
-                "summary": "N-02: the funnel, not the leads that make it up \u2014 a count per\nLeadStage rather than a page of Lead rows the caller would have to\ntally itself. Same grouping order as LeadBoardController's own board\n(declaration order, not the stored strings' alphabetical order) and\nthe same `open()` scope: a lost lead left its stage the moment it was\nmarked lost, so it no longer belongs to any column's count",
+                "summary": "N-02: the funnel, not the leads that make it up \u2014 a count per\nstage rather than a page of Lead rows the caller would have to\ntally itself. Same grouping order as LeadBoardController's own board\n(declaration order, not the stored strings' alphabetical order) and\nthe same `open()` scope: a lost lead left its stage the moment it was\nmarked lost, so it no longer belongs to any column's count",
                 "tags": [
                     "CrmRead"
                 ],
@@ -875,44 +900,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object",
-                                            "additionalProperties": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "stage": {
-                                                        "type": "string"
-                                                    },
-                                                    "label": {
-                                                        "type": "string",
-                                                        "enum": [
-                                                            "Neu",
-                                                            "Kontaktiert",
-                                                            "Angebot",
-                                                            "Angebot angenommen",
-                                                            "Vertrag",
-                                                            "Gebucht"
-                                                        ]
-                                                    },
-                                                    "count": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "enum": [
-                                                                    0
-                                                                ]
-                                                            }
-                                                        ]
-                                                    }
-                                                },
-                                                "required": [
-                                                    "stage",
-                                                    "label",
-                                                    "count"
-                                                ]
-                                            }
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
@@ -921,6 +909,276 @@
                                 }
                             }
                         }
+                    }
+                }
+            }
+        },
+        "/galleries/{gallery}/entwurf-bilder/{key}": {
+            "get": {
+                "operationId": "galleries.draft-images.show",
+                "tags": [
+                    "GalleryDraftImage"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "preview",
+                        "in": "query",
+                        "description": "is_string(), not a raw query('preview'): a ?preview[]=x arrives as an\n array, and opens(?string) exploding one would fatal into a 500 \u2014 the\n uniform-failure rule this stage worked to establish. Treated the same\n as no token at all, not coerced (PHP's array-to-string cast raises a\n warning PHPUnit's own handler turns back into a fatal).",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "headers": {
+                            "Cache-Control": {
+                                "schema": {
+                                    "type": "string",
+                                    "const": "private, no-store"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/galleries/{gallery}/guest": {
+            "post": {
+                "operationId": "galleries.guest.request",
+                "tags": [
+                    "GalleryGuest"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 120
+                                    }
+                                },
+                                "required": [
+                                    "email",
+                                    "name"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "sent": {
+                                            "type": "boolean"
+                                        }
+                                    },
+                                    "required": [
+                                        "sent"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "sent": {
+                                            "type": "boolean"
+                                        },
+                                        "retryAfter": {
+                                            "type": "integer"
+                                        }
+                                    },
+                                    "required": [
+                                        "sent",
+                                        "retryAfter"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/galleries/{gallery}/guest/bestaetigung": {
+            "post": {
+                "operationId": "galleries.guest.confirm",
+                "tags": [
+                    "GalleryGuest"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "email",
+                                        "maxLength": 255
+                                    },
+                                    "code": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 6
+                                    },
+                                    "token": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 128
+                                    },
+                                    "anonymous_id": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "description": "Was dieser Browser anonym markiert hat, damit es mitwandert.",
+                                        "maxLength": 64
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "confirmed": {
+                                            "type": "boolean"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "email": {
+                                            "type": "string"
+                                        },
+                                        "pass": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "confirmed",
+                                        "name",
+                                        "email",
+                                        "pass"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     }
                 }
             }
@@ -1056,6 +1314,102 @@
                 }
             }
         },
+        "/galleries/{gallery}/benachrichtigung": {
+            "post": {
+                "operationId": "galleries.prerelease-signup",
+                "tags": [
+                    "GalleryPrereleaseSignup"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "maxLength": 255
+                                    },
+                                    "website": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "description": "Never filled by a human \u2014 see the page's own hidden field.",
+                                        "maxLength": 255
+                                    },
+                                    "elapsed": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ],
+                                        "description": "Seconds since the page rendered, computed server-side by\napps/gallery from a hidden timestamp field (this page ships\nno client JavaScript, so there is no inline script to send\nit the way PublicInquiryController's snippet does). Optional\nfor the same reason theirs is: a first-ever render has\nnothing to compute it from."
+                                    }
+                                },
+                                "required": [
+                                    "email"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "202": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "const": "received"
+                                        }
+                                    },
+                                    "required": [
+                                        "status"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Eintrag nicht m\u00f6glich."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/galleries/{gallery}": {
             "get": {
                 "operationId": "galleries.show",
@@ -1071,6 +1425,14 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "preview",
+                        "in": "query",
+                        "description": "R43: a preview pass outranks pre-release \u2014 a specific credential\n beats that gallery's public default. is_string(), not a raw\n query('preview'): see GalleryDraftImageController's own comment\n on why an array here must not reach opens() raw.",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -1079,79 +1441,174 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "gallery": {
+                                    "anyOf": [
+                                        {
                                             "type": "object",
                                             "properties": {
-                                                "public_id": {
-                                                    "type": "string"
-                                                },
-                                                "title": {
-                                                    "type": [
-                                                        "string",
-                                                        "null"
-                                                    ]
-                                                },
-                                                "version": {
+                                                "gallery": {
                                                     "type": "object",
                                                     "properties": {
                                                         "public_id": {
                                                             "type": "string"
                                                         },
+                                                        "title": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "draft": {
+                                                            "type": "boolean"
+                                                        },
                                                         "version": {
-                                                            "type": "integer"
-                                                        },
-                                                        "published_at": {
-                                                            "type": "string",
-                                                            "format": "date-time"
-                                                        },
-                                                        "assets": {
-                                                            "type": "array",
-                                                            "items": {
-                                                                "type": "object",
-                                                                "properties": {
-                                                                    "key": {
-                                                                        "type": "string"
-                                                                    },
-                                                                    "width": {
-                                                                        "type": [
-                                                                            "string",
-                                                                            "null"
-                                                                        ]
-                                                                    },
-                                                                    "height": {
-                                                                        "type": [
-                                                                            "string",
-                                                                            "null"
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "public_id": {
+                                                                    "type": "string"
+                                                                },
+                                                                "version": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "published_at": {
+                                                                    "type": "string",
+                                                                    "format": "date-time"
+                                                                },
+                                                                "assets": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                        "type": "object",
+                                                                        "properties": {
+                                                                            "key": {
+                                                                                "type": "string"
+                                                                            },
+                                                                            "width": {
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
+                                                                            },
+                                                                            "height": {
+                                                                                "type": [
+                                                                                    "string",
+                                                                                    "null"
+                                                                                ]
+                                                                            }
+                                                                        },
+                                                                        "required": [
+                                                                            "key",
+                                                                            "width",
+                                                                            "height"
                                                                         ]
                                                                     }
-                                                                },
-                                                                "required": [
-                                                                    "key",
-                                                                    "width",
-                                                                    "height"
-                                                                ]
-                                                            }
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "public_id",
+                                                                "version",
+                                                                "published_at",
+                                                                "assets"
+                                                            ]
                                                         }
                                                     },
                                                     "required": [
                                                         "public_id",
-                                                        "version",
-                                                        "published_at",
-                                                        "assets"
+                                                        "title",
+                                                        "draft",
+                                                        "version"
                                                     ]
                                                 }
                                             },
                                             "required": [
-                                                "public_id",
-                                                "title",
-                                                "version"
+                                                "gallery"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "gallery": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "public_id": {
+                                                            "type": "string"
+                                                        },
+                                                        "title": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "prerelease": {
+                                                            "type": "boolean"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "public_id",
+                                                        "title",
+                                                        "prerelease"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "gallery"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "gallery": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "public_id": {
+                                                            "type": "string"
+                                                        },
+                                                        "title": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "draft": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "version": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "public_id": {
+                                                                    "type": "null"
+                                                                },
+                                                                "version": {
+                                                                    "type": "null"
+                                                                },
+                                                                "published_at": {
+                                                                    "type": "null"
+                                                                },
+                                                                "assets": {
+                                                                    "type": "array",
+                                                                    "items": {
+                                                                        "type": "string"
+                                                                    }
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "public_id",
+                                                                "version",
+                                                                "published_at",
+                                                                "assets"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "public_id",
+                                                        "title",
+                                                        "draft",
+                                                        "version"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "gallery"
                                             ]
                                         }
-                                    },
-                                    "required": [
-                                        "gallery"
                                     ]
                                 }
                             }
@@ -1459,7 +1916,7 @@
                                 "type": "object",
                                 "properties": {
                                     "stage": {
-                                        "$ref": "#/components/schemas/LeadStage"
+                                        "type": "string"
                                     }
                                 },
                                 "required": [
@@ -1652,7 +2109,7 @@
                                         "maxLength": 255
                                     },
                                     "type": {
-                                        "$ref": "#/components/schemas/ProjectType"
+                                        "type": "string"
                                     },
                                     "source": {
                                         "anyOf": [
@@ -1841,13 +2298,34 @@
                         "maxLength": 255
                     },
                     "type": {
-                        "$ref": "#/components/schemas/ProjectType"
+                        "type": "string"
                     },
                     "source": {
                         "$ref": "#/components/schemas/LeadSource"
                     },
                     "captured_via": {
                         "$ref": "#/components/schemas/CaptureChannel"
+                    },
+                    "type_other": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 120
+                    },
+                    "source_other": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 120
+                    },
+                    "captured_via_other": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 120
                     },
                     "date": {
                         "type": [
@@ -1894,33 +2372,10 @@
                 ],
                 "title": "LeadSource"
             },
-            "LeadStage": {
-                "type": "string",
-                "description": "The sales funnel (vision \u00a77). quote_accepted is its own stage because \"they  * said yes, send the contract\" is the one funnel moment where the studio is the bottleneck, and folding it into quote_sent hides it. Lost is deliberately not a case here. It is reachable from any stage, and a seventh value would erase which stage the lead died in \u2014 the number the funnel is actually measured on. See Lead::$lost_at.\n",
-                "enum": [
-                    "new",
-                    "contacted",
-                    "quote_sent",
-                    "quote_accepted",
-                    "contract_sent",
-                    "booked"
-                ],
-                "title": "LeadStage"
-            },
             "ProjectReadData": {
                 "type": "object",
                 "additionalProperties": {},
                 "title": "ProjectReadData"
-            },
-            "ProjectType": {
-                "type": "string",
-                "description": "Lives on Project, not Job. Mockup 03 collects it at capture, months before a Job exists and for the many leads that never convert at all, and a project's nature does not change when it does. Deviation from vision \u00a73.1, recorded in the P1b spec \u00a72.2. Shoot.kind stays the finer-grained field: a wedding project has shoots of kind engagement, wedding and reception.\n",
-                "enum": [
-                    "wedding",
-                    "portrait",
-                    "other"
-                ],
-                "title": "ProjectType"
             }
         },
         "responses": {

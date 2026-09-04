@@ -5,9 +5,10 @@ declare module '@inertiajs/core' {
     flashDataType: { status: string | null; secret: string | null }
     sharedPageProps: {
       auth: { user: App.Data.StaffProfileData | null; can: App.Enums.Capability[] }
-      nav: { leads: number; projects: number } | null
+      nav: { leads: number; projects: number; unread: number } | null
       flash: { status: string | null; secret: string | null }
       portalPreview: boolean
+      brand: string
     }
   }
 }

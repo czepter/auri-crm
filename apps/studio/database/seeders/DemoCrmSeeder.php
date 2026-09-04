@@ -14,6 +14,7 @@ use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
@@ -22,6 +23,7 @@ use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\TaskTemplate;
+use App\Crm\Support\CrmVocabulary;
 use App\Engagement\Actions\StartThread;
 use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
@@ -307,12 +309,14 @@ class DemoCrmSeeder extends Seeder
         // sits in prep — so the derived header reads the least-advanced of
         // them rather than the furthest.
         $advance = app(AdvanceShootStatus::class);
+        $stage = fn (ShootStatus $status) => app(CrmVocabulary::class)
+            ->byKey(StagePipeline::Project, $status->value);
 
         foreach ([$engagement, $registry] as $done) {
-            $advance($done->refresh(), ShootStatus::Delivered, $christian);
+            $advance($done->refresh(), $stage(ShootStatus::Delivered), $christian);
         }
 
-        $advance($wedding->refresh(), ShootStatus::Prep, $christian);
+        $advance($wedding->refresh(), $stage(ShootStatus::Prep), $christian);
 
         CrewAssignment::create([
             'shoot_id' => $wedding->id,
@@ -464,11 +468,11 @@ class DemoCrmSeeder extends Seeder
      * ReadAfterDeliveryColumn::EXPIRY_WINDOW_DAYS.
      *
      * expires_at is set directly rather than through Gallery::publish():
-     * publish() only stamps it when config('gallery.retention_days') is set,
-     * and that config defaults to null — every published gallery keeps no
-     * expiry until a studio asks for one. This row needs an expiry to exist
-     * regardless of that setting, so it is written the same way
-     * publish() itself would have, once retention is configured.
+     * publish() only stamps it when gallery_default_expiry_days is set, and
+     * that setting defaults to null — every published gallery keeps no expiry
+     * until a studio asks for one. This row needs an expiry to exist
+     * regardless of that setting, so it is written the same way publish()
+     * itself would have, once retention is configured.
      */
     private function seedReferralAndExpiringGallery(Project $project, Project $referrerProject): void
     {

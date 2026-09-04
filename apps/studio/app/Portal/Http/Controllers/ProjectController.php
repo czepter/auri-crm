@@ -3,9 +3,12 @@
 namespace App\Portal\Http\Controllers;
 
 use App\Contracts\Models\Contract;
-use App\Crm\Models\Project;
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\FormInstance;
+use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Support\CrmVocabulary;
 use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Controller;
 use App\Payments\Enums\PaymentInstallmentStatus;
@@ -52,7 +55,14 @@ class ProjectController extends Controller
         $shared = [
             'contact' => ['name' => $contact->name],
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
-            'studio' => ['name' => $studio->displayName(), 'messagingEnabled' => $settings->messagingEnabled($contact)],
+            // The same contact block the home screen carries: the person to
+            // write to stands on every client screen, so it is composed the
+            // same way on all of them.
+            'studio' => [
+                'name' => $studio->displayName(),
+                'messagingEnabled' => $settings->messagingEnabled($contact),
+                ...$settings->contactLine(),
+            ],
         ];
 
         return $editable
@@ -121,7 +131,7 @@ class ProjectController extends Controller
         return [
             'id' => $found->public_id,
             'name' => $found->name,
-            'type' => $found->type->label(),
+            'type' => $found->type->name,
             'date' => $shoot?->date?->format('Y-m-d'),
             'venueName' => $shoot?->venue_name,
             'venueCity' => $shoot?->venue_city,
@@ -146,10 +156,18 @@ class ProjectController extends Controller
         $gallery = $found->galleries->first(fn (Gallery $one) => $one->currentVersion !== null);
         $version = $gallery?->currentVersion;
 
+        // The two positions the three states are read against: at or past
+        // "fertig" the work is done, past the entry stage it is under way.
+        // Positions rather than a list of statuses, so a studio's own extra
+        // stage lands in the right state without being named here.
+        $stages = app(CrmVocabulary::class);
+        $ready = $stages->anchored(StagePipeline::Project, StageAnchor::Ready)?->sort_order;
+        $started = $stages->anchored(StagePipeline::Project, StageAnchor::Entry)?->sort_order;
+
         return [
             'id' => $found->public_id,
             'name' => $found->name,
-            'type' => $found->type->label(),
+            'type' => $found->type->name,
             'date' => $found->primaryShoot?->date?->format('Y-m-d'),
             'venue' => $found->primaryShoot?->venue(),
             'shoots' => $found->shoots->map(fn (Shoot $shoot) => [
@@ -163,7 +181,15 @@ class ProjectController extends Controller
                 // fact: nothing here is coloured as a warning, because the
                 // studio chases and the client is not chased in their own
                 // portal.
-                'status' => $shoot->status->label(),
+                'status' => $shoot->status->name,
+                // The same fact as a mark the eye reads before the word.
+                // Three states, because colour on this surface is a signal
+                // and a fourth would make it decoration again.
+                'state' => match (true) {
+                    $ready !== null && $shoot->status->sort_order >= $ready => 'done',
+                    $started !== null && $shoot->status->sort_order > $started => 'open',
+                    default => 'neutral',
+                },
             ])->all(),
             // The entry point that was missing entirely: a strip of the
             // delivered pictures and a way into all of them.

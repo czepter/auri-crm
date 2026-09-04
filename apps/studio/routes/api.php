@@ -3,10 +3,13 @@
 use App\Crm\Http\Controllers\PublicInquiryController;
 use App\Engagement\Http\Controllers\InboundMailController;
 use App\Enums\Capability;
-use App\Gallery\Http\Controllers\GalleryPassController;
 use App\Gallery\Http\Controllers\AssetCommentController;
 use App\Gallery\Http\Controllers\AssetFavoriteController;
+use App\Gallery\Http\Controllers\GalleryDraftImageController;
+use App\Gallery\Http\Controllers\GalleryGuestController;
 use App\Gallery\Http\Controllers\GalleryImageController;
+use App\Gallery\Http\Controllers\GalleryPassController;
+use App\Gallery\Http\Controllers\GalleryPrereleaseSignupController;
 use App\Gallery\Http\Controllers\GalleryReadController;
 use App\Http\Controllers\GuestIdentityController;
 use App\Http\Controllers\HealthController;
@@ -42,36 +45,80 @@ Route::post('/mail/eingang', InboundMailController::class)->name('api.mail.inbou
 // the password", rate limits included — and hands back a signed pass.
 Route::post('/galleries/{gallery}/passwort', GalleryPassController::class)->name('api.galleries.pass');
 
+// R39-R42: the pre-release page's signup — public, no password (R40: there
+// is nothing behind this address to protect), uniform response (R41: see
+// the controller's own doc comment), rate-limited the same way the route
+// above is.
+Route::post('/galleries/{gallery}/benachrichtigung', GalleryPrereleaseSignupController::class)
+    ->name('api.galleries.prerelease-signup');
+
 // G-08/G-09/G-12: everything the Astro gallery viewer calls — version
 // metadata, image bytes, favorites, comments. All of it behind
 // `gallery.pass`: this surface holds no session, so G-06's claim reaches it
 // as a signed bearer instead (GalleryViewPass). A gallery with no password
 // needs none. Without this the password protected one screen and left both
 // the asset list and the bytes open to anyone holding an id.
+//
+// R35/R37: a GalleryPreviewPass authorises exactly two things — reading the
+// draft and fetching a draft image — and both routes sit outside this
+// middleware group entirely rather than inside it. Two different reasons
+// land on the same shape: `gallery.pass` guards a whole group of
+// version-scoped routes (favorites, comments, version images) a preview
+// pass has no business opening (R35), and GalleryReadController must honour
+// a preview pass even when the gallery also requires a view password —
+// the whole point of a preview link is to reach someone before the
+// gallery is published, often before there is a reason to know its
+// password at all (R37). Sitting outside the group and checking both
+// kinds of pass itself is what makes that possible without leaking the
+// preview pass into the other routes here. See both controllers' own doc
+// comments, and GuardsGalleryViewPassword for the check GalleryReadController
+// shares with this middleware rather than duplicating.
+Route::get('/galleries/{gallery}/entwurf-bilder/{key}', GalleryDraftImageController::class)
+    ->where('key', '.*')
+    ->name('api.galleries.draft-images.show');
+
+// Implicit binding, not {gallery:public_id}: apps/gallery's own /g/{id}
+// route accepts a slug or a public_id (Gallery::resolveRouteBinding()),
+// and this is the read call it makes with whichever one is in the URL.
+Route::get('/galleries/{gallery}', GalleryReadController::class)->name('api.galleries.show');
+
+// Die Anmeldung des Gastes. Hinter dem Ansichtspass, weil sie nur etwas ist,
+// das man in einer offenen Galerie tut — aber vor jedem Herz und jedem
+// Kommentar, denn ohne sie gibt es keinen Absender.
 Route::middleware('gallery.pass')->group(function () {
-    Route::get('/galleries/{gallery:public_id}', GalleryReadController::class)->name('api.galleries.show');
+    Route::post('/galleries/{gallery}/guest', [GalleryGuestController::class, 'request'])
+        ->name('api.galleries.guest.request');
+    Route::post('/galleries/{gallery}/guest/bestaetigung', [GalleryGuestController::class, 'confirm'])
+        ->name('api.galleries.guest.confirm');
+});
+
+Route::middleware('gallery.pass')->group(function () {
     Route::get('/gallery-versions/{galleryVersion:public_id}/images/{key}', GalleryImageController::class)
         ->where('key', '.*')
         ->name('api.gallery-versions.images.show');
 
-    // The first browser-originated calls this surface serves (the two routes
-    // above are only ever hit server-side, by Astro's own SSR fetch, or from
+    // The first browser-originated calls this surface serves (the route
+    // above is only ever hit server-side, by Astro's own SSR fetch, or from
     // a bare <img> src), so they are also what config/cors.php exists for.
-    Route::get('/gallery-versions/{galleryVersion:public_id}/favorites', [AssetFavoriteController::class, 'index'])
-        ->name('api.gallery-versions.favorites.index');
-    Route::post('/gallery-versions/{galleryVersion:public_id}/favorites/{key}', [AssetFavoriteController::class, 'toggle'])
-        ->where('key', '.*')
-        ->name('api.gallery-versions.favorites.toggle');
+    Route::middleware('gallery.feature:lists')->group(function () {
+        Route::get('/gallery-versions/{galleryVersion:public_id}/favorites', [AssetFavoriteController::class, 'index'])
+            ->name('api.gallery-versions.favorites.index');
+        Route::post('/gallery-versions/{galleryVersion:public_id}/favorites/{key}', [AssetFavoriteController::class, 'toggle'])
+            ->where('key', '.*')
+            ->name('api.gallery-versions.favorites.toggle');
+    });
 
     // asset_key travels as a request field on the comment routes, not a path
     // segment, since a comment (unlike a favorite) is never addressed by its
     // own key/guest pair. Same guest-identity gap as the favorite routes,
     // inherited on purpose rather than solved here — see
     // AssetCommentController's own doc comment.
-    Route::get('/gallery-versions/{galleryVersion:public_id}/comments', [AssetCommentController::class, 'index'])
-        ->name('api.gallery-versions.comments.index');
-    Route::post('/gallery-versions/{galleryVersion:public_id}/comments', [AssetCommentController::class, 'store'])
-        ->name('api.gallery-versions.comments.store');
+    Route::middleware('gallery.feature:comments')->group(function () {
+        Route::get('/gallery-versions/{galleryVersion:public_id}/comments', [AssetCommentController::class, 'index'])
+            ->name('api.gallery-versions.comments.index');
+        Route::post('/gallery-versions/{galleryVersion:public_id}/comments', [AssetCommentController::class, 'store'])
+            ->name('api.gallery-versions.comments.store');
+    });
 });
 
 // M-05: the first api-surface consumer of user-facing business logic

@@ -2,8 +2,8 @@
 
 namespace App\Crm\Events;
 
-use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\Stage;
 use Illuminate\Foundation\Events\Dispatchable;
 
 /**
@@ -17,7 +17,7 @@ class ShootStatusChanged
 
     public function __construct(
         public readonly Shoot $shoot,
-        public readonly ShootStatus $from,
-        public readonly ShootStatus $to,
+        public readonly Stage $from,
+        public readonly Stage $to,
     ) {}
 }

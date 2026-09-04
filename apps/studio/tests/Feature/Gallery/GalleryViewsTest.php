@@ -4,7 +4,9 @@ use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
 use App\Gallery\Models\GalleryView;
+use App\Media\Models\Asset;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -14,10 +16,10 @@ beforeEach(fn () => useSurface(Surface::PORTAL));
 
 function openableGallery(array $attributes = []): Gallery
 {
-    $gallery = Gallery::factory()->create([...$attributes, 'assets' => [
-        ['key' => 'galleries/g1/a.jpg', 'width' => 4000, 'height' => 3000],
-    ]]);
-    $gallery->publish();
+    $gallery = Gallery::factory()->create($attributes);
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g1/a.jpg', 'width' => 4000, 'height' => 3000]);
+    $gallery->fresh()->publish();
 
     return $gallery->fresh();
 }

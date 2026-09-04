@@ -1,0 +1,85 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { Link } from '@inertiajs/vue3'
+import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import ProjectShell from '@/admin/components/ProjectShell.vue'
+import Section from '@/ui/page/Section.vue'
+import { Button } from '@/ui/button'
+import { dayAndMonth, weekday } from '@/admin/lib/shoots'
+
+const props = defineProps<{
+  header: App.Crm.Data.ProjectHeaderData
+  galleries: App.Crm.Data.ProjectGalleryData[]
+  shoots: App.Crm.Data.ShootData[]
+}>()
+
+/* tokens.css .chip's four tones. */
+const TONE: Record<string, string> = {
+  draft: 'bg-muted text-muted-foreground',
+  prerelease: 'bg-due-bg text-due',
+  published: 'bg-ok-bg text-ok',
+  withdrawn: 'bg-muted text-faint',
+}
+
+const withoutGallery = computed(() => {
+  const taken = new Set(props.galleries.map((gallery) => gallery.shootId))
+
+  return props.shoots.filter((shoot) => !shoot.isCancelled && !taken.has(shoot.id))
+})
+
+function day(iso: string | null) {
+  return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : null
+}
+</script>
+
+<template>
+  <AdminLayout active="anfragen">
+    <ProjectShell :header="header" active="galleries">
+      <Section :title="$t('galleries.title')">
+        <template #actions>
+          <Button :as="Link" variant="outline" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
+        </template>
+
+        <div
+          v-for="gallery in galleries"
+          :key="gallery.id"
+          class="flex items-baseline gap-2.5 py-2.5"
+        >
+          <div class="min-w-0 flex-1">
+            <Link :href="`/galerien/${gallery.id}`" class="text-[13px] leading-[1.3] font-semibold tracking-[-0.01em]">
+              {{ gallery.title ?? '—' }}
+            </Link>
+            <span class="mt-0.5 block text-[11.5px] leading-[1.35] text-muted-foreground">
+              {{
+                [
+                  $t('project.galleryImages', { count: gallery.assetCount }),
+                  gallery.version ? $t('galleryRecord.version', { version: gallery.version }) : null,
+                  gallery.expiresAt ? $t('project.galleryExpires', { date: day(gallery.expiresAt) }) : $t('project.galleryNoExpiry'),
+                  gallery.inPortal ? $t('project.galleryInPortal') : $t('project.galleryNotInPortal'),
+                ].filter(Boolean).join(' · ')
+              }}
+            </span>
+          </div>
+          <span :class="['flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase', TONE[gallery.state]]">
+            {{ $t(`project.galleryState.${gallery.state}`) }}
+          </span>
+        </div>
+      </Section>
+
+      <!-- Der Platz für das Shooting, das noch keine Galerie hat: kein leerer
+           Text, sondern der Knopf, der sie anlegt. -->
+      <Section v-if="withoutGallery.length" :title="$t('project.galleriesMissing')">
+        <div v-for="shoot in withoutGallery" :key="shoot.id" class="flex items-center gap-2.5 py-2.5">
+          <div class="w-[54px] flex-none text-[12px] leading-[1.2] font-semibold tabular-nums">
+            {{ dayAndMonth(shoot.date) ?? '—' }}
+            <em class="mt-0.5 block text-[10.5px] leading-[1.3] font-normal not-italic text-faint">
+              {{ weekday(shoot.date) ?? $t('board.openDate') }}
+            </em>
+          </div>
+          <span class="min-w-0 flex-1 text-[13px] leading-[1.3] font-semibold tracking-[-0.01em]">{{ shoot.label ?? shoot.kind }}</span>
+          <Button :as="Link" variant="outline" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
+        </div>
+      </Section>
+    </ProjectShell>
+  </AdminLayout>
+</template>

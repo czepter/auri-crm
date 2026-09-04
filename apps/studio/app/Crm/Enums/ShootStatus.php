@@ -5,13 +5,13 @@ namespace App\Crm\Enums;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
- * The forward-only production pipeline (vision §7). Kept separate from
- * LeadStage so neither becomes a fourteen-state enum in which half the
- * transitions are illegal.
+ * The stages a fresh studio starts with, and nothing more.
  *
- * Cancellation is deliberately not a case here. It is reachable from any
- * status, and a tenth value would erase which position the shoot died in. See
- * Shoot::$cancelled_at.
+ * The funnel itself lives in the `stages` table now — renamed,
+ * reordered and added to by the studio — and Lead::$stage reads a Stage row,
+ * not a case of this enum. What is left here is the seed the migration writes
+ * and the vocabulary factories and seeders name it by. Behaviour hangs off
+ * StageAnchor; nothing may branch on a case below.
  */
 #[TypeScript]
 enum ShootStatus: string implements HasLabel

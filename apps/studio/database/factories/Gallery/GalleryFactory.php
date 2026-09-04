@@ -18,7 +18,6 @@ class GalleryFactory extends Factory
         return [
             'project_id' => Project::factory(),
             'title' => fake()->words(2, true),
-            'assets' => [],
         ];
     }
 }

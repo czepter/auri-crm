@@ -36,6 +36,7 @@ class MultipartUploadController extends Controller
         $this->authorize('manageMedia', $gallery);
 
         $validated = $request->validate([
+            'gallery_set_id' => ['required', 'string'],
             'filename' => ['required', 'string', 'max:255'],
             'file_size' => ['required', 'integer', 'min:1'],
             // The browser's own File.lastModified: milliseconds since the
@@ -43,20 +44,34 @@ class MultipartUploadController extends Controller
             // where the bytes end up.
             'file_modified_at' => ['required', 'integer', 'min:0'],
             'content_type' => ['nullable', 'string', 'max:255'],
+            'replaces_asset_id' => ['nullable', 'string'],
         ]);
+
+        $set = $gallery->sets()->where('public_id', $validated['gallery_set_id'])->firstOrFail();
+
+        $replaces = isset($validated['replaces_asset_id'])
+            ? $gallery->assets()->where('public_id', $validated['replaces_asset_id'])->firstOrFail()
+            : null;
 
         ['upload' => $upload, 'parts' => $parts] = ($this->startOrResume)(
             $gallery,
+            $set,
             $validated['filename'],
             $validated['file_size'],
             Carbon::createFromTimestampMs($validated['file_modified_at']),
             $validated['content_type'] ?? null,
+            $replaces?->id,
         );
 
         return response()->json([
             'upload' => [
                 'public_id' => $upload->public_id,
                 'part_size' => $upload->part_size,
+                // The set this session actually targets — a resumed row
+                // keeps the one it was started against, which can differ
+                // from $set (the one this request named) if another tab is
+                // now open on a different one. See StartOrResumeMultipartUpload.
+                'gallery_set_id' => $upload->set->public_id,
             ],
             'parts' => $parts,
         ]);

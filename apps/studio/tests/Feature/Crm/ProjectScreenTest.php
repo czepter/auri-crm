@@ -1,19 +1,30 @@
 <?php
 
+use App\Contracts\Enums\ContractStatus;
+use App\Contracts\Models\Contract;
+use App\Contracts\Models\ContractSignature;
 use App\Crm\Enums\CrewRole;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\CrewAssignment;
+use App\Crm\Models\FormAnswer;
+use App\Crm\Models\FormInstance;
+use App\Crm\Models\FormInstanceField;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
+use App\Engagement\Models\Message;
+use App\Engagement\Models\Thread;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
+use App\Support\AuditLogger;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -46,7 +57,76 @@ it('shows only the tabs whose feature exists', function () {
     // Fragebögen is E-02.
     $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
 
-    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots', 'messages', 'forms', 'quotes', 'contract']);
+    expect(array_column($tabs, 'key'))->toBe(['overview', 'shoots', 'tasks', 'galleries', 'messages', 'forms', 'quotes', 'contract']);
+});
+
+it('names its tabs with keys the catalogue answers', function () {
+    // The labels used to be German strings in PHP, which made this the one
+    // navigation in the product no locale could reach.
+    $catalogue = json_decode(file_get_contents(resource_path('js/locales/de.json')), true);
+
+    $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
+
+    foreach (array_column($tabs, 'label') as $key) {
+        expect(data_get($catalogue, $key))->toBeString("{$key} is missing from de.json");
+    }
+});
+
+it('counts the threads waiting for an answer', function () {
+    // The rule the inbox already uses: whoever wrote the last line owes the
+    // next one. A thread the studio answered last is not waiting.
+    $waiting = Thread::factory()->for($this->project)->create();
+    Message::factory()->for($waiting)->create();
+
+    $answered = Thread::factory()->for($this->project)->create();
+    Message::factory()->for($answered)->create();
+    Message::factory()->for($answered)->fromStaff($this->staff)->create();
+
+    $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
+
+    expect(collect($tabs)->firstWhere('key', 'messages')['count'])->toBe(1);
+});
+
+it('counts the questionnaires the client has not answered', function () {
+    // Shared and untouched is the one that waits. A questionnaire the studio
+    // keeps to itself is nobody's homework, and one with an answer on it has
+    // been started.
+    FormInstance::factory()->for($this->project)->create()->forceFill(['shared_at' => now()])->save();
+
+    $started = FormInstance::factory()->for($this->project)->create();
+    $started->forceFill(['shared_at' => now()])->save();
+    FormAnswer::factory()->for(FormInstanceField::factory()->for($started))->create();
+
+    FormInstance::factory()->for($this->project)->create();
+
+    $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
+
+    expect(collect($tabs)->firstWhere('key', 'forms')['count'])->toBe(1);
+});
+
+it('counts the quotes the client has not answered', function () {
+    // Sent and still open. A draft has not left the studio, and an accepted
+    // or superseded one is settled either way.
+    Quote::factory()->for($this->project)->create(['status' => QuoteStatus::Sent, 'sent_at' => now()]);
+    Quote::factory()->for($this->project)->create();
+    Quote::factory()->for($this->project)->create(['status' => QuoteStatus::Accepted, 'sent_at' => now(), 'accepted_at' => now()]);
+
+    $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
+
+    expect(collect($tabs)->firstWhere('key', 'quotes')['count'])->toBe(1);
+});
+
+it('counts the contracts still waiting for a signature', function () {
+    // A contract in front of the client and unsigned is the one that waits.
+    // Signed is done, and one that never rendered is the studio's own problem.
+    Contract::factory()->for($this->project)->create(['status' => ContractStatus::Rendered]);
+
+    $signed = Contract::factory()->for($this->project)->create(['status' => ContractStatus::Rendered]);
+    ContractSignature::factory()->for($signed)->create();
+
+    $tabs = props("/auftraege/{$this->project->public_id}")['header']['tabs'];
+
+    expect(collect($tabs)->firstWhere('key', 'contract')['count'])->toBe(1);
 });
 
 it('agrees with the board about an unbooked project', function () {
@@ -83,7 +163,7 @@ it('adds a shoot to a project', function () {
     $shoot = $this->project->shoots()->sole();
 
     expect($shoot->kind)->toBe(ShootKind::Engagement)
-        ->and($shoot->status)->toBe(ShootStatus::Requested)
+        ->and($shoot->status->key)->toBe(ShootStatus::Requested->value)
         ->and($shoot->is_primary)->toBeFalse();
 });
 
@@ -100,7 +180,7 @@ it('advances a shoot from the screen', function () {
     $this->post("/shootings/{$shoot->public_id}/status", ['status' => 'shot'])
         ->assertRedirect();
 
-    expect($shoot->fresh()->status)->toBe(ShootStatus::Shot);
+    expect($shoot->fresh()->status->key)->toBe(ShootStatus::Shot->value);
 });
 
 it('renders a refused transition beside the control rather than failing', function () {
@@ -110,7 +190,7 @@ it('renders a refused transition beside the control rather than failing', functi
         ->post("/shootings/{$shoot->public_id}/status", ['status' => 'booked'])
         ->assertSessionHasErrors('status');
 
-    expect($shoot->fresh()->status)->toBe(ShootStatus::Delivered);
+    expect($shoot->fresh()->status->key)->toBe(ShootStatus::Delivered->value);
 });
 
 it('cancels a shoot with a reason', function () {
@@ -120,7 +200,7 @@ it('cancels a shoot with a reason', function () {
         ->assertRedirect();
 
     expect($shoot->fresh()->isCancelled())->toBeTrue()
-        ->and($shoot->fresh()->status)->toBe(ShootStatus::Prep);
+        ->and($shoot->fresh()->status->key)->toBe(ShootStatus::Prep->value);
 });
 
 it('re-designates the primary shoot in one transaction', function () {
@@ -190,7 +270,7 @@ it('books the project from the screen', function () {
     $this->post("/auftraege/{$this->project->public_id}/buchung")->assertRedirect();
 
     expect($this->project->fresh()->job)->not->toBeNull()
-        ->and($this->project->shoots()->sole()->status)->toBe(ShootStatus::Booked);
+        ->and($this->project->shoots()->sole()->status->key)->toBe(ShootStatus::Booked->value);
 });
 
 it('leaves an already booked project alone when the button is pressed twice', function () {
@@ -208,9 +288,10 @@ it('writes, edits and deletes an internal note', function () {
     $note = InternalNote::sole();
     expect($note->author_id)->toBe($this->staff->id);
 
-    $notes = props("/auftraege/{$this->project->public_id}")['notes'];
-    expect($notes[0]['body'])->toBe('Gegenlicht ab 20 Uhr.')
-        ->and($notes[0]['author'])->toBe($this->staff->name);
+    $written = collect(props("/auftraege/{$this->project->public_id}")['thread'])
+        ->firstWhere('body', 'Gegenlicht ab 20 Uhr.');
+    expect($written['author'])->toBe($this->staff->name)
+        ->and($written['system'])->toBeFalse();
 
     $this->patch("/notizen/{$note->public_id}", ['body' => 'Korrigiert.'])->assertRedirect();
     expect($note->fresh()->body)->toBe('Korrigiert.');
@@ -236,6 +317,22 @@ it('renders the tasks card with the audience the field carries', function () {
         ->and($tasks[0]['isOverdue'])->toBeTrue();
 });
 
+// The edit state writes venue_name and venue_city separately, so the screen
+// gets them separately. Splitting the joined line back apart cut a name that
+// carries its own comma in the wrong place.
+it('carries the venue in its two parts beside the joined line', function () {
+    Shoot::factory()->for($this->project)->create([
+        'venue_name' => 'Gut Basthorst, Hof 2',
+        'venue_city' => 'Basthorst',
+    ]);
+
+    $shoot = props("/auftraege/{$this->project->public_id}")['shoots'][0];
+
+    expect($shoot['venue'])->toBe('Gut Basthorst, Hof 2, Basthorst')
+        ->and($shoot['venueName'])->toBe('Gut Basthorst, Hof 2')
+        ->and($shoot['venueCity'])->toBe('Basthorst');
+});
+
 it('sorts open tasks above finished ones', function () {
     Task::factory()->for($this->project)->done()->create(['title' => 'Erledigt']);
     Task::factory()->for($this->project)->due(now()->addDays(30)->format('Y-m-d'))->create(['title' => 'Offen']);
@@ -243,6 +340,27 @@ it('sorts open tasks above finished ones', function () {
     $tasks = props("/auftraege/{$this->project->public_id}")['tasks'];
 
     expect(collect($tasks)->pluck('title')->all())->toBe(['Offen', 'Erledigt']);
+});
+
+// The trace is one order or it is two lists sharing a heading: a note from
+// June must not sit under an event from March because notes were merged last.
+it('orders notes, recorded events and finished tasks into one trace', function () {
+    InternalNote::factory()->for($this->project)->create([
+        'body' => 'Notiz',
+        'author_id' => $this->staff->id,
+        'created_at' => '2026-03-02 09:00:00',
+    ]);
+    // Audit rows are append-only, so the clock moves rather than the row.
+    $this->travelTo('2026-03-01 09:00:00');
+    AuditLogger::record('quote.sent', $this->staff, [], null, $this->project->id);
+    $this->travelBack();
+    Task::factory()->for($this->project)->done()->due('2026-03-03')->create(['title' => 'Erledigt']);
+
+    $thread = props("/auftraege/{$this->project->public_id}")['thread'];
+
+    expect(collect($thread)->pluck('body')->all())
+        ->toBe([__('activity.quote.sent'), 'Notiz', 'Erledigt'])
+        ->and(collect($thread)->pluck('system')->all())->toBe([true, false, true]);
 });
 
 it('never calls a finished task overdue', function () {
@@ -297,7 +415,7 @@ it('saves the name, the stage and the shoot blocks from the project screen', fun
         ->assertRedirect();
 
     expect($project->fresh()->name)->toBe('Neu')
-        ->and($lead->fresh()->stage)->toBe(LeadStage::Contacted)
+        ->and($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value)
         ->and($shoot->fresh()->date->format('Y-m-d'))->toBe('2026-06-20')
         ->and($shoot->fresh()->venue_name)->toBe('Gut Basthorst');
 });

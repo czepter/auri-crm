@@ -3,6 +3,7 @@
 namespace App\Media\Actions;
 
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
 use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
 use App\Media\Enums\MultipartUploadStatus;
 use App\Media\Models\MultipartUpload;
@@ -32,11 +33,18 @@ class StartOrResumeMultipartUpload
     /** @return array{upload: MultipartUpload, parts: list<array{part_number: int, size: int, etag: string}>} */
     public function __invoke(
         Gallery $gallery,
+        GallerySet $set,
         string $filename,
         int $fileSize,
         CarbonInterface $fileModifiedAt,
         ?string $contentType,
+        ?int $replacesAssetId = null,
     ): array {
+        // Fingerprint excludes the set on purpose: the same file re-picked
+        // after a reload is the same upload even if a different set is open
+        // now. A resumed row keeps the set it was started against — bytes
+        // already in flight for one set don't silently retarget to whatever
+        // fach happens to be open on this later request.
         $existing = MultipartUpload::query()
             ->where('gallery_id', $gallery->id)
             ->where('filename', $filename)
@@ -64,6 +72,8 @@ class StartOrResumeMultipartUpload
         $upload = MultipartUpload::create([
             'public_id' => $publicId,
             'gallery_id' => $gallery->id,
+            'gallery_set_id' => $set->id,
+            'replaces_asset_id' => $replacesAssetId,
             'key' => $key,
             'upload_id' => $uploadId,
             'filename' => $filename,

@@ -49,7 +49,7 @@ it('groups a conversation by who owes the next line', function () {
 it('files a conversation as done, and reopens it when the client writes again', function () {
     $thread = threadWhereLastSpoke('client');
 
-    $this->post("/posteingang/faden/{$thread->public_id}/erledigt")->assertRedirect();
+    $this->post("/posteingang/unterhaltung/{$thread->public_id}/erledigt")->assertRedirect();
 
     expect(collect(inbox()['groups'])->firstWhere('key', 'erledigt')['rows'])->toHaveCount(1);
 
@@ -69,8 +69,8 @@ it('opens the first unanswered conversation, or the one asked for', function () 
 
     $waiting = Thread::query()->where('subject', 'Wartet')->sole();
 
-    expect(inbox(['faden' => $waiting->public_id])['open']['subject'])->toBe('Wartet')
-        ->and(inbox(['faden' => $unanswered->public_id])['open']['state'])->toBe('unbeantwortet');
+    expect(inbox(['unterhaltung' => $waiting->public_id])['open']['subject'])->toBe('Wartet')
+        ->and(inbox(['unterhaltung' => $unanswered->public_id])['open']['state'])->toBe('unbeantwortet');
 });
 
 // A conversation that names no booking still has to be answerable — the
@@ -82,7 +82,7 @@ it('answers a thread from the inbox, booking or no booking', function () {
         'author_id' => null,
     ]);
 
-    $this->post("/posteingang/faden/{$thread->public_id}/antwort", ['body' => 'Sehr gern.'])
+    $this->post("/posteingang/unterhaltung/{$thread->public_id}/antwort", ['body' => 'Sehr gern.'])
         ->assertRedirect();
 
     expect($thread->fresh()->latestMessage->body)->toBe('Sehr gern.')

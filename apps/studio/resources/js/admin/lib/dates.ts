@@ -1,5 +1,5 @@
 /*
- * Datumsfelder haben zwei Leser: <input type="date"> will YYYY-MM-DD, der
+ * Datumsfelder haben zwei Leser: das Feld will YYYY-MM-DD, der
  * Mensch davor will "in 3 Wochen". Beides hier, weil die Fallen (Zeitzone,
  * Monatsende) sonst in jeder Komponente einzeln stehen.
  */
@@ -39,4 +39,14 @@ export function relativeDate(iso: string, locale: string, from = new Date()): st
   if (Math.abs(days) < 60) return format.format(Math.round(days / 7), 'week')
 
   return format.format(Math.round(days / 30.44), 'month')
+}
+
+/**
+ * "Mo., 14.06." — die Datumsspalte der Fallschirme und der Unterhaltung. Ohne Datum
+ * steht der Platzhalter, den der Schirm dort führt.
+ */
+export function dayWithWeekday(iso: string | null | undefined, fallback: string | null = '—'): string | null {
+  return iso
+    ? new Date(iso).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' })
+    : fallback
 }

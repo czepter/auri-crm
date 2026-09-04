@@ -1,11 +1,13 @@
-import { guestId, passHeader, type GuestIdStore } from './favorites'
+import { passHeader } from './favorites'
 
 /**
  * G-12: the lightbox's comment rail — mockup 10's `.cmts`/`.lbwrite`, cut
- * from G-09 to this story. Same guest identity as favorites.ts (see that
- * module's own doc comment): no account behind it, so a comment carries no
- * name — the lightbox renders every one as "Gast" rather than inventing an
- * identity this app never collects.
+ * from G-09 to this story.
+ *
+ * Der Absender steht seit der Gast-Identität fest: der signierte Pass aus
+ * guest.ts weist ihn aus, und die api schickt den Namen zurück, den er beim
+ * Bestätigen hinterlegt hat. Die Adresse bleibt dabei auf dem Server —
+ * sichtbar ist der Name.
  */
 export interface GalleryComment {
   body: string
@@ -54,13 +56,15 @@ export async function postComment(
   key: string,
   body: string,
   pass?: string | null,
-  store?: GuestIdStore,
+  guestPass?: string | null,
 ): Promise<GalleryComment | null> {
+  if (!guestPass) return null
+
   try {
     const response = await fetch(`${apiBase}${commentsPath(versionPublicId)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...passHeader(pass) },
-      body: JSON.stringify({ guest_id: guestId(store), asset_key: key, body }),
+      body: JSON.stringify({ guest_pass: guestPass, asset_key: key, body }),
     })
     if (!response.ok) return null
 

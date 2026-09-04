@@ -6,6 +6,7 @@ use App\Gallery\Actions\NotifyStudioOfEngagement;
 use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\GalleryVersion;
 use App\Gallery\Notifications\AssetFavorited;
+use App\Gallery\Support\IdentifiesGalleryGuest;
 use App\Http\Controllers\Controller;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
@@ -32,18 +33,20 @@ use Illuminate\Http\Request;
  */
 class AssetFavoriteController extends Controller
 {
+    use IdentifiesGalleryGuest;
+
     public function __construct(private readonly NotifyStudioOfEngagement $notifyStudio) {}
 
     /** The current guest's favorited asset keys within one version. */
     public function index(Request $request, GalleryVersion $galleryVersion): JsonResponse
     {
-        $guestId = (string) $request->query('guest_id', '');
+        $me = $this->guest($request, $galleryVersion);
 
-        $keys = $guestId === ''
+        $keys = $me === null
             ? collect()
             : AssetFavorite::query()
                 ->where('gallery_version_id', $galleryVersion->id)
-                ->where('guest_identifier', $guestId)
+                ->where('guest_identifier', $me->identifier)
                 ->pluck('asset_key');
 
         return response()->json(['favorited' => $keys->values()]);
@@ -51,7 +54,11 @@ class AssetFavoriteController extends Controller
 
     public function toggle(Request $request, GalleryVersion $galleryVersion, string $key): JsonResponse
     {
-        $validated = $request->validate(['guest_id' => ['required', 'string', 'max:64']]);
+        // Kein Herz ohne Absender. Wer es setzt, soll es auf dem naechsten
+        // Geraet wiederfinden — und das geht nur ueber eine bestaetigte
+        // Adresse.
+        $me = $this->guest($request, $galleryVersion);
+        abort_if($me === null, 403);
 
         $known = collect($galleryVersion->assets)->contains(fn (array $asset) => $asset['key'] === $key);
         abort_unless($known, 404);
@@ -59,7 +66,7 @@ class AssetFavoriteController extends Controller
         $favorite = AssetFavorite::query()
             ->where('gallery_version_id', $galleryVersion->id)
             ->where('asset_key', $key)
-            ->where('guest_identifier', $validated['guest_id'])
+            ->where('guest_identifier', $me->identifier)
             ->first();
 
         if ($favorite) {
@@ -72,7 +79,7 @@ class AssetFavoriteController extends Controller
             $created = AssetFavorite::create([
                 'gallery_version_id' => $galleryVersion->id,
                 'asset_key' => $key,
-                'guest_identifier' => $validated['guest_id'],
+                'guest_identifier' => $me->identifier,
             ]);
 
             // G-12: reaches the studio through the unread stream — only on

@@ -3,6 +3,7 @@
 namespace Database\Factories\Media;
 
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
 use App\Media\Enums\AssetStatus;
 use App\Media\Models\Asset;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -18,6 +19,8 @@ class AssetFactory extends Factory
     {
         return [
             'gallery_id' => Gallery::factory(),
+            'gallery_set_id' => fn (array $attributes) => Gallery::find($attributes['gallery_id'])?->sets()->first()?->id
+                ?? GallerySet::factory()->create(['gallery_id' => $attributes['gallery_id']])->id,
             'checksum' => hash('sha256', fake()->unique()->uuid()),
             'status' => AssetStatus::Ready,
             'key' => 'galleries/test/'.fake()->uuid().'/original.jpg',

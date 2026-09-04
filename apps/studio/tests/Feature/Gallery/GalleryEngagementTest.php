@@ -3,6 +3,8 @@
 use App\Gallery\Models\AssetComment;
 use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GallerySet;
+use App\Media\Models\Asset;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -12,11 +14,11 @@ beforeEach(fn () => useSurface(Surface::PORTAL));
 
 function engagedGallery(): Gallery
 {
-    $gallery = Gallery::factory()->create(['assets' => [
-        ['key' => 'galleries/g/a.jpg'],
-        ['key' => 'galleries/g/b.jpg'],
-    ]]);
-    $gallery->publish();
+    $gallery = Gallery::factory()->create();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/a.jpg', 'filename' => 'a.jpg']);
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/b.jpg', 'filename' => 'b.jpg']);
+    $gallery->fresh()->publish();
 
     return $gallery->fresh();
 }
@@ -86,8 +88,10 @@ it('signs a client\'s comment with their name and a guest\'s with Gast', functio
     $contact = App\Crm\Models\Contact::factory()->create(['name' => 'Viola Neumann']);
     $project->attachContact($contact, App\Crm\Enums\ProjectContactRole::Primary);
 
-    $gallery = Gallery::factory()->for($project)->create(['assets' => [['key' => 'galleries/g/a.jpg']]]);
-    $gallery->publish();
+    $gallery = Gallery::factory()->for($project)->create();
+    $set = GallerySet::where('gallery_id', $gallery->id)->first();
+    Asset::factory()->create(['gallery_id' => $gallery->id, 'gallery_set_id' => $set->id, 'key' => 'galleries/g/a.jpg', 'filename' => 'a.jpg']);
+    $gallery->fresh()->publish();
 
     // The guest first, while nobody is signed in.
     test()->postJson("/galerien/{$gallery->public_id}/kommentar", [

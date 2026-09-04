@@ -3,6 +3,7 @@ import { useForm } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
 import { Textarea } from '@/ui/textarea'
 import { Label } from '@/ui/label'
+import { Field } from '@/ui/field'
 
 const props = defineProps<{ settings: App.Settings.Data.StudioSettingsData }>()
 const emit = defineEmits<{ saved: [] }>()
@@ -32,53 +33,43 @@ defineExpose({ form, submit })
 
 <template>
   <form id="mail-form" @submit.prevent="submit">
-    <div class="dsec" style="margin-top: 0">
-      <div class="dlab">{{ $t('settings.mailSenderLabel') }}</div>
-      <div class="grp">
-        <div class="two">
-          <div class="fld">
-            <Label for="m-absendername">{{ $t('settings.mailFromNameLabel') }}</Label>
+    <div class="mt-0">
+      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.mailSenderLabel') }}</div>
+      <div class="mb-6">
+        <div class="grid grid-cols-2 gap-4">
+          <Field :label="$t('settings.mailFromNameLabel')" id="m-absendername" :error="form.errors.mail_from_name">
             <Input id="m-absendername" v-model="form.mail_from_name" type="text" />
-            <p v-if="form.errors.mail_from_name" class="err">{{ form.errors.mail_from_name }}</p>
-          </div>
-          <div class="fld">
-            <Label for="m-absenderadresse">{{ $t('settings.mailFromAddressLabel') }}</Label>
+          </Field>
+          <Field :label="$t('settings.mailFromAddressLabel')" id="m-absenderadresse" :error="form.errors.mail_from_address">
             <Input id="m-absenderadresse" v-model="form.mail_from_address" type="email" />
-            <p v-if="form.errors.mail_from_address" class="err">{{ form.errors.mail_from_address }}</p>
-          </div>
+          </Field>
         </div>
       </div>
     </div>
 
-    <div class="dsec">
-      <div class="dlab">{{ $t('settings.mailReplyLabel') }}</div>
-      <div class="grp">
-        <div class="two">
-          <div class="fld">
-            <Label for="m-antwortan">{{ $t('settings.mailReplyToLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
-            <Input id="m-antwortan" v-model="form.mail_reply_to" type="email" />
-            <span class="hint">{{ $t('settings.mailReplyToHint') }}</span>
-            <p v-if="form.errors.mail_reply_to" class="err">{{ form.errors.mail_reply_to }}</p>
-          </div>
-          <div class="fld">
-            <Label for="m-bcc">{{ $t('settings.mailBccLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
-            <Input id="m-bcc" v-model="form.mail_bcc" type="email" />
-            <span class="hint">{{ $t('settings.mailBccHint') }}</span>
-            <p v-if="form.errors.mail_bcc" class="err">{{ form.errors.mail_bcc }}</p>
-          </div>
+    <div class="mt-8 first-of-type:mt-6">
+      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.mailReplyLabel') }}</div>
+      <div class="mb-6">
+        <div class="grid grid-cols-2 gap-4">
+          <Field :error="form.errors.mail_reply_to" v-slot="{ id }">
+            <Label :for="id">{{ $t('settings.mailReplyToLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
+            <Input :id v-model="form.mail_reply_to" type="email" />
+          </Field>
+          <Field :error="form.errors.mail_bcc" v-slot="{ id }">
+            <Label :for="id">{{ $t('settings.mailBccLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
+            <Input :id v-model="form.mail_bcc" type="email" />
+          </Field>
         </div>
       </div>
     </div>
 
-    <div class="dsec">
-      <div class="dlab">{{ $t('settings.mailSignatureLabel') }}</div>
-      <div class="grp">
-        <div class="fld">
-          <Label for="m-signatur">{{ $t('settings.mailSignatureFieldLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
-          <Textarea id="m-signatur" v-model="form.mail_signature" rows="4" />
-          <span class="hint">{{ $t('settings.mailSignatureHint') }}</span>
-          <p v-if="form.errors.mail_signature" class="err">{{ form.errors.mail_signature }}</p>
-        </div>
+    <div class="mt-8 first-of-type:mt-6">
+      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.mailSignatureLabel') }}</div>
+      <div class="mb-6">
+        <Field :error="form.errors.mail_signature" v-slot="{ id }">
+          <Label :for="id">{{ $t('settings.mailSignatureFieldLabel') }} <em>{{ $t('settings.optional') }}</em></Label>
+          <Textarea :id v-model="form.mail_signature" rows="4" />
+        </Field>
       </div>
     </div>
   </form>

@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Staff;
 use App\Crm\Data\LeadCardData;
 use App\Crm\Data\NextShootData;
 use App\Crm\Data\TaskRowData;
-use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\Stage;
 use App\Crm\Models\Task;
+use App\Crm\Support\CrmVocabulary;
 use App\Engagement\Models\Thread;
+use App\Enums\Capability;
 use App\Gallery\Actions\ReadAfterDeliveryColumn;
 use App\Http\Controllers\Controller;
 use App\Models\Absence;
@@ -90,7 +93,7 @@ class DashboardController extends Controller
             'pipelineStages' => $this->pipelineStages(),
             'overdue' => $this->overdue(),
             'quotes' => QuoteAcceptanceRate::countsForTrailingYear(),
-            'unanswered' => $this->unanswered(),
+            'unanswered' => auth('staff')->user()?->role->allows(Capability::ManageMessages) ? $this->unanswered() : 0,
         ]);
     }
 
@@ -103,10 +106,10 @@ class DashboardController extends Controller
      */
     private function pipelineStages(): array
     {
-        $order = array_column(LeadStage::cases(), 'value');
+        $order = app(CrmVocabulary::class)->ordered(StagePipeline::Lead)->pluck('key')->all();
 
         return Lead::query()->open()->pluck('stage')
-            ->map(fn (LeadStage $stage) => $stage->value)
+            ->map(fn (?Stage $stage) => $stage?->key)
             ->sortBy(fn (string $stage) => array_search($stage, $order, true))
             ->values()
             ->all();
@@ -143,7 +146,7 @@ class DashboardController extends Controller
      * abwesend` announced above the week said nothing about which day it
      * costs, which is the only thing anyone reads that line for.
      *
-     * @return list<array{when: string, what: string, away: bool}>
+     * @return list<array{when: string, what: string, away: bool, href: string|null}>
      */
     private function week(User $viewer): array
     {
@@ -166,6 +169,7 @@ class DashboardController extends Controller
                 'time' => $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
                 'what' => $shoot->project->name,
                 'away' => false,
+                'href' => '/auftraege/'.$shoot->project->public_id.'/shootings',
             ]);
 
         $absences = Absence::query()
@@ -181,6 +185,7 @@ class DashboardController extends Controller
                 // nobody thinks to look in.
                 'what' => $absence->user->name,
                 'away' => true,
+                'href' => null,
             ]);
 
         return $shoots->concat($absences)
@@ -190,6 +195,7 @@ class DashboardController extends Controller
                 'when' => $entry['date'].($entry['time'] === null ? '' : ' '.$entry['time']),
                 'what' => $entry['what'],
                 'away' => $entry['away'],
+                'href' => $entry['href'],
             ])
             ->all();
     }
@@ -226,7 +232,7 @@ class DashboardController extends Controller
         return LeadCardData::collect(
             Lead::query()
                 ->open()
-                ->with(['project.contacts', 'project.shoots'])
+                ->with(['project.contacts', 'project.shoots', 'project.primaryShoot', 'project.latestQuote'])
                 ->latest()
                 ->limit(3)
                 ->get()
@@ -282,11 +288,16 @@ class DashboardController extends Controller
      * so a thread with no messages has no latestMessage and whereHas simply
      * never matches it — no raw SQL, no null-comparison edge to get wrong on
      * a thread that has not had its first message yet.
+     *
+     * The second clause is Thread::workState()'s filed check: a conversation
+     * closed on the client's own last message is finished, not owed, and must
+     * not show here while the Posteingang files it under erledigt.
      */
     private function unanswered(): int
     {
         return Thread::query()
             ->whereHas('latestMessage', fn ($query) => $query->whereNotNull('contact_id'))
+            ->whereDoesntHave('latestMessage', fn ($query) => $query->whereColumn('messages.id', 'threads.closed_message_id'))
             ->count();
     }
 }

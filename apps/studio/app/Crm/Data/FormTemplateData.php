@@ -28,8 +28,8 @@ class FormTemplateData extends Data
         return new self(
             id: $template->public_id,
             name: $template->name,
-            projectType: $template->project_type?->value,
-            projectTypeLabel: $template->project_type?->label(),
+            projectType: $template->project_type?->key,
+            projectTypeLabel: $template->project_type?->name,
             isActive: $template->is_active,
             // fields_count comes from withCount('fields') on the index query,
             // the same shape as PackageData::itemCount. The edit screen loads

@@ -5,6 +5,7 @@ namespace App\Crm\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Enums\TaskAudience;
+use App\Crm\Support\TaskAnchors;
 use App\Models\User;
 use Database\Factories\Crm\TaskFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,6 +30,8 @@ class Task extends Model
         'title',
         'audience',
         'due_on',
+        'due_anchor',
+        'due_offset_days',
         'completed_at',
         'completed_by_id',
         'task_template_id',
@@ -42,6 +45,17 @@ class Task extends Model
             'due_on' => 'immutable_date',
             'completed_at' => 'immutable_datetime',
         ];
+    }
+
+    /**
+     * The occasion the due date hangs off, as a screen reads it. Null for a
+     * fixed date, and null again once the shoot behind the anchor is gone.
+     */
+    public function dueAnchorLabel(): ?string
+    {
+        return $this->due_anchor === null
+            ? null
+            : TaskAnchors::label($this->project, $this->due_anchor);
     }
 
     public function isDone(): bool

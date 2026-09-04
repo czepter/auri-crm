@@ -1,14 +1,11 @@
 <?php
 
+use App\Contracts\Actions\EnsureContractArtifact;
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
 use App\Contracts\Models\Contract;
 use App\Crm\Models\Project;
 use App\Documents\Models\DocumentTemplate;
-use App\Documents\Support\DocumentMergeDataBuilder;
-use App\Documents\Support\DocumentRenderer;
-use App\Settings\Support\StudioSettingsResolver;
-use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -25,10 +22,7 @@ it('leaves an already-rendered contract byte-for-byte untouched after its templa
         ->for($template, 'template')
         ->create();
 
-    (new RenderContractJob($contract))->handle(
-        app(GotenbergClient::class), app(StudioSettingsResolver::class),
-        app(DocumentMergeDataBuilder::class), app(DocumentRenderer::class),
-    );
+    (new RenderContractJob($contract))->handle(app(EnsureContractArtifact::class));
     $contract->refresh();
 
     expect($contract->status)->toBe(ContractStatus::Rendered);

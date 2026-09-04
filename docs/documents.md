@@ -105,7 +105,7 @@ anyway, that is the normal case rather than a new hole.
 | Path                 | Value                                          |
 |----------------------|-------------------------------------------------|
 | `gallery.title`      | The newest gallery of the project. Empty where none exists. |
-| `gallery.link`       | The portal's own address, never the api surface's — no guest can open that one. |
+| `gallery.link`       | apps/gallery's own address (`Gallery::publicUrl()`), never this app's own host — no guest can open that one. |
 | `gallery.password`   | The view password in clear, or empty where the gallery is ungated. |
 | `gallery.downloadPin` | The download code in clear, same rule. |
 | `gallery.expiresOn`  | `galleries.expires_at`, `dd.mm.yyyy`. |

@@ -9,6 +9,8 @@ use App\Engagement\Models\Thread;
 use App\Engagement\Notifications\StaffReplyPosted;
 use App\Engagement\Support\MessageIdentifier;
 use App\Enums\StaffRole;
+use App\Models\User;
+use App\Notifications\Studio\ClientMessagePosted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
@@ -44,7 +46,9 @@ it('mails a staff reply to the client and keeps the row as the record', function
         ->and($message->fresh()->delivery_state)->toBe('sent');
 });
 
-it('never mails a message the client wrote', function () {
+// T-11 moved the second half of this: a client's message is never mailed
+// back to the client, but it is what tells the studio to open the thread.
+it('never mails the client a message the client wrote', function () {
     Notification::fake();
 
     $thread = threadWithClient();
@@ -52,7 +56,8 @@ it('never mails a message the client wrote', function () {
 
     app(PostMessage::class)($thread, $contact, 'Wann kommen die Bilder?');
 
-    Notification::assertNothingSent();
+    Notification::assertNothingSentTo($contact);
+    Notification::assertSentTo(User::query()->get(), ClientMessagePosted::class);
     expect(Message::sole()->delivery_state)->toBeNull();
 });
 

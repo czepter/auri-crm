@@ -61,6 +61,12 @@ class StudioSettingsData extends Data
         public ?string $mailReplyTo,
         public ?string $mailSignature,
         public ?string $mailBcc,
+        /** @var list<string> */
+        public array $leadTypePresets,
+        /** @var list<string> */
+        public array $leadSourcePresets,
+        /** @var list<string> */
+        public array $leadChannelPresets,
     ) {}
 
     public static function fromResolver(StudioSettingsResolver $settings): self
@@ -106,6 +112,9 @@ class StudioSettingsData extends Data
             mailReplyTo: $settings->mailReplyTo(),
             mailSignature: $settings->mailSignature(),
             mailBcc: $settings->mailBcc(),
+            leadTypePresets: $settings->leadPresets('type'),
+            leadSourcePresets: $settings->leadPresets('source'),
+            leadChannelPresets: $settings->leadPresets('channel'),
         );
     }
 }

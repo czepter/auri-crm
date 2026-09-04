@@ -34,15 +34,3 @@ it('hides rows belonging to another tenant', function () {
 
     expect(TenantProbe::pluck('label')->all())->toBe(['ours']);
 });
-
-class TenantProbe extends \Illuminate\Database\Eloquent\Model
-{
-    use \App\Concerns\BelongsToTenant;
-    use \App\Concerns\HasPublicId;
-
-    protected $table = 'seam_probes';
-
-    public $timestamps = false;
-
-    protected $fillable = ['label'];
-}

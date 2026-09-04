@@ -5,6 +5,7 @@ namespace App\Crm\Http\Controllers;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Project;
 use App\Crm\Models\Task;
+use App\Crm\Support\TaskAnchors;
 use App\Crm\Support\TaskDependencyGraph;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
@@ -15,6 +16,8 @@ use Illuminate\Validation\ValidationException;
 
 class TaskController extends Controller
 {
+    public function __construct(private readonly TaskAnchors $anchors) {}
+
     public function store(Request $request, Project $project): RedirectResponse
     {
         $this->authorize('manageTasks', $project);
@@ -22,7 +25,11 @@ class TaskController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'audience' => ['required', Rule::enum(TaskAudience::class)],
-            'due_on' => ['nullable', 'date'],
+            // A fixed day or an anchor, never both — two answers to "when" is
+            // one of them going stale.
+            'due_on' => ['nullable', 'date', 'prohibits:anchor'],
+            'anchor' => ['nullable', 'string'],
+            'offset_days' => ['nullable', 'integer', 'between:-365,365'],
             'shoot' => ['nullable', 'string', Rule::exists('shoots', 'public_id')],
             // S-12: what this one is waiting on. Scoped to the project below
             // rather than by an exists rule alone — a task may only depend on
@@ -37,10 +44,26 @@ class TaskController extends Controller
 
         abort_if(isset($validated['depends_on']) && $predecessor === null, 422);
 
+        $anchor = $validated['anchor'] ?? null;
+        $offset = $anchor === null ? null : (int) ($validated['offset_days'] ?? 0);
+
+        // Only what this project can still reach. An anchor from a cancelled
+        // shoot or a stage the funnel already skipped would never resolve to
+        // a day, and would sit on the list as a deadline that never arrives.
+        abort_if(
+            $anchor !== null
+                && ! in_array($anchor, array_column($this->anchors->forProject($project), 'value'), true),
+            422,
+        );
+
         $project->tasks()->create([
             'title' => $validated['title'],
             'audience' => $validated['audience'],
-            'due_on' => $validated['due_on'] ?? null,
+            'due_on' => $anchor === null
+                ? $validated['due_on'] ?? null
+                : $this->anchors->dueOn($project, $anchor, $offset)?->format('Y-m-d'),
+            'due_anchor' => $anchor,
+            'due_offset_days' => $offset,
             'shoot_id' => isset($validated['shoot'])
                 ? $project->shoots()->where('public_id', $validated['shoot'])->value('id')
                 : null,
@@ -104,6 +127,23 @@ class TaskController extends Controller
             ]);
         }
 
+        return $this->mark($task, $done);
+    }
+
+    /**
+     * The counterpart to complete(), for the list that only shows done ones:
+     * there the toggle has no checkbox to click, and a second click on
+     * complete() would tick a task that is already ticked.
+     */
+    public function reopen(Task $task): RedirectResponse
+    {
+        $this->authorize('update', $task);
+
+        return $this->mark($task, false);
+    }
+
+    private function mark(Task $task, bool $done): RedirectResponse
+    {
         $task->forceFill([
             'completed_at' => $done ? now() : null,
             'completed_by_id' => $done ? auth('staff')->id() : null,

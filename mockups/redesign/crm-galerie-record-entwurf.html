@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Galerie im Entwurf · Meier &amp; Kowalski — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="galerien">
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="main">
+
+    <div class="hrow">
+      <div>
+        <div class="kick"><a class="link" href="crm-projekt.html">Meier &amp; Kowalski</a></div>
+        <h1 style="font-size:24px">Hochzeitstag</h1>
+      </div>
+      <span class="kick" style="margin-left:auto">Entwurf</span>
+      <span class="rec-acts">
+        <a class="link" href="#">Mehr</a>
+        <a class="btn-2" href="galerie.html">Vorschau</a>
+        <a class="btn" href="#">Veröffentlichen</a>
+      </span>
+      <a class="btn-2 rec-more" href="#">…</a>
+    </div>
+
+    <input class="vswitch" type="radio" name="g" id="g-bilder" checked>
+    <input class="vswitch" type="radio" name="g" id="g-gestaltung">
+    <input class="vswitch" type="radio" name="g" id="g-einstellungen">
+    <input class="vswitch" type="radio" name="g" id="g-aktivitaet">
+
+    <div class="rec">
+
+      <nav class="recnav">
+        <label class="cover-none" for="g-gestaltung">Titelbild<b>Bild wählen</b></label>
+        <div class="items">
+          <label for="g-bilder"><span class="tw">▶</span>Bilder</label>
+          <div class="recsets">
+            <a class="on" href="#"><span class="grip">⠿</span>Highlights <span class="ct">22</span></a>
+            <a class="add" href="#">+ Set</a>
+          </div>
+          <label for="g-gestaltung"><span class="tw"></span>Gestaltung</label>
+          <label for="g-einstellungen"><span class="tw"></span>Einstellungen</label>
+          <label for="g-aktivitaet"><span class="tw"></span>Aktivität</label>
+        </div>
+      </nav>
+
+      <div class="recbody">
+
+        <div class="recview bilder">
+          <div class="bar">
+            <h2>Highlights</h2>
+            <span class="n">22 · 1,4 GB</span>
+            <div class="seg">
+              <label>Klein</label><label class="on">Mittel</label><label>Groß</label>
+            </div>
+          </div>
+          <div class="grid-photos">
+            <figure><img src="https://picsum.photos/seed/nl1/300/200" alt=""></figure>
+            <figure><img src="https://picsum.photos/seed/nl2/300/200" alt=""></figure>
+            <figure><img src="https://picsum.photos/seed/nl3/300/200" alt=""></figure>
+            <figure><img src="https://picsum.photos/seed/nl4/300/200" alt=""></figure>
+            <figure><img src="https://picsum.photos/seed/nl5/300/200" alt=""></figure>
+            <figure><img src="https://picsum.photos/seed/nl6/300/200" alt=""></figure>
+            <figure><img src="https://picsum.photos/seed/nl7/300/200" alt=""></figure>
+            <figure><img src="https://picsum.photos/seed/nl8/300/200" alt=""></figure>
+            <figure><img src="https://picsum.photos/seed/nl9/300/200" alt=""></figure>
+          </div>
+        </div>
+
+        <div class="recview gestaltung">
+          <div class="bar"><h2>Gestaltung</h2></div>
+          <div class="grid-photos" style="grid-template-columns:repeat(auto-fill,minmax(190px,1fr))">
+            <figure><img src="https://picsum.photos/seed/nl3/380/254" alt=""></figure>
+            <figure><img src="https://picsum.photos/seed/nl20/380/254" alt=""></figure>
+            <figure><img src="https://picsum.photos/seed/nl21/380/254" alt=""></figure>
+          </div>
+        </div>
+
+        <div class="recview einstellungen">
+          <nav class="subnav">
+            <div class="lab">Galerie</div>
+            <a class="on" href="#">Allgemein</a>
+            <a href="#">Zugang</a>
+            <a href="#">Sets</a>
+            <div class="lab">Was Gäste dürfen</div>
+            <a href="#">Download <span class="st">An</span></a>
+            <a href="#">Listen <span class="st">An</span></a>
+            <a href="#">Kommentare <span class="st">Aus</span></a>
+          </nav>
+          <div class="pane">
+            <h2>Allgemein</h2>
+            <label class="field" style="margin-bottom:var(--s4)">
+              <span>Adresse</span>
+              <span class="slug"><span class="pre">nordlicht.de/g/</span><input value="hochzeitstag"></span>
+            </label>
+            <label class="field" style="margin-bottom:var(--s4)">
+              <span>Shootingdatum</span>
+              <input type="date" value="2026-08-12" style="width:180px">
+            </label>
+            <label class="field">
+              <span>Erreichbar bis</span>
+              <input type="date" style="width:180px">
+            </label>
+          </div>
+        </div>
+
+        <div class="recview aktivitaet">
+          <div class="bar"><h2>Aktivität</h2></div>
+          <div class="log">
+            <div class="e"><span class="t">heute 14:12</span><span>22 Bilder hochgeladen</span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+</body>
+</html>

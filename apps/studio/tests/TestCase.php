@@ -19,5 +19,16 @@ abstract class TestCase extends BaseTestCase
         // independent of the asset pipeline. Whether the real assets resolve is a
         // question for the browser, and the e2e job builds for real and answers it.
         $this->withoutVite();
+
+        // StudioSettingsResolver reads and busts its cache through the `redis`
+        // store by name, which walks straight past CACHE_STORE=array — so one
+        // Redis is shared by every test process at once. `artisan test
+        // --parallel` runs six, and tests/Pest.php flushes that store before
+        // each test in Feature: worker A's flush lands between worker B's
+        // cache warm-up and the query count it takes right after, and B fails
+        // on a number it never caused. Pointing the store at the array driver
+        // gives each test its own, which is what the per-test flush was
+        // reaching for anyway.
+        config(['cache.stores.redis' => ['driver' => 'array', 'serialize' => false]]);
     }
 }

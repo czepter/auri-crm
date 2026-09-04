@@ -36,12 +36,15 @@ Route::middleware('portal.maintenance')->group(function () {
     Route::middleware('guest:portal')->group(function () {
         Route::get('/anmelden', [MagicLinkController::class, 'create'])->name('portal.login');
         Route::post('/anmelden', [MagicLinkController::class, 'store'])->name('portal.login.request');
-
-        // The link itself. Single use, fifteen minutes, and the token in the
-        // path is the whole of the credential — so it is spent the moment it
-        // works.
-        Route::get('/zugang/{token}', [MagicLinkController::class, 'consume'])->name('portal.access');
     });
+
+    // The link itself. Single use, fifteen minutes, and the token in the
+    // path is the whole of the credential — so it is spent the moment it
+    // works. Deliberately outside `guest:portal`: behind it an already signed
+    // in browser was bounced to '/' with the token unspent, so a studio member
+    // previewing a second client kept seeing the first, and a shared browser
+    // showed one client another's portal.
+    Route::get('/zugang/{token}', [MagicLinkController::class, 'consume'])->name('portal.access');
 
     Route::middleware('audience:portal')->group(function () {
         Route::post('/abmelden', [MagicLinkController::class, 'destroy'])->name('portal.logout');
@@ -80,6 +83,12 @@ Route::middleware('portal.maintenance')->group(function () {
         // table.
         Route::get('/projekte/{project}/fragebogen/{questionnaire}', [QuestionnaireController::class, 'show'])
             ->name('portal.questionnaires.show');
+        Route::post('/projekte/{project}/fragebogen/{questionnaire}/datei', [QuestionnaireController::class, 'upload'])
+            ->name('portal.questionnaire.upload');
+        Route::get('/projekte/{project}/fragebogen/{questionnaire}/datei/{file}', [QuestionnaireController::class, 'download'])
+            ->name('portal.questionnaire.file.download');
+        Route::delete('/projekte/{project}/fragebogen/{questionnaire}/datei/{file}', [QuestionnaireController::class, 'destroyFile'])
+            ->name('portal.questionnaire.file.destroy');
         Route::patch('/projekte/{project}/fragebogen/{questionnaire}', [QuestionnaireController::class, 'update'])
             ->name('portal.questionnaires.update');
 
@@ -134,13 +143,15 @@ Route::middleware('portal.maintenance')->group(function () {
         // for both audiences (GalleryPasswordController). Every one is a
         // 404 for anybody who is not the client of this gallery.
         Route::prefix('/galerien/{gallery}/eure-auswahl')->group(function () {
-            Route::post('/listen', [PortalGalleryController::class, 'storeList'])->name('portal.galleries.lists.store');
-            Route::patch('/listen/{list}', [PortalGalleryController::class, 'renameList'])
-                ->name('portal.galleries.lists.rename');
-            Route::delete('/listen/{list}', [PortalGalleryController::class, 'destroyList'])
-                ->name('portal.galleries.lists.destroy');
-            Route::post('/listen/{list}/bild', [PortalGalleryController::class, 'toggleItem'])
-                ->name('portal.galleries.lists.toggle');
+            Route::middleware('gallery.feature:lists')->group(function () {
+                Route::post('/listen', [PortalGalleryController::class, 'storeList'])->name('portal.galleries.lists.store');
+                Route::patch('/listen/{list}', [PortalGalleryController::class, 'renameList'])
+                    ->name('portal.galleries.lists.rename');
+                Route::delete('/listen/{list}', [PortalGalleryController::class, 'destroyList'])
+                    ->name('portal.galleries.lists.destroy');
+                Route::post('/listen/{list}/bild', [PortalGalleryController::class, 'toggleItem'])
+                    ->name('portal.galleries.lists.toggle');
+            });
 
             // The three rotate*() methods have lived on the model since G-06
             // with no caller outside the admin. Rotating is the only real
@@ -239,15 +250,17 @@ Route::prefix('galerien/{gallery}')->group(function () {
         Route::get('/beteiligung', [GalleryEngagementController::class, 'index'])
             ->name('gallery.engagement.index');
         Route::post('/favorit', [GalleryEngagementController::class, 'toggleFavorite'])
+            ->middleware('gallery.feature:lists')
             ->name('gallery.favorite.toggle');
         Route::post('/kommentar', [GalleryEngagementController::class, 'storeComment'])
+            ->middleware('gallery.feature:comments')
             ->name('gallery.comment.store');
     });
 
     // The download gates (mockups 11, 12) — reachable only once the view
     // gate above is satisfied, since "download" is a link found inside an
     // already-unlocked gallery, never before it.
-    Route::middleware('gallery.gate:view')->group(function () {
+    Route::middleware(['gallery.gate:view', 'gallery.feature:downloads'])->group(function () {
         Route::get('/download', [GalleryDownloadController::class, 'show'])->name('gallery.download.show');
         Route::post('/download/pin', [GalleryDownloadController::class, 'storePin'])->name('gallery.download.pin');
 
