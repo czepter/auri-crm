@@ -175,12 +175,12 @@ function open(row: Row) {
             </div>
 
             <div v-if="matching(rows[entry]).length" class="overflow-hidden rounded-md border border-border">
-              <button
+              <component
+                :is="row.href ? Link : 'button'"
                 v-for="row in matching(rows[entry]).slice(0, 4)"
                 :key="row.id"
-                class="flex w-full cursor-pointer items-center gap-3.5 border-t border-border bg-transparent p-2.5 text-left transition-[background-color] duration-[.12s] ease-out first:border-t-0 hover:bg-muted"
-                type="button"
-                @click="open(row)"
+                class="flex w-full cursor-pointer items-center gap-3.5 border-t border-border bg-transparent p-2.5 text-left no-underline transition-[background-color] duration-[.12s] ease-out first:border-t-0 hover:bg-muted"
+                v-bind="row.href ? { href: row.href } : { type: 'button', onClick: () => open(row) }"
               >
                 <span class="min-w-0 flex-1">
                   <span class="block text-[13px] leading-[1.3] font-semibold" :class="!row.active && 'text-muted-foreground'">{{ row.name }}</span>
@@ -191,7 +191,7 @@ function open(row: Row) {
                   v-if="!row.active"
                   class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-faint"
                 >{{ $t('formTemplates.inactive') }}</span>
-              </button>
+              </component>
 
               <Link
                 v-if="matching(rows[entry]).length > 4"
@@ -207,13 +207,13 @@ function open(row: Row) {
         <!-- Eine Art: Liste links, ihr Editor rechts. -->
         <div v-else class="flex items-start gap-7 max-[1080px]:flex-col">
           <div class="flex w-[392px] flex-none flex-col gap-0.5 max-[1080px]:w-full">
-            <button
+            <component
+              :is="row.href ? Link : 'button'"
               v-for="row in matching(rows[kind])"
               :key="row.id"
-              class="flex cursor-pointer items-center gap-3.5 rounded-lg border-0 bg-transparent p-2.5 text-left transition-[background-color] duration-[.12s] ease-out hover:bg-muted"
+              class="flex cursor-pointer items-center gap-3.5 rounded-lg border-0 bg-transparent p-2.5 text-left no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted"
               :class="current && row.id === current.id && 'bg-sunk-2'"
-              type="button"
-              @click="open(row)"
+              v-bind="row.href ? { href: row.href } : { type: 'button', onClick: () => open(row) }"
             >
               <span class="min-w-0 flex-1">
                 <span class="block text-[13px] leading-[1.3] font-semibold" :class="!row.active && 'text-muted-foreground'">{{ row.name }}</span>
@@ -224,7 +224,7 @@ function open(row: Row) {
                 v-if="!row.active"
                 class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-faint"
               >{{ $t('formTemplates.inactive') }}</span>
-            </button>
+            </component>
 
             <p v-if="!matching(rows[kind]).length" class="m-0 text-[12px] leading-[1.45] text-faint">{{ $t('templates.empty') }}</p>
           </div>

@@ -22,5 +22,5 @@ test('the project screen shows its key figures and an activity trace', async ({ 
   // being empty by construction.
   await page.getByRole('button', { name: /Portal-Sichtbarkeit/ }).click()
 
-  await expect(page.getByText(/Portal (freigegeben|verborgen)/)).toBeVisible()
+  await expect(page.locator('aside').getByText(/Portal (freigegeben|verborgen)/)).toBeVisible()
 })

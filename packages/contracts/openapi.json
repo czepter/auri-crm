@@ -887,7 +887,7 @@
         "/pipeline-snapshot": {
             "get": {
                 "operationId": "pipeline-snapshot",
-                "summary": "N-02: the funnel, not the leads that make it up \u2014 a count per\nLeadStage rather than a page of Lead rows the caller would have to\ntally itself. Same grouping order as LeadBoardController's own board\n(declaration order, not the stored strings' alphabetical order) and\nthe same `open()` scope: a lost lead left its stage the moment it was\nmarked lost, so it no longer belongs to any column's count",
+                "summary": "N-02: the funnel, not the leads that make it up \u2014 a count per\nstage rather than a page of Lead rows the caller would have to\ntally itself. Same grouping order as LeadBoardController's own board\n(declaration order, not the stored strings' alphabetical order) and\nthe same `open()` scope: a lost lead left its stage the moment it was\nmarked lost, so it no longer belongs to any column's count",
                 "tags": [
                     "CrmRead"
                 ],
@@ -900,44 +900,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object",
-                                            "additionalProperties": {
-                                                "type": "object",
-                                                "properties": {
-                                                    "stage": {
-                                                        "type": "string"
-                                                    },
-                                                    "label": {
-                                                        "type": "string",
-                                                        "enum": [
-                                                            "Neu",
-                                                            "Kontaktiert",
-                                                            "Angebot",
-                                                            "Angebot angenommen",
-                                                            "Vertrag",
-                                                            "Gebucht"
-                                                        ]
-                                                    },
-                                                    "count": {
-                                                        "anyOf": [
-                                                            {
-                                                                "type": "string"
-                                                            },
-                                                            {
-                                                                "type": "integer",
-                                                                "enum": [
-                                                                    0
-                                                                ]
-                                                            }
-                                                        ]
-                                                    }
-                                                },
-                                                "required": [
-                                                    "stage",
-                                                    "label",
-                                                    "count"
-                                                ]
-                                            }
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
@@ -1953,7 +1916,7 @@
                                 "type": "object",
                                 "properties": {
                                     "stage": {
-                                        "$ref": "#/components/schemas/LeadStage"
+                                        "type": "string"
                                     }
                                 },
                                 "required": [
@@ -2146,7 +2109,7 @@
                                         "maxLength": 255
                                     },
                                     "type": {
-                                        "$ref": "#/components/schemas/ProjectType"
+                                        "type": "string"
                                     },
                                     "source": {
                                         "anyOf": [
@@ -2335,7 +2298,7 @@
                         "maxLength": 255
                     },
                     "type": {
-                        "$ref": "#/components/schemas/ProjectType"
+                        "type": "string"
                     },
                     "source": {
                         "$ref": "#/components/schemas/LeadSource"
@@ -2409,33 +2372,10 @@
                 ],
                 "title": "LeadSource"
             },
-            "LeadStage": {
-                "type": "string",
-                "description": "The sales funnel (vision \u00a77). quote_accepted is its own stage because \"they  * said yes, send the contract\" is the one funnel moment where the studio is the bottleneck, and folding it into quote_sent hides it. Lost is deliberately not a case here. It is reachable from any stage, and a seventh value would erase which stage the lead died in \u2014 the number the funnel is actually measured on. See Lead::$lost_at.\n",
-                "enum": [
-                    "new",
-                    "contacted",
-                    "quote_sent",
-                    "quote_accepted",
-                    "contract_sent",
-                    "booked"
-                ],
-                "title": "LeadStage"
-            },
             "ProjectReadData": {
                 "type": "object",
                 "additionalProperties": {},
                 "title": "ProjectReadData"
-            },
-            "ProjectType": {
-                "type": "string",
-                "description": "Lives on Project, not Job. Mockup 03 collects it at capture, months before a Job exists and for the many leads that never convert at all, and a project's nature does not change when it does. Deviation from vision \u00a73.1, recorded in the P1b spec \u00a72.2. Shoot.kind stays the finer-grained field: a wedding project has shoots of kind engagement, wedding and reception.\n",
-                "enum": [
-                    "wedding",
-                    "portrait",
-                    "other"
-                ],
-                "title": "ProjectType"
             }
         },
         "responses": {
