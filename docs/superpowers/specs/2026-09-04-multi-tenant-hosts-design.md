@@ -196,6 +196,10 @@ heute. Mehrere Treffer: Studio-Auswahl, nur die Studios, deren Passwort
 passte. Kein Treffer: eine Meldung, gleich ob Adresse unbekannt oder
 Passwort falsch. Der Apex hält keine Session.
 
+Auf `{slug}.auri-crm.de/login` ändert sich nichts: der Mandant steht durch den
+Host fest, geprüft wird nur das Konto dieses Studios, keine Auswahl, keine
+Übergabe.
+
 Test `SignupTest`: gesperrter Slug abgelehnt, vergebener Slug abgelehnt,
 Assistent 404 ohne Signatur, 200 mit, Sweep lässt beanspruchte Mandanten
 stehen. Test `ApexLoginTest`: ein Konto leitet um, zwei Konten zeigen die
