@@ -8,6 +8,7 @@ use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
 use App\Contracts\Models\ContractSignature;
 use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\ProjectFieldType;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\ShootStatus;
@@ -19,6 +20,8 @@ use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
+use App\Crm\Models\ProjectField;
+use App\Crm\Models\ProjectType as ProjectTypeModel;
 use App\Crm\Models\Shoot;
 use App\Engagement\Actions\PostMessage;
 use App\Engagement\Actions\StartThread;
@@ -106,6 +109,7 @@ class E2eSeeder extends Seeder
         );
 
         $this->seedInvitation();
+        $this->seedProjectFields();
         $this->seedOccupiedDate();
         $this->seedEditableRecords();
         $this->seedBooking();
@@ -129,6 +133,43 @@ class E2eSeeder extends Seeder
                 'invited_by_id' => User::query()->firstOrFail()->id,
             ],
         );
+    }
+
+    /**
+     * C-25: what a Hochzeit carries beyond its name. One field of each shape
+     * that renders differently — a number with a unit, a closed list, a
+     * growing tag list, a switch — so the panel and the project's "Details"
+     * both have something to draw.
+     */
+    private function seedProjectFields(): void
+    {
+        $wedding = ProjectTypeModel::query()->where('key', ProjectType::Wedding->value)->first();
+
+        if ($wedding === null) {
+            return;
+        }
+
+        $fields = [
+            ['gaeste', 'Gäste', ProjectFieldType::Number, null, 'Personen', false],
+            ['location_art', 'Location-Art', ProjectFieldType::Select, ['Scheune', 'Schloss', 'Hotel', 'Standesamt', 'Draußen'], null, true],
+            ['trauung', 'Trauung', ProjectFieldType::Select, ['Frei', 'Kirchlich', 'Standesamt'], null, false],
+            ['stil', 'Stil', ProjectFieldType::Tags, ['Boho', 'Vintage', 'Klassisch', 'Modern'], null, true],
+            ['zweiter_fotograf', 'Zweiter Fotograf', ProjectFieldType::Boolean, null, null, false],
+        ];
+
+        foreach ($fields as $order => [$key, $label, $type, $options, $unit, $open]) {
+            ProjectField::updateOrCreate(
+                ['project_type_id' => $wedding->id, 'key' => $key],
+                [
+                    'label' => $label,
+                    'type' => $type,
+                    'options' => $options,
+                    'unit' => $unit,
+                    'allow_new_options' => $open,
+                    'sort_order' => $order,
+                ],
+            );
+        }
     }
 
     /**
@@ -168,6 +209,7 @@ class E2eSeeder extends Seeder
                 'venue_city' => 'Basthorst',
                 'is_primary' => true,
             ]);
+
         }
     }
 
@@ -244,6 +286,17 @@ class E2eSeeder extends Seeder
             ['name' => 'E2E Buchung'],
             ['type' => ProjectType::Wedding, 'portal_visible' => true],
         );
+
+        // C-25's "Details", answered. On this project for the same reason the
+        // draft quote below is: /projekte lists booked projects only, and that
+        // list is how the visual suite reaches the screen.
+        $project->forceFill(['field_values' => [
+            'gaeste' => 120,
+            'location_art' => 'Scheune',
+            'trauung' => 'Frei',
+            'stil' => ['Boho', 'Vintage'],
+            'zweiter_fotograf' => true,
+        ]])->save();
 
         // The quote editor's fixture. It sits on this project rather than on
         // the inquiry above because /projekte lists booked projects only, and

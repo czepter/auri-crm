@@ -17,6 +17,7 @@ use App\Crm\Http\Controllers\LeadBoardController;
 use App\Crm\Http\Controllers\LeadCaseController;
 use App\Crm\Http\Controllers\LeadStageController;
 use App\Crm\Http\Controllers\ProjectController;
+use App\Crm\Http\Controllers\ProjectFieldController;
 use App\Crm\Http\Controllers\ProjectSearchController;
 use App\Crm\Http\Controllers\ProjectTypeController;
 use App\Crm\Http\Controllers\ShootController;
@@ -334,6 +335,17 @@ Route::middleware('audience:staff')->group(function () {
             ->name('project-types.update');
         Route::delete('/projekttypen/{projectType}', [ProjectTypeController::class, 'destroy'])
             ->name('project-types.destroy');
+
+        // C-25: what a project of that type carries. Under the type because
+        // that is what owns them — there is no field without one.
+        Route::post('/projekttypen/{projectType}/felder', [ProjectFieldController::class, 'store'])
+            ->name('project-fields.store');
+        Route::patch('/projekttypen/{projectType}/felder/reihenfolge', [ProjectFieldController::class, 'reorder'])
+            ->name('project-fields.reorder');
+        Route::patch('/projekttypen/{projectType}/felder/{projectField}', [ProjectFieldController::class, 'update'])
+            ->name('project-fields.update');
+        Route::delete('/projekttypen/{projectType}/felder/{projectField}', [ProjectFieldController::class, 'destroy'])
+            ->name('project-fields.destroy');
 
         // T-14: its own controller and gate (ManageTasks, not ManageSettings —
         // see TaskTemplateController's doc comment), sitting in the settings

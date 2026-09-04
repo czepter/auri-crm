@@ -79,7 +79,7 @@ describe('read tools', () => {
     vi.unstubAllGlobals()
   })
 
-  it('registers the four read tools', async () => {
+  it('registers the read tools', async () => {
     const client = await connectedClient({})
 
     const { tools } = await client.listTools()
@@ -88,7 +88,13 @@ describe('read tools', () => {
     // N-03's write tools on the same server — this checks read
     // registration specifically, not the server's full tool inventory.
     expect(tools.map((tool) => tool.name).sort()).toEqual(
-      expect.arrayContaining(['get_project', 'pipeline_snapshot', 'search_contacts', 'shoots_in_date_range'])
+      expect.arrayContaining([
+        'get_project',
+        'list_project_types',
+        'pipeline_snapshot',
+        'search_contacts',
+        'shoots_in_date_range',
+      ])
     )
   })
 
@@ -141,7 +147,14 @@ describe('read tools', () => {
     const client = await connectedClient({
       '/api/projects/prj_meier': () =>
         jsonResponse({
-          data: { id: 'prj_meier', name: 'Meier Hochzeit', type: 'wedding', portalVisible: true, updatedAt: '2026-01-01T00:00:00Z' },
+          data: {
+            id: 'prj_meier',
+            name: 'Meier Hochzeit',
+            type: 'wedding',
+            portalVisible: true,
+            fields: { gaeste: 120 },
+            updatedAt: '2026-01-01T00:00:00Z',
+          },
         }),
     })
 
@@ -149,7 +162,14 @@ describe('read tools', () => {
 
     expect(result.isError).toBeFalsy()
     expect(result.structuredContent).toEqual({
-      project: { id: 'prj_meier', name: 'Meier Hochzeit', type: 'wedding', portalVisible: true, updatedAt: '2026-01-01T00:00:00Z' },
+      project: {
+        id: 'prj_meier',
+        name: 'Meier Hochzeit',
+        type: 'wedding',
+        portalVisible: true,
+        fields: { gaeste: 120 },
+        updatedAt: '2026-01-01T00:00:00Z',
+      },
     })
     expect(integerIdPaths(result.structuredContent)).toEqual([])
   })
@@ -193,6 +213,36 @@ describe('read tools', () => {
       ],
       nextCursor: null,
     })
+    expect(integerIdPaths(result.structuredContent)).toEqual([])
+  })
+
+  it('list_project_types wraps GET /project-types with the fields of each type', async () => {
+    const wedding = {
+      id: 'ptp_wedding',
+      key: 'wedding',
+      name: 'Hochzeit',
+      isActive: true,
+      isDefault: true,
+      fields: [
+        {
+          id: 'pfl_gaeste',
+          key: 'gaeste',
+          label: 'Gäste',
+          type: 'number',
+          options: [],
+          unit: 'Personen',
+          required: true,
+          allowNewOptions: false,
+        },
+      ],
+    }
+
+    const client = await connectedClient({ '/api/project-types': () => jsonResponse({ data: [wedding] }) })
+
+    const result = await client.callTool({ name: 'list_project_types', arguments: {} })
+
+    expect(result.isError).toBeFalsy()
+    expect(result.structuredContent).toEqual({ types: [wedding] })
     expect(integerIdPaths(result.structuredContent)).toEqual([])
   })
 

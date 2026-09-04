@@ -18,6 +18,7 @@ use App\Integration\Http\Controllers\CrmReadController;
 use App\Integration\Http\Controllers\InternalNoteController;
 use App\Integration\Http\Controllers\LeadController;
 use App\Integration\Http\Controllers\OAuthTokenInfoController;
+use App\Integration\Http\Controllers\ProjectFieldController;
 use App\Payments\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -204,3 +205,22 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'ide
 Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'idempotent'])
     ->post('/projects/{project:public_id}/notes', [InternalNoteController::class, 'store'])
     ->name('api.projects.notes.store');
+
+// C-25: what a project of a given type can carry, and the values it does.
+// Reading the definitions is ViewAllProjects, the same scope the project
+// index already requires — a field definition says nothing a project does
+// not. Writing values is ManageLeads, the scope leads.store already carries
+// for writing project data; a per-field scope would be a vocabulary the
+// staff roles have no counterpart for (I-01). Adding a definition is
+// ManageSettings, the capability the admin panel is gated on.
+Route::middleware(['audience:api', 'scope:'.Capability::ViewAllProjects->value])
+    ->get('/project-types', [ProjectFieldController::class, 'types'])
+    ->name('api.project-types.index');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
+    ->patch('/projects/{project:public_id}/fields', [ProjectFieldController::class, 'updateValues'])
+    ->name('api.projects.fields.update');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageSettings->value, 'idempotent'])
+    ->post('/project-types/{projectType:public_id}/fields', [ProjectFieldController::class, 'store'])
+    ->name('api.project-types.fields.store');

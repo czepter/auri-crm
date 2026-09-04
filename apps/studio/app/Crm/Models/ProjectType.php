@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * The kind of work a project is, as a row rather than the three cases
@@ -33,6 +34,12 @@ class ProjectType extends Model
     public function scopeActive(Builder $query): void
     {
         $query->where('is_active', true);
+    }
+
+    /** C-25: what a project of this type carries, in the studio's order. */
+    public function fields(): HasMany
+    {
+        return $this->hasMany(ProjectField::class)->orderBy('sort_order')->orderBy('id');
     }
 
     /**

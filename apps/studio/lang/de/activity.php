@@ -22,6 +22,7 @@ return [
     'contract.render_requested' => 'Vertrag erstellt',
     'contract.signed' => 'Vertrag unterschrieben',
     'project.booked' => 'Projekt gebucht',
+    'project.fields_changed' => 'Details geändert',
     'project.portal_shown' => 'Portal freigegeben',
     'project.portal_hidden' => 'Portal verborgen',
     'payment_plan.created' => 'Zahlungsplan angelegt',

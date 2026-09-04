@@ -33,6 +33,8 @@ const projectSchema = z.object({
   name: z.string(),
   type: z.string(),
   portalVisible: z.boolean(),
+  // C-25: keyed by ProjectField.key — list_project_types says what each means.
+  fields: z.record(z.string(), z.unknown()),
   updatedAt: z.string(),
 })
 
@@ -44,6 +46,26 @@ const shootSchema = z.object({
   date: z.string().nullable(),
   status: z.string(),
   updatedAt: z.string(),
+})
+
+const projectFieldSchema = z.object({
+  id: z.string(),
+  key: z.string(),
+  label: z.string(),
+  type: z.string(),
+  options: z.array(z.string()),
+  unit: z.string().nullable(),
+  required: z.boolean(),
+  allowNewOptions: z.boolean(),
+})
+
+const projectTypeSchema = z.object({
+  id: z.string(),
+  key: z.string(),
+  name: z.string(),
+  isActive: z.boolean(),
+  isDefault: z.boolean(),
+  fields: z.array(projectFieldSchema),
 })
 
 const pipelineStageSchema = z.object({
@@ -138,6 +160,27 @@ export function registerReadTools(server: McpServer, client: ApiClient): void {
       }
 
       return jsonResult({ project: data.data as unknown as z.infer<typeof projectSchema> })
+    },
+  )
+
+  server.registerTool(
+    'list_project_types',
+    {
+      title: 'List project types',
+      description:
+        "C-25: every project type the studio offers with the fields a project of that type carries — the vocabulary `set_project_fields` writes against. `key` is what a value is stored under, `type` says what shape it takes (text, textarea, number, select, tags, date, boolean), `options` is the list a select or tags field offers, and `allowNewOptions` says whether writing an option that is not on that list adds it. Inactive fields are left out: a caller may only write what the studio still asks for.",
+      inputSchema: {},
+      outputSchema: {
+        types: z.array(projectTypeSchema),
+      },
+    },
+    async () => {
+      const { data, error } = await client.GET('/project-types')
+      if (error) {
+        return errorResult(error)
+      }
+
+      return jsonResult({ types: data.data as unknown as z.infer<typeof projectTypeSchema>[] })
     },
   )
 

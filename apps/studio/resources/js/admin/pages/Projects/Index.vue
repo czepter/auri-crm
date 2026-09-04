@@ -1,30 +1,20 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Link, router, usePage } from '@inertiajs/vue3'
+import { Link, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import PageHead from '@/ui/page/PageHead.vue'
-import StageSettings from '@/admin/components/StageSettings.vue'
+import ProjectSettings from '@/admin/components/ProjectSettings.vue'
 import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
-import WorkflowPanel from '@/admin/components/WorkflowPanel.vue'
 import { Button } from '@/ui/button'
 
 defineProps<{
   projects: App.Crm.Data.ProjectRowData[]
-  stageSettings: InstanceType<typeof StageSettings>['$props'] | null
+  stageSettings: Omit<InstanceType<typeof ProjectSettings>['$props'], 'workflow' | 'canManageTasks'> | null
   workflow?: Record<string, unknown> | null
 }>()
 
-const stagesOpen = ref(false)
-
-// Die Spalten kommen erst beim Oeffnen mit — sonst laedt jede Liste sie mit,
-// ohne dass sie jemand sieht.
-const workflowOpen = ref(false)
+const settingsOpen = ref(false)
 const workflowAllowed = computed(() => (usePage().props.auth.can ?? []).includes('manage_tasks'))
-
-function openWorkflow() {
-  workflowOpen.value = true
-  router.reload({ only: ['workflow'] })
-}
 
 function day(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
@@ -46,12 +36,8 @@ function day(iso: string) {
          keep the stylesheet they were built on. -->
     <div data-tokens>
       <PageHead :title="$t('projects.title')">
-        <Button v-if="stageSettings" class="ml-auto" type="button" variant="pill-muted" @click="stagesOpen = true">
+        <Button v-if="stageSettings" class="ml-auto" type="button" variant="pill-muted" @click="settingsOpen = true">
           {{ $t('stages.entry') }}
-        </Button>
-
-        <Button v-if="workflowAllowed" type="button" variant="pill-muted" @click="openWorkflow">
-          {{ $t('board.workflows') }}
         </Button>
       </PageHead>
 
@@ -85,9 +71,13 @@ function day(iso: string) {
       <Button v-else :as="Link" variant="pill" class="mt-5" href="/anfragen/neu">
         {{ $t('leads.createKicker') }}
       </Button>
-      <StageSettings v-if="stagesOpen && stageSettings" v-bind="stageSettings" @close="stagesOpen = false" />
-
-      <WorkflowPanel v-if="workflowOpen" :workflow="workflow as never" @close="workflowOpen = false" />
+      <ProjectSettings
+        v-if="settingsOpen && stageSettings"
+        v-bind="stageSettings"
+        :can-manage-tasks="workflowAllowed"
+        :workflow="workflow"
+        @close="settingsOpen = false"
+      />
     </div>
   </AdminLayout>
 </template>

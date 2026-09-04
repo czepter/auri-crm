@@ -6,8 +6,8 @@ import type { ApiClient } from '../client.js'
 import { idempotencyKeyFor } from '../idempotency.js'
 
 /**
- * N-03: the MCP server's only three write tools, each a thin call onto one
- * of I-03's idempotent api-surface endpoints (see routes/api.php) via the
+ * N-03: the MCP server's write tools, each a thin call onto one of I-03's
+ * (and C-25's) idempotent api-surface endpoints (see routes/api.php) via the
  * generated openapi-fetch client — no DB access, no second copy of the
  * funnel's rules. OQ-8 (#94) decided these ship at all, on the condition
  * that "explicit confirmation is the floor": every handler below elicits an
@@ -25,6 +25,8 @@ export function registerWriteTools(server: McpServer, apiClient: ApiClient): voi
   registerCaptureLead(server, apiClient)
   registerAdvanceLeadStage(server, apiClient)
   registerAddInternalNote(server, apiClient)
+  registerSetProjectFields(server, apiClient)
+  registerAddProjectField(server, apiClient)
 }
 
 const leadSourceEnum = ['referral', 'website', 'instagram', 'wedding_fair', 'other'] as const
@@ -120,6 +122,74 @@ function registerAddInternalNote(server: McpServer, apiClient: ApiClient): void 
         params: { path: { project } },
         body: { body },
         headers: { 'Idempotency-Key': idempotencyKeyFor('add_internal_note', extra) },
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+const projectFieldTypeEnum = ['text', 'textarea', 'number', 'select', 'tags', 'date', 'boolean'] as const
+
+function registerSetProjectFields(server: McpServer, apiClient: ApiClient): void {
+  server.registerTool(
+    'set_project_fields',
+    {
+      title: 'Set project fields',
+      description:
+        "C-25: write the values of a project's own fields — \"120 Gäste, Scheune\" out of a mail. Call `list_project_types` first: the keys of `fields` are that type's field keys, and each value takes the shape its definition names (a number, a string, a YYYY-MM-DD date, a boolean, or a list of strings for a tags field). Keys are merged, never replaced, so writing one field leaves the rest alone. A value outside a closed option list is refused; on a field that allows new options it is added to the list.",
+      inputSchema: {
+        project: z.string().describe('The project public id'),
+        fields: z.record(z.string(), z.unknown()).describe('Keyed by field key — see list_project_types.'),
+      },
+      // Overwrites whatever stood under those keys, so destructive even
+      // though re-sending the same values changes nothing.
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ project, fields }, extra) => {
+      const declined = await requireConfirmation(server, `Write these details to project ${project}?\n\n${JSON.stringify(fields, null, 2)}`)
+      if (declined) return declined
+
+      // Scramble reads the `array` rule as `string[]` (see tools.ts's module
+      // doc comment on why this surface's generated payloads are only
+      // trustworthy for paths and params).
+      const { data, error } = await apiClient.PATCH('/projects/{project}/fields', {
+        params: { path: { project } },
+        body: { fields } as never,
+        headers: { 'Idempotency-Key': idempotencyKeyFor('set_project_fields', extra) },
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerAddProjectField(server: McpServer, apiClient: ApiClient): void {
+  server.registerTool(
+    'add_project_field',
+    {
+      title: 'Add a project field',
+      description:
+        "C-25: define a new field on a project type, so every project of that type carries it. The key is derived from the label and fixed; `options` and `allow_new_options` apply to select and tags only, `unit` to number only. Changes what every project of this type is asked for, so only do it when the studio asked for it.",
+      inputSchema: {
+        project_type: z.string().describe('The project type public id — see list_project_types'),
+        label: z.string().max(120),
+        type: z.enum(projectFieldTypeEnum),
+        options: z.array(z.string().max(255)).optional().describe('select and tags only'),
+        unit: z.string().max(40).nullish().describe('number only — "Personen" makes 120 read as "120 Personen"'),
+        required: z.boolean().optional(),
+        allow_new_options: z.boolean().optional().describe('select and tags only: may a project add an option?'),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ project_type: projectType, ...field }, extra) => {
+      const declined = await requireConfirmation(server, `Add the field "${field.label}" (${field.type}) to this project type?`)
+      if (declined) return declined
+
+      const { data, error } = await apiClient.POST('/project-types/{projectType}/fields', {
+        params: { path: { projectType } },
+        body: field,
+        headers: { 'Idempotency-Key': idempotencyKeyFor('add_project_field', extra) },
       })
 
       return apiResult(data, error)

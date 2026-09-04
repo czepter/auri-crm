@@ -81,8 +81,7 @@
     "colStage": "Stufe",
     "colValue": "Wert",
     "colLast": "Zuletzt",
-    "shootCount": "1 Shooting | {count} Shootings",
-    "workflows": "Workflows"
+    "shootCount": "1 Shooting | {count} Shootings"
   },
   "contacts": {
     "title": "Kontakte",
@@ -319,7 +318,11 @@
       "prerelease": "Vorab",
       "published": "Freigegeben",
       "withdrawn": "Zurückgezogen"
-    }
+    },
+    "details": "Details",
+    "fieldNewOption": "„{term}“ anlegen",
+    "fieldTagAdd": "Tag hinzufügen",
+    "fieldTagRemove": "{tag} entfernen"
   },
   "projects": {
     "title": "Projekte",
@@ -1404,7 +1407,7 @@
   },
   "stages": {
     "title": "Projekt-Einstellungen",
-    "entry": "Stufen & Typen",
+    "entry": "Einstellungen",
     "done": "Fertig",
     "stagesSection": "{pipeline}stufen",
     "typesSection": "Projekttypen",
@@ -1421,7 +1424,6 @@
     "positionAfter": "Nach {stage}",
     "keyField": "Schlüssel",
     "activeField": "Aktiv",
-    "defaultField": "Standard",
     "save": "Speichern",
     "add": "Hinzufügen",
     "cancel": "Abbrechen",
@@ -1429,7 +1431,23 @@
     "deleteStage": "Stufe „{name}“ löschen",
     "deleteStageCount": "{count} Datensätze",
     "moveToField": "Verschieben nach",
-    "deleteAndMove": "Löschen und verschieben"
+    "deleteAndMove": "Löschen und verschieben",
+    "stagesNav": "Stufen",
+    "typeShort": "Typ",
+    "tabGeneral": "Allgemein",
+    "defaultOnNew": "Standard bei neuen Anfragen",
+    "fieldsSection": "Felder",
+    "fieldShort": "Feld",
+    "fieldLabel": "Bezeichnung",
+    "fieldType": "Typ",
+    "fieldOptions": "Optionen",
+    "fieldOptionsHint": "Eine Option pro Zeile.",
+    "fieldUnit": "Einheit",
+    "fieldRequired": "Pflicht",
+    "fieldRequiredField": "Pflichtfeld",
+    "fieldOpenList_select": "Neue Optionen im Projekt",
+    "fieldOpenList_tags": "Neue Tags im Projekt",
+    "tabWorkflow": "Workflow"
   },
   "templates": {
     "title": "Vorlagen",

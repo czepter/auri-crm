@@ -37,9 +37,6 @@ class WorkflowColumns
         return [
             'type' => $type->key,
             'pipeline' => $pipeline->value,
-            'types' => $this->vocabulary->types()
-                ->map(fn (ProjectType $type) => ['value' => $type->key, 'label' => $type->name])
-                ->all(),
             'audiences' => $this->options(TaskAudience::cases()),
             'anchors' => $this->options(DueAnchor::cases()),
             'shootKinds' => $this->options(ShootKind::cases()),

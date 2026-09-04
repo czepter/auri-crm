@@ -17,6 +17,7 @@ import { ACCOUNTS, arrive, submitLogin } from './helpers'
 /** E2eSeeder's own project, the one with a quote still in draft on it. */
 const DRAFT_QUOTE_PROJECT = 'E2E Buchung'
 
+
 const ROUTES = [
   '/',
   '/anfragen',
@@ -195,6 +196,18 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     })
   }
 
+  // C-25's settings panel, over the list it configures. Both panes: the
+  // stages it opens on, and a project type with its fields.
+  await page.goto('/projekte')
+  await page.waitForLoadState('networkidle')
+  await page.getByRole('button', { name: 'Einstellungen' }).click()
+  await page.getByRole('button', { name: 'Hochzeit' }).click()
+  await page.waitForFunction(() => document.fonts.status === 'loaded')
+  await expect.soft(page).toHaveScreenshot('projekt-einstellungen-typ.png', {
+    fullPage: true,
+    animations: 'disabled',
+  })
+
   // The quote editor, which only renders for a draft. E2eSeeder puts one on a
   // project it owns, so this looks that project up by name rather than walking
   // rows until one happens to have a draft on it.
@@ -223,6 +236,35 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
     })
   } else {
     console.log('OHNE BASELINE: auftrag-angebot-editor — kein Angebot im Entwurf')
+  }
+
+  // C-25's "Details" on the project screen, in the edit state where every
+  // control shows. E2eSeeder answers the wedding type's fields on the same
+  // booked project the quote editor uses, so this looks that one up by name
+  // rather than walking rows until one happens to carry values.
+  await page.goto('/projekte')
+  await page.waitForLoadState('networkidle')
+  const detailed = (
+    await page.locator('a[href^="/auftraege/"]').evaluateAll(
+      (nodes, name) =>
+        nodes
+          .filter((n) => (n.closest('tr, li') ?? n).textContent?.includes(name))
+          .map((n) => (n as HTMLAnchorElement).getAttribute('href') ?? ''),
+      DRAFT_QUOTE_PROJECT,
+    )
+  )[0]
+
+  if (detailed === undefined) {
+    console.log('OHNE BASELINE: auftrag-details — kein Projekt mit Feldwerten')
+  } else {
+    await page.goto(detailed)
+    await page.waitForLoadState('networkidle')
+    await page.getByRole('link', { name: 'Bearbeiten' }).click()
+    await page.waitForFunction(() => document.fonts.status === 'loaded')
+    await expect.soft(page).toHaveScreenshot('auftrag-details-bearbeiten.png', {
+      fullPage: true,
+      animations: 'disabled',
+    })
   }
 
   // Whatever gallery the dashboard links first — .../galerien/{id}, its
