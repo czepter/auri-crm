@@ -5,12 +5,14 @@ Datum: 2026-09-05
 
 ## Ziel
 
-Ein frisch angelegtes Studio bekommt heute keine einzige Mail. Diese Spec
-schließt die Lücke mit drei Mails an den Inhaber und gibt allen ausgehenden
-Mails ein gemeinsames Layout aus MJML.
+Ein frisch angelegtes Studio bekommt heute keine einzige Mail, und seine
+Adresse wird nie geprüft. Diese Spec schließt beides: vier Mails an den
+Inhaber, eine E-Mail-Bestätigung dahinter, und ein gemeinsames Layout aus
+MJML für alles Ausgehende.
 
 | Mail | Absender | Auslöser |
 |---|---|---|
+| Bestätige deine E-Mail-Adresse | Produkt | Account-Anlage, vor der Willkommensmail |
 | Willkommen bei Auri CRM | Produkt | Account-Anlage (`SetupController::store()`) |
 | Noch ein paar Einstellungen | Produkt | tägliches Kommando, zwei Tage nach Anlage, Assistent unfertig |
 | Deine Adressen bei Auri CRM | Produkt | Abschluss des Assistenten (`StudioOnboardingController::complete()`) |
@@ -22,6 +24,12 @@ Schritt-Status, Mails an Kunden.
 
 - Alle Mails sind heute `MailMessage` im Laravel-Default-Theme.
   `resources/views/vendor/mail` existiert nicht.
+- Es gibt keine E-Mail-Bestätigung für Staff. `User` implementiert kein
+  `MustVerifyEmail`, keine Migration legt `email_verified_at` an, es gibt
+  weder Route noch Middleware. `SetupController::store()` meldet den Inhaber
+  sofort an. Für den *Wechsel* einer Adresse existiert dagegen ein fertiges
+  Muster: `UserEmailChange` mit `token_hash`, `expires_at`, `consumed_at`,
+  `scopeLive()` und uniformem Scheitern.
 - `AppliesStudioMailIdentity` setzt From, Reply-To, BCC und hängt Signatur
   und Rechtsfußzeile als Textzeilen an. Gilt für Mails **des Studios**; die
   drei Mails hier verwenden den Trait nicht.
@@ -61,6 +69,9 @@ Schritt-Status, Mails an Kunden.
 | Erinnerung | tägliches Kommando plus `onboarding_reminder_sent_at` | verzögerter Job, läge zwei Tage in Redis |
 | Präferenzen | nicht in `StudioEvents::ALL` | eine Checkbox "Willkommensmail" auf einer Pane, die man erst nach Erhalt sieht |
 | Mail-Texte | fest im PHP, wie `StaffInvited` | `de.json`, dort gehen Notification-Texte nicht durch |
+| Bestätigung einlösen | Code **und** Link, beide auf denselben Datensatz | nur Link (langsamer, obwohl der Inhaber ohnehin am Schirm sitzt); nur Code (unbrauchbar, wenn die Mail auf dem Telefon geöffnet wird) |
+| Aufbau der Willkommensmail | Intro mit CTA, drei Funktionsblöcke mit je eigenem CTA, Grußformel | eine Mail, eine Handlung: zeigt dem Inhaber nichts, was er noch nicht gefunden hat |
+| Fuß | Ziel-Link zu den GitHub-Issues, Grund des Versands | Impressum: Auri CRM ist in dieser Phase Open Source, kein gewerblicher Absender. Kommt zurück, sobald daraus ein Angebot wird |
 
 ## 1 Pipeline
 
@@ -125,6 +136,29 @@ außerdem etwas tragen, das der Leser auf seinem Bildschirm nicht sieht
 (CLAUDE.md, "Prose copy that arrives without a UI"). Deshalb erklärt keine
 der drei Mails eine Oberfläche.
 
+**StudioEmailVerification** — `SetupController::store()`, vor allem anderen
+
+```
+Betreff: Bestätige deine E-Mail-Adresse
+
+Hallo {name},
+
+bitte bestätige die E-Mail-Adresse deines Auri-CRM-Kontos mit diesem Code:
+
+    140736
+
+Der Code gilt 30 Minuten.
+
+[E-Mail-Adresse bestätigen]  →  /e-mail-bestaetigen/{token}
+
+Oder diesen Link öffnen:
+https://…/e-mail-bestaetigen/{token}
+```
+
+`Transactional`: der Inhaber wartet gerade darauf, Ruhezeiten halten sie
+nicht auf. Die rohe URL steht ausgeschrieben da, weil ein zweiter Link an
+derselben Stelle nicht hilft, wenn der Button nicht funktioniert.
+
 **StudioWelcome** — `SetupController::store()`
 
 ```
@@ -133,17 +167,42 @@ Betreff: Willkommen bei Auri CRM
 Hallo {name},
 
 willkommen bei Auri CRM. Ab jetzt liegt alles zu deinen Aufträgen an einem
-Ort, von der ersten Anfrage bis zu den fertigen Bildern.
+Ort, von der ersten Anfrage bis zu den fertigen Bildern. Drei Funktionen,
+die du vielleicht noch nicht kennst:
 
 [Studio öffnen]  →  /
 
-Schön, dass du da bist. Viel Spaß damit.
+── Ein eigener Bereich für deine Kunden
+Angebot, Vertrag und Rechnung liegen im Kundenportal bereit. Deine Kunden
+melden sich **ohne Passwort** an, unterschreiben den Vertrag im Browser und
+zahlen per Überweisung oder Karte.
+[Portal einrichten]
+
+── Galerien, die Gäste ohne Konto sehen
+Fertige Bilder gehen als Galerie raus statt als Link mit Ablaufdatum. Gäste
+öffnen sie **ohne Konto**, markieren Favoriten und laden ihre Auswahl als
+ZIP herunter.
+[Galerie anlegen]
+
+── Anfragen und Antworten in einem Posteingang
+Dein Studio hat eine **eigene Mailadresse für Anfragen**. Was dort ankommt,
+landet im Posteingang. Antworten deiner Kunden hängen sich von selbst an den
+richtigen Auftrag.
+[Posteingang ansehen]
+
+Viele Grüße
+dein Auri-CRM-Team
 ```
 
 Erwähnt die Einrichtung nicht. Die Mail geht bei der Anlage raus, der Inhaber
 landet sofort im Assistenten und ist oft durch, bevor er sie öffnet. `/`
 stimmt in beiden Fällen, weil `RequireStudioOnboarding` jeden GET auf den
 Assistenten umleitet, solange der offen ist.
+
+Jeder Behauptungssatz ist im Code geprüft: Magic-Link-Anmeldung,
+`ContractSigned`, Überweisung/Karte aus `de.json`, `GalleryGuestCode`,
+`/favorit`, `GalleryZipReady`, `InboundAddress` und die Thread-Zuordnung über
+die HMAC-Reply-Adresse.
 
 **StudioSetupPending** — tägliches Kommando, siehe Abschnitt 4
 
@@ -229,6 +288,44 @@ Pest unter `apps/studio/tests/Feature/`, Container mit `-e APP_SURFACE=admin`:
 - bei gesetztem `onboarding_completed_at` versendet er nichts
 - `StaffInvited` rendert durch das neue Layout und trägt die Akzentfarbe
 - eine Produkt-Mail trägt die Produktmarke, `StaffInvited` die des Studios
+- `SetupController::store()` versendet `StudioEmailVerification`
+- der Link setzt `email_verified_at` und verbraucht den Datensatz
+- der richtige Code tut dasselbe
+- ein falscher Code erhöht `attempts`; der sechste Versuch scheitert auch mit
+  dem richtigen Code
+- ein abgelaufener Datensatz scheitert wie ein verbrauchter und wie ein nie
+  existierender
+
+## 6 E-Mail-Bestätigung
+
+Migration legt `users.email_verified_at` (`timestampTz`, nullable) an und die
+Tabelle `user_email_verifications`, nach dem Vorbild von
+`user_email_changes`: `tenant_id`, `public_id`, `user_id`, `token_hash`
+(unique), `code_hash`, `expires_at`, `consumed_at`, `attempts`, Zeitstempel.
+
+`UserEmailVerification` spiegelt `UserEmailChange`: `VALID_FOR_MINUTES = 30`,
+`scopeLive()`, `hash()`, `forToken()`, dazu `forCode()`. Scheitern ist
+uniform für abgelaufen, verbraucht und nie existiert.
+
+Zwei Wege auf denselben Datensatz:
+
+| Weg | Wo | Warum |
+|---|---|---|
+| Link | `GET /e-mail-bestaetigen/{token}`, admin-Fläche, öffentlich | die Mail wird oft auf dem Telefon geöffnet, nicht in der angemeldeten Sitzung |
+| Code | Feld im ersten Schritt des Assistenten | dort sitzt der Inhaber nach der Anmeldung ohnehin |
+
+**Sicherheit, und der Punkt, an dem diese Tabelle von `user_email_changes`
+abweicht:** sechs Ziffern sind 10⁶ Möglichkeiten und damit durchprobierbar.
+Der Link braucht keine Bremse, sein Token ist lang; der Code braucht eine.
+`attempts` zählt die Fehlversuche je Datensatz, nach fünf gilt er als
+verbraucht, und der Endpunkt bekommt zusätzlich ein `RateLimiter`-Fenster je
+IP. Der `code_hash` ist Konvention, kein Schutz: bei Datenbankzugriff sind
+10⁶ Urbilder in Sekunden durchgerechnet. Die Bremse ist die Verteidigung.
+
+Die Bestätigung ist heute kein Tor. Der Inhaber ist nach
+`SetupController::store()` angemeldet und kann arbeiten; der Schritt im
+Assistenten lässt sich überspringen. Ob unbestätigte Konten später etwas
+nicht dürfen, ist eine Produktentscheidung und steht nicht hier.
 
 ## Beobachtet, nicht im Umfang
 
