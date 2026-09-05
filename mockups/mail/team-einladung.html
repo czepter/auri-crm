@@ -38,17 +38,19 @@
      Wortmarke des Studios im Kopf, Signatur und Rechtszeile im Fuß statt des
      GitHub-Ziels.
 
-     Zwei Blöcke, nicht drei. Beide gelten für ALLE fünf Rollen:
-     /abwesenheiten ist laut Routenkommentar „open to every role, not gated
-     behind ManageStaff“, und die Zuordnung eingehender Antworten hängt an
-     der HMAC-Reply-Adresse, nicht an einer Capability. ViewAllProjects steht
-     NICHT in der Schnittmenge (Zweitfotograf und Assistenz haben es nicht),
-     deshalb kein Block über „alle Aufträge“.
+     Zwei Blöcke, beide rollenunabhängig und beide über Dinge, die man auf
+     dem Bildschirm nicht sieht. Der Abo-Feed enthält laut
+     CalendarController:125 genau die Shootings, für die man eingeteilt ist;
+     die Zuordnung eingehender Kundenantworten hängt an der HMAC-Reply-
+     Adresse. ViewAllProjects steht NICHT in der Schnittmenge aller fünf
+     Rollen, deshalb kein Block über „alle Aufträge“.
 
-     Kein 2FA-Block: Zwei-Faktor ist eine Pflichtübung, kein Vorteil, und
-     gehört nicht in eine Vorteilsliste. Die alte Zeile „Danach richtest du
-     die Zwei-Faktor-Bestätigung ein“ war ohnehin falsch, MFA ist laut
-     InvitationController:150 opt-in.
+     Verworfen: ein Abwesenheiten-Block, weil nach dem Streichen der
+     Reassurance („dafür braucht es niemanden aus dem Studio“) nur
+     Überschrift und Button übrig blieben. Und ein 2FA-Block, weil
+     Zwei-Faktor eine Pflichtübung ist und nicht in eine Vorteilsliste
+     gehört — die alte Zeile „Danach richtest du die Zwei-Faktor-Bestätigung
+     ein“ war ohnehin falsch, MFA ist laut InvitationController:150 opt-in.
 
      Keine Grußformel mit dem Namen des Inhabers: die Mail ist systemerzeugt,
      und AppliesStudioMailIdentity hängt mit mailSignature() bereits die
@@ -72,14 +74,14 @@
       <p class="sub">Der Link gilt 7 Tage.</p>
 
       <div class="block">
-        <div class="banner"><h2>Wann du nicht kannst</h2></div>
-        <p class="line">Deine Abwesenheiten trägst du selbst ein. Dafür braucht es niemanden aus dem Studio.</p>
-        <a class="cta" href="#" style="background: #B44E22">Abwesenheiten eintragen</a>
+        <div class="banner"><h2>Deine Termine im eigenen Kalender</h2></div>
+        <p class="line">Die Shootings, für die du eingeteilt bist, kannst du in deiner Kalender-App abonnieren.</p>
+        <a class="cta" href="#" style="background: #B44E22">Kalender abonnieren</a>
       </div>
 
       <div class="block">
         <div class="banner"><h2>Antworten am Auftrag</h2></div>
-        <p class="line">Wenn ein Kunde auf eine Nachricht antwortet, landet sie am Auftrag und nicht in deinem privaten Postfach. Auch dann, wenn er aus seinem eigenen Mailprogramm schreibt.</p>
+        <p class="line">Kundenantworten landen am Auftrag, auch wenn der Kunde aus seinem eigenen Mailprogramm schreibt.</p>
         <a class="cta" href="#" style="background: #B44E22">Zum Studio</a>
       </div>
 
