@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>36 · Mail — Willkommen bei Auri CRM</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<style>
+  body { background:#F5F5F4; }
+  .mailpage { padding:28px 28px 48px; }
+  .backlink { display:block; max-width:600px; margin:0 auto 20px; font:400 12.5px/1 var(--font); color:var(--muted); text-decoration:none; }
+  .backlink:hover { color:var(--ink); }
+    a { color: #B44E22; }
+    a:hover { color: #8F3D1B; }
+    .meta { display: flex; gap: 10px; align-items: baseline; }
+    .kick { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #A3A3A3; width: 62px; flex: none; }
+    .metaval { font-size: 12px; color: #6B6B6B; }
+    .card { max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E9E9E7; border-radius: 8px; overflow: hidden; }
+    .brandbar { padding: 24px 32px; border-bottom: 1px solid #E9E9E7; }
+    .brandrow { display: flex; align-items: center; gap: 10px; }
+    .mark { width: 26px; height: 26px; border-radius: 6px; flex: none; }
+    .wordmark { font-family: 'Instrument Serif', Georgia, serif; font-size: 21px; letter-spacing: -.022em; color: #191919; }
+    .bodyzone { padding: 32px; }
+    .greet { margin: 0 0 18px; font-size: 15px; line-height: 1.6; font-weight: 600; color: #191919; }
+    .line { margin: 0 0 24px; font-size: 15px; line-height: 1.62; color: #191919; }
+    .cta { display: inline-block; color: #FFFFFF; font-size: 15px; font-weight: 600; line-height: 1; padding: 15px 24px; border-radius: 6px; text-decoration: none; }
+    .banner { background: #FBF0EA; border-radius: 8px; padding: 28px 26px; margin: 0 0 20px; }
+    .banner h2 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 25px; line-height: 1.05; letter-spacing: -.022em; color: #191919; margin: 0; }
+    .block { margin: 36px 0 0; }
+    .signoff { margin: 40px 0 0; font-size: 15px; line-height: 1.6; color: #191919; }
+    .footzone { padding: 24px 32px 28px; border-top: 1px solid #E9E9E7; background: #FCFCFB; }
+    .ftext { margin: 0 0 10px; font-size: 12px; line-height: 1.55; color: #6B6B6B; }
+    .ftext:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<!-- Intro mit CTA, drei Funktionsblöcke mit je eigenem CTA, Grußformel.
+
+     Gezeigt werden nur Funktionen, die der Inhaber noch NICHT gefunden hat.
+     Den Bildschirm zu beschreiben, auf den er gerade guckt, wäre wertlos.
+     Jeder Behauptungssatz ist im Code geprüft: Magic-Link, ContractSigned,
+     Überweisung/Karte, GalleryGuestCode, /favorit, GalleryZipReady,
+     InboundAddress.
+
+     Die Einrichtung kommt nicht vor: die Mail geht bei der Anlage raus, der
+     Inhaber ist oft durch, bevor er sie öffnet. -->
+
+<div class="mailpage">
+  <a class="backlink" href="../index.html">← Übersicht</a>
+
+  <div class="meta" style="max-width: 600px; margin: 0 auto 14px;">
+    <span class="kick">Betreff</span><span class="metaval">Willkommen bei Auri CRM</span>
+  </div>
+  <div class="meta" style="max-width: 600px; margin: 0 auto 18px;">
+    <span class="kick">Auslöser</span><span class="metaval">Account-Anlage, sofort</span>
+  </div>
+
+  <div class="card">
+    <div class="brandbar">
+      <div class="brandrow">
+        <div class="mark" style="background: #B44E22"></div>
+        <div class="wordmark">Auri CRM</div>
+      </div>
+    </div>
+
+    <div class="bodyzone">
+      <p class="greet">Hallo Christian,</p>
+      <p class="line">willkommen bei Auri CRM. Ab jetzt liegt alles zu deinen Aufträgen an einem Ort, von der ersten Anfrage bis zu den fertigen Bildern. Drei Funktionen, die du vielleicht noch nicht kennst:</p>
+      <a class="cta" href="#" style="background: #B44E22">Studio öffnen</a>
+
+      <div class="block">
+        <div class="banner"><h2>Ein eigener Bereich<br>für deine Kunden</h2></div>
+        <p class="line">Angebot, Vertrag und Rechnung liegen im Kundenportal bereit. Deine Kunden melden sich <strong>ohne Passwort</strong> an, unterschreiben den Vertrag im Browser und zahlen per Überweisung oder Karte.</p>
+        <a class="cta" href="#" style="background: #B44E22">Portal einrichten</a>
+      </div>
+
+      <div class="block">
+        <div class="banner"><h2>Galerien, die Gäste<br>ohne Konto sehen</h2></div>
+        <p class="line">Fertige Bilder gehen als Galerie raus statt als Link mit Ablaufdatum. Gäste öffnen sie <strong>ohne Konto</strong>, markieren Favoriten und laden ihre Auswahl als ZIP herunter.</p>
+        <a class="cta" href="#" style="background: #B44E22">Galerie anlegen</a>
+      </div>
+
+      <div class="block">
+        <div class="banner"><h2>Anfragen und Antworten<br>in einem Posteingang</h2></div>
+        <p class="line">Dein Studio hat eine <strong>eigene Mailadresse für Anfragen</strong>. Was dort ankommt, landet im Posteingang. Antworten deiner Kunden hängen sich von selbst an den richtigen Auftrag.</p>
+        <a class="cta" href="#" style="background: #B44E22">Posteingang ansehen</a>
+      </div>
+
+      <p class="signoff">Viele Grüße<br>dein Auri-CRM-Team</p>
+    </div>
+
+    <div class="footzone">
+      <p class="ftext">Fragen: <a href="https://github.com/czepter/auri-crm/issues">github.com/czepter/auri-crm/issues</a></p>
+      <p class="ftext">Du bekommst diese Mail, weil du ein Studio bei Auri CRM angelegt hast.</p>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
