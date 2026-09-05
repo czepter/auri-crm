@@ -391,6 +391,7 @@ export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date
 export type LeadSource = 'referral' | 'website' | 'instagram' | 'wedding_fair' | 'other';
 export type LeadStage = 'new' | 'contacted' | 'quote_sent' | 'quote_accepted' | 'contract_sent' | 'booked';
 export type ProjectContactRole = 'primary' | 'partner' | 'payer' | 'planner' | 'vendor';
+export type ProjectFieldType = 'text' | 'textarea' | 'number' | 'select' | 'tags' | 'date' | 'boolean';
 export type ProjectType = 'wedding' | 'portrait' | 'other';
 export type ShootKind = 'engagement' | 'wedding' | 'reception' | 'portrait' | 'other';
 export type ShootStatus = 'requested' | 'booked' | 'prep' | 'shot' | 'culling' | 'editing' | 'ready' | 'delivered' | 'archived';
@@ -537,12 +538,31 @@ stage: string,
 isLost: boolean,
 updatedAt: string,
 };
+export type ProjectFieldReadData = {
+id: string,
+key: string,
+label: string,
+type: string,
+options: string[],
+unit: string | null,
+required: boolean,
+allowNewOptions: boolean,
+};
 export type ProjectReadData = {
 id: string,
 name: string,
 type: string,
 portalVisible: boolean,
+fields: Array<any>,
 updatedAt: string,
+};
+export type ProjectTypeReadData = {
+id: string,
+key: string,
+name: string,
+isActive: boolean,
+isDefault: boolean,
+fields: App.Integration.Data.ProjectFieldReadData[],
 };
 export type ShootReadData = {
 id: string,

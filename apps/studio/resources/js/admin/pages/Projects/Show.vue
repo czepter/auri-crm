@@ -11,6 +11,8 @@ import ShootFields from "@/admin/components/ShootFields.vue";
 import ShootRow from "@/admin/components/ShootRow.vue";
 import { Input } from "@/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
+import ProjectFields from "@/admin/components/ProjectFields.vue";
+import type { ProjectFieldValues } from "@/admin/components/ProjectFields.vue";
 import ProjectShell from "@/admin/components/ProjectShell.vue";
 import TaskCreateDialog from "@/admin/components/TaskCreateDialog.vue";
 import Rail from "@/ui/page/Rail.vue";
@@ -21,6 +23,7 @@ import { formatEurosRounded } from "@/admin/lib/money";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
 
 type Figure = { value: string | null; proof: string | null };
+type ProjectFieldDefinition = InstanceType<typeof ProjectFields>["$props"]["fields"][number];
 
 const props = defineProps<{
     header: App.Crm.Data.ProjectHeaderData;
@@ -45,6 +48,8 @@ const props = defineProps<{
         hasDraft: boolean;
     };
     people: App.Crm.Data.ProjectPersonData[];
+    fields: ProjectFieldDefinition[];
+    fieldValues: ProjectFieldValues;
     galleries: { id: string; title: string | null; expiresAt: string | null }[];
     stages: { value: string; label: string }[];
     sources: { value: string; label: string }[];
@@ -89,6 +94,8 @@ const edit = useForm({
         id: person.id,
         role: person.role,
     })),
+    // C-25: die Werte des Projekttyps, im selben Speichern wie Name und Termine.
+    fields: { ...props.fieldValues },
     shoots: props.shoots.map((shoot) => ({
         id: shoot.id,
         date: shoot.date ?? "",
@@ -370,6 +377,15 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             </BandValue>
                         </BandCell>
                     </div>
+
+                    <Section v-if="fields.length" :title="$t('project.details')">
+                        <ProjectFields
+                            v-model="edit.fields"
+                            :editing="editing"
+                            :errors="edit.errors"
+                            :fields="fields"
+                        />
+                    </Section>
 
                     <Section v-if="editing || shoots.length" :title="$t('lead.dates')">
                         <template v-if="!editing" #actions>

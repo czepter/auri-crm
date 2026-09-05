@@ -18,7 +18,6 @@ const props = defineProps<{
   workflow?: {
     type: string
     pipeline: string
-    types: Option[]
     audiences: Option[]
     anchors: Option[]
     shootKinds: Option[]
@@ -26,15 +25,7 @@ const props = defineProps<{
   } | null
 }>()
 
-const emit = defineEmits<{ close: [] }>()
-
 const { t } = useI18n()
-
-// Der Typ steht in der URL, nicht im Component-State: ein Wechsel laedt die
-// Spalten nach, und der zurueckkommende Prop ist die einzige Wahrheit.
-function chooseType(type: string) {
-  router.reload({ only: ['workflow'], data: { workflow_typ: type } })
-}
 
 const editing = ref<App.Crm.Data.TaskTemplateData | null>(null)
 const stage = ref<string>('')
@@ -84,7 +75,7 @@ function open(column: Column, template: App.Crm.Data.TaskTemplateData | null) {
 // Speichern leer da.
 function reload() {
   close()
-  router.reload({ only: ['workflow'] })
+  router.reload({ only: ['workflow'], data: { workflow_typ: props.workflow!.type } })
 }
 
 function submit() {
@@ -121,47 +112,9 @@ function meta(template: App.Crm.Data.TaskTemplateData) {
 </script>
 
 <template>
-  <!-- Dieselbe Flaeche wie StageSettings, aus demselben Grund: die Aufgaben
-       einer Stufe werden auf der Liste gelesen, also auch dort bearbeitet.
-       Fest statt im Fluss, damit die Liste darunter ihre Scrollposition
-       behaelt. -->
-  <div v-if="workflow" data-tokens class="fixed inset-0 z-40 overflow-y-auto bg-background">
-    <div class="mx-auto w-full max-w-[720px] px-6 pb-16">
-      <!-- Bleibt stehen: die Liste ist so lang wie das Studio Stufen hat, und
-           der Weg hier heraus darf nicht nach oben scrollen. -->
-      <div class="sticky top-0 z-10 flex items-center gap-4 bg-background py-[18px]">
-        <button
-          :aria-label="$t('workflow.done')"
-          class="inline-flex cursor-pointer border-0 bg-transparent p-1 text-ink-2"
-          type="button"
-          @click="emit('close')"
-        >
-          <svg class="size-[18px] fill-none stroke-current stroke-[1.75] [stroke-linecap:round]" viewBox="0 0 24 24">
-            <path d="M6 6l12 12M18 6L6 18" />
-          </svg>
-        </button>
-        <span class="text-[16px] leading-[1.3] font-semibold tracking-[-0.015em]">{{ $t('workflow.title') }}</span>
-        <Button type="button" @click="emit('close')">{{ $t('workflow.done') }}</Button>
-      </div>
-
-      <div class="pt-10">
-        <section class="mb-11">
-          <h2 class="text-[15px] leading-[1.3] font-semibold tracking-[-0.015em]">{{ $t('workflow.typeSection') }}</h2>
-
-          <div class="mt-3.5 flex flex-wrap gap-2">
-            <button
-              v-for="type in workflow.types"
-              :key="type.value"
-              class="inline-flex cursor-pointer items-center gap-[7px] rounded-full border-0 bg-sunk-2 px-3.5 py-2 text-[13px] leading-[1.2] transition-colors hover:bg-[#E9E9EC]"
-              :class="type.value === workflow.type ? 'font-semibold text-foreground' : 'text-ink-2'"
-              type="button"
-              @click="chooseType(type.value)"
-            >
-              {{ type.label }}
-            </button>
-          </div>
-        </section>
-
+  <!-- C-25: der Workflow-Tab eines Projekttyps. Kein eigener Rahmen mehr — den
+       stellt ProjectSettings, das auch den Typ waehlt. -->
+  <div v-if="workflow" class="mt-7">
         <section v-for="column in workflow.columns" :key="column.stage" class="mb-11">
           <h2 class="text-[15px] leading-[1.3] font-semibold tracking-[-0.015em]">{{ column.label }}</h2>
 
@@ -190,8 +143,6 @@ function meta(template: App.Crm.Data.TaskTemplateData) {
             {{ $t('workflow.addTask') }}
           </Button>
         </section>
-      </div>
-    </div>
 
     <Dialog :open="stage !== ''" @update:open="(value) => !value && close()">
       <DialogContent>

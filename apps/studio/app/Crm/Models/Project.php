@@ -56,6 +56,9 @@ class Project extends Model
     {
         return [
             'portal_visible' => 'boolean',
+            // C-25: keyed by ProjectField::$key. Written only through
+            // WriteProjectFieldValues, which is why it is not fillable.
+            'field_values' => 'array',
         ];
     }
 

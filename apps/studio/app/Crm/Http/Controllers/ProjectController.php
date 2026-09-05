@@ -14,6 +14,7 @@ use App\Crm\Actions\CrewAvailability;
 use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Actions\ReadProjectScreen;
 use App\Crm\Actions\WorkflowColumns;
+use App\Crm\Actions\WriteProjectFieldValues;
 use App\Crm\Data\FormInstanceData;
 use App\Crm\Data\ProjectGalleryData;
 use App\Crm\Data\ProjectHeaderData;
@@ -158,6 +159,12 @@ class ProjectController extends Controller
             'people' => ProjectPersonData::collect(
                 $project->contacts->map(ProjectPersonData::fromContact(...))
             ),
+            // C-25: what this type asks of a project, and what this project
+            // answers. Definitions and values apart, because a value under a
+            // key the type no longer defines is kept but not shown.
+            'fields' => $project->type?->fields()->active()->get()
+                ->map(StageSettingsPayload::field(...))->values()->all() ?? [],
+            'fieldValues' => (object) ($project->field_values ?? []),
             // C-12 (#248): what the edit state offers as fixed choices.
             'stages' => app(CrmVocabulary::class)->ordered(StagePipeline::Lead)
                 ->filter(fn (Stage $stage) => $stage->is_active)
@@ -195,8 +202,12 @@ class ProjectController extends Controller
      * have their own form at their own section. Nobody should have to unlock
      * the whole record to write one line.
      */
-    public function update(Request $request, Project $project, AdvanceLeadStage $advance): RedirectResponse
-    {
+    public function update(
+        Request $request,
+        Project $project,
+        AdvanceLeadStage $advance,
+        WriteProjectFieldValues $writeFields,
+    ): RedirectResponse {
         $this->authorize('manageShoots', $project);
 
         $validated = $request->validate([
@@ -214,9 +225,10 @@ class ProjectController extends Controller
             'shoots.*.end_time' => ['nullable', 'date_format:H:i'],
             'shoots.*.venue_name' => ['nullable', 'string', 'max:255'],
             'shoots.*.venue_city' => ['nullable', 'string', 'max:255'],
+            'fields' => ['array'],
         ]);
 
-        DB::transaction(function () use ($project, $validated, $advance) {
+        DB::transaction(function () use ($project, $validated, $advance, $writeFields) {
             $project->update(['name' => $validated['name']]);
 
             if ($project->lead !== null) {
@@ -253,6 +265,10 @@ class ProjectController extends Controller
                     'venue_city' => $row['venue_city'] ?? null,
                 ]);
             }
+
+            // Through the action, not the column: the api surface and the MCP
+            // server write the same values against the same definitions.
+            $writeFields($project, $validated['fields'] ?? [], auth('staff')->user());
         });
 
         return back();

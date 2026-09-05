@@ -18,6 +18,8 @@ class ProjectReadData extends Data
         public string $name,
         public string $type,
         public bool $portalVisible,
+        /** C-25: keyed by ProjectField::$key — see GET /project-types for what each one means. @var array<string, mixed> */
+        public array $fields,
         public string $updatedAt,
     ) {}
 
@@ -28,6 +30,7 @@ class ProjectReadData extends Data
             name: $project->name,
             type: $project->type->key,
             portalVisible: $project->portal_visible,
+            fields: $project->field_values ?? [],
             updatedAt: $project->updated_at->toIso8601String(),
         );
     }

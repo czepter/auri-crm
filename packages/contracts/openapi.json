@@ -2065,6 +2065,209 @@
                 }
             }
         },
+        "/project-types": {
+            "get": {
+                "operationId": "project-types.index",
+                "tags": [
+                    "ProjectField"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "anyOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/DataCollection"
+                                                },
+                                                {
+                                                    "$ref": "#/components/schemas/PaginatedDataCollection"
+                                                },
+                                                {
+                                                    "$ref": "#/components/schemas/CursorPaginatedDataCollection"
+                                                },
+                                                {
+                                                    "type": "object"
+                                                },
+                                                {
+                                                    "$ref": "#/components/schemas/LazyCollection"
+                                                },
+                                                {
+                                                    "type": "array",
+                                                    "items": {}
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/projects/{project}/fields": {
+            "patch": {
+                "operationId": "projects.fields.update",
+                "tags": [
+                    "ProjectField"
+                ],
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "fields": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "minItems": 1
+                                    }
+                                },
+                                "required": [
+                                    "fields"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ProjectReadData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/project-types/{projectType}/fields": {
+            "post": {
+                "operationId": "project-types.fields.store",
+                "tags": [
+                    "ProjectField"
+                ],
+                "parameters": [
+                    {
+                        "name": "projectType",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project type public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "label": {
+                                        "type": "string",
+                                        "maxLength": 120
+                                    },
+                                    "type": {
+                                        "$ref": "#/components/schemas/ProjectFieldType"
+                                    },
+                                    "options": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string",
+                                            "maxLength": 255
+                                        }
+                                    },
+                                    "unit": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 40
+                                    },
+                                    "required": {
+                                        "type": "boolean"
+                                    },
+                                    "allow_new_options": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "required": [
+                                    "label",
+                                    "type"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ProjectTypeReadData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/anfragen": {
             "post": {
                 "operationId": "inquiries.store",
@@ -2360,6 +2563,21 @@
                 ],
                 "title": "CaptureInquiryData"
             },
+            "CursorPaginatedDataCollection": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "CursorPaginatedDataCollection"
+            },
+            "DataCollection": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "DataCollection"
+            },
+            "LazyCollection": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "LazyCollection"
+            },
             "LeadSource": {
                 "type": "string",
                 "description": "How the client heard about the studio. A fixed list rather than free text: it is the one fact that cannot be read back out of the inquiry text later, and its entire value is being countable (mockup 03).\n",
@@ -2372,10 +2590,34 @@
                 ],
                 "title": "LeadSource"
             },
+            "PaginatedDataCollection": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "PaginatedDataCollection"
+            },
+            "ProjectFieldType": {
+                "type": "string",
+                "description": "C-25: what a studio may ask of a project of one type. Deliberately not FormFieldType \u2014 the questionnaire knows files, name lists and group photos, a project field does not, and the two vocabularies are meant to grow apart.\n",
+                "enum": [
+                    "text",
+                    "textarea",
+                    "number",
+                    "select",
+                    "tags",
+                    "date",
+                    "boolean"
+                ],
+                "title": "ProjectFieldType"
+            },
             "ProjectReadData": {
                 "type": "object",
                 "additionalProperties": {},
                 "title": "ProjectReadData"
+            },
+            "ProjectTypeReadData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "ProjectTypeReadData"
             }
         },
         "responses": {

@@ -16,13 +16,16 @@ import { registerWriteTools } from './write.js'
 // annotation is set.
 
 function fakeApiClient(data: unknown = { id: 'fake_public_id' }) {
-  const post = vi.fn(async (_path: string, _options: { headers?: Record<string, string> }) => ({
+  const answer = async (_path: string, _options: { headers?: Record<string, string> }) => ({
     data,
     error: undefined,
     response: new Response(),
-  }))
+  })
 
-  return { post, client: { POST: post } as unknown as ApiClient }
+  const post = vi.fn(answer)
+  const patch = vi.fn(answer)
+
+  return { post, patch, client: { POST: post, PATCH: patch } as unknown as ApiClient }
 }
 
 async function connectedPair(apiClient: ApiClient, elicitationSupported: boolean) {
@@ -47,7 +50,7 @@ describe('registerWriteTools', () => {
     await Promise.all(clients.splice(0).map((client) => client.close()))
   })
 
-  it('registers exactly capture_lead, advance_lead_stage and add_internal_note', async () => {
+  it('registers exactly the five write tools', async () => {
     const { client } = await connectedPair(fakeApiClient().client, true)
     clients.push(client)
 
@@ -55,8 +58,10 @@ describe('registerWriteTools', () => {
 
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       'add_internal_note',
+      'add_project_field',
       'advance_lead_stage',
       'capture_lead',
+      'set_project_fields',
     ])
   })
 
@@ -121,6 +126,63 @@ describe('registerWriteTools', () => {
     expect(options.headers?.['Idempotency-Key']).toBeTruthy()
   })
 
+  it('set_project_fields PATCHes the values behind the same confirmation gate', async () => {
+    const { patch, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient, true)
+    clients.push(client)
+
+    client.setRequestHandler(ElicitRequestSchema, async () => ({ action: 'decline' }))
+
+    const declining = await client.callTool({
+      name: 'set_project_fields',
+      arguments: { project: 'project_public_id', fields: { gaeste: 120 } },
+    })
+
+    expect(patch).not.toHaveBeenCalled()
+    expect(JSON.stringify(declining.content)).toContain('Not confirmed')
+
+    client.setRequestHandler(ElicitRequestSchema, async () => ({ action: 'accept', content: { confirm: true } }))
+
+    await client.callTool({
+      name: 'set_project_fields',
+      arguments: { project: 'project_public_id', fields: { gaeste: 120, stil: ['Boho'] } },
+    })
+
+    expect(patch).toHaveBeenCalledTimes(1)
+    const [path, options] = patch.mock.calls[0]
+    expect(path).toBe('/projects/{project}/fields')
+    expect(options).toMatchObject({ body: { fields: { gaeste: 120, stil: ['Boho'] } } })
+    expect(options.headers?.['Idempotency-Key']).toBeTruthy()
+  })
+
+  it('add_project_field POSTs one definition onto the type', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient, true)
+    clients.push(client)
+
+    client.setRequestHandler(ElicitRequestSchema, async () => ({ action: 'accept', content: { confirm: true } }))
+
+    await client.callTool({
+      name: 'add_project_field',
+      arguments: {
+        project_type: 'type_public_id',
+        label: 'Location-Art',
+        type: 'select',
+        options: ['Scheune', 'Schloss'],
+        allow_new_options: true,
+      },
+    })
+
+    const [path, options] = post.mock.calls[0]
+
+    expect(path).toBe('/project-types/{projectType}/fields')
+    // The path segment travels as a param, never inside the body.
+    expect(options).toMatchObject({
+      params: { path: { projectType: 'type_public_id' } },
+      body: { label: 'Location-Art', type: 'select', options: ['Scheune', 'Schloss'], allow_new_options: true },
+    })
+  })
+
   // N-04: NoInternalIdsTest's invariant ("no integer identifier in any JSON
   // body") extended onto the one JSON surface apps/studio's Pest suite can
   // never reach directly — a Node process's own tool result. A write tool's
@@ -170,6 +232,24 @@ describe('registerWriteTools', () => {
       const data = await toolResult(apiClient, 'advance_lead_stage', {
         lead: 'lead_publicid1234567890ab',
         stage: 'contacted',
+      })
+
+      expect(integerIdPaths(data)).toEqual([])
+    })
+
+    it('set_project_fields', async () => {
+      const { client: apiClient } = fakeApiClient({
+        id: 'proj_publicid1234567890ab',
+        name: 'Meier Hochzeit',
+        type: 'wedding',
+        portalVisible: false,
+        fields: { gaeste: 120 },
+        updatedAt: '2026-09-04T12:00:00Z',
+      })
+
+      const data = await toolResult(apiClient, 'set_project_fields', {
+        project: 'proj_publicid1234567890ab',
+        fields: { gaeste: 120 },
       })
 
       expect(integerIdPaths(data)).toEqual([])

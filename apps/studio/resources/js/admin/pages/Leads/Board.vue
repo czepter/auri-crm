@@ -5,8 +5,7 @@ import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import LeadQueue from "@/admin/components/LeadQueue.vue";
 import Page from "@/ui/page/Page.vue";
 import PageHead from "@/ui/page/PageHead.vue";
-import StageSettings from "@/admin/components/StageSettings.vue";
-import WorkflowPanel from "@/admin/components/WorkflowPanel.vue";
+import ProjectSettings from "@/admin/components/ProjectSettings.vue";
 import {
     Table,
     TableCell,
@@ -36,7 +35,10 @@ const props = defineProps<{
     groups: Group[];
     queue: { key: string; rows: App.Crm.Data.LeadQueueRowData[] }[];
     view: string;
-    stageSettings: InstanceType<typeof StageSettings>["$props"] | null;
+    stageSettings: Omit<
+        InstanceType<typeof ProjectSettings>["$props"],
+        "workflow" | "canManageTasks"
+    > | null;
     workflow?: Record<string, unknown> | null;
 }>();
 
@@ -195,17 +197,9 @@ const STAGE_DOT = [
     "bg-action",
     "bg-mark",
 ];
-// Die Spalten kommen erst beim Oeffnen mit — ein Board laedt sie sonst bei
-// jedem Aufruf mit, ohne dass sie jemand sieht.
-const workflowOpen = ref(false);
 const workflowAllowed = computed(() =>
     (usePage().props.auth.can ?? []).includes("manage_tasks"),
 );
-
-function openWorkflow() {
-    workflowOpen.value = true;
-    router.reload({ only: ["workflow"] });
-}
 
 </script>
 
@@ -232,15 +226,6 @@ function openWorkflow() {
                         @click="stagesOpen = true"
                     >
                         {{ $t("stages.entry") }}
-                    </Button>
-
-                    <Button
-                        v-if="workflowAllowed"
-                        variant="pill-muted"
-                        type="button"
-                        @click="openWorkflow"
-                    >
-                        {{ $t("board.workflows") }}
                     </Button>
 
                     <Button :as="Link" variant="pill" href="/anfragen/neu">
@@ -494,16 +479,12 @@ function openWorkflow() {
                 </AlertDialog>
             </div>
 
-            <StageSettings
+            <ProjectSettings
                 v-if="stagesOpen && stageSettings"
                 v-bind="stageSettings"
+                :can-manage-tasks="workflowAllowed"
+                :workflow="workflow"
                 @close="stagesOpen = false"
-            />
-
-            <WorkflowPanel
-                v-if="workflowOpen"
-                :workflow="workflow as never"
-                @close="workflowOpen = false"
             />
         </Page>
     </AdminLayout>
