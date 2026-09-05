@@ -22,6 +22,9 @@
     .line { margin: 0 0 20px; font-size: 15px; line-height: 1.62; color: #191919; }
     .line.last { margin-bottom: 28px; }
     .sub { margin: 24px 0 0; font-size: 14.5px; line-height: 1.6; color: #6B6B6B; }
+    .banner { background: #FBF0EA; border-radius: 8px; padding: 24px 26px; margin: 0 0 18px; }
+    .banner h2 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 23px; line-height: 1.05; letter-spacing: -.022em; color: #191919; margin: 0; }
+    .block { margin: 34px 0 0; }
     .signoff { margin: 34px 0 0; font-size: 15px; line-height: 1.6; color: #191919; }
     .cta { display: inline-block; color: #FFFFFF; font-size: 15px; font-weight: 600; line-height: 1; padding: 15px 24px; border-radius: 6px; text-decoration: none; }
     .footzone { padding: 20px 32px 24px; border-top: 1px solid #E9E9E7; background: #FCFCFB; }
@@ -32,16 +35,21 @@
 <body>
 
 <!-- Bestandsmail StaffInvited, überarbeitet. Absender ist das STUDIO, nicht
-     das Produkt — deshalb Wortmarke des Studios im Kopf und Signatur plus
-     Rechtszeile im Fuß statt des GitHub-Ziels.
+     das Produkt — Wortmarke des Studios im Kopf, Signatur und Rechtszeile im
+     Fuß statt des GitHub-Ziels.
 
-     Die Zeile „Danach richtest du die Zwei-Faktor-Bestätigung ein“ ist raus:
-     InvitationController:150 sagt, MFA ist opt-in, die eingeladene Person
-     landet direkt auf dem Dashboard. Der Satz kündigte einen Schritt an, den
-     es nicht gibt.
+     Drei Blöcke, alle drei für ALLE fünf Rollen gültig: /abwesenheiten ist
+     laut Routenkommentar „open to every role, not gated behind ManageStaff“,
+     /auth/mfa/enroll hängt nur an audience:staff, Aufgaben und Nachrichten
+     stehen in jeder Capability-Liste. ViewAllProjects steht NICHT in der
+     Schnittmenge (Zweitfotograf und Assistenz haben es nicht), deshalb kein
+     Block über „alle Aufträge“.
 
-     Keine Rollenbeschreibung: dieselbe Mail geht an fünf Rollen, jede
-     Beschreibung wäre für vier davon falsch. -->
+     Die alte Zeile „Danach richtest du die Zwei-Faktor-Bestätigung ein“ war
+     falsch — InvitationController:150 sagt, MFA ist opt-in. Als freiwilliger
+     Block stimmt die Aussage und die ursprüngliche Absicht bleibt erhalten:
+     eine unangekündigte Authenticator-App ist laut Code-Kommentar der Punkt,
+     an dem Leute den Setup-Link abbrechen. -->
 
 <div class="mailpage">
   <a class="backlink" href="../index.html">← Übersicht</a>
@@ -56,9 +64,28 @@
     <div class="brandbar"><div class="wordmark">Atelier Nordlicht</div></div>
     <div class="bodyzone">
       <p class="greet">Hallo Mira,</p>
-      <p class="line last">Christian Zepter hat dich als Fotograf ins Atelier Nordlicht eingeladen. Schön, dass du dabei bist.</p>
+      <p class="line last">Christian Zepter hat dich als Fotograf eingeladen. Schön, dass du dabei bist.</p>
       <a class="cta" href="#" style="background: #B44E22">Zugang einrichten</a>
       <p class="sub">Der Link gilt 7 Tage.</p>
+
+      <div class="block">
+        <div class="banner"><h2>Wann du nicht kannst</h2></div>
+        <p class="line">Deine Abwesenheiten trägst du selbst ein. Dafür braucht es niemanden aus dem Studio.</p>
+        <a class="cta" href="#" style="background: #B44E22">Abwesenheiten eintragen</a>
+      </div>
+
+      <div class="block">
+        <div class="banner"><h2>Aufgaben und Nachrichten</h2></div>
+        <p class="line">Was an einem Auftrag ansteht, hängt als Aufgabe daran. Nachrichten mit Kunden laufen über denselben Auftrag.</p>
+        <a class="cta" href="#" style="background: #B44E22">Zum Studio</a>
+      </div>
+
+      <div class="block">
+        <div class="banner"><h2>Zwei-Faktor-Bestätigung</h2></div>
+        <p class="line">Freiwillig. Du richtest sie mit einer Authenticator-App ein und bekommst Wiederherstellungscodes dazu.</p>
+        <a class="cta" href="#" style="background: #B44E22">Zwei-Faktor einrichten</a>
+      </div>
+
       <p class="signoff">Viele Grüße<br>Christian Zepter</p>
     </div>
     <div class="footzone">
