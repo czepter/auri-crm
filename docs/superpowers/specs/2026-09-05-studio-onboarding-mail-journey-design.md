@@ -1,64 +1,66 @@
 # Willkommens- und Onboarding-Mails für neue Studios
 
-Status: Entwurf, im Gespräch abgestimmt.
+Status: Entwurf, im Gespräch abgestimmt. Texte am Canvas abgenommen.
 Datum: 2026-09-05
 
 ## Ziel
 
 Ein frisch angelegtes Studio bekommt heute keine einzige Mail. Diese Spec
-schließt die Lücke mit drei Mails an den Owner und gibt allen ausgehenden
-Mails dabei ein gemeinsames, gebrandetes Layout aus MJML.
+schließt die Lücke mit drei Mails an den Inhaber und gibt allen ausgehenden
+Mails ein gemeinsames Layout aus MJML.
 
-| Mail | Auslöser |
-|---|---|
-| Willkommen | Account-Anlage (`SetupController::store()`) |
-| Einrichtung offen | tägliches Kommando, zwei Tage nach Account-Anlage, Wizard unfertig |
-| Startklar | Wizard-Abschluss (`StudioOnboardingController::complete()`) |
+| Mail | Absender | Auslöser |
+|---|---|---|
+| Willkommen bei Auri CRM | Produkt | Account-Anlage (`SetupController::store()`) |
+| Noch ein paar Einstellungen | Produkt | tägliches Kommando, zwei Tage nach Anlage, Assistent unfertig |
+| Deine Adressen bei Auri CRM | Produkt | Abschluss des Assistenten (`StudioOnboardingController::complete()`) |
 
 Nicht im Umfang: Drip-Kampagne über Wochen, Journey-Tabelle mit
-Schritt-Status, Mails an Kunden oder Team.
+Schritt-Status, Mails an Kunden.
 
 ## Ausgangslage
 
 - Alle Mails sind heute `MailMessage` im Laravel-Default-Theme.
-  `resources/views/vendor/mail` existiert nicht, `resources/views` enthält
-  vier Dateien, keine davon eine Mail.
+  `resources/views/vendor/mail` existiert nicht.
 - `AppliesStudioMailIdentity` setzt From, Reply-To, BCC und hängt Signatur
-  und Rechtsfußzeile als Textzeilen an. Bleibt unverändert.
+  und Rechtsfußzeile als Textzeilen an. Gilt für Mails **des Studios**; die
+  drei Mails hier verwenden den Trait nicht.
 - `NotificationService` ist der einzige Fan-out-Punkt. Ruhezeiten und
   Präferenzen werden ausschließlich dort geprüft; `Transactional` umgeht
   beides.
 - Das Laufzeit-Image hat kein Node. `docker/app/Dockerfile` zieht
   `node:24-alpine` nur für die `assets`-Stufe; die finale `app`-Stufe ist
   reines FrankenPHP.
-- `/branding/logo` (`routes/portal.php:207`) ist öffentlich und ohne Session
-  erreichbar.
+- `/branding/logo` (`routes/portal.php:207`) ist öffentlich erreichbar.
 - Routen sind flächengebunden. Ein Prozess mit `APP_SURFACE=admin` kennt die
-  Portal-Routen nicht, deshalb `config('portal.url')` statt `route()` — so
+  Portal-Routen nicht, deshalb `config('portal.url')` statt `route()`, so
   wie `NotifyZipWaiters:25` es bereits macht.
+- `InboundAddress::catchAll($displayName, $secret)` prägt die Anfrage-Adresse
+  aus `studio_settings.inbound_secret`. `InboxController:74` baut sie schon
+  so; Mail 3 ruft dieselbe Stelle.
 - `studio_settings` wird von der Migration befüllt. `created_at` ist der
-  Installationszeitpunkt, nicht der Registrierungszeitpunkt; Anker für
-  "vor zwei Tagen" ist deshalb `users.created_at` des Owners.
+  Installationszeitpunkt; Anker für "vor zwei Tagen" ist `users.created_at`
+  des frühesten Inhabers.
 - CI hat mit `packages/contracts/openapi.json` bereits einen
   Generieren-und-Diffen-Check (`ci.yml:213`). Die MJML-Ausgabe bekommt
   denselben.
 - Die Spec vom 2026-09-04 (Mandantenfähigkeit) verschiebt den Auslöser der
   Willkommensmail später von `SetupController` zur Selbstregistrierung. Die
-  Notification-Klasse überlebt diesen Umzug, der Aufrufort nicht.
+  Notification-Klassen überleben den Umzug, der Aufrufort nicht.
 
 ## Entscheidungen
 
 | Frage | Entscheidung | Verworfen |
 |---|---|---|
 | MJML ausführen | Build-Zeit, Ergebnis eingecheckt, CI-Drift-Check | `spatie/mjml-php` zur Laufzeit (Node ins Laufzeit-Image, Subprozess je Versand für Ausgabe, die nie variiert); nur in der `assets`-Stufe kompilieren (Tests und lokale Entwicklung stünden ohne Views da) |
-| Reichweite | `layout` und `button` überschreiben, alles andere fällt auf Laravels eigene Komponenten zurück | Den kompletten Komponentensatz veröffentlichen — zehn Dateien Diff ohne Anlass; `panel` mitgenerieren, das `MailMessage` gar nicht aufrufen kann |
-| Branding einspeisen | ein `View::composer` auf `mail::html.layout` | Merge-Daten in jede Notification (vierzehn Dateien für null neuen Nutzen) |
-| Platzhalter | Sentinel-Token (`__SLOT__`), nach `mjml` zu Blade ersetzt | `{{ }}` direkt in die MJML-Quelle — ungeklärt, wie MJML das in Attributpositionen escaped |
+| Reichweite | `layout` und `button` überschreiben, alles andere fällt auf Laravels Komponenten zurück | Den kompletten Satz veröffentlichen (zehn Dateien Diff ohne Anlass); `panel` mitgenerieren, das `MailMessage` nicht aufrufen kann |
+| Absender | zwei Marken: Produkt für diese drei, Studio für die übrigen vierzehn | eine Marke für alles: eine Willkommensmail unter dem Namen des Studios begrüßt niemanden, der dieses Studio selbst gerade angelegt hat |
+| Platzhalter | Sentinel-Token (`__SLOT__`), nach `mjml` zu Blade ersetzt | `{{ }}` direkt in die MJML-Quelle, ungeklärtes Escaping in Attributpositionen |
 | Logo | absolute URL auf `config('portal.url')."/branding/logo"` | CID-Embed; `MailMessage` reicht kein `$message` in die Markdown-Views durch |
-| Akzentfarbe | inline, aus der MJML-Ausgabe | `themes/default.css` — statische Datei, kann keinen Laufzeitwert je Mandant tragen |
-| Erinnerung | tägliches Kommando plus Spalte `onboarding_reminder_sent_at` | verzögerter Job (läge zwei Tage in Redis, ein Flush verlöre die Mail) |
-| Präferenzen | nicht in `StudioEvents::ALL` | eine Checkbox "Willkommensmail" auf einer Pane, die man erst nach Erhalt der Mail sieht |
-| Mail-Texte | fest im PHP, wie `StaffInvited` | `de.json` — Notification-Texte gehen dort nicht durch |
+| Akzentfarbe | inline aus der MJML-Ausgabe | `themes/default.css`, statisch, trägt keinen Laufzeitwert je Mandant |
+| Erinnerung | tägliches Kommando plus `onboarding_reminder_sent_at` | verzögerter Job, läge zwei Tage in Redis |
+| Präferenzen | nicht in `StudioEvents::ALL` | eine Checkbox "Willkommensmail" auf einer Pane, die man erst nach Erhalt sieht |
+| Mail-Texte | fest im PHP, wie `StaffInvited` | `de.json`, dort gehen Notification-Texte nicht durch |
 
 ## 1 Pipeline
 
@@ -69,20 +71,14 @@ resources/mail/layout.mjml  →  resources/views/vendor/mail/html/layout.blade.p
 resources/mail/button.mjml  →  resources/views/vendor/mail/html/button.blade.php
 ```
 
-`mjml` als devDependency in `apps/studio/package.json`, Skript `mail:build`
-ruft `scripts/build-mail.mjs`. Das Skript kompiliert jede Quelle und ersetzt
-danach die Sentinel:
+`mjml` als devDependency, Skript `mail:build` ruft `scripts/build-mail.mjs`.
+Das Skript kompiliert und ersetzt danach die Sentinel: `__SLOT__`,
+`__HEADER__`, `__FOOTER__`, `__SUBCOPY__` zu `{{ $slot }}` usw.,
+`__BRAND__`, `__ACCENT__`, `__LOGO_URL__`, `__URL__` entsprechend.
 
-| Token | wird zu |
-|---|---|
-| `__SLOT__`, `__HEADER__`, `__FOOTER__`, `__SUBCOPY__` | `{{ $slot }}` usw. |
-| `__ACCENT__`, `__STUDIO__`, `__LOGO_URL__` | `{{ $accent }}` usw. |
-| `__URL__` | `{{ $url }}` |
+`{{ }}` genügt auch für `$slot`: Laravels `e()` lässt `Htmlable` unangetastet.
 
-`{{ }}` genügt auch für `$slot`: Laravels `e()` lässt `Htmlable` unangetastet,
-und Markdown-Slots sind `HtmlString`.
-
-CI-Schritt im `web`-Job, der pnpm bereits hat:
+CI-Schritt im `web`-Job:
 
 ```
 pnpm --filter @studio/app mail:build
@@ -91,74 +87,121 @@ git diff --exit-code -- apps/studio/resources/views/vendor/mail
 
 **Zuerst zu beweisen:** dass Laravel eine teilweise veröffentlichte
 Komponentenmenge akzeptiert und für `message`, `header`, `footer` weiter auf
-die eigenen Views zurückfällt. Ein Render-Test gegen eine bestehende
-Notification zeigt das in einer Zeile.
+die eigenen Views zurückfällt. Ein Render-Test gegen `StaffInvited` zeigt das.
 
-## 2 Branding im Layout
+## 2 Zwei Absender in einem Layout
 
-Ein Composer in `AppServiceProvider`:
+Das Layout ist dasselbe, Kopf und Fuß unterscheiden sich:
 
-```php
-View::composer('mail::html.layout', function (View $view) {
-    $settings = app(StudioSettingsResolver::class);
+| | Produkt | Studio |
+|---|---|---|
+| Wortmarke | Auri CRM | `display_name`, sonst Logo aus `logoPath()` |
+| Absenderadresse | `MAIL_FROM_ADDRESS` | `StudioSettingsResolver::mailFromAddress()` |
+| Fuß | Produktzeile plus Grund des Versands | Signatur und Rechtszeile |
+| Trait | keiner | `AppliesStudioMailIdentity` |
 
-    $view->with([
-        'studioName' => $settings->displayName() ?? config('app.name'),
-        'accent' => $settings->attributes()['accent_color'] ?: '#111111',
-        'logoUrl' => $settings->logoPath()
-            ? rtrim((string) config('portal.url'), '/').'/branding/logo'
-            : null,
-    ]);
-});
-```
+Für die Studio-Seite genügt ein `View::composer` auf `mail::html.layout`, der
+Marke, Akzent und Logo-URL aus dem Resolver einspeist; die vierzehn
+bestehenden Notifications ändern sich dann nicht.
 
-Ohne Logo trägt der Header den Studionamen als Wortmarke. Die vierzehn
-bestehenden Notifications ändern sich nicht und sind trotzdem gebrandet.
+**Zuerst zu beweisen:** wie das Layout erfährt, welcher der beiden Fälle
+gerade rendert. Ein View-Composer sieht die Notification nicht. Empfehlung:
+die drei Produkt-Notifications rendern über eine eigene Markdown-View, die
+dasselbe kompilierte Layout mit gesetzter Produktmarke einbindet, statt den
+Composer um einen Zustandsschalter zu erweitern. Vor der Umsetzung an einer
+echten Notification prüfen.
 
 ## 3 Die drei Mails
 
-`Notification` plus `MailMessage`, Geschwister von `StaffInvited`, unter
-`app/Notifications/Studio/`. Versand über `NotificationService`. Keine ist
-`Transactional` — niemand wartet auf diese Mails, und eine Willkommensmail um
-03:00 ist genau der Fall, für den es Ruhezeiten gibt.
+`Notification` plus `MailMessage` unter `app/Notifications/Studio/`, Versand
+über `NotificationService`. Keine ist `Transactional`: niemand wartet auf
+sie, und eine Willkommensmail um 03:00 ist der Fall, für den es Ruhezeiten
+gibt.
 
-Die Willkommensmail geht unter `MAIL_FROM_ADDRESS` raus, weil die
-Mail-Identität des Studios erst in Wizard-Schritt fünf gesetzt wird. Das ist
-richtig so: Absender ist das Deployment, nicht das Studio.
+Jeder Satz muss etwas tragen, das der Leser auf seinem Bildschirm nicht sieht
+(CLAUDE.md, "Prose copy that arrives without a UI"). Deshalb erklärt keine
+der drei Mails eine Oberfläche.
 
-**StudioWelcome** — `SetupController::store()`, nach `Auth::login()`
+**StudioWelcome** — `SetupController::store()`
 
 ```
-Betreff: Studio angelegt
+Betreff: Willkommen bei Auri CRM
+
 Hallo {name},
-Sechs Schritte bis zum ersten Angebot: Profil, Umsatzsteuer, Dokumente,
-Vorlagen, E-Mail, Portal.
-[Einrichtung starten] → /einrichtung/studio
-Dauer etwa zehn Minuten.
+
+willkommen bei Auri CRM. Ab jetzt liegt alles zu deinen Aufträgen an einem
+Ort, von der ersten Anfrage bis zu den fertigen Bildern.
+
+[Studio öffnen]  →  /
+
+Viel Spaß damit.
 ```
+
+Erwähnt die Einrichtung nicht. Die Mail geht bei der Anlage raus, der Inhaber
+landet sofort im Assistenten und ist oft durch, bevor er sie öffnet. `/`
+stimmt in beiden Fällen, weil `RequireStudioOnboarding` jeden GET auf den
+Assistenten umleitet, solange der offen ist.
 
 **StudioSetupPending** — tägliches Kommando, siehe Abschnitt 4
 
 ```
-Betreff: Einrichtung offen
+Betreff: Noch ein paar Einstellungen
+
 Hallo {name},
-Ohne Profil und Umsatzsteuer lässt sich kein Angebot schreiben.
-[Weiter einrichten] → /einrichtung/studio
+
+um mit Auri CRM richtig durchzustarten, fehlen dir noch ein paar
+Einstellungen. Vor zwei Tagen hast du angefangen, seitdem ist es liegen
+geblieben.
+
+Fang mit dem Studio-Profil und der Umsatzsteuer an. Beides steht später
+wörtlich auf jedem Angebot und jeder Rechnung, und in schon verschickten
+Dokumenten lässt es sich nicht mehr korrigieren.
+
+[Weiter einrichten]  →  /einrichtung/studio
+
+Acht Minuten, dann kann die erste Anfrage reinkommen.
 ```
 
-**StudioReady** — `StudioOnboardingController::complete()`, vor dem Redirect
+Die Unkorrigierbarkeit ist belegt: `SendQuote:45` ruft `Quote::snapshotVat()`
+beim Versenden, `EnsureContractArtifact` friert den Vertrag beim Erzeugen ein.
+
+**StudioReady** — `StudioOnboardingController::complete()`
 
 ```
-Betreff: Startklar
+Betreff: Deine Adressen bei Auri CRM
+
 Hallo {name},
-[Erstes Angebot schreiben] → /angebote/neu
-Kundenportal: {config('portal.url')}
+
+die Einrichtung ist durch. Dein Studio hat dabei eine eigene Mailadresse für
+Anfragen bekommen:
+
+{InboundAddress::catchAll(displayName, inboundSecret)}
+
+Die gibt es kein zweites Mal, und sie gehört auf deine Website oder hinter
+dein Kontaktformular. Wenn du sie später austauschst, hört die alte im selben
+Moment auf zu funktionieren.
+
+Dein Kundenportal liegt unter {config('portal.url')}. Deine Kunden melden
+sich dort ohne Passwort an, den Zugang bekommen sie per Mail.
+
+[Erste Anfrage anlegen]  →  /anfragen/neu
+
+Viel Erfolg mit dem ersten Auftrag.
 ```
+
+Der Betreff ist aufs Wiederfinden geschrieben. Die Mail trägt den einzigen
+Wert, der beim Abschluss entsteht und nirgends sonst im Postfach landet: die
+geprägte Adresse und was bei Rotation mit ihr passiert.
+
+**Zu entscheiden:** Die Adresse enthält das Secret. `docs/inbound-mail.md`
+sieht genau diese Adresse für die öffentliche Studio-Website vor, der
+Mailversand gibt also nichts Neues preis. Wer das anders bewertet, nennt in
+der Mail nur `/posteingang` als Fundort.
 
 ## 4 Erinnerung: Kommando und Spalte
 
 Migration ergänzt `studio_settings` um `onboarding_reminder_sent_at`
-(`timestampTz`, nullable). Einbahnflagge, nach demselben Muster wie
+(`timestampTz`, nullable). Einbahnflagge nach dem Muster von
 `payment_installments.overdue_notified_at`: einmal gesetzt, nie geleert.
 
 `App\Notifications\Actions\RemindOnboarding`, aufgerufen von
@@ -167,11 +210,11 @@ Versendet nur, wenn alle drei Bedingungen halten:
 
 - `onboarding_completed_at` ist NULL
 - `onboarding_reminder_sent_at` ist NULL
-- der früheste Owner (`users`, Rolle `owner`, nach `created_at`) wurde vor
+- der früheste Inhaber (`users`, Rolle `owner`, nach `created_at`) wurde vor
   mindestens zwei Tagen angelegt
 
-Dann geht die Mail an genau diesen Owner, danach
-`$settings->set('onboarding_reminder_sent_at', now())` — über den Resolver,
+Dann geht die Mail an genau diesen Inhaber, danach
+`$settings->set('onboarding_reminder_sent_at', now())` über den Resolver,
 damit der Redis-Cache invalidiert wird.
 
 ## 5 Tests
@@ -179,17 +222,28 @@ damit der Redis-Cache invalidiert wird.
 Pest unter `apps/studio/tests/Feature/`, Container mit `-e APP_SURFACE=admin`:
 
 - `SetupController::store()` versendet `StudioWelcome`
-- `complete()` versendet `StudioReady`
-- `RemindOnboarding` versendet bei unfertigem Wizard und Owner älter als zwei
-  Tage, und setzt die Flagge
+- `complete()` versendet `StudioReady`, und die gerenderte Mail enthält die
+  Adresse aus `InboundAddress::catchAll()`
+- `RemindOnboarding` versendet bei unfertigem Assistenten und Inhaber älter
+  als zwei Tage, und setzt die Flagge
 - derselbe Aufruf ein zweites Mal versendet nichts
 - bei gesetztem `onboarding_completed_at` versendet er nichts
-- eine bestehende Notification (`StaffInvited`) rendert durch das neue Layout
-  und trägt die Akzentfarbe
+- `StaffInvited` rendert durch das neue Layout und trägt die Akzentfarbe
+- eine Produkt-Mail trägt die Produktmarke, `StaffInvited` die des Studios
 
 ## Beobachtet, nicht im Umfang
 
-`QuoteSent:56` und `:70` bauen Portal-Links mit `url()` statt
-`config('portal.url')`. `config/portal.php` setzt `PORTAL_URL` auf `APP_URL`
-zurück, solange nichts anderes gesetzt ist — bei getrennten Hosts zeigen diese
-Links auf die Admin-Fläche. Eigenes Issue.
+- `StaffInvited` kündigt an: "Danach richtest du die Zwei-Faktor-Bestätigung
+  ein." `InvitationController:150` sagt, MFA ist opt-in; die eingeladene
+  Person landet direkt auf dem Dashboard. Entweder die Zeile streichen oder
+  MFA wieder verpflichtend machen. Eigenes Issue.
+- `AppliesStudioMailIdentity` hängt Signatur und Rechtszeile als `->line()`
+  an. Beide landen im Rumpf statt im Fuß. Für die Fußzone braucht der Trait
+  einen eigenen Slot. Eigenes Issue.
+- Ein Anfrageformular gibt es als Produktfunktion nicht. Es existiert
+  `POST /api/anfragen` und Beispiel-HTML in `docs/inquiry-form.md`, das ein
+  Studio selbst einbauen müsste. Solange kein Screen das Snippet ausgibt,
+  kann keine Mail dorthin führen.
+- `QuoteSent:56` und `:70` bauen Portal-Links mit `url()` statt
+  `config('portal.url')`. Bei getrennten Hosts zeigen sie auf die
+  Admin-Fläche. Eigenes Issue.
