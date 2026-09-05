@@ -107,6 +107,10 @@ services:
       # reasoning as the php service's own GALLERY_URL, not inherited here
       # since this block predates the anchor and repeats it by hand.
       GALLERY_URL: http://localhost:${GALLERY_PORT:-4321}
+      # A quiet-hours DeferredNotification re-renders QuoteSent on the `mail`
+      # queue, so this container composes portal links too — same reasoning as
+      # GALLERY_URL above, and as the php service's own PORTAL_URL.
+      PORTAL_URL: http://localhost:${PORTAL_PORT:-8001}
       # F-11: a failed job on this container's default/mail/render
       # supervisors (config/horizon.php) reports here too — same DSN, same
       # empty-by-default rule as the php service above.
