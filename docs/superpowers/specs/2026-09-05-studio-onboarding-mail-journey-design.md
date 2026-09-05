@@ -71,6 +71,7 @@ Schritt-Status, Mails an Kunden.
 | Mail-Texte | fest im PHP, wie `StaffInvited` | `de.json`, dort gehen Notification-Texte nicht durch |
 | Bestätigung einlösen | Code **und** Link, beide auf denselben Datensatz | nur Link (langsamer, obwohl der Inhaber ohnehin am Schirm sitzt); nur Code (unbrauchbar, wenn die Mail auf dem Telefon geöffnet wird) |
 | Aufbau der Willkommensmail | Intro mit CTA, drei Funktionsblöcke mit je eigenem CTA, Grußformel | eine Mail, eine Handlung: zeigt dem Inhaber nichts, was er noch nicht gefunden hat |
+| Grußformel | Produktmails "Viele Grüße / Auri CRM", Studiomails keine | "dein Auri-CRM-Team" erfindet ein Team, das ein Ein-Personen-OSS-Projekt nicht hat; der Name des Inhabers behauptet eine Handschrift bei einer systemerzeugten Mail und konkurriert mit `mailSignature()` |
 | Fuß | Ziel-Link zu den GitHub-Issues, Grund des Versands | Impressum: Auri CRM ist in dieser Phase Open Source, kein gewerblicher Absender. Kommt zurück, sobald daraus ein Angebot wird |
 
 ## 1 Pipeline
@@ -232,29 +233,79 @@ Betreff: Deine Adressen bei Auri CRM
 
 Hallo {name},
 
-deine Anfrage-Adresse steht:
-
-{InboundAddress::catchAll(displayName, inboundSecret)}
-
-Die kannst du auf deiner Website verlinken.
-
-Dein Kundenportal erreichst du unter {config('portal.url')}.
+die Einrichtung steht. Dein Studio hat dabei zwei eigene Adressen bekommen.
 
 [Erste Anfrage anlegen]  →  /anfragen/neu
 
-Viel Erfolg mit dem ersten Auftrag.
+── Anfragen per Mail
+{InboundAddress::catchAll(displayName, inboundSecret)}
+Die kannst du auf deiner Website verlinken.
+[Posteingang öffnen]  →  /posteingang
+
+── Dein Kundenportal
+{config('portal.url')}
+Gebuchte Kunden bekommen ihren Zugang per Mail.
+[Portal ansehen]
+
+Viele Grüße
+Auri CRM
 ```
 
-Der Betreff ist aufs Wiederfinden geschrieben. Die Mail trägt die geprägte
-Adresse und einen Satz dazu, was damit zu tun ist. Was die Rotation mit
-alten Adressen macht, gehört in die Doku, nicht hierher: ein Sonderfall zu
-einer Funktion, die der Leser noch nie benutzt hat, wirkt nur deshalb
-wertvoll, weil die Mail sonst leer aussieht.
+Der Betreff ist aufs Wiederfinden geschrieben. Beim Portal steht bewusst
+"bekommen ihren Zugang per Mail" und nicht "den Link bekommen sie von dir":
+`ClientAccessLink` verschickt den Magic-Link, nicht der Inhaber von Hand.
+
+Was die Rotation mit alten Adressen macht, gehört in die Doku, nicht hierher.
+Ein Sonderfall zu einer Funktion, die der Leser noch nie benutzt hat, wirkt
+nur deshalb wertvoll, weil die Mail sonst leer aussieht.
 
 **Zu entscheiden:** Die Adresse enthält das Secret. `docs/inbound-mail.md`
 sieht genau diese Adresse für die öffentliche Studio-Website vor, der
 Mailversand gibt also nichts Neues preis. Wer das anders bewertet, nennt in
 der Mail nur `/posteingang` als Fundort.
+
+**StaffInvited** — die eine Bestandsmail, die mit überarbeitet wurde
+
+```
+Betreff: Dein Zugang zu {studio}
+
+Hallo {name},
+
+{invitedBy} hat dich als {role} eingeladen. Schön, dass du dabei bist.
+
+[Zugang einrichten]
+
+Der Link gilt 7 Tage.
+
+── Deine Termine im eigenen Kalender
+Die Shootings, für die du eingeteilt bist, kannst du in deiner Kalender-App
+abonnieren.
+[Kalender abonnieren]  →  /einstellungen/kalender
+
+── Antworten am Auftrag
+Kundenantworten landen am Auftrag, auch wenn der Kunde aus seinem eigenen
+Mailprogramm schreibt.
+[Zum Studio]
+```
+
+Absender ist das **Studio**, nicht das Produkt: Wortmarke des Studios im
+Kopf, `mailSignature()` und Rechtszeile im Fuß, kein GitHub-Ziel.
+
+Beide Blöcke gelten für alle fünf Rollen. Der Abo-Feed enthält laut
+`CalendarController:125` genau die eigenen Crew-Einteilungen, die Zuordnung
+eingehender Antworten hängt an der HMAC-Reply-Adresse.
+`Capability::ViewAllProjects` steht **nicht** in der Schnittmenge aus
+`StaffRole::capabilities()` — Zweitfotograf und Assistenz haben es nicht —
+deshalb kein Block über "alle Aufträge" und keine Beschreibung der Rolle.
+
+Verworfen: ein Abwesenheiten-Block, weil nach dem Streichen der Reassurance
+("dafür braucht es niemanden aus dem Studio") nur Überschrift und Button
+übrig blieben. Und ein 2FA-Block, weil Zwei-Faktor eine Pflichtübung ist und
+nicht in eine Vorteilsliste gehört.
+
+Keine Grußformel mit dem Namen des Inhabers: die Mail ist systemerzeugt, und
+`AppliesStudioMailIdentity` hängt mit `mailSignature()` bereits die Zeile an,
+die das Studio selbst steuert.
 
 ## 4 Erinnerung: Kommando und Spalte
 
@@ -329,10 +380,13 @@ nicht dürfen, ist eine Produktentscheidung und steht nicht hier.
 
 ## Beobachtet, nicht im Umfang
 
-- `StaffInvited` kündigt an: "Danach richtest du die Zwei-Faktor-Bestätigung
-  ein." `InvitationController:150` sagt, MFA ist opt-in; die eingeladene
-  Person landet direkt auf dem Dashboard. Entweder die Zeile streichen oder
-  MFA wieder verpflichtend machen. Eigenes Issue.
+- `app/Notifications/StaffInvited.php` ist unverändert und verschickt weiter
+  "Danach richtest du die Zwei-Faktor-Bestätigung ein."
+  `InvitationController:150` sagt, MFA ist opt-in; die eingeladene Person
+  landet direkt auf dem Dashboard. Der Text oben ersetzt die Zeile, die
+  Klasse muss noch nachgezogen werden. `MailIdentityNotificationTest` und
+  `InvitationTest` fassen sie an, prüfen aber Absender und Fußzeile, nicht
+  den Text.
 - `AppliesStudioMailIdentity` hängt Signatur und Rechtszeile als `->line()`
   an. Beide landen im Rumpf statt im Fuß. Für die Fußzone braucht der Trait
   einen eigenen Slot. Eigenes Issue.
