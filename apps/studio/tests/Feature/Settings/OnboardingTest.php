@@ -1,7 +1,10 @@
 <?php
 
+use App\Documents\Enums\DocumentTemplateType;
+use App\Documents\Models\DocumentTemplate;
 use App\Enums\StaffRole;
 use App\Settings\Models\StudioSettings;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 
@@ -58,6 +61,26 @@ it('stamps completion and releases the dashboard', function () {
     expect(StudioSettings::query()->sole()->onboarding_completed_at)->not->toBeNull();
 
     $this->get('/')->assertOk();
+});
+
+it('writes the starter templates on finish, skipping included', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post('/einrichtung/studio/abschluss')
+        ->assertRedirect('/');
+
+    expect(DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Invoice)->pluck('name')->all())
+        ->toBe(['Rechnung']);
+});
+
+it('writes the Kleinunternehmer invoice when that is the mode the wizard left behind', function () {
+    app(StudioSettingsResolver::class)->set('vat_mode', 'small_business', null);
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post('/einrichtung/studio/abschluss')
+        ->assertRedirect('/');
+
+    expect(DocumentTemplate::query()->current()->ofType(DocumentTemplateType::Invoice)->pluck('name')->all())
+        ->toBe(['Rechnung — Kleinunternehmer']);
 });
 
 it('opens the wizard screen itself without redirecting', function () {

@@ -11,7 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('finishes onboarding with a current template for each offered type', function () {
-    app(SeedStarterTemplates::class)(StarterTemplateCatalog::onboardingDefaults(), staffMember(StaffRole::Owner));
+    app(SeedStarterTemplates::class)(StarterTemplateCatalog::onboardingDefaults('standard'), staffMember(StaffRole::Owner));
 
     foreach ([DocumentTemplateType::Quote, DocumentTemplateType::Contract, DocumentTemplateType::Invoice, DocumentTemplateType::Mail] as $type) {
         expect(DocumentTemplate::query()->current()->ofType($type)->exists())->toBeTrue("no {$type->value} template");
@@ -36,8 +36,8 @@ it('leaves the template count unchanged when the step runs twice', function () {
     $seed = app(SeedStarterTemplates::class);
     $actor = staffMember(StaffRole::Owner);
 
-    $first = $seed(StarterTemplateCatalog::onboardingDefaults(), $actor);
-    $second = $seed(StarterTemplateCatalog::onboardingDefaults(), $actor);
+    $first = $seed(StarterTemplateCatalog::onboardingDefaults('standard'), $actor);
+    $second = $seed(StarterTemplateCatalog::onboardingDefaults('standard'), $actor);
 
     expect($first)->toBeGreaterThan(0)
         ->and($second)->toBe(0)
@@ -71,45 +71,4 @@ it('ignores a key the catalog does not know rather than failing the step', funct
     $written = app(SeedStarterTemplates::class)(['nope', 'contract-werkvertrag'], staffMember(StaffRole::Owner));
 
     expect($written)->toBe(1);
-});
-
-// --- the wizard step ----------------------------------------------------
-
-it('offers the catalog on the onboarding wizard, without shipping every document body', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->get('/einrichtung/studio')
-        ->assertOk()
-        ->assertInertia(function ($page) {
-            $props = $page->toArray()['props'];
-
-            expect($props['starterDefaults'])->toBe(StarterTemplateCatalog::onboardingDefaults())
-                ->and($props['starters']['contract'][0])->toHaveKeys(['key', 'name', 'description'])
-                // Choosing does not need the blocks, and shipping them all
-                // would be page weight nobody asked for.
-                ->and($props['starters']['contract'][0])->not->toHaveKey('blocks');
-        });
-});
-
-it('seeds the chosen set from the wizard', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->post('/dokumentvorlagen/starter', ['keys' => ['contract-werkvertrag']])
-        ->assertRedirect();
-
-    expect(DocumentTemplate::sole()->name)->toBe('Fotovertrag (Werkvertrag)');
-});
-
-it('treats skipping as a real answer, leaving the tenant with none', function () {
-    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
-        ->post('/dokumentvorlagen/starter', ['keys' => []])
-        ->assertRedirect();
-
-    expect(DocumentTemplate::count())->toBe(0);
-});
-
-it('refuses a role that may not create a template', function () {
-    $this->actingAs(staffMember(StaffRole::Assistant), 'staff')
-        ->post('/dokumentvorlagen/starter', ['keys' => ['contract-werkvertrag']])
-        ->assertForbidden();
-
-    expect(DocumentTemplate::count())->toBe(0);
 });

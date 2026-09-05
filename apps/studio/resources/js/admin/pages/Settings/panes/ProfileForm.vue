@@ -15,10 +15,13 @@ const props = withDefaults(defineProps<{
   // Absent during first-run setup: the pair is fine-tuning, not a thing a
   // studio has to decide before it can work.
   fontPairs?: { value: string; label: string; description: string }[]
-  // The settings screen shows one fieldset per nav entry; onboarding still
-  // collects all three in a single step, so the default is all of them.
+  // The settings screen shows one fieldset per nav entry.
   sections?: Section[]
-}>(), { fontPairs: () => [], sections: () => ['legal', 'brand', 'bank'] })
+  // First run asks for the studio's identity and stops there. Steuernummer,
+  // USt-ID and the register pair are what an invoice carries — the first
+  // invoice is early enough to ask for them.
+  firstRun?: boolean
+}>(), { fontPairs: () => [], sections: () => ['legal', 'brand', 'bank'], firstRun: false })
 const emit = defineEmits<{ saved: [] }>()
 
 // A pane sends only its own fields. tax_number/vat_id are required_without
@@ -31,7 +34,11 @@ const SECTION_FIELDS: Record<Section, string[]> = {
   bank: ['bank_account_holder', 'bank_iban', 'bank_bic'],
 }
 
-const shows = (section: Section) => props.sections.includes(section)
+const FIRST_RUN_SECTIONS: Section[] = ['legal', 'brand']
+const FIRST_RUN_OMITS = ['tax_number', 'vat_id', 'register_number', 'register_court', 'website', 'logo', 'accent_color']
+
+const shownSections = computed(() => (props.firstRun ? FIRST_RUN_SECTIONS : props.sections))
+const shows = (section: Section) => shownSections.value.includes(section)
 
 const form = useForm({
   display_name: props.settings.displayName ?? '',
@@ -72,7 +79,11 @@ function onLogoChange(event: Event) {
 }
 
 function submit() {
-  const sent = new Set<string>(props.sections.flatMap((section) => SECTION_FIELDS[section]))
+  const sent = new Set<string>(shownSections.value.flatMap((section) => SECTION_FIELDS[section]))
+
+  if (props.firstRun) {
+    FIRST_RUN_OMITS.forEach((field) => sent.delete(field))
+  }
 
   // Inertia's own documented workaround: a browser cannot send a real PUT
   // or PATCH as multipart/form-data, so a file upload goes over POST with
@@ -91,7 +102,7 @@ defineExpose({ form, submit })
 <template>
   <form id="settings-form" @submit.prevent="submit">
     <div v-if="shows('legal')" class="mt-8 first:mt-0">
-      <div v-if="sections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.legalEntity') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.legalEntity') }}</div>
       <div class="mb-6">
         <Field :label="$t('settings.legalName')" id="p-firma" wide :error="form.errors.legal_name">
           <Input id="p-firma" v-model="form.legal_name" type="text" />
@@ -149,7 +160,7 @@ defineExpose({ form, submit })
           </Select>
         </Field>
       </div>
-      <div class="mb-6">
+      <div v-if="!firstRun" class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.taxNumber')" id="p-steuernr" :error="form.errors.tax_number">
             <Input id="p-steuernr" v-model="form.tax_number" class="tabular-nums" type="text" />
@@ -161,7 +172,7 @@ defineExpose({ form, submit })
         </div>
         <span class="text-[11.5px] leading-[1.45] text-faint">{{ $t('settings.taxHint') }}</span>
       </div>
-      <div class="mb-6">
+      <div v-if="!firstRun" class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.registerNumber')" id="p-hrb" :error="form.errors.register_number">
             <Input id="p-hrb" v-model="form.register_number" class="tabular-nums" type="text" />
@@ -174,13 +185,13 @@ defineExpose({ form, submit })
     </div>
 
     <div v-if="shows('brand')" class="mt-8 first:mt-0">
-      <div v-if="sections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.brand') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.brand') }}</div>
       <div class="mb-6">
-        <div class="grid grid-cols-2 gap-4">
+        <div :class="firstRun ? '' : 'grid grid-cols-2 gap-4'">
           <Field :label="$t('settings.displayName')" id="p-anzeigename" :error="form.errors.display_name">
             <Input id="p-anzeigename" v-model="form.display_name" type="text" />
           </Field>
-          <Field :label="$t('settings.website')" id="p-web" :error="form.errors.website">
+          <Field v-if="!firstRun" :label="$t('settings.website')" id="p-web" :error="form.errors.website">
             <InputGroup>
               <InputGroupAddon>https://</InputGroupAddon>
               <InputGroupInput id="p-web" v-model="websiteHost" type="text" />
@@ -188,7 +199,7 @@ defineExpose({ form, submit })
           </Field>
         </div>
       </div>
-      <div class="mb-6">
+      <div v-if="!firstRun" class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.logo')" id="p-logo" :error="form.errors.logo" :hint="$t('settings.logoHint')">
             <div style="display: flex; align-items: center; gap: var(--s3)">
@@ -237,7 +248,7 @@ defineExpose({ form, submit })
     </div>
 
     <div v-if="shows('bank')" class="mt-8 first:mt-0">
-      <div v-if="sections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.bank') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.bank') }}</div>
       <div class="mb-6">
         <Field :label="$t('settings.bankAccountHolder')" id="p-kontoinhaber" wide :error="form.errors.bank_account_holder">
           <Input id="p-kontoinhaber" v-model="form.bank_account_holder" type="text" />
