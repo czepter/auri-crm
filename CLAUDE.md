@@ -43,7 +43,7 @@ These get the change rejected outright:
   reach here: an inbox has nothing around the words to explain the rest, so
   two terse lines are a config dump, not a message. Write sentences, then
   cut every one that fails this test: **does it say something the reader
-  cannot see on their own screen?** Six tells, all of them shipped in a
+  cannot see on their own screen?** Eight tells, all of them shipped in a
   single sitting:
   - *Feature tour.* "Anfragen landen auf einem Board und wandern nach
     rechts." He is looking at the board.
@@ -60,6 +60,13 @@ These get the change rejected outright:
     ships; quotes hang off a project.
   - *Copy contradicting the code.* `StaffInvited` announces a 2FA step that
     `InvitationController` made opt-in.
+  - *Lecturing.* Instruction, then the reason for it, then the consequence
+    of skipping it, then a reward for compliance. A reminder is a nudge;
+    an instruction the reader genuinely needs stands without its
+    justification appended.
+  - *Invented numbers.* "Acht Minuten, dann kann die erste Anfrage
+    reinkommen." Nothing measured that. A figure in shipped copy has a
+    source or it does not ship.
   What earns an inbox is what a screen cannot show: a reason, a
   consequence, a value minted once (the inbound address), what breaks on
   rotation.

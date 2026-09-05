@@ -150,19 +150,15 @@ Betreff: Noch ein paar Einstellungen
 Hallo {name},
 
 um mit Auri CRM richtig durchzustarten, fehlen dir noch ein paar
-Einstellungen. Vor zwei Tagen hast du angefangen, seitdem ist es liegen
-geblieben.
-
-Fang mit Studio-Profil und Umsatzsteuer an. Beides steht später auf jedem
-Angebot und jeder Rechnung. Einmal verschickt, änderst du es dort nicht mehr.
+Einstellungen.
 
 [Weiter einrichten]  →  /einrichtung/studio
-
-Acht Minuten, dann kann die erste Anfrage reinkommen.
 ```
 
-Die Unkorrigierbarkeit ist belegt: `SendQuote:45` ruft `Quote::snapshotVat()`
-beim Versenden, `EnsureContractArtifact` friert den Vertrag beim Erzeugen ein.
+Eine Erinnerung ist ein Stups. Die Vorfassung nannte den ersten Schritt, den
+Grund dafür, die Folge des Aufschiebens und eine Dauer als Anreiz: eine
+Lektion mit Belohnung dran. Die Dauer war zusätzlich erfunden, es gibt keine
+Messung.
 
 **StudioReady** — `StudioOnboardingController::complete()`
 
@@ -175,7 +171,7 @@ deine Anfrage-Adresse steht:
 
 {InboundAddress::catchAll(displayName, inboundSecret)}
 
-Verlink sie auf deiner Website, dann landen neue Anfragen direkt in Auri CRM.
+Die kannst du auf deiner Website verlinken.
 
 Dein Kundenportal erreichst du unter {config('portal.url')}.
 
