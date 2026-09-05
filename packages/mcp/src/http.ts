@@ -13,9 +13,16 @@ declare module 'node:http' {
 
 const PROTECTED_RESOURCE_PATH = '/.well-known/oauth-protected-resource'
 
+/** Coolify's SERVICE_FQDN_* is a bare host; RFC 8414 and 9728 want an absolute URL. */
+function absoluteUrl(value: string | undefined, fallback: string): string {
+  const raw = (value?.trim() || fallback).replace(/\/+$/, '')
+
+  return /^https?:\/\//.test(raw) ? raw : `https://${raw}`
+}
+
 /** This process's own public URL — Coolify's SERVICE_FQDN_MCP in deployment. */
 function publicUrl(): string {
-  return (process.env.MCP_PUBLIC_URL ?? 'http://localhost:3000').replace(/\/+$/, '')
+  return absoluteUrl(process.env.MCP_PUBLIC_URL, 'http://localhost:3000')
 }
 
 /**
@@ -34,9 +41,7 @@ function publicUrl(): string {
 function resourceMetadata(): Record<string, unknown> {
   return {
     resource: publicUrl(),
-    authorization_servers: [
-      (process.env.OAUTH_ISSUER_URL ?? 'http://localhost:8000').replace(/\/+$/, ''),
-    ],
+    authorization_servers: [absoluteUrl(process.env.OAUTH_ISSUER_URL, 'http://localhost:8000')],
     bearer_methods_supported: ['header'],
   }
 }

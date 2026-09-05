@@ -49,6 +49,7 @@ describe('createAuthenticatedRequestListener', () => {
     await Promise.all(clients.splice(0).map((client) => client.close()))
     await new Promise<void>((resolve) => httpServer.close(() => resolve()))
     vi.unstubAllGlobals()
+    vi.unstubAllEnvs()
   })
 
   it('refuses a connection with no bearer token at all', async () => {
@@ -75,6 +76,18 @@ describe('createAuthenticatedRequestListener', () => {
       // The admin surface, where /oauth/authorize actually lives — never
       // CRM_API_BASE_URL, which points at a container-internal host.
       authorization_servers: ['http://localhost:8000'],
+    })
+  })
+
+  it('makes a bare Coolify FQDN absolute in the metadata', async () => {
+    vi.stubEnv('MCP_PUBLIC_URL', 'mcp.example.test')
+    vi.stubEnv('OAUTH_ISSUER_URL', 'admin.example.test')
+
+    const response = await fetch(`http://127.0.0.1:${port}/.well-known/oauth-protected-resource`)
+
+    await expect(response.json()).resolves.toMatchObject({
+      resource: 'https://mcp.example.test',
+      authorization_servers: ['https://admin.example.test'],
     })
   })
 
