@@ -34,7 +34,7 @@ class OAuthAuthorizationController extends Controller
         $clientId = (string) $request->query('client_id');
         $redirectUri = (string) $request->query('redirect_uri');
 
-        if (! OAuthClients::isKnownClient($clientId) || ! OAuthClients::redirectUriAllowed($redirectUri)) {
+        if (! OAuthClients::isKnownClient($clientId) || ! OAuthClients::redirectUriAllowed($clientId, $redirectUri)) {
             abort(400, 'Unknown client or redirect_uri.');
         }
 
@@ -58,6 +58,17 @@ class OAuthAuthorizationController extends Controller
         }
 
         return Inertia::render('Auth/OauthAuthorize', [
+            'clientId' => $clientId,
+            // Whoever registered themselves picked this string, so it is the
+            // one thing on the screen this app did not write. Shown because
+            // with RFC 7591 open, "which client is asking" is a question only
+            // the consent screen can answer.
+            'clientName' => OAuthClients::nameFor($clientId) ?? $clientId,
+            // The name above is whatever the client called itself, so it
+            // cannot be the only thing on screen: registration is open, and
+            // a second client may call itself the same. The host the code
+            // actually lands on is the part nobody can spoof.
+            'redirectHost' => parse_url($redirectUri, PHP_URL_HOST),
             'redirectUri' => $redirectUri,
             'codeChallenge' => $codeChallenge,
             'state' => $state,
@@ -71,6 +82,7 @@ class OAuthAuthorizationController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'client_id' => ['required', 'string'],
             'redirect_uri' => ['required', 'string'],
             'code_challenge' => ['required', 'string'],
             'scope' => ['required', 'string'],
@@ -78,8 +90,9 @@ class OAuthAuthorizationController extends Controller
             'decision' => ['required', Rule::in(['approve', 'deny'])],
         ]);
 
-        if (! OAuthClients::redirectUriAllowed($validated['redirect_uri'])) {
-            abort(400, 'Unknown redirect_uri.');
+        if (! OAuthClients::isKnownClient($validated['client_id'])
+            || ! OAuthClients::redirectUriAllowed($validated['client_id'], $validated['redirect_uri'])) {
+            abort(400, 'Unknown client or redirect_uri.');
         }
 
         /** @var User $user */
@@ -98,9 +111,18 @@ class OAuthAuthorizationController extends Controller
             return $this->errorRedirect($validated['redirect_uri'], 'invalid_scope', $state);
         }
 
-        $code = OAuthAuthorizationCode::issue($user, $validated['redirect_uri'], $validated['code_challenge'], $scopes);
+        $code = OAuthAuthorizationCode::issue(
+            $user,
+            $validated['client_id'],
+            $validated['redirect_uri'],
+            $validated['code_challenge'],
+            $scopes,
+        );
 
-        AuditLogger::record('mcp_oauth.authorized', $user, ['scopes' => $scopes]);
+        AuditLogger::record('mcp_oauth.authorized', $user, [
+            'client_id' => $validated['client_id'],
+            'scopes' => $scopes,
+        ]);
 
         return redirect()->away($this->appendQuery($validated['redirect_uri'], ['code' => $code, 'state' => $state]));
     }

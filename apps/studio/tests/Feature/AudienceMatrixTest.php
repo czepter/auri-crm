@@ -46,6 +46,11 @@ const PUBLIC_ROUTES = [
         // `audience:staff` same as every other screen in the mfa group below,
         // so it is not listed here.
         'oauth/token',
+        // ...and the same for RFC 7591 registration and the RFC 8414
+        // discovery document: both are read or written before any credential
+        // exists, which is what makes them discovery at all.
+        'oauth/register',
+        '.well-known/oauth-authorization-server',
     ],
     // Stripe is the only caller of the webhook, and it authenticates itself
     // by the request signature (Stripe-Signature, verified against

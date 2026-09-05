@@ -47,6 +47,8 @@ use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
 use App\Http\Controllers\Staff\NotificationController;
 use App\Http\Controllers\Staff\OAuthAuthorizationController;
+use App\Http\Controllers\Staff\OAuthClientRegistrationController;
+use App\Http\Controllers\Staff\OAuthMetadataController;
 use App\Http\Controllers\Staff\OAuthTokenController;
 use App\Http\Controllers\Staff\PasswordResetController;
 use App\Http\Controllers\Staff\ProfileController;
@@ -94,6 +96,23 @@ Route::get('/kalender/{token}/shootings.ics', [CalendarController::class, 'feed'
 // its PKCE verifier are the credential; see OAuthTokenController's own doc
 // comment for why that is enough without a client_secret.
 Route::post('/oauth/token', [OAuthTokenController::class, 'store'])->name('oauth.token');
+
+// N-04: RFC 7591. Open by design — a remote MCP client is given no client_id
+// to paste, so refusing anonymous registration means refusing the client. A
+// row grants nothing on its own; every capability still comes from a staff
+// member approving the consent screen. Throttled because an unauthenticated
+// POST that writes a row is otherwise a free table.
+Route::post('/oauth/register', [OAuthClientRegistrationController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('oauth.register');
+
+// N-04's discovery document (RFC 8414). A static description of the three
+// routes above, read before any credential exists — necessarily public, and
+// carrying nothing a reader could not already infer from the route table.
+// RFC 9728's companion is served by packages/mcp, at the resource it
+// describes.
+Route::get('/.well-known/oauth-authorization-server', OAuthMetadataController::class)
+    ->name('oauth.metadata.authorization-server');
 
 Route::middleware(['guest:staff', 'setup'])->group(function () {
     Route::get('/einrichtung', [SetupController::class, 'create'])->name('setup');

@@ -20,12 +20,13 @@ final class OAuthAuthorizationCode
     private const PREFIX = 'mcp_oauth_code:';
 
     /** @param list<string> $scopes */
-    public static function issue(User $user, string $redirectUri, string $codeChallenge, array $scopes): string
+    public static function issue(User $user, string $clientId, string $redirectUri, string $codeChallenge, array $scopes): string
     {
         $code = Str::random(64);
 
         Cache::put(self::PREFIX.$code, [
             'user_id' => $user->id,
+            'client_id' => $clientId,
             'redirect_uri' => $redirectUri,
             'code_challenge' => $codeChallenge,
             'scopes' => $scopes,
@@ -38,7 +39,7 @@ final class OAuthAuthorizationCode
      * Single-use: gone from the cache the moment this is called, whether or
      * not the caller goes on to find the payload valid.
      *
-     * @return array{user_id: int, redirect_uri: string, code_challenge: string, scopes: list<string>}|null
+     * @return array{user_id: int, client_id: string, redirect_uri: string, code_challenge: string, scopes: list<string>}|null
      */
     public static function consume(string $code): ?array
     {

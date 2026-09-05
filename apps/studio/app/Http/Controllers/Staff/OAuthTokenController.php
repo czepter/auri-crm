@@ -26,6 +26,7 @@ class OAuthTokenController extends Controller
     {
         $validated = $request->validate([
             'grant_type' => ['required', 'string'],
+            'client_id' => ['required', 'string'],
             'code' => ['required', 'string'],
             'redirect_uri' => ['required', 'string'],
             'code_verifier' => ['required', 'string'],
@@ -37,7 +38,10 @@ class OAuthTokenController extends Controller
 
         $payload = OAuthAuthorizationCode::consume($validated['code']);
 
+        // The code is bound to the client that asked for it: without this a
+        // client could redeem a code issued to another one (RFC 6749 §4.1.3).
         if ($payload === null
+            || ! hash_equals($payload['client_id'] ?? '', $validated['client_id'])
             || $payload['redirect_uri'] !== $validated['redirect_uri']
             || ! OAuthAuthorizationCode::verifyPkce($validated['code_verifier'], $payload['code_challenge'])) {
             return response()->json(['error' => 'invalid_grant'], 400);
@@ -52,7 +56,10 @@ class OAuthTokenController extends Controller
         $ttl = (int) config('mcp_oauth.token_ttl');
         $token = $user->createToken('mcp', $payload['scopes'], now()->addSeconds($ttl));
 
-        AuditLogger::record('mcp_oauth.token_issued', $user, ['scopes' => $payload['scopes']]);
+        AuditLogger::record('mcp_oauth.token_issued', $user, [
+            'client_id' => $validated['client_id'],
+            'scopes' => $payload['scopes'],
+        ]);
 
         return response()->json([
             'access_token' => $token->plainTextToken,

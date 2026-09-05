@@ -58,6 +58,26 @@ describe('createAuthenticatedRequestListener', () => {
     expect(response.headers.get('WWW-Authenticate')).toContain('Bearer')
   })
 
+  it('points an unauthenticated caller at its own RFC 9728 metadata', async () => {
+    const response = await fetch(`http://127.0.0.1:${port}/mcp`, { method: 'POST' })
+
+    expect(response.headers.get('WWW-Authenticate')).toContain(
+      'resource_metadata="http://localhost:3000/.well-known/oauth-protected-resource"',
+    )
+  })
+
+  it('serves the protected resource metadata without a token', async () => {
+    const response = await fetch(`http://127.0.0.1:${port}/.well-known/oauth-protected-resource`)
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toMatchObject({
+      resource: 'http://localhost:3000',
+      // The admin surface, where /oauth/authorize actually lives — never
+      // CRM_API_BASE_URL, which points at a container-internal host.
+      authorization_servers: ['http://localhost:8000'],
+    })
+  })
+
   it('refuses a bearer token the CRM does not accept', async () => {
     vi.stubGlobal('fetch', mockTokenInfoFetch(() => new Response(null, { status: 401 })))
 
