@@ -34,22 +34,25 @@
 </head>
 <body>
 
-<!-- Bestandsmail StaffInvited, überarbeitet. Absender ist das STUDIO, nicht
-     das Produkt — Wortmarke des Studios im Kopf, Signatur und Rechtszeile im
-     Fuß statt des GitHub-Ziels.
+<!-- Bestandsmail StaffInvited, überarbeitet. Absender ist das STUDIO:
+     Wortmarke des Studios im Kopf, Signatur und Rechtszeile im Fuß statt des
+     GitHub-Ziels.
 
-     Drei Blöcke, alle drei für ALLE fünf Rollen gültig: /abwesenheiten ist
-     laut Routenkommentar „open to every role, not gated behind ManageStaff“,
-     /auth/mfa/enroll hängt nur an audience:staff, Aufgaben und Nachrichten
-     stehen in jeder Capability-Liste. ViewAllProjects steht NICHT in der
-     Schnittmenge (Zweitfotograf und Assistenz haben es nicht), deshalb kein
-     Block über „alle Aufträge“.
+     Zwei Blöcke, nicht drei. Beide gelten für ALLE fünf Rollen:
+     /abwesenheiten ist laut Routenkommentar „open to every role, not gated
+     behind ManageStaff“, und die Zuordnung eingehender Antworten hängt an
+     der HMAC-Reply-Adresse, nicht an einer Capability. ViewAllProjects steht
+     NICHT in der Schnittmenge (Zweitfotograf und Assistenz haben es nicht),
+     deshalb kein Block über „alle Aufträge“.
 
-     Die alte Zeile „Danach richtest du die Zwei-Faktor-Bestätigung ein“ war
-     falsch — InvitationController:150 sagt, MFA ist opt-in. Als freiwilliger
-     Block stimmt die Aussage und die ursprüngliche Absicht bleibt erhalten:
-     eine unangekündigte Authenticator-App ist laut Code-Kommentar der Punkt,
-     an dem Leute den Setup-Link abbrechen. -->
+     Kein 2FA-Block: Zwei-Faktor ist eine Pflichtübung, kein Vorteil, und
+     gehört nicht in eine Vorteilsliste. Die alte Zeile „Danach richtest du
+     die Zwei-Faktor-Bestätigung ein“ war ohnehin falsch, MFA ist laut
+     InvitationController:150 opt-in.
+
+     Keine Grußformel mit dem Namen des Inhabers: die Mail ist systemerzeugt,
+     und AppliesStudioMailIdentity hängt mit mailSignature() bereits die
+     Zeile an, die das Studio selbst steuert. -->
 
 <div class="mailpage">
   <a class="backlink" href="../index.html">← Übersicht</a>
@@ -75,18 +78,11 @@
       </div>
 
       <div class="block">
-        <div class="banner"><h2>Aufgaben und Nachrichten</h2></div>
-        <p class="line">Was an einem Auftrag ansteht, hängt als Aufgabe daran. Nachrichten mit Kunden laufen über denselben Auftrag.</p>
+        <div class="banner"><h2>Antworten am Auftrag</h2></div>
+        <p class="line">Wenn ein Kunde auf eine Nachricht antwortet, landet sie am Auftrag und nicht in deinem privaten Postfach. Auch dann, wenn er aus seinem eigenen Mailprogramm schreibt.</p>
         <a class="cta" href="#" style="background: #B44E22">Zum Studio</a>
       </div>
 
-      <div class="block">
-        <div class="banner"><h2>Zwei-Faktor-Bestätigung</h2></div>
-        <p class="line">Freiwillig. Du richtest sie mit einer Authenticator-App ein und bekommst Wiederherstellungscodes dazu.</p>
-        <a class="cta" href="#" style="background: #B44E22">Zwei-Faktor einrichten</a>
-      </div>
-
-      <p class="signoff">Viele Grüße<br>Christian Zepter</p>
     </div>
     <div class="footzone">
       <p class="sig">Atelier Nordlicht · Christian Zepter</p>

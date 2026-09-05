@@ -36,15 +36,14 @@
 </head>
 <body>
 
-<!-- Zwei Blöcke mit je eigenem CTA, wie die Willkommensmail. Trägt das
-     Einzige, was beim Abschluss des Assistenten entsteht und nirgends sonst
-     im Postfach landet: die aus studio_settings.inbound_secret geprägte
-     Anfrage-Adresse. InboundAddress::catchAll() baut sie, wie
-     InboxController:74 es schon tut.
+<!-- Zwei Blöcke mit je eigenem CTA. Trägt das Einzige, was beim Abschluss
+     des Assistenten entsteht und nirgends sonst im Postfach landet: die aus
+     studio_settings.inbound_secret geprägte Anfrage-Adresse.
+     InboundAddress::catchAll() baut sie, wie InboxController:74 es tut.
 
-     Beim Portal steht bewusst „bekommen ihren Zugang per Mail“ und nicht
-     „den Link bekommen sie von dir“: ClientAccessLink verschickt den
-     Magic-Link, nicht der Inhaber von Hand. -->
+     Beim Portal steht „bekommen ihren Zugang per Mail“ und nicht „den Link
+     bekommen sie von dir“: ClientAccessLink verschickt den Magic-Link, nicht
+     der Inhaber von Hand. -->
 
 <div class="mailpage">
   <a class="backlink" href="../index.html">← Übersicht</a>
@@ -81,7 +80,7 @@
         <a class="cta" href="#" style="background: #B44E22">Portal ansehen</a>
       </div>
 
-      <p class="signoff">Viele Grüße<br>dein Auri-CRM-Team</p>
+      <p class="signoff">Viele Grüße<br>Auri CRM</p>
     </div>
     <div class="footzone">
       <p class="ftext">Fragen: <a href="https://github.com/czepter/auri-crm/issues">github.com/czepter/auri-crm/issues</a></p>
