@@ -152,7 +152,7 @@ Betreff: Noch ein paar Einstellungen
 Hallo {name},
 
 um mit Auri CRM richtig durchzustarten, fehlen dir noch ein paar
-Einstellungen. Was du schon eingetragen hast, ist gespeichert.
+Einstellungen.
 
 [Weiter einrichten]  →  /einrichtung/studio
 
@@ -161,11 +161,10 @@ Lass dir Zeit damit, dein Studio läuft dir nicht weg.
 
 Eine Erinnerung ist ein Stups. Eine Vorfassung nannte den ersten Schritt, den
 Grund dafür, die Folge des Aufschiebens und eine erfundene Dauer als Anreiz:
-eine Lektion mit Belohnung dran. Der Satz zum Speichern bleibt, weil er die
-Sorge trifft, von vorn anfangen zu müssen; jeder Schritt postet auf den
-echten Settings-Endpoint, bevor er weiterschaltet (`Onboarding.vue:52`).
-Nicht behaupten lässt sich dagegen, der Assistent setze dort fort, wo man
-aufgehört hat: `stepIndex` beginnt bei jedem neuen Aufruf wieder bei eins.
+eine Lektion mit Belohnung dran. Eine weitere versicherte "Was du schon
+eingetragen hast, ist gespeichert" — der Leser setzt das voraus, und es zu
+erwähnen sät erst den Zweifel. Die Wärme trägt der Schlusssatz, der über das
+Produkt nichts behauptet.
 
 **StudioReady** — `StudioOnboardingController::complete()`
 

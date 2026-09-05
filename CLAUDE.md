@@ -69,8 +69,13 @@ These get the change rejected outright:
     source or it does not ship.
   The register is nudge and nurture: warm, unhurried, on the reader's side
   ("lass dir Zeit damit", "wenn du soweit bist"). Stripping a mail to one
-  sentence and a button is the over-correction, not the fix. What earns an
-  inbox is what a screen cannot show, said kindly.
+  sentence and a button is the over-correction, not the fix. But warmth
+  lives in the register, never in an added sentence: "Was du schon
+  eingetragen hast, ist gespeichert" reaches for kindness and lands on
+  reassurance, because saving is what the reader already assumes and
+  mentioning it plants the doubt. Warm the closing line, which claims
+  nothing about the product. What earns an inbox is what a screen cannot
+  show, said kindly.
 - **Filler in messages, commits, PRs.** No "Certainly", "Great question",
   "I hope this helps", "Let me know if…", "In summary". No hedging on facts you
   can verify. State the thing.
