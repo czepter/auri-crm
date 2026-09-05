@@ -1,0 +1,1111 @@
+/* Redesign-Entwurf — CRM (Admin).
+ *
+ * Getrennt von tokens.css: Portal und Galerie tragen Instrument Serif und viel
+ * Raum, das Admin trägt Dichte. Die drei Oberflächen dürfen sich nicht dieselben
+ * Knochen teilen — genau das war der Befund der UX-Prüfung.
+ *
+ * Systemschrift statt Instrument Sans: die Fläche ist ein Werkzeug, das den
+ * ganzen Tag offen steht, SF rastert bei 11–15px sauberer als jede geladene
+ * Familie — und spart den Fremdabruf, der im Portal ein DSGVO-Problem ist.
+ *
+ * Keine Rahmen, keine Schatten. Getrennt wird durch Fläche, Abstand, Größe.
+ * Eine dritte Graustufe für Text gibt es nicht.
+ */
+
+:root {
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;
+
+  --paper: #FFFFFF;
+  --sunk: #FAFAFA;
+  --sunk-2: #F2F2F4;
+
+  --ink: #1D1D1F;
+  --ink-2: #6E6E73;
+  --mark: #DEDEE1;      /* ungefüllter Punkt — kein Text, deshalb eigener Wert */
+  --rule: #EFEFF1;
+
+  --accent: #B44E22;
+
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 20px; --s6: 28px; --s7: 32px;
+
+  --r: 20px;
+  --r-sm: 12px;
+  --r-pill: 980px;
+
+  --col: 20px;          /* Spaltenrinne */
+  --row: 28px;          /* Reihenrinne — größer, damit Reihen als Reihen lesen */
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font: 400 13px/1.47 var(--font);
+  letter-spacing: -.006em;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app { display: flex; min-height: 100vh; }
+
+/* ---------- Sidebar ---------- */
+
+.side { width: 214px; flex: none; padding: 18px 12px; display: flex; flex-direction: column; }
+.side .wm { font: 600 17px/1 var(--font); letter-spacing: -.024em; padding: 0 10px 22px; }
+.side a {
+  display: flex; align-items: center; gap: 9px;
+  padding: 6px 10px; margin-bottom: 1px;
+  border-radius: 8px; color: var(--ink); text-decoration: none;
+  font-size: 13px; letter-spacing: -.01em;
+  transition: background .12s ease-out;
+}
+.side a:hover { background: var(--sunk); }
+.side a.on { background: var(--sunk-2); font-weight: 600; }
+.side a svg {
+  width: 17px; height: 17px; flex: none;
+  fill: none; stroke: var(--ink-2); stroke-width: 1.6;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.side a.on svg { stroke: var(--ink); }
+.side a .ct { margin-left: auto; color: var(--ink-2); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.side .group { height: 18px; }
+.side .lab { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); padding: 0 10px 6px; }
+.side .me { margin-top: auto; display: flex; align-items: center; gap: var(--s2); padding: 10px; font-size: 12.5px; }
+.side .me .av {
+  width: 24px; height: 24px; border-radius: 50%; background: #F0F0F2;
+  font: 600 10px/24px var(--font); text-align: center; color: var(--ink-2);
+}
+
+/* ---------- Befehlspalette ---------- */
+
+/* Sucheintrag sitzt über der Navigation, nicht in ihr: er wechselt nicht die
+   Seite, er öffnet ein Werkzeug. Das Kürzel steht da, wo sonst der Zähler steht. */
+.side .find {
+  display: flex; align-items: center; gap: 9px; width: 100%;
+  padding: 6px 10px; margin: 0 0 var(--s4);
+  border: 0; border-radius: 8px; background: var(--sunk);
+  font: 400 13px/1.47 var(--font); letter-spacing: -.01em; color: var(--ink-2);
+  text-align: left; cursor: pointer;
+  transition: background .12s ease-out;
+}
+.side .find:hover { background: var(--sunk-2); }
+.side .find svg {
+  width: 17px; height: 17px; flex: none;
+  fill: none; stroke: var(--ink-2); stroke-width: 1.6; stroke-linecap: round;
+}
+.side .find kbd {
+  margin-left: auto; font: 500 11px/1 var(--font); color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+dialog.palette {
+  width: min(560px, calc(100vw - 48px)); padding: 0; border: 0; border-radius: var(--r);
+  background: var(--paper); color: var(--ink);
+  margin: 12vh auto auto;   /* oberes Drittel: die Liste wächst nach unten, der Blick bleibt */
+}
+dialog.palette::backdrop { background: rgba(29, 29, 31, .28); backdrop-filter: blur(3px); }
+
+.palette .q {
+  display: block; width: 100%; padding: 18px 22px; border: 0; outline: 0; background: none;
+  font: 400 20px/1.3 var(--font); letter-spacing: -.022em; color: var(--ink);
+  box-shadow: inset 0 -1px 0 var(--rule);
+}
+.palette .q::placeholder { color: #B0B0B5; }
+.palette .results { max-height: 52vh; overflow: auto; padding: 6px 0 8px; }
+.palette .lab {
+  font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2);
+  padding: 12px 22px 4px;
+}
+.palette a {
+  display: flex; align-items: baseline; gap: 12px; padding: 8px 22px;
+  color: var(--ink); text-decoration: none;
+}
+.palette a:hover, .palette a:focus-visible { background: var(--sunk); outline: 0; }
+.palette a .kind { width: 62px; flex: none; font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
+.palette a .n { font-size: 14px; font-weight: 500; letter-spacing: -.014em; }
+.palette a .m { margin-left: auto; font-size: 11.5px; color: var(--ink-2); white-space: nowrap; }
+
+/* ---------- Kopf ---------- */
+
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.hrow { display: flex; align-items: center; gap: var(--s3); padding: 22px var(--s7) 0; }
+.kick { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
+h1 { margin: 2px 0 0; font: 600 32px/1.08 var(--font); letter-spacing: -.032em; }
+
+/* ---------- Handlungen: gefüllt, grau, Link ---------- */
+
+.btn, .btn-2 {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: var(--r-pill);
+  font-size: 12.5px; font-weight: 500; letter-spacing: -.01em;
+  text-decoration: none; white-space: nowrap; border: 0; cursor: pointer;
+  transition: filter .12s ease-out, background .12s ease-out;
+}
+.btn { background: var(--accent); color: #fff; }
+.btn:hover { filter: brightness(1.08); }
+.btn-2 { background: var(--sunk-2); color: var(--ink); }
+.btn-2:hover { background: #E9E9EC; }
+.link { color: var(--accent); font-size: 12.5px; letter-spacing: -.01em; text-decoration: none; white-space: nowrap; }
+.link:hover { text-decoration: underline; }
+
+/* ---------- Ansichtswahl und Filter ---------- */
+
+/* Ansicht als Radio: der Wechsel gehört zum Dokumentzustand, nicht zu einem
+   Skript. Zwei Ansichten, eine Wahrheit, kein Zustand in JS. */
+.vswitch { position: absolute; opacity: 0; pointer-events: none; }
+
+.seg { display: flex; background: var(--sunk-2); border-radius: 8px; padding: 2px; }
+.seg label {
+  font-size: 12.5px; padding: 4px 14px; border-radius: 6px; color: var(--ink); cursor: pointer;
+  transition: background .12s ease-out;
+}
+#view-board:checked ~ .hrow .seg label[for="view-board"],
+#view-liste:checked ~ .hrow .seg label[for="view-liste"] { background: var(--paper); font-weight: 500; }
+
+.view { display: none; }
+#view-board:checked ~ .view.board,
+#view-liste:checked ~ .view.liste { display: block; }
+
+/* Aufklappknopf statt Chip-Reihe: ein Filter ist eine Wahl aus vielen,
+   keine Sammlung von Schaltern. */
+.filters { display: flex; gap: var(--s2); align-items: center; padding: var(--s4) var(--s7) 0; }
+.pop {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--sunk-2); border: 0; border-radius: 8px; padding: 5px 10px;
+  font: 400 12.5px/1.3 var(--font); color: var(--ink); cursor: pointer;
+}
+.pop u { text-decoration: none; color: var(--ink-2); }
+.pop::after { content: '⌄'; color: var(--ink-2); font-size: 11px; margin-top: -4px; }
+
+/* ---------- Board: Listenspalten ---------- */
+
+/* Keine Kartenflächen. Getrennt wird senkrecht durch Haarlinien, waagerecht
+   durch dieselben Regeln wie in jeder anderen Liste. */
+.cols { display: flex; padding: var(--s5) 20px var(--s6); align-items: stretch; overflow-x: auto; }
+.cols .col { flex: 1 0 190px; min-width: 0; padding: 0 var(--s3); }
+.cols .col + .col { box-shadow: inset 1px 0 0 #F0F0F2; }
+.cols .col > header { display: flex; align-items: baseline; gap: 6px; padding: 0 0 var(--s2); }
+.cols .col > header b { font: 600 11px/1 var(--font); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2); }
+.cols .col > header .s { margin-left: auto; font-size: 11px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.cols .card {
+  display: block; padding: 9px 6px; margin: 0 -6px;
+  box-shadow: inset 0 1px 0 #F0F0F2; border-radius: 8px;
+  color: inherit; text-decoration: none;
+}
+.cols .card:first-of-type { box-shadow: none; }
+.cols .card:hover { background: var(--sunk); }
+.cols .card .nm { font: 600 13.5px/1.3 var(--font); letter-spacing: -.014em; }
+.cols .card .mt { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+.cols .card .w { font-size: 11.5px; color: var(--accent); margin-top: 3px; }
+.cols .col.done .nm { font-weight: 500; color: var(--ink-2); }
+
+/* Ziehen ohne Objekt: es fährt nichts mit, es wandert nur die Einfügemarke.
+   Kein Griff — gezogen wird die Zeile selbst, wie in Erinnerungen. Weil nichts
+   mitkommt, muss die Ursprungszeile sagen, dass sie unterwegs ist. */
+.cols .card { cursor: grab; }
+.cols .card.moving { cursor: grabbing; }
+.cols .card.moving .nm { font-weight: 500; color: var(--ink-2); }
+.cols .card.moving .mt, .cols .card.moving .w { color: var(--mark); }
+.cols .dropline { height: 2px; background: var(--accent); border-radius: 1px; margin: 0 -6px; }
+.cols .col.target { background: var(--sunk); border-radius: var(--r-sm); }
+.cols .col.target > .stub { display: block; min-height: 44px; }   /* leere Stufe bleibt ein Ziel */
+
+/* ---------- Liste: Tabelle ---------- */
+
+/* Gruppiert nach Dringlichkeit, nicht nach Stufe: ein Board zeigt, wo etwas
+   steht — eine Tabelle zeigt, was als nächstes dran ist. */
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  text-align: left; padding: 0 var(--s7) var(--s2);
+  font: 600 11px/1 var(--font); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2);
+}
+thead th.r, tbody td.r { text-align: right; }
+tbody td { padding: 10px var(--s7); box-shadow: inset 0 1px 0 #F0F0F2; font-size: 13px; vertical-align: baseline; }
+tbody tr:hover td { background: var(--sunk); }
+tbody td.nm { font-weight: 600; font-size: 13.5px; letter-spacing: -.014em; }
+tbody td.mu { color: var(--ink-2); }
+tbody td.r { font-variant-numeric: tabular-nums; }
+tbody td .w { color: var(--accent); }
+tbody td.grp {
+  padding: var(--s4) var(--s7) 6px; background: var(--sunk); box-shadow: none;
+  font: 600 11px/1 var(--font); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2);
+}
+.stufe { display: inline-flex; align-items: baseline; gap: 7px; font-size: 12.5px; }
+.stufe s { text-decoration: none; width: 6px; height: 6px; border-radius: 50%; background: var(--ink); align-self: center; }
+.stufe s.s2 { background: #5F5F63; }
+.stufe s.s3 { background: #A1A1A6; }
+.stufe s.s4 { background: var(--accent); }
+.stufe s.s5 { background: var(--mark); }
+
+/* ---------- Vorgang: Warteschlange, Fläche, Spur ---------- */
+
+/* Die Warteschlange gruppiert nach Arbeitsstand, nicht nach den sechs
+   Board-Stufen: sechs Stufen sind die Sicht auf den Trichter, drei Gruppen
+   die Sicht auf den Tag. */
+.queue { width: 232px; flex: none; background: var(--sunk); padding: 14px 0 0; overflow-y: auto; }
+.queue > h2 { display: flex; align-items: baseline; margin: 0; padding: 0 14px var(--s2); }
+.queue a + h2 { padding-top: var(--s5); }
+.queue > h2 b { font: 600 12.5px/1 var(--font); letter-spacing: -.012em; }
+.queue > h2 .n { margin-left: auto; font-size: 11px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.queue a {
+  display: block; padding: 9px 14px; color: inherit; text-decoration: none;
+  box-shadow: inset 0 1px 0 #ECECEE;
+}
+.queue a.on { background: var(--paper); }
+.queue a .nm { font-size: 12.5px; font-weight: 600; letter-spacing: -.012em; }
+.queue a .mt { font-size: 11.5px; color: var(--ink-2); margin-top: 1px; }
+.queue a .mt.warn { color: var(--accent); }
+
+.detail { flex: 1; min-width: 0; padding: var(--s4) 26px var(--s5); overflow-y: auto; }
+.detail .crumb { font-size: 11.5px; color: var(--ink-2); }
+.detail .crumb kbd { background: var(--sunk-2); border-radius: 5px; padding: 2px 6px; font: 500 11px/1 var(--font); margin-left: 3px; }
+.detail .title { display: flex; align-items: flex-start; gap: 14px; margin-top: 5px; }
+.detail .title h1 { font-size: 25px; }
+.detail .title .sub { font-size: 12.5px; color: var(--ink-2); margin-top: 4px; }
+.detail .title .acts { margin-left: auto; display: flex; gap: var(--s2); align-items: center; }
+
+/* Phase als Satz, nicht als Leiste über die Breite: was nicht stattgefunden
+   hat, braucht keinen Platz. */
+.detail .phase { font-size: 12px; color: var(--ink-2); margin-top: 11px; }
+.detail .phase b { color: var(--ink); font-weight: 600; }
+.detail .phase s { text-decoration: none; color: var(--mark); padding: 0 6px; }
+
+.detail section { margin-top: 22px; }
+.detail section > header { display: flex; align-items: baseline; gap: 9px; margin-bottom: 7px; }
+.detail section > header h2 { margin: 0; font: 600 15px/1.2 var(--font); letter-spacing: -.02em; }
+.detail section > header .n { font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.detail section > header .more { margin-left: auto; font-size: 12px; }
+
+/* Anfragetext neben den Kontaktdaten: die Nummer ist der Grund, warum der
+   Screen offen ist — sie steht nicht klein unter dem Zitat. */
+.said { display: flex; gap: 26px; align-items: flex-start; }
+.said p { margin: 0; flex: 1; min-width: 0; max-width: 58ch; font-size: 14px; line-height: 1.5; letter-spacing: -.008em; }
+.said .who { width: 238px; flex: none; padding-left: 22px; box-shadow: inset 1px 0 0 var(--rule); }
+.said .who .p + .p { margin-top: 13px; }
+.said .who .nm { font-size: 13px; font-weight: 600; letter-spacing: -.012em; }
+.said .who .ro { font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); margin-top: 2px; }
+.said .who .v { font-size: 13.5px; letter-spacing: -.01em; margin-top: 4px; }
+.said .who .v.none { color: var(--mark); }
+.said .who .via { margin-top: 15px; padding-top: 11px; box-shadow: inset 0 1px 0 var(--rule); font-size: 12.5px; color: var(--ink-2); }
+.said .who .via b { display: block; color: var(--ink); font-weight: 600; font-size: 13px; letter-spacing: -.012em; }
+/* Anlass und Herkunft stehen oben in derselben Spalte, nicht als Unterzeile
+   am Titel: sie beschreiben den Vorgang, nicht den Bildschirm. */
+.said .who .via.top { margin: 0 0 15px; padding: 0 0 11px; box-shadow: inset 0 -1px 0 var(--rule); }
+
+/* Zeilensatz für Termine und alles mit Zeitpunkt links */
+.rowset .r { display: flex; align-items: center; gap: 14px; padding: 11px 0; box-shadow: inset 0 1px 0 var(--rule); }
+.rowset .r:first-child { box-shadow: none; }
+.rowset .when { width: 150px; flex: none; font-size: 13px; font-weight: 600; letter-spacing: -.012em; font-variant-numeric: tabular-nums; }
+.rowset .when .st { display: block; font-weight: 400; font-size: 11.5px; color: var(--ink-2); }
+.rowset .what { flex: 1; min-width: 0; font-size: 13.5px; }
+.rowset .what .s { font-size: 12px; color: var(--ink-2); }
+.rowset .right { width: 118px; flex: none; text-align: right; font-size: 12px; color: var(--ink-2); }
+.rowset .right.warn { color: var(--accent); }
+
+.ghosts { display: flex; gap: var(--s2); padding: 10px 0 0; }
+.ghost {
+  border: 0; border-radius: var(--r-pill); padding: 5px 11px;
+  font: 400 12px/1.4 var(--font); color: var(--ink-2); background: var(--sunk); cursor: pointer;
+}
+.ghost b { color: var(--ink); font-weight: 600; }
+.ghost:hover { background: var(--sunk-2); }
+
+/* Angebot: die Positionen, nicht nur die Summe */
+.quote .qr { display: flex; align-items: baseline; gap: 14px; padding: var(--s2) 0; box-shadow: inset 0 1px 0 var(--rule); }
+.quote .qr:first-child { box-shadow: none; }
+.quote .ti { flex: 1; min-width: 0; font-size: 13.5px; }
+.quote .ti .s { font-size: 12px; color: var(--ink-2); }
+.quote .qty { width: 56px; flex: none; text-align: right; font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.quote .amt { width: 96px; flex: none; text-align: right; font-size: 13px; font-variant-numeric: tabular-nums; }
+.quote .sum { display: flex; align-items: baseline; gap: 14px; padding: 10px 0 0; box-shadow: inset 0 1px 0 #D8D8DC; }
+.quote .sum .ti { font-size: 13px; font-weight: 600; }
+.quote .sum .amt { font-size: 15px; font-weight: 600; letter-spacing: -.018em; }
+.quote .meta { font-size: 12px; color: var(--ink-2); margin-top: 7px; }
+.quote .meta em { font-style: normal; color: var(--accent); }
+
+/* Aufgaben */
+.todo .r { display: flex; align-items: center; gap: var(--s3); padding: 7px 0; box-shadow: inset 0 1px 0 var(--rule); }
+.todo .r:first-child { box-shadow: none; }
+.todo .b { width: 15px; height: 15px; border-radius: 5px; background: var(--sunk-2); flex: none; }
+.todo .b.done { background: var(--ink); }
+.todo .t { font-size: 13.5px; }
+.todo .r.done .t { color: var(--ink-2); }
+.todo .aud { font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
+.todo .due { margin-left: auto; font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.todo .due.warn { color: var(--accent); }
+
+/* Notizen und Systemzeilen */
+.log .e { display: flex; gap: 14px; padding: 7px 0; box-shadow: inset 0 1px 0 var(--rule); }
+.log .e:first-child { box-shadow: none; }
+.log .t { width: 150px; flex: none; font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.log .c { flex: 1; min-width: 0; font-size: 13px; }
+.log .c.sys, .log .c .by { color: var(--ink-2); }
+
+/* Spur: was um den Termin herum liegt */
+.rail { width: 280px; flex: none; padding: var(--s4) var(--s5); background: var(--sunk); overflow-y: auto; }
+.rail h2 { margin: 0 0 9px; font: 600 10.5px/1 var(--font); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2); }
+.rail .grp + h2 { margin-top: var(--s5); }
+.rail .d { display: flex; gap: 10px; padding: 6px 0; box-shadow: inset 0 1px 0 #ECECEE; font-size: 12.5px; }
+.rail .d:first-child { box-shadow: none; }
+.rail .d .dd { width: 62px; flex: none; font-weight: 600; font-variant-numeric: tabular-nums; }
+.rail .d .ev { color: var(--ink-2); }
+.rail .d.free, .rail .d.set { background: var(--paper); border-radius: 8px; margin: 0 -8px; padding: 6px 8px; box-shadow: none; }
+.rail .d.free .ev { color: #3F6B4A; font-weight: 500; }
+.rail .d.set .ev { color: var(--accent); font-weight: 500; }
+.rail .d.none .ev { color: var(--mark); }
+.rail .k { display: flex; gap: 10px; padding: 5px 0; font-size: 12.5px; }
+.rail .k span:first-child { width: 74px; flex: none; color: var(--ink-2); }
+.rail .p { display: flex; align-items: center; gap: var(--s2); padding: 5px 0; font-size: 12.5px; }
+.rail .p .av { width: 22px; height: 22px; border-radius: 50%; background: var(--sunk-2); font: 600 8.5px/22px var(--font); text-align: center; color: var(--ink-2); }
+.rail .p .st { margin-left: auto; font-size: 11.5px; color: #3F6B4A; }
+
+/* ---------- Bearbeiten im Screen ---------- */
+
+/* Kein zweiter Screen fürs Ändern: dieselbe Anzeige, dieselben Stellen, nur
+   bedienbar. Umschalter ist eine Checkbox, damit der Zustand im Dokument
+   liegt und nicht in einem Skript. */
+.edit-on { display: none; }
+#edit:checked ~ * .edit-off, #edit:checked ~ .title .edit-off { display: none; }
+#edit:checked ~ * .edit-on { display: block; }
+#edit:checked ~ .title .edit-on, #edit:checked ~ * .edit-on.inline { display: inline-flex; }
+#edit:checked ~ * .said .who { box-shadow: none; }
+
+/* ---------- Anlegen an Ort und Stelle ---------- */
+
+/* Notiz, Aufgabe und Termin entstehen im Abschnitt, zu dem sie gehören.
+   Kein Dialog: das Fenster nimmt den Kontext weg, den man beim Schreiben
+   liest — die letzten drei Notizen, die anderen Termine. */
+.composer { display: none; padding: 4px 0 2px; }
+.vswitch:checked ~ .composer { display: block; }
+.composer .foot { display: flex; align-items: center; gap: var(--s3); margin-top: 10px; }
+.composer .foot .btn { margin-left: auto; }
+/* Feste Zeilen statt freiem Umbruch: Datum, Antritt und Ende gehören
+   zusammen, Ort und Stadt gehören zusammen. Frei umbrechend reißt es die
+   Paare bei jeder Fensterbreite anders auseinander. */
+.composer .line, .edit-on .line { display: flex; gap: var(--s2); align-items: flex-end; flex-wrap: nowrap; }
+.composer .line + .line, .edit-on .line + .line { margin-top: var(--s2); }
+
+/* Ein Termin ist ein Block, kein Feldhaufen: sonst läuft der zweite Termin
+   optisch in den ersten. Tag steht vorn — man sucht Termine über das Datum. */
+.shootblock { padding: 14px 0 16px; box-shadow: inset 0 1px 0 var(--rule); }
+.edit-on .shootblock:first-child { padding-top: 4px; box-shadow: none; }
+.field.grow { flex: 1; min-width: 148px; }   /* darf nicht zusammenfallen */
+.field input { width: 100%; }
+.composer .field input[type="date"], .edit-on .field input[type="date"] { width: 124px; }
+.composer .field input[type="time"], .edit-on .field input[type="time"] { width: 96px; }
+
+/* Beschriftung über dem Feld, nicht im Feld: ein Platzhalter verschwindet beim
+   Tippen, und zwei gleich aussehende Zeitfelder sind danach nicht mehr
+   auseinanderzuhalten. Links kann die Beschriftung hier nicht stehen — eine
+   Zeile trägt fünf Felder, eine Beschriftung kann nicht fünf Dinge benennen. */
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field > span {
+  font: 400 10.5px/1 var(--font); letter-spacing: .05em; text-transform: uppercase;
+  color: var(--ink-2); padding-left: 2px;
+}
+
+/* ---------- Formular ---------- */
+
+/* Felder tragen Fläche statt Rahmen, wie alles andere auch. Die Beschriftung
+   steht links auf fester Breite, damit die Eingaben eine Kante bilden. */
+.form { max-width: 820px; }   /* Name, E-Mail und Telefon müssen auf eine Zeile */
+.form .fr { display: flex; align-items: flex-start; gap: 16px; padding: 9px 0; }
+.form .fr > label { width: 150px; flex: none; padding-top: 7px; font-size: 12.5px; color: var(--ink-2); }
+.form .fr .fields { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: var(--s2); }
+.form input, .form textarea, .form select {
+  font: 400 13.5px/1.4 var(--font); color: var(--ink); letter-spacing: -.01em;
+  background: var(--sunk); border: 0; border-radius: 10px; padding: 7px 11px;
+  outline: 0; width: 100%;
+}
+.form input::placeholder, .form textarea::placeholder { color: #B0B0B5; }
+.form input:focus, .form textarea:focus, .form select:focus { background: var(--sunk-2); box-shadow: inset 0 0 0 2px var(--accent); }
+.form input.s { width: 148px; }
+.form input.m { width: 232px; }
+.form input.n { width: 190px; }
+/* Folgezeile derselben Sache: Beschriftung entfällt, die Felder bilden eine
+   Spalte weiter. */
+.form .fr.cont + .fr.cont { padding-top: 0; }
+.form textarea { min-height: 88px; resize: vertical; }
+.form .hint { font-size: 12px; color: var(--ink-2); padding-top: 6px; }
+.form .conflict { font-size: 12.5px; color: var(--accent); padding-top: 6px; width: 100%; }
+.form .conflict a { color: inherit; }
+
+/* Auswahl aus wenigen festen Werten: Knöpfe statt Klappliste — drei Anlässe
+   sind schneller getroffen als ein Menü geöffnet. */
+.choice { display: flex; gap: 6px; flex-wrap: wrap; }
+.choice label { position: relative; }
+.choice input { position: absolute; opacity: 0; pointer-events: none; }
+.choice span {
+  display: inline-block; padding: 6px 12px; border-radius: var(--r-pill);
+  background: var(--sunk); font-size: 12.5px; color: var(--ink); cursor: pointer;
+}
+.choice input:checked + span { background: var(--ink); color: var(--paper); }
+
+.formfoot { display: flex; align-items: center; gap: var(--s3); margin-top: var(--s5); padding-top: var(--s4); box-shadow: inset 0 1px 0 var(--rule); }
+.formfoot .btn { margin-left: auto; }
+
+/* ---------- Raster ---------- */
+
+.grid {
+  flex: 1; display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: min-content;
+  align-items: start;   /* Feld endet an seinem Inhalt, nicht an der Reihenhöhe */
+  column-gap: var(--col); row-gap: var(--row);
+  padding: var(--s6) var(--s7) var(--s6);
+}
+.sp2 { grid-column: span 2; }
+.sp3 { grid-column: span 3; }
+
+/* ---------- Kennzahl: Label, Zahl, Beleg ---------- */
+
+.metric {
+  background: var(--sunk); border-radius: var(--r);
+  padding: 15px 17px 14px; display: flex; flex-direction: column; min-height: 130px;
+}
+.metric .lab { font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2); }
+.metric .num {
+  margin-top: var(--s2); display: flex; align-items: baseline; gap: 3px;
+  font: 600 28px/1 var(--font); letter-spacing: -.034em; font-variant-numeric: tabular-nums;
+}
+.metric .num .unit { font-size: .52em; font-weight: 500; color: var(--ink-2); }
+.metric .num.warn { color: var(--accent); }
+.metric .proof { margin-top: auto; padding-top: var(--s3); }
+.metric .proof p { margin: 7px 0 0; font-size: 11.5px; color: var(--ink-2); }
+.metric .proof p b { color: var(--ink); font-weight: 600; }
+
+/* Ein Punkt ist ein Vorgang. Höchstens zwölf, der Rest wird gezählt:
+   8px Punkt + 5px Rinne = 151px, das ist die schmalste Kachel ohne Umbruch. */
+.dots { display: flex; gap: 5px; align-items: center; }
+.dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--mark); flex: none; }
+.dots i.on { background: var(--ink); }
+.dots i.s2 { background: #5F5F63; }
+.dots i.s3 { background: #A1A1A6; }
+.dots i.warn { background: var(--accent); }
+.dots .more {
+  margin-left: 3px; font: 600 11px/1 var(--font); color: var(--ink-2);
+  letter-spacing: -.01em; font-variant-numeric: tabular-nums;
+}
+
+/* Termin trägt dieselbe Gliederung, nur mit Datumsfeld statt Zahl */
+.metric.date { padding: 0; overflow: hidden; }
+.metric.date .head { display: flex; gap: 11px; align-items: flex-start; padding: 15px 17px 0; }
+.metric.date .day {
+  width: 46px; height: 46px; flex: none; border-radius: var(--r-sm); color: #fff;
+  background: linear-gradient(158deg, #4D3A2C, #C0A184);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1;
+}
+.metric.date .day b { font: 600 18px/1 var(--font); letter-spacing: -.03em; }
+.metric.date .day i { font-style: normal; font-size: 8px; letter-spacing: .09em; text-transform: uppercase; opacity: .85; margin-top: 3px; }
+.metric.date .what b { display: block; margin-top: 2px; font: 600 13.5px/1.25 var(--font); letter-spacing: -.018em; }
+.metric.date .what span { font-size: 11px; color: var(--ink-2); }
+.metric.date .proof { padding: 0 17px 14px; }
+
+/* ---------- Feld ---------- */
+
+.panel { background: var(--sunk); border-radius: var(--r); padding: var(--s4) 18px; overflow: hidden; }
+.panel.bare { background: none; padding: 2px 2px 0; }   /* das wichtigste Feld braucht keinen Behälter */
+.panel > header { display: flex; align-items: baseline; gap: 9px; margin-bottom: var(--s2); }
+.panel > header h2 { margin: 0; font: 600 15px/1.2 var(--font); letter-spacing: -.02em; }
+.panel > header .n { font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.panel > header .more { margin-left: auto; font-size: 12px; }
+
+/* ---------- Entscheidungszeile ---------- */
+
+.decide .row {
+  display: flex; align-items: center; gap: 14px; padding: 11px 0;
+  box-shadow: inset 0 1px 0 var(--rule);   /* Regel statt Rahmen: verschiebt nichts, wenn eine Zeile geht */
+}
+.decide .row:first-child { box-shadow: none; }
+.decide .who {
+  width: 208px; flex: none; font-size: 14.5px; font-weight: 600; letter-spacing: -.018em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.decide .what {
+  flex: 1; min-width: 0; font-size: 12.5px; color: var(--ink-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.decide .what em { font-style: normal; color: var(--accent); }
+.decide .act { width: 168px; flex: none; display: flex; gap: var(--s2); align-items: center; justify-content: flex-end; }
+
+/* ---------- Kurze Zeile in einem Feld ---------- */
+
+.list .row { display: flex; align-items: baseline; gap: 9px; padding: var(--s2) 0; box-shadow: inset 0 1px 0 #EEEEF0; }
+.list .row:first-child { box-shadow: none; }
+.list .n { font-size: 13px; font-weight: 500; letter-spacing: -.01em; }
+.list .m { margin-left: auto; font-size: 11.5px; color: var(--ink-2); white-space: nowrap; }
+.list .tag { width: 56px; flex: none; font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
+.list .when { width: 62px; flex: none; font-size: 12px; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.list .flag { margin-left: auto; font-size: 11.5px; color: var(--accent); text-decoration: none; white-space: nowrap; }
+.list .flag:hover { text-decoration: underline; }
+.list .row.off .n { color: var(--ink-2); font-weight: 400; }
+
+/* Haupttermin ist eine Setzung, keine Rechnung: der früheste Termin ist es
+   nicht (Getting Ready steht vor der Trauung), der längste auch nicht.
+   Radio statt Checkbox, weil es je Projekt höchstens einen gibt — der
+   Teilindex on shoots (project_id) where is_primary sagt dasselbe. */
+.primary { display: inline-flex; align-items: center; gap: 7px; margin-top: 10px;
+           font-size: 12.5px; color: var(--ink-2); cursor: pointer; }
+.primary input { accent-color: var(--accent); margin: 0; }
+
+/* ---------- Projekt: Kennwerte, Verlauf, Abweichung ---------- */
+
+/* Stammdaten quer statt in einer schmalen Spalte — sechs Werte auf einer
+   Linie, jeder mit Beleg darunter. */
+.band { display: flex; margin: 0 0 var(--s5); }
+.band .cell { flex: 1; min-width: 0; padding: 0 18px; box-shadow: inset 1px 0 0 var(--rule); }
+.band .cell:first-child { padding-left: 0; box-shadow: none; }
+.band .lab { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.band .val { margin-top: 5px; font: 600 17px/1.2 var(--font); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.band .val.plain { font-weight: 500; font-size: 15px; }
+.band .val.warn { color: var(--accent); }
+.band .sub { font-size: 11.5px; color: var(--ink-2); margin-top: 3px; }
+
+.quote .tag { margin-left: 3px; font-size: 11.5px; color: var(--accent); }
+.quote .amt .was { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 400; color: var(--accent); }
+.quote .amt { width: 112px; }
+
+/* Verlauf: Notiz, Anruf, Mail und Systemzeilen in einer Spur */
+.compose {
+  display: flex; align-items: center; gap: 10px; margin-bottom: var(--s1);
+  padding: 10px 12px; border-radius: var(--r-sm); background: var(--sunk);
+  font-size: 13px; color: var(--ink-2);
+}
+.compose .kinds { margin-left: auto; display: flex; gap: 6px; }
+.compose .kinds span { background: var(--paper); border-radius: var(--r-pill); padding: 3px 9px; font-size: 11.5px; color: var(--ink); }
+.stream .ev { display: flex; gap: 14px; padding: 10px 0; box-shadow: inset 0 1px 0 var(--rule); }
+.stream .t { width: 110px; flex: none; font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.stream .c { flex: 1; min-width: 0; font-size: 13px; }
+.stream .kind { font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); }
+.stream .by { color: var(--ink-2); }
+.stream .ev.sys .c { color: var(--ink-2); }
+
+/* Verknüpftes in der Spur */
+.rail .item { padding: 8px 0; box-shadow: inset 0 1px 0 #ECECEE; }
+.rail .item:first-child { box-shadow: none; }
+.rail .item .n { font-size: 12.5px; font-weight: 600; letter-spacing: -.012em; }
+.rail .item .m { font-size: 11.5px; color: var(--ink-2); margin-top: 1px; }
+.rail .item .m.warn { color: var(--accent); }
+
+/* Projektspalten: Arbeit breit, Spur schmal, beide über die volle Höhe */
+.work { flex: 1; min-width: 0; padding: var(--s5) 26px var(--s6); }
+.work > h2 {
+  margin: 0 0 var(--s2); font: 600 10.5px/1 var(--font);
+  letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2);
+}
+.work > h2 + * { margin-bottom: var(--s5); }
+.work .sec { margin-bottom: var(--s5); }
+
+/* Abgeleitete Kennwerte sagen im Bearbeiten-Zustand, woher sie kommen —
+   sonst sucht man das Feld, das es nicht gibt. */
+.band .lab .derived { color: var(--mark); text-transform: none; letter-spacing: 0; }
+#edit:checked ~ * .band .cell .val:not(.plain),
+#edit:checked ~ * .band .cell .val.plain { opacity: 1; }
+
+/* ---------- Kalender ---------- */
+
+/* Ein Monatsraster, kein chronologisches Verzeichnis: der Betrieb plant in
+   Wochen, und ein freier Samstag ist die wichtigste Information darin. */
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); }
+.cal .dow {
+  padding: 0 0 8px 2px; font: 600 10.5px/1 var(--font);
+  letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2);
+}
+.cal .day { min-height: 104px; padding: 8px 8px 10px; box-shadow: inset 0 1px 0 var(--rule), inset 1px 0 0 var(--rule); }
+.cal .day:nth-child(7n + 1) { box-shadow: inset 0 1px 0 var(--rule); }
+.cal .day .n { font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cal .day.off { background: var(--sunk); }
+.cal .day.off .n, .cal .day.pale .n { color: var(--ink-2); font-weight: 400; }
+.cal .day.today .n {
+  display: inline-block; min-width: 20px; padding: 1px 5px; border-radius: var(--r-pill);
+  background: var(--ink); color: var(--paper); text-align: center;
+}
+.cal .e { display: block; margin-top: 5px; font-size: 11.5px; color: inherit; text-decoration: none; }
+.cal .e .tm { font-weight: 600; font-variant-numeric: tabular-nums; }
+.cal .e .who { color: var(--ink-2); }
+.cal .e.hold { color: var(--accent); }
+.cal .e.away { color: var(--ink-2); }
+.cal .e.away .tm { font-weight: 400; }
+
+/* ---------- Posteingang ---------- */
+
+.thread { display: flex; gap: 14px; padding: 11px 0; box-shadow: inset 0 1px 0 var(--rule); color: inherit; text-decoration: none; }
+.thread:first-of-type { box-shadow: none; }
+.thread .who { width: 190px; flex: none; }
+.thread .who .n { font-size: 13.5px; font-weight: 600; letter-spacing: -.014em; }
+.thread .who .p { font-size: 11.5px; color: var(--ink-2); margin-top: 1px; }
+.thread .txt { flex: 1; min-width: 0; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thread .txt .subj { font-weight: 500; }
+.thread .when { width: 96px; flex: none; text-align: right; font-size: 11.5px; color: var(--ink-2); white-space: nowrap; }
+.thread .when.warn { color: var(--accent); }
+
+/* Nachricht im Verlauf einer Unterhaltung */
+.msg { padding: 12px 0; box-shadow: inset 0 1px 0 var(--rule); }
+.msg:first-of-type { box-shadow: none; }
+.msg .head { display: flex; align-items: baseline; gap: 9px; }
+.msg .head .n { font-size: 13px; font-weight: 600; letter-spacing: -.012em; }
+.msg .head .t { margin-left: auto; font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.msg .body { font-size: 13.5px; line-height: 1.55; margin-top: 5px; max-width: 68ch; }
+.msg.own { padding-left: 14px; box-shadow: inset 0 1px 0 var(--rule), inset 2px 0 0 var(--sunk-2); }
+
+/* ---------- Pakete und Vorlagen ---------- */
+
+.pkg { padding: 14px 0 16px; box-shadow: inset 0 1px 0 var(--rule); }
+.pkg:first-of-type { box-shadow: none; }
+.pkg > header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.pkg > header h3 { margin: 0; font: 600 15px/1.2 var(--font); letter-spacing: -.018em; }
+.pkg > header .sum { margin-left: auto; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.pkg > header .n { font-size: 11.5px; color: var(--ink-2); }
+.pkg .off { font-size: 11.5px; color: var(--ink-2); }
+
+/* ---------- Dokumentvorlagen ---------- */
+
+/* Wahl statt leerer Seite: der Blockeditor hat die HTML-Hürde beseitigt und
+   die Hürde der leeren Seite stehen lassen (StarterTemplateCatalog, T-16). */
+.starters { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s3); }
+.starter { background: var(--sunk); border-radius: var(--r-sm); padding: 14px 16px; color: inherit; text-decoration: none; display: block; }
+.starter:hover { background: var(--sunk-2); }
+.starter .nm { font: 600 14px/1.3 var(--font); letter-spacing: -.016em; }
+.starter .ty { font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-2); margin-top: 2px; }
+.starter .de { font-size: 12px; line-height: 1.45; color: var(--ink-2); margin-top: 7px; }
+.starter .bl { font-size: 11.5px; color: var(--ink-2); margin-top: 9px; padding-top: 8px; box-shadow: inset 0 1px 0 #ECECEE; }
+.starter.blank { background: none; box-shadow: inset 0 0 0 1px var(--rule); }
+
+/* Editor und Vorschau teilen sich die Fläche zur Hälfte */
+.split { flex: 1; display: flex; min-height: 0; }
+.split > .pane { flex: 1 1 50%; min-width: 0; padding: 14px 26px var(--s6); }
+.split > .pane.preview { background: var(--sunk); box-shadow: inset 1px 0 0 #ECECEE; }
+.panehead { display: flex; align-items: baseline; gap: 9px; margin-bottom: var(--s3); }
+.panehead h2 { margin: 0; font: 600 10.5px/1 var(--font); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2); }
+.panehead .r { margin-left: auto; font-size: 12px; color: var(--ink-2); }
+
+/* Editor.js stellt den Rahmen: Griff und Plus in der Rinne, Leiste bei Auswahl */
+.ej { position: relative; }
+.ejb { position: relative; padding: 7px 0 7px 44px; border-radius: 8px; }
+.ejb:hover, .ejb.sel { background: var(--sunk); }
+.ejb .gut { position: absolute; left: 6px; top: 7px; display: flex; gap: 2px; opacity: 0; }
+.ejb:hover .gut, .ejb.sel .gut { opacity: 1; }
+.ejb .gut i {
+  width: 22px; height: 22px; border-radius: 6px; background: var(--sunk-2); color: var(--ink-2);
+  font-style: normal; font-size: 13px; line-height: 22px; text-align: center;
+}
+.ejb h3 { margin: 0; font: 600 17px/1.35 var(--font); letter-spacing: -.02em; }
+.ejb h4 { margin: 0; font: 600 14px/1.4 var(--font); letter-spacing: -.016em; }
+.ejb p { margin: 0; font-size: 13.5px; line-height: 1.65; }
+.ejb ul { margin: 0; padding-left: 19px; font-size: 13.5px; line-height: 1.65; }
+.ejb table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.ejb td { padding: 5px 0; box-shadow: inset 0 1px 0 #ECECEE; }
+.ejb td.r { text-align: right; font-variant-numeric: tabular-nums; }
+.ph { background: #F2E7DF; border-radius: 5px; padding: 0 4px; color: var(--accent); }
+
+.tools {
+  position: absolute; left: 44px; top: -16px; display: flex; gap: 2px;
+  background: var(--paper); border-radius: 9px; padding: 3px; box-shadow: 0 4px 14px rgba(0,0,0,.14);
+}
+.tools i { font-style: normal; font-size: 12px; padding: 4px 8px; border-radius: 6px; }
+.tools i.on { background: var(--sunk-2); }
+.tools i.field { color: var(--accent); }
+.tools .sep { width: 1px; background: var(--rule); margin: 3px 2px; }
+
+.blockmenu {
+  position: absolute; left: 34px; width: 208px; background: var(--paper); border-radius: var(--r-sm);
+  padding: 5px; box-shadow: 0 8px 24px rgba(0,0,0,.16); z-index: 2;
+}
+.blockmenu div { display: flex; align-items: center; gap: 9px; padding: 6px 9px; border-radius: 8px; font-size: 12.5px; }
+.blockmenu div:hover { background: var(--sunk); }
+.blockmenu div .k { margin-left: auto; font-size: 10.5px; color: var(--ink-2); }
+.blockmenu .off, .blockmenu .off:hover { color: var(--mark); background: none; }
+
+/* Das Blatt: weiß auf grauer Fläche, dadurch ein Papierrand ohne Rahmen */
+.paper { background: var(--paper); border-radius: 10px; padding: 26px 24px; font-size: 11.5px; line-height: 1.65; }
+.paper .logo { font: 600 14px/1 var(--font); letter-spacing: -.02em; }
+.paper .addr { color: var(--ink-2); font-size: 10px; margin-top: 14px; }
+.paper h3 { margin: 16px 0 8px; font: 600 15px/1.3 var(--font); }
+.paper h4 { margin: 14px 0 5px; font: 600 12.5px/1.3 var(--font); }
+.paper p { margin: 0 0 9px; }
+.paper table { width: 100%; border-collapse: collapse; margin: 9px 0; font-size: 11px; }
+.paper td { padding: 4px 0; border-top: 1px solid #ECECEE; }
+.paper td.r { text-align: right; font-variant-numeric: tabular-nums; }
+.paper .sum td { font-weight: 600; border-top: 1px solid #C9C9CD; }
+.paper .fine { color: var(--ink-2); font-size: 10px; margin-top: 14px; }
+.paper .sig { display: flex; gap: 26px; margin-top: 20px; font-size: 10px; color: var(--ink-2); }
+.paper .sig div { flex: 1; padding-top: 6px; border-top: 1px solid #C9C9CD; }
+
+/* ---------- Einstellungen ---------- */
+
+/* Zweite Navigation innerhalb der Seite, gleiche Formsprache wie die globale:
+   Fläche für den aktiven Eintrag, keine Kante. */
+.subnav { width: 196px; flex: none; padding: var(--s5) var(--s3) var(--s6); }
+.subnav a {
+  display: block; padding: 6px 10px; margin-bottom: 1px; border-radius: 8px;
+  color: var(--ink); text-decoration: none; font-size: 13px; letter-spacing: -.01em;
+}
+.subnav a:hover { background: var(--sunk); }
+.subnav a.on { background: var(--sunk-2); font-weight: 600; }
+.subnav .lab { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); padding: var(--s4) 10px 6px; }
+
+.pane-set { flex: 1; min-width: 0; padding: var(--s5) var(--s7) var(--s6); }
+.pane-set > h2 {
+  margin: var(--s6) 0 var(--s3); font: 600 10.5px/1 var(--font);
+  letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2);
+}
+.pane-set > h2:first-child { margin-top: 0; }
+
+/* Schalterzeile: Beschriftung links, Zustand rechts, Erklärung nur wenn sie
+   etwas sagt, das der Schalter nicht sagt. */
+.setting { display: flex; align-items: center; gap: 16px; padding: 11px 0; box-shadow: inset 0 1px 0 var(--rule); }
+.setting:first-of-type { box-shadow: none; }
+.setting .t { flex: 1; min-width: 0; font-size: 13.5px; }
+.setting .t .s { font-size: 12px; color: var(--ink-2); margin-top: 2px; }
+.setting .v { font-size: 13px; font-variant-numeric: tabular-nums; }
+.setting .v.mut { color: var(--ink-2); }
+
+.sw { width: 40px; height: 24px; border-radius: var(--r-pill); background: var(--sunk-2); flex: none; position: relative; cursor: pointer; }
+.sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: var(--paper); transition: transform .16s ease-out; }
+.sw.on { background: var(--accent); }
+.sw.on::after { transform: translateX(16px); }
+
+/* Beim Kontakt ist die Nummer der Grund, warum man ihn öffnet: sie steht
+   unter dem Namen und nicht klein in der Spur. */
+.reach { display: flex; gap: 18px; margin-top: 6px; }
+.reach a { font-size: 15px; letter-spacing: -.012em; }
+
+/* Link, Passwort und Code sind der Grund, warum die Galerie geöffnet wird —
+   sie stehen oben und zeigen ihren Wert. Das setzt voraus, dass sie
+   wiederherstellbar gespeichert werden; heute liegen sie als Hash. */
+.access { display: flex; gap: 26px; align-items: flex-start; margin-bottom: var(--s5); padding-bottom: var(--s5); box-shadow: inset 0 -1px 0 var(--rule); }
+.access .col { min-width: 0; }
+.access .col.wide { margin-left: auto; }
+.access .lab { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.access .val { margin-top: 6px; font-size: 17px; letter-spacing: -.018em; }
+.access .val a { font-size: 17px; }
+.access .val input { font-size: 17px; letter-spacing: -.018em; width: 190px; padding: 5px 9px; }
+.access .val input.s { width: 92px; }
+.access .act { margin-top: 7px; }
+.access .siblings { display: flex; gap: 6px; margin-top: 8px; }
+.access .siblings a {
+  display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 12px; border-radius: var(--r-pill);
+  background: var(--sunk); color: var(--ink); text-decoration: none; font-size: 13px;
+}
+.access .siblings a.on { background: var(--ink); color: var(--paper); }
+.access .siblings a span { font-size: 11.5px; color: var(--ink-2); }
+.access .siblings a.on span { color: #B9B9BD; }
+
+/* ---------- Kontaktblatt ---------- */
+
+/* Aufbau wie in Google Kontakte: Avatar, Name, eine Reihe Handlungen, darunter
+   Datenzeilen mit dem Wert groß und der Bezeichnung klein. Eine Spalte, weil
+   ein Kontakt kein Arbeitsbereich ist, sondern ein Blatt, das man aufschlägt. */
+.sheet { max-width: 760px; padding: var(--s6) var(--s7) var(--s7); }
+.sheet .head { display: flex; align-items: center; gap: var(--s5); }
+.sheet .head h1 { margin: 0; font-size: 28px; }
+.sheet .head .sub { font-size: 13.5px; color: var(--ink-2); margin-top: 4px; }
+
+.quick { display: flex; gap: var(--s2); margin: var(--s5) 0 var(--s6); }
+.quick a {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 15px; border-radius: var(--r-pill); background: var(--sunk);
+  color: var(--ink); text-decoration: none; font-size: 13px;
+}
+.quick a:hover { background: var(--sunk-2); }
+.quick a.primary { background: var(--accent); color: var(--paper); }
+.quick svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+.sheet section { margin-bottom: var(--s6); }
+.sheet section > h2 {
+  margin: 0 0 var(--s3); font: 600 10.5px/1 var(--font);
+  letter-spacing: .07em; text-transform: uppercase; color: var(--ink-2);
+}
+.datarow { display: flex; align-items: center; gap: 16px; padding: 10px 0; box-shadow: inset 0 1px 0 var(--rule); }
+.datarow:first-of-type { box-shadow: none; }
+.datarow .val { font-size: 15px; letter-spacing: -.012em; }
+.datarow .val a { font-size: 15px; }
+.datarow .lab { font-size: 12px; color: var(--ink-2); margin-top: 1px; }
+.datarow .right { margin-left: auto; font-size: 12.5px; color: var(--ink-2); }
+.datarow .right.warn { color: var(--accent); }
+
+/* Schalterzeile in der Spur: schmaler, Zurücksetzen unter die Beschriftung */
+.rail .setting { padding: 9px 0; gap: 12px; }
+.rail .setting .t { font-size: 13px; }
+.rail .setting .t .s { margin-top: 3px; }
+.rail .sw { width: 36px; height: 22px; }
+.rail .sw::after { width: 16px; height: 16px; }
+.rail .sw.on::after { transform: translateX(14px); }
+
+/* ---------- Galerieverwaltung ---------- */
+
+/* Reiter innerhalb des Datensatzes: Bilder, Gestaltung, Zugang, Verlauf.
+   Vier Flächen auf einem Screen wären keine Verwaltung mehr, sondern eine
+   Halde — und die Bilder brauchen die ganze Breite. */
+.tabs { display: flex; gap: 20px; padding: 0 var(--s7); box-shadow: inset 0 -1px 0 var(--rule); }
+.tabs label { padding: 10px 0 11px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.tabs label:hover { color: var(--ink); }
+#tab-bilder:checked ~ .tabs label[for="tab-bilder"],
+#tab-design:checked ~ .tabs label[for="tab-design"],
+#tab-download:checked ~ .tabs label[for="tab-download"],
+#tab-zugang:checked ~ .tabs label[for="tab-zugang"],
+#tab-verlauf:checked ~ .tabs label[for="tab-verlauf"] {
+  color: var(--ink); font-weight: 600; box-shadow: inset 0 -2px 0 var(--ink);
+}
+.tabview { display: none; }
+#tab-bilder:checked ~ .tabview.bilder,
+#tab-design:checked ~ .tabview.design,
+#tab-download:checked ~ .tabview.download,
+#tab-zugang:checked ~ .tabview.zugang,
+#tab-verlauf:checked ~ .tabview.verlauf { display: flex; }
+
+/* Sätze links, Raster rechts — wie in jedem Galerieverwalter, weil ein Satz
+   die Einheit ist, in der ausgewählt und geliefert wird. */
+.sets { width: 220px; flex: none; padding: var(--s5) var(--s4) var(--s6) var(--s7); }
+.sets a {
+  display: flex; align-items: baseline; gap: 8px; padding: 8px 10px; margin-bottom: 2px;
+  border-radius: 8px; color: var(--ink); text-decoration: none; font-size: 13px;
+}
+.sets a.on { background: var(--sunk-2); font-weight: 600; }
+.sets a .ct { margin-left: auto; font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.sets .add { margin-top: var(--s3); }
+
+.shelf { flex: 1; min-width: 0; padding: var(--s5) var(--s7) var(--s6) 0; }
+.shelf .bar { display: flex; align-items: center; gap: var(--s3); margin-bottom: var(--s4); }
+.shelf .bar h2 { margin: 0; font: 600 17px/1.2 var(--font); letter-spacing: -.022em; }
+.shelf .bar .n { font-size: 12px; color: var(--ink-2); }
+.grid-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.grid-photos figure { margin: 0; position: relative; }
+.grid-photos img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 8px; display: block; }
+.grid-photos figure.tall img { aspect-ratio: 2 / 3; }
+.grid-photos .mark {
+  position: absolute; left: 7px; top: 7px; display: flex; gap: 4px;
+  font-size: 10.5px; color: var(--paper);
+}
+.grid-photos .mark span { background: rgba(29,29,31,.62); border-radius: 980px; padding: 2px 7px; }
+
+/* Gestaltung: Auswahlkarten mit Vorschaubild statt Beschreibungstext */
+.picks { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s3); max-width: 560px; }
+.picks label { cursor: pointer; }
+.picks input { position: absolute; opacity: 0; pointer-events: none; }
+.picks .thumb {
+  border-radius: var(--r-sm); overflow: hidden; background: var(--sunk); aspect-ratio: 4 / 3;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2);
+  box-shadow: inset 0 0 0 1px transparent;
+}
+.picks input:checked + .thumb { box-shadow: inset 0 0 0 2px var(--accent); }
+.picks .cap { font-size: 12.5px; margin-top: 6px; }
+.picks .sw-row { display: flex; gap: 5px; }
+.picks .sw-row i { width: 18px; height: 18px; border-radius: 50%; display: block; }
+
+/* Gestaltung ohne Vorschau ist Raten: die Wahl links, das Ergebnis rechts. */
+.preview-pane { flex: 1; min-width: 0; padding: var(--s5) var(--s7) var(--s6); background: var(--sunk); }
+.preview-pane .frame { background: var(--paper); border-radius: var(--r-sm); overflow: hidden; }
+.preview-pane .cover { position: relative; }
+.preview-pane .cover img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; }
+.preview-pane .cover .title {
+  position: absolute; inset: auto 0 0 0; padding: 22px 20px;
+  background: linear-gradient(transparent, rgba(20,16,14,.55)); color: var(--paper); text-align: center;
+}
+.preview-pane .cover .title b { display: block; font: 600 19px/1.2 var(--font); letter-spacing: .04em; text-transform: uppercase; }
+.preview-pane .cover .title span { font-size: 11.5px; opacity: .85; }
+.preview-pane .thumbs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 10px; }
+.preview-pane .thumbs img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; display: block; border-radius: 3px; }
+.pv-foot { display: flex; align-items: center; gap: var(--s3); margin-top: var(--s4); }
+.pv-foot .link { margin-left: auto; }
+
+/* Aktivität: drei Blätter, weil die Fragen verschieden sind — wer hat geladen,
+   wer hat markiert, wer war da. Eine Tabelle je Blatt, damit E-Mail, Umfang
+   und Zeit untereinander vergleichbar bleiben. */
+.aktview { display: none; }
+#akt-download:checked ~ .aktview.download,
+#akt-marken:checked ~ .aktview.marken,
+#akt-zugriffe:checked ~ .aktview.zugriffe { display: block; }
+#akt-download:checked ~ * .seg label[for="akt-download"],
+#akt-marken:checked ~ * .seg label[for="akt-marken"],
+#akt-zugriffe:checked ~ * .seg label[for="akt-zugriffe"] { background: var(--paper); font-weight: 500; }
+.aktview thead th:first-child, .aktview tbody td:first-child { padding-left: 0; }
+.aktview thead th:last-child, .aktview tbody td:last-child { padding-right: 0; }
+
+/* ---------- Zwei Haltepunkte ---------- */
+
+/* Schmale Schirme bekommen eine andere Navigation, keine kleinere. Unter
+   1080px wird die Seitenleiste zur Symbolspalte — die Reihenfolge bleibt, die
+   Beschriftung fällt weg, weil zehn abgeschnittene Wörter schlechter zu
+   treffen sind als zehn Symbole. Unter 640px wandert sie an den unteren Rand,
+   wo der Daumen ist, und trägt nur noch das Tagesgeschäft. */
+
+@media (max-width: 1080px) {
+  .side { width: 56px; padding: 18px 8px; }
+  .side .wm, .side a span, .side .find kbd, .side .lab, .side .me { display: none; }
+  .side a, .side .find { justify-content: center; padding: 8px 0; }
+
+  .grid { grid-template-columns: repeat(2, 1fr); padding: var(--s5) var(--s5) var(--s6); }
+  .sp2, .sp3 { grid-column: span 2; }
+
+  /* Board: sechs Stufen bleiben sechs, sie rollen nur. Sie untereinander zu
+     stapeln macht aus einem Trichter eine Liste, die niemand lesen kann. */
+  .cols .col { flex: 0 0 200px; }
+
+  .queue { width: 200px; }
+  .rail { display: none; }        /* die Spur ist Beiwerk, der Vorgang nicht */
+  .split { flex-direction: column; }
+  .said { flex-direction: column; gap: var(--s4); }
+  .said .who { width: auto; padding-left: 0; box-shadow: none; }
+}
+
+@media (max-width: 640px) {
+  .app { flex-direction: column; }
+
+  .side {
+    order: 2; position: sticky; bottom: 0; z-index: 30;
+    width: auto; flex-direction: row; justify-content: space-around;
+    padding: 6px 4px; background: var(--paper);
+    box-shadow: inset 0 1px 0 var(--rule);
+  }
+  .side .find, .side .group, .side .ct { display: none; }
+  /* Nur das Tagesgeschäft: die Studio-Gruppe ist Einrichtung, und die richtet
+     niemand am Telefon ein. */
+  .side a:nth-of-type(n + 8) { display: none; }
+  /* Und von den sieben bleiben unten nur die Zeichen: mit Beschriftung
+     brauchen sie 595px, die Leiste hat 390. Abgeschnitten wäre schlimmer als
+     wortlos — ein Zeichen ohne Wort ist immer noch anklickbar. */
+  .side a { font-size: 0; gap: 0; justify-content: center; padding: 9px 12px; }
+  .side a svg { width: 19px; height: 19px; }
+
+  .main { order: 1; }
+  .hrow { padding: 16px var(--s5) 0; }
+  h1 { font-size: 25px; }
+
+  .grid { grid-template-columns: 1fr; row-gap: var(--s5); }
+  .sp2, .sp3 { grid-column: span 1; }
+
+  .cal .day { min-height: 64px; }
+  .decide .row, .rowset .r { flex-wrap: wrap; }
+  .decide .who, .decide .act { width: 100%; justify-content: flex-start; }
+  thead { display: none; }        /* eine Tabelle ohne Kopf ist auf 390px eine Liste */
+  tbody td { padding: 8px var(--s5); }
+}
+
+/* ---------- Galerie: der Datensatz ---------- */
+
+/* Der Datensatz Galerie trägt dieselbe Spalte wie das Projekt: Wörter statt
+   Glyphen, Zähler auf einer linken Kante ausgerichtet, unter 900px legt sie
+   sich hin und scrollt seitwärts. Der Kommentar in ProjectShell.vue nennt den
+   Grund und lehnt den Streifen über dem Inhalt ausdrücklich ab.
+
+   212px statt der 150px des Projekts: „Getting Ready 38" passt bei 150px nicht
+   in eine Zeile, und das Titelbild darüber braucht die Breite ohnehin.
+
+   Zwei Dinge, die das Projekt nicht hat:
+
+   Das Titelbild sitzt über den Einträgen. Es ist kein Bereich, sondern das
+   Gesicht des Datensatzes — dieselbe Stelle, an der ein Kontakt seinen Avatar
+   trägt. Beim Projekt steht dort nichts, weil ein Projekt kein Gesicht hat.
+   Es bleibt in allen vier Bereichen stehen, auch beim Einstellen.
+
+   Die Sets hängen eingerückt unter Bilder. Sie sind kein fünfter Bereich,
+   sondern die Gliederung des ersten; eine zweite Liste darunter wären zwei
+   Navigationen in einer Spalte. Sie stehen offen, solange Bilder aktiv ist,
+   und falten sich weg, sobald woanders gearbeitet wird. */
+
+.rec { display: flex; margin: var(--s4) var(--s7) 0; box-shadow: inset 0 1px 0 var(--rule); }
+
+.recnav { width: 212px; flex: none; padding-top: var(--s4); box-shadow: inset -1px 0 0 var(--rule); }
+.recnav .cover { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--r-sm); }
+/* Der leere Zustand hat die Form, die das Bild bekommt, und trägt seine eigene
+   Aktion. Ein Satz darüber, dass keins gesetzt ist, sagt weniger als das Loch. */
+.recnav .cover-none {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  width: 100%; aspect-ratio: 4 / 3; border-radius: var(--r-sm);
+  background: var(--sunk); border: 1px dashed var(--mark);
+  font-size: 11px; color: var(--ink-2); text-decoration: none;
+}
+.recnav .cover-none b { font: 600 11.5px/1 var(--font); color: var(--accent); }
+/* Der Pfeil steht nur da, wenn der Entwurf von der Fassung abweicht. */
+.recnav .ct .to { color: var(--ink-2); }
+.recnav .items { padding: var(--s3) var(--s2) var(--s6) 0; }
+.recnav .items > label, .recnav .items > a {
+  display: flex; align-items: center; gap: var(--s2);
+  padding: 7px 10px; margin-bottom: 1px; border-radius: 8px;
+  font-size: 13px; color: var(--ink); text-decoration: none; cursor: pointer;
+}
+.recnav .items > label:hover { background: var(--sunk); }
+.recnav .ct { margin-left: auto; font-size: 11.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.recnav .tw { width: 9px; flex: none; font-size: 8px; color: var(--ink-2); }
+
+.recsets { margin: 2px 0 6px 19px; padding-left: 10px; box-shadow: inset 1px 0 0 var(--rule); }
+.recsets a {
+  display: flex; align-items: center; gap: 7px; padding: 5px 9px; margin-bottom: 1px;
+  border-radius: 7px; font-size: 12.5px; color: var(--ink); text-decoration: none;
+}
+.recsets a:hover { background: var(--sunk); }
+.recsets a.on { background: var(--sunk-2); font-weight: 600; }
+.recsets .ct { font-size: 11px; }
+.recsets .grip { color: var(--ink-2); font-size: 9px; cursor: grab; opacity: 0; }
+.recsets a:hover .grip { opacity: 1; }
+.recsets .add { color: var(--accent); font-size: 12px; }
+
+.recbody { flex: 1; min-width: 0; padding: var(--s4) 0 var(--s6) var(--s5); }
+.recbody .bar { display: flex; align-items: baseline; gap: 9px; margin-bottom: var(--s3); }
+.recbody .bar h2 { margin: 0; font: 600 17px/1.2 var(--font); letter-spacing: -.022em; }
+.recbody .bar .n { font-size: 12px; color: var(--ink-2); }
+.recbody .bar .seg { margin-left: auto; }
+.recbody .seg label.on { background: var(--paper); font-weight: 500; }
+
+.recview { display: none; }
+#g-bilder:checked ~ .rec .recview.bilder,
+#g-gestaltung:checked ~ .rec .recview.gestaltung,
+#g-aktivitaet:checked ~ .rec .recview.aktivitaet { display: block; }
+#g-einstellungen:checked ~ .rec .recview.einstellungen { display: flex; }
+
+#g-bilder:checked ~ .rec label[for=g-bilder],
+#g-gestaltung:checked ~ .rec label[for=g-gestaltung],
+#g-einstellungen:checked ~ .rec label[for=g-einstellungen],
+#g-aktivitaet:checked ~ .rec label[for=g-aktivitaet] { background: var(--sunk-2); font-weight: 600; }
+
+/* Aufgeklappt heisst: der Bereich ist aktiv. Kein zweiter Zustand zum Merken. */
+.recsets { display: none; }
+#g-bilder:checked ~ .rec .recsets { display: block; }
+#g-bilder:checked ~ .rec label[for=g-bilder] .tw { transform: rotate(90deg); }
+
+.einstellungen { gap: var(--s5); }
+.einstellungen .subnav { width: 184px; padding: 0; }
+.einstellungen .subnav a { display: flex; align-items: center; }
+.einstellungen .subnav .lab:first-child { padding-top: 0; }
+.einstellungen .subnav .st { margin-left: auto; font-size: 11px; color: var(--ink-2); }
+.einstellungen .pane { flex: 1; min-width: 0; }
+.einstellungen h2 { margin: 0 0 var(--s4); font: 600 17px/1.2 var(--font); letter-spacing: -.022em; }
+.einstellungen .slug { display: flex; align-items: baseline; }
+.einstellungen .slug .pre { font-size: 15px; color: var(--ink-2); }
+.einstellungen .slug input { font-size: 15px; width: 180px; }
+
+/* Unter 640px trägt der Kopf einen Knopf statt dreier — der Titel braucht
+   die Zeile, und Vorschau und Mehr sind keine Handgriffe für unterwegs. */
+.rec-acts { display: contents; }
+.rec-more { display: none; }
+
+.log { font-size: 12.5px; }
+.log .e { display: flex; gap: var(--s3); padding: 8px 0; box-shadow: inset 0 1px 0 var(--rule); }
+.log .e:first-child { box-shadow: none; }
+.log .e .t { width: 92px; flex: none; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 900px) {
+  .rec { display: block; margin: var(--s4) var(--s5) 0; }
+  .recnav { width: 100%; box-shadow: inset 0 -1px 0 var(--rule); }
+  .recnav .cover, .recnav .cover-none { aspect-ratio: 16 / 5; }
+  /* Die vier Bereiche in einer Zeile, die Sets in der zweiten darunter —
+     order und flex-basis, weil die Sets im Baum zwischen Bilder und
+     Gestaltung stehen müssen. */
+  .recnav .items { display: flex; flex-wrap: wrap; gap: 4px; padding: var(--s3) 0; }
+  .recnav .items > label, .recsets a { margin-bottom: 0; white-space: nowrap; }
+  .recsets { order: 1; flex-basis: 100%; min-width: 0; margin: var(--s2) 0 0; padding: 0; box-shadow: none; }
+  #g-bilder:checked ~ .rec .recsets { display: flex; gap: 4px; overflow-x: auto; }
+  .recbody { padding: 0 0 var(--s6); }
+  #g-einstellungen:checked ~ .rec .recview.einstellungen { display: block; }
+  .einstellungen .subnav { width: 100%; margin-bottom: var(--s4); }
+}
+
+@media (max-width: 640px) {
+  .rec-acts { display: none; }
+  .rec-more { display: inline-flex; }
+  .grid-photos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

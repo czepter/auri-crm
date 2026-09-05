@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Anfrage · angenommen — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="anfragen">
+
+<!-- Derselbe Screen wie crm-anfrage.html, zwei Telefonate später. Nichts ist
+     umgezogen: aus einem angefragten Termin sind drei bestätigte geworden,
+     das Angebot hat Positionen statt Paketknöpfe, die Aufgaben haben
+     Erledigtes, und im Verlauf steht, was am Telefon besprochen wurde.
+
+     Der gefüllte Knopf wandert mit der fälligen Handlung: aus "Angebot
+     schreiben" wird "Vertrag senden". Es bleibt bei einem pro Screen.
+
+     Die Spur zeigt jetzt Besetzung, Zahlplan und die Vorlagen, aus denen die
+     nächsten Schritte entstehen — Vertrag, Fragebogen, Aufgabensatz. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <nav class="queue">
+    <h2><b>Unbeantwortet</b><span class="n">3</span></h2>
+    <a href="crm-anfrage.html">
+      <div class="nm">Familie Osterhoff</div>
+      <div class="mt">14.3. · Studio · gestern</div>
+    </a>
+    <a href="#">
+      <div class="nm">Nina Kaltenbach &amp; Ruben Adler</div>
+      <div class="mt warn">14.6. · Termin doppelt</div>
+    </a>
+    <a href="#">
+      <div class="nm">Charlotte Vehse &amp; Paul Rieck</div>
+      <div class="mt warn">22.8. · 8 Tage still</div>
+    </a>
+
+    <h2><b>Angebot draußen</b><span class="n">2</span></h2>
+    <a href="#">
+      <div class="nm">Annika Reuter &amp; Finn Sölter</div>
+      <div class="mt warn">läuft 21.08. ab</div>
+    </a>
+    <a href="#">
+      <div class="nm">Lea Hoffmann &amp; Jonas Behr</div>
+      <div class="mt">3.500 € · vor 6 Tagen</div>
+    </a>
+
+    <h2><b>Angenommen</b><span class="n">2</span></h2>
+    <a class="on" href="crm-anfrage-angenommen.html">
+      <div class="nm">Sarah Brandt &amp; Tim Erdmann</div>
+      <div class="mt warn">Vertrag fehlt</div>
+    </a>
+    <a href="#">
+      <div class="nm">Marie Ahrens &amp; David Kroll</div>
+      <div class="mt warn">Vertrag fehlt</div>
+    </a>
+  </nav>
+
+  <main class="detail">
+    <div class="crumb">Anfragen <kbd>↑</kbd><kbd>↓</kbd></div>
+
+    <div class="title">
+      <div>
+        <h1>Sarah Brandt &amp; Tim Erdmann</h1>
+      </div>
+      <div class="acts">
+        <a class="link" href="#">Angebot ansehen</a>
+        <a class="btn-2" href="#">Notiz</a>
+        <a class="btn" href="#">Vertrag senden</a>
+      </div>
+    </div>
+
+
+    <section>
+      <header><h2>Was sie schreiben</h2><a class="link more" href="#">Ganzer Verlauf ›</a></header>
+      <div class="said">
+        <p>„Wir heiraten im September auf Hof Eggers und suchen jemanden für den ganzen Tag — Trauung um 14 Uhr, Feier bis in die Nacht.“</p>
+        <div class="who">
+          <div class="via top"><b>Hochzeit</b>Empfehlung von Familie Osterhoff</div>
+          <div class="p">
+            <div class="nm">Sarah Brandt</div>
+            <div class="ro">Auftraggeberin</div>
+            <div class="v"><a class="link" href="#">s.brandt@example.de</a></div>
+            <div class="v"><a class="link" href="#">0170 998877</a></div>
+          </div>
+          <div class="p">
+            <div class="nm">Tim Erdmann</div>
+            <div class="ro">Partner</div>
+            <div class="v"><a class="link" href="#">t.erdmann@example.de</a></div>
+          </div>
+          <div class="via"><b>Portal</b>Sarah heute 08:12 · Tim nie</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <input class="vswitch" type="checkbox" id="newshoot">
+      <header><h2>Termine</h2><span class="n">3</span><a class="link more" href="#">Im Kalender ›</a></header>
+      <div class="rowset">
+        <div class="r">
+          <span class="when">Sa, 05.09. · 10:00<span class="st">bestätigt</span></span>
+          <span class="what">Getting Ready<div class="s">Landhotel, Winsen · bis 12:00</div></span>
+          <span class="right">Nina</span>
+        </div>
+        <div class="r">
+          <span class="when">Sa, 05.09. · 13:00<span class="st">bestätigt · Haupttermin</span></span>
+          <span class="what">Hochzeitstag<div class="s">Hof Eggers, Winsen · bis 02:00</div></span>
+          <span class="right">Christian, Nina</span>
+        </div>
+        <div class="r">
+          <span class="when">So, 06.09. · 11:00<span class="st">angefragt</span></span>
+          <span class="what">Brunch<div class="s">Hof Eggers, Winsen · bis 14:00</div></span>
+          <span class="right">Christian</span>
+        </div>
+      </div>
+      <div class="composer form">
+        <div class="shootblock neu">
+        <div class="line">
+          <label class="field"><span>Tag</span><input class="s" type="date"></label>
+          <label class="field grow"><span>Art</span><input placeholder="Brunch, Getting Ready"></label>
+          <label class="field"><span>Antritt</span><input class="s" type="time"></label>
+          <label class="field"><span>Ende</span><input class="s" type="time"></label>
+        </div>
+        <div class="line">
+          <label class="field grow"><span>Ort</span><input></label>
+          <label class="field"><span>Stadt</span><input class="m"></label>
+        </div>
+        </div>
+        <div class="foot">
+          <label class="link" for="newshoot">Abbrechen</label>
+          <button class="btn" type="button">Termin anlegen</button>
+        </div>
+      </div>
+      <div class="ghosts"><label class="ghost" for="newshoot">+ Termin</label></div>
+    </section>
+
+    <section>
+      <header><h2>Angebot</h2><span class="n">6 Positionen</span><a class="link more" href="#">Bearbeiten ›</a></header>
+      <div class="quote">
+        <div class="qr"><span class="ti">Ganztagsbegleitung<div class="s">ab Getting Ready bis 02:00</div></span><span class="qty">1×</span><span class="amt">2.400 €</span></div>
+        <div class="qr"><span class="ti">Zweitfotografin<div class="s">Nina Sturm, 10:00–20:00</div></span><span class="qty">1×</span><span class="amt">600 €</span></div>
+        <div class="qr"><span class="ti">Brunch am Folgetag<div class="s">3 Stunden</div></span><span class="qty">1×</span><span class="amt">450 €</span></div>
+        <div class="qr"><span class="ti">Onlinegalerie mit Download</span><span class="qty">1×</span><span class="amt">150 €</span></div>
+        <div class="qr"><span class="ti">Fotobuch 30×30<div class="s">40 Seiten, Leinen</div></span><span class="qty">1×</span><span class="amt">380 €</span></div>
+        <div class="qr"><span class="ti">Fahrtkosten<div class="s">45 km</div></span><span class="qty">2×</span><span class="amt">45 €</span></div>
+        <div class="sum"><span class="ti">Summe</span><span class="qty"></span><span class="amt">3.800 €</span></div>
+        <div class="meta">angenommen gestern 16:40 · gültig war bis 25.08. · 3 Raten, erste bei Vertrag · <em>Vertrag noch nicht gesendet</em></div>
+      </div>
+    </section>
+
+    <section>
+      <input class="vswitch" type="checkbox" id="newtask">
+      <header><h2>Aufgaben</h2><span class="n">2 offen</span><label class="link more" for="newtask">+ Aufgabe</label></header>
+      <div class="todo">
+        <div class="r"><span class="b"></span><span class="t">Vertrag senden</span><span class="aud">intern</span><span class="due warn">heute</span></div>
+        <div class="r"><span class="b"></span><span class="t">Ablaufplan ausfüllen</span><span class="aud">kunde</span><span class="due">bis 15.08.</span></div>
+        <div class="r done"><span class="b done"></span><span class="t">Angebot schreiben</span><span class="aud">intern</span><span class="due">erledigt 16.08.</span></div>
+        <div class="r done"><span class="b done"></span><span class="t">Rückfrage: Ablauf und Feierende</span><span class="aud">intern</span><span class="due">erledigt 17.08.</span></div>
+      </div>
+      <div class="composer form">
+        <div class="line">
+          <label class="field grow"><span>Aufgabe</span><input></label>
+          <label class="field"><span>Für</span>
+            <div class="choice">
+              <label><input type="radio" name="aud" checked><span>intern</span></label>
+              <label><input type="radio" name="aud"><span>kunde</span></label>
+            </div>
+          </label>
+          <label class="field"><span>Fällig</span><input class="s" type="date"></label>
+        </div>
+        <div class="foot">
+          <label class="link" for="newtask">Abbrechen</label>
+          <button class="btn-2" type="button">Aus Vorlage</button>
+          <button class="btn" type="button">Anlegen</button>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <input class="vswitch" type="checkbox" id="newnote">
+      <header><h2>Notizen</h2><span class="n">3</span><label class="link more" for="newnote">Notiz schreiben ›</label></header>
+      <div class="composer form">
+        <textarea placeholder="Was besprochen wurde"></textarea>
+        <div class="foot">
+          <label class="link" for="newnote">Abbrechen</label>
+          <button class="btn" type="button">Sichern</button>
+        </div>
+      </div>
+      <div class="log">
+        <div class="e"><span class="t">gestern 16:40</span><span class="c sys">Angebot angenommen · 3.800 €</span></div>
+        <div class="e"><span class="t">17.08. 14:20</span><span class="c">Telefonat: 65 Gäste, Feier bis 2 Uhr, Brunch gewünscht. Getting Ready im Landhotel, Nina übernimmt. <span class="by">— Christian</span></span></div>
+        <div class="e"><span class="t">16.08. 11:00</span><span class="c sys">Angebot v2 gesendet · 3.800 €</span></div>
+        <div class="e"><span class="t">15.08. 09:05</span><span class="c sys">Anfrage angelegt · Website-Formular</span></div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="rail">
+    <h2>Woche um den 5. September</h2>
+    <div class="grp">
+      <div class="d"><span class="dd">Di 1.9.</span><span class="ev">Portrait Sundermann</span></div>
+      <div class="d none"><span class="dd">Mi 2.9.</span><span class="ev">—</span></div>
+      <div class="d"><span class="dd">Do 3.9.</span><span class="ev">After-Wedding Meier</span></div>
+      <div class="d"><span class="dd">Fr 4.9.</span><span class="ev">Nina · Urlaub</span></div>
+      <div class="d set"><span class="dd">Sa 5.9.</span><span class="ev">2 Termine · bestätigt</span></div>
+      <div class="d set"><span class="dd">So 6.9.</span><span class="ev">Brunch · angefragt</span></div>
+    </div>
+
+    <h2>Besetzung</h2>
+    <div class="grp">
+      <div class="p"><span class="av">CB</span>Christian<span class="st">2 Termine</span></div>
+      <div class="p"><span class="av">NS</span>Nina<span class="st">2 Termine</span></div>
+    </div>
+
+    <h2>Zahlplan</h2>
+    <div class="grp">
+      <div class="k"><span>1. Rate</span><span>1.200 € bei Vertrag</span></div>
+      <div class="k"><span>2. Rate</span><span>1.300 € bis 05.08.</span></div>
+      <div class="k"><span>3. Rate</span><span>1.300 € nach Lieferung</span></div>
+    </div>
+
+    <h2>Vorlagen</h2>
+    <div class="grp">
+      <div class="k"><span>Vertrag</span><a class="link" href="#">Hochzeit 2026</a></div>
+      <div class="k"><span>Fragebogen</span><a class="link" href="#">Hochzeit · 18 Fragen</a></div>
+      <div class="k"><span>Aufgaben</span><a class="link" href="#">Hochzeit gebucht</a></div>
+    </div>
+  </aside>
+</div>
+
+</body>
+</html>

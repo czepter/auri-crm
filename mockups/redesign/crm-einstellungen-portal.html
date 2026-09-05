@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Einstellungen · Portal — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="einstellungen">
+
+<!-- Zwei Sorten, deshalb zwei Gruppen: die vier Freigaben (portal_*_enabled)
+     sind Vorgaben für neue Kontakte und stehen am Kontakt übersteuerbar
+     (admin-kontakt-portal.html); Wartung, Begrüßung und Rechtslinks gelten für
+     das ganze Portal und haben keine Ausnahme.
+
+     Neben jeder Vorgabe steht, wie viele Kontakte heute abweichen — sonst
+     ändert man einen Startwert in der Annahme, damit alle zu treffen.
+
+     Drei Begrüßungen statt einer, weil die Startseite drei Zustände hat —
+     Anfrage, ein Auftrag, viele Aufträge. Ein Text für alle drei begrüßt
+     zwangsläufig zwei davon falsch.
+
+     Rechts steht, was der Kunde davon sieht: die Vorschau ist die Prüfung,
+     ob eine abgeschaltete Freigabe eine leere Seite hinterlässt. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="main">
+
+    <div class="hrow">
+      <div>
+        <div class="kick">Einstellungen</div>
+        <h1>Portal</h1>
+      </div>
+      <a class="link" href="portal-start.html" style="margin-left:auto">Als Kunde ansehen</a>
+      <a class="btn" href="#">Sichern</a>
+    </div>
+
+    <div style="display:flex; align-items:stretch; flex:1; min-height:0; margin-top:14px">
+
+      <nav class="subnav">
+        <div class="lab">Persönlich</div>
+        <a href="crm-einstellungen-person.html">Konto</a>
+        <a href="#">Benachrichtigungen</a>
+        <div class="lab">Studio</div>
+        <a href="crm-einstellungen-studio.html">Stammdaten</a>
+        <a href="#">Nummernkreise</a>
+        <a href="#">Zahlungen</a>
+        <a href="#">Verfügbarkeit</a>
+        <a href="#">E-Mail</a>
+        <div class="lab">Kunden</div>
+        <a class="on" href="crm-einstellungen-portal.html">Portal</a>
+        <a href="crm-einstellungen-galerie.html">Galerie</a>
+        <a href="#">Aufgabenvorlagen</a>
+        <a href="#">Fragebögen</a>
+      </nav>
+
+      <div class="pane-set">
+
+        <h2>Vorgabe für neue Kontakte</h2>
+        <div class="setting">
+          <span class="t">Angebot annehmen</span>
+          <span class="v mut">2 Kontakte abweichend</span>
+          <span class="sw on"></span>
+        </div>
+        <div class="setting">
+          <span class="t">Vertrag unterschreiben</span>
+          <span class="v mut">alle wie Vorgabe</span>
+          <span class="sw on"></span>
+        </div>
+        <div class="setting">
+          <span class="t">Nachrichten schreiben</span>
+          <span class="v mut">1 Kontakt abweichend</span>
+          <span class="sw on"></span>
+        </div>
+        <div class="setting">
+          <span class="t">Zahlungsstand sehen</span>
+          <span class="v mut">4 Kontakte abweichend</span>
+          <span class="sw"></span>
+        </div>
+        <div class="setting">
+          <span class="t">Gültigkeit eines Zugangslinks</span>
+          <span class="v">14 Tage</span>
+        </div>
+        <div class="setting">
+          <span class="t">Abweichungen ansehen</span>
+          <span class="v mut">7 von 31 Kontakten</span>
+          <a class="link" href="crm-kontakte.html">Kontakte</a>
+        </div>
+
+        <h2>Gilt für das ganze Portal</h2>
+        <div class="setting">
+          <span class="t">Portal geschlossen</span>
+          <span class="sw"></span>
+        </div>
+        <div class="setting">
+          <span class="t">Hinweistext bei geschlossenem Portal</span>
+          <span class="v mut">Wir sind kurz im Umbau, ab Montag wieder da.</span>
+          <a class="link" href="#">Ändern</a>
+        </div>
+
+        <h2>Begrüßung auf der Startseite</h2>
+        <form class="form">
+          <div class="fr">
+            <label for="g1">Anfrage</label>
+            <div class="fields"><input id="g1" style="width:100%" value="Schön, dass ihr da seid — hier entsteht alles zu eurem Termin."></div>
+          </div>
+          <div class="fr">
+            <label for="g2">Ein Auftrag</label>
+            <div class="fields"><input id="g2" style="width:100%" value="Alles zu eurem Shooting an einem Ort."></div>
+          </div>
+          <div class="fr">
+            <label for="g3">Mehrere Aufträge</label>
+            <div class="fields"><input id="g3" style="width:100%" value="Alle Aufträge und Galerien auf einen Blick."></div>
+          </div>
+        </form>
+
+        <h2>Rechtliches</h2>
+        <form class="form">
+          <div class="fr">
+            <label for="agb">AGB</label>
+            <div class="fields"><input id="agb" class="m" value="atelier-nordlicht.de/agb"></div>
+          </div>
+          <div class="fr">
+            <label for="ds">Datenschutz</label>
+            <div class="fields"><input id="ds" class="m" value="atelier-nordlicht.de/datenschutz"></div>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

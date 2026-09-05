@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Kalender — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="kalender">
+
+<!-- Der bisherige "Kalender" war ein chronologisches Verzeichnis, und das
+     dominanteste Objekt darauf war die ICS-Adresse samt Bearer-Token in
+     Klartext (docs/ux-audit.md). Beides ist hier anders: ein Monatsraster,
+     und das Abonnement steht in den Einstellungen, wo Zugangsdaten hingehören.
+
+     Ein freier Samstag ist die wichtigste Information im Raster — deshalb
+     tragen belegte Tage Einträge und freie Wochenenden nichts als ihre Zahl.
+     Abwesenheiten und Schließzeiten stehen als eigene, gedämpfte Zeile im Tag,
+     weil sie erklären, warum ein Tag nicht frei ist. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="main">
+
+    <input class="vswitch" type="radio" name="view" id="view-board" checked>
+    <input class="vswitch" type="radio" name="view" id="view-liste">
+
+    <div class="hrow">
+      <div>
+        <div class="kick">August 2026 · 6 Termine</div>
+        <h1>Kalender</h1>
+      </div>
+      <div class="seg" style="margin-left:auto">
+        <label for="view-board">Monat</label>
+        <label for="view-liste">Liste</label>
+      </div>
+      <a class="link" href="#">Heute</a>
+      <a class="btn" href="#">Termin anlegen</a>
+    </div>
+
+    <div class="view board" style="padding:20px 32px 28px">
+      <div class="cal">
+        <div class="dow">Mo</div><div class="dow">Di</div><div class="dow">Mi</div><div class="dow">Do</div>
+        <div class="dow">Fr</div><div class="dow">Sa</div><div class="dow">So</div>
+
+        <div class="day pale"><div class="n">27</div></div>
+        <div class="day pale"><div class="n">28</div></div>
+        <div class="day pale"><div class="n">29</div></div>
+        <div class="day pale"><div class="n">30</div></div>
+        <div class="day pale"><div class="n">31</div></div>
+        <div class="day"><div class="n">1</div></div>
+        <div class="day off"><div class="n">2</div></div>
+
+        <div class="day"><div class="n">3</div></div>
+        <div class="day"><div class="n">4</div>
+          <a class="e" href="crm-projekt.html"><span class="tm">11:00</span> Portrait Sundermann <span class="who">· Nina</span></a>
+        </div>
+        <div class="day"><div class="n">5</div></div>
+        <div class="day"><div class="n">6</div></div>
+        <div class="day"><div class="n">7</div>
+          <a class="e" href="crm-projekt.html"><span class="tm">14:00</span> Kennenlernen Petersen <span class="who">· Christian</span></a>
+        </div>
+        <div class="day"><div class="n">8</div>
+          <a class="e" href="crm-projekt.html"><span class="tm">10:00</span> Hochzeit Ahrens &amp; Kroll <span class="who">· Christian, Nina</span></a>
+        </div>
+        <div class="day off"><div class="n">9</div></div>
+
+        <div class="day"><div class="n">10</div></div>
+        <div class="day"><div class="n">11</div></div>
+        <div class="day"><div class="n">12</div></div>
+        <div class="day"><div class="n">13</div></div>
+        <div class="day"><div class="n">14</div>
+          <a class="e" href="crm-projekt.html"><span class="tm">11:00</span> Familie Osterhoff <span class="who">· Nina</span></a>
+        </div>
+        <div class="day"><div class="n">15</div>
+          <a class="e" href="crm-projekt.html"><span class="tm">09:00</span> Hochzeit Lang &amp; Voss <span class="who">· Christian, Nina</span></a>
+        </div>
+        <div class="day off"><div class="n">16</div></div>
+
+        <div class="day today"><div class="n">17</div></div>
+        <div class="day"><div class="n">18</div></div>
+        <div class="day"><div class="n">19</div></div>
+        <div class="day"><div class="n">20</div>
+          <span class="e away"><span class="tm">ganztägig</span> Nina · Urlaub</span>
+        </div>
+        <div class="day"><div class="n">21</div>
+          <span class="e away"><span class="tm">ganztägig</span> Nina · Urlaub</span>
+        </div>
+        <div class="day"><div class="n">22</div>
+          <a class="e hold" href="crm-anfrage.html"><span class="tm">angefragt</span> Vehse &amp; Rieck</a>
+        </div>
+        <div class="day off"><div class="n">23</div></div>
+
+        <div class="day"><div class="n">24</div></div>
+        <div class="day"><div class="n">25</div></div>
+        <div class="day"><div class="n">26</div>
+          <a class="e" href="crm-projekt.html"><span class="tm">08:00</span> Hotel Elbblick <span class="who">· Christian</span></a>
+        </div>
+        <div class="day"><div class="n">27</div>
+          <a class="e" href="crm-projekt.html"><span class="tm">06:30</span> Elbblick · Außen <span class="who">· Christian</span></a>
+        </div>
+        <div class="day"><div class="n">28</div></div>
+        <div class="day"><div class="n">29</div>
+          <a class="e" href="crm-projekt.html"><span class="tm">13:00</span> Hochzeit Hoffmann <span class="who">· Christian, Nina</span></a>
+        </div>
+        <div class="day off"><div class="n">30</div></div>
+
+        <div class="day"><div class="n">31</div></div>
+        <div class="day pale"><div class="n">1</div></div>
+        <div class="day pale"><div class="n">2</div></div>
+        <div class="day pale"><div class="n">3</div>
+          <span class="e away"><span class="tm">ganztägig</span> Studio geschlossen</span>
+        </div>
+        <div class="day pale"><div class="n">4</div>
+          <span class="e away"><span class="tm">ganztägig</span> Studio geschlossen</span>
+        </div>
+        <div class="day pale"><div class="n">5</div>
+          <a class="e" href="crm-anfrage.html"><span class="tm">angefragt</span> Brandt &amp; Erdmann</a>
+        </div>
+        <div class="day pale off"><div class="n">6</div></div>
+      </div>
+    </div>
+
+    <div class="view liste">
+      <table style="margin-top:20px">
+        <thead>
+          <tr>
+            <th style="width:18%">Tag</th>
+            <th style="width:30%">Termin</th>
+            <th style="width:22%">Ort</th>
+            <th style="width:18%">Besetzung</th>
+            <th class="r" style="width:12%">Stand</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="grp" colspan="5">Diese Woche</td></tr>
+          <tr><td class="nm">Do, 20.08.</td><td class="mu">Nina · Urlaub</td><td class="mu">—</td><td class="mu">—</td><td class="r mu">Abwesenheit</td></tr>
+          <tr><td class="nm">Fr, 21.08.</td><td class="mu">Nina · Urlaub</td><td class="mu">—</td><td class="mu">—</td><td class="r mu">Abwesenheit</td></tr>
+          <tr><td class="nm">Sa, 22.08.</td><td>Vehse &amp; Rieck</td><td class="mu">Schloss Reinbek</td><td class="mu">—</td><td class="r"><span class="w">angefragt</span></td></tr>
+
+          <tr><td class="grp" colspan="5">Nächste Woche</td></tr>
+          <tr><td class="nm">Mi, 26.08. · 08:00</td><td>Hotel Elbblick — Zimmer und Restaurant</td><td class="mu">Hotel Elbblick, Hamburg</td><td class="mu">Christian</td><td class="r mu">gebucht</td></tr>
+          <tr><td class="nm">Do, 27.08. · 06:30</td><td>Hotel Elbblick — Außenaufnahmen</td><td class="mu">Elbterrasse, Hamburg</td><td class="mu">Christian</td><td class="r mu">gebucht</td></tr>
+          <tr><td class="nm">Sa, 29.08. · 13:00</td><td>Hochzeit Hoffmann &amp; Behr</td><td class="mu">Gut Wulksfelde</td><td class="mu">Christian, Nina</td><td class="r mu">gebucht</td></tr>
+
+          <tr><td class="grp" colspan="5">September</td></tr>
+          <tr><td class="nm">Do, 03.09.</td><td class="mu">Studio geschlossen</td><td class="mu">—</td><td class="mu">—</td><td class="r mu">Schließzeit</td></tr>
+          <tr><td class="nm">Sa, 05.09.</td><td>Brandt &amp; Erdmann</td><td class="mu">Hof Eggers, Winsen</td><td class="mu">Christian, Nina</td><td class="r"><span class="w">angefragt</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

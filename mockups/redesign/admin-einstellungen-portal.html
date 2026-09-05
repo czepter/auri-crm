@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="admin">
+<head>
+<meta charset="utf-8">
+<title>Einstellungen · Portal — Nordlicht</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/admin-extra.css">
+<script src="../_shared/layout.js"></script>
+</head>
+<body data-nav="einst" data-depth="2">
+
+<!-- #228. Die Seite gibt es live schon (T-08): Wartung, ein Willkommenstext,
+     zwei Rechtslinks, vier Freigaben. Sprint 25 baut sieben Portalseiten, deren
+     Verhalten dort nicht vorkommt — dieser Entwurf zeigt den Pane mit den
+     fehlenden Blöcken drin.
+
+     Drei Begrüßungen statt einer, weil die Startseite drei Zustände hat
+     (#222 Anfrage, #220 eine Buchung, #221 Location mit vielen). Ein Text für
+     alle drei begrüßt zwangsläufig zwei davon falsch.
+
+     Alles hier ist Studio-Standard. Begrüßung, Freigaben, Nachrichten und
+     Galerie-Vorgaben sind je Kontakt übersteuerbar (admin-kontakt-portal.html);
+     Wartung, Datenschutz-Anfragen, Kontaktzeile und Rechtslinks nicht — die
+     gelten für das ganze Portal oder für niemanden.
+
+     Galerie-Vorgaben sind Startwerte, keine laufende Steuerung: die Gates
+     stehen je Galerie in `galleries` und bleiben dort übersteuerbar. Ein
+     geänderter Standard darf keine laufende Galerie umschalten.
+
+     Kein Löschen-, Sperr- oder Zugangsentzug hier — das bleibt A-04 im Projekt
+     und am Kontakt. Dieser Pane stellt ein, was das Portal kann, nicht wer
+     hineindarf. -->
+
+<div class="app">
+  <div data-sidebar></div>
+
+  <main class="main">
+    <div class="hrow">
+      <div>
+        <div class="kick">Einstellungen</div>
+        <h1>Portal</h1>
+      </div>
+      <span class="chip now">Ungespeicherte Änderungen</span>
+      <a class="txtbtn" href="portal-start.html" style="margin-left:auto">
+        <svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+        Vorschau als Kunde
+      </a>
+      <a class="btn" href="#" style="margin-left:var(--s4)"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>Speichern</a>
+    </div>
+
+    <div style="display:flex; gap:var(--s6); margin-top:var(--s5); align-items:flex-start">
+
+      <nav style="width:196px; flex:none; display:flex; flex-direction:column; gap:2px">
+        <a class="nav" href="../admin/14-einstellungen.html">Studio-Profil</a>
+        <a class="nav" href="#" style="pointer-events:none; opacity:.5">Nummernkreise</a>
+        <a class="nav" href="#" style="pointer-events:none; opacity:.5">Verfügbarkeit</a>
+        <a class="nav" href="#" style="pointer-events:none; opacity:.5">Zahlungen</a>
+        <a class="nav" href="#" style="pointer-events:none; opacity:.5">Aufgabenvorlagen</a>
+        <a class="nav" href="../admin/13-fragebogen-builder.html">Fragebogen-Vorlagen</a>
+        <a class="nav on" href="admin-einstellungen-portal.html">Portal</a>
+        <a class="nav" href="#" style="pointer-events:none; opacity:.5">Benachrichtigungen</a>
+      </nav>
+
+      <div style="flex:1; min-width:0; max-width:620px">
+
+        <div class="dsec" style="margin-top:0">
+          <div class="dlab">Wartung</div>
+          <div class="grp">
+            <div style="display:flex; align-items:center; gap:10px">
+              <input type="checkbox" id="po-wartung">
+              <label for="po-wartung" style="font:400 13px/1.4 var(--font)">Portal geschlossen</label>
+            </div>
+            <span class="hint" style="display:block; margin-top:var(--s3)">Gilt für alle Kunden. Entzieht keinen Zugang.</span>
+          </div>
+          <div class="grp">
+            <div class="fld">
+              <label for="po-wartungstext">Hinweistext <em>optional</em></label>
+              <textarea class="inp" id="po-wartungstext" rows="2">Wir spielen gerade neue Bilder ein. In einer Stunde sind wir zurück.</textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">Begrüßung · Standard</div>
+          <div class="grp">
+            <div class="fld">
+              <label for="po-gruss-anfrage">Anfrage, noch keine Buchung</label>
+              <textarea class="inp" id="po-gruss-anfrage" rows="2">Schön, dass ihr da seid. Hier seht ihr euren Stand — sobald wir den Termin halten, wird daraus euer Projekt.</textarea>
+            </div>
+          </div>
+          <div class="grp">
+            <div class="fld">
+              <label for="po-gruss-buchung">Eine Buchung</label>
+              <textarea class="inp" id="po-gruss-buchung" rows="2">Willkommen, {vorname}. Alles zu eurem {termin} findet ihr hier.</textarea>
+            </div>
+          </div>
+          <div class="grp">
+            <div class="fld">
+              <label for="po-gruss-viele">Mehrere Buchungen</label>
+              <textarea class="inp" id="po-gruss-viele" rows="2">Willkommen zurück. {anzahl} Termine, die offenen Punkte stehen oben.</textarea>
+            </div>
+            <span class="hint" style="display:block; margin-top:var(--s3)">Felder: {vorname}, {termin}, {anzahl}, {studio}. Je Kontakt übersteuerbar.</span>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">Freigaben · Standard</div>
+          <div class="grp tight">
+            <div style="display:flex; align-items:center; gap:10px">
+              <input type="checkbox" id="po-angebot" checked>
+              <label for="po-angebot" style="font:400 13px/1.4 var(--font)">Angebote annehmen</label>
+            </div>
+          </div>
+          <div class="grp tight">
+            <div style="display:flex; align-items:center; gap:10px">
+              <input type="checkbox" id="po-vertrag" checked>
+              <label for="po-vertrag" style="font:400 13px/1.4 var(--font)">Verträge unterschreiben</label>
+            </div>
+          </div>
+          <div class="grp tight">
+            <div style="display:flex; align-items:center; gap:10px">
+              <input type="checkbox" id="po-zahlung" checked>
+              <label for="po-zahlung" style="font:400 13px/1.4 var(--font)">Zahlungsstand zeigen</label>
+            </div>
+          </div>
+          <div class="grp">
+            <div style="display:flex; align-items:center; gap:10px">
+              <input type="checkbox" id="po-daten">
+              <label for="po-daten" style="font:400 13px/1.4 var(--font)">Kontaktdaten selbst ändern</label>
+            </div>
+            <span class="hint" style="display:block; margin-top:var(--s3)">E-Mail-Wechsel läuft immer über eine Bestätigung an die neue Adresse. Je Kontakt übersteuerbar.</span>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">Galerie-Vorgaben · Standard</div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="po-gate">Zugang</label>
+                <select class="inp" id="po-gate">
+                  <option>Nur über den Link</option>
+                  <option selected>Passwort</option>
+                  <option>E-Mail-Bestätigung</option>
+                </select>
+              </div>
+              <div class="fld">
+                <label for="po-ablauf">Gültig für</label>
+                <select class="inp" id="po-ablauf">
+                  <option>Unbegrenzt</option>
+                  <option>90 Tage</option>
+                  <option selected>180 Tage</option>
+                  <option>365 Tage</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="grp">
+            <div style="display:flex; align-items:center; gap:10px">
+              <input type="checkbox" id="po-restzahlung" checked>
+              <label for="po-restzahlung" style="font:400 13px/1.4 var(--font)">Erst nach Restzahlung sichtbar</label>
+            </div>
+          </div>
+          <div class="grp">
+            <div style="display:flex; align-items:center; gap:10px">
+              <input type="checkbox" id="po-download" checked>
+              <label for="po-download" style="font:400 13px/1.4 var(--font)">Download</label>
+            </div>
+            <div style="display:flex; gap:var(--s5); margin-top:var(--s3); padding-left:26px">
+              <label style="display:flex; align-items:center; gap:10px; font:400 13px/1.4 var(--font)">
+                <input type="checkbox" checked> Web, 2048 px
+              </label>
+              <label style="display:flex; align-items:center; gap:10px; font:400 13px/1.4 var(--font)">
+                <input type="checkbox" checked> Volle Auflösung
+              </label>
+            </div>
+            <span class="hint" style="display:block; margin-top:var(--s3)">Download-PIN steht je Galerie.</span>
+          </div>
+          <div class="grp tight">
+            <div style="display:flex; align-items:center; gap:10px">
+              <input type="checkbox" id="po-listen" checked>
+              <label for="po-listen" style="font:400 13px/1.4 var(--font)">Listen anlegen</label>
+            </div>
+          </div>
+          <div class="grp">
+            <div style="display:flex; align-items:center; gap:10px">
+              <input type="checkbox" id="po-kommentare" checked>
+              <label for="po-kommentare" style="font:400 13px/1.4 var(--font)">Kommentare am Bild</label>
+            </div>
+            <span class="hint" style="display:block; margin-top:var(--s3)">Startwerte für neue Galerien. Je Kontakt und je Galerie übersteuerbar, laufende bleiben stehen.</span>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">Nachrichten · Standard</div>
+          <div class="grp">
+            <div style="display:flex; flex-direction:column; gap:var(--s3)">
+              <label style="display:flex; align-items:center; gap:10px; font:400 13px/1.4 var(--font)">
+                <input type="radio" name="po-msg"> Aus
+              </label>
+              <label style="display:flex; align-items:center; gap:10px; font:400 13px/1.4 var(--font)">
+                <input type="radio" name="po-msg"> Nur zu einer Buchung
+              </label>
+              <label style="display:flex; align-items:center; gap:10px; font:400 13px/1.4 var(--font)">
+                <input type="radio" name="po-msg" checked> Auch ohne Buchung
+              </label>
+            </div>
+            <span class="hint" style="display:block; margin-top:var(--s3)">Ohne Buchung landet der Thread im Posteingang, ohne Projekt. Je Kontakt übersteuerbar.</span>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">Datenschutz-Anfragen</div>
+          <div class="grp tight">
+            <div style="display:flex; align-items:center; gap:10px">
+              <input type="checkbox" id="po-kopie" checked>
+              <label for="po-kopie" style="font:400 13px/1.4 var(--font)">Datenkopie anfordern</label>
+            </div>
+          </div>
+          <div class="grp">
+            <div style="display:flex; align-items:center; gap:10px">
+              <input type="checkbox" id="po-loeschung" checked>
+              <label for="po-loeschung" style="font:400 13px/1.4 var(--font)">Löschung anfragen</label>
+            </div>
+          </div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="po-empfaenger">Landet bei</label>
+                <select class="inp" id="po-empfaenger">
+                  <option selected>Christian Nordlicht</option>
+                  <option>Marie Kessler</option>
+                </select>
+              </div>
+              <div class="fld">
+                <label for="po-frist">Frist</label>
+                <select class="inp" id="po-frist">
+                  <option selected>30 Tage</option>
+                  <option>14 Tage</option>
+                  <option>7 Tage</option>
+                </select>
+              </div>
+            </div>
+            <span class="hint" style="display:block; margin-top:var(--s3)">Anfrage, keine automatische Löschung — Verträge und Rechnungen bleiben zehn Jahre.</span>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">Kontakt im Portal</div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="po-tel">Telefon</label>
+                <input class="inp num" id="po-tel" type="text" value="+49 40 987 65 43">
+              </div>
+              <div class="fld">
+                <label for="po-mail">E-Mail</label>
+                <input class="inp" id="po-mail" type="text" value="hallo@atelier-nordlicht.de">
+              </div>
+            </div>
+          </div>
+          <div class="grp">
+            <div class="fld" style="max-width:260px">
+              <label for="po-antwort">Antwortzeit</label>
+              <select class="inp" id="po-antwort">
+                <option>Keine Angabe</option>
+                <option selected>Innerhalb eines Werktags</option>
+                <option>Innerhalb von zwei Werktagen</option>
+              </select>
+            </div>
+            <span class="hint" style="display:block; margin-top:var(--s3)">Steht im Fuß jeder Portalseite. Logo, Farbe und Name kommen aus Studio-Profil.</span>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">Rechtliches</div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="po-datenschutz">Datenschutz-URL <em>optional</em></label>
+                <input class="inp" id="po-datenschutz" type="text" value="https://atelier-nordlicht.de/datenschutz">
+              </div>
+              <div class="fld">
+                <label for="po-agb">AGB-URL <em>optional</em></label>
+                <input class="inp" id="po-agb" type="text" value="https://atelier-nordlicht.de/agb">
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

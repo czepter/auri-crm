@@ -1,0 +1,11 @@
+@import "./app.css";
+@import "./admin-extra.css";
+@import "./document-editor.css";
+@import "./crm.css";
+
+/*
+ * The admin surface is the clickdummy's own theme — tokens.css declares its
+ * values under :root with no override needed. The portal overrides the same
+ * tokens in the other direction in P2 via [data-theme="portal"], which is why
+ * the primitives themselves never fork.
+ */

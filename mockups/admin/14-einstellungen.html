@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="admin">
+<head>
+<meta charset="utf-8">
+<title>14 · Einstellungen — Nordlicht</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<link rel="stylesheet" href="../_shared/admin-extra.css">
+<script src="../_shared/layout.js"></script>
+</head>
+<body data-nav="einst" data-screen="14" data-depth="2">
+
+<!-- Section shell for T-01, holding T-02 (Studio-Profil) and T-03 (Umsatzsteuer).
+     The left column reuses .nav verbatim from the app sidebar — same row, same hover,
+     same .on state — so a second-level navigation never reads as a second design
+     language. The groups still to come — Nummernkreise (T-04), Dokumente (T-05),
+     E-Mail (T-06), Zahlungen (T-07), Portal (T-08), Verfügbarkeit (T-09),
+     Aufgabenvorlagen (T-14), Benachrichtigungen (T-11), Allgemein (T-13) — are
+     drawn disabled with a .chip.next "bald", the same "not yet" chip screen 4's
+     Vertrag tab already uses for a superseded quote, rather than invented
+     "coming soon" chrome.
+
+     Bankverbindung sits in Studio-Profil, not under its own tab: T-02 is one form
+     with three fieldsets, because the legal entity, the brand and the bank are
+     edited together and rendered together. So the second tab is Umsatzsteuer and
+     nothing else — naming it "Zahlungsdaten" would point at data one pane over.
+
+     DIRTY STATE: no JS in a static file can toggle a class, so both states of the
+     save affordance are shown as two panes. Studio-Profil renders the dirty state —
+     .chip.now next to a full-opacity .btn — because a field has changed. Umsatzsteuer
+     renders the clean state below it — the same .btn, dimmed and inert, no chip —
+     because nothing has. One component, two opacities, is the whole affordance. -->
+
+<div class="app">
+  <div data-sidebar></div>
+
+  <main class="main">
+    <div class="hrow">
+      <div>
+        <div class="kick">Einstellungen</div>
+        <h1>Studio-Profil</h1>
+      </div>
+      <span class="chip now">Ungespeicherte Änderungen</span>
+      <a class="btn" href="#"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>Speichern</a>
+    </div>
+
+    <div style="display:flex; gap:var(--s6); margin-top:var(--s5); align-items:flex-start">
+
+      <nav style="width:196px; flex:none; display:flex; flex-direction:column; gap:2px">
+        <a class="nav on" href="14-einstellungen.html">Studio-Profil</a>
+        <a class="nav" href="#vat">Umsatzsteuer</a>
+        <a class="nav" href="#" style="pointer-events:none; opacity:.5">Nummernkreise<span class="chip next" style="margin-left:auto">bald</span></a>
+        <a class="nav" href="#" style="pointer-events:none; opacity:.5">Dokumente<span class="chip next" style="margin-left:auto">bald</span></a>
+        <a class="nav" href="#" style="pointer-events:none; opacity:.5">E-Mail<span class="chip next" style="margin-left:auto">bald</span></a>
+        <a class="nav" href="#" style="pointer-events:none; opacity:.5">Zahlungen<span class="chip next" style="margin-left:auto">bald</span></a>
+        <a class="nav" href="#" style="pointer-events:none; opacity:.5">Portal<span class="chip next" style="margin-left:auto">bald</span></a>
+        <a class="nav" href="#" style="pointer-events:none; opacity:.5">Verfügbarkeit<span class="chip next" style="margin-left:auto">bald</span></a>
+        <a class="nav" href="#" style="pointer-events:none; opacity:.5">Aufgabenvorlagen<span class="chip next" style="margin-left:auto">bald</span></a>
+        <a class="nav" href="#" style="pointer-events:none; opacity:.5">Benachrichtigungen<span class="chip next" style="margin-left:auto">bald</span></a>
+        <a class="nav" href="#" style="pointer-events:none; opacity:.5">Allgemein<span class="chip next" style="margin-left:auto">bald</span></a>
+      </nav>
+
+      <div style="flex:1; min-width:0; max-width:620px">
+
+        <div class="dsec" style="margin-top:0">
+          <div class="dlab">Rechtliche Einheit</div>
+          <div class="grp">
+            <div class="fld wide">
+              <label for="p-firma">Firmierung</label>
+              <input class="inp" id="p-firma" type="text" value="Atelier Nordlicht Fotografie GmbH">
+            </div>
+          </div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="p-rechtsform">Rechtsform</label>
+                <select class="inp" id="p-rechtsform">
+                  <option>Einzelunternehmen</option>
+                  <option selected>GmbH</option>
+                  <option>UG (haftungsbeschränkt)</option>
+                  <option>GbR</option>
+                </select>
+              </div>
+              <div class="fld">
+                <label for="p-vertretung">Vertretungsberechtigte Person</label>
+                <input class="inp" id="p-vertretung" type="text" value="Christian Nordlicht">
+              </div>
+            </div>
+          </div>
+          <div class="grp">
+            <div class="fld wide">
+              <label for="p-strasse">Straße &amp; Hausnummer</label>
+              <input class="inp" id="p-strasse" type="text" value="Elbchaussee 112">
+            </div>
+          </div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="p-plz">Postleitzahl</label>
+                <input class="inp num" id="p-plz" type="text" value="22763">
+              </div>
+              <div class="fld">
+                <label for="p-stadt">Stadt</label>
+                <input class="inp" id="p-stadt" type="text" value="Hamburg">
+              </div>
+            </div>
+          </div>
+          <div class="grp">
+            <div class="fld" style="max-width:260px">
+              <label for="p-land">Land</label>
+              <select class="inp" id="p-land">
+                <option selected>Deutschland</option>
+                <option>Österreich</option>
+                <option>Schweiz</option>
+              </select>
+            </div>
+          </div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="p-steuernr">Steuernummer</label>
+                <input class="inp num" id="p-steuernr" type="text" value="22/123/45678">
+              </div>
+              <div class="fld">
+                <label for="p-ustid">USt-IdNr.</label>
+                <input class="inp num" id="p-ustid" type="text" value="DE284957312">
+              </div>
+            </div>
+            <span class="hint" style="display:block; margin-top:var(--s3)">Mindestens eines von beiden — ein Beleg ohne Steuernummer und ohne USt-IdNr. ist nicht abrechenbar.</span>
+          </div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="p-hrb">Handelsregister-Nummer <em>optional</em></label>
+                <input class="inp num" id="p-hrb" type="text" value="HRB 142 887">
+              </div>
+              <div class="fld">
+                <label for="p-gericht">Registergericht <em>optional</em></label>
+                <input class="inp" id="p-gericht" type="text" value="Amtsgericht Hamburg">
+              </div>
+            </div>
+            <span class="hint" style="display:block; margin-top:var(--s3)">Nur bei eingetragenen Rechtsformen. Einzelunternehmen und GbR lassen beides leer.</span>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">Marke</div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="p-anzeigename">Anzeigename</label>
+                <input class="inp" id="p-anzeigename" type="text" value="Atelier Nordlicht">
+              </div>
+              <div class="fld">
+                <label for="p-web">Website</label>
+                <input class="inp" id="p-web" type="text" value="https://atelier-nordlicht.de">
+              </div>
+            </div>
+          </div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="p-logo">Logo</label>
+                <div style="display:flex; align-items:center; gap:var(--s3)">
+                  <div class="galcover empty" style="width:40px; height:40px">Logo</div>
+                  <input class="inp" id="p-logo" type="file" accept="image/png,image/svg+xml" style="flex:1">
+                </div>
+                <span class="hint">PNG oder SVG, transparenter Hintergrund empfohlen.</span>
+              </div>
+              <div class="fld">
+                <label for="p-akzent">Akzentfarbe</label>
+                <div style="display:flex; align-items:center; gap:10px">
+                  <span style="display:inline-block; width:32px; height:32px; border-radius:var(--r-sm); border:1px solid var(--line); background:#B44E22; flex:none"></span>
+                  <input class="inp num" id="p-akzent" type="text" value="#B44E22">
+                </div>
+                <span class="hint">Erscheint auf Angeboten, Verträgen und im Portal.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dsec">
+          <div class="dlab">Bankverbindung</div>
+          <div class="grp">
+            <div class="fld wide">
+              <label for="p-kontoinhaber">Kontoinhaber</label>
+              <input class="inp" id="p-kontoinhaber" type="text" value="Atelier Nordlicht Fotografie GmbH">
+            </div>
+          </div>
+          <div class="grp">
+            <div class="two">
+              <div class="fld">
+                <label for="p-iban">IBAN</label>
+                <input class="inp num" id="p-iban" type="text" value="DE89 3704 0044 0532 0130 00">
+              </div>
+              <div class="fld">
+                <label for="p-bic">BIC</label>
+                <input class="inp num" id="p-bic" type="text" value="COBADEFFXXX">
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- second state: Umsatzsteuer selected in the same shell, save clean -->
+    <div class="variant" id="vat">
+      <span class="vlab">Variante · Umsatzsteuer aktiv, keine ungespeicherten Änderungen</span>
+
+      <div class="hrow">
+        <div>
+          <div class="kick">Einstellungen</div>
+          <h1>Umsatzsteuer</h1>
+        </div>
+        <a class="btn" href="#" style="opacity:.4; pointer-events:none"><svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>Speichern</a>
+      </div>
+
+      <div style="display:flex; gap:var(--s6); margin-top:var(--s5); align-items:flex-start">
+
+        <nav style="width:196px; flex:none; display:flex; flex-direction:column; gap:2px">
+          <a class="nav" href="14-einstellungen.html">Studio-Profil</a>
+          <a class="nav on" href="#vat">Umsatzsteuer</a>
+          <a class="nav" href="#" style="pointer-events:none; opacity:.5">Nummernkreise<span class="chip next" style="margin-left:auto">bald</span></a>
+          <a class="nav" href="#" style="pointer-events:none; opacity:.5">Dokumente<span class="chip next" style="margin-left:auto">bald</span></a>
+          <a class="nav" href="#" style="pointer-events:none; opacity:.5">E-Mail<span class="chip next" style="margin-left:auto">bald</span></a>
+          <a class="nav" href="#" style="pointer-events:none; opacity:.5">Zahlungen<span class="chip next" style="margin-left:auto">bald</span></a>
+          <a class="nav" href="#" style="pointer-events:none; opacity:.5">Portal<span class="chip next" style="margin-left:auto">bald</span></a>
+          <a class="nav" href="#" style="pointer-events:none; opacity:.5">Verfügbarkeit<span class="chip next" style="margin-left:auto">bald</span></a>
+          <a class="nav" href="#" style="pointer-events:none; opacity:.5">Aufgabenvorlagen<span class="chip next" style="margin-left:auto">bald</span></a>
+          <a class="nav" href="#" style="pointer-events:none; opacity:.5">Benachrichtigungen<span class="chip next" style="margin-left:auto">bald</span></a>
+          <a class="nav" href="#" style="pointer-events:none; opacity:.5">Allgemein<span class="chip next" style="margin-left:auto">bald</span></a>
+        </nav>
+
+        <div style="flex:1; min-width:0; max-width:460px">
+
+          <div class="dsec" style="margin-top:0">
+            <div class="dlab">Modus</div>
+            <div class="grp">
+              <div style="display:flex; flex-direction:column; gap:var(--s3)">
+                <label style="display:flex; align-items:center; gap:10px; font:400 13px/1.4 var(--font)">
+                  <input type="radio" name="vatmode">
+                  Standard — USt. wird auf jedem Beleg ausgewiesen
+                </label>
+                <label style="display:flex; align-items:center; gap:10px; font:400 13px/1.4 var(--font)">
+                  <input type="radio" name="vatmode" checked>
+                  §19 UStG — Kleinunternehmer, keine USt. ausgewiesen
+                </label>
+              </div>
+            </div>
+            <div class="grp">
+              <div class="fld" style="max-width:160px">
+                <label for="v-satz">Steuersatz</label>
+                <input class="inp num" id="v-satz" type="text" value="19">
+                <span class="hint">Prozent, netto.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="dsec">
+            <div class="dlab">Rechnungshinweis</div>
+            <div class="grp">
+              <div class="fld">
+                <label for="v-hinweis">Hinweistext <em>optional</em></label>
+                <textarea class="inp" id="v-hinweis" rows="3">Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.</textarea>
+                <span class="hint">Steht unter der Summe auf Angebot, Vertrag und Rechnung. Wortlaut frei — leer lassen, wenn kein Hinweis nötig ist.</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,41 @@
+/* ------------------------------------------------------------------
+   Form controls, shared by every surface.
+
+   Ported from mockups/_shared/admin-extra.css, but not admin-only: the
+   client signs in on the portal through the same field and the same
+   button, and a second copy of these rules under another name is how two
+   surfaces drift into looking like two products.
+
+   The rest of admin-extra.css stays where it is — a KPI row and a
+   production worklist have no meaning in a client's portal.
+   ------------------------------------------------------------------ */
+
+/* labels sit above their field, never inside it as a placeholder — a
+   filled form must still say what each value is. The caption's own type is
+   ui/label's `field` variant now; what stays here is where it sits. */
+.fgrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--s4) var(--s5); }
+.fld { display:flex; flex-direction:column; gap:6px; min-width:0; }
+.fld.wide { grid-column:1 / -1; }
+
+/* a checkbox and the sentence it switches, on one line — the shape a dozen
+   settings panes each repeated as an inline style before Checkbox became a
+   component. The sentence takes ui/label's `inline` variant, because it is
+   not a caption for the control, it is the thing the control switches. */
+.cbrow { display:flex; align-items:center; gap:10px; }
+
+/* .inp, textarea.inp, select.inp and select.inp.sm used to live here. They are
+   now resources/js/ui/input's inputVariants, carrying the same values: the
+   field became a component so a <select> could stop being an OS-drawn menu,
+   and one control cannot be a class on one surface and a component on the
+   next. .fld.lead .inp went the same way, as the `lead` size.
+   The layout above (.fgrid, .fld, its label) stays CSS — it is the form's
+   shape, not the control's. */
+
+.hint { font:400 11.5px/1.45 var(--font); color:var(--faint); }
+.err { font:400 11.5px/1.45 var(--font); color:var(--late); }
+
+.formfoot { display:flex; align-items:center; gap:var(--s4); margin-top:var(--s5); }
+/* the default button carries .btn's own margin-left:auto; in a form footer the
+   row already puts it where it belongs */
+.formfoot [data-slot="button"][data-variant="default"] { margin-left:0; }
+

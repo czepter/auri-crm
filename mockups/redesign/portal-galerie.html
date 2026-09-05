@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verlobungsshooting — Nordlicht Fotografie</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* Die Galerie aus Sicht des Paares — nicht die Galerie selbst (galerie.html),
+ * sondern was ihnen daran gehört: der Link, den sie weitergeben, die Gates,
+ * die davor liegen, und ihre eigene Auswahl.
+ *
+ * Zwei Dinge, die der heutige Code nicht hergibt und die das Layout deshalb
+ * anders löst, als man erwarten würde:
+ *
+ *   Passwort und Download-Code stehen im Klartext. Ein Zugangswort, das man
+ *   an Gäste weitergibt, ist kein Login — der Kunde muss es ablesen können,
+ *   sonst ruft er im Studio an. Setzt voraus, dass view_password_hash und
+ *   download_pin_hash gegen Klartextspalten getauscht werden.
+ *
+ *   Favoriten und Kommentare hängen an guest_identifier, nicht am Kontakt
+ *   ("carries no account behind it", AssetFavorite). Damit "Eure Listen"
+ *   überhaupt die eigenen sind, muss die Gast-Identität eines angemeldeten
+ *   Kunden an seinen Contact gebunden werden.
+ *
+ * Listen gibt es im Modell noch gar nicht — heute existiert ein flacher
+ * Favoritensatz je GalleryVersion. Der Entwurf hier setzt voraus:
+ *
+ *   Eine Liste hängt an der Galerie, nicht an einer Version. Sonst ist sie
+ *   nach dem nächsten publish() verwaist. Sie speichert asset_key, und was
+ *   in der aktuellen Version fehlt, fällt aus der Anzeige — dieselbe Logik,
+ *   mit der GalleryImageController einen Key gegen die Version prüft.
+ *
+ *   Benannte Listen gehören dem angemeldeten Kunden. Gäste behalten das
+ *   Herz, also genau eine Liste ohne Namen: wer anonym ist, kuratiert kein
+ *   Album, und ein Namensfeld für eine Identität, die es nicht gibt, wäre
+ *   ein zweites Problem statt einer Funktion.
+ */
+
+
+
+
+
+
+
+
+.head { padding-block: var(--s8) 0; display: flex; align-items: flex-end; gap: var(--s6); flex-wrap: wrap; }
+.head .cover { width: 168px; height: 112px; border-radius: var(--r); object-fit: cover; background: var(--sunk); }
+.head .kind { font: 600 10.5px/1 var(--sans); letter-spacing: .15em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 8px; }
+.head h1 { font: 400 clamp(32px, 4.4vw, 46px)/1.1 var(--serif); letter-spacing: -0.016em; margin: 0; }
+.head .meta { margin-top: 10px; }
+.head .open { margin-left: auto; }
+
+.split { display: grid; gap: var(--s8); align-items: start; padding-block: var(--s8) var(--s10); }
+@media (min-width: 1024px) { .split { grid-template-columns: minmax(0, 1fr) 380px; column-gap: var(--s7); } }
+
+.lab { font: 600 11px/1 var(--sans); letter-spacing: .17em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 var(--s4); }
+.block + .block { margin-top: var(--s8); }
+
+/* ── Link ─────────────────────────────────────────────────────────────── */
+.link {
+  display: flex; align-items: center; gap: var(--s3);
+  border: 1px solid var(--line-2); border-radius: var(--r-sm); background: #fff;
+  padding: 11px 11px 11px 14px;
+}
+.link code {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: 400 13.5px/1.4 var(--sans); color: var(--ink-2);
+}
+.copy {
+  flex: none; padding: 8px 14px; border-radius: var(--r-pill);
+  border: 1px solid var(--line-2); background: transparent; cursor: pointer;
+  font: 600 12.5px/1 var(--sans); color: var(--ink);
+  transition: background .18s var(--ease), color .18s var(--ease);
+}
+.copy:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* ── Gates ────────────────────────────────────────────────────────────── */
+.gates { border-top: 1px solid var(--line); margin-top: var(--s5); }
+.gate {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: var(--s4);
+  padding: var(--s5) var(--s3); margin-inline: calc(var(--s3) * -1);
+  border-bottom: 1px solid var(--line); border-radius: var(--r-sm);
+  transition: background .18s var(--ease);
+}
+.gate:hover { background: var(--sunk); }
+.gate b { display: block; font: 600 14.5px/1.35 var(--sans); letter-spacing: -0.008em; }
+.gate .state { font-size: 13px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.gate button {
+  background: transparent; border: 0; cursor: pointer;
+  font: 500 13.5px/1 var(--sans); color: var(--ink-2);
+  text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2);
+}
+.gate button:hover { color: var(--ink); text-decoration-color: var(--ink-2); }
+.gate .val { font: 600 15px/1 var(--sans); letter-spacing: .08em; color: var(--ink); }
+
+/* ── Listen ───────────────────────────────────────────────────────────── */
+.pills { display: flex; gap: var(--s2); flex-wrap: wrap; margin-bottom: var(--s5); }
+.pill {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 15px; border-radius: var(--r-pill);
+  border: 1px solid var(--line-2); background: transparent;
+  font: 500 13px/1 var(--sans); color: var(--ink-2); cursor: pointer;
+  transition: background .18s var(--ease), color .18s var(--ease), border-color .18s var(--ease);
+}
+.pill:hover { border-color: var(--ink-2); color: var(--ink); }
+.pill[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.pill .n { opacity: .55; font-variant-numeric: tabular-nums; }
+.pill.add { border-style: dashed; color: var(--ink-2); }
+.pill.add:hover { border-style: solid; }
+.pill svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+
+.listbar { display: flex; align-items: baseline; gap: var(--s4); flex-wrap: wrap; margin-top: var(--s5); }
+.listbar .meta { margin-right: auto; }
+.listbar button {
+  background: transparent; border: 0; cursor: pointer;
+  font: 500 13px/1 var(--sans); color: var(--ink-2);
+  text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2);
+}
+.listbar button:hover { color: var(--ink); text-decoration-color: var(--ink-2); }
+.listbar button.warn:hover { color: var(--accent); text-decoration-color: var(--accent); }
+
+/* ── Auswahl ──────────────────────────────────────────────────────────── */
+.picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: var(--s2); margin-top: var(--s4); }
+.picks a { display: block; border-radius: 8px; overflow: hidden; background: var(--sunk); }
+.picks img { width: 100%; height: 86px; object-fit: cover; transition: transform 1s var(--ease); }
+.picks a:hover img { transform: scale(1.05); }
+.pickfoot { display: flex; align-items: center; gap: var(--s4); margin-top: var(--s5); flex-wrap: wrap; }
+
+/* ── Kommentare ───────────────────────────────────────────────────────── */
+.notes { display: grid; gap: var(--s4); margin-top: var(--s4); }
+.note { display: grid; grid-template-columns: 64px 1fr; gap: var(--s4); align-items: start; }
+.note img { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; background: var(--sunk); }
+.note .txt { font-size: 14.5px; line-height: 1.55; }
+.note .when { font-size: 12px; color: var(--ink-2); margin-top: 5px; }
+
+/* ── Gästezahlen ──────────────────────────────────────────────────────── */
+.guests { border: 1px solid var(--line); border-radius: var(--r); background: #fff; padding: var(--s5); }
+.stat { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s4); padding: 9px 0; }
+.stat + .stat { border-top: 1px solid var(--line); }
+.stat .n { font: 600 19px/1 var(--sans); letter-spacing: -0.02em; }
+.stat .k { font-size: 13.5px; color: var(--ink-2); }
+
+.foot {
+  border-top: 1px solid var(--line);
+  max-width: var(--page); margin: 0 auto;
+  padding: var(--s6) var(--s5) var(--s8);
+  display: flex; justify-content: space-between; gap: var(--s5); flex-wrap: wrap;
+  font-size: 13px; color: var(--ink-2);
+}
+.foot a { text-decoration: none; }
+.foot a:hover { color: var(--ink); }
+
+@media (max-width: 700px) {
+  .head .open { margin-left: 0; width: 100%; }
+  .head .cover { width: 120px; height: 84px; }
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="inner">
+    <a class="wordmark" href="portal-start.html"><i></i> Nordlicht Fotografie</a>
+    <nav>
+      <a href="portal-start.html" class="on">Buchungen</a>
+      <a class="mail" href="portal-nachrichten.html">Nachrichten <span class="badge">2</span></a>
+      <a href="portal-einstellungen.html">Einstellungen</a>
+      <a href="#">Abmelden</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <section class="head rise rise-2">
+    <img class="cover" src="img/p016-sm.jpg" alt="">
+    <div>
+      <div class="kind">Paarshooting · 29.03.2025</div>
+      <h1>Verlobungsshooting</h1>
+      <p class="meta num">33 Bilder · online bis 28.08.2026</p>
+    </div>
+    <a class="btn open" href="galerie.html">
+      Galerie öffnen
+      <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </a>
+  </section>
+
+  <div class="split rise rise-3">
+    <div>
+      <section class="block">
+        <p class="lab">Eure Listen</p>
+
+        <div class="pills">
+          <button class="pill" aria-pressed="false">Favoriten <span class="n">6</span></button>
+          <button class="pill" aria-pressed="true">Album <span class="n">12</span></button>
+          <button class="pill" aria-pressed="false">Für die Eltern <span class="n">4</span></button>
+          <button class="pill add" type="button">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            Neue Liste
+          </button>
+        </div>
+
+        <div class="picks">
+          <a href="galerie.html"><img src="img/p001-sm.jpg" alt=""></a>
+          <a href="galerie.html"><img src="img/p020-sm.jpg" alt=""></a>
+          <a href="galerie.html"><img src="img/p008-sm.jpg" alt=""></a>
+          <a href="galerie.html"><img src="img/p025-sm.jpg" alt=""></a>
+          <a href="galerie.html"><img src="img/p011-sm.jpg" alt=""></a>
+          <a href="galerie.html"><img src="img/p030-sm.jpg" alt=""></a>
+          <a href="galerie.html"><img src="img/p005-sm.jpg" alt=""></a>
+          <a href="galerie.html"><img src="img/p016-sm.jpg" alt=""></a>
+          <a href="galerie.html"><img src="img/p030-sm.jpg" alt=""></a>
+          <a href="galerie.html"><img src="img/p011-sm.jpg" alt=""></a>
+          <a href="galerie.html"><img src="img/p008-sm.jpg" alt=""></a>
+          <a href="galerie.html"><img src="img/p020-sm.jpg" alt=""></a>
+        </div>
+
+        <div class="listbar">
+          <span class="meta num">12 von 33 · zuletzt geändert gestern</span>
+          <button type="button">Umbenennen</button>
+          <button class="warn" type="button">Löschen</button>
+          <a class="btn ghost" href="portal-nachrichten.html">An Christian schicken</a>
+        </div>
+      </section>
+
+      <section class="block">
+        <p class="lab">Eure Kommentare</p>
+        <div class="notes">
+          <div class="note">
+            <img src="img/p001-sm.jpg" alt="">
+            <div>
+              <div class="txt">Das bitte groß ausbelichten, für über das Sofa.</div>
+              <div class="when num">Viola · 14.08.2026</div>
+            </div>
+          </div>
+          <div class="note">
+            <img src="img/p025-sm.jpg" alt="">
+            <div>
+              <div class="txt">Hier ist Chris' Auge zu — gibt es davon noch eine zweite?</div>
+              <div class="when num">Chris · 14.08.2026</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <aside>
+      <section class="block" style="margin-top:0">
+        <p class="lab">Teilen</p>
+        <div class="link">
+          <code>nordlicht.de/g/d13pdab6v7cb</code>
+          <button class="copy" type="button">Kopieren</button>
+        </div>
+
+        <div class="gates">
+          <div class="gate">
+            <div>
+              <b>Ansichtspasswort</b>
+              <div class="state"><span class="val num">herbstlicht</span></div>
+            </div>
+            <button type="button">Ändern</button>
+          </div>
+
+          <div class="gate">
+            <div>
+              <b>Download-Code</b>
+              <div class="state"><span class="val num">4711</span></div>
+            </div>
+            <button type="button">Ändern</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <p class="lab">Eure Gäste</p>
+        <div class="guests">
+          <div class="stat"><span class="k">Aufrufe</span><span class="n num">128</span></div>
+          <div class="stat"><span class="k">Markierte Bilder</span><span class="n num">41</span></div>
+          <div class="stat"><span class="k">Kommentare</span><span class="n num">9</span></div>
+          <div class="stat"><span class="k">Downloads</span><span class="n num">6</span></div>
+        </div>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<footer class="foot">
+  <span>Nordlicht Fotografie · Elbchaussee 12, 22765 Hamburg</span>
+  <span><a href="#">Impressum</a></span>
+</footer>
+
+
+<nav class="tabbar">
+  <a href="portal-start.html" class="on">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+    Buchungen
+  </a>
+  <a href="portal-nachrichten.html">
+    <span class="mark"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg></span>
+    Nachrichten
+  </a>
+  <a href="portal-einstellungen.html">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+    Einstellungen
+  </a>
+</nav>
+
+</body>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nachrichten — Nordlicht Fotografie</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* Ein Postfach, nicht drei.
+ *
+ * Der Kunde schreibt dem Studio. Ob die Nachricht zu einer Buchung gehört,
+ * ist eine Eigenschaft des Fadens, keine Voraussetzung dafür, ihn zu
+ * beginnen — sonst kann niemand fragen "habt ihr im Herbst noch was frei?",
+ * bevor es die Buchung gibt, um die es geht.
+ *
+ * Jeder Faden trägt seinen Bezug sichtbar: eine Buchung oder "Allgemein".
+ * Das Studio kann einen allgemeinen Faden später einer Buchung zuordnen —
+ * dieselbe Bewegung, die der Posteingang für eingehende Mails schon kennt.
+ *
+ * Für den Code heißt das: threads.project_id muss nullable werden (heute
+ * ->constrained() ohne nullable), StartThread muss ?Project annehmen, und
+ * die Zuordnung braucht eine Aktion auf der Studioseite.
+ */
+
+
+
+
+
+
+
+
+
+.head { padding-block: var(--s8) 0; }
+.head .display { font-size: clamp(36px, 5vw, 52px); }
+
+.split { display: grid; gap: var(--s7); align-items: start; padding-block: var(--s7) var(--s10); }
+@media (min-width: 980px) { .split { grid-template-columns: 340px minmax(0, 1fr); } }
+
+/* ── Fäden ────────────────────────────────────────────────────────────── */
+.threads { border-top: 1px solid var(--line); }
+.thread {
+  display: block; padding: var(--s4) var(--s3); margin-inline: calc(var(--s3) * -1);
+  border-bottom: 1px solid var(--line); border-radius: var(--r-sm);
+  text-decoration: none; color: inherit;
+  transition: background .18s var(--ease);
+}
+.thread:hover { background: var(--sunk); }
+.thread.on { background: var(--sunk); }
+.thread 
+.thread b { font: 600 14.5px/1.35 var(--sans); letter-spacing: -0.008em; flex: 1; }
+.thread .ago { font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+.thread .snippet { font-size: 13px; color: var(--ink-2); margin-top: 5px;
+  display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Der Bezug steht an jedem Faden — auch wenn er "keiner" ist. */
+.ref {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 8px;
+  padding: 3px 9px; border-radius: var(--r-pill);
+  background: var(--sunk); border: 1px solid var(--line);
+  font: 500 11.5px/1 var(--sans); color: var(--ink-2);
+}
+.thread.on .ref { background: #fff; }
+.ref.none { color: var(--ink-2); }
+.unread { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex: none; }
+
+.newbtn { margin-top: var(--s5); width: 100%; justify-content: center; }
+
+/* ── Faden ────────────────────────────────────────────────────────────── */
+.convo { border: 1px solid var(--line); border-radius: var(--r); background: #fff; overflow: hidden; }
+.convohead { padding: var(--s5); border-bottom: 1px solid var(--line); }
+.convohead h2 { font: 400 26px/1.2 var(--serif); margin: 0; letter-spacing: -0.012em; }
+.convohead .ref { margin-top: var(--s3); }
+
+.msgs { padding: var(--s5); display: grid; gap: var(--s5); }
+.msg { max-width: 78%; }
+.msg .meta { font-size: 12px; color: var(--ink-2); margin-bottom: 6px; }
+.msg .body { padding: var(--s4) var(--s5); border-radius: var(--r); font-size: 14.5px; line-height: 1.6; }
+.msg.them .body { background: var(--sunk); border-top-left-radius: 4px; }
+.msg.me { justify-self: end; text-align: right; }
+.msg.me .body { background: var(--ink); color: var(--paper); border-top-right-radius: 4px; text-align: left; }
+
+.compose { border-top: 1px solid var(--line); padding: var(--s5); background: var(--paper); }
+.compose textarea {
+  width: 100%; min-height: 92px; resize: vertical;
+  border: 1px solid var(--line-2); border-radius: var(--r-sm); background: #fff;
+  padding: var(--s4); font: 400 14.5px/1.6 var(--sans); color: var(--ink);
+  outline: none; transition: border-color .2s var(--ease);
+}
+.compose textarea:focus { border-color: var(--ink-2); }
+.composefoot { display: flex; align-items: center; gap: var(--s4); margin-top: var(--s4); flex-wrap: wrap; }
+.about { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-2); }
+.about select {
+  border: 1px solid var(--line-2); border-radius: var(--r-pill); background: #fff;
+  padding: 8px 14px; font: 500 13px/1 var(--sans); color: var(--ink); cursor: pointer;
+}
+.composefoot .btn { margin-left: auto; }
+
+@media (max-width: 979px) {
+  .msg { max-width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="inner">
+    <a class="wordmark" href="portal-start.html"><i></i> Nordlicht Fotografie</a>
+    <nav>
+      <a href="portal-start.html">Buchungen</a>
+      <a class="mail on" href="portal-nachrichten.html">Nachrichten <span class="badge">2</span></a>
+      <a href="portal-einstellungen.html">Einstellungen</a>
+      <a href="#">Abmelden</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <section class="head">
+    <h1 class="display rise rise-2">Nachrichten</h1>
+  </section>
+
+  <div class="split rise rise-3">
+    <aside>
+      <div class="threads">
+        <a class="thread on" href="#">
+          <span class="top">
+            <span class="unread"></span>
+            <b>Familienshooting im Herbst?</b>
+            <span class="ago">gestern</span>
+          </span>
+          <div class="snippet">Sehr gerne — im Oktober haben wir noch zwei Samstage frei.</div>
+          <span class="ref none">Allgemein</span>
+        </a>
+
+        <a class="thread" href="#">
+          <span class="top">
+            <span class="unread"></span>
+            <b>Ablauf am Hochzeitstag</b>
+            <span class="ago">vor 3 Tagen</span>
+          </span>
+          <div class="snippet">Wir sind ab 09:00 bei euch, Nina kommt um 11:00 dazu.</div>
+          <span class="ref">Hochzeitstag · 21.08.2026</span>
+        </a>
+
+        <a class="thread" href="#">
+          <span class="top">
+            <b>Rechnung Anzahlung</b>
+            <span class="ago">12.07.</span>
+          </span>
+          <div class="snippet">Die Rechnung hängt an, zahlbar bis zum 27. Juli.</div>
+          <span class="ref">Hochzeitstag · 21.08.2026</span>
+        </a>
+      </div>
+
+      <a class="btn ghost newbtn" href="#">
+        <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        Neue Nachricht
+      </a>
+    </aside>
+
+    <div class="convo">
+      <div class="convohead">
+        <h2>Familienshooting im Herbst?</h2>
+        <!-- Kein Bezug — und das ist ein gültiger Zustand, kein fehlender Wert. -->
+        <span class="ref none">Allgemein · noch keine Buchung</span>
+      </div>
+
+      <div class="msgs">
+        <div class="msg me">
+          <div class="meta num">Viola · 14.08.2026, 20:14</div>
+          <div class="body">Hallo Christian, wir würden im Herbst gern noch einmal mit
+          unseren Eltern fotografieren — habt ihr im Oktober noch etwas frei?</div>
+        </div>
+
+        <div class="msg them">
+          <div class="meta num">Christian · gestern, 09:02</div>
+          <div class="body">Sehr gerne. Im Oktober haben wir noch den 10. und den 24.
+          frei, jeweils nachmittags wegen des Lichts. Sagt kurz Bescheid, welcher
+          euch besser passt, dann schicke ich euch ein Angebot.</div>
+        </div>
+      </div>
+
+      <form class="compose" onsubmit="return false">
+        <textarea placeholder="Eure Nachricht …"></textarea>
+        <div class="composefoot">
+          <!-- Optional, nicht Pflicht. Wer aus einer Buchung heraus schreibt,
+               findet sie hier vorausgewählt. -->
+          <label class="about">
+            Betrifft
+            <select>
+              <option selected>Allgemein</option>
+              <option>Hochzeitstag · 21.08.2026</option>
+              <option>Babybauchshooting · 2027</option>
+              <option>Verlobungsshooting · 29.03.2025</option>
+            </select>
+          </label>
+          <button class="btn" type="submit">
+            Senden
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+
+<nav class="tabbar">
+  <a href="portal-start.html">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+    Buchungen
+  </a>
+  <a href="portal-nachrichten.html" class="on">
+    <span class="mark"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg></span>
+    Nachrichten
+  </a>
+  <a href="portal-einstellungen.html">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+    Einstellungen
+  </a>
+</nav>
+
+</body>
+</html>

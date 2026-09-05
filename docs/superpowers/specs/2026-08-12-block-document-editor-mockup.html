@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="admin">
+<head>
+<meta charset="utf-8">
+<title>Dokument-Editor — Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* tokens lifted from mockups/_shared/tokens.css so this file stands alone */
+:root{
+  --bg:#FFFFFF; --ink:#14100E; --muted:#78706B; --faint:#ABA49F;
+  --hover:#F6F3F1; --line:#EDE9E6; --line-hover:#E3DCD7;
+  --accent:#B44E22; --accent-bg:#FBF0EA; --ok:#3F6B4A; --ok-bg:#EDF3EE;
+  --s1:4px; --s2:6px; --s3:10px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+  --r:8px; --r-sm:5px;
+  --font:'Instrument Sans', system-ui, sans-serif;
+  --paper:#FBF9F8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 14px/1.45 var(--font);-webkit-font-smoothing:antialiased}
+svg{flex:none;stroke:currentColor;stroke-width:1.75;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+.app{display:flex;min-height:100vh}
+.side{width:204px;flex:none;padding:var(--s5) var(--s3) var(--s4);display:flex;flex-direction:column;border-right:1px solid var(--line)}
+.brand{font:700 19px/1 var(--font);letter-spacing:-.035em;padding:0 var(--s3) var(--s5)}
+.nav{display:flex;align-items:center;gap:var(--s3);padding:9px var(--s3);border-radius:7px;font:400 14px/1 var(--font);color:var(--muted);text-decoration:none}
+.nav.on{color:var(--ink);font-weight:600;background:var(--hover)}
+.navlab{font:500 11.5px/1 var(--font);color:var(--faint);padding:var(--s5) var(--s3) var(--s2)}
+
+.main{flex:1;min-width:0;padding:var(--s5) var(--s5) 0 var(--s6);display:flex;flex-direction:column}
+.hrow{display:flex;align-items:center;gap:var(--s4)}
+h1{font:700 24px/1 var(--font);letter-spacing:-.04em;margin:0}
+.kick{font:600 10px/1 var(--font);letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+.btn{margin-left:auto;display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border-radius:var(--r);background:var(--ink);color:var(--bg);font:600 13px/1 var(--font);text-decoration:none}
+.txtbtn{display:inline-flex;align-items:center;gap:7px;font:500 13px/1 var(--font);color:var(--muted);padding:9px 0;text-decoration:none}
+.metaline{display:flex;gap:var(--s5);margin-top:var(--s3);font:400 12.5px/1.35 var(--font);color:var(--muted)}
+.metaline .warn{color:var(--accent);font-weight:500}
+
+/* ---------- the two halves ---------- */
+.editorsplit{display:grid;grid-template-columns:minmax(0,1fr) 7px minmax(0,1fr);flex:1;margin-top:var(--s5);min-height:0}
+.pane{min-width:0;display:flex;flex-direction:column}
+.panehead{display:flex;align-items:center;gap:var(--s3);padding-bottom:var(--s3);border-bottom:1px solid var(--line)}
+.panelab{font:600 10px/1 var(--font);letter-spacing:.09em;text-transform:uppercase;color:var(--faint)}
+.panehead .right{margin-left:auto;display:flex;align-items:center;gap:var(--s3)}
+.seg{display:flex;border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
+.seg span{padding:4px 9px;font:500 11px/1.4 var(--font);color:var(--muted);background:var(--bg)}
+.seg span.on{background:var(--ink);color:var(--bg)}
+.livedot{display:inline-flex;align-items:center;gap:5px;font:400 11px/1 var(--font);color:var(--faint)}
+.livedot i{width:6px;height:6px;border-radius:50%;background:var(--ok);display:block}
+.splitbar{cursor:col-resize;display:flex;align-items:center;justify-content:center}
+.splitbar::before{content:'';width:1px;height:100%;background:var(--line)}
+
+.scroll{flex:1;overflow:auto;padding:var(--s5) 0 var(--s7);background:var(--hover);margin-top:0}
+.pane.canvas .scroll{background:transparent}
+
+/* ---------- paper ---------- */
+.sheet{background:#fff;border:1px solid var(--line);border-radius:2px;margin:0 auto;padding:34px 40px 40px;max-width:520px;
+       box-shadow:0 1px 2px rgba(20,16,14,.04),0 8px 24px -12px rgba(20,16,14,.10)}
+.pane.canvas .sheet{box-shadow:none;border-color:var(--line)}
+.chrome{padding:9px 12px;margin:-34px -40px var(--s5);border-bottom:1px dashed var(--line-hover);background:#FCFBFA;
+        font:500 10px/1.4 var(--font);letter-spacing:.06em;text-transform:uppercase;color:var(--faint);display:flex;gap:var(--s3);align-items:center;border-radius:2px 2px 0 0}
+.chrome a{margin-left:auto;color:var(--muted);text-decoration:none;font-size:10px;letter-spacing:.04em}
+.chrome.foot{margin:var(--s5) -40px -40px;border-bottom:none;border-top:1px dashed var(--line-hover);border-radius:0 0 2px 2px}
+
+/* ---------- blocks in the canvas ---------- */
+.blk{position:relative;padding:3px 0;margin:0 0 var(--s3)}
+.blk.on{background:#FDFAF8;box-shadow:0 0 0 1px #EFE0D7;border-radius:4px;padding:6px 8px;margin-left:-8px;margin-right:-8px}
+.grip,.dots{position:absolute;top:6px;width:20px;height:20px;border-radius:4px;display:none;align-items:center;justify-content:center;color:var(--faint);background:#fff;border:1px solid var(--line)}
+.grip{left:-52px}.plus{left:-28px}.dots{right:-28px}
+.plus{position:absolute;top:6px;width:20px;height:20px;border-radius:4px;display:none;align-items:center;justify-content:center;color:var(--muted);background:#fff;border:1px solid var(--line)}
+.blk.on .grip,.blk.on .plus,.blk.on .dots{display:flex}
+.blk h2{font:700 19px/1.25 var(--font);letter-spacing:-.03em;margin:0 0 var(--s2)}
+.blk h3{font:600 14px/1.3 var(--font);letter-spacing:-.01em;margin:var(--s4) 0 var(--s2)}
+.blk p{margin:0;font:400 12.5px/1.65 var(--font);color:#241E1B}
+.blk ul{margin:0;padding-left:17px;font:400 12.5px/1.7 var(--font);color:#241E1B}
+
+/* merge-field chip: shows the sample value, not the braces */
+.mf{display:inline-flex;align-items:center;gap:4px;padding:1px 6px 1px 5px;border-radius:4px;
+    background:var(--accent-bg);color:#8A3A18;font-weight:500;box-shadow:inset 0 0 0 1px #F1DCD0;white-space:nowrap}
+.mf::before{content:'';width:9px;height:9px;flex:none;border-radius:2px;
+    background:linear-gradient(135deg,#D98A63 0 50%,transparent 50%),#E9BFA9}
+
+/* dynamic + structural blocks read as objects, not text */
+.objblk{border:1px solid #E7DED8;border-radius:6px;background:#FCFAF9;padding:var(--s3) var(--s4)}
+.objhead{display:flex;align-items:center;gap:var(--s2);font:600 9.5px/1 var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:var(--s3)}
+.objhead .src{margin-left:auto;color:var(--faint);font-weight:500;letter-spacing:.03em;text-transform:none;font-size:10.5px}
+table.li{width:100%;border-collapse:collapse;font:400 11.5px/1.5 var(--font)}
+table.li th{text-align:left;font:600 9.5px/1 var(--font);letter-spacing:.07em;text-transform:uppercase;color:var(--faint);padding-bottom:6px;border-bottom:1px solid var(--line)}
+table.li td{padding:6px 0;border-bottom:1px solid var(--line);color:#241E1B}
+table.li td.num,table.li th.num{text-align:right;font-variant-numeric:tabular-nums}
+table.li tr.sum td{border-bottom:none;font-weight:700;padding-top:9px}
+
+.sigrow{display:grid;grid-template-columns:1fr 1fr;gap:var(--s6);margin-top:var(--s2)}
+.sigline{border-top:1px solid var(--ink);padding-top:5px;font:400 10.5px/1.3 var(--font);color:var(--muted)}
+
+.pbreak{display:flex;align-items:center;gap:var(--s3);color:var(--faint);font:600 9.5px/1 var(--font);letter-spacing:.08em;text-transform:uppercase}
+.pbreak::before,.pbreak::after{content:'';flex:1;height:1px;background:repeating-linear-gradient(90deg,var(--line-hover) 0 5px,transparent 5px 10px)}
+
+/* ---------- floating inserter ---------- */
+.inserter{position:absolute;left:-28px;top:32px;width:288px;background:#fff;border:1px solid var(--line-hover);border-radius:var(--r);
+          box-shadow:0 12px 32px -8px rgba(20,16,14,.18),0 2px 6px rgba(20,16,14,.06);padding:var(--s3);z-index:5}
+.srch{display:flex;align-items:center;gap:7px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;color:var(--faint);font:400 12px/1 var(--font)}
+.srch b{color:var(--ink);font-weight:400}
+.srch .caret{width:1px;height:12px;background:var(--ink);display:inline-block;margin-left:-2px}
+.grouplab{font:600 9.5px/1 var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:var(--s4) 0 var(--s2);padding:0 2px}
+.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:3px}
+.tool{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 2px;border-radius:6px;color:var(--muted);
+      font:500 9.5px/1.2 var(--font);text-align:center}
+.tool span:first-child{font:600 13px/1 var(--font);color:var(--ink)}
+.tool.on{background:var(--accent-bg);color:var(--accent)}
+.tool.on span:first-child{color:var(--accent)}
+.ins-foot{margin-top:var(--s3);padding-top:var(--s3);border-top:1px solid var(--line);font:400 10.5px/1.4 var(--font);color:var(--faint)}
+
+/* ---------- preview side ---------- */
+.pv .sheet{padding-top:0}
+.pv .chrome{background:#F7F4F2;color:var(--muted);border-bottom-style:solid;border-color:var(--line);margin-top:0}
+.pv p,.pv li{font:400 12px/1.7 var(--font);color:#241E1B}
+.pv h2{font:700 18px/1.25 var(--font);letter-spacing:-.03em;margin:0 0 var(--s3)}
+.pv h3{font:600 13.5px/1.3 var(--font);margin:var(--s4) 0 var(--s2)}
+.pagegap{height:var(--s5);margin:0 -40px;background:var(--hover);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+         display:flex;align-items:center;justify-content:center;font:500 9px/1 var(--font);letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+.lh{display:flex;align-items:flex-start;gap:var(--s3);padding:var(--s4) 0 var(--s3)}
+.lhmark{width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font:700 11px/1 var(--font)}
+.lhtxt{font:600 11px/1.35 var(--font)}
+.lhtxt em{display:block;font-style:normal;font-weight:400;color:var(--muted);font-size:10px;margin-top:2px}
+.ft{font:400 9.5px/1.5 var(--font);color:var(--muted);display:flex;gap:var(--s4)}
+
+.note{max-width:none;margin:var(--s5) 0 var(--s6);padding:var(--s4);border:1px solid var(--line);border-radius:var(--r);
+      background:var(--hover);font:400 12.5px/1.6 var(--font);color:var(--muted)}
+.note b{color:var(--ink);font-weight:600}
+.note code{font:500 11.5px/1 ui-monospace,monospace;background:#fff;border:1px solid var(--line);border-radius:3px;padding:2px 5px}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <aside class="side">
+    <div class="brand">Nordlicht</div>
+    <a class="nav" href="#">Übersicht</a>
+    <a class="nav" href="#">Anfragen</a>
+    <a class="nav" href="#">Projekte</a>
+    <a class="nav" href="#">Medien</a>
+    <div class="navlab">Studio</div>
+    <a class="nav on" href="#">Dokumentvorlagen</a>
+    <a class="nav" href="#">Einstellungen</a>
+  </aside>
+
+  <main class="main">
+
+    <div class="hrow">
+      <div>
+        <div class="kick">Dokumentvorlagen · Vertrag</div>
+        <h1>Fotovertrag Hochzeit</h1>
+      </div>
+      <a class="txtbtn" href="#">Als PDF prüfen</a>
+      <a class="btn" href="#">Speichern</a>
+    </div>
+    <div class="metaline">
+      <span>Version 4 · geändert 11.08.2026 · Christian</span>
+      <span>Variante Hochzeit</span>
+      <span class="warn">3 ungespeicherte Änderungen</span>
+    </div>
+
+    <div class="editorsplit">
+
+      <!-- ================= LEFT: canvas ================= -->
+      <section class="pane canvas">
+        <div class="panehead">
+          <span class="panelab">Bearbeiten</span>
+          <div class="right"><span class="livedot" style="color:var(--faint)">⌘ + / für Bausteine</span></div>
+        </div>
+        <div class="scroll">
+          <div class="sheet">
+
+            <div class="chrome">
+              Briefkopf · aus Einstellungen
+              <a href="#">Briefkopf bearbeiten →</a>
+            </div>
+
+            <div class="blk">
+              <span class="grip">⠿</span><span class="plus">+</span><span class="dots">⋯</span>
+              <h2>Fotografievertrag</h2>
+            </div>
+
+            <div class="blk on">
+              <span class="grip">⠿</span><span class="plus">+</span><span class="dots">⋯</span>
+              <p>Zwischen <span class="mf">Atelier Nordlicht Fotografie GmbH</span>, <span class="mf">Beispielstraße 12</span>, <span class="mf">20095</span> <span class="mf">Hamburg</span> — nachfolgend Fotograf — und <span class="mf">Lena Meier</span>, <span class="mf">lena@example.test</span> — nachfolgend Auftraggeber — wird folgender Vertrag über <span class="mf">Hochzeit Meier &amp; Kowalski</span> geschlossen.</p>
+            </div>
+
+            <div class="blk">
+              <span class="grip">⠿</span><span class="plus">+</span><span class="dots">⋯</span>
+              <h3>1. Leistungsumfang</h3>
+            </div>
+
+            <div class="blk">
+              <span class="grip">⠿</span><span class="plus">+</span><span class="dots">⋯</span>
+              <ul>
+                <li>Reportage am <span class="mf">14.06.2026</span>, ganztägig</li>
+                <li>Online-Galerie mit Download für geladene Gäste</li>
+                <li>Bearbeitete Aufnahmen in Web- und Druckauflösung</li>
+              </ul>
+            </div>
+
+            <div class="blk" style="margin-bottom:var(--s5)">
+              <span class="grip">⠿</span><span class="plus">+</span><span class="dots">⋯</span>
+              <div class="objblk">
+                <div class="objhead">Positionen<span class="src">wird beim Rendern aus dem Angebot gefüllt</span></div>
+                <table class="li">
+                  <tr><th>Position</th><th class="num">Menge</th><th class="num">Betrag</th></tr>
+                  <tr><td>Reportage ganztägig</td><td class="num">1</td><td class="num">2.400,00 €</td></tr>
+                  <tr><td>Zweitfotograf</td><td class="num">1</td><td class="num">650,00 €</td></tr>
+                  <tr class="sum"><td>Gesamt</td><td class="num"></td><td class="num">3.050,00 €</td></tr>
+                </table>
+              </div>
+
+              <!-- floating inserter, opened from the + of this block -->
+              <div class="inserter">
+                <div class="srch">🔍 <b>unter</b><span class="caret"></span></div>
+
+                <div class="grouplab">Treffer</div>
+                <div class="tools">
+                  <div class="tool on"><span>✎</span><span>Unterschrift</span></div>
+                  <div class="tool"><span>§</span><span>Widerruf</span></div>
+                </div>
+
+                <div class="grouplab">Text</div>
+                <div class="tools">
+                  <div class="tool"><span>¶</span><span>Absatz</span></div>
+                  <div class="tool"><span>H</span><span>Überschrift</span></div>
+                  <div class="tool"><span>•</span><span>Liste</span></div>
+                  <div class="tool"><span>❞</span><span>Zitat</span></div>
+                </div>
+
+                <div class="grouplab">Layout</div>
+                <div class="tools">
+                  <div class="tool"><span>▤</span><span>Tabelle</span></div>
+                  <div class="tool"><span>◫</span><span>2 Spalten</span></div>
+                  <div class="tool"><span>▭</span><span>Bild</span></div>
+                  <div class="tool"><span>—</span><span>Trenner</span></div>
+                </div>
+
+                <div class="grouplab">Dokument</div>
+                <div class="tools">
+                  <div class="tool"><span>⤓</span><span>Seiten&shy;umbruch</span></div>
+                  <div class="tool"><span>✎</span><span>Unterschrift</span></div>
+                  <div class="tool"><span>§</span><span>Widerruf</span></div>
+                  <div class="tool"><span>◇</span><span>Hinweis</span></div>
+                </div>
+
+                <div class="grouplab">Daten</div>
+                <div class="tools">
+                  <div class="tool"><span>{ }</span><span>Feld</span></div>
+                  <div class="tool"><span>Σ</span><span>Positionen</span></div>
+                  <div class="tool"><span>☰</span><span>Pakete</span></div>
+                </div>
+
+                <div class="ins-foot">Ziehen zum Einfügen an anderer Stelle · Esc schließt</div>
+              </div>
+            </div>
+
+            <div class="blk"><span class="grip">⠿</span><span class="plus">+</span><span class="dots">⋯</span>
+              <div class="pbreak">Seitenumbruch</div>
+            </div>
+
+            <div class="blk" style="margin-top:var(--s5)">
+              <span class="grip">⠿</span><span class="plus">+</span><span class="dots">⋯</span>
+              <div class="objblk">
+                <div class="objhead">Unterschrift<span class="src">Ort · Datum · zwei Linien</span></div>
+                <div class="sigrow">
+                  <div class="sigline">Hamburg, den 14.06.2026 · Fotograf</div>
+                  <div class="sigline">Ort, Datum · Auftraggeber</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="chrome foot">Fußzeile · aus Einstellungen<a href="#">Fußzeile bearbeiten →</a></div>
+
+          </div>
+        </div>
+      </section>
+
+      <div class="splitbar"></div>
+
+      <!-- ================= RIGHT: preview ================= -->
+      <section class="pane pv">
+        <div class="panehead">
+          <span class="panelab">Vorschau · Beispieldaten</span>
+          <div class="right">
+            <div class="seg"><span class="on">A4</span><span>E-Mail</span></div>
+            <span class="livedot"><i></i> aktuell</span>
+          </div>
+        </div>
+        <div class="scroll">
+          <div class="sheet">
+            <div class="chrome">Seite 1 von 2</div>
+
+            <div class="lh">
+              <div class="lhmark">AN</div>
+              <div class="lhtxt">Atelier Nordlicht Fotografie GmbH<em>Beispielstraße 12 · 20095 Hamburg · nordlicht.example</em></div>
+            </div>
+
+            <h2>Fotografievertrag</h2>
+            <p>Zwischen Atelier Nordlicht Fotografie GmbH, Beispielstraße 12, 20095 Hamburg — nachfolgend Fotograf — und Lena Meier, lena@example.test — nachfolgend Auftraggeber — wird folgender Vertrag über Hochzeit Meier &amp; Kowalski geschlossen.</p>
+
+            <h3>1. Leistungsumfang</h3>
+            <ul>
+              <li>Reportage am 14.06.2026, ganztägig</li>
+              <li>Online-Galerie mit Download für geladene Gäste</li>
+              <li>Bearbeitete Aufnahmen in Web- und Druckauflösung</li>
+            </ul>
+
+            <table class="li" style="margin-top:var(--s4)">
+              <tr><th>Position</th><th class="num">Menge</th><th class="num">Betrag</th></tr>
+              <tr><td>Reportage ganztägig</td><td class="num">1</td><td class="num">2.400,00 €</td></tr>
+              <tr><td>Zweitfotograf</td><td class="num">1</td><td class="num">650,00 €</td></tr>
+              <tr class="sum"><td>Gesamt</td><td class="num"></td><td class="num">3.050,00 €</td></tr>
+            </table>
+
+            <div class="pagegap">Seitenumbruch</div>
+
+            <div style="padding-top:var(--s4)">
+              <h3>2. Unterschriften</h3>
+              <div class="sigrow" style="margin-top:var(--s5)">
+                <div class="sigline">Hamburg, den 14.06.2026 · Fotograf</div>
+                <div class="sigline">Ort, Datum · Auftraggeber</div>
+              </div>
+            </div>
+
+            <div class="chrome foot" style="text-transform:none;letter-spacing:0">
+              <div class="ft"><span>Atelier Nordlicht Fotografie GmbH · HRB 12345 · Amtsgericht Hamburg</span><span>USt-IdNr. DE123456789</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <div class="note">
+      <b>Was das Mockup behauptet.</b>
+      Links Bausteine, rechts das Ergebnis — <b>gleiche Papierbreite auf beiden Seiten</b>, damit ein Umbruch links dort passiert, wo er rechts landet.
+      Feldbausteine zeigen im Editor <b>den Beispielwert</b> (<span class="mf">Lena Meier</span>), nicht <code>{{ contact.name }}</code> — Fließtext bleibt lesbar.
+      Briefkopf und Fußzeile stehen als gedimmte, nicht editierbare Ränder am Blatt: sie kommen aus den Einstellungen, nicht aus der Vorlage.
+      <b>Positionen</b> und <b>Unterschrift</b> sind Objekte, kein Text — sie werden beim Rendern serverseitig gefüllt.
+      Die Bausteinliste ist ein Popover über <code>+</code> oder <code>/</code>, mit Suche und vier Gruppen.
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

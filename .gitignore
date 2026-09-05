@@ -1,3 +1,27 @@
 .DS_Store
 node_modules/
 .superpowers/
+
+# Per-worktree Docker host ports (APP_PORT, POSTGRES_PORT). Machine-local:
+# several worktrees run their own stack and cannot share a host port.
+/.env
+
+# PHP
+apps/studio/vendor/
+apps/studio/.env
+apps/studio/storage/*.key
+apps/studio/public/storage
+
+# Front-end build output
+apps/studio/public/build/
+apps/studio/public/hot
+dist/
+playwright-report/
+test-results/
+
+# Agent worktrees, checked out per branch under this repo
+.claude/worktrees/
+
+# Redesign mockup stock photos — 5.5 MB of demo JPGs the HTML points at.
+# Machine-local: the mockups render without them, and git keeps blobs forever.
+mockups/redesign/img/

@@ -35,7 +35,7 @@ const NAV = [
   { key:'galerien',   label:'Galerien' },
   { lab:'Studio' },
   { key:'pakete',     label:'Pakete' },
-  { key:'einst',      label:'Einstellungen' },
+  { key:'einst',      label:'Einstellungen',  href:'14-einstellungen.html' },
 ]
 
 /* the twelve screens, in flow order — drives prev/next in the footer strip */
@@ -53,6 +53,7 @@ const SCREENS = [
   { n:11, t:'Download — PIN',       href:'gallery/11-pin.html',       s:'Galerie' },
   { n:12, t:'Download — E-Mail',    href:'gallery/12-email.html',     s:'Galerie' },
   { n:13, t:'Fragebogen-Vorlage',   href:'admin/13-fragebogen-builder.html', s:'Admin' },
+  { n:14, t:'Einstellungen',        href:'admin/14-einstellungen.html', s:'Admin' },
 ]
 
 function adminSidebar (active) {

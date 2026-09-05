@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Viola & Chris — Nordlicht Fotografie</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* Der erste Tag im Portal. Es gibt: zwei Namen, einen Wunschtermin, eine
+   Art. Es gibt nicht: Bilder, Termine, Angebot, Vertrag, Zahlungen.
+ *
+ * Deshalb ist das hier kein Dashboard mit fünf leeren Kästen, sondern ein
+ * Brief. Schmales Maß, viel Luft, kein Bild — und genau eine Auskunft:
+ * was als Nächstes passiert und wer sich kümmert. Der Kopf ist typografisch,
+ * weil es von diesem Paar noch kein Foto gibt; sobald das erste Shooting
+ * geliefert ist, wird aus diesem Kopf das Titelbild (portal-projekt.html).
+ */
+
+
+
+
+
+
+
+/* Briefmaß: 620px. Schmaler als jede andere Seite im Portal — das ist die
+   Absicht. Der Screen soll sich anders anfühlen, nicht nur leerer. */
+.letter { max-width: 620px; margin: 0 auto; padding: var(--s10) var(--s5) var(--s9); }
+
+.letter .eyebrow { margin-bottom: var(--s5); }
+.letter .display { font-size: clamp(42px, 6vw, 62px); }
+.letter .when {
+  margin-top: var(--s5); font-size: 15px; color: var(--ink-2);
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.tag {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 11px; border-radius: var(--r-pill);
+  background: var(--accent-soft); color: var(--accent);
+  font: 600 11.5px/1 var(--sans); letter-spacing: .02em;
+}
+
+.hair { height: 1px; background: var(--line); margin: var(--s8) 0; }
+
+/* Was das Studio notiert hat — und was der Kunde selbst korrigieren darf.
+ *
+ * Solange die Buchung eine Anfrage ist, ist kein Termin reserviert und
+ * nichts unterschrieben: die Angaben gehören dem Kunden, und ihn dafür eine
+ * Nachricht schreiben zu lassen, damit jemand anders ein Feld ändert, ist
+ * Arbeit für zwei statt für keinen.
+ *
+ * Ab "gebucht" kehrt sich das um. Termin und Ort stehen dann im Vertrag und
+ * werden schreibgeschützt — dort steht statt der Felder ein "Änderung
+ * anfragen", das den Nachrichtenfaden öffnet.
+ *
+ * Im Formular stehen nur Felder, die man bedienen kann. Der Anlass ist
+ * keins: ein anderer Anlass ist eine andere Buchung. Er steht in der
+ * Ansicht und im Kicker über dem Namen und verschwindet beim Bearbeiten,
+ * statt als graue Zeile mit Schloss zu erklären, warum er nicht mitmacht.
+ */
+.recap { margin-top: var(--s8); }
+.recap .lead-row { display: flex; align-items: baseline; gap: var(--s4); }
+.recap .lead-row .eyebrow { margin: 0; }
+.editbtn {
+  margin-left: auto; background: transparent; border: 0; cursor: pointer;
+  font: 500 13px/1 var(--sans); color: var(--ink-2);
+  text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-2);
+  transition: color .18s var(--ease);
+}
+.editbtn:hover { color: var(--ink); text-decoration-color: var(--ink-2); }
+
+.recap dl { display: grid; grid-template-columns: 132px 1fr; gap: var(--s3) var(--s5); margin: var(--s4) 0 0; }
+.recap dt { font-size: 13px; color: var(--ink-2); }
+.recap dd { margin: 0; font-size: 14.5px; }
+.recap blockquote {
+  margin: var(--s5) 0 0; padding-left: var(--s4);
+  border-left: 2px solid var(--line-2);
+  font: 400 16px/1.6 var(--sans); color: var(--ink-2);
+}
+
+/* Bearbeiten ist derselbe Block, nicht ein Formular an anderer Stelle:
+   die Zeilen bleiben, wo sie waren, nur der Wert wird zum Feld. */
+.recap .form { display: none; }
+.recap.editing .view { display: none; }
+.recap.editing .form { display: block; }
+
+.recap .form dl { align-items: center; }
+.recap input, .recap textarea {
+  width: 100%; background: #fff;
+  border: 1px solid var(--line-2); border-radius: var(--r-sm);
+  padding: 10px 12px; color: var(--ink);
+  font: 400 14.5px/1.5 var(--sans);
+  outline: none; transition: border-color .2s var(--ease);
+}
+.recap textarea { min-height: 96px; resize: vertical; }
+.recap input:focus, .recap textarea:focus { border-color: var(--ink-2); }
+.recap .actions-row { display: flex; align-items: center; gap: var(--s4); margin-top: var(--s5); flex-wrap: wrap; }
+.recap .actions-row .note { font-size: 12.5px; color: var(--ink-2); }
+.recap .cancel {
+  background: transparent; border: 0; cursor: pointer;
+  font: 500 14px/1 var(--sans); color: var(--ink-2);
+}
+.recap .cancel:hover { color: var(--ink); }
+
+/* Die einzige Auskunft, die es zu diesem Zeitpunkt gibt. Ein Satz in der
+   Serif — dieselbe Stelle, an der später der Countdown steht. */
+.next .serif-lg { font-size: clamp(24px, 3vw, 32px); }
+.next p { margin-top: var(--s4); max-width: 48ch; }
+
+/* Offene Handlung — heute genau eine. Sieht aus wie die Zeilen unter
+   "Unterlagen" im gebuchten Projekt, damit später nichts umlernt. */
+.todo { margin-top: var(--s8); border-top: 1px solid var(--line); }
+
+/* Was noch nicht da ist, wird einmal genannt und nicht fünfmal als leerer
+   Kasten gezeigt. Ein Satz statt vier Platzhalter. */
+.later {
+  margin-top: var(--s7); padding-top: var(--s5);
+  font-size: 13.5px; color: var(--ink-2); line-height: 1.6;
+}
+
+.foot {
+  border-top: 1px solid var(--line);
+  max-width: var(--page); margin: 0 auto;
+  padding: var(--s6) var(--s5) var(--s8);
+  display: flex; justify-content: space-between; gap: var(--s5); flex-wrap: wrap;
+  font-size: 13px; color: var(--ink-2);
+}
+.foot a { text-decoration: none; }
+.foot a:hover { color: var(--ink); }
+.foot .links { display: flex; gap: var(--s5); }
+
+@media (max-width: 700px) {
+  /* 132px Beschriftungsspalte plus "Gut Basthorst, Basthorst" passen nicht
+     in 360px — untereinander statt nebeneinander. */
+  .recap dl { grid-template-columns: 1fr; gap: 2px var(--s4); }
+  .recap dt { margin-top: var(--s3); }
+  .letter { padding-top: var(--s8); }
+  .person { flex-wrap: wrap; }
+  .person .contact { margin-left: 0; width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="inner">
+    <a class="wordmark" href="portal-start.html"><i></i> Nordlicht Fotografie</a>
+    <nav>
+      <a href="portal-start.html" class="on">Buchungen</a>
+      <a class="mail" href="portal-nachrichten.html">Nachrichten <span class="badge">2</span></a>
+      <a href="portal-einstellungen.html">Einstellungen</a>
+      <a href="#">Abmelden</a>
+    </nav>
+  </div>
+</header>
+
+<main class="letter">
+  <p class="eyebrow rise rise-1">Hochzeit</p>
+  <h1 class="display rise rise-2">Viola <span class="amp">&amp;</span> Chris</h1>
+  <p class="when rise rise-3 num">
+    14. Juni 2026 · Gut Basthorst
+    <span class="tag">Wunschtermin, noch nicht reserviert</span>
+  </p>
+
+  <div class="rise rise-4">
+    <div class="hair"></div>
+
+    <section class="next">
+      <h2 class="serif-lg">Wir haben eure Anfrage.</h2>
+      <p class="lead">Christian schaut sich den Termin an und meldet sich bis Freitag mit einem Angebot. Bis dahin müsst ihr nichts tun.</p>
+    </section>
+
+    <section class="recap" id="recap">
+      <div class="lead-row">
+        <p class="eyebrow">Das haben wir notiert</p>
+        <button class="editbtn view" type="button"
+                onclick="document.getElementById('recap').classList.add('editing')">Ändern</button>
+      </div>
+
+      <div class="view">
+        <dl>
+          <dt>Anlass</dt><dd>Hochzeit</dd>
+          <dt>Wunschtermin</dt><dd class="num">Sonntag, 14. Juni 2026</dd>
+          <dt>Ort</dt><dd>Gut Basthorst, Basthorst</dd>
+          <dt>Gäste</dt><dd class="num">ca. 80</dd>
+          <dt>Ihr erreicht uns</dt><dd>viola.neumann@example.test · 0171 2223344</dd>
+        </dl>
+        <blockquote>Freie Trauung im Park, Empfang in der Scheune. Wir hätten gern
+        auch ein After-Wedding-Shooting am Strand, wenn das möglich ist.</blockquote>
+      </div>
+
+      <form class="form" onsubmit="return false">
+        <dl>
+          <dt><label for="f-datum">Wunschtermin</label></dt>
+          <dd><input id="f-datum" type="date" value="2026-06-14"></dd>
+
+          <dt><label for="f-ort">Ort</label></dt>
+          <dd><input id="f-ort" type="text" value="Gut Basthorst, Basthorst"></dd>
+
+          <dt><label for="f-gaeste">Gäste</label></dt>
+          <dd><input id="f-gaeste" type="text" inputmode="numeric" value="80"></dd>
+
+          <dt><label for="f-mail">E-Mail</label></dt>
+          <dd><input id="f-mail" type="email" value="viola.neumann@example.test"></dd>
+
+          <dt><label for="f-tel">Telefon</label></dt>
+          <dd><input id="f-tel" type="tel" value="0171 2223344"></dd>
+
+          <dt><label for="f-text">Was ihr euch vorstellt</label></dt>
+          <dd><textarea id="f-text">Freie Trauung im Park, Empfang in der Scheune. Wir hätten gern auch ein After-Wedding-Shooting am Strand, wenn das möglich ist.</textarea></dd>
+        </dl>
+
+        <div class="actions-row">
+          <button class="btn" type="submit">Speichern</button>
+          <button class="cancel" type="button"
+                  onclick="document.getElementById('recap').classList.remove('editing')">Abbrechen</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="person" style="margin-top: var(--s8)">
+      <span class="av">CB</span>
+      <span>
+        <b>Christian Bergmann</b>
+        <span class="role">Euer Fotograf</span>
+      </span>
+      <span class="contact">
+        <a class="chip" href="tel:+4940123456">
+          <svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a1 1 0 01-1 1A16 16 0 014 5a1 1 0 011-1z"/></svg>
+          Anrufen
+        </a>
+        <a class="chip" href="#">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg>
+          Schreiben
+        </a>
+      </span>
+    </section>
+
+    <section class="todo">
+      <a class="item" href="#">
+        <div>
+          <h3>Fragebogen</h3>
+          <div class="sub"><span class="dot open"></span> 8 Fragen · dauert etwa fünf Minuten</div>
+        </div>
+        <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+    </section>
+
+  </div>
+</main>
+
+<footer class="foot">
+  <span>Nordlicht Fotografie · Elbchaussee 12, 22765 Hamburg</span>
+  <span class="links">
+    <a href="#">Impressum</a>
+    <a href="#">Datenschutz</a>
+    <a href="#">AGB</a>
+  </span>
+</footer>
+
+
+<nav class="tabbar">
+  <a href="portal-start.html" class="on">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+    Buchungen
+  </a>
+  <a href="portal-nachrichten.html">
+    <span class="mark"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg></span>
+    Nachrichten
+  </a>
+  <a href="portal-einstellungen.html">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+    Einstellungen
+  </a>
+</nav>
+
+</body>
+</html>

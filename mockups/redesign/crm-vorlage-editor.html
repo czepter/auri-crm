@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Vorlage bearbeiten · Fotovertrag — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="vorlagen">
+
+<!-- Den Rahmen stellt Editor.js — das Paket liegt im Projekt (@editorjs/editorjs
+     mit header, list, quote, table, delimiter). Deshalb keine Werkzeugspalte am
+     Rand: Griff und Plus stehen in der linken Rinne am überfahrenen Block, die
+     Auswahl bringt die schwebende Leiste.
+
+     Zwei Ergänzungen zu Editor.js, beide begründet:
+     – "Platzhalter" als Inline-Werkzeug, weil ein Platzhalter kein Textformat
+       ist, sondern ein Pfad aus MergeFieldVocabulary;
+     – im Plus-Menü stehen unerlaubte Blöcke gedämpft mit dem Grund, statt zu
+       fehlen. DocumentBlockCatalog::allows() entscheidet ohnehin serverseitig,
+       und ein stumm fehlender Eintrag sieht aus wie ein Fehler.
+
+     Die Vorschau rechnet mit einem echten Projekt, nicht mit Beispielwerten:
+     nur so sieht man, dass ein Platzhalter leer bleibt, bevor es der Kunde
+     sieht. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="main">
+
+    <div class="hrow" style="padding-bottom:14px">
+      <div>
+        <div class="kick">Dokumentvorlagen · aus „Fotovertrag“ · v1, nicht gesichert</div>
+        <h1 style="font-size:23px">Fotovertrag Hochzeit 2027</h1>
+      </div>
+      <a class="link" href="crm-dokumentvorlagen.html" style="margin-left:auto">Verwerfen</a>
+      <a class="btn-2" href="#">Als Entwurf</a>
+      <a class="btn" href="#">Fassung sichern</a>
+    </div>
+
+    <div class="split">
+
+      <div class="pane">
+        <div class="panehead">
+          <h2>Vorlage</h2>
+          <span class="r">7 Blöcke · 9 Platzhalter</span>
+        </div>
+
+        <div class="ej">
+          <div class="ejb">
+            <span class="gut"><i>⋮⋮</i><i>+</i></span>
+            <h3>Fotografievertrag</h3>
+          </div>
+
+          <div class="ejb">
+            <span class="gut"><i>⋮⋮</i><i>+</i></span>
+            <p>Zwischen <span class="ph">studio.name</span>, <span class="ph">studio.street</span>, <span class="ph">studio.postcode</span> <span class="ph">studio.city</span> — im Folgenden Fotograf — und <span class="ph">contact.name</span>, <span class="ph">contact.street</span>, <span class="ph">contact.postcode</span> <span class="ph">contact.city</span> — im Folgenden Auftraggeber.</p>
+          </div>
+
+          <div class="ejb sel">
+            <span class="gut"><i>⋮⋮</i><i>+</i></span>
+            <span class="tools">
+              <i class="on">B</i><i><em>I</em></i><i>Link</i>
+              <span class="sep"></span>
+              <i class="field">Platzhalter ⌄</i>
+            </span>
+            <p>Der Fotograf begleitet <span class="ph">project.name</span> am <span class="ph">shoot.date</span>. Der Umfang ergibt sich aus dem Angebot und den dort genannten Positionen.</p>
+          </div>
+
+          <div class="ejb">
+            <span class="gut"><i>⋮⋮</i><i>+</i></span>
+            <h4>Leistungen</h4>
+          </div>
+
+          <div class="ejb">
+            <span class="gut"><i>⋮⋮</i><i>+</i></span>
+            <ul>
+              <li>Lieferung der bearbeiteten Bilder über eine Onlinegalerie</li>
+              <li>Rechte zur privaten Nutzung ohne zeitliche Begrenzung</li>
+              <li>Veröffentlichung durch den Fotografen nur nach Rücksprache</li>
+            </ul>
+          </div>
+
+          <div class="ejb">
+            <span class="gut"><i>⋮⋮</i><i>+</i></span>
+            <table>
+              <tr><td>Ausfall bis 30 Tage vor dem Termin</td><td class="r">50 % des Honorars</td></tr>
+              <tr><td>Ausfall danach</td><td class="r">100 % des Honorars</td></tr>
+            </table>
+          </div>
+
+          <div class="ejb" style="padding-bottom:170px">
+            <span class="gut"><i>⋮⋮</i><i>+</i></span>
+            <p><span class="ph">settings.widerrufText</span></p>
+            <div class="blockmenu" style="top:42px">
+              <div>Überschrift <span class="k">H</span></div>
+              <div>Absatz <span class="k">¶</span></div>
+              <div>Liste</div>
+              <div>Tabelle</div>
+              <div>Zitat</div>
+              <div>Trenner</div>
+              <div class="off">Positionen · nur Angebot und Rechnung</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pane preview">
+        <div class="panehead">
+          <h2>Vorschau</h2>
+          <button class="pop" style="margin-left:auto"><u>Daten von</u> Meier &amp; Kowalski</button>
+        </div>
+
+        <div class="paper">
+          <div class="logo">Atelier Nordlicht</div>
+          <div class="addr">Atelier Nordlicht · Deichstraße 12 · 20459 Hamburg · Inhaber Christian Bergmann</div>
+
+          <h3>Fotografievertrag</h3>
+          <p>Zwischen Atelier Nordlicht, Deichstraße 12, 20459 Hamburg — im Folgenden Fotograf — und Lea Meier, Lindenweg 3, 21514 Basthorst — im Folgenden Auftraggeber.</p>
+          <p>Der Fotograf begleitet Meier &amp; Kowalski am 21.08.2026. Der Umfang ergibt sich aus dem Angebot und den dort genannten Positionen.</p>
+
+          <h4>Leistungen</h4>
+          <p>Lieferung der bearbeiteten Bilder über eine Onlinegalerie. Rechte zur privaten Nutzung ohne zeitliche Begrenzung. Veröffentlichung durch den Fotografen nur nach Rücksprache.</p>
+
+          <table>
+            <tr><td>Ausfall bis 30 Tage vor dem Termin</td><td class="r">50 % des Honorars</td></tr>
+            <tr><td>Ausfall danach</td><td class="r">100 % des Honorars</td></tr>
+          </table>
+
+          <div class="fine">Widerrufsbelehrung nach § 355 BGB — Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen …</div>
+
+          <div class="sig">
+            <div>Ort, Datum · Auftraggeber</div>
+            <div>Ort, Datum · Fotograf</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

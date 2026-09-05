@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Viola & Chris — Nordlicht Fotografie</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+/* Die Startseite eines Kunden mit mehreren Buchungen.
+ *
+ * Vier Dinge in dieser Reihenfolge, und die Reihenfolge ist die Aussage:
+ *
+ *   1. Was auf euch wartet — quer über alle Buchungen. Wer hier landet,
+ *      will zuerst wissen, ob etwas offen ist, nicht was es alles gibt.
+ *   2. Eure Buchungen — gleichrangig, jede mit eigener Phase.
+ *   3. Eure Galerien — der Grund, warum jemand das Portal nach drei Jahren
+ *      noch einmal öffnet. Direkt, ohne Umweg über die Buchung.
+ *   4. Wer sich kümmert — mit Postfach, auf jedem Screen erreichbar.
+ *
+ * Abschnitt 1 verschwindet, wenn nichts offen ist. Abschnitt 3 erscheint
+ * erst mit der ersten gelieferten Galerie. Kein Kasten ohne Inhalt.
+ */
+
+
+
+
+
+
+
+/* Nachrichten liegen im Kopf, nicht in einer Buchung: der Kunde schreibt
+   dem Studio, nicht dem Auftrag. Die Buchung ist Kontext im Faden. */
+
+
+
+.head { padding-block: var(--s8) 0; }
+.head .display { font-size: clamp(42px, 6vw, 68px); }
+
+/* Zwei Spalten ab 1080px: links, was der Kunde durchsieht (Buchungen,
+   Galerien), rechts, was ihn betrifft (Offenes, Kontakt) — mitlaufend, damit
+   die offene Rate beim Scrollen nicht aus dem Bild geht. Darunter eine
+   Kolonne, Offenes zuerst. Eine Spalte auf 1440px hieße eine tote Hälfte. */
+.split { display: grid; gap: var(--s8); align-items: start; padding-top: var(--s8); }
+@media (min-width: 1080px) {
+  /* Explizite Platzierung, nicht Reihenfolge: die Schiene steht im Markup
+     zuerst, damit sie auf dem Handy oben landet — im Raster gehört sie
+     trotzdem nach rechts. */
+  .split { grid-template-columns: minmax(0, 1fr) 348px; column-gap: var(--s7); }
+  .main { grid-column: 1; grid-row: 1; display: grid; gap: var(--s8); }
+  .rail { grid-column: 2; grid-row: 1; position: sticky; top: 88px; display: grid; gap: var(--s7); }
+}
+@media (max-width: 1079px) {
+  .split { grid-template-columns: 1fr; }
+  .rail, .main { display: contents; }
+  .pending { order: -1; }
+}
+
+section { scroll-margin-top: 80px; }
+.lab {
+  font: 600 11px/1 var(--sans); letter-spacing: .17em; text-transform: uppercase;
+  color: var(--ink-2); margin: 0 0 var(--s4);
+}
+
+/* ── 1 · Offen ────────────────────────────────────────────────────────── */
+.pending .list { border-top: 1px solid var(--line); }
+.pending .item { grid-template-columns: 1fr auto; align-items: start; padding-inline: var(--s3); margin-inline: calc(var(--s3) * -1); }
+.pending .item h3 { font-size: 19px; }
+.pending .item .chev { display: none; }
+.pending .item .where { font-size: 12px; color: var(--ink-2); margin-top: 5px; }
+
+/* ── 2 · Buchungen ────────────────────────────────────────────────────── */
+.orders { margin-top: 0; }
+.bookings .yearhead:first-child { padding-top: var(--s3); }
+
+/* ── 3 · Galerien ─────────────────────────────────────────────────────── */
+
+/* ── 4 · Ansprechpartner ──────────────────────────────────────────────── */
+
+.foot {
+  border-top: 1px solid var(--line);
+  max-width: var(--page); margin: var(--s9) auto 0;
+  padding: var(--s6) var(--s5) var(--s8);
+  display: flex; justify-content: space-between; gap: var(--s5); flex-wrap: wrap;
+  font-size: 13px; color: var(--ink-2);
+}
+.foot a { text-decoration: none; }
+.foot a:hover { color: var(--ink); }
+.foot .links { display: flex; gap: var(--s5); }
+
+@media (max-width: 700px) {
+  /* Betrag unter den Text statt daneben: in 390px bleibt neben "1.500,00 €"
+     zu wenig für den Titel, und das Grid kippt die Zeile. */
+  .pending .item { grid-template-columns: 1fr; }
+  .pending .amount { justify-self: start; margin-top: var(--s2); }
+  .head { padding-top: var(--s7); }
+  .person .contact { margin-left: 0; width: 100%; }
+  .gcard img { height: 190px; }
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="inner">
+    <a class="wordmark" href="portal-start.html"><i></i> Nordlicht Fotografie</a>
+    <nav>
+      <a href="portal-start.html" class="on">Buchungen</a>
+      <a class="mail" href="portal-nachrichten.html">Nachrichten <span class="badge">2</span></a>
+      <a href="portal-einstellungen.html">Einstellungen</a>
+      <a href="#">Abmelden</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <section class="head">
+    <h1 class="display rise rise-2">Viola <span class="amp">&amp;</span> Chris</h1>
+  </section>
+
+  <div class="split">
+   <div class="rail">
+  <!-- 1 · Quer über alle Buchungen. Fehlt der Abschnitt, ist nichts offen. -->
+  <section class="pending rise rise-3">
+    <p class="lab">Das wartet auf euch</p>
+    <div class="list">
+      <a class="item" href="portal-projekt.html">
+        <div>
+          <h3>Anzahlung</h3>
+          <div class="sub"><span class="dot open"></span> fällig am 27.07.2026</div>
+          <div class="where">Hochzeitstag · 21.08.2026</div>
+        </div>
+        <span class="amount open num">1.500,00 €</span>
+        <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="item" href="portal-anfrage.html">
+        <div>
+          <h3>Angebot</h3>
+          <div class="sub"><span class="dot open"></span> gültig bis 04.09.2026</div>
+          <div class="where">Babybauchshooting · Termin noch offen</div>
+        </div>
+        <span class="amount num">890,00 €</span>
+        <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+      <a class="item" href="#">
+        <div>
+          <h3>Nachrichten</h3>
+          <div class="sub"><span class="dot open"></span> zwei Antworten von Christian</div>
+          <div class="where">Hochzeitstag · gestern</div>
+        </div>
+        <span class="faint" style="font-size:13.5px">gestern</span>
+        <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+    </div>
+  </section>
+
+  <!-- 4 · Ein Mensch, kein Kontaktformular. -->
+  <section class="who rise rise-4">
+    <p class="lab">Euer Kontakt</p>
+    <div class="person">
+      <span class="av">CB</span>
+      <span>
+        <b>Christian Bergmann</b>
+        <span class="role">Nordlicht Fotografie · Hamburg</span>
+      </span>
+      <span class="contact">
+        <a class="chip" href="portal-nachrichten.html">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg>
+          Schreiben
+          <span class="badge">2</span>
+        </a>
+        <a class="chip" href="tel:+4940123456">
+          <svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a1 1 0 01-1 1A16 16 0 014 5a1 1 0 011-1z"/></svg>
+          Anrufen
+        </a>
+      </span>
+    </div>
+  </section>
+   </div>
+
+   <div class="main">
+  <!-- 2 · Alle Buchungen, gleichrangig. -->
+  <section class="bookings rise rise-4">
+    <p class="lab">Eure Buchungen</p>
+    <div class="orders">
+      <div class="yearhead">2027</div>
+
+      <a class="entry" href="portal-anfrage.html">
+        <span class="mono">27</span>
+        <span>
+          <span class="kind">Babybauch</span>
+          <h3>Babybauchshooting</h3>
+          <div class="sub">Termin noch offen · Hamburg</div>
+        </span>
+        <span class="state"><span class="dot open"></span> Angebot offen</span>
+        <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+
+      <div class="yearhead">2026</div>
+
+      <a class="entry" href="portal-projekt.html">
+        <img src="img/p005-sm.jpg" alt="">
+        <span>
+          <span class="kind">Hochzeit</span>
+          <h3>Hochzeitstag</h3>
+          <div class="sub num">21.08.2026 · Gut Basthorst, Basthorst</div>
+        </span>
+        <span class="state"><span class="dot"></span> Gebucht · 1.500 € offen</span>
+        <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+
+      <div class="yearhead">2025</div>
+
+      <a class="entry" href="galerie.html">
+        <img src="img/p016-sm.jpg" alt="">
+        <span>
+          <span class="kind">Paarshooting</span>
+          <h3>Verlobungsshooting</h3>
+          <div class="sub num">29.03.2025 · Jenischpark, Hamburg</div>
+        </span>
+        <span class="state"><span class="dot done"></span> 33 Bilder geliefert</span>
+        <span class="chev"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </a>
+    </div>
+  </section>
+
+  <!-- 3 · Direkt zu den Bildern, ohne Umweg über die Buchung. -->
+  <section class="gal rise rise-4">
+    <p class="lab">Eure Galerien</p>
+    <div class="galleries">
+      <a class="gcard" href="galerie.html">
+        <span class="shot"><img src="img/p016-sm.jpg" alt=""></span>
+        <b>Verlobungsshooting</b>
+        <span class="num">33 Bilder · online bis 28.08.2026</span>
+      </a>
+      <a class="gcard" href="galerie.html">
+        <span class="shot"><img src="img/p025-sm.jpg" alt=""></span>
+        <b>Standesamt</b>
+        <span class="num">78 Bilder · online bis 12.11.2026</span>
+      </a>
+    </div>
+  </section>
+
+   </div>
+  </div>
+</main>
+
+<footer class="foot">
+  <span>Nordlicht Fotografie · Elbchaussee 12, 22765 Hamburg</span>
+  <span class="links">
+    <a href="#">Impressum</a>
+    <a href="#">Datenschutz</a>
+    <a href="#">AGB</a>
+  </span>
+</footer>
+
+
+<nav class="tabbar">
+  <a href="portal-start.html" class="on">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+    Buchungen
+  </a>
+  <a href="portal-nachrichten.html">
+    <span class="mark"><svg viewBox="0 0 24 24"><path d="M4 6h16v12H4zM4 7l8 6 8-6"/></svg></span>
+    Nachrichten
+  </a>
+  <a href="portal-einstellungen.html">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>
+    Einstellungen
+  </a>
+</nav>
+
+</body>
+</html>

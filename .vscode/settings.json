@@ -1,0 +1,6 @@
+{
+  "i18n-ally.localesPaths": [
+    "apps/studio/lang",
+    "apps/studio/resources/js/locales"
+  ]
+}

@@ -1,0 +1,57 @@
+/*
+ * C-01 (#235): the admin's palette, scale and type, ported from
+ * mockups/redesign/crm.css.
+ *
+ * Its own sheet rather than an addition to tokens.css, which is the point of
+ * the issue: the portal and the gallery carry Instrument Serif and a lot of
+ * room, the admin carries density, and the UX audit named the shared bones as
+ * the root of why a tool for the operator and a keepsake for a couple read as
+ * the same product (docs/ux-audit.md). It has to stay a later import too — the
+ * values override tokens.css's :root on equal specificity, where only source
+ * order decides, and admin.css imports this one last.
+ *
+ * :root, not [data-tokens="crm"]: the surface is the scope. admin.css is the
+ * only sheet that imports this one and vite.config.ts gives each surface its
+ * own entrypoint, so everything these values reach is admin already. The
+ * attribute scope reached less than that — <main>, every dialog teleported to
+ * <body> and every page that does not use ui/page/Page sat outside it and drew
+ * the portal's palette in the admin.
+ *
+ * What stood here besides: 476 class rules, now written out as utilities at
+ * the screens that used them
+ * (docs/superpowers/specs/2026-08-19-tailwind-only-migration-design.md).
+ * app.css maps the values below onto Tailwind names — `bg-sunk`, `text-ink-2`,
+ * `text-action`.
+ */
+:root {
+  /* System stack, not Instrument Sans: the admin is a surface that stands
+     open all day, SF rasterises cleaner at 11–15px than any loaded family,
+     and the foreign fetch — a GDPR finding on the portal — falls away. */
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;
+
+  --paper: #FFFFFF;
+  --sunk: #FAFAFA;
+  --sunk-2: #F2F2F4;
+
+  --ink: #1D1D1F;
+  --ink-2: #6E6E73;
+  --mark: #DEDEE1;      /* an unfilled dot — not text, so it gets its own value */
+  --rule: #EFEFF1;
+
+  --accent: #B44E22;
+
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 20px; --s6: 28px; --s7: 32px;
+
+  --r: 20px;
+  --r-sm: 12px;
+  --r-pill: 980px;
+}
+
+/* Not on :root with the values above — tokens.css sets the same shorthand on
+   body, and a declaration there beats one inherited from html whatever the
+   order of the sheets. */
+body {
+  font: 400 13px/1.47 var(--font);
+  letter-spacing: -.006em;
+}

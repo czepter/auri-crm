@@ -1,0 +1,62 @@
+import { defineConfig } from '@playwright/test'
+
+// CI installs PHP natively; locally there is no host PHP, so the server runs in
+// the compose container, which publishes its port 8000 on the host as APP_PORT.
+// That host port is a variable because several git worktrees of this repository
+// run their own stack at once and cannot all bind the same one — see the ports
+// section of docker-compose.yml. Inside the container the port never moves, so
+// only the host side and the URL Playwright dials read the variable.
+const hostPort = process.env.CI ? '8000' : (process.env.APP_PORT ?? '8000')
+const baseURL = `http://127.0.0.1:${hostPort}`
+
+// migrate:fresh, not just a seed. These specs create leads, so a database that
+// survives between runs accumulates them and assertions start matching two
+// elements on the second run — a suite whose result depends on how often it has
+// been run before is not a suite. E2eSeeder is the single source of e2e
+// fixtures; locally, `php artisan migrate:fresh --seed` brings the demo cast
+// back for browsing.
+// cache:clear gehoert zu migrate:fresh. Der StudioSettingsResolver legt die
+// Studio-Einstellungen in Redis ab, und Redis ueberlebt die frische Datenbank
+// — der Name im Kopf jedes Screenshots war danach der, den die
+// Entwicklungsanwendung zuletzt gesetzt hatte, nicht der geseedete.
+const serve =
+  'sh -c "php artisan migrate:fresh --force' +
+  ' && php artisan cache:clear' +
+  ' && php artisan db:seed --class=E2eSeeder --force' +
+  // --no-reload, or the DB_DATABASE the compose run below sets never reaches
+  // the server: ServeCommand passes only its own $passthroughVariables list
+  // to the child process, and DB_* is not on it. Everything before this line
+  // took the override and rebuilt studio_e2e; the server fell back to .env
+  // and answered from the developer's own database, so every spec that signs
+  // in as an E2eSeeder account met an account that was not there.
+  ' && php artisan serve --no-reload --host=0.0.0.0 --port=8000"'
+
+export default defineConfig({
+  testDir: './tests/e2e',
+  // Playwright keys a snapshot to the platform that took it, so the committed
+  // -darwin.png baselines are files CI's ubuntu runner never looks for — it
+  // asks for -linux.png and fails all ninety. Fonts render differently enough
+  // between the two that one set cannot serve both. The portal spec is out for
+  // a second reason: it dials the portal surface on 8001, which the e2e job
+  // does not start.
+  testIgnore: process.env.CI ? ['**/visual.spec.ts', '**/visual-portal.spec.ts'] : [],
+  timeout: 30_000,
+  use: {
+    baseURL,
+    trace: 'on-first-retry',
+  },
+  webServer: {
+    cwd: process.env.CI ? '.' : '../..',
+    command: process.env.CI
+      ? serve
+      : `docker compose run --rm --service-ports -e APP_SURFACE=admin -e DB_DATABASE=studio_e2e php ${serve}`,
+    url: `${baseURL}/up`,
+    reuseExistingServer: !process.env.CI,
+    // One PHP worker serves one request at a time, so a fetch a page fires
+    // while that page is still pulling assets waits behind them — which is
+    // what gallery-record's five-second assertion on a minted link kept
+    // losing to on CI. Respected only alongside --no-reload above.
+    env: { APP_SURFACE: 'admin', PHP_CLI_SERVER_WORKERS: '4' },
+    timeout: 120_000,
+  },
+})

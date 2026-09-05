@@ -6,11 +6,13 @@
 
 **Architecture:** One Laravel application (`apps/studio`) renders its staff interface with Inertia and Vue 3, styled with shadcn-vue. `APP_SURFACE` selects exactly one route file at boot, so the admin container never registers the portal or api routes — isolation is a deploy property, not a repository one. Authentication is a plain Laravel session guard named `staff`; there is no Sanctum, no CORS, and no JSON API for the admin surface, because Inertia carries typed props instead. `spatie/laravel-data` objects are those props, and `spatie/laravel-typescript-transformer` turns them into TypeScript so renaming a PHP field fails `vue-tsc` in the same pull request.
 
-**Tech Stack:** PHP 8.3, Laravel 11, Pest 3, PostgreSQL 18, `inertiajs/inertia-laravel` 2, `spatie/laravel-data` 4, `spatie/laravel-typescript-transformer` 2, `pragmarx/google2fa`, `visus/cuid2`, Node 24, pnpm 10, Vue 3, Vite 6, Tailwind CSS 4, shadcn-vue, Vitest, Playwright, Docker Compose, GitHub Actions.
+**Tech Stack:** PHP 8.5, Laravel 13, Pest 5, PostgreSQL 18, `inertiajs/inertia-laravel` 3, `spatie/laravel-data` 4, `spatie/laravel-typescript-transformer` 3, `pragmarx/google2fa`, `visus/cuid2`, Node 24, pnpm 10, Vue 3, Vite 6, Tailwind CSS 4, shadcn-vue, Vitest, Playwright, Docker Compose, GitHub Actions.
+
+> **Revised 2026-08-08, three tasks in.** The stack line above originally read PHP 8.3, Laravel 11, Pest 3. PHP 8.3 left active support in December 2025 and is security-only, so a greenfield application starting today would begin its life on a version already past feature maintenance. The pin was also load-bearing in a way that was not obvious when it was written: Pest 5 requires PHP `^8.4`, so 8.3 silently capped the test framework at Pest 3 as well. Laravel 13 (released 2026-08-04) requires PHP `^8.3` and `inertiajs/inertia-laravel` 3.3 already declares `^11.35|^12.0|^13.0`, so nothing in the dependency graph objected. Changing this at task 3 costs one scaffold correction; changing it after the schema, the auth flow and the type-generation pipeline exist costs a migration.
 
 ## Global Constraints
 
-- PHP 8.3, Laravel 11.x, Pest 3.x. All PHP commands run inside Docker — never assume a host `php` or `composer` binary.
+- PHP 8.5, Laravel 13.x, Pest 5.x. All PHP commands run inside Docker — never assume a host `php` or `composer` binary.
 - Node 24, pnpm 10. pnpm is the only package manager; do not create `package-lock.json` or `yarn.lock`.
 - PostgreSQL 18. No MySQL-specific SQL, no SQLite in tests — tests run against real Postgres.
 - Exactly one route file is loaded per process, chosen by `APP_SURFACE`. A route belongs to exactly one surface. Never register a route from more than one surface file.

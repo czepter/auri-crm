@@ -60,15 +60,14 @@
 
       <span class="bar big"><i style="width:61%"></i></span>
 
-      <div class="bklist" style="margin-top:var(--s4)">
-        <div class="bkrow"><span>Dateien</span><span><b class="big">731</b> <em>von 1.204</em></span></div>
-        <div class="bkrow"><span>Übertragen</span><span class="big">18,4 GB <em>von 30,2 GB</em></span></div>
+      <div class="tiles" style="margin-top:var(--s4)">
+        <div class="fact"><div class="l">Dateien</div><div class="v">731</div><div class="s">von 1.204</div></div>
+        <div class="fact"><div class="l">Übertragen</div><div class="v">18,4 GB</div><div class="s">von 30,2 GB</div></div>
+        <div class="fact"><div class="l">Tempo</div><div class="v">12,4 MB/s</div><div class="s">12 Dateien parallel</div></div>
 
-        <div class="bkrow"><span>Tempo</span><span>12,4 MB/s <em>· 12 Dateien parallel</em></span></div>
-        <div class="bkrow"><span>Restzeit</span><span>ca. 16 Min. <em>· Beginn 21:38 Uhr</em></span></div>
-
-        <div class="bkrow"><span>Verarbeitet</span><span>612 <em>· Ableitungen fertig</em></span></div>
-        <div class="bkrow"><span>Zurückgewiesen</span><span><i>3</i> <em>· siehe unten</em></span></div>
+        <div class="fact"><div class="l">Restzeit</div><div class="v">ca. 16 Min.</div><div class="s">Beginn 21:38 Uhr</div></div>
+        <div class="fact"><div class="l">Verarbeitet</div><div class="v">612</div><div class="s">Ableitungen fertig</div></div>
+        <div class="fact"><div class="l">Zurückgewiesen</div><div class="v"><i>3</i></div><div class="s">siehe unten</div></div>
       </div>
 
       <div class="hint" style="margin-top:var(--s4)">Die Übertragung läuft in diesem Fenster. Wird es geschlossen, pausiert sie — fortsetzen lässt sie sich jederzeit mit demselben Ordner.</div>
@@ -148,12 +147,12 @@
         <div class="card static">
           <div class="cardhead"><span class="kick">Aufbereitung</span><span class="chip now">84 %</span></div>
           <span class="bar"><i style="width:84%"></i></span>
-          <div class="kv" style="margin-top:var(--s4)">
-            <div class="kvrow"><span>thumb 400</span><span><b>612</b> von 728</span></div>
-            <div class="kvrow"><span>web 1600</span><span><b>612</b> von 728</span></div>
-            <div class="kvrow"><span>preview 2560</span><span><b>604</b> von 728</span></div>
-            <div class="kvrow"><span>Blurhash</span><span><b>612</b> von 728</span></div>
-            <div class="kvrow"><span>Aufnahmezeit</span><span>aus EXIF</span></div>
+          <div class="tiles" style="margin-top:var(--s4)">
+            <div class="fact"><div class="l">thumb 400</div><div class="v">612</div><div class="s">von 728</div></div>
+            <div class="fact"><div class="l">web 1600</div><div class="v">612</div><div class="s">von 728</div></div>
+            <div class="fact"><div class="l">preview 2560</div><div class="v">604</div><div class="s">von 728</div></div>
+            <div class="fact"><div class="l">Blurhash</div><div class="v">612</div><div class="s">von 728</div></div>
+            <div class="fact"><div class="l">Aufnahmezeit</div><div class="v">aus EXIF</div></div>
           </div>
           <div class="hint" style="margin-top:var(--s4)">„Übertragen" ist noch nicht „bereit": erst mit allen drei Größen und dem Platzhalter erscheint ein Bild in der Galerie. Die Aufbereitung läuft im Hintergrund weiter, auch wenn dieses Fenster geschlossen wird.</div>
         </div>
@@ -161,20 +160,22 @@
         <div class="card static">
           <div class="cardhead"><span class="kick">Abbruch &amp; Fortsetzen</span></div>
           <div class="hint">Ein abgebrochener Import lässt sich jederzeit mit demselben Ordner fortsetzen — bereits übertragene Bilder werden erkannt und übersprungen, nichts wird doppelt angelegt.</div>
-          <div class="kv" style="margin-top:var(--s4)">
-            <div class="kvrow"><span>Ordner</span><span>/HZ_Meier/14-06</span></div>
-            <div class="kvrow"><span>Zuletzt</span><span>vor 3 Sek.</span></div>
+          <div class="tiles" style="margin-top:var(--s4)">
+            <div class="fact"><div class="l">Ordner</div><div class="v">/HZ_Meier/14-06</div></div>
+            <div class="fact"><div class="l">Zuletzt</div><div class="v">vor 3 Sek.</div></div>
           </div>
           <a class="blkfoot" href="#">Ordner erneut prüfen →</a>
         </div>
 
         <div class="card static">
           <div class="cardhead"><span class="kick">Ziel</span></div>
-          <div class="kv">
-            <div class="kvrow"><span>Projekt</span><span>Meier &amp; Kowalski</span></div>
-            <div class="kvrow"><span>Shooting</span><span>Hochzeitstag</span></div>
-            <div class="kvrow"><span>Galerie</span><span>Hochzeitstag · Entwurf</span></div>
-            <div class="kvrow"><span>Sortierung</span><span>Aufnahmezeit</span></div>
+          <!-- 4 facts: the default 3-up grid would strand a single tile on its
+               own row, so this block pairs them 2-up instead. -->
+          <div class="tiles" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+            <div class="fact"><div class="l">Projekt</div><div class="v">Meier &amp; Kowalski</div></div>
+            <div class="fact"><div class="l">Shooting</div><div class="v">Hochzeitstag</div></div>
+            <div class="fact"><div class="l">Galerie</div><div class="v">Hochzeitstag · Entwurf</div></div>
+            <div class="fact"><div class="l">Sortierung</div><div class="v">Aufnahmezeit</div></div>
           </div>
           <div class="hint" style="margin-top:var(--s4)">Die Galerie bleibt Entwurf, bis sie veröffentlicht wird. Bis dahin sieht niemand außerhalb des Studios die Bilder.</div>
           <a class="blkfoot" href="04-auftrag.html">Galerie im Projekt →</a>

@@ -51,21 +51,23 @@
 
     <div class="card static" style="margin-bottom:var(--s5)">
       <div class="cardhead"><span class="kick">Buchung</span></div>
-      <div class="bklist">
-        <div class="bkrow"><span>Kontakt</span><span>Lena Meier <em>· 0170 5512480</em></span></div>
-        <div class="bkrow"><span>Aktueller Wert</span><span class="big">5.880 € <i>+ 480 €</i></span></div>
+      <!-- 10 facts: the default 3-up grid would strand a single tile on its
+           own row, so this one keeps the original's paired layout at 2-up. -->
+      <div class="tiles" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+        <div class="fact"><div class="l">Kontakt</div><div class="v">Lena Meier</div><div class="s">0170 5512480</div></div>
+        <div class="fact"><div class="l">Aktueller Wert</div><div class="v">5.880 € <i>+ 480 €</i></div></div>
 
-        <div class="bkrow"><span>Typ</span><span>Hochzeit <em>· 4 Shootings</em></span></div>
-        <div class="bkrow"><span>Angebot</span><span>AN-2026-0042 <em>· 5.400 € angenommen 03.02.</em></span></div>
+        <div class="fact"><div class="l">Typ</div><div class="v">Hochzeit</div><div class="s">4 Shootings</div></div>
+        <div class="fact"><div class="l">Angebot</div><div class="v">AN-2026-0042</div><div class="s">5.400 € angenommen 03.02.</div></div>
 
-        <div class="bkrow"><span>Quelle</span><span>Empfehlung <em>· Fam. Osterhoff, 2024</em></span></div>
-        <div class="bkrow"><span>Offen</span><span>4.080 € <em>· 2 Raten</em></span></div>
+        <div class="fact"><div class="l">Quelle</div><div class="v">Empfehlung</div><div class="s">Fam. Osterhoff, 2024</div></div>
+        <div class="fact"><div class="l">Offen</div><div class="v">4.080 €</div><div class="s">2 Raten</div></div>
 
-        <div class="bkrow"><span>Haupttermin</span><span>14.06.2026 <em>· Hochzeitstag</em></span></div>
-        <div class="bkrow"><span>Vertrag</span><span>signiert 04.02.2026 <em>· Hochzeit v3</em></span></div>
+        <div class="fact"><div class="l">Haupttermin</div><div class="v">14.06.2026</div><div class="s">Hochzeitstag</div></div>
+        <div class="fact"><div class="l">Vertrag</div><div class="v">signiert 04.02.2026</div><div class="s">Hochzeit v3</div></div>
 
-        <div class="bkrow"><span>Verantwortlich</span><span>Christian Bergmann <em>· Fotograf</em></span></div>
-        <div class="bkrow"><span>Gebucht am</span><span>04.02.2026 <em>· Anzahlung bezahlt</em></span></div>
+        <div class="fact"><div class="l">Verantwortlich</div><div class="v">Christian Bergmann</div><div class="s">Fotograf</div></div>
+        <div class="fact"><div class="l">Gebucht am</div><div class="v">04.02.2026</div><div class="s">Anzahlung bezahlt</div></div>
       </div>
     </div>
 
@@ -284,9 +286,9 @@
 
         <div class="card static">
           <div class="cardhead"><span class="kick">Aus der Anfrage</span></div>
-          <div class="kv">
-            <div class="kvrow"><span>Angefragt</span><span>02.02.2026</span></div>
-            <div class="kvrow"><span>Quelle</span><span>Empfehlung</span></div>
+          <div class="tiles">
+            <div class="fact"><div class="l">Angefragt</div><div class="v">02.02.2026</div></div>
+            <div class="fact"><div class="l">Quelle</div><div class="v">Empfehlung</div></div>
           </div>
           <div class="msgbody" style="margin-top:12px">„Wir heiraten kirchlich und feiern auf dem Land. Uns sind ungestellte Reportagebilder wichtiger als klassische Portraits."</div>
           <a class="blkfoot" href="02-anfragen.html">Zur Anfrage →</a>
@@ -391,13 +393,13 @@
         <div class="stackcol">
           <div class="card static">
             <div class="cardhead"><span class="kick">Projektdaten</span></div>
-            <div class="kv">
-              <div class="kvrow"><span>Kontakt</span><span>Annika Steffens</span></div>
-              <div class="kvrow"><span>Typ</span><span>Hochzeit</span></div>
-              <div class="kvrow"><span>Haupttermin</span><span>14.06.2026</span></div>
-              <div class="kvrow"><span>Ort</span><span class="tbd">aus dem Text: Gut Basthorst</span></div>
-              <div class="kvrow"><span>Quelle</span><span>Empfehlung</span></div>
-              <div class="kvrow"><span>Wert</span><span class="tbd">noch kein Angebot</span></div>
+            <div class="tiles">
+              <div class="fact"><div class="l">Kontakt</div><div class="v">Annika Steffens</div></div>
+              <div class="fact"><div class="l">Typ</div><div class="v">Hochzeit</div></div>
+              <div class="fact"><div class="l">Haupttermin</div><div class="v">14.06.2026</div></div>
+              <div class="fact ghost"><div class="l">Ort</div><div class="v">aus dem Text: Gut Basthorst</div></div>
+              <div class="fact"><div class="l">Quelle</div><div class="v">Empfehlung</div></div>
+              <div class="fact ghost"><div class="l">Wert</div><div class="v">noch kein Angebot</div></div>
             </div>
             <a class="blkfoot" href="#">Projektdaten ergänzen →</a>
           </div>

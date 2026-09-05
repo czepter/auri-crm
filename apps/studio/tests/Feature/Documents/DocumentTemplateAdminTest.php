@@ -1,0 +1,243 @@
+<?php
+
+use App\Documents\Enums\DocumentTemplateType;
+use App\Documents\Models\DocumentTemplate;
+use App\Documents\Support\StarterBlockSerializer;
+use App\Documents\Support\StarterTemplateCatalog;
+use App\Enums\StaffRole;
+use App\Models\AuditLog;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
+
+it('creates a first template version', function () {
+    $staff = staffMember(StaffRole::Owner);
+
+    $this->actingAs($staff, 'staff')
+        ->post('/dokumentvorlagen', ['name' => 'Hochzeit', 'body' => '<p>{{ project.name }}</p>', 'type' => 'contract'])
+        ->assertRedirect('/dokumentvorlagen');
+
+    $template = DocumentTemplate::sole();
+    expect($template->version)->toBe(1)
+        ->and($template->is_current)->toBeTrue()
+        ->and($template->type)->toBe(DocumentTemplateType::Contract)
+        ->and(AuditLog::where('event', 'document_template.created')->sole()->actor_id)->toBe($staff->id);
+});
+
+it('creates a quote or mail template exactly the same way as a contract one', function (string $type) {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post('/dokumentvorlagen', ['name' => 'Standard', 'body' => '<p>{{ project.name }}</p>', 'type' => $type])
+        ->assertRedirect('/dokumentvorlagen');
+
+    expect(DocumentTemplate::sole()->type)->toBe(DocumentTemplateType::from($type));
+})->with(['quote', 'invoice', 'mail']);
+
+it('rejects an unknown document type', function () {
+    // 'invoice' was this test's example of an unknown type until T-15 made
+    // it the fourth real one.
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post('/dokumentvorlagen', ['name' => 'X', 'body' => '<p>x</p>', 'type' => 'receipt'])
+        ->assertInvalid(['type']);
+});
+
+it('accepts an optional shoot kind variant', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post('/dokumentvorlagen', ['name' => 'Hochzeit', 'body' => '<p>x</p>', 'type' => 'contract', 'shoot_kind' => 'wedding'])
+        ->assertRedirect('/dokumentvorlagen');
+
+    expect(DocumentTemplate::sole()->shoot_kind)->toBe('wedding');
+});
+
+it('creates a new version rather than mutating on update', function () {
+    $staff = staffMember(StaffRole::Owner);
+    $template = DocumentTemplate::factory()->create(['body' => '<p>v1</p>']);
+
+    $this->actingAs($staff, 'staff')
+        ->patch("/dokumentvorlagen/{$template->public_id}", ['name' => $template->name, 'body' => '<p>v2</p>'])
+        ->assertRedirect('/dokumentvorlagen');
+
+    expect(DocumentTemplate::query()->where('family_id', $template->family_id)->count())->toBe(2);
+
+    $template->refresh();
+    expect($template->body)->toBe('<p>v1</p>')
+        ->and($template->is_current)->toBeFalse();
+
+    $current = DocumentTemplate::current()->where('family_id', $template->family_id)->sole();
+    expect($current->body)->toBe('<p>v2</p>')
+        ->and(AuditLog::where('event', 'document_template.updated')->sole()->context['version'])->toBe(2);
+});
+
+it('keeps block content through a new version, and sanitises it on the way', function () {
+    $template = DocumentTemplate::factory()->create();
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch("/dokumentvorlagen/{$template->public_id}", [
+            'name' => $template->name,
+            'body' => '<p>Neu</p>',
+            'blocks' => ['blocks' => [['type' => 'paragraph', 'data' => ['text' => 'Neu <img src=x onerror=alert(1)>']]]],
+        ])
+        ->assertRedirect('/dokumentvorlagen');
+
+    $version = DocumentTemplate::query()->where('version', 2)->firstOrFail();
+
+    expect($version->blocks['blocks'][0]['data']['text'])->toBe('Neu ');
+});
+
+it('404s editing a superseded version', function () {
+    $staff = staffMember(StaffRole::Owner);
+    $template = DocumentTemplate::factory()->create();
+    $template->newVersion(['name' => $template->name, 'body' => '<p>v2</p>']);
+
+    $this->actingAs($staff, 'staff')->get("/dokumentvorlagen/{$template->public_id}")->assertNotFound();
+});
+
+it('opens the template list to every role that manages contracts, and refuses the ones that cannot', function (StaffRole $role, int $status) {
+    $this->actingAs(staffMember($role), 'staff')->get('/vorlagen?typ=dokumente')->assertStatus($status);
+})->with([
+    [StaffRole::Owner, 200],
+    [StaffRole::Photographer, 200],
+    [StaffRole::Editor, 200],
+    [StaffRole::SecondShooter, 404],
+    [StaffRole::Assistant, 404],
+]);
+
+it('stores the editor blocks next to the serialized body', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post('/dokumentvorlagen', [
+            'name' => 'Fotovertrag',
+            'type' => 'contract',
+            'shoot_kind' => null,
+            'body' => '<p>Hallo</p>',
+            'blocks' => ['blocks' => [['type' => 'paragraph', 'data' => ['text' => 'Hallo']]]],
+        ])
+        ->assertRedirect('/dokumentvorlagen');
+
+    $template = DocumentTemplate::query()->firstOrFail();
+
+    // Not just the type: a validation rule covering only `.type` lets Laravel's
+    // validated() silently reconstruct the block without its `data`, which is
+    // exactly the bug this test caught (see InlineHtmlSanitizer's write-path fix).
+    expect($template->body)->toBe('<p>Hallo</p>')
+        ->and($template->blocks['blocks'][0]['type'])->toBe('paragraph')
+        ->and($template->blocks['blocks'][0]['data']['text'])->toBe('Hallo');
+});
+
+it('refuses a block the document type may not use', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post('/dokumentvorlagen', [
+            'name' => 'Angebotsmail',
+            'type' => 'mail',
+            'shoot_kind' => null,
+            'body' => '<p>x</p>',
+            'blocks' => ['blocks' => [['type' => 'columns', 'data' => ['left' => [], 'right' => []]]]],
+        ])
+        ->assertInvalid(['blocks']);
+
+    expect(DocumentTemplate::query()->count())->toBe(0);
+});
+
+it('accepts a template saved without blocks, the way an untouched legacy row is', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post('/dokumentvorlagen', [
+            'name' => 'Alt',
+            'type' => 'contract',
+            'shoot_kind' => null,
+            'body' => '<p>alt</p>',
+        ])
+        ->assertRedirect('/dokumentvorlagen');
+
+    expect(DocumentTemplate::query()->firstOrFail()->blocks)->toBeNull();
+});
+
+it('gives the create screen a palette for its type and the merge-field samples', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get('/dokumentvorlagen/neu')
+        ->assertInertia(fn ($page) => $page
+            ->component('DocumentTemplates/Create')
+            ->has('palettes.contract')
+            ->has('palettes.mail')
+            ->has('mergeFields.0.path')
+            ->has('mergeFields.0.sample'));
+});
+
+it('gives the edit screen the palette for the template it is editing', function () {
+    $template = DocumentTemplate::factory()->create(['type' => 'mail']);
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get("/dokumentvorlagen/{$template->public_id}")
+        ->assertInertia(fn ($page) => $page
+            ->component('DocumentTemplates/Edit')
+            // C-16 (#252): `columns` is in the palette for a mail, marked as
+            // refused with its reason — it must never arrive usable.
+            ->where('palette', fn ($palette) => collect($palette)
+                ->where('allowed', true)->pluck('type')->doesntContain('columns'))
+            ->where('palette', fn ($palette) => collect($palette)
+                ->firstWhere('type', 'columns')['only'] === 'Vertrag und Angebot und Rechnung'));
+});
+
+it('refuses a body carrying an href with an unsafe scheme', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post('/dokumentvorlagen', [
+            'name' => 'Angebotsmail',
+            'type' => 'mail',
+            'shoot_kind' => null,
+            'body' => '<p><a href=\'javascript:alert(1)\'>klick</a></p>',
+        ])
+        ->assertInvalid(['body']);
+
+    expect(DocumentTemplate::query()->count())->toBe(0);
+});
+
+it('sanitises block html on the way into storage, not merely on the way out', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post('/dokumentvorlagen', [
+            'name' => 'Fotovertrag',
+            'type' => 'contract',
+            'shoot_kind' => null,
+            'body' => '<p>Hallo</p>',
+            'blocks' => ['blocks' => [['type' => 'paragraph', 'data' => ['text' => 'Hallo <img src=x onerror=alert(1)>']]]],
+        ])
+        ->assertRedirect('/dokumentvorlagen');
+
+    expect(DocumentTemplate::query()->firstOrFail()->blocks['blocks'][0]['data']['text'])->toBe('Hallo ');
+});
+
+// --- T-16: starters on the create screen --------------------------------
+
+it('opens the create screen on the catalog rather than on an empty canvas', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->get('/dokumentvorlagen/neu')
+        ->assertOk()
+        ->assertInertia(function ($page) {
+            $starters = $page->toArray()['props']['starters'];
+
+            expect(array_keys($starters))->toContain('contract', 'quote', 'invoice', 'mail')
+                ->and($starters['contract'])->not->toBeEmpty()
+                // Blocks travel with the entry, so choosing one is a local
+                // edit rather than a second request.
+                ->and($starters['contract'][0])->toHaveKeys(['key', 'name', 'description', 'shootKind', 'blocks']);
+        });
+});
+
+it('creates a tenant-owned first version whose blocks are the starter\'s own', function () {
+    $starter = StarterTemplateCatalog::find('contract-werkvertrag');
+    $body = StarterBlockSerializer::toHtml($starter['blocks']);
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->post('/dokumentvorlagen', [
+            'name' => $starter['name'],
+            'type' => $starter['type'],
+            'body' => $body,
+            'blocks' => $starter['blocks'],
+        ])
+        ->assertRedirect();
+
+    $template = DocumentTemplate::sole();
+
+    expect($template->version)->toBe(1)
+        ->and($template->is_current)->toBeTrue()
+        ->and($template->blocks['blocks'][0]['data']['text'])->toBe('Fotovertrag')
+        // Nothing records which starter it came from: a later release editing
+        // the catalog must not reach a template the studio has made its own.
+        ->and($template->getAttributes())->not->toHaveKey('starter_key');
+});

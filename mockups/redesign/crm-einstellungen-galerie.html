@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Einstellungen · Galerie — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="einstellungen">
+
+<!-- Zwei Sorten, deshalb zwei Gruppen. gallery_default_* trifft nur neue
+     Galerien; die Tore stehen danach je Galerie in galleries und bleiben dort
+     übersteuerbar — ein geänderter Startwert darf keine laufende Galerie
+     umschalten. Neben jeder Vorgabe steht deshalb, wie viele Galerien heute
+     abweichen.
+
+     Die zweite Gruppe hat keine Entsprechung je Galerie: Größen, Archivteile
+     und Wasserzeichen entstehen bei der Auslieferung und gelten für alle.
+
+     Der Ablauf setzt beim Veröffentlichen expires_at — Vorgabe, nicht
+     rückwirkend. Wie viele Galerien demnächst ablaufen, gehört in die
+     Galerieübersicht und nicht in die Einstellungen. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="main">
+
+    <div class="hrow">
+      <div>
+        <div class="kick">Einstellungen</div>
+        <h1>Galerie</h1>
+      </div>
+      <a class="link" href="galerie.html" style="margin-left:auto">Als Gast ansehen</a>
+      <a class="btn" href="#">Sichern</a>
+    </div>
+
+    <div style="display:flex; align-items:stretch; flex:1; min-height:0; margin-top:14px">
+
+      <nav class="subnav">
+        <div class="lab">Persönlich</div>
+        <a href="crm-einstellungen-person.html">Konto</a>
+        <a href="#">Benachrichtigungen</a>
+        <div class="lab">Studio</div>
+        <a href="crm-einstellungen-studio.html">Stammdaten</a>
+        <a href="#">Nummernkreise</a>
+        <a href="#">Zahlungen</a>
+        <a href="#">Verfügbarkeit</a>
+        <a href="#">E-Mail</a>
+        <div class="lab">Kunden</div>
+        <a href="crm-einstellungen-portal.html">Portal</a>
+        <a class="on" href="crm-einstellungen-galerie.html">Galerie</a>
+        <a href="#">Aufgabenvorlagen</a>
+        <a href="#">Fragebögen</a>
+      </nav>
+
+      <div class="pane-set">
+
+        <h2>Vorgabe für neue Galerien</h2>
+        <div class="setting">
+          <span class="t">Herunterladen erlaubt</span>
+          <span class="v mut">3 Galerien abweichend</span>
+          <span class="sw on"></span>
+        </div>
+        <div class="setting">
+          <span class="t">Kommentare</span>
+          <span class="v mut">1 Galerie abweichend</span>
+          <span class="sw on"></span>
+        </div>
+        <div class="setting">
+          <span class="t">Favoritenlisten</span>
+          <span class="v mut">alle wie Vorgabe</span>
+          <span class="sw on"></span>
+        </div>
+        <div class="setting">
+          <span class="t">Download erst nach vollständiger Zahlung</span>
+          <span class="v mut">2 Galerien abweichend</span>
+          <span class="sw"></span>
+        </div>
+        <div class="setting">
+          <span class="t">Passwort für die Ansicht</span>
+          <span class="v mut">5 Galerien ohne</span>
+          <span class="sw on"></span>
+        </div>
+        <div class="setting">
+          <span class="t">Zweiter Code für den Download</span>
+          <span class="v mut">alle wie Vorgabe</span>
+          <span class="sw on"></span>
+        </div>
+        <div class="setting">
+          <span class="t">E-Mail vor dem Download</span>
+          <span class="v mut">2 Galerien abweichend</span>
+          <span class="sw"></span>
+        </div>
+        <div class="setting">
+          <span class="t">Galerie läuft ab nach</span>
+          <span class="v">90 Tagen</span>
+        </div>
+        <div class="setting">
+          <span class="t">Abweichungen ansehen</span>
+          <span class="v mut">9 von 34 Galerien</span>
+          <a class="link" href="#">Galerien</a>
+        </div>
+
+        <h2>Gilt für alle Galerien</h2>
+        <div class="setting">
+          <span class="t">Größen im Download</span>
+          <span class="v">Original und Web</span>
+        </div>
+        <div class="setting">
+          <span class="t">Teile eines Archivs</span>
+          <span class="v">je 2 GB</span>
+        </div>
+        <div class="setting">
+          <span class="t">Wasserzeichen in der Vorschau</span>
+          <span class="sw"></span>
+        </div>
+        <div class="setting">
+          <span class="t">Dateien nach Ablauf</span>
+          <span class="v">30 Tage aufbewahren</span>
+        </div>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

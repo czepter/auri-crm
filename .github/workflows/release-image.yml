@@ -1,0 +1,93 @@
+name: Release images
+
+# Builds the deployment images ahead of the deploy rather than on the server.
+# docker-compose.coolify.yml names eight services off three images; letting
+# Coolify build them would mean a VPS compiling PHP extensions and two
+# JavaScript bundles while the old containers are still serving, on hardware
+# sized for neither. Here the build is already cached, already tested by ci.yml
+# on the same commit, and the deploy is a pull.
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - 'apps/**'
+      - 'docker/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.dockerignore'
+      - '.github/workflows/release-image.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: release-image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Cheap, and it guards the failure mode nothing else would catch: every rule
+  # it checks produces a stack that deploys green with an empty secret or a
+  # misrouted domain. Its own job so the matrix below does not run it twice.
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check the Compose file against Coolify's parser rules
+        run: php docker/app/check-coolify-compose.php
+
+  build:
+    needs: check
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Six of the seven app services run this one: three HTTP surfaces,
+          # Horizon, the scheduler and the migration one-shot.
+          - image: studio
+            dockerfile: docker/app/Dockerfile
+          - image: gallery
+            dockerfile: docker/gallery/Dockerfile
+          - image: mcp
+            dockerfile: docker/mcp/Dockerfile
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # `latest` is what docker-compose.coolify.yml names, and it moves only on
+      # the default branch — a dev push must never become what production pulls
+      # on its next restart. Every build also gets its branch name and its
+      # commit SHA; the SHA is the only tag that can name a specific deploy to
+      # roll back to.
+      - id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}/${{ matrix.image }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+            type=sha,format=long
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Only the gallery image declares this ARG; the studio build ignores
+          # it. It is what tags a GlitchTip event with the build it came from.
+          build-args: |
+            SENTRY_RELEASE=${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}

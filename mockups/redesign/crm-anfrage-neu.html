@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Anfrage anlegen — Nordlicht</title>
+<link rel="stylesheet" href="crm.css">
+<script src="crm-chrome.js"></script>
+</head>
+<body data-nav="anfragen">
+
+<!-- Manuelle Erfassung: das Paar hat angerufen oder steht im Studio. Deshalb
+     ist die erste Zeile der Name und nicht der Kanal, und deshalb sind alle
+     Felder außer Namen und Anlass optional — am Telefon weiß niemand die
+     Postleitzahl des Guts.
+
+     Der Kanal kennt web_form nicht: CaptureChannel::manualCases() filtert den
+     Fall heraus, weil eine Anfrage, die jemand hier eintippt, nicht über das
+     Formular kam.
+
+     Der Terminkonflikt erscheint an dem Feld, das ihn auslöst, und blockiert
+     nicht: Doppelbelegung ist bei Anfragen der Normalfall — zwei Paare fragen
+     denselben Samstag an, eines bucht. Die Spur rechts zeigt dieselbe Woche
+     mit, sobald ein Datum steht. -->
+
+<div class="app">
+
+  <div data-chrome></div>
+
+  <main class="detail">
+    <div class="crumb"><a class="link" href="crm-anfragen.html">Anfragen</a></div>
+
+    <div class="title">
+      <h1>Anfrage anlegen</h1>
+    </div>
+
+    <form class="form" style="margin-top:22px">
+
+      <div class="fr cont">
+        <label for="k1">Kontakt</label>
+        <div class="fields">
+          <input id="k1" class="n" value="Meike Sørensen" autocomplete="off">
+          <input class="m" value="meike.sorensen@example.de" inputmode="email" placeholder="E-Mail">
+          <input class="s" placeholder="Telefon" inputmode="tel">
+        </div>
+      </div>
+
+      <div class="fr cont">
+        <label for="k2"></label>
+        <div class="fields">
+          <input id="k2" class="n" value="Jonas Sørensen" autocomplete="off">
+          <input class="m" placeholder="E-Mail" inputmode="email">
+          <input class="s" placeholder="Telefon" inputmode="tel">
+        </div>
+      </div>
+
+      <div class="fr cont">
+        <label></label>
+        <div class="fields"><button class="ghost" type="button">+ Person</button></div>
+      </div>
+
+      <div class="fr">
+        <label>Anlass</label>
+        <div class="fields choice">
+          <label><input type="radio" name="anlass" checked><span>Hochzeit</span></label>
+          <label><input type="radio" name="anlass"><span>Portrait</span></label>
+          <label><input type="radio" name="anlass"><span>Sonstiges</span></label>
+        </div>
+      </div>
+
+      <div class="fr">
+        <label for="tag">Termin</label>
+        <div class="fields">
+          <input id="tag" class="s" type="date" value="2026-06-14">
+          <input class="m" value="Gut Basthorst" placeholder="Ort">
+          <input class="s" value="Basthorst" placeholder="Stadt">
+          <div class="conflict">14.06. ist belegt — <a href="crm-anfrage-angenommen.html">Meier &amp; Kowalski, Hochzeit</a> · Nina an dem Tag frei</div>
+        </div>
+      </div>
+
+      <div class="fr">
+        <label>Quelle</label>
+        <div class="fields choice">
+          <label><input type="radio" name="quelle"><span>Empfehlung</span></label>
+          <label><input type="radio" name="quelle"><span>Website</span></label>
+          <label><input type="radio" name="quelle" checked><span>Instagram</span></label>
+          <label><input type="radio" name="quelle"><span>Hochzeitsmesse</span></label>
+          <label><input type="radio" name="quelle"><span>Sonstiges</span></label>
+        </div>
+      </div>
+
+      <div class="fr">
+        <label>Eingang</label>
+        <div class="fields choice">
+          <label><input type="radio" name="kanal" checked><span>Telefon</span></label>
+          <label><input type="radio" name="kanal"><span>E-Mail</span></label>
+          <label><input type="radio" name="kanal"><span>Persönlich</span></label>
+          <label><input type="radio" name="kanal"><span>Sonstiges</span></label>
+        </div>
+      </div>
+
+      <div class="fr">
+        <label for="txt">Was sie sagen</label>
+        <div class="fields">
+          <textarea id="txt">Ruft aus dem Urlaub an. Freie Trauung auf dem Gut, danach Feier in der Scheune, ca. 90 Gäste. Kennen uns über Instagram, fragen nach Ganztag mit zweiter Person. Melden sich nächste Woche mit dem Ablauf.</textarea>
+        </div>
+      </div>
+
+      <div class="formfoot">
+        <a class="link" href="crm-anfragen.html">Abbrechen</a>
+        <button class="btn-2" type="button">Anlegen und nächste</button>
+        <button class="btn" type="button">Anlegen</button>
+      </div>
+    </form>
+  </main>
+
+  <aside class="rail">
+    <h2>Woche um den 14. Juni</h2>
+    <div class="grp">
+      <div class="d"><span class="dd">Do 11.6.</span><span class="ev">—</span></div>
+      <div class="d"><span class="dd">Fr 12.6.</span><span class="ev">Portrait Sundermann</span></div>
+      <div class="d set"><span class="dd">Sa 13.6.</span><span class="ev">Hochzeit Ahrens &amp; Kroll</span></div>
+      <div class="d set"><span class="dd">So 14.6.</span><span class="ev">Meier &amp; Kowalski · gebucht</span></div>
+      <div class="d none"><span class="dd">Mo 15.6.</span><span class="ev">—</span></div>
+    </div>
+
+    <h2>Wer kann am 14.6.</h2>
+    <div class="grp">
+      <div class="p"><span class="av">CB</span>Christian<span class="st" style="color:#B44E22">Meier &amp; Kowalski</span></div>
+      <div class="p"><span class="av">NS</span>Nina<span class="st">frei</span></div>
+    </div>
+
+    <h2>Juni</h2>
+    <div class="grp">
+      <div class="d"><span class="dd">20.6.</span><span class="ev">Hochzeit Petersen</span></div>
+      <div class="d none"><span class="dd">27.6.</span><span class="ev">frei</span></div>
+    </div>
+
+    <h2>Hochzeiten 2026</h2>
+    <div class="grp">
+      <div class="k"><span>Angebote</span><span>2.400–3.500 €</span></div>
+      <div class="k"><span>Gebucht</span><span>6 von 12</span></div>
+    </div>
+  </aside>
+</div>
+
+</body>
+</html>
