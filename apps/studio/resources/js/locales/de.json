@@ -31,7 +31,8 @@
     "devLoginHint": "Nur lokal. Überspringt Passwort und Zwei-Faktor-Bestätigung.",
     "forgot": "Passwort vergessen?",
     "oauthTitle": "Zugriff erlauben",
-    "oauthHint": "Ein MCP-Client fordert Zugriff auf:",
+    "oauthHint": "{client} fordert Zugriff auf:",
+    "oauthTarget": "Weiterleitung an {host}",
     "oauthApprove": "Erlauben",
     "oauthDeny": "Ablehnen"
   },

@@ -104,7 +104,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // no session and so no CSRF token to present. The authorization code
         // and PKCE verifier OAuthTokenController checks are the credential
         // that route's CSRF token would otherwise have been.
-        $middleware->validateCsrfTokens(except: ['oauth/token']);
+        $middleware->validateCsrfTokens(except: ['oauth/token', 'oauth/register']);
 
         $middleware->alias([
             'setup' => EnsureNoStaffExists::class,

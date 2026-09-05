@@ -1,7 +1,7 @@
 # Deployment
 
 Deployed on [Coolify](https://coolify.io) from `docker-compose.coolify.yml`:
-seven application services off two prebuilt images — pulled, never built on
+eight application services off three prebuilt images — pulled, never built on
 the server — alongside Postgres, Redis, Gotenberg and RustFS from upstream
 ones. `docker-compose.yml` beside it stays the local development stack with
 its bind mounts and dev dependencies; nothing in the Coolify file is meant to
@@ -16,14 +16,20 @@ why of any individual line.
 
 ## The image pipeline
 
-`.github/workflows/release-image.yml` builds `docker/app/Dockerfile` and
-`docker/gallery/Dockerfile` on every push to `main` and `dev` that touches
-`apps/`, `docker/` or the workspace manifests, and pushes both to GHCR:
+`.github/workflows/release-image.yml` builds `docker/app/Dockerfile`,
+`docker/gallery/Dockerfile` and `docker/mcp/Dockerfile` on every push to
+`main` and `dev` that touches `apps/`, `docker/` or the workspace manifests,
+and pushes all three to GHCR:
 
 ```
 ghcr.io/czepter/auri-crm/studio     six services: admin, portal, api, horizon, scheduler, migrate
 ghcr.io/czepter/auri-crm/gallery    the Astro SSR gallery
+ghcr.io/czepter/auri-crm/mcp        the MCP server's HTTP transport
 ```
+
+`mcp` is its own image rather than a seventh service on `studio` because it
+is a Node program and that image's runtime is FrankenPHP — Node appears there
+only in a build stage that is thrown away. Same reason `gallery` is separate.
 
 Building ahead of the deploy rather than on the server is deliberate: a VPS
 compiling PHP extensions and two JavaScript bundles while the old containers
@@ -88,9 +94,16 @@ are not:
 | `GALLERY_SENTRY_DSN` | The GlitchTip project for the Astro gallery — same |
 | `POSTGRES_DB`, `AWS_BUCKET` | Optional; both default to `studio` |
 
-Four domains are assigned by Coolify, one per web-facing service: `admin`,
-`portal`, `api` and `gallery`. RustFS gets a fifth, because presigned URLs
-handed to a browser have to resolve publicly.
+Five domains are assigned by Coolify, one per web-facing service: `admin`,
+`portal`, `api`, `gallery` and `mcp`. RustFS gets a sixth, because presigned
+URLs handed to a browser have to resolve publicly.
+
+`mcp` needs one because a remote MCP client connects to it directly, and
+because the URL *is* the `resource` identifier in the RFC 9728 document it
+serves. Nothing about the MCP server is configured by hand: `MCP_PUBLIC_URL`
+and `OAUTH_ISSUER_URL` are both `SERVICE_FQDN_*` references Coolify fills in,
+and `CRM_API_BASE_URL` stays container-internal because only that container
+calls it.
 
 Identifiers in `SERVICE_*` names carry no underscores — Coolify splits the
 port off the last one, so `SERVICE_FQDN_MY_APP_8080` reads as the service
@@ -104,6 +117,7 @@ port off the last one, so `SERVICE_FQDN_MY_APP_8080` reads as the service
 | `portal` | studio | `APP_SURFACE=portal` — the client surface, own domain |
 | `api` | studio | `APP_SURFACE=api` — public JSON, own domain |
 | `gallery` | gallery | Astro SSR, own domain, reaches `api` internally |
+| `mcp` | mcp | MCP HTTP transport, own domain, verifies bearers against `api` internally |
 | `horizon` | studio | `php artisan horizon` — every named queue |
 | `scheduler` | studio | `php artisan schedule:work` |
 | `migrate` | studio | `php artisan migrate --force --isolated`, one-shot |
@@ -141,11 +155,12 @@ whose `db:cutover-restore` command exists for exactly this.
 
 1. Create the resource in Coolify from `docker-compose.coolify.yml` on the
    `main` branch.
-2. Assign the five domains (`admin`, `portal`, `api`, `gallery`, `rustfs`).
+2. Assign the six domains (`admin`, `portal`, `api`, `gallery`, `mcp`,
+   `rustfs`).
 3. Fill the manual variables above. Leave both Sentry DSNs empty until a
    GlitchTip project exists.
 4. Deploy. `migrate` runs the schema, `rustfs-init` creates the bucket, and
-   the four web services come up behind their healthchecks.
+   the five web services come up behind their healthchecks.
 5. Visit `/einrichtung` on the admin domain and complete first-run setup —
    see "First-run setup" below. No seeder runs in a deploy, and
    `DemoCrmSeeder` is guarded off in production anyway. Everyone after the

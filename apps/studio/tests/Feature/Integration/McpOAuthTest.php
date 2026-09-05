@@ -22,6 +22,7 @@ function pkcePair(): array
 }
 
 const REDIRECT_URI = 'http://127.0.0.1:33418/callback';
+const CLAUDE_REDIRECT_URI = 'https://claude.ai/api/mcp/auth_callback';
 
 it('shows the consent screen scoped to the signed-in staff member\'s own role', function () {
     $user = staffMember(StaffRole::SecondShooter);
@@ -98,6 +99,7 @@ it('completes the authorization-code-with-PKCE flow end to end and mints a worki
     [$verifier, $challenge] = pkcePair();
 
     $authorize = $this->actingAs($user, 'staff')->post('/oauth/authorize', [
+        'client_id' => 'studio-mcp',
         'redirect_uri' => REDIRECT_URI,
         'code_challenge' => $challenge,
         'scope' => Capability::ManageContacts->value,
@@ -113,6 +115,7 @@ it('completes the authorization-code-with-PKCE flow end to end and mints a worki
 
     $token = $this->postJson('/oauth/token', [
         'grant_type' => 'authorization_code',
+        'client_id' => 'studio-mcp',
         'code' => $params['code'],
         'redirect_uri' => REDIRECT_URI,
         'code_verifier' => $verifier,
@@ -154,6 +157,7 @@ it('grants the caller\'s full role when no scope is requested', function () {
     $scope = $authorize->viewData('page')['props']['scope'];
 
     $approve = $this->actingAs($user, 'staff')->post('/oauth/authorize', [
+        'client_id' => 'studio-mcp',
         'redirect_uri' => REDIRECT_URI,
         'code_challenge' => $challenge,
         'scope' => $scope,
@@ -164,6 +168,7 @@ it('grants the caller\'s full role when no scope is requested', function () {
 
     $token = $this->postJson('/oauth/token', [
         'grant_type' => 'authorization_code',
+        'client_id' => 'studio-mcp',
         'code' => $params['code'],
         'redirect_uri' => REDIRECT_URI,
         'code_verifier' => $verifier,
@@ -179,6 +184,7 @@ it('redirects with access_denied when the staff member declines', function () {
     [, $challenge] = pkcePair();
 
     $response = $this->actingAs($user, 'staff')->post('/oauth/authorize', [
+        'client_id' => 'studio-mcp',
         'redirect_uri' => REDIRECT_URI,
         'code_challenge' => $challenge,
         'scope' => Capability::ManageContacts->value,
@@ -196,6 +202,7 @@ it('never lets a code be redeemed twice', function () {
     [$verifier, $challenge] = pkcePair();
 
     $approve = $this->actingAs($user, 'staff')->post('/oauth/authorize', [
+        'client_id' => 'studio-mcp',
         'redirect_uri' => REDIRECT_URI,
         'code_challenge' => $challenge,
         'scope' => Capability::ManageContacts->value,
@@ -205,6 +212,7 @@ it('never lets a code be redeemed twice', function () {
 
     $payload = [
         'grant_type' => 'authorization_code',
+        'client_id' => 'studio-mcp',
         'code' => $params['code'],
         'redirect_uri' => REDIRECT_URI,
         'code_verifier' => $verifier,
@@ -219,6 +227,7 @@ it('refuses the wrong code_verifier', function () {
     [, $challenge] = pkcePair();
 
     $approve = $this->actingAs($user, 'staff')->post('/oauth/authorize', [
+        'client_id' => 'studio-mcp',
         'redirect_uri' => REDIRECT_URI,
         'code_challenge' => $challenge,
         'scope' => Capability::ManageContacts->value,
@@ -228,6 +237,7 @@ it('refuses the wrong code_verifier', function () {
 
     $this->postJson('/oauth/token', [
         'grant_type' => 'authorization_code',
+        'client_id' => 'studio-mcp',
         'code' => $params['code'],
         'redirect_uri' => REDIRECT_URI,
         'code_verifier' => 'not-the-right-verifier',
@@ -239,6 +249,7 @@ it('refuses a code redeemed against a different redirect_uri', function () {
     [$verifier, $challenge] = pkcePair();
 
     $approve = $this->actingAs($user, 'staff')->post('/oauth/authorize', [
+        'client_id' => 'studio-mcp',
         'redirect_uri' => REDIRECT_URI,
         'code_challenge' => $challenge,
         'scope' => Capability::ManageContacts->value,
@@ -248,6 +259,7 @@ it('refuses a code redeemed against a different redirect_uri', function () {
 
     $this->postJson('/oauth/token', [
         'grant_type' => 'authorization_code',
+        'client_id' => 'studio-mcp',
         'code' => $params['code'],
         'redirect_uri' => 'http://127.0.0.1:54219/callback',
         'code_verifier' => $verifier,
@@ -259,6 +271,7 @@ it('attributes a lead captured through a staff member\'s own OAuth token to that
     [$verifier, $challenge] = pkcePair();
 
     $approve = $this->actingAs($user, 'staff')->post('/oauth/authorize', [
+        'client_id' => 'studio-mcp',
         'redirect_uri' => REDIRECT_URI,
         'code_challenge' => $challenge,
         'scope' => Capability::ManageLeads->value,
@@ -268,6 +281,7 @@ it('attributes a lead captured through a staff member\'s own OAuth token to that
 
     $token = $this->postJson('/oauth/token', [
         'grant_type' => 'authorization_code',
+        'client_id' => 'studio-mcp',
         'code' => $params['code'],
         'redirect_uri' => REDIRECT_URI,
         'code_verifier' => $verifier,
@@ -308,4 +322,146 @@ it('an ApiToken caller still carries no captured_by_id, unchanged from I-03', fu
         ])->assertCreated();
 
     expect(Project::sole()->lead->captured_by_id)->toBeNull();
+});
+
+/**
+ * N-04's second half: RFC 7591 registration and the two discovery documents,
+ * which are what make this flow usable by a client that was never told the
+ * well-known id — claude.ai being the one that forced the issue.
+ */
+function registerClient(array $overrides = []): array
+{
+    return test()->postJson('/oauth/register', array_merge([
+        'client_name' => 'Claude',
+        'redirect_uris' => [CLAUDE_REDIRECT_URI],
+    ], $overrides))->assertCreated()->json();
+}
+
+it('registers a client with no credential and hands back a usable client_id', function () {
+    $client = registerClient();
+
+    expect($client['client_id'])->not->toBeEmpty()
+        ->and($client['client_name'])->toBe('Claude')
+        ->and($client['redirect_uris'])->toBe([CLAUDE_REDIRECT_URI])
+        ->and($client['token_endpoint_auth_method'])->toBe('none')
+        ->and($client)->not->toHaveKey('client_secret');
+
+    expect(integerIdPaths($client))->toBe([]);
+});
+
+it('refuses a redirect_uri that is neither https nor http loopback', function (string $uri) {
+    $this->postJson('/oauth/register', ['redirect_uris' => [$uri]])
+        ->assertStatus(400)
+        ->assertJson(['error' => 'invalid_redirect_uri']);
+})->with([
+    'http://evil.example/callback',
+    'https://evil.example/callback#fragment',
+    'not-a-url',
+]);
+
+it('refuses to pretend a client has a secret', function () {
+    $this->postJson('/oauth/register', [
+        'redirect_uris' => [CLAUDE_REDIRECT_URI],
+        'token_endpoint_auth_method' => 'client_secret_basic',
+    ])->assertStatus(400)->assertJson(['error' => 'invalid_client_metadata']);
+});
+
+it('completes the whole flow for a client that registered itself', function () {
+    $client = registerClient();
+    $user = staffMember(StaffRole::Photographer);
+    [$verifier, $challenge] = pkcePair();
+
+    $props = $this->actingAs($user, 'staff')->get('/oauth/authorize?'.http_build_query([
+        'response_type' => 'code',
+        'client_id' => $client['client_id'],
+        'redirect_uri' => CLAUDE_REDIRECT_URI,
+        'code_challenge' => $challenge,
+        'code_challenge_method' => 'S256',
+        'scope' => Capability::ManageContacts->value,
+    ]))->assertOk()->viewData('page')['props'];
+
+    // The consent screen names who is asking — with registration open, that
+    // is the only thing separating this client from any other.
+    expect($props['clientName'])->toBe('Claude')
+        ->and($props['redirectHost'])->toBe('claude.ai');
+
+    $approve = $this->actingAs($user, 'staff')->post('/oauth/authorize', [
+        'client_id' => $client['client_id'],
+        'redirect_uri' => CLAUDE_REDIRECT_URI,
+        'code_challenge' => $challenge,
+        'scope' => Capability::ManageContacts->value,
+        'decision' => 'approve',
+    ]);
+
+    parse_str((string) parse_url((string) $approve->headers->get('Location'), PHP_URL_QUERY), $params);
+
+    $token = $this->postJson('/oauth/token', [
+        'grant_type' => 'authorization_code',
+        'client_id' => $client['client_id'],
+        'code' => $params['code'],
+        'redirect_uri' => CLAUDE_REDIRECT_URI,
+        'code_verifier' => $verifier,
+    ])->assertOk()->json();
+
+    expect($token['scope'])->toBe(Capability::ManageContacts->value);
+});
+
+it('never lets one client borrow another\'s redirect_uri', function () {
+    $client = registerClient();
+    $user = staffMember();
+    [, $challenge] = pkcePair();
+
+    // The well-known client asking for the registered one's callback, and
+    // the reverse. Either would land a code on a stranger's listener.
+    $this->actingAs($user, 'staff')->get('/oauth/authorize?'.http_build_query([
+        'response_type' => 'code',
+        'client_id' => 'studio-mcp',
+        'redirect_uri' => CLAUDE_REDIRECT_URI,
+        'code_challenge' => $challenge,
+        'code_challenge_method' => 'S256',
+    ]))->assertStatus(400);
+
+    $this->actingAs($user, 'staff')->get('/oauth/authorize?'.http_build_query([
+        'response_type' => 'code',
+        'client_id' => $client['client_id'],
+        'redirect_uri' => REDIRECT_URI,
+        'code_challenge' => $challenge,
+        'code_challenge_method' => 'S256',
+    ]))->assertStatus(400);
+});
+
+it('never lets a code be redeemed by a different client than asked for it', function () {
+    $client = registerClient();
+    $user = staffMember();
+    [$verifier, $challenge] = pkcePair();
+
+    $approve = $this->actingAs($user, 'staff')->post('/oauth/authorize', [
+        'client_id' => $client['client_id'],
+        'redirect_uri' => CLAUDE_REDIRECT_URI,
+        'code_challenge' => $challenge,
+        'scope' => Capability::ManageContacts->value,
+        'decision' => 'approve',
+    ]);
+
+    parse_str((string) parse_url((string) $approve->headers->get('Location'), PHP_URL_QUERY), $params);
+
+    $this->postJson('/oauth/token', [
+        'grant_type' => 'authorization_code',
+        'client_id' => 'studio-mcp',
+        'code' => $params['code'],
+        'redirect_uri' => CLAUDE_REDIRECT_URI,
+        'code_verifier' => $verifier,
+    ])->assertStatus(400)->assertJson(['error' => 'invalid_grant']);
+});
+
+it('advertises the flow to a client that has never seen this server', function () {
+    $metadata = $this->getJson('/.well-known/oauth-authorization-server')->assertOk()->json();
+
+    expect($metadata['authorization_endpoint'])->toEndWith('/oauth/authorize')
+        ->and($metadata['token_endpoint'])->toEndWith('/oauth/token')
+        ->and($metadata['registration_endpoint'])->toEndWith('/oauth/register')
+        ->and($metadata['code_challenge_methods_supported'])->toBe(['S256'])
+        ->and($metadata['token_endpoint_auth_methods_supported'])->toBe(['none'])
+        ->and($metadata['scopes_supported'])->toContain(Capability::ManageContacts->value)
+        ->and($metadata['issuer'])->toBe(url('/'));
 });
