@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>39 · Mail — Team-Einladung</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<style>
+  body { background:#F5F5F4; }
+  .mailpage { padding:28px 28px 48px; }
+  .backlink { display:block; max-width:600px; margin:0 auto 20px; font:400 12.5px/1 var(--font); color:var(--muted); text-decoration:none; }
+  .backlink:hover { color:var(--ink); }
+    a { color: #B44E22; }
+    a:hover { color: #8F3D1B; }
+    .meta { display: flex; gap: 10px; align-items: baseline; }
+    .kick { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #A3A3A3; width: 62px; flex: none; }
+    .metaval { font-size: 12px; color: #6B6B6B; }
+    .card { max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E9E9E7; border-radius: 8px; overflow: hidden; }
+    .brandbar { padding: 26px 32px; border-bottom: 1px solid #E9E9E7; }
+    .wordmark { font-family: 'Instrument Serif', Georgia, serif; font-size: 21px; letter-spacing: -.022em; color: #191919; }
+    .bodyzone { padding: 32px; }
+    .greet { margin: 0 0 18px; font-size: 15px; line-height: 1.6; font-weight: 600; color: #191919; }
+    .line { margin: 0 0 20px; font-size: 15px; line-height: 1.62; color: #191919; }
+    .line.last { margin-bottom: 28px; }
+    .sub { margin: 24px 0 0; font-size: 14.5px; line-height: 1.6; color: #6B6B6B; }
+    .signoff { margin: 34px 0 0; font-size: 15px; line-height: 1.6; color: #191919; }
+    .cta { display: inline-block; color: #FFFFFF; font-size: 15px; font-weight: 600; line-height: 1; padding: 15px 24px; border-radius: 6px; text-decoration: none; }
+    .footzone { padding: 20px 32px 24px; border-top: 1px solid #E9E9E7; background: #FCFCFB; }
+    .sig { margin: 0 0 6px; font-size: 12px; line-height: 1.5; color: #6B6B6B; }
+    .legal { margin: 0; font-size: 11.5px; line-height: 1.5; color: #A3A3A3; }
+</style>
+</head>
+<body>
+
+<!-- Bestandsmail StaffInvited, überarbeitet. Absender ist das STUDIO, nicht
+     das Produkt — deshalb Wortmarke des Studios im Kopf und Signatur plus
+     Rechtszeile im Fuß statt des GitHub-Ziels.
+
+     Die Zeile „Danach richtest du die Zwei-Faktor-Bestätigung ein“ ist raus:
+     InvitationController:150 sagt, MFA ist opt-in, die eingeladene Person
+     landet direkt auf dem Dashboard. Der Satz kündigte einen Schritt an, den
+     es nicht gibt.
+
+     Keine Rollenbeschreibung: dieselbe Mail geht an fünf Rollen, jede
+     Beschreibung wäre für vier davon falsch. -->
+
+<div class="mailpage">
+  <a class="backlink" href="../index.html">← Übersicht</a>
+
+  <div class="meta" style="max-width: 600px; margin: 0 auto 14px;">
+    <span class="kick">Betreff</span><span class="metaval">Dein Zugang zu Atelier Nordlicht</span>
+  </div>
+  <div class="meta" style="max-width: 600px; margin: 0 auto 18px;">
+    <span class="kick">Bestand</span><span class="metaval">StaffInvited, Text überarbeitet</span>
+  </div>
+  <div class="card">
+    <div class="brandbar"><div class="wordmark">Atelier Nordlicht</div></div>
+    <div class="bodyzone">
+      <p class="greet">Hallo Mira,</p>
+      <p class="line last">Christian Zepter hat dich als Fotograf ins Atelier Nordlicht eingeladen. Schön, dass du dabei bist.</p>
+      <a class="cta" href="#" style="background: #B44E22">Zugang einrichten</a>
+      <p class="sub">Der Link gilt 7 Tage.</p>
+      <p class="signoff">Viele Grüße<br>Christian Zepter</p>
+    </div>
+    <div class="footzone">
+      <p class="sig">Atelier Nordlicht · Christian Zepter</p>
+      <p class="legal">Atelier Nordlicht GbR · Lange Straße 14, 07743 Jena · St.-Nr. 162/108/04516</p>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
