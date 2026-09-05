@@ -22,3 +22,16 @@ export function createApiClient(
 }
 
 export type ApiClient = ReturnType<typeof createApiClient>
+
+/**
+ * A client per call rather than one per process: over HTTP the token is the
+ * bearer that opened the session (N-04), so a shared client built at boot
+ * would call the api surface as nobody at all — 302 to /login, and an error
+ * body no tool can read. Over stdio there is no such bearer and the env
+ * token stays the fallback.
+ */
+export type ApiClientFactory = (token?: string) => ApiClient
+
+export function apiClientFactory(): ApiClientFactory {
+  return (token) => createApiClient(undefined, token)
+}

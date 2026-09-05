@@ -7,6 +7,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import type { ApiClient } from './client.js'
 import { createAuthenticatedRequestListener } from './http.js'
 import { createMcpServer } from './server.js'
 
@@ -119,4 +120,39 @@ describe('createAuthenticatedRequestListener', () => {
 
     expect(client.getServerVersion()).toEqual({ name: 'studio-mcp', version: '0.0.1' })
   })
+})
+
+// Its own server pair, outside the describe above: this one hands
+// createMcpServer a stand-in factory to see which token the tools build
+// their api client with, where every case above wants the real one.
+it('builds the api client with the bearer that opened the session', async () => {
+  vi.stubGlobal(
+    'fetch',
+    mockTokenInfoFetch(
+      () => new Response(JSON.stringify({ clientId: 'usr_abc', scopes: ['manage_leads'] }), { status: 200 }),
+    ),
+  )
+
+  const seen: (string | undefined)[] = []
+  const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: () => randomUUID() })
+  await createMcpServer((token) => {
+    seen.push(token)
+    return { GET: async () => ({ data: { data: [] } }) } as unknown as ApiClient
+  }).connect(transport)
+
+  const httpServer = createHttpServer(createAuthenticatedRequestListener(transport, 'http://crm.test/api'))
+  await new Promise<void>((resolve) => httpServer.listen(0, resolve))
+  const port = (httpServer.address() as AddressInfo).port
+
+  const client = new Client({ name: 'test-client', version: '0.0.1' })
+  await client.connect(new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${port}/mcp`), {
+    requestInit: { headers: { Authorization: 'Bearer session-token' } },
+  }))
+  await client.callTool({ name: 'list_project_types', arguments: {} })
+
+  expect(seen).toEqual(['session-token'])
+
+  await client.close()
+  await new Promise<void>((resolve) => httpServer.close(() => resolve()))
+  vi.unstubAllGlobals()
 })

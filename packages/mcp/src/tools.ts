@@ -1,9 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 
-import type { createApiClient } from './client.js'
-
-type ApiClient = ReturnType<typeof createApiClient>
+import type { ApiClientFactory } from './client.js'
 
 /**
  * N-02: the read tools that give an assistant the four questions I-02's
@@ -98,7 +96,7 @@ function jsonResult<T extends Record<string, unknown>>(structuredContent: T): {
   return { content: [{ type: 'text', text: JSON.stringify(structuredContent) }], structuredContent }
 }
 
-export function registerReadTools(server: McpServer, client: ApiClient): void {
+export function registerReadTools(server: McpServer, clientFor: ApiClientFactory): void {
   server.registerTool(
     'search_contacts',
     {
@@ -115,7 +113,9 @@ export function registerReadTools(server: McpServer, client: ApiClient): void {
         nextCursor: z.string().nullable(),
       },
     },
-    async ({ query, cursor, since }) => {
+    async ({ query, cursor, since }, extra) => {
+      const client = clientFor(extra.authInfo?.token)
+
       // '/contacts' documents no query parameters at all (see the module
       // doc comment) even though `cursor`/`since` both work at runtime —
       // Scramble never sees them because CrmReadController validates them
@@ -153,7 +153,9 @@ export function registerReadTools(server: McpServer, client: ApiClient): void {
         project: projectSchema,
       },
     },
-    async ({ publicId }) => {
+    async ({ publicId }, extra) => {
+      const client = clientFor(extra.authInfo?.token)
+
       const { data, error } = await client.GET('/projects/{project}', { params: { path: { project: publicId } } })
       if (error) {
         return errorResult(error)
@@ -174,7 +176,8 @@ export function registerReadTools(server: McpServer, client: ApiClient): void {
         types: z.array(projectTypeSchema),
       },
     },
-    async () => {
+    async (_args, extra) => {
+      const client = clientFor(extra.authInfo?.token)
       const { data, error } = await client.GET('/project-types')
       if (error) {
         return errorResult(error)
@@ -200,7 +203,9 @@ export function registerReadTools(server: McpServer, client: ApiClient): void {
         nextCursor: z.string().nullable(),
       },
     },
-    async ({ from, to, cursor }) => {
+    async ({ from, to, cursor }, extra) => {
+      const client = clientFor(extra.authInfo?.token)
+
       // Built as a variable rather than an inline literal: structural typing
       // (unlike the excess-property check TypeScript runs on a literal
       // passed straight into a typed slot) accepts the extra `cursor` key
@@ -230,7 +235,8 @@ export function registerReadTools(server: McpServer, client: ApiClient): void {
         stages: z.array(pipelineStageSchema),
       },
     },
-    async () => {
+    async (_args, extra) => {
+      const client = clientFor(extra.authInfo?.token)
       const { data, error } = await client.GET('/pipeline-snapshot')
       if (error) {
         return errorResult(error)
