@@ -153,9 +153,8 @@ um mit Auri CRM richtig durchzustarten, fehlen dir noch ein paar
 Einstellungen. Vor zwei Tagen hast du angefangen, seitdem ist es liegen
 geblieben.
 
-Fang mit dem Studio-Profil und der Umsatzsteuer an. Beides steht später
-wörtlich auf jedem Angebot und jeder Rechnung, und in schon verschickten
-Dokumenten lässt es sich nicht mehr korrigieren.
+Fang mit Studio-Profil und Umsatzsteuer an. Beides steht später auf jedem
+Angebot und jeder Rechnung. Einmal verschickt, änderst du es dort nicht mehr.
 
 [Weiter einrichten]  →  /einrichtung/studio
 
@@ -172,26 +171,24 @@ Betreff: Deine Adressen bei Auri CRM
 
 Hallo {name},
 
-die Einrichtung ist durch. Dein Studio hat dabei eine eigene Mailadresse für
-Anfragen bekommen:
+deine Anfrage-Adresse steht:
 
 {InboundAddress::catchAll(displayName, inboundSecret)}
 
-Die gibt es kein zweites Mal, und sie gehört auf deine Website oder hinter
-dein Kontaktformular. Wenn du sie später austauschst, hört die alte im selben
-Moment auf zu funktionieren.
+Verlink sie auf deiner Website, dann landen neue Anfragen direkt in Auri CRM.
 
-Dein Kundenportal liegt unter {config('portal.url')}. Deine Kunden melden
-sich dort ohne Passwort an, den Zugang bekommen sie per Mail.
+Dein Kundenportal erreichst du unter {config('portal.url')}.
 
 [Erste Anfrage anlegen]  →  /anfragen/neu
 
 Viel Erfolg mit dem ersten Auftrag.
 ```
 
-Der Betreff ist aufs Wiederfinden geschrieben. Die Mail trägt den einzigen
-Wert, der beim Abschluss entsteht und nirgends sonst im Postfach landet: die
-geprägte Adresse und was bei Rotation mit ihr passiert.
+Der Betreff ist aufs Wiederfinden geschrieben. Die Mail trägt die geprägte
+Adresse und einen Satz dazu, was damit zu tun ist. Was die Rotation mit
+alten Adressen macht, gehört in die Doku, nicht hierher: ein Sonderfall zu
+einer Funktion, die der Leser noch nie benutzt hat, wirkt nur deshalb
+wertvoll, weil die Mail sonst leer aussieht.
 
 **Zu entscheiden:** Die Adresse enthält das Secret. `docs/inbound-mail.md`
 sieht genau diese Adresse für die öffentliche Studio-Website vor, der
