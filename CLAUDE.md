@@ -67,9 +67,10 @@ These get the change rejected outright:
   - *Invented numbers.* "Acht Minuten, dann kann die erste Anfrage
     reinkommen." Nothing measured that. A figure in shipped copy has a
     source or it does not ship.
-  What earns an inbox is what a screen cannot show: a reason, a
-  consequence, a value minted once (the inbound address), what breaks on
-  rotation.
+  The register is nudge and nurture: warm, unhurried, on the reader's side
+  ("lass dir Zeit damit", "wenn du soweit bist"). Stripping a mail to one
+  sentence and a button is the over-correction, not the fix. What earns an
+  inbox is what a screen cannot show, said kindly.
 - **Filler in messages, commits, PRs.** No "Certainly", "Great question",
   "I hope this helps", "Let me know if…", "In summary". No hedging on facts you
   can verify. State the thing.

@@ -118,7 +118,9 @@ echten Notification prüfen.
 sie, und eine Willkommensmail um 03:00 ist der Fall, für den es Ruhezeiten
 gibt.
 
-Jeder Satz muss etwas tragen, das der Leser auf seinem Bildschirm nicht sieht
+Ton: nudge and nurture. Freundlich stupsen, ohne Druck, und ohne die
+Lehrerhaltung aus Anweisung, Begründung, Folge und Belohnung. Jeder Satz muss
+außerdem etwas tragen, das der Leser auf seinem Bildschirm nicht sieht
 (CLAUDE.md, "Prose copy that arrives without a UI"). Deshalb erklärt keine
 der drei Mails eine Oberfläche.
 
@@ -134,7 +136,7 @@ Ort, von der ersten Anfrage bis zu den fertigen Bildern.
 
 [Studio öffnen]  →  /
 
-Viel Spaß damit.
+Schön, dass du da bist. Viel Spaß damit.
 ```
 
 Erwähnt die Einrichtung nicht. Die Mail geht bei der Anlage raus, der Inhaber
@@ -150,15 +152,20 @@ Betreff: Noch ein paar Einstellungen
 Hallo {name},
 
 um mit Auri CRM richtig durchzustarten, fehlen dir noch ein paar
-Einstellungen.
+Einstellungen. Was du schon eingetragen hast, ist gespeichert.
 
 [Weiter einrichten]  →  /einrichtung/studio
+
+Lass dir Zeit damit, dein Studio läuft dir nicht weg.
 ```
 
-Eine Erinnerung ist ein Stups. Die Vorfassung nannte den ersten Schritt, den
-Grund dafür, die Folge des Aufschiebens und eine Dauer als Anreiz: eine
-Lektion mit Belohnung dran. Die Dauer war zusätzlich erfunden, es gibt keine
-Messung.
+Eine Erinnerung ist ein Stups. Eine Vorfassung nannte den ersten Schritt, den
+Grund dafür, die Folge des Aufschiebens und eine erfundene Dauer als Anreiz:
+eine Lektion mit Belohnung dran. Der Satz zum Speichern bleibt, weil er die
+Sorge trifft, von vorn anfangen zu müssen; jeder Schritt postet auf den
+echten Settings-Endpoint, bevor er weiterschaltet (`Onboarding.vue:52`).
+Nicht behaupten lässt sich dagegen, der Assistent setze dort fort, wo man
+aufgehört hat: `stepIndex` beginnt bei jedem neuen Aufruf wieder bei eins.
 
 **StudioReady** — `StudioOnboardingController::complete()`
 
@@ -171,7 +178,7 @@ deine Anfrage-Adresse steht:
 
 {InboundAddress::catchAll(displayName, inboundSecret)}
 
-Die kannst du auf deiner Website verlinken.
+Die kannst du auf deiner Website verlinken, wenn du soweit bist.
 
 Dein Kundenportal erreichst du unter {config('portal.url')}.
 
