@@ -37,16 +37,22 @@ are still serving is a bad trade on hardware sized for neither. By the time a
 deploy runs, the image is already built, already cached, and already tested
 by `ci.yml` on the same commit.
 
-Three tags per build:
+Tags per build:
 
-| Tag | Moves when | Used for |
+| Tag | Entsteht bei | Verwendung |
 |---|---|---|
-| `latest` | Only on the default branch | What `docker-compose.coolify.yml` names |
-| `<branch>` | Every push to that branch | Trying a branch on a staging stack |
-| `sha-<commit>` | Never | Naming one specific deploy — the rollback target |
+| `v<version>` | Einem veröffentlichten GitHub-Release | Was `docker-compose.coolify.yml` benennt |
+| `latest` | Push auf den Default-Branch (`dev`) | Branch-Stand, **nicht** das Deploy-Ziel |
+| `<branch>` | Jedem Push auf den Branch | Einen Branch auf einem Staging-Stack testen |
+| `sha-<commit>` | Nie wieder bewegt | Einen konkreten Build benennen |
 
-A `dev` push must never become what production pulls on its next restart,
-which is why `latest` is gated on the default branch.
+Der Default-Branch dieses Repos ist `dev`, nicht `main`. `latest` trägt also
+den dev-Stand. Das Compose benennt darum eine Version, nie `latest` — sonst
+zöge Produktion beim nächsten Restart, was zuletzt auf `dev` gepusht wurde.
+
+Ein Release baut über den `release: [published]`-Trigger, nicht über einen
+Tag-Push: ein Tag-Push bringt keine geänderten Dateien mit, der `paths`-Filter
+würde ihn also überspringen.
 
 The workflow's first job runs `docker/app/check-coolify-compose.php`, which
 enforces Coolify's parser rules against the compose file. It guards the
@@ -142,9 +148,9 @@ have to change to get it back.
 
 ## Rolling back
 
-Edit the `image:` lines in `docker-compose.coolify.yml` to name a
-`sha-<commit>` tag from a known-good build and redeploy. That tag is the only
-one that names a specific deploy; `latest` moves.
+Die `image:`-Zeilen in `docker-compose.coolify.yml` auf die vorige Version
+setzen (`v0.8.0`) oder auf einen `sha-<commit>` aus einem bekannt guten Build,
+dann neu deployen. Beide Tags bewegen sich nie.
 
 A rollback does **not** undo migrations. If the bad deploy changed the
 schema, restore from the cutover snapshot instead — see
