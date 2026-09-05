@@ -43,7 +43,7 @@ These get the change rejected outright:
   reach here: an inbox has nothing around the words to explain the rest, so
   two terse lines are a config dump, not a message. Write sentences, then
   cut every one that fails this test: **does it say something the reader
-  cannot see on their own screen?** Eight tells, all of them shipped in a
+  cannot see on their own screen?** Nine tells, all of them shipped in a
   single sitting:
   - *Feature tour.* "Anfragen landen auf einem Board und wandern nach
     rechts." He is looking at the board.
@@ -67,6 +67,12 @@ These get the change rejected outright:
   - *Invented numbers.* "Acht Minuten, dann kann die erste Anfrage
     reinkommen." Nothing measured that. A figure in shipped copy has a
     source or it does not ship.
+  - *Narrating a control that speaks for itself.* "Wenn du das Fenster mit
+    dem Eingabefeld schon geschlossen hast, kommst du über den Button
+    zurück zur Bestätigung." A conditional built to explain a button
+    labelled "E-Mail-Adresse bestätigen" sitting right below it. Same for
+    telling the reader where a thing belongs ("gehört auf deine Website",
+    "gehören in die Issues") instead of naming the destination.
   The register is nudge and nurture: warm, unhurried, on the reader's side.
   Stripping a mail to one sentence and a button is the over-correction, not
   the fix. But warmth is a greeting or a good wish ("Schön, dass du da
