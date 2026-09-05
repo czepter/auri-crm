@@ -15,9 +15,12 @@ beforeEach(function () {
 it('matches on a name fragment, case insensitively', function () {
     // Case-insensitive is load-bearing: a typeahead that misses "Steffens"
     // when someone types "steff" creates the duplicate it exists to prevent.
-    Contact::factory()->create(['name' => 'Steffi Wehrmann']);
-    Contact::factory()->create(['name' => 'Annika Steffens']);
-    Contact::factory()->create(['name' => 'Paul Rieck']);
+    // Emails are pinned because the search covers that column too, and
+    // de_DE faker hands out steffen@… often enough to make the count below
+    // fail on some runs and not others.
+    Contact::factory()->create(['name' => 'Steffi Wehrmann', 'email' => 'steffi@wehrmann.de']);
+    Contact::factory()->create(['name' => 'Annika Steffens', 'email' => 'annika@steffens.de']);
+    Contact::factory()->create(['name' => 'Paul Rieck', 'email' => 'paul@rieck.de']);
 
     $this->actingAs($this->staff, 'staff')
         ->getJson('/kontakte/suche?q=stef')

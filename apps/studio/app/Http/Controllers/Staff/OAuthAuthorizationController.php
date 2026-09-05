@@ -8,11 +8,11 @@ use App\Models\User;
 use App\Support\AuditLogger;
 use App\Support\OAuthAuthorizationCode;
 use App\Support\OAuthClients;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 /**
  * N-04: the authorization half of the MCP HTTP transport's OAuth 2.1 flow —
@@ -26,10 +26,15 @@ use Inertia\Response;
  * than ApiToken, and scopesFor() is the one place that enforces a token
  * minted here can never do something the consenting user's own StaffRole
  * could not.
+ *
+ * Every hop back to the client goes through Inertia::location, never
+ * redirect()->away(): the consent screen posts through Inertia, and a 302
+ * there is followed by fetch() rather than the browser — the callback then
+ * reaches claude.ai as a cross-origin XHR and dies in preflight.
  */
 class OAuthAuthorizationController extends Controller
 {
-    public function create(Request $request): Response|RedirectResponse
+    public function create(Request $request): Response|HttpResponse
     {
         $clientId = (string) $request->query('client_id');
         $redirectUri = (string) $request->query('redirect_uri');
@@ -79,7 +84,7 @@ class OAuthAuthorizationController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): HttpResponse
     {
         $validated = $request->validate([
             'client_id' => ['required', 'string'],
@@ -124,7 +129,7 @@ class OAuthAuthorizationController extends Controller
             'scopes' => $scopes,
         ]);
 
-        return redirect()->away($this->appendQuery($validated['redirect_uri'], ['code' => $code, 'state' => $state]));
+        return Inertia::location($this->appendQuery($validated['redirect_uri'], ['code' => $code, 'state' => $state]));
     }
 
     /**
@@ -145,9 +150,9 @@ class OAuthAuthorizationController extends Controller
         return $requested === [] ? $roleScopes : array_values(array_intersect($requested, $roleScopes));
     }
 
-    private function errorRedirect(string $redirectUri, string $error, ?string $state): RedirectResponse
+    private function errorRedirect(string $redirectUri, string $error, ?string $state): HttpResponse
     {
-        return redirect()->away($this->appendQuery($redirectUri, ['error' => $error, 'state' => $state]));
+        return Inertia::location($this->appendQuery($redirectUri, ['error' => $error, 'state' => $state]));
     }
 
     /** @param array<string, ?string> $params */
