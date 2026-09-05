@@ -42,13 +42,20 @@ Tags per build:
 | Tag | Entsteht bei | Verwendung |
 |---|---|---|
 | `v<version>` | Einem veröffentlichten GitHub-Release | Was `docker-compose.coolify.yml` benennt |
-| `latest` | Push auf den Default-Branch (`dev`) | Branch-Stand, **nicht** das Deploy-Ziel |
+| `latest` | Ebenfalls nur bei einem Release | Zeigt auf den neuesten Release |
 | `<branch>` | Jedem Push auf den Branch | Einen Branch auf einem Staging-Stack testen |
 | `sha-<commit>` | Nie wieder bewegt | Einen konkreten Build benennen |
 
-Der Default-Branch dieses Repos ist `dev`, nicht `main`. `latest` trägt also
-den dev-Stand. Das Compose benennt darum eine Version, nie `latest` — sonst
-zöge Produktion beim nächsten Restart, was zuletzt auf `dev` gepusht wurde.
+`latest` und `v<version>` entstehen zusammen und zeigen auf dasselbe Image.
+Das Compose benennt trotzdem die Version: `latest` wandert beim nächsten
+Release weiter, die Version nicht, und ein Deploy soll benennen können, was
+er ausliefert.
+
+`latest` hing bis v0.9.0 an `enable={{is_default_branch}}`. Das war aus zwei
+Gründen falsch: der Default-Branch dieses Repos ist `dev`, und die
+metadata-action wertet den Ausdruck auf einem Tag-Ref ebenfalls zu `true`
+aus. `latest` bewegte sich also sowohl bei jedem dev-Push als auch bei jedem
+Release.
 
 Ein Release baut über den `release: [published]`-Trigger, nicht über einen
 Tag-Push: ein Tag-Push bringt keine geänderten Dateien mit, der `paths`-Filter
