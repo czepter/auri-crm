@@ -67,15 +67,17 @@ These get the change rejected outright:
   - *Invented numbers.* "Acht Minuten, dann kann die erste Anfrage
     reinkommen." Nothing measured that. A figure in shipped copy has a
     source or it does not ship.
-  The register is nudge and nurture: warm, unhurried, on the reader's side
-  ("lass dir Zeit damit", "wenn du soweit bist"). Stripping a mail to one
-  sentence and a button is the over-correction, not the fix. But warmth
-  lives in the register, never in an added sentence: "Was du schon
-  eingetragen hast, ist gespeichert" reaches for kindness and lands on
-  reassurance, because saving is what the reader already assumes and
-  mentioning it plants the doubt. Warm the closing line, which claims
-  nothing about the product. What earns an inbox is what a screen cannot
-  show, said kindly.
+  The register is nudge and nurture: warm, unhurried, on the reader's side.
+  Stripping a mail to one sentence and a button is the over-correction, not
+  the fix. But warmth is a greeting or a good wish ("Schön, dass du da
+  bist", "Viel Erfolg mit dem ersten Auftrag") — something about the sender
+  or about what is ahead. It is NEVER a sentence that answers a worry the
+  reader has not voiced. "Was du schon eingetragen hast, ist gespeichert",
+  "lass dir Zeit, dein Studio läuft dir nicht weg", "wenn du soweit bist",
+  "kannst du später ändern": each reaches for kindness and lands on
+  reassurance, and naming the fear is what plants it. Position rescues
+  nothing — a closing line is not harmless for sitting at the end. What
+  earns an inbox is what a screen cannot show, said kindly.
 - **Filler in messages, commits, PRs.** No "Certainly", "Great question",
   "I hope this helps", "Let me know if…", "In summary". No hedging on facts you
   can verify. State the thing.

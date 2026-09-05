@@ -119,7 +119,8 @@ sie, und eine Willkommensmail um 03:00 ist der Fall, für den es Ruhezeiten
 gibt.
 
 Ton: nudge and nurture. Freundlich stupsen, ohne Druck, und ohne die
-Lehrerhaltung aus Anweisung, Begründung, Folge und Belohnung. Jeder Satz muss
+Lehrerhaltung aus Anweisung, Begründung, Folge und Belohnung. Wärme ist
+Begrüßung oder guter Wunsch, nie eine Antwort auf eine ungestellte Sorge. Jeder Satz muss
 außerdem etwas tragen, das der Leser auf seinem Bildschirm nicht sieht
 (CLAUDE.md, "Prose copy that arrives without a UI"). Deshalb erklärt keine
 der drei Mails eine Oberfläche.
@@ -155,16 +156,15 @@ um mit Auri CRM richtig durchzustarten, fehlen dir noch ein paar
 Einstellungen.
 
 [Weiter einrichten]  →  /einrichtung/studio
-
-Lass dir Zeit damit, dein Studio läuft dir nicht weg.
 ```
 
 Eine Erinnerung ist ein Stups. Eine Vorfassung nannte den ersten Schritt, den
 Grund dafür, die Folge des Aufschiebens und eine erfundene Dauer als Anreiz:
-eine Lektion mit Belohnung dran. Eine weitere versicherte "Was du schon
-eingetragen hast, ist gespeichert" — der Leser setzt das voraus, und es zu
-erwähnen sät erst den Zweifel. Die Wärme trägt der Schlusssatz, der über das
-Produkt nichts behauptet.
+eine Lektion mit Belohnung dran. Zwei weitere beruhigten: "Was du schon eingetragen
+hast, ist gespeichert" und "lass dir Zeit, dein Studio läuft dir nicht weg".
+Beide antworten auf Sorgen, die niemand geäußert hat, und sähen sie damit
+erst. Diese Mail trägt keinen Schlusssatz; ihre Freundlichkeit steckt in
+"richtig durchzustarten".
 
 **StudioReady** — `StudioOnboardingController::complete()`
 
@@ -177,7 +177,7 @@ deine Anfrage-Adresse steht:
 
 {InboundAddress::catchAll(displayName, inboundSecret)}
 
-Die kannst du auf deiner Website verlinken, wenn du soweit bist.
+Die kannst du auf deiner Website verlinken.
 
 Dein Kundenportal erreichst du unter {config('portal.url')}.
 
