@@ -2,7 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import { z } from 'zod'
 
-import type { ApiClient } from '../client.js'
+import type { ApiClientFactory } from '../client.js'
 import { idempotencyKeyFor } from '../idempotency.js'
 
 /**
@@ -21,12 +21,12 @@ import { idempotencyKeyFor } from '../idempotency.js'
  * elicitation — the spec is explicit that these are hints only, never a
  * substitute for the actual confirmation step.
  */
-export function registerWriteTools(server: McpServer, apiClient: ApiClient): void {
-  registerCaptureLead(server, apiClient)
-  registerAdvanceLeadStage(server, apiClient)
-  registerAddInternalNote(server, apiClient)
-  registerSetProjectFields(server, apiClient)
-  registerAddProjectField(server, apiClient)
+export function registerWriteTools(server: McpServer, clientFor: ApiClientFactory): void {
+  registerCaptureLead(server, clientFor)
+  registerAdvanceLeadStage(server, clientFor)
+  registerAddInternalNote(server, clientFor)
+  registerSetProjectFields(server, clientFor)
+  registerAddProjectField(server, clientFor)
 }
 
 const leadSourceEnum = ['referral', 'website', 'instagram', 'wedding_fair', 'other'] as const
@@ -34,7 +34,7 @@ const projectTypeEnum = ['wedding', 'portrait', 'other'] as const
 const captureChannelEnum = ['phone', 'email', 'in_person', 'other'] as const
 const leadStageEnum = ['new', 'contacted', 'quote_sent', 'quote_accepted', 'contract_sent', 'booked'] as const
 
-function registerCaptureLead(server: McpServer, apiClient: ApiClient): void {
+function registerCaptureLead(server: McpServer, clientFor: ApiClientFactory): void {
   server.registerTool(
     'capture_lead',
     {
@@ -61,7 +61,7 @@ function registerCaptureLead(server: McpServer, apiClient: ApiClient): void {
       const declined = await requireConfirmation(server, `Capture a new lead: "${args.project_name}"?`)
       if (declined) return declined
 
-      const { data, error } = await apiClient.POST('/leads', {
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads', {
         body: args,
         headers: { 'Idempotency-Key': idempotencyKeyFor('capture_lead', extra) },
       })
@@ -71,7 +71,7 @@ function registerCaptureLead(server: McpServer, apiClient: ApiClient): void {
   )
 }
 
-function registerAdvanceLeadStage(server: McpServer, apiClient: ApiClient): void {
+function registerAdvanceLeadStage(server: McpServer, clientFor: ApiClientFactory): void {
   server.registerTool(
     'advance_lead_stage',
     {
@@ -91,7 +91,7 @@ function registerAdvanceLeadStage(server: McpServer, apiClient: ApiClient): void
       const declined = await requireConfirmation(server, `Advance lead ${lead} to stage "${stage}"?`)
       if (declined) return declined
 
-      const { data, error } = await apiClient.POST('/leads/{lead}/stage', {
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads/{lead}/stage', {
         params: { path: { lead } },
         body: { stage },
         headers: { 'Idempotency-Key': idempotencyKeyFor('advance_lead_stage', extra) },
@@ -102,7 +102,7 @@ function registerAdvanceLeadStage(server: McpServer, apiClient: ApiClient): void
   )
 }
 
-function registerAddInternalNote(server: McpServer, apiClient: ApiClient): void {
+function registerAddInternalNote(server: McpServer, clientFor: ApiClientFactory): void {
   server.registerTool(
     'add_internal_note',
     {
@@ -118,7 +118,7 @@ function registerAddInternalNote(server: McpServer, apiClient: ApiClient): void 
       const declined = await requireConfirmation(server, `Add this note to project ${project}?\n\n${body}`)
       if (declined) return declined
 
-      const { data, error } = await apiClient.POST('/projects/{project}/notes', {
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/notes', {
         params: { path: { project } },
         body: { body },
         headers: { 'Idempotency-Key': idempotencyKeyFor('add_internal_note', extra) },
@@ -131,7 +131,7 @@ function registerAddInternalNote(server: McpServer, apiClient: ApiClient): void 
 
 const projectFieldTypeEnum = ['text', 'textarea', 'number', 'select', 'tags', 'date', 'boolean'] as const
 
-function registerSetProjectFields(server: McpServer, apiClient: ApiClient): void {
+function registerSetProjectFields(server: McpServer, clientFor: ApiClientFactory): void {
   server.registerTool(
     'set_project_fields',
     {
@@ -153,7 +153,7 @@ function registerSetProjectFields(server: McpServer, apiClient: ApiClient): void
       // Scramble reads the `array` rule as `string[]` (see tools.ts's module
       // doc comment on why this surface's generated payloads are only
       // trustworthy for paths and params).
-      const { data, error } = await apiClient.PATCH('/projects/{project}/fields', {
+      const { data, error } = await clientFor(extra.authInfo?.token).PATCH('/projects/{project}/fields', {
         params: { path: { project } },
         body: { fields } as never,
         headers: { 'Idempotency-Key': idempotencyKeyFor('set_project_fields', extra) },
@@ -164,7 +164,7 @@ function registerSetProjectFields(server: McpServer, apiClient: ApiClient): void
   )
 }
 
-function registerAddProjectField(server: McpServer, apiClient: ApiClient): void {
+function registerAddProjectField(server: McpServer, clientFor: ApiClientFactory): void {
   server.registerTool(
     'add_project_field',
     {
@@ -186,7 +186,7 @@ function registerAddProjectField(server: McpServer, apiClient: ApiClient): void 
       const declined = await requireConfirmation(server, `Add the field "${field.label}" (${field.type}) to this project type?`)
       if (declined) return declined
 
-      const { data, error } = await apiClient.POST('/project-types/{projectType}/fields', {
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/project-types/{projectType}/fields', {
         params: { path: { projectType } },
         body: field,
         headers: { 'Idempotency-Key': idempotencyKeyFor('add_project_field', extra) },
