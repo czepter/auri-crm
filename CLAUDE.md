@@ -16,10 +16,13 @@ These get the change rejected outright:
   A comment is allowed only for *why* — a non-obvious constraint, a workaround
   with a link, a `ponytail:` ceiling. If the code needs a comment to be
   understood, rewrite the code.
-- **AI-slop copy.** Applies to `de.json`, to Blade and Vue, and to mockup
-  text — a draft ships its wording into the product. Labels stay short and
-  native German (`Wunschtermin`, not `Bitte gib hier deinen gewünschten
-  Termin ein`). One noun beats a sentence. No emoji, no exclamation marks.
+- **AI-slop copy in the UI.** Applies to `de.json`, to Blade and Vue, and
+  to mockup text — a draft ships its wording into the product. These are
+  strings with controls around them; for e-mail and other prose see the
+  next rule, which is not this one. Labels stay short and native German
+  (`Wunschtermin`, not `Bitte gib hier deinen gewünschten Termin ein`).
+  One noun beats a sentence. No emoji, no exclamation marks. Generic
+  masculine throughout (`Fotograf`, `Kunden`), never `:in` or `*in`.
   Five tells, each of which already shipped once:
   - *Reassurance.* "Speichern ist trotzdem möglich", "blockieren aber
     nichts", "bleibt danach frei änderbar" — calming the reader about a
@@ -35,6 +38,31 @@ These get the change rejected outright:
     where one place suffices.
   Test before shipping a string: read its three neighbours in `de.json`.
   Longer than they are, or explaining rather than naming, means rewrite.
+- **Prose copy that arrives without a UI.** E-mail, PDF body text, anything
+  read where no control stands next to it. The label rule above does NOT
+  reach here: an inbox has nothing around the words to explain the rest, so
+  two terse lines are a config dump, not a message. Write sentences, then
+  cut every one that fails this test: **does it say something the reader
+  cannot see on their own screen?** Six tells, all of them shipped in a
+  single sitting:
+  - *Feature tour.* "Anfragen landen auf einem Board und wandern nach
+    rechts." He is looking at the board.
+  - *Announcing what just happened.* A mail fired on wizard completion
+    saying "Auri CRM ist eingerichtet". He pressed the button a second ago.
+    Check the trigger before writing a word; some mails have nothing to say
+    at their moment and should not exist.
+  - *Never naming the product.* A welcome mail that does not write
+    "Auri CRM" welcomes nobody.
+  - *Naming something that does not exist.* "Anfrageformular einrichten" —
+    there is an endpoint and an example snippet in `docs/`, no feature and
+    no screen. A doc is not proof a feature shipped.
+  - *A route nobody checked.* `/angebote/neu`. Grep `routes/` before a CTA
+    ships; quotes hang off a project.
+  - *Copy contradicting the code.* `StaffInvited` announces a 2FA step that
+    `InvitationController` made opt-in.
+  What earns an inbox is what a screen cannot show: a reason, a
+  consequence, a value minted once (the inbound address), what breaks on
+  rotation.
 - **Filler in messages, commits, PRs.** No "Certainly", "Great question",
   "I hope this helps", "Let me know if…", "In summary". No hedging on facts you
   can verify. State the thing.
