@@ -1,6 +1,6 @@
 services:
   admin:
-    image: ghcr.io/czepter/auri-crm/studio:latest
+    image: ghcr.io/czepter/auri-crm/studio:v0.9.0
     restart: unless-stopped
     environment:
       SERVICE_FQDN_ADMIN_8080:
@@ -37,7 +37,7 @@ services:
         condition: service_completed_successfully
 
   portal:
-    image: ghcr.io/czepter/auri-crm/studio:latest
+    image: ghcr.io/czepter/auri-crm/studio:v0.9.0
     restart: unless-stopped
     environment:
       SERVICE_FQDN_PORTAL_8080:
@@ -73,7 +73,7 @@ services:
         condition: service_completed_successfully
 
   api:
-    image: ghcr.io/czepter/auri-crm/studio:latest
+    image: ghcr.io/czepter/auri-crm/studio:v0.9.0
     restart: unless-stopped
     environment:
       SERVICE_FQDN_API_8080:
@@ -107,7 +107,7 @@ services:
         condition: service_completed_successfully
 
   gallery:
-    image: ghcr.io/czepter/auri-crm/gallery:latest
+    image: ghcr.io/czepter/auri-crm/gallery:v0.9.0
     restart: unless-stopped
     environment:
       SERVICE_FQDN_GALLERY_4321:
@@ -132,7 +132,7 @@ services:
   # in the metadata document it serves; CRM_API_BASE_URL stays internal
   # because only this container calls it.
   mcp:
-    image: ghcr.io/czepter/auri-crm/mcp:latest
+    image: ghcr.io/czepter/auri-crm/mcp:v0.9.0
     restart: unless-stopped
     environment:
       SERVICE_FQDN_MCP_3000:
@@ -150,7 +150,7 @@ services:
         condition: service_healthy
 
   horizon:
-    image: ghcr.io/czepter/auri-crm/studio:latest
+    image: ghcr.io/czepter/auri-crm/studio:v0.9.0
     restart: unless-stopped
     command: php artisan horizon
     stop_grace_period: 60s
@@ -186,7 +186,7 @@ services:
         condition: service_completed_successfully
 
   scheduler:
-    image: ghcr.io/czepter/auri-crm/studio:latest
+    image: ghcr.io/czepter/auri-crm/studio:v0.9.0
     restart: unless-stopped
     command: php artisan schedule:work
     # No web server in this container, so the HTTP probe baked into the image
@@ -220,7 +220,7 @@ services:
         condition: service_completed_successfully
 
   migrate:
-    image: ghcr.io/czepter/auri-crm/studio:latest
+    image: ghcr.io/czepter/auri-crm/studio:v0.9.0
     restart: "no"
     command: php artisan migrate --force --isolated
     environment:
