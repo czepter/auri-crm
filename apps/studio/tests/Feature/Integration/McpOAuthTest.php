@@ -94,6 +94,23 @@ it('accepts a loopback redirect_uri on any port for the same path', function () 
     ]))->assertOk();
 });
 
+it('sends the consent screen back to the client as a page visit, not an XHR redirect', function () {
+    $user = staffMember();
+    [, $challenge] = pkcePair();
+
+    $this->actingAs($user, 'staff')
+        ->withHeader('X-Inertia', 'true')
+        ->post('/oauth/authorize', [
+            'client_id' => 'studio-mcp',
+            'redirect_uri' => REDIRECT_URI,
+            'code_challenge' => $challenge,
+            'scope' => Capability::ManageContacts->value,
+            'decision' => 'approve',
+        ])
+        ->assertStatus(409)
+        ->assertHeader('X-Inertia-Location');
+});
+
 it('completes the authorization-code-with-PKCE flow end to end and mints a working token', function () {
     $user = staffMember(StaffRole::Photographer);
     [$verifier, $challenge] = pkcePair();
