@@ -17,6 +17,12 @@ on:
       - 'pnpm-workspace.yaml'
       - '.dockerignore'
       - '.github/workflows/release-image.yml'
+  # A published release is what names a deployable version. Its own trigger
+  # rather than `push: tags:` because a tag push carries no changed files, so
+  # the paths filter above would skip it — and the filter cannot be set per
+  # trigger inside one `push` block.
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -64,16 +70,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # `latest` is what docker-compose.coolify.yml names, and it moves only on
-      # the default branch — a dev push must never become what production pulls
-      # on its next restart. Every build also gets its branch name and its
-      # commit SHA; the SHA is the only tag that can name a specific deploy to
-      # roll back to.
+      # docker-compose.coolify.yml names a version tag, so `v0.9.0` on a
+      # release is the tag production actually pulls. `latest` stays on the
+      # default branch, which is `dev` — it is the branch build, never the
+      # deploy target, and pointing production at it was the bug this fixes.
+      # Every build also gets its branch name and its commit SHA; the SHA is
+      # the only tag that names one specific build forever.
       - id: meta
         uses: docker/metadata-action@v6
         with:
           images: ghcr.io/${{ github.repository }}/${{ matrix.image }}
           tags: |
+            type=semver,pattern=v{{version}}
             type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=branch
             type=sha,format=long
