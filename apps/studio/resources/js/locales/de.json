@@ -316,6 +316,7 @@
     "contractSigned": "Unterschrieben · {date}",
     "contractRemind": "Erinnern",
     "contractReminded": "Erinnert · {date}",
+    "contractDeadline": "Frist",
     "contractVersions": "Fassungen",
     "contractProjectData": "Projektdaten",
     "galleryState": {
@@ -562,6 +563,22 @@
     "addendumTo": "Nachtrag zu {number}",
     "intro": "Einleitung",
     "outro": "Schluss"
+  },
+  "automations": {
+    "title": "Automationen",
+    "add": "Regel anlegen",
+    "inactive": "Inaktiv",
+    "name": "Name",
+    "anchor": "Anker",
+    "offset": "Abstand",
+    "recipient": "Empfänger",
+    "condition": "Bedingung",
+    "conditionNone": "Keine",
+    "subject": "Betreff",
+    "body": "Text",
+    "active": "Aktiv",
+    "preview": "Vorschau",
+    "runs": "Läufe"
   },
   "payments": {
     "title": "Zahlungen",

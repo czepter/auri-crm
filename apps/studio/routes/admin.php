@@ -3,6 +3,7 @@
 use App\Catalog\Http\Controllers\PackageController;
 use App\Contracts\Http\Controllers\ContractController;
 use App\Contracts\Http\Controllers\ContractSignerController;
+use App\Automation\Http\Controllers\AutomationRuleController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
 use App\Crm\Http\Controllers\ContactController;
@@ -332,6 +333,19 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/einstellungen/verfuegbarkeit/schliesszeiten/{studioClosure}', [StudioClosureController::class, 'destroy'])
             ->name('studio-closures.destroy');
 
+        // E-14: die Fläche, die es zu E-08 nicht gab — Regeln entstanden bis
+        // hierhin nur über das Seed-Kommando.
+        Route::get('/einstellungen/automationen', [AutomationRuleController::class, 'index'])
+            ->name('automations.index');
+        Route::post('/einstellungen/automationen', [AutomationRuleController::class, 'store'])
+            ->name('automations.store');
+        Route::get('/einstellungen/automationen/{automationRule}', [AutomationRuleController::class, 'edit'])
+            ->name('automations.edit');
+        Route::patch('/einstellungen/automationen/{automationRule}', [AutomationRuleController::class, 'update'])
+            ->name('automations.update');
+        Route::delete('/einstellungen/automationen/{automationRule}', [AutomationRuleController::class, 'destroy'])
+            ->name('automations.destroy');
+
         Route::get('/einstellungen/zahlungen', [PaymentSettingsController::class, 'edit'])
             ->name('settings.payments.edit');
         Route::patch('/einstellungen/zahlungen', [PaymentSettingsController::class, 'update'])
@@ -524,6 +538,8 @@ Route::middleware('audience:staff')->group(function () {
         // Stand bleibt abrufbar, bis die neue versendet ist.
         Route::patch('/vertraege/{contract}', [ContractController::class, 'update'])
             ->name('contracts.update');
+        Route::patch('/vertraege/{contract}/frist', [ContractController::class, 'deadline'])
+            ->name('contracts.deadline');
         Route::post('/vertraege/{contract}/versenden', [ContractController::class, 'send'])
             ->name('contracts.send');
         Route::post('/vertraege/{contract}/unterzeichner', [ContractSignerController::class, 'store'])

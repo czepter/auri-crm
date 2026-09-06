@@ -1,9 +1,36 @@
 declare namespace App {
 namespace Automation {
+namespace Data {
+export type AutomationRuleData = {
+id: string,
+name: string,
+triggerLabel: string,
+recipient: string,
+recipientLabel: string,
+condition: string | null,
+conditionLabel: string | null,
+isActive: boolean,
+lastRunAt: string | null,
+subject: string,
+body: string,
+anchor: string | null,
+offsetDays: number | null,
+direction: string | null,
+};
+export type AutomationRunData = {
+id: string,
+firedAt: string,
+status: string,
+statusLabel: string,
+error: string | null,
+};
+}
 namespace Enums {
-export type AutomationAnchor = 'per_shoot' | 'primary_shoot' | 'quote_validity';
+export type AutomationAnchor = 'per_shoot' | 'primary_shoot' | 'quote_validity' | 'installment_due' | 'contract_deadline' | 'gallery_expiry' | 'questionnaire_due';
+export type AutomationCondition = 'payment_open' | 'contract_unsigned' | 'questionnaire_open' | 'gallery_unopened';
 export type AutomationOffsetDirection = 'before' | 'after';
-export type AutomationRunStatus = 'pending' | 'sent' | 'failed';
+export type AutomationRecipient = 'client' | 'crew' | 'studio';
+export type AutomationRunStatus = 'pending' | 'sent' | 'failed' | 'skipped';
 export type AutomationTriggerType = 'event' | 'date_offset';
 }
 }
@@ -48,6 +75,7 @@ blocks: Record<string, any> | null,
 renderedAt: string | null,
 sentAt: string | null,
 downloadUrl: string | null,
+signDeadlineOn: string | null,
 signers: App.Contracts.Data.ContractSignerData[],
 };
 export type ContractSignerData = {
@@ -349,6 +377,8 @@ isBlocked: boolean,
 blockedBy: string | null,
 completedOn: string | null,
 dueAnchorLabel: string | null,
+assigneeId: string | null,
+assigneeName: string | null,
 };
 export type TaskTemplateData = {
 id: string,
@@ -388,6 +418,7 @@ export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'web_form' | 'oth
 export type CrewRole = 'lead_photographer' | 'second_shooter' | 'assistant';
 export type DueAnchor = 'stage' | 'shoot';
 export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list' | 'group_photos' | 'file';
+export type LeadOutcome = 'lost' | 'declined' | 'closed';
 export type LeadSource = 'referral' | 'website' | 'instagram' | 'wedding_fair' | 'other';
 export type LeadStage = 'new' | 'contacted' | 'quote_sent' | 'quote_accepted' | 'contract_sent' | 'booked';
 export type ProjectContactRole = 'primary' | 'partner' | 'payer' | 'planner' | 'vendor';
@@ -594,6 +625,11 @@ export type ZipBuildSize = 'original' | 'web';
 export type ZipBuildStatus = 'building' | 'ready' | 'failed';
 }
 }
+namespace Notifications {
+namespace Enums {
+export type NotificationMode = 'immediate' | 'briefing' | 'digest' | 'off';
+}
+}
 namespace Numbering {
 namespace Enums {
 export type DocumentType = 'quote' | 'contract' | 'invoice';
@@ -625,10 +661,12 @@ total: number,
 openTotal: number,
 isEditable: boolean,
 reference: string | null,
+clientRemindersEnabled: boolean,
 installments: App.Payments.Data.PaymentInstallmentData[],
 };
 }
 namespace Enums {
+export type OverdueReason = 'due_date_passed' | 'payment_failed';
 export type PaymentInstallmentStatus = 'scheduled' | 'paid' | 'invoiced';
 export type SettledVia = 'stripe' | 'transfer' | 'manual';
 }

@@ -2,17 +2,27 @@
 
 namespace App\Automation\Actions;
 
+use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Enums\AutomationRunStatus;
 use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
 use App\Automation\Notifications\AutomationReminder;
-use App\Crm\Models\Contact;
+use App\Automation\Support\AutomationConditions;
+use App\Contracts\Models\Contract;
+use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\Task;
+use App\Documents\Support\DocumentMergeDataBuilder;
+use App\Gallery\Models\Gallery;
+use App\Models\User;
 use App\Notifications\NotificationService;
+use App\Notifications\Support\StudioAudience;
+use App\Payments\Models\PaymentInstallment;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Collection;
 use Throwable;
 
 /**
@@ -36,6 +46,9 @@ class FireAutomationRule
     public function __construct(
         private readonly NotificationService $notifications,
         private readonly StudioSettingsResolver $settings,
+        private readonly StudioAudience $audience,
+        private readonly AutomationConditions $conditions,
+        private readonly DocumentMergeDataBuilder $merge,
     ) {}
 
     public function __invoke(AutomationRule $rule, Model $anchor, string $triggerDate): ?AutomationRun
@@ -60,16 +73,36 @@ class FireAutomationRule
             return null;
         }
 
-        $recipient = $this->recipientFor($anchor);
+        $project = self::projectOf($anchor);
 
-        if ($recipient === null) {
-            $run->update(['status' => AutomationRunStatus::Failed, 'error' => 'No primary contact to notify.']);
+        // E-15: the rule worked, it just had nothing to say. Its own state,
+        // so the history answers "why did nothing arrive".
+        if (! $this->conditions->holds($rule->condition, $project)) {
+            $run->update(['status' => AutomationRunStatus::Skipped]);
 
             return $run;
         }
 
+        $recipients = $this->recipientsFor($rule, $project);
+
+        if ($recipients->isEmpty()) {
+            $run->update(['status' => AutomationRunStatus::Failed, 'error' => 'No recipient to notify.']);
+
+            return $run;
+        }
+
+        // E-15: resolved against the anchor's own project, so "morgen ist ein
+        // Shooting" names which one. The claim above is already on record, so
+        // a second run today sends nothing even if a colleague joined the crew
+        // in between — the run answers "did this rule run", not "did everyone
+        // get their mail".
+        $data = $project === null ? [] : $this->merge->fromProject($project, $this->settings);
+
         try {
-            $this->notifications->send($recipient, new AutomationReminder($rule, $this->settings));
+            foreach ($recipients as $recipient) {
+                $this->notifications->send($recipient, new AutomationReminder($rule, $this->settings, $data));
+            }
+
             $run->update(['status' => AutomationRunStatus::Sent]);
         } catch (Throwable $e) {
             $run->update(['status' => AutomationRunStatus::Failed, 'error' => $e->getMessage()]);
@@ -78,11 +111,39 @@ class FireAutomationRule
         return $run;
     }
 
-    /** The anchor's own project's primary contact — a Shoot has one via ->project, a Project is one. */
-    private function recipientFor(Model $anchor): ?Contact
+    /**
+     * E-14: the client as before, or the studio side. `crew` stays silent
+     * where nobody is assigned — "Ausrüstung packen" has no meaning for the
+     * whole studio — while `studio` takes StudioAudience's own widening.
+     *
+     * @return Collection<int, Model>
+     */
+    private function recipientsFor(AutomationRule $rule, ?Project $project): Collection
     {
-        $project = $anchor instanceof Shoot ? $anchor->project : $anchor;
+        if ($project === null) {
+            return collect();
+        }
 
-        return $project instanceof Project ? $project->primaryContact() : null;
+        return match ($rule->recipient_type) {
+            AutomationRecipient::Client => collect(array_filter([$project->primaryContact()])),
+            AutomationRecipient::Crew => User::query()
+                ->whereIn('id', CrewAssignment::query()
+                    ->whereIn('shoot_id', $project->shoots()->select('id'))
+                    ->select('user_id'))
+                ->get(),
+            AutomationRecipient::Studio => $this->audience->forProject($project),
+        };
+    }
+
+    /** The project every anchor hangs off — a Project is one, the rest name theirs. */
+    public static function projectOf(Model $anchor): ?Project
+    {
+        return match (true) {
+            $anchor instanceof Project => $anchor,
+            $anchor instanceof Shoot, $anchor instanceof Contract,
+            $anchor instanceof Gallery, $anchor instanceof Task => $anchor->project,
+            $anchor instanceof PaymentInstallment => $anchor->plan->job->project,
+            default => null,
+        };
     }
 }

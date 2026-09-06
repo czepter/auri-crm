@@ -2,6 +2,7 @@
 
 use App\Automation\Console\Commands\SeedDefaultAutomationRulesCommand;
 use App\Automation\Console\Commands\SweepDateOffsetAutomationRulesCommand;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Engagement\Console\Commands\PollInboundMailbox;
 use App\Gallery\Console\Commands\ImportLegacyGalleriesCommand;
 use App\Http\Middleware\AssignRequestId;
@@ -75,7 +76,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command(ReapIncompleteMultipartUploads::class)->daily();
 
         // E-08's date-offset half — see the command's own docblock.
-        $schedule->command(SweepDateOffsetAutomationRulesCommand::class)->daily();
+        // E-14: studio time, the same clock the quiet hours and the three
+        // morning scans read. "One day before" on a foreign clock hits the
+        // wrong day in winter. rescue(), because this closure is built on
+        // every artisan boot — including the migrate that creates the row.
+        $schedule->command(SweepDateOffsetAutomationRulesCommand::class)
+            ->daily()
+            ->timezone(rescue(
+                fn () => app(StudioSettingsResolver::class)->timezone(),
+                config('app.timezone'),
+                report: false,
+            ));
 
         // E-12's inbound half. Every minute, without overlapping: a slow pass
         // must not have a second one reading the same unread messages behind
