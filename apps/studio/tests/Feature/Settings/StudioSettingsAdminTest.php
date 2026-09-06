@@ -285,7 +285,7 @@ it('stores the chosen font pair and refuses one that is not licensed', function 
     ])->assertInvalid(['font_pair']);
 });
 
-// A studio that never opens the setting keeps exactly what it had.
-it('falls back to Instrument while nothing is chosen', function () {
-    expect(app(StudioSettingsResolver::class)->fontPair())->toBe(FontPair::Instrument);
+// A studio that never opens the setting keeps the product default.
+it('falls back to Hanken while nothing is chosen', function () {
+    expect(app(StudioSettingsResolver::class)->fontPair())->toBe(FontPair::Hanken);
 });

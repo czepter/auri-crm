@@ -143,7 +143,7 @@ const documentPreview = computed(() => {
   return {
     displayName: props.settings.displayName ?? '',
     logoUrl: props.settings.logoUrl,
-    fontPair: props.settings.fontPair ?? 'instrument',
+    fontPair: props.settings.fontPair ?? 'hanken',
     accentColor: props.settings.accentColor,
     legalName: profile?.legal_name ?? props.settings.legalName ?? '',
     legalForm: profile?.legal_form ?? props.settings.legalForm ?? '',
