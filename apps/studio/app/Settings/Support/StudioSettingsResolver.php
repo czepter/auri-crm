@@ -620,6 +620,12 @@ class StudioSettingsResolver
         return $this->row()->onboarding_completed_at !== null;
     }
 
+    /** Whether App\Notifications\Actions\RemindOnboarding has already sent its one nudge. */
+    public function onboardingReminderSent(): bool
+    {
+        return $this->row()->onboarding_reminder_sent_at !== null;
+    }
+
     // --- T-11: quiet hours — App\Notifications\Support\QuietHours is the
     // only reader of these three, the same "raw values here, logic in the
     // domain class" split T-13's workingDays()/TaskTemplate::dueFor() already

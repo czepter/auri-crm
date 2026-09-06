@@ -64,7 +64,7 @@ class StudioSettings extends Model
         'dsgvo_request_recipient', 'dsgvo_request_deadline_days',
         'portal_contact_phone', 'portal_contact_email', 'portal_contact_response_time',
         'quiet_hours_enabled', 'quiet_hours_start', 'quiet_hours_end',
-        'onboarding_completed_at',
+        'onboarding_completed_at', 'onboarding_reminder_sent_at',
         'lead_type_presets', 'lead_source_presets', 'lead_channel_presets',
     ];
 
@@ -100,6 +100,7 @@ class StudioSettings extends Model
             'gallery_default_comments_enabled' => 'boolean',
             'quiet_hours_enabled' => 'boolean',
             'onboarding_completed_at' => 'datetime',
+            'onboarding_reminder_sent_at' => 'datetime',
             'lead_type_presets' => 'array',
             'lead_source_presets' => 'array',
             'lead_channel_presets' => 'array',
