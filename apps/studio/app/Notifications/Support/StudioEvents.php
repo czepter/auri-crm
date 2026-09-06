@@ -25,6 +25,8 @@ final class StudioEvents
         'contractSigned' => Studio\ContractSigned::class,
         'questionnaireSubmitted' => Studio\QuestionnaireSubmitted::class,
         'installmentPaid' => Studio\InstallmentPaid::class,
+        'tasksDue' => Studio\TasksDue::class,
+        'leadStalled' => Studio\LeadStalled::class,
         'assetCommented' => AssetCommented::class,
         'assetFavorited' => AssetFavorited::class,
     ];

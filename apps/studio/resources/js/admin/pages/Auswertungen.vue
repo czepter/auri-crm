@@ -13,7 +13,7 @@ const props = defineProps<{
   funnelByMonth: { month: string; captured: number; booked: number; rate: number | null }[]
   sources: { source: string; label: string; captured: number; booked: number; revenue: number }[]
   referrers: { name: string; count: number }[]
-  lostReasons: { reason: string; count: number }[]
+  lostReasons: { outcome: string; outcomeLabel: string; reason: string; count: number }[]
   acceptanceRate: number | null
   acceptanceRatePrior: number | null
   revenue: { projects: number; revenue: number; averagePerProject: number | null }
@@ -177,7 +177,9 @@ const bookingRate = computed(() =>
                  breakdown look complete when it is not. -->
             <ReportCard v-if="lostReasons.length" class="mt-4" :title="$t('reports.lostTitle')">
               <ul class="mt-2.5 list-none p-0 text-[13px] leading-[1.7]">
-                <li v-for="row in lostReasons" :key="row.reason">{{ row.reason }} — {{ row.count }}</li>
+                <li v-for="row in lostReasons" :key="`${row.outcome}:${row.reason}`">
+                  {{ row.outcomeLabel }} · {{ row.reason }} — {{ row.count }}
+                </li>
               </ul>
             </ReportCard>
           </div>

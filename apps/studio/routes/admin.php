@@ -715,6 +715,10 @@ Route::middleware('audience:staff')->group(function () {
         // are different decisions taken at different moments.
         Route::post('/aufgaben/{task}/abhaengigkeit', [TaskController::class, 'depend'])
             ->name('tasks.depend');
+        // T-24: Zuständigkeit. Eigene Route aus demselben Grund wie oben —
+        // wer etwas übernimmt, erledigt es nicht im selben Zug.
+        Route::post('/aufgaben/{task}/zustaendig', [TaskController::class, 'assign'])
+            ->name('tasks.assign');
         Route::delete('/aufgaben/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 
         Route::post('/auftraege/{project}/notizen', [InternalNoteController::class, 'store'])

@@ -1,5 +1,6 @@
 <?php
 
+use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
@@ -54,7 +55,7 @@ it('groups projects into the six funnel columns in order', function () {
 });
 
 it('keeps lost leads off the board entirely', function () {
-    leadOn('2026-06-14')->forceFill(['lost_at' => now(), 'lost_reason' => 'Budget'])->save();
+    leadOn('2026-06-14')->forceFill(['lost_at' => now(), 'lost_reason' => 'Budget', 'outcome' => LeadOutcome::Lost])->save();
 
     $counts = array_map(fn ($c) => count($c['cards']), boardProps()['columns']);
 

@@ -32,6 +32,7 @@ const props = defineProps<{
     thread: App.Crm.Data.ThreadEntryData[];
     tasks: App.Crm.Data.TaskRowData[];
     shootOptions: { value: string; label: string }[];
+    staffOptions: { value: string; label: string }[];
     // Kommt von ProjectController@show; bis dahin bleibt die Ankerliste leer.
     anchors?: { value: string; label: string; group: string; on: string | null }[];
     figures: Record<string, Figure>;
@@ -438,6 +439,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 v-if="header.canManageTasks"
                                 :project-id="header.id"
                                 :shoot-options="shootOptions"
+                                :staff-options="staffOptions"
                                 :anchors="anchors ?? []"
                             />
                         </template>
