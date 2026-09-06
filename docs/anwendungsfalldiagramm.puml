@@ -1,0 +1,179 @@
+@startuml
+' Anwendungsfalldiagramm — Auri CRM
+' Rendern: docker run --rm -i plantuml/plantuml -tsvg -pipe < docs/anwendungsfalldiagramm.puml > docs/anwendungsfalldiagramm.svg
+left to right direction
+skinparam shadowing false
+skinparam actorStyle awesome
+skinparam usecase {
+  BackgroundColor<<Akquise>> #E8F1FB
+  BackgroundColor<<Abschluss>> #EAF6EC
+  BackgroundColor<<Zahlung>> #FDF3E3
+  BackgroundColor<<Produktion>> #F3ECFA
+  BackgroundColor<<Betreuung>> #FBEAEA
+  BackgroundColor<<Verwaltung>> #EFEFEF
+}
+
+actor "Interessent" as Lead
+actor "Studio-Inhaber" as Owner
+actor "Mitarbeiter" as Staff
+actor "Crew" as Crew
+actor "Integrationsclient" as Api
+actor "Zeitgeber" as Clock
+
+Owner --|> Staff
+
+rectangle "Auri CRM" {
+  usecase "Anfrage stellen" as UC_Inquiry <<Akquise>>
+  usecase "Lead auf Board fuehren" as UC_Board <<Akquise>>
+  usecase "Projekt anlegen" as UC_Project <<Akquise>>
+  usecase "Shooting terminieren" as UC_Shoot <<Akquise>>
+  usecase "Verfuegbarkeit pruefen" as UC_Avail <<Akquise>>
+  usecase "Crew zuweisen" as UC_CrewAssign <<Akquise>>
+
+  usecase "Angebot erstellen" as UC_QuoteCreate <<Abschluss>>
+  usecase "Angebot annehmen" as UC_QuoteAccept <<Abschluss>>
+  usecase "Vertrag erstellen" as UC_ContractCreate <<Abschluss>>
+  usecase "Vertrag unterschreiben" as UC_Sign <<Abschluss>>
+  usecase "Dokument als PDF erzeugen" as UC_Pdf <<Abschluss>>
+  usecase "Nummernkreis vergeben" as UC_Number <<Abschluss>>
+
+  usecase "Zahlungsplan festlegen" as UC_Plan <<Zahlung>>
+  usecase "Rate online zahlen" as UC_Pay <<Zahlung>>
+  usecase "Rechnung erzeugen" as UC_Invoice <<Zahlung>>
+  usecase "Zahlungseingang buchen" as UC_Book <<Zahlung>>
+  usecase "Zahlungsverzug erkennen" as UC_Overdue <<Zahlung>>
+
+  usecase "Bilder hochladen" as UC_Upload <<Produktion>>
+  usecase "Derivate berechnen" as UC_Derivatives <<Produktion>>
+  usecase "Galerie veroeffentlichen" as UC_Publish <<Produktion>>
+  usecase "Galerie ansehen" as UC_View <<Produktion>>
+  usecase "Bilder favorisieren" as UC_Fav <<Produktion>>
+  usecase "Bild kommentieren" as UC_Comment <<Produktion>>
+  usecase "Auswahlliste pflegen" as UC_List <<Produktion>>
+  usecase "Bilder herunterladen" as UC_Download <<Produktion>>
+  usecase "Galerie-Tor loesen" as UC_Gate <<Produktion>>
+  usecase "ZIP-Paket bauen" as UC_Zip <<Produktion>>
+
+  usecase "Portal-Zugang erhalten" as UC_MagicLink <<Betreuung>>
+  usecase "Fragebogen ausfuellen" as UC_Form <<Betreuung>>
+  usecase "Nachricht schreiben" as UC_Message <<Betreuung>>
+  usecase "Per E-Mail antworten" as UC_MailReply <<Betreuung>>
+  usecase "Posteingang abrufen" as UC_MailPoll <<Betreuung>>
+  usecase "Aufgaben fuehren" as UC_Tasks <<Betreuung>>
+  usecase "Automation ausloesen" as UC_Automation <<Betreuung>>
+  usecase "Erinnerung terminieren" as UC_Sweep <<Betreuung>>
+  usecase "Benachrichtigung zustellen" as UC_Notify <<Betreuung>>
+  usecase "Ruhezeit beachten" as UC_Quiet <<Betreuung>>
+  usecase "Zusammenfassung senden" as UC_Digest <<Betreuung>>
+  usecase "Onboarding-Erinnerung senden" as UC_OnbNudge <<Betreuung>>
+  usecase "Webhook zustellen" as UC_Webhook <<Betreuung>>
+
+  usecase "Studio einrichten" as UC_Onboarding <<Verwaltung>>
+  usecase "Mitarbeiter einladen" as UC_Invite <<Verwaltung>>
+  usecase "Vorlagen pflegen" as UC_Templates <<Verwaltung>>
+  usecase "Katalog pflegen" as UC_Catalog <<Verwaltung>>
+  usecase "Portal-Funktionen schalten" as UC_Capabilities <<Verwaltung>>
+  usecase "Benachrichtigungen einstellen" as UC_NotifyPrefs <<Verwaltung>>
+  usecase "Absenderidentitaet einstellen" as UC_MailIdentity <<Verwaltung>>
+  usecase "Auswertungen ansehen" as UC_Reports <<Verwaltung>>
+  usecase "DSGVO-Auskunft erteilen" as UC_Dsgvo <<Verwaltung>>
+  usecase "Altbestand importieren" as UC_Import <<Verwaltung>>
+  usecase "Daten ueber API abrufen" as UC_ApiRead <<Verwaltung>>
+}
+
+Lead --> UC_Inquiry
+Api --> UC_Inquiry
+Api --> UC_ApiRead
+
+Staff --> UC_Board
+Staff --> UC_Project
+Staff --> UC_Shoot
+Staff --> UC_CrewAssign
+Staff --> UC_QuoteCreate
+Staff --> UC_ContractCreate
+Staff --> UC_Plan
+Staff --> UC_Invoice
+Staff --> UC_Book
+Staff --> UC_Upload
+Staff --> UC_Publish
+Staff --> UC_Tasks
+Staff --> UC_Message
+Staff --> UC_Templates
+Staff --> UC_Catalog
+Staff --> UC_Reports
+Staff --> UC_NotifyPrefs
+Staff --> UC_Digest
+
+Owner --> UC_Onboarding
+Owner --> UC_Invite
+Owner --> UC_Capabilities
+Owner --> UC_MailIdentity
+Owner --> UC_Dsgvo
+Owner --> UC_Import
+
+Crew --> UC_Shoot
+Crew --> UC_Upload
+
+Clock --> UC_Sweep
+Clock --> UC_Digest
+Clock --> UC_OnbNudge
+Clock --> UC_Overdue
+Clock --> UC_MailPoll
+
+actor "Kunde" as Client
+actor "Gast" as Guest
+actor "Stripe" as Stripe
+actor "Mailserver" as Mail
+actor "Objektspeicher" as S3
+
+Client --> UC_MagicLink
+Client --> UC_QuoteAccept
+Client --> UC_Sign
+Client --> UC_Form
+Client --> UC_Message
+Client --> UC_MailReply
+Client --> UC_Pay
+Client --> UC_View
+Client --> UC_List
+Client --> UC_Download
+
+Guest --> UC_View
+Guest --> UC_Fav
+Guest --> UC_Comment
+Guest --> UC_Download
+
+UC_Inquiry ..> UC_Board : <<include>>
+UC_Shoot ..> UC_Avail : <<include>>
+UC_QuoteCreate ..> UC_Pdf : <<include>>
+UC_ContractCreate ..> UC_Pdf : <<include>>
+UC_Invoice ..> UC_Pdf : <<include>>
+UC_Invoice ..> UC_Number : <<include>>
+UC_QuoteAccept ..> UC_ContractCreate : <<extend>>
+UC_Sign ..> UC_Plan : <<extend>>
+UC_Pay ..> UC_Book : <<include>>
+UC_Upload ..> UC_Derivatives : <<include>>
+UC_View ..> UC_Gate : <<include>>
+UC_Download ..> UC_Gate : <<include>>
+UC_Download ..> UC_Zip : <<include>>
+UC_Publish ..> UC_Notify : <<include>>
+UC_Sweep ..> UC_Automation : <<include>>
+UC_Notify ..> UC_Quiet : <<include>>
+UC_MailReply ..> UC_MailPoll : <<include>>
+UC_Automation ..> UC_Notify : <<include>>
+UC_MagicLink ..> UC_Notify : <<include>>
+UC_Board ..> UC_Automation : <<extend>>
+
+UC_Pay --> Stripe
+Stripe --> UC_Book
+UC_Notify --> Mail
+Mail --> UC_MailPoll
+UC_Webhook --> Api
+UC_Upload --> S3
+UC_Zip --> S3
+UC_Derivatives --> S3
+
+legend right
+  Akquise · Abschluss · Zahlung · Produktion · Betreuung · Verwaltung
+  Farbe = Domaenenmodul (apps/studio/app)
+endlegend
+@enduml
