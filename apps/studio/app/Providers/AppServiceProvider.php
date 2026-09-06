@@ -32,6 +32,7 @@ use App\Notifications\Listeners\NotifyStudioOfDomainEvent;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\NotificationPreferences;
 use App\Notifications\Support\QuietHours;
+use App\Notifications\Support\StudioMailFooter;
 use App\Notifications\Transports\InAppTransport;
 use App\Notifications\Transports\MailTransport;
 use App\Notifications\Transports\WebhookTransport;
@@ -136,6 +137,11 @@ class AppServiceProvider extends ServiceProvider
         // see resources/views/mail/{product,blocks}-message.blade.php.
         View::composer('mail::layout', function ($view) {
             if (($view->getData()['brand'] ?? null) !== null) {
+                // The product mails' footer, here for the same reason brand is
+                // resolved here: one place, rather than the same string copied
+                // into four notification classes.
+                $view->with('mailFooter', 'Fragen: <a href="https://github.com/czepter/auri-crm/issues">github.com/czepter/auri-crm/issues</a>');
+
                 return;
             }
 
@@ -146,6 +152,12 @@ class AppServiceProvider extends ServiceProvider
                 'logoUrl' => $settings->logoPath()
                     ? rtrim((string) config('portal.url'), '/').'/branding/logo'
                     : null,
+                // Signature and legal particulars belong in the footer zone,
+                // not on the body as two more ->line()s. Resolved here for the
+                // same reason brand is: Blade hands a view's data to no nested
+                // component, so the layout's own scope is the only place that
+                // can be reached.
+                'mailFooter' => app(StudioMailFooter::class)($settings),
             ]);
         });
 

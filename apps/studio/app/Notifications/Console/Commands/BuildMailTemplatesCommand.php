@@ -29,6 +29,11 @@ class BuildMailTemplatesCommand extends Command
         '__LOGO_URL__' => '{{ $logoUrl ?? null }}',
         '__LOGO_IF__' => '@if(! empty($logoUrl))',
         '__LOGO_ENDIF__' => '@endif',
+        // The footer zone is opt-in: without a mailFooter the whole section
+        // is skipped, so a mail that sets none shows no empty ruled band.
+        '__FOOTER__' => '{!! $mailFooter ?? \'\' !!}',
+        '__FOOTER_IF__' => '@if(! empty($mailFooter))',
+        '__FOOTER_ENDIF__' => '@endif',
         '__ACCENT__' => '{{ $accent ?? \'#111111\' }}',
         '__URL__' => '{{ $url }}',
     ];
