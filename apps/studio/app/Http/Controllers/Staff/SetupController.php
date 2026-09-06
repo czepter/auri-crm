@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Staff;
 use App\Enums\StaffRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserEmailVerification;
+use App\Notifications\NotificationService;
+use App\Notifications\Studio\StudioEmailVerification;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,7 +30,7 @@ class SetupController extends Controller
         return Inertia::render('Auth/Setup');
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, NotificationService $notifications): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -65,6 +68,18 @@ class SetupController extends Controller
         $request->session()->regenerate();
 
         AuditLogger::record('staff.setup_completed', $user);
+
+        $token = bin2hex(random_bytes(32));
+        $code = (string) random_int(100000, 999999);
+
+        UserEmailVerification::create([
+            'user_id' => $user->id,
+            'token_hash' => UserEmailVerification::hash($token),
+            'code_hash' => UserEmailVerification::hash($code),
+            'expires_at' => now()->addMinutes(UserEmailVerification::VALID_FOR_MINUTES),
+        ]);
+
+        $notifications->send($user, new StudioEmailVerification($user->name, $code, url("/e-mail-bestaetigen/{$token}")));
 
         return redirect('/einrichtung/studio');
     }
