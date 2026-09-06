@@ -7,6 +7,7 @@ import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
+import QuoteSlider from '@/portal/components/QuoteSlider.vue'
 import { Button } from '@/ui/button'
 
 type QuoteItem = {
@@ -19,6 +20,9 @@ type QuoteItem = {
 
 type Quote = {
   id: string
+  // Q-08: null heisst klassisches Angebot — dann steht unten die Tabelle,
+  // die vor dieser Runde hier stand, unveraendert.
+  hourlyRate: number | null
   status: string
   statusLabel: string
   number: string | null
@@ -47,6 +51,8 @@ const props = defineProps<{
   // would accept a new one.
   canAccept: boolean
   quote: Quote | null
+  // Q-10: wie viele Schaufensterbilder es gibt. Null heisst kein Raster.
+  showcaseCount: number
 }>()
 
 const form = useForm({})
@@ -79,7 +85,18 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
         </h1>
       </section>
 
-      <div v-if="quote" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 max-w-[680px] border-t border-border pt-8">
+      <QuoteSlider
+        v-if="quote && quote.hourlyRate !== null"
+        class="animate-rise [animation-delay:230ms] motion-reduce:animate-none"
+        :project="project"
+        :quote="(quote as unknown as App.Quotes.Data.QuoteData)"
+        :can-accept="canAccept"
+        :expired="quote.expired"
+        :accepted-at="quote.acceptedAt"
+        :showcase-count="showcaseCount"
+      />
+
+      <div v-else-if="quote" class="animate-rise [animation-delay:230ms] motion-reduce:animate-none mt-12 max-w-[680px] border-t border-border pt-8">
         <!-- The heading above already says "Angebot"; only a number adds
              anything here. -->
         <div class="flex flex-wrap items-baseline justify-between gap-4">

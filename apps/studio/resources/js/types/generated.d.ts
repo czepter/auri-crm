@@ -58,6 +58,10 @@ title: string,
 description: string | null,
 quantity: number,
 unitPrice: number | null,
+selectable: boolean,
+selected: boolean,
+outcome: string | null,
+hasImage: boolean,
 };
 }
 }
@@ -808,6 +812,7 @@ website: string | null,
 accentColor: string | null,
 fontPair: string | null,
 logoUrl: string | null,
+showcaseUrls: string[],
 bankAccountHolder: string | null,
 bankIban: string | null,
 bankBic: string | null,

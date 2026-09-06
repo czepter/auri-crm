@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+import { router, useForm } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -76,6 +76,20 @@ const websiteHost = computed({
 
 function onLogoChange(event: Event) {
   form.logo = (event.target as HTMLInputElement).files?.[0] ?? null
+}
+
+// Q-10: eigener Weg, nicht Teil des Profil-Formulars. Ein Satz waechst und
+// schrumpft; das Logo wird ersetzt.
+function onShowcaseChange(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+
+  if (!file) return
+
+  router.post('/einstellungen/schaufenster', { image: file }, { preserveScroll: true, forceFormData: true })
+}
+
+function removeShowcase(index: number) {
+  router.delete(`/einstellungen/schaufenster/${index}`, { preserveScroll: true })
 }
 
 function submit() {
@@ -210,6 +224,26 @@ defineExpose({ form, submit })
               <Input id="p-logo" type="file" accept="image/png" style="flex: 1" @change="onLogoChange" />
             </div>
           </Field>
+          <Field
+            wide
+            :label="$t('settings.showcase')"
+            id="p-schaufenster"
+            :hint="$t('settings.showcaseHint')"
+          >
+            <div class="flex flex-wrap items-center gap-2">
+              <div v-for="(url, index) in settings.showcaseUrls" :key="url" class="relative">
+                <img class="size-14 rounded-[6px] object-cover" :src="url" alt="" />
+                <button
+                  class="absolute -top-1.5 -right-1.5 flex size-5 cursor-pointer items-center justify-center rounded-full bg-sunk-2 text-[11px] leading-none"
+                  type="button"
+                  :aria-label="$t('common.remove')"
+                  @click="removeShowcase(index)"
+                >×</button>
+              </div>
+              <Input id="p-schaufenster" class="max-w-[240px]" type="file" accept="image/png,image/jpeg" @change="onShowcaseChange" />
+            </div>
+          </Field>
+
           <Field :label="$t('settings.accentColor')" id="p-akzent" :error="form.errors.accent_color">
             <InputGroup>
               <InputGroupAddon>

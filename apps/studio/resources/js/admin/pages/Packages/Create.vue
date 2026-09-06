@@ -24,6 +24,9 @@ function submit() {
         description: item.description || null,
         quantity: item.quantity,
         unit_price: eurosToCents(item.unitPrice),
+        selectable: item.selectable,
+        selected: item.selected,
+        outcome: item.outcome || null,
       })),
     }))
     .post('/pakete')

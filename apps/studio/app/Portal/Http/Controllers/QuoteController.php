@@ -44,6 +44,9 @@ class QuoteController extends Controller
             // half via `portal.capability:accept_quotes`. Never hides an
             // already-accepted quote — only the button that would accept one.
             'canAccept' => $settings->acceptQuotesEnabled(),
+            // Q-10: die Zahl reicht — die Kacheln zaehlen zyklisch durch und
+            // holen sich jede ihr Bild ueber ihren Index.
+            'showcaseCount' => count($settings->showcasePaths()),
             'quote' => $quote === null ? null : [
                 ...QuoteData::fromModel($quote)->toArray(),
                 // Display only — see AcceptQuote for the re-check this

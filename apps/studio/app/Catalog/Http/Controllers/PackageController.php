@@ -84,8 +84,12 @@ class PackageController extends Controller
         // Wholesale replace rather than a diffed sync: no id anywhere else
         // references an item row — see Package::copyItems() — so there is no
         // foreign key a delete-and-recreate could orphan.
+        // Read before the delete below: the rows carry the only paths this
+        // app will accept, and they are about to stop existing.
+        $images = $this->imagePathsFor($package);
+
         $package->items()->delete();
-        $package->items()->createMany($this->itemRows($validated['items']));
+        $package->items()->createMany($this->itemRows($validated['items'], $images));
 
         AuditLogger::record(
             event: 'package.updated',
@@ -191,14 +195,14 @@ class PackageController extends Controller
             'items.*.description' => ['nullable', 'string', 'max:2000'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
-            // Q-09/Q-10: the block half of a line. image_path round-trips
-            // rather than being uploaded here — update() below replaces the
-            // rows wholesale, so a path the form did not send back would be
-            // dropped on the next save.
+            // Q-09/Q-10: the block half of a line. `id` is how a picture
+            // survives update()'s wholesale replace — never the path itself:
+            // a stored path accepted from a form is a read of any file on
+            // the disk, this app's contracts included. See imagePathsFor().
+            'items.*.id' => ['nullable', 'string'],
             'items.*.selectable' => ['sometimes', 'boolean'],
             'items.*.selected' => ['sometimes', 'boolean'],
             'items.*.outcome' => ['nullable', 'string', 'max:255'],
-            'items.*.image_path' => ['nullable', 'string', 'max:2048'],
         ]);
     }
 
@@ -207,9 +211,10 @@ class PackageController extends Controller
      * in: the admin screen reorders by moving a row, not by typing a number.
      *
      * @param  list<array<string, mixed>>  $items
+     * @param  array<string, string>  $images  public_id => stored path, from imagePathsFor()
      * @return list<array<string, mixed>>
      */
-    private function itemRows(array $items): array
+    private function itemRows(array $items, array $images = []): array
     {
         return collect($items)->values()->map(fn (array $item, int $index) => [
             'title' => $item['title'],
@@ -220,7 +225,26 @@ class PackageController extends Controller
             'selectable' => $item['selectable'] ?? false,
             'selected' => $item['selected'] ?? false,
             'outcome' => $item['outcome'] ?? null,
-            'image_path' => $item['image_path'] ?? null,
+            // Resolved from this package's own rows, never from the payload:
+            // an id the client made up simply finds nothing.
+            'image_path' => $images[$item['id'] ?? ''] ?? null,
         ])->all();
+    }
+
+    /**
+     * The picture each of this package's current lines holds, keyed by the
+     * public_id the form sends back. The whole point is that a path only
+     * ever comes from a row this tenant already owns — uploadImage() builds
+     * the only other one, out of a file and the tenant id, and neither is
+     * the client's to name.
+     *
+     * @return array<string, string>
+     */
+    private function imagePathsFor(Package $package): array
+    {
+        return $package->items()
+            ->whereNotNull('image_path')
+            ->pluck('image_path', 'public_id')
+            ->all();
     }
 }

@@ -359,7 +359,7 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Quotes', [
             'header' => $this->header($project),
             'quotes' => QuoteData::collect(
-                $project->quotes()->with(['items', 'predecessor'])->get()
+                $project->quotes()->with(['items', 'predecessor', 'paymentStages'])->get()
             ),
             'paymentPlan' => $project->job?->paymentPlan
                 ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments'))
