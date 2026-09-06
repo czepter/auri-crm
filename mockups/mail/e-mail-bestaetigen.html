@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>35 · Mail — E-Mail bestätigen</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<style>
+  body { background:#F5F5F4; }
+  .mailpage { padding:28px 28px 48px; }
+  .backlink { display:block; max-width:600px; margin:0 auto 20px; font:400 12.5px/1 var(--font); color:var(--muted); text-decoration:none; }
+  .backlink:hover { color:var(--ink); }
+    a { color: #B44E22; }
+    a:hover { color: #8F3D1B; }
+    .meta { display: flex; gap: 10px; align-items: baseline; }
+    .kick { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #A3A3A3; width: 62px; flex: none; }
+    .metaval { font-size: 12px; color: #6B6B6B; }
+    .card { max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E9E9E7; border-radius: 8px; overflow: hidden; }
+    .brandbar { padding: 24px 32px; border-bottom: 1px solid #E9E9E7; }
+    .brandrow { display: flex; align-items: center; gap: 10px; }
+    .mark { width: 26px; height: 26px; border-radius: 6px; flex: none; }
+    .wordmark { font-family: 'Instrument Serif', Georgia, serif; font-size: 21px; letter-spacing: -.022em; color: #191919; }
+    .bodyzone { padding: 32px; }
+    .greet { margin: 0 0 18px; font-size: 15px; line-height: 1.6; font-weight: 600; color: #191919; }
+    .line { margin: 0 0 22px; font-size: 15px; line-height: 1.62; color: #191919; }
+    .cta { display: inline-block; color: #FFFFFF; font-size: 15px; font-weight: 600; line-height: 1; padding: 15px 24px; border-radius: 6px; text-decoration: none; }
+    .codeband { background: #F5F5F4; border-radius: 8px; padding: 26px 20px; margin: 0 0 20px; text-align: center; }
+    .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 34px; font-weight: 600; letter-spacing: .14em; color: #191919; }
+    .small { margin: 22px 0 0; font-size: 13px; line-height: 1.55; color: #6B6B6B; }
+    .rawlink { margin: 6px 0 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.45; color: #6B6B6B; word-break: break-all; }
+    .signoff { margin: 32px 0 0; font-size: 15px; line-height: 1.6; color: #191919; }
+    .footzone { padding: 24px 32px 28px; border-top: 1px solid #E9E9E7; background: #FCFCFB; }
+    .ftext { margin: 0 0 10px; font-size: 12px; line-height: 1.55; color: #6B6B6B; }
+    .ftext:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<!-- Die einzige Mail, hinter der noch kein Feature steht: User implementiert
+     kein MustVerifyEmail, es gibt keine Spalte email_verified_at und keine
+     Route. Code und Link lösen denselben Datensatz ein — der Code, weil der
+     Inhaber nach der Anmeldung ohnehin am Schirm sitzt, der Link, weil die
+     Mail meist auf dem Telefon aufgeht.
+
+     Die 30 Minuten sind ein Vorschlag und brauchen eine Konstante wie
+     ClientAccess::VALID_FOR_MINUTES, keine erfundene Zahl im Text. -->
+
+<div class="mailpage">
+  <a class="backlink" href="../index.html">← Übersicht</a>
+
+  <div class="meta" style="max-width: 600px; margin: 0 auto 14px;">
+    <span class="kick">Betreff</span><span class="metaval">Bestätige deine E-Mail-Adresse</span>
+  </div>
+  <div class="meta" style="max-width: 600px; margin: 0 auto 18px;">
+    <span class="kick">Auslöser</span><span class="metaval">Account-Anlage, vor der Willkommensmail</span>
+  </div>
+
+  <div class="card">
+    <div class="brandbar">
+      <div class="brandrow">
+        <div class="mark" style="background: #B44E22"></div>
+        <div class="wordmark">Auri CRM</div>
+      </div>
+    </div>
+
+    <div class="bodyzone">
+      <p class="greet">Hallo Christian,</p>
+      <p class="line">bitte bestätige die E-Mail-Adresse deines Auri-CRM-Kontos mit diesem Code:</p>
+
+      <div class="codeband"><span class="code">140736</span></div>
+      <p class="line">Der Code gilt 30 Minuten.</p>
+
+      <a class="cta" href="#" style="background: #B44E22">E-Mail-Adresse bestätigen</a>
+
+      <p class="small">Oder diesen Link öffnen:</p>
+      <p class="rawlink">https://atelier-nordlicht.auri-crm.de/e-mail-bestaetigen/9f3c1a2b8d7e4056</p>
+
+      <p class="signoff">Viele Grüße<br>Auri CRM</p>
+    </div>
+
+    <div class="footzone">
+      <p class="ftext">Fragen: <a href="https://github.com/czepter/auri-crm/issues">github.com/czepter/auri-crm/issues</a></p>
+      <p class="ftext">Du bekommst diese Mail, weil mit dieser Adresse ein Studio bei Auri CRM angelegt wurde.</p>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
