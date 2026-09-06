@@ -25,6 +25,9 @@ class PaymentPlanData extends Data
         // CreatePaymentPlan allocates once, at creation (T-04's numbering).
         // Null for a plan created before this story's action ran.
         public ?string $reference,
+        // T-25: der Einzelfall neben dem Studioschalter unter Zahlungen —
+        // der eine Kunde, mit dem man gerade telefoniert hat.
+        public bool $clientRemindersEnabled,
         public array $installments,
     ) {}
 
@@ -50,6 +53,7 @@ class PaymentPlanData extends Data
             openTotal: $openTotal,
             isEditable: $plan->isEditable(),
             reference: $plan->reference,
+            clientRemindersEnabled: $plan->client_reminders_enabled,
             installments: $items,
         );
     }

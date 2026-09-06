@@ -3,22 +3,26 @@
 use App\Crm\Actions\RemindDueTasks;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Task;
-use App\Models\User;
+use App\Notifications\Enums\NotificationMode;
 use App\Notifications\Studio\TasksDue;
+use App\Notifications\Support\NotificationPreferences;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
 uses(RefreshDatabase::class);
 
+// Auf sofort gestellt, weil die Vorgabe der Tagesueberblick ist und der die
+// Mail bewusst zurueckhaelt (T-23).
 it('reminds on the due day itself', function () {
     Notification::fake();
-    staffMember();
+    $staff = staffMember();
+    app(NotificationPreferences::class)->setMode($staff, TasksDue::class, NotificationMode::Immediate);
 
-    Task::factory()->due(now()->toDateString())->create();
+    Task::factory()->due(now()->toDateString())->create(['assignee_id' => $staff->id]);
 
     expect(app(RemindDueTasks::class)())->toBe(1);
 
-    Notification::assertSentTo(User::query()->get(), TasksDue::class);
+    Notification::assertSentTo($staff, TasksDue::class);
 });
 
 it('says nothing about a task not yet due', function () {
@@ -69,6 +73,10 @@ it('sends to the assignee alone where a task names one', function () {
     Notification::fake();
     $assignee = staffMember();
     $other = staffMember();
+
+    foreach ([$assignee, $other] as $user) {
+        app(NotificationPreferences::class)->setMode($user, TasksDue::class, NotificationMode::Immediate);
+    }
 
     Task::factory()->due(now()->toDateString())->create(['assignee_id' => $assignee->id]);
 

@@ -3,6 +3,8 @@ import { computed, ref } from "vue";
 import { Link, router, useForm } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import { Button } from "@/ui/button";
+import { Checkbox } from "@/ui/checkbox";
+import { Label } from "@/ui/label";
 import BandCell from "@/admin/components/BandCell.vue";
 import BandValue from "@/admin/components/BandValue.vue";
 import LineItems from "@/admin/components/LineItems.vue";
@@ -61,6 +63,14 @@ const props = defineProps<{
     sourceOther: string | null;
     sourceLabel: string | null;
 }>();
+
+function toggleReminders(value: boolean | 'indeterminate') {
+    router.patch(
+        `/zahlungsplaene/${props.paymentPlan?.id}/erinnerungen`,
+        { client_reminders_enabled: value === true },
+        { preserveScroll: true }
+    );
+}
 
 function euro(minor: string | number | null) {
     return minor === null ? "—" : formatEurosRounded(Number(minor));
@@ -207,6 +217,17 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         >
                             <span class="w-[74px] flex-none text-ink-2">{{ day(instalment.dueOn) }}</span>
                             <span>{{ euro(instalment.amount) }}</span>
+                        </div>
+
+                        <div class="mt-2 flex items-center gap-2">
+                            <Checkbox
+                                id="cb-plan-reminders"
+                                :model-value="paymentPlan.clientRemindersEnabled"
+                                @update:model-value="toggleReminders"
+                            />
+                            <Label variant="inline" for="cb-plan-reminders">{{
+                                $t("payments.clientReminders")
+                            }}</Label>
                         </div>
                     </RailSection>
 

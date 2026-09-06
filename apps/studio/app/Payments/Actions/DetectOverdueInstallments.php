@@ -10,6 +10,9 @@ use App\Payments\Enums\OverdueReason;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Events\InstallmentOverdue;
 use App\Payments\Models\PaymentInstallment;
+use App\Portal\Notifications\PaymentReminder;
+use App\Portal\Support\ClientAudience;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\FibonacciReminderSchedule;
 use Illuminate\Support\Collection;
 
@@ -45,6 +48,8 @@ class DetectOverdueInstallments
     public function __construct(
         private readonly NotificationService $notifications,
         private readonly StudioAudience $audience,
+        private readonly ClientAudience $clients,
+        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /** @return int installments newly flagged */
@@ -65,6 +70,7 @@ class DetectOverdueInstallments
         }
 
         $this->remindStudio();
+        $this->remindClients();
 
         return $installments->count();
     }
@@ -96,6 +102,49 @@ class DetectOverdueInstallments
         foreach ($due as $installment) {
             $installment->forceFill([
                 'overdue_reminders_sent' => FibonacciReminderSchedule::reachedRungs($installment->due_on->toImmutable()),
+            ])->save();
+        }
+    }
+
+    /**
+     * T-25: the client's own ladder, one rung behind the studio's. A day late
+     * is a transfer in flight; the studio may know that earlier and more
+     * often than the client is asked about it.
+     *
+     * Two switches, both the studio's: the Zahlungen pane for all of them,
+     * the payment plan for the one client somebody just spoke to. Nothing
+     * goes out while the portal is closed for maintenance — the link would
+     * land on the closure page.
+     */
+    private function remindClients(): void
+    {
+        if (! $this->settings->remindersEnabled() || $this->settings->maintenanceEnabled()) {
+            return;
+        }
+
+        $due = PaymentInstallment::query()
+            ->overdue()
+            ->whereHas('plan', fn ($plan) => $plan->where('client_reminders_enabled', true))
+            ->with('plan.job.project')
+            ->get()
+            ->filter(fn (PaymentInstallment $installment) => FibonacciReminderSchedule::isDue(
+                $installment->due_on->toImmutable(),
+                $installment->client_reminders_sent,
+            ));
+
+        foreach ($due as $installment) {
+            $recipients = $this->clients->forProject($installment->plan->job->project);
+
+            if ($recipients->isEmpty()) {
+                continue;
+            }
+
+            foreach ($recipients as $contact) {
+                $this->notifications->send($contact, new PaymentReminder($installment, $this->settings));
+            }
+
+            $installment->forceFill([
+                'client_reminders_sent' => FibonacciReminderSchedule::reachedRungs($installment->due_on->toImmutable()),
             ])->save();
         }
     }

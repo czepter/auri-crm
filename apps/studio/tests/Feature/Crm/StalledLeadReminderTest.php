@@ -8,8 +8,9 @@ use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Stage;
 use App\Crm\Support\CrmVocabulary;
-use App\Models\User;
+use App\Notifications\Enums\NotificationMode;
 use App\Notifications\Studio\LeadStalled;
+use App\Notifications\Support\NotificationPreferences;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
@@ -18,12 +19,13 @@ uses(RefreshDatabase::class);
 it('reports a lead that has sat past the first rung', function () {
     Notification::fake();
     $staff = staffMember();
+    app(NotificationPreferences::class)->setMode($staff, LeadStalled::class, NotificationMode::Immediate);
 
     Lead::factory()->atStage(LeadStage::Contacted, 4)->create(['captured_by_id' => $staff->id]);
 
     expect(app(RemindStalledLeads::class)())->toBe(1);
 
-    Notification::assertSentTo(User::query()->get(), LeadStalled::class);
+    Notification::assertSentTo($staff, LeadStalled::class);
 });
 
 it('says nothing before the first rung', function () {

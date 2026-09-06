@@ -659,6 +659,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('payment-plans.store');
         Route::patch('/zahlungsplaene/{paymentPlan}', [PaymentPlanController::class, 'update'])
             ->name('payment-plans.update');
+        Route::patch('/zahlungsplaene/{paymentPlan}/erinnerungen', [PaymentPlanController::class, 'reminders'])
+            ->name('payment-plans.reminders');
 
         // T-07's staff action: date, method and reference, recorded once —
         // never a status flipped on its own. See MarkInstallmentPaid.

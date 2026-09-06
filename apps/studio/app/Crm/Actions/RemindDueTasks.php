@@ -8,6 +8,9 @@ use App\Models\User;
 use App\Notifications\NotificationService;
 use App\Notifications\Studio\TasksDue;
 use App\Notifications\Support\StudioAudience;
+use App\Portal\Notifications\TaskDue;
+use App\Portal\Support\ClientAudience;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\FibonacciReminderSchedule;
 use Illuminate\Support\Collection;
 
@@ -21,17 +24,24 @@ use Illuminate\Support\Collection;
  * Blocked tasks stay out. `depends_on_task_id` pointing at something still
  * open means this one cannot be done, and a reminder to do it asks for
  * something impossible.
+ *
+ * T-28 hangs its second pass off the same run: the client's tasks, on the
+ * same ladder one rung later, with a counter of their own.
  */
 class RemindDueTasks
 {
     public function __construct(
         private readonly NotificationService $notifications,
         private readonly StudioAudience $audience,
+        private readonly ClientAudience $clients,
+        private readonly StudioSettingsResolver $settings,
     ) {}
 
     /** @return int recipients notified */
     public function __invoke(): int
     {
+        $this->remindClients();
+
         $due = self::dueToday();
 
         if ($due->isEmpty()) {
@@ -72,6 +82,51 @@ class RemindDueTasks
             ->reject(fn (Task $task) => $task->isBlocked())
             ->filter(fn (Task $task) => self::rungs($task) > $task->reminders_sent)
             ->values();
+    }
+
+    /**
+     * T-28: the second pass, over the tasks the client owes. One rung behind
+     * the studio's — not because anything is in flight, but because the third
+     * mail in five days arrives as nagging.
+     *
+     * Nothing goes out while the portal is closed: the link would land on the
+     * closure page.
+     */
+    private function remindClients(): void
+    {
+        if ($this->settings->maintenanceEnabled()) {
+            return;
+        }
+
+        $due = Task::query()
+            ->open()
+            ->where('audience', TaskAudience::Client)
+            ->whereNotNull('due_on')
+            ->whereDate('due_on', '<=', now()->toDateString())
+            ->with('project')
+            ->orderBy('due_on')
+            ->get()
+            ->reject(fn (Task $task) => $task->isBlocked())
+            ->filter(fn (Task $task) => FibonacciReminderSchedule::isDue(
+                $task->due_on->toImmutable(),
+                $task->client_reminders_sent,
+            ));
+
+        foreach ($due as $task) {
+            $recipients = $this->clients->forProject($task->project);
+
+            if ($recipients->isEmpty()) {
+                continue;
+            }
+
+            foreach ($recipients as $contact) {
+                $this->notifications->send($contact, new TaskDue($task, $this->settings));
+            }
+
+            $task->forceFill([
+                'client_reminders_sent' => FibonacciReminderSchedule::reachedRungs($task->due_on->toImmutable()),
+            ])->save();
+        }
     }
 
     /** The due day itself, plus every Fibonacci day of lateness since. */
