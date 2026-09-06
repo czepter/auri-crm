@@ -29,9 +29,4 @@
         <p>{{ $salutation }}</p>
     @endif
 
-    <x-slot:footer>
-        @isset($brand)
-            <p>Auri CRM ist Open Source. Rückmeldungen landen auf GitHub: <a href="https://github.com/czepter/auri-crm/issues">github.com/czepter/auri-crm/issues</a></p>
-        @endisset
-    </x-slot:footer>
 </x-mail::layout>

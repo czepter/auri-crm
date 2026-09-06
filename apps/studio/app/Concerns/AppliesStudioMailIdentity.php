@@ -4,7 +4,6 @@ namespace App\Concerns;
 
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Support\Collection;
 
 /**
  * T-06: every outgoing notification mail this story names — ClientAccessLink
@@ -32,31 +31,6 @@ trait AppliesStudioMailIdentity
             $message->bcc($bcc);
         }
 
-        if ($signature = $settings->mailSignature()) {
-            $message->line($signature);
-        }
-
-        if ($footer = $this->studioMailFooter($settings)) {
-            $message->line($footer);
-        }
-
         return $message;
-    }
-
-    private function studioMailFooter(StudioSettingsResolver $settings): ?string
-    {
-        $studio = $settings->attributes();
-
-        $line = Collection::make([
-            $studio['legal_name'] ?: $studio['display_name'],
-            Collection::make([$studio['street'], trim(($studio['postcode'] ?? '').' '.($studio['city'] ?? ''))])
-                ->filter()->implode(', '),
-            Collection::make([
-                $studio['tax_number'] ? "St.-Nr. {$studio['tax_number']}" : null,
-                $studio['vat_id'] ? "USt-IdNr. {$studio['vat_id']}" : null,
-            ])->filter()->implode(' · '),
-        ])->filter()->implode(' · ');
-
-        return $line !== '' ? $line : null;
     }
 }
