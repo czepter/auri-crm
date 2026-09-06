@@ -27,6 +27,9 @@ request.
 | API | `api` | `apps/studio/routes/api.php` | The gallery, integrations, the MCP server | Public JSON |
 | Gallery | — | `apps/gallery` (Astro SSR) | Clients and wedding guests | Public |
 
+A fifth, unauthenticated sibling app — the marketing site — lives in its
+own repository, [czepter/auri-crm-site](https://github.com/czepter/auri-crm-site).
+
 Each Laravel surface signs its sessions with its own cookie name
 (`Surface::COOKIES`) so a staff session and a client session can never be
 mistaken for one another on a shared host.

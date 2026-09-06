@@ -41,7 +41,7 @@ class StudioSettings extends Model
         'display_name',
         'legal_name', 'legal_form', 'street', 'postcode', 'city', 'country',
         'tax_number', 'vat_id', 'register_number', 'register_court', 'representative',
-        'website', 'accent_color', 'logo_path', 'font_pair',
+        'website', 'accent_color', 'logo_path', 'showcase_paths', 'font_pair',
         'bank_account_holder', 'bank_iban', 'bank_bic',
         'vat_mode', 'vat_rate', 'vat_note',
         'default_shoot_duration_minutes',
@@ -64,7 +64,7 @@ class StudioSettings extends Model
         'dsgvo_request_recipient', 'dsgvo_request_deadline_days',
         'portal_contact_phone', 'portal_contact_email', 'portal_contact_response_time',
         'quiet_hours_enabled', 'quiet_hours_start', 'quiet_hours_end',
-        'onboarding_completed_at',
+        'onboarding_completed_at', 'onboarding_reminder_sent_at',
         'lead_type_presets', 'lead_source_presets', 'lead_channel_presets',
     ];
 
@@ -100,6 +100,8 @@ class StudioSettings extends Model
             'gallery_default_comments_enabled' => 'boolean',
             'quiet_hours_enabled' => 'boolean',
             'onboarding_completed_at' => 'datetime',
+            'onboarding_reminder_sent_at' => 'datetime',
+            'showcase_paths' => 'array',
             'lead_type_presets' => 'array',
             'lead_source_presets' => 'array',
             'lead_channel_presets' => 'array',

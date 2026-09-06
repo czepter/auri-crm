@@ -266,6 +266,18 @@ class ContractController extends Controller
         $contract->refresh();
     }
 
+    /** E-16: die Frist, an der die Automationsregel hängt. */
+    public function deadline(Request $request, Contract $contract): RedirectResponse
+    {
+        $this->authorize('manageContracts', $contract->project);
+
+        $contract->update($request->validate([
+            'sign_deadline_on' => ['nullable', 'date'],
+        ]));
+
+        return back();
+    }
+
     private function contractData(Contract $contract, Project $project): ContractData
     {
         return ContractData::fromModel(

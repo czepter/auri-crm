@@ -8,6 +8,8 @@ use App\Notifications\StaffInvited;
 use App\Portal\Notifications\ClientAccessLink;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Mail\Markdown;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Cache;
 
 uses(RefreshDatabase::class);
@@ -15,6 +17,16 @@ uses(RefreshDatabase::class);
 // staffMember() lives in tests/Pest.php — see the note there.
 
 beforeEach(fn () => Cache::store('redis')->flush());
+
+// The footer lives in the layout's own scope, filled by AppServiceProvider's
+// `mail::layout` composer — Blade hands a view's data to no nested component,
+// so it can only be asserted on the rendered document, never on the
+// MailMessage. See App\Notifications\Support\StudioMailFooter.
+function renderedMail(MailMessage $message): string
+{
+    return (string) app(Markdown::class)
+        ->render($message->view ?? $message->markdown, $message->data());
+}
 
 /**
  * A StaffInvitation with a real inviter — StaffInvited::toMail() reads
@@ -84,7 +96,7 @@ it("appends the studio's signature block as its own line on ClientAccessLink", f
 
     $message = (new ClientAccessLink($contact, 'https://example.test/zugang', new StudioSettingsResolver))->toMail($contact);
 
-    expect($message->outroLines)->toContain('Herzliche Grüße, das Team von Atelier Nordlicht');
+    expect(renderedMail($message))->toContain('Herzliche Grüße, das Team von Atelier Nordlicht');
 });
 
 it(
@@ -105,9 +117,7 @@ it(
         $studio = (new StudioSettingsResolver)->attributes();
 
         $message = (new ClientAccessLink($contact, 'https://example.test/zugang', new StudioSettingsResolver))->toMail($contact);
-        $footer = collect($message->outroLines)->last();
-
-        expect($footer)->toContain($studio['legal_name'])
+        expect(renderedMail($message))->toContain($studio['legal_name'])
             ->toContain($studio['street'])
             ->toContain($studio['postcode'])
             ->toContain($studio['city'])
@@ -121,12 +131,13 @@ it('omits the footer line entirely when the studio has entered no legal particul
 
     $message = (new ClientAccessLink($contact, 'https://example.test/zugang', new StudioSettingsResolver))->toMail($contact);
 
-    // No signature, no legal particulars — the outro carries only the
-    // notification's own body lines, no blank trailing line.
-    expect($message->outroLines)->toBe([
-        'Der Link gilt 15 Minuten und funktioniert einmal.',
-        'Wenn Sie das nicht angefordert haben, können Sie diese E-Mail ignorieren.',
-    ]);
+    // No signature, no legal particulars — the composer hands the layout a
+    // null footer, so the whole ruled band is skipped rather than drawn empty.
+    expect(renderedMail($message))->not->toContain('St.-Nr.')
+        ->and($message->outroLines)->toBe([
+            'Der Link gilt 15 Minuten und funktioniert einmal.',
+            'Wenn Sie das nicht angefordert haben, können Sie diese E-Mail ignorieren.',
+        ]);
 });
 
 it("leaves StaffInvited's mail under the tenant's own address, resolved live at send time", function () {
@@ -158,9 +169,35 @@ it(
 
         $message = (new StaffInvited($invitation, 'https://example.test/einladung/raw', new StudioSettingsResolver))
             ->toMail($invitation);
-        $footer = collect($message->outroLines)->last();
-
-        expect($footer)->toContain($studio['legal_name'])
+        expect(renderedMail($message))->toContain($studio['legal_name'])
             ->toContain($studio['city']);
     }
 );
+
+it("renders the studio's legal particulars inside the layout's footer zone, not as a body paragraph", function () {
+    $owner = staffMember(StaffRole::Owner);
+    $contact = Contact::factory()->create();
+    $settings = new StudioSettingsResolver;
+    $settings->set('legal_name', 'Atelier Nordlicht Fotografie GmbH', $owner);
+    $settings->set('city', 'Hamburg', $owner);
+
+    $html = renderedMail((new ClientAccessLink($contact, 'https://example.test/zugang', new StudioSettingsResolver))->toMail($contact));
+
+    // The slot the views set and the slot the compiled layout reads were
+    // named differently once, which dropped every footer silently. Assert on
+    // the rendered document so a rename cannot do that again.
+    expect($html)->toContain('Atelier Nordlicht Fotografie GmbH')
+        ->toContain('Hamburg');
+});
+
+it('renders the product footer on a mail that carries its own brand', function () {
+    $html = (string) app(Markdown::class)->render('mail.product-message', [
+        'brand' => 'Auri CRM',
+        'greeting' => 'Hallo Christian,',
+        'introLines' => ['Testzeile.'],
+        'outroLines' => [],
+        'salutation' => null,
+    ]);
+
+    expect($html)->toContain('github.com/czepter/auri-crm/issues');
+});

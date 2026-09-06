@@ -3,6 +3,7 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Crm\Actions\AdvanceLeadStage;
+use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
 use App\Crm\Support\CrmVocabulary;
@@ -32,6 +33,34 @@ class LeadStageController extends Controller
             // A rejected transition is a validation failure to the studio, not
             // a 500 — the board renders it beside the card they clicked.
             throw ValidationException::withMessages(['stage' => $e->getMessage()]);
+        }
+
+        return redirect('/anfragen');
+    }
+
+    /**
+     * T-20: schliessen, mit dem Ausgang und dem Grund. Der Ausgang steht
+     * neben dem Freitext, weil `declined` — das Studio hat abgelehnt — nicht
+     * in dieselbe Verlustquote gehoert wie `lost`.
+     */
+    public function close(Request $request, Lead $lead, AdvanceLeadStage $advance): RedirectResponse
+    {
+        $this->authorize('update', $lead);
+
+        $validated = $request->validate([
+            'outcome' => ['required', Rule::enum(LeadOutcome::class)],
+            'reason' => ['required', 'string', 'max:255'],
+        ]);
+
+        try {
+            $advance->markLost(
+                $lead,
+                $validated['reason'],
+                auth('staff')->user(),
+                LeadOutcome::from($validated['outcome']),
+            );
+        } catch (DomainException $e) {
+            throw ValidationException::withMessages(['outcome' => $e->getMessage()]);
         }
 
         return redirect('/anfragen');

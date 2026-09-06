@@ -7,7 +7,7 @@
  * überfällig, weil eine Frist ohne Tag keine ist.
  */
 import { computed, ref } from 'vue'
-import { router } from '@inertiajs/vue3'
+import { router, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
 import TaskCreateDialog from '@/admin/components/TaskCreateDialog.vue'
@@ -19,12 +19,16 @@ const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
   tasks: App.Crm.Data.TaskRowData[]
   shootOptions: { value: string; label: string }[]
+  staffOptions: { value: string; label: string }[]
   anchors: { value: string; label: string; group: string; on: string | null }[]
 }>()
 
 const shoot = ref('all')
 const audience = ref('all')
+const assignee = ref('all')
 const showDone = ref(false)
+
+const me = computed(() => (usePage().props.auth as { user: { id: string } | null }).user?.id ?? '')
 
 const today = isoDate(new Date())
 const weekEnd = isoDate(new Date(Date.now() + 7 * 86_400_000))
@@ -33,7 +37,8 @@ const shown = computed(() =>
   props.tasks.filter(
     (task) =>
       (shoot.value === 'all' || task.shootId === shoot.value) &&
-      (audience.value === 'all' || task.audience === audience.value)
+      (audience.value === 'all' || task.audience === audience.value) &&
+      (assignee.value === 'all' || task.assigneeId === (assignee.value === 'mine' ? me.value : assignee.value))
   )
 )
 
@@ -52,6 +57,10 @@ const groups = computed(() => [
 
 function complete(row: App.Crm.Data.TaskRowData) {
   router.post(`/aufgaben/${row.id}/erledigt`, {}, { preserveScroll: true })
+}
+
+function assign(row: App.Crm.Data.TaskRowData, value: string) {
+  router.post(`/aufgaben/${row.id}/zustaendig`, { assignee: value === 'none' ? null : value }, { preserveScroll: true })
 }
 
 function reopen(row: App.Crm.Data.TaskRowData) {
@@ -83,10 +92,22 @@ function reopen(row: App.Crm.Data.TaskRowData) {
             </SelectContent>
           </Select>
 
+          <Select v-model="assignee">
+            <SelectTrigger class="w-44"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{{ $t('project.tasksAllAssignees') }}</SelectItem>
+              <SelectItem value="mine">{{ $t('project.tasksMine') }}</SelectItem>
+              <SelectItem v-for="option in staffOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
           <TaskCreateDialog
             v-if="header.canManageTasks"
             :project-id="header.id"
             :shoot-options="shootOptions"
+            :staff-options="staffOptions"
             :anchors="anchors"
           />
         </template>
@@ -111,6 +132,18 @@ function reopen(row: App.Crm.Data.TaskRowData) {
             <span v-if="row.isBlocked" class="text-[11.5px] text-faint">{{
               $t('project.taskBlockedBy', { title: row.blockedBy })
             }}</span>
+            <!-- Zugewiesen steht als Name; ohne Zuweisung steht die Auswahl,
+                 die sie setzt — eine leere Spalte übernimmt niemand. -->
+            <span v-if="row.assigneeName" class="text-[11.5px] text-ink-2">{{ row.assigneeName }}</span>
+            <Select v-else :model-value="'none'" @update:model-value="(value) => assign(row, String(value))">
+              <SelectTrigger class="h-6 w-36 text-[11.5px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">{{ $t('project.taskUnassigned') }}</SelectItem>
+                <SelectItem v-for="option in staffOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
             <span
               class="ml-auto text-[12.5px] whitespace-nowrap tabular-nums"
               :class="row.isOverdue ? 'text-destructive' : 'text-ink-2'"
@@ -145,7 +178,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
                 dayWithWeekday(row.completedOn)
               }}</span>
               <button
-                class="cursor-pointer text-[12.5px] whitespace-nowrap text-accent"
+                class="cursor-pointer text-[12.5px] whitespace-nowrap text-[var(--accent)]"
                 type="button"
                 @click="reopen(row)"
               >

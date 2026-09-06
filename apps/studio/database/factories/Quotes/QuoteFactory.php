@@ -19,4 +19,16 @@ class QuoteFactory extends Factory
             'project_id' => Project::factory(),
         ];
     }
+
+    /** Q-08: a quote the client configures rather than one it only accepts. */
+    public function slider(int $rate = 25_000, int $min = 4, int $max = 10): static
+    {
+        return $this->state(fn () => [
+            'hourly_rate' => $rate,
+            'min_hours' => $min,
+            'max_hours' => $max,
+            'images_per_hour' => 40,
+            'hours' => $min,
+        ]);
+    }
 }

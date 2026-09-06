@@ -4,7 +4,6 @@ namespace App\Documents\Http\Controllers;
 
 use App\Crm\Enums\ShootKind;
 use App\Crm\Models\Project;
-use App\Documents\Actions\SeedStarterTemplates;
 use App\Documents\Data\DocumentTemplateData;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
@@ -101,29 +100,6 @@ class DocumentTemplateController extends Controller
         );
 
         return redirect('/dokumentvorlagen');
-    }
-
-    /**
-     * T-18: seed a chosen set of starters. Lives here rather than on
-     * StudioOnboardingController because that controller is a shell — it shows
-     * the wizard and stamps completion, and duplicating persistence into it is
-     * what its own docblock rules out. The wizard step posts here like every
-     * other step posts to the settings endpoint it belongs to.
-     */
-    public function seedStarters(Request $request, SeedStarterTemplates $seed): RedirectResponse
-    {
-        $this->authorize('create', DocumentTemplate::class);
-
-        $validated = $request->validate([
-            'keys' => ['present', 'array'],
-            'keys.*' => ['string', 'max:64'],
-        ]);
-
-        // Skipping is a first-class outcome: an empty set writes nothing and
-        // is not an error.
-        $seed($validated['keys'], auth('staff')->user());
-
-        return back();
     }
 
     public function edit(DocumentTemplate $documentTemplate): Response

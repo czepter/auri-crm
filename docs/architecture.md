@@ -54,6 +54,9 @@ surface's public JSON. It is server-rendered rather than prerendered because
 which gallery version is current changes the moment a studio owner
 republishes.
 
+(A marketing site exists at [czepter/auri-crm-site](https://github.com/czepter/auri-crm-site) —
+not a surface, since it has neither authentication nor a Laravel dependency.)
+
 ## Authorization, in four layers
 
 Each layer answers a different question, and each runs earlier than the one
@@ -123,6 +126,19 @@ Console commands live beside their module too, which is why
 `bootstrap/app.php` names each one explicitly in `withCommands()` — nothing
 in `app/Console/Commands` is auto-discovered, because that directory is not
 used.
+
+Which actor drives which of these modules is drawn in
+[anwendungsfalldiagramm.svg](anwendungsfalldiagramm.svg); the notification
+fan-out behind it — who is notified, which of the three transports carries
+it, and where preferences, quiet hours and the digest sit — has its own
+diagram in
+[benachrichtigungen-anwendungsfaelle.svg](benachrichtigungen-anwendungsfaelle.svg).
+Both are generated from the `.puml` files beside them:
+
+```
+docker run --rm -v "$PWD/docs":/data -w /data plantuml/plantuml -tsvg \
+  anwendungsfalldiagramm.puml benachrichtigungen-anwendungsfaelle.puml
+```
 
 ## Data conventions
 
@@ -210,6 +226,8 @@ means a rule was crossed, not that a behaviour regressed:
 
 ## Further reading
 
+[anwendungsfalldiagramm.svg](anwendungsfalldiagramm.svg) ·
+[benachrichtigungen-anwendungsfaelle.svg](benachrichtigungen-anwendungsfaelle.svg) ·
 [deployment.md](deployment.md) ·
 [branching.md](branching.md) ·
 [backlog.md](backlog.md) ·

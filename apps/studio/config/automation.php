@@ -2,6 +2,7 @@
 
 use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationOffsetDirection;
+use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Enums\AutomationTriggerType;
 use App\Crm\Events\ProjectBooked;
 
@@ -47,6 +48,20 @@ return [
             'direction' => AutomationOffsetDirection::Before,
             'notification_subject' => 'Ihr Angebot läuft bald ab',
             'notification_body' => 'Ihr Angebot gilt noch eine Woche. Melden Sie sich gern, wenn etwas offen ist.',
+        ],
+        // E-14: the studio's own reminder, off until somebody wants it —
+        // there so it can be found rather than invented.
+        [
+            'key' => 'crew-briefing-day-before',
+            'name' => 'Crew — Tag vor dem Shooting',
+            'trigger_type' => AutomationTriggerType::DateOffset,
+            'anchor' => AutomationAnchor::PerShoot,
+            'offset_days' => 1,
+            'direction' => AutomationOffsetDirection::Before,
+            'recipient_type' => AutomationRecipient::Crew,
+            'is_active' => false,
+            'notification_subject' => 'Morgen: {{ project.name }}',
+            'notification_body' => 'Morgen steht {{ project.name }} an. Ausrüstung packen, Ablauf durchgehen.',
         ],
         [
             'key' => 'booking-confirmation',

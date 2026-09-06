@@ -24,10 +24,22 @@ class RescheduleAnchoredTasks
         $tasks = $project->tasks()->open()->whereNotNull('due_anchor')->get();
 
         foreach ($tasks as $task) {
+            $dueOn = $this->anchors
+                ->dueOn($project, $task->due_anchor, $task->due_offset_days ?? 0)
+                ?->format('Y-m-d');
+
+            if ($dueOn === $task->due_on?->format('Y-m-d')) {
+                continue;
+            }
+
+            // T-19: a new deadline is a new deadline, so both ladders start
+            // over. Only when the day actually moves — this runs on every
+            // stage change, and resetting there would silence a task the
+            // moment anything else on the project happened.
             $task->update([
-                'due_on' => $this->anchors
-                    ->dueOn($project, $task->due_anchor, $task->due_offset_days ?? 0)
-                    ?->format('Y-m-d'),
+                'due_on' => $dueOn,
+                'reminders_sent' => 0,
+                'client_reminders_sent' => 0,
             ]);
         }
     }

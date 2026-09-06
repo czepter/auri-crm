@@ -27,6 +27,14 @@ class QuoteItemData extends Data
         // left for the client to subtract, the same reasoning as lineTotal
         // itself above.
         public int $netTotal,
+        // Q-09: die dritte Art Zeile — eine, die der Kunde selbst schaltet.
+        // Beides false ist der heutige Zustand jeder bestehenden Zeile.
+        public bool $selectable = false,
+        public bool $selected = false,
+        // Die eine Zeile, die auf der Kachel Platz hat. `description` bleibt
+        // der Absatz darunter und im PDF.
+        public ?string $outcome = null,
+        public bool $hasImage = false,
     ) {}
 
     public static function fromModel(QuoteItem $item): self
@@ -43,6 +51,13 @@ class QuoteItemData extends Data
             discountValue: $item->discount_value,
             discountAmount: $item->discount_amount,
             netTotal: $item->discountedLineTotal(),
+            selectable: $item->selectable,
+            selected: $item->selected,
+            outcome: $item->outcome,
+            // Der Pfad selbst geht nie raus: die Datei liegt neben denen
+            // jedes anderen Mandanten, und ein ratbarer Dateiname in einer
+            // URL waere die ganze Zugriffsregel.
+            hasImage: $item->image_path !== null,
         );
     }
 }

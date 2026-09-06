@@ -38,6 +38,11 @@ const PUBLIC_ROUTES = [
         // nobody in, it swaps one column. Same story as the portal's own
         // e-mail-bestaetigen/{token} below.
         'profil/e-mail-bestaetigen/{token}',
+        // The initial account-verification link after studio-owner creation,
+        // confirmed from the inbox — which may not be the browser that
+        // created the account. The single-use token in the path is the whole
+        // credential; it stamps email_verified_at but signs nobody in.
+        'e-mail-bestaetigen/{token}',
         // N-04's token exchange: the MCP client calls this directly,
         // off-browser, with no staff session to hold an `audience:` guard —
         // the single-use authorization code and its PKCE verifier are the
@@ -118,6 +123,11 @@ const PUBLIC_ROUTES = [
     // credential, same shape as zugang/{token}.
     'portal' => [
         'anmelden', 'zugang/{token}', 'branding/logo', 'impressum', 'abmelden/{contact}',
+        // Q-10: das Reglerraster. Oeffentlich aus demselben Grund wie das
+        // Logo — Schaufensterbilder laedt der Fotograf hoch, um sie zu
+        // zeigen, und das Raster steht, bevor irgendwer angenommen hat. Der
+        // Index laesst keinen Dateinamen raten.
+        'schaufenster/{index}',
         // P-05 (#224): the e-mail-change confirmation. Whoever follows it is
         // reading the new inbox, which is not necessarily the browser
         // holding the session — same reason zugang/{token} above carries no
@@ -145,6 +155,11 @@ const PUBLIC_ROUTES = [
         // against (EnsureUngatedGallery).
         'galerie-bilder/{galleryVersion}/{key}',
         'galerien/{gallery}/download', 'galerien/{gallery}/download/pin',
+        // The "Herunterladen" mail's own link (GalleryZipReady). Behind the
+        // same two gates as the screen it redirects into; the stored,
+        // expiring GalleryDownloadLink token it checks first is that link's
+        // whole credential, same shape as the tokens above, not `audience:`.
+        'galerien/{gallery}/download/mail/{token}',
         // G-03 (#231): queues the archive. Behind the same two gates as the
         // screen that offers it, neither of which reads as `audience:`.
         'galerien/{gallery}/download/vorbereiten',

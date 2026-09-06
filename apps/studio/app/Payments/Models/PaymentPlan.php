@@ -33,7 +33,14 @@ class PaymentPlan extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['job_id', 'total', 'reference'];
+    protected $fillable = ['job_id', 'total', 'reference', 'client_reminders_enabled'];
+
+    protected $attributes = ['client_reminders_enabled' => true];
+
+    protected function casts(): array
+    {
+        return ['client_reminders_enabled' => 'boolean'];
+    }
 
     public function job(): BelongsTo
     {

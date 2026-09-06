@@ -3,6 +3,7 @@
 namespace App\Quotes\Models;
 
 use App\Concerns\BelongsToTenant;
+use App\Concerns\HasHourlyPricing;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
@@ -34,9 +35,10 @@ class Quote extends Model
 {
     use BelongsToTenant;
     use HasFactory;
+    use HasHourlyPricing;
     use HasPublicId;
 
-    protected $fillable = ['project_id', 'predecessor_id', 'is_addendum', 'status', 'intro', 'outro', 'currency', 'valid_until', 'sent_at', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id'];
+    protected $fillable = ['project_id', 'predecessor_id', 'is_addendum', 'status', 'intro', 'outro', 'currency', 'valid_until', 'sent_at', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours'];
 
     // Mirrors every column default in memory (the same reason Project's own
     // $attributes gives for portal_visible): without net and discount_amount
@@ -69,8 +71,9 @@ class Quote extends Model
      *
      * A sent quote allows exactly two further writes: status alone, to
      * superseded — what ReviseQuote's predecessor half performs — or status
-     * bundled with the three acceptance columns together, to accepted —
-     * what App\Quotes\Actions\AcceptQuote performs. An accepted or
+     * bundled with the acceptance columns together, to accepted — what
+     * App\Quotes\Actions\AcceptQuote performs, including Q-12's `hours`
+     * and `total`. An accepted or
      * superseded quote allows nothing more, ever.
      */
     protected static function booted(): void
@@ -82,8 +85,11 @@ class Quote extends Model
                 return;
             }
 
+            // Q-12: `hours` and `total` join the list by name rather than by
+            // softening the guard. A slider quote turns from a configuration
+            // into an amount at exactly one moment, and it is this one.
             $allowed = $original === QuoteStatus::Sent->value
-                ? ['status', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id']
+                ? ['status', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hours', 'total']
                 : [];
             $blocked = array_diff(array_keys($quote->getDirty()), $allowed);
 
@@ -103,6 +109,12 @@ class Quote extends Model
     public function items(): HasMany
     {
         return $this->hasMany(QuoteItem::class)->orderBy('sort_order');
+    }
+
+    /** Q-11: the shares a plan is materialised from at booking. Empty on a classic quote. */
+    public function paymentStages(): HasMany
+    {
+        return $this->hasMany(QuotePaymentStage::class)->orderBy('sort_order');
     }
 
     /** The quote this one revises, if any — App\Quotes\Actions\ReviseQuote's own new row. */

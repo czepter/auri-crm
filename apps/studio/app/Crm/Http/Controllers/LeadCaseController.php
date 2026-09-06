@@ -70,7 +70,7 @@ class LeadCaseController extends Controller
             $project->name,
         );
 
-        $project->load(['contacts', 'shoots.crew.user', 'tasks.project', 'notes.author', 'latestQuote.items']);
+        $project->load(['contacts', 'shoots.crew.user', 'tasks.project', 'tasks.assignee', 'notes.author', 'latestQuote.items']);
         $primary = $project->primaryShoot;
 
         return Inertia::render('Leads/Show', [

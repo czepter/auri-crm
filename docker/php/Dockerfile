@@ -62,6 +62,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         postgresql-client-18 \
         libvips-tools \
         libheif-plugin-aomenc \
+        # mail:build (App\Notifications\Console\Commands\BuildMailTemplatesCommand)
+        # shells out to a Node script bundled inside spatie/mjml-php — the
+        # only reason Node is in this dev image at all.
+        nodejs \
+    && corepack enable \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-avif \
     && docker-php-ext-install -j"$(nproc)" pdo_pgsql bcmath gd intl pcntl exif zip \
     && rm -rf /var/lib/apt/lists/*

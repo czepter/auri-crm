@@ -3,6 +3,7 @@
 namespace App\Quotes\Data;
 
 use App\Quotes\Models\Quote;
+use App\Quotes\Support\QuoteRange;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -43,6 +44,19 @@ class QuoteData extends Data
         public ?string $intro,
         public ?string $outro,
         public array $items,
+        // Q-08: null heisst klassisches Angebot, und jeder Schirm rendert
+        // dann, was er vorher rendert hat.
+        public ?int $hourlyRate = null,
+        public ?int $minHours = null,
+        public ?int $maxHours = null,
+        public ?int $imagesPerHour = null,
+        public ?int $hours = null,
+        // Q-15: vor der Zusage hat ein Regler-Angebot keinen Betrag, sondern
+        // einen Bereich — berechnet, nie gespeichert.
+        public ?int $rangeMin = null,
+        public ?int $rangeMax = null,
+        /** @var list<array{id: string, percent: int, label: string, minimum: int}> */
+        public array $paymentStages = [],
     ) {}
 
     public static function fromModel(Quote $quote): self
@@ -73,6 +87,19 @@ class QuoteData extends Data
             intro: $quote->intro,
             outro: $quote->outro,
             items: $quote->items->map(QuoteItemData::fromModel(...))->all(),
+            hourlyRate: $quote->hourly_rate,
+            minHours: $quote->min_hours,
+            maxHours: $quote->max_hours,
+            imagesPerHour: $quote->images_per_hour,
+            hours: $quote->hours,
+            rangeMin: $quote->hasSlider() ? QuoteRange::min($quote) : null,
+            rangeMax: $quote->hasSlider() ? QuoteRange::max($quote) : null,
+            paymentStages: $quote->paymentStages->map(fn ($stage) => [
+                'id' => $stage->public_id,
+                'percent' => $stage->percent,
+                'label' => $stage->label,
+                'minimum' => $stage->minimum,
+            ])->all(),
         );
     }
 }

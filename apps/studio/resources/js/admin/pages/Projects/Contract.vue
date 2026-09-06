@@ -8,6 +8,7 @@ import DocumentPreviewPane from '@/admin/components/DocumentPreviewPane.vue'
 import Rail from '@/ui/page/Rail.vue'
 import Section from '@/ui/page/Section.vue'
 import { Button } from '@/ui/button'
+import { DatePicker } from '@/ui/date-picker'
 import { Label } from '@/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { NONE, fromOption, toOption } from '@/lib/select'
@@ -60,6 +61,14 @@ function save() {
     `/vertraege/${props.contract!.id}`,
     { body: serialize(doc.value, 'print'), blocks: doc.value },
     { preserveScroll: true, onFinish: () => (saving.value = false) },
+  )
+}
+
+function setDeadline(value: string) {
+  router.patch(
+    `/vertraege/${props.contract!.id}/frist`,
+    { sign_deadline_on: value === '' ? null : value },
+    { preserveScroll: true }
   )
 }
 
@@ -183,6 +192,17 @@ onBeforeUnmount(clearPoll)
               {{ $t('project.contractSignerAdd') }}
             </Button>
           </form>
+
+          <h3 class="mt-7 m-0 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">
+            {{ $t('project.contractDeadline') }}
+          </h3>
+
+          <DatePicker
+            v-if="header.canManageContracts"
+            class="mt-2"
+            :model-value="contract.signDeadlineOn ?? ''"
+            @update:model-value="setDeadline"
+          />
 
           <h3 class="mt-7 m-0 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">
             {{ $t('project.contractVersions') }}

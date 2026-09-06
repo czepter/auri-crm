@@ -26,6 +26,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\URL;
 
 uses(RefreshDatabase::class);
 
@@ -730,6 +731,26 @@ describe('Q-06: sending a quote', function () {
         // the route is bound on visibility, not just on the contact.
         expect($withButton->actionUrl)->toContain("/projekte/{$visible->public_id}/angebot")
             ->and($withoutButton->actionUrl)->toBeNull();
+    });
+
+    it('composes both portal links against the portal host, not the admin surface it is sent from', function () {
+        // PORTAL_URL only diverges from APP_URL once the surfaces get their
+        // own hosts, which is the single setup where url() would be wrong —
+        // and the one config/portal.php's fallback hides everywhere else.
+        config(['portal.url' => 'https://kunden.example.test']);
+        URL::forceRootUrl('https://studio.example.test');
+
+        $contact = Contact::factory()->create(['email' => 'lena@example.test']);
+        $project = Project::factory()->create(['portal_visible' => true]);
+        $project->attachContact($contact, ProjectContactRole::Primary);
+
+        $mail = (new QuoteSent(Quote::factory()->for($project)->create()))->toMail($contact);
+        $body = (string) $mail->render();
+
+        expect($mail->actionUrl)->toBe("https://kunden.example.test/projekte/{$project->public_id}/angebot")
+            ->and($body)->toContain("https://kunden.example.test/abmelden/{$contact->public_id}")
+            ->and($body)->not->toContain('studio.example.test/projekte')
+            ->and($body)->not->toContain('studio.example.test/abmelden');
     });
 
     it('sends no mail when the project has no contactable primary contact', function () {

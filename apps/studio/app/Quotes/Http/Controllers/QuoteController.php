@@ -12,15 +12,18 @@ use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Actions\SendQuote;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Quotes\Models\QuoteItem;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterval;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuoteController extends Controller
 {
@@ -99,6 +102,25 @@ class QuoteController extends Controller
             'items.*.discount_type' => ['nullable', 'in:percentage,amount', 'required_with:items.*.discount_value'],
             'items.*.discount_value' => ['nullable', 'integer', 'min:1', 'required_with:items.*.discount_type'],
             'items.*.remember' => ['boolean'],
+            // Q-08/Q-09/Q-11: der Reglerteil. hourly_rate null laesst alles
+            // unten so laufen, wie es vorher lief.
+            'hourly_rate' => ['nullable', 'integer', 'min:0'],
+            'min_hours' => ['nullable', 'integer', 'min:0', 'max:2000'],
+            'max_hours' => ['nullable', 'integer', 'min:0', 'max:2000'],
+            'images_per_hour' => ['nullable', 'integer', 'min:0', 'max:2000'],
+            'hours' => ['nullable', 'integer', 'min:0', 'max:2000'],
+            // `id`, nie der Pfad: das Portal liefert dieses Bild an den
+            // Kunden aus, und ein aus einem Formular uebernommener Pfad
+            // waere das Lesen jeder Datei auf dem Disk — die Vertraege
+            // eingeschlossen.
+            'items.*.id' => ['nullable', 'string'],
+            'items.*.selectable' => ['sometimes', 'boolean'],
+            'items.*.selected' => ['sometimes', 'boolean'],
+            'items.*.outcome' => ['nullable', 'string', 'max:255'],
+            'stages' => ['array'],
+            'stages.*.percent' => ['required', 'integer', 'min:0', 'max:100'],
+            'stages.*.label' => ['required', 'string', 'max:255'],
+            'stages.*.minimum' => ['nullable', 'integer', 'min:0'],
         ]);
 
         // Der Schlüssel kommt nur mit, wenn der Bildschirm das Häkchen
@@ -115,7 +137,16 @@ class QuoteController extends Controller
             'outro' => $validated['outro'] ?? null,
             'discount_type' => $validated['discount_type'] ?? null,
             'discount_value' => $validated['discount_value'] ?? null,
+            'hourly_rate' => $validated['hourly_rate'] ?? null,
+            'min_hours' => $validated['min_hours'] ?? null,
+            'max_hours' => $validated['max_hours'] ?? null,
+            'images_per_hour' => $validated['images_per_hour'] ?? null,
+            'hours' => $validated['hours'] ?? null,
         ]);
+
+        // Vor dem Loeschen gelesen: die Zeilen tragen die einzigen Pfade,
+        // die dieses Angebot je akzeptiert, und gleich gibt es sie nicht mehr.
+        $images = $quote->items()->whereNotNull('image_path')->pluck('image_path', 'public_id')->all();
 
         $quote->items()->delete();
         $quote->items()->createMany(
@@ -129,11 +160,35 @@ class QuoteController extends Controller
                     'sort_order' => $index,
                     'discount_type' => $item['discount_type'] ?? null,
                     'discount_value' => $item['discount_value'] ?? null,
+                    'selectable' => $item['selectable'] ?? false,
+                    'selected' => $item['selected'] ?? false,
+                    'outcome' => $item['outcome'] ?? null,
+                    'image_path' => $images[$item['id'] ?? ''] ?? null,
                 ])
                 ->all()
         );
 
-        $quote->recalculateTotal();
+        // Q-11: dieselbe vollstaendige Ersetzung wie bei den Zeilen. Nichts
+        // haelt einen Fremdschluessel auf eine Stufe.
+        $quote->paymentStages()->delete();
+        $quote->paymentStages()->createMany(
+            collect($validated['stages'] ?? [])
+                ->values()
+                ->map(fn (array $stage, int $index) => [
+                    'percent' => $stage['percent'],
+                    'label' => $stage['label'],
+                    'minimum' => $stage['minimum'] ?? 0,
+                    'sort_order' => $index,
+                ])
+                ->all()
+        );
+
+        // Q-15: ein Regler-Angebot hat vor der Zusage keine Summe, sondern
+        // eine Spanne. AcceptQuote schreibt total; bis dahin wuerde diese
+        // Ableitung eine zweite, falsche Wahrheit hinstellen.
+        if (! $quote->fresh()->hasSlider()) {
+            $quote->recalculateTotal();
+        }
 
         $this->syncCatalog($validated['items'] ?? []);
 
@@ -146,6 +201,20 @@ class QuoteController extends Controller
         );
 
         return back();
+    }
+
+    /**
+     * Q-14: das kopierte Bild einer Baustein-Zeile, für die Anzeige im
+     * Editor. Über die Zeile aufgelöst und nicht über den Pfad — dieselbe
+     * Regel, die update() oben trägt.
+     */
+    public function itemImage(Quote $quote, QuoteItem $quoteItem): StreamedResponse
+    {
+        $this->authorize('view', $quote->project);
+
+        abort_unless($quoteItem->quote_id === $quote->id && $quoteItem->image_path !== null, 404);
+
+        return Storage::disk('local')->response($quoteItem->image_path);
     }
 
     /**

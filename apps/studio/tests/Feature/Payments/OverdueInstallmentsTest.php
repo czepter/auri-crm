@@ -4,6 +4,7 @@ use App\Payments\Actions\DetectOverdueInstallments;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Events\InstallmentOverdue;
 use App\Payments\Models\PaymentInstallment;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -68,6 +69,7 @@ it('runs from the artisan command, reporting how many it flagged', function () {
         ->assertSuccessful();
 });
 
+// T-22: 06:30 Studiozeit, vor dem Tagesueberblick um 07:00.
 it('registers the overdue scan on the daily schedule', function () {
     $schedule = app(Schedule::class);
 
@@ -75,5 +77,6 @@ it('registers the overdue scan on the daily schedule', function () {
         ->filter(fn ($event) => str_contains($event->command ?? '', 'payments:detect-overdue-installments'));
 
     expect($events)->not->toBeEmpty()
-        ->and($events->first()->expression)->toBe('0 0 * * *');
+        ->and($events->first()->expression)->toBe('30 6 * * *')
+        ->and($events->first()->timezone)->toBe(app(StudioSettingsResolver::class)->timezone());
 });

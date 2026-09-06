@@ -3,11 +3,11 @@
 /**
  * Where the client surface answers, as seen from the outside.
  *
- * Every other client-facing link in this app is built with url() by the
- * portal process itself (RequestClientAccess, QuoteSent), which already
- * knows its own APP_URL. P-09's "preview as client" is the first link the
- * ADMIN process has to build onto the portal, and the admin container's
- * APP_URL is its own — hence one value rather than a second guess.
+ * Client-facing links built by the portal process itself (RequestClientAccess,
+ * RequestGalleryEmailVerification) use url() and already know their own
+ * APP_URL. This value is for the links the ADMIN process composes onto the
+ * portal — P-09's "preview as client", QuoteSent's quote and unsubscribe
+ * links — where the container's own APP_URL is the studio's.
  *
  * Falls back to APP_URL for a single-host setup, which is what the test
  * suite runs as.

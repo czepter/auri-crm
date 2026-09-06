@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Support;
 
+use App\Notifications\Enums\NotificationMode;
 use App\Notifications\Models\NotificationPreference;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notification;
@@ -35,7 +36,52 @@ class NotificationPreferences
      */
     public function enabled(Model $notifiable, string $notificationClass, string $channel): bool
     {
-        $row = NotificationPreference::query()
+        $row = $this->row($notifiable, $notificationClass, $channel);
+
+        if ($row === null) {
+            return NotificationMode::defaultFor($notificationClass)->allows($channel);
+        }
+
+        // T-23: the mode is the answer where there is one. `enabled` still
+        // answers for the '*' rows a client unsubscribe writes — those name
+        // no event and so have no mode.
+        return $row->mode?->allows($channel) ?? $row->enabled;
+    }
+
+    /**
+     * T-23: which of the four ways this person reads this event. The stored
+     * value where the pane has been used, the event's own default otherwise
+     * — a fresh staff member has no rows and must still land on briefing for
+     * the two scans that default there.
+     */
+    public function mode(Model $notifiable, string $notificationClass): NotificationMode
+    {
+        return $this->row($notifiable, $notificationClass, 'mail')?->mode
+            ?? NotificationMode::defaultFor($notificationClass);
+    }
+
+    /**
+     * The one writer of the four-way choice: both channel rows carry the same
+     * mode, so neither can be read on its own and disagree with the other.
+     */
+    public function setMode(Model $notifiable, string $notificationClass, NotificationMode $mode): void
+    {
+        foreach (['mail', 'in_app'] as $channel) {
+            NotificationPreference::query()->updateOrCreate(
+                [
+                    'notifiable_type' => $notifiable->getMorphClass(),
+                    'notifiable_id' => $notifiable->getKey(),
+                    'notification_class' => $notificationClass,
+                    'channel' => $channel,
+                ],
+                ['enabled' => $mode->allows($channel), 'mode' => $mode],
+            );
+        }
+    }
+
+    private function row(Model $notifiable, string $notificationClass, string $channel): ?NotificationPreference
+    {
+        return NotificationPreference::query()
             ->where('notifiable_type', $notifiable->getMorphClass())
             ->where('notifiable_id', $notifiable->getKey())
             ->where('channel', $channel)
@@ -46,14 +92,16 @@ class NotificationPreferences
             // never clicked unsubscribe, still gets everything else.
             ->sortBy(fn (NotificationPreference $row) => $row->notification_class === '*' ? 1 : 0)
             ->first();
-
-        return $row === null || $row->enabled;
     }
 
     /**
-     * Writes one row — the staff "which events, per channel" screen and the
-     * client one-click unsubscribe ('*' as $notificationClass) both call
-     * this, never NotificationPreference::create() directly.
+     * Writes one channel row — the client one-click unsubscribe ('*' as
+     * $notificationClass) and anything else that speaks in channels, never
+     * NotificationPreference::create() directly. The staff pane goes through
+     * setMode() above instead.
+     *
+     * Clears the mode: a row that says "mail off" and "immediate" at once
+     * would answer differently depending on which of the two was read.
      */
     public function set(Model $notifiable, string $notificationClass, string $channel, bool $enabled): void
     {
@@ -64,7 +112,7 @@ class NotificationPreferences
                 'notification_class' => $notificationClass,
                 'channel' => $channel,
             ],
-            ['enabled' => $enabled],
+            ['enabled' => $enabled, 'mode' => null],
         );
     }
 

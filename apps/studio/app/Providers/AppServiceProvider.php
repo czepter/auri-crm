@@ -32,6 +32,7 @@ use App\Notifications\Listeners\NotifyStudioOfDomainEvent;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\NotificationPreferences;
 use App\Notifications\Support\QuietHours;
+use App\Notifications\Support\StudioMailFooter;
 use App\Notifications\Transports\InAppTransport;
 use App\Notifications\Transports\MailTransport;
 use App\Notifications\Transports\WebhookTransport;
@@ -50,6 +51,7 @@ use App\Policies\ShootPolicy;
 use App\Policies\StagePolicy;
 use App\Policies\TaskPolicy;
 use App\Policies\TaskTemplatePolicy;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\PersonalAccessToken;
 use App\Support\Surface;
 use Aws\S3\S3Client;
@@ -61,6 +63,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
 
@@ -114,6 +117,58 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // The 'mail::' namespace (<x-mail::layout>, <x-mail::button>) only
+        // exists while Illuminate\Mail\Markdown::render() is on the stack —
+        // it registers it there and nowhere else, pointed at
+        // config('mail.markdown.paths').'/html' (see Markdown::
+        // htmlComponentPaths()). That covers every notification using the
+        // default markdown template, but
+        // mail.product-message/mail.blocks-message are rendered through
+        // MailMessage::view(), which never touches Markdown::render() at
+        // all. Registered permanently at the same path, so both routes
+        // resolve the one compiled layout.
+        View::addNamespace('mail', resource_path('views/vendor/mail/html'));
+
+        // Studio-branded by default: every existing notification's mail keeps
+        // working unmodified, because this only fires when nobody has already
+        // passed an explicit brand. The four product mails set 'brand'
+        // explicitly and this returns immediately — StaffInvited's shared
+        // blocks view passes none, so it falls through to the studio default —
+        // see resources/views/mail/{product,blocks}-message.blade.php.
+        View::composer('mail::layout', function ($view) {
+            if (($view->getData()['brand'] ?? null) !== null) {
+                // The product mails' footer, here for the same reason brand is
+                // resolved here: one place, rather than the same string copied
+                // into four notification classes.
+                $view->with('mailFooter', 'Fragen: <a href="https://github.com/czepter/auri-crm/issues">github.com/czepter/auri-crm/issues</a>');
+
+                return;
+            }
+
+            $settings = app(StudioSettingsResolver::class);
+
+            $view->with([
+                'brand' => $settings->displayName() ?? config('app.name'),
+                'logoUrl' => $settings->logoPath()
+                    ? rtrim((string) config('portal.url'), '/').'/branding/logo'
+                    : null,
+                // Signature and legal particulars belong in the footer zone,
+                // not on the body as two more ->line()s. Resolved here for the
+                // same reason brand is: Blade hands a view's data to no nested
+                // component, so the layout's own scope is the only place that
+                // can be reached.
+                'mailFooter' => app(StudioMailFooter::class)($settings),
+            ]);
+        });
+
+        // Accent is not brand-differentiated (spec §2's table has no Accent row):
+        // every mail, product or studio, shows the current tenant's own accent, with
+        // a neutral fallback before any studio has set one.
+        View::composer('mail::button', function ($view) {
+            $accent = app(StudioSettingsResolver::class)->attributes()['accent_color'] ?? null;
+            $view->with('accent', $accent ?: '#111111');
+        });
+
         Blueprint::macro('tenantId', function () {
             /** @var Blueprint $this */
             $column = $this->uuid('tenant_id')->default(config('tenancy.tenant_id'));
@@ -185,6 +240,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(LeadCaptured::class, [NotifyStudioOfDomainEvent::class, 'handleLeadCaptured']);
         Event::listen(ContractSigned::class, [NotifyStudioOfDomainEvent::class, 'handleContractSigned']);
         Event::listen(InstallmentPaid::class, [NotifyStudioOfDomainEvent::class, 'handleInstallmentPaid']);
+        Event::listen(InstallmentOverdue::class, [NotifyStudioOfDomainEvent::class, 'handleInstallmentOverdue']);
 
         // E-08: one wildcard subscription rather than one Event::listen()
         // per event class — an AutomationRule's own event_class column is

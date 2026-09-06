@@ -2,6 +2,7 @@
 
 namespace App\Media\Actions;
 
+use App\Gallery\Actions\IssueGalleryDownloadLink;
 use App\Gallery\Notifications\GalleryZipReady;
 use App\Media\Models\ZipBuild;
 use App\Media\Models\ZipBuildWaiter;
@@ -17,12 +18,15 @@ use Illuminate\Support\Facades\Notification;
  */
 class NotifyZipWaiters
 {
-    public function __construct(private readonly StudioSettingsResolver $settings) {}
+    public function __construct(
+        private readonly StudioSettingsResolver $settings,
+        private readonly IssueGalleryDownloadLink $issueLink,
+    ) {}
 
     public function __invoke(ZipBuild $zipBuild): void
     {
         $gallery = $zipBuild->galleryVersion->gallery;
-        $url = rtrim((string) config('portal.url'), '/')."/galerien/{$gallery->public_id}/download";
+        $url = ($this->issueLink)($gallery);
         $parts = $zipBuild->parts()->count();
 
         ZipBuildWaiter::query()

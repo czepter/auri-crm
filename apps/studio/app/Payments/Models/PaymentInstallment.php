@@ -5,9 +5,11 @@ namespace App\Payments\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Documents\Models\DocumentTemplate;
+use App\Payments\Enums\OverdueReason;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Enums\SettledVia;
 use Database\Factories\Payments\PaymentInstallmentFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,8 +30,9 @@ class PaymentInstallment extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'payment_plan_id', 'amount', 'due_on', 'status', 'sort_order',
+        'payment_plan_id', 'amount', 'due_on', 'status', 'sort_order', 'title',
         'settled_via', 'paid_on', 'payment_reference', 'overdue_notified_at',
+        'overdue_reason', 'overdue_reminders_sent', 'client_reminders_sent',
         'stripe_checkout_session_id',
         'invoice_number', 'invoiced_at', 'invoice_path', 'invoice_template_id',
     ];
@@ -44,6 +47,7 @@ class PaymentInstallment extends Model
             'settled_via' => SettledVia::class,
             'paid_on' => 'date',
             'overdue_notified_at' => 'immutable_datetime',
+            'overdue_reason' => OverdueReason::class,
             'invoiced_at' => 'immutable_datetime',
         ];
     }
@@ -61,6 +65,17 @@ class PaymentInstallment extends Model
     public function invoiceTemplate(): BelongsTo
     {
         return $this->belongsTo(DocumentTemplate::class, 'invoice_template_id');
+    }
+
+    /**
+     * T-22: still owed and past its date. `invoiced` counts too — an issued,
+     * unpaid invoice is where arrears actually start mattering — and the flag
+     * is what says the scan has already seen it.
+     */
+    public function scopeOverdue(Builder $query): void
+    {
+        $query->whereIn('status', [PaymentInstallmentStatus::Scheduled, PaymentInstallmentStatus::Invoiced])
+            ->whereNotNull('overdue_notified_at');
     }
 
     /** M-06: issued means stamped with a number, whatever the render has done since. */

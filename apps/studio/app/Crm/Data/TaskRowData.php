@@ -36,6 +36,10 @@ class TaskRowData extends Data
         // Woran die Fälligkeit hängt. Steht anstelle des Datums, solange der
         // Anker noch nicht eingetreten ist.
         public ?string $dueAnchorLabel = null,
+        // T-24: wer sie schuldet. Leer heißt Crew, sonst Studio — die
+        // Auflösung steht in StudioAudience::forTask().
+        public ?string $assigneeId = null,
+        public ?string $assigneeName = null,
     ) {}
 
     public static function fromTask(Task $task): self
@@ -62,6 +66,8 @@ class TaskRowData extends Data
             audienceLabel: $task->audience->label(),
             completedOn: $task->completed_at?->format('Y-m-d'),
             dueAnchorLabel: $task->dueAnchorLabel(),
+            assigneeId: $task->assignee?->public_id,
+            assigneeName: $task->assignee?->name,
         );
     }
 }

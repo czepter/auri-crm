@@ -13,6 +13,9 @@ on:
 permissions:
   contents: read
   pull-requests: read
+  # already-green asks the API for this workflow's own earlier runs. Without
+  # actions:read it finds none, never skips, and costs a job to say so.
+  actions: read
 
 # Supersede in-flight runs for the same PR/branch. Pushes to the integration
 # branches are never cancelled so every commit there keeps a verdict.
@@ -21,6 +24,26 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # One change is tested up to four times: the pull request into dev, the push
+  # that merge makes on dev, the pull request from dev into main, and that
+  # merge's push on main. The tree is identical across those whenever the base
+  # has not moved in between, and this job is what notices. A moved base, or an
+  # edit to this file, changes the tree and everything runs again.
+  #
+  # Skipping leaves studio/web/e2e reported as skipped, which branch protection
+  # counts as passing — the same thing the `changes` gate below already relies
+  # on.
+  already-green:
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.probe.outputs.should_skip }}
+    steps:
+      # Pinned to the commit behind v5.3.2 rather than the tag: a tag on a
+      # third-party repository can be moved onto other code, and this one runs
+      # before every test job.
+      - id: probe
+        uses: fkirc/skip-duplicate-actions@b974a9395958c231af965b70070979a577efa578
+
   # Enforces the branching model documented in docs/branching.md:
   # feature/bugfix -> dev -> main. Deliberately has no `needs`, so it reports
   # a verdict even while the test jobs are still running.
@@ -86,6 +109,8 @@ jobs:
               - 'apps/studio/artisan'
               - 'apps/studio/.env.example'
               - 'apps/studio/resources/js/types/generated.d.ts'
+              - 'apps/studio/resources/mail/**'
+              - 'apps/studio/resources/views/vendor/mail/**'
               # G-01: the committed OpenAPI document is derived from the api
               # surface's routes, so a hand-edit here — without the route
               # change that should have produced it — needs the same
@@ -110,8 +135,8 @@ jobs:
               - *web
 
   studio:
-    needs: changes
-    if: needs.changes.outputs.php == 'true'
+    needs: [changes, already-green]
+    if: needs.changes.outputs.php == 'true' && needs.already-green.outputs.skip != 'true'
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -147,6 +172,12 @@ jobs:
           php-version: "8.5"
           extensions: pdo_pgsql, bcmath, gd, intl, pcntl, exif
           coverage: none
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter @studio/app
       # X-03's db:cutover-snapshot/db:cutover-restore shell out to pg_dump/
       # pg_restore, and CutoverRehearsalTest exercises them for real — the
       # runner's default postgresql-client doesn't match the postgres:18
@@ -213,10 +244,16 @@ jobs:
           php artisan scramble:export --path=../../packages/contracts/openapi.json
           git diff --exit-code -- ../../packages/contracts/openapi.json \
             || { echo "packages/contracts/openapi.json is stale. Run 'php artisan scramble:export --path=../../packages/contracts/openapi.json' in apps/studio and commit."; exit 1; }
+      - name: Assert compiled mail templates are current
+        working-directory: apps/studio
+        run: |
+          php artisan mail:build
+          git diff --exit-code -- resources/views/vendor/mail \
+            || { echo "Compiled mail templates are stale. Run 'php artisan mail:build' in apps/studio and commit the result."; exit 1; }
 
   web:
-    needs: changes
-    if: needs.changes.outputs.web == 'true'
+    needs: [changes, already-green]
+    if: needs.changes.outputs.web == 'true' && needs.already-green.outputs.skip != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -232,8 +269,8 @@ jobs:
       - run: pnpm build
 
   e2e:
-    needs: changes
-    if: needs.changes.outputs.e2e == 'true'
+    needs: [changes, already-green]
+    if: needs.changes.outputs.e2e == 'true' && needs.already-green.outputs.skip != 'true'
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -280,6 +317,9 @@ jobs:
         with: { node-version: 24, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @studio/app build
+      # mcp.spec.ts runs the MCP server as its own process (see the webServer
+      # list in playwright.config.ts), and that process is dist/index.js.
+      - run: pnpm --filter @studio/mcp build
       # Every database setting goes into .env rather than into this step's env.
       # Playwright starts `artisan serve` as a subprocess of a later step, and
       # that subprocess reads .env — so step-level DB_* variables reached the

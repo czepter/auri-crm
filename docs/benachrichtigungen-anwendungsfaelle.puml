@@ -1,0 +1,93 @@
+@startuml
+
+title Benachrichtigungen — Zustellwege
+
+left to right direction
+skinparam shadowing false
+skinparam actorStyle awesome
+
+actor "Zeitgeber" as Clock2
+actor "Kunde" as Client2
+actor "Gast" as Guest2
+actor "Mitarbeiter" as Staff2
+
+rectangle "Auri CRM · Notifications" {
+  usecase "Anfrage eingegangen" as N_Inquiry
+  usecase "Angebot angenommen" as N_QuoteAccepted
+  usecase "Vertrag unterschrieben" as N_Signed
+  usecase "Fragebogen abgegeben" as N_Form
+  usecase "Rate bezahlt" as N_Paid
+  usecase "Kundennachricht eingegangen" as N_Message
+  usecase "Bild kommentiert / favorisiert" as N_Asset
+  usecase "Galerie fertig / ZIP bereit" as N_Gallery
+  usecase "Automations-Erinnerung" as N_Automation
+  usecase "Zahlungsverzug erkannt" as N_Overdue
+  usecase "Onboarding unvollstaendig" as N_Onboarding
+
+  usecase "Empfaenger bestimmen" as N_Audience
+  usecase "Benachrichtigung fanout" as N_Service
+  usecase "Praeferenz pruefen" as N_Prefs
+  usecase "Ruhezeit pruefen" as N_Quiet
+  usecase "Zustellung verschieben" as N_Defer
+  usecase "Zusammenfassung bauen" as N_Digest
+
+  usecase "Mail senden" as N_Mail
+  usecase "In-App-Eintrag schreiben" as N_InApp
+  usecase "Webhook senden" as N_Hook
+
+  usecase "Antwortmail einlesen" as N_Inbound
+  usecase "Nachricht dem Thread zuordnen" as N_Thread
+}
+
+actor "Mailserver" as Mail2
+actor "Integrationsclient" as Api2
+
+Client2 --> N_Message
+Client2 --> N_QuoteAccepted
+Client2 --> N_Signed
+Client2 --> N_Form
+Client2 --> N_Paid
+Guest2 --> N_Asset
+Clock2 --> N_Automation
+Clock2 --> N_Overdue
+Clock2 --> N_Onboarding
+Clock2 --> N_Digest
+Clock2 --> N_Inbound
+Staff2 --> N_Gallery
+
+N_Inquiry ..> N_Audience : <<include>>
+N_QuoteAccepted ..> N_Audience : <<include>>
+N_Signed ..> N_Audience : <<include>>
+N_Form ..> N_Audience : <<include>>
+N_Paid ..> N_Audience : <<include>>
+N_Message ..> N_Audience : <<include>>
+N_Asset ..> N_Audience : <<include>>
+N_Audience ..> N_Service : <<include>>
+
+N_Gallery ..> N_Service : <<include>>
+N_Automation ..> N_Service : <<include>>
+N_Onboarding ..> N_Service : <<include>>
+N_Digest ..> N_Service : <<include>>
+
+N_Service ..> N_Prefs : <<include>>
+N_Service ..> N_Quiet : <<include>>
+N_Quiet ..> N_Defer : <<extend>>
+N_Service ..> N_Mail : <<include>>
+N_Service ..> N_InApp : <<include>>
+N_Service ..> N_Hook : <<extend>>
+N_InApp ..> N_Digest : <<extend>>
+
+N_Overdue ..> N_Hook : <<include>>
+N_Inbound ..> N_Thread : <<include>>
+N_Thread ..> N_Message : <<extend>>
+
+N_Mail --> Mail2
+Mail2 --> N_Inbound
+N_Hook --> Api2
+
+legend right
+  Transactional (StaffInvited, ClientAccessLink, QuoteSent, Galerie-Codes)
+  umgeht Praeferenz und Ruhezeit.
+  Zahlungsverzug erreicht heute nur den Webhook, keine Studio-Mail.
+endlegend
+@enduml

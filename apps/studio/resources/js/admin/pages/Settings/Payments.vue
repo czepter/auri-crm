@@ -11,6 +11,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
+import { Switch } from '@/ui/switch'
 
 const props = defineProps<{ settings: App.Settings.Data.PaymentSettingsData }>()
 
@@ -153,13 +154,20 @@ function submit() {
             </div>
 
             <div class="mt-8 first-of-type:mt-6">
-              <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.defaultsSection') }}</div>
-              <div class="mb-6">
-                <div class="flex items-center gap-2.5">
-                  <Checkbox id="cb-payments-reminders-enabled" v-model="form.payments_reminders_enabled" />
-                  <Label variant="inline" for="cb-payments-reminders-enabled">{{ $t('paymentSettings.remindersEnabled') }}</Label>
+              <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.remindersSection') }}</div>
+              <div class="mb-6 rounded-[10px] border border-rule px-5 py-4">
+                <div class="flex items-start gap-3">
+                  <Switch id="sw-payments-reminders-enabled" v-model="form.payments_reminders_enabled" class="mt-0.5" />
+                  <div class="flex flex-col gap-1">
+                    <label class="text-[13.5px] leading-none" for="sw-payments-reminders-enabled">{{ $t('paymentSettings.remindersEnabled') }}</label>
+                    <span class="text-[11.5px] leading-[1.45] text-faint">{{ $t('paymentSettings.remindersCadence') }}</span>
+                  </div>
                 </div>
               </div>
+            </div>
+
+            <div class="mt-8">
+              <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('paymentSettings.defaultsSection') }}</div>
 
               <!-- Deposit percentage and Zahlungsziel are T-05's own Dokumente
                    fields (studio_settings.deposit_percentage / payment_term_days)

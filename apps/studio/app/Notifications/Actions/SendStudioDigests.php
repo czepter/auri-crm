@@ -3,6 +3,7 @@
 namespace App\Notifications\Actions;
 
 use App\Models\User;
+use App\Notifications\Enums\NotificationMode;
 use App\Notifications\Models\InAppNotification;
 use App\Notifications\NotificationService;
 use App\Notifications\Studio\StudioDigest;
@@ -17,10 +18,10 @@ use Carbon\CarbonImmutable;
  * skipping a week.
  *
  * Only events set to "Zusammenfassung" travel in it: an event still on
- * `sofort` has its mail preference enabled and was mailed when it happened,
- * and carrying it again here would announce it twice. That is the whole of
- * the three-way choice on the profile screen — there is no third state
- * stored anywhere.
+ * `sofort` was mailed when it happened, and carrying it again here would
+ * announce it twice. T-23 turned that choice into a stored mode, so this
+ * reads `digest` rather than inferring it from a silenced mail channel —
+ * the morning briefing silences the same channel and means something else.
  */
 class SendStudioDigests
 {
@@ -74,15 +75,15 @@ class SendStudioDigests
 
     /**
      * The event classes this person reads in the summary rather than at the
-     * moment they happen — mail off, which is what the pane writes for
-     * "Zusammenfassung".
+     * moment they happen. T-23 made this a stored mode: "mail off" now also
+     * describes the morning briefing, and the two collect different rows.
      *
      * @return list<string>
      */
     private function digested(User $user): array
     {
         return collect(StudioEvents::ALL)
-            ->reject(fn (string $class) => $this->preferences->enabled($user, $class, 'mail'))
+            ->filter(fn (string $class) => $this->preferences->mode($user, $class) === NotificationMode::Digest)
             ->values()
             ->all();
     }

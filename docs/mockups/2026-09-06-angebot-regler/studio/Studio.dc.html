@@ -1,0 +1,377 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap">
+  <style>
+    body { margin:0; background:#FFFFFF; color:#151A22;
+           font:400 13px/1.47 'Hanken Grotesk', system-ui, sans-serif;
+           letter-spacing:-.006em; -webkit-font-smoothing:antialiased; }
+    a { color:#151A22; text-decoration:none; }
+    a:hover { color:#1C6870; }
+    svg { fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+    input { font:400 13px/1.47 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.006em;
+            color:#151A22; border:1px solid #CFD6DB; border-radius:8px; padding:7px 10px; background:#FFFFFF; }
+    input:focus { outline:2px solid #1C6870; outline-offset:-1px; }
+    .lab { font:600 12.5px/1.2 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-0.012em; color:#626B78; }
+    .num { font-variant-numeric:tabular-nums; }
+  </style>
+</helmet>
+
+<div style="display:flex; min-height:100%; background:#FFFFFF">
+
+  <div style="width:214px; flex:none; padding:18px 12px; display:flex; flex-direction:column; gap:2px">
+    <div style="padding:0 10px 22px; font:600 17px/1 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-0.024em">Atelier Nordlicht</div>
+    <div style="display:flex; align-items:center; gap:9px; margin-bottom:16px; padding:6px 10px; border-radius:8px; background:#F5F7F8; color:#626B78">
+      <svg viewBox="0 0 24 24" style="width:17px; height:17px"><circle cx="11" cy="11" r="6.5"></circle><path d="m16 16 4.5 4.5"></path></svg>
+      <span>Suche</span>
+      <span style="margin-left:auto; font:500 11px/1 'Hanken Grotesk', system-ui, sans-serif">⌘K</span>
+    </div>
+    <sc-for list="{{nav}}" as="n" hint-placeholder-count="6">
+      <div style="{{n.style}}">{{n.label}}</div>
+    </sc-for>
+  </div>
+
+  <div style="flex:1; min-width:0; padding:24px 32px 40px; max-width:1180px">
+
+    <div style="display:flex; align-items:center; gap:12px; color:#626B78">
+      <span>Aufträge</span>
+      <span>·</span>
+      <span>Lena Meier &amp; Jonas Kowalski</span>
+    </div>
+    <h1 style="margin:10px 0 0; font:700 24px/1 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-0.04em">Angebot</h1>
+    <div style="display:flex; align-items:center; gap:10px; margin-top:12px; color:#626B78">
+      <span style="display:inline-flex; align-items:center; padding:5px 10px; border-radius:12px; background:#FAF3E4; color:#8A6212; font:600 11.5px/1 'Hanken Grotesk', system-ui, sans-serif">Entwurf</span>
+      <span>2026-0042 · gültig bis 30.09.2026</span>
+    </div>
+
+    <div style="margin-top:36px; display:flex; gap:24px">
+      <div class="lab" style="width:112px; flex:none; padding-top:8px">Zeit</div>
+      <div style="flex:1; min-width:0">
+        <div style="display:flex; align-items:flex-end; gap:20px; flex-wrap:wrap">
+          <label style="display:block">
+            <span class="lab" style="display:block; margin-bottom:7px">Stundensatz</span>
+            <input class="num" type="number" step="10" value="{{rate}}" onInput="{{setRate}}" style="width:96px">
+          </label>
+          <label style="display:block">
+            <span class="lab" style="display:block; margin-bottom:7px">Ab</span>
+            <input class="num" type="number" step="1" value="{{minHours}}" onInput="{{setMin}}" style="width:72px">
+          </label>
+          <label style="display:block">
+            <span class="lab" style="display:block; margin-bottom:7px">Bis</span>
+            <input class="num" type="number" step="1" value="{{maxHours}}" onInput="{{setMax}}" style="width:72px">
+          </label>
+          <label style="display:block">
+            <span class="lab" style="display:block; margin-bottom:7px">Bilder je Stunde</span>
+            <input class="num" type="number" step="5" value="{{perHour}}" onInput="{{setPerHour}}" style="width:96px">
+          </label>
+          <div style="color:#626B78; padding-bottom:8px">{{ends}}</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:32px; display:flex; gap:24px">
+      <div class="lab" style="width:112px; flex:none; padding-top:3px">Ohne Aufpreis</div>
+      <div style="flex:1; min-width:0">
+        <div style="display:flex; flex-direction:column; gap:9px">
+          <sc-for list="{{included}}" as="i" hint-placeholder-count="4">
+            <div style="display:flex; align-items:center; gap:12px; padding:9px 0; border-top:1px solid #E2E7EB">
+              <span style="{{i.style}}">{{i.label}}</span>
+              <span style="{{i.tagStyle}}">{{i.tag}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex; align-items:center; gap:9px; padding:12px 0 0; border-top:1px solid #E2E7EB; color:#626B78">
+          <svg viewBox="0 0 24 24" style="width:15px; height:15px"><path d="M12 5v14M5 12h14"></path></svg>
+          <span>Zusage</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:32px; display:flex; gap:24px">
+      <div class="lab" style="width:112px; flex:none; padding-top:3px">Bausteine</div>
+      <div style="flex:1; min-width:0">
+
+        <div style="display:grid; grid-template-columns:44px minmax(0,1fr) 200px 100px 130px; gap:16px; padding:0 0 8px; font:500 11.5px/1 'Hanken Grotesk', system-ui, sans-serif; color:#626B78">
+          <span>Bild</span>
+          <span>Name</span>
+          <span>Was der Kunde liest</span>
+          <span style="text-align:right">Preis</span>
+          <span>Im Portal</span>
+        </div>
+
+        <sc-for list="{{bricks}}" as="b" hint-placeholder-count="4">
+          <div style="display:grid; grid-template-columns:44px minmax(0,1fr) 200px 100px 130px; gap:16px; align-items:center; padding:10px 0; border-top:1px solid #E2E7EB">
+            <img src="{{b.image}}" alt="" style="width:44px; height:32px; object-fit:cover; border-radius:6px">
+            <div style="font-weight:500">{{b.name}}</div>
+            <div style="color:#626B78">{{b.gives}}</div>
+            <div class="num" style="text-align:right">{{b.price}}</div>
+            <div><span onClick="{{b.toggle}}" style="{{b.stateStyle}}">{{b.state}}</span></div>
+          </div>
+        </sc-for>
+
+        <div style="display:flex; align-items:center; gap:9px; padding:12px 0 0; border-top:1px solid #E2E7EB; color:#626B78">
+          <svg viewBox="0 0 24 24" style="width:15px; height:15px"><path d="M12 5v14M5 12h14"></path></svg>
+          <span>Baustein</span>
+          <span style="margin-left:16px">Aus Katalog</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:32px; display:flex; gap:24px">
+      <div class="lab" style="width:112px; flex:none; padding-top:8px">Zahlung</div>
+      <div style="flex:1; min-width:0">
+        <div style="display:flex; flex-direction:column; gap:9px">
+          <sc-for list="{{shares}}" as="s" hint-placeholder-count="3">
+            <div style="display:flex; align-items:center; gap:12px">
+              <input class="num" type="number" step="5" value="{{s.value}}" onInput="{{s.set}}" style="width:72px; text-align:right">
+              <span style="color:#626B78">%</span>
+              <input type="text" value="{{s.text}}" onInput="{{s.setText}}" style="width:230px">
+              <span style="color:#626B78">mindestens</span>
+              <input class="num" type="number" step="50" value="{{s.min}}" onInput="{{s.setMin}}" style="width:88px; text-align:right">
+              <span class="num" style="{{s.exampleStyle}}">{{s.example}}</span>
+              <svg onClick="{{s.drop}}" viewBox="0 0 24 24" style="cursor:pointer; width:15px; height:15px; margin-left:auto; color:#626B78"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:16px; margin-top:14px">
+          <div onClick="{{addShare}}" style="cursor:pointer; display:inline-flex; align-items:center; gap:9px; color:#626B78">
+            <svg viewBox="0 0 24 24" style="width:15px; height:15px"><path d="M12 5v14M5 12h14"></path></svg>
+            <span>Stufe</span>
+          </div>
+          <div style="{{shareStyle}}">{{shareNote}}</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:32px; display:flex; gap:24px">
+      <div class="lab" style="width:112px; flex:none; padding-top:3px">Spanne</div>
+      <div style="flex:1; min-width:0; display:flex; gap:12px">
+        <sc-for list="{{tiles}}" as="t" hint-placeholder-count="3">
+          <div style="{{t.style}}">
+            <div style="font:500 11.5px/1 'Hanken Grotesk', system-ui, sans-serif; {{t.labelColor}}">{{t.label}}</div>
+            <div class="num" style="margin-top:10px; font:600 22px/1 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-0.03em; {{t.valueColor}}">{{t.value}}</div>
+            <div style="margin-top:6px; {{t.labelColor}}">{{t.note}}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="margin-top:36px; display:flex; gap:24px">
+      <div style="width:112px; flex:none"></div>
+      <div style="flex:1; display:flex; align-items:center; gap:16px">
+        <span style="color:#626B78">Zuletzt gespeichert 14:02</span>
+        <span style="margin-left:auto; display:inline-flex; align-items:center; padding:3px 9px; border-radius:6px; border:1px solid #CFD6DB; font:600 10.5px/1.4 'Hanken Grotesk', system-ui, sans-serif; color:#626B78">Vorschau als Kunde</span>
+        <span style="display:inline-flex; align-items:center; padding:9px 14px; border-radius:6px; background:#1C6870; color:#FFFFFF; font:600 13px/1 'Hanken Grotesk', system-ui, sans-serif">Angebot senden</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1400,"height":1080}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      rate: 250,
+      minHours: 3,
+      maxHours: 12,
+      perHour: 40,
+      preset: { content: true, analog: true },
+      shares: [
+        { percent: 25, text: 'Bei der Zusage', min: 800 },
+        { percent: 50, text: 'Am Termin', min: 0 },
+        { percent: 25, text: 'Bei der Galerie', min: 0 },
+      ],
+    };
+  }
+
+  euro(v) {
+    return v.toLocaleString('de-DE') + ' €';
+  }
+
+  catalogue() {
+    return [
+      { id: 'content', name: 'Content Creator', gives: 'Reels und TikToks, hochkant', price: 400, image: 'p020.jpg' },
+      { id: 'analog', name: 'Analog, 35 mm', gives: 'Zwei bis drei Rollen Kodak Gold', price: 250, image: 'p011.jpg' },
+      { id: 'raw', name: 'Raw Dump', gives: 'Alle Dateien, nur farbkorrigiert', price: 150, image: 'p001.jpg' },
+      { id: 'album', name: 'Fine-Art-Album', gives: 'Vierzig Seiten, 30 × 30', price: 690, image: 'p016.jpg' },
+    ];
+  }
+
+  /* Prozent, aber nie unter dem Mindestbetrag. Was die früheren Stufen dadurch
+     mehr nehmen, fehlt der letzten — sie trägt immer den Rest. */
+  allocate(total, rows) {
+    let rest = total;
+
+    return rows.map((row, index) => {
+      if (index === rows.length - 1) {
+        return Math.max(0, rest);
+      }
+
+      const share = Math.round(total * row.percent / 100 / 10) * 10;
+      const amount = Math.min(Math.max(share, row.min || 0), Math.max(0, rest));
+      rest -= amount;
+
+      return amount;
+    });
+  }
+
+  setNumber(key) {
+    return (event) => {
+      const value = Number(event.target.value);
+      this.setState({ [key]: Number.isFinite(value) ? value : 0 });
+    };
+  }
+
+  renderVals() {
+    const state = this.state;
+    const items = this.catalogue();
+    const chosen = items.filter((item) => state.preset[item.id]);
+
+    const min = state.minHours * state.rate;
+    const max = state.maxHours * state.rate + items.reduce((sum, item) => sum + item.price, 0);
+    const presetHours = Math.min(6, state.maxHours);
+    const preset = presetHours * state.rate + chosen.reduce((sum, item) => sum + item.price, 0);
+
+    const sum = state.shares.reduce((total, share) => total + share.percent, 0);
+    const amounts = this.allocate(preset, state.shares);
+    const floors = state.shares.reduce((total, share) => total + (share.min || 0), 0);
+
+    const TILE = 'flex:1; border-radius:20px; padding:20px; ';
+
+    return {
+      nav: [
+        { label: 'Heute', on: false },
+        { label: 'Anfragen', on: false },
+        { label: 'Aufträge', on: true },
+        { label: 'Kalender', on: false },
+        { label: 'Pakete', on: false },
+        { label: 'Rechnungen', on: false },
+      ].map((n) => ({
+        label: n.label,
+        style: n.on
+          ? 'padding:6px 10px; border-radius:8px; background:#F0F3F5; font-weight:600'
+          : 'padding:6px 10px; border-radius:8px; color:#151A22',
+      })),
+
+      rate: state.rate,
+      minHours: state.minHours,
+      maxHours: state.maxHours,
+      perHour: state.perHour,
+      setRate: this.setNumber('rate'),
+      setMin: this.setNumber('minHours'),
+      setMax: this.setNumber('maxHours'),
+      setPerHour: this.setNumber('perHour'),
+      ends: state.minHours + ' Std ' + this.euro(min) + ' · ' + state.maxHours + ' Std ' + this.euro(state.maxHours * state.rate)
+        + ' · ' + state.perHour * state.minHours + ' bis ' + state.perHour * state.maxHours + ' Bilder',
+
+      // Die erste Zeile rechnet mit dem Regler und ist deshalb nicht editierbar;
+      // die übrigen schreibt der Fotograf.
+      included: [
+        { label: state.perHour * state.minHours + ' bis ' + state.perHour * state.maxHours + ' bearbeitete Bilder', auto: true },
+        { label: 'Fünf davon in 48 Stunden', auto: false },
+        { label: 'Galerie mit Download', auto: false },
+        { label: 'Fahrt in Norddeutschland', auto: false },
+      ].map((line) => ({
+        label: line.label,
+        style: line.auto ? 'color:#626B78' : '',
+        tag: line.auto ? 'automatisch' : '',
+        tagStyle: line.auto
+          ? 'margin-left:auto; padding:4px 9px; border-radius:12px; background:#F0F3F5; color:#626B78; font:600 11px/1 \'Hanken Grotesk\', system-ui, sans-serif'
+          : 'display:none',
+      })),
+
+      bricks: items.map((item) => {
+        const active = !!state.preset[item.id];
+        return {
+          name: item.name,
+          gives: item.gives,
+          image: item.image,
+          price: this.euro(item.price),
+          toggle: () => this.setState({ preset: { ...this.state.preset, [item.id]: !this.state.preset[item.id] } }),
+          state: active ? 'vorausgewählt' : 'wählbar',
+          stateStyle: active
+            ? 'cursor:pointer; display:inline-flex; padding:5px 10px; border-radius:12px; background:#E7F1F2; color:#1C6870; font:600 11.5px/1 \'Hanken Grotesk\', system-ui, sans-serif'
+            : 'cursor:pointer; display:inline-flex; padding:5px 10px; border-radius:12px; border:1px solid #CFD6DB; color:#626B78; font:500 11.5px/1 \'Hanken Grotesk\', system-ui, sans-serif',
+        };
+      }),
+
+      shares: state.shares.map((share, index) => ({
+        value: share.percent,
+        text: share.text,
+        min: share.min,
+        example: this.euro(amounts[index]),
+        // Teal, sobald der Mindestbetrag den Prozentsatz überstimmt.
+        exampleStyle: amounts[index] > Math.round(preset * share.percent / 100 / 10) * 10
+          ? 'color:#1C6870; font-weight:600'
+          : 'color:#626B78',
+        setMin: (event) => {
+          const next = [...this.state.shares];
+          next[index] = { ...next[index], min: Number(event.target.value) || 0 };
+          this.setState({ shares: next });
+        },
+        set: (event) => {
+          const next = [...this.state.shares];
+          next[index] = { ...next[index], percent: Number(event.target.value) || 0 };
+          this.setState({ shares: next });
+        },
+        setText: (event) => {
+          const next = [...this.state.shares];
+          next[index] = { ...next[index], text: event.target.value };
+          this.setState({ shares: next });
+        },
+        drop: () => this.setState({ shares: this.state.shares.filter((row, at) => at !== index) }),
+      })),
+      addShare: () => this.setState({ shares: [...this.state.shares, { percent: 0, text: '' }] }),
+      shareNote: sum !== 100
+        ? sum + ' % — muss 100 ergeben'
+        : (floors > min
+          ? 'Mindestbeträge sind höher als das kleinste Angebot von ' + this.euro(min)
+          : '100 %'),
+      shareStyle: sum === 100 && floors <= min
+        ? 'color:#626B78'
+        : 'color:#B3261E; font-weight:600',
+
+      tiles: [
+        {
+          label: 'Kleinstes Angebot',
+          value: this.euro(min),
+          note: state.minHours + ' Stunden, nichts dazu',
+          style: TILE + 'background:#F5F7F8',
+          labelColor: 'color:#626B78',
+          valueColor: '',
+        },
+        {
+          label: 'Vorauswahl',
+          value: this.euro(preset),
+          note: presetHours + ' Stunden, ' + chosen.length + ' Bausteine',
+          style: TILE + 'background:#E7F1F2',
+          labelColor: 'color:#1C6870',
+          valueColor: 'color:#1C6870',
+        },
+        {
+          label: 'Größtes Angebot',
+          value: this.euro(max),
+          note: state.maxHours + ' Stunden, alle Bausteine',
+          style: TILE + 'background:#F5F7F8',
+          labelColor: 'color:#626B78',
+          valueColor: '',
+        },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

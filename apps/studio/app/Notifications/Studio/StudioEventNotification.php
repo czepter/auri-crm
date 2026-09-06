@@ -40,6 +40,17 @@ abstract class StudioEventNotification extends Notification
     /** What happened, named once. */
     abstract public function body(): string;
 
+    /**
+     * The mail's paragraphs. One by default; the scans (T-19, T-20, T-22)
+     * bundle several rows into one message and override this.
+     *
+     * @return list<string>
+     */
+    public function lines(): array
+    {
+        return [$this->body()];
+    }
+
     /** The admin screen that answers it. */
     abstract public function url(): string;
 
@@ -54,9 +65,13 @@ abstract class StudioEventNotification extends Notification
     {
         $message = (new MailMessage)
             ->subject($this->title())
-            ->greeting("Hallo {$notifiable->name},")
-            ->line($this->body())
-            ->action('Ansehen', url($this->url()));
+            ->greeting("Hallo {$notifiable->name},");
+
+        foreach ($this->lines() as $line) {
+            $message->line($line);
+        }
+
+        $message->action('Ansehen', url($this->url()));
 
         return $this->appendStudioMailIdentity($message, app(StudioSettingsResolver::class));
     }

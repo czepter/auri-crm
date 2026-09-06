@@ -24,8 +24,16 @@ use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 uses(RefreshDatabase::class);
+
+// IssueInvoice refuses a studio with neither identifier (§ 14 UStG), and the
+// column is nullable with no default — a studio far enough along to invoice
+// has filed one.
+beforeEach(function () {
+    app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
+});
 
 // contractProject(), renderedContract() and staffMember() live in tests/Pest.php.
 
@@ -40,6 +48,28 @@ function invoiceablePlan(): PaymentInstallment
 
     return $plan->installments()->orderBy('sort_order')->first();
 }
+
+it('refuses to issue without a Steuernummer or USt-IdNr., drawing no number', function () {
+    $settings = app(StudioSettingsResolver::class);
+    $settings->set('tax_number', null, null);
+    $settings->set('vat_id', null, null);
+
+    $installment = invoiceablePlan();
+
+    expect(fn () => app(IssueInvoice::class)($installment))
+        ->toThrow(ValidationException::class);
+
+    expect($installment->fresh()->invoice_number)->toBeNull()
+        ->and(NumberCounter::query()->where('document_type', DocumentType::Invoice->value)->exists())->toBeFalse();
+});
+
+it('issues on the USt-IdNr. alone', function () {
+    $settings = app(StudioSettingsResolver::class);
+    $settings->set('tax_number', null, null);
+    $settings->set('vat_id', 'DE123456789', null);
+
+    expect(app(IssueInvoice::class)(invoiceablePlan())->invoice_number)->not->toBeNull();
+});
 
 // --- T-15: invoice as the fourth document type --------------------------
 

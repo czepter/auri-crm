@@ -66,7 +66,7 @@ const sheet = computed(() => {
   // Schriftgrad, damit die Zeilen nicht auf halber Höhe springen, sobald
   // die eigentliche Fassung eintrifft.
   const provisional = `<style>
-    body { font: 10.5pt/1.55 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif; color: #191919; }
+    body { font: 10.5pt/1.55 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif; color: #191919; }
   </style>`
 
   return style + provisional + html.value

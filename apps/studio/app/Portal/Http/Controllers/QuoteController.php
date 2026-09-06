@@ -8,8 +8,10 @@ use App\Quotes\Data\QuoteData;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * The client's read of the quote Q-06 sent, and this story's own accept
@@ -29,7 +31,7 @@ class QuoteController extends Controller
         $contact = auth('portal')->user();
 
         $found = $contact->visibleProjects()->where('projects.public_id', $project)
-            ->with(['latestQuote.items', 'latestQuote.predecessor'])
+            ->with(['latestQuote.items', 'latestQuote.predecessor', 'latestQuote.paymentStages'])
             ->firstOrFail();
         $quote = $found->latestQuote;
 
@@ -42,6 +44,9 @@ class QuoteController extends Controller
             // half via `portal.capability:accept_quotes`. Never hides an
             // already-accepted quote — only the button that would accept one.
             'canAccept' => $settings->acceptQuotesEnabled(),
+            // Q-10: die Zahl reicht — die Kacheln zaehlen zyklisch durch und
+            // holen sich jede ihr Bild ueber ihren Index.
+            'showcaseCount' => count($settings->showcasePaths()),
             'quote' => $quote === null ? null : [
                 ...QuoteData::fromModel($quote)->toArray(),
                 // Display only — see AcceptQuote for the re-check this
@@ -51,6 +56,27 @@ class QuoteController extends Controller
                 'acceptedAt' => $quote->accepted_at?->format('Y-m-d'),
             ],
         ]);
+    }
+
+    /**
+     * Q-10: the picture on a block's tile, as the client sees it. Served
+     * through the project the contact may see rather than by path: the file
+     * itself lives beside every other tenant's under catalog/, and a
+     * guessable filename in a URL would be the whole access rule.
+     */
+    public function image(string $project, string $item): StreamedResponse
+    {
+        $contact = auth('portal')->user();
+
+        $found = $contact->visibleProjects()->where('projects.public_id', $project)
+            ->with('latestQuote.items')
+            ->firstOrFail();
+
+        $path = $found->latestQuote?->items->firstWhere('public_id', $item)?->image_path;
+
+        abort_if($path === null, 404);
+
+        return Storage::disk('local')->response($path);
     }
 
     /**
@@ -69,7 +95,23 @@ class QuoteController extends Controller
 
         abort_if($found->latestQuote === null, 404);
 
-        $accept($found->latestQuote, $contact, (string) $request->ip());
+        // Q-12: a proposal, not a decision. AcceptQuote checks the hours
+        // against the quote's own bounds and refuses a line the studio never
+        // made switchable — validating the shape here would only be a second
+        // place to keep those rules.
+        $validated = $request->validate([
+            'hours' => ['nullable', 'integer', 'min:0'],
+            'items' => ['array'],
+            'items.*' => ['string'],
+        ]);
+
+        $accept(
+            $found->latestQuote,
+            $contact,
+            (string) $request->ip(),
+            $validated['hours'] ?? null,
+            $validated['items'] ?? [],
+        );
 
         return back();
     }

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+import { router, useForm } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -15,10 +15,13 @@ const props = withDefaults(defineProps<{
   // Absent during first-run setup: the pair is fine-tuning, not a thing a
   // studio has to decide before it can work.
   fontPairs?: { value: string; label: string; description: string }[]
-  // The settings screen shows one fieldset per nav entry; onboarding still
-  // collects all three in a single step, so the default is all of them.
+  // The settings screen shows one fieldset per nav entry.
   sections?: Section[]
-}>(), { fontPairs: () => [], sections: () => ['legal', 'brand', 'bank'] })
+  // First run asks for the studio's identity and stops there. Steuernummer,
+  // USt-ID and the register pair are what an invoice carries — the first
+  // invoice is early enough to ask for them.
+  firstRun?: boolean
+}>(), { fontPairs: () => [], sections: () => ['legal', 'brand', 'bank'], firstRun: false })
 const emit = defineEmits<{ saved: [] }>()
 
 // A pane sends only its own fields. tax_number/vat_id are required_without
@@ -31,7 +34,11 @@ const SECTION_FIELDS: Record<Section, string[]> = {
   bank: ['bank_account_holder', 'bank_iban', 'bank_bic'],
 }
 
-const shows = (section: Section) => props.sections.includes(section)
+const FIRST_RUN_SECTIONS: Section[] = ['legal', 'brand']
+const FIRST_RUN_OMITS = ['tax_number', 'vat_id', 'register_number', 'register_court', 'website', 'logo', 'accent_color']
+
+const shownSections = computed(() => (props.firstRun ? FIRST_RUN_SECTIONS : props.sections))
+const shows = (section: Section) => shownSections.value.includes(section)
 
 const form = useForm({
   display_name: props.settings.displayName ?? '',
@@ -48,7 +55,7 @@ const form = useForm({
   representative: props.settings.representative ?? '',
   website: props.settings.website ?? '',
   accent_color: props.settings.accentColor ?? '',
-  font_pair: props.settings.fontPair ?? 'instrument',
+  font_pair: props.settings.fontPair ?? 'hanken',
   logo: null as File | null,
   bank_account_holder: props.settings.bankAccountHolder ?? '',
   bank_iban: props.settings.bankIban ?? '',
@@ -71,8 +78,26 @@ function onLogoChange(event: Event) {
   form.logo = (event.target as HTMLInputElement).files?.[0] ?? null
 }
 
+// Q-10: eigener Weg, nicht Teil des Profil-Formulars. Ein Satz waechst und
+// schrumpft; das Logo wird ersetzt.
+function onShowcaseChange(event: Event) {
+  const file = (event.target as HTMLInputElement).files?.[0]
+
+  if (!file) return
+
+  router.post('/einstellungen/schaufenster', { image: file }, { preserveScroll: true, forceFormData: true })
+}
+
+function removeShowcase(index: number) {
+  router.delete(`/einstellungen/schaufenster/${index}`, { preserveScroll: true })
+}
+
 function submit() {
-  const sent = new Set<string>(props.sections.flatMap((section) => SECTION_FIELDS[section]))
+  const sent = new Set<string>(shownSections.value.flatMap((section) => SECTION_FIELDS[section]))
+
+  if (props.firstRun) {
+    FIRST_RUN_OMITS.forEach((field) => sent.delete(field))
+  }
 
   // Inertia's own documented workaround: a browser cannot send a real PUT
   // or PATCH as multipart/form-data, so a file upload goes over POST with
@@ -91,7 +116,7 @@ defineExpose({ form, submit })
 <template>
   <form id="settings-form" @submit.prevent="submit">
     <div v-if="shows('legal')" class="mt-8 first:mt-0">
-      <div v-if="sections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.legalEntity') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.legalEntity') }}</div>
       <div class="mb-6">
         <Field :label="$t('settings.legalName')" id="p-firma" wide :error="form.errors.legal_name">
           <Input id="p-firma" v-model="form.legal_name" type="text" />
@@ -149,7 +174,7 @@ defineExpose({ form, submit })
           </Select>
         </Field>
       </div>
-      <div class="mb-6">
+      <div v-if="!firstRun" class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.taxNumber')" id="p-steuernr" :error="form.errors.tax_number">
             <Input id="p-steuernr" v-model="form.tax_number" class="tabular-nums" type="text" />
@@ -161,7 +186,7 @@ defineExpose({ form, submit })
         </div>
         <span class="text-[11.5px] leading-[1.45] text-faint">{{ $t('settings.taxHint') }}</span>
       </div>
-      <div class="mb-6">
+      <div v-if="!firstRun" class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.registerNumber')" id="p-hrb" :error="form.errors.register_number">
             <Input id="p-hrb" v-model="form.register_number" class="tabular-nums" type="text" />
@@ -174,13 +199,13 @@ defineExpose({ form, submit })
     </div>
 
     <div v-if="shows('brand')" class="mt-8 first:mt-0">
-      <div v-if="sections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.brand') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.brand') }}</div>
       <div class="mb-6">
-        <div class="grid grid-cols-2 gap-4">
+        <div :class="firstRun ? '' : 'grid grid-cols-2 gap-4'">
           <Field :label="$t('settings.displayName')" id="p-anzeigename" :error="form.errors.display_name">
             <Input id="p-anzeigename" v-model="form.display_name" type="text" />
           </Field>
-          <Field :label="$t('settings.website')" id="p-web" :error="form.errors.website">
+          <Field v-if="!firstRun" :label="$t('settings.website')" id="p-web" :error="form.errors.website">
             <InputGroup>
               <InputGroupAddon>https://</InputGroupAddon>
               <InputGroupInput id="p-web" v-model="websiteHost" type="text" />
@@ -188,7 +213,7 @@ defineExpose({ form, submit })
           </Field>
         </div>
       </div>
-      <div class="mb-6">
+      <div v-if="!firstRun" class="mb-6">
         <div class="grid grid-cols-2 gap-4">
           <Field :label="$t('settings.logo')" id="p-logo" :error="form.errors.logo" :hint="$t('settings.logoHint')">
             <div style="display: flex; align-items: center; gap: var(--s3)">
@@ -199,6 +224,26 @@ defineExpose({ form, submit })
               <Input id="p-logo" type="file" accept="image/png" style="flex: 1" @change="onLogoChange" />
             </div>
           </Field>
+          <Field
+            wide
+            :label="$t('settings.showcase')"
+            id="p-schaufenster"
+            :hint="$t('settings.showcaseHint')"
+          >
+            <div class="flex flex-wrap items-center gap-2">
+              <div v-for="(url, index) in settings.showcaseUrls" :key="url" class="relative">
+                <img class="size-14 rounded-[6px] object-cover" :src="url" alt="" />
+                <button
+                  class="absolute -top-1.5 -right-1.5 flex size-5 cursor-pointer items-center justify-center rounded-full bg-sunk-2 text-[11px] leading-none"
+                  type="button"
+                  :aria-label="$t('common.remove')"
+                  @click="removeShowcase(index)"
+                >×</button>
+              </div>
+              <Input id="p-schaufenster" class="max-w-[240px]" type="file" accept="image/png,image/jpeg" @change="onShowcaseChange" />
+            </div>
+          </Field>
+
           <Field :label="$t('settings.accentColor')" id="p-akzent" :error="form.errors.accent_color">
             <InputGroup>
               <InputGroupAddon>
@@ -207,7 +252,7 @@ defineExpose({ form, submit })
                   :style="{ background: form.accent_color || 'transparent' }"
                 />
               </InputGroupAddon>
-              <InputGroupInput id="p-akzent" v-model="form.accent_color" class="tabular-nums" type="text" placeholder="#B44E22" />
+              <InputGroupInput id="p-akzent" v-model="form.accent_color" class="tabular-nums" type="text" placeholder="#1C6870" />
             </InputGroup>
           </Field>
         </div>
@@ -237,7 +282,7 @@ defineExpose({ form, submit })
     </div>
 
     <div v-if="shows('bank')" class="mt-8 first:mt-0">
-      <div v-if="sections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.bank') }}</div>
+      <div v-if="shownSections.length > 1" class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.bank') }}</div>
       <div class="mb-6">
         <Field :label="$t('settings.bankAccountHolder')" id="p-kontoinhaber" wide :error="form.errors.bank_account_holder">
           <Input id="p-kontoinhaber" v-model="form.bank_account_holder" type="text" />

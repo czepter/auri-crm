@@ -10,8 +10,10 @@ use App\Numbering\Enums\DocumentType;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Jobs\RenderInvoiceJob;
 use App\Payments\Models\PaymentInstallment;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * M-06's "Fällig stellen": one installment becomes one invoice.
@@ -33,15 +35,30 @@ use Illuminate\Support\Facades\DB;
  * A paid installment can still be invoiced: transfers arrive before paperwork
  * more often than the other way round, and refusing would leave the studio
  * with a settled payment it cannot document.
+ *
+ * What it does refuse is a studio with neither Steuernummer nor USt-IdNr.:
+ * § 14 UStG requires one of them, and both starter invoices render the pair.
+ * Neither is asked for during first-run setup — this is where they fall due.
  */
 class IssueInvoice
 {
-    public function __construct(private readonly AllocateDocumentNumber $allocate) {}
+    public function __construct(
+        private readonly AllocateDocumentNumber $allocate,
+        private readonly StudioSettingsResolver $settings,
+    ) {}
 
     public function __invoke(PaymentInstallment $installment, ?User $actor = null): PaymentInstallment
     {
         if ($installment->isInvoiced()) {
             return $installment;
+        }
+
+        // Ahead of the transaction: a number drawn for a document that cannot
+        // be issued would leave a gap in the tenant's invoice sequence.
+        $studio = $this->settings->attributes();
+
+        if (blank($studio['tax_number']) && blank($studio['vat_id'])) {
+            throw ValidationException::withMessages(['invoice' => __('payments.taxIdentifierMissing')]);
         }
 
         $template = DocumentTemplate::query()

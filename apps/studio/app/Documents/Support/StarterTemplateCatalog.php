@@ -75,16 +75,25 @@ class StarterTemplateCatalog
     }
 
     /**
-     * The set T-18's onboarding step pre-ticks: one document of each kind a
-     * studio cannot trade without, and the two mails it will send in the first
-     * week. Variants are offered but never pre-ticked — a studio that shoots
-     * no weddings should not finish onboarding with a wedding quote.
+     * The set the wizard writes on finish: one document of each kind a studio
+     * cannot trade without, and the two mails it will send in the first week.
+     * Variants stay out — a studio that shoots no weddings should not finish
+     * onboarding with a wedding quote.
+     *
+     * The invoice is the exception, because the two variants are not a matter
+     * of taste: a Kleinunternehmer's invoice must not show a VAT line at all.
      *
      * @return list<string>
      */
-    public static function onboardingDefaults(): array
+    public static function onboardingDefaults(string $vatMode): array
     {
-        return ['quote-generic', 'contract-werkvertrag', 'invoice-standard', 'mail-quote-sent', 'mail-booking-confirmed'];
+        return [
+            'quote-generic',
+            'contract-werkvertrag',
+            $vatMode === 'small_business' ? 'invoice-small-business' : 'invoice-standard',
+            'mail-quote-sent',
+            'mail-booking-confirmed',
+        ];
     }
 
     /**

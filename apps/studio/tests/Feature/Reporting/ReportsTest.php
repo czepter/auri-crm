@@ -67,15 +67,20 @@ it('keys the booking rate on capture, so a month cannot exceed 100%', function (
 });
 
 it('counts a lead lost without a reason in the funnel and leaves it out of the breakdown', function () {
-    Lead::factory()->create(['lost_at' => now(), 'lost_reason' => 'Budget', 'stage' => LeadStage::New]);
-    Lead::factory()->create(['lost_at' => now(), 'lost_reason' => null, 'stage' => LeadStage::New]);
+    Lead::factory()->lost()->create(['stage' => LeadStage::New]);
+    Lead::factory()->lost(reason: '')->create(['lost_reason' => null, 'stage' => LeadStage::New]);
 
     $reasons = BookingFunnel::lostReasons(now()->subYear(), now());
     $captured = collect(BookingFunnel::byMonth(now()->subYear(), now()))->sum('captured');
 
     expect($captured)->toBe(2)
         ->and($reasons)->toHaveCount(1)
-        ->and($reasons[0])->toBe(['reason' => 'Budget', 'count' => 1]);
+        ->and($reasons[0])->toBe([
+            'outcome' => 'lost',
+            'outcomeLabel' => 'Verloren',
+            'reason' => 'Budget',
+            'count' => 1,
+        ]);
 });
 
 it('labels each source from the enum rather than echoing the column', function () {

@@ -11,7 +11,9 @@ use App\Crm\Models\Project;
 use App\Models\User;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Quotes\Support\QuoteRange;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Number;
 
 /**
  * Mockup 01's *Anfragen & Angebote* column: what the studio owes on an offer
@@ -67,7 +69,7 @@ class ReadInquiryColumn
                 'project_id',
                 Project::query()->visibleTo($viewer)->select('projects.id'),
             ))
-            ->with('project')
+            ->with(['project', 'items'])
             ->orderBy('valid_until')
             ->get()
             ->map(function (Quote $quote) {
@@ -80,7 +82,7 @@ class ReadInquiryColumn
                 return new DomainRowData(
                     projectId: $quote->project->public_id,
                     who: $quote->project->name,
-                    what: 'Angebot still,',
+                    what: $this->worth($quote).' still,',
                     emphasis: 'läuft '.$quote->valid_until->format('d.m.').' ab',
                     whatTail: sprintf('· %d× erinnert, keine Reaktion', $nudges),
                     action: RowActionData::tel('Anrufen', $quote->project->primaryContact()?->phone),
@@ -89,6 +91,30 @@ class ReadInquiryColumn
             })
             ->filter()
             ->values();
+    }
+
+    /**
+     * Q-15: what the row calls the offer. A quote with a slider has no sum
+     * before it is accepted, it has a range — computed from the same
+     * configuration every time rather than kept in a second column that
+     * would part ways with the first the moment somebody edits a block.
+     */
+    private function worth(Quote $quote): string
+    {
+        if (! $quote->hasSlider()) {
+            return 'Angebot';
+        }
+
+        return sprintf(
+            'Angebot %s–%s',
+            $this->money(QuoteRange::min($quote)),
+            $this->money(QuoteRange::max($quote)),
+        );
+    }
+
+    private function money(int $minorUnits): string
+    {
+        return Number::currency($minorUnits / 100, in: 'EUR', locale: 'de', precision: 0);
     }
 
     /**

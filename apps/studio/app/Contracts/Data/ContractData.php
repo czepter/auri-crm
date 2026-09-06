@@ -29,6 +29,9 @@ class ContractData extends Data
         public ?string $renderedAt,
         public ?string $sentAt,
         public ?string $downloadUrl,
+        // E-16: bis wann unterschrieben sein soll. Anker der Automations-
+        // regel „Nachfassen vor Ablauf“ und sonst nirgends abgeleitet.
+        public ?string $signDeadlineOn,
         public array $signers,
     ) {}
 
@@ -49,6 +52,7 @@ class ContractData extends Data
             renderedAt: $contract->rendered_at?->toIso8601String(),
             sentAt: $contract->sent_at?->toIso8601String(),
             downloadUrl: $contract->hasArtifact() ? $downloadUrl : null,
+            signDeadlineOn: $contract->sign_deadline_on?->format('Y-m-d'),
             signers: $contract->signers->map(
                 fn ($signer) => ContractSignerData::fromModel($signer, $roles[$signer->contact_id] ?? null)
             )->values()->all(),

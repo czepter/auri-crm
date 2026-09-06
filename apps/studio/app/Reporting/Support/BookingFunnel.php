@@ -133,19 +133,28 @@ class BookingFunnel
      * field nobody filled in would make the breakdown look complete when it
      * is not.
      *
-     * @return list<array{reason: string, count: int}>
+     * T-20 split the outcome off the free text, so the breakdown groups by it
+     * too: a booking the studio itself declined is not a lost one, and the
+     * two counted together read as a worse quota than the studio has.
+     *
+     * @return list<array{outcome: string, outcomeLabel: string, reason: string, count: int}>
      */
     public static function lostReasons(Carbon $from, Carbon $to): array
     {
         return Lead::query()
-            ->select('lost_reason', DB::raw('count(*) as count'))
-            ->whereNotNull('lost_at')
+            ->select('outcome', 'lost_reason', DB::raw('count(*) as count'))
+            ->whereNotNull('outcome')
             ->whereNotNull('lost_reason')
             ->whereBetween('created_at', [$from, $to])
-            ->groupBy('lost_reason')
+            ->groupBy('outcome', 'lost_reason')
             ->orderByDesc('count')
             ->get()
-            ->map(fn ($row) => ['reason' => $row->lost_reason, 'count' => (int) $row->count])
+            ->map(fn ($row) => [
+                'outcome' => $row->outcome->value,
+                'outcomeLabel' => $row->outcome->label(),
+                'reason' => $row->lost_reason,
+                'count' => (int) $row->count,
+            ])
             ->all();
     }
 }

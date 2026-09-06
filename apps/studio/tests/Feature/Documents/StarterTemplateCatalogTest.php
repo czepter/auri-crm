@@ -146,7 +146,7 @@ it('repeats neither the signature nor the legal footer in a mail starter', funct
 });
 
 it('pre-ticks a default set that exists and covers the trading documents', function () {
-    $defaults = StarterTemplateCatalog::onboardingDefaults();
+    $defaults = StarterTemplateCatalog::onboardingDefaults('standard');
 
     foreach ($defaults as $key) {
         expect(StarterTemplateCatalog::find($key))->not->toBeNull("unknown default: {$key}");
@@ -159,6 +159,12 @@ it('pre-ticks a default set that exists and covers the trading documents', funct
     // A studio that shoots no weddings should not finish onboarding with a
     // wedding quote.
     expect($defaults)->not->toContain('quote-wedding');
+});
+
+it('swaps the invoice for the Kleinunternehmer variant', function () {
+    expect(StarterTemplateCatalog::onboardingDefaults('small_business'))
+        ->toContain('invoice-small-business')
+        ->not->toContain('invoice-standard');
 });
 
 // --- the serializer the seeding path depends on -------------------------

@@ -3,6 +3,7 @@
 namespace Database\Factories\Crm;
 
 use App\Crm\Enums\CaptureChannel;
+use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Models\Lead;
@@ -40,11 +41,12 @@ class LeadFactory extends Factory
         ]);
     }
 
-    public function lost(string $reason = 'Budget'): static
+    public function lost(string $reason = 'Budget', LeadOutcome $outcome = LeadOutcome::Lost): static
     {
         return $this->state(fn () => [
             'lost_at' => now(),
             'lost_reason' => $reason,
+            'outcome' => $outcome,
         ]);
     }
 }
