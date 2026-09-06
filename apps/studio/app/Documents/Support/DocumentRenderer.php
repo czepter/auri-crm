@@ -45,7 +45,7 @@ class DocumentRenderer
      *
      * Gotenberg rendert in einem eigenen Container und käme an /fonts nicht
      * heran; eine URL wäre je nach Umgebung mal erreichbar und mal nicht,
-     * und ein Vertrag, der beim einen Lauf in Instrument Sans und beim
+     * und ein Vertrag, der beim einen Lauf in Hanken Grotesk und beim
      * nächsten in DejaVu gesetzt ist, ist kein Beleg mehr, den man
      * wiedererkennt. Latin und Latin-Ext, weil die deutsche Typografie
      * (Gedankenstrich, ‚Anführung', ﬁ) im zweiten Schnitt liegt.
@@ -57,7 +57,7 @@ class DocumentRenderer
     {
         $faces = '';
 
-        foreach (['instrument-sans-latin', 'instrument-sans-latin-ext'] as $file) {
+        foreach (['hanken-grotesk-latin', 'hanken-grotesk-latin-ext'] as $file) {
             $path = public_path("fonts/{$file}.woff2");
 
             if (! is_readable($path)) {
@@ -66,7 +66,7 @@ class DocumentRenderer
 
             $data = base64_encode((string) file_get_contents($path));
 
-            $faces .= "@font-face{font-family:'Instrument Sans';font-style:normal;font-weight:400 700;"
+            $faces .= "@font-face{font-family:'Hanken Grotesk';font-style:normal;font-weight:400 700;"
                 ."src:url(data:font/woff2;base64,{$data}) format('woff2');}";
         }
 
@@ -91,7 +91,7 @@ class DocumentRenderer
           body {
             counter-reset: doc-clause;
             margin: 0;
-            font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
             font-size: 10.5pt;
             line-height: 1.55;
             color: #191919;

@@ -53,7 +53,7 @@ it('sets the paper typography once, in the file that goes to Gotenberg and to th
     $html = (new DocumentRenderer)->wrap(DocumentTemplateType::Contract, '<p>Vertragstext</p>', new StudioSettingsResolver);
 
     expect($html)->toContain('font-size: 10.5pt')
-        ->and($html)->toContain("font-family: 'Instrument Sans'")
+        ->and($html)->toContain("font-family: 'Hanken Grotesk'")
         ->and($html)->toContain('lang="de"');
 });
 
@@ -61,7 +61,7 @@ it('embeds the house face rather than linking it — Gotenberg cannot reach /fon
     $html = (new DocumentRenderer)->wrap(DocumentTemplateType::Contract, '<p>Vertragstext</p>', new StudioSettingsResolver);
 
     expect($html)->toContain('src:url(data:font/woff2;base64,')
-        ->and($html)->not->toContain('/fonts/instrument-sans-latin.woff2');
+        ->and($html)->not->toContain('/fonts/hanken-grotesk-latin.woff2');
 });
 
 it('keeps a mail free of the paper stylesheet, where a page size means nothing', function () {

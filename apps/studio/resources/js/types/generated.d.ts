@@ -778,7 +778,7 @@ leadChannelPresets: string[],
 };
 }
 namespace Enums {
-export type FontPair = 'instrument' | 'fraunces' | 'cormorant' | 'grotesk';
+export type FontPair = 'hanken' | 'fraunces' | 'cormorant' | 'grotesk';
 }
 }
 }

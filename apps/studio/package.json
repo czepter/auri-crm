@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@inertiajs/core": "^2.3.27",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@playwright/test": "^1.49.0",
     "@tailwindcss/vite": "^4.0.0",
     "@types/qrcode": "^1.5.6",

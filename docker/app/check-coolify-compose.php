@@ -2,10 +2,11 @@
 
 /**
  * Checks docker-compose.coolify.yml against the rules Coolify's compose parser
- * enforces but never reports. Every one of these fails silently: the stack
- * deploys, the containers start, and a variable is empty or a domain points at
- * the wrong container. Run by .github/workflows/release-image.yml before the
- * image is built.
+ * enforces but never reports (1-4), and the one this app enforces on itself
+ * (5). Every one of them fails silently: the stack deploys, the containers
+ * start, and a variable is empty, a domain points at the wrong container, or a
+ * mail carries the wrong host. Run by .github/workflows/release-image.yml
+ * before the image is built.
  *
  * Deliberately a text scan rather than a YAML parse: rule 3 is about the order
  * keys appear in, and every parser — including `docker compose config`, which
@@ -19,6 +20,8 @@ $errors = [];
 $service = null;
 $declaredOwnFqdn = [];
 $referencedFqdn = [];
+$surface = [];
+$appUrl = [];
 
 foreach ($lines as $i => $line) {
     $no = $i + 1;
@@ -57,6 +60,14 @@ foreach ($lines as $i => $line) {
     [, $key, $value] = $m;
     $value = trim($value);
 
+    if ($key === 'APP_SURFACE') {
+        $surface[$service] = $value;
+    }
+
+    if ($key === 'APP_URL') {
+        $appUrl[$service] = [$no, $value];
+    }
+
     // Rule 2: a SERVICE_* variable is only generated when it is the whole value.
     // shared.php gates on `$value?->startsWith('$')`, so a prefix, a suffix or a
     // second reference in the same value leaves it ungenerated and empty.
@@ -80,8 +91,25 @@ foreach ($lines as $i => $line) {
     }
 }
 
+// Rule 5: a container composes links for the surface it boots (App\Support\Surface),
+// so its APP_URL is that surface's own domain — links onto another surface name
+// their host separately (PORTAL_URL, GALLERY_URL). Pointing APP_URL at a foreign
+// surface fails as silently as the rest: the mail sends, and the link in it is
+// simply the wrong host.
+foreach ($appUrl as $name => [$no, $value]) {
+    if (! isset($surface[$name])) {
+        continue;
+    }
+
+    $expected = '${SERVICE_FQDN_'.strtoupper($surface[$name]).'}';
+
+    if ($value !== $expected) {
+        $errors[] = "$no: $name.APP_URL = $value but APP_SURFACE is {$surface[$name]} — expected $expected.";
+    }
+}
+
 if ($errors !== []) {
-    fwrite(STDERR, "docker-compose.coolify.yml violates Coolify's parser rules:\n\n");
+    fwrite(STDERR, "docker-compose.coolify.yml breaks rules that fail silently at deploy:\n\n");
     foreach ($errors as $error) {
         fwrite(STDERR, "  $error\n");
     }

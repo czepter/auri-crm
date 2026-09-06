@@ -2,11 +2,10 @@
  *
  * Zwei Entscheidungen tragen alles andere:
  *
- * 1. Instrument Serif als Display über dem vorhandenen Instrument Sans.
- *    Keine fremde Hochzeitsschrift dazugekauft — es ist die Serif-Schwester
- *    der Familie, die das Produkt schon lädt. Sie darf groß werden (56–84px)
- *    und tritt sonst nirgends auf. Der Sprung von 13px Meta auf 72px Display
- *    ist der Unterschied zwischen "Formular" und "Buch".
+ * 1. Eine Grotesk, Hanken, für Display und Text gleich. Keine Serif mehr —
+ *    ein zweiter Schnitt an einer Stelle, wo die Größe (13px Meta gegen
+ *    86px Display) die Hierarchie schon allein trägt, wäre die zweite
+ *    Markierung derselben Sache.
  *
  * 2. Weiß. Hier stand vorher ein warmes #FBF8F5 mit der Begründung, Reinweiß
  *    lasse warme Fotos vergilbt wirken. Der Effekt ist real, seine
@@ -19,40 +18,43 @@
  *
  *    Die Werte kommen aus dem Bestand: --bg, --ink und --line des Produkts.
  *
- * Der Rostton bleibt aus dem Bestand (#B44E22, hier eine Spur tiefer), wird
- * aber vom Flächenfarbton zum Signal: er erscheint nur dort, wo der Kunde
- * etwas tun muss oder etwas offen ist.
+ * Der Akzent, ein kühles Petrol, ist kein Flächenfarbton mehr, sondern ein
+ * Signal: er erscheint nur dort, wo der Kunde etwas tun muss oder etwas
+ * offen ist.
  */
 
 @import url('../_shared/fonts.css');
 
 :root {
-  --sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
-  --serif: 'Instrument Serif', ui-serif, Georgia, serif;
+  --sans: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+  /* Gleiche Familie wie --sans — die Display-Regeln unten setzen eigene
+     Gewichte und Größen, keine zweite Schriftfamilie. */
+  --serif: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
 
   /* Fläche */
   --paper: #FFFFFF;
-  --sunk: #F4F4F3;
+  --sunk: #F0F3F5;
   /* Zwei Stimmen für Text, nicht drei. Die Rampe Fast-Schwarz / Mittelgrau /
      Hellgrau ist die Voreinstellung jedes Generators, und ihre dritte Stufe
      war hier mit 2,83:1 auf Weiß ohnehin unlesbar — gesetzt waren damit
      ausgerechnet die kleinsten Texte, 11px-Kicker und 12,5px-Hinweise.
      Hierarchie macht in diesem Entwurf die Größe: 11px Versalien gegen 86px
-     Serif. Eine dritte Graustufe wäre die dritte Markierung derselben Sache.
+     Display. Eine dritte Graustufe wäre die dritte Markierung derselben
+     Sache.
 
      --mark ist kein Textwert, aber auch kein Ornament: der Statuspunkt sagt
      offen oder erledigt. Deshalb der hellste Neutralton, der auf beiden
-     Flächen noch 3:1 schafft — #8D8D89, gerechnet gegen --sunk, nicht gegen
+     Flächen noch 3:1 schafft — #96A0AD, gerechnet gegen --sunk, nicht gegen
      Weiß, weil die Zeilen beim Überfahren absinken. */
-  --ink: #191919;
-  --ink-2: #5C5C58;
-  --mark: #8D8D89;
-  --line: #E9E9E7;
-  --line-2: #DCDCD9;
+  --ink: #151A22;
+  --ink-2: #626B78;
+  --mark: #96A0AD;
+  --line: #E2E7EB;
+  --line-2: #CFD6DB;
 
-  --accent: #B4462A;
-  --accent-ink: #FFF6F2;
-  --accent-soft: #FBE9E2;
+  --accent: #1C6870;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E7F1F2;
   --good: #3F6B4A;
 
   /* Dunkel — Galerie */
