@@ -13,7 +13,11 @@ use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Gallery\Actions\EnsureGalleryCover;
+use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
+use App\Media\Enums\AssetStatus;
+use App\Media\Models\Asset;
 use App\Models\User;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Enums\SettledVia;
@@ -22,6 +26,8 @@ use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * Data for the auri-crm-site screenshot captures — written to be shown
@@ -30,6 +36,10 @@ use Illuminate\Support\Facades\DB;
  */
 class MarketingScreenshotSeeder extends Seeder
 {
+    private const IMAGE_WIDTH = 1200;
+
+    private const IMAGE_HEIGHT = 800;
+
     public function run(): void
     {
         if (app()->isProduction()) {
@@ -68,7 +78,8 @@ class MarketingScreenshotSeeder extends Seeder
     private function seedBookedWedding(User $staff): void
     {
         $project = Project::create(['name' => 'Melissa & Jan Ahrens', 'type' => ProjectType::Wedding]);
-        $project->attachContact(Contact::factory()->create(['name' => 'Melissa Ahrens']), ProjectContactRole::Primary);
+        $melissa = Contact::factory()->create(['name' => 'Melissa Ahrens']);
+        $project->attachContact($melissa, ProjectContactRole::Primary);
         $project->attachContact(Contact::factory()->create(['name' => 'Jan Ahrens']), ProjectContactRole::Partner);
 
         Shoot::create([
@@ -128,6 +139,75 @@ class MarketingScreenshotSeeder extends Seeder
             ]);
         });
 
-        Gallery::factory()->for($project)->create(['title' => 'Melissa & Jan'])->publish();
+        $gallery = Gallery::factory()->for($project)->create(['title' => 'Melissa & Jan']);
+        $photoKeys = $this->seedGalleryPhotos($gallery);
+        $version = $gallery->publish();
+
+        foreach (array_slice($photoKeys, 0, 2) as $key) {
+            AssetFavorite::create([
+                'gallery_version_id' => $version->id,
+                'asset_key' => $key,
+                'guest_identifier' => (string) Str::uuid(),
+                'contact_id' => $melissa->id,
+            ]);
+        }
+    }
+
+    /**
+     * Placeholder photos so the gallery grid and detail screenshots have
+     * something real to show — same approach as E2eSeeder::seedGallery(),
+     * since GalleryImageController serves derivatives off real s3 bytes and
+     * a gallery with rows but no objects is broken tiles, not an empty state.
+     *
+     * @return list<string> the asset keys, in gallery order
+     */
+    private function seedGalleryPhotos(Gallery $gallery): array
+    {
+        $disk = Storage::disk('s3');
+        $set = $gallery->sets()->first();
+        $keys = [];
+
+        foreach (range(1, 7) as $index) {
+            $key = "galleries/marketing/{$gallery->public_id}/{$index}.jpg";
+            $bytes = self::flatJpeg($index);
+            $disk->put($key, $bytes);
+
+            Asset::create([
+                'gallery_id' => $gallery->id,
+                'gallery_set_id' => $set->id,
+                'status' => AssetStatus::Ready,
+                'key' => $key,
+                'filename' => basename($key),
+                'byte_size' => strlen($bytes),
+                'width' => self::IMAGE_WIDTH,
+                'height' => self::IMAGE_HEIGHT,
+            ]);
+
+            $keys[] = $key;
+        }
+
+        app(EnsureGalleryCover::class)($gallery->refresh());
+
+        return $keys;
+    }
+
+    /** One flat colour per index — a photograph would tie a pixel baseline to a JPEG encoder's version. */
+    private static function flatJpeg(int $index): string
+    {
+        $image = imagecreatetruecolor(self::IMAGE_WIDTH, self::IMAGE_HEIGHT);
+        imagefilledrectangle(
+            $image,
+            0,
+            0,
+            self::IMAGE_WIDTH,
+            self::IMAGE_HEIGHT,
+            imagecolorallocate($image, 30 + $index * 25, 60 + $index * 10, 90),
+        );
+
+        ob_start();
+        imagejpeg($image, null, 82);
+        imagedestroy($image);
+
+        return (string) ob_get_clean();
     }
 }
