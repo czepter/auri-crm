@@ -264,6 +264,15 @@ Route::prefix('galerien/{gallery}')->group(function () {
         Route::get('/download', [GalleryDownloadController::class, 'show'])->name('gallery.download.show');
         Route::post('/download/pin', [GalleryDownloadController::class, 'storePin'])->name('gallery.download.pin');
 
+        // The "Herunterladen" mail's own link (GalleryZipReady) — a stored,
+        // expiring token rather than the bare path show() answers to from
+        // ordinary in-gallery navigation, so a forwarded or leaked copy of
+        // the mail stops working once GalleryDownloadLink::VALID_FOR_DAYS
+        // passes. Same gates as show() apply after the redirect; this only
+        // bounds how long the mail's own link works, not the archive.
+        Route::get('/download/mail/{token}', [GalleryDownloadController::class, 'openFromMail'])
+            ->name('gallery.download.mail');
+
         // G-03 (#231): "Bilder vorbereiten". Queues BuildGalleryZip for one
         // selection at one size, or does nothing when a fresh archive of the
         // same request already stands.

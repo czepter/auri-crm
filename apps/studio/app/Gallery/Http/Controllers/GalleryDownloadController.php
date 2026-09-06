@@ -5,6 +5,7 @@ namespace App\Gallery\Http\Controllers;
 use App\Gallery\Actions\ConsumeGalleryEmailVerification;
 use App\Gallery\Actions\RequestGalleryEmailVerification;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryDownloadLink;
 use App\Gallery\Models\GalleryGuest;
 use App\Gallery\Models\GalleryList;
 use App\Gallery\Models\GalleryVersion;
@@ -82,6 +83,21 @@ class GalleryDownloadController extends Controller
                 ? $this->builds($request, $gallery, $version)
                 : [],
         ]);
+    }
+
+    /**
+     * The "Herunterladen" mail's own entry point (IssueGalleryDownloadLink).
+     * Only checks the token; the PIN/email gates on this route group apply
+     * exactly as they do to a guest who found show() by ordinary navigation.
+     */
+    public function openFromMail(Gallery $gallery, string $token): RedirectResponse
+    {
+        abort_unless(
+            GalleryDownloadLink::forToken($token)?->gallery_id === $gallery->id,
+            404,
+        );
+
+        return redirect()->route('gallery.download.show', ['gallery' => $gallery->public_id]);
     }
 
     /**
