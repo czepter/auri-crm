@@ -10,9 +10,11 @@ recipientLabel: string,
 condition: string | null,
 conditionLabel: string | null,
 isActive: boolean,
-lastRunAt: string | null,
+lastRunLabel: string | null,
 subject: string,
 body: string,
+triggerType: string,
+eventLabel: string | null,
 anchor: string | null,
 offsetDays: number | null,
 direction: string | null,
@@ -20,9 +22,9 @@ direction: string | null,
 export type AutomationRunData = {
 id: string,
 firedAt: string,
+anchorLabel: string,
 status: string,
 statusLabel: string,
-error: string | null,
 };
 }
 namespace Enums {

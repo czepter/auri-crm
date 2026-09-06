@@ -1,20 +1,21 @@
 <script setup lang="ts">
 /*
- * Eine Regel: Anker, Abstand, Empfänger, Bedingung und der Text. Rechts die
- * Vorschau im Wortlaut, mit dem sie zugestellt würde, und die letzten Läufe
- * — „Übersprungen“ ist dort eine Antwort und kein Ausfall.
+ * Eine Regel: Auslöser, Bedingung, Nachricht. Rechts die Vorschau im
+ * Mail-Layout des Studios und die letzten Läufe — „Übersprungen“ ist dort
+ * eine Antwort und kein Ausfall.
+ *
+ * Keine Einstellungs-Spalte: eine Regel ist ein Datensatz mit eigenem Kopf,
+ * kein Feld auf einer Fläche.
  */
 import { computed } from 'vue'
-import { router, useForm } from '@inertiajs/vue3'
+import { router, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import PageHead from '@/ui/page/PageHead.vue'
-import SettingsNav from '@/admin/components/SettingsNav.vue'
 import { Button } from '@/ui/button'
-import { Checkbox } from '@/ui/checkbox'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
-import { Label } from '@/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { Switch } from '@/ui/switch'
 import { Textarea } from '@/ui/textarea'
 
 type Option = { value: string; label: string }
@@ -30,9 +31,12 @@ const props = defineProps<{
 
 const NO_CONDITION = 'none'
 
+const dated = computed(() => props.rule.triggerType === 'date_offset')
+const brand = computed(() => String(usePage().props.brand ?? ''))
+
 const form = useForm({
   name: props.rule.name,
-  anchor: props.rule.anchor ?? 'per_shoot',
+  anchor: props.rule.anchor,
   offset_days: props.rule.offsetDays ?? 0,
   direction: props.rule.direction ?? 'before',
   recipient_type: props.rule.recipient,
@@ -42,8 +46,8 @@ const form = useForm({
   is_active: props.rule.isActive,
 })
 
-// Die Vorschau rechnet mit denselben Beispielwerten wie der Server; ein
-// unbekanntes Feld bleibt stehen, wie es geschrieben wurde.
+// Dieselben Beispielwerte, gegen die der Server rendert; ein unbekanntes Feld
+// bleibt stehen, wie es geschrieben wurde.
 const samples = computed(() => Object.fromEntries(props.mergeFields.map((f) => [f.path, f.sample])))
 
 function render(text: string) {
@@ -61,125 +65,172 @@ function remove() {
 function insert(path: string) {
   form.notification_body = `${form.notification_body}{{ ${path} }}`
 }
+
+function chipClass(status: string): string {
+  return ({ sent: 'done', failed: 'fail', skipped: 'off' } as Record<string, string>)[status] ?? 'now'
+}
 </script>
 
 <template>
   <AdminLayout active="einstellungen">
     <div data-tokens>
-      <PageHead :kicker="$t('automations.title')" :title="rule.name" />
+      <PageHead :kicker="$t('automations.title')" :title="rule.name">
+        <span
+          v-if="form.isDirty"
+          class="ml-auto flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due"
+        >{{ $t('settings.unsaved') }}</span>
+        <Button :class="form.isDirty ? '' : 'ml-auto'" type="button" :disabled="form.processing" @click="save">
+          {{ $t('common.save') }}
+        </Button>
+      </PageHead>
 
-      <div class="px-8 pt-7 pb-8">
-        <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
-          <SettingsNav active="automations" />
+      <div class="flex items-start gap-10 px-8 pt-7 pb-8 max-[900px]:flex-col">
+        <form class="max-w-[620px] min-w-0 flex-1" @submit.prevent="save">
+          <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            {{ $t('automations.triggerSection') }}
+          </div>
 
-          <form class="max-w-[520px] min-w-0 flex-1" @submit.prevent="save">
-            <div class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4">
-              <Field v-slot="{ id }" wide :label="$t('automations.name')" :error="form.errors.name">
-                <Input :id="id" v-model="form.name" type="text" />
-              </Field>
+          <div class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4">
+            <Field v-slot="{ id }" wide :label="$t('automations.name')" :error="form.errors.name">
+              <Input :id="id" v-model="form.name" type="text" />
+            </Field>
 
-              <Field v-slot="{ id }" :label="$t('automations.anchor')">
-                <Select :model-value="form.anchor" @update:model-value="(v) => (form.anchor = String(v))">
-                  <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
+            <Field :label="$t('automations.kind')">
+              <Input :model-value="dated ? $t('automations.kindDate') : $t('automations.kindEvent')" type="text" disabled />
+            </Field>
+
+            <Field v-slot="{ id }" :label="$t('automations.anchor')">
+              <Select
+                v-if="dated"
+                :model-value="form.anchor ?? undefined"
+                @update:model-value="(v) => (form.anchor = String(v))"
+              >
+                <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="option in anchors" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <Input v-else :id="id" :model-value="rule.eventLabel ?? ''" type="text" disabled />
+            </Field>
+
+            <Field v-if="dated" :label="$t('automations.offset')" :error="form.errors.offset_days">
+              <div class="flex items-center gap-2">
+                <Input v-model="form.offset_days" class="w-16" type="number" min="0" />
+                <Select :model-value="form.direction" @update:model-value="(v) => (form.direction = String(v))">
+                  <SelectTrigger class="w-32"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem v-for="option in anchors" :key="option.value" :value="option.value">
-                      {{ option.label }}
-                    </SelectItem>
+                    <SelectItem value="before">{{ $t('automations.daysBefore') }}</SelectItem>
+                    <SelectItem value="after">{{ $t('automations.daysAfter') }}</SelectItem>
                   </SelectContent>
                 </Select>
-              </Field>
+              </div>
+            </Field>
 
-              <Field :label="$t('automations.offset')" :error="form.errors.offset_days">
-                <div class="flex items-center gap-2">
-                  <Input v-model="form.offset_days" class="w-16" type="number" min="0" />
-                  <Select :model-value="form.direction" @update:model-value="(v) => (form.direction = String(v))">
-                    <SelectTrigger class="w-24"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="before">{{ $t('project.taskOffsetBefore') }}</SelectItem>
-                      <SelectItem value="after">{{ $t('project.taskOffsetAfter') }}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </Field>
+            <Field
+              v-slot="{ id }"
+              :label="$t('automations.recipient')"
+              :hint="$t('automations.recipientHint')"
+            >
+              <Select
+                :model-value="form.recipient_type"
+                @update:model-value="(v) => (form.recipient_type = String(v))"
+              >
+                <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="option in recipients" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
 
-              <Field v-slot="{ id }" :label="$t('automations.recipient')">
-                <Select
-                  :model-value="form.recipient_type"
-                  @update:model-value="(v) => (form.recipient_type = String(v))"
+          <div class="mt-8 mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            {{ $t('automations.condition') }}
+          </div>
+
+          <Select
+            :model-value="form.condition ?? NO_CONDITION"
+            @update:model-value="(v) => (form.condition = v === NO_CONDITION ? null : String(v))"
+          >
+            <SelectTrigger class="max-w-[300px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem :value="NO_CONDITION">{{ $t('automations.conditionNone') }}</SelectItem>
+              <SelectItem v-for="option in conditions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+
+          <div class="mt-8 mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            {{ $t('automations.messageSection') }}
+          </div>
+
+          <div class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4">
+            <Field v-slot="{ id }" wide :label="$t('automations.subject')" :error="form.errors.notification_subject">
+              <Input :id="id" v-model="form.notification_subject" type="text" />
+            </Field>
+
+            <Field v-slot="{ id }" wide :label="$t('automations.body')" :error="form.errors.notification_body">
+              <Textarea :id="id" v-model="form.notification_body" rows="6" />
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button
+                  v-for="field in mergeFields"
+                  :key="field.path"
+                  class="cursor-pointer rounded-[var(--r-sm)] bg-sunk-2 px-2 py-1 text-[11px] leading-none"
+                  type="button"
+                  @click="insert(field.path)"
                 >
-                  <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="option in recipients" :key="option.value" :value="option.value">
-                      {{ option.label }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
+                  {{ field.path }}
+                </button>
+              </div>
+            </Field>
+          </div>
 
-              <Field v-slot="{ id }" :label="$t('automations.condition')">
-                <Select
-                  :model-value="form.condition ?? NO_CONDITION"
-                  @update:model-value="(v) => (form.condition = v === NO_CONDITION ? null : String(v))"
-                >
-                  <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem :value="NO_CONDITION">{{ $t('automations.conditionNone') }}</SelectItem>
-                    <SelectItem v-for="option in conditions" :key="option.value" :value="option.value">
-                      {{ option.label }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </Field>
+          <div class="mt-6 flex items-center gap-3">
+            <Switch id="sw-rule-active" v-model="form.is_active" />
+            <label class="text-[13px]" for="sw-rule-active">{{ $t('automations.active') }}</label>
+            <button class="ml-auto cursor-pointer text-[12.5px] text-ink-2 underline" type="button" @click="remove">
+              {{ $t('common.remove') }}
+            </button>
+          </div>
+        </form>
 
-              <Field v-slot="{ id }" wide :label="$t('automations.subject')" :error="form.errors.notification_subject">
-                <Input :id="id" v-model="form.notification_subject" type="text" />
-              </Field>
+        <aside class="w-[320px] flex-none max-[900px]:w-full">
+          <div class="text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            {{ $t('automations.preview') }}
+          </div>
 
-              <Field v-slot="{ id }" wide :label="$t('automations.body')" :error="form.errors.notification_body">
-                <Textarea :id="id" v-model="form.notification_body" rows="6" />
-                <div class="mt-2 flex flex-wrap gap-1.5">
-                  <button
-                    v-for="field in mergeFields"
-                    :key="field.path"
-                    class="cursor-pointer rounded-[var(--r-pill)] bg-sunk-2 px-2 py-1 text-[11px] leading-none"
-                    type="button"
-                    @click="insert(field.path)"
-                  >
-                    {{ field.path }}
-                  </button>
-                </div>
-              </Field>
+          <!-- Im Mail-Layout, nicht als Rohtext: die Regel wird für einen
+               Posteingang geschrieben und dort gelesen. -->
+          <div class="mt-2 rounded-[10px] bg-sunk-2 p-3">
+            <div class="rounded-[7px] bg-paper p-5">
+              <div class="text-[13px] font-semibold">{{ brand }}</div>
+              <div class="mt-3 text-[12.5px] font-medium">{{ render(form.notification_subject) }}</div>
+              <p class="mt-1.5 text-[12.5px] leading-[1.55] whitespace-pre-line">
+                {{ render(form.notification_body) }}
+              </p>
             </div>
+          </div>
 
-            <div class="mt-4 flex items-center gap-2">
-              <Checkbox id="cb-rule-active" v-model="form.is_active" />
-              <Label variant="inline" for="cb-rule-active">{{ $t('automations.active') }}</Label>
-            </div>
+          <div class="mt-7 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+            {{ $t('automations.runs') }}
+          </div>
 
-            <div class="mt-6 flex gap-2">
-              <Button type="submit" :disabled="form.processing">{{ $t('common.save') }}</Button>
-              <Button variant="ghost" type="button" @click="remove">{{ $t('common.remove') }}</Button>
+          <div class="mt-2 overflow-hidden rounded-[10px] border border-rule">
+            <div
+              v-for="run in runs"
+              :key="run.id"
+              class="flex items-center gap-3 border-b border-rule px-3 py-2.5 text-[11.5px] last:border-b-0"
+            >
+              <span class="w-24 flex-none text-ink-2 tabular-nums">{{ run.firedAt }}</span>
+              <span class="min-w-0 flex-1 truncate">{{ run.anchorLabel }}</span>
+              <span :class="['chip', chipClass(run.status)]">{{ run.statusLabel }}</span>
             </div>
-          </form>
-
-          <aside class="w-[260px] flex-none max-[900px]:w-full">
-            <div class="text-[10.5px] font-semibold tracking-[0.07em] uppercase text-ink-2">
-              {{ $t('automations.preview') }}
-            </div>
-            <div class="mt-2 rounded-[7px] bg-sunk-2 p-3">
-              <div class="text-[12.5px] font-medium">{{ render(form.notification_subject) }}</div>
-              <p class="mt-1.5 text-[12.5px] leading-[1.5] whitespace-pre-line">{{ render(form.notification_body) }}</p>
-            </div>
-
-            <div class="mt-6 text-[10.5px] font-semibold tracking-[0.07em] uppercase text-ink-2">
-              {{ $t('automations.runs') }}
-            </div>
-            <div v-for="run in runs" :key="run.id" class="flex items-baseline gap-2 py-1.5 text-[11.5px]">
-              <span class="text-ink-2 tabular-nums">{{ run.firedAt }}</span>
-              <span>{{ run.statusLabel }}</span>
-            </div>
-          </aside>
-        </div>
+          </div>
+        </aside>
       </div>
     </div>
   </AdminLayout>

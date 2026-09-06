@@ -3,6 +3,7 @@
 use App\Automation\Enums\AutomationCondition;
 use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Models\AutomationRule;
+use App\Crm\Events\ProjectBooked;
 use App\Enums\StaffRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -32,6 +33,26 @@ it('lists the rules and edits one', function () {
 
     expect($rule->fresh()->recipient_type)->toBe(AutomationRecipient::Crew)
         ->and($rule->fresh()->condition)->toBe(AutomationCondition::PaymentOpen);
+});
+
+// Eine Ereignisregel traegt weder Anker noch Abstand — AutomationRule::booted()
+// weist eine zurueck, die beides hat.
+it('saves an event rule, which carries no anchor', function () {
+    $rule = AutomationRule::factory()->event(ProjectBooked::class)->create();
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch("/einstellungen/automationen/{$rule->public_id}", [
+            'name' => 'Buchungsbestätigung',
+            'recipient_type' => 'client',
+            'condition' => null,
+            'notification_subject' => 'Ihre Buchung ist bestätigt',
+            'notification_body' => 'Wir freuen uns.',
+            'is_active' => true,
+        ])
+        ->assertRedirect();
+
+    expect($rule->fresh()->notification_body)->toBe('Wir freuen uns.')
+        ->and($rule->fresh()->anchor)->toBeNull();
 });
 
 // AuthorizesStaffSettings antwortet mit 404, nicht 403: eine Flaeche, die

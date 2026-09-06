@@ -24,6 +24,7 @@ use App\Crm\Http\Controllers\ProjectTypeController;
 use App\Crm\Http\Controllers\ShootController;
 use App\Crm\Http\Controllers\ShotListItemController;
 use App\Crm\Http\Controllers\StageController;
+use App\Crm\Http\Controllers\TaskBoardController;
 use App\Crm\Http\Controllers\TaskController;
 use App\Crm\Http\Controllers\TaskTemplateController;
 use App\Crm\Http\Controllers\TimelineController;
@@ -723,6 +724,11 @@ Route::middleware('audience:staff')->group(function () {
             ->name('shot-list-items.toggle');
         Route::delete('/checkliste/{item}', [ShotListItemController::class, 'destroy'])
             ->name('shot-list-items.destroy');
+
+        // T-24: die Aufgabenflaeche des Studios. /auftraege/{project}/aufgaben
+        // beantwortet "was ist an diesem Auftrag offen", diese hier "was ist
+        // an mir offen" — die Frage, die eine Zuweisung ueberhaupt erst stellt.
+        Route::get('/aufgaben', TaskBoardController::class)->name('tasks.index');
 
         Route::post('/auftraege/{project}/aufgaben', [TaskController::class, 'store'])
             ->name('tasks.store');

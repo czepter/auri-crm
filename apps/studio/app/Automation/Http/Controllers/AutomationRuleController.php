@@ -13,6 +13,7 @@ use App\Automation\Models\AutomationRule;
 use App\Concerns\AuthorizesStaffSettings;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Http\Controllers\Controller;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -29,7 +30,7 @@ class AutomationRuleController extends Controller
 {
     use AuthorizesStaffSettings;
 
-    public function index(): Response
+    public function index(StudioSettingsResolver $settings): Response
     {
         $this->authorizeSettings();
 
@@ -37,6 +38,9 @@ class AutomationRuleController extends Controller
             'rules' => AutomationRuleData::collect(
                 AutomationRule::query()->orderBy('name')->get()->map(AutomationRuleData::fromModel(...))
             ),
+            // Der Sweep laeuft in Studiozeit, nicht in Containerzeit. Wer
+            // die Spalte "letzter Lauf" liest, liest sie auf dieser Uhr.
+            'timezone' => $settings->timezone(),
         ]);
     }
 
@@ -56,7 +60,7 @@ class AutomationRuleController extends Controller
                 ->values()
                 ->all(),
             'runs' => AutomationRunData::collect(
-                $automationRule->runs()->latest('fired_at')->limit(20)->get()
+                $automationRule->runs()->with('anchorable')->latest('fired_at')->limit(20)->get()
                     ->map(AutomationRunData::fromModel(...))
             ),
         ]);
@@ -67,7 +71,7 @@ class AutomationRuleController extends Controller
         $this->authorizeSettings();
 
         $rule = AutomationRule::create([
-            ...$this->validated($request),
+            ...$this->validated($request, AutomationTriggerType::DateOffset),
             // The key is the seeder's join column, never a studio's to pick.
             'key' => 'custom-'.(new Cuid2(12)),
             'trigger_type' => AutomationTriggerType::DateOffset,
@@ -80,7 +84,7 @@ class AutomationRuleController extends Controller
     {
         $this->authorizeSettings();
 
-        $automationRule->update($this->validated($request));
+        $automationRule->update($this->validated($request, $automationRule->trigger_type));
 
         return back();
     }
@@ -94,14 +98,22 @@ class AutomationRuleController extends Controller
         return redirect('/einstellungen/automationen');
     }
 
-    /** @return array<string, mixed> */
-    private function validated(Request $request): array
+    /**
+     * An event rule carries no anchor and no offset — AutomationRule::booted()
+     * refuses one that does, so requiring them here would make the seeded
+     * Buchungsbestaetigung unsaveable from its own screen.
+     *
+     * @return array<string, mixed>
+     */
+    private function validated(Request $request, AutomationTriggerType $trigger): array
     {
+        $dated = $trigger === AutomationTriggerType::DateOffset;
+
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'anchor' => ['required', Rule::enum(AutomationAnchor::class)],
-            'offset_days' => ['required', 'integer', 'between:0,365'],
-            'direction' => ['required', Rule::enum(AutomationOffsetDirection::class)],
+            'anchor' => [Rule::requiredIf($dated), Rule::enum(AutomationAnchor::class)],
+            'offset_days' => [Rule::requiredIf($dated), 'integer', 'between:0,365'],
+            'direction' => [Rule::requiredIf($dated), Rule::enum(AutomationOffsetDirection::class)],
             'recipient_type' => ['required', Rule::enum(AutomationRecipient::class)],
             'condition' => ['nullable', Rule::enum(AutomationCondition::class)],
             'notification_subject' => ['required', 'string', 'max:255'],
