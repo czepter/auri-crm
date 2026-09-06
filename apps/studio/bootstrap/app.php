@@ -9,11 +9,11 @@ use App\Http\Middleware\EnsureApiTokenScope;
 use App\Http\Middleware\EnsureAudience;
 use App\Http\Middleware\EnsureGalleryFeature;
 use App\Http\Middleware\EnsureGalleryGate;
+use App\Http\Middleware\EnsureGalleryPass;
 use App\Http\Middleware\EnsureIdempotentWrite;
 use App\Http\Middleware\EnsureNoStaffExists;
 use App\Http\Middleware\EnsurePortalCapability;
 use App\Http\Middleware\EnsurePortalMaintenanceClosure;
-use App\Http\Middleware\EnsureGalleryPass;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RequireStudioOnboarding;
 use App\Integration\Console\Commands\CreateApiTokenCommand;
@@ -28,6 +28,7 @@ use App\Notifications\Console\Commands\BuildMailTemplatesCommand;
 use App\Notifications\Console\Commands\RemindOnboardingCommand;
 use App\Notifications\Console\Commands\SendStudioDigestsCommand;
 use App\Payments\Console\Commands\DetectOverdueInstallmentsCommand;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\Surface;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
@@ -75,7 +76,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command(ReapIncompleteMultipartUploads::class)->daily();
 
         // E-08's date-offset half — see the command's own docblock.
-        $schedule->command(SweepDateOffsetAutomationRulesCommand::class)->daily();
+        // E-14: studio time, the same clock the quiet hours and the three
+        // morning scans read. "One day before" on a foreign clock hits the
+        // wrong day in winter. rescue(), because this closure is built on
+        // every artisan boot — including the migrate that creates the row.
+        $schedule->command(SweepDateOffsetAutomationRulesCommand::class)
+            ->daily()
+            ->timezone(rescue(
+                fn () => app(StudioSettingsResolver::class)->timezone(),
+                config('app.timezone'),
+                report: false,
+            ));
 
         // E-12's inbound half. Every minute, without overlapping: a slow pass
         // must not have a second one reading the same unread messages behind

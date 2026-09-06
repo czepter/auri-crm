@@ -7,6 +7,8 @@ use App\Notifications\Actions\NotifyStudio;
 use App\Notifications\Studio\QuoteAccepted;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Quotes\Models\QuoteItem;
+use App\Quotes\Support\QuoteRange;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -23,13 +25,29 @@ use Illuminate\Validation\ValidationException;
  * docblock describes: a doubled request (a retried POST, two tabs) finds the
  * quote already accepted and returns it, rather than failing on the
  * booted() guard's second write or writing a second acceptance.
+ *
+ * Q-12 gives it a second job. A quote with an hourly rate is a
+ * configuration until somebody accepts it; this is where the client's choice
+ * is written down and where it stops being a range and becomes an amount.
+ * What the frontend sends is a proposal — hours outside the range, or a line
+ * the studio never made switchable, are refused here rather than quietly
+ * bent into shape. The same stance EnsurePortalCapability already takes on
+ * the accept_quotes switch.
  */
 class AcceptQuote
 {
     public function __construct(private readonly NotifyStudio $notifyStudio) {}
 
-    public function __invoke(Quote $quote, Contact $contact, string $ip): Quote
-    {
+    /**
+     * @param  list<string>  $selectedItemIds  public_ids of the blocks the client switched on
+     */
+    public function __invoke(
+        Quote $quote,
+        Contact $contact,
+        string $ip,
+        ?int $hours = null,
+        array $selectedItemIds = [],
+    ): Quote {
         if ($quote->status === QuoteStatus::Accepted) {
             return $quote;
         }
@@ -44,13 +62,25 @@ class AcceptQuote
             throw ValidationException::withMessages(['quote' => __('portal.quote_not_valid')]);
         }
 
-        DB::transaction(function () use ($quote, $contact, $ip) {
+        $configuration = $quote->hasSlider()
+            ? $this->configuration($quote, $hours, $selectedItemIds)
+            : [];
+
+        DB::transaction(function () use ($quote, $contact, $ip, $configuration) {
             $quote->update([
                 'status' => QuoteStatus::Accepted,
                 'accepted_at' => now(),
                 'accepted_ip' => $ip,
                 'accepted_by_contact_id' => $contact->id,
+                ...$configuration['quote'] ?? [],
             ]);
+
+            // Written after the quote, inside the same transaction: what the
+            // client switched on is part of the acceptance, not a separate
+            // edit that could survive a rolled-back one.
+            foreach ($configuration['selected'] ?? [] as $itemId => $selected) {
+                QuoteItem::query()->whereKey($itemId)->update(['selected' => $selected]);
+            }
 
             // actor is null, not $contact — AuditLog::actor_id is a foreign
             // key to staff users, and a Contact is never one. The same shape
@@ -71,5 +101,44 @@ class AcceptQuote
         ($this->notifyStudio)(new QuoteAccepted($accepted));
 
         return $accepted;
+    }
+
+    /**
+     * Q-12: the client's proposal, checked and turned into the columns the
+     * acceptance writes.
+     *
+     * @param  list<string>  $selectedItemIds
+     * @return array{quote: array<string, mixed>, selected: array<int, bool>}
+     */
+    private function configuration(Quote $quote, ?int $hours, array $selectedItemIds): array
+    {
+        $hours ??= $quote->hours ?? $quote->min_hours ?? 0;
+
+        if (
+            ($quote->min_hours !== null && $hours < $quote->min_hours)
+            || ($quote->max_hours !== null && $hours > $quote->max_hours)
+        ) {
+            throw ValidationException::withMessages(['hours' => __('portal.quote_hours_out_of_range')]);
+        }
+
+        $selectable = QuoteRange::selectable($quote);
+        $chosen = $selectable->whereIn('public_id', $selectedItemIds);
+
+        // A line the studio never made switchable cannot be switched. Sent
+        // as a set difference rather than per line: naming which one was
+        // refused would tell a caller what to send next time.
+        if ($chosen->count() !== count(array_unique($selectedItemIds))) {
+            throw ValidationException::withMessages(['items' => __('portal.quote_item_not_selectable')]);
+        }
+
+        return [
+            'quote' => [
+                'hours' => $hours,
+                'total' => QuoteRange::totalFor($quote, $hours, $chosen->pluck('id')),
+            ],
+            'selected' => $selectable
+                ->mapWithKeys(fn (QuoteItem $item) => [$item->id => $chosen->contains('id', $item->id)])
+                ->all(),
+        ];
     }
 }

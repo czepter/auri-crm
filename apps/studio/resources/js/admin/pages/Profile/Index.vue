@@ -14,8 +14,11 @@ const props = defineProps<{
   mfaConfirmed: boolean
   recoveryCodesLeft: number
   digestFrequency: string | null
-  events: Record<string, 'immediate' | 'digest' | 'off'>
+  events: Record<string, Mode>
+  briefable: Record<string, boolean>
 }>()
+
+type Mode = 'immediate' | 'briefing' | 'digest' | 'off'
 
 // The order the pane lists them in — the same keys StudioEvents::ALL sends,
 // grouped the way somebody reads them: the booking first, the gallery last.
@@ -30,7 +33,16 @@ const EVENT_KEYS = [
   'assetFavorited',
 ] as const
 
+// Die drei Scans stehen zuerst und in einem eigenen Abschnitt: nur sie
+// kennen den vierten Zustand, und ein Feld mit vier Optionen neben einem mit
+// dreien liest sich sonst wie ein Fehler.
+const BACKLOG_KEYS = ['tasksDue', 'leadStalled', 'installmentOverdue'] as const
+
 const MODES = ['immediate', 'digest', 'off'] as const
+
+function modesFor(key: string): Mode[] {
+  return props.briefable[key] ? ['immediate', 'briefing', 'digest', 'off'] : [...MODES]
+}
 
 // A Select item carries a string; "kein Rhythmus" is null on the wire. Same
 // sentinel pairing Settings/TaskTemplates.vue uses for its own empty option.
@@ -228,6 +240,32 @@ function submitEvents() {
 
             <form v-else id="profile-benachrichtigungen-form" @submit.prevent="submitEvents">
               <div class="mt-8 first:mt-0">
+                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('profile.backlogSection') }}</div>
+                <div class="mb-6">
+                  <div class="grid grid-cols-2 gap-4">
+                    <Field
+                      v-for="key in BACKLOG_KEYS"
+                      :key="key"
+                      :label="$t(`profile.event.${key}`)"
+                      :id="`ev-${key}`"
+                    >
+                      <Select
+                        :model-value="eventsForm.events[key]"
+                        @update:model-value="(value) => (eventsForm.events[key] = String(value) as Mode)"
+                      >
+                        <SelectTrigger :id="`ev-${key}`">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem v-for="mode in modesFor(key)" :key="mode" :value="mode">{{ $t(`profile.mode.${mode}`) }}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-8 first:mt-0">
                 <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('profile.eventsSection') }}</div>
                 <div class="mb-6">
                   <div class="grid grid-cols-2 gap-4">
@@ -239,13 +277,13 @@ function submitEvents() {
                     >
                       <Select
                         :model-value="eventsForm.events[key]"
-                        @update:model-value="(value) => (eventsForm.events[key] = String(value) as typeof MODES[number])"
+                        @update:model-value="(value) => (eventsForm.events[key] = String(value) as Mode)"
                       >
                         <SelectTrigger :id="`ev-${key}`">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem v-for="mode in MODES" :key="mode" :value="mode">{{ $t(`profile.mode.${mode}`) }}</SelectItem>
+                          <SelectItem v-for="mode in modesFor(key)" :key="mode" :value="mode">{{ $t(`profile.mode.${mode}`) }}</SelectItem>
                         </SelectContent>
                       </Select>
                     </Field>

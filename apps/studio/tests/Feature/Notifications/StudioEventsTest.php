@@ -7,6 +7,7 @@ use App\Crm\Models\Shoot;
 use App\Engagement\Actions\StartThread;
 use App\Models\User;
 use App\Notifications\Actions\SendStudioDigests;
+use App\Notifications\Enums\NotificationMode;
 use App\Notifications\Models\InAppNotification;
 use App\Notifications\Studio\ClientMessagePosted;
 use App\Notifications\Studio\ContractSigned;
@@ -64,7 +65,7 @@ it('carries only the events set to the summary, and never the ones already maile
     $user->forceFill(['digest_frequency' => 'daily'])->save();
 
     // One digested, one immediate.
-    app(NotificationPreferences::class)->set($user, ClientMessagePosted::class, 'mail', false);
+    app(NotificationPreferences::class)->setMode($user, ClientMessagePosted::class, NotificationMode::Digest);
 
     InAppNotification::create([
         'notifiable_type' => $user->getMorphClass(),
@@ -100,7 +101,7 @@ it('holds a weekly summary until the week is up', function () {
     expect(app(SendStudioDigests::class)())->toBe(0);
 
     $user->forceFill(['digest_sent_at' => now()->subDays(8)])->save();
-    app(NotificationPreferences::class)->set($user, ClientMessagePosted::class, 'mail', false);
+    app(NotificationPreferences::class)->setMode($user, ClientMessagePosted::class, NotificationMode::Digest);
 
     InAppNotification::create([
         'notifiable_type' => $user->getMorphClass(),

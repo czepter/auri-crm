@@ -8,6 +8,7 @@ use App\Crm\Models\Task;
 use App\Crm\Support\TaskAnchors;
 use App\Crm\Support\TaskDependencyGraph;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,6 +37,7 @@ class TaskController extends Controller
             // one of its own project's, or a dependency would reach across
             // two studios' worth of work.
             'depends_on' => ['nullable', 'string'],
+            'assignee' => ['nullable', 'string', Rule::exists('users', 'public_id')],
         ]);
 
         $predecessor = isset($validated['depends_on'])
@@ -68,6 +70,7 @@ class TaskController extends Controller
                 ? $project->shoots()->where('public_id', $validated['shoot'])->value('id')
                 : null,
             'depends_on_task_id' => $predecessor?->id,
+            'assignee_id' => $this->assigneeId($validated['assignee'] ?? null),
         ]);
 
         return back();
@@ -106,6 +109,25 @@ class TaskController extends Controller
         $task->update(['depends_on_task_id' => $predecessor->id]);
 
         return back();
+    }
+
+    /** T-24: hand a task over, or take it back. Its own route for the reason depend() has one. */
+    public function assign(Request $request, Task $task): RedirectResponse
+    {
+        $this->authorize('update', $task);
+
+        $validated = $request->validate([
+            'assignee' => ['nullable', 'string', Rule::exists('users', 'public_id')],
+        ]);
+
+        $task->update(['assignee_id' => $this->assigneeId($validated['assignee'] ?? null)]);
+
+        return back();
+    }
+
+    private function assigneeId(?string $publicId): ?int
+    {
+        return $publicId === null ? null : User::query()->where('public_id', $publicId)->value('id');
     }
 
     /**

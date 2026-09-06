@@ -41,6 +41,7 @@ use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Data\QuoteData;
 use App\Settings\Support\StudioSettingsResolver;
@@ -134,13 +135,14 @@ class ProjectController extends Controller
             // row is something already finished buries the work.
             'tasks' => TaskRowData::collect(
                 $project->tasks()
-                    ->with(['project', 'shoot'])
+                    ->with(['project', 'shoot', 'assignee'])
                     ->orderByRaw('completed_at is not null')
                     ->byDueDate()
                     ->get()
                     ->map(TaskRowData::fromTask(...))
             ),
             'shootOptions' => $this->shootOptions($project),
+            'staffOptions' => $this->staffOptions(),
             'anchors' => $anchors->forProject($project),
             // Notes, the whitelisted audit trail and what got done, in one
             // order. Admin-only by omission: the portal's own ProjectController
@@ -302,13 +304,14 @@ class ProjectController extends Controller
             'header' => $this->header($project),
             'tasks' => TaskRowData::collect(
                 $project->tasks()
-                    ->with(['project', 'shoot'])
+                    ->with(['project', 'shoot', 'assignee'])
                     ->orderByRaw('completed_at is not null')
                     ->byDueDate()
                     ->get()
                     ->map(TaskRowData::fromTask(...))
             ),
             'shootOptions' => $this->shootOptions($project),
+            'staffOptions' => $this->staffOptions(),
             'anchors' => $anchors->forProject($project),
         ]);
     }
@@ -331,6 +334,14 @@ class ProjectController extends Controller
     }
 
     /** @return list<array{value: string, label: string}> */
+    /** T-24: wer eine Aufgabe übernehmen kann. Das ganze Studio, nicht die Crew — zugewiesen wird auch quer. */
+    private function staffOptions(): array
+    {
+        return User::query()->orderBy('name')->get()
+            ->map(fn (User $user) => ['value' => $user->public_id, 'label' => $user->name])
+            ->all();
+    }
+
     private function shootOptions(Project $project): array
     {
         return $project->shoots()->uncancelled()->get()
@@ -348,7 +359,7 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Quotes', [
             'header' => $this->header($project),
             'quotes' => QuoteData::collect(
-                $project->quotes()->with(['items', 'predecessor'])->get()
+                $project->quotes()->with(['items', 'predecessor', 'paymentStages'])->get()
             ),
             'paymentPlan' => $project->job?->paymentPlan
                 ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments'))

@@ -2,6 +2,9 @@
 
 namespace App\Automation\Enums;
 
+use App\Crm\Enums\HasLabel;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
+
 /**
  * The hard part E-08 exists for. PerShoot: "seven days before the shoot" is
  * a different date per shoot on a multi-shoot project — the sweep checks
@@ -12,7 +15,8 @@ namespace App\Automation\Enums;
  * Only set on a date-offset rule; null on an event-triggered one, whose
  * anchor is whichever Project or Shoot the firing event itself carries.
  */
-enum AutomationAnchor: string
+#[TypeScript]
+enum AutomationAnchor: string implements HasLabel
 {
     case PerShoot = 'per_shoot';
     case PrimaryShoot = 'primary_shoot';
@@ -24,4 +28,29 @@ enum AutomationAnchor: string
      * studio revises the offer.
      */
     case QuoteValidity = 'quote_validity';
+
+    /**
+     * E-16: four more dates the machinery could already carry and did not
+     * see. The offset works in both directions, so `installment_due` is the
+     * announcement that prevents T-22's arrears rather than the repair after
+     * them — and it belongs here and not in the overdue scan, because it is
+     * a studio's decision and not a system truth.
+     */
+    case InstallmentDue = 'installment_due';
+    case ContractDeadline = 'contract_deadline';
+    case GalleryExpiry = 'gallery_expiry';
+    case QuestionnaireDue = 'questionnaire_due';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::PerShoot => 'Jedes Shooting',
+            self::PrimaryShoot => 'Haupttermin',
+            self::QuoteValidity => 'Angebot gültig bis',
+            self::InstallmentDue => 'Rate fällig',
+            self::ContractDeadline => 'Vertragsfrist',
+            self::GalleryExpiry => 'Galerie läuft ab',
+            self::QuestionnaireDue => 'Kundenaufgabe fällig',
+        };
+    }
 }

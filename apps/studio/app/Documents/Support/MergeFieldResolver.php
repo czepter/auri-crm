@@ -16,12 +16,16 @@ class MergeFieldResolver
 
     /**
      * @param  array<string, mixed>  $data  Dot-addressable, e.g. ['project' => ['name' => 'Meier & Kowalski']].
+     * @param  bool  $keepUnknown  E-15: leave an unresolvable field standing as written rather than
+     *                             blanking it. A document silently drops what it cannot fill; an
+     *                             automation rule is edited in a box with a preview beside it, and a
+     *                             visible gap is the thing that gets fixed.
      */
-    public static function resolve(string $body, array $data): string
+    public static function resolve(string $body, array $data, bool $keepUnknown = false): string
     {
         return preg_replace_callback(
             self::PATTERN,
-            fn (array $match) => (string) (data_get($data, $match[1]) ?? ''),
+            fn (array $match) => (string) (data_get($data, $match[1]) ?? ($keepUnknown ? $match[0] : '')),
             $body,
         );
     }

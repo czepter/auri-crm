@@ -4,6 +4,7 @@ import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
 import QuoteTable, { type QuoteRow } from '@/admin/components/QuoteTable.vue'
+import QuoteSliderEditor, { type SliderDraft } from '@/admin/components/QuoteSliderEditor.vue'
 import ValidUntilField from '@/admin/components/ValidUntilField.vue'
 import Section from '@/ui/page/Section.vue'
 import { debounced } from '@/admin/lib/autosave'
@@ -25,7 +26,16 @@ const props = defineProps<{
   paymentPlan: App.Payments.Data.PaymentPlanData | null
 }>()
 
-type Draft = { validUntil: string; discount: string; intro: string; outro: string; rows: QuoteRow[] }
+type Draft = {
+  validUntil: string
+  discount: string
+  intro: string
+  outro: string
+  rows: QuoteRow[]
+  // Q-14: derselbe Entwurf traegt beide Welten. hourlyRate leer heisst
+  // Positionstabelle, und dann ruehrt nichts hier unten etwas an.
+  slider: SliderDraft
+}
 
 function draftOf(quote: App.Quotes.Data.QuoteData): Draft {
   return {
@@ -43,6 +53,27 @@ function draftOf(quote: App.Quotes.Data.QuoteData): Draft {
       // diesen Titel.
       remember: props.catalogItems.some((entry) => entry.title === item.title),
     })),
+    slider: {
+      hourlyRate: centsToEuros(quote.hourlyRate),
+      minHours: quote.minHours,
+      maxHours: quote.maxHours,
+      imagesPerHour: quote.imagesPerHour,
+      hours: quote.hours,
+      rows: quote.items.map((item) => ({
+        id: item.id,
+        title: item.title,
+        outcome: item.outcome ?? '',
+        unitPrice: centsToEuros(item.unitPrice),
+        selectable: item.selectable,
+        selected: item.selected,
+        hasImage: item.hasImage,
+      })),
+      stages: quote.paymentStages.map((stage) => ({
+        percent: stage.percent,
+        label: stage.label,
+        minimum: centsToEuros(stage.minimum) || '',
+      })),
+    },
   }
 }
 
@@ -84,6 +115,17 @@ function saveAsPackage(quoteId: string) {
 const save = debounced((quoteId: string) => {
   const draft = drafts[quoteId]
   const quoteDiscount = parseDiscount(draft.discount)
+  const rate = eurosToCents(draft.slider.hourlyRate)
+
+  if (rate !== null) {
+    router.patch(`/angebote/${quoteId}`, sliderPayload(draft), {
+      preserveScroll: true,
+      preserveState: true,
+      only: ['quotes'],
+    })
+
+    return
+  }
 
   router.patch(
     `/angebote/${quoteId}`,
@@ -114,6 +156,38 @@ const save = debounced((quoteId: string) => {
     { preserveScroll: true, preserveState: true, only: ['quotes'] },
   )
 }, 600)
+
+/**
+ * Q-14: dieselbe Route, andere Felder. Die id geht mit, weil der Controller
+ * das Bild einer Zeile daran wiederfindet — der Pfad selbst kommt nie aus
+ * dem Formular.
+ */
+function sliderPayload(draft: Draft) {
+  return {
+    valid_until: draft.validUntil || null,
+    intro: draft.intro || null,
+    outro: draft.outro || null,
+    hourly_rate: eurosToCents(draft.slider.hourlyRate),
+    min_hours: draft.slider.minHours,
+    max_hours: draft.slider.maxHours,
+    images_per_hour: draft.slider.imagesPerHour,
+    hours: draft.slider.hours,
+    items: draft.slider.rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      quantity: 1,
+      unit_price: eurosToCents(row.unitPrice),
+      outcome: row.outcome || null,
+      selectable: row.selectable,
+      selected: row.selected,
+    })),
+    stages: draft.slider.stages.map((stage) => ({
+      percent: stage.percent,
+      label: stage.label,
+      minimum: eurosToCents(stage.minimum) ?? 0,
+    })),
+  }
+}
 
 function create() {
   router.post(`/auftraege/${props.header.id}/angebote`, {}, { preserveScroll: true })
@@ -270,7 +344,17 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
              wrong or bypassed. Ein Entwurf ist die Tabelle; erst ab Versendet
              tritt das gelesene Dokument an ihre Stelle. -->
         <template v-if="header.canManageQuotes && quote.status === 'draft' && drafts[quote.id]">
+          <!-- Q-14: der Stundensatz ist die Weiche. Leer bleibt die Tabelle
+               stehen, die vor dieser Runde hier stand. -->
+          <QuoteSliderEditor
+            v-model="drafts[quote.id].slider"
+            :quote-id="quote.id"
+            @change="save(quote.id)"
+          />
+
           <QuoteTable
+            v-if="!drafts[quote.id].slider.hourlyRate"
+            class="mt-8"
             v-model="drafts[quote.id].rows"
             :can-manage-catalog="canManageCatalog"
             :packages="packages"

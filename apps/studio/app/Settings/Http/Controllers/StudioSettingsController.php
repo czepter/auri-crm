@@ -124,6 +124,44 @@ class StudioSettingsController extends Controller
     }
 
     /**
+     * Q-10: one shop-window picture, appended. PNG and JPEG only, and never
+     * SVG — served inline from this app's own origin, an uploaded SVG can
+     * carry a <script> and execute as this app rather than as an image. The
+     * same exclusion the logo above documents.
+     */
+    public function storeShowcase(Request $request, StudioSettingsResolver $settings): RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        $request->validate(['image' => ['required', 'file', 'mimes:png,jpg,jpeg', 'max:4096']]);
+
+        $settings->addShowcaseImage($request->file('image'), auth('staff')->user());
+
+        return back();
+    }
+
+    public function destroyShowcase(int $index, StudioSettingsResolver $settings): RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        $settings->removeShowcaseImage($index, auth('staff')->user());
+
+        return back();
+    }
+
+    /** The studio's own read of one, behind the settings gate — the portal serves the same file publicly. */
+    public function showcase(int $index, StudioSettingsResolver $settings): StreamedResponse
+    {
+        $this->authorizeSettings();
+
+        $path = $settings->showcasePaths()[$index] ?? null;
+
+        abort_if($path === null, 404);
+
+        return Storage::disk('local')->response($path);
+    }
+
+    /**
      * T-03's own save action, separate from update() above: Studio-Profil
      * and Zahlungsdaten & USt are two forms in the mockup, each with its own
      * "Speichern" button, and giving them one shared endpoint would make an

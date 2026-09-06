@@ -28,7 +28,7 @@ class QuoteItem extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['title', 'description', 'quantity', 'unit_price', 'sort_order', 'discount_type', 'discount_value'];
+    protected $fillable = ['title', 'description', 'quantity', 'unit_price', 'sort_order', 'discount_type', 'discount_value', 'selectable', 'selected', 'outcome', 'image_path'];
 
     protected $attributes = ['quantity' => 1, 'sort_order' => 0];
 
@@ -36,6 +36,8 @@ class QuoteItem extends Model
     {
         return [
             'discount_type' => DiscountType::class,
+            'selectable' => 'boolean',
+            'selected' => 'boolean',
         ];
     }
 
@@ -55,6 +57,16 @@ class QuoteItem extends Model
     public function quote(): BelongsTo
     {
         return $this->belongsTo(Quote::class);
+    }
+
+    /**
+     * Q-09: a line the client switches in the portal. Neither a fixed
+     * position nor an included one — it counts toward the total only once
+     * `selected` says so.
+     */
+    public function isSelectable(): bool
+    {
+        return $this->selectable;
     }
 
     /** Enthaltene Leistung: part of what was already paid for, not a price this line invents. */

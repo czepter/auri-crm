@@ -144,12 +144,21 @@ it('gives copyItems a deep, disconnected copy that a later edit cannot touch', f
             'description' => 'Inklusive Anfahrt',
             'quantity' => 1,
             'unit_price' => 129900,
+            // Q-09/Q-10 ride along, and just as deadly copied.
+            'selectable' => false,
+            'selected' => false,
+            'outcome' => null,
+            'image_path' => null,
         ],
         [
             'title' => 'Album',
             'description' => null,
             'quantity' => 1,
             'unit_price' => null,
+            'selectable' => false,
+            'selected' => false,
+            'outcome' => null,
+            'image_path' => null,
         ],
     ]);
 });

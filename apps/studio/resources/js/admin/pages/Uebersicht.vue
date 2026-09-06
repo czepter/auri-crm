@@ -285,10 +285,21 @@ function complete(task: App.Crm.Data.TaskRowData) {
                     :title="$t('dashboard.decide')"
                     :count="decisions.length || null"
                 >
-                    <template v-if="owed > decisions.length" #action>
-                        <span class="ml-auto text-[11.5px] tabular-nums text-ink-2">
+                    <template #action>
+                        <span
+                            v-if="owed > decisions.length"
+                            class="ml-auto text-[11.5px] tabular-nums text-ink-2"
+                        >
                             {{ $t("dashboard.moreOwed", { count: owed - decisions.length }) }}
                         </span>
+                        <!-- T-24: die vollständige Liste, in der auch die
+                             Zuständigkeit steht. -->
+                        <Link
+                            class="text-[11.5px] text-ink-2 no-underline"
+                            :class="owed > decisions.length ? '' : 'ml-auto'"
+                            href="/aufgaben"
+                            >{{ $t("dashboard.allTasks") }}</Link
+                        >
                     </template>
 
                     <div v-if="decisions.length">

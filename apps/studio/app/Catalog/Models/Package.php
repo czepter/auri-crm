@@ -3,6 +3,7 @@
 namespace App\Catalog\Models;
 
 use App\Concerns\BelongsToTenant;
+use App\Concerns\HasHourlyPricing;
 use App\Concerns\HasPublicId;
 use Database\Factories\Catalog\PackageFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -25,9 +26,10 @@ class Package extends Model
 {
     use BelongsToTenant;
     use HasFactory;
+    use HasHourlyPricing;
     use HasPublicId;
 
-    protected $fillable = ['name', 'description', 'is_active'];
+    protected $fillable = ['name', 'description', 'is_active', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours'];
 
     protected $attributes = ['is_active' => true];
 
@@ -39,6 +41,25 @@ class Package extends Model
     public function items(): HasMany
     {
         return $this->hasMany(PackageItem::class)->orderBy('sort_order');
+    }
+
+    /** Q-11's template shares, copied onto a quote the same dead way copyItems() copies lines. */
+    public function paymentStages(): HasMany
+    {
+        return $this->hasMany(PackagePaymentStage::class)->orderBy('sort_order');
+    }
+
+    /**
+     * @return list<array{percent: int, label: string, minimum: int, sort_order: int}>
+     */
+    public function copyPaymentStages(): array
+    {
+        return $this->paymentStages->map(fn (PackagePaymentStage $stage) => [
+            'percent' => $stage->percent,
+            'label' => $stage->label,
+            'minimum' => $stage->minimum,
+            'sort_order' => $stage->sort_order,
+        ])->all();
     }
 
     /** Available to start a new quote from. A deactivated package drops out of this and nothing else. */
@@ -54,7 +75,12 @@ class Package extends Model
      * since it is what would let editing or deactivating the package here
      * move a line a quote already copied out of it.
      *
-     * @return list<array{title: string, description: ?string, quantity: int, unit_price: ?int}>
+     * Q-09/Q-10 ride along: `selectable`, `selected`, `outcome` and the
+     * copied `image_path`. The last one is the point of copying rather than
+     * referencing — swap the catalogue photo later and a quote already sent
+     * keeps the picture it was sent with.
+     *
+     * @return list<array{title: string, description: ?string, quantity: int, unit_price: ?int, selectable: bool, selected: bool, outcome: ?string, image_path: ?string}>
      */
     public function copyItems(): array
     {
@@ -63,6 +89,10 @@ class Package extends Model
             'description' => $item->description,
             'quantity' => $item->quantity,
             'unit_price' => $item->unit_price,
+            'selectable' => $item->selectable,
+            'selected' => $item->selected,
+            'outcome' => $item->outcome,
+            'image_path' => $item->image_path,
         ])->all();
     }
 

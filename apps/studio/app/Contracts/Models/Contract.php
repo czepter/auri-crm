@@ -40,7 +40,7 @@ class Contract extends Model
     protected $fillable = [
         'project_id', 'contract_template_id', 'requested_by_id',
         'status', 'artifact_path', 'rendered_at', 'error',
-        'version', 'state', 'body', 'blocks', 'sent_at',
+        'version', 'state', 'body', 'blocks', 'sent_at', 'sign_deadline_on',
     ];
 
     protected $attributes = [
@@ -57,6 +57,7 @@ class Contract extends Model
             'blocks' => 'array',
             'rendered_at' => 'immutable_datetime',
             'sent_at' => 'immutable_datetime',
+            'sign_deadline_on' => 'immutable_date',
         ];
     }
 

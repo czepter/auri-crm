@@ -2,9 +2,19 @@
 
 namespace App\Payments\Actions;
 
+use App\Models\User;
+use App\Notifications\NotificationService;
+use App\Notifications\Studio;
+use App\Notifications\Support\StudioAudience;
+use App\Payments\Enums\OverdueReason;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Events\InstallmentOverdue;
 use App\Payments\Models\PaymentInstallment;
+use App\Portal\Notifications\PaymentReminder;
+use App\Portal\Support\ClientAudience;
+use App\Settings\Support\StudioSettingsResolver;
+use App\Support\FibonacciReminderSchedule;
+use Illuminate\Support\Collection;
 
 /**
  * T-07's scheduled scan: every still-scheduled installment whose due date
@@ -20,11 +30,12 @@ use App\Payments\Models\PaymentInstallment;
  * installment forever — set once, the moment this scan first notices it,
  * and never cleared.
  *
- * ponytail: a plain due_on < today scan, one query. Reminder cadence
- * (payments_reminders_enabled, "remind again after N days") is a distinct,
- * not-yet-scoped feature — add a separate scan reading that setting when a
- * story actually asks for repeat reminders rather than a one-time overdue
- * flag.
+ * T-22 answers the cadence this class left open. A second pass runs over the
+ * installments already flagged and still unpaid, and the Fibonacci ladder
+ * (App\Support\FibonacciReminderSchedule, anchored on due_on) decides which
+ * of them are worth saying again — so the rhythm is in the sequence and not
+ * in a setting nobody maintains. A row that leaves `scheduled`/`invoiced`
+ * falls out of the query and needs no reset.
  *
  * M-05 gave the Stripe signal this class's own doc comment above already
  * asked for: App\Payments\Jobs\ProcessStripeWebhookEvent calls markOverdue()
@@ -34,10 +45,22 @@ use App\Payments\Models\PaymentInstallment;
  */
 class DetectOverdueInstallments
 {
+    public function __construct(
+        private readonly NotificationService $notifications,
+        private readonly StudioAudience $audience,
+        private readonly ClientAudience $clients,
+        private readonly StudioSettingsResolver $settings,
+    ) {}
+
+    /** @return int installments newly flagged */
     public function __invoke(): int
     {
+        // `invoiced` counts as well as `scheduled`: an issued, unpaid invoice
+        // is the case arrears actually matter in. Nothing writes that status
+        // today (see PaymentPlan), which makes the clause inert rather than
+        // wrong — and closes the trap before invoicing sets it.
         $installments = PaymentInstallment::query()
-            ->where('status', PaymentInstallmentStatus::Scheduled)
+            ->whereIn('status', [PaymentInstallmentStatus::Scheduled, PaymentInstallmentStatus::Invoiced])
             ->whereNull('overdue_notified_at')
             ->whereDate('due_on', '<', now('UTC')->toDateString())
             ->get();
@@ -46,7 +69,102 @@ class DetectOverdueInstallments
             $this->markOverdue($installment);
         }
 
+        $this->remindStudio();
+        $this->remindClients();
+
         return $installments->count();
+    }
+
+    /**
+     * The second pass: everything already flagged and still owed, on the rung
+     * the ladder has reached. One message per recipient — three overdue
+     * installments are one occasion.
+     */
+    private function remindStudio(): void
+    {
+        $due = PaymentInstallment::query()
+            ->overdue()
+            ->with('plan.job.project')
+            ->get()
+            ->filter(fn (PaymentInstallment $installment) => FibonacciReminderSchedule::isDue(
+                $installment->due_on->toImmutable(),
+                $installment->overdue_reminders_sent,
+            ));
+
+        if ($due->isEmpty()) {
+            return;
+        }
+
+        foreach ($this->group($due) as [$user, $installments]) {
+            $this->notifications->send($user, new Studio\InstallmentOverdue($installments));
+        }
+
+        foreach ($due as $installment) {
+            $installment->forceFill([
+                'overdue_reminders_sent' => FibonacciReminderSchedule::reachedRungs($installment->due_on->toImmutable()),
+            ])->save();
+        }
+    }
+
+    /**
+     * T-25: the client's own ladder, one rung behind the studio's. A day late
+     * is a transfer in flight; the studio may know that earlier and more
+     * often than the client is asked about it.
+     *
+     * Two switches, both the studio's: the Zahlungen pane for all of them,
+     * the payment plan for the one client somebody just spoke to. Nothing
+     * goes out while the portal is closed for maintenance — the link would
+     * land on the closure page.
+     */
+    private function remindClients(): void
+    {
+        if (! $this->settings->remindersEnabled() || $this->settings->maintenanceEnabled()) {
+            return;
+        }
+
+        $due = PaymentInstallment::query()
+            ->overdue()
+            ->whereHas('plan', fn ($plan) => $plan->where('client_reminders_enabled', true))
+            ->with('plan.job.project')
+            ->get()
+            ->filter(fn (PaymentInstallment $installment) => FibonacciReminderSchedule::isDue(
+                $installment->due_on->toImmutable(),
+                $installment->client_reminders_sent,
+            ));
+
+        foreach ($due as $installment) {
+            $recipients = $this->clients->forProject($installment->plan->job->project);
+
+            if ($recipients->isEmpty()) {
+                continue;
+            }
+
+            foreach ($recipients as $contact) {
+                $this->notifications->send($contact, new PaymentReminder($installment, $this->settings));
+            }
+
+            $installment->forceFill([
+                'client_reminders_sent' => FibonacciReminderSchedule::reachedRungs($installment->due_on->toImmutable()),
+            ])->save();
+        }
+    }
+
+    /**
+     * @param  Collection<int, PaymentInstallment>  $due
+     * @return array<int, array{0: User, 1: Collection<int, PaymentInstallment>}>
+     */
+    private function group(Collection $due): array
+    {
+        $recipients = [];
+
+        foreach ($due as $installment) {
+            foreach ($this->audience->forProject($installment->plan->job->project) as $user) {
+                $recipients[$user->id] ??= [$user, collect()];
+                $recipients[$user->id][1]->push($installment);
+            }
+        }
+
+        return array_values($recipients);
     }
 
     /**
@@ -56,13 +174,23 @@ class DetectOverdueInstallments
      * this row already has a different outcome writes nothing and dispatches
      * nothing.
      */
-    public function markOverdue(PaymentInstallment $installment): void
-    {
-        if ($installment->status !== PaymentInstallmentStatus::Scheduled || $installment->overdue_notified_at !== null) {
+    public function markOverdue(
+        PaymentInstallment $installment,
+        OverdueReason $reason = OverdueReason::DueDatePassed,
+    ): void {
+        $open = [PaymentInstallmentStatus::Scheduled, PaymentInstallmentStatus::Invoiced];
+
+        if (! in_array($installment->status, $open, true) || $installment->overdue_notified_at !== null) {
             return;
         }
 
-        $installment->update(['overdue_notified_at' => now('UTC')]);
+        $installment->update([
+            'overdue_notified_at' => now('UTC'),
+            'overdue_reason' => $reason,
+            // The first word goes out through the event below; the ladder
+            // counts from there, so the next rung is a repeat and not a echo.
+            'overdue_reminders_sent' => FibonacciReminderSchedule::reachedRungs($installment->due_on->toImmutable()),
+        ]);
 
         InstallmentOverdue::dispatch($installment);
     }

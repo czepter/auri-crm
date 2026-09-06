@@ -2,6 +2,7 @@
 
 namespace App\Crm\Actions;
 
+use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Events\LeadLost;
 use App\Crm\Events\LeadStageChanged;
@@ -12,7 +13,7 @@ use App\Support\AuditLogger;
 use DomainException;
 
 /**
- * The only writer of Lead::$stage and Lead::$lost_at.
+ * The only writer of Lead::$stage, Lead::$lost_at and Lead::$outcome.
  *
  * No transitions table: the ledger is audit_logs, which P1a already made
  * append-only, and stage_entered_at holds the one derived fact the board needs.
@@ -44,9 +45,13 @@ class AdvanceLeadStage
         // seconds old whenever a mis-drop is fixed the moment it happens.
         // ponytail: last-entry lookup from audit_logs if corrections start
         // arriving days late and the staleness colour matters that far back.
+        // T-20: a lead that moved starts the reminder ladder over. The rungs
+        // count time in the stage it sits in, and it sits in a new one.
         $lead->forceFill([
             'stage' => $next,
             'stage_entered_at' => now(),
+            'stalled_reminders_sent' => 0,
+            'stalled_reminded_at' => null,
         ])->save();
 
         AuditLogger::record(
@@ -71,8 +76,12 @@ class AdvanceLeadStage
         return $lead;
     }
 
-    public function markLost(Lead $lead, string $reason, ?User $actor = null): Lead
-    {
+    public function markLost(
+        Lead $lead,
+        string $reason,
+        ?User $actor = null,
+        LeadOutcome $outcome = LeadOutcome::Lost,
+    ): Lead {
         if ($lead->isLost()) {
             throw new DomainException("Lead {$lead->public_id} is already lost.");
         }
@@ -83,12 +92,13 @@ class AdvanceLeadStage
         $lead->forceFill([
             'lost_at' => now(),
             'lost_reason' => $reason,
+            'outcome' => $outcome,
         ])->save();
 
         AuditLogger::record(
             event: 'lead.lost',
             actor: $actor ?? auth('staff')->user(),
-            context: ['stage' => $lead->stage->key, 'reason' => $reason],
+            context: ['stage' => $lead->stage->key, 'reason' => $reason, 'outcome' => $outcome->value],
             subject: $lead->public_id,
             projectId: $lead->project_id,
         );

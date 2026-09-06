@@ -1,5 +1,6 @@
 <?php
 
+use App\Automation\Http\Controllers\AutomationRuleController;
 use App\Catalog\Http\Controllers\PackageController;
 use App\Contracts\Http\Controllers\ContractController;
 use App\Contracts\Http\Controllers\ContractSignerController;
@@ -23,6 +24,7 @@ use App\Crm\Http\Controllers\ProjectTypeController;
 use App\Crm\Http\Controllers\ShootController;
 use App\Crm\Http\Controllers\ShotListItemController;
 use App\Crm\Http\Controllers\StageController;
+use App\Crm\Http\Controllers\TaskBoardController;
 use App\Crm\Http\Controllers\TaskController;
 use App\Crm\Http\Controllers\TaskTemplateController;
 use App\Crm\Http\Controllers\TimelineController;
@@ -218,6 +220,12 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/pakete/{package}', [PackageController::class, 'update'])->name('packages.update');
         Route::post('/pakete/{package}/status', [PackageController::class, 'toggle'])->name('packages.toggle');
         Route::post('/pakete/{package}/duplizieren', [PackageController::class, 'duplicate'])->name('packages.duplicate');
+        // Q-10: das Bild der Baustein-Kachel, am Katalogeintrag gepflegt —
+        // das Angebot traegt spaeter nur die Kopie.
+        Route::post('/pakete/{package}/positionen/{packageItem}/bild', [PackageController::class, 'uploadImage'])
+            ->name('packages.items.image.store');
+        Route::get('/pakete/{package}/positionen/{packageItem}/bild', [PackageController::class, 'image'])
+            ->name('packages.items.image');
 
         Route::get('/vorlagen', [TemplateHubController::class, 'index'])->name('templates.index');
 
@@ -310,6 +318,13 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/einstellungen', [StudioSettingsController::class, 'edit'])->name('settings.edit');
         Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');
         Route::get('/einstellungen/logo', [StudioSettingsController::class, 'logo'])->name('settings.logo');
+        // Q-10: die Schaufensterbilder, neben dem Logo gepflegt.
+        Route::post('/einstellungen/schaufenster', [StudioSettingsController::class, 'storeShowcase'])
+            ->name('settings.showcase.store');
+        Route::get('/einstellungen/schaufenster/{index}', [StudioSettingsController::class, 'showcase'])
+            ->whereNumber('index')->name('settings.showcase');
+        Route::delete('/einstellungen/schaufenster/{index}', [StudioSettingsController::class, 'destroyShowcase'])
+            ->whereNumber('index')->name('settings.showcase.destroy');
         Route::patch('/einstellungen/ust', [StudioSettingsController::class, 'updateVat'])->name('settings.vat.update');
         Route::patch('/einstellungen/dokumente', [StudioSettingsController::class, 'updateDocuments'])->name('settings.documents.update');
         Route::patch('/einstellungen/allgemein', [StudioSettingsController::class, 'updateGeneral'])->name('settings.general.update');
@@ -331,6 +346,19 @@ Route::middleware('audience:staff')->group(function () {
             ->name('studio-closures.update');
         Route::delete('/einstellungen/verfuegbarkeit/schliesszeiten/{studioClosure}', [StudioClosureController::class, 'destroy'])
             ->name('studio-closures.destroy');
+
+        // E-14: die Fläche, die es zu E-08 nicht gab — Regeln entstanden bis
+        // hierhin nur über das Seed-Kommando.
+        Route::get('/einstellungen/automationen', [AutomationRuleController::class, 'index'])
+            ->name('automations.index');
+        Route::post('/einstellungen/automationen', [AutomationRuleController::class, 'store'])
+            ->name('automations.store');
+        Route::get('/einstellungen/automationen/{automationRule}', [AutomationRuleController::class, 'edit'])
+            ->name('automations.edit');
+        Route::patch('/einstellungen/automationen/{automationRule}', [AutomationRuleController::class, 'update'])
+            ->name('automations.update');
+        Route::delete('/einstellungen/automationen/{automationRule}', [AutomationRuleController::class, 'destroy'])
+            ->name('automations.destroy');
 
         Route::get('/einstellungen/zahlungen', [PaymentSettingsController::class, 'edit'])
             ->name('settings.payments.edit');
@@ -437,6 +465,8 @@ Route::middleware('audience:staff')->group(function () {
         // C-10 (#245): editing is a state of the view, so it posts back to
         // the same case rather than to a screen of its own.
         Route::patch('/anfragen/{lead}', [LeadCaseController::class, 'update'])->name('leads.update');
+        Route::post('/anfragen/{lead}/schliessen', [LeadStageController::class, 'close'])
+            ->name('leads.close');
         Route::post('/anfragen/{lead}/stufe', [LeadStageController::class, 'update'])
             ->name('leads.stage.update');
 
@@ -482,6 +512,8 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::post('/auftraege/{project}/angebote', [QuoteController::class, 'store'])
             ->name('quotes.store');
+        Route::get('/angebote/{quote}/positionen/{quoteItem}/bild', [QuoteController::class, 'itemImage'])
+            ->name('quotes.items.image');
         Route::patch('/angebote/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
         Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
         Route::post('/angebote/{quote}/als-paket', [QuoteController::class, 'saveAsPackage'])->name('quotes.saveAsPackage');
@@ -524,6 +556,8 @@ Route::middleware('audience:staff')->group(function () {
         // Stand bleibt abrufbar, bis die neue versendet ist.
         Route::patch('/vertraege/{contract}', [ContractController::class, 'update'])
             ->name('contracts.update');
+        Route::patch('/vertraege/{contract}/frist', [ContractController::class, 'deadline'])
+            ->name('contracts.deadline');
         Route::post('/vertraege/{contract}/versenden', [ContractController::class, 'send'])
             ->name('contracts.send');
         Route::post('/vertraege/{contract}/unterzeichner', [ContractSignerController::class, 'store'])
@@ -659,6 +693,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('payment-plans.store');
         Route::patch('/zahlungsplaene/{paymentPlan}', [PaymentPlanController::class, 'update'])
             ->name('payment-plans.update');
+        Route::patch('/zahlungsplaene/{paymentPlan}/erinnerungen', [PaymentPlanController::class, 'reminders'])
+            ->name('payment-plans.reminders');
 
         // T-07's staff action: date, method and reference, recorded once —
         // never a status flipped on its own. See MarkInstallmentPaid.
@@ -704,6 +740,11 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/checkliste/{item}', [ShotListItemController::class, 'destroy'])
             ->name('shot-list-items.destroy');
 
+        // T-24: die Aufgabenflaeche des Studios. /auftraege/{project}/aufgaben
+        // beantwortet "was ist an diesem Auftrag offen", diese hier "was ist
+        // an mir offen" — die Frage, die eine Zuweisung ueberhaupt erst stellt.
+        Route::get('/aufgaben', TaskBoardController::class)->name('tasks.index');
+
         Route::post('/auftraege/{project}/aufgaben', [TaskController::class, 'store'])
             ->name('tasks.store');
         Route::post('/aufgaben/{task}/erledigt', [TaskController::class, 'complete'])
@@ -715,6 +756,10 @@ Route::middleware('audience:staff')->group(function () {
         // are different decisions taken at different moments.
         Route::post('/aufgaben/{task}/abhaengigkeit', [TaskController::class, 'depend'])
             ->name('tasks.depend');
+        // T-24: Zuständigkeit. Eigene Route aus demselben Grund wie oben —
+        // wer etwas übernimmt, erledigt es nicht im selben Zug.
+        Route::post('/aufgaben/{task}/zustaendig', [TaskController::class, 'assign'])
+            ->name('tasks.assign');
         Route::delete('/aufgaben/{task}', [TaskController::class, 'destroy'])->name('tasks.destroy');
 
         Route::post('/auftraege/{project}/notizen', [InternalNoteController::class, 'store'])

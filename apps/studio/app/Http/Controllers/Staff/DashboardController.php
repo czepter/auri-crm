@@ -214,7 +214,7 @@ class DashboardController extends Controller
                 ->open()
                 ->whereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id'))
                 ->byDueDate()
-                ->with('project')
+                ->with(['project', 'assignee'])
                 ->limit(self::DECISIONS)
                 ->get()
                 ->map(TaskRowData::fromTask(...))

@@ -34,6 +34,9 @@ class Task extends Model
         'due_offset_days',
         'completed_at',
         'completed_by_id',
+        'assignee_id',
+        'reminders_sent',
+        'client_reminders_sent',
         'task_template_id',
         'depends_on_task_id',
     ];
@@ -98,6 +101,12 @@ class Task extends Model
     public function completedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'completed_by_id');
+    }
+
+    /** T-24: who owes it. Null falls back to the crew, then to the studio — see StudioAudience::forTask(). */
+    public function assignee(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assignee_id');
     }
 
     /**

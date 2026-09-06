@@ -3,7 +3,9 @@
 namespace App\Automation\Models;
 
 use App\Automation\Enums\AutomationAnchor;
+use App\Automation\Enums\AutomationCondition;
 use App\Automation\Enums\AutomationOffsetDirection;
+use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Enums\AutomationTriggerType;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
@@ -47,8 +49,12 @@ class AutomationRule extends Model
         'direction',
         'notification_subject',
         'notification_body',
+        'recipient_type',
+        'condition',
         'is_active',
     ];
+
+    protected $attributes = ['recipient_type' => 'client'];
 
     protected function casts(): array
     {
@@ -56,6 +62,8 @@ class AutomationRule extends Model
             'trigger_type' => AutomationTriggerType::class,
             'anchor' => AutomationAnchor::class,
             'direction' => AutomationOffsetDirection::class,
+            'recipient_type' => AutomationRecipient::class,
+            'condition' => AutomationCondition::class,
             'is_active' => 'boolean',
         ];
     }

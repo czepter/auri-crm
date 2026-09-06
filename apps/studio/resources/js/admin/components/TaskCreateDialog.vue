@@ -32,6 +32,7 @@ type Anchor = { value: string; label: string; group: string; on: string | null }
 const props = defineProps<{
   projectId: string
   shootOptions: { value: string; label: string }[]
+  staffOptions: { value: string; label: string }[]
   anchors: Anchor[]
 }>()
 
@@ -46,6 +47,7 @@ const form = useForm({
   due_on: '',
   anchor: '',
   shoot: 'none',
+  assignee: 'none',
 })
 
 const groupLabels: Record<string, string> = {
@@ -69,6 +71,7 @@ function submit() {
       offset_days:
         mode.value === 'anchor' ? (direction.value === 'before' ? -Number(days.value) : Number(days.value)) : null,
       shoot: data.shoot === 'none' ? null : data.shoot,
+      assignee: data.assignee === 'none' ? null : data.assignee,
     }))
     .post(`/auftraege/${props.projectId}/aufgaben`, {
       preserveScroll: true,
@@ -122,6 +125,18 @@ function submit() {
               <SelectContent>
                 <SelectItem value="none">{{ $t('project.taskNoShoot') }}</SelectItem>
                 <SelectItem v-for="option in shootOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+
+          <Field v-slot="{ id }" :label="$t('project.taskAssignee')">
+            <Select v-model="form.assignee">
+              <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">{{ $t('project.taskUnassigned') }}</SelectItem>
+                <SelectItem v-for="option in staffOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
                 </SelectItem>
               </SelectContent>

@@ -7,8 +7,10 @@ use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\MergeFieldResolver;
+use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
+use App\Quotes\Support\QuoteRange;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\GotenbergClient;
 use Illuminate\Support\Number;
@@ -71,12 +73,54 @@ class RenderQuotePdf
 
     private function items(Quote $quote): string
     {
+        if ($quote->hasSlider()) {
+            return '<table><tbody>'.$this->sliderRows($quote).'</tbody></table>';
+        }
+
         $rows = $quote->items->map(fn (QuoteItem $item) => $this->row(
             e($item->title).($item->description === null ? '' : '<br><small>'.e($item->description).'</small>'),
             $item->isIncluded() ? 'inklusive' : $this->money($item->discountedLineTotal()),
         ))->implode('');
 
         return '<table><tbody>'.$rows.$this->summary($quote).'</tbody></table>';
+    }
+
+    /**
+     * Q-15: a slider quote in print. Accepted, it is the configuration the
+     * client chose and a single sum — the same breakdown the portal rail
+     * shows, in the order the amount comes about. Not yet accepted, it has
+     * no sum at all, so the last row is the range.
+     */
+    private function sliderRows(Quote $quote): string
+    {
+        $accepted = $quote->status === QuoteStatus::Accepted;
+        $hours = $quote->hours ?? $quote->min_hours ?? 0;
+
+        $html = $accepted
+            ? $this->row(e($hours.' Stunden'), $this->money($hours * $quote->hourly_rate))
+            : $this->row(
+                e(sprintf('%d–%d Stunden', $quote->min_hours ?? 0, $quote->max_hours ?? 0)),
+                $this->money($quote->hourly_rate).' je Stunde',
+            );
+
+        foreach ($quote->items as $item) {
+            // Before the acceptance an optional block is an offer, not a
+            // line: it prints with its price and no claim that it is in.
+            $chosen = ! $item->selectable || ($accepted && $item->selected);
+
+            if ($accepted && ! $chosen) {
+                continue;
+            }
+
+            $html .= $this->row(
+                e($item->title).($item->outcome === null ? '' : '<br><small>'.e($item->outcome).'</small>'),
+                $item->isIncluded() ? 'enthalten' : $this->money($item->lineTotal()),
+            );
+        }
+
+        return $html.($accepted
+            ? $this->row('Gesamt', $this->money($quote->total))
+            : $this->row('Spanne', $this->money(QuoteRange::min($quote)).' – '.$this->money(QuoteRange::max($quote))));
     }
 
     /** Dieselben Zeilen, die der Schirm zeigt — Rabatt und USt. nur, wo es sie gibt. */

@@ -27,6 +27,12 @@ return [
     'quote_not_valid' => 'Dieses Angebot ist nicht mehr gültig.',
     'quote_superseded' => 'Dieses Angebot wurde bereits durch eine neuere Version ersetzt.',
 
+    // Q-12: der Vorschlag des Reglers, zurueckgewiesen. Beide Faelle sind
+    // erreichbar, ohne dass jemand am Bildschirm etwas falsch macht — ein
+    // Tab, der offen stand, waehrend das Studio das Angebot ueberarbeitet hat.
+    'quote_hours_out_of_range' => 'Die gewählte Stundenzahl liegt außerhalb des Angebots.',
+    'quote_item_not_selectable' => 'Diese Auswahl gehört nicht zum Angebot.',
+
     // P-03 (#222): the line UpdateProjectDetails writes into the thread. A
     // change to a wedding date that lives only in a diff is how a
     // photographer turns up on the wrong Saturday.

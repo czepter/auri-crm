@@ -4,6 +4,7 @@ namespace App\Notifications\Support;
 
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Project;
+use App\Crm\Models\Task;
 use App\Models\User;
 use Illuminate\Support\Collection;
 
@@ -30,5 +31,19 @@ class StudioAudience
                 ->get();
 
         return $crew->isNotEmpty() ? $crew : User::query()->get();
+    }
+
+    /**
+     * T-24: the assignee where a task names one, the project's audience
+     * otherwise. Three steps, descending in specificity, and the fallback is
+     * the one above — a studio that assigns nothing sees no change.
+     *
+     * @return Collection<int, User>
+     */
+    public function forTask(Task $task): Collection
+    {
+        return $task->assignee !== null
+            ? collect([$task->assignee])
+            : $this->forProject($task->project);
     }
 }

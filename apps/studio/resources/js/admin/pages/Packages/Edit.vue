@@ -16,10 +16,15 @@ const form = useForm({
   description: props.package.description ?? '',
   items: props.package.items.map(
     (item): PackageItemRow => ({
+      id: item.id,
       title: item.title,
       description: item.description ?? '',
       quantity: item.quantity,
       unitPrice: centsToEuros(item.unitPrice),
+      selectable: item.selectable,
+      selected: item.selected,
+      outcome: item.outcome ?? '',
+      hasImage: item.hasImage,
     }),
   ),
 })
@@ -33,6 +38,12 @@ function submit() {
         description: item.description || null,
         quantity: item.quantity,
         unit_price: eurosToCents(item.unitPrice),
+        selectable: item.selectable,
+        selected: item.selected,
+        outcome: item.outcome || null,
+        // Die id, nicht der Pfad: der Controller schlaegt das Bild an der
+        // eigenen Zeile nach. Siehe PackageController::imagePathsFor().
+        id: item.id,
       })),
     }))
     .patch(`/pakete/${props.package.id}`)
@@ -54,7 +65,7 @@ function submit() {
 
         <div class="mt-8 first-of-type:mt-6">
           <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.items') }}</div>
-          <PackageItemsEditor v-model="form.items" />
+          <PackageItemsEditor v-model="form.items" :package-id="package.id" />
         </div>
 
         <div class="mt-6 flex items-center gap-4">
