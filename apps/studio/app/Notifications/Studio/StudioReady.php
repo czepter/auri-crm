@@ -26,7 +26,9 @@ class StudioReady extends Notification
                 'blocks' => [
                     [
                         'heading' => 'Anfragen per Mail',
-                        'body' => ($this->inboundAddress ?? '').'<br>Die kannst du auf deiner Website verlinken.',
+                        'body' => $this->inboundAddress === null
+                            ? 'Deine Adresse für Anfragen findest du im Posteingang.'
+                            : $this->inboundAddress.'<br>Die kannst du auf deiner Website verlinken.',
                         'buttonLabel' => 'Posteingang öffnen',
                         'buttonUrl' => '/posteingang',
                     ],

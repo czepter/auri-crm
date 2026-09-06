@@ -39,3 +39,18 @@ it('sends the ready mail carrying the inbound address on completion', function (
         return str_contains($html, '@'.inboundDomain());
     });
 });
+
+it('falls back to Posteingang when the studio never rotated an inbound secret', function () {
+    StudioSettings::query()->update(['inbound_secret' => null]);
+    Notification::fake();
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')->post('/einrichtung/studio/abschluss')->assertRedirect('/');
+
+    Notification::assertSentTo($owner, function (StudioReady $notification) use ($owner) {
+        $html = (string) $notification->toMail($owner)->render();
+
+        return ! str_contains($html, 'Die kannst du')
+            && str_contains($html, 'Deine Adresse für Anfragen findest du im Posteingang.');
+    });
+});
