@@ -167,7 +167,7 @@
                   
       <div
          style="font-family:Helvetica, Arial, sans-serif;font-size:14px;line-height:1.6;text-align:left;color:#1a1a1a;"
-      >{{ $slot }}</div>
+      >{!! \Illuminate\Mail\Markdown::parse($slot) !!}</div>
     
                 </td>
               </tr>

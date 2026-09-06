@@ -4,6 +4,7 @@ namespace App\Gallery\Notifications;
 
 use App\Concerns\AppliesStudioMailIdentity;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Models\GalleryDownloadLink;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
@@ -15,9 +16,12 @@ use Illuminate\Notifications\Notification;
  * Seite und lädt neu. Genau dafür wird beim Herunterladen nach einer
  * Adresse gefragt — ohne diese Mail wäre sie eine Erhebung ohne Zweck.
  *
- * Der Link führt zurück auf den Download-Schirm und nicht auf ein Band:
- * die Bänder tragen signierte, 24 Stunden gültige Adressen, die eine Mail
- * überleben würde, und wie viele es sind, weiß der Schirm besser.
+ * Der Link (IssueGalleryDownloadLink) führt zurück auf den Download-Schirm
+ * und nicht auf ein Band: die Bänder tragen eigene, signierte Adressen, die
+ * der Schirm bei jedem Aufruf neu ausstellt. Der Mail-Link selbst trägt ein
+ * gespeichertes Token mit eigener Gültigkeit — GalleryDownloadLink::
+ * VALID_FOR_DAYS —, unabhängig davon, ob das Archiv dahinter noch frisch ist
+ * oder auf Anfrage neu gebaut wird.
  */
 class GalleryZipReady extends Notification
 {
@@ -42,10 +46,10 @@ class GalleryZipReady extends Notification
             ->subject("Deine Bilder aus „{$this->gallery->title}“ stehen bereit")
             ->greeting('Hallo,')
             ->line($this->parts === 1
-                ? 'Das Archiv ist fertig gepackt.'
-                : "Das Archiv ist fertig gepackt — {$this->parts} Teile.")
+                ? 'Eure Bilder stehen zum Download bereit.'
+                : "Eure Bilder stehen in {$this->parts} Teilen zum Download bereit.")
             ->action('Herunterladen', $this->url)
-            ->line('Die Links gelten 24 Stunden.');
+            ->line('Der Link ist '.GalleryDownloadLink::VALID_FOR_DAYS.' Tage gültig.');
 
         return $this->appendStudioMailIdentity($message, $this->settings);
     }

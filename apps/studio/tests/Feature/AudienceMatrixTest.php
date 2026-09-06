@@ -150,6 +150,11 @@ const PUBLIC_ROUTES = [
         // against (EnsureUngatedGallery).
         'galerie-bilder/{galleryVersion}/{key}',
         'galerien/{gallery}/download', 'galerien/{gallery}/download/pin',
+        // The "Herunterladen" mail's own link (GalleryZipReady). Behind the
+        // same two gates as the screen it redirects into; the stored,
+        // expiring GalleryDownloadLink token it checks first is that link's
+        // whole credential, same shape as the tokens above, not `audience:`.
+        'galerien/{gallery}/download/mail/{token}',
         // G-03 (#231): queues the archive. Behind the same two gates as the
         // screen that offers it, neither of which reads as `audience:`.
         'galerien/{gallery}/download/vorbereiten',

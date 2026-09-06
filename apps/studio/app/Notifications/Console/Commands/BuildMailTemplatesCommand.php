@@ -23,7 +23,6 @@ class BuildMailTemplatesCommand extends Command
     // rescans its own output), so no replacement text may itself contain
     // another sentinel — none of these do.
     private const SENTINELS = [
-        '__SLOT__' => '{{ $slot }}',
         '__SUBCOPY__' => '{{ $subcopy ?? \'\' }}',
         '__BRAND__' => '{{ $brand ?? config(\'app.name\') }}',
         '__LOGO_URL__' => '{{ $logoUrl ?? null }}',
@@ -70,7 +69,20 @@ class BuildMailTemplatesCommand extends Command
                 $html = trim($matches[1]);
             }
 
-            $blade = strtr($html, self::SENTINELS);
+            // layout.mjml's slot is the notification's whole markdown body
+            // (greeting, lines, the button's own compiled fragment); Laravel's
+            // stock html/layout.blade.php runs it through Markdown::parse()
+            // for exactly this reason, and our override had silently dropped
+            // that call — every notification rendered literal "# " greetings,
+            // "**bold**" and "[text](url)" links. button.mjml's __SLOT__ is
+            // only the button's own label text and must stay unparsed.
+            $sentinels = self::SENTINELS + [
+                '__SLOT__' => $file->getFilenameWithoutExtension() === 'layout'
+                    ? '{!! \Illuminate\Mail\Markdown::parse($slot) !!}'
+                    : '{{ $slot }}',
+            ];
+
+            $blade = strtr($html, $sentinels);
 
             File::put($outputDir.'/'.$file->getFilenameWithoutExtension().'.blade.php', $blade);
         }
