@@ -268,6 +268,65 @@ class StudioSettingsResolver
     }
 
     /**
+     * Q-10: the shop-window pictures, in the order they were uploaded. The
+     * slider's 24 tiles are laid over them cyclically; under six the repeat
+     * is visible, and with none the grid is left out entirely and the slider
+     * stands on its two numbers.
+     *
+     * @return list<string>
+     */
+    public function showcasePaths(): array
+    {
+        return array_values($this->row()->showcase_paths ?? []);
+    }
+
+    /**
+     * The same road the logo takes — storeAs() onto the local disk under the
+     * tenant's own folder, no media library and no second disk. Appends
+     * rather than replaces: a set is what the grid needs.
+     */
+    public function addShowcaseImage(UploadedFile $file, ?User $actor = null): void
+    {
+        $row = StudioSettings::query()->firstOrFail();
+        $paths = array_values($row->showcase_paths ?? []);
+
+        $paths[] = $file->store("showcase/{$row->tenant_id}", 'local');
+
+        $this->writeShowcase($row, $paths, $actor);
+    }
+
+    /** Removes one picture and the file behind it. An index nobody holds is a no-op. */
+    public function removeShowcaseImage(int $index, ?User $actor = null): void
+    {
+        $row = StudioSettings::query()->firstOrFail();
+        $paths = array_values($row->showcase_paths ?? []);
+
+        if (! array_key_exists($index, $paths)) {
+            return;
+        }
+
+        Storage::disk('local')->delete($paths[$index]);
+        unset($paths[$index]);
+
+        $this->writeShowcase($row, array_values($paths), $actor);
+    }
+
+    /** @param list<string> $paths */
+    private function writeShowcase(StudioSettings $row, array $paths, ?User $actor): void
+    {
+        $row->update(['showcase_paths' => $paths]);
+
+        Cache::store('redis')->forget($this->cacheKey());
+
+        AuditLogger::record(
+            event: 'studio_settings.updated',
+            actor: $actor,
+            context: ['key' => 'showcase_paths', 'count' => count($paths)],
+            subject: $row->public_id,
+        );
+    }
+
+    /**
      * Writes one column, busts the cache both processes read through, and
      * leaves an audit row naming the actor and both values — T-01's issue,
      * "every write goes through the existing AuditLog". Reads the row fresh

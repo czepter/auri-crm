@@ -112,6 +112,8 @@ Route::middleware('portal.maintenance')->group(function () {
         // never re-derived — see App\Portal\Http\Controllers\QuoteController.
         // The view stays open the same way a contract's view does; only the
         // accept action below is gated.
+        Route::get('/projekte/{project}/angebot/bild/{item}', [QuoteController::class, 'image'])
+            ->name('portal.quotes.image');
         Route::get('/projekte/{project}/angebot', [QuoteController::class, 'show'])
             ->name('portal.quotes.show');
 
@@ -205,6 +207,10 @@ Route::middleware('portal.maintenance')->group(function () {
 // resolve on the sign-in screen before any contact session exists. Reachable
 // during a maintenance closure too, same reasoning as the Impressum below.
 Route::get('/branding/logo', [BrandingController::class, 'logo'])->name('portal.branding.logo');
+// Q-10: eine Kachel des Reglerrasters. Oeffentlich wie das Logo — der Regler
+// steht, bevor irgendjemand angenommen hat.
+Route::get('/schaufenster/{index}', [BrandingController::class, 'showcase'])
+    ->whereNumber('index')->name('portal.showcase');
 
 // P-05 (#224): the e-mail-change confirmation. Public by necessity — the
 // person following it is reading the new inbox, which is not necessarily the

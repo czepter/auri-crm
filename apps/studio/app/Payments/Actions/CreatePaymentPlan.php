@@ -5,7 +5,12 @@ namespace App\Payments\Actions;
 use App\Crm\Models\Job;
 use App\Payments\Models\PaymentPlan;
 use App\Payments\Support\PaymentInstallmentSplitter;
+use App\Payments\Support\PaymentStageSplitter;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
+use App\Quotes\Models\QuotePaymentStage;
 use App\Support\AuditLogger;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -43,28 +48,63 @@ class CreatePaymentPlan
             'A payment plan requires a signed contract.'
         );
 
-        $amounts = PaymentInstallmentSplitter::evenly($total, count($dueDates));
+        // Q-11: where the accepted quote carries stages, they decide the
+        // amounts and their wording; the dates stay this action's own, since
+        // a stage has a text and no date. An even split otherwise — that is
+        // every plan that exists today.
+        $stages = $this->stagesFor($job);
+        $rows = $stages->isEmpty()
+            ? collect(PaymentInstallmentSplitter::evenly($total, count($dueDates)))
+                ->map(fn (int $amount) => ['amount' => $amount, 'title' => null])
+                ->all()
+            : collect(PaymentStageSplitter::split($total, $stages))
+                ->map(fn (array $row) => ['amount' => $row['amount'], 'title' => $row['label']])
+                ->all();
 
-        return DB::transaction(function () use ($job, $total, $dueDates, $amounts) {
+        return DB::transaction(function () use ($job, $total, $dueDates, $rows) {
             $plan = PaymentPlan::create(['job_id' => $job->id, 'total' => $total]);
 
-            foreach (array_values($dueDates) as $index => $dueOn) {
+            foreach (array_values($rows) as $index => $row) {
                 $plan->installments()->create([
-                    'amount' => $amounts[$index],
-                    'due_on' => $dueOn,
+                    'amount' => $row['amount'],
+                    // due_on is NOT NULL, and a stage carries no date of its
+                    // own — so a stage past the last date supplied falls back
+                    // to it rather than inventing one. ponytail: derive the
+                    // dates from the Job's own shoots when a story asks the
+                    // booking screen to stop typing them.
+                    'due_on' => array_values($dueDates)[$index] ?? end($dueDates),
                     'sort_order' => $index,
+                    'title' => $row['title'],
                 ]);
             }
 
             AuditLogger::record(
                 event: 'payment_plan.created',
                 actor: auth('staff')->user(),
-                context: ['job' => $job->public_id, 'total' => $total, 'installments' => count($dueDates)],
+                context: ['job' => $job->public_id, 'total' => $total, 'installments' => count($rows)],
                 subject: $plan->public_id,
                 projectId: $job->project_id,
             );
 
             return $plan;
         });
+    }
+
+    /**
+     * The accepted quote's stages, if this project has one. Read off the
+     * quote rather than copied onto the Job: the quote is the document the
+     * client agreed to, and it is the only place that answers what was
+     * agreed.
+     *
+     * @return Collection<int, QuotePaymentStage>
+     */
+    private function stagesFor(Job $job): Collection
+    {
+        return Quote::query()
+            ->where('project_id', $job->project_id)
+            ->where('status', QuoteStatus::Accepted)
+            ->latest('accepted_at')
+            ->first()
+            ?->paymentStages ?? collect();
     }
 }

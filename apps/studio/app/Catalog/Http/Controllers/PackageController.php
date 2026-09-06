@@ -4,12 +4,15 @@ namespace App\Catalog\Http\Controllers;
 
 use App\Catalog\Data\PackageData;
 use App\Catalog\Models\Package;
+use App\Catalog\Models\PackageItem;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PackageController extends Controller
 {
@@ -141,6 +144,43 @@ class PackageController extends Controller
         return back();
     }
 
+    /**
+     * Q-10: the picture on a block's tile, stored under catalog/{tenant}/ —
+     * the same road the logo takes, no media library and no image model.
+     * Kept off update() because that one deletes and recreates every row: an
+     * upload has to land on a row that exists right now, and the screen
+     * carries the path back into the next save.
+     */
+    public function uploadImage(Request $request, Package $package, PackageItem $packageItem): RedirectResponse
+    {
+        $this->authorize('update', $package);
+
+        abort_unless($packageItem->package_id === $package->id, 404);
+
+        $request->validate(['image' => ['required', 'file', 'mimes:png,jpg,jpeg', 'max:4096']]);
+
+        $old = $packageItem->image_path;
+        $path = $request->file('image')->store("catalog/{$package->tenant_id}", 'local');
+
+        if ($old !== null && $old !== $path) {
+            Storage::disk('local')->delete($old);
+        }
+
+        $packageItem->update(['image_path' => $path]);
+
+        return back();
+    }
+
+    /** Behind the staff gate: a catalogue picture is not published until a quote carries a copy of it. */
+    public function image(Package $package, PackageItem $packageItem): StreamedResponse
+    {
+        $this->authorize('view', $package);
+
+        abort_unless($packageItem->package_id === $package->id && $packageItem->image_path !== null, 404);
+
+        return Storage::disk('local')->response($packageItem->image_path);
+    }
+
     private function validated(Request $request): array
     {
         return $request->validate([
@@ -151,6 +191,14 @@ class PackageController extends Controller
             'items.*.description' => ['nullable', 'string', 'max:2000'],
             'items.*.quantity' => ['required', 'integer', 'min:1'],
             'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
+            // Q-09/Q-10: the block half of a line. image_path round-trips
+            // rather than being uploaded here — update() below replaces the
+            // rows wholesale, so a path the form did not send back would be
+            // dropped on the next save.
+            'items.*.selectable' => ['sometimes', 'boolean'],
+            'items.*.selected' => ['sometimes', 'boolean'],
+            'items.*.outcome' => ['nullable', 'string', 'max:255'],
+            'items.*.image_path' => ['nullable', 'string', 'max:2048'],
         ]);
     }
 
@@ -169,6 +217,10 @@ class PackageController extends Controller
             'quantity' => $item['quantity'],
             'unit_price' => $item['unit_price'] ?? null,
             'sort_order' => $index,
+            'selectable' => $item['selectable'] ?? false,
+            'selected' => $item['selected'] ?? false,
+            'outcome' => $item['outcome'] ?? null,
+            'image_path' => $item['image_path'] ?? null,
         ])->all();
     }
 }

@@ -8,8 +8,10 @@ use App\Quotes\Data\QuoteData;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * The client's read of the quote Q-06 sent, and this story's own accept
@@ -29,7 +31,7 @@ class QuoteController extends Controller
         $contact = auth('portal')->user();
 
         $found = $contact->visibleProjects()->where('projects.public_id', $project)
-            ->with(['latestQuote.items', 'latestQuote.predecessor'])
+            ->with(['latestQuote.items', 'latestQuote.predecessor', 'latestQuote.paymentStages'])
             ->firstOrFail();
         $quote = $found->latestQuote;
 
@@ -54,6 +56,27 @@ class QuoteController extends Controller
     }
 
     /**
+     * Q-10: the picture on a block's tile, as the client sees it. Served
+     * through the project the contact may see rather than by path: the file
+     * itself lives beside every other tenant's under catalog/, and a
+     * guessable filename in a URL would be the whole access rule.
+     */
+    public function image(string $project, string $item): StreamedResponse
+    {
+        $contact = auth('portal')->user();
+
+        $found = $contact->visibleProjects()->where('projects.public_id', $project)
+            ->with('latestQuote.items')
+            ->firstOrFail();
+
+        $path = $found->latestQuote?->items->firstWhere('public_id', $item)?->image_path;
+
+        abort_if($path === null, 404);
+
+        return Storage::disk('local')->response($path);
+    }
+
+    /**
      * The submit. AcceptQuote re-reads status and valid_until off the row
      * fetched fresh by this request — never off what the earlier GET above
      * handed the screen — so a quote invalidated in the gap between the two
@@ -69,7 +92,23 @@ class QuoteController extends Controller
 
         abort_if($found->latestQuote === null, 404);
 
-        $accept($found->latestQuote, $contact, (string) $request->ip());
+        // Q-12: a proposal, not a decision. AcceptQuote checks the hours
+        // against the quote's own bounds and refuses a line the studio never
+        // made switchable — validating the shape here would only be a second
+        // place to keep those rules.
+        $validated = $request->validate([
+            'hours' => ['nullable', 'integer', 'min:0'],
+            'items' => ['array'],
+            'items.*' => ['string'],
+        ]);
+
+        $accept(
+            $found->latestQuote,
+            $contact,
+            (string) $request->ip(),
+            $validated['hours'] ?? null,
+            $validated['items'] ?? [],
+        );
 
         return back();
     }

@@ -220,6 +220,12 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/pakete/{package}', [PackageController::class, 'update'])->name('packages.update');
         Route::post('/pakete/{package}/status', [PackageController::class, 'toggle'])->name('packages.toggle');
         Route::post('/pakete/{package}/duplizieren', [PackageController::class, 'duplicate'])->name('packages.duplicate');
+        // Q-10: das Bild der Baustein-Kachel, am Katalogeintrag gepflegt —
+        // das Angebot traegt spaeter nur die Kopie.
+        Route::post('/pakete/{package}/positionen/{packageItem}/bild', [PackageController::class, 'uploadImage'])
+            ->name('packages.items.image.store');
+        Route::get('/pakete/{package}/positionen/{packageItem}/bild', [PackageController::class, 'image'])
+            ->name('packages.items.image');
 
         Route::get('/vorlagen', [TemplateHubController::class, 'index'])->name('templates.index');
 
@@ -312,6 +318,13 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/einstellungen', [StudioSettingsController::class, 'edit'])->name('settings.edit');
         Route::patch('/einstellungen', [StudioSettingsController::class, 'update'])->name('settings.update');
         Route::get('/einstellungen/logo', [StudioSettingsController::class, 'logo'])->name('settings.logo');
+        // Q-10: die Schaufensterbilder, neben dem Logo gepflegt.
+        Route::post('/einstellungen/schaufenster', [StudioSettingsController::class, 'storeShowcase'])
+            ->name('settings.showcase.store');
+        Route::get('/einstellungen/schaufenster/{index}', [StudioSettingsController::class, 'showcase'])
+            ->whereNumber('index')->name('settings.showcase');
+        Route::delete('/einstellungen/schaufenster/{index}', [StudioSettingsController::class, 'destroyShowcase'])
+            ->whereNumber('index')->name('settings.showcase.destroy');
         Route::patch('/einstellungen/ust', [StudioSettingsController::class, 'updateVat'])->name('settings.vat.update');
         Route::patch('/einstellungen/dokumente', [StudioSettingsController::class, 'updateDocuments'])->name('settings.documents.update');
         Route::patch('/einstellungen/allgemein', [StudioSettingsController::class, 'updateGeneral'])->name('settings.general.update');

@@ -39,7 +39,10 @@ class PaymentPlanData extends Data
         $items = $installments->values()
             ->map(fn ($installment, int $index) => PaymentInstallmentData::fromModel(
                 $installment,
-                self::labelFor($index, $count),
+                // Q-11: the stage's own wording where the quote carried one.
+                // The derivation below only ever produced three words, and a
+                // sentence somebody wrote is not one of them.
+                $installment->title ?? self::labelFor($index, $count),
             ))
             ->all();
 
@@ -65,6 +68,10 @@ class PaymentPlanData extends Data
      */
     public static function labelForInstallment(PaymentInstallment $installment): string
     {
+        if ($installment->title !== null) {
+            return $installment->title;
+        }
+
         $siblings = $installment->plan->installments()->orderBy('sort_order')->pluck('id')->all();
         $index = array_search($installment->id, $siblings, true);
 

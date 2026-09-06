@@ -30,7 +30,7 @@ class PaymentInstallment extends Model
     use HasPublicId;
 
     protected $fillable = [
-        'payment_plan_id', 'amount', 'due_on', 'status', 'sort_order',
+        'payment_plan_id', 'amount', 'due_on', 'status', 'sort_order', 'title',
         'settled_via', 'paid_on', 'payment_reference', 'overdue_notified_at',
         'overdue_reason', 'overdue_reminders_sent', 'client_reminders_sent',
         'stripe_checkout_session_id',

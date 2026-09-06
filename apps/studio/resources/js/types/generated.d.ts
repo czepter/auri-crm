@@ -698,6 +698,19 @@ vatAmount: number | null,
 intro: string | null,
 outro: string | null,
 items: App.Quotes.Data.QuoteItemData[],
+hourlyRate: number | null,
+minHours: number | null,
+maxHours: number | null,
+imagesPerHour: number | null,
+hours: number | null,
+rangeMin: number | null,
+rangeMax: number | null,
+paymentStages: {
+id: string,
+percent: number,
+label: string,
+minimum: number,
+}[],
 };
 export type QuoteItemData = {
 id: string,
@@ -711,6 +724,10 @@ discountType: string | null,
 discountValue: number | null,
 discountAmount: number,
 netTotal: number,
+selectable: boolean,
+selected: boolean,
+outcome: string | null,
+hasImage: boolean,
 };
 }
 namespace Enums {
