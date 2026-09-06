@@ -7,6 +7,7 @@ use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Support\StarterTemplateCatalog;
 use App\Engagement\Support\InboundAddress;
 use App\Http\Controllers\Controller;
+use App\Models\UserEmailVerification;
 use App\Notifications\NotificationService;
 use App\Notifications\Studio\StudioReady;
 use App\Settings\Data\PortalSettingsData;
@@ -36,6 +37,7 @@ class StudioOnboardingController extends Controller
             'settings' => StudioSettingsData::fromResolver($settings),
             'portalSettings' => PortalSettingsData::fromResolver($settings),
             'emailVerified' => auth('staff')->user()->email_verified_at !== null,
+            'hasLiveVerification' => UserEmailVerification::forUser(auth('staff')->user()) !== null,
             // T-18: the catalog, minus its blocks — this step chooses, it does
             // not edit, and shipping every starter's document to a screen that
             // renders four words of each would be a page weight nobody asked

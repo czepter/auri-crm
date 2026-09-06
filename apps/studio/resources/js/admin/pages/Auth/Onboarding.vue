@@ -18,6 +18,7 @@ defineProps<{
   starterDefaults: string[]
   typeLabels: Record<string, string>
   emailVerified: boolean
+  hasLiveVerification: boolean
 }>()
 
 // T-18 sits after `documents`: the settings that step collects — validity,
@@ -71,7 +72,7 @@ function finish() {
       {{ $t('onboarding.stepCount', { current: stepIndex + 1, total: steps.length }) }}
     </p>
 
-    <EmailVerificationForm v-if="step() === 'profile' && !emailVerified" />
+    <EmailVerificationForm v-if="step() === 'profile' && !emailVerified && hasLiveVerification" />
     <ProfileForm v-if="step() === 'profile'" ref="paneRef" :settings="settings" @saved="advance" />
     <VatForm v-else-if="step() === 'vat'" ref="paneRef" :settings="settings" @saved="advance" />
     <DocumentsForm v-else-if="step() === 'documents'" ref="paneRef" :settings="settings" @saved="advance" />
