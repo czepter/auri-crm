@@ -18,6 +18,7 @@ actor "Studio-Inhaber" as Owner
 actor "Mitarbeiter" as Staff
 actor "Crew" as Crew
 actor "Integrationsclient" as Api
+actor "Zeitgeber" as Clock
 
 Owner --|> Staff
 
@@ -40,6 +41,7 @@ rectangle "Auri CRM" {
   usecase "Rate online zahlen" as UC_Pay <<Zahlung>>
   usecase "Rechnung erzeugen" as UC_Invoice <<Zahlung>>
   usecase "Zahlungseingang buchen" as UC_Book <<Zahlung>>
+  usecase "Zahlungsverzug erkennen" as UC_Overdue <<Zahlung>>
 
   usecase "Bilder hochladen" as UC_Upload <<Produktion>>
   usecase "Derivate berechnen" as UC_Derivatives <<Produktion>>
@@ -55,15 +57,24 @@ rectangle "Auri CRM" {
   usecase "Portal-Zugang erhalten" as UC_MagicLink <<Betreuung>>
   usecase "Fragebogen ausfuellen" as UC_Form <<Betreuung>>
   usecase "Nachricht schreiben" as UC_Message <<Betreuung>>
+  usecase "Per E-Mail antworten" as UC_MailReply <<Betreuung>>
+  usecase "Posteingang abrufen" as UC_MailPoll <<Betreuung>>
   usecase "Aufgaben fuehren" as UC_Tasks <<Betreuung>>
   usecase "Automation ausloesen" as UC_Automation <<Betreuung>>
+  usecase "Erinnerung terminieren" as UC_Sweep <<Betreuung>>
   usecase "Benachrichtigung zustellen" as UC_Notify <<Betreuung>>
+  usecase "Ruhezeit beachten" as UC_Quiet <<Betreuung>>
+  usecase "Zusammenfassung senden" as UC_Digest <<Betreuung>>
+  usecase "Onboarding-Erinnerung senden" as UC_OnbNudge <<Betreuung>>
+  usecase "Webhook zustellen" as UC_Webhook <<Betreuung>>
 
   usecase "Studio einrichten" as UC_Onboarding <<Verwaltung>>
   usecase "Mitarbeiter einladen" as UC_Invite <<Verwaltung>>
   usecase "Vorlagen pflegen" as UC_Templates <<Verwaltung>>
   usecase "Katalog pflegen" as UC_Catalog <<Verwaltung>>
   usecase "Portal-Funktionen schalten" as UC_Capabilities <<Verwaltung>>
+  usecase "Benachrichtigungen einstellen" as UC_NotifyPrefs <<Verwaltung>>
+  usecase "Absenderidentitaet einstellen" as UC_MailIdentity <<Verwaltung>>
   usecase "Auswertungen ansehen" as UC_Reports <<Verwaltung>>
   usecase "DSGVO-Auskunft erteilen" as UC_Dsgvo <<Verwaltung>>
   usecase "Altbestand importieren" as UC_Import <<Verwaltung>>
@@ -90,15 +101,24 @@ Staff --> UC_Message
 Staff --> UC_Templates
 Staff --> UC_Catalog
 Staff --> UC_Reports
+Staff --> UC_NotifyPrefs
+Staff --> UC_Digest
 
 Owner --> UC_Onboarding
 Owner --> UC_Invite
 Owner --> UC_Capabilities
+Owner --> UC_MailIdentity
 Owner --> UC_Dsgvo
 Owner --> UC_Import
 
 Crew --> UC_Shoot
 Crew --> UC_Upload
+
+Clock --> UC_Sweep
+Clock --> UC_Digest
+Clock --> UC_OnbNudge
+Clock --> UC_Overdue
+Clock --> UC_MailPoll
 
 actor "Kunde" as Client
 actor "Gast" as Guest
@@ -111,6 +131,7 @@ Client --> UC_QuoteAccept
 Client --> UC_Sign
 Client --> UC_Form
 Client --> UC_Message
+Client --> UC_MailReply
 Client --> UC_Pay
 Client --> UC_View
 Client --> UC_List
@@ -135,6 +156,9 @@ UC_View ..> UC_Gate : <<include>>
 UC_Download ..> UC_Gate : <<include>>
 UC_Download ..> UC_Zip : <<include>>
 UC_Publish ..> UC_Notify : <<include>>
+UC_Sweep ..> UC_Automation : <<include>>
+UC_Notify ..> UC_Quiet : <<include>>
+UC_MailReply ..> UC_MailPoll : <<include>>
 UC_Automation ..> UC_Notify : <<include>>
 UC_MagicLink ..> UC_Notify : <<include>>
 UC_Board ..> UC_Automation : <<extend>>
@@ -142,6 +166,8 @@ UC_Board ..> UC_Automation : <<extend>>
 UC_Pay --> Stripe
 Stripe --> UC_Book
 UC_Notify --> Mail
+Mail --> UC_MailPoll
+UC_Webhook --> Api
 UC_Upload --> S3
 UC_Zip --> S3
 UC_Derivatives --> S3

@@ -128,12 +128,16 @@ in `app/Console/Commands` is auto-discovered, because that directory is not
 used.
 
 Which actor drives which of these modules is drawn in
-[anwendungsfalldiagramm.svg](anwendungsfalldiagramm.svg), generated from
-[anwendungsfalldiagramm.puml](anwendungsfalldiagramm.puml):
+[anwendungsfalldiagramm.svg](anwendungsfalldiagramm.svg); the notification
+fan-out behind it — who is notified, which of the three transports carries
+it, and where preferences, quiet hours and the digest sit — has its own
+diagram in
+[benachrichtigungen-anwendungsfaelle.svg](benachrichtigungen-anwendungsfaelle.svg).
+Both are generated from the `.puml` files beside them:
 
 ```
-docker run --rm -i plantuml/plantuml -tsvg -pipe \
-  < docs/anwendungsfalldiagramm.puml > docs/anwendungsfalldiagramm.svg
+docker run --rm -v "$PWD/docs":/data -w /data plantuml/plantuml -tsvg \
+  anwendungsfalldiagramm.puml benachrichtigungen-anwendungsfaelle.puml
 ```
 
 ## Data conventions
@@ -223,6 +227,7 @@ means a rule was crossed, not that a behaviour regressed:
 ## Further reading
 
 [anwendungsfalldiagramm.svg](anwendungsfalldiagramm.svg) ·
+[benachrichtigungen-anwendungsfaelle.svg](benachrichtigungen-anwendungsfaelle.svg) ·
 [deployment.md](deployment.md) ·
 [branching.md](branching.md) ·
 [backlog.md](backlog.md) ·
