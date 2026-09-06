@@ -21,6 +21,6 @@ class StudioSetupPending extends Notification
             ->view('mail.product-message', ['brand' => 'Auri CRM'])
             ->greeting("Hallo {$this->name},")
             ->line('um mit Auri CRM richtig durchzustarten, fehlen dir noch ein paar Einstellungen.')
-            ->action('Weiter einrichten', '/einrichtung/studio');
+            ->action('Weiter einrichten', url('/einrichtung/studio'));
     }
 }

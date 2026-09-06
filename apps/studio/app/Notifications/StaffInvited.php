@@ -45,20 +45,20 @@ class StaffInvited extends Notification implements Transactional
                         'heading' => 'Deine Termine im eigenen Kalender',
                         'body' => 'Die Shootings, für die du eingeteilt bist, kannst du in deiner Kalender-App abonnieren.',
                         'buttonLabel' => 'Kalender abonnieren',
-                        'buttonUrl' => '/einstellungen/kalender',
+                        'buttonUrl' => url('/einstellungen/kalender'),
                     ],
                     [
                         'heading' => 'Antworten am Auftrag',
                         'body' => 'Kundenantworten landen am Auftrag, auch wenn der Kunde aus seinem eigenen Mailprogramm schreibt.',
                         'buttonLabel' => 'Zum Studio',
-                        'buttonUrl' => '/',
+                        'buttonUrl' => url('/'),
                     ],
                 ],
             ])
             ->greeting("Hallo {$this->invitation->name},")
             ->line("{$this->invitation->invitedBy->name} hat dich als {$this->invitation->role->label()} eingeladen. Schön, dass du dabei bist.")
-            ->action('Zugang einrichten', $this->url)
-            ->line('Der Link gilt '.StaffInvitation::VALID_FOR_DAYS.' Tage.');
+            ->line('Der Link gilt '.StaffInvitation::VALID_FOR_DAYS.' Tage.')
+            ->action('Zugang einrichten', $this->url);
 
         // T-06: from/reply-to/BCC and the signature+legal footer, resolved
         // per tenant at send time rather than from MAIL_FROM_ADDRESS.

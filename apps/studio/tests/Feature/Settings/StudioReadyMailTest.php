@@ -40,7 +40,7 @@ it('sends the ready mail carrying the inbound address on completion', function (
     });
 });
 
-it('falls back to Posteingang when the studio never rotated an inbound secret', function () {
+it('drops the inbound block when the studio never rotated an inbound secret', function () {
     StudioSettings::query()->update(['inbound_secret' => null]);
     Notification::fake();
     $owner = staffMember(StaffRole::Owner);
@@ -50,7 +50,8 @@ it('falls back to Posteingang when the studio never rotated an inbound secret', 
     Notification::assertSentTo($owner, function (StudioReady $notification) use ($owner) {
         $html = (string) $notification->toMail($owner)->render();
 
-        return ! str_contains($html, 'Die kannst du')
-            && str_contains($html, 'Deine Adresse für Anfragen findest du im Posteingang.');
+        return ! str_contains($html, 'Anfragen per Mail')
+            && ! str_contains($html, 'Posteingang öffnen')
+            && str_contains($html, 'eine eigene Adresse');
     });
 });

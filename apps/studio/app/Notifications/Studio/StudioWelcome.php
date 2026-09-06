@@ -25,26 +25,26 @@ class StudioWelcome extends Notification
                         'heading' => 'Ein eigener Bereich für deine Kunden',
                         'body' => 'Angebot, Vertrag und Rechnung liegen im Kundenportal bereit. Deine Kunden melden sich <strong>ohne Passwort</strong> an, unterschreiben den Vertrag im Browser und zahlen per Überweisung oder Karte.',
                         'buttonLabel' => 'Portal einrichten',
-                        'buttonUrl' => '/einstellungen/portal',
+                        'buttonUrl' => url('/einstellungen/portal'),
                     ],
                     [
                         'heading' => 'Galerien, die Gäste ohne Konto sehen',
                         'body' => 'Fertige Bilder gehen als Galerie raus statt als Link mit Ablaufdatum. Gäste öffnen sie <strong>ohne Konto</strong>, markieren Favoriten und laden ihre Auswahl als ZIP herunter.',
                         'buttonLabel' => 'Galerie anlegen',
-                        'buttonUrl' => '/galerien/neu',
+                        'buttonUrl' => url('/galerien/neu'),
                     ],
                     [
                         'heading' => 'Anfragen und Antworten in einem Posteingang',
                         'body' => 'Dein Studio hat eine <strong>eigene Mailadresse für Anfragen</strong>. Was dort ankommt, landet im Posteingang. Antworten deiner Kunden hängen sich von selbst an den richtigen Auftrag.',
                         'buttonLabel' => 'Posteingang ansehen',
-                        'buttonUrl' => '/posteingang',
+                        'buttonUrl' => url('/posteingang'),
                     ],
                 ],
             ])
             ->greeting("Hallo {$this->name},")
             ->line('willkommen bei Auri CRM. Ab jetzt liegt alles zu deinen Aufträgen an einem Ort, von der ersten Anfrage bis zu den fertigen Bildern. Drei Funktionen, die du vielleicht noch nicht kennst:')
-            ->action('Studio öffnen', '/')
+            ->action('Studio öffnen', url('/'))
             ->line('Viele Grüße')
-            ->line('dein Auri-CRM-Team');
+            ->line('Auri CRM');
     }
 }
