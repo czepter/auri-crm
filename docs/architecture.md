@@ -127,6 +127,15 @@ Console commands live beside their module too, which is why
 in `app/Console/Commands` is auto-discovered, because that directory is not
 used.
 
+Which actor drives which of these modules is drawn in
+[anwendungsfalldiagramm.svg](anwendungsfalldiagramm.svg), generated from
+[anwendungsfalldiagramm.puml](anwendungsfalldiagramm.puml):
+
+```
+docker run --rm -i plantuml/plantuml -tsvg -pipe \
+  < docs/anwendungsfalldiagramm.puml > docs/anwendungsfalldiagramm.svg
+```
+
 ## Data conventions
 
 **Split identity** (`App\Concerns\HasPublicId`). The bigint primary key stays
@@ -213,6 +222,7 @@ means a rule was crossed, not that a behaviour regressed:
 
 ## Further reading
 
+[anwendungsfalldiagramm.svg](anwendungsfalldiagramm.svg) ·
 [deployment.md](deployment.md) ·
 [branching.md](branching.md) ·
 [backlog.md](backlog.md) ·
