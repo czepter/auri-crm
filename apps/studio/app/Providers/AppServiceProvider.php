@@ -121,7 +121,7 @@ class AppServiceProvider extends ServiceProvider
         // it registers it there and nowhere else, pointed at
         // config('mail.markdown.paths').'/html' (see Markdown::
         // htmlComponentPaths()). That covers every notification using the
-        // default markdown template (StaffInvited included), but
+        // default markdown template, but
         // mail.product-message/mail.blocks-message are rendered through
         // MailMessage::view(), which never touches Markdown::render() at
         // all. Registered permanently at the same path, so both routes
@@ -130,7 +130,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Studio-branded by default: every existing notification's mail keeps
         // working unmodified, because this only fires when nobody has already
-        // passed an explicit brand. The three product mails set 'brand'
+        // passed an explicit brand. The four product mails set 'brand'
         // explicitly and this returns immediately — StaffInvited's shared
         // blocks view passes none, so it falls through to the studio default —
         // see resources/views/mail/{product,blocks}-message.blade.php.

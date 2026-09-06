@@ -24,8 +24,6 @@ class BuildMailTemplatesCommand extends Command
     // another sentinel — none of these do.
     private const SENTINELS = [
         '__SLOT__' => '{{ $slot }}',
-        '__HEADER__' => '{{ $header ?? \'\' }}',
-        '__FOOTER__' => '{{ $footer ?? \'\' }}',
         '__SUBCOPY__' => '{{ $subcopy ?? \'\' }}',
         '__BRAND__' => '{{ $brand ?? config(\'app.name\') }}',
         '__LOGO_URL__' => '{{ $logoUrl ?? null }}',
@@ -59,7 +57,15 @@ class BuildMailTemplatesCommand extends Command
                 return self::FAILURE;
             }
 
-            $blade = strtr($result->html(), self::SENTINELS);
+            $html = $result->html();
+
+            // MJML always emits a complete document; only layout.mjml is one.
+            // Every other source is a fragment embedded inside that layout.
+            if ($file->getFilenameWithoutExtension() !== 'layout' && preg_match('/<body[^>]*>(.*)<\/body>/is', $html, $matches)) {
+                $html = trim($matches[1]);
+            }
+
+            $blade = strtr($html, self::SENTINELS);
 
             File::put($outputDir.'/'.$file->getFilenameWithoutExtension().'.blade.php', $blade);
         }

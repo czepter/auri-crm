@@ -87,6 +87,7 @@ jobs:
               - 'apps/studio/.env.example'
               - 'apps/studio/resources/js/types/generated.d.ts'
               - 'apps/studio/resources/mail/**'
+              - 'apps/studio/resources/views/vendor/mail/**'
               # G-01: the committed OpenAPI document is derived from the api
               # surface's routes, so a hand-edit here — without the route
               # change that should have produced it — needs the same
