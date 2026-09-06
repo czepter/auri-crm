@@ -1,5 +1,6 @@
 <?php
 
+use App\Notifications\Enums\NotificationMode;
 use App\Notifications\Models\InAppNotification;
 use App\Notifications\Studio\ClientMessagePosted;
 use App\Notifications\Studio\StudioDigest;
@@ -14,7 +15,7 @@ it('is registered and mails a digest to a user who is due', function () {
 
     $user = staffMember();
     $user->forceFill(['digest_frequency' => 'daily'])->save();
-    app(NotificationPreferences::class)->set($user, ClientMessagePosted::class, 'mail', false);
+    app(NotificationPreferences::class)->setMode($user, ClientMessagePosted::class, NotificationMode::Digest);
 
     InAppNotification::create([
         'notifiable_type' => $user->getMorphClass(),

@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\UserEmailChange;
 use App\Notifications\StaffEmailChangeConfirmation;
 use App\Notifications\Support\NotificationPreferences;
+use App\Notifications\Enums\NotificationMode;
 use App\Notifications\Support\StudioEvents;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
@@ -29,18 +30,6 @@ use Inertia\Response;
  */
 class ProfileController extends Controller
 {
-    /**
-     * How an event reaches this person. Two preference rows carry all three:
-     * mail on is `sofort`, mail off with in_app on is `zusammenfassung` —
-     * SendStudioDigests reads exactly that — and both off is `aus`. There is
-     * no third column and no fourth state.
-     */
-    private const MODES = [
-        'immediate' => ['mail' => true, 'in_app' => true],
-        'digest' => ['mail' => false, 'in_app' => true],
-        'off' => ['mail' => false, 'in_app' => false],
-    ];
-
     public function edit(Request $request, NotificationPreferences $preferences): Response
     {
         $user = $request->user('staff');
@@ -60,7 +49,13 @@ class ProfileController extends Controller
             'recoveryCodesLeft' => count($user->mfa_recovery_codes ?? []),
             'digestFrequency' => $user->digest_frequency,
             'events' => collect(StudioEvents::ALL)
-                ->map(fn (string $class) => $this->mode($preferences, $user, $class))
+                ->map(fn (string $class) => $preferences->mode($user, $class)->value)
+                ->all(),
+            // T-23: which rows may take the fourth state. The three scans
+            // describe a condition that is still true in the morning; the
+            // other eight happened at a moment and have the summary already.
+            'briefable' => collect(StudioEvents::ALL)
+                ->map(fn (string $class) => in_array($class, NotificationMode::BRIEFABLE, true))
                 ->all(),
         ]);
     }
@@ -163,7 +158,7 @@ class ProfileController extends Controller
             'digest_frequency' => ['nullable', Rule::in(['daily', 'weekly', 'monthly'])],
             ...collect(StudioEvents::ALL)
                 ->mapWithKeys(fn (string $class, string $key) => [
-                    "events.{$key}" => ['required', Rule::in(array_keys(self::MODES))],
+                    "events.{$key}" => ['required', Rule::in(NotificationMode::allowedFor($class))],
                 ])
                 ->all(),
         ]);
@@ -171,22 +166,10 @@ class ProfileController extends Controller
         $user->update(['digest_frequency' => $data['digest_frequency'] ?? null]);
 
         foreach (StudioEvents::ALL as $key => $class) {
-            foreach (self::MODES[$data['events'][$key]] as $channel => $enabled) {
-                $preferences->set($user, $class, $channel, $enabled);
-            }
+            $preferences->setMode($user, $class, NotificationMode::from($data['events'][$key]));
         }
 
         return back();
-    }
-
-    /** @return 'immediate'|'digest'|'off' */
-    private function mode(NotificationPreferences $preferences, User $user, string $class): string
-    {
-        if ($preferences->enabled($user, $class, 'mail')) {
-            return 'immediate';
-        }
-
-        return $preferences->enabled($user, $class, 'in_app') ? 'digest' : 'off';
     }
 
     private function requestEmailChange(User $user, string $newEmail, StudioSettingsResolver $settings): void

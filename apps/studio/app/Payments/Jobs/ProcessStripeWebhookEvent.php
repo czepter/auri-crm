@@ -3,6 +3,7 @@
 namespace App\Payments\Jobs;
 
 use App\Payments\Actions\DetectOverdueInstallments;
+use App\Payments\Enums\OverdueReason;
 use App\Payments\Actions\MarkInstallmentPaid;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\PaymentInstallment;
@@ -78,7 +79,7 @@ class ProcessStripeWebhookEvent implements ShouldQueue
 
         match ($type) {
             'checkout.session.completed', 'checkout.session.async_payment_succeeded' => $this->handlePaid($installment, $session, $markPaid),
-            'checkout.session.async_payment_failed' => $overdue->markOverdue($installment),
+            'checkout.session.async_payment_failed' => $overdue->markOverdue($installment, OverdueReason::PaymentFailed),
             default => null,
         };
     }

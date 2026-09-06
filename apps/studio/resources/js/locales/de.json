@@ -789,6 +789,7 @@
     "recoveryCodesLeft": "{count} Wiederherstellungscodes übrig",
     "regenerate": "Neu erzeugen",
     "eventsSection": "Ereignisse",
+    "backlogSection": "Rückstände",
     "event": {
       "inquiryReceived": "Neue Anfrage",
       "clientMessage": "Nachricht im Portal",

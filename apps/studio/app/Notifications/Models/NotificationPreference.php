@@ -4,6 +4,7 @@ namespace App\Notifications\Models;
 
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
+use App\Notifications\Enums\NotificationMode;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -18,10 +19,10 @@ class NotificationPreference extends Model
     use BelongsToTenant;
     use HasPublicId;
 
-    protected $fillable = ['notifiable_type', 'notifiable_id', 'notification_class', 'channel', 'enabled'];
+    protected $fillable = ['notifiable_type', 'notifiable_id', 'notification_class', 'channel', 'enabled', 'mode'];
 
     protected function casts(): array
     {
-        return ['enabled' => 'boolean'];
+        return ['enabled' => 'boolean', 'mode' => NotificationMode::class];
     }
 }
