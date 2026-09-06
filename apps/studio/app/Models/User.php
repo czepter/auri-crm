@@ -69,6 +69,7 @@ class User extends Authenticatable
             'mfa_recovery_codes' => 'encrypted:array',
             'mfa_confirmed_at' => 'immutable_datetime',
             'digest_sent_at' => 'immutable_datetime',
+            'email_verified_at' => 'immutable_datetime',
         ];
     }
 

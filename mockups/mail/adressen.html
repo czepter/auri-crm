@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>38 · Mail — Deine Adressen</title>
+<link rel="stylesheet" href="../_shared/tokens.css">
+<style>
+  body { background:#F5F5F4; }
+  .mailpage { padding:28px 28px 48px; }
+  .backlink { display:block; max-width:600px; margin:0 auto 20px; font:400 12.5px/1 var(--font); color:var(--muted); text-decoration:none; }
+  .backlink:hover { color:var(--ink); }
+    a { color: #B44E22; }
+    a:hover { color: #8F3D1B; }
+    .meta { display: flex; gap: 10px; align-items: baseline; }
+    .kick { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #A3A3A3; width: 62px; flex: none; }
+    .metaval { font-size: 12px; color: #6B6B6B; }
+    .card { max-width: 600px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E9E9E7; border-radius: 8px; overflow: hidden; }
+    .brandbar { padding: 24px 32px; border-bottom: 1px solid #E9E9E7; }
+    .brandrow { display: flex; align-items: center; gap: 10px; }
+    .mark { width: 26px; height: 26px; border-radius: 6px; flex: none; }
+    .wordmark { font-family: 'Instrument Serif', Georgia, serif; font-size: 21px; letter-spacing: -.022em; color: #191919; }
+    .bodyzone { padding: 32px; }
+    .greet { margin: 0 0 18px; font-size: 15px; line-height: 1.6; font-weight: 600; color: #191919; }
+    .line { margin: 0 0 20px; font-size: 15px; line-height: 1.62; color: #191919; }
+    .line.last { margin-bottom: 28px; }
+    .banner { background: #FBF0EA; border-radius: 8px; padding: 24px 26px; margin: 0 0 18px; }
+    .banner h2 { font-family: 'Instrument Serif', Georgia, serif; font-weight: 400; font-size: 23px; line-height: 1.05; letter-spacing: -.022em; color: #191919; margin: 0; }
+    .addr { margin: 0 0 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px; line-height: 1.4; color: #191919; word-break: break-all; }
+    .block { margin: 34px 0 0; }
+    .signoff { margin: 38px 0 0; font-size: 15px; line-height: 1.6; color: #191919; }
+    .cta { display: inline-block; color: #FFFFFF; font-size: 15px; font-weight: 600; line-height: 1; padding: 15px 24px; border-radius: 6px; text-decoration: none; }
+    .footzone { padding: 24px 32px 28px; border-top: 1px solid #E9E9E7; background: #FCFCFB; }
+    .ftext { margin: 0 0 10px; font-size: 12px; line-height: 1.55; color: #6B6B6B; }
+    .ftext:last-child { margin-bottom: 0; }
+</style>
+</head>
+<body>
+
+<!-- Zwei Blöcke mit je eigenem CTA. Trägt das Einzige, was beim Abschluss
+     des Assistenten entsteht und nirgends sonst im Postfach landet: die aus
+     studio_settings.inbound_secret geprägte Anfrage-Adresse.
+     InboundAddress::catchAll() baut sie, wie InboxController:74 es tut.
+
+     Beim Portal steht „bekommen ihren Zugang per Mail“ und nicht „den Link
+     bekommen sie von dir“: ClientAccessLink verschickt den Magic-Link, nicht
+     der Inhaber von Hand. -->
+
+<div class="mailpage">
+  <a class="backlink" href="../index.html">← Übersicht</a>
+
+  <div class="meta" style="max-width: 600px; margin: 0 auto 14px;">
+    <span class="kick">Betreff</span><span class="metaval">Deine Adressen bei Auri CRM</span>
+  </div>
+  <div class="meta" style="max-width: 600px; margin: 0 auto 18px;">
+    <span class="kick">Auslöser</span><span class="metaval">Abschluss des Assistenten</span>
+  </div>
+  <div class="card">
+    <div class="brandbar">
+      <div class="brandrow">
+        <div class="mark" style="background: #B44E22"></div>
+        <div class="wordmark">Auri CRM</div>
+      </div>
+    </div>
+    <div class="bodyzone">
+      <p class="greet">Hallo Christian,</p>
+      <p class="line">die Einrichtung steht. Dein Studio hat dabei zwei eigene Adressen bekommen.</p>
+      <a class="cta" href="#" style="background: #B44E22">Erste Anfrage anlegen</a>
+
+      <div class="block">
+        <div class="banner"><h2>Anfragen per Mail</h2></div>
+        <p class="addr">atelier-nordlicht.k3f9x2t8@in.auri-crm.de</p>
+        <p class="line">Die kannst du auf deiner Website verlinken.</p>
+        <a class="cta" href="#" style="background: #B44E22">Posteingang öffnen</a>
+      </div>
+
+      <div class="block">
+        <div class="banner"><h2>Dein Kundenportal</h2></div>
+        <p class="addr">atelier-nordlicht.auri-crm.de</p>
+        <p class="line">Gebuchte Kunden bekommen ihren Zugang per Mail.</p>
+        <a class="cta" href="#" style="background: #B44E22">Portal ansehen</a>
+      </div>
+
+      <p class="signoff">Viele Grüße<br>Auri CRM</p>
+    </div>
+    <div class="footzone">
+      <p class="ftext">Fragen: <a href="https://github.com/czepter/auri-crm/issues">github.com/czepter/auri-crm/issues</a></p>
+      <p class="ftext">Du bekommst diese Mail, weil du ein Studio bei Auri CRM angelegt hast.</p>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

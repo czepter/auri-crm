@@ -50,24 +50,26 @@ class QuoteSent extends Notification
             $message->line("Das Angebot ist gültig bis {$this->quote->valid_until->format('d.m.Y')}.");
         }
 
-        // Raw url() for the same reason the unsubscribe line below uses one.
+        // Both links below are portal paths, so they compose against
+        // config('portal.url') and never url(): SendQuote runs on the admin
+        // surface, and a quiet-hours DeferredNotification re-renders this on
+        // the worker, which is admin too. url() would put the studio's host
+        // in front of a route only the portal serves.
         if ($this->quote->project->portal_visible) {
             $message->action(
                 'Angebot ansehen',
-                url("/projekte/{$this->quote->project->public_id}/angebot")
+                config('portal.url')."/projekte/{$this->quote->project->public_id}/angebot"
             );
         }
 
         // T-11: the unsubscribe every non-transactional mail must carry.
-        // Raw url() rather than route('portal.unsubscribe.show', ...) — this
-        // notification is sent from the admin surface's process, which never
-        // registers the portal's own route table (see Surface::registerRoutes()
-        // and how ClientAccessLink/StaffInvited build their own links the
-        // same way, one surface over).
+        // A literal path rather than route('portal.unsubscribe.show', ...):
+        // the admin process never registers the portal's route table at all
+        // (Surface::registerRoutes()).
         if ($notifiable instanceof Contact) {
             $message->line(
                 '[Benachrichtigungen abbestellen]('
-                .url("/abmelden/{$notifiable->public_id}").')'
+                .config('portal.url')."/abmelden/{$notifiable->public_id}".')'
             );
         }
 

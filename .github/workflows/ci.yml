@@ -109,6 +109,8 @@ jobs:
               - 'apps/studio/artisan'
               - 'apps/studio/.env.example'
               - 'apps/studio/resources/js/types/generated.d.ts'
+              - 'apps/studio/resources/mail/**'
+              - 'apps/studio/resources/views/vendor/mail/**'
               # G-01: the committed OpenAPI document is derived from the api
               # surface's routes, so a hand-edit here — without the route
               # change that should have produced it — needs the same
@@ -170,6 +172,12 @@ jobs:
           php-version: "8.5"
           extensions: pdo_pgsql, bcmath, gd, intl, pcntl, exif
           coverage: none
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter @studio/app
       # X-03's db:cutover-snapshot/db:cutover-restore shell out to pg_dump/
       # pg_restore, and CutoverRehearsalTest exercises them for real — the
       # runner's default postgresql-client doesn't match the postgres:18
@@ -236,6 +244,12 @@ jobs:
           php artisan scramble:export --path=../../packages/contracts/openapi.json
           git diff --exit-code -- ../../packages/contracts/openapi.json \
             || { echo "packages/contracts/openapi.json is stale. Run 'php artisan scramble:export --path=../../packages/contracts/openapi.json' in apps/studio and commit."; exit 1; }
+      - name: Assert compiled mail templates are current
+        working-directory: apps/studio
+        run: |
+          php artisan mail:build
+          git diff --exit-code -- resources/views/vendor/mail \
+            || { echo "Compiled mail templates are stale. Run 'php artisan mail:build' in apps/studio and commit the result."; exit 1; }
 
   web:
     needs: [changes, already-green]
@@ -303,6 +317,9 @@ jobs:
         with: { node-version: 24, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @studio/app build
+      # mcp.spec.ts runs the MCP server as its own process (see the webServer
+      # list in playwright.config.ts), and that process is dist/index.js.
+      - run: pnpm --filter @studio/mcp build
       # Every database setting goes into .env rather than into this step's env.
       # Playwright starts `artisan serve` as a subprocess of a later step, and
       # that subprocess reads .env — so step-level DB_* variables reached the

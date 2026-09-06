@@ -5,7 +5,11 @@ namespace App\Settings\Http\Controllers;
 use App\Concerns\AuthorizesStaffSettings;
 use App\Documents\Actions\SeedStarterTemplates;
 use App\Documents\Support\StarterTemplateCatalog;
+use App\Engagement\Support\InboundAddress;
 use App\Http\Controllers\Controller;
+use App\Models\UserEmailVerification;
+use App\Notifications\NotificationService;
+use App\Notifications\Studio\StudioReady;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
@@ -29,20 +33,31 @@ class StudioOnboardingController extends Controller
 
         return Inertia::render('Auth/Onboarding', [
             'settings' => StudioSettingsData::fromResolver($settings),
+            'emailVerified' => auth('staff')->user()->email_verified_at !== null,
+            'hasLiveVerification' => UserEmailVerification::forUser(auth('staff')->user()) !== null,
         ]);
     }
 
-    public function complete(StudioSettingsResolver $settings, SeedStarterTemplates $seed): RedirectResponse
-    {
+    public function complete(
+        StudioSettingsResolver $settings,
+        SeedStarterTemplates $seed,
+        NotificationService $notifications,
+    ): RedirectResponse {
         $this->authorizeSettings();
 
-        $actor = auth('staff')->user();
+        $owner = auth('staff')->user();
 
         // Also on "später abschließen": a studio with no templates can issue
         // nothing. Idempotent, so a second pass writes nothing.
-        $seed(StarterTemplateCatalog::onboardingDefaults($settings->vatMode()), $actor);
+        $seed(StarterTemplateCatalog::onboardingDefaults($settings->vatMode()), $owner);
 
-        $settings->set('onboarding_completed_at', now(), $actor);
+        $settings->set('onboarding_completed_at', now(), $owner);
+
+        $inboundAddress = $settings->inboundSecret() === null
+            ? null
+            : InboundAddress::catchAll($settings->displayName() ?? '', $settings->inboundSecret());
+
+        $notifications->send($owner, new StudioReady($owner->name, $inboundAddress));
 
         return redirect('/');
     }

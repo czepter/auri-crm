@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
+import EmailVerificationForm from '@/admin/pages/Auth/panes/EmailVerificationForm.vue'
 import ProfileForm from '@/admin/pages/Settings/panes/ProfileForm.vue'
 import VatForm from '@/admin/pages/Settings/panes/VatForm.vue'
 import AuthLayout from '@/admin/layouts/AuthLayout.vue'
@@ -8,6 +9,8 @@ import { Button } from '@/ui/button'
 
 defineProps<{
   settings: App.Settings.Data.StudioSettingsData
+  emailVerified: boolean
+  hasLiveVerification: boolean
 }>()
 
 // Every other studio setting ships with a column default (see the
@@ -59,6 +62,7 @@ function finish() {
       {{ $t('onboarding.stepCount', { current: stepIndex + 1, total: steps.length }) }}
     </p>
 
+    <EmailVerificationForm v-if="step() === 'profile' && !emailVerified && hasLiveVerification" />
     <ProfileForm v-if="step() === 'profile'" ref="paneRef" :settings="settings" first-run @saved="advance" />
     <VatForm v-else ref="paneRef" :settings="settings" @saved="finish" />
 

@@ -42,6 +42,7 @@ use App\Gallery\Models\Gallery;
 use App\Http\Controllers\Staff\AbsenceController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
+use App\Http\Controllers\Staff\EmailVerificationController;
 use App\Http\Controllers\Staff\InvitationController;
 use App\Http\Controllers\Staff\MfaChallengeController;
 use App\Http\Controllers\Staff\MfaEnrollmentController;
@@ -148,6 +149,10 @@ Route::middleware('guest:staff')->group(function () {
 Route::get('/profil/e-mail-bestaetigen/{token}', [ProfileController::class, 'confirmEmail'])
     ->name('profile.email.confirm');
 
+// Same reasoning as profile.email.confirm just above: the mail is as likely
+// opened on a phone with no session as in the browser that requested it.
+Route::get('/e-mail-bestaetigen/{token}', [EmailVerificationController::class, 'confirm']);
+
 Route::middleware('audience:staff')->group(function () {
     Route::post('/logout', [SessionController::class, 'destroy']);
 
@@ -157,6 +162,8 @@ Route::middleware('audience:staff')->group(function () {
 
     Route::get('/einrichtung/studio', [StudioOnboardingController::class, 'show'])->name('onboarding');
     Route::post('/einrichtung/studio/abschluss', [StudioOnboardingController::class, 'complete']);
+
+    Route::post('/einrichtung/e-mail-bestaetigen', [EmailVerificationController::class, 'confirmCode']);
 
     Route::middleware('onboarding')->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');

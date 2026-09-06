@@ -55,7 +55,7 @@ const form = useForm({
   representative: props.settings.representative ?? '',
   website: props.settings.website ?? '',
   accent_color: props.settings.accentColor ?? '',
-  font_pair: props.settings.fontPair ?? 'instrument',
+  font_pair: props.settings.fontPair ?? 'hanken',
   logo: null as File | null,
   bank_account_holder: props.settings.bankAccountHolder ?? '',
   bank_iban: props.settings.bankIban ?? '',
@@ -218,7 +218,7 @@ defineExpose({ form, submit })
                   :style="{ background: form.accent_color || 'transparent' }"
                 />
               </InputGroupAddon>
-              <InputGroupInput id="p-akzent" v-model="form.accent_color" class="tabular-nums" type="text" placeholder="#B44E22" />
+              <InputGroupInput id="p-akzent" v-model="form.accent_color" class="tabular-nums" type="text" placeholder="#1C6870" />
             </InputGroup>
           </Field>
         </div>

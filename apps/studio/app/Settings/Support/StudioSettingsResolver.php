@@ -218,12 +218,11 @@ class StudioSettingsResolver
      */
     /**
      * #234: the display pair this studio's portal and gallery are written in.
-     * Null is Instrument — a studio that never opened the setting keeps what
-     * it had.
+     * Null is Hanken, the product's own default.
      */
     public function fontPair(): FontPair
     {
-        return FontPair::tryFrom((string) $this->row()->font_pair) ?? FontPair::Instrument;
+        return FontPair::tryFrom((string) $this->row()->font_pair) ?? FontPair::Hanken;
     }
 
     public function attributes(): array
@@ -618,6 +617,12 @@ class StudioSettingsResolver
     public function onboardingCompleted(): bool
     {
         return $this->row()->onboarding_completed_at !== null;
+    }
+
+    /** Whether App\Notifications\Actions\RemindOnboarding has already sent its one nudge. */
+    public function onboardingReminderSent(): bool
+    {
+        return $this->row()->onboarding_reminder_sent_at !== null;
     }
 
     // --- T-11: quiet hours — App\Notifications\Support\QuietHours is the

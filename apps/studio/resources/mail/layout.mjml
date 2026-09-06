@@ -1,0 +1,24 @@
+<mjml>
+  <mj-head>
+    <mj-attributes>
+      <mj-all font-family="Helvetica, Arial, sans-serif" />
+      <mj-text font-size="14px" line-height="1.6" color="#1a1a1a" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#f4f4f5" width="600px">
+    <mj-section background-color="#ffffff" padding="32px 32px 0 32px">
+      <mj-column>
+        <mj-raw>__LOGO_IF__</mj-raw>
+        <mj-image src="__LOGO_URL__" alt="__BRAND__" align="left" width="120px" padding="0 0 16px 0" />
+        <mj-raw>__LOGO_ENDIF__</mj-raw>
+        <mj-text font-size="15px" font-weight="700" padding="0 0 16px 0">__BRAND__</mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section background-color="#ffffff" padding="0 32px 32px 32px">
+      <mj-column>
+        <mj-text>__SLOT__</mj-text>
+        <mj-text font-size="12.5px" color="#6b7280">__SUBCOPY__</mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

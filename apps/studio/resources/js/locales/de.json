@@ -823,7 +823,9 @@
     "stepCount": "Schritt {current} von {total}",
     "next": "Weiter",
     "finish": "Fertigstellen",
-    "skip": "Später abschließen"
+    "skip": "Später abschließen",
+    "emailCode": "Code aus der E-Mail",
+    "emailConfirm": "Bestätigen"
   },
   "paymentSettings": {
     "title": "Zahlungen",

@@ -12,20 +12,20 @@
    ------------------------------------------------------------------ */
 
 :root {
-  /* neutral ground. The warm accent is action and nothing else — a state
+  /* cool neutral ground. The accent is action and nothing else — a state
      that borrows it reads as a button, which is the confusion this palette
      exists to end. Status has its own three. */
   --bg:#FFFFFF;
-  --ink:#191919;
-  --muted:#6B6B6B;
-  --faint:#A3A3A3;
-  --hover:#F5F5F4;      /* fill AND hover — the reference's cards and its
+  --ink:#151A22;
+  --muted:#626B78;
+  --faint:#96A0AD;
+  --hover:#F0F3F5;      /* fill AND hover — the reference's cards and its
                            hover states are the same grey; two tokens would
                            invite them to drift */
-  --line:#E9E9E7;
-  --line-hover:#DCDCD9;
+  --line:#E2E7EB;
+  --line-hover:#CFD6DB;
 
-  --accent:#B44E22;     --accent-bg:#FBF0EA;   /* action only */
+  --accent:#1C6870;     --accent-bg:#E7F1F2;   /* action only */
 
   --ok:#3F6B4A;         --ok-bg:#EDF3EE;
   --due:#8A6212;        --due-bg:#FAF3E4;
@@ -42,16 +42,17 @@
      that is global. */
   --ease:cubic-bezier(.22, .61, .36, 1);
 
-  --font:'Instrument Sans', system-ui, sans-serif;
+  --font:'Hanken Grotesk', system-ui, sans-serif;
 
   /* #234: the display face and the two corrections it needs. A pair is
      chosen per studio and every one of them rasterises differently, so the
      tracking and the leading of the big sizes travel with the pair rather
-     than being baked into the rules that use them — a broad slab at
-     -0.022em collides with itself, a Didone at 0.94 clips its ascenders. */
-  --font-display:'Instrument Serif', Georgia, serif;
-  --display-tracking:-.022em;
-  --display-leading:.94;
+     than being baked into the rules that use them — the product default is
+     the body face at display size, tight enough not to look like the same
+     text merely enlarged. */
+  --font-display:'Hanken Grotesk', system-ui, sans-serif;
+  --display-tracking:-.03em;
+  --display-leading:.98;
 }
 
 /* portal — same bones, more air. The theme is a spacing scale and a radius,
@@ -73,15 +74,15 @@
    --page is the measure every screen picks. Nothing on this surface sets a
    width of its own. */
 [data-theme="portal"] {
-  --hover:#F4F4F3;
-  --sunk:#F4F4F3;
-  --muted:#5C5C58;
-  --faint:#5C5C58;
-  --ink-2:#5C5C58;
-  --mark:#8D8D89;
-  --line-hover:#DCDCD9;
-  --accent:#B4462A;
-  --accent-bg:#FBE9E2;
+  --hover:#F0F3F5;
+  --sunk:#F0F3F5;
+  --muted:#626B78;
+  --faint:#626B78;
+  --ink-2:#626B78;
+  --mark:#96A0AD;
+  --line-hover:#CFD6DB;
+  --accent:#1C6870;
+  --accent-bg:#E7F1F2;
 
   --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
   --s8:72px;
