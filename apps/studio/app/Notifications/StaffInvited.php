@@ -38,14 +38,27 @@ class StaffInvited extends Notification implements Transactional
         $studio = $this->settings->displayName();
 
         $message = (new MailMessage)
-            ->subject($studio === null ? 'Zugang zum Studio' : "Zugang zum Studio von {$studio}")
+            ->subject($studio === null ? 'Dein Zugang zum Studio' : "Dein Zugang zu {$studio}")
+            ->view('mail.blocks-message', [
+                'blocks' => [
+                    [
+                        'heading' => 'Deine Termine im eigenen Kalender',
+                        'body' => 'Die Shootings, für die du eingeteilt bist, kannst du in deiner Kalender-App abonnieren.',
+                        'buttonLabel' => 'Kalender abonnieren',
+                        'buttonUrl' => url('/einstellungen/kalender'),
+                    ],
+                    [
+                        'heading' => 'Antworten am Auftrag',
+                        'body' => 'Kundenantworten landen am Auftrag, auch wenn der Kunde aus seinem eigenen Mailprogramm schreibt.',
+                        'buttonLabel' => 'Zum Studio',
+                        'buttonUrl' => url('/'),
+                    ],
+                ],
+            ])
             ->greeting("Hallo {$this->invitation->name},")
-            ->line("{$this->invitation->invitedBy->name} hat dich als {$this->invitation->role->label()} eingeladen.")
-            ->action('Zugang einrichten', $this->url)
+            ->line("{$this->invitation->invitedBy->name} hat dich als {$this->invitation->role->label()} eingeladen. Schön, dass du dabei bist.")
             ->line('Der Link gilt '.StaffInvitation::VALID_FOR_DAYS.' Tage.')
-            // Said plainly here, because meeting an authenticator app
-            // unannounced is where people abandon a setup link.
-            ->line('Danach richtest du die Zwei-Faktor-Bestätigung ein.');
+            ->action('Zugang einrichten', $this->url);
 
         // T-06: from/reply-to/BCC and the signature+legal footer, resolved
         // per tenant at send time rather than from MAIL_FROM_ADDRESS.

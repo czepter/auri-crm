@@ -24,6 +24,8 @@ use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
 use App\Migration\Console\Commands\CutoverRestoreCommand;
 use App\Migration\Console\Commands\CutoverSnapshotCommand;
 use App\Migration\Console\Commands\ImportHistoricalDataCommand;
+use App\Notifications\Console\Commands\BuildMailTemplatesCommand;
+use App\Notifications\Console\Commands\RemindOnboardingCommand;
 use App\Notifications\Console\Commands\SendStudioDigestsCommand;
 use App\Payments\Console\Commands\DetectOverdueInstallmentsCommand;
 use App\Support\Surface;
@@ -61,6 +63,8 @@ return Application::configure(basePath: dirname(__DIR__))
         RevokeApiTokenCommand::class,
         CreateWebhookEndpointCommand::class,
         RedeliverWebhookCommand::class,
+        BuildMailTemplatesCommand::class,
+        RemindOnboardingCommand::class,
         SendStudioDigestsCommand::class,
     ])
     ->withSchedule(function (Schedule $schedule) {

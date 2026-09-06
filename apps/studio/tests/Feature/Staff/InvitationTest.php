@@ -4,6 +4,7 @@ use App\Enums\StaffRole;
 use App\Models\StaffInvitation;
 use App\Models\User;
 use App\Notifications\StaffInvited;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
@@ -153,4 +154,18 @@ it('stops a revoked invitation from being accepted', function () {
     ])->assertRedirect('/login');
 
     expect(User::where('email', 'nina@nordlicht.test')->exists())->toBeFalse();
+});
+
+it('renders the calendar and reply blocks, and drops the 2FA line', function () {
+    $owner = User::factory()->create(['role' => StaffRole::Owner]);
+    $invitation = invite(['invited_by_id' => $owner->id]);
+
+    $html = (string) (new StaffInvited($invitation, 'https://example.test/einladung/abc', app(StudioSettingsResolver::class)))
+        ->toMail($owner)
+        ->render();
+
+    expect($html)
+        ->toContain('Kalender abonnieren')
+        ->toContain('Antworten am Auftrag')
+        ->not->toContain('Zwei-Faktor');
 });

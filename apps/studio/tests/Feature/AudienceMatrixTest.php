@@ -38,6 +38,11 @@ const PUBLIC_ROUTES = [
         // nobody in, it swaps one column. Same story as the portal's own
         // e-mail-bestaetigen/{token} below.
         'profil/e-mail-bestaetigen/{token}',
+        // The initial account-verification link after studio-owner creation,
+        // confirmed from the inbox — which may not be the browser that
+        // created the account. The single-use token in the path is the whole
+        // credential; it stamps email_verified_at but signs nobody in.
+        'e-mail-bestaetigen/{token}',
         // N-04's token exchange: the MCP client calls this directly,
         // off-browser, with no staff session to hold an `audience:` guard —
         // the single-use authorization code and its PKCE verifier are the

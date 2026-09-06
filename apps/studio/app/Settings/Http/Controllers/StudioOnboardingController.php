@@ -5,7 +5,11 @@ namespace App\Settings\Http\Controllers;
 use App\Concerns\AuthorizesStaffSettings;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Support\StarterTemplateCatalog;
+use App\Engagement\Support\InboundAddress;
 use App\Http\Controllers\Controller;
+use App\Models\UserEmailVerification;
+use App\Notifications\NotificationService;
+use App\Notifications\Studio\StudioReady;
 use App\Settings\Data\PortalSettingsData;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioSettingsResolver;
@@ -32,6 +36,8 @@ class StudioOnboardingController extends Controller
         return Inertia::render('Auth/Onboarding', [
             'settings' => StudioSettingsData::fromResolver($settings),
             'portalSettings' => PortalSettingsData::fromResolver($settings),
+            'emailVerified' => auth('staff')->user()->email_verified_at !== null,
+            'hasLiveVerification' => UserEmailVerification::forUser(auth('staff')->user()) !== null,
             // T-18: the catalog, minus its blocks — this step chooses, it does
             // not edit, and shipping every starter's document to a screen that
             // renders four words of each would be a page weight nobody asked
@@ -49,11 +55,19 @@ class StudioOnboardingController extends Controller
         ]);
     }
 
-    public function complete(StudioSettingsResolver $settings): RedirectResponse
+    public function complete(StudioSettingsResolver $settings, NotificationService $notifications): RedirectResponse
     {
         $this->authorizeSettings();
 
-        $settings->set('onboarding_completed_at', now(), auth('staff')->user());
+        $owner = auth('staff')->user();
+
+        $settings->set('onboarding_completed_at', now(), $owner);
+
+        $inboundAddress = $settings->inboundSecret() === null
+            ? null
+            : InboundAddress::catchAll($settings->displayName() ?? '', $settings->inboundSecret());
+
+        $notifications->send($owner, new StudioReady($owner->name, $inboundAddress));
 
         return redirect('/');
     }

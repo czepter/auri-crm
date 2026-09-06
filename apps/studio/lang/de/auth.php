@@ -34,4 +34,9 @@ return [
     'link_dead' => 'Dieser Link gilt nicht mehr. Bitte die Adresse erneut ändern.',
     'email_taken' => 'Diese Adresse wird inzwischen von einem anderen Zugang benutzt.',
 
+    // Uniform for a wrong code, an expired one and one already used up on
+    // attempts — which of those it was is not something to tell the browser.
+    'email_verification_invalid' => 'Dieser Code ist nicht gültig.',
+    'email_verification_link_dead' => 'Dieser Link gilt nicht mehr.',
+
 ];
