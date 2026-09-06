@@ -66,6 +66,7 @@ function draftOf(quote: App.Quotes.Data.QuoteData): Draft {
         unitPrice: centsToEuros(item.unitPrice),
         selectable: item.selectable,
         selected: item.selected,
+        hasImage: item.hasImage,
       })),
       stages: quote.paymentStages.map((stage) => ({
         percent: stage.percent,
@@ -347,6 +348,7 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
                stehen, die vor dieser Runde hier stand. -->
           <QuoteSliderEditor
             v-model="drafts[quote.id].slider"
+            :quote-id="quote.id"
             @change="save(quote.id)"
           />
 

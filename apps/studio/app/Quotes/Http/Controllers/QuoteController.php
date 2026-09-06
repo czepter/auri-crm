@@ -12,15 +12,18 @@ use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Actions\SendQuote;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
+use App\Quotes\Models\QuoteItem;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterval;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuoteController extends Controller
 {
@@ -198,6 +201,20 @@ class QuoteController extends Controller
         );
 
         return back();
+    }
+
+    /**
+     * Q-14: das kopierte Bild einer Baustein-Zeile, für die Anzeige im
+     * Editor. Über die Zeile aufgelöst und nicht über den Pfad — dieselbe
+     * Regel, die update() oben trägt.
+     */
+    public function itemImage(Quote $quote, QuoteItem $quoteItem): StreamedResponse
+    {
+        $this->authorize('view', $quote->project);
+
+        abort_unless($quoteItem->quote_id === $quote->id && $quoteItem->image_path !== null, 404);
+
+        return Storage::disk('local')->response($quoteItem->image_path);
     }
 
     /**

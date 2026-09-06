@@ -130,7 +130,7 @@ function removeRow(index: number) {
                 :src="`/pakete/${packageId}/positionen/${item.id}/bild`"
                 alt=""
               />
-              <span class="text-[12.5px] text-accent underline">{{ $t('packages.itemImage') }}</span>
+              <span class="text-[12.5px] text-[var(--accent)] underline">{{ $t('packages.itemImage') }}</span>
               <input class="hidden" type="file" accept="image/png,image/jpeg" @change="upload(item, $event)" />
             </label>
           </div>

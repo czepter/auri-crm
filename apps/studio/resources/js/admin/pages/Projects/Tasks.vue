@@ -178,7 +178,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
                 dayWithWeekday(row.completedOn)
               }}</span>
               <button
-                class="cursor-pointer text-[12.5px] whitespace-nowrap text-accent"
+                class="cursor-pointer text-[12.5px] whitespace-nowrap text-[var(--accent)]"
                 type="button"
                 @click="reopen(row)"
               >
