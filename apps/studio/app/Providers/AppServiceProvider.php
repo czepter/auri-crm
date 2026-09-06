@@ -50,6 +50,7 @@ use App\Policies\ShootPolicy;
 use App\Policies\StagePolicy;
 use App\Policies\TaskPolicy;
 use App\Policies\TaskTemplatePolicy;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\PersonalAccessToken;
 use App\Support\Surface;
 use Aws\S3\S3Client;
@@ -61,6 +62,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
 
@@ -114,6 +116,46 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // The 'mail::' namespace (<x-mail::layout>, <x-mail::button>) only
+        // exists while Illuminate\Mail\Markdown::render() is on the stack —
+        // it registers it there and nowhere else, pointed at
+        // config('mail.markdown.paths').'/html' (see Markdown::
+        // htmlComponentPaths()). That covers every notification using the
+        // default markdown template (StaffInvited included), but
+        // mail.product-message/mail.blocks-message are rendered through
+        // MailMessage::view(), which never touches Markdown::render() at
+        // all. Registered permanently at the same path, so both routes
+        // resolve the one compiled layout.
+        View::addNamespace('mail', resource_path('views/vendor/mail/html'));
+
+        // Studio-branded by default: every existing notification's mail keeps
+        // working unmodified, because this only fires when nobody has already
+        // passed an explicit brand. The three product mails (and StaffInvited's
+        // shared blocks view) set 'brand' explicitly and this returns immediately —
+        // see resources/views/mail/{product,blocks}-message.blade.php.
+        View::composer('mail::layout', function ($view) {
+            if (array_key_exists('brand', $view->getData())) {
+                return;
+            }
+
+            $settings = app(StudioSettingsResolver::class);
+
+            $view->with([
+                'brand' => $settings->displayName() ?? config('app.name'),
+                'logoUrl' => $settings->logoPath()
+                    ? rtrim((string) config('portal.url'), '/').'/branding/logo'
+                    : null,
+            ]);
+        });
+
+        // Accent is not brand-differentiated (spec §2's table has no Accent row):
+        // every mail, product or studio, shows the current tenant's own accent, with
+        // a neutral fallback before any studio has set one.
+        View::composer('mail::button', function ($view) {
+            $accent = app(StudioSettingsResolver::class)->attributes()['accent_color'] ?? null;
+            $view->with('accent', $accent ?: '#111111');
+        });
+
         Blueprint::macro('tenantId', function () {
             /** @var Blueprint $this */
             $column = $this->uuid('tenant_id')->default(config('tenancy.tenant_id'));
