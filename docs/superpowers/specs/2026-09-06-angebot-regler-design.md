@@ -60,6 +60,13 @@ Die Bilder sind aus den Artboard-Quellen gerendert und liegen unter
 | `docs/screenshots/2026-09-06-angebot-desktop.png` | Regler + Bausteine · Desktop | dieselbe linke Spalte, Rail rechts mit Aufstellung und Stufen |
 | `docs/screenshots/2026-09-06-angebot-studio.png` | Studio · Angebot bearbeiten | Stundensatz, Bausteine, Zahlstufen, Spanne |
 
+Zu zwei der drei Artboards liegt der Export daneben, unter
+`docs/mockups/2026-09-06-angebot-regler/` — `handy/` und `studio/`. Ein PNG
+zeigt das Ergebnis, der Export nennt die Werte: Rasterspalten, Radien,
+Schriftgrößen, die Zustände einer Kachel und die Verteilungsregel als Code.
+Wer eine der beiden Flächen anfasst, liest den Export und nicht das Bild.
+Zum Desktop gibt es keinen; dort trägt das PNG allein.
+
 ### 3.1 Portal, Handy
 
 Kopf: Stundenzahl groß, Bilderzahl rechts. Darunter der Regler über
