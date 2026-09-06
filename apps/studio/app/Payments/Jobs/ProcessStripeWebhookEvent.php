@@ -3,8 +3,8 @@
 namespace App\Payments\Jobs;
 
 use App\Payments\Actions\DetectOverdueInstallments;
-use App\Payments\Enums\OverdueReason;
 use App\Payments\Actions\MarkInstallmentPaid;
+use App\Payments\Enums\OverdueReason;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\PaymentInstallment;
 use Illuminate\Bus\Queueable;

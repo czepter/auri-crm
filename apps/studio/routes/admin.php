@@ -1,9 +1,9 @@
 <?php
 
+use App\Automation\Http\Controllers\AutomationRuleController;
 use App\Catalog\Http\Controllers\PackageController;
 use App\Contracts\Http\Controllers\ContractController;
 use App\Contracts\Http\Controllers\ContractSignerController;
-use App\Automation\Http\Controllers\AutomationRuleController;
 use App\Crm\Http\Controllers\AvailabilityController;
 use App\Crm\Http\Controllers\CalendarController;
 use App\Crm\Http\Controllers\ContactController;
@@ -451,6 +451,8 @@ Route::middleware('audience:staff')->group(function () {
         // C-10 (#245): editing is a state of the view, so it posts back to
         // the same case rather than to a screen of its own.
         Route::patch('/anfragen/{lead}', [LeadCaseController::class, 'update'])->name('leads.update');
+        Route::post('/anfragen/{lead}/schliessen', [LeadStageController::class, 'close'])
+            ->name('leads.close');
         Route::post('/anfragen/{lead}/stufe', [LeadStageController::class, 'update'])
             ->name('leads.stage.update');
 

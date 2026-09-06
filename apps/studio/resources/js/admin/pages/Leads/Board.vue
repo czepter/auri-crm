@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { Link, router, usePage } from "@inertiajs/vue3";
+import { Link, router, useForm, usePage } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import LeadQueue from "@/admin/components/LeadQueue.vue";
 import Page from "@/ui/page/Page.vue";
@@ -25,6 +25,15 @@ import {
 import { formatEurosRounded } from "@/admin/lib/money";
 import { Button } from "@/ui/button";
 import { ChoiceGroup } from "@/ui/choice-group";
+import { Field } from "@/ui/field";
+import { Input } from "@/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/ui/select";
 
 type Card = App.Crm.Data.LeadCardData;
 type Column = { stage: string; label: string; cards: Card[]; total: number };
@@ -154,6 +163,21 @@ function book() {
         { preserveScroll: true },
     );
     booking.value = null;
+}
+
+// T-20: schliessen mit dem Ausgang. Bis hierhin liess sich eine Anfrage
+// ueberhaupt nicht abschliessen — markLost() hatte keinen Aufrufer.
+const closing = ref<string | null>(null);
+const closeForm = useForm({ outcome: "lost", reason: "" });
+
+function closeLead() {
+    closeForm.post(`/anfragen/${closing.value}/schliessen`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeForm.reset();
+            closing.value = null;
+        },
+    });
 }
 
 // Without a mouse, and that is not optional: dragging a row across six
@@ -450,7 +474,61 @@ const workflowAllowed = computed(() =>
                     >
                         {{ column.label }}
                     </div>
+
+                    <div
+                        class="mt-1 cursor-pointer rounded-lg border-t border-rule px-[9px] py-1.5 text-[12.5px] hover:bg-sunk"
+                        @click="closing = menu!.card.leadId; menu = null"
+                    >
+                        {{ $t("board.close") }}
+                    </div>
                 </div>
+
+                <AlertDialog
+                    :open="closing !== null"
+                    @update:open="
+                        (open: boolean) => {
+                            if (!open) closing = null;
+                        }
+                    "
+                >
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>{{
+                                $t("board.closeTitle")
+                            }}</AlertDialogTitle>
+                        </AlertDialogHeader>
+
+                        <Field v-slot="{ id }" :label="$t('board.outcome')">
+                            <Select
+                                :model-value="closeForm.outcome"
+                                @update:model-value="(value) => (closeForm.outcome = String(value))"
+                            >
+                                <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="lost">{{ $t("board.outcomeLost") }}</SelectItem>
+                                    <SelectItem value="declined">{{ $t("board.outcomeDeclined") }}</SelectItem>
+                                    <SelectItem value="closed">{{ $t("board.outcomeClosed") }}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </Field>
+
+                        <Field
+                            v-slot="{ id }"
+                            :label="$t('board.closeReason')"
+                            :error="closeForm.errors.reason"
+                        >
+                            <Input :id="id" v-model="closeForm.reason" type="text" />
+                        </Field>
+
+                        <AlertDialogFooter>
+                            <AlertDialogAction
+                                :disabled="!closeForm.reason || closeForm.processing"
+                                @click="closeLead"
+                            >{{ $t("board.close") }}</AlertDialogAction>
+                            <AlertDialogCancel>{{ $t("common.cancel") }}</AlertDialogCancel>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
 
                 <AlertDialog
                     :open="booking !== null"

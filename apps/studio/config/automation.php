@@ -1,8 +1,8 @@
 <?php
 
 use App\Automation\Enums\AutomationAnchor;
-use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Enums\AutomationOffsetDirection;
+use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Enums\AutomationTriggerType;
 use App\Crm\Events\ProjectBooked;
 

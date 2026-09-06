@@ -1,5 +1,6 @@
 <?php
 
+use App\Automation\Actions\SweepDateOffsetAutomationRules;
 use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationCondition;
 use App\Automation\Enums\AutomationOffsetDirection;
@@ -29,7 +30,7 @@ function shootIn(int $days, ?Project $project = null): Shoot
 
 function sweepOn(string $date = '2026-06-01'): int
 {
-    return app(App\Automation\Actions\SweepDateOffsetAutomationRules::class)(CarbonImmutable::parse($date, 'UTC'));
+    return app(SweepDateOffsetAutomationRules::class)(CarbonImmutable::parse($date, 'UTC'));
 }
 
 it('sends a studio rule to the crew of the shoot', function () {

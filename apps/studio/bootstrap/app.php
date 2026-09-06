@@ -2,7 +2,6 @@
 
 use App\Automation\Console\Commands\SeedDefaultAutomationRulesCommand;
 use App\Automation\Console\Commands\SweepDateOffsetAutomationRulesCommand;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Engagement\Console\Commands\PollInboundMailbox;
 use App\Gallery\Console\Commands\ImportLegacyGalleriesCommand;
 use App\Http\Middleware\AssignRequestId;
@@ -10,11 +9,11 @@ use App\Http\Middleware\EnsureApiTokenScope;
 use App\Http\Middleware\EnsureAudience;
 use App\Http\Middleware\EnsureGalleryFeature;
 use App\Http\Middleware\EnsureGalleryGate;
+use App\Http\Middleware\EnsureGalleryPass;
 use App\Http\Middleware\EnsureIdempotentWrite;
 use App\Http\Middleware\EnsureNoStaffExists;
 use App\Http\Middleware\EnsurePortalCapability;
 use App\Http\Middleware\EnsurePortalMaintenanceClosure;
-use App\Http\Middleware\EnsureGalleryPass;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RequireStudioOnboarding;
 use App\Integration\Console\Commands\CreateApiTokenCommand;
@@ -29,6 +28,7 @@ use App\Notifications\Console\Commands\BuildMailTemplatesCommand;
 use App\Notifications\Console\Commands\RemindOnboardingCommand;
 use App\Notifications\Console\Commands\SendStudioDigestsCommand;
 use App\Payments\Console\Commands\DetectOverdueInstallmentsCommand;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\Surface;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;

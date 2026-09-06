@@ -1,5 +1,6 @@
 <?php
 
+use App\Automation\Actions\SweepDateOffsetAutomationRules;
 use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Enums\AutomationRecipient;
@@ -33,7 +34,7 @@ function studioRule(AutomationAnchor $anchor, int $days = 3): AutomationRule
 
 function sweep(CarbonImmutable $today): int
 {
-    return app(App\Automation\Actions\SweepDateOffsetAutomationRules::class)($today);
+    return app(SweepDateOffsetAutomationRules::class)($today);
 }
 
 // Die Vorankuendigung, die T-22s Verzug verhindert statt ihn zu reparieren.

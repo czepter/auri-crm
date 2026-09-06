@@ -81,8 +81,7 @@ class AdvanceLeadStage
         string $reason,
         ?User $actor = null,
         LeadOutcome $outcome = LeadOutcome::Lost,
-    ): Lead
-    {
+    ): Lead {
         if ($lead->isLost()) {
             throw new DomainException("Lead {$lead->public_id} is already lost.");
         }

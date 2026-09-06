@@ -10,7 +10,6 @@ use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Enums\AutomationTriggerType;
 use App\Automation\Models\AutomationRule;
-use App\Automation\Models\AutomationRun;
 use App\Concerns\AuthorizesStaffSettings;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Http\Controllers\Controller;

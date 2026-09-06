@@ -86,3 +86,17 @@ it('starts the ladder over when the lead moves', function () {
 
     expect($lead->fresh()->stalled_reminders_sent)->toBe(0);
 });
+
+it('closes an inquiry from the board with its outcome', function () {
+    $lead = Lead::factory()->atStage(LeadStage::Contacted, 2)->create();
+
+    $this->actingAs(staffMember(), 'staff')
+        ->post("/anfragen/{$lead->public_id}/schliessen", [
+            'outcome' => LeadOutcome::Declined->value,
+            'reason' => 'Termin belegt',
+        ])
+        ->assertRedirect('/anfragen');
+
+    expect($lead->fresh()->outcome)->toBe(LeadOutcome::Declined)
+        ->and($lead->fresh()->isLost())->toBeTrue();
+});

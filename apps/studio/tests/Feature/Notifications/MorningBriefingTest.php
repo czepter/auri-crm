@@ -1,5 +1,6 @@
 <?php
 
+use App\Crm\Actions\RemindDueTasks;
 use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -71,7 +72,7 @@ it('keeps the scan mail off the desk of somebody reading the briefing', function
     $user = staffMember();
     Task::factory()->due(now()->toDateString())->create();
 
-    app(\App\Crm\Actions\RemindDueTasks::class)();
+    app(RemindDueTasks::class)();
 
     Notification::assertNotSentTo($user, TasksDue::class, fn ($notification, $channels) => in_array('mail', $channels, true));
 });
