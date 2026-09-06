@@ -19,3 +19,8 @@ Schedule::command('payments:detect-overdue-installments')->daily();
 // person's own last send to decide who is due, so a missed run catches up
 // rather than skipping a week. 07:00 so it is read at the desk, not at 00:00.
 Schedule::command('notifications:send-digests')->dailyAt('07:00');
+
+// The onboarding nudge — see App\Notifications\Actions\RemindOnboarding for
+// the three-condition guard. 09:00 so it lands with the rest of the morning
+// mail, not overnight.
+Schedule::command('notifications:remind-onboarding')->dailyAt('09:00');
