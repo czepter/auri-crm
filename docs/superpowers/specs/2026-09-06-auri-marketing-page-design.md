@@ -17,7 +17,7 @@ Inspiration: [opengym.duarte-santos.ch](https://opengym.duarte-santos.ch) — si
 
 **Out, named so the omissions are decisions:** a live in-browser demo (real client/financial data flows make a public demo instance its own project — seed isolation, reset cadence — not a page-design concern); English/i18n (product UI is German-only today, matching it); a mobile app section (none exists, unlike openGym's app-vs-self-host duality); a Discord/support-channel section (no such channel exists yet); an automated migration/import feature card (the `Migration` module has `PlanHistoricalImport`/`CommitHistoricalImport` actions in code, but per direct correction there is no working import run today — the page must not claim a feature that doesn't work); a tech-stack rationale on `/about` (the reader is a photographer, not a developer — why Laravel-plus-Astro belongs in `docs/architecture.md`, not here); `CONTRIBUTING.md`/`CHANGELOG.md` (neither exists — the Quelloffen section links only to the repo and the license, not to files that don't exist on their own schedule yet); a logo mark, custom favicon, or designed OG-image (v1 ships wordmark-only — "Auri" as text, a generic favicon, a text-based OG card; an actual mark is a design decision this spec doesn't make); rebranding `APP_NAME` away from its `"Laravel"` default in the running product (the marketing site says "Auri", the product itself doesn't yet — that's a separate, later task, not silently folded into a marketing-page ticket); a "no telemetry" claim (the stack does support optional self-hosted GlitchTip error monitoring — true, but nobody asked for this claim, and it sits one skeptical read away from contradicting the page's own client-side GitHub-API fetch); a live numeric GitHub-stats widget (see §5, the repo has 0 stars/0 forks today — the widget ships once there's a real number, not on day one); a purchased domain (none exists yet — see §8).
 
-**License:** AGPL-3.0, decided over MIT specifically to close the SaaS-resale loophole — the same reasoning openGym gives for its own AGPL choice. A `LICENSE` file at repo root, and flipping the GitHub repo from private to public, are both **hard prerequisites** the marketing page's deploy is gated behind — not concurrent work, not a "ships first, catches up later." A public page asserting "open source, AGPL-3.0" while the repo is still private is the same defect as claiming a test passes without having run it.
+**License:** AGPL-3.0, decided over MIT specifically to close the SaaS-resale loophole — the same reasoning openGym gives for its own AGPL choice. Applies to both repos now (§4) — the product (`czepter/auri-crm`) and the marketing site itself (`czepter/auri-crm-site`), for consistency across everything the org publishes. A `LICENSE` file at each repo's root, and flipping `auri-crm` from private to public, are **hard prerequisites** the marketing page's deploy is gated behind — not concurrent work, not a "ships first, catches up later." The two repos are split for ownership/CI reasons only (§4); in real-world timing they still go public together, so a visitor who lands on the marketing site can always actually clone the product it's marketing. A public page asserting "open source, AGPL-3.0" while the product repo is still private is the same defect as claiming a test passes without having run it.
 
 ## 3. Why static, not SSR
 
@@ -27,24 +27,26 @@ The one piece of the page that changes without a deploy — GitHub star/fork/iss
 
 ## 4. Repo layout
 
+**A dedicated repo, `czepter/auri-crm-site`, not `apps/marketing` inside `auri-crm`.** Not the original plan — revised because the marketing site is meant to be able to go live on its own release cadence, independent of the product repo's own CI/build/PR flow, even though in practice both still flip public at the same real-world moment (§2). Splitting it out also means it never touches the `studio-workspace` pnpm workspace, `@studio/*` package scope, or the product's own Vitest/lint pipeline — it has none of those dependencies, so it shouldn't share their config surface just because it happens to live in the same place today.
+
 ```
-apps/marketing/              @studio/marketing
-  astro.config.mjs            output: 'static', @tailwindcss/vite (same Tailwind 4 major as studio/gallery)
+czepter/auri-crm-site/          (own repo, own git history, own GitHub Actions)
+  astro.config.mjs               output: 'static', @tailwindcss/vite (same Tailwind 4 major as auri-crm's studio/gallery, so the two don't drift onto two different design systems for no reason)
+  package.json                   plain package.json, name "auri-crm-site" — no pnpm workspace, no @studio/* scope
+  LICENSE                        AGPL-3.0, matching auri-crm's own
   src/
     pages/
       index.astro
       features.astro
       docs.astro
       about.astro
-    components/                Nav, Hero, FeatureGrid, ScreenshotCarousel, SelfHostBlock, OpenSourceStats, Footer
-    content/                    feature copy as plain .ts data, no CMS
+    components/                  Nav, Hero, FeatureGrid, ScreenshotCarousel, SelfHostBlock, OpenSourceStats, Footer
+    content/                     feature copy as plain .ts data, no CMS
   public/
-    screenshots/                the four to five captures from §7
-docker/marketing/
-  Dockerfile                    nginx:alpine serving the built dist/, no Node in the runtime stage
+    screenshots/                 the four to five captures from §7 — copied in by hand after being captured from the (private, at capture time) auri-crm dev stack; there is no automated cross-repo pipeline for this, and building one for a one-time asset drop would be exactly the speculative infrastructure CLAUDE.md rejects
 ```
 
-Package name `@studio/marketing`, following `@studio/gallery` — the repo's public name is `auri-crm`/"Auri", the internal package scope stays `@studio/*` the way it already does for `studio-workspace` and `@studio/gallery`; renaming that scope is a separate, unrelated decision this design doesn't make.
+No `docker/marketing/Dockerfile` in `auri-crm` — the repo's own Dockerfile (`nginx:alpine` serving the built `dist/`, no Node in the runtime stage) lives at `czepter/auri-crm-site`'s root instead (§8).
 
 ## 5. Landing page (`/`) — sections
 
@@ -98,18 +100,20 @@ No screenshots exist anywhere in the repo today. `apps/studio/database/seeders/D
 
 ## 8. Deploy wiring
 
-- `docker-compose.yml`: new `marketing` service, static build served by `nginx:alpine`, `MARKETING_PORT` (default `4322`), no `depends_on` — the app is fully standalone, no Postgres/Redis/api dependency at all, unlike the gallery service.
-- `docker-compose.coolify.yml`: matching entry, `${SERVICE_FQDN_MARKETING_80}`, following the existing per-service pattern. No custom domain exists anywhere yet — every currently deployed service (`admin`, `portal`, `api`, `gallery`, `mcp`) sits on a Coolify-generated subdomain under the shared `coolify3.czpt.de` wildcard, confirmed by inspecting the live Coolify project. `marketing` ships the same way at first; canonical URLs, the OG-image `url` field, and the GitHub README's link swap to a real domain once one is bought — that purchase is the user's decision, not discoverable or choosable by this design.
-- `README.md`: the "four surfaces" table gains the marketing site as a fifth row, or a short paragraph beneath it — worded as a fifth *sibling app*, not a fifth *surface*, since `Surface` in this codebase means an authenticated Laravel route file and this has neither authentication nor a Laravel dependency. Add it to the `apps/` tree listing too.
-- `docs/architecture.md`: one line under "Surfaces" noting the marketing app exists and explicitly why it isn't one.
-- Testing: `vitest run --passWithNoTests` scaffold, matching `apps/gallery/package.json`. No forced test beyond that — CLAUDE.md's "non-trivial logic ships with a test" rule doesn't reach markup and copy, and inventing logic to test would be exactly the speculative work CLAUDE.md rejects.
-- **Launch gate, explicit:** the marketing page must not go live in front of real visitors until (a) the GitHub repo is flipped from private to public and (b) `LICENSE` (AGPL-3.0) exists at repo root. Both are prerequisites the implementation plan should carry as blocking steps, not follow-up work — see §2.
+Because `czepter/auri-crm-site` is its own repo rather than a service inside `auri-crm`'s compose files (§4), it deploys as its **own standalone Coolify application** with its own git source — not a new entry in `docker-compose.yml`/`docker-compose.coolify.yml`, and not part of the existing `auri-crm` Coolify project (verified live: that project currently bundles `admin`, `portal`, `api`, `gallery`, `mcp` plus support containers as one compose-based service). A plain static site with its own Dockerfile doesn't belong wedged into that bundle just because it's related in subject matter.
+
+- **New Coolify application**, source = `czepter/auri-crm-site`, build = the repo's own `Dockerfile` (`nginx:alpine`, no build args shared with `auri-crm`).
+- **Domain:** none exists anywhere yet — every currently deployed `auri-crm` service sits on a Coolify-generated subdomain under the shared `coolify3.czpt.de` wildcard. The new application ships the same way at first (its own generated subdomain); canonical URLs, the OG-image `url` field, and any cross-links from `auri-crm`'s own README swap to a real domain once one is bought — that purchase is the user's decision, not discoverable or choosable by this design.
+- **In `auri-crm` itself:** no `docker/marketing/`, no compose service, no `apps/marketing` — the only touch points are a short mention in `README.md` (a link to the marketing site once it has a URL) and, optionally, one line in `docs/architecture.md` noting a marketing site exists in a separate repo and isn't a `Surface` — worded that way because `Surface` means an authenticated Laravel route file, and this has neither authentication nor a Laravel dependency, in either repo.
+- Testing (in `auri-crm-site`): `vitest run --passWithNoTests` scaffold, matching the pattern `apps/gallery/package.json` already uses. No forced test beyond that — CLAUDE.md's "non-trivial logic ships with a test" rule doesn't reach markup and copy, and inventing logic to test would be exactly the speculative work CLAUDE.md rejects. `auri-crm-site` gets its own minimal CI (build + lint), independent of `auri-crm`'s pipeline.
+- **Launch gate, explicit:** the marketing site must not go live in front of real visitors until (a) `auri-crm` is flipped from private to public, (b) `LICENSE` (AGPL-3.0) exists at both repos' roots. Both are prerequisites the implementation plan should carry as blocking steps, not follow-up work — see §2.
 
 ## 9. Follow-ups, explicitly out of scope here
 
 - **Domain purchase.** Nobody owns one yet; §8 covers how the design tolerates that gap until one exists.
-- **`CONTRIBUTING.md` / `CHANGELOG.md`.** Real content (PR process, coding standards pointer; a backfilled history), on their own schedule — not a marketing-page dependency (§2).
+- **`CONTRIBUTING.md` / `CHANGELOG.md`** — for `auri-crm`, the product repo. Real content (PR process, coding standards pointer; a backfilled history), on their own schedule — not a marketing-page dependency (§2).
 - **A logo/brand mark.** v1 is wordmark-only; an actual mark is its own design decision.
 - **`APP_NAME` rebrand.** The running product still defaults to `"Laravel"`; making it say "Auri" touches emails, PDFs, admin chrome — a separate, later task (§2).
-- **The live GitHub-stats widget.** Built once the repo has a real star count worth showing (§5 row 7) — the client-side fetch and its rate-limit fallback are specified here so implementing it later doesn't need a second design pass.
+- **The live GitHub-stats widget.** Built once `auri-crm` has a real star count worth showing (§5 row 7) — the client-side fetch and its rate-limit fallback are specified here so implementing it later doesn't need a second design pass.
+- **`czepter/auri-crm-site`'s own repo hygiene** (its own minimal README describing what it is and how to run it locally) — small, but it's a repo-setup task once the repo exists, not part of this design's content.
 - Actual German copy (headlines, subcopy, card descriptions) is a content-writing pass against this structure, not fixed by this design — CLAUDE.md's no-AI-slop German copy rule applies directly when it's written.
