@@ -51,14 +51,14 @@ im Canvas, sie sind Referenz und kein Feature).
 
 ## 3. Die drei Screens
 
-Die Bilder stammen aus dem Design-Canvas, ein PNG je Artboard über dessen
-Export.
+Die Bilder sind aus den Artboard-Quellen gerendert und liegen unter
+`docs/screenshots/`.
 
 | Bild | Artboard | Was es zeigt |
 |---|---|---|
-| `img/2026-09-06-angebot-handy.png` | Regler + Bausteine · Handy | Regler, Bildraster, Bausteine, klebende Zahlleiste am Fuß |
-| `img/2026-09-06-angebot-desktop.png` | Regler + Bausteine · Desktop | dieselbe linke Spalte, Rail rechts mit Aufstellung und Stufen |
-| `img/2026-09-06-angebot-studio.png` | Studio · Angebot bearbeiten | Stundensatz, Bausteine, Zahlstufen, Spanne |
+| `docs/screenshots/2026-09-06-angebot-handy.png` | Regler + Bausteine · Handy | Regler, Bildraster, Bausteine, klebende Zahlleiste am Fuß |
+| `docs/screenshots/2026-09-06-angebot-desktop.png` | Regler + Bausteine · Desktop | dieselbe linke Spalte, Rail rechts mit Aufstellung und Stufen |
+| `docs/screenshots/2026-09-06-angebot-studio.png` | Studio · Angebot bearbeiten | Stundensatz, Bausteine, Zahlstufen, Spanne |
 
 ### 3.1 Portal, Handy
 
