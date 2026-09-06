@@ -115,7 +115,7 @@ function serializeBlock(block: EditorBlock, profile: SerializeProfile): string {
 
     case 'callout':
       return profile === 'mail'
-        ? `<div style="padding:12px 14px;border-left:3px solid #B44E22;background:#FBF0EA">${inline(data.text)}</div>`
+        ? `<div style="padding:12px 14px;border-left:3px solid #1C6870;background:#E7F1F2">${inline(data.text)}</div>`
         : `<div class="doc-callout">${inline(data.text)}</div>`
 
     case 'spacer':

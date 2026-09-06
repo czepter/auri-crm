@@ -3,10 +3,10 @@
  * mockups/redesign/crm.css.
  *
  * Its own sheet rather than an addition to tokens.css, which is the point of
- * the issue: the portal and the gallery carry Instrument Serif and a lot of
- * room, the admin carries density, and the UX audit named the shared bones as
- * the root of why a tool for the operator and a keepsake for a couple read as
- * the same product (docs/ux-audit.md). It has to stay a later import too — the
+ * the issue: the portal and the gallery carry a lot of room, the admin
+ * carries density, and the UX audit named the shared bones as the root of why
+ * a tool for the operator and a keepsake for a couple read as the same
+ * product (docs/ux-audit.md). It has to stay a later import too — the
  * values override tokens.css's :root on equal specificity, where only source
  * order decides, and admin.css imports this one last.
  *
@@ -24,21 +24,18 @@
  * `text-action`.
  */
 :root {
-  /* System stack, not Instrument Sans: the admin is a surface that stands
-     open all day, SF rasterises cleaner at 11–15px than any loaded family,
-     and the foreign fetch — a GDPR finding on the portal — falls away. */
-  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;
+  --font: 'Hanken Grotesk', system-ui, sans-serif;
 
   --paper: #FFFFFF;
-  --sunk: #FAFAFA;
-  --sunk-2: #F2F2F4;
+  --sunk: #F5F7F8;
+  --sunk-2: #F0F3F5;
 
-  --ink: #1D1D1F;
-  --ink-2: #6E6E73;
-  --mark: #DEDEE1;      /* an unfilled dot — not text, so it gets its own value */
-  --rule: #EFEFF1;
+  --ink: #151A22;
+  --ink-2: #626B78;
+  --mark: #CFD6DB;      /* an unfilled dot — not text, so it gets its own value */
+  --rule: #E2E7EB;
 
-  --accent: #B44E22;
+  --accent: #1C6870;
 
   --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
   --s5: 20px; --s6: 28px; --s7: 32px;
