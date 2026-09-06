@@ -218,12 +218,11 @@ class StudioSettingsResolver
      */
     /**
      * #234: the display pair this studio's portal and gallery are written in.
-     * Null is Instrument — a studio that never opened the setting keeps what
-     * it had.
+     * Null is Hanken, the product's own default.
      */
     public function fontPair(): FontPair
     {
-        return FontPair::tryFrom((string) $this->row()->font_pair) ?? FontPair::Instrument;
+        return FontPair::tryFrom((string) $this->row()->font_pair) ?? FontPair::Hanken;
     }
 
     public function attributes(): array

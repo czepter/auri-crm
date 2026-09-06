@@ -30,7 +30,7 @@ function fakeApiClient(data: unknown = { id: 'fake_public_id' }) {
 
 async function connectedPair(apiClient: ApiClient, elicitationSupported: boolean) {
   const server = new McpServer({ name: 'studio-mcp', version: '0.0.1' })
-  registerWriteTools(server, apiClient)
+  registerWriteTools(server, () => apiClient)
 
   const client = new Client(
     { name: 'test-client', version: '0.0.1' },

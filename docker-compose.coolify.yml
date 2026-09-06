@@ -156,7 +156,10 @@ services:
     stop_grace_period: 60s
     environment:
       APP_SURFACE: admin
-      APP_URL: ${SERVICE_FQDN_PORTAL}
+      # This container's own surface, like every other service here: StudioDigest
+      # links /benachrichtigungen, an admin route, and renders on this queue.
+      # Links onto the other surfaces name their host below.
+      APP_URL: ${SERVICE_FQDN_ADMIN}
       APP_KEY: ${SERVICE_REALBASE64_APPKEY}
       SENTRY_LARAVEL_DSN: ${STUDIO_SENTRY_DSN}
       DB_DATABASE: ${POSTGRES_DB:-studio}
@@ -168,6 +171,10 @@ services:
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
       GALLERY_URL: ${SERVICE_FQDN_GALLERY_4321}
+      # QuoteSent composes portal links here whenever quiet hours defer the
+      # send, and APP_URL above is the studio — config/portal.php's fallback
+      # would aim them at the wrong surface.
+      PORTAL_URL: ${SERVICE_FQDN_PORTAL}
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
     healthcheck:
@@ -196,7 +203,11 @@ services:
       disable: true
     environment:
       APP_SURFACE: admin
-      APP_URL: ${SERVICE_FQDN_PORTAL}
+      # Admin, and the portal named separately — same reasoning as horizon.
+      # notifications:send-digests sends StudioDigest inline from here whenever
+      # quiet hours do not defer it to that queue.
+      APP_URL: ${SERVICE_FQDN_ADMIN}
+      PORTAL_URL: ${SERVICE_FQDN_PORTAL}
       APP_KEY: ${SERVICE_REALBASE64_APPKEY}
       SENTRY_LARAVEL_DSN: ${STUDIO_SENTRY_DSN}
       DB_DATABASE: ${POSTGRES_DB:-studio}
