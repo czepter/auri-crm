@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\UserEmailVerification;
 use App\Notifications\NotificationService;
 use App\Notifications\Studio\StudioEmailVerification;
+use App\Notifications\Studio\StudioWelcome;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -80,6 +81,7 @@ class SetupController extends Controller
         ]);
 
         $notifications->send($user, new StudioEmailVerification($user->name, $code, url("/e-mail-bestaetigen/{$token}")));
+        $notifications->send($user, new StudioWelcome($user->name));
 
         return redirect('/einrichtung/studio');
     }

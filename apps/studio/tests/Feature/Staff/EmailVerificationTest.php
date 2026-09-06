@@ -5,6 +5,7 @@
 use App\Models\User;
 use App\Models\UserEmailVerification;
 use App\Notifications\Studio\StudioEmailVerification;
+use App\Notifications\Studio\StudioWelcome;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 
@@ -28,6 +29,14 @@ it('sends a verification mail on setup', function () {
     $user = createOwner();
 
     Notification::assertSentTo($user, StudioEmailVerification::class);
+});
+
+it('also sends the welcome mail on setup', function () {
+    Notification::fake();
+
+    $user = createOwner();
+
+    Notification::assertSentTo($user, StudioWelcome::class);
 });
 
 it('consumes the record and stamps the user via the link', function () {
