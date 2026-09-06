@@ -31,6 +31,36 @@ const serve =
   // in as an E2eSeeder account met an account that was not there.
   ' && php artisan serve --no-reload --host=0.0.0.0 --port=8000"'
 
+// mcp.spec.ts drives a remote MCP client through the whole OAuth flow, so it
+// needs two more processes than every other spec: the api surface, where
+// /api/oauth/token-info and the tool routes live (Surface::registerRoutes
+// mounts routes/api.php only under APP_SURFACE=api), and the MCP server that
+// calls them. Both only on CI — locally the admin server already occupies the
+// one published port of the compose php service, and a second `docker compose
+// run --service-ports` would collide with it.
+const mcpServers = [
+  {
+    cwd: '.',
+    command: 'php artisan serve --no-reload --host=127.0.0.1 --port=8002',
+    url: 'http://127.0.0.1:8002/up',
+    env: { APP_SURFACE: 'api', PHP_CLI_SERVER_WORKERS: '4' },
+    timeout: 120_000,
+  },
+  {
+    cwd: '../../packages/mcp',
+    command: 'node dist/index.js --http',
+    // The document the spec's first assertion reads, and the one endpoint
+    // that answers without a token — so it doubles as the readiness probe.
+    url: 'http://127.0.0.1:3000/.well-known/oauth-protected-resource',
+    env: {
+      MCP_PUBLIC_URL: 'http://127.0.0.1:3000',
+      OAUTH_ISSUER_URL: 'http://127.0.0.1:8000',
+      CRM_API_BASE_URL: 'http://127.0.0.1:8002/api',
+    },
+    timeout: 60_000,
+  },
+]
+
 export default defineConfig({
   testDir: './tests/e2e',
   // Playwright keys a snapshot to the platform that took it, so the committed
@@ -39,24 +69,29 @@ export default defineConfig({
   // between the two that one set cannot serve both. The portal spec is out for
   // a second reason: it dials the portal surface on 8001, which the e2e job
   // does not start.
-  testIgnore: process.env.CI ? ['**/visual.spec.ts', '**/visual-portal.spec.ts'] : [],
+  testIgnore: process.env.CI
+    ? ['**/visual.spec.ts', '**/visual-portal.spec.ts']
+    : ['**/mcp.spec.ts'],
   timeout: 30_000,
   use: {
     baseURL,
     trace: 'on-first-retry',
   },
-  webServer: {
-    cwd: process.env.CI ? '.' : '../..',
-    command: process.env.CI
-      ? serve
-      : `docker compose run --rm --service-ports -e APP_SURFACE=admin -e DB_DATABASE=studio_e2e php ${serve}`,
-    url: `${baseURL}/up`,
-    reuseExistingServer: !process.env.CI,
-    // One PHP worker serves one request at a time, so a fetch a page fires
-    // while that page is still pulling assets waits behind them — which is
-    // what gallery-record's five-second assertion on a minted link kept
-    // losing to on CI. Respected only alongside --no-reload above.
-    env: { APP_SURFACE: 'admin', PHP_CLI_SERVER_WORKERS: '4' },
-    timeout: 120_000,
-  },
+  webServer: [
+    {
+      cwd: process.env.CI ? '.' : '../..',
+      command: process.env.CI
+        ? serve
+        : `docker compose run --rm --service-ports -e APP_SURFACE=admin -e DB_DATABASE=studio_e2e php ${serve}`,
+      url: `${baseURL}/up`,
+      reuseExistingServer: !process.env.CI,
+      // One PHP worker serves one request at a time, so a fetch a page fires
+      // while that page is still pulling assets waits behind them — which is
+      // what gallery-record's five-second assertion on a minted link kept
+      // losing to on CI. Respected only alongside --no-reload above.
+      env: { APP_SURFACE: 'admin', PHP_CLI_SERVER_WORKERS: '4' },
+      timeout: 120_000,
+    },
+    ...(process.env.CI ? mcpServers : []),
+  ],
 })
