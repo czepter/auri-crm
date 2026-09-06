@@ -54,6 +54,9 @@ surface's public JSON. It is server-rendered rather than prerendered because
 which gallery version is current changes the moment a studio owner
 republishes.
 
+(A marketing site exists at [czepter/auri-crm-site](https://github.com/czepter/auri-crm-site) —
+not a surface, since it has neither authentication nor a Laravel dependency.)
+
 ## Authorization, in four layers
 
 Each layer answers a different question, and each runs earlier than the one
