@@ -14,6 +14,7 @@ use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Gallery\Actions\EnsureGalleryCover;
+use App\Gallery\Models\AssetComment;
 use App\Gallery\Models\AssetFavorite;
 use App\Gallery\Models\Gallery;
 use App\Media\Enums\AssetStatus;
@@ -33,6 +34,11 @@ use Illuminate\Support\Str;
  * Data for the auri-crm-site screenshot captures — written to be shown
  * publicly indefinitely, so it does not reuse DemoCrmSeeder's own cast (built
  * for mockup 02, not for the public internet).
+ *
+ * Run this alone against a freshly migrated database (`migrate:fresh` then
+ * `db:seed --class=MarketingScreenshotSeeder`), never on top of
+ * DemoCrmSeeder or any other seeder — screenshots taken against a DB that
+ * also has DemoCrmSeeder's cast on it will show that cast's data too.
  */
 class MarketingScreenshotSeeder extends Seeder
 {
@@ -151,6 +157,14 @@ class MarketingScreenshotSeeder extends Seeder
                 'contact_id' => $melissa->id,
             ]);
         }
+
+        AssetComment::create([
+            'gallery_version_id' => $version->id,
+            'asset_key' => $photoKeys[0],
+            'guest_identifier' => (string) Str::uuid(),
+            'body' => 'Dieses Bild muss groß gedruckt werden!',
+            'contact_id' => $melissa->id,
+        ]);
     }
 
     /**
