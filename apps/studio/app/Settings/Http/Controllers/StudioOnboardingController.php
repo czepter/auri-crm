@@ -5,7 +5,10 @@ namespace App\Settings\Http\Controllers;
 use App\Concerns\AuthorizesStaffSettings;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Support\StarterTemplateCatalog;
+use App\Engagement\Support\InboundAddress;
 use App\Http\Controllers\Controller;
+use App\Notifications\NotificationService;
+use App\Notifications\Studio\StudioReady;
 use App\Settings\Data\PortalSettingsData;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Support\StudioSettingsResolver;
@@ -50,11 +53,19 @@ class StudioOnboardingController extends Controller
         ]);
     }
 
-    public function complete(StudioSettingsResolver $settings): RedirectResponse
+    public function complete(StudioSettingsResolver $settings, NotificationService $notifications): RedirectResponse
     {
         $this->authorizeSettings();
 
-        $settings->set('onboarding_completed_at', now(), auth('staff')->user());
+        $owner = auth('staff')->user();
+
+        $settings->set('onboarding_completed_at', now(), $owner);
+
+        $inboundAddress = $settings->inboundSecret() === null
+            ? null
+            : InboundAddress::catchAll($settings->displayName() ?? '', $settings->inboundSecret());
+
+        $notifications->send($owner, new StudioReady($owner->name, $inboundAddress));
 
         return redirect('/');
     }

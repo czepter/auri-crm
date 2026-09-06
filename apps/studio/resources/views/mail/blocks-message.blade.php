@@ -1,5 +1,5 @@
 {{-- apps/studio/resources/views/mail/blocks-message.blade.php --}}
-<x-mail::layout @if(isset($brand)) :brand="$brand" @endif>
+<x-mail::layout :brand="$brand">
     <x-slot:header></x-slot:header>
 
     @if (! empty($greeting))
