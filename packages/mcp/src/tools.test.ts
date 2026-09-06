@@ -38,7 +38,7 @@ function stubFetch(handlers: Record<string, (url: URL) => Response>): void {
 async function connectedClient(handlers: Record<string, (url: URL) => Response>): Promise<Client> {
   stubFetch(handlers)
 
-  const server = createMcpServer(createApiClient('http://mcp-test.invalid/api', 'test-token'))
+  const server = createMcpServer(() => createApiClient('http://mcp-test.invalid/api', 'test-token'))
   const client = new Client({ name: 'test-client', version: '0.0.1' })
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
 

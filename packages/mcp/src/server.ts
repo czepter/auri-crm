@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 
-import { createApiClient, type ApiClient } from './client.js'
+import { apiClientFactory, type ApiClientFactory } from './client.js'
 import { registerReadTools } from './tools.js'
 import { registerWriteTools } from './tools/write.js'
 
@@ -13,10 +13,12 @@ import { registerWriteTools } from './tools/write.js'
  * App\Integration\Models\ApiToken. `apiClient` defaults to the real one but
  * is an argument rather than always constructed here, so a test can hand
  * this a fake and exercise tool registration without a live api surface.
+ * It is a factory, not a client: each call builds one for the bearer that
+ * made it (see client.ts).
  */
-export function createMcpServer(apiClient: ApiClient = createApiClient()): McpServer {
+export function createMcpServer(clientFor: ApiClientFactory = apiClientFactory()): McpServer {
   const server = new McpServer({ name: 'studio-mcp', version: '0.0.1' })
-  registerReadTools(server, apiClient)
-  registerWriteTools(server, apiClient)
+  registerReadTools(server, clientFor)
+  registerWriteTools(server, clientFor)
   return server
 }
