@@ -130,11 +130,12 @@ class AppServiceProvider extends ServiceProvider
 
         // Studio-branded by default: every existing notification's mail keeps
         // working unmodified, because this only fires when nobody has already
-        // passed an explicit brand. The three product mails (and StaffInvited's
-        // shared blocks view) set 'brand' explicitly and this returns immediately —
+        // passed an explicit brand. The three product mails set 'brand'
+        // explicitly and this returns immediately — StaffInvited's shared
+        // blocks view passes none, so it falls through to the studio default —
         // see resources/views/mail/{product,blocks}-message.blade.php.
         View::composer('mail::layout', function ($view) {
-            if (array_key_exists('brand', $view->getData())) {
+            if (($view->getData()['brand'] ?? null) !== null) {
                 return;
             }
 
