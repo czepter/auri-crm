@@ -32,7 +32,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 #[TypeScript]
 enum FontPair: string implements HasLabel
 {
-    case Instrument = 'instrument';
+    case Hanken = 'hanken';
     case Fraunces = 'fraunces';
     case Cormorant = 'cormorant';
     case Grotesk = 'grotesk';
@@ -40,7 +40,7 @@ enum FontPair: string implements HasLabel
     public function label(): string
     {
         return match ($this) {
-            self::Instrument => 'Instrument',
+            self::Hanken => 'Hanken',
             self::Fraunces => 'Fraunces',
             self::Cormorant => 'Cormorant',
             self::Grotesk => 'Space Grotesk',
@@ -51,7 +51,7 @@ enum FontPair: string implements HasLabel
     public function description(): string
     {
         return match ($this) {
-            self::Instrument => 'Ruhige Grotesk, schmale Serif',
+            self::Hanken => 'Eine Grotesk, Titel und Text gleich',
             self::Fraunces => 'Kontrastreiche Serif, neutrale Grotesk',
             self::Cormorant => 'Feine Serif, schmale Grotesk',
             self::Grotesk => 'Technische Grotesk',

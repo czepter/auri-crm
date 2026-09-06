@@ -112,7 +112,7 @@ test('Admin-Oberflaeche haelt ihre Baselines', async ({ page }) => {
   for (const route of ROUTES) {
     await page.goto(route)
     await page.waitForLoadState('networkidle')
-    // The studio name is set in Instrument Serif. networkidle can land between
+    // The studio name is set in the display face. networkidle can land between
     // the fallback paint and the swap, which is a diff in the sidebar of every
     // screen unlucky enough to be caught there.
     await page.waitForFunction(() => document.fonts.status === 'loaded')

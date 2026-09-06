@@ -107,7 +107,7 @@ const ROW = [
           type="button"
           @click="choose(contact)"
         >
-          <span class="flex size-[26px] flex-none items-center justify-center rounded-full bg-[#FBE9E7] text-[11px] leading-none font-semibold text-[#A2493B]">{{ contact.name.slice(0, 1).toUpperCase() }}</span>
+          <span class="flex size-[26px] flex-none items-center justify-center rounded-full bg-[#E7F1F2] text-[11px] leading-none font-semibold text-[#1C6870]">{{ contact.name.slice(0, 1).toUpperCase() }}</span>
           <span>
             <span class="text-[12.5px] leading-[1.25] font-semibold">{{ contact.name }}</span>
             <span class="mt-px text-[11.5px] leading-[1.3] font-normal text-muted-foreground">{{ contact.email }}</span>
@@ -115,7 +115,7 @@ const ROW = [
         </Button>
 
         <Button variant="ghost" :class="[ROW, 'bg-muted']" type="button" @click="emit('createNew', term)">
-          <span class="flex size-[26px] flex-none items-center justify-center rounded-full bg-[#FBE9E7] text-[11px] leading-none font-semibold text-[#A2493B] bg-foreground text-[14px] text-background">+</span>
+          <span class="flex size-[26px] flex-none items-center justify-center rounded-full bg-[#E7F1F2] text-[11px] leading-none font-semibold text-[#1C6870] bg-foreground text-[14px] text-background">+</span>
           <span class="text-[12.5px] leading-[1.25] font-semibold">{{ $t('leads.contactCreate', { term }) }}</span>
         </Button>
       </div>

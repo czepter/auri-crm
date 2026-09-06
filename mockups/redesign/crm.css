@@ -1,30 +1,29 @@
 /* Redesign-Entwurf — CRM (Admin).
  *
- * Getrennt von tokens.css: Portal und Galerie tragen Instrument Serif und viel
- * Raum, das Admin trägt Dichte. Die drei Oberflächen dürfen sich nicht dieselben
- * Knochen teilen — genau das war der Befund der UX-Prüfung.
+ * Getrennt von tokens.css: Portal und Galerie tragen viel Raum, das Admin
+ * trägt Dichte. Die drei Oberflächen dürfen sich nicht dieselben Knochen
+ * teilen — genau das war der Befund der UX-Prüfung.
  *
- * Systemschrift statt Instrument Sans: die Fläche ist ein Werkzeug, das den
- * ganzen Tag offen steht, SF rastert bei 11–15px sauberer als jede geladene
- * Familie — und spart den Fremdabruf, der im Portal ein DSGVO-Problem ist.
+ * Dieselbe Hanken Grotesk wie Portal und Galerie: eine Stimme über alle drei
+ * Oberflächen statt einer eigenen für das Admin.
  *
  * Keine Rahmen, keine Schatten. Getrennt wird durch Fläche, Abstand, Größe.
  * Eine dritte Graustufe für Text gibt es nicht.
  */
 
 :root {
-  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;
+  --font: 'Hanken Grotesk', system-ui, sans-serif;
 
   --paper: #FFFFFF;
-  --sunk: #FAFAFA;
-  --sunk-2: #F2F2F4;
+  --sunk: #F5F7F8;
+  --sunk-2: #F0F3F5;
 
-  --ink: #1D1D1F;
-  --ink-2: #6E6E73;
-  --mark: #DEDEE1;      /* ungefüllter Punkt — kein Text, deshalb eigener Wert */
-  --rule: #EFEFF1;
+  --ink: #151A22;
+  --ink-2: #626B78;
+  --mark: #CFD6DB;      /* ungefüllter Punkt — kein Text, deshalb eigener Wert */
+  --rule: #E2E7EB;
 
-  --accent: #B44E22;
+  --accent: #1C6870;
 
   --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
   --s5: 20px; --s6: 28px; --s7: 32px;
