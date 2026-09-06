@@ -32,6 +32,7 @@ class StudioOnboardingController extends Controller
         return Inertia::render('Auth/Onboarding', [
             'settings' => StudioSettingsData::fromResolver($settings),
             'portalSettings' => PortalSettingsData::fromResolver($settings),
+            'emailVerified' => auth('staff')->user()->email_verified_at !== null,
             // T-18: the catalog, minus its blocks — this step chooses, it does
             // not edit, and shipping every starter's document to a screen that
             // renders four words of each would be a page weight nobody asked

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { router } from '@inertiajs/vue3'
+import EmailVerificationForm from '@/admin/pages/Auth/panes/EmailVerificationForm.vue'
 import ProfileForm from '@/admin/pages/Settings/panes/ProfileForm.vue'
 import VatForm from '@/admin/pages/Settings/panes/VatForm.vue'
 import DocumentsForm from '@/admin/pages/Settings/panes/DocumentsForm.vue'
@@ -16,6 +17,7 @@ defineProps<{
   starters: Record<string, { key: string; name: string; description: string; shootKind: string | null }[]>
   starterDefaults: string[]
   typeLabels: Record<string, string>
+  emailVerified: boolean
 }>()
 
 // T-18 sits after `documents`: the settings that step collects — validity,
@@ -69,6 +71,7 @@ function finish() {
       {{ $t('onboarding.stepCount', { current: stepIndex + 1, total: steps.length }) }}
     </p>
 
+    <EmailVerificationForm v-if="step() === 'profile' && !emailVerified" />
     <ProfileForm v-if="step() === 'profile'" ref="paneRef" :settings="settings" @saved="advance" />
     <VatForm v-else-if="step() === 'vat'" ref="paneRef" :settings="settings" @saved="advance" />
     <DocumentsForm v-else-if="step() === 'documents'" ref="paneRef" :settings="settings" @saved="advance" />
