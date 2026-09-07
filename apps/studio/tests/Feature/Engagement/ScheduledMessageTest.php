@@ -7,6 +7,7 @@ use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
 use App\Engagement\Notifications\StaffReplyPosted;
 use App\Enums\StaffRole;
+use App\Notifications\Jobs\SendMailNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Notification;
@@ -114,7 +115,13 @@ it('never sends one message twice, however often its job runs', function () {
     (new SendScheduledMessage($message, $when->toIso8601String()))->handle($send);
     (new SendScheduledMessage($message, $when->toIso8601String()))->handle($send);
 
-    Notification::assertSentTimes(StaffReplyPosted::class, 1);
+    // Counted on the queue, not at the mailer: MailTransport dispatches the
+    // send rather than performing it, and Bus::fake() holds it here.
+    Bus::assertDispatchedTimes(SendMailNotification::class, 1);
+    Bus::assertDispatched(
+        SendMailNotification::class,
+        fn (SendMailNotification $job) => $job->notification instanceof StaffReplyPosted,
+    );
 });
 
 // --- the screen ---------------------------------------------------------

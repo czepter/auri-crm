@@ -1,14 +1,17 @@
 <?php
 
 use App\Models\User;
+use App\Notifications\Jobs\SendMailNotification;
 use App\Notifications\Models\InAppNotification;
 use App\Notifications\NotificationService;
 use App\Notifications\Transports\InAppTransport;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
+use Illuminate\Support\Facades\Queue;
 
 uses(RefreshDatabase::class);
 
@@ -39,6 +42,24 @@ class E07DemoNotification extends Notification
     }
 }
 
+/**
+ * Mail-only, and named rather than anonymous: MailTransport queues the send,
+ * and an anonymous class cannot be serialised into a job payload.
+ */
+class E07MailOnlyNotification extends Notification
+{
+    /** @return list<string> */
+    public function via(object $notifiable): array
+    {
+        return ['mail'];
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        return new MailMessage;
+    }
+}
+
 it('fans a notification out to every transport its via() names, tenant-scoped and publicly identified', function () {
     NotificationFacade::fake();
     $user = User::factory()->create();
@@ -61,19 +82,7 @@ it('sends only through the channels a notification actually names', function () 
     NotificationFacade::fake();
     $user = User::factory()->create();
 
-    app(NotificationService::class)->send($user, new class extends Notification
-    {
-        /** @return list<string> */
-        public function via(object $notifiable): array
-        {
-            return ['mail'];
-        }
-
-        public function toMail(object $notifiable): MailMessage
-        {
-            return new MailMessage;
-        }
-    });
+    app(NotificationService::class)->send($user, new E07MailOnlyNotification);
 
     expect(InAppNotification::count())->toBe(0);
 });
@@ -85,19 +94,7 @@ it("routes an on-demand address through the mail transport, so Notification::fak
     // key a row on, so a notification sent to one must not name 'in_app'.
     NotificationFacade::fake();
 
-    $notification = new class extends Notification
-    {
-        /** @return list<string> */
-        public function via(object $notifiable): array
-        {
-            return ['mail'];
-        }
-
-        public function toMail(object $notifiable): MailMessage
-        {
-            return new MailMessage;
-        }
-    };
+    $notification = new E07MailOnlyNotification;
 
     app(NotificationService::class)->send(
         NotificationFacade::route('mail', 'nina@nordlicht.test'),
@@ -106,6 +103,25 @@ it("routes an on-demand address through the mail transport, so Notification::fak
 
     NotificationFacade::assertSentOnDemand($notification::class);
     expect(InAppNotification::count())->toBe(0);
+});
+
+it('hands a mail to the mail queue instead of sending it inside the caller', function () {
+    Queue::fake();
+
+    app(NotificationService::class)->send(User::factory()->create(), new E07MailOnlyNotification);
+
+    Queue::assertPushedOn('mail', SendMailNotification::class);
+});
+
+it('queues the framework password-reset mail too, the one send that never reaches a transport', function () {
+    Queue::fake();
+
+    $user = User::factory()->create();
+    $user->sendPasswordResetNotification('token');
+
+    Queue::assertPushedOn('mail', SendMailNotification::class, function (SendMailNotification $job) use ($user) {
+        return $job->notifiable->is($user) && $job->notification instanceof ResetPassword;
+    });
 });
 
 it('refuses to write an in-app row for a notifiable with no persisted identity', function () {
