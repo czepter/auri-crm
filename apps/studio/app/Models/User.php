@@ -6,7 +6,9 @@ use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\CrewAssignment;
 use App\Enums\StaffRole;
+use App\Notifications\Jobs\SendMailNotification;
 use App\Notifications\Models\InAppNotification;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -95,6 +97,16 @@ class User extends Authenticatable
         $this->forceFill(['mfa_recovery_codes' => $codes])->save();
 
         return $codes;
+    }
+
+    /**
+     * The one mail the framework sends on its own — Password::broker() reaches
+     * for this rather than for anything in App\Notifications, so it would
+     * otherwise be the single send left going out inside a web request.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        SendMailNotification::dispatch($this, new ResetPassword($token));
     }
 
     /** T-11's inbox: what the in_app transport wrote for this person. */

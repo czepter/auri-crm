@@ -5,6 +5,7 @@ namespace App\Gallery\Actions;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryEmailVerification;
 use App\Gallery\Notifications\GalleryEmailVerificationLink;
+use App\Notifications\Jobs\SendMailNotification;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\Notification;
@@ -31,11 +32,14 @@ class RequestGalleryEmailVerification
             'expires_at' => now()->addMinutes(GalleryEmailVerification::VALID_FOR_MINUTES),
         ]);
 
-        Notification::route('mail', $email)->notify(new GalleryEmailVerificationLink(
-            $gallery,
-            url("/galerien/{$gallery->public_id}/download/email/{$token}"),
-            $this->settings,
-        ));
+        SendMailNotification::dispatch(
+            Notification::route('mail', $email),
+            new GalleryEmailVerificationLink(
+                $gallery,
+                url("/galerien/{$gallery->public_id}/download/email/{$token}"),
+                $this->settings,
+            ),
+        );
 
         AuditLogger::record(
             event: 'gallery.email_verification_issued',

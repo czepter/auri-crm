@@ -202,10 +202,10 @@ return [
 
     // One supervisor per workload rather than one queue carrying everything,
     // so a slow render never makes a lead-capture email wait behind it and a
-    // stuck mail call can't starve the default queue. M-01 (Gotenberg) and
-    // later stories dispatch onto 'mail' and 'render'; nothing does yet, so
-    // both sit idle until then. Timeouts are per queue because a worker
-    // that outlives its job's timeout is killed and retried.
+    // stuck mail call can't starve the default queue. Every outgoing mail is
+    // on 'mail' — MailTransport dispatches SendMailNotification rather than
+    // talking to an MTA in the caller's process. Timeouts are per queue
+    // because a worker that outlives its job's timeout is killed and retried.
     'defaults' => [
         'supervisor-default' => [
             'connection' => 'redis',

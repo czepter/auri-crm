@@ -4,6 +4,7 @@ namespace App\Portal\Http\Controllers;
 
 use App\Crm\Models\Contact;
 use App\Http\Controllers\Controller;
+use App\Notifications\Jobs\SendMailNotification;
 use App\Notifications\Support\NotificationPreferences;
 use App\Portal\Models\DsgvoRequest;
 use App\Portal\Models\EmailChange;
@@ -210,7 +211,9 @@ class AccountController extends Controller
         // that is the whole of the proof. On-demand rather than through the
         // Contact notifiable, so nothing has to pretend the column already
         // holds the new value.
-        Notification::route('mail', $newEmail)
-            ->notify(new EmailChangeConfirmation($contact, url("/e-mail-bestaetigen/{$token}"), $settings));
+        SendMailNotification::dispatch(
+            Notification::route('mail', $newEmail),
+            new EmailChangeConfirmation($contact, url("/e-mail-bestaetigen/{$token}"), $settings),
+        );
     }
 }

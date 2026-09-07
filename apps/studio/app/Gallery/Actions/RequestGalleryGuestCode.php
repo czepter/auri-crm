@@ -6,6 +6,7 @@ use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryEmailVerification;
 use App\Gallery\Models\GalleryGuest;
 use App\Gallery\Notifications\GalleryGuestCode;
+use App\Notifications\Jobs\SendMailNotification;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\Notification;
@@ -44,12 +45,15 @@ class RequestGalleryGuestCode
             'expires_at' => now()->addMinutes(GalleryEmailVerification::VALID_FOR_MINUTES),
         ]);
 
-        Notification::route('mail', $email)->notify(new GalleryGuestCode(
-            $gallery,
-            $code,
-            rtrim((string) config('services.gallery.url'), '/')."/g/{$gallery->public_id}?bestaetigung={$token}",
-            $this->settings,
-        ));
+        SendMailNotification::dispatch(
+            Notification::route('mail', $email),
+            new GalleryGuestCode(
+                $gallery,
+                $code,
+                rtrim((string) config('services.gallery.url'), '/')."/g/{$gallery->public_id}?bestaetigung={$token}",
+                $this->settings,
+            ),
+        );
 
         AuditLogger::record(
             event: 'gallery.guest_code_issued',

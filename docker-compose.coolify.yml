@@ -20,6 +20,7 @@ services:
       GALLERY_URL: ${SERVICE_FQDN_GALLERY_4321}
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/up"]
       interval: 10s
@@ -56,6 +57,7 @@ services:
       GALLERY_URL: ${SERVICE_FQDN_GALLERY_4321}
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/up"]
       interval: 10s
@@ -90,6 +92,15 @@ services:
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      # This surface raises notifications of its own — PublicInquiryController
+      # -> LeadCaptured -> InquiryReceived is the studio's only word that a
+      # lead arrived, and the Stripe webhook above raises InstallmentPaid the
+      # same way. SendMailNotification carries every one of them to horizon,
+      # so the DSN here is what keeps that true of a deploy that ever runs
+      # the queue synchronously rather than a promise the code makes.
+      MAIL_URL: ${MAIL_URL}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/up"]
       interval: 10s
@@ -177,6 +188,7 @@ services:
       PORTAL_URL: ${SERVICE_FQDN_PORTAL}
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
     healthcheck:
       test: ["CMD", "php", "artisan", "horizon:status"]
       interval: 30s
@@ -220,6 +232,7 @@ services:
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
     depends_on:
       postgres:
         condition: service_healthy
