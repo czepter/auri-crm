@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserEmailChange;
 use App\Notifications\Enums\NotificationMode;
+use App\Notifications\Jobs\SendMailNotification;
 use App\Notifications\StaffEmailChangeConfirmation;
 use App\Notifications\Support\NotificationPreferences;
 use App\Notifications\Support\StudioEvents;
@@ -185,7 +186,9 @@ class ProfileController extends Controller
 
         // Addressed to the inbox being claimed, not to the one on file — that
         // is the whole of the proof.
-        Notification::route('mail', $newEmail)
-            ->notify(new StaffEmailChangeConfirmation($user, url("/profil/e-mail-bestaetigen/{$token}"), $settings));
+        SendMailNotification::dispatch(
+            Notification::route('mail', $newEmail),
+            new StaffEmailChangeConfirmation($user, url("/profil/e-mail-bestaetigen/{$token}"), $settings),
+        );
     }
 }

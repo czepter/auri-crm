@@ -4,6 +4,7 @@ use App\Models\AuditLog;
 use App\Models\User;
 use App\Notifications\Contracts\Transactional;
 use App\Notifications\Jobs\DeferredNotification;
+use App\Notifications\Jobs\SendMailNotification;
 use App\Notifications\Models\InAppNotification;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\NotificationPreferences;
@@ -150,8 +151,10 @@ it('holds a non-transactional mail send during quiet hours instead of delivering
 
     app(NotificationService::class)->send($user, new T11DemoNotification);
 
-    // Not delivered now...
+    // Not delivered now — and not queued for delivery either, which is what
+    // "not delivered" means once MailTransport is itself a queue push.
     NotificationFacade::assertNothingSent();
+    Queue::assertNotPushed(SendMailNotification::class);
 
     // ...but re-dispatched for delivery once the window opens, at 07:00 the
     // same tenant-local day — not dropped.
@@ -163,10 +166,14 @@ it('holds a non-transactional mail send during quiet hours instead of delivering
 
     // Running the job once the window has actually opened delivers it —
     // "arrives when the window opens", the acceptance criterion in full.
+    // Delivery is itself a SendMailNotification push, because MailTransport
+    // never hands a message to the MTA inside the caller's process.
     Date::setTestNow('2026-08-10 07:00:01');
     Bus::dispatchNow((new ReflectionClass(DeferredNotification::class))->newInstance($user, new T11DemoNotification));
 
-    NotificationFacade::assertSentTo($user, T11DemoNotification::class);
+    Queue::assertPushed(SendMailNotification::class, function (SendMailNotification $job) use ($user) {
+        return $job->notifiable->is($user) && $job->notification instanceof T11DemoNotification;
+    });
 });
 
 it('never holds a Transactional notification for quiet hours', function () {
@@ -185,8 +192,10 @@ it('never holds a Transactional notification for quiet hours', function () {
 
     app(NotificationService::class)->send($user, new T11DemoTransactionalNotification);
 
-    NotificationFacade::assertSentTo($user, T11DemoTransactionalNotification::class);
-    Queue::assertNothingPushed();
+    Queue::assertPushed(SendMailNotification::class, function (SendMailNotification $job) use ($user) {
+        return $job->notifiable->is($user) && $job->notification instanceof T11DemoTransactionalNotification;
+    });
+    Queue::assertNotPushed(DeferredNotification::class);
 });
 
 it('never holds a notification that does not name the mail channel, quiet hours or not', function () {

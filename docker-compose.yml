@@ -53,6 +53,15 @@ services:
       # http://localhost:${GLITCHTIP_PORT:-8080}/<project-dsn-path> once a
       # project exists on the glitchtip-web service below to test against.
       SENTRY_LARAVEL_DSN: ${SENTRY_LARAVEL_DSN:-}
+      # The `mailpit` service below is the only SMTP host this stack has, and
+      # nothing pointed at it: apps/studio/.env.example ships Laravel's
+      # MAIL_MAILER=log, and docker/php/Dockerfile — unlike the production
+      # image (docker/app/Dockerfile) — bakes no mail defaults. Every mail the
+      # app sends locally went to the log file instead, so the inbox at
+      # http://localhost:8025 stayed empty and no rendered mail was ever seen.
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
     ports:
       # Published so the Playwright suite on the host can reach `artisan serve`
       # running inside this container. The host port is a variable because
@@ -115,6 +124,13 @@ services:
       # supervisors (config/horizon.php) reports here too — same DSN, same
       # empty-by-default rule as the php service above.
       SENTRY_LARAVEL_DSN: ${SENTRY_LARAVEL_DSN:-}
+      # The `mail` queue supervisor runs here, so this is the container that
+      # actually hands a message to an MTA — same reasoning as the php
+      # service's own MAIL_* block, not inherited since this one repeats the
+      # anchor by hand.
+      MAIL_MAILER: smtp
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
     command: php artisan horizon
     depends_on:
       postgres:
