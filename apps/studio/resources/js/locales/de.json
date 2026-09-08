@@ -1591,5 +1591,14 @@
     "select": "Vorlage wählen",
     "more": "{count} weitere",
     "kindLabel": "Art"
+  },
+  "help": {
+    "art": {
+      "aufgabe": "Aufgabe",
+      "referenz": "Referenz"
+    },
+    "close": "Schließen",
+    "loadFailed": "Artikel nicht geladen.",
+    "retry": "Erneut versuchen"
   }
 }

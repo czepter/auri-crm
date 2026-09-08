@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import HelpRail from './HelpRail.vue'
+
 /*
  * A case is capped at --container-case, or the rows run the width of the
  * screen and stop being readable. The board is the one screen that is not
@@ -27,8 +29,8 @@ defineProps<{ wide?: boolean }>()
 
         <slot name="right" />
 
-        <!-- Die Hilfespalte. Vorgabeinhalt kommt in Task 7; bis dahin ist der
-             Slot leer und kostet nichts. -->
-        <slot name="help" />
+        <!-- Die Hilfespalte. HelpRail zeigt sich selbst nur, wenn Einträge
+             und Panel-Zustand es hergeben. -->
+        <slot name="help"><HelpRail /></slot>
     </div>
 </template>
