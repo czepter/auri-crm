@@ -13,7 +13,7 @@
            font:400 13px/1.47 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.006em;
            -webkit-font-smoothing:antialiased; }
     * { box-sizing:border-box; }
-    a { color:#151A22; text-decoration:none; } a:hover { color:#151A22; }
+    a { color:#151A22; text-decoration:none; }
     svg { flex:none; fill:none; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
     .item { display:flex; align-items:center; gap:9px; margin-bottom:1px; padding:6px 10px;
             border-radius:8px; font:400 13px/1.47 'Hanken Grotesk', system-ui, sans-serif;
@@ -23,22 +23,23 @@
     .item.on { background:#F0F3F5; font-weight:600; }
     .item.on svg { stroke:#151A22; }
     .item .ct { margin-left:auto; font-size:11.5px; font-variant-numeric:tabular-nums; color:#626B78; }
-    .chip { display:inline-flex; align-items:center; flex:none; padding:3px 8px; border-radius:12px;
-            font:600 10px/1.5 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:.04em; text-transform:uppercase; }
-    .fbtn { appearance:none; cursor:pointer; flex:none; border:1px solid #CFD6DB; background:#FFFFFF;
-            border-radius:6px; padding:5px 11px; color:#626B78;
-            font:600 10.5px/1.4 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:.04em; text-transform:uppercase; }
-    .fbtn:hover { border-color:#96A0AD; color:#151A22; }
-    .fbtn.on { background:#151A22; border-color:#151A22; color:#FFFFFF; }
-    .more { appearance:none; cursor:pointer; border:0; background:transparent; padding:10px 0 0;
-            font:500 13px/1 'Hanken Grotesk', system-ui, sans-serif; color:#626B78; }
-    .more:hover { color:#151A22; }
     .ver { display:flex; align-items:center; gap:7px; margin-bottom:6px; padding:6px 10px; border-radius:8px;
            font:400 11.5px/1 'Hanken Grotesk', system-ui, sans-serif; font-variant-numeric:tabular-nums;
            color:#626B78; text-decoration:none; }
     .ver:hover { background:#F5F7F8; color:#151A22; }
     .ver.on { background:#F0F3F5; color:#151A22; font-weight:600; }
-    .entry { display:flex; align-items:baseline; gap:12px; padding:10px 0; box-shadow:inset 0 1px 0 #F0F0F2; }
+    .chip { display:inline-flex; align-items:center; flex:none; padding:3px 8px; border-radius:12px;
+            font:600 10px/1.5 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:.04em; text-transform:uppercase; }
+    .rel { display:flex; gap:24px; align-items:flex-start; margin:0 -12px; padding:15px 12px;
+           box-shadow:inset 0 1px 0 #F0F0F2; }
+    .rel:hover { background:#F5F7F8; }
+    .rel .rail { width:112px; flex:none; }
+    .rel .num { font:600 13px/1.2 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.012em; }
+    .rel .day { margin-top:3px; font:400 12px/1.3 'Hanken Grotesk', system-ui, sans-serif;
+                color:#626B78; font-variant-numeric:tabular-nums; }
+    .rel .head { font:600 15px/1.3 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.02em; }
+    .cnt { display:flex; gap:16px; font:400 12.5px/1.4 'Hanken Grotesk', system-ui, sans-serif; color:#626B78; }
+    .cnt b { color:#151A22; font-weight:600; font-variant-numeric:tabular-nums; }
   </style>
 </helmet>
 
@@ -85,44 +86,33 @@
 
   <main style="flex:1; min-width:0; max-width:1180px">
 
-    <div style="display:flex; align-items:center; gap:12px; padding:22px 32px 0">
-      <div>
-        <div style="margin-bottom:5px; font:600 11px/1 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:.05em; text-transform:uppercase; color:#626B78">Studio</div>
-        <h1 style="margin:2px 0 0; font:600 32px/1.08 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.032em">Neuigkeiten</h1>
-      </div>
+    <div style="padding:22px 32px 0">
+      <div style="margin-bottom:5px; font:600 11px/1 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:.05em; text-transform:uppercase; color:#626B78">Studio</div>
+      <h1 style="margin:2px 0 0; font:600 32px/1.08 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.032em">Neuigkeiten</h1>
     </div>
 
-    <div style="display:flex; gap:8px; padding:20px 32px 0">
-      <button type="button" class="fbtn {{f.alleOn}}" onClick="{{f.alle}}">Alles</button>
-      <button type="button" class="fbtn {{f.neuOn}}" onClick="{{f.neu}}">Neu</button>
-      <button type="button" class="fbtn {{f.fixOn}}" onClick="{{f.fix}}">Behoben</button>
-    </div>
-
-    <div style="padding:0 32px 44px">
-      <sc-for list="{{versionen}}" as="v" hint-placeholder-count="3">
-        <section style="display:flex; gap:24px; margin-top:36px">
-
-          <div style="width:112px; flex:none; padding-top:5px">
-            <div style="font:600 12.5px/1.2 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.012em; color:#151A22">{{v.nummer}}</div>
-            <div style="margin-top:3px; font:400 12px/1.3 'Hanken Grotesk', system-ui, sans-serif; color:#626B78; font-variant-numeric:tabular-nums">{{v.datum}}</div>
-            <sc-if value="{{v.marke}}" hint-placeholder-val="{{true}}">
-              <div class="chip" style="margin-top:8px; background:{{v.markeBg}}; color:{{v.markeFg}}">{{v.marke}}</div>
+    <div style="padding:20px 32px 44px">
+      <sc-for list="{{releases}}" as="r" hint-placeholder-count="6">
+        <a href="#" class="rel">
+          <div class="rail">
+            <div class="num">{{r.nummer}}</div>
+            <div class="day">{{r.datum}}</div>
+            <sc-if value="{{r.marke}}" hint-placeholder-val="{{true}}">
+              <div class="chip" style="margin-top:8px; background:{{r.markeBg}}; color:{{r.markeFg}}">{{r.marke}}</div>
             </sc-if>
           </div>
-
-          <div style="min-width:0; flex:1">
-            <sc-for list="{{v.zeilen}}" as="z" hint-placeholder-count="4">
-              <div class="entry">
-                <span class="chip" style="width:68px; justify-content:center; background:{{z.bg}}; color:{{z.fg}}">{{z.art}}</span>
-                <span style="font:400 13px/1.47 'Hanken Grotesk', system-ui, sans-serif; color:#151A22">{{z.text}}</span>
-              </div>
-            </sc-for>
-            <sc-if value="{{v.mehr}}" hint-placeholder-val="{{true}}">
-              <button type="button" class="more" onClick="{{v.umschalten}}">{{v.mehrLabel}}</button>
+          <div style="flex:1; min-width:0">
+            <sc-if value="{{r.headline}}" hint-placeholder-val="{{true}}">
+              <div class="head" style="margin-bottom:6px">{{r.headline}}</div>
             </sc-if>
+            <div class="cnt">
+              <sc-for list="{{r.teile}}" as="t" hint-placeholder-count="3">
+                <span><b>{{t.n}}</b> {{t.label}}</span>
+              </sc-for>
+            </div>
           </div>
-
-        </section>
+          <svg viewBox="0 0 24 24" style="width:16px; height:16px; margin-top:2px; stroke:#CFD6DB"><path d="M9 6l6 6-6 6"/></svg>
+        </a>
       </sc-for>
     </div>
 
@@ -132,93 +122,33 @@
 
 <script data-dc-script data-props='{"update":{"editor":"boolean","default":true,"section":"Zustand"},"$preview":{"width":1440,"height":980}}'>
 class Component extends DCLogic {
-  constructor(props) {
-    super(props);
-    this.state = { filter: 'alle', offen: {} };
-  }
-
   renderVals() {
-    const n = (text) => ({ art: 'Neu', bg: '#EDF3EE', fg: '#3F6B4A', text });
-    const f = (text) => ({ art: 'Behoben', bg: '#F0F3F5', fg: '#626B78', text });
+    const VERFUEGBAR = { marke: 'Verfügbar', markeBg: '#FAF3E4', markeFg: '#8A6212' };
+    const INSTALLIERT = { marke: 'Installiert', markeBg: '#EDF3EE', markeFg: '#3F6B4A' };
 
-    const versionen = [
-      {
-        nummer: '0.9.2',
-        datum: '8. Sep. 2026',
-        marke: 'Verfügbar', markeBg: '#FAF3E4', markeFg: '#8A6212',
-        alle: [
-          n('Galerie-Einstellungen liegen bei den Galerien'),
-          f('Mails blieben in der Warteschlange liegen'),
-        ],
-      },
-      {
-        nummer: '0.9.1',
-        datum: '6. Sep. 2026',
-        marke: 'Installiert', markeBg: '#EDF3EE', markeFg: '#3F6B4A',
-        alle: [
-          n('Angebot als Regler: der Kunde stellt sein Paket selbst zusammen'),
-          n('Bausteine für Angebote im Studio'),
-          n('Anfragen direkt auf dem Board schließen'),
-          n('Automationen für Studio und Crew an vier Ankern'),
-          n('Erinnerungen für Aufgaben und Anfragen'),
-          n('Erinnerungen an den Kunden'),
-          n('Zahlungsverzug im Tagesüberblick'),
-          n('Onboarding in zwei Schritten, Bestätigung per Link oder Code'),
-          n('Steuernummer auf der Rechnung'),
-          n('Neue Farben und Schrift im ganzen Studio'),
-          f('Links aus dem Portal führten auf die falsche Adresse'),
-          f('Buttons in Mails führten ins Leere'),
-          f('Fußzeile in Mails stand mitten im Text'),
-        ],
-      },
-      {
-        nummer: '0.9.0',
-        datum: '5. Sep. 2026',
-        alle: [
-          n('Anfragen-Board mit sechs Stufen'),
-          n('Projekte mit Aufgaben, Terminen und Crew'),
-          n('Pakete, Angebote und Verträge'),
-          n('Zahlungen und Rechnungen'),
-          n('Kundenportal mit eigener Galerie'),
-          n('Kontakte, Kalender und Abwesenheiten'),
-          n('Team mit Rollen und Rechten'),
-          n('Vorlagen für Aufgaben, Formulare und Dokumente'),
-        ],
-      },
+    // Die Zähler stehen so in release-log/releases/*.json.
+    const roh = [
+      { nummer: '0.9.2', datum: '8. Sep. 2026', ...VERFUEGBAR, headline: 'Galerie-Einstellungen liegen bei den Galerien', feat: 1, perf: 0, fix: 2 },
+      { nummer: '0.9.1', datum: '6. Sep. 2026', ...INSTALLIERT, headline: 'Das Angebot wird ein Regler', feat: 22, perf: 0, fix: 18 },
+      { nummer: '0.9.0', datum: '5. Sep. 2026', headline: 'Erste Alpha: Board, Projekte, Portal', feat: 80, perf: 1, fix: 69 },
+      { nummer: '0.6.0', datum: '18. Aug. 2026', headline: null, feat: 37, perf: 1, fix: 17 },
+      { nummer: '0.5.0', datum: '16. Aug. 2026', headline: null, feat: 46, perf: 0, fix: 19 },
+      { nummer: '0.4.0', datum: '14. Aug. 2026', headline: null, feat: 6, perf: 0, fix: 19 },
+      { nummer: '0.3.0', datum: '12. Aug. 2026', headline: null, feat: 9, perf: 0, fix: 10 },
+      { nummer: '0.2.0', datum: '11. Aug. 2026', headline: null, feat: 31, perf: 0, fix: 10 },
+      { nummer: '0.1.0', datum: '9. Aug. 2026', headline: null, feat: 87, perf: 0, fix: 29 },
     ];
-
-    const KAPPE = 4;
-    const filter = this.state.filter;
-    const passt = (z) => filter === 'alle'
-      || (filter === 'neu' && z.art === 'Neu')
-      || (filter === 'fix' && z.art === 'Behoben');
 
     return {
       update: this.props.update ?? true,
-      f: {
-        alle: () => this.setState({ filter: 'alle' }),
-        neu: () => this.setState({ filter: 'neu' }),
-        fix: () => this.setState({ filter: 'fix' }),
-        alleOn: filter === 'alle' ? 'on' : '',
-        neuOn: filter === 'neu' ? 'on' : '',
-        fixOn: filter === 'fix' ? 'on' : '',
-      },
-      versionen: versionen
-        .map((v) => {
-          const gefiltert = v.alle.filter(passt);
-          const offen = Boolean(this.state.offen[v.nummer]);
-          const kappen = !offen && gefiltert.length > KAPPE;
-          return {
-            ...v,
-            zeilen: kappen ? gefiltert.slice(0, KAPPE) : gefiltert,
-            mehr: gefiltert.length > KAPPE,
-            mehrLabel: kappen ? `Alles aus ${v.nummer}` : 'Weniger',
-            umschalten: () => this.setState({
-              offen: { ...this.state.offen, [v.nummer]: !offen },
-            }),
-          };
-        })
-        .filter((v) => v.zeilen.length > 0),
+      releases: roh.map((r) => ({
+        ...r,
+        teile: [
+          { n: r.feat, label: 'Neu' },
+          { n: r.perf, label: r.perf === 1 ? 'Änderung' : 'Änderungen' },
+          { n: r.fix, label: 'Behoben' },
+        ].filter((t) => t.n > 0),
+      })),
     };
   }
 }

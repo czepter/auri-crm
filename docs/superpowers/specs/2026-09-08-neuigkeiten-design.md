@@ -8,33 +8,39 @@
 ## 1. Warum das existiert
 
 Das Studio wird laufend deployed, und wer davor sitzt, erfährt nichts davon.
-Drei Tags stehen im Repo — `v0.9.0` (5.9.), `v0.9.1` (6.9.), `v0.9.2` (8.9.) —
-und keiner von ihnen ist in der Anwendung sichtbar. Ein Fotograf, dem die
-Angebotsseite plötzlich anders aussieht, hat keine Stelle, an der steht warum.
+Neun Versionen liegen inzwischen in `release-log` — 0.1.0 bis 0.9.2, 514
+Änderungen — und keine davon ist in der Anwendung sichtbar. Ein Fotograf, dem
+die Angebotsseite plötzlich anders aussieht, hat keine Stelle, an der steht
+warum.
 
-Die Commit-Historie ist der Rohstoff, aber sie ist kein Changelog: 558 Commits,
-davon `docs`, `ci`, `chore`, `test`, und die `feat`-Betreffe sind für Entwickler
-geschrieben („SMTP-Variablen für alle Mail-Container setzen"). Zwischen Historie
-und Screen liegt eine Übersetzung, die jemand vornimmt.
+`release-log` steht bereits: ein Node-Server, der `releases/<version>.json`
+ausliefert, dazu `bin/from-git.mjs`, das diese Dateien aus den Tags des
+Portal-Repos schreibt. Was fehlt, ist die Seite im Studio, die ihn liest, und
+die Version, an der sie erkennt, ob es etwas Neues gibt.
 
 ## 2. Scope
 
-**Drin:** ein Screen `/neuigkeiten`, der die Releases untereinander zeigt, je
-Zeile eine Änderung mit der Marke Neu oder Behoben; ein Filter über die beiden
-Marken; je Version vier Zeilen, der Rest hinter einem Schalter; die installierte
-Version unten in der Sidebar über der Profilzeile, mit einem Punkt daneben, wenn
-der Dienst eine höhere `latest` meldet; der Dienst selbst, der täglich gepingt
-und dessen Antwort gecacht wird.
+**Drin:** ein Feed `/neuigkeiten` mit allen neun Releases, je Zeile Nummer,
+Datum, `headline` und die Zähler je Gruppe; eine Detailseite
+`/neuigkeiten/<version>` mit Bild, `headline` und allen Einträgen des Releases
+nach Gruppen, jede Zeile mit ihrer Beschreibung zum Aufklappen; die drei
+Gruppen, die release-log liefert (`feat` → Neu, `perf` → Änderungen, `fix` →
+Behoben); die installierte Version unten in der Sidebar über der Profilzeile,
+mit einem Punkt daneben, wenn `latest` höher ist; der tägliche Ping und der
+Cache dahinter.
 
-**Draußen, benannt damit die Auslassungen Entscheidungen sind:** ein Overlay beim
-ersten Login nach einem Update (der Punkt ist der Hinweis, ein Modal unterbricht
-die Arbeit); gelesen/ungelesen je Nutzer (der Punkt hängt an
-`latest > config('app.version')` — das ist keine Nutzereigenschaft und braucht
-keine Spalte); ein Auslöser für das Update selbst (Deployment läuft über Coolify,
-nicht über diesen Screen); Filter nach Bereich oder Suche über die Zeilen (drei
-Releases, keine Menge, die danach verlangt); ein RSS- oder Mail-Kanal für
-Releases; eine Zeile je Commit (die Übersetzung ist der Punkt der Sache);
-Zeilen für Versionen vor `v0.9.0`.
+**Draußen, benannt damit die Auslassungen Entscheidungen sind:** ein Overlay
+beim ersten Login nach einem Update (der Punkt ist der Hinweis, ein Modal
+unterbricht die Arbeit); gelesen/ungelesen je Nutzer (der Punkt hängt an
+`latest` gegen `config('app.version')` — das ist keine Nutzereigenschaft und
+braucht keine Spalte); ein Auslöser für das Update selbst (Deployment läuft
+über Coolify); Suche über die Einträge; Commit-Hashes, PR- und Issue-Nummern im
+Studio (sie stehen in den Daten, aber ein Fotograf klickt sie nicht); ein
+RSS- oder Mail-Kanal; Paginierung im Feed (neun Releases passen auf einen
+Screen, `/releases` kann sie später liefern).
+
+Die sechs Versionen ohne Tag (0.1.0–0.6.0, aus `cutoffs.json`) stehen im Feed
+wie die anderen, ohne eigene Kennzeichnung.
 
 ## 3. Die Screens
 
@@ -44,67 +50,70 @@ Die Bilder sind aus den Artboard-Quellen gerendert und liegen unter
 
 | Bild | Artboard | Was es zeigt |
 |---|---|---|
-| `docs/screenshots/2026-09-08-neuigkeiten-studio.png` | Main | `/neuigkeiten` am Schreibtisch: Filter, drei Releases, Kappung bei vier Zeilen, Version mit Punkt unten in der Sidebar |
-| `docs/screenshots/2026-09-08-neuigkeiten-handy.png` | Mobil | derselbe Screen auf 390px |
-| `docs/screenshots/2026-09-08-neuigkeiten-zustaende.png` | Marker | Versionszeile in drei Zuständen, die fünf Markierungen, die Filterpillen |
-| `docs/screenshots/2026-09-08-neuigkeiten-dienst.png` | Quelle | der Weg vom Tag in den Screen, die Nutzlast, wie ein Commit zur Zeile wird |
+| `docs/screenshots/2026-09-08-neuigkeiten-studio.png` | Main | der Feed: neun Releases, Zähler je Gruppe, Version mit Punkt unten in der Sidebar |
+| `docs/screenshots/2026-09-08-neuigkeiten-release.png` | Detail | `/neuigkeiten/0.9.1`: Bild, headline, Filter, 22 + 18 Einträge |
+| `docs/screenshots/2026-09-08-neuigkeiten-handy.png` | Mobil | der Feed auf 390px |
+| `docs/screenshots/2026-09-08-neuigkeiten-zustaende.png` | Marker | Versionszeile in drei Zuständen, die Markierungen, die Filterpillen |
+| `docs/screenshots/2026-09-08-neuigkeiten-dienst.png` | Quelle | der Weg aus release-log, die Endpunkte, die drei Gruppen |
 
 Canvas: https://claude.ai/code/artifact/28837ea9-cb16-48fb-ae0a-fb3bc3db41a2
 
+Alle Zahlen und alle Einträge in den Entwürfen stammen aus
+`release-log/releases/*.json`. Die einzige Ausnahme sind die drei
+`headline`-Zeilen im Feed: das Feld ist heute in allen neun Releases leer, und
+ohne es zeigt der Entwurf seinen eigenen Platz nicht.
+
 ## 4. Der Weg vom Tag in den Screen
 
-    Tag im Repo → releases.json beim Dienst → Ping (Scheduler, täglich)
-                → Cache 24 h → GET /neuigkeiten
+    Tag im Repo → bin/from-git.mjs → releases/<version>.json → release-log
+                → Ping (Scheduler, täglich) → Cache 24 h → /neuigkeiten
 
-Der Screen liest ausschließlich den Cache. Antwortet der Dienst nicht, steht der
-letzte Stand da — kein Ladezustand, kein Fehlerbild, kein Ping zur Laufzeit.
+Der Screen liest ausschließlich den Cache. Antwortet release-log nicht, steht
+der letzte Stand da — kein Ladezustand, kein Fehlerbild, kein Ping zur Laufzeit.
 
-Nutzlast:
+Was das Studio holt:
 
-```json
-{
-  "latest": "0.9.2",
-  "releases": [
-    {
-      "version": "0.9.2",
-      "date": "2026-09-08",
-      "entries": [
-        { "kind": "feat", "text": "Galerie-Einstellungen liegen bei den Galerien" },
-        { "kind": "fix",  "text": "Mails blieben in der Warteschlange liegen" }
-      ]
-    }
-  ]
-}
-```
-
-Der Dienst heißt **release-log** und existiert noch nicht — kein Repo, kein
-Coolify-Eintrag, kein Verzeichnis. Er hält ein statisches JSON; die Datei
-entsteht beim Taggen, nicht zur Laufzeit.
+| Endpunkt | Antwort |
+|---|---|
+| `GET /versions` | `latest` und je Release Version, Datum, `headline`, `url`. Der Update-Check. |
+| `GET /releases?page=1` | Der Feed. Je Release nur die **Zähler** je Gruppe — 0.9.0 hat 150 Einträge, deshalb trägt der Feed keine. |
+| `GET /releases/<version>` | Ein Release mit allen Einträgen, in `sections` nach Gruppe sortiert. |
+| `GET /media/<datei>` | Das Bild des Releases. Drei von neun haben eins. |
+| `GET /health` | Für Coolify. |
 
 `config('app.version')` ist die installierte Seite des Vergleichs. Sie ist nur
 auf einem Release eine Zahl; ein Branch-Build trägt `dev`. Wer die beiden
 vergleicht, muss deshalb zuerst auf Semver prüfen: `version_compare('dev',
 '0.9.2', '<')` ist `true`, ein Dev-Build würde sich sonst als veraltet melden.
 
-## 5. Commit wird Zeile
+## 5. Was Git schreibt und was von Hand kommt
 
-1. `feat:` wird Neu, `fix:` wird Behoben. `docs`, `ci`, `chore`, `test` fallen raus.
-2. Zwei Commits an derselben Sache werden eine Zeile. Beispiel aus `v0.9.2`:
-   `fix: jede Mail über die mail-Queue verschicken` und `fix: SMTP-Variablen für
-   alle Mail-Container setzen` ergeben zusammen „Mails blieben in der
-   Warteschlange liegen".
-3. Die Zeile nennt, was der Fotograf jetzt tun kann. Kein Dateiname, kein
-   Klassenname, kein `Host`, kein `Rumpf`.
-4. Geschrieben beim Taggen und beim Dienst abgelegt.
+`bin/from-git.mjs` sagt es im Kopf selbst: alles Faktische liest es aus git,
+`headline`, `body` und `image` sind Handarbeit und überleben jeden Lauf.
+
+Aus git: `version`, `tag`, `date`, `commits` und jeder Eintrag in `changes` —
+`type`, `scope`, `title`, `description`, `pr`, `issues`, `commit`, `date`.
+`title` ist der Commit-Betreff unverändert, `description` der Rumpf ohne
+Trailer. `feat`, `fix` und `perf` zählen; `docs`, `ci`, `chore` und `test`
+fallen raus. Ein gequetschter Pull Request wird an seinen `* `-Aufzählungen
+wieder in seine einzelnen Commits zerlegt.
+
+Von Hand: `headline` ist der Satz, den der Fotograf im Feed liest. `body` sind
+Absätze darunter. `image` ist ein Screenshot aus `release-log/media/`.
+
+Damit steht die Arbeitsteilung: das Detail zeigt Entwicklersprache, weil sie
+aus git kommt; der Feed zeigt die Zusammenfassung, weil sie geschrieben wird.
+Heute ist keine geschrieben (§7).
 
 ## 6. Teile
 
 | Teil | Was es tut | Status |
 |---|---|---|
-| `release-log/v1/releases.json` | statisches JSON, beim Taggen geschrieben | offen |
+| `release-log` (Node, `server.mjs`) | liefert `/versions`, `/releases`, `/releases/<v>`, `/media/` | **steht**, noch nicht deployed |
+| `bin/from-git.mjs` | schreibt `releases/<version>.json` aus den Tags | **steht** |
 | `CheckReleases` (Console-Command, Scheduler täglich) | holt und legt in den Cache | offen |
-| `Cache::remember('releases', …)` | 24 Stunden; der Screen liest nur hier | offen |
-| `GET /neuigkeiten` | ein Controller, eine Inertia-Seite | offen |
+| `Cache::remember(…)` | 24 Stunden; der Screen liest nur hier | offen |
+| `GET /neuigkeiten` und `/neuigkeiten/<version>` | zwei Controller, zwei Inertia-Seiten | offen |
 | `APP_VERSION` als Build-Arg | `release-image.yml` → `docker/app/Dockerfile` | **steht** |
 | `config('app.version')` | steht in der Sidebar; unter `latest` heißt gelber Punkt | **steht** |
 
@@ -121,9 +130,13 @@ Config wird pro Request geparst — die ENV steht zur Laufzeit bereit.
 
 ## 7. Offen
 
-- **Wo release-log läuft.** Der Name steht; Subdomain mit statischem JSON,
-  Bucket oder Raw-URL des Repos ist offen. Ändert nichts am Screen.
-- **Wer die Zeilen schreibt.** Beim Taggen von Hand, oder ein Agent, der den
-  Commit-Range vorlegt und der Mensch abnimmt.
-- **Farbe des Punkts.** Aktuell `--due` (#8A6212), das systemeigene „steht offen".
-  Bei 6px liest es als Gold. Ein reines Gelb hat die Palette nicht.
+- **`headline` ist überall leer.** Ohne sie trägt eine Feed-Zeile nur Nummer,
+  Datum und drei Zahlen. Neun Releases wollen je einen Satz — oder der Feed
+  bekommt eine andere erste Zeile.
+- **Das Detail spricht Entwicklersprache.** Die 40 Zeilen zu 0.9.1 sind
+  Commit-Betreffe, ein Teil davon englisch („add new portal components and
+  functionality"). Wer sie für den Fotografen umschreiben will, braucht ein
+  Feld je Eintrag; heute gibt es nur `headline` je Release.
+- **Wo release-log läuft.** Der Server ist da, das Deployment nicht.
+- **Farbe des Punkts.** Aktuell `--due` (#8A6212), das systemeigene „steht
+  offen". Bei 6px liest es als Gold. Ein reines Gelb hat die Palette nicht.

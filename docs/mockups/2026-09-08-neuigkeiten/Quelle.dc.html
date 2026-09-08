@@ -17,121 +17,147 @@
            text-transform:uppercase; color:#96A0AD; }
     .mono { font:400 11.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; color:#626B78; }
     h2 { margin:0; font:600 15px/1.2 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.02em; }
-    .box { flex:1; min-width:0; padding:12px 14px; border:1px solid #E2E7EB; border-radius:12px; background:#FFFFFF; }
+    .box { flex:1; min-width:0; padding:11px 13px; border:1px solid #E2E7EB; border-radius:12px; }
     .box.svc { background:#F5F7F8; border-color:#CFD6DB; }
     .box.fall { border-style:dashed; }
     .box .t { font:600 12.5px/1.3 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.012em; }
     .box .s { margin-top:4px; font:400 11.5px/1.4 'Hanken Grotesk', system-ui, sans-serif; color:#626B78; }
-    .arr { flex:none; width:18px; height:18px; align-self:center; }
-    .row { display:grid; grid-template-columns:1fr 22px 1fr; gap:14px; align-items:center;
-           padding:9px 0; box-shadow:inset 0 1px 0 #F0F0F2; }
-    .out { font:400 13px/1.47 'Hanken Grotesk', system-ui, sans-serif; }
-    .drop { color:#96A0AD; text-decoration:line-through; }
+    .arr { flex:none; width:16px; height:16px; align-self:center; }
+    .ep { display:grid; grid-template-columns:200px 1fr; gap:14px; padding:8px 0;
+          box-shadow:inset 0 1px 0 #F0F0F2; }
+    .ep .w { font:400 12.5px/1.5 'Hanken Grotesk', system-ui, sans-serif; }
+    .rule { display:flex; gap:10px; padding:8px 0; box-shadow:inset 0 1px 0 #F0F0F2;
+            font:400 12.5px/1.5 'Hanken Grotesk', system-ui, sans-serif; }
+    .rule b { flex:none; width:56px; font-weight:600; color:#151A22; }
     .chip { display:inline-flex; align-items:center; padding:3px 8px; border-radius:12px;
             font:600 10px/1.5 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:.04em; text-transform:uppercase; }
-    .rule { display:flex; gap:10px; padding:9px 0; box-shadow:inset 0 1px 0 #F0F0F2; }
-    .rule b { flex:none; width:16px; font-weight:600; color:#96A0AD; }
-    .pre { margin:10px 0 0; padding:14px; border-radius:12px; background:#F5F7F8;
-           font:400 11.5px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; color:#151A22;
-           white-space:pre; overflow:hidden; }
+    .map { display:flex; align-items:center; gap:10px; }
+    .map .k { width:56px; flex:none; }
     svg { flex:none; fill:none; stroke:#CFD6DB; stroke-width:1.75; stroke-linecap:round; stroke-linejoin:round; }
   </style>
 </helmet>
 
-<div style="padding:28px 32px 32px; background:#FFFFFF">
+<div style="padding:26px 30px 30px; background:#FFFFFF">
 
-  <h1 style="margin:0 0 22px; font:600 24px/1.1 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.03em">Woher die Zeilen kommen</h1>
+  <h1 style="margin:0 0 20px; font:600 24px/1.1 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.03em">Woher die Zeilen kommen</h1>
 
   <div class="lab">Weg</div>
-  <div style="display:flex; align-items:stretch; gap:10px; margin-top:12px">
+  <div style="display:flex; align-items:stretch; gap:8px; margin-top:11px">
     <div class="box">
       <div class="t">Tag im Repo</div>
       <div class="s mono">v0.9.2</div>
     </div>
     <svg class="arr" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    <div class="box">
+      <div class="t">from-git.mjs</div>
+      <div class="s">liest git, schreibt je Version eine Datei</div>
+    </div>
+    <svg class="arr" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     <div class="box svc">
-      <div class="t">Dienst</div>
-      <div class="s mono">release-log/v1/releases.json</div>
+      <div class="t">release-log</div>
+      <div class="s">Node-Server, hält alles im Speicher</div>
     </div>
     <svg class="arr" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     <div class="box">
-      <div class="t">Ping</div>
-      <div class="s">Scheduler, täglich</div>
+      <div class="t">Ping + Cache</div>
+      <div class="s">Scheduler täglich, 24 h</div>
     </div>
     <svg class="arr" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
     <div class="box">
-      <div class="t">Cache</div>
-      <div class="s">24 Stunden</div>
-    </div>
-    <svg class="arr" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-    <div class="box">
-      <div class="t">/neuigkeiten</div>
+      <div class="t">Studio</div>
       <div class="s">liest nur den Cache</div>
     </div>
   </div>
 
-  <div style="display:flex; align-items:center; gap:10px; margin-top:10px; padding-left:2px">
-    <svg viewBox="0 0 24 24" style="width:16px; height:16px"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
-    <div class="box fall" style="max-width:520px">
-      <div class="t">Dienst antwortet nicht</div>
+  <div style="display:flex; align-items:center; gap:10px; margin-top:9px">
+    <svg viewBox="0 0 24 24" style="width:15px; height:15px"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+    <div class="box fall" style="max-width:560px">
+      <div class="t">release-log antwortet nicht</div>
       <div class="s">Der Screen zeigt den letzten Stand. Kein Ping zur Laufzeit, kein Ladezustand.</div>
     </div>
   </div>
 
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:32px; margin-top:32px">
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:30px; margin-top:26px">
 
     <div>
-      <h2>Commit wird Zeile</h2>
-      <div class="mono" style="margin:4px 0 10px">git log --no-merges v0.9.1..v0.9.2</div>
-
-      <div class="row">
-        <div class="mono">feat: Galerie-Einstellungen auf /galerien</div>
-        <svg viewBox="0 0 24 24" style="width:18px; height:18px"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        <div class="out"><span class="chip" style="background:#EDF3EE; color:#3F6B4A; margin-right:8px">Neu</span>Galerie-Einstellungen liegen bei den Galerien</div>
+      <h2>Was das Studio holt</h2>
+      <div style="margin-top:8px">
+        <div class="ep">
+          <div class="mono">GET /versions</div>
+          <div class="w">latest und neun Zeilen mit Version, Datum, headline. Der Update-Check.</div>
+        </div>
+        <div class="ep">
+          <div class="mono">GET /releases?page=1</div>
+          <div class="w">Der Feed. Je Release nur die Zähler je Gruppe — 0.9.0 hat 150 Einträge.</div>
+        </div>
+        <div class="ep">
+          <div class="mono">GET /releases/0.9.1</div>
+          <div class="w">Ein Release mit allen Einträgen, nach Gruppen sortiert.</div>
+        </div>
+        <div class="ep">
+          <div class="mono">GET /media/&lt;datei&gt;</div>
+          <div class="w">Das Bild des Releases. Drei von neun haben eins.</div>
+        </div>
+        <div class="ep">
+          <div class="mono">GET /health</div>
+          <div class="w">Für Coolify.</div>
+        </div>
       </div>
 
-      <div class="row">
-        <div class="mono">fix: jede Mail über die mail-Queue verschicken<br>fix: SMTP-Variablen für alle Mail-Container setzen</div>
-        <svg viewBox="0 0 24 24" style="width:18px; height:18px"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        <div class="out"><span class="chip" style="background:#F0F3F5; color:#626B78; margin-right:8px">Behoben</span>Mails blieben in der Warteschlange liegen</div>
-      </div>
-
-      <div class="row">
-        <div class="mono drop">docs: Entwuerfe zu den Galerie-Einstellungen ablegen</div>
-        <svg viewBox="0 0 24 24" style="width:18px; height:18px"><path d="M7 7l10 10M17 7 7 17"/></svg>
-        <div class="out" style="color:#96A0AD">—</div>
-      </div>
-
-      <div style="margin-top:16px">
-        <div class="rule"><b>1</b><span><code class="mono" style="color:#151A22">feat:</code> wird Neu, <code class="mono" style="color:#151A22">fix:</code> wird Behoben. <code class="mono" style="color:#151A22">docs</code>, <code class="mono" style="color:#151A22">ci</code>, <code class="mono" style="color:#151A22">chore</code>, <code class="mono" style="color:#151A22">test</code> fallen raus.</span></div>
-        <div class="rule"><b>2</b><span>Zwei Commits an derselben Sache werden eine Zeile.</span></div>
-        <div class="rule"><b>3</b><span>Die Zeile nennt, was der Fotograf jetzt tun kann.</span></div>
-        <div class="rule"><b>4</b><span>Wird beim Taggen geschrieben und beim Dienst abgelegt.</span></div>
+      <h2 style="margin-top:22px">Die drei Gruppen</h2>
+      <div style="margin-top:10px; display:flex; flex-direction:column; gap:9px">
+        <div class="map">
+          <span class="mono k">feat</span>
+          <svg viewBox="0 0 24 24" style="width:15px; height:15px"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <span class="chip" style="background:#EDF3EE; color:#3F6B4A">Neu</span>
+        </div>
+        <div class="map">
+          <span class="mono k">perf</span>
+          <svg viewBox="0 0 24 24" style="width:15px; height:15px"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <span class="chip" style="background:transparent; box-shadow:inset 0 0 0 1px #CFD6DB; color:#626B78">Änderungen</span>
+        </div>
+        <div class="map">
+          <span class="mono k">fix</span>
+          <svg viewBox="0 0 24 24" style="width:15px; height:15px"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          <span class="chip" style="background:#F0F3F5; color:#626B78">Behoben</span>
+        </div>
+        <div class="map">
+          <span class="mono k" style="line-height:1.35">docs ci<br>chore test</span>
+          <svg viewBox="0 0 24 24" style="width:15px; height:15px"><path d="M7 7l10 10M17 7 7 17"/></svg>
+          <span style="font:400 12.5px/1.4 'Hanken Grotesk', system-ui, sans-serif; color:#96A0AD">fallen raus</span>
+        </div>
       </div>
     </div>
 
     <div>
-      <h2>Nutzlast</h2>
-      <div class="pre">{
-  "latest": "0.9.2",
-  "releases": [
-    {
-      "version": "0.9.2",
-      "date": "2026-09-08",
-      "entries": [
-        { "kind": "feat", "text": "Galerie-Einstellungen …" },
-        { "kind": "fix",  "text": "Mails blieben in der …" }
-      ]
-    }
-  ]
-}</div>
+      <h2>Git schreibt, Hand schreibt</h2>
+      <div style="margin-top:8px">
+        <div class="rule"><b>Git</b><span><code class="mono" style="color:#151A22">version</code>, <code class="mono" style="color:#151A22">tag</code>, <code class="mono" style="color:#151A22">date</code>, <code class="mono" style="color:#151A22">commits</code> und jeder Eintrag in <code class="mono" style="color:#151A22">changes</code> — Titel, Beschreibung, Commit, Issues.</span></div>
+        <div class="rule"><b>Hand</b><span><code class="mono" style="color:#151A22">headline</code>, <code class="mono" style="color:#151A22">body</code>, <code class="mono" style="color:#151A22">image</code>. Bleiben über Läufe von <code class="mono" style="color:#151A22">from-git.mjs</code> erhalten.</span></div>
+      </div>
 
-      <h2 style="margin-top:24px">Teile</h2>
-      <div style="margin-top:10px">
-        <div class="rule"><span><code class="mono" style="color:#151A22">release-log/v1/releases.json</code><br><span style="color:#626B78">Statisches JSON, beim Taggen geschrieben. Keine Tabelle im Studio.</span></span></div>
-        <div class="rule"><span><code class="mono" style="color:#151A22">CheckReleases</code><br><span style="color:#626B78">Scheduler, täglich. Holt und legt in den Cache.</span></span></div>
-        <div class="rule"><span><code class="mono" style="color:#151A22">GET /neuigkeiten</code><br><span style="color:#626B78">Ein Controller, eine Inertia-Seite.</span></span></div>
-        <div class="rule"><span><code class="mono" style="color:#151A22">config('app.version')</code><br><span style="color:#626B78">Steht in der Nav. Unter <code class="mono" style="color:#151A22">latest</code> heißt: gelber Punkt daneben.</span></span></div>
+      <div style="margin-top:14px; padding:12px 14px; border-radius:12px; background:#FAF3E4;
+                  font:400 12.5px/1.5 'Hanken Grotesk', system-ui, sans-serif">
+        Heute ist <code class="mono" style="color:#151A22">headline</code> in allen neun Releases leer,
+        <code class="mono" style="color:#151A22">image</code> in dreien gefüllt. Ohne headline steht im
+        Feed eine Nummer und drei Zahlen.
+      </div>
+
+      <h2 style="margin-top:22px">Ein Eintrag</h2>
+      <div style="margin:8px 0 0; padding:13px; border-radius:12px; background:#F5F7F8;
+                  font:400 11.5px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; color:#151A22;
+                  white-space:pre; overflow:hidden">{
+  "type": "fix",
+  "scope": null,
+  "title": "jede Mail über die mail-Queue verschicken",
+  "description": "MailTransport rief sendNow() …",
+  "pr": null,
+  "issues": [],
+  "commit": "dd9875c9",
+  "date": "2026-09-07"
+}</div>
+      <div style="margin-top:9px; font:400 12px/1.5 'Hanken Grotesk', system-ui, sans-serif; color:#626B78">
+        Der Titel ist der Commit-Betreff, unverändert. Die Beschreibung ist der Commit-Rumpf ohne Trailer.
       </div>
     </div>
 
@@ -139,7 +165,7 @@
 </div>
 </x-dc>
 
-<script data-dc-script data-props='{"$preview":{"width":1040,"height":880}}'>
+<script data-dc-script data-props='{"$preview":{"width":1040,"height":900}}'>
 class Component extends DCLogic {}
 </script>
 </body>
