@@ -1,12 +1,8 @@
 <script setup lang="ts">
-import { computed, useSlots } from 'vue'
-import { usePage } from '@inertiajs/vue3'
+import { useSlots } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 import { helpPanel } from '@/lib/helpPanel'
 import HelpRail from './HelpRail.vue'
-import HelpButton from './HelpButton.vue'
-
-type Eintrag = { slug: string; titel: string; art: string }
 
 /*
  * A case is capped at --container-case, or the rows run the width of the
@@ -16,9 +12,6 @@ type Eintrag = { slug: string; titel: string; art: string }
 defineProps<{ wide?: boolean }>()
 
 const slots = useSlots()
-const page = usePage()
-
-const eintraege = computed(() => (page.props.help as Eintrag[] | null) ?? [])
 
 // Two width refs, not one computed keyed on $slots.right: Vue never fires a
 // reactive trigger for slot changes (only a forced re-render), so a computed
@@ -27,6 +20,16 @@ const eintraege = computed(() => (page.props.help as Eintrag[] | null) ?? [])
 // across that forced re-render even though it is never a tracked dependency.
 const breitOhneRail = useMediaQuery('(min-width: 1080px)')
 const breitMitRail = useMediaQuery('(min-width: 1536px)')
+
+// AdminLayout's sidebar button needs the same decision but sits above this
+// component and never sees #right — publish it to helpPanel's module state
+// on every render, same reasoning as the two refs above: reading slots.right
+// only stays fresh inside this render, not in a computed.
+function hilfeDockt() {
+  const dockt = slots.right ? breitMitRail.value : breitOhneRail.value
+  helpPanel.dockt.value = dockt
+  return dockt
+}
 
 // ponytail: the 1080px no-rail threshold was checked live against the
 // Anfragen board (5 columns, `wide`) — at 1280px with the panel open, the
@@ -48,15 +51,9 @@ const breitMitRail = useMediaQuery('(min-width: 1536px)')
         <slot name="left" />
 
         <div
-            class="relative flex min-w-0 flex-1 items-stretch max-[640px]:basis-full"
+            class="flex min-w-0 flex-1 items-stretch max-[640px]:basis-full"
             :class="wide ? undefined : 'max-w-case'"
         >
-            <HelpButton
-                v-if="!helpPanel.offen.value"
-                class="absolute top-4 right-5 z-10"
-                :eintraege="eintraege"
-                :mit-rail="Boolean(slots.right)"
-            />
             <slot />
         </div>
 
@@ -64,6 +61,6 @@ const breitMitRail = useMediaQuery('(min-width: 1536px)')
 
         <!-- Die Hilfespalte. HelpRail zeigt sich selbst nur, wenn Einträge
              und Panel-Zustand es hergeben. -->
-        <slot name="help"><HelpRail v-if="slots.right ? breitMitRail : breitOhneRail" /></slot>
+        <slot name="help"><HelpRail v-if="hilfeDockt()" /></slot>
     </div>
 </template>

@@ -11,9 +11,16 @@ const geladen = new Map<string, Artikel>()
 const offen = ref(false)
 const ueberschrieben = ref<string | null>(null)
 
+// AdminLayout rendert den Sidebar-Knopf oberhalb von Page.vue und kennt die
+// Seiten-Rail nicht — nur Page.vue weiß, ob #right steht, und nur Page.vue
+// kennt die zwei Schwellen. Page.vue schreibt hier bei jedem Render, der
+// Knopf liest nur.
+const dockt = ref(false)
+
 function zuruecksetzen() {
   geladen.clear()
   ueberschrieben.value = null
+  dockt.value = false
   // Kein gespeicherter Wert heißt offen. Geschrieben wird `help.open` nur
   // durch oeffnen()/schliessen() — also nur durch einen bewussten Klick,
   // nie durchs bloße Rendern.
@@ -38,6 +45,7 @@ export function linkZiel(event: Klick, href: string | null): 'artikel' | 'seite'
 export const helpPanel = {
   offen,
   ueberschrieben,
+  dockt,
 
   oeffnen(slug?: string) {
     offen.value = true

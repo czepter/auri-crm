@@ -8,6 +8,7 @@ import {
     DropdownMenuTrigger,
 } from "@/ui/dropdown-menu";
 import CommandPalette from "@/admin/components/CommandPalette.vue";
+import HelpButton from "@/ui/page/HelpButton.vue";
 
 const props = defineProps<{ active: string }>();
 
@@ -226,6 +227,8 @@ const items = computed(() =>
                         >⌘K</kbd
                     >
                 </button>
+
+                <HelpButton />
 
                 <template v-for="item in items" :key="item.key ?? item.group">
                     <template v-if="item.group">

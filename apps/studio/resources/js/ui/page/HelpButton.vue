@@ -1,31 +1,39 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Link } from '@inertiajs/vue3'
-import { useMediaQuery } from '@vueuse/core'
+import { Link, usePage } from '@inertiajs/vue3'
 import { helpPanel } from '@/lib/helpPanel'
 
 type Eintrag = { slug: string; titel: string; art: string }
 
-const props = defineProps<{ eintraege: Eintrag[]; mitRail: boolean }>()
-
-// Rail.vue verschwindet unter 1080px. Zwei Rails nebeneinander brauchen mehr
-// Raum, sonst bleiben bei 1280px nur 458px Fallakte übrig.
-const breitGenug = useMediaQuery(computed(() => props.mitRail
-  ? '(min-width: 1536px)'
-  : '(min-width: 1080px)'))
+const page = usePage()
+const eintraege = computed(() => (page.props.help as Eintrag[] | null) ?? [])
 </script>
 
 <template>
   <button
-    v-if="eintraege.length && breitGenug"
-    class="cursor-pointer rounded-[7px] border-0 bg-transparent px-2 py-1 text-[12px] leading-none text-ink-2 hover:bg-sunk"
+    v-if="eintraege.length && helpPanel.dockt.value"
+    class="mb-4 flex w-full cursor-pointer items-center gap-2.25 rounded-lg border-0 bg-sunk px-2.5 py-1.5 text-left text-[13px] leading-[1.47] tracking-[-0.01em] text-ink-2 transition-colors duration-[120ms] ease-out hover:bg-sunk-2 max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2 max-[640px]:hidden"
     type="button"
     @click="helpPanel.oeffnen()"
-  >{{ $t('help.open') }}</button>
+  >
+    <svg class="size-4.25 flex-none fill-none stroke-ink-2 stroke-[1.6] [stroke-linecap:round]" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9a2.5 2.5 0 1 1 3.7 2.2c-.8.5-1.2 1-1.2 1.8" />
+      <path d="M12 17.3h.01" />
+    </svg>
+    {{ $t('help.open') }}
+  </button>
 
   <Link
     v-else-if="eintraege.length"
-    class="text-[12px] leading-none text-ink-2 no-underline"
+    class="mb-4 flex w-full cursor-pointer items-center gap-2.25 rounded-lg border-0 bg-sunk px-2.5 py-1.5 text-left text-[13px] leading-[1.47] tracking-[-0.01em] text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk-2 max-[1080px]:justify-center max-[1080px]:px-0 max-[1080px]:py-2 max-[640px]:hidden"
     :href="`/hilfe/${eintraege[0].slug}`"
-  >{{ $t('help.open') }}</Link>
+  >
+    <svg class="size-4.25 flex-none fill-none stroke-ink-2 stroke-[1.6] [stroke-linecap:round]" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.5 9a2.5 2.5 0 1 1 3.7 2.2c-.8.5-1.2 1-1.2 1.8" />
+      <path d="M12 17.3h.01" />
+    </svg>
+    {{ $t('help.open') }}
+  </Link>
 </template>
