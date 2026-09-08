@@ -16,7 +16,7 @@ it('verschweigt einen Artikel, dessen Fähigkeit fehlt', function () {
 });
 
 it('gibt für eine Route ohne Artikel nichts zurück', function () {
-    expect(app(HelpIndex::class)->forRoute('galleries.index', ['manage_leads']))->toBe([]);
+    expect(app(HelpIndex::class)->forRoute('tasks.index', ['manage_leads']))->toBe([]);
 });
 
 it('lässt verborgene Artikel aus visible() weg', function () {
