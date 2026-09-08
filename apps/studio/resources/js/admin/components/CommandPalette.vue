@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
-import { usePage } from '@inertiajs/vue3'
+import { router, usePage } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
+import { helpPanel } from '@/lib/helpPanel'
+import { treffer, type HelpEintrag } from '@/lib/helpSearch'
 
 /**
  * C-03 (#237): the search is a tool in the sidebar, not a field in a header.
@@ -12,25 +14,65 @@ import { Input } from '@/ui/input'
  *
  * It opens on what one has just been looking at rather than on an empty mask,
  * mixed in visit order — grouped by kind it would be sorted by something
- * nobody is searching for. Search over the stock is not part of this: the
- * shell and the history are.
+ * nobody is searching for. Below that, once there is a query, the help index
+ * joins in as a second group.
  */
 type Recent = { kind: string; title: string; href: string; at: string }
 
 const dialog = ref<HTMLDialogElement | null>(null)
 const recent = () => (usePage().props.recent as Recent[] | null) ?? []
 
+const frage = ref('')
+const index = ref<HelpEintrag[]>([])
+
+// Modulebene, nicht Ref-Init: ein zweites <dialog>-Öffnen soll den Fetch
+// nicht wiederholen. Als geteilte Inertia-Prop wären es sechzig Kilobyte an
+// jeder Antwort, damit jemand vielleicht ⌘K drückt.
+let geholt: Promise<HelpEintrag[]> | null = null
+
+function recentGefiltert() {
+  if (!frage.value) return recent()
+
+  const q = frage.value.trim().toLowerCase()
+  return recent().filter((entry) => entry.title.toLowerCase().includes(q))
+}
+
+async function open() {
+  dialog.value?.showModal()
+  geholt ??= fetch('/hilfe/suche', { headers: { Accept: 'application/json' } }).then((r) => r.json())
+  index.value = await geholt
+}
+
+// Dieselbe Schwelle wie der Hilfe-Knopf: helpPanel.dockt sagt bereits, ob die
+// Spalte offen ist, statt die Breakpoints hier ein zweites Mal zu kennen.
+function waehlen(slug: string) {
+  dialog.value?.close()
+
+  if (helpPanel.dockt.value) {
+    helpPanel.oeffnen(slug)
+    return
+  }
+
+  router.visit(`/hilfe/${slug}`)
+}
+
+// AdminLayout mountet mit jeder Inertia-Navigation neu (kein persistentes
+// Layout, siehe helpPanel.ts) — hier zu vergessen heißt: der in der Palette
+// gewählte Artikel klebt sonst über jedem folgenden Screen.
 function onKey(event: KeyboardEvent) {
   if (event.key === 'k' && (event.metaKey || event.ctrlKey)) {
     event.preventDefault()
-    dialog.value?.showModal()
+    open()
   }
 }
 
-onMounted(() => addEventListener('keydown', onKey))
+onMounted(() => {
+  helpPanel.navigiert()
+  addEventListener('keydown', onKey)
+})
 onUnmounted(() => removeEventListener('keydown', onKey))
 
-defineExpose({ open: () => dialog.value?.showModal() })
+defineExpose({ open })
 
 const relative = new Intl.RelativeTimeFormat('de-DE', { numeric: 'auto' })
 
@@ -59,6 +101,7 @@ function when(at: string) {
   >
     <!-- upper third: the list grows downward, the eye stays -->
     <Input
+      v-model="frage"
       class="rounded-none border-0 bg-transparent px-5.5 py-4.5 text-[20px] leading-[1.3] tracking-[-0.022em] shadow-[inset_0_-1px_0_var(--rule)] placeholder:text-[#B0B0B5]"
       type="search"
       :placeholder="$t('palette.placeholder')"
@@ -70,7 +113,7 @@ function when(at: string) {
         {{ $t('palette.recent') }}
       </div>
       <a
-        v-for="entry in recent()"
+        v-for="entry in recentGefiltert()"
         :key="entry.href"
         class="flex items-baseline gap-3 px-5.5 py-2 text-foreground no-underline hover:bg-sunk focus-visible:bg-sunk focus-visible:outline-0"
         :href="entry.href"
@@ -81,6 +124,25 @@ function when(at: string) {
         <span class="text-[14px] font-medium tracking-[-0.014em]">{{ entry.title }}</span>
         <span class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ when(entry.at) }}</span>
       </a>
+
+      <template v-if="frage">
+        <div class="px-5.5 pt-3 pb-1 text-[10.5px] tracking-[0.07em] uppercase text-ink-2">
+          {{ $t('help.title') }}
+        </div>
+
+        <button
+          v-for="eintrag in treffer(index, frage)"
+          :key="eintrag.slug"
+          class="flex w-full cursor-pointer items-baseline gap-3 border-0 bg-transparent px-5.5 py-2 text-left text-foreground hover:bg-sunk"
+          type="button"
+          @click="waehlen(eintrag.slug)"
+        >
+          <span class="w-[62px] flex-none text-[10.5px] tracking-[0.05em] uppercase text-ink-2">
+            {{ $t(`help.art.${eintrag.art}`) }}
+          </span>
+          <span class="text-[14px] font-medium tracking-[-0.014em]">{{ eintrag.titel }}</span>
+        </button>
+      </template>
     </div>
   </dialog>
 </template>
