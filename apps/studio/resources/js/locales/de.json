@@ -17,6 +17,9 @@
     "signInTitle": "Anmelden",
     "email": "E-Mail",
     "password": "Passwort",
+    "remember": "Angemeldet bleiben",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen",
     "mfaTitle": "Bestätigung in zwei Schritten",
     "mfaCode": "6-stelliger Code",
     "mfaConfirm": "Bestätigen",
@@ -95,6 +98,7 @@
   },
   "contacts": {
     "title": "Kontakte",
+    "create": "Neuer Kontakt",
     "name": "Name",
     "email": "E-Mail",
     "phone": "Telefon",
@@ -358,6 +362,7 @@
     "revoke": "Adresse zurückziehen",
     "viewMonth": "Monat",
     "viewList": "Liste",
+    "toProjects": "Zu den Projekten",
     "more": "+{count} weitere",
     "feedUrl": "Abo-Adresse",
     "colDate": "Termin",
@@ -456,6 +461,7 @@
     "nextShoot": "nächstes Shooting",
     "openPoints": "1 von {all} Punkten offen | {count} von {all} Punkten offen",
     "inquiries": "Neue Anfragen",
+    "inquiriesEmpty": "Keine Anfragen.",
     "toBoard": "Board",
     "done": "Erledigt",
     "nothingDue": "Nichts offen.",
@@ -472,6 +478,7 @@
     "away": "{name} abwesend",
     "dateDoubled": "{date} doppelt",
     "galleries": "Nach der Lieferung",
+    "galleriesEmpty": "Keine Galerien.",
     "nothingDueNext": "Nächster Termin: {what} am {date}",
     "payments": "Zahlungen"
   },
@@ -509,8 +516,6 @@
   "absences": {
     "title": "Abwesenheiten",
     "person": "Person",
-    "myself": "Ich selbst",
-    "category": "Art",
     "startsOn": "Von",
     "endsOn": "Bis",
     "add": "Abwesenheit eintragen",
@@ -805,9 +810,6 @@
     "widerrufIncludedLabel": "In Verträgen aufnehmen",
     "widerrufTextLabel": "Text",
     "mailTitle": "E-Mail",
-    "mailSenderLabel": "Absender",
-    "mailFromNameLabel": "Absendername",
-    "mailFromAddressLabel": "Absenderadresse",
     "mailReplyLabel": "Antwort & Blindkopie",
     "mailReplyToLabel": "Antwort-an",
     "mailBccLabel": "Blindkopie",
@@ -853,7 +855,9 @@
     "previewMailReplyTo": "Antwort an",
     "groupGalleries": "Galerien",
     "navGalleryDefaults": "Standardwerte",
-    "navGalleryPresets": "Vorlagen"
+    "navGalleryPresets": "Vorlagen",
+    "mailSenderFromEnv": "Serverkonfiguration",
+    "mailSenderReset": "Zurücksetzen"
   },
   "notifications": {
     "title": "Benachrichtigungen",

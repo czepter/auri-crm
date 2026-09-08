@@ -8,7 +8,6 @@ import { inputVariants } from "."
 const props = defineProps<{
   defaultValue?: string | number
   modelValue?: string | number
-  variant?: InputVariants["variant"]
   size?: InputVariants["size"]
   class?: HTMLAttributes["class"]
 }>()
@@ -27,6 +26,6 @@ const modelValue = useVModel(props, "modelValue", emits, {
   <input
     v-model="modelValue"
     data-slot="input"
-    :class="cn(inputVariants({ variant, size }), props.class)"
+    :class="cn(inputVariants({ size }), props.class)"
   >
 </template>

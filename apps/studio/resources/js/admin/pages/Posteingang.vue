@@ -179,7 +179,7 @@ function receivedAt(iso: string) {
 
           <form class="mt-4 pt-1 pb-0.5" @submit.prevent="send">
             <Field v-slot="{ id }" dense :label="$t('inbox.reply')">
-              <Textarea :id="id" v-model="reply.body" variant="filled" rows="3" class="mb-3" />
+              <Textarea :id="id" v-model="reply.body" rows="3" class="mb-3" />
             </Field>
             <div class="mt-2.5 flex items-center gap-3">
               <Button variant="pill" class="ml-auto" type="submit" :disabled="reply.processing || !reply.body">

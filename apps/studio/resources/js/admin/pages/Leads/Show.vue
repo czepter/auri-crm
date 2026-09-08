@@ -308,7 +308,7 @@ const due = computed(() => {
                          under the quote. -->
                     <div class="flex items-start gap-[26px] max-[1080px]:flex-col max-[1080px]:gap-4">
                         <div v-if="editing" class="min-w-0 max-w-[58ch] flex-1">
-                            <Textarea v-model="edit.inquiry_text" variant="filled" rows="5" />
+                            <Textarea v-model="edit.inquiry_text" rows="5" />
                         </div>
                         <p
                             v-else
@@ -331,7 +331,6 @@ const due = computed(() => {
                                 <Input
                                     v-if="edit.type === 'other'"
                                     v-model="edit.type_other"
-                                    variant="filled"
                                     class="mb-2"
                                     type="text"
                                     list="type-presets"
@@ -344,7 +343,6 @@ const due = computed(() => {
                                 <Input
                                     v-if="edit.source === 'other'"
                                     v-model="edit.source_other"
-                                    variant="filled"
                                     class="mt-2"
                                     type="text"
                                     list="source-presets"
@@ -366,15 +364,14 @@ const due = computed(() => {
                                     :key="person.id"
                                     class="[&+&]:mt-[13px]"
                                 >
-                                    <Input v-model="person.name" variant="filled" class="mb-1.5" type="text" />
+                                    <Input v-model="person.name" class="mb-1.5" type="text" />
                                     <Input
                                         v-model="person.email"
-                                        variant="filled"
                                         class="mb-1.5"
                                         type="email"
                                         inputmode="email"
                                     />
-                                    <Input v-model="person.phone" variant="filled" type="tel" inputmode="tel" />
+                                    <Input v-model="person.phone" type="tel" inputmode="tel" />
                                 </div>
                             </div>
 
@@ -490,11 +487,11 @@ const due = computed(() => {
                                 class="min-w-[148px] flex-1"
                                 :label="$t('lead.taskTitle')"
                             >
-                                <Input :id="id" v-model="task.title" variant="filled" type="text" />
+                                <Input :id="id" v-model="task.title" type="text" />
                             </Field>
                             <Field v-slot="{ id }" dense :label="$t('lead.taskAudience')">
                                 <Select v-model="task.audience">
-                                    <SelectTrigger :id="id" variant="filled"><SelectValue /></SelectTrigger>
+                                    <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="internal">{{ $t("lead.audienceInternal") }}</SelectItem>
                                         <SelectItem value="client">{{ $t("lead.audienceClient") }}</SelectItem>
