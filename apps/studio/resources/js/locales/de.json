@@ -1599,6 +1599,7 @@
     },
     "close": "Schließen",
     "loadFailed": "Artikel nicht geladen.",
+    "open": "Hilfe",
     "retry": "Erneut versuchen"
   }
 }
