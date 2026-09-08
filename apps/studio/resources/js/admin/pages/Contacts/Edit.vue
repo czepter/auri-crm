@@ -192,7 +192,7 @@ function eraseDsgvoData() {
             <template v-if="editing">
               <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
               <Button variant="pill-muted" type="button" @click="cancelEdit">{{ $t('common.cancel') }}</Button>
-              <Button variant="pill" type="submit" form="contact-form" :disabled="!form.isDirty || form.processing">
+              <Button v-if="form.isDirty" variant="pill" type="submit" form="contact-form" :disabled="form.processing">
                 {{ $t('common.save') }}
               </Button>
             </template>
