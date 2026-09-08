@@ -183,6 +183,7 @@ Route::middleware('audience:staff')->group(function () {
         // binds "suche" as a contact public id and answers 404.
         Route::get('/kontakte/suche', ContactSearchController::class)->name('contacts.search');
         Route::get('/kontakte', [ContactController::class, 'index'])->name('contacts.index');
+        Route::post('/kontakte', [ContactController::class, 'store'])->name('contacts.store');
         Route::get('/kontakte/{contact}', [ContactController::class, 'edit'])->name('contacts.edit');
         Route::patch('/kontakte/{contact}', [ContactController::class, 'update'])->name('contacts.update');
         // P-09 (#228). This contact's departures from the studio's portal
