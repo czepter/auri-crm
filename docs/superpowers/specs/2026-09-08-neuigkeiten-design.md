@@ -77,8 +77,14 @@ Nutzlast:
 }
 ```
 
-Wo der Dienst liegt, ist offen (§7). Er hält ein statisches JSON; die Datei
+Der Dienst heißt **release-log** und existiert noch nicht — kein Repo, kein
+Coolify-Eintrag, kein Verzeichnis. Er hält ein statisches JSON; die Datei
 entsteht beim Taggen, nicht zur Laufzeit.
+
+`config('app.version')` ist die installierte Seite des Vergleichs. Sie ist nur
+auf einem Release eine Zahl; ein Branch-Build trägt `dev`. Wer die beiden
+vergleicht, muss deshalb zuerst auf Semver prüfen: `version_compare('dev',
+'0.9.2', '<')` ist `true`, ein Dev-Build würde sich sonst als veraltet melden.
 
 ## 5. Commit wird Zeile
 
@@ -93,20 +99,30 @@ entsteht beim Taggen, nicht zur Laufzeit.
 
 ## 6. Teile
 
-| Teil | Was es tut |
-|---|---|
-| `[RELEASE-HOST]/v1/releases.json` | statisches JSON, beim Taggen geschrieben |
-| `CheckReleases` (Console-Command, Scheduler täglich) | holt und legt in den Cache |
-| `Cache::remember('releases', …)` | 24 Stunden; der Screen liest nur hier |
-| `GET /neuigkeiten` | ein Controller, eine Inertia-Seite |
-| `config('app.version')` | steht in der Sidebar; unter `latest` heißt gelber Punkt |
+| Teil | Was es tut | Status |
+|---|---|---|
+| `release-log/v1/releases.json` | statisches JSON, beim Taggen geschrieben | offen |
+| `CheckReleases` (Console-Command, Scheduler täglich) | holt und legt in den Cache | offen |
+| `Cache::remember('releases', …)` | 24 Stunden; der Screen liest nur hier | offen |
+| `GET /neuigkeiten` | ein Controller, eine Inertia-Seite | offen |
+| `APP_VERSION` als Build-Arg | `release-image.yml` → `docker/app/Dockerfile` | **steht** |
+| `config('app.version')` | steht in der Sidebar; unter `latest` heißt gelber Punkt | **steht** |
 
 Keine Tabelle, keine Migration.
 
+Die Version kommt aus dem Image, nicht aus dem Deployment — dieselbe Begründung,
+die im Dockerfile schon über `SENTRY_RELEASE` steht. `release-image.yml` reicht
+`github.event.release.tag_name || github.ref_name` als Build-Arg durch, das
+Dockerfile backt es als `ENV`, `config/app.php` streift das führende `v` vor
+einer Ziffer ab. `docker-compose.coolify.yml` bekommt nichts: es zieht einen
+festen Image-Tag, also sind gebackene Version und laufendes Image dasselbe
+Artefakt. `docker/app/entrypoint.sh` ruft bewusst kein `config:cache` auf, die
+Config wird pro Request geparst — die ENV steht zur Laufzeit bereit.
+
 ## 7. Offen
 
-- **Wo der Dienst liegt.** Eigene Subdomain mit statischem JSON, ein Bucket, oder
-  die Raw-URL des Repos. Die Entscheidung ändert nichts am Screen.
+- **Wo release-log läuft.** Der Name steht; Subdomain mit statischem JSON,
+  Bucket oder Raw-URL des Repos ist offen. Ändert nichts am Screen.
 - **Wer die Zeilen schreibt.** Beim Taggen von Hand, oder ein Agent, der den
   Commit-Range vorlegt und der Mensch abnimmt.
 - **Farbe des Punkts.** Aktuell `--due` (#8A6212), das systemeigene „steht offen".

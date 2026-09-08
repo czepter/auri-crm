@@ -93,9 +93,14 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Only the gallery image declares this ARG; the studio build ignores
-          # it. It is what tags a GlitchTip event with the build it came from.
+          # SENTRY_RELEASE tags a GlitchTip event with the build it came from,
+          # so it is the commit. APP_VERSION is what the running app calls
+          # itself: the release tag where there is one, otherwise the branch —
+          # `github.event.release.tag_name` is empty on a push and falls
+          # through, so a branch build reads `dev` — which config/app.php
+          # documents as not being a version at all.
           build-args: |
             SENTRY_RELEASE=${{ github.sha }}
+            APP_VERSION=${{ github.event.release.tag_name || github.ref_name }}
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}
