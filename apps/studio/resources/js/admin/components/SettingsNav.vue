@@ -42,8 +42,6 @@ const items = [
   { key: 'email', href: '/einstellungen?pane=email', label: 'settings.navMail' },
   { key: 'notifications', href: '/einstellungen/benachrichtigungen', label: 'settings.navNotifications' },
 
-  { group: 'settings.groupGalleries' },
-  { key: 'galleries', href: '/einstellungen/galerien', label: 'settings.navGalleryDefaults' },
 ]
 
 /* tokens.css .nav — the sidebar row, reused for the settings rail. */

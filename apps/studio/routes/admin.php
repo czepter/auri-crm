@@ -428,17 +428,22 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/einstellungen/portal', [PortalSettingsController::class, 'update'])
             ->name('settings.portal.update');
 
-        Route::get('/einstellungen/galerien', [GallerySettingsController::class, 'edit'])
+        // G-14: die Vorgaben werden auf /galerien bedient, wie Stufen auf
+        // /auftraege. Ein Lesezeichen auf den alten Screen landet dort, wo sie
+        // jetzt stehen.
+        Route::redirect('/einstellungen/galerien', '/galerien?einstellungen=standardwerte')
             ->name('settings.galleries.edit');
         Route::patch('/einstellungen/galerien', [GallerySettingsController::class, 'update'])
             ->name('settings.galleries.update');
 
-        Route::redirect('/einstellungen/galerie-vorlagen', '/vorlagen?typ=galerien')
+        Route::redirect('/einstellungen/galerie-vorlagen', '/galerien?einstellungen=vorlagen')
             ->name('gallery-presets.index');
         Route::post('/einstellungen/galerie-vorlagen', [GalleryPresetController::class, 'store'])
             ->name('gallery-presets.store');
         Route::patch('/einstellungen/galerie-vorlagen/{galleryPreset}', [GalleryPresetController::class, 'update'])
             ->name('gallery-presets.update');
+        Route::patch('/einstellungen/galerie-vorlagen/{galleryPreset}/standard', [GalleryPresetController::class, 'markDefault'])
+            ->name('gallery-presets.default');
         Route::delete('/einstellungen/galerie-vorlagen/{galleryPreset}', [GalleryPresetController::class, 'destroy'])
             ->name('gallery-presets.destroy');
 

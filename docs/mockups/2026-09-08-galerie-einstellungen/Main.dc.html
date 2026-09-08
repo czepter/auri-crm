@@ -1,0 +1,476 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: 'Hanken Grotesk', system-ui, sans-serif; }
+    a { color: #1C6870; text-decoration: none; }
+    a:hover { color: #14494F; text-decoration: underline; }
+    button { font: inherit; }
+  </style>
+</helmet>
+
+<div style="width: 1440px; height: 900px; overflow: hidden; background: #FFFFFF; color: #151A22; -webkit-font-smoothing: antialiased">
+  <div style="max-width: 1180px; margin: 0 auto; padding: 0 24px 64px">
+
+    <div style="display: flex; align-items: center; gap: 16px; padding: 18px 0; background: #FFFFFF">
+      <span style="display: inline-flex; padding: 4px; color: #626B78">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+      </span>
+      <span style="font-size: 16px; line-height: 1.3; font-weight: 600; letter-spacing: -0.015em">Galerie-Einstellungen</span>
+      <button style="margin-left: auto; border: 0; border-radius: 8px; background: #1C6870; color: #FFFFFF; padding: 9px 14px; font-size: 13px; font-weight: 600; line-height: 1; cursor: pointer">Fertig</button>
+    </div>
+
+    <div style="display: flex; gap: 40px; padding-top: 24px">
+
+      <nav style="width: 168px; flex: none">
+        <h3 style="margin: 0 0 7px; font-size: 10.5px; line-height: 1; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #626B78">Galerien</h3>
+        <sc-for list="{{sections}}" as="section" hint-placeholder-count="3">
+          <button
+            type="button"
+            onClick="{{ section.pick }}"
+            style="display: block; width: 100%; border: 0; border-radius: 8px; padding: 7px 10px; text-align: left; font-size: 13px; line-height: 1.3; cursor: pointer; background: {{section.bg}}; color: {{section.ink}}; font-weight: {{section.weight}}"
+          >{{ section.label }}</button>
+        </sc-for>
+      </nav>
+
+      <section style="min-width: 0; flex: 1">
+
+        <sc-if value="{{ isDefaults }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <h2 style="margin: 0 0 24px; font-size: 19px; line-height: 1.2; font-weight: 600; letter-spacing: -0.02em">Standardwerte</h2>
+
+            <div style="display: flex; gap: 32px; align-items: flex-start">
+              <div style="width: 300px; flex: none">
+                <div style="margin-bottom: 24px">
+                  <label style="display: block; margin-bottom: 6px; font-size: 12.5px; line-height: 1.4; font-weight: 500">Gültigkeit in Tagen <em style="font-style: normal; color: #96A0AD">optional</em></label>
+                  <div style="display: flex; align-items: stretch; border: 1px solid #E2E7EB; border-radius: 8px; overflow: hidden">
+                    <input type="number" value="90" style="min-width: 0; flex: 1; border: 0; outline: none; padding: 8px 10px; font-size: 13px; font-variant-numeric: tabular-nums; color: #151A22">
+                    <span style="display: flex; align-items: center; padding: 0 10px; background: #F5F7F8; font-size: 12.5px; color: #626B78; border-left: 1px solid #E2E7EB">Tage</span>
+                  </div>
+                </div>
+
+                <sc-for list="{{gates}}" as="gate" hint-placeholder-count="4">
+                  <div style="margin-bottom: 18px; display: flex; align-items: center; gap: 10px">
+                    <span
+                      onClick="{{ gate.pick }}"
+                      style="display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; flex: none; border-radius: 4px; cursor: pointer; border: 1px solid {{gate.border}}; background: {{gate.fill}}"
+                    >
+                      <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="opacity: {{gate.tick}}"><path d="M5 12.5l4.5 4.5L19 7"></path></svg>
+                    </span>
+                    <label onClick="{{ gate.pick }}" style="font-size: 13px; line-height: 1.4; cursor: pointer">{{ gate.label }}</label>
+                  </div>
+                </sc-for>
+              </div>
+
+              <aside style="min-width: 0; flex: 1">
+                <div style="margin-bottom: 10px; font-size: 12.5px; line-height: 1; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; color: #96A0AD">Vorschau</div>
+                <dc-import name="GalleryWindow" pv="{{ pv }}" hint-size="100%,366px"></dc-import>
+              </aside>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isDesign }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <h2 style="margin: 0 0 24px; font-size: 19px; line-height: 1.2; font-weight: 600; letter-spacing: -0.02em">Gestaltung</h2>
+
+            <div style="display: flex; gap: 32px; align-items: flex-start">
+              <div style="width: 260px; flex: none">
+                <sc-for list="{{groups}}" as="group" hint-placeholder-count="3">
+                  <div style="margin-bottom: 18px; display: flex; flex-direction: column; gap: 6px">
+                    <span style="padding-left: 2px; font-size: 10.5px; line-height: 1; letter-spacing: 0.05em; text-transform: uppercase; color: #626B78">{{ group.label }}</span>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px">
+                      <sc-for list="{{group.options}}" as="option" hint-placeholder-count="3">
+                        <span
+                          onClick="{{ option.pick }}"
+                          style="display: inline-block; cursor: pointer; border-radius: 999px; padding: 6px 12px; font-size: 12.5px; line-height: 1.2; background: {{option.bg}}; color: {{option.ink}}"
+                        >{{ option.label }}</span>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+
+              <aside style="min-width: 0; flex: 1">
+                <div style="margin-bottom: 10px; font-size: 12.5px; line-height: 1; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; color: #96A0AD">Vorschau</div>
+                <dc-import name="GalleryWindow" pv="{{ pv }}" hint-size="100%,366px"></dc-import>
+                <div style="margin-top: 14px; display: flex">
+                  <a href="#" style="margin-left: auto; font-size: 12.5px; letter-spacing: -0.01em; white-space: nowrap">Galerie ansehen</a>
+                </div>
+              </aside>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isPresets }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <h2 style="margin: 0 0 24px; font-size: 19px; line-height: 1.2; font-weight: 600; letter-spacing: -0.02em">Vorlagen</h2>
+
+            <div style="display: flex; gap: 32px; align-items: flex-start">
+              <div style="width: 150px; flex: none">
+                <sc-for list="{{presets}}" as="preset" hint-placeholder-count="3">
+                  <button
+                    type="button"
+                    onClick="{{ preset.pick }}"
+                    style="display: flex; align-items: center; gap: 8px; width: 100%; border: 0; border-radius: 8px; padding: 7px 10px; text-align: left; font-size: 13px; line-height: 1.3; cursor: pointer; background: {{preset.bg}}; color: {{preset.ink}}; font-weight: {{preset.weight}}"
+                  >
+                    <span style="min-width: 0; flex: 1">{{ preset.name }}</span>
+                    <span style="flex: none; border-radius: 5px; background: #E7F1F2; padding: 2px 6px; font-size: 10px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: #1C6870; display: {{preset.markShown}}">Standard</span>
+                  </button>
+                </sc-for>
+                <button type="button" style="margin-top: 6px; display: inline-flex; align-items: center; gap: 7px; border: 0; background: transparent; padding: 9px 0; font-size: 13px; font-weight: 500; line-height: 1; color: #626B78; cursor: pointer">
+                  <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v8M8 12h8"></path></svg>
+                  Vorlage
+                </button>
+              </div>
+
+              <div style="width: 300px; flex: none">
+                <div style="display: flex; align-items: center; gap: 16px; padding: 10px 0; border-bottom: 1px solid #E2E7EB">
+                  <span style="flex: 1; font-size: 13px">Name</span>
+                  <input type="text" value="{{ chosen.name }}" style="max-width: 160px; border: 1px solid #E2E7EB; border-radius: 8px; outline: none; padding: 7px 10px; font-size: 13px; color: #151A22">
+                </div>
+                <div style="display: flex; align-items: center; gap: 16px; padding: 10px 0; border-bottom: 1px solid #E2E7EB">
+                  <span style="flex: 1; font-size: 13px">Standard bei neuen Galerien</span>
+                  <span
+                    onClick="{{ chosen.makeDefault }}"
+                    style="display: inline-flex; align-items: center; width: 34px; height: 20px; flex: none; border-radius: 999px; cursor: pointer; padding: 2px; background: {{chosen.switchBg}}"
+                  >
+                    <span style="width: 16px; height: 16px; border-radius: 999px; background: #FFFFFF; margin-left: {{chosen.switchOffset}}"></span>
+                  </span>
+                </div>
+
+                <sc-for list="{{presetRows}}" as="row" hint-placeholder-count="5">
+                  <div style="display: flex; align-items: center; gap: 16px; padding: 10px 0; border-bottom: 1px solid #E2E7EB">
+                    <span style="min-width: 0; flex: 1; font-size: 13px; line-height: 1.35">{{ row.label }}</span>
+                    <div style="display: flex; flex: none; gap: 5px">
+                      <sc-for list="{{row.options}}" as="option" hint-placeholder-count="3">
+                        <span
+                          onClick="{{ option.pick }}"
+                          style="display: inline-block; cursor: pointer; border-radius: 999px; padding: 5px 10px; font-size: 12px; line-height: 1.2; background: {{option.bg}}; color: {{option.ink}}"
+                        >{{ option.label }}</span>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+
+                <div style="display: flex; align-items: center; gap: 16px; padding: 10px 0; border-bottom: 1px solid #E2E7EB">
+                  <span style="flex: 1; font-size: 13px">Eigene Gestaltung</span>
+                  <span
+                    onClick="{{ chosen.toggleDesign }}"
+                    style="display: inline-flex; align-items: center; width: 34px; height: 20px; flex: none; border-radius: 999px; cursor: pointer; padding: 2px; background: {{chosen.designSwitchBg}}"
+                  >
+                    <span style="width: 16px; height: 16px; border-radius: 999px; background: #FFFFFF; margin-left: {{chosen.designSwitchOffset}}"></span>
+                  </span>
+                </div>
+
+                <div style="padding-top: 14px; opacity: {{chosen.designOpacity}}">
+                  <sc-for list="{{presetGroups}}" as="group" hint-placeholder-count="3">
+                    <div style="margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px">
+                      <span style="padding-left: 2px; font-size: 10.5px; line-height: 1; letter-spacing: 0.05em; text-transform: uppercase; color: #626B78">{{ group.label }}</span>
+                      <div style="display: flex; flex-wrap: wrap; gap: 6px">
+                        <sc-for list="{{group.options}}" as="option" hint-placeholder-count="3">
+                          <span
+                            onClick="{{ option.pick }}"
+                            style="display: inline-block; border-radius: 999px; padding: 6px 12px; font-size: 12.5px; line-height: 1.2; cursor: {{group.cursor}}; background: {{option.bg}}; color: {{option.ink}}"
+                          >{{ option.label }}</span>
+                        </sc-for>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+
+              <aside style="min-width: 0; flex: 1">
+                <div style="margin-bottom: 10px; display: flex; align-items: baseline; gap: 8px">
+                  <span style="font-size: 12.5px; line-height: 1; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; color: #96A0AD">Vorschau</span>
+                  <span style="font-size: 11.5px; line-height: 1; color: #96A0AD">{{ chosen.previewNote }}</span>
+                </div>
+                <dc-import name="GalleryWindow" pv="{{ pvPreset }}" hint-size="100%,366px"></dc-import>
+              </aside>
+            </div>
+          </div>
+        </sc-if>
+
+      </section>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props)
+    this.state = {
+      section: 'presets',
+      design: { cover: 'full', colour: 'light', grid: 'wide' },
+      gates: { balance: false, downloads: true, lists: true, comments: true },
+      preset: 'hochzeit',
+      defaultPreset: 'hochzeit',
+      presets: {
+        hochzeit: {
+          name: 'Hochzeit',
+          design: { cover: 'full', colour: 'dark', grid: 'wide' },
+          rows: { expiry: 'days', balance: 'inherit', downloads: 'on', lists: 'on', comments: 'on' },
+        },
+        portrait: {
+          name: 'Portrait',
+          design: null,
+          rows: { expiry: 'inherit', balance: 'inherit', downloads: 'on', lists: 'off', comments: 'off' },
+        },
+        business: {
+          name: 'Business',
+          design: { cover: 'plain', colour: 'light', grid: 'dense' },
+          rows: { expiry: 'never', balance: 'on', downloads: 'off', lists: 'off', comments: 'off' },
+        },
+      },
+    }
+  }
+
+  chip(on) {
+    return on
+      ? { bg: '#151A22', ink: '#FFFFFF' }
+      : { bg: '#F5F7F8', ink: '#151A22' }
+  }
+
+  rail(on) {
+    return on
+      ? { bg: '#F0F3F5', ink: '#151A22', weight: '600' }
+      : { bg: 'transparent', ink: '#626B78', weight: '400' }
+  }
+
+  scheme(colour) {
+    const schemes = {
+      light: {
+        bg: '#FFFFFF', ink: '#151A22', muted: '#626B78', line: '#E2E7EB', hero: '#C9D1D7', barBg: '#FFFFFF',
+        due: '#8A6212', dueBg: '#FAF3E4', tiles: ['#E2E7EB', '#DDE3E8', '#E7ECEF'],
+      },
+      dark: {
+        bg: '#0E0C0B', ink: '#F2EDE9', muted: '#8B817B', line: '#241F1C', hero: '#2C2521', barBg: '#131110',
+        due: '#D9B25C', dueBg: '#241D0E', tiles: ['#241F1C', '#2A2421', '#1E1917'],
+      },
+      warm: {
+        bg: '#FBF7F2', ink: '#2A211B', muted: '#7A6A5C', line: '#E6DBCC', hero: '#D8C4AC', barBg: '#FBF7F2',
+        due: '#8A6212', dueBg: '#F6EBD8', tiles: ['#EADFD2', '#E4D7C8', '#EFE6DA'],
+      },
+    }
+
+    return schemes[colour]
+  }
+
+  gridSpec(grid) {
+    const grids = {
+      wide: { columns: 3, heights: ['84px', '60px', '70px', '56px', '78px', '64px'] },
+      dense: { columns: 4, heights: ['62px', '46px', '54px', '44px', '58px', '50px', '42px', '56px'] },
+      single: { columns: 1, heights: ['118px', '96px'] },
+    }
+
+    return grids[grid]
+  }
+
+  // Eine Gestaltung und vier Tore, gleich ob sie vom Studio kommen oder aus
+  // einer Vorlage.
+  window(design, gates) {
+    const scheme = this.scheme(design.colour)
+    const grid = this.gridSpec(design.grid)
+
+    const filters = [{ label: 'Alle', count: 128, on: true }]
+    if (gates.lists) filters.push({ label: 'Favoriten', count: 12, on: false })
+    if (gates.comments) filters.push({ label: 'Kommentiert', count: 4, on: false })
+
+    return {
+      bg: scheme.bg,
+      ink: scheme.ink,
+      muted: scheme.muted,
+      line: scheme.line,
+      hero: scheme.hero,
+      barBg: scheme.barBg,
+      isFull: design.cover === 'full',
+      isSplit: design.cover === 'split',
+      isPlain: design.cover === 'plain',
+      locked: gates.balance,
+      downloadable: gates.downloads && !gates.balance,
+      actionBg: scheme.ink,
+      actionInk: scheme.bg,
+      lockBg: scheme.dueBg,
+      lockInk: scheme.due,
+      columns: grid.columns,
+      filters: filters.map((one) => ({
+        label: one.label,
+        count: one.count,
+        weight: one.on ? '600' : '500',
+        border: one.on ? scheme.ink : scheme.line,
+        bg: one.on ? scheme.ink : 'transparent',
+        ink: one.on ? scheme.bg : scheme.muted,
+      })),
+      tiles: grid.heights.map((height, index) => ({
+        height,
+        fill: scheme.tiles[index % scheme.tiles.length],
+        markShown: gates.lists && index === 1 ? 'block' : 'none',
+      })),
+    }
+  }
+
+  designGroups(design, set, enabled) {
+    return [
+      { key: 'cover', label: 'Titelbild', options: [
+        { label: 'Ganzflächig', value: 'full' },
+        { label: 'Geteilt', value: 'split' },
+        { label: 'Ohne Bild', value: 'plain' },
+      ] },
+      { key: 'colour', label: 'Farbe', options: [
+        { label: 'Hell', value: 'light' },
+        { label: 'Dunkel', value: 'dark' },
+        { label: 'Warm', value: 'warm' },
+      ] },
+      { key: 'grid', label: 'Raster', options: [
+        { label: 'Weit', value: 'wide' },
+        { label: 'Dicht', value: 'dense' },
+        { label: 'Einspaltig', value: 'single' },
+      ] },
+    ].map((group) => ({
+      label: group.label,
+      cursor: enabled ? 'pointer' : 'default',
+      options: group.options.map((option) => ({
+        label: option.label,
+        ...this.chip(design[group.key] === option.value),
+        pick: enabled ? () => set(group.key, option.value) : () => {},
+      })),
+    }))
+  }
+
+  patchPreset(patch) {
+    const preset = this.state.presets[this.state.preset]
+
+    this.setState({
+      presets: { ...this.state.presets, [this.state.preset]: { ...preset, ...patch } },
+    })
+  }
+
+  renderVals() {
+    const sections = [
+      { key: 'defaults', label: 'Standardwerte' },
+      { key: 'design', label: 'Gestaltung' },
+      { key: 'presets', label: 'Vorlagen' },
+    ].map((one) => ({
+      label: one.label,
+      ...this.rail(this.state.section === one.key),
+      pick: () => this.setState({ section: one.key }),
+    }))
+
+    const gates = [
+      { key: 'balance', label: 'Erst nach vollständiger Zahlung freigeben' },
+      { key: 'downloads', label: 'Download erlauben' },
+      { key: 'lists', label: 'Listen erlauben' },
+      { key: 'comments', label: 'Kommentare erlauben' },
+    ].map((field) => {
+      const on = this.state.gates[field.key]
+
+      return {
+        label: field.label,
+        border: on ? '#1C6870' : '#CFD6DB',
+        fill: on ? '#1C6870' : '#FFFFFF',
+        tick: on ? '1' : '0',
+        pick: () => this.setState({ gates: { ...this.state.gates, [field.key]: !on } }),
+      }
+    })
+
+    const preset = this.state.presets[this.state.preset]
+    const ownDesign = preset.design !== null
+    const effectiveDesign = ownDesign ? preset.design : this.state.design
+
+    // Erben heißt: was das Studio sagt. Die Vorschau löst genauso auf wie die
+    // Galerie, sonst zeigt sie eine Lage, die nie entsteht.
+    const resolve = (key) => {
+      const value = preset.rows[key]
+
+      return value === 'inherit' ? this.state.gates[key] : value === 'on'
+    }
+
+    const effectiveGates = {
+      balance: resolve('balance'),
+      downloads: resolve('downloads'),
+      lists: resolve('lists'),
+      comments: resolve('comments'),
+    }
+
+    const presets = Object.keys(this.state.presets).map((key) => ({
+      name: this.state.presets[key].name,
+      ...this.rail(this.state.preset === key),
+      markShown: this.state.defaultPreset === key ? 'inline-block' : 'none',
+      pick: () => this.setState({ preset: key }),
+    }))
+
+    const isDefault = this.state.defaultPreset === this.state.preset
+
+    const chosen = {
+      name: preset.name,
+      switchBg: isDefault ? '#1C6870' : '#CFD6DB',
+      switchOffset: isDefault ? '14px' : '0px',
+      makeDefault: () => this.setState({ defaultPreset: this.state.preset }),
+      designSwitchBg: ownDesign ? '#1C6870' : '#CFD6DB',
+      designSwitchOffset: ownDesign ? '14px' : '0px',
+      designOpacity: ownDesign ? '1' : '0.45',
+      previewNote: ownDesign ? preset.name : 'Gestaltung geerbt',
+      toggleDesign: () => this.patchPreset({ design: ownDesign ? null : { ...this.state.design } }),
+    }
+
+    const rowOptions = (key, options) =>
+      options.map((option) => ({
+        label: option.label,
+        ...this.chip(preset.rows[key] === option.value),
+        pick: () => this.patchPreset({ rows: { ...preset.rows, [key]: option.value } }),
+      }))
+
+    const TRI = [
+      { label: 'Erben', value: 'inherit' },
+      { label: 'An', value: 'on' },
+      { label: 'Aus', value: 'off' },
+    ]
+
+    const presetRows = [
+      { label: 'Gültigkeit', options: rowOptions('expiry', [
+        { label: 'Erben', value: 'inherit' },
+        { label: 'Tage', value: 'days' },
+        { label: 'Nie', value: 'never' },
+      ]) },
+      { label: 'Zahlung', options: rowOptions('balance', TRI) },
+      { label: 'Download', options: rowOptions('downloads', TRI) },
+      { label: 'Listen', options: rowOptions('lists', TRI) },
+      { label: 'Kommentare', options: rowOptions('comments', TRI) },
+    ]
+
+    return {
+      sections,
+      isDefaults: this.state.section === 'defaults',
+      isDesign: this.state.section === 'design',
+      isPresets: this.state.section === 'presets',
+      gates,
+      groups: this.designGroups(
+        this.state.design,
+        (key, value) => this.setState({ design: { ...this.state.design, [key]: value } }),
+        true,
+      ),
+      presetGroups: this.designGroups(
+        effectiveDesign,
+        (key, value) => this.patchPreset({ design: { ...preset.design, [key]: value } }),
+        ownDesign,
+      ),
+      pv: this.window(this.state.design, this.state.gates),
+      pvPreset: this.window(effectiveDesign, effectiveGates),
+      presets,
+      chosen,
+      presetRows,
+    }
+  }
+}
+</script>
+</body>
+</html>

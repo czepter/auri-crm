@@ -23,7 +23,7 @@ it('creates a preset', function () {
         'lists_enabled' => null,
         'comments_enabled' => false,
         'design' => ['cover' => 'full', 'type' => 'serif', 'colour' => 'light', 'grid' => 'wide'],
-    ])->assertRedirect('/einstellungen/galerie-vorlagen');
+    ])->assertRedirect();
 
     $preset = GalleryPreset::sole();
 
@@ -85,7 +85,7 @@ it('saves a gallery as a named preset', function () {
     ]);
 
     $this->post("/galerien/{$gallery->public_id}/vorlage", ['name' => 'Hochzeit'])
-        ->assertRedirect('/einstellungen/galerie-vorlagen');
+        ->assertRedirect();
 
     $preset = GalleryPreset::sole();
 

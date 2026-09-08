@@ -21,6 +21,7 @@ const props = defineProps<{
     comments: boolean
     expiryDays: number | null
     requiresSettledBalance: boolean
+    design: Record<string, string>
   }
 }>()
 
@@ -28,7 +29,9 @@ const MODES = ['internal', 'external']
 
 const mode = ref('internal')
 const project = ref<App.Crm.Data.ProjectSuggestionData | null>(null)
-const presetId = ref('')
+// G-16: womit eine neue Galerie anfängt. Die Standard-Vorlage steht schon
+// gewählt da, statt dass jeder sie aus der Liste sucht.
+const presetId = ref(props.presets.find((row) => row.isDefault)?.id ?? '')
 
 const preset = computed(() => props.presets.find((row) => row.id === presetId.value) ?? null)
 
@@ -42,7 +45,7 @@ const form = useForm({
   downloads_enabled: props.studioDefaults.downloads,
   lists_enabled: props.studioDefaults.lists,
   comments_enabled: props.studioDefaults.comments,
-  design: null as Record<string, string> | null,
+  design: { ...props.studioDefaults.design } as Record<string, string> | null,
 })
 
 watch([preset, project], () => {
@@ -53,9 +56,9 @@ watch([preset, project], () => {
   form.comments_enabled = born.comments
   form.requires_settled_balance =
     preset.value?.requiresSettledBalance ?? props.studioDefaults.requiresSettledBalance
-  form.design = preset.value?.design ?? null
+  form.design = preset.value?.design ?? { ...props.studioDefaults.design }
   form.expires_at = expiryOn(preset.value, props.studioDefaults, new Date())
-})
+}, { immediate: true })
 
 // Eine externe Galerie liegt anderswo: sie hat weder eine Frist noch einen
 // Download, den dieses System regeln koennte, also reist davon nichts mit.
