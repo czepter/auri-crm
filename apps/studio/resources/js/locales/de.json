@@ -1598,8 +1598,13 @@
       "referenz": "Referenz"
     },
     "close": "Schließen",
+    "group": {
+      "aufgaben": "Aufgaben",
+      "referenz": "Referenz"
+    },
     "loadFailed": "Artikel nicht geladen.",
     "open": "Hilfe",
-    "retry": "Erneut versuchen"
+    "retry": "Erneut versuchen",
+    "title": "Hilfe"
   }
 }

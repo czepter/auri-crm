@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useForm, usePage } from '@inertiajs/vue3'
+import { Link, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -309,6 +309,8 @@ function submitGeneral() {
             <DocumentPreview v-else-if="DOCUMENT_PANES.includes(pane)" :doc="documentPreview" />
             <MailPreview v-else-if="pane === 'email'" :mail="mailPreview" />
           </div>
+
+          <Link href="/hilfe" class="mt-6 inline-block text-[13px] text-ink-2 underline">{{ $t('help.title') }}</Link>
         </div>
       </div>
     </Page>

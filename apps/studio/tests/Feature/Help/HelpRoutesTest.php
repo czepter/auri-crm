@@ -76,3 +76,24 @@ it('lässt einen Artikel ohne Fähigkeit aus der Suche weg', function () {
 it('weist Gäste ab', function () {
     $this->get('/hilfe')->assertRedirect('/login');
 });
+
+it('rendert die Vollansicht mit beiden Ebenen', function () {
+    $user = User::factory()->withMfa()->create();
+
+    $this->actingAs($user, 'staff')
+        ->get('/hilfe')
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('Help/Index')
+            ->has('aufgaben')
+            ->has('referenz'));
+});
+
+it('zeigt auf der Hilfeseite selbst keine Hilfespalte', function () {
+    // Ein Artikel, der erklärt, was der Leser gerade offensichtlich bedient.
+    $user = User::factory()->withMfa()->create();
+
+    $this->actingAs($user, 'staff')
+        ->get('/hilfe')
+        ->assertInertia(fn (Assert $page) => $page->where('help', []));
+});

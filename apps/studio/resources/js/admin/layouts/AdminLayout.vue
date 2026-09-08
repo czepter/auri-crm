@@ -300,6 +300,9 @@ const items = computed(() =>
                         <DropdownMenuItem as-child>
                             <Link href="/profil">{{ $t("profile.nav") }}</Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem as-child>
+                            <Link href="/hilfe">{{ $t("help.title") }}</Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem @select="router.post('/logout')">
                             {{ $t("common.signOut") }}
                         </DropdownMenuItem>
