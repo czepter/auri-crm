@@ -2,16 +2,19 @@
 
 use App\Help\Support\HelpIndex;
 
-it('findet den Artikel zu einer Route', function () {
+it('stellt die Aufgabe vor die Referenz', function () {
     $treffer = app(HelpIndex::class)->forRoute('leads.index', ['manage_leads']);
 
-    expect($treffer)->toHaveCount(1)
-        ->and($treffer[0]->slug)->toBe('lead-anlegen')
-        ->and($treffer[0]->titel)->toBe('Lead anlegen');
+    expect($treffer[0]->slug)->toBe('lead-anlegen')
+        ->and($treffer[0]->art)->toBe('aufgabe')
+        ->and($treffer[0]->titel)->toBe('Lead anlegen')
+        ->and($treffer[1]->art)->toBe('referenz');
 });
 
 it('verschweigt einen Artikel, dessen Fähigkeit fehlt', function () {
-    expect(app(HelpIndex::class)->forRoute('leads.index', []))->toBe([])
+    $treffer = app(HelpIndex::class)->forRoute('leads.index', []);
+
+    expect(collect($treffer)->pluck('slug'))->not->toContain('lead-anlegen')
         ->and(app(HelpIndex::class)->find('lead-anlegen', []))->toBeNull();
 });
 
