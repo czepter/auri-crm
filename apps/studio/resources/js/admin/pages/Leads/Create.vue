@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import ContactTypeahead from '@/admin/components/ContactTypeahead.vue'
 import ConflictNote from '@/admin/components/ConflictNote.vue'
+import ProjectFields from '@/admin/components/ProjectFields.vue'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
@@ -14,7 +15,19 @@ import { Textarea } from '@/ui/textarea'
 
 type Option = { value: string; label: string }
 
-const props = defineProps<{ types: Option[]; sources: Option[]; channels: Option[] }>()
+type FieldDefinition = InstanceType<typeof ProjectFields>['$props']['fields'][number]
+
+const props = defineProps<{
+  types: Option[]
+  sources: Option[]
+  channels: Option[]
+  fieldsByType: Record<string, FieldDefinition[]>
+  presets: { type: string[]; source: string[]; channel: string[] }
+}>()
+
+// ProjectType::isCatchAll() und die beiden Other-Fälle der Enums hängen alle
+// an diesem einen Schlüssel; der Anzeigename daneben ist umbenennbar.
+const CATCH_ALL = 'other'
 
 const contact = ref<App.Crm.Data.ContactSuggestionData | null>(null)
 // Only true once a search has run and the studio chose "create new" — the name
@@ -35,15 +48,24 @@ const form = useForm({
   people: [] as { name: string; email: string; phone: string }[],
   project_name: '',
   type: props.types[0].value,
+  // Was „Sonstige" war. Project und Lead räumen den Wert beim Speichern weg,
+  // sobald die Wahl daneben eine andere ist.
+  type_other: '',
   source: props.sources[0].value,
+  source_other: '',
   captured_via: props.channels[0].value,
+  captured_via_other: '',
   date: '',
   inquiry_text: '',
   // Empty is now. Filled only when the call happened before this form was
   // opened — the funnel is counted on it, so today's default cannot be a
   // guess made silently.
   captured_at: '',
+  // C-25: leer, bis der Typ Felder mitbringt und jemand sie ausfüllt.
+  fields: {} as Record<string, string | number | boolean | string[] | null>,
 })
+
+const typeFields = computed(() => props.fieldsByType[form.type] ?? [])
 
 // The project name proposes itself from contact and type, so the "Betreff"
 // costs nothing — but never overwrites a value the studio has typed.
@@ -64,7 +86,12 @@ watch(contact, (value) => {
   proposeProjectName()
 })
 
-watch(() => form.type, proposeProjectName)
+// Ein Wert unter einem Schlüssel, den der neue Typ nicht kennt, lässt
+// WriteProjectFieldValues die Erfassung ablehnen.
+watch(() => form.type, () => {
+  form.fields = {}
+  proposeProjectName()
+})
 
 function startCreating(term: string) {
   creating.value = true
@@ -130,28 +157,27 @@ function submit() {
               <Input
                 :id="id"
                 v-model="form.contact_name"
-                variant="filled"
                 type="text"
                 @input="proposeProjectName"
               />
             </Field>
             <Field v-slot="{ id }" :label="$t('leads.email')">
-              <Input :id="id" v-model="form.contact_email" variant="filled" type="email" />
+              <Input :id="id" v-model="form.contact_email" type="email" />
             </Field>
             <Field v-slot="{ id }" :label="$t('leads.phone')">
-              <Input :id="id" v-model="form.contact_phone" variant="filled" type="tel" />
+              <Input :id="id" v-model="form.contact_phone" type="tel" />
             </Field>
           </div>
 
           <div v-for="(person, index) in form.people" :key="index" class="flex gap-3 [&+&]:mt-3 [&>*]:min-w-[148px] [&>*]:flex-1">
             <Field v-slot="{ id }" :label="$t('leads.name')">
-              <Input :id="id" v-model="person.name" variant="filled" type="text" />
+              <Input :id="id" v-model="person.name" type="text" />
             </Field>
             <Field v-slot="{ id }" :label="$t('leads.email')">
-              <Input :id="id" v-model="person.email" variant="filled" type="email" />
+              <Input :id="id" v-model="person.email" type="email" />
             </Field>
             <Field v-slot="{ id }" :label="$t('leads.phone')">
-              <Input :id="id" v-model="person.phone" variant="filled" type="tel" />
+              <Input :id="id" v-model="person.phone" type="tel" />
             </Field>
           </div>
 
@@ -169,7 +195,6 @@ function submit() {
             <Input
               :id="id"
               v-model="form.project_name"
-              variant="filled"
               type="text"
               @input="nameTouched = true"
             />
@@ -183,15 +208,43 @@ function submit() {
             v-model="form.type"
             :label="$t('leads.type')"
             :options="types"
+            variant="segmented"
             @update:model-value="proposeProjectName"
           />
+
+          <Field
+            v-if="form.type === CATCH_ALL"
+            v-slot="{ id }"
+            class="mt-2 max-w-[320px]"
+            :label="$t('leads.otherDetail')"
+            :error="form.errors.type_other"
+          >
+            <Input :id="id" v-model="form.type_other" type="text" list="type-presets" />
+            <datalist id="type-presets">
+              <option v-for="value in presets.type" :key="value" :value="value" />
+            </datalist>
+          </Field>
 
           <ChoiceGroup
             v-model="form.source"
             class="mt-4"
             :label="$t('leads.source')"
             :options="sources"
+            variant="segmented"
           />
+
+          <Field
+            v-if="form.source === CATCH_ALL"
+            v-slot="{ id }"
+            class="mt-2 max-w-[320px]"
+            :label="$t('leads.otherDetail')"
+            :error="form.errors.source_other"
+          >
+            <Input :id="id" v-model="form.source_other" type="text" list="source-presets" />
+            <datalist id="source-presets">
+              <option v-for="value in presets.source" :key="value" :value="value" />
+            </datalist>
+          </Field>
 
           <!-- CaptureChannel without web_form: what somebody types in here did
                not arrive through the form. The controller filters it. -->
@@ -200,7 +253,22 @@ function submit() {
             class="mt-4"
             :label="$t('leads.capturedVia')"
             :options="channels"
+            variant="segmented"
           />
+
+          <Field
+            v-if="form.captured_via === CATCH_ALL"
+            v-slot="{ id }"
+            class="mt-2 max-w-[320px]"
+            :label="$t('leads.otherDetail')"
+            :error="form.errors.captured_via_other"
+          >
+            <Input :id="id" v-model="form.captured_via_other" type="text" list="channel-presets" />
+            <datalist id="channel-presets">
+              <option v-for="value in presets.channel" :key="value" :value="value" />
+            </datalist>
+          </Field>
+
         </div>
 
         <!-- The main date is the field the whole intake hangs off
@@ -216,7 +284,7 @@ function submit() {
 
         <div class="mb-5">
           <Field v-slot="{ id }" :label="$t('leads.inquiryText')">
-            <Textarea :id="id" v-model="form.inquiry_text" variant="filled" rows="8" />
+            <Textarea :id="id" v-model="form.inquiry_text" rows="8" />
           </Field>
         </div>
 
@@ -225,10 +293,20 @@ function submit() {
             class="w-fit cursor-pointer text-[12.5px] tracking-[-0.01em] text-ink-2 marker:text-ink-2"
           >{{ $t('leads.advanced') }}</summary>
 
-          <div class="mt-3">
-            <Field v-slot="{ id }" :label="$t('leads.capturedAt')" :error="form.errors.captured_at">
+          <div class="mt-3 flex flex-col gap-5">
+            <Field v-slot="{ id }" class="max-w-[220px]" :label="$t('leads.capturedAt')" :error="form.errors.captured_at">
               <DatePicker :id="id" v-model="form.captured_at" />
             </Field>
+
+            <!-- C-25: was dieser Typ über den Namen hinaus mitbringt. Die
+                 Felder gab es im Modell längst, nur nicht bei der Erfassung. -->
+            <ProjectFields
+              v-if="typeFields.length"
+              v-model="form.fields"
+              editing
+              :errors="form.errors"
+              :fields="typeFields"
+            />
           </div>
         </details>
 

@@ -54,6 +54,14 @@ class CaptureInquiryData extends Data
          * the only case the form has to fill in is the one where it wasn't.
          */
         public ?string $captured_at = null,
+        /**
+         * C-25: die Felder des Projekttyps, nach ProjectField::$key. Geprüft
+         * von WriteProjectFieldValues statt hier, damit ein Wert derselben
+         * Definition gehorcht, welche Oberfläche ihn auch schreibt.
+         *
+         * @var array<string, mixed>
+         */
+        public array $fields = [],
     ) {}
 
     public static function rules(): array
@@ -87,6 +95,7 @@ class CaptureInquiryData extends Data
             // has not arrived yet is a typo, and it would sit at the head of
             // every funnel month until someone found it.
             'captured_at' => ['nullable', 'date', 'before_or_equal:now'],
+            'fields' => ['array'],
 
             // The CUID2 of an existing contact, same shape as contact_id
             // above. Nullable always, including when the source is a

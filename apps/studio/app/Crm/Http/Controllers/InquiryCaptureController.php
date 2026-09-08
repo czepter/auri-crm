@@ -10,6 +10,7 @@ use App\Crm\Enums\LeadSource;
 use App\Crm\Models\Lead;
 use App\Crm\Models\ProjectType;
 use App\Crm\Support\CrmVocabulary;
+use App\Crm\Support\StageSettingsPayload;
 use App\Http\Controllers\Controller;
 use App\Settings\Support\StudioSettingsResolver;
 use BackedEnum;
@@ -23,11 +24,23 @@ class InquiryCaptureController extends Controller
     {
         $this->authorize('create', Lead::class);
 
+        $types = app(CrmVocabulary::class)->types()
+            ->filter(fn (ProjectType $type) => $type->is_active)
+            ->load(['fields' => fn ($query) => $query->active()]);
+
         return Inertia::render('Leads/Create', [
-            'types' => app(CrmVocabulary::class)->types()
-                ->filter(fn (ProjectType $type) => $type->is_active)
+            'types' => $types
                 ->map(fn (ProjectType $type) => ['value' => $type->key, 'label' => $type->name])
                 ->values()->all(),
+            // C-25: die Felder aller aktiven Typen auf einmal, nach Typ
+            // geschlüsselt, damit ein Typwechsel unter „Erweitert" sie ohne
+            // zweite Anfrage tauscht.
+            'fieldsByType' => $types
+                ->mapWithKeys(fn (ProjectType $type) => [
+                    $type->key => $type->fields
+                        ->map(StageSettingsPayload::field(...))->values()->all(),
+                ])
+                ->all(),
             'sources' => self::options(LeadSource::cases()),
             // C-08: not cases(). The web-form channel belongs to the public
             // endpoint alone — offering it here would make "how many
