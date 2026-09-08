@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin: 0; font-family: 'Hanken Grotesk', system-ui, sans-serif; }
+    a { color: #1C6870; }
+    a:hover { color: #14494F; }
+  </style>
+</helmet>
+
+<div style="border-radius: 10px; overflow: hidden; border: 1px solid #E2E7EB; background: #FFFFFF; box-shadow: 0 12px 32px rgba(20,16,14,0.10)">
+
+  <div style="display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 10px; background: #F0F3F5; border-bottom: 1px solid #E2E7EB">
+    <span style="display: flex; gap: 5px; flex: none">
+      <span style="width: 8px; height: 8px; border-radius: 999px; background: #D9DEE2"></span>
+      <span style="width: 8px; height: 8px; border-radius: 999px; background: #D9DEE2"></span>
+      <span style="width: 8px; height: 8px; border-radius: 999px; background: #D9DEE2"></span>
+    </span>
+    <span style="min-width: 0; flex: 1; display: flex; justify-content: center">
+      <span style="max-width: 100%; border-radius: 999px; border: 1px solid #E2E7EB; background: #FFFFFF; padding: 3px 12px; font-size: 9.5px; line-height: 1.3; color: #626B78; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">nordlicht.de/galerien/lena-jonas</span>
+    </span>
+    <span style="width: 34px; flex: none"></span>
+  </div>
+
+  <div style="height: 334px; overflow: hidden; background: {{pv.bg}}; color: {{pv.ink}}">
+
+    <sc-if value="{{ pv.isFull }}" hint-placeholder-val="{{ true }}">
+      <div style="position: relative; height: 140px; display: grid; place-items: center; overflow: hidden; background: {{pv.hero}}">
+        <div style="position: absolute; inset: 0; background: radial-gradient(115% 85% at 50% 46%, rgba(12,10,9,.48) 0%, rgba(12,10,9,.76) 62%, rgba(12,10,9,.92) 100%)"></div>
+        <div style="position: relative; text-align: center; padding: 0 20px">
+          <div style="font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(242,237,233,0.9)">Atelier Nordlicht</div>
+          <div style="margin-top: 10px; font-size: 27px; line-height: 1.1; font-weight: 600; letter-spacing: -0.03em; color: #FFFFFF">Lena &amp; Jonas</div>
+          <div style="margin: 14px auto 0; width: 34px; height: 1px; background: rgba(242,237,233,0.45)"></div>
+          <div style="margin-top: 12px; font-size: 7.5px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(242,237,233,0.62)">Zu den Bildern</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ pv.isSplit }}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; align-items: stretch; height: 140px">
+        <div style="width: 48%; flex: none; background: {{pv.hero}}"></div>
+        <div style="min-width: 0; flex: 1; padding: 0 24px; display: flex; flex-direction: column; justify-content: center">
+          <div style="font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: {{pv.muted}}">Atelier Nordlicht</div>
+          <div style="margin-top: 10px; font-size: 24px; line-height: 1.1; font-weight: 600; letter-spacing: -0.03em">Lena &amp; Jonas</div>
+          <div style="margin-top: 12px; width: 34px; height: 1px; background: {{pv.line}}"></div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ pv.isPlain }}" hint-placeholder-val="{{ true }}">
+      <div style="height: 140px; display: grid; place-items: center; text-align: center; padding: 0 20px">
+        <div>
+          <div style="font-size: 8px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: {{pv.muted}}">Atelier Nordlicht</div>
+          <div style="margin-top: 10px; font-size: 27px; line-height: 1.1; font-weight: 600; letter-spacing: -0.03em">Lena &amp; Jonas</div>
+          <div style="margin: 14px auto 0; width: 34px; height: 1px; background: {{pv.line}}"></div>
+        </div>
+      </div>
+    </sc-if>
+
+    <div style="display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid {{pv.line}}; background: {{pv.barBg}}">
+      <span style="min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9.5px; line-height: 1.35; font-weight: 600; letter-spacing: -0.015em; color: {{pv.muted}}">
+        <b style="font-weight: 600; color: {{pv.ink}}">Lena &amp; Jonas</b> · online bis 12.12.26
+      </span>
+      <span style="margin: 0 auto; display: flex; align-items: center; gap: 5px">
+        <sc-for list="{{pv.filters}}" as="filter" hint-placeholder-count="2">
+          <span style="flex: none; display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 4px 10px; font-size: 8.5px; line-height: 1; font-weight: {{filter.weight}}; border: 1px solid {{filter.border}}; background: {{filter.bg}}; color: {{filter.ink}}">
+            {{ filter.label }}<span style="opacity: 0.55; font-variant-numeric: tabular-nums">{{ filter.count }}</span>
+          </span>
+        </sc-for>
+      </span>
+
+      <sc-if value="{{ pv.locked }}" hint-placeholder-val="{{ true }}">
+        <span style="flex: none; display: inline-flex; align-items: center; gap: 5px; border-radius: 6px; padding: 5px 10px; font-size: 8.5px; line-height: 1; font-weight: 600; background: {{pv.lockBg}}; color: {{pv.lockInk}}">
+          <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 018 0v3"></path></svg>
+          Nach Zahlung
+        </span>
+      </sc-if>
+
+      <sc-if value="{{ pv.downloadable }}" hint-placeholder-val="{{ true }}">
+        <span style="flex: none; display: inline-flex; align-items: center; gap: 5px; border-radius: 6px; padding: 5px 10px; font-size: 8.5px; line-height: 1; font-weight: 600; background: {{pv.actionBg}}; color: {{pv.actionInk}}">
+          <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M7 12l5 5 5-5M5 20h14"></path></svg>
+          Herunterladen
+        </span>
+      </sc-if>
+    </div>
+
+    <div style="padding: 14px; column-count: {{pv.columns}}; column-gap: 7px">
+      <sc-for list="{{pv.tiles}}" as="tile" hint-placeholder-count="8">
+        <div style="position: relative; break-inside: avoid; margin-bottom: 7px; border-radius: 5px; height: {{tile.height}}; background: {{tile.fill}}">
+          <span style="position: absolute; top: 6px; right: 6px; width: 15px; height: 15px; border-radius: 999px; background: rgba(12,10,9,0.5); display: {{tile.markShown}}"></span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"pv": {"editor": null, "default": {"bg": "#0E0C0B", "ink": "#F2EDE9", "muted": "#8B817B", "line": "#241F1C", "hero": "#2C2521", "barBg": "#131110", "isFull": true, "isSplit": false, "isPlain": false, "locked": false, "downloadable": true, "actionBg": "#F2EDE9", "actionInk": "#0E0C0B", "lockBg": "#241D0E", "lockInk": "#D9B25C", "columns": 3, "filters": [{"label": "Alle", "count": 128, "weight": "600", "border": "#F2EDE9", "bg": "#F2EDE9", "ink": "#0E0C0B"}, {"label": "Favoriten", "count": 12, "weight": "500", "border": "#241F1C", "bg": "transparent", "ink": "#8B817B"}], "tiles": [{"height": "84px", "fill": "#241F1C", "markShown": "none"}, {"height": "60px", "fill": "#2A2421", "markShown": "block"}, {"height": "70px", "fill": "#1E1917", "markShown": "none"}, {"height": "56px", "fill": "#2A2421", "markShown": "none"}, {"height": "78px", "fill": "#241F1C", "markShown": "none"}, {"height": "64px", "fill": "#1E1917", "markShown": "none"}, {"height": "52px", "fill": "#2A2421", "markShown": "none"}, {"height": "72px", "fill": "#241F1C", "markShown": "none"}]}}, "$preview": {"width": 520, "height": 380}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { pv: this.props.pv }
+  }
+}
+</script>
+</body>
+</html>

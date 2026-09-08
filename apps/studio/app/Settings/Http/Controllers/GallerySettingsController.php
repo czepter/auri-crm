@@ -4,30 +4,19 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
-use App\Settings\Data\GallerySettingsData;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Validation\Rule;
 
 /**
- * The gallery defaults, split off the Portal pane: they are read by the
- * ingest screen and by ContactController's per-contact overrides, neither of
- * which the portal switches touch.
+ * Die Galerie-Vorgaben. Seit G-14 haben sie keinen eigenen Screen mehr: sie
+ * werden auf /galerien bedient, wie Stufen und Projekttypen auf /auftraege.
+ * Was bleibt, ist die Stelle, an die der Raum schreibt.
  */
 class GallerySettingsController extends Controller
 {
     use AuthorizesStaffSettings;
-
-    public function edit(StudioSettingsResolver $settings): Response
-    {
-        $this->authorizeSettings();
-
-        return Inertia::render('Settings/Galleries', [
-            'settings' => GallerySettingsData::fromResolver($settings),
-        ]);
-    }
 
     public function update(Request $request, StudioSettingsResolver $settings): RedirectResponse
     {
@@ -39,6 +28,13 @@ class GallerySettingsController extends Controller
             'gallery_default_downloads_enabled' => ['required', 'boolean'],
             'gallery_default_lists_enabled' => ['required', 'boolean'],
             'gallery_default_comments_enabled' => ['required', 'boolean'],
+            // Ganz oder gar nicht, wie auf der Vorlage: die vier Schluessel
+            // stehen zusammen oder das Feld fehlt.
+            'gallery_default_design' => ['nullable', 'array'],
+            'gallery_default_design.cover' => ['required_with:gallery_default_design', Rule::in(['full', 'split', 'plain'])],
+            'gallery_default_design.type' => ['required_with:gallery_default_design', 'string', 'max:32'],
+            'gallery_default_design.colour' => ['required_with:gallery_default_design', Rule::in(['light', 'dark', 'warm'])],
+            'gallery_default_design.grid' => ['required_with:gallery_default_design', Rule::in(['wide', 'dense', 'single'])],
         ]);
 
         $actor = auth('staff')->user();
@@ -47,6 +43,6 @@ class GallerySettingsController extends Controller
             $settings->set($key, $value, $actor);
         }
 
-        return redirect('/einstellungen/galerien');
+        return redirect('/galerien');
     }
 }
