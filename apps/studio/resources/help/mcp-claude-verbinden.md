@@ -6,15 +6,27 @@ reihenfolge: 80
 faehigkeit: manage_settings
 ---
 
-Claude spricht mit deinem Studio über eine eigene Adresse:
+Mit der Verbindung fragst du Claude nach deinem Trichter oder lässt ihn eine
+Anfrage anlegen, ohne das Studio zu öffnen.
+
+## Einrichten
+
+In Claude legst du unter den Connectors einen eigenen Connector an, mit dieser
+Adresse:
 
 ```
 %mcp_url%
 ```
 
-Die trägst du in Claude als eigene Verbindung ein. Einen Schlüssel gibt es
-nicht zu kopieren: Claude schickt dich zu einer Freigabeseite in deinem
-Studio, und erst dein Klick dort schaltet den Zugang frei.
+Einen Schlüssel gibt es nicht zu kopieren: Claude meldet sich selbst an und
+schickt dich zu einer Freigabeseite in deinem Studio. Erst dein Klick dort
+schaltet den Zugang frei.
 
-Der Zugang hängt danach an deinem Konto und kann nichts, was deine eigene
-Rolle nicht kann.
+Auf der Freigabeseite steht ein Name, den das fragende Programm sich selbst
+gegeben hat — ein zweites darf sich genauso nennen. Verlässlich ist der Host
+darunter.
+
+## Danach
+
+Der Zugang hängt an deinem Konto und kann nichts, was deine eigene Rolle nicht
+kann. Vor jedem Schreibvorgang fragt Claude dich, was er tun soll.
