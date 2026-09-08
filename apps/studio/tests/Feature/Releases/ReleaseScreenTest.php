@@ -8,9 +8,12 @@ use Inertia\Testing\AssertableInertia as Assert;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    config(['services.release_log.url' => 'https://release-log.test']);
     Cache::forever('release-log.latest', '0.9.2');
     Cache::forever('release-log.feed', [
-        ['version' => '0.9.2', 'date' => '2026-09-08', 'headline' => null,
+        ['version' => '0.9.2', 'date' => '2026-09-08', 'headline' => 'Galerie-Einstellungen an einer Stelle',
+            'body' => ['Vorgaben, Gestaltung und Vorlagen stehen über der Liste.'],
+            'image' => ['src' => '/media/0.9.2-galerien.png', 'alt' => 'Galerienliste'],
             'sections' => [['key' => 'new', 'label' => 'Neu', 'count' => 1]]],
         ['version' => '0.9.1', 'date' => '2026-09-06', 'headline' => 'Das Angebot wird ein Regler',
             'sections' => [['key' => 'new', 'label' => 'Neu', 'count' => 22]]],
@@ -36,7 +39,12 @@ it('lists every release release-log knows', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('Releases/Index')
             ->has('releases', 2)
-            ->where('releases.1.headline', 'Das Angebot wird ein Regler'));
+            ->where('releases.1.headline', 'Das Angebot wird ein Regler')
+            // Beschreibung und Bild tragen die Zeile — ohne sie steht dort
+            // eine Nummer und drei Zahlen.
+            ->where('releases.0.body.0', 'Vorgaben, Gestaltung und Vorlagen stehen über der Liste.')
+            ->where('releases.0.image.src', '/media/0.9.2-galerien.png')
+            ->where('mediaBase', 'https://release-log.test'));
 });
 
 it('shows one release with its entries', function () {

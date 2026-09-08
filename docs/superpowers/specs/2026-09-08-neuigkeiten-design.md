@@ -22,7 +22,7 @@ die Version, an der sie erkennt, ob es etwas Neues gibt — beides steht jetzt
 ## 2. Scope
 
 **Drin:** ein Feed `/neuigkeiten` mit allen neun Releases, je Zeile Nummer,
-Datum, `headline` und die Zähler je Gruppe; eine Detailseite
+Datum, `headline`, `body`, `image` und die Zähler je Gruppe; eine Detailseite
 `/neuigkeiten/<version>` mit Bild, `headline` und allen Einträgen des Releases
 nach Gruppen, jede Zeile mit ihrer Beschreibung zum Aufklappen; die drei
 Gruppen, die release-log liefert (`feat` → Neu, `perf` → Änderungen, `fix` →
@@ -51,7 +51,7 @@ Die Bilder sind aus den Artboard-Quellen gerendert und liegen unter
 
 | Bild | Artboard | Was es zeigt |
 |---|---|---|
-| `docs/screenshots/2026-09-08-neuigkeiten-studio.png` | Main | der Feed: neun Releases, Zähler je Gruppe, Version mit Punkt unten in der Sidebar |
+| `docs/screenshots/2026-09-08-neuigkeiten-studio.png` | Main | der Feed: neun Releases mit Überschrift, Beschreibung, Bild und Zählern, Version mit Punkt unten in der Sidebar |
 | `docs/screenshots/2026-09-08-neuigkeiten-release.png` | Detail | `/neuigkeiten/0.9.1`: Bild, headline, body, Filter, 7 + 4 Einträge |
 | `docs/screenshots/2026-09-08-neuigkeiten-handy.png` | Mobil | der Feed auf 390px |
 | `docs/screenshots/2026-09-08-neuigkeiten-zustaende.png` | Marker | Versionszeile in drei Zuständen, die Markierungen, die Filterpillen |
@@ -84,7 +84,7 @@ Was das Studio holt:
 | Endpunkt | Antwort |
 |---|---|
 | `GET /versions` | `latest` und je Release Version, Datum, `headline`, `url`. Der Update-Check. |
-| `GET /releases?page=1` | Der Feed. Je Release nur die **Zähler** je Gruppe, nicht die Einträge. |
+| `GET /releases?page=1` | Der Feed. Je Release `headline`, `body`, `image` und die **Zähler** je Gruppe — nicht die Einträge. |
 | `GET /releases/<version>` | Ein Release mit allen Einträgen, in `sections` nach Gruppe sortiert. |
 | `GET /media/<datei>` | Das Bild des Releases. Drei von neun haben eins. |
 | `GET /health` | Für Coolify. |

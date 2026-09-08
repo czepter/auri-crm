@@ -37,13 +37,17 @@
     .rel .num { font:600 13px/1.2 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.012em; }
     .rel .day { margin-top:3px; font:400 12px/1.3 'Hanken Grotesk', system-ui, sans-serif;
                 color:#626B78; font-variant-numeric:tabular-nums; }
-    .rel .head { font:600 15px/1.3 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.02em; }
+    .rel .head { margin-bottom:2px; font:600 15px/1.3 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.02em; }
+    .rel .body { margin:6px 0 0; max-width:640px;
+                 font:400 12.5px/1.6 'Hanken Grotesk', system-ui, sans-serif; color:#626B78; }
+    .thumb { width:148px; height:92px; flex:none; border-radius:12px; object-fit:cover;
+             border:1px solid #E2E7EB; }
     .cnt { display:flex; gap:16px; font:400 12.5px/1.4 'Hanken Grotesk', system-ui, sans-serif; color:#626B78; }
     .cnt b { color:#151A22; font-weight:600; font-variant-numeric:tabular-nums; }
   </style>
 </helmet>
 
-<div style="display:flex; min-height:980px; background:#FFFFFF">
+<div style="display:flex; min-height:1760px; background:#FFFFFF">
 
   <nav style="width:214px; flex:none; display:flex; flex-direction:column; padding:18px 12px">
     <a href="#" style="display:flex; align-items:center; margin-bottom:1px; padding:0 10px 22px; font:600 17px/1 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.024em; color:#151A22">Nordlicht</a>
@@ -103,14 +107,23 @@
           </div>
           <div style="flex:1; min-width:0">
             <sc-if value="{{r.headline}}" hint-placeholder-val="{{true}}">
-              <div class="head" style="margin-bottom:6px">{{r.headline}}</div>
+              <div class="head">{{r.headline}}</div>
             </sc-if>
-            <div class="cnt">
+            <sc-for list="{{r.absaetze}}" as="p" hint-placeholder-count="2">
+              <p class="body">{{p.text}}</p>
+            </sc-for>
+            <div class="cnt" style="margin-top:10px">
               <sc-for list="{{r.teile}}" as="t" hint-placeholder-count="3">
                 <span><b>{{t.n}}</b> {{t.label}}</span>
               </sc-for>
             </div>
           </div>
+          <sc-if value="{{r.bild092}}" hint-placeholder-val="{{false}}">
+            <img class="thumb" src="0.9.2-galerien.jpg" alt="{{r.alt}}" />
+          </sc-if>
+          <sc-if value="{{r.bild091}}" hint-placeholder-val="{{false}}">
+            <img class="thumb" src="0.9.1-angebot-regler.jpg" alt="{{r.alt}}" />
+          </sc-if>
           <svg viewBox="0 0 24 24" style="width:16px; height:16px; margin-top:2px; stroke:#CFD6DB"><path d="M9 6l6 6-6 6"/></svg>
         </a>
       </sc-for>
@@ -120,7 +133,7 @@
 </div>
 </x-dc>
 
-<script data-dc-script data-props='{"update":{"editor":"boolean","default":true,"section":"Zustand"},"$preview":{"width":1440,"height":980}}'>
+<script data-dc-script data-props='{"update":{"editor":"boolean","default":true,"section":"Zustand"},"$preview":{"width":1440,"height":1760}}'>
 class Component extends DCLogic {
   renderVals() {
     const VERFUEGBAR = { marke: 'Verfügbar', markeBg: '#FAF3E4', markeFg: '#8A6212' };
@@ -128,15 +141,42 @@ class Component extends DCLogic {
 
     // Die Zähler stehen so in release-log/releases/*.json.
     const roh = [
-      { nummer: "0.9.2", datum: "8. Sep. 2026", ...VERFUEGBAR, headline: "Galerie-Einstellungen an einer Stelle", feat: 1, perf: 0, fix: 2 },
-      { nummer: "0.9.1", datum: "6. Sep. 2026", ...INSTALLIERT, headline: "Angebote nach Stunden, Erinnerungen von selbst", feat: 7, perf: 0, fix: 4 },
-      { nummer: "0.9.0", datum: "5. Sep. 2026", headline: "Die erste ausgelieferte Fassung", feat: 17, perf: 1, fix: 0 },
-      { nummer: "0.6.0", datum: "18. Aug. 2026", headline: "Das CRM bekommt seine eigene Form", feat: 14, perf: 1, fix: 0 },
-      { nummer: "0.5.0", datum: "16. Aug. 2026", headline: "Das Portal wird der Ort des Kunden", feat: 15, perf: 0, fix: 0 },
-      { nummer: "0.4.0", datum: "14. Aug. 2026", headline: "Was am Projekt passiert ist, steht am Projekt", feat: 4, perf: 0, fix: 0 },
-      { nummer: "0.3.0", datum: "12. Aug. 2026", headline: "Vorlagen bauen statt HTML tippen", feat: 2, perf: 0, fix: 0 },
-      { nummer: "0.2.0", datum: "11. Aug. 2026", headline: "Die Galerie erreicht den Gast", feat: 12, perf: 0, fix: 0 },
-      { nummer: "0.1.0", datum: "9. Aug. 2026", headline: "Vom Erstkontakt bis zur fertigen Galerie", feat: 15, perf: 0, fix: 0 },
+      { nummer: "0.9.2", datum: "8. Sep. 2026", ...VERFUEGBAR, headline: "Galerie-Einstellungen an einer Stelle",
+        absaetze: [{"text": "Vorgaben, Gestaltung und Vorlagen für Galerien stehen über der Liste, für die sie gelten, mit einer Vorschau an der Galerie selbst. Dazu zwei Korrekturen am Mailversand."}],
+        bild092: true, bild091: false, alt: "Galerienliste mit den Einstellungen darüber",
+        feat: 1, perf: 0, fix: 2 },
+      { nummer: "0.9.1", datum: "6. Sep. 2026", ...INSTALLIERT, headline: "Angebote nach Stunden, Erinnerungen von selbst",
+        absaetze: [{"text": "Ein Angebot kann jetzt ein Stundenregler mit Bausteinen sein, den der Kunde im Portal selbst einstellt. Offene Aufgaben, unbeantwortete Anfragen und überfällige Raten erinnern in wachsenden Abständen, wahlweise als Tagesüberblick."}, {"text": "Dazu ein eigenes Mail-Layout mit zwei Absenderrollen und eine neue Farb- und Schriftrichtung: kühles Petrol und Hanken Grotesk statt Rost-Orange."}],
+        bild092: false, bild091: true, alt: "Angebot mit Stundenregler im Portal",
+        feat: 7, perf: 0, fix: 4 },
+      { nummer: "0.9.0", datum: "5. Sep. 2026", headline: "Die erste ausgelieferte Fassung",
+        absaetze: [{"text": "Die Galerie wird ein geführter Datensatz: Fächer statt einer Bilderliste, Vorschau vor der Veröffentlichung, Vorab-Ankündigung, eine sprechende Adresse und Gäste, die einen Namen tragen statt einer Zufallskennung im Browser."}, {"text": "Im Studio wird konfigurierbar, was bisher fest verdrahtet war — Stufen, Projekttypen, eigene Felder und Abläufe je Typ und Phase. Angebote entstehen in einer Tabelle mit Autosave, Verträge in Fassungen, und alle Vorlagen stehen unter einem Punkt."}],
+        bild092: false, bild091: false, alt: "",
+        feat: 17, perf: 1, fix: 0 },
+      { nummer: "0.6.0", datum: "18. Aug. 2026", headline: "Das CRM bekommt seine eigene Form",
+        absaetze: [{"text": "Das Studio-Werkzeug wird vom Sammelplatz gebauter Bildschirme zu einem Arbeitsplatz: eine eigene Formsprache, eine Seitenleiste entlang des Auftragswegs, eine Befehlspalette, und für Anfragen, Projekte, Kontakte, Posteingang und Kalender je eine Ansicht, die zeigt, was als Nächstes dran ist."}, {"text": "In den Galerien wird verwaltet statt eingestellt: fünf Reiter, nachsehbare Passwörter, aufgezeichnete Aufrufe. Gäste filtern nach Auswahl, laden in Teilen herunter und kommen wieder über die schnelle Ansicht herein."}],
+        bild092: false, bild091: false, alt: "",
+        feat: 14, perf: 1, fix: 0 },
+      { nummer: "0.5.0", datum: "16. Aug. 2026", headline: "Das Portal wird der Ort des Kunden",
+        absaetze: [{"text": "Der Kunde bekommt eine Startseite statt eines Umschalters, ein eigenes Konto, seine Galerie samt Listen, einen Posteingang auch ohne Buchung und einen Fragebogen, den er selbst ausfüllt. Was er dort sieht, richtet das Studio als Voreinstellung ein und weicht je Kontakt davon ab."}, {"text": "Dazu geht E-Mail erstmals in beide Richtungen: eine Antwort aus dem Studio erreicht das Postfach, und was zurückkommt, landet im richtigen Gespräch. Die Übersicht bekommt ihre Kennzahlen, es gibt Auswertungen, Rechnungen je Rate und ein Anfrageformular für die eigene Website."}],
+        bild092: false, bild091: false, alt: "",
+        feat: 15, perf: 0, fix: 0 },
+      { nummer: "0.4.0", datum: "14. Aug. 2026", headline: "Was am Projekt passiert ist, steht am Projekt",
+        absaetze: [{"text": "Jedes Projekt führt seinen eigenen Verlauf: wer wann welche Stufe geschaltet, ein Shooting abgesagt oder das Projekt ins Portal gestellt hat. Dazu wird die Farbgebung eindeutig — Akzentfarbe für Aktionen, eigene Farben für Zustände wie eine überfällige Rate."}],
+        bild092: false, bild091: false, alt: "",
+        feat: 4, perf: 0, fix: 0 },
+      { nummer: "0.3.0", datum: "12. Aug. 2026", headline: "Vorlagen bauen statt HTML tippen",
+        absaetze: [{"text": "Dokumentvorlagen entstehen aus Blöcken, mit einer Auswahl für Platzhalter und einer Vorschau daneben. Formulare, Knöpfe und Dialoge kommen aus einem gemeinsamen Satz Komponenten, statt an jeder Stelle neu geschrieben zu werden."}],
+        bild092: false, bild091: false, alt: "",
+        feat: 2, perf: 0, fix: 0 },
+      { nummer: "0.2.0", datum: "11. Aug. 2026", headline: "Die Galerie erreicht den Gast",
+        absaetze: [{"text": "Bilder gehen den Weg vom Upload bis zum Gast: verarbeitet im Hintergrund, geschützt durch Passwort, PIN oder bestätigte Adresse, betrachtet auf einer eigenen Seite mit Favoriten und Kommentaren, heruntergeladen einzeln oder als Archiv."}, {"text": "Daneben öffnet sich das System nach außen — Schnittstelle, Webhooks und eine Anbindung für KI-Assistenten — und nach innen: eine Ersteinrichtung, die durch die Studio-Angaben führt, Abwesenheiten in der Terminplanung und Auskunft und Löschung als Knopf statt als Entwicklerarbeit."}],
+        bild092: false, bild091: false, alt: "",
+        feat: 12, perf: 0, fix: 0 },
+      { nummer: "0.1.0", datum: "9. Aug. 2026", headline: "Vom Erstkontakt bis zur fertigen Galerie",
+        absaetze: [{"text": "Die erste Version legt den ganzen Auftragsweg an: Anfrage, Angebot, Vertrag, Anzahlung, Shooting, Galerie. Das Studio arbeitet auf Board und Arbeitsliste, der Kunde sieht seinen Teil im Portal."}, {"text": "Was ein Vorgang gerade ist, ergibt sich aus dem, was an ihm hängt, statt aus einem Feld, das jemand nachzieht. Versendetes bleibt, wie es versendet wurde, und ein entzogener Zugang endet beim nächsten Klick."}],
+        bild092: false, bild091: false, alt: "",
+        feat: 15, perf: 0, fix: 0 },
     ];
 
     return {

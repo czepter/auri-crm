@@ -22,14 +22,15 @@ export type FeedItem = {
   version: string
   date: string
   headline: string | null
+  /* Absätze unter der Überschrift. Der Feed trägt sie mit — ohne sie steht
+     dort eine Nummer und drei Zahlen. */
+  body: string[]
   image: { src: string; alt: string } | null
   sections: ReleaseSection[]
 }
 
 export type ReleaseDetail = FeedItem & {
   tag: string | null
-  body: string[]
-  sections: ReleaseSection[]
 }
 
 /** Die drei Gruppen, die der Dienst kennt, mit ihren Schlüsseln in de.json. */

@@ -15,8 +15,9 @@ release-log. Nichts davon ist geschrieben.
 ## Contents
 
 - `Main.dc.html` — `/neuigkeiten`, der Feed. Neun Releases, je Zeile Nummer,
-  Datum, headline und die Zähler je Gruppe. Unten in der Sidebar die
-  installierte Version mit dem Punkt; der Schalter `update` nimmt ihn weg.
+  Datum, Überschrift, Beschreibung, Bild und die Zähler je Gruppe. Unten in der
+  Sidebar die installierte Version mit dem Punkt; der Schalter `update` nimmt
+  ihn weg.
 - `Detail.dc.html` — `/neuigkeiten/0.9.1`. Bild, headline, body, Filter und die
   elf Einträge des Releases nach Gruppen. Jede Zeile klappt ihre Beschreibung
   auf.
@@ -26,8 +27,8 @@ release-log. Nichts davon ist geschrieben.
 - `Quelle.dc.html` — kein Screen, sondern der Weg: Tag, `from-git.mjs`,
   release-log, Ping, Cache, Studio. Dazu die Endpunkte, die drei Gruppen und
   was Git schreibt gegenüber dem, was von Hand kommt.
-- `0.9.1-angebot-regler.jpg` — das Release-Bild, verkleinert aus
-  `release-log/media/`.
+- `0.9.1-angebot-regler.jpg`, `0.9.2-galerien.jpg` — die zwei Release-Bilder,
+  verkleinert aus `release-log/media/`.
 - `support.js`, `vendor/react*.js` — the runtime that renders the
   component in a browser; not part of the design.
 

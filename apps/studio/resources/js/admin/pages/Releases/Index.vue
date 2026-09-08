@@ -3,14 +3,23 @@ import { Link } from "@inertiajs/vue3"
 import AdminLayout from "@/admin/layouts/AdminLayout.vue"
 import PageHead from "@/ui/page/PageHead.vue"
 import { monthDate } from "@/admin/lib/dates"
-import { releaseMark, sectionCounts, type FeedItem } from "@/admin/lib/releases"
+import {
+    mediaUrl,
+    releaseMark,
+    sectionCounts,
+    type FeedItem,
+} from "@/admin/lib/releases"
 
 /*
- * Der Feed. release-log liefert je Release nur die Zähler je Gruppe — ein
- * Release hält bis zu hundertfünfzig Einträge — also steht hier, was ein
- * Release war, und die Einträge liegen hinter der Zeile.
+ * Der Feed. Die Einträge selbst liegen hinter der Zeile — release-log gibt
+ * hier nur die Zähler je Gruppe. Was die Zeile trägt, ist deshalb das, was
+ * von Hand geschrieben wurde: Überschrift, Beschreibung, Bild.
  */
-defineProps<{ releases: FeedItem[]; installed: string }>()
+defineProps<{
+    releases: FeedItem[]
+    installed: string
+    mediaBase: string | null
+}>()
 </script>
 
 <template>
@@ -51,12 +60,21 @@ defineProps<{ releases: FeedItem[]; installed: string }>()
                     <div class="min-w-0 flex-1">
                         <div
                             v-if="release.headline"
-                            class="mb-1.5 text-[15px] leading-[1.3] font-semibold tracking-[-0.02em]"
+                            class="mb-0.5 text-[15px] leading-[1.3] font-semibold tracking-[-0.02em]"
                         >
                             {{ release.headline }}
                         </div>
+
+                        <p
+                            v-for="(paragraph, index) in release.body ?? []"
+                            :key="index"
+                            class="mt-1.5 max-w-[640px] text-[12.5px] leading-[1.6] text-ink-2"
+                        >
+                            {{ paragraph }}
+                        </p>
+
                         <div
-                            class="flex gap-4 text-[12.5px] leading-[1.4] text-ink-2"
+                            class="mt-2.5 flex gap-4 text-[12.5px] leading-[1.4] text-ink-2"
                         >
                             <span
                                 v-for="part in sectionCounts(release.sections)"
@@ -70,6 +88,15 @@ defineProps<{ releases: FeedItem[]; installed: string }>()
                             </span>
                         </div>
                     </div>
+
+                    <!-- Zwei von neun Releases haben eins. Die Spalte steht
+                         deshalb nicht als leerer Rahmen da, wenn keines kommt. -->
+                    <img
+                        v-if="mediaUrl(mediaBase, release.image?.src)"
+                        class="h-23 w-37 flex-none rounded-[12px] border border-rule object-cover max-[640px]:hidden"
+                        :src="mediaUrl(mediaBase, release.image?.src)!"
+                        :alt="release.image?.alt ?? ''"
+                    />
 
                     <svg
                         class="mt-0.5 size-4 flex-none fill-none stroke-mark stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"
