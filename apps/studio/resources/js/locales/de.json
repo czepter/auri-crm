@@ -1090,7 +1090,15 @@
     "balanceLabel": "Erst nach vollständiger Zahlung freigeben",
     "downloadsLabel": "Download erlauben",
     "listsLabel": "Listen erlauben",
-    "commentsLabel": "Kommentare erlauben"
+    "commentsLabel": "Kommentare erlauben",
+    "roomTitle": "Galerie-Einstellungen",
+    "nav_standardwerte": "Standardwerte",
+    "nav_gestaltung": "Gestaltung",
+    "nav_vorlagen": "Vorlagen",
+    "defaultLabel": "Standard bei neuen Galerien",
+    "defaultMark": "Standard",
+    "previewLocked": "Nach Zahlung",
+    "previewInherited": "Gestaltung geerbt"
   },
   "portal": {
     "none": "—",
@@ -1266,7 +1274,8 @@
     "delete": "Löschen",
     "add": "Vorlage anlegen",
     "days": "{count} Tage",
-    "designLabel": "Gestaltung festlegen"
+    "designLabel": "Gestaltung festlegen",
+    "untitled": "Ohne Namen"
   },
   "gallery": {
     "passwordLabel": "Galerie-Passwort",

@@ -1,10 +1,27 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import GallerySettings from '@/admin/components/GallerySettings.vue'
 import { Button } from '@/ui/button'
 
-defineProps<{ galleries: App.Gallery.Data.GalleryRowData[] }>()
+const props = defineProps<{
+  galleries: App.Gallery.Data.GalleryRowData[]
+  settings: App.Settings.Data.GallerySettingsData | null
+  presets: App.Gallery.Data.GalleryPresetData[]
+  galleryHost: string
+}>()
+
+// G-14: der Abschnitt steht in der Adresse, damit die alten Einstellungspfade
+// hierher zeigen können. Ohne ihn bleibt der Raum zu.
+const section = new URLSearchParams(window.location.search).get('einstellungen')
+const settingsOpen = ref(props.settings !== null && section !== null)
+
+function close() {
+  settingsOpen.value = false
+  window.history.replaceState({}, '', '/galerien')
+}
 
 function day(iso: string | null) {
   return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
@@ -15,7 +32,10 @@ function day(iso: string | null) {
   <AdminLayout active="galerien">
     <div data-tokens>
       <PageHead :title="$t('galleries.title')">
-        <Button :as="Link" variant="pill" class="ml-auto" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
+        <Button v-if="settings" class="ml-auto" type="button" variant="pill-muted" @click="settingsOpen = true">
+          {{ $t('stages.entry') }}
+        </Button>
+        <Button :as="Link" variant="pill" :class="settings ? undefined : 'ml-auto'" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
       </PageHead>
 
       <div class="max-w-[900px] px-8 pt-7 pb-8 max-[640px]:px-5">
@@ -38,6 +58,16 @@ function day(iso: string | null) {
           <span class="w-20 flex-none text-right text-[12.5px] tabular-nums text-ink-2 max-[640px]:w-auto max-[640px]:text-left">{{ day(gallery.expiresAt) }}</span>
         </div>
       </div>
+
+      <GallerySettings
+        v-if="settingsOpen && settings"
+        :gallery-host="galleryHost"
+        :presets="presets"
+        :preview-title="galleries[0]?.title ?? $page.props.brand"
+        :section="section === 'gestaltung' || section === 'vorlagen' ? section : 'standardwerte'"
+        :settings="settings"
+        @close="close"
+      />
     </div>
   </AdminLayout>
 </template>

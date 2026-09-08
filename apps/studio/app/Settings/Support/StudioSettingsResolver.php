@@ -2,6 +2,7 @@
 
 namespace App\Settings\Support;
 
+use App\Gallery\Models\GalleryPreset;
 use App\Models\User;
 use App\Settings\Enums\FontPair;
 use App\Settings\Models\StudioSettings;
@@ -617,6 +618,18 @@ class StudioSettingsResolver
             'expiryDays' => $row->gallery_default_expiry_days,
             'requiresSettledBalance' => (bool) $row->gallery_default_requires_settled_balance,
         ];
+    }
+
+    /**
+     * G-15: die vier Gestaltungsschluessel, mit denen eine neue Galerie
+     * geboren wird. Ohne Vorgabe die eingebauten Werte — GalleryPreset::DESIGN
+     * ist die eine Stelle, die sie nennt.
+     *
+     * @return array<string, string>
+     */
+    public function galleryDesign(): array
+    {
+        return [...GalleryPreset::DESIGN, ...($this->row()->gallery_default_design ?? [])];
     }
 
     public function galleryDownloadsEnabled(): bool

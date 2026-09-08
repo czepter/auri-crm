@@ -20,6 +20,7 @@ class GalleryPresetData extends Data
         public ?bool $downloadsEnabled,
         public ?bool $listsEnabled,
         public ?bool $commentsEnabled,
+        public bool $isDefault,
     ) {}
 
     public static function fromModel(GalleryPreset $preset): self
@@ -34,6 +35,7 @@ class GalleryPresetData extends Data
             downloadsEnabled: $preset->downloads_enabled,
             listsEnabled: $preset->lists_enabled,
             commentsEnabled: $preset->comments_enabled,
+            isDefault: $preset->is_default,
         );
     }
 }

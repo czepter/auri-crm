@@ -23,8 +23,16 @@ class GalleryPreset extends Model
 
     public const MODES = ['inherit', 'days', 'never'];
 
+    /**
+     * Womit eine Galerie gestaltet ist, wenn niemand etwas gesagt hat. Ganz
+     * oder gar nicht: wer design setzt, setzt alle vier Schluessel, sonst
+     * traegt eine Galerie eine halbe Gestaltung und der Rest kommt aus dem
+     * Stylesheet.
+     */
+    public const DESIGN = ['cover' => 'full', 'type' => 'serif', 'colour' => 'light', 'grid' => 'wide'];
+
     protected $fillable = [
-        'name', 'design', 'expiry_mode', 'expiry_days',
+        'name', 'design', 'expiry_mode', 'expiry_days', 'is_default',
         'requires_settled_balance', 'downloads_enabled', 'lists_enabled', 'comments_enabled',
     ];
 
@@ -36,6 +44,7 @@ class GalleryPreset extends Model
             'downloads_enabled' => 'boolean',
             'lists_enabled' => 'boolean',
             'comments_enabled' => 'boolean',
+            'is_default' => 'boolean',
         ];
     }
 
