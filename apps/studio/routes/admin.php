@@ -41,6 +41,7 @@ use App\Gallery\Http\Controllers\GalleryPublicationController;
 use App\Gallery\Http\Controllers\GalleryRecordController;
 use App\Gallery\Http\Controllers\GallerySetController;
 use App\Gallery\Models\Gallery;
+use App\Help\Http\Controllers\HelpController;
 use App\Http\Controllers\Staff\AbsenceController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
@@ -274,6 +275,13 @@ Route::middleware('audience:staff')->group(function () {
         // authorised in RotateInboundSecret rather than by this route — see
         // that action's own doc comment for why the check is not on the
         // screen.
+        // Suche und Artikel-JSON vor dem Platzhalter registriert, sonst
+        // schluckt /hilfe/{slug} beide.
+        Route::get('/hilfe', [HelpController::class, 'index'])->name('help.index');
+        Route::get('/hilfe/suche', [HelpController::class, 'search'])->name('help.search');
+        Route::get('/hilfe/artikel/{slug}', [HelpController::class, 'article'])->name('help.article');
+        Route::get('/hilfe/{slug}', [HelpController::class, 'show'])->name('help.show');
+
         Route::get('/posteingang', [InboxController::class, 'index'])->name('inbox.index');
         Route::post('/posteingang/{inboundMessage}/zuordnen', [InboxController::class, 'attach'])
             ->name('inbox.attach');

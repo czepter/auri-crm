@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Crm\Actions\OpenLeads;
 use App\Crm\Models\Project;
 use App\Data\StaffProfileData;
+use App\Help\Support\HelpIndex;
 use App\Portal\Support\PortalSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\RecordVisit;
@@ -76,6 +77,21 @@ class HandleInertiaRequests extends Middleware
             // passed per page, because the palette is chrome and opens over
             // whatever screen is up. Lazy for the same reason as the counts.
             'recent' => $user === null ? null : fn () => RecordVisit::recent(),
+            // Welcher Hilfeartikel zu diesem Screen gehört — null bis zwei,
+            // Aufgabe zuerst. Aufgelöst aus dem gecachten Index, also ohne
+            // Dateizugriff; der Artikeltext kommt erst beim Aufklappen und
+            // dann über /hilfe/artikel/{slug}, nicht über Inertia.
+            'help' => $user === null ? null : fn () => array_map(
+                fn ($entry) => [
+                    'slug' => $entry->slug,
+                    'titel' => $entry->titel,
+                    'art' => $entry->art,
+                ],
+                app(HelpIndex::class)->forRoute(
+                    (string) $request->route()?->getName(),
+                    array_map(fn ($c) => $c->value, $user->role->capabilities()),
+                ),
+            ),
             // T-08: logo, accent colour and the two external legal links —
             // every portal page's own chrome, not one screen's. Lazy and
             // scoped to the portal surface alone, so an admin request never
