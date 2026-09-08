@@ -58,6 +58,17 @@ defineProps<{
                     </div>
 
                     <div class="min-w-0 flex-1">
+                        <!-- Zwei von neun Releases haben eins, deshalb ein
+                             v-if und kein leerer Rahmen. Die Höhe ist
+                             gedeckelt: ein hoher Screenshot schiebt sonst die
+                             nächste Zeile aus dem Bild. -->
+                        <img
+                            v-if="mediaUrl(mediaBase, release.image?.src)"
+                            class="mt-0.5 mb-2.5 block max-h-60 w-full max-w-[560px] rounded-[12px] border border-rule object-cover object-top"
+                            :src="mediaUrl(mediaBase, release.image?.src)!"
+                            :alt="release.image?.alt ?? ''"
+                        />
+
                         <div
                             v-if="release.headline"
                             class="mb-0.5 text-[15px] leading-[1.3] font-semibold tracking-[-0.02em]"
@@ -88,15 +99,6 @@ defineProps<{
                             </span>
                         </div>
                     </div>
-
-                    <!-- Zwei von neun Releases haben eins. Die Spalte steht
-                         deshalb nicht als leerer Rahmen da, wenn keines kommt. -->
-                    <img
-                        v-if="mediaUrl(mediaBase, release.image?.src)"
-                        class="h-23 w-37 flex-none rounded-[12px] border border-rule object-cover max-[640px]:hidden"
-                        :src="mediaUrl(mediaBase, release.image?.src)!"
-                        :alt="release.image?.alt ?? ''"
-                    />
 
                     <svg
                         class="mt-0.5 size-4 flex-none fill-none stroke-mark stroke-[1.6] [stroke-linecap:round] [stroke-linejoin:round]"
