@@ -26,5 +26,9 @@ defineProps<{ wide?: boolean }>()
         </div>
 
         <slot name="right" />
+
+        <!-- Die Hilfespalte. Vorgabeinhalt kommt in Task 7; bis dahin ist der
+             Slot leer und kostet nichts. -->
+        <slot name="help" />
     </div>
 </template>
