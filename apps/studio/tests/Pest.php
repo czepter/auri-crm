@@ -68,11 +68,7 @@ pest()->extend(TestCase::class)
         // applies per-file; this makes it universal.
         if (Schema::hasTable('studio_settings')) {
             StudioSettings::query()->update(['onboarding_completed_at' => now()]);
-            try {
-                Cache::store('redis')->flush();
-            } catch (Throwable) {
-                // Redis may not be available in all test environments
-            }
+            Cache::store('redis')->flush();
         }
     })
     ->in('Feature');
