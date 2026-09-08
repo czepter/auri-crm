@@ -23,6 +23,7 @@ services:
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
+      RELEASE_LOG_URL: ${RELEASE_LOG_URL:-https://uew53y9iuh4kievlxtcshuyc.coolify3.czpt.de}
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/up"]
       interval: 10s
@@ -235,6 +236,7 @@ services:
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
+      RELEASE_LOG_URL: ${RELEASE_LOG_URL:-https://uew53y9iuh4kievlxtcshuyc.coolify3.czpt.de}
     depends_on:
       postgres:
         condition: service_healthy

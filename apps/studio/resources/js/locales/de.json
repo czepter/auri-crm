@@ -866,6 +866,16 @@
     "colWhat": "Was",
     "colWhen": "Wann"
   },
+  "releases": {
+    "kicker": "Studio",
+    "title": "Neuigkeiten",
+    "installed": "Installiert",
+    "available": "Verfügbar",
+    "filterAll": "Alles",
+    "groupNew": "Neu | Neu",
+    "groupChanged": "Änderung | Änderungen",
+    "groupFixed": "Behoben | Behoben"
+  },
   "profile": {
     "kicker": "Profil",
     "nav": "Profil",

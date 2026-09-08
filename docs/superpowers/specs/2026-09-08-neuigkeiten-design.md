@@ -1,7 +1,7 @@
 # Neuigkeiten — design
 
 **Date:** 2026-09-08
-**Status:** design. Das Issue trägt den Scope.
+**Status:** gebaut auf `feat/neuigkeiten-announcement`. Das Issue trägt den Scope.
 
 ---
 
@@ -15,8 +15,9 @@ warum.
 
 `release-log` steht bereits: ein Node-Server, der `releases/<version>.json`
 ausliefert, dazu `bin/from-git.mjs`, das diese Dateien aus den Tags des
-Portal-Repos schreibt. Was fehlt, ist die Seite im Studio, die ihn liest, und
-die Version, an der sie erkennt, ob es etwas Neues gibt.
+Portal-Repos schreibt. Was fehlte, war die Seite im Studio, die ihn liest, und
+die Version, an der sie erkennt, ob es etwas Neues gibt — beides steht jetzt
+(§6).
 
 ## 2. Scope
 
@@ -66,10 +67,19 @@ ohne es zeigt der Entwurf seinen eigenen Platz nicht.
 ## 4. Der Weg vom Tag in den Screen
 
     Tag im Repo → bin/from-git.mjs → releases/<version>.json → release-log
-                → Ping (Scheduler, täglich) → Cache 24 h → /neuigkeiten
+                → releases:fetch (Scheduler, täglich 04:00) → Cache → /neuigkeiten
 
 Der Screen liest ausschließlich den Cache. Antwortet release-log nicht, steht
 der letzte Stand da — kein Ladezustand, kein Fehlerbild, kein Ping zur Laufzeit.
+
+Gespeichert wird ohne Ablauf (`Cache::forever`), aufgefrischt vom täglichen
+Lauf. Eine Lebensdauer von 24 Stunden neben einem täglichen Lauf wäre dasselbe
+Fenster von der anderen Seite: der erste gescheiterte Lauf leert den Screen.
+Veraltet ist hier hinnehmbar, leer nicht.
+
+Die Instanz steht unter
+`https://uew53y9iuh4kievlxtcshuyc.coolify3.czpt.de` — vorerst, deshalb liest
+`config/services.php` sie aus `RELEASE_LOG_URL` und nicht aus einer Konstante.
 
 Was das Studio holt:
 
@@ -109,11 +119,11 @@ Heute ist keine geschrieben (§7).
 
 | Teil | Was es tut | Status |
 |---|---|---|
-| `release-log` (Node, `server.mjs`) | liefert `/versions`, `/releases`, `/releases/<v>`, `/media/` | **steht**, noch nicht deployed |
+| `release-log` (Node, `server.mjs`) | liefert `/versions`, `/releases`, `/releases/<v>`, `/media/` | **steht**, deployed |
 | `bin/from-git.mjs` | schreibt `releases/<version>.json` aus den Tags | **steht** |
-| `CheckReleases` (Console-Command, Scheduler täglich) | holt und legt in den Cache | offen |
-| `Cache::remember(…)` | 24 Stunden; der Screen liest nur hier | offen |
-| `GET /neuigkeiten` und `/neuigkeiten/<version>` | zwei Controller, zwei Inertia-Seiten | offen |
+| `releases:fetch` (`App\Releases\Console\Commands\FetchReleasesCommand`) | holt und legt in den Cache, täglich 04:00 | **steht** |
+| `App\Releases\Support\ReleaseLog` | der einzige Ort, der mit dem Dienst spricht | **steht** |
+| `GET /neuigkeiten` und `/neuigkeiten/<version>` | ein Controller, zwei Inertia-Seiten | **steht** |
 | `APP_VERSION` als Build-Arg | `release-image.yml` → `docker/app/Dockerfile` | **steht** |
 | `config('app.version')` | steht in der Sidebar; unter `latest` heißt gelber Punkt | **steht** |
 
@@ -128,6 +138,10 @@ festen Image-Tag, also sind gebackene Version und laufendes Image dasselbe
 Artefakt. `docker/app/entrypoint.sh` ruft bewusst kein `config:cache` auf, die
 Config wird pro Request geparst — die ENV steht zur Laufzeit bereit.
 
+`docker-compose.coolify.yml` trägt dafür nichts. Was es trägt, ist
+`RELEASE_LOG_URL`, und zwar bei `admin` und `scheduler`: der eine liest den
+Cache, der andere schreibt ihn. Die anderen Surfaces haben keinen Screen dafür.
+
 ## 7. Offen
 
 - **`headline` ist überall leer.** Ohne sie trägt eine Feed-Zeile nur Nummer,
@@ -137,6 +151,5 @@ Config wird pro Request geparst — die ENV steht zur Laufzeit bereit.
   Commit-Betreffe, ein Teil davon englisch („add new portal components and
   functionality"). Wer sie für den Fotografen umschreiben will, braucht ein
   Feld je Eintrag; heute gibt es nur `headline` je Release.
-- **Wo release-log läuft.** Der Server ist da, das Deployment nicht.
 - **Farbe des Punkts.** Aktuell `--due` (#8A6212), das systemeigene „steht
   offen". Bei 6px liest es als Gold. Ein reines Gelb hat die Palette nicht.

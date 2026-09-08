@@ -78,6 +78,14 @@ return [
     // ponytail: one secret for whichever mode's events actually arrive here,
     // not a test/live pair — add the split if a studio ever needs both a
     // live endpoint and a standing test endpoint receiving events at once.
+    // Der Dienst, der die Versionsliste hält: liest die Tags des Repos und
+    // liefert sie als JSON (release-log/server.mjs). Ohne die Variable
+    // bleiben die Neuigkeiten-Screens leer — eine Instanz ohne release-log
+    // ist eine funktionierende Instanz, nur eine ohne diesen Screen.
+    'release_log' => [
+        'url' => env('RELEASE_LOG_URL'),
+    ],
+
     'stripe' => [
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
     ],

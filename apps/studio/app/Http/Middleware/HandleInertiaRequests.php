@@ -7,6 +7,7 @@ use App\Crm\Models\Project;
 use App\Data\StaffProfileData;
 use App\Help\Support\HelpIndex;
 use App\Portal\Support\PortalSettings;
+use App\Releases\Support\ReleaseLog;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\RecordVisit;
 use App\Support\Surface;
@@ -73,6 +74,16 @@ class HandleInertiaRequests extends Middleware
                 // the list refuses to show is worse than no badge.
                 'projects' => fn () => Project::query()->visibleTo($user)->whereHas('job')->count(),
             ],
+            // Die laufende Version und ob release-log eine höhere kennt. Chrome
+            // wie die Zähler darüber: die Zeile steht auf jedem Admin-Screen
+            // über der Profilzeile. Nur dort — der Portal-Surface hat keine
+            // Seitenleiste, in die sie gehörte.
+            ...($user !== null && Surface::current() === Surface::ADMIN ? [
+                'release' => fn () => [
+                    'installed' => app(ReleaseLog::class)->installed(),
+                    'updateAvailable' => app(ReleaseLog::class)->updateAvailable(),
+                ],
+            ] : []),
             // C-03 (#237): what this user last opened. Shared rather than
             // passed per page, because the palette is chrome and opens over
             // whatever screen is up. Lazy for the same reason as the counts.
