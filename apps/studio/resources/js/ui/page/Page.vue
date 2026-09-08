@@ -13,18 +13,29 @@ defineProps<{ wide?: boolean }>()
 
 const slots = useSlots()
 
-// Two width refs, not one computed keyed on $slots.right: Vue never fires a
-// reactive trigger for slot changes (only a forced re-render), so a computed
-// built on slots.right would compute once and cache that value forever.
-// mitRail is read straight off `slots` at each use below, which stays fresh
-// across that forced re-render even though it is never a tracked dependency.
 const breitOhneRail = useMediaQuery('(min-width: 1080px)')
 const breitMitRail = useMediaQuery('(min-width: 1536px)')
 
-// AdminLayout's sidebar button needs the same decision but sits above this
+// AdminLayout's sidebar button needs this same decision but sits above this
 // component and never sees #right — publish it to helpPanel's module state
-// on every render, same reasoning as the two refs above: reading slots.right
-// only stays fresh inside this render, not in a computed.
+// on every render.
+//
+// Do NOT wrap `slots.right` in a `computed()` here, even though it looks
+// like the obvious tidy-up. `updateSlots` in @vue/runtime-core only calls
+// `trigger(instance, 'set', '$slots')` inside its `isHmrUpdating` branch, so
+// outside of dev/HMR a slot appearing or disappearing never fires a
+// reactive trigger — a computed reading `slots.right` would compute once
+// and freeze on that value forever in production. Vue still force-reruns
+// this render via the DYNAMIC_SLOTS patch flag whenever a parent's
+// v-if-wrapped named slot changes (Posteingang.vue's #right is exactly
+// this case), which is why reading `slots.right` directly here, on every
+// call, stays correct — a computed would not. No test in this repo catches
+// a regression back to `computed`: `environment: 'node'` (vitest.config.ts)
+// makes Vite compile every SFC SSR-only (ssrRender, no client render), so
+// nothing here can mount a real client instance and force a second render
+// of it to tell the two forms apart — renderToString-based tests build a
+// fresh instance per call and cannot distinguish "read fresh" from "cached
+// on first read" either way. This comment is the only guard; keep it.
 function hilfeDockt() {
   const dockt = slots.right ? breitMitRail.value : breitOhneRail.value
   helpPanel.dockt.value = dockt
