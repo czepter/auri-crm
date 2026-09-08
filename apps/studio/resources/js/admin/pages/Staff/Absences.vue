@@ -127,17 +127,23 @@ function add() {
               <Label class="sr-only" :for="`ends-${absence.id}`">{{ $t('absences.endsOn') }}</Label>
               <DatePicker :id="`ends-${absence.id}`" v-model="rowForms[absence.id].ends_on" size="sm" class="w-36" />
 
-              <Button
-                class="ml-auto"
-                variant="pill"
-                type="submit"
-                :disabled="!rowForms[absence.id].isDirty || rowForms[absence.id].processing"
-              >
-                {{ $t('absences.save') }}
-              </Button>
-              <Button variant="pill-muted" type="button" @click="destroy(absence.id)">
-                {{ $t('absences.delete') }}
-              </Button>
+              <!-- Die rechte Kante gehört dem Umschlag, nicht den Knöpfen:
+                   verschwindet Speichern, bleibt Löschen stehen, statt an
+                   dessen Stelle zu rutschen. Ein ml-auto an beiden ginge
+                   nicht — Flex teilte den freien Raum unter ihnen auf. -->
+              <div class="ml-auto flex items-center gap-2">
+                <Button
+                  v-if="rowForms[absence.id].isDirty"
+                  variant="pill"
+                  type="submit"
+                  :disabled="rowForms[absence.id].processing"
+                >
+                  {{ $t('absences.save') }}
+                </Button>
+                <Button variant="pill-muted" type="button" @click="destroy(absence.id)">
+                  {{ $t('absences.delete') }}
+                </Button>
+              </div>
             </div>
 
             <p
