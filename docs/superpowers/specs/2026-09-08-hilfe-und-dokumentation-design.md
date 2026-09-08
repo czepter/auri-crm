@@ -31,7 +31,7 @@ aus der laufenden Instanz, samt der zwei Umgebungswerte, die der
 Admin-Prozess dafür noch nicht kennt (§4.3); eine auf- und zuklappbare Spalte
 rechts, die den zum aktuellen Screen gehörenden Artikel zeigt; eine
 Vollansicht unter `/hilfe`; Hilfe-Suche in der bestehenden ⌘K-Palette;
-dreiundzwanzig Artikel in zwei Ebenen, in drei Phasen geschrieben.
+zweiundzwanzig Artikel in zwei Ebenen, in drei Phasen geschrieben.
 
 **Draußen, benannt damit die Auslassungen Entscheidungen sind:** Hilfe im
 Portal (ein Kunde besucht es drei- bis fünfmal je Auftrag; was er nicht
@@ -229,7 +229,7 @@ Geteilt, mit unterschiedlicher Begründung je Hälfte:
 
 - **Index** (Slug, Titel, Beschreibung, Art, Reihenfolge, Screens, Fähigkeit,
   Reintext für die Suche): gecacht. Ohne ihn liest jeder Seitenaufruf
-  dreiundzwanzig Dateien, nur um zu wissen, ob es für diesen Screen einen
+  zweiundzwanzig Dateien, nur um zu wissen, ob es für diesen Screen einen
   Artikel gibt.
 - **Artikeltext**: nicht gecacht. Eine Datei parsen ist etwa eine
   Millisekunde, ein Cache dafür ist Infrastruktur ohne Anlass — und der
@@ -240,8 +240,8 @@ Der Cache-Schlüssel enthält den Hash über die `filemtime` aller Hilfedateien.
 `docker/app/entrypoint.sh` räumt bewusst keine Caches (siehe dort den
 `ponytail:`-Kommentar zu `config:cache`), und der Store ist Redis — der
 überlebt den Deploy. Ohne selbstinvalidierenden Schlüssel stünde nach einem
-Release der Index des vorigen. Dreiundzwanzig `stat`-Aufrufe sind ein
-Bruchteil von dreiundzwanzig Dateilesungen samt YAML.
+Release der Index des vorigen. Zweiundzwanzig `stat`-Aufrufe sind ein
+Bruchteil von zweiundzwanzig Dateilesungen samt YAML.
 
 ## 5. Serverseite
 
@@ -444,7 +444,7 @@ vielleicht ⌘K drückt, ist die teure Variante. Der Modulzustand überlebt
 Inertia-Navigation, geholt wird also einmal je Seitenladung.
 
 Ein Suchindex-Paket wäre Infrastruktur für ein Problem, das bei zweihundert
-Artikeln anfinge; ein Substring-Filter über dreiundzwanzig reicht.
+Artikeln anfinge; ein Substring-Filter über zweiundzwanzig reicht.
 
 Was ein Treffer tut, hängt an derselben Schwelle wie der Knopf: darüber
 klappt die Spalte auf und zeigt den Artikel, darunter wird nach
@@ -508,27 +508,29 @@ Aufgabe fehlt, stehen sie allein.
 einen 2FA-Schritt an, den `InvitationController` optional gemacht hat. Der
 Widerspruch wird ein eigenes Issue, keine stille Mitreparatur.
 
-### 8.3 Referenz — vierzehn
+### 8.3 Referenz — dreizehn
 
 Je einer pro Navigationseintrag, Slug mit Suffix: `uebersicht-referenz`,
 `anfragen-referenz`, `projekte-referenz`, `galerien-referenz`,
 `kontakte-referenz`, `kalender-referenz`, `abwesenheiten-referenz`,
 `benachrichtigungen-referenz`, `posteingang-referenz`, `pakete-referenz`,
-`vorlagen-referenz`, `team-referenz`, `auswertungen-referenz`,
-`einstellungen-referenz`.
+`vorlagen-referenz`, `auswertungen-referenz`, `einstellungen-referenz`.
+
+Kein `team-referenz`: `team-einladen` trägt das Rollenmodell schon, und
+sonst ist auf `staff.index` nichts verborgen.
 
 ### 8.4 Phasen
 
-Dreiundzwanzig Artikel sind der größere Teil der Schreibarbeit. Ein PR, aber
+Zweiundzwanzig Artikel sind der größere Teil der Schreibarbeit. Ein PR, aber
 drei Etappen darin:
 
 - **Phase 1** — Migration, Mechanik, dazu `erste-schritte`, `lead-anlegen`,
   `projekttypen-und-felder`, `mcp-claude-verbinden`, `mail-weiterleitung`.
   Damit ist alles beweisbar: Spalte, Umschalter, Palette, Platzhalter,
-  Berechtigung. **Hier wird der Ton beurteilt, bevor achtzehn weitere Artikel
+  Berechtigung. **Hier wird der Ton beurteilt, bevor siebzehn weitere Artikel
   daran hängen.**
 - **Phase 2** — die restlichen vier Aufgabenartikel.
-- **Phase 3** — die vierzehn Referenzartikel.
+- **Phase 3** — die dreizehn Referenzartikel.
 
 Ein Screen ohne Artikel zeigt keinen Knopf.
 
@@ -582,7 +584,7 @@ Commit davor (§3.3) ist die Gegenmaßnahme, `wide` auf allen 29 (§3.2) die
 zweite: das Erscheinungsbild bleibt exakt, der Diff ist pro Datei drei Zeilen.
 
 **Ein langlebiger Branch.** Ein PR für Migration, Mechanik und
-dreiundzwanzig Artikel steht lange offen, während parallele Sitzungen an
+zweiundzwanzig Artikel steht lange offen, während parallele Sitzungen an
 denselben Dateien arbeiten. Gegenmaßnahme in der Reihenfolge: Migration und
 Mechanik früh stabil, danach kommt nur noch Markdown dazu — und Markdown
 kollidiert mit nichts.
