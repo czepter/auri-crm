@@ -270,11 +270,6 @@ Route::middleware('audience:staff')->group(function () {
         Route::delete('/team/einladungen/{invitation}', [InvitationController::class, 'destroy'])
             ->name('staff.invitation.destroy');
 
-        // E-12. Everything that arrived and did not thread itself, and the
-        // addresses the studio hands out. Rotation posts here but is
-        // authorised in RotateInboundSecret rather than by this route — see
-        // that action's own doc comment for why the check is not on the
-        // screen.
         // Suche und Artikel-JSON vor dem Platzhalter registriert, sonst
         // schluckt /hilfe/{slug} beide.
         Route::get('/hilfe', [HelpController::class, 'index'])->name('help.index');
@@ -282,6 +277,11 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/hilfe/artikel/{slug}', [HelpController::class, 'article'])->name('help.article');
         Route::get('/hilfe/{slug}', [HelpController::class, 'show'])->name('help.show');
 
+        // E-12. Everything that arrived and did not thread itself, and the
+        // addresses the studio hands out. Rotation posts here but is
+        // authorised in RotateInboundSecret rather than by this route — see
+        // that action's own doc comment for why the check is not on the
+        // screen.
         Route::get('/posteingang', [InboxController::class, 'index'])->name('inbox.index');
         Route::post('/posteingang/{inboundMessage}/zuordnen', [InboxController::class, 'attach'])
             ->name('inbox.attach');
