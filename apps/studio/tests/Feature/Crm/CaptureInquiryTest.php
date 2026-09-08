@@ -316,3 +316,21 @@ it('keeps the detail behind Sonstige and drops it when the case changes', functi
         ->and($lead->fresh()->source_other)->toBeNull()
         ->and($lead->fresh()->captured_via_other)->toBe('Brief');
 });
+
+it('backdates the capture to the day the inquiry actually arrived', function () {
+    $this->actingAs($this->staff, 'staff')
+        ->post('/anfragen', payload(['captured_at' => '2026-05-02']))
+        ->assertRedirect('/anfragen');
+
+    expect(Lead::sole()->captured_at->toDateString())->toBe('2026-05-02');
+});
+
+it('captures now when no date is given, and refuses a future one', function () {
+    $this->actingAs($this->staff, 'staff')->post('/anfragen', payload());
+
+    expect(Lead::sole()->captured_at->isToday())->toBeTrue();
+
+    $this->actingAs($this->staff, 'staff')
+        ->post('/anfragen', payload(['captured_at' => now()->addDay()->toDateString()]))
+        ->assertSessionHasErrors('captured_at');
+});

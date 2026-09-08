@@ -39,6 +39,10 @@ const form = useForm({
   captured_via: props.channels[0].value,
   date: '',
   inquiry_text: '',
+  // Empty is now. Filled only when the call happened before this form was
+  // opened — the funnel is counted on it, so today's default cannot be a
+  // guess made silently.
+  captured_at: '',
 })
 
 // The project name proposes itself from contact and type, so the "Betreff"
@@ -215,6 +219,18 @@ function submit() {
             <Textarea :id="id" v-model="form.inquiry_text" variant="filled" rows="8" />
           </Field>
         </div>
+
+        <details class="mb-5">
+          <summary
+            class="w-fit cursor-pointer text-[12.5px] tracking-[-0.01em] text-ink-2 marker:text-ink-2"
+          >{{ $t('leads.advanced') }}</summary>
+
+          <div class="mt-3">
+            <Field v-slot="{ id }" :label="$t('leads.capturedAt')" :error="form.errors.captured_at">
+              <DatePicker :id="id" v-model="form.captured_at" />
+            </Field>
+          </div>
+        </details>
 
         <div class="mt-5 flex items-center gap-3 pt-4 shadow-[inset_0_1px_0_var(--rule)] [&>button:last-child]:ml-auto">
           <a

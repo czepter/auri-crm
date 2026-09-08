@@ -39,6 +39,8 @@ const props = defineProps<{
         capturedVia: string | null;
         capturedAt: string;
         booked: boolean;
+        lostReason: string | null;
+        outcomeLabel: string | null;
     };
     people: App.Crm.Data.ProjectPersonData[];
     shoots: App.Crm.Data.ShootData[];
@@ -132,6 +134,10 @@ const edit = useForm({
               end_time: shoot.endTime ?? "",
           })),
 });
+
+function reopen() {
+    router.post(`/anfragen/${props.lead.id}/wieder-oeffnen`, {}, { preserveScroll: true });
+}
 
 function save() {
     edit.transform((data) => ({
@@ -280,6 +286,20 @@ const due = computed(() => {
                             $t(due.label)
                         }}</Button>
                     </div>
+                </div>
+
+                <div
+                    v-if="lead.outcomeLabel"
+                    class="mt-2.5 flex items-center gap-3 rounded-[7px] bg-late-bg py-[7px] pr-[9px] pl-[11px] text-[12.5px] leading-[1.3] font-medium text-destructive"
+                >
+                    {{ lead.outcomeLabel }} — {{ lead.lostReason }}
+                    <button
+                        class="ml-auto cursor-pointer whitespace-nowrap text-[var(--accent)]"
+                        type="button"
+                        @click="reopen"
+                    >
+                        {{ $t('lead.reopen') }}
+                    </button>
                 </div>
 
                 <CaseSection :title="$t('lead.said')">

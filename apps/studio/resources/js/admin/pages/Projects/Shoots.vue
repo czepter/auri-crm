@@ -129,6 +129,10 @@ function confirmCancel() {
   })
 }
 
+function uncancel(shoot: App.Crm.Data.ShootData) {
+  router.post(`/shootings/${shoot.id}/absage-zuruecknehmen`, {}, { preserveScroll: true })
+}
+
 function designatePrimary(shoot: App.Crm.Data.ShootData) {
   router.post(`/shootings/${shoot.id}/haupttermin`, {}, { preserveScroll: true })
 }
@@ -299,8 +303,16 @@ const TONE: Record<string, string> = {
               </span>
             </div>
 
-            <div v-if="shoot.isCancelled" class="mt-1.5 flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[12.5px] leading-[1.3] font-medium text-destructive">
+            <div v-if="shoot.isCancelled" class="mt-1.5 flex items-center gap-3 rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[12.5px] leading-[1.3] font-medium text-destructive">
               {{ $t('project.cancelled', { reason: shoot.cancelledReason }) }}
+              <button
+                v-if="header.canManageShoots"
+                class="ml-auto cursor-pointer whitespace-nowrap text-[var(--accent)]"
+                type="button"
+                @click="uncancel(shoot)"
+              >
+                {{ $t('project.uncancel') }}
+              </button>
             </div>
 
             <template v-else>

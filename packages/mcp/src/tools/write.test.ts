@@ -50,7 +50,7 @@ describe('registerWriteTools', () => {
     await Promise.all(clients.splice(0).map((client) => client.close()))
   })
 
-  it('registers exactly the five write tools', async () => {
+  it('registers exactly the write tools', async () => {
     const { client } = await connectedPair(fakeApiClient().client, true)
     clients.push(client)
 
@@ -60,8 +60,13 @@ describe('registerWriteTools', () => {
       'add_internal_note',
       'add_project_field',
       'advance_lead_stage',
+      'advance_shoot_status',
+      'cancel_shoot',
       'capture_lead',
+      'close_lead',
+      'reopen_lead',
       'set_project_fields',
+      'uncancel_shoot',
     ])
   })
 

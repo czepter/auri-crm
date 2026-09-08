@@ -8,6 +8,8 @@ use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Models\AuditLog;
 use App\Models\User;
+use App\Payments\Models\PaymentPlan;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 
@@ -132,4 +134,71 @@ it('leaves an existing job alone when the stage catches up', function () {
 
     expect($lead->project->job()->count())->toBe(1)
         ->and($lead->project->job->is($job))->toBeTrue();
+});
+
+it('restores the original entry time when a mistaken move is taken back', function () {
+    $lead = Lead::factory()->atStage(LeadStage::New, daysAgo: 9)->create();
+    $entered = $lead->stage_entered_at;
+
+    app(AdvanceLeadStage::class)($lead, stage(LeadStage::Contacted));
+    app(AdvanceLeadStage::class)($lead, stage(LeadStage::New));
+
+    // Back in Neu it has stood there since it arrived, not since the undo —
+    // the board colours staleness off this, and T-20's reminder ladder counts
+    // its rungs off it.
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::New->value)
+        ->and($lead->fresh()->stage_entered_at->diffInSeconds($entered))->toBeLessThan(2);
+});
+
+it('backdates a move that is entered after the fact', function () {
+    $lead = Lead::factory()->create();
+
+    app(AdvanceLeadStage::class)($lead, stage(LeadStage::Contacted), null, CarbonImmutable::parse('2026-07-03 09:00'));
+
+    expect($lead->fresh()->stage_entered_at->toDateString())->toBe('2026-07-03');
+});
+
+it('takes the booking back when the won stage is taken back', function () {
+    $lead = Lead::factory()->create();
+    $actor = User::factory()->create();
+
+    app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), $actor);
+    expect(Job::count())->toBe(1);
+
+    app(AdvanceLeadStage::class)($lead, stage(LeadStage::ContractSent), $actor);
+
+    expect(Job::count())->toBe(0)
+        ->and($lead->fresh()->stage->key)->toBe(LeadStage::ContractSent->value)
+        ->and(AuditLog::where('event', 'project.unbooked')->count())->toBe(1);
+});
+
+it('refuses to take the booking back once a payment plan hangs off it', function () {
+    $lead = Lead::factory()->create();
+    $actor = User::factory()->create();
+
+    app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), $actor);
+    PaymentPlan::factory()->for(Job::sole())->create();
+
+    expect(fn () => app(AdvanceLeadStage::class)($lead, stage(LeadStage::ContractSent), $actor))
+        ->toThrow(DomainException::class);
+
+    expect(Job::count())->toBe(1)
+        ->and($lead->fresh()->stage->key)->toBe(LeadStage::Booked->value);
+});
+
+it('reopens a lead that was closed by mistake', function () {
+    $lead = Lead::factory()->create();
+
+    app(AdvanceLeadStage::class)->markLost($lead, 'Budget');
+    expect($lead->fresh()->isLost())->toBeTrue();
+
+    app(AdvanceLeadStage::class)->reopen($lead);
+
+    expect($lead->fresh()->isLost())->toBeFalse()
+        ->and($lead->fresh()->lost_reason)->toBeNull()
+        ->and($lead->fresh()->outcome)->toBeNull();
+
+    // And it can move again, which is the whole point.
+    app(AdvanceLeadStage::class)($lead, stage(LeadStage::Contacted));
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value);
 });

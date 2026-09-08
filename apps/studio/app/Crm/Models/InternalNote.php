@@ -5,6 +5,7 @@ namespace App\Crm\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Models\User;
+use Carbon\CarbonInterface;
 use Database\Factories\Crm\InternalNoteFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -27,7 +28,18 @@ class InternalNote extends Model
     use HasFactory;
     use HasPublicId;
 
-    protected $fillable = ['project_id', 'author_id', 'body'];
+    protected $fillable = ['project_id', 'author_id', 'body', 'occurred_at'];
+
+    protected function casts(): array
+    {
+        return ['occurred_at' => 'immutable_datetime'];
+    }
+
+    /** What the note is about happened then; absent it, when it was written. */
+    public function happenedAt(): CarbonInterface
+    {
+        return $this->occurred_at ?? $this->created_at;
+    }
 
     public function project(): BelongsTo
     {

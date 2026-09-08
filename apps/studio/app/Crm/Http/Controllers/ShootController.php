@@ -10,6 +10,7 @@ use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
+use Carbon\CarbonImmutable;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -48,12 +49,14 @@ class ShootController extends Controller
                 'required',
                 Rule::exists('stages', 'key')->where('pipeline', StagePipeline::Project->value)->where('is_active', true),
             ],
+            'entered_at' => ['nullable', 'date', 'before_or_equal:now'],
         ]);
 
         return $this->attempt('status', fn () => $advance(
             $shoot,
             $stages->byKey(StagePipeline::Project, $validated['status']),
             auth('staff')->user(),
+            isset($validated['entered_at']) ? CarbonImmutable::parse($validated['entered_at']) : null,
         ));
     }
 
@@ -70,6 +73,14 @@ class ShootController extends Controller
             $validated['reason'],
             auth('staff')->user(),
         ));
+    }
+
+    /** Das Gegenstück zu cancel(): ein irrtümlich abgesagtes Shooting steht wieder in seinem Status. */
+    public function uncancel(Shoot $shoot, AdvanceShootStatus $advance): RedirectResponse
+    {
+        $this->authorize('update', $shoot);
+
+        return $this->attempt('reason', fn () => $advance->uncancel($shoot, auth('staff')->user()));
     }
 
     public function designatePrimary(Shoot $shoot, DesignatePrimaryShoot $designate): RedirectResponse
