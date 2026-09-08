@@ -64,7 +64,7 @@ it('sends the old settings entries to the hub', function () {
 
     $this->get('/einstellungen/aufgabenvorlagen')->assertRedirect('/vorlagen?typ=aufgaben');
     $this->get('/einstellungen/fragebogen-vorlagen')->assertRedirect('/vorlagen?typ=fragebogen');
-    $this->get('/einstellungen/galerie-vorlagen')->assertRedirect('/vorlagen?typ=galerien');
+    $this->get('/einstellungen/galerie-vorlagen')->assertRedirect('/galerien?einstellungen=vorlagen');
     $this->get('/dokumentvorlagen')->assertRedirect('/vorlagen?typ=dokumente');
 });
 

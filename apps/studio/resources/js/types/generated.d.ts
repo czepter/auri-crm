@@ -540,6 +540,7 @@ requiresSettledBalance: boolean | null,
 downloadsEnabled: boolean | null,
 listsEnabled: boolean | null,
 commentsEnabled: boolean | null,
+isDefault: boolean,
 };
 export type GalleryRowData = {
 id: string,
@@ -748,6 +749,7 @@ requiresSettledBalance: boolean,
 downloadsEnabled: boolean,
 listsEnabled: boolean,
 commentsEnabled: boolean,
+design: Record<string, string>,
 };
 export type NumberRangeData = {
 id: string,

@@ -3,11 +3,13 @@
 namespace App\Gallery\Http\Controllers;
 
 use App\Crm\Models\Project;
+use App\Enums\Capability;
 use App\Gallery\Data\GalleryPresetData;
 use App\Gallery\Data\GalleryRowData;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryPreset;
 use App\Http\Controllers\Controller;
+use App\Settings\Data\GallerySettingsData;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
@@ -27,9 +29,14 @@ use Inertia\Response;
  */
 class GalleryIndexController extends Controller
 {
-    public function index(): Response
+    public function index(StudioSettingsResolver $settings): Response
     {
         $this->authorize('viewAny', Gallery::class);
+
+        // G-14: die Vorgaben reisen mit der Liste, weil der Raum ueber ihr
+        // aufgeht. Wer sie nicht bearbeiten darf, bekommt sie nicht — die
+        // Pille im Kopf haengt an genau diesem null.
+        $mayManage = auth('staff')->user()?->role->allows(Capability::ManageSettings) ?? false;
 
         $galleries = Gallery::query()
             ->with(['project', 'currentVersion'])
@@ -44,6 +51,13 @@ class GalleryIndexController extends Controller
 
         return Inertia::render('Galleries/Index', [
             'galleries' => GalleryRowData::collect($galleries),
+            'settings' => $mayManage ? GallerySettingsData::fromResolver($settings) : null,
+            'presets' => $mayManage
+                ? GalleryPresetData::collect(GalleryPreset::query()->orderBy('name')->get())
+                : [],
+            // Die Adresszeile der Vorschau. Ohne Slug — welche Galerie das
+            // spaeter wird, entscheidet sich beim Anlegen.
+            'galleryHost' => preg_replace('#^https?://#', '', rtrim((string) config('services.gallery.url'), '/')),
         ]);
     }
 
@@ -61,6 +75,7 @@ class GalleryIndexController extends Controller
                 'comments' => $settings->galleryCommentsEnabled(),
                 'expiryDays' => $settings->galleryDefaults()['expiryDays'],
                 'requiresSettledBalance' => $settings->galleryDefaults()['requiresSettledBalance'],
+                'design' => $settings->galleryDesign(),
             ],
         ]);
     }

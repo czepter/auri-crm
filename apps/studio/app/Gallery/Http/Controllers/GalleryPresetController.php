@@ -9,12 +9,13 @@ use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 /**
- * Eigener Screen neben den Studio-Standardwerten, nicht ein zweiter Abschnitt
- * auf ihnen: eine Vorlage ist eine benannte Sache, von der es mehrere gibt,
- * und die Rail führt sie wie Aufgaben- und Fragebogenvorlagen.
+ * Seit G-16 im Einstellungsraum über /galerien, neben den Vorgaben, auf die
+ * sich eine Vorlage bezieht: was eine Vorlage offenlässt, steht einen
+ * Abschnitt weiter oben und nicht auf einem anderen Screen.
  */
 class GalleryPresetController extends Controller
 {
@@ -33,7 +34,7 @@ class GalleryPresetController extends Controller
             subject: $preset->public_id,
         );
 
-        return redirect('/einstellungen/galerie-vorlagen');
+        return back();
     }
 
     /**
@@ -68,7 +69,7 @@ class GalleryPresetController extends Controller
             subject: $preset->public_id,
         );
 
-        return redirect('/einstellungen/galerie-vorlagen');
+        return back();
     }
 
     /**
@@ -133,7 +134,24 @@ class GalleryPresetController extends Controller
 
         $galleryPreset->update($this->validated($request));
 
-        return redirect('/einstellungen/galerie-vorlagen');
+        return back();
+    }
+
+    /**
+     * G-16: der Startpunkt, mit dem "Galerie anlegen" beginnt. Genau eine
+     * Vorlage traegt ihn — den Ausschluss erzwingt der partielle Unique-Index
+     * auf gallery_presets, hier steht nur, welche der beiden Zeilen weicht.
+     */
+    public function markDefault(GalleryPreset $galleryPreset): RedirectResponse
+    {
+        $this->authorizeSettings();
+
+        DB::transaction(function () use ($galleryPreset) {
+            GalleryPreset::query()->where('is_default', true)->update(['is_default' => false]);
+            $galleryPreset->update(['is_default' => true]);
+        });
+
+        return back();
     }
 
     public function destroy(GalleryPreset $galleryPreset): RedirectResponse
@@ -149,7 +167,7 @@ class GalleryPresetController extends Controller
 
         $galleryPreset->delete();
 
-        return redirect('/einstellungen/galerie-vorlagen');
+        return back();
     }
 
     /** @return array<string, mixed> */

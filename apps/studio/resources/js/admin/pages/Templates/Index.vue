@@ -5,7 +5,6 @@ import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import TaskTemplateForm from '@/admin/components/templates/TaskTemplateForm.vue'
-import GalleryPresetForm from '@/admin/components/templates/GalleryPresetForm.vue'
 import TemplateCreateDialog from '@/admin/components/templates/TemplateCreateDialog.vue'
 import TaskTemplatePreview from '@/admin/components/templates/TaskTemplatePreview.vue'
 import { Input } from '@/ui/input'
@@ -91,6 +90,7 @@ const rows = computed<Record<Kind, Row[]>>(() => ({
       : t(`galleryPresets.mode_${preset.expiryMode}`),
     note: '',
     active: true,
+    href: '/galerien?einstellungen=vorlagen',
   })),
 }))
 
@@ -106,16 +106,14 @@ function matching(list: Row[]): Row[] {
 
 const total = computed(() => props.kinds.reduce((sum, kind) => sum + props.counts[kind], 0))
 
-// Aufgaben und Galerie-Vorlagen werden hier bearbeitet; Fragebögen und
-// Dokumente haben ihren eigenen Editor, den die Zeile öffnet.
-const editable = computed(() => props.kind === 'aufgaben' || props.kind === 'galerien')
+// Nur Aufgaben werden hier bearbeitet; Fragebögen, Dokumente und seit G-16
+// die Galerie-Vorlagen haben ihren eigenen Editor, den die Zeile öffnet.
+const editable = computed(() => props.kind === 'aufgaben')
 
 const current = computed(() => {
   if (!editable.value) return null
 
-  const list = props.kind === 'aufgaben' ? props.taskTemplates : props.galleryPresets
-
-  return list.find((entry) => entry.id === props.selected) ?? list[0] ?? null
+  return props.taskTemplates.find((entry) => entry.id === props.selected) ?? props.taskTemplates[0] ?? null
 })
 
 function open(row: Row) {
@@ -231,20 +229,13 @@ function open(row: Row) {
 
           <div v-if="editable && current" class="min-w-0 max-w-[600px] flex-1">
             <TaskTemplateForm
-              v-if="kind === 'aufgaben'"
               :key="current.id"
-              :template="(current as App.Crm.Data.TaskTemplateData)"
+              :template="current"
               :audiences="audiences"
               :shoot-kinds="shootKinds"
             />
-            <GalleryPresetForm
-              v-else
-              :key="current.id"
-              :preset="(current as App.Gallery.Data.GalleryPresetData)"
-            />
 
             <TaskTemplatePreview
-              v-if="kind === 'aufgaben'"
               class="mt-8"
               :shoot-kinds="shootKinds"
               :preview="preview"

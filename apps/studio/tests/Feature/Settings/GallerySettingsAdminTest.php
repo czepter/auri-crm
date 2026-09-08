@@ -9,17 +9,12 @@ uses(RefreshDatabase::class);
 
 beforeEach(fn () => Cache::store('redis')->flush());
 
-it('hands the gallery defaults to their own screen', function () {
-    $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+// G-14: der eigene Screen ist weg, die Vorgaben stehen auf /galerien. Ein
+// Lesezeichen darauf landet im richtigen Abschnitt.
+it('sends the old gallery settings screen to the room', function () {
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->get('/einstellungen/galerien')
-        ->assertOk()
-        ->viewData('page')['props'];
-
-    expect($props['settings'])
-        ->toHaveKey('expiryDays')
-        ->toHaveKey('downloadsEnabled')
-        ->toHaveKey('listsEnabled')
-        ->toHaveKey('commentsEnabled');
+        ->assertRedirect('/galerien?einstellungen=standardwerte');
 });
 
 it('updates the gallery defaults without touching the portal switches', function () {
@@ -41,13 +36,15 @@ it('updates the gallery defaults without touching the portal switches', function
             'gallery_default_downloads_enabled' => true,
             'gallery_default_lists_enabled' => false,
             'gallery_default_comments_enabled' => false,
-        ])->assertRedirect('/einstellungen/galerien');
+            'gallery_default_design' => ['cover' => 'split', 'type' => 'serif', 'colour' => 'warm', 'grid' => 'dense'],
+        ])->assertRedirect('/galerien');
 
     $row = StudioSettings::query()->sole();
 
     expect($row->gallery_default_expiry_days)->toBe(90)
         ->and($row->gallery_default_requires_settled_balance)->toBeTrue()
         ->and($row->gallery_default_lists_enabled)->toBeFalse()
+        ->and($row->gallery_default_design['colour'])->toBe('warm')
         ->and($row->portal_maintenance_enabled)->toBeTrue()
         ->and($row->portal_messaging_mode)->toBe('any');
 });
@@ -60,10 +57,18 @@ it('no longer accepts a gallery default on the portal route', function () {
     expect(StudioSettings::query()->sole()->gallery_default_expiry_days)->toBeNull();
 });
 
-it('gives every non-owner role the same response on the gallery settings route as a route that does not exist', function (StaffRole $role, int $status) {
+// Das Tor sitzt jetzt am Schreiben: der Weg dorthin ist eine Weiterleitung
+// auf eine Liste, die diese Rollen ohnehin sehen duerfen, und der Raum geht
+// ohne Vorgaben in den Props gar nicht erst auf.
+it('gives every non-owner role the same response on the gallery settings write as a route that does not exist', function (StaffRole $role, int $status) {
     $missing = $this->actingAs(staffMember($role), 'staff')->get('/this-route-does-not-exist-xyz');
 
-    $response = $this->actingAs(staffMember($role), 'staff')->get('/einstellungen/galerien');
+    $response = $this->actingAs(staffMember($role), 'staff')->patch('/einstellungen/galerien', [
+        'gallery_default_requires_settled_balance' => false,
+        'gallery_default_downloads_enabled' => true,
+        'gallery_default_lists_enabled' => true,
+        'gallery_default_comments_enabled' => true,
+    ]);
 
     $response->assertStatus($status);
 
@@ -71,7 +76,7 @@ it('gives every non-owner role the same response on the gallery settings route a
         expect($response->status())->toBe($missing->status());
     }
 })->with([
-    [StaffRole::Owner, 200],
+    [StaffRole::Owner, 302],
     [StaffRole::Photographer, 404],
     [StaffRole::Editor, 404],
     [StaffRole::SecondShooter, 404],

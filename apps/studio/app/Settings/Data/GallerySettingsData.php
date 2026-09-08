@@ -22,6 +22,8 @@ class GallerySettingsData extends Data
         public bool $downloadsEnabled,
         public bool $listsEnabled,
         public bool $commentsEnabled,
+        /** @var array<string, string> */
+        public array $design,
     ) {}
 
     public static function fromResolver(StudioSettingsResolver $settings): self
@@ -33,6 +35,7 @@ class GallerySettingsData extends Data
             downloadsEnabled: $settings->galleryDownloadsEnabled(),
             listsEnabled: $settings->galleryListsEnabled(),
             commentsEnabled: $settings->galleryCommentsEnabled(),
+            design: $settings->galleryDesign(),
         );
     }
 }
