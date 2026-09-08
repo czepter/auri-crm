@@ -31,4 +31,26 @@ describe('holeIndex', () => {
 
     vi.unstubAllGlobals()
   })
+
+  // Ein gemerkter abgelehnter Promise legt die Hilfesuche bis zum
+  // Seitenneuladen still, und CommandPalette.vue awaitet ohne catch.
+  it('merkt sich einen Fehlschlag nicht', async () => {
+    const antwort = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError('offline'))
+      .mockResolvedValueOnce(new Response(JSON.stringify([{ slug: 'erste-schritte' }])))
+    vi.stubGlobal('fetch', antwort)
+
+    // Frisches Modul: der Test darüber hat den Modulzustand schon belegt.
+    vi.resetModules()
+    const modul = await import('./helpSearch')
+
+    await expect(modul.holeIndex()).resolves.toEqual([])
+    await expect(modul.holeIndex()).resolves.toEqual([{ slug: 'erste-schritte' }])
+
+    expect(antwort).toHaveBeenCalledTimes(2)
+
+    vi.unstubAllGlobals()
+    vi.resetModules()
+  })
 })

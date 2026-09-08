@@ -8,7 +8,16 @@ export type HelpEintrag = { slug: string; titel: string; beschreibung: string; a
 let geholt: Promise<HelpEintrag[]> | null = null
 
 export function holeIndex(): Promise<HelpEintrag[]> {
-  geholt ??= fetch('/hilfe/suche', { headers: { Accept: 'application/json' } }).then((r) => r.json())
+  // Ohne das Zurücksetzen bliebe ein einziger Fehlschlag — offline, oder eine
+  // 302 auf /login, an deren HTML r.json() erstickt — bis zum Seitenneuladen
+  // gemerkt, und CommandPalette.vue awaitet ohne catch.
+  geholt ??= fetch('/hilfe/suche', { headers: { Accept: 'application/json' } })
+    .then((r) => r.json())
+    .catch(() => {
+      geholt = null
+      return []
+    })
+
   return geholt
 }
 

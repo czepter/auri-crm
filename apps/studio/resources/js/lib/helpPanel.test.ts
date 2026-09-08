@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { helpPanel, linkZiel } from './helpPanel'
 
 const klick = { defaultPrevented: false, button: 0, metaKey: false, ctrlKey: false, shiftKey: false, altKey: false }
@@ -43,6 +43,34 @@ describe('helpPanel', () => {
     helpPanel.zuruecksetzen()
 
     expect(helpPanel.offen.value).toBe(false)
+  })
+})
+
+describe('ohne Speicher', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.resetModules()
+  })
+
+  // Ein Browser mit blockierten Site-Daten wirft schon beim Getter. Page.vue
+  // importiert dieses Modul und steht auf jedem Adminscreen — ein Wurf beim
+  // Import nimmt das ganze Admin-Bundle mit.
+  it('lädt trotzdem und startet offen', async () => {
+    vi.stubGlobal('localStorage', {
+      getItem() {
+        throw new DOMException('blocked', 'SecurityError')
+      },
+      setItem() {
+        throw new DOMException('blocked', 'SecurityError')
+      },
+    })
+
+    vi.resetModules()
+    const modul = await import('./helpPanel')
+
+    expect(modul.helpPanel.offen.value).toBe(true)
+    expect(() => modul.helpPanel.schliessen()).not.toThrow()
+    expect(modul.helpPanel.offen.value).toBe(false)
   })
 })
 

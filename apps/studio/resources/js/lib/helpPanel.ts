@@ -17,6 +17,27 @@ const ueberschrieben = ref<string | null>(null)
 // Knopf liest nur.
 const dockt = ref(false)
 
+// Ein Browser mit blockierten Site-Daten wirft schon beim Zugriff auf
+// `localStorage`. zuruecksetzen() läuft beim Import, Page.vue importiert das
+// hier und steht auf jedem Adminscreen — ein Wurf nimmt das ganze Bundle mit.
+// Ohne Speicher gilt der Vorgabewert, und der Zustand hält für diese
+// Seitenladung.
+function gespeichert(): string | null {
+  try {
+    return localStorage.getItem('help.open')
+  } catch {
+    return null
+  }
+}
+
+function speichern(wert: string) {
+  try {
+    localStorage.setItem('help.open', wert)
+  } catch {
+    // Siehe gespeichert().
+  }
+}
+
 function zuruecksetzen() {
   geladen.clear()
   ueberschrieben.value = null
@@ -24,9 +45,7 @@ function zuruecksetzen() {
   // Kein gespeicherter Wert heißt offen. Geschrieben wird `help.open` nur
   // durch oeffnen()/schliessen() — also nur durch einen bewussten Klick,
   // nie durchs bloße Rendern.
-  offen.value = localStorage.getItem('help.open') === null
-    ? true
-    : localStorage.getItem('help.open') === '1'
+  offen.value = gespeichert() === null ? true : gespeichert() === '1'
 }
 
 zuruecksetzen()
@@ -49,13 +68,13 @@ export const helpPanel = {
 
   oeffnen(slug?: string) {
     offen.value = true
-    localStorage.setItem('help.open', '1')
+    speichern('1')
     if (slug) ueberschrieben.value = slug
   },
 
   schliessen() {
     offen.value = false
-    localStorage.setItem('help.open', '0')
+    speichern('0')
   },
 
   navigiert() {
