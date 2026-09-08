@@ -6,16 +6,6 @@ reihenfolge: 10
 screens: [dashboard]
 ---
 
-Die Einrichtung hat nach der Identität gefragt: Firma, Anschrift, Anzeigename,
-dazu die Umsatzsteuerlage. Steuernummer, USt-IdNr., Registereintrag und
-Bankverbindung fehlen mit Absicht. Die stehen auf einer Rechnung, und dort
-werden sie fällig, nicht bei der Einrichtung; die Felder dafür liegen in den
-Einstellungen unter *Rechtliche Einheit* und *Bankverbindung*.
-
-Aus deiner Angabe zur Umsatzsteuer ist die passende Rechnungsvorlage
-entstanden, dazu ein Angebot, ein Werkvertrag und zwei Mailvorlagen. Sie
-liegen unter *Vorlagen*.
-
 ## Projekttypen zuerst
 
 Jede Anfrage bekommt beim Erfassen einen Projekttyp, und die Felder hängen am

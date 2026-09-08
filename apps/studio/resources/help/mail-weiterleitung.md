@@ -36,13 +36,3 @@ Du siehst sie, zuordnen lässt sie sich nicht.
 
 Mail an eine Adresse, die zu keinem Studio gehört, wird verworfen, ohne dass
 Absender, Betreff oder Text irgendwo gespeichert werden.
-
-## Rotieren
-
-Rotieren trifft mehr als die Adresse oben. Jede Nachricht, die du je aus einem
-Projekt geschickt hast, trägt eine Antwortadresse aus demselben Geheimnis, und
-die liegen in den Postfächern deiner Kunden. Auch jede Weiterleitung, die du
-bei deinem Anbieter eingerichtet hast, zeigt danach auf eine tote Adresse.
-
-Das ist die richtige Antwort auf eine Adresse, die in falsche Hände geraten
-ist, und der falsche Weg zu allem anderen.
