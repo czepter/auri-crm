@@ -3,7 +3,7 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
 import { helpPanel } from '@/lib/helpPanel'
-import { treffer, type HelpEintrag } from '@/lib/helpSearch'
+import { holeIndex, treffer, type HelpEintrag } from '@/lib/helpSearch'
 
 /**
  * C-03 (#237): the search is a tool in the sidebar, not a field in a header.
@@ -25,11 +25,6 @@ const recent = () => (usePage().props.recent as Recent[] | null) ?? []
 const frage = ref('')
 const index = ref<HelpEintrag[]>([])
 
-// Modulebene, nicht Ref-Init: ein zweites <dialog>-Öffnen soll den Fetch
-// nicht wiederholen. Als geteilte Inertia-Prop wären es sechzig Kilobyte an
-// jeder Antwort, damit jemand vielleicht ⌘K drückt.
-let geholt: Promise<HelpEintrag[]> | null = null
-
 function recentGefiltert() {
   if (!frage.value) return recent()
 
@@ -39,8 +34,7 @@ function recentGefiltert() {
 
 async function open() {
   dialog.value?.showModal()
-  geholt ??= fetch('/hilfe/suche', { headers: { Accept: 'application/json' } }).then((r) => r.json())
-  index.value = await geholt
+  index.value = await holeIndex()
 }
 
 // Dieselbe Schwelle wie der Hilfe-Knopf: helpPanel.dockt sagt bereits, ob die
