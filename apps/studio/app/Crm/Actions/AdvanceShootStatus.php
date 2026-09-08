@@ -7,7 +7,9 @@ use App\Crm\Events\ShootStatusChanged;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Models\User;
+use App\Crm\Support\StageHistory;
 use App\Support\AuditLogger;
+use Carbon\CarbonInterface;
 use DomainException;
 
 /**
@@ -19,34 +21,48 @@ use DomainException;
  * BookProject and any future automation all get the same rules — BookProject
  * in particular routes through this rather than mass-updating the column.
  *
- * Correcting a mistaken forward transition has no path here, deliberately.
- * AdvanceLeadStage shipped with the identical hole.
+ * A correction backwards is the one move Stage::canTransitionTo refuses on
+ * this pipeline, and it is refused there for BookProject's sake: booking a
+ * project must never drag a delivered shoot back to gebucht. A move somebody
+ * asks for by hand is a different thing from one a side effect makes, so it is
+ * allowed here and guarded there.
  */
 class AdvanceShootStatus
 {
-    public function __invoke(Shoot $shoot, Stage $next, ?User $actor = null): Shoot
+    /** $enteredAt backdates the move; absent it, a correction restores the moment it first stood there. */
+    public function __invoke(Shoot $shoot, Stage $next, ?User $actor = null, ?CarbonInterface $enteredAt = null): Shoot
     {
         if ($shoot->isCancelled()) {
             throw new DomainException("Shoot {$shoot->public_id} is cancelled and cannot advance.");
         }
 
         $from = $shoot->status;
+        $backwards = $next->sort_order < $from->sort_order;
 
-        if (! $from->canTransitionTo($next)) {
+        if (! $backwards && ! $from->canTransitionTo($next)) {
             throw new DomainException(
                 "Illegal shoot transition {$from->key} -> {$next->key}."
             );
         }
 
+        $entered = $enteredAt
+            ?? ($backwards ? StageHistory::enteredAt('shoot.status_changed', $shoot->public_id, $next->key) : null)
+            ?? now();
+
         $shoot->forceFill([
             'status' => $next,
-            'status_entered_at' => now(),
+            'status_entered_at' => $entered,
         ])->save();
 
         AuditLogger::record(
             event: 'shoot.status_changed',
             actor: $actor ?? auth('staff')->user(),
-            context: ['from' => $from->key, 'to' => $next->key],
+            context: [
+                'from' => $from->key,
+                'to' => $next->key,
+                'entered_at' => $entered->toIso8601String(),
+                ...$backwards ? ['reverted' => true] : [],
+            ],
             subject: $shoot->public_id,
             projectId: $shoot->project_id,
         );
@@ -56,7 +72,7 @@ class AdvanceShootStatus
         return $shoot;
     }
 
-    public function cancel(Shoot $shoot, string $reason, ?User $actor = null): Shoot
+    public function cancel(Shoot $shoot, string $reason, ?User $actor = null, ?CarbonInterface $cancelledAt = null): Shoot
     {
         if ($shoot->isCancelled()) {
             throw new DomainException("Shoot {$shoot->public_id} is already cancelled.");
@@ -66,7 +82,7 @@ class AdvanceShootStatus
         // in is what the pipeline is measured on, and overwriting it here would
         // make every cancelled shoot look identical in hindsight.
         $shoot->forceFill([
-            'cancelled_at' => now(),
+            'cancelled_at' => $cancelledAt ?? now(),
             'cancelled_reason' => $reason,
         ])->save();
 
@@ -79,6 +95,36 @@ class AdvanceShootStatus
         );
 
         ShootCancelled::dispatch($shoot, $reason);
+
+        return $shoot;
+    }
+
+    /**
+     * Take back an absage. Same shape as AdvanceLeadStage::reopen and for the
+     * same reason: isCancelled() bars every further move, so a shoot cancelled
+     * by mistake is stuck for good without this. The status was never
+     * overwritten, so clearing the two columns puts it back where it stood.
+     */
+    public function uncancel(Shoot $shoot, ?User $actor = null): Shoot
+    {
+        if (! $shoot->isCancelled()) {
+            throw new DomainException("Shoot {$shoot->public_id} is not cancelled.");
+        }
+
+        $reason = $shoot->cancelled_reason;
+
+        $shoot->forceFill([
+            'cancelled_at' => null,
+            'cancelled_reason' => null,
+        ])->save();
+
+        AuditLogger::record(
+            event: 'shoot.uncancelled',
+            actor: $actor ?? auth('staff')->user(),
+            context: ['status' => $shoot->status->key, 'reason' => $reason],
+            subject: $shoot->public_id,
+            projectId: $shoot->project_id,
+        );
 
         return $shoot;
     }

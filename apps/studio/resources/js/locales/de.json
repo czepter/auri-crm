@@ -61,7 +61,9 @@
     "addPerson": "+ Person",
     "submitAndNext": "Anlegen und nächste",
     "conflictBooked": "Gebucht — {project}{venue} ›",
-    "otherDetail": "Details"
+    "otherDetail": "Details",
+    "advanced": "Erweitert",
+    "capturedAt": "Anfragedatum"
   },
   "board": {
     "title": "Anfragen",
@@ -231,6 +233,10 @@
     "notes": "Notizen",
     "notesInternalOnly": "Nur intern",
     "notePlaceholder": "Notiz schreiben …",
+    "noteOccurredAt": "Datum",
+    "advanced": "Erweitert",
+    "taskCompletedOn": "Erledigt am",
+    "uncancel": "Absage zurücknehmen",
     "noteEdit": "bearbeiten",
     "noteDelete": "löschen",
     "portalStatus": "Portal",
@@ -1383,6 +1389,7 @@
       "angenommen": "Angenommen"
     },
     "said": "Was sie schreiben",
+    "reopen": "Wieder öffnen",
     "noText": "Kein Text",
     "noReach": "Keine Kontaktdaten",
     "dates": "Termine",

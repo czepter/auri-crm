@@ -24,6 +24,7 @@ class InternalNoteController extends Controller
     {
         $validated = $request->validate([
             'body' => ['required', 'string', 'max:5000'],
+            'occurred_at' => ['nullable', 'date', 'before_or_equal:now'],
         ]);
 
         $principal = $request->user('api');
@@ -31,12 +32,14 @@ class InternalNoteController extends Controller
         $note = $project->notes()->create([
             'author_id' => $principal instanceof User ? $principal->id : null,
             'body' => $validated['body'],
+            'occurred_at' => $validated['occurred_at'] ?? null,
         ]);
 
         return response()->json([
             'id' => $note->public_id,
             'body' => $note->body,
             'writtenAt' => $note->created_at->toIso8601String(),
+            'occurredAt' => $note->happenedAt()->toIso8601String(),
         ], 201);
     }
 }

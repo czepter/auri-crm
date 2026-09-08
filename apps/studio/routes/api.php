@@ -19,6 +19,7 @@ use App\Integration\Http\Controllers\InternalNoteController;
 use App\Integration\Http\Controllers\LeadController;
 use App\Integration\Http\Controllers\OAuthTokenInfoController;
 use App\Integration\Http\Controllers\ProjectFieldController;
+use App\Integration\Http\Controllers\ShootController;
 use App\Payments\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -201,6 +202,31 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'ide
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
     ->post('/leads/{lead:public_id}/stage', [LeadController::class, 'advanceStage'])
     ->name('api.leads.stage.update');
+
+// Closing a lead and taking that back are the same authority as moving it:
+// all three write Lead columns nobody but AdvanceLeadStage writes.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
+    ->post('/leads/{lead:public_id}/lost', [LeadController::class, 'markLost'])
+    ->name('api.leads.lost');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
+    ->post('/leads/{lead:public_id}/reopen', [LeadController::class, 'reopen'])
+    ->name('api.leads.reopen');
+
+// The production pipeline. ManageShoots rather than the read side's
+// ViewAllProjects: ShootPolicy::update already routes there, and a token that
+// may see every project must not thereby move one through delivery.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
+    ->post('/shoots/{shoot:public_id}/status', [ShootController::class, 'advance'])
+    ->name('api.shoots.status.update');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
+    ->post('/shoots/{shoot:public_id}/cancel', [ShootController::class, 'cancel'])
+    ->name('api.shoots.cancel');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
+    ->post('/shoots/{shoot:public_id}/uncancel', [ShootController::class, 'uncancel'])
+    ->name('api.shoots.uncancel');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'idempotent'])
     ->post('/projects/{project:public_id}/notes', [InternalNoteController::class, 'store'])

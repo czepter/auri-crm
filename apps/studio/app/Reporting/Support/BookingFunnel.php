@@ -42,10 +42,10 @@ class BookingFunnel
     public static function byMonth(Carbon $from, Carbon $to): array
     {
         $rows = Lead::query()
-            ->selectRaw("to_char(date_trunc('month', leads.created_at), 'YYYY-MM') as month")
+            ->selectRaw("to_char(date_trunc('month', leads.captured_at), 'YYYY-MM') as month")
             ->selectRaw('count(*) as captured')
             ->selectRaw('count(*) filter (where leads.stage = ?) as booked', [self::wonKey()])
-            ->whereBetween('leads.created_at', [$from, $to])
+            ->whereBetween('leads.captured_at', [$from, $to])
             ->groupBy('month')
             ->orderBy('month')
             ->get();
@@ -85,7 +85,7 @@ class BookingFunnel
             ->selectRaw('coalesce(sum(payment_plans.total), 0) as revenue')
             ->leftJoin('jobs', 'jobs.project_id', '=', 'leads.project_id')
             ->leftJoin('payment_plans', 'payment_plans.job_id', '=', 'jobs.id')
-            ->whereBetween('leads.created_at', [$from, $to])
+            ->whereBetween('leads.captured_at', [$from, $to])
             ->groupBy('leads.source', 'leads.source_other')
             ->orderByDesc('captured')
             ->get()
@@ -117,7 +117,7 @@ class BookingFunnel
         return Lead::query()
             ->join('contacts', 'contacts.id', '=', 'leads.referred_by_contact_id')
             ->selectRaw('contacts.name, count(*) as count')
-            ->whereBetween('leads.created_at', [$from, $to])
+            ->whereBetween('leads.captured_at', [$from, $to])
             ->groupBy('contacts.name')
             ->orderByDesc('count')
             ->get()

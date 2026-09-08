@@ -97,3 +97,37 @@ it('404s advancing a stage for a lead public_id from another tenant or that does
         ->postJson('/api/leads/does-not-exist-1234567890/stage', ['stage' => LeadStage::Contacted->value])
         ->assertNotFound();
 });
+
+it('closes a lead and takes that back', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
+    $lead = Lead::factory()->create();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'lost-1')
+        ->postJson("/api/leads/{$lead->public_id}/lost", ['outcome' => 'lost', 'reason' => 'Budget'])
+        ->assertOk();
+
+    expect($lead->fresh()->isLost())->toBeTrue();
+
+    $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'reopen-1')
+        ->postJson("/api/leads/{$lead->public_id}/reopen");
+
+    $response->assertOk();
+
+    expect($lead->fresh()->isLost())->toBeFalse()
+        ->and($response->json('lostAt'))->toBeNull()
+        ->and(integerIdPaths($response->json()))->toBe([]);
+});
+
+it('refuses to close a lead without the manage_leads scope', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageContacts)->create();
+    $lead = Lead::factory()->create();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'lost-scope')
+        ->postJson("/api/leads/{$lead->public_id}/lost", ['outcome' => 'lost', 'reason' => 'Budget'])
+        ->assertForbidden();
+
+    expect($lead->fresh()->isLost())->toBeFalse();
+});

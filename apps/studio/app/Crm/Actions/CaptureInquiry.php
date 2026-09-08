@@ -91,6 +91,7 @@ class CaptureInquiry
                 'captured_via' => $data->captured_via,
                 'captured_via_other' => $data->captured_via_other,
                 'captured_by_id' => $actor?->id,
+                'captured_at' => $data->captured_at ?? now(),
                 'referred_by_contact_id' => $referrer?->id,
             ]);
 

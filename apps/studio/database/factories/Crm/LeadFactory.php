@@ -29,6 +29,7 @@ class LeadFactory extends Factory
             'inquiry_text' => fake()->paragraph(),
             'captured_via' => CaptureChannel::Phone,
             'captured_by_id' => User::factory(),
+            'captured_at' => now(),
         ];
     }
 

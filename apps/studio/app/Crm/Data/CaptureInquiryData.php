@@ -49,6 +49,11 @@ class CaptureInquiryData extends Data
          * @var list<array{name: string, email: ?string, phone: ?string}>
          */
         public array $people = [],
+        /**
+         * When the inquiry reached the studio. Absent, it is this moment —
+         * the only case the form has to fill in is the one where it wasn't.
+         */
+        public ?string $captured_at = null,
     ) {}
 
     public static function rules(): array
@@ -77,6 +82,11 @@ class CaptureInquiryData extends Data
             // CheckDateAvailability.
             'date' => ['nullable', 'date_format:Y-m-d'],
             'inquiry_text' => ['nullable', 'string', 'max:10000'],
+
+            // A day, a moment, or nothing. Never the future: an inquiry that
+            // has not arrived yet is a typo, and it would sit at the head of
+            // every funnel month until someone found it.
+            'captured_at' => ['nullable', 'date', 'before_or_equal:now'],
 
             // The CUID2 of an existing contact, same shape as contact_id
             // above. Nullable always, including when the source is a

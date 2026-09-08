@@ -186,11 +186,31 @@ it('advances a shoot from the screen', function () {
 it('renders a refused transition beside the control rather than failing', function () {
     $shoot = Shoot::factory()->for($this->project)->atStatus(ShootStatus::Delivered)->create();
 
+    // The no-op, since a correction backwards is a move the screen now makes.
     $this->from("/auftraege/{$this->project->public_id}/shootings")
-        ->post("/shootings/{$shoot->public_id}/status", ['status' => 'booked'])
+        ->post("/shootings/{$shoot->public_id}/status", ['status' => ShootStatus::Delivered->value])
         ->assertSessionHasErrors('status');
 
     expect($shoot->fresh()->status->key)->toBe(ShootStatus::Delivered->value);
+});
+
+it('takes a mistaken status move back from the project screen', function () {
+    $shoot = Shoot::factory()->for($this->project)->atStatus(ShootStatus::Delivered)->create();
+
+    $this->post("/shootings/{$shoot->public_id}/status", ['status' => ShootStatus::Booked->value])
+        ->assertRedirect();
+
+    expect($shoot->fresh()->status->key)->toBe(ShootStatus::Booked->value);
+});
+
+it('takes an absage back from the project screen', function () {
+    $shoot = Shoot::factory()->for($this->project)->atStatus(ShootStatus::Prep)->create();
+
+    $this->post("/shootings/{$shoot->public_id}/absage", ['reason' => 'Termin abgesagt']);
+    $this->post("/shootings/{$shoot->public_id}/absage-zuruecknehmen")->assertRedirect();
+
+    expect($shoot->fresh()->isCancelled())->toBeFalse()
+        ->and($shoot->fresh()->status->key)->toBe(ShootStatus::Prep->value);
 });
 
 it('cancels a shoot with a reason', function () {
@@ -384,6 +404,24 @@ it('adds a task by hand against one shoot', function () {
     expect($task->title)->toBe('Ablauf bestätigen')
         ->and($task->shoot_id)->toBe($shoot->id)
         ->and($task->task_template_id)->toBeNull();
+});
+
+it('writes a note under the day it is about, not the day it was typed', function () {
+    $this->post("/auftraege/{$this->project->public_id}/notizen", [
+        'body' => 'Angerufen, Termin steht.',
+        'occurred_at' => '2026-04-09',
+    ])->assertRedirect();
+
+    expect(InternalNote::sole()->occurred_at->toDateString())->toBe('2026-04-09');
+
+    $entry = collect(props("/auftraege/{$this->project->public_id}")['thread'])
+        ->firstWhere('body', 'Angerufen, Termin steht.');
+    expect($entry['at'])->toStartWith('2026-04-09');
+
+    $this->post("/auftraege/{$this->project->public_id}/notizen", [
+        'body' => 'Zu früh.',
+        'occurred_at' => now()->addDay()->toDateString(),
+    ])->assertSessionHasErrors('occurred_at');
 });
 
 it('rejects an empty note', function () {

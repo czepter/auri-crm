@@ -467,6 +467,8 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/anfragen/{lead}', [LeadCaseController::class, 'update'])->name('leads.update');
         Route::post('/anfragen/{lead}/schliessen', [LeadStageController::class, 'close'])
             ->name('leads.close');
+        Route::post('/anfragen/{lead}/wieder-oeffnen', [LeadStageController::class, 'reopen'])
+            ->name('leads.reopen');
         Route::post('/anfragen/{lead}/stufe', [LeadStageController::class, 'update'])
             ->name('leads.stage.update');
 
@@ -714,6 +716,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('shoots.advance');
         Route::post('/shootings/{shoot}/absage', [ShootController::class, 'cancel'])
             ->name('shoots.cancel');
+        Route::post('/shootings/{shoot}/absage-zuruecknehmen', [ShootController::class, 'uncancel'])
+            ->name('shoots.uncancel');
         Route::post('/shootings/{shoot}/haupttermin', [ShootController::class, 'designatePrimary'])
             ->name('shoots.primary');
 
