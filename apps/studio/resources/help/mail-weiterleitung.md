@@ -31,8 +31,8 @@ Alles andere wartet darauf, dass du es einem Projekt zuordnest.
 Weitergeleitete Post gehört fast immer dazu: Sie nennt keinen Verlauf, den es
 schon gibt.
 
-Mail, deren Absender die Echtheitsprüfung nicht besteht, kommt in Quarantäne.
-Du siehst sie, zuordnen lässt sie sich nicht.
+Mail, deren Absender die Echtheitsprüfung nicht besteht, steht unter
+blockiert. Du siehst sie, zuordnen lässt sie sich nicht.
 
-Mail an eine Adresse, die zu keinem Studio gehört, wird verworfen, ohne dass
+Mail an eine Adresse, die zu keinem Studio gehört, wird abgewiesen, ohne dass
 Absender, Betreff oder Text irgendwo gespeichert werden.

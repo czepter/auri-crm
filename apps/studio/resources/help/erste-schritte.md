@@ -18,14 +18,13 @@ lohnt eine Runde durch die Projekttypen, bevor die erste Anfrage hereinkommt.
 Von Hand erfasst brauchst du nichts weiter. Die beiden anderen Wege verlangen
 je einen Handgriff außerhalb des Studios:
 
-- [Anfrageformular einbinden](/hilfe/anfrageformular-einbinden) — der Weg über
-  deine eigene Website.
+- Über ein Formular auf deiner eigenen Website.
 - Über E-Mail: dein Studio hat eine eigene Adresse, sie steht im Posteingang.
   Bestehende Adressen leitest du bei deinem Mailanbieter dorthin weiter.
 
 ## Claude
 
 Das Studio spricht MCP. Claude kann damit Anfragen anlegen, den Trichter lesen
-und Projektfelder setzen: [Claude verbinden](/hilfe/mcp-claude-verbinden).
+und Projektfelder setzen.
 
 Viel Erfolg mit dem ersten Auftrag.

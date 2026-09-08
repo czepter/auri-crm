@@ -22,7 +22,7 @@ wartet darauf, dass du sie einem Auftrag zuweist. *Blockiert* hat die
 Echtheitsprüfung des Absenders nicht bestanden: du siehst sie, zuordnen lässt
 sie sich nicht.
 
-Verworfen wird nichts davon: für jede Zustellung an eine Adresse deines
+Verloren geht nichts davon: für jede Zustellung an eine Adresse deines
 Studios entsteht eine Zeile, auch für die, die nicht durchkam.
 
 ## Verläufe ohne Auftrag

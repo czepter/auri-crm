@@ -10,8 +10,8 @@ faehigkeit: manage_shoots
 
 Die Bilderzahl in der Zeile zählt den Entwurf — das, woran du gerade
 arbeitest. Die Fassung daneben ist die Nummer der letzten veröffentlichten
-Abschrift, und die ist es, was der Gast sieht. Vierzig Bilder neben *Fassung
-1* heißt also: zehn davon stehen noch nicht draußen.
+Abschrift, und die ist es, was der Gast sieht. Was du seit dieser Fassung am
+Entwurf geändert hast, steht noch nicht draußen.
 
 Ohne Fassung war die Galerie noch nie veröffentlicht.
 

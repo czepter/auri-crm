@@ -6,9 +6,8 @@ reihenfolge: 15
 faehigkeit: manage_settings
 ---
 
-Das Formular gehört auf deine Website. Es ist reines HTML mit einem Skript
-darin, ohne Rahmen und ohne Stylesheet von hier, und übernimmt das Aussehen
-deiner Seite.
+Reines HTML mit einem Skript darin, ohne Rahmen und ohne Stylesheet von hier,
+und übernimmt das Aussehen deiner Seite.
 
 ```html
 <form id="anfrage" novalidate>

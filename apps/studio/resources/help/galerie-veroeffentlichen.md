@@ -1,35 +1,35 @@
 ---
 titel: Galerie veröffentlichen
-beschreibung: Was eine Version ist und was nach dem Veröffentlichen draußen steht.
+beschreibung: Was eine Fassung ist und was nach dem Veröffentlichen draußen steht.
 art: aufgabe
 reihenfolge: 50
 screens: [galleries.index]
 ---
 
-## Versionen
+## Fassungen
 
-Veröffentlichen legt eine Version an: eine Abschrift von Titel, Bildern,
+Veröffentlichen legt eine Fassung an: eine Abschrift von Titel, Bildern,
 Titelbild und Gestaltung, wie sie in diesem Moment stehen. Der Gast sieht
 immer die letzte. Am Entwurf kannst du danach weiterarbeiten, ohne dass sich
 draußen etwas ändert, bis du erneut veröffentlichst.
 
-Weicht der Entwurf von der stehenden Version nicht ab, entsteht keine zweite.
+Weicht der Entwurf von der stehenden Fassung nicht ab, entsteht keine zweite.
 Eine Galerie ohne Bilder lässt sich nicht veröffentlichen.
 
-Die Adresse bleibt über alle Versionen dieselbe. Ein Link, den du längst
+Die Adresse bleibt über alle Fassungen dieselbe. Ein Link, den du längst
 verschickt hast, zeigt nach dem nächsten Veröffentlichen die neuen Bilder.
-Das Ablaufdatum verschiebt sich dabei nicht: Es steht seit dem Anlegen, und
-eine zweite Version startet die Frist nicht neu.
+Stand beim Anlegen kein Ablaufdatum, setzt das erste Veröffentlichen eines;
+eine zweite Fassung startet die Frist nicht neu.
 
 ## Zurücknehmen
 
 Zurücknehmen schließt jeden Weg von außen hinein, den Vorschaulink
-eingeschlossen. Die Versionen bleiben liegen; Veröffentlichen holt die
+eingeschlossen. Die Fassungen bleiben liegen; Veröffentlichen holt die
 Galerie zurück.
 
 ## Vorab
 
-Solange keine Version steht, kannst du die Galerie auf Pre-release stellen.
+Solange keine Fassung steht, kannst du die Galerie auf Pre-release stellen.
 Wer dort seine Adresse hinterlässt, bekommt beim Veröffentlichen genau eine
 Mail, danach ist die Adresse gelöscht.
 
