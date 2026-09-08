@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import SettingsNav from '@/admin/components/SettingsNav.vue'
 import ProfileForm from './panes/ProfileForm.vue'
@@ -197,117 +198,119 @@ function submitGeneral() {
 
 <template>
   <AdminLayout active="einstellungen">
-    <div data-tokens>
-      <PageHead :kicker="$t('settings.kicker')" :title="$t(paneTitle)">
-        <span v-if="activeForm?.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">{{ $t('settings.unsaved') }}</span>
-        <Button
-          class="ml-auto"
-          variant="pill"
-          type="submit"
-          :form="formId"
-          :disabled="!activeForm?.isDirty || activeForm?.processing"
-        >
-          {{ $t('common.save') }}
-        </Button>
-      </PageHead>
+    <Page data-tokens wide>
+      <div class="min-w-0 flex-1">
+        <PageHead :kicker="$t('settings.kicker')" :title="$t(paneTitle)">
+          <span v-if="activeForm?.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">{{ $t('settings.unsaved') }}</span>
+          <Button
+            class="ml-auto"
+            variant="pill"
+            type="submit"
+            :form="formId"
+            :disabled="!activeForm?.isDirty || activeForm?.processing"
+          >
+            {{ $t('common.save') }}
+          </Button>
+        </PageHead>
 
-      <div class="px-8 pt-7 pb-8">
-        <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
-          <SettingsNav :active="pane" />
+        <div class="px-8 pt-7 pb-8">
+          <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
+            <SettingsNav :active="pane" />
 
-          <div class="max-w-[620px] min-w-0 flex-1">
-            <ProfileForm v-if="profileSection" ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="[profileSection]" />
-            <VatForm v-else-if="pane === 'vat'" ref="vatRef" :settings="settings" />
-            <DocumentsForm v-else-if="pane === 'documents'" ref="documentsRef" :settings="settings" />
-            <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" />
+            <div class="max-w-[620px] min-w-0 flex-1">
+              <ProfileForm v-if="profileSection" ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="[profileSection]" />
+              <VatForm v-else-if="pane === 'vat'" ref="vatRef" :settings="settings" />
+              <DocumentsForm v-else-if="pane === 'documents'" ref="documentsRef" :settings="settings" />
+              <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" />
 
-            <form v-else-if="pane === 'capture'" id="capture-form" @submit.prevent="submitCapture">
-              <div>
-                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.capturePresetsLabel') }}</div>
-                <div class="mb-6">
-                  <div class="flex min-w-0 flex-col gap-1.5">
-                    <Label for="c-typ">{{ $t('leads.type') }}</Label>
-                    <Textarea id="c-typ" v-model="captureForm.lead_type_presets" rows="4" />
-                  </div>
-                  <div class="mt-4 flex min-w-0 flex-col gap-1.5">
-                    <Label for="c-quelle">{{ $t('leads.source') }}</Label>
-                    <Textarea id="c-quelle" v-model="captureForm.lead_source_presets" rows="4" />
-                  </div>
-                  <div class="mt-4 flex min-w-0 flex-col gap-1.5">
-                    <Label for="c-kanal">{{ $t('leads.capturedVia') }}</Label>
-                    <Textarea id="c-kanal" v-model="captureForm.lead_channel_presets" rows="4" />
-                  </div>
-                  <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('settings.capturePresetsHint') }}</span>
-                </div>
-              </div>
-            </form>
-
-            <form v-else id="general-form" @submit.prevent="submitGeneral">
-              <div>
-                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.timezoneLocaleLabel') }}</div>
-                <div class="mb-6">
-                  <div class="grid grid-cols-2 gap-4">
+              <form v-else-if="pane === 'capture'" id="capture-form" @submit.prevent="submitCapture">
+                <div>
+                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.capturePresetsLabel') }}</div>
+                  <div class="mb-6">
                     <div class="flex min-w-0 flex-col gap-1.5">
-                      <Label for="g-zeitzone">{{ $t('settings.timezoneLabel') }}</Label>
-                      <Input id="g-zeitzone" v-model="generalForm.timezone" type="text" placeholder="Europe/Berlin" />
-                      <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('settings.timezoneHint') }}</span>
-                      <p v-if="generalForm.errors.timezone" class="text-[11.5px] leading-[1.45] text-destructive">{{ generalForm.errors.timezone }}</p>
+                      <Label for="c-typ">{{ $t('leads.type') }}</Label>
+                      <Textarea id="c-typ" v-model="captureForm.lead_type_presets" rows="4" />
                     </div>
-                    <div class="flex min-w-0 flex-col gap-1.5">
-                      <Label for="g-sprache">{{ $t('settings.localeLabel') }}</Label>
-                      <Select
-                        :model-value="generalForm.locale"
-                        @update:model-value="(value) => (generalForm.locale = String(value))"
-                      >
-                        <SelectTrigger id="g-sprache">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="de">{{ $t('settings.localeDe') }}</SelectItem>
-                          <SelectItem value="de_DE">{{ $t('settings.localeDeDe') }}</SelectItem>
-                          <SelectItem value="de_AT">{{ $t('settings.localeDeAt') }}</SelectItem>
-                          <SelectItem value="de_CH">{{ $t('settings.localeDeCh') }}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p v-if="generalForm.errors.locale" class="text-[11.5px] leading-[1.45] text-destructive">{{ generalForm.errors.locale }}</p>
+                    <div class="mt-4 flex min-w-0 flex-col gap-1.5">
+                      <Label for="c-quelle">{{ $t('leads.source') }}</Label>
+                      <Textarea id="c-quelle" v-model="captureForm.lead_source_presets" rows="4" />
                     </div>
+                    <div class="mt-4 flex min-w-0 flex-col gap-1.5">
+                      <Label for="c-kanal">{{ $t('leads.capturedVia') }}</Label>
+                      <Textarea id="c-kanal" v-model="captureForm.lead_channel_presets" rows="4" />
+                    </div>
+                    <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('settings.capturePresetsHint') }}</span>
                   </div>
                 </div>
-              </div>
+              </form>
 
-              <div class="mt-8 first-of-type:mt-6">
-                <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.workingDaysLabel') }}</div>
-                <div class="mb-6">
-                  <div class="flex flex-wrap gap-4">
-                    <div v-for="day in weekdays" :key="day.value" class="flex items-center gap-2">
-                      <Checkbox
-                        :id="`wd-${day.value}`"
-                        :model-value="generalForm.working_days.includes(day.value)"
-                        @update:model-value="toggleWorkingDay(day.value)"
-                      />
-                      <Label :for="`wd-${day.value}`">{{ $t(day.key) }}</Label>
+              <form v-else id="general-form" @submit.prevent="submitGeneral">
+                <div>
+                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.timezoneLocaleLabel') }}</div>
+                  <div class="mb-6">
+                    <div class="grid grid-cols-2 gap-4">
+                      <div class="flex min-w-0 flex-col gap-1.5">
+                        <Label for="g-zeitzone">{{ $t('settings.timezoneLabel') }}</Label>
+                        <Input id="g-zeitzone" v-model="generalForm.timezone" type="text" placeholder="Europe/Berlin" />
+                        <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('settings.timezoneHint') }}</span>
+                        <p v-if="generalForm.errors.timezone" class="text-[11.5px] leading-[1.45] text-destructive">{{ generalForm.errors.timezone }}</p>
+                      </div>
+                      <div class="flex min-w-0 flex-col gap-1.5">
+                        <Label for="g-sprache">{{ $t('settings.localeLabel') }}</Label>
+                        <Select
+                          :model-value="generalForm.locale"
+                          @update:model-value="(value) => (generalForm.locale = String(value))"
+                        >
+                          <SelectTrigger id="g-sprache">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="de">{{ $t('settings.localeDe') }}</SelectItem>
+                            <SelectItem value="de_DE">{{ $t('settings.localeDeDe') }}</SelectItem>
+                            <SelectItem value="de_AT">{{ $t('settings.localeDeAt') }}</SelectItem>
+                            <SelectItem value="de_CH">{{ $t('settings.localeDeCh') }}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p v-if="generalForm.errors.locale" class="text-[11.5px] leading-[1.45] text-destructive">{{ generalForm.errors.locale }}</p>
+                      </div>
                     </div>
                   </div>
-                  <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('settings.workingDaysHint') }}</span>
-                  <p v-if="generalForm.errors.working_days" class="text-[11.5px] leading-[1.45] text-destructive">{{ generalForm.errors.working_days }}</p>
                 </div>
-              </div>
-            </form>
+
+                <div class="mt-8 first-of-type:mt-6">
+                  <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.workingDaysLabel') }}</div>
+                  <div class="mb-6">
+                    <div class="flex flex-wrap gap-4">
+                      <div v-for="day in weekdays" :key="day.value" class="flex items-center gap-2">
+                        <Checkbox
+                          :id="`wd-${day.value}`"
+                          :model-value="generalForm.working_days.includes(day.value)"
+                          @update:model-value="toggleWorkingDay(day.value)"
+                        />
+                        <Label :for="`wd-${day.value}`">{{ $t(day.key) }}</Label>
+                      </div>
+                    </div>
+                    <span class="text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('settings.workingDaysHint') }}</span>
+                    <p v-if="generalForm.errors.working_days" class="text-[11.5px] leading-[1.45] text-destructive">{{ generalForm.errors.working_days }}</p>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <BrandPreview
+              v-if="pane === 'brand' && profileRef"
+              :display-name="profileRef.form.display_name"
+              :website="profileRef.form.website"
+              :accent-color="profileRef.form.accent_color"
+              :font-pair="profileRef.form.font_pair"
+              :logo-file="profileRef.form.logo"
+              :logo-url="settings.logoUrl"
+            />
+            <DocumentPreview v-else-if="DOCUMENT_PANES.includes(pane)" :doc="documentPreview" />
+            <MailPreview v-else-if="pane === 'email'" :mail="mailPreview" />
           </div>
-
-          <BrandPreview
-            v-if="pane === 'brand' && profileRef"
-            :display-name="profileRef.form.display_name"
-            :website="profileRef.form.website"
-            :accent-color="profileRef.form.accent_color"
-            :font-pair="profileRef.form.font_pair"
-            :logo-file="profileRef.form.logo"
-            :logo-url="settings.logoUrl"
-          />
-          <DocumentPreview v-else-if="DOCUMENT_PANES.includes(pane)" :doc="documentPreview" />
-          <MailPreview v-else-if="pane === 'email'" :mail="mailPreview" />
         </div>
       </div>
-    </div>
+    </Page>
   </AdminLayout>
 </template>

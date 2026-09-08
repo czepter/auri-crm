@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 import { Button } from '@/ui/button'
@@ -28,37 +29,39 @@ function day(iso: string) {
 
 <template>
   <AdminLayout active="kontakte">
-    <div data-tokens>
-      <PageHead :title="$t('contacts.title')" />
+    <Page data-tokens wide>
+      <div class="min-w-0 flex-1">
+        <PageHead :title="$t('contacts.title')" />
 
-      <Table v-if="contacts.length">
-        <thead>
-          <tr>
-            <TableHead>{{ $t('contacts.colName') }}</TableHead>
-            <TableHead>{{ $t('contacts.colReach') }}</TableHead>
-            <TableHead>{{ $t('contacts.colProjects') }}</TableHead>
-            <TableHead align="right">{{ $t('contacts.colNext') }}</TableHead>
-          </tr>
-        </thead>
-        <tbody>
-          <template v-for="group in groups" :key="group.key">
-            <TableGroupRow :colspan="4">{{ $t(`contacts.group.${group.key}`) }}</TableGroupRow>
-            <TableRow v-for="contact in group.rows" :key="contact.id">
-              <TableCell tone="name"><Link :href="`/kontakte/${contact.id}`">{{ contact.name }}</Link></TableCell>
-              <TableCell tone="muted">{{ [contact.email, contact.phone].filter(Boolean).join(' · ') || '—' }}</TableCell>
-              <TableCell tone="muted">
-                {{ contact.latestProject ?? '—' }}
-                <template v-if="contact.projectCount > 1"> · {{ $t('contacts.projectCount', contact.projectCount) }}</template>
-              </TableCell>
-              <TableCell align="right">{{ contact.nextDate ? day(contact.nextDate) : '—' }}</TableCell>
-            </TableRow>
-          </template>
-        </tbody>
-      </Table>
+        <Table v-if="contacts.length">
+          <thead>
+            <tr>
+              <TableHead>{{ $t('contacts.colName') }}</TableHead>
+              <TableHead>{{ $t('contacts.colReach') }}</TableHead>
+              <TableHead>{{ $t('contacts.colProjects') }}</TableHead>
+              <TableHead align="right">{{ $t('contacts.colNext') }}</TableHead>
+            </tr>
+          </thead>
+          <tbody>
+            <template v-for="group in groups" :key="group.key">
+              <TableGroupRow :colspan="4">{{ $t(`contacts.group.${group.key}`) }}</TableGroupRow>
+              <TableRow v-for="contact in group.rows" :key="contact.id">
+                <TableCell tone="name"><Link :href="`/kontakte/${contact.id}`">{{ contact.name }}</Link></TableCell>
+                <TableCell tone="muted">{{ [contact.email, contact.phone].filter(Boolean).join(' · ') || '—' }}</TableCell>
+                <TableCell tone="muted">
+                  {{ contact.latestProject ?? '—' }}
+                  <template v-if="contact.projectCount > 1"> · {{ $t('contacts.projectCount', contact.projectCount) }}</template>
+                </TableCell>
+                <TableCell align="right">{{ contact.nextDate ? day(contact.nextDate) : '—' }}</TableCell>
+              </TableRow>
+            </template>
+          </tbody>
+        </Table>
 
-      <Button v-else :as="Link" variant="pill" class="mt-5" href="/anfragen/neu">
-        {{ $t('leads.createKicker') }}
-      </Button>
-    </div>
+        <Button v-else :as="Link" variant="pill" class="mt-5" href="/anfragen/neu">
+          {{ $t('leads.createKicker') }}
+        </Button>
+      </div>
+    </Page>
   </AdminLayout>
 </template>

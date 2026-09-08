@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { ChoiceGroup } from '@/ui/choice-group'
 import ProjectTypeahead from '@/admin/components/ProjectTypeahead.vue'
@@ -85,77 +86,79 @@ function submit() {
 
 <template>
   <AdminLayout active="galerien">
-    <div data-tokens>
-      <PageHead :title="$t('galleries.create')" />
+    <Page data-tokens wide>
+      <div class="min-w-0 flex-1">
+        <PageHead :title="$t('galleries.create')" />
 
-      <form class="max-w-[620px] px-8 pt-7 pb-8" @submit.prevent="submit">
-        <ChoiceGroup
-          v-model="mode"
-          :options="MODES.map((option) => ({ value: option, label: $t(`galleries.mode_${option}`) }))"
-        />
+        <form class="max-w-[620px] px-8 pt-7 pb-8" @submit.prevent="submit">
+          <ChoiceGroup
+            v-model="mode"
+            :options="MODES.map((option) => ({ value: option, label: $t(`galleries.mode_${option}`) }))"
+          />
 
-        <div class="mt-6 flex flex-col gap-4">
-          <div class="flex flex-col gap-1.5">
-            <Label for="gallery-project">{{ $t('projects.title') }}</Label>
-            <ProjectTypeahead id="gallery-project" v-model="project" />
-          </div>
-
-          <div class="flex flex-col gap-1.5">
-            <Label for="gallery-title">{{ $t('galleries.titleField') }}</Label>
-            <Input id="gallery-title" v-model="form.title" type="text" />
-          </div>
-
-          <div v-if="mode === 'external'" class="flex flex-col gap-1.5">
-            <Label for="gallery-url">{{ $t('galleries.urlField') }}</Label>
-            <Input id="gallery-url" v-model="form.external_url" type="url" />
-          </div>
-
-          <template v-else>
+          <div class="mt-6 flex flex-col gap-4">
             <div class="flex flex-col gap-1.5">
-              <Label for="gallery-preset">{{ $t('galleryPresets.title') }}</Label>
-              <Select
-                :model-value="toOption(presetId)"
-                @update:model-value="(value) => presetId = fromOption(value)"
-              >
-                <SelectTrigger id="gallery-preset"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem :value="NONE">{{ $t('galleryPresets.none') }}</SelectItem>
-                  <SelectItem v-for="row in presets" :key="row.id" :value="row.id">{{ row.name }}</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label for="gallery-project">{{ $t('projects.title') }}</Label>
+              <ProjectTypeahead id="gallery-project" v-model="project" />
             </div>
 
             <div class="flex flex-col gap-1.5">
-              <Label for="gallery-expiry">{{ $t('galleries.expiryField') }}</Label>
-              <Input id="gallery-expiry" v-model="form.expires_at" type="date" />
+              <Label for="gallery-title">{{ $t('galleries.titleField') }}</Label>
+              <Input id="gallery-title" v-model="form.title" type="text" />
             </div>
 
-            <div class="flex items-center gap-2.5">
-              <Checkbox id="cb-new-balance" v-model="form.requires_settled_balance" />
-              <Label variant="inline" for="cb-new-balance">{{ $t('gallerySettings.balanceLabel') }}</Label>
+            <div v-if="mode === 'external'" class="flex flex-col gap-1.5">
+              <Label for="gallery-url">{{ $t('galleries.urlField') }}</Label>
+              <Input id="gallery-url" v-model="form.external_url" type="url" />
             </div>
 
-            <div class="flex items-center gap-2.5">
-              <Checkbox id="cb-new-downloads" v-model="form.downloads_enabled" />
-              <Label variant="inline" for="cb-new-downloads">{{ $t('gallerySettings.downloadsLabel') }}</Label>
-            </div>
+            <template v-else>
+              <div class="flex flex-col gap-1.5">
+                <Label for="gallery-preset">{{ $t('galleryPresets.title') }}</Label>
+                <Select
+                  :model-value="toOption(presetId)"
+                  @update:model-value="(value) => presetId = fromOption(value)"
+                >
+                  <SelectTrigger id="gallery-preset"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem :value="NONE">{{ $t('galleryPresets.none') }}</SelectItem>
+                    <SelectItem v-for="row in presets" :key="row.id" :value="row.id">{{ row.name }}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div class="flex items-center gap-2.5">
-              <Checkbox id="cb-new-lists" v-model="form.lists_enabled" />
-              <Label variant="inline" for="cb-new-lists">{{ $t('gallerySettings.listsLabel') }}</Label>
-            </div>
+              <div class="flex flex-col gap-1.5">
+                <Label for="gallery-expiry">{{ $t('galleries.expiryField') }}</Label>
+                <Input id="gallery-expiry" v-model="form.expires_at" type="date" />
+              </div>
 
-            <div class="flex items-center gap-2.5">
-              <Checkbox id="cb-new-comments" v-model="form.comments_enabled" />
-              <Label variant="inline" for="cb-new-comments">{{ $t('gallerySettings.commentsLabel') }}</Label>
-            </div>
-          </template>
-        </div>
+              <div class="flex items-center gap-2.5">
+                <Checkbox id="cb-new-balance" v-model="form.requires_settled_balance" />
+                <Label variant="inline" for="cb-new-balance">{{ $t('gallerySettings.balanceLabel') }}</Label>
+              </div>
 
-        <Button class="mt-6" type="submit" :disabled="form.processing || form.title === ''">
-          {{ $t('galleries.create') }}
-        </Button>
-      </form>
-    </div>
+              <div class="flex items-center gap-2.5">
+                <Checkbox id="cb-new-downloads" v-model="form.downloads_enabled" />
+                <Label variant="inline" for="cb-new-downloads">{{ $t('gallerySettings.downloadsLabel') }}</Label>
+              </div>
+
+              <div class="flex items-center gap-2.5">
+                <Checkbox id="cb-new-lists" v-model="form.lists_enabled" />
+                <Label variant="inline" for="cb-new-lists">{{ $t('gallerySettings.listsLabel') }}</Label>
+              </div>
+
+              <div class="flex items-center gap-2.5">
+                <Checkbox id="cb-new-comments" v-model="form.comments_enabled" />
+                <Label variant="inline" for="cb-new-comments">{{ $t('gallerySettings.commentsLabel') }}</Label>
+              </div>
+            </template>
+          </div>
+
+          <Button class="mt-6" type="submit" :disabled="form.processing || form.title === ''">
+            {{ $t('galleries.create') }}
+          </Button>
+        </form>
+      </div>
+    </Page>
   </AdminLayout>
 </template>

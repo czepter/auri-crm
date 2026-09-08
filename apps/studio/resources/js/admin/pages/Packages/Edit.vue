@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import PackageItemsEditor, { type PackageItemRow } from '@/admin/components/PackageItemsEditor.vue'
 import { centsToEuros, eurosToCents } from '@/admin/lib/money'
@@ -52,27 +53,29 @@ function submit() {
 
 <template>
   <AdminLayout active="pakete">
-    <div data-tokens>
-      <PageHead :title="$t('packages.editTitle')" />
+    <Page data-tokens wide>
+      <div class="min-w-0 flex-1">
+        <PageHead :title="$t('packages.editTitle')" />
 
-      <form class="max-w-[640px] px-8 pt-7 pb-8" @submit.prevent="submit">
-        <Field id="name" class="mb-6" :label="$t('packages.name')" :error="form.errors.name">
-          <Input id="name" v-model="form.name" type="text" required />
-        </Field>
-        <Field id="description" class="mb-6" :label="$t('packages.description')">
-          <Input id="description" v-model="form.description" type="text" />
-        </Field>
+        <form class="max-w-[640px] px-8 pt-7 pb-8" @submit.prevent="submit">
+          <Field id="name" class="mb-6" :label="$t('packages.name')" :error="form.errors.name">
+            <Input id="name" v-model="form.name" type="text" required />
+          </Field>
+          <Field id="description" class="mb-6" :label="$t('packages.description')">
+            <Input id="description" v-model="form.description" type="text" />
+          </Field>
 
-        <div class="mt-8 first-of-type:mt-6">
-          <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.items') }}</div>
-          <PackageItemsEditor v-model="form.items" :package-id="package.id" />
-        </div>
+          <div class="mt-8 first-of-type:mt-6">
+            <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.items') }}</div>
+            <PackageItemsEditor v-model="form.items" :package-id="package.id" />
+          </div>
 
-        <div class="mt-6 flex items-center gap-4">
-          <Button type="submit" class="ml-0" :disabled="form.processing">{{ $t('common.save') }}</Button>
-          <Button as="a" href="/pakete" variant="ghost">{{ $t('common.cancel') }}</Button>
-        </div>
-      </form>
-    </div>
+          <div class="mt-6 flex items-center gap-4">
+            <Button type="submit" class="ml-0" :disabled="form.processing">{{ $t('common.save') }}</Button>
+            <Button as="a" href="/pakete" variant="ghost">{{ $t('common.cancel') }}</Button>
+          </div>
+        </form>
+      </div>
+    </Page>
   </AdminLayout>
 </template>

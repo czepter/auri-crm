@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { Link, router } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
+import Page from "@/ui/page/Page.vue";
 import Panel from "@/admin/components/Panel.vue";
 import PageHead from "@/ui/page/PageHead.vue";
 import Metric from "@/admin/components/Metric.vue";
@@ -185,258 +186,260 @@ function complete(task: App.Crm.Data.TaskRowData) {
 
 <template>
     <AdminLayout active="uebersicht">
-        <div data-tokens>
-            <PageHead :kicker="heading" :title="$t('dashboard.title')">
+        <Page data-tokens wide>
+            <div class="min-w-0 flex-1">
+                <PageHead :kicker="heading" :title="$t('dashboard.title')">
 
-                <!-- Unbeantwortet, not ungelesen: ThreadParticipant carries no
-             last_read_at and this screen does not add one. -->
-                <Link
-                    v-if="unanswered"
-                    href="/posteingang"
-                    class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.05em] uppercase text-ink-2 ml-auto"
+                    <!-- Unbeantwortet, not ungelesen: ThreadParticipant carries no
+                 last_read_at and this screen does not add one. -->
+                    <Link
+                        v-if="unanswered"
+                        href="/posteingang"
+                        class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.05em] uppercase text-ink-2 ml-auto"
+                    >
+                        {{ $t("dashboard.unanswered", { count: unanswered }) }}
+                    </Link>
+                </PageHead>
+
+                <Button v-if="bare" :as="Link" variant="pill" class="mt-5" href="/anfragen/neu">
+                    {{ $t("leads.createKicker") }}
+                </Button>
+
+                <div
+                    v-else
+                    class="grid flex-1 auto-rows-min grid-cols-4 items-start gap-x-5 gap-y-7 px-8 py-7"
                 >
-                    {{ $t("dashboard.unanswered", { count: unanswered }) }}
-                </Link>
-            </PageHead>
+                    <!-- Every tile brings its own proof, or it is not a tile (C-05). A
+                 figure with nothing behind it is absent rather than a zero. -->
+                    <Metric
+                        v-if="pipeline"
+                        :label="$t('dashboard.pipeline')"
+                        :value="formatEurosRounded(pipeline)"
+                        :dots="pipelineDots"
+                    >
+                        <p>
+                            <b>{{
+                                $t("dashboard.leadCount", pipelineStages.length)
+                            }}</b>
+                        </p>
+                    </Metric>
 
-            <Button v-if="bare" :as="Link" variant="pill" class="mt-5" href="/anfragen/neu">
-                {{ $t("leads.createKicker") }}
-            </Button>
-
-            <div
-                v-else
-                class="grid flex-1 auto-rows-min grid-cols-4 items-start gap-x-5 gap-y-7 px-8 py-7"
-            >
-                <!-- Every tile brings its own proof, or it is not a tile (C-05). A
-             figure with nothing behind it is absent rather than a zero. -->
-                <Metric
-                    v-if="pipeline"
-                    :label="$t('dashboard.pipeline')"
-                    :value="formatEurosRounded(pipeline)"
-                    :dots="pipelineDots"
-                >
-                    <p>
-                        <b>{{
-                            $t("dashboard.leadCount", pipelineStages.length)
-                        }}</b>
-                    </p>
-                </Metric>
-
-                <Metric
-                    v-if="overdue.total"
-                    :label="$t('dashboard.overdueTotal')"
-                    :value="formatEurosRounded(overdue.total)"
-                    warn
-                    :dots="overdueDots"
-                >
-                    <p>
-                        <b>{{
-                            $t("dashboard.instalmentsOpen", {
-                                open: overdue.open,
-                                all: overdue.all,
-                            })
-                        }}</b>
-                        <template v-if="overdue.sinceDays !== null">
-                            ·
-                            {{
-                                $t("dashboard.sinceDays", overdue.sinceDays)
-                            }}</template
-                        >
-                    </p>
-                </Metric>
-
-                <Metric
-                    v-if="quotes.sent"
-                    :label="$t('dashboard.acceptance')"
-                    :value="String(quotes.accepted)"
-                    :unit="$t('dashboard.ofSent', { count: quotes.sent })"
-                    :dots="quoteDots"
-                >
-                    <p>{{ $t("dashboard.lastTwelveMonths") }}</p>
-                </Metric>
-
-                <Metric
-                    v-if="heroDay"
-                    :label="$t('dashboard.nextShoot')"
-                    :href="`/auftraege/${nextShoot!.projectId}/shootings`"
-                    :day="heroDay"
-                    :dots="readinessDots"
-                >
-                    <p>
-                        <b v-if="openPoints">{{
-                            $t("dashboard.openPoints", {
-                                count: openPoints,
-                                all: readinessDots.length,
-                            })
-                        }}</b>
-                        <b v-else>{{ $t("dashboard.allReady") }}</b>
-                        <template v-if="nextShoot?.venue">
-                            · {{ nextShoot.venue }}</template
-                        >
-                    </p>
-                </Metric>
-
-                <!-- The most important field is the only one without a container:
-                     emphasis comes from position, size and the one filled button. -->
-                <Panel
-                    v-if="decisions.length || nextShoot"
-                    bare
-                    class="col-span-3"
-                    :title="$t('dashboard.decide')"
-                    :count="decisions.length || null"
-                >
-                    <template #action>
-                        <span
-                            v-if="owed > decisions.length"
-                            class="ml-auto text-[11.5px] tabular-nums text-ink-2"
-                        >
-                            {{ $t("dashboard.moreOwed", { count: owed - decisions.length }) }}
-                        </span>
-                        <!-- T-24: die vollständige Liste, in der auch die
-                             Zuständigkeit steht. -->
-                        <Link
-                            class="text-[11.5px] text-ink-2 no-underline"
-                            :class="owed > decisions.length ? '' : 'ml-auto'"
-                            href="/aufgaben"
-                            >{{ $t("dashboard.allTasks") }}</Link
-                        >
-                    </template>
-
-                    <div v-if="decisions.length">
-                        <div
-                            v-for="(decision, index) in decisions"
-                            :key="decision.key"
-                            class="flex items-center gap-3.5 py-[11px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
-                        >
-                            <!-- leading-[1.35] is tokens.css .who, which decides it here too -->
-                            <Link
-                                class="w-52 flex-none overflow-hidden text-[14.5px] leading-[1.35] font-semibold tracking-[-0.018em] text-ellipsis whitespace-nowrap"
-                                :href="decision.href"
-                                >{{ decision.who }}</Link
+                    <Metric
+                        v-if="overdue.total"
+                        :label="$t('dashboard.overdueTotal')"
+                        :value="formatEurosRounded(overdue.total)"
+                        warn
+                        :dots="overdueDots"
+                    >
+                        <p>
+                            <b>{{
+                                $t("dashboard.instalmentsOpen", {
+                                    open: overdue.open,
+                                    all: overdue.all,
+                                })
+                            }}</b>
+                            <template v-if="overdue.sinceDays !== null">
+                                ·
+                                {{
+                                    $t("dashboard.sinceDays", overdue.sinceDays)
+                                }}</template
                             >
+                        </p>
+                    </Metric>
+
+                    <Metric
+                        v-if="quotes.sent"
+                        :label="$t('dashboard.acceptance')"
+                        :value="String(quotes.accepted)"
+                        :unit="$t('dashboard.ofSent', { count: quotes.sent })"
+                        :dots="quoteDots"
+                    >
+                        <p>{{ $t("dashboard.lastTwelveMonths") }}</p>
+                    </Metric>
+
+                    <Metric
+                        v-if="heroDay"
+                        :label="$t('dashboard.nextShoot')"
+                        :href="`/auftraege/${nextShoot!.projectId}/shootings`"
+                        :day="heroDay"
+                        :dots="readinessDots"
+                    >
+                        <p>
+                            <b v-if="openPoints">{{
+                                $t("dashboard.openPoints", {
+                                    count: openPoints,
+                                    all: readinessDots.length,
+                                })
+                            }}</b>
+                            <b v-else>{{ $t("dashboard.allReady") }}</b>
+                            <template v-if="nextShoot?.venue">
+                                · {{ nextShoot.venue }}</template
+                            >
+                        </p>
+                    </Metric>
+
+                    <!-- The most important field is the only one without a container:
+                         emphasis comes from position, size and the one filled button. -->
+                    <Panel
+                        v-if="decisions.length || nextShoot"
+                        bare
+                        class="col-span-3"
+                        :title="$t('dashboard.decide')"
+                        :count="decisions.length || null"
+                    >
+                        <template #action>
                             <span
-                                class="min-w-0 flex-1 overflow-hidden text-[12.5px] text-ellipsis whitespace-nowrap text-ink-2 [&_em]:text-action [&_em]:not-italic"
+                                v-if="owed > decisions.length"
+                                class="ml-auto text-[11.5px] tabular-nums text-ink-2"
                             >
-                                {{ decision.what }}
-                                <em v-if="decision.emphasis">{{
-                                    decision.emphasis
-                                }}</em>
-                                <template v-if="decision.whatTail">{{
-                                    decision.whatTail
-                                }}</template>
+                                {{ $t("dashboard.moreOwed", { count: owed - decisions.length }) }}
                             </span>
-                            <span
-                                class="flex w-42 flex-none items-center justify-end gap-2"
+                            <!-- T-24: die vollständige Liste, in der auch die
+                                 Zuständigkeit steht. -->
+                            <Link
+                                class="text-[11.5px] text-ink-2 no-underline"
+                                :class="owed > decisions.length ? '' : 'ml-auto'"
+                                href="/aufgaben"
+                                >{{ $t("dashboard.allTasks") }}</Link
                             >
-                                <!-- Exactly one filled button on the screen, and it is the due
-                     action in the first decision row — not `Anfrage anlegen`,
-                     which is never the thing that is due. -->
-                                <Button
-                                    v-if="decision.action"
-                                    :as="Link"
-                                    :variant="index === 0 ? 'pill' : 'pill-muted'"
-                                    :href="decision.action.target"
-                                    >{{ decision.action.label }}</Button
+                        </template>
+
+                        <div v-if="decisions.length">
+                            <div
+                                v-for="(decision, index) in decisions"
+                                :key="decision.key"
+                                class="flex items-center gap-3.5 py-[11px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                            >
+                                <!-- leading-[1.35] is tokens.css .who, which decides it here too -->
+                                <Link
+                                    class="w-52 flex-none overflow-hidden text-[14.5px] leading-[1.35] font-semibold tracking-[-0.018em] text-ellipsis whitespace-nowrap"
+                                    :href="decision.href"
+                                    >{{ decision.who }}</Link
                                 >
-                                <Button
-                                    v-else-if="decision.done"
-                                    type="button"
-                                    :variant="index === 0 ? 'pill' : 'pill-muted'"
-                                    @click="complete(decision.done)"
-                                    >{{ $t("dashboard.done") }}</Button
+                                <span
+                                    class="min-w-0 flex-1 overflow-hidden text-[12.5px] text-ellipsis whitespace-nowrap text-ink-2 [&_em]:text-action [&_em]:not-italic"
                                 >
+                                    {{ decision.what }}
+                                    <em v-if="decision.emphasis">{{
+                                        decision.emphasis
+                                    }}</em>
+                                    <template v-if="decision.whatTail">{{
+                                        decision.whatTail
+                                    }}</template>
+                                </span>
+                                <span
+                                    class="flex w-42 flex-none items-center justify-end gap-2"
+                                >
+                                    <!-- Exactly one filled button on the screen, and it is the due
+                         action in the first decision row — not `Anfrage anlegen`,
+                         which is never the thing that is due. -->
+                                    <Button
+                                        v-if="decision.action"
+                                        :as="Link"
+                                        :variant="index === 0 ? 'pill' : 'pill-muted'"
+                                        :href="decision.action.target"
+                                        >{{ decision.action.label }}</Button
+                                    >
+                                    <Button
+                                        v-else-if="decision.done"
+                                        type="button"
+                                        :variant="index === 0 ? 'pill' : 'pill-muted'"
+                                        @click="complete(decision.done)"
+                                        >{{ $t("dashboard.done") }}</Button
+                                    >
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- A day with nothing to decide is the normal one. The next
+                   shooting day takes the field's place rather than a heading with
+                   nothing under it. -->
+                        <p
+                            v-else-if="nextShoot"
+                            class="text-[11.5px] leading-[1.45] font-normal text-faint"
+                        >
+                            {{
+                                $t("dashboard.nothingDueNext", {
+                                    what: nextShoot.title,
+                                    date: dayOf(nextShoot.date),
+                                })
+                            }}
+                        </p>
+                    </Panel>
+
+                    <Panel v-if="week.length" :title="$t('dashboard.thisWeek')">
+                        <div
+                            v-for="entry in week"
+                            :key="`${entry.when}${entry.what}`"
+                            class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none"
+                        >
+                            <span
+                                class="w-[62px] flex-none text-[12px] font-semibold tracking-[-0.01em] tabular-nums"
+                            >
+                                {{ weekWhen(entry.when) }}
+                            </span>
+                            <component
+                                :is="entry.href ? Link : 'span'"
+                                :href="entry.href"
+                                class="text-[13px] font-medium tracking-[-0.01em]"
+                                :class="entry.away && 'font-normal text-ink-2'"
+                            >
+                                {{ entry.away ? $t("dashboard.away", { name: entry.what }) : entry.what }}
+                            </component>
+                        </div>
+                    </Panel>
+
+                    <Panel
+                        v-if="newLeads.length"
+                        class="col-span-2"
+                        :title="$t('dashboard.inquiries')"
+                        :count="newLeads.length"
+                    >
+                        <template #action>
+                            <Link class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline ml-auto text-[12px]" href="/anfragen">{{
+                                $t("dashboard.toBoard")
+                            }}</Link>
+                        </template>
+                        <div v-for="lead in newLeads" :key="lead.id" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
+                            <span
+                                class="w-14 flex-none text-[10.5px] tracking-[0.05em] uppercase text-ink-2"
+                            >{{ lead.type }}</span>
+                            <Link class="text-[13px] font-medium tracking-[-0.01em]" :href="`/anfragen/${lead.leadId}`">{{ lead.names }}</Link>
+                            <!-- The conflict is a mark on the row that has it and leads into
+                                 the resolution; a footer counting collisions names neither
+                                 which nor where. -->
+                            <Link
+                                v-if="lead.conflicts.length"
+                                class="mt-1.5 ml-auto flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[11.5px] leading-[1.3] font-medium whitespace-nowrap text-action no-underline hover:underline"
+                                :href="`/auftraege/${lead.id}/shootings`"
+                            >
+                                {{ $t("dashboard.dateDoubled", { date: dayOf(lead.date) }) }}
+                            </Link>
+                            <span v-else class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ lead.source }}</span>
+                        </div>
+                    </Panel>
+
+                    <Panel
+                        v-if="galleries.length"
+                        class="col-span-2"
+                        :title="$t('dashboard.galleries')"
+                        :count="galleries.length"
+                    >
+                        <div
+                            v-for="row in galleries"
+                            :key="`${row.projectId}${row.what}`"
+                            class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none"
+                        >
+                            <Link class="text-[13px] font-medium tracking-[-0.01em]" :href="`/auftraege/${row.projectId}`">{{ row.who }}</Link>
+                            <span class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">
+                                {{ row.what }}
+                                <template v-if="row.emphasis">{{ row.emphasis }}</template>
+                                <template v-if="row.whatTail">{{ row.whatTail }}</template>
                             </span>
                         </div>
-                    </div>
-
-                    <!-- A day with nothing to decide is the normal one. The next
-               shooting day takes the field's place rather than a heading with
-               nothing under it. -->
-                    <p
-                        v-else-if="nextShoot"
-                        class="text-[11.5px] leading-[1.45] font-normal text-faint"
-                    >
-                        {{
-                            $t("dashboard.nothingDueNext", {
-                                what: nextShoot.title,
-                                date: dayOf(nextShoot.date),
-                            })
-                        }}
-                    </p>
-                </Panel>
-
-                <Panel v-if="week.length" :title="$t('dashboard.thisWeek')">
-                    <div
-                        v-for="entry in week"
-                        :key="`${entry.when}${entry.what}`"
-                        class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none"
-                    >
-                        <span
-                            class="w-[62px] flex-none text-[12px] font-semibold tracking-[-0.01em] tabular-nums"
-                        >
-                            {{ weekWhen(entry.when) }}
-                        </span>
-                        <component
-                            :is="entry.href ? Link : 'span'"
-                            :href="entry.href"
-                            class="text-[13px] font-medium tracking-[-0.01em]"
-                            :class="entry.away && 'font-normal text-ink-2'"
-                        >
-                            {{ entry.away ? $t("dashboard.away", { name: entry.what }) : entry.what }}
-                        </component>
-                    </div>
-                </Panel>
-
-                <Panel
-                    v-if="newLeads.length"
-                    class="col-span-2"
-                    :title="$t('dashboard.inquiries')"
-                    :count="newLeads.length"
-                >
-                    <template #action>
-                        <Link class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline ml-auto text-[12px]" href="/anfragen">{{
-                            $t("dashboard.toBoard")
-                        }}</Link>
-                    </template>
-                    <div v-for="lead in newLeads" :key="lead.id" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
-                        <span
-                            class="w-14 flex-none text-[10.5px] tracking-[0.05em] uppercase text-ink-2"
-                        >{{ lead.type }}</span>
-                        <Link class="text-[13px] font-medium tracking-[-0.01em]" :href="`/anfragen/${lead.leadId}`">{{ lead.names }}</Link>
-                        <!-- The conflict is a mark on the row that has it and leads into
-                             the resolution; a footer counting collisions names neither
-                             which nor where. -->
-                        <Link
-                            v-if="lead.conflicts.length"
-                            class="mt-1.5 ml-auto flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[11.5px] leading-[1.3] font-medium whitespace-nowrap text-action no-underline hover:underline"
-                            :href="`/auftraege/${lead.id}/shootings`"
-                        >
-                            {{ $t("dashboard.dateDoubled", { date: dayOf(lead.date) }) }}
-                        </Link>
-                        <span v-else class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ lead.source }}</span>
-                    </div>
-                </Panel>
-
-                <Panel
-                    v-if="galleries.length"
-                    class="col-span-2"
-                    :title="$t('dashboard.galleries')"
-                    :count="galleries.length"
-                >
-                    <div
-                        v-for="row in galleries"
-                        :key="`${row.projectId}${row.what}`"
-                        class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none"
-                    >
-                        <Link class="text-[13px] font-medium tracking-[-0.01em]" :href="`/auftraege/${row.projectId}`">{{ row.who }}</Link>
-                        <span class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">
-                            {{ row.what }}
-                            <template v-if="row.emphasis">{{ row.emphasis }}</template>
-                            <template v-if="row.whatTail">{{ row.whatTail }}</template>
-                        </span>
-                    </div>
-                </Panel>
+                    </Panel>
+                </div>
             </div>
-        </div>
+        </Page>
     </AdminLayout>
 </template>

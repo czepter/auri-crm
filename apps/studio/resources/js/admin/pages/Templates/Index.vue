@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import TaskTemplateForm from '@/admin/components/templates/TaskTemplateForm.vue'
 import TemplateCreateDialog from '@/admin/components/templates/TemplateCreateDialog.vue'
@@ -129,55 +130,89 @@ function open(row: Row) {
 
 <template>
   <AdminLayout active="vorlagen">
-    <div data-tokens>
-      <PageHead :title="$t('templates.title')">
-        <div class="ml-auto flex items-center gap-2.5">
-          <Input v-model="query" class="w-[220px]" type="search" :placeholder="$t('templates.search')" />
-          <TemplateCreateDialog
-            :kinds="kinds"
-            :kind="kind"
-            :audiences="audiences"
-            :shoot-kinds="shootKinds"
-            :project-types="projectTypes"
-          />
+    <Page data-tokens wide>
+      <div class="min-w-0 flex-1">
+        <PageHead :title="$t('templates.title')">
+          <div class="ml-auto flex items-center gap-2.5">
+            <Input v-model="query" class="w-[220px]" type="search" :placeholder="$t('templates.search')" />
+            <TemplateCreateDialog
+              :kinds="kinds"
+              :kind="kind"
+              :audiences="audiences"
+              :shoot-kinds="shootKinds"
+              :project-types="projectTypes"
+            />
+          </div>
+        </PageHead>
+
+        <div class="flex flex-wrap items-center gap-2 px-8 pt-5">
+          <Link
+            class="rounded-lg px-2.5 py-[5px] text-[12.5px] leading-[1.3] no-underline"
+            :class="kind === null ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
+            href="/vorlagen"
+          >
+            {{ $t('templates.all') }}
+            <span class="ml-1.5" :class="kind === null ? 'text-faint' : 'text-ink-2'">{{ total }}</span>
+          </Link>
+          <Link
+            v-for="entry in kinds"
+            :key="entry"
+            class="rounded-lg px-2.5 py-[5px] text-[12.5px] leading-[1.3] no-underline"
+            :class="kind === entry ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
+            :href="`/vorlagen?typ=${entry}`"
+          >
+            {{ $t(KIND_LABEL[entry]) }}
+            <span class="ml-1.5" :class="kind === entry ? 'text-faint' : 'text-ink-2'">{{ counts[entry] }}</span>
+          </Link>
         </div>
-      </PageHead>
 
-      <div class="flex flex-wrap items-center gap-2 px-8 pt-5">
-        <Link
-          class="rounded-lg px-2.5 py-[5px] text-[12.5px] leading-[1.3] no-underline"
-          :class="kind === null ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
-          href="/vorlagen"
-        >
-          {{ $t('templates.all') }}
-          <span class="ml-1.5" :class="kind === null ? 'text-faint' : 'text-ink-2'">{{ total }}</span>
-        </Link>
-        <Link
-          v-for="entry in kinds"
-          :key="entry"
-          class="rounded-lg px-2.5 py-[5px] text-[12.5px] leading-[1.3] no-underline"
-          :class="kind === entry ? 'bg-foreground text-background' : 'bg-sunk-2 text-foreground'"
-          :href="`/vorlagen?typ=${entry}`"
-        >
-          {{ $t(KIND_LABEL[entry]) }}
-          <span class="ml-1.5" :class="kind === entry ? 'text-faint' : 'text-ink-2'">{{ counts[entry] }}</span>
-        </Link>
-      </div>
+        <div class="px-8 pt-6 pb-8">
+          <!-- Übersicht: jede Art als eigene Karte, in der Reihenfolge der Chips. -->
+          <div v-if="kind === null" class="max-w-[980px]">
+            <section v-for="entry in kinds" :key="entry" class="mt-7 first:mt-0">
+              <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
+                {{ $t(KIND_LABEL[entry]) }}
+              </div>
 
-      <div class="px-8 pt-6 pb-8">
-        <!-- Übersicht: jede Art als eigene Karte, in der Reihenfolge der Chips. -->
-        <div v-if="kind === null" class="max-w-[980px]">
-          <section v-for="entry in kinds" :key="entry" class="mt-7 first:mt-0">
-            <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">
-              {{ $t(KIND_LABEL[entry]) }}
-            </div>
+              <div v-if="matching(rows[entry]).length" class="overflow-hidden rounded-md border border-border">
+                <component
+                  :is="row.href ? Link : 'button'"
+                  v-for="row in matching(rows[entry]).slice(0, 4)"
+                  :key="row.id"
+                  class="flex w-full cursor-pointer items-center gap-3.5 border-t border-border bg-transparent p-2.5 text-left no-underline transition-[background-color] duration-[.12s] ease-out first:border-t-0 hover:bg-muted"
+                  v-bind="row.href ? { href: row.href } : { type: 'button', onClick: () => open(row) }"
+                >
+                  <span class="min-w-0 flex-1">
+                    <span class="block text-[13px] leading-[1.3] font-semibold" :class="!row.active && 'text-muted-foreground'">{{ row.name }}</span>
+                    <span class="mt-px block text-[12px] leading-[1.3] text-muted-foreground">{{ row.meta }}</span>
+                  </span>
+                  <span v-if="row.note" class="flex-none text-[12px] tabular-nums text-faint">{{ row.note }}</span>
+                  <span
+                    v-if="!row.active"
+                    class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-faint"
+                  >{{ $t('formTemplates.inactive') }}</span>
+                </component>
 
-            <div v-if="matching(rows[entry]).length" class="overflow-hidden rounded-md border border-border">
+                <Link
+                  v-if="matching(rows[entry]).length > 4"
+                  class="flex items-center gap-2.5 border-t border-border p-2.5 text-[12.5px] leading-[1.3] text-muted-foreground no-underline hover:bg-muted"
+                  :href="`/vorlagen?typ=${entry}`"
+                >{{ $t('templates.more', { count: matching(rows[entry]).length - 4 }) }}</Link>
+              </div>
+
+              <p v-else class="m-0 text-[12px] leading-[1.45] text-faint">{{ $t('templates.empty') }}</p>
+            </section>
+          </div>
+
+          <!-- Eine Art: Liste links, ihr Editor rechts. -->
+          <div v-else class="flex items-start gap-7 max-[1080px]:flex-col">
+            <div class="flex w-[392px] flex-none flex-col gap-0.5 max-[1080px]:w-full">
               <component
                 :is="row.href ? Link : 'button'"
-                v-for="row in matching(rows[entry]).slice(0, 4)"
+                v-for="row in matching(rows[kind])"
                 :key="row.id"
-                class="flex w-full cursor-pointer items-center gap-3.5 border-t border-border bg-transparent p-2.5 text-left no-underline transition-[background-color] duration-[.12s] ease-out first:border-t-0 hover:bg-muted"
+                class="flex cursor-pointer items-center gap-3.5 rounded-lg border-0 bg-transparent p-2.5 text-left no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted"
+                :class="current && row.id === current.id && 'bg-sunk-2'"
                 v-bind="row.href ? { href: row.href } : { type: 'button', onClick: () => open(row) }"
               >
                 <span class="min-w-0 flex-1">
@@ -191,61 +226,29 @@ function open(row: Row) {
                 >{{ $t('formTemplates.inactive') }}</span>
               </component>
 
-              <Link
-                v-if="matching(rows[entry]).length > 4"
-                class="flex items-center gap-2.5 border-t border-border p-2.5 text-[12.5px] leading-[1.3] text-muted-foreground no-underline hover:bg-muted"
-                :href="`/vorlagen?typ=${entry}`"
-              >{{ $t('templates.more', { count: matching(rows[entry]).length - 4 }) }}</Link>
+              <p v-if="!matching(rows[kind]).length" class="m-0 text-[12px] leading-[1.45] text-faint">{{ $t('templates.empty') }}</p>
             </div>
 
-            <p v-else class="m-0 text-[12px] leading-[1.45] text-faint">{{ $t('templates.empty') }}</p>
-          </section>
-        </div>
+            <div v-if="editable && current" class="min-w-0 max-w-[600px] flex-1">
+              <TaskTemplateForm
+                :key="current.id"
+                :template="current"
+                :audiences="audiences"
+                :shoot-kinds="shootKinds"
+              />
 
-        <!-- Eine Art: Liste links, ihr Editor rechts. -->
-        <div v-else class="flex items-start gap-7 max-[1080px]:flex-col">
-          <div class="flex w-[392px] flex-none flex-col gap-0.5 max-[1080px]:w-full">
-            <component
-              :is="row.href ? Link : 'button'"
-              v-for="row in matching(rows[kind])"
-              :key="row.id"
-              class="flex cursor-pointer items-center gap-3.5 rounded-lg border-0 bg-transparent p-2.5 text-left no-underline transition-[background-color] duration-[.12s] ease-out hover:bg-muted"
-              :class="current && row.id === current.id && 'bg-sunk-2'"
-              v-bind="row.href ? { href: row.href } : { type: 'button', onClick: () => open(row) }"
-            >
-              <span class="min-w-0 flex-1">
-                <span class="block text-[13px] leading-[1.3] font-semibold" :class="!row.active && 'text-muted-foreground'">{{ row.name }}</span>
-                <span class="mt-px block text-[12px] leading-[1.3] text-muted-foreground">{{ row.meta }}</span>
-              </span>
-              <span v-if="row.note" class="flex-none text-[12px] tabular-nums text-faint">{{ row.note }}</span>
-              <span
-                v-if="!row.active"
-                class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-faint"
-              >{{ $t('formTemplates.inactive') }}</span>
-            </component>
-
-            <p v-if="!matching(rows[kind]).length" class="m-0 text-[12px] leading-[1.45] text-faint">{{ $t('templates.empty') }}</p>
-          </div>
-
-          <div v-if="editable && current" class="min-w-0 max-w-[600px] flex-1">
-            <TaskTemplateForm
-              :key="current.id"
-              :template="current"
-              :audiences="audiences"
-              :shoot-kinds="shootKinds"
-            />
-
-            <TaskTemplatePreview
-              class="mt-8"
-              :shoot-kinds="shootKinds"
-              :preview="preview"
-              :preview-date="previewDate"
-              :preview-shoot-kind="previewShootKind"
-              :selected="current.id"
-            />
+              <TaskTemplatePreview
+                class="mt-8"
+                :shoot-kinds="shootKinds"
+                :preview="preview"
+                :preview-date="previewDate"
+                :preview-shoot-kind="previewShootKind"
+                :selected="current.id"
+              />
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </Page>
   </AdminLayout>
 </template>

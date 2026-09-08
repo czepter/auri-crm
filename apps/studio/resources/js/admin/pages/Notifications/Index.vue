@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Button } from '@/ui/button'
@@ -32,40 +33,42 @@ const unread = computed(() => props.notifications.filter((row) => row.readAt ===
 
 <template>
   <AdminLayout active="benachrichtigungen">
-    <div data-tokens>
-      <PageHead :title="$t('notifications.title')">
-        <Button
-          v-if="unread > 0"
-          class="ml-auto"
-          type="button"
-          variant="ghost"
-          @click="router.post('/benachrichtigungen/gelesen', {}, { preserveScroll: true })"
-        >
-          {{ $t('notifications.markRead') }}
-        </Button>
-      </PageHead>
+    <Page data-tokens wide>
+      <div class="min-w-0 flex-1">
+        <PageHead :title="$t('notifications.title')">
+          <Button
+            v-if="unread > 0"
+            class="ml-auto"
+            type="button"
+            variant="ghost"
+            @click="router.post('/benachrichtigungen/gelesen', {}, { preserveScroll: true })"
+          >
+            {{ $t('notifications.markRead') }}
+          </Button>
+        </PageHead>
 
-      <Table v-if="notifications.length">
-        <thead>
-          <tr>
-            <TableHead>{{ $t('notifications.colEvent') }}</TableHead>
-            <TableHead>{{ $t('notifications.colWhat') }}</TableHead>
-            <TableHead align="right">{{ $t('notifications.colWhen') }}</TableHead>
-          </tr>
-        </thead>
-        <tbody>
-          <TableRow v-for="row in notifications" :key="row.id">
-            <!-- Read is the muted row, the same weight drop the dashboard's
-                 own settled rows take. -->
-            <TableCell :tone="row.readAt === null ? 'name' : 'muted'">
-              <Link v-if="row.url" :href="row.url">{{ row.title }}</Link>
-              <template v-else>{{ row.title }}</template>
-            </TableCell>
-            <TableCell tone="muted">{{ row.body }}</TableCell>
-            <TableCell tone="muted" align="right">{{ relativeDate(row.createdAt.slice(0, 10), locale) }}</TableCell>
-          </TableRow>
-        </tbody>
-      </Table>
-    </div>
+        <Table v-if="notifications.length">
+          <thead>
+            <tr>
+              <TableHead>{{ $t('notifications.colEvent') }}</TableHead>
+              <TableHead>{{ $t('notifications.colWhat') }}</TableHead>
+              <TableHead align="right">{{ $t('notifications.colWhen') }}</TableHead>
+            </tr>
+          </thead>
+          <tbody>
+            <TableRow v-for="row in notifications" :key="row.id">
+              <!-- Read is the muted row, the same weight drop the dashboard's
+                   own settled rows take. -->
+              <TableCell :tone="row.readAt === null ? 'name' : 'muted'">
+                <Link v-if="row.url" :href="row.url">{{ row.title }}</Link>
+                <template v-else>{{ row.title }}</template>
+              </TableCell>
+              <TableCell tone="muted">{{ row.body }}</TableCell>
+              <TableCell tone="muted" align="right">{{ relativeDate(row.createdAt.slice(0, 10), locale) }}</TableCell>
+            </TableRow>
+          </tbody>
+        </Table>
+      </div>
+    </Page>
   </AdminLayout>
 </template>
