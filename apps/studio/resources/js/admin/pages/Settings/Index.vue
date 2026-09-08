@@ -22,6 +22,7 @@ import { Label } from '@/ui/label'
 const props = defineProps<{
 
   fontPairs: { value: string; label: string; description: string }[]
+  mailSenderFromEnv: { name: boolean; address: boolean }
   settings: App.Settings.Data.StudioSettingsData
 }>()
 
@@ -171,8 +172,8 @@ const mailPreview = computed(() => {
   const mail = emailRef.value?.form
 
   return {
-    fromName: mail?.mail_from_name ?? props.settings.mailFromName,
-    fromAddress: mail?.mail_from_address ?? props.settings.mailFromAddress,
+    fromName: props.settings.mailFromName,
+    fromAddress: props.settings.mailFromAddress,
     replyTo: mail?.mail_reply_to ?? props.settings.mailReplyTo ?? '',
     bcc: mail?.mail_bcc ?? props.settings.mailBcc ?? '',
     signature: mail?.mail_signature ?? props.settings.mailSignature ?? '',
@@ -201,25 +202,26 @@ function submitGeneral() {
       <PageHead :kicker="$t('settings.kicker')" :title="$t(paneTitle)">
         <span v-if="activeForm?.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">{{ $t('settings.unsaved') }}</span>
         <Button
+          v-if="activeForm?.isDirty"
           class="ml-auto"
           variant="pill"
           type="submit"
           :form="formId"
-          :disabled="!activeForm?.isDirty || activeForm?.processing"
+          :disabled="activeForm?.processing"
         >
           {{ $t('common.save') }}
         </Button>
       </PageHead>
 
       <div class="px-8 pt-7 pb-8">
-        <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
+        <div class="flex flex-wrap items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
           <SettingsNav :active="pane" />
 
           <div class="max-w-[620px] min-w-0 flex-1">
             <ProfileForm v-if="profileSection" ref="profileRef" :settings="settings" :font-pairs="fontPairs" :sections="[profileSection]" />
             <VatForm v-else-if="pane === 'vat'" ref="vatRef" :settings="settings" />
             <DocumentsForm v-else-if="pane === 'documents'" ref="documentsRef" :settings="settings" />
-            <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" />
+            <EmailForm v-else-if="pane === 'email'" ref="emailRef" :settings="settings" :sender-from-env="mailSenderFromEnv" />
 
             <form v-else-if="pane === 'capture'" id="capture-form" @submit.prevent="submitCapture">
               <div>

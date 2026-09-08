@@ -6,10 +6,12 @@ use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Enums\FontPair;
+use App\Settings\Models\StudioSettings;
 use App\Settings\Rules\ValidIban;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -33,6 +35,8 @@ class StudioSettingsController extends Controller
     {
         $this->authorizeSettings();
 
+        $row = StudioSettings::query()->firstOrFail();
+
         return Inertia::render('Settings/Index', [
             // #234: the four pairs, each with what it is — the screen draws
             // the choice as a preview and not as a sample line.
@@ -41,6 +45,14 @@ class StudioSettingsController extends Controller
                 'label' => $pair->label(),
                 'description' => $pair->description(),
             ])->all(),
+            // The sender only comes from MAIL_FROM_* while the column is
+            // empty — an older installation can still carry its own value, and
+            // naming the variable would then be a lie. Hence the raw column
+            // rather than the resolved value the screen prints.
+            'mailSenderFromEnv' => [
+                'name' => $row->mail_from_name === null,
+                'address' => $row->mail_from_address === null,
+            ],
             'settings' => StudioSettingsData::fromResolver($settings),
         ]);
     }
@@ -292,25 +304,29 @@ class StudioSettingsController extends Controller
      * T-06's own pane and save action, same reasoning as updateVat() above:
      * E-Mail is its own form with its own "Speichern" button.
      *
-     * mail_from_name and mail_from_address travel the form already resolved
-     * with the env fallback (StudioSettingsResolver::mailFromName()/
-     * mailFromAddress()), the same pre-filled shape timezone/locale use on
-     * the Allgemein pane — so an unmodified save simply re-confirms the
-     * fallback rather than leaving the field looking empty.
+     * The sender is not a field here: it comes from MAIL_FROM_NAME and
+     * MAIL_FROM_ADDRESS, so it cannot drift away from the SMTP identity it
+     * has to stay aligned with. mail_sender_reset empties the two columns an
+     * older installation may still carry and hands them back to the .env.
      */
     public function updateMail(Request $request, StudioSettingsResolver $settings): RedirectResponse
     {
         $this->authorizeSettings();
 
         $validated = $request->validate([
-            'mail_from_name' => ['nullable', 'string', 'max:255'],
-            'mail_from_address' => ['nullable', 'string', 'max:255', 'email'],
             'mail_reply_to' => ['nullable', 'string', 'max:255', 'email'],
             'mail_bcc' => ['nullable', 'string', 'max:255', 'email'],
             'mail_signature' => ['nullable', 'string', 'max:1000'],
+            'mail_sender_reset' => ['sometimes', 'boolean'],
         ]);
 
         $actor = auth('staff')->user();
+
+        if (Arr::pull($validated, 'mail_sender_reset')) {
+            $settings->set('mail_from_name', null, $actor);
+            $settings->set('mail_from_address', null, $actor);
+        }
+
         foreach ($validated as $key => $value) {
             $settings->set($key, $value, $actor);
         }

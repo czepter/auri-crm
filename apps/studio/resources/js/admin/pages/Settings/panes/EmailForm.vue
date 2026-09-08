@@ -1,26 +1,31 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3'
+import { router, useForm } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
 import { Textarea } from '@/ui/textarea'
 import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 
-const props = defineProps<{ settings: App.Settings.Data.StudioSettingsData }>()
+const props = defineProps<{
+  settings: App.Settings.Data.StudioSettingsData
+  senderFromEnv: { name: boolean; address: boolean }
+}>()
 const emit = defineEmits<{ saved: [] }>()
 
 const form = useForm({
-  mail_from_name: props.settings.mailFromName,
-  mail_from_address: props.settings.mailFromAddress,
   mail_reply_to: props.settings.mailReplyTo ?? '',
   mail_bcc: props.settings.mailBcc ?? '',
   mail_signature: props.settings.mailSignature ?? '',
 })
 
+// Leert die beiden Spalten einer Bestandsinstallation, damit MAIL_FROM_*
+// wieder greift — ein eigener Weg, weil der Absender nicht im Formular steht.
+function resetSender() {
+  router.patch('/einstellungen/email', { mail_sender_reset: true }, { preserveScroll: true })
+}
+
 function submit() {
   form
     .transform((data) => ({
-      mail_from_name: data.mail_from_name || null,
-      mail_from_address: data.mail_from_address || null,
       mail_reply_to: data.mail_reply_to || null,
       mail_bcc: data.mail_bcc || null,
       mail_signature: data.mail_signature || null,
@@ -34,16 +39,24 @@ defineExpose({ form, submit })
 <template>
   <form id="mail-form" @submit.prevent="submit">
     <div class="mt-0">
-      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.mailSenderLabel') }}</div>
-      <div class="mb-6">
-        <div class="grid grid-cols-2 gap-4">
-          <Field :label="$t('settings.mailFromNameLabel')" id="m-absendername" :error="form.errors.mail_from_name">
-            <Input id="m-absendername" v-model="form.mail_from_name" type="text" />
-          </Field>
-          <Field :label="$t('settings.mailFromAddressLabel')" id="m-absenderadresse" :error="form.errors.mail_from_address">
-            <Input id="m-absenderadresse" v-model="form.mail_from_address" type="email" />
-          </Field>
+      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.mailSenderFromEnv') }}</div>
+      <div class="mb-6 flex flex-col gap-1.5">
+        <div class="flex items-center gap-3 rounded-[var(--r-sm)] bg-sunk px-3 py-2.5">
+          <span class="text-[13px] font-medium">{{ settings.mailFromName }}</span>
+          <span v-if="senderFromEnv.name" class="ml-auto font-mono text-[11px] text-ink-2">MAIL_FROM_NAME</span>
         </div>
+        <div class="flex items-center gap-3 rounded-[var(--r-sm)] bg-sunk px-3 py-2.5">
+          <span class="text-[13px] font-medium">{{ settings.mailFromAddress }}</span>
+          <span v-if="senderFromEnv.address" class="ml-auto font-mono text-[11px] text-ink-2">MAIL_FROM_ADDRESS</span>
+        </div>
+        <button
+          v-if="!senderFromEnv.name || !senderFromEnv.address"
+          class="mt-1 cursor-pointer self-start text-[12.5px] text-ink-2 underline"
+          type="button"
+          @click="resetSender"
+        >
+          {{ $t('settings.mailSenderReset') }}
+        </button>
       </div>
     </div>
 

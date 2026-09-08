@@ -80,16 +80,12 @@ function addClosure() {
                     </p>
                   </div>
                 </div>
-                <div class="mt-6 flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0">
-                  <Button
-                    type="submit"
-                    :disabled="!durationForm.isDirty || durationForm.processing"
-                    :style="!durationForm.isDirty ? 'opacity:.4' : undefined"
-                  >
+                <div v-if="durationForm.isDirty" class="mt-6 flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0">
+                  <Button type="submit" :disabled="durationForm.processing">
                     <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
                     {{ $t('settings.durationSave') }}
                   </Button>
-                  <span v-if="durationForm.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
+                  <span class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
                 </div>
               </form>
             </div>
@@ -119,9 +115,9 @@ function addClosure() {
                   </div>
                   <div class="mt-6 flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0">
                     <Button
+                      v-if="closureForms[closure.id].isDirty"
                       type="submit"
-                      :disabled="!closureForms[closure.id].isDirty || closureForms[closure.id].processing"
-                      :style="!closureForms[closure.id].isDirty ? 'opacity:.4' : undefined"
+                      :disabled="closureForms[closure.id].processing"
                     >
                       <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
                       {{ $t('settings.numberingSave') }}

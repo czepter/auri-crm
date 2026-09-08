@@ -3,6 +3,7 @@
 use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Settings\Models\StudioSettings;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 
@@ -24,7 +25,8 @@ it('hands the resolved mail identity to the settings screen', function () {
         ->and($props['settings']['mailFromName'])->toBe('Example')
         ->and($props['settings']['mailReplyTo'])->toBeNull()
         ->and($props['settings']['mailBcc'])->toBeNull()
-        ->and($props['settings']['mailSignature'])->toBeNull();
+        ->and($props['settings']['mailSignature'])->toBeNull()
+        ->and($props['mailSenderFromEnv'])->toBe(['name' => true, 'address' => true]);
 });
 
 it('updates the mail identity, redirects to the shell, and audits the owner', function () {
@@ -32,8 +34,6 @@ it('updates the mail identity, redirects to the shell, and audits the owner', fu
 
     $this->actingAs($owner, 'staff')
         ->patch('/einstellungen/email', [
-            'mail_from_name' => 'Atelier Nordlicht',
-            'mail_from_address' => 'studio@nordlicht.test',
             'mail_reply_to' => 'buero@nordlicht.test',
             'mail_bcc' => 'ablage@nordlicht.test',
             'mail_signature' => 'Herzliche Grüße, das Team von Atelier Nordlicht',
@@ -42,12 +42,32 @@ it('updates the mail identity, redirects to the shell, and audits the owner', fu
 
     $row = StudioSettings::query()->sole();
 
-    expect($row->mail_from_name)->toBe('Atelier Nordlicht')
-        ->and($row->mail_from_address)->toBe('studio@nordlicht.test')
-        ->and($row->mail_reply_to)->toBe('buero@nordlicht.test')
+    expect($row->mail_reply_to)->toBe('buero@nordlicht.test')
         ->and($row->mail_bcc)->toBe('ablage@nordlicht.test')
         ->and($row->mail_signature)->toBe('Herzliche Grüße, das Team von Atelier Nordlicht')
-        ->and(AuditLog::where('event', 'studio_settings.updated')->where('context->key', 'mail_from_address')->sole()->actor_id)->toBe($owner->id);
+        ->and(AuditLog::where('event', 'studio_settings.updated')->where('context->key', 'mail_reply_to')->sole()->actor_id)->toBe($owner->id);
+});
+
+it('leaves the sender to the environment: no field writes it, and a reset empties an inherited one', function () {
+    $owner = staffMember(StaffRole::Owner);
+
+    $this->actingAs($owner, 'staff')->patch('/einstellungen/email', [
+        'mail_from_name' => 'Atelier Nordlicht',
+        'mail_from_address' => 'studio@nordlicht.test',
+    ]);
+    expect(StudioSettings::query()->sole()->mail_from_address)->toBeNull();
+
+    (new StudioSettingsResolver)->set('mail_from_name', 'Atelier Nordlicht', $owner);
+    (new StudioSettingsResolver)->set('mail_from_address', 'studio@nordlicht.test', $owner);
+
+    $this->actingAs($owner, 'staff')
+        ->patch('/einstellungen/email', ['mail_sender_reset' => true])
+        ->assertRedirect('/einstellungen');
+
+    $row = StudioSettings::query()->sole();
+
+    expect($row->mail_from_name)->toBeNull()
+        ->and($row->mail_from_address)->toBeNull();
 });
 
 it('rejects a reply-to or bcc address that is not a valid email', function () {
@@ -77,7 +97,7 @@ it('opens the mail identity route to the owner, and gives every other role the s
     $missing = $this->actingAs(staffMember($role), 'staff')->get('/this-route-does-not-exist-xyz');
 
     $response = $this->actingAs(staffMember($role), 'staff')->patch('/einstellungen/email', [
-        'mail_from_name' => 'Atelier Nordlicht',
+        'mail_reply_to' => 'buero@nordlicht.test',
     ]);
 
     $response->assertStatus($status);
