@@ -52,6 +52,12 @@ final class HelpIndex
     }
 
     /** @param  array<string>  $capabilities */
+    public function visible(array $capabilities): Collection
+    {
+        return $this->all()->filter(fn (HelpEntry $entry) => $this->darf($entry, $capabilities))->values();
+    }
+
+    /** @param  array<string>  $capabilities */
     private function darf(HelpEntry $entry, array $capabilities): bool
     {
         return $entry->faehigkeit === null

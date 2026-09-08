@@ -47,9 +47,7 @@ final class HelpController
     public function search(Request $request)
     {
         return response()->json(
-            $this->index->all()
-                ->filter(fn (HelpEntry $e) => $e->faehigkeit === null
-                    || in_array($e->faehigkeit, $this->capabilities($request), true))
+            $this->index->visible($this->capabilities($request))
                 ->map(fn (HelpEntry $e) => [
                     'slug' => $e->slug,
                     'titel' => $e->titel,
@@ -64,10 +62,8 @@ final class HelpController
     /** @return array<array{slug: string, titel: string, beschreibung: string}> */
     private function liste(Request $request, string $art): array
     {
-        return $this->index->all()
+        return $this->index->visible($this->capabilities($request))
             ->filter(fn (HelpEntry $e) => $e->art === $art)
-            ->filter(fn (HelpEntry $e) => $e->faehigkeit === null
-                || in_array($e->faehigkeit, $this->capabilities($request), true))
             // Aufgaben sind ein Weg und stehen kuratiert; die Referenz ist ein
             // Nachschlagewerk und steht alphabetisch.
             ->sortBy(fn (HelpEntry $e) => $art === 'aufgabe' ? $e->reihenfolge ?? PHP_INT_MAX : $e->titel)
