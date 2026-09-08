@@ -98,16 +98,15 @@ function save(rangeId: string) {
                   </div>
                 </div>
 
-                <div class="mt-6 flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0">
-                  <Button
-                    type="submit"
-                    :disabled="!forms[range.id].isDirty || forms[range.id].processing"
-                    :style="!forms[range.id].isDirty ? 'opacity:.4' : undefined"
-                  >
+                <div
+                  v-if="forms[range.id].isDirty"
+                  class="mt-6 flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0"
+                >
+                  <Button type="submit" :disabled="forms[range.id].processing">
                     <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7" /></svg>
                     {{ $t('settings.numberingSave') }}
                   </Button>
-                  <span v-if="forms[range.id].isDirty" class="chip now">{{ $t('settings.unsaved') }}</span>
+                  <span class="chip now">{{ $t('settings.unsaved') }}</span>
                 </div>
               </form>
             </div>
