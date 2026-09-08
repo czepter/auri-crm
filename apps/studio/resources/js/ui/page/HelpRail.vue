@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
 import Rail from '@/ui/page/Rail.vue'
-import { helpPanel } from '@/lib/helpPanel'
+import { helpPanel, linkZiel } from '@/lib/helpPanel'
 
 type Eintrag = { slug: string; titel: string; art: string }
 
@@ -39,15 +39,14 @@ watch(slug, laden, { immediate: true })
 // wogegen die Spalte gebaut ist.
 function aufLink(event: MouseEvent) {
   const ziel = (event.target as HTMLElement).closest('a')
-  const href = ziel?.getAttribute('href')
+  const href = ziel?.getAttribute('href') ?? null
+  const ergebnis = linkZiel(event, href)
 
-  if (!href || !href.startsWith('/')) return
-  if (event.defaultPrevented || event.button !== 0) return
-  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+  if (!ergebnis || !href) return
 
   event.preventDefault()
 
-  if (href.startsWith('/hilfe/')) {
+  if (ergebnis === 'artikel') {
     helpPanel.oeffnen(href.slice('/hilfe/'.length))
     return
   }

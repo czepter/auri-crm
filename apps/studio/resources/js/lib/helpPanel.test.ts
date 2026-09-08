@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { helpPanel } from './helpPanel'
+import { helpPanel, linkZiel } from './helpPanel'
+
+const klick = { defaultPrevented: false, button: 0, metaKey: false, ctrlKey: false, shiftKey: false, altKey: false }
 
 beforeEach(() => {
   localStorage.clear()
@@ -41,5 +43,35 @@ describe('helpPanel', () => {
     helpPanel.zuruecksetzen()
 
     expect(helpPanel.offen.value).toBe(false)
+  })
+})
+
+describe('linkZiel', () => {
+  it.each(['metaKey', 'ctrlKey', 'shiftKey', 'altKey'] as const)('lässt den Klick in Ruhe, wenn %s gedrückt ist', (taste) => {
+    expect(linkZiel({ ...klick, [taste]: true }, '/hilfe/foo')).toBeNull()
+  })
+
+  it('lässt den Klick in Ruhe bei einem nicht-primären Maustaste', () => {
+    expect(linkZiel({ ...klick, button: 1 }, '/hilfe/foo')).toBeNull()
+  })
+
+  it('lässt den Klick in Ruhe, wenn schon defaultPrevented ist', () => {
+    expect(linkZiel({ ...klick, defaultPrevented: true }, '/hilfe/foo')).toBeNull()
+  })
+
+  it('lässt externe Links in Ruhe', () => {
+    expect(linkZiel(klick, 'https://example.com')).toBeNull()
+  })
+
+  it('lässt Klicks ohne href in Ruhe', () => {
+    expect(linkZiel(klick, null)).toBeNull()
+  })
+
+  it('erkennt einen Hilfeartikel', () => {
+    expect(linkZiel(klick, '/hilfe/foo')).toBe('artikel')
+  })
+
+  it('erkennt eine normale interne Seite', () => {
+    expect(linkZiel(klick, '/projekte')).toBe('seite')
   })
 })

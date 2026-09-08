@@ -53,11 +53,4 @@ describe('HelpRail', () => {
 
     expect(html).toContain(de.help.close)
   })
-
-  // Vue's SSR renderer produces a static HTML string and never runs event
-  // listeners — there is no DOM, so a MouseEvent can't be dispatched at
-  // `aufLink` this way, and this workspace has no jsdom or @vue/test-utils
-  // to mount one (every other *.test.ts here renders through the same
-  // SSR-string idiom). The modifier-click guard from finding 2 is exercised
-  // manually instead: see task-7-report.md.
 })
