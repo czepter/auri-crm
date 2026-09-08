@@ -8,8 +8,8 @@
 ## 1. Warum das existiert
 
 Das Studio wird laufend deployed, und wer davor sitzt, erfährt nichts davon.
-Neun Versionen liegen inzwischen in `release-log` — 0.1.0 bis 0.9.2, 514
-Änderungen — und keine davon ist in der Anwendung sichtbar. Ein Fotograf, dem
+Neun Versionen liegen inzwischen in `release-log` — 0.1.0 bis 0.9.2, 95
+kuratierte Einträge — und keine davon ist in der Anwendung sichtbar. Ein Fotograf, dem
 die Angebotsseite plötzlich anders aussieht, hat keine Stelle, an der steht
 warum.
 
@@ -52,17 +52,15 @@ Die Bilder sind aus den Artboard-Quellen gerendert und liegen unter
 | Bild | Artboard | Was es zeigt |
 |---|---|---|
 | `docs/screenshots/2026-09-08-neuigkeiten-studio.png` | Main | der Feed: neun Releases, Zähler je Gruppe, Version mit Punkt unten in der Sidebar |
-| `docs/screenshots/2026-09-08-neuigkeiten-release.png` | Detail | `/neuigkeiten/0.9.1`: Bild, headline, Filter, 22 + 18 Einträge |
+| `docs/screenshots/2026-09-08-neuigkeiten-release.png` | Detail | `/neuigkeiten/0.9.1`: Bild, headline, body, Filter, 7 + 4 Einträge |
 | `docs/screenshots/2026-09-08-neuigkeiten-handy.png` | Mobil | der Feed auf 390px |
 | `docs/screenshots/2026-09-08-neuigkeiten-zustaende.png` | Marker | Versionszeile in drei Zuständen, die Markierungen, die Filterpillen |
 | `docs/screenshots/2026-09-08-neuigkeiten-dienst.png` | Quelle | der Weg aus release-log, die Endpunkte, die drei Gruppen |
 
 Canvas: https://claude.ai/code/artifact/28837ea9-cb16-48fb-ae0a-fb3bc3db41a2
 
-Alle Zahlen und alle Einträge in den Entwürfen stammen aus
-`release-log/releases/*.json`. Die einzige Ausnahme sind die drei
-`headline`-Zeilen im Feed: das Feld ist heute in allen neun Releases leer, und
-ohne es zeigt der Entwurf seinen eigenen Platz nicht.
+Alle Zahlen, Überschriften und Einträge in den Entwürfen stammen aus dem
+laufenden Dienst. Nichts davon ist geschrieben.
 
 ## 4. Der Weg vom Tag in den Screen
 
@@ -86,7 +84,7 @@ Was das Studio holt:
 | Endpunkt | Antwort |
 |---|---|
 | `GET /versions` | `latest` und je Release Version, Datum, `headline`, `url`. Der Update-Check. |
-| `GET /releases?page=1` | Der Feed. Je Release nur die **Zähler** je Gruppe — 0.9.0 hat 150 Einträge, deshalb trägt der Feed keine. |
+| `GET /releases?page=1` | Der Feed. Je Release nur die **Zähler** je Gruppe, nicht die Einträge. |
 | `GET /releases/<version>` | Ein Release mit allen Einträgen, in `sections` nach Gruppe sortiert. |
 | `GET /media/<datei>` | Das Bild des Releases. Drei von neun haben eins. |
 | `GET /health` | Für Coolify. |
@@ -101,19 +99,18 @@ vergleicht, muss deshalb zuerst auf Semver prüfen: `version_compare('dev',
 `bin/from-git.mjs` sagt es im Kopf selbst: alles Faktische liest es aus git,
 `headline`, `body` und `image` sind Handarbeit und überleben jeden Lauf.
 
-Aus git: `version`, `tag`, `date`, `commits` und jeder Eintrag in `changes` —
-`type`, `scope`, `title`, `description`, `pr`, `issues`, `commit`, `date`.
-`title` ist der Commit-Betreff unverändert, `description` der Rumpf ohne
-Trailer. `feat`, `fix` und `perf` zählen; `docs`, `ci`, `chore` und `test`
-fallen raus. Ein gequetschter Pull Request wird an seinen `* `-Aufzählungen
-wieder in seine einzelnen Commits zerlegt.
+Aus git kommen die Fakten: `version`, `tag`, `date`, `commits` und je Eintrag
+`type`, `pr`, `issues`, `commit`, `date`. `feat`, `fix` und `perf` zählen;
+`docs`, `ci`, `chore` und `test` fallen raus.
 
-Von Hand: `headline` ist der Satz, den der Fotograf im Feed liest. `body` sind
-Absätze darunter. `image` ist ein Screenshot aus `release-log/media/`.
+Von Hand kommt alles, was gelesen wird: `headline`, `body`, `image` je Release,
+und `title` und `description` je Eintrag. Der Dienst führt inzwischen 95
+Einträge statt der 514 Commits, die dahinterstehen — mehrere Commits an
+derselben Sache stehen als eine Zeile, in der Sprache des Fotografen
+(„Download-Link in der Fertigmeldung lief nie ab").
 
-Damit steht die Arbeitsteilung: das Detail zeigt Entwicklersprache, weil sie
-aus git kommt; der Feed zeigt die Zusammenfassung, weil sie geschrieben wird.
-Heute ist keine geschrieben (§7).
+Das Studio schreibt nichts davon und formatiert nichts um. Es zeigt, was der
+Dienst liefert.
 
 ## 6. Teile
 
@@ -144,12 +141,11 @@ Cache, der andere schreibt ihn. Die anderen Surfaces haben keinen Screen dafür.
 
 ## 7. Offen
 
-- **`headline` ist überall leer.** Ohne sie trägt eine Feed-Zeile nur Nummer,
-  Datum und drei Zahlen. Neun Releases wollen je einen Satz — oder der Feed
-  bekommt eine andere erste Zeile.
-- **Das Detail spricht Entwicklersprache.** Die 40 Zeilen zu 0.9.1 sind
-  Commit-Betreffe, ein Teil davon englisch („add new portal components and
-  functionality"). Wer sie für den Fotografen umschreiben will, braucht ein
-  Feld je Eintrag; heute gibt es nur `headline` je Release.
+- **Bilder gibt es für zwei von neun Releases.** Die anderen sieben zeichnen
+  die Detailseite ohne. Das ist kein Fehler, aber sieben Screenshots wären
+  besser als sieben Leerstellen.
+- **Sechs Releases tragen keine Behoben-Gruppe.** Der Dienst führt dort nur
+  Neuerungen. Ob die Fehler dieser Wochen fehlen oder bewusst nicht geführt
+  werden, entscheidet release-log, nicht das Studio.
 - **Farbe des Punkts.** Aktuell `--due` (#8A6212), das systemeigene „steht
   offen". Bei 6px liest es als Gold. Ein reines Gelb hat die Palette nicht.
