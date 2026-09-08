@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
 import Rail from '@/ui/page/Rail.vue'
 import { helpPanel } from '@/lib/helpPanel'
@@ -15,6 +15,7 @@ const fehler = ref(false)
 const laedt = ref(false)
 
 const slug = computed(() => helpPanel.ueberschrieben.value ?? gewaehlt.value ?? eintraege.value[0]?.slug ?? null)
+const sichtbar = computed(() => helpPanel.offen.value && eintraege.value.length > 0)
 
 async function laden() {
   if (!slug.value) return
@@ -32,7 +33,13 @@ async function laden() {
 }
 
 watch(slug, laden, { immediate: true })
-onMounted(() => helpPanel.gesehen())
+
+// mounted feuert unabhängig vom v-if unten — ohne diese Bedingung würde eine
+// Seite ganz ohne Einträge oder ein schon zugeklapptes Panel die
+// Erstöffnung verbrauchen, obwohl nie eine Spalte zu sehen war.
+watch(sichtbar, (ist) => {
+  if (ist) helpPanel.gesehen()
+}, { immediate: true })
 
 // Ein rohes <a href> in einem v-html-Block macht einen vollen
 // Seitenladevorgang — die offene Fallakte daneben wäre weg, also genau das,
@@ -55,7 +62,7 @@ function aufLink(event: MouseEvent) {
 </script>
 
 <template>
-  <Rail v-if="helpPanel.offen.value && eintraege.length">
+  <Rail v-if="sichtbar">
     <div class="mb-3 flex items-center gap-2">
       <button
         v-for="eintrag in eintraege"
