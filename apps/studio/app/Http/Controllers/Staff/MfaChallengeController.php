@@ -61,8 +61,9 @@ class MfaChallengeController extends Controller
 
         RateLimiter::clear($key);
         $request->session()->forget('mfa.pending_user_id');
+        $remember = (bool) $request->session()->pull('mfa.remember', false);
 
-        Auth::guard('staff')->login($user);
+        Auth::guard('staff')->login($user, $remember);
         $request->session()->regenerate();
         AuditLogger::record('staff.login.succeeded', $user, ['method' => 'totp']);
 
