@@ -21,6 +21,8 @@ const props = defineProps<{
   unit?: string
   warn?: boolean
   dots: Tone[]
+  /** The empty screen's placeholder: the tile keeps the grid, the figure is absent. */
+  ghost?: boolean
   /** The "Als nächstes" form: a date plate instead of a number. */
   day?: { number: string; weekday: string; what: string; who: string }
   href?: string
@@ -42,8 +44,9 @@ const DOT: Record<string, string> = {
   <component
     :is="href ? Link : 'div'"
     :href="href"
-    class="flex min-h-[130px] flex-col rounded-md bg-sunk no-underline text-foreground"
+    class="flex min-h-[130px] flex-col rounded-md no-underline text-foreground"
     :class="[
+      ghost ? 'border border-dashed border-border bg-transparent' : 'bg-sunk',
       day ? 'overflow-hidden p-0' : 'px-[17px] pt-[15px] pb-3.5',
       href && 'hover:bg-mark',
     ]"
@@ -69,10 +72,10 @@ const DOT: Record<string, string> = {
     <template v-else>
       <div class="text-[10.5px] tracking-[0.07em] uppercase text-ink-2">{{ label }}</div>
       <div
-        class="mt-2 flex items-baseline gap-[3px] text-[28px] leading-none font-semibold tracking-[-0.034em] tabular-nums"
-        :class="warn && 'text-action'"
+        class="mt-2 flex items-baseline gap-[3px] text-[28px] leading-none tracking-[-0.034em] tabular-nums"
+        :class="[ghost ? 'font-normal text-faint' : 'font-semibold', warn && 'text-action']"
       >
-        {{ value }}<span v-if="unit" class="text-[0.52em] font-medium text-ink-2">{{ unit }}</span>
+        {{ ghost ? '—' : value }}<span v-if="unit" class="text-[0.52em] font-medium text-ink-2">{{ unit }}</span>
       </div>
     </template>
 
@@ -87,7 +90,7 @@ const DOT: Record<string, string> = {
           v-for="(tone, index) in proof.shown"
           :key="index"
           class="size-2 flex-none rounded-full"
-          :class="DOT[tone] ?? 'bg-mark'"
+          :class="ghost ? 'bg-sunk-2' : (DOT[tone] ?? 'bg-mark')"
         />
         <span
           v-if="proof.overflow"

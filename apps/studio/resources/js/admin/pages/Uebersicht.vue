@@ -72,6 +72,8 @@ const quoteDots = computed<Tone[]>(() => [
     ),
 ]);
 
+const ghostDots = Array.from<unknown, Tone>({ length: 5 }, () => "");
+
 const readinessDots = computed<Tone[]>(() =>
     (props.nextShoot?.readiness ?? []).map((mark) =>
         mark.done ? "on" : "warn",
@@ -122,8 +124,8 @@ const owed = computed(
 );
 
 // A studio on its first day owes nothing, has booked nothing and has no
-// history to count — the screen is then the one control that starts all
-// three, not eight containers reporting their own absence.
+// history to count — the grid then stands as placeholders rather than as
+// eight containers reporting their own absence.
 const bare = computed(
     () =>
         !decisions.value.length &&
@@ -193,20 +195,26 @@ function complete(task: App.Crm.Data.TaskRowData) {
                 <Link
                     v-if="unanswered"
                     href="/posteingang"
-                    class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.05em] uppercase text-ink-2 ml-auto"
+                    class="mb-[5px] text-[11px] leading-none font-semibold tracking-[0.05em] uppercase text-ink-2"
                 >
                     {{ $t("dashboard.unanswered", { count: unanswered }) }}
                 </Link>
+
+                <Button :as="Link" variant="pill" class="ml-auto" href="/anfragen/neu">
+                    {{ $t("leads.createKicker") }}
+                </Button>
             </PageHead>
 
-            <Button v-if="bare" :as="Link" variant="pill" class="mt-5" href="/anfragen/neu">
-                {{ $t("leads.createKicker") }}
-            </Button>
-
             <div
-                v-else
                 class="grid flex-1 auto-rows-min grid-cols-4 items-start gap-x-5 gap-y-7 px-8 py-7"
             >
+                <template v-if="bare">
+                    <Metric :label="$t('dashboard.pipeline')" ghost :dots="ghostDots" />
+                    <Metric :label="$t('dashboard.overdueTotal')" ghost :dots="ghostDots" />
+                    <Metric :label="$t('dashboard.acceptance')" ghost :dots="ghostDots" />
+                    <Metric :label="$t('dashboard.nextShoot')" ghost :dots="ghostDots" />
+                </template>
+
                 <!-- Every tile brings its own proof, or it is not a tile (C-05). A
              figure with nothing behind it is absent rather than a zero. -->
                 <Metric
@@ -279,7 +287,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
                 <!-- The most important field is the only one without a container:
                      emphasis comes from position, size and the one filled button. -->
                 <Panel
-                    v-if="decisions.length || nextShoot"
+                    v-if="decisions.length || nextShoot || bare"
                     bare
                     class="col-span-3"
                     :title="$t('dashboard.decide')"
@@ -363,9 +371,24 @@ function complete(task: App.Crm.Data.TaskRowData) {
                             })
                         }}
                     </p>
+
+                    <div v-else>
+                        <div
+                            v-for="row in 3"
+                            :key="row"
+                            class="flex items-center gap-3.5 py-[11px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                        >
+                            <div class="h-[9px] w-52 flex-none rounded-full bg-sunk-2" />
+                            <div class="h-[9px] flex-1 rounded-full bg-sunk-2" />
+                            <div class="h-[9px] w-20 flex-none rounded-full bg-sunk-2" />
+                        </div>
+                    </div>
                 </Panel>
 
-                <Panel v-if="week.length" :title="$t('dashboard.thisWeek')">
+                <Panel v-if="week.length || bare" :title="$t('dashboard.thisWeek')">
+                    <p v-if="!week.length" class="text-[11.5px] leading-[1.45] text-faint">
+                        {{ $t("dashboard.weekEmpty") }}
+                    </p>
                     <div
                         v-for="entry in week"
                         :key="`${entry.when}${entry.what}`"
@@ -388,16 +411,19 @@ function complete(task: App.Crm.Data.TaskRowData) {
                 </Panel>
 
                 <Panel
-                    v-if="newLeads.length"
+                    v-if="newLeads.length || bare"
                     class="col-span-2"
                     :title="$t('dashboard.inquiries')"
-                    :count="newLeads.length"
+                    :count="newLeads.length || null"
                 >
                     <template #action>
                         <Link class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline ml-auto text-[12px]" href="/anfragen">{{
                             $t("dashboard.toBoard")
                         }}</Link>
                     </template>
+                    <p v-if="!newLeads.length" class="text-[11.5px] leading-[1.45] text-faint">
+                        {{ $t("dashboard.inquiriesEmpty") }}
+                    </p>
                     <div v-for="lead in newLeads" :key="lead.id" class="flex items-baseline gap-[9px] py-2 shadow-[inset_0_1px_0_#EEEEF0] first:shadow-none">
                         <span
                             class="w-14 flex-none text-[10.5px] tracking-[0.05em] uppercase text-ink-2"
@@ -418,11 +444,14 @@ function complete(task: App.Crm.Data.TaskRowData) {
                 </Panel>
 
                 <Panel
-                    v-if="galleries.length"
+                    v-if="galleries.length || bare"
                     class="col-span-2"
                     :title="$t('dashboard.galleries')"
-                    :count="galleries.length"
+                    :count="galleries.length || null"
                 >
+                    <p v-if="!galleries.length" class="text-[11.5px] leading-[1.45] text-faint">
+                        {{ $t("dashboard.galleriesEmpty") }}
+                    </p>
                     <div
                         v-for="row in galleries"
                         :key="`${row.projectId}${row.what}`"
