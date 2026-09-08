@@ -34,13 +34,6 @@ async function laden() {
 
 watch(slug, laden, { immediate: true })
 
-// mounted feuert unabhängig vom v-if unten — ohne diese Bedingung würde eine
-// Seite ganz ohne Einträge oder ein schon zugeklapptes Panel die
-// Erstöffnung verbrauchen, obwohl nie eine Spalte zu sehen war.
-watch(sichtbar, (ist) => {
-  if (ist) helpPanel.gesehen()
-}, { immediate: true })
-
 // Ein rohes <a href> in einem v-html-Block macht einen vollen
 // Seitenladevorgang — die offene Fallakte daneben wäre weg, also genau das,
 // wogegen die Spalte gebaut ist.
@@ -49,6 +42,8 @@ function aufLink(event: MouseEvent) {
   const href = ziel?.getAttribute('href')
 
   if (!href || !href.startsWith('/')) return
+  if (event.defaultPrevented || event.button !== 0) return
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
 
   event.preventDefault()
 

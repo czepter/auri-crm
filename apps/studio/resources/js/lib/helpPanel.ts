@@ -13,9 +13,10 @@ const ueberschrieben = ref<string | null>(null)
 function zuruecksetzen() {
   geladen.clear()
   ueberschrieben.value = null
-  // Beim ersten Besuch offen, bis einmal zugeklappt wurde. Ein Hilfesystem,
-  // das zugeklappt startet, wird nicht entdeckt.
-  offen.value = localStorage.getItem('help.seen') === null
+  // Kein gespeicherter Wert heißt offen. Geschrieben wird `help.open` nur
+  // durch oeffnen()/schliessen() — also nur durch einen bewussten Klick,
+  // nie durchs bloße Rendern.
+  offen.value = localStorage.getItem('help.open') === null
     ? true
     : localStorage.getItem('help.open') === '1'
 }
@@ -35,13 +36,6 @@ export const helpPanel = {
   schliessen() {
     offen.value = false
     localStorage.setItem('help.open', '0')
-    localStorage.setItem('help.seen', '1')
-  },
-
-  // Erst wenn die Spalte tatsächlich gezeigt wurde, ist die Erstöffnung
-  // verbraucht.
-  gesehen() {
-    localStorage.setItem('help.seen', '1')
   },
 
   navigiert() {

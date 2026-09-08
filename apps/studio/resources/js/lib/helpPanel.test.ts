@@ -29,14 +29,17 @@ describe('helpPanel', () => {
     expect(helpPanel.ueberschrieben.value).toBeNull()
   })
 
-  it('verbraucht die Erstöffnung erst, wenn die Spalte sichtbar war', () => {
-    // Unter der Schwelle gibt es keine Spalte zum Zuklappen. Ein schmales
-    // Fenster darf die einzige Entdeckungschance nicht verschlucken.
+  it('startet offen, solange kein Wert gespeichert ist, sonst nach dem gespeicherten Wert', () => {
+    // Ein Key statt zwei: nur ein bewusster Klick auf oeffnen()/schliessen()
+    // schreibt `help.open`. Eine unsichtbare Spalte schreibt nie etwas und
+    // kann so die Erstöffnung nicht verbrauchen.
+    expect(localStorage.getItem('help.open')).toBeNull()
     helpPanel.zuruecksetzen()
-    expect(localStorage.getItem('help.seen')).toBeNull()
+    expect(helpPanel.offen.value).toBe(true)
 
-    helpPanel.gesehen()
+    localStorage.setItem('help.open', '0')
+    helpPanel.zuruecksetzen()
 
-    expect(localStorage.getItem('help.seen')).toBe('1')
+    expect(helpPanel.offen.value).toBe(false)
   })
 })
