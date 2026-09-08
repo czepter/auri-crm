@@ -78,9 +78,12 @@ final class HelpIndex
             faehigkeit: $kopf['faehigkeit'] ?? null,
             // Reintext für die Suche: Markdown-Zeichen weg, Zeilenumbrüche zu
             // Leerzeichen, damit ein Substring über Zeilengrenzen trifft.
-            suchtext: trim(preg_replace('/\s+/', ' ', strip_tags(str_replace(
-                ['#', '*', '`', '>', '_'], '', $rumpf,
-            )))),
+            // strip_tags zuerst: es braucht heile Tags. Erst die Zeichen zu
+            // entfernen nimmt einem `<form …>` im Codeblock sein `>`, und der
+            // nun offene Tag frisst den Rest des Artikels.
+            suchtext: trim(preg_replace('/\s+/', ' ', str_replace(
+                ['#', '*', '`', '>', '_'], '', strip_tags($rumpf),
+            ))),
         );
     }
 
