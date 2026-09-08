@@ -573,7 +573,7 @@
     "pickable": "Wählbar",
     "stageAtLeast": "mindestens",
     "stagePercentOff": "{percent} % — muss 100 ergeben",
-    "stageMinimumsOver": "Mindestbeträge sind höher als das kleinste Angebot von {amount}",
+    "stageMinimumsCollapse": "Unter {amount} fällt alles auf die erste Stufe",
     "spanMinNote": "{hours} Stunden, nichts dazu",
     "spanPreselectedNote": "{hours} Stunden, {blocks} Bausteine",
     "spanMaxNote": "{hours} Stunden, alle Bausteine",
