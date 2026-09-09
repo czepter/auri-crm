@@ -2960,6 +2960,12 @@
                         "format": "date-time",
                         "description": "A day, a moment, or nothing. Never the future: an inquiry that\nhas not arrived yet is a typo, and it would sit at the head of\nevery funnel month until someone found it."
                     },
+                    "fields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
                     "referred_by_contact_id": {
                         "type": [
                             "string",
