@@ -134,11 +134,12 @@ function submitEvents() {
         <PageHead :kicker="$t('profile.kicker')" :title="$t(paneTitle)">
           <span v-if="activeForm.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">{{ $t('settings.unsaved') }}</span>
           <Button
+            v-if="activeForm.isDirty"
             class="ml-auto"
             variant="pill"
             type="submit"
             :form="formId"
-            :disabled="!activeForm.isDirty || activeForm.processing"
+            :disabled="activeForm.processing"
           >
             {{ $t('common.save') }}
           </Button>

@@ -170,6 +170,36 @@ class ContactController extends Controller
         ]);
     }
 
+    public function store(Request $request): RedirectResponse
+    {
+        // ContactPolicy grants the address book one authority, and update()
+        // is the write half of it — there is no create ability to name.
+        $this->authorize('update', new Contact);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => [
+                'nullable', 'email', 'max:255',
+                // An address already on file is the same person
+                // (CaptureInquiry::resolveContact), and the partial unique
+                // index on (tenant_id, email) would throw where the form
+                // should show a field error.
+                Rule::unique('contacts', 'email')->where('tenant_id', config('tenancy.tenant_id')),
+            ],
+            'phone' => ['nullable', 'string', 'max:64'],
+        ]);
+
+        $contact = Contact::create($validated);
+
+        AuditLogger::record(
+            event: 'contact.created',
+            actor: auth('staff')->user(),
+            subject: $contact->public_id,
+        );
+
+        return redirect("/kontakte/{$contact->public_id}");
+    }
+
     public function update(Request $request, Contact $contact): RedirectResponse
     {
         $this->authorize('update', $contact);

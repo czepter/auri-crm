@@ -37,7 +37,10 @@ class SessionController extends Controller
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
+            'remember' => ['boolean'],
         ]);
+
+        $remember = (bool) ($credentials['remember'] ?? false);
 
         $key = 'staff-login|'.$request->ip();
 
@@ -77,12 +80,15 @@ class SessionController extends Controller
 
         if ($user->hasConfirmedMfa()) {
             $request->session()->put('mfa.pending_user_id', $user->id);
+            // Die Wahl gehört zur Anmeldung, nicht zum ersten Schritt davon —
+            // ohne das fällt sie zwischen Passwort und Code herunter.
+            $request->session()->put('mfa.remember', $remember);
             AuditLogger::record('staff.login.mfa_required', $user);
 
             return redirect('/auth/mfa');
         }
 
-        Auth::guard('staff')->login($user);
+        Auth::guard('staff')->login($user, $remember);
         $request->session()->regenerate();
         AuditLogger::record('staff.login.succeeded', $user, ['method' => 'password']);
 

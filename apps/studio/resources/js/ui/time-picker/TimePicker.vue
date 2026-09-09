@@ -12,7 +12,6 @@ import { toClock, toTime } from "./parse"
 const props = defineProps<{
   id?: string
   modelValue?: string | null
-  variant?: InputVariants["variant"]
   size?: InputVariants["size"]
   required?: boolean
   disabled?: boolean
@@ -43,7 +42,7 @@ const value = computed({
     :required="required"
     :disabled="disabled"
     :class="cn(
-      inputVariants({ variant, size }),
+      inputVariants({ size }),
       'flex items-center gap-px tabular-nums',
       props.class,
     )"

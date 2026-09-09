@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\AbsenceCategory;
 use App\Enums\Capability;
 use App\Enums\StaffRole;
 use App\Models\Absence;
@@ -14,7 +15,6 @@ it('lets a second shooter record their own absence without ManageStaff', functio
 
     $this->actingAs($nina, 'staff')
         ->post('/abwesenheiten', [
-            'category' => 'holiday',
             'starts_on' => '2026-09-01',
             'ends_on' => '2026-09-07',
         ])
@@ -23,7 +23,7 @@ it('lets a second shooter record their own absence without ManageStaff', functio
     $absence = Absence::sole();
 
     expect($absence->user_id)->toBe($nina->id)
-        ->and($absence->category->value)->toBe('holiday');
+        ->and($absence->category)->toBe(AbsenceCategory::Unavailable);
 });
 
 it('refuses a second shooter recording an absence for somebody else', function () {
@@ -33,7 +33,6 @@ it('refuses a second shooter recording an absence for somebody else', function (
     $this->actingAs($nina, 'staff')
         ->post('/abwesenheiten', [
             'user' => $other->public_id,
-            'category' => 'holiday',
             'starts_on' => '2026-09-01',
             'ends_on' => '2026-09-07',
         ])
@@ -51,7 +50,6 @@ it('lets ManageCrew record an absence on behalf of somebody else', function () {
     $this->actingAs($owner, 'staff')
         ->post('/abwesenheiten', [
             'user' => $nina->public_id,
-            'category' => 'other',
             'starts_on' => '2026-09-01',
             'ends_on' => '2026-09-03',
         ])
@@ -95,14 +93,13 @@ it('refuses a second shooter editing somebody else\'s absence', function () {
 
     $this->actingAs($nina, 'staff')
         ->patch("/abwesenheiten/{$absence->public_id}", [
-            'category' => 'other',
             'starts_on' => '2026-10-01',
             'ends_on' => '2026-10-02',
         ])
         ->assertForbidden();
 });
 
-it('lets a second shooter edit their own absence', function () {
+it('lets a second shooter edit their own absence, leaving the category alone', function () {
     $nina = staffMember(StaffRole::SecondShooter);
     $absence = Absence::factory()->for($nina)->create(['category' => 'other']);
 
@@ -114,7 +111,8 @@ it('lets a second shooter edit their own absence', function () {
         ])
         ->assertRedirect();
 
-    expect($absence->fresh()->category->value)->toBe('holiday');
+    expect($absence->fresh()->category)->toBe(AbsenceCategory::Other)
+        ->and($absence->fresh()->starts_on->format('Y-m-d'))->toBe('2026-10-01');
 });
 
 it('lets ManageCrew edit and delete anybody\'s absence', function () {
@@ -127,18 +125,6 @@ it('lets ManageCrew edit and delete anybody\'s absence', function () {
         ->assertRedirect();
 
     expect(Absence::count())->toBe(0);
-});
-
-it('rejects a category outside the closed enum', function () {
-    $nina = staffMember(StaffRole::SecondShooter);
-
-    $this->actingAs($nina, 'staff')
-        ->post('/abwesenheiten', [
-            'category' => 'krank',
-            'starts_on' => '2026-09-01',
-            'ends_on' => '2026-09-07',
-        ])
-        ->assertSessionHasErrors('category');
 });
 
 it('rejects an unauthenticated request', function () {

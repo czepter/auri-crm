@@ -93,7 +93,11 @@ function share(percent: number) {
 
 const percentSum = computed(() => draft.value.stages.reduce((sum, stage) => sum + (stage.percent || 0), 0))
 const minimumSum = computed(() => draft.value.stages.reduce((sum, stage) => sum + euros(stage.minimum), 0))
-const stagesInvalid = computed(() => percentSum.value !== 100 || minimumSum.value > span.value.min)
+// Nur die Anteilssumme ist ein Fehler. Mindestbeträge über dem kleinsten
+// Angebot sind keiner: PaymentStageSplitter lässt die späteren Stufen dann
+// entfallen — bewusst und getestet. Die Zeile darunter sagt die Folge, statt
+// eine Konfiguration zu bemängeln, die das Studio so gewollt haben kann.
+const stagesInvalid = computed(() => percentSum.value !== 100)
 
 function addRow(selectable: boolean) {
   draft.value.rows = [
@@ -282,7 +286,7 @@ const GRID = 'grid grid-cols-[44px_minmax(0,1fr)_200px_100px_130px] items-center
           </button>
           <span class="text-[13px] tabular-nums" :class="stagesInvalid ? 'font-semibold text-destructive' : 'text-ink-2'">
             <template v-if="percentSum !== 100">{{ $t('quotes.stagePercentOff', { percent: percentSum }) }}</template>
-            <template v-else-if="minimumSum > span.min">{{ $t('quotes.stageMinimumsOver', { amount: formatEuros(span.min) }) }}</template>
+            <template v-else-if="minimumSum > span.min">{{ $t('quotes.stageMinimumsCollapse', { amount: formatEuros(minimumSum) }) }}</template>
             <template v-else>100 %</template>
           </span>
         </div>

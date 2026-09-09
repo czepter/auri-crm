@@ -321,7 +321,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 v-if="editing && stage"
                                 v-model="edit.stage"
                             >
-                                <SelectTrigger variant="filled" class="mt-[5px] max-w-[820px]"><SelectValue /></SelectTrigger>
+                                <SelectTrigger class="mt-[5px] max-w-[820px]"><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem
                                         v-for="option in stages"

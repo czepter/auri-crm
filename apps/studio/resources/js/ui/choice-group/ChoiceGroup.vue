@@ -59,10 +59,17 @@ const ITEM = {
   <component
     :is="label ? 'fieldset' : 'div'"
     data-slot="choice-group"
-    :class="cn(label ? 'flex min-w-0 flex-col gap-1.5' : CONTAINER[variant], props.class)"
+    :class="cn(label ? 'flex min-w-0 flex-col' : CONTAINER[variant], props.class)"
   >
-    <legend v-if="label" :class="labelVariants()">{{ label }}</legend>
-    <div :class="variant === 'segmented' ? 'contents' : label && 'flex flex-wrap gap-1.5'">
+    <!-- Der Abstand hängt am Rand statt am `gap` des fieldset: ein legend ist
+         kein Flex-Item, das gap greift an ihm also nicht, und ein Browser, der
+         es doch als eines führte, zählte beide zusammen. -->
+    <legend v-if="label" :class="cn('mb-1.5', labelVariants())">{{ label }}</legend>
+    <!-- Mit Beschriftung trägt diese Zeile den Container, ohne sie tut es das
+         fieldset selbst und die Optionen fallen per `contents` hindurch. Der
+         Rail des `segmented` stand vorher nie, wenn eine Beschriftung dabei
+         war — die Optionen kamen dann als Spalte. -->
+    <div :class="label ? cn(CONTAINER[variant], variant === 'segmented' && 'self-start') : 'contents'">
       <label v-for="option in options" :key="option.value" class="relative">
         <input
           v-model="model"

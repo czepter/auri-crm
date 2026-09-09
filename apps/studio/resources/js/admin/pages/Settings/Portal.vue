@@ -61,18 +61,19 @@ const preview = computed(() => {
         <PageHead :kicker="$t('settings.kicker')" :title="$t(paneTitle)">
           <span v-if="formRef?.form.isDirty" class="flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase bg-due-bg text-due">{{ $t('settings.unsaved') }}</span>
           <Button
+            v-if="formRef?.form.isDirty"
             class="ml-auto"
             variant="pill"
             type="submit"
             form="portal-settings-form"
-            :disabled="!formRef?.form.isDirty || formRef?.form.processing"
+            :disabled="formRef?.form.processing"
           >
             {{ $t('common.save') }}
           </Button>
         </PageHead>
 
         <div class="px-8 pt-7 pb-8">
-          <div class="flex items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
+          <div class="flex flex-wrap items-start gap-8 max-[640px]:flex-col max-[640px]:gap-4">
             <SettingsNav :active="pane" />
 
             <div class="max-w-[620px] min-w-0 flex-1">

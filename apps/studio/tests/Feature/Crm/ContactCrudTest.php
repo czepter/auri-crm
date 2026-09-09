@@ -47,6 +47,26 @@ it('binds the edit route on the public id, not the primary key', function () {
     $this->actingAs($this->staff, 'staff')->get("/kontakte/{$contact->id}")->assertNotFound();
 });
 
+it('creates a contact', function () {
+    $this->actingAs($this->staff, 'staff')
+        ->post('/kontakte', ['name' => 'Annika Steffens', 'email' => 'annika@example.test', 'phone' => '0170 1234567'])
+        ->assertSessionHasNoErrors();
+
+    expect(Contact::where('email', 'annika@example.test')->first()?->name)->toBe('Annika Steffens');
+});
+
+it('refuses to create a second contact on an address already on file', function () {
+    // The same person enquiring again, and the partial unique index would
+    // throw where the form should show a field error.
+    Contact::factory()->create(['email' => 'taken@example.test']);
+
+    $this->actingAs($this->staff, 'staff')
+        ->post('/kontakte', ['name' => 'Wer Anders', 'email' => 'taken@example.test'])
+        ->assertSessionHasErrors('email');
+
+    expect(Contact::where('email', 'taken@example.test')->count())->toBe(1);
+});
+
 it('updates a contact', function () {
     $contact = Contact::factory()->create(['name' => 'Anika Steffens']);
 

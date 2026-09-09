@@ -102,7 +102,6 @@ function scheduledLabel(iso: string) {
               <Textarea
                 :id="id"
                 v-model="reply.body"
-                variant="filled"
                 rows="4"
                 :placeholder="$t('project.messagesReplyPlaceholder')" />
             </Field>
@@ -111,7 +110,6 @@ function scheduledLabel(iso: string) {
                    is a dependency this screen does not need. -->
               <Input
                 v-model="reply.scheduled_for"
-                variant="filled"
                 class="w-auto"
                 type="datetime-local"
                 :aria-label="$t('project.messagesScheduleLabel')"
