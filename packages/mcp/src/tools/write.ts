@@ -24,6 +24,11 @@ import { idempotencyKeyFor } from '../idempotency.js'
 export function registerWriteTools(server: McpServer, clientFor: ApiClientFactory): void {
   registerCaptureLead(server, clientFor)
   registerAdvanceLeadStage(server, clientFor)
+  registerCloseLead(server, clientFor)
+  registerReopenLead(server, clientFor)
+  registerAdvanceShootStatus(server, clientFor)
+  registerCancelShoot(server, clientFor)
+  registerUncancelShoot(server, clientFor)
   registerAddInternalNote(server, clientFor)
   registerSetProjectFields(server, clientFor)
   registerAddProjectField(server, clientFor)
@@ -33,6 +38,7 @@ const leadSourceEnum = ['referral', 'website', 'instagram', 'wedding_fair', 'oth
 const projectTypeEnum = ['wedding', 'portrait', 'other'] as const
 const captureChannelEnum = ['phone', 'email', 'in_person', 'other'] as const
 const leadStageEnum = ['new', 'contacted', 'quote_sent', 'quote_accepted', 'contract_sent', 'booked'] as const
+const leadOutcomeEnum = ['lost', 'declined'] as const
 
 function registerCaptureLead(server: McpServer, clientFor: ApiClientFactory): void {
   server.registerTool(
@@ -52,6 +58,10 @@ function registerCaptureLead(server: McpServer, clientFor: ApiClientFactory): vo
         captured_via: z.enum(captureChannelEnum),
         date: z.string().nullish().describe('YYYY-MM-DD'),
         inquiry_text: z.string().max(10000).nullish(),
+        captured_at: z
+          .string()
+          .nullish()
+          .describe('When the inquiry reached the studio, for one entered after the fact. ISO 8601 or YYYY-MM-DD, never in the future. Defaults to now.'),
       },
       // Additive — a new lead never overwrites anything — but still a
       // write with real consequences, so readOnlyHint stays false.
@@ -80,6 +90,10 @@ function registerAdvanceLeadStage(server: McpServer, clientFor: ApiClientFactory
       inputSchema: {
         lead: z.string().describe('The lead public id'),
         stage: z.enum(leadStageEnum),
+        entered_at: z
+          .string()
+          .nullish()
+          .describe('Since when it stands there, for a move entered after the fact. ISO 8601 or YYYY-MM-DD, never in the future.'),
       },
       // Overwrites the lead's current stage — a destructive update to
       // existing state, even though the resulting call is naturally
@@ -87,14 +101,154 @@ function registerAdvanceLeadStage(server: McpServer, clientFor: ApiClientFactory
       // place).
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
-    async ({ lead, stage }, extra) => {
+    async ({ lead, stage, entered_at: enteredAt }, extra) => {
       const declined = await requireConfirmation(server, `Advance lead ${lead} to stage "${stage}"?`)
       if (declined) return declined
 
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads/{lead}/stage', {
         params: { path: { lead } },
-        body: { stage },
+        body: { stage, entered_at: enteredAt } as never,
         headers: { 'Idempotency-Key': idempotencyKeyFor('advance_lead_stage', extra) },
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerCloseLead(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'close_lead',
+    {
+      title: 'Close lead',
+      description:
+        "End the pursuit. `lost` is the client's decision, `declined` the studio's — the two are counted apart, so pick the one that happened. The stage is left alone: which stage a lead died in is what the funnel is measured on. Reversible with reopen_lead.",
+      inputSchema: {
+        lead: z.string().describe('The lead public id'),
+        outcome: z.enum(leadOutcomeEnum),
+        reason: z.string().max(255),
+        lost_at: z.string().nullish().describe('When it ended, for one entered after the fact. Never in the future.'),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ lead, outcome, reason, lost_at: lostAt }, extra) => {
+      const declined = await requireConfirmation(server, `Close lead ${lead} as "${outcome}"?\n\n${reason}`)
+      if (declined) return declined
+
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads/{lead}/lost', {
+        params: { path: { lead } },
+        body: { outcome, reason, lost_at: lostAt } as never,
+        headers: { 'Idempotency-Key': idempotencyKeyFor('close_lead', extra) },
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerReopenLead(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'reopen_lead',
+    {
+      title: 'Reopen lead',
+      description:
+        'Take back a close. A closed lead can make no further move at all, so this is the only way out of one entered by mistake. It returns to the stage it was closed in.',
+      inputSchema: {
+        lead: z.string().describe('The lead public id'),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ lead }, extra) => {
+      const declined = await requireConfirmation(server, `Reopen lead ${lead}?`)
+      if (declined) return declined
+
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads/{lead}/reopen', {
+        params: { path: { lead } },
+        headers: { 'Idempotency-Key': idempotencyKeyFor('reopen_lead', extra) },
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerAdvanceShootStatus(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'advance_shoot_status',
+    {
+      title: 'Advance shoot status',
+      description:
+        'Move one shoot through the production pipeline (Shoot.status) — the transition the project screen makes. A status below the current one is a correction of a mistaken move and restores the moment it first stood there.',
+      inputSchema: {
+        shoot: z.string().describe('The shoot public id'),
+        status: z.string().describe("The stage key in the project pipeline, e.g. 'booked' or 'delivered'"),
+        entered_at: z.string().nullish().describe('Since when it stands there. Never in the future.'),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ shoot, status, entered_at: enteredAt }, extra) => {
+      const declined = await requireConfirmation(server, `Move shoot ${shoot} to status "${status}"?`)
+      if (declined) return declined
+
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/shoots/{shoot}/status', {
+        params: { path: { shoot } },
+        body: { status, entered_at: enteredAt } as never,
+        headers: { 'Idempotency-Key': idempotencyKeyFor('advance_shoot_status', extra) },
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerCancelShoot(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'cancel_shoot',
+    {
+      title: 'Cancel shoot',
+      description:
+        'Call off one shooting day. The status is left alone — which position it was cancelled in is what the pipeline is measured on. Reversible with uncancel_shoot.',
+      inputSchema: {
+        shoot: z.string().describe('The shoot public id'),
+        reason: z.string().max(255),
+        cancelled_at: z.string().nullish().describe('When it was called off. Never in the future.'),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ shoot, reason, cancelled_at: cancelledAt }, extra) => {
+      const declined = await requireConfirmation(server, `Cancel shoot ${shoot}?\n\n${reason}`)
+      if (declined) return declined
+
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/shoots/{shoot}/cancel', {
+        params: { path: { shoot } },
+        body: { reason, cancelled_at: cancelledAt } as never,
+        headers: { 'Idempotency-Key': idempotencyKeyFor('cancel_shoot', extra) },
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerUncancelShoot(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'uncancel_shoot',
+    {
+      title: 'Uncancel shoot',
+      description:
+        'Take back an absage. A cancelled shoot can make no further move at all, so this is the only way out of one entered by mistake.',
+      inputSchema: {
+        shoot: z.string().describe('The shoot public id'),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ shoot }, extra) => {
+      const declined = await requireConfirmation(server, `Uncancel shoot ${shoot}?`)
+      if (declined) return declined
+
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/shoots/{shoot}/uncancel', {
+        params: { path: { shoot } },
+        headers: { 'Idempotency-Key': idempotencyKeyFor('uncancel_shoot', extra) },
       })
 
       return apiResult(data, error)
@@ -111,16 +265,20 @@ function registerAddInternalNote(server: McpServer, clientFor: ApiClientFactory)
       inputSchema: {
         project: z.string().describe('The project public id'),
         body: z.string().max(5000),
+        occurred_at: z
+          .string()
+          .nullish()
+          .describe('When what the note is about happened, for one written up later. ISO 8601 or YYYY-MM-DD, never in the future.'),
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
-    async ({ project, body }, extra) => {
+    async ({ project, body, occurred_at }, extra) => {
       const declined = await requireConfirmation(server, `Add this note to project ${project}?\n\n${body}`)
       if (declined) return declined
 
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/notes', {
         params: { path: { project } },
-        body: { body },
+        body: { body, occurred_at } as never,
         headers: { 'Idempotency-Key': idempotencyKeyFor('add_internal_note', extra) },
       })
 

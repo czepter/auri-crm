@@ -9,7 +9,9 @@ use App\Crm\Events\LeadStageChanged;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Stage;
 use App\Models\User;
+use App\Crm\Support\StageHistory;
 use App\Support\AuditLogger;
+use Carbon\CarbonInterface;
 use DomainException;
 
 /**
@@ -22,15 +24,24 @@ use DomainException;
  */
 class AdvanceLeadStage
 {
-    public function __construct(private readonly BookProject $book) {}
+    public function __construct(
+        private readonly BookProject $book,
+        private readonly UnbookProject $unbook,
+    ) {}
 
-    public function __invoke(Lead $lead, Stage $next, ?User $actor = null): Lead
+    /**
+     * $enteredAt backdates the move — an inquiry worked by phone last week and
+     * entered today. Absent it, a correction restores the moment the lead
+     * originally entered the stage it returns to, and a forward move is now.
+     */
+    public function __invoke(Lead $lead, Stage $next, ?User $actor = null, ?CarbonInterface $enteredAt = null): Lead
     {
         if ($lead->isLost()) {
             throw new DomainException("Lead {$lead->public_id} is lost and cannot advance.");
         }
 
         $from = $lead->stage;
+        $backwards = $next->sort_order < $from->sort_order;
 
         if (! $from->canTransitionTo($next)) {
             throw new DomainException(
@@ -38,26 +49,40 @@ class AdvanceLeadStage
             );
         }
 
-        // Reset on a correction too. The clock the board colours is "how long
-        // has it sat where it sits", and the stage it returns to has no
-        // recorded entry time to restore — only audit_logs knows, and reading
-        // it back would be a query in the write path for a number that is
-        // seconds old whenever a mis-drop is fixed the moment it happens.
-        // ponytail: last-entry lookup from audit_logs if corrections start
-        // arriving days late and the staleness colour matters that far back.
-        // T-20: a lead that moved starts the reminder ladder over. The rungs
-        // count time in the stage it sits in, and it sits in a new one.
+        // Taking back the won stage takes back the booking with it, or the
+        // board and the project list each show what the other one denies.
+        // Throws when the booking has a payment plan — see UnbookProject.
+        if ($backwards && $from->anchor === StageAnchor::Won) {
+            ($this->unbook)($lead->project, $actor ?? auth('staff')->user());
+        }
+
+        // A correction restores the moment the lead first entered the stage it
+        // returns to, read from the append-only trail: the board colours "how
+        // long has it sat where it sits", and after a mis-drop is undone it has
+        // sat there since it originally arrived, not since the undo.
+        // T-20: a lead that moved forward starts the reminder ladder over. The
+        // rungs count time in the stage it sits in, and it sits in a new one. A
+        // correction that hands back an old timestamp keeps the rungs already
+        // climbed, or undoing the mis-drop would re-send every reminder.
+        $entered = $enteredAt
+            ?? ($backwards ? StageHistory::enteredAt('lead.stage_changed', $lead->public_id, $next->key) : null)
+            ?? now();
+
         $lead->forceFill([
             'stage' => $next,
-            'stage_entered_at' => now(),
-            'stalled_reminders_sent' => 0,
-            'stalled_reminded_at' => null,
+            'stage_entered_at' => $entered,
+            ...$backwards ? [] : ['stalled_reminders_sent' => 0, 'stalled_reminded_at' => null],
         ])->save();
 
         AuditLogger::record(
             event: 'lead.stage_changed',
             actor: $actor ?? auth('staff')->user(),
-            context: ['from' => $from->key, 'to' => $next->key],
+            context: [
+                'from' => $from->key,
+                'to' => $next->key,
+                'entered_at' => $entered->toIso8601String(),
+                ...$backwards ? ['reverted' => true] : [],
+            ],
             subject: $lead->public_id,
             projectId: $lead->project_id,
         );
@@ -81,6 +106,7 @@ class AdvanceLeadStage
         string $reason,
         ?User $actor = null,
         LeadOutcome $outcome = LeadOutcome::Lost,
+        ?CarbonInterface $lostAt = null,
     ): Lead {
         if ($lead->isLost()) {
             throw new DomainException("Lead {$lead->public_id} is already lost.");
@@ -90,7 +116,7 @@ class AdvanceLeadStage
         // the number the funnel is measured on, and overwriting it here would
         // make every lost lead look identical in hindsight.
         $lead->forceFill([
-            'lost_at' => now(),
+            'lost_at' => $lostAt ?? now(),
             'lost_reason' => $reason,
             'outcome' => $outcome,
         ])->save();
@@ -104,6 +130,38 @@ class AdvanceLeadStage
         );
 
         LeadLost::dispatch($lead, $reason);
+
+        return $lead;
+    }
+
+    /**
+     * Closing a lead that was still alive is the one mistake markLost() cannot
+     * be talked out of afterwards: isLost() bars every further move, so the
+     * card is stuck for good. The stage was never overwritten, so there is
+     * nothing to restore — clearing the three columns puts the lead back where
+     * it stood.
+     */
+    public function reopen(Lead $lead, ?User $actor = null): Lead
+    {
+        if (! $lead->isLost()) {
+            throw new DomainException("Lead {$lead->public_id} is not closed.");
+        }
+
+        $reason = $lead->lost_reason;
+
+        $lead->forceFill([
+            'lost_at' => null,
+            'lost_reason' => null,
+            'outcome' => null,
+        ])->save();
+
+        AuditLogger::record(
+            event: 'lead.reopened',
+            actor: $actor ?? auth('staff')->user(),
+            context: ['stage' => $lead->stage->key, 'reason' => $reason],
+            subject: $lead->public_id,
+            projectId: $lead->project_id,
+        );
 
         return $lead;
     }

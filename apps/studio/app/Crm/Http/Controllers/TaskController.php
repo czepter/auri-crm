@@ -10,6 +10,7 @@ use App\Crm\Support\TaskDependencyGraph;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Support\AuditLogger;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -134,11 +135,18 @@ class TaskController extends Controller
      * Completion is a toggle rather than a delete: what was owed and when it
      * was done is the record, and a removed row answers neither question.
      */
-    public function complete(Task $task): RedirectResponse
+    public function complete(Request $request, Task $task): RedirectResponse
     {
         $this->authorize('update', $task);
 
-        $done = ! $task->isDone();
+        // A day, when the work was actually done rather than ticked off. It
+        // makes the call a statement instead of a toggle: sending one on a
+        // task already done corrects its date rather than reopening it.
+        $on = $request->validate([
+            'completed_on' => ['nullable', 'date', 'before_or_equal:today'],
+        ])['completed_on'] ?? null;
+
+        $done = $on !== null || ! $task->isDone();
 
         // S-12: a blocked task cannot be completed. Reopening one always can
         // — undoing a mistake must not itself be blocked by the thing the
@@ -149,7 +157,7 @@ class TaskController extends Controller
             ]);
         }
 
-        return $this->mark($task, $done);
+        return $this->mark($task, $done, $on);
     }
 
     /**
@@ -164,10 +172,10 @@ class TaskController extends Controller
         return $this->mark($task, false);
     }
 
-    private function mark(Task $task, bool $done): RedirectResponse
+    private function mark(Task $task, bool $done, ?string $on = null): RedirectResponse
     {
         $task->forceFill([
-            'completed_at' => $done ? now() : null,
+            'completed_at' => $done ? ($on === null ? now() : CarbonImmutable::parse($on)->startOfDay()) : null,
             'completed_by_id' => $done ? auth('staff')->id() : null,
         ])->save();
 

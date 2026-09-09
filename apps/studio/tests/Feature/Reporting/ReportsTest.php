@@ -54,8 +54,8 @@ it('keys the booking rate on capture, so a month cannot exceed 100%', function (
     // an empty denominator.
     $captured = now()->subMonth();
 
-    Lead::factory()->count(3)->create(['created_at' => $captured, 'stage' => LeadStage::New]);
-    Lead::factory()->create(['created_at' => $captured, 'stage' => LeadStage::Booked]);
+    Lead::factory()->count(3)->create(['captured_at' => $captured, 'stage' => LeadStage::New]);
+    Lead::factory()->create(['captured_at' => $captured, 'stage' => LeadStage::Booked]);
 
     $months = BookingFunnel::byMonth(now()->subYear(), now());
     $row = collect($months)->firstWhere('month', $captured->format('Y-m'));

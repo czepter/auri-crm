@@ -31,18 +31,18 @@ defineProps<{ shoot: EditableShoot }>();
                 <DatePicker :id="id" v-model="shoot.date" class="w-[148px] [&_input]:pr-8" />
             </Field>
             <Field v-slot="{ id }" dense :label="$t('project.callTime')">
-                <TimePicker :id="id" v-model="shoot.call_time" variant="filled" />
+                <TimePicker :id="id" v-model="shoot.call_time" />
             </Field>
             <Field v-slot="{ id }" dense :label="$t('project.endTime')">
-                <TimePicker :id="id" v-model="shoot.end_time" variant="filled" />
+                <TimePicker :id="id" v-model="shoot.end_time" />
             </Field>
         </div>
         <div class="flex gap-3 [&+&]:mt-3">
             <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('project.venueName')">
-                <Input :id="id" v-model="shoot.venue_name" variant="filled" type="text" />
+                <Input :id="id" v-model="shoot.venue_name" type="text" />
             </Field>
             <Field v-slot="{ id }" dense class="min-w-[148px] flex-1" :label="$t('project.venueCity')">
-                <Input :id="id" v-model="shoot.venue_city" variant="filled" type="text" />
+                <Input :id="id" v-model="shoot.venue_city" type="text" />
             </Field>
         </div>
     </div>

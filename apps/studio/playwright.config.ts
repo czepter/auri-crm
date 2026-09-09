@@ -63,15 +63,9 @@ const mcpServers = [
 
 export default defineConfig({
   testDir: './tests/e2e',
-  // Playwright keys a snapshot to the platform that took it, so the committed
-  // -darwin.png baselines are files CI's ubuntu runner never looks for — it
-  // asks for -linux.png and fails all ninety. Fonts render differently enough
-  // between the two that one set cannot serve both. The portal spec is out for
-  // a second reason: it dials the portal surface on 8001, which the e2e job
-  // does not start.
-  testIgnore: process.env.CI
-    ? ['**/visual.spec.ts', '**/visual-portal.spec.ts']
-    : ['**/mcp.spec.ts'],
+  // mcp.spec.ts braucht den gebauten MCP-Server; CI fährt ihn in einem
+  // eigenen Job hoch, lokal steht er nicht.
+  testIgnore: process.env.CI ? [] : ['**/mcp.spec.ts'],
   timeout: 30_000,
   use: {
     baseURL,

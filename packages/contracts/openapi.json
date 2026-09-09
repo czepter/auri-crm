@@ -1846,6 +1846,13 @@
                                     "body": {
                                         "type": "string",
                                         "maxLength": 5000
+                                    },
+                                    "occurred_at": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
                                     }
                                 },
                                 "required": [
@@ -1871,12 +1878,16 @@
                                         },
                                         "writtenAt": {
                                             "type": "string"
+                                        },
+                                        "occurredAt": {
+                                            "type": "string"
                                         }
                                     },
                                     "required": [
                                         "id",
                                         "body",
-                                        "writtenAt"
+                                        "writtenAt",
+                                        "occurredAt"
                                     ]
                                 }
                             }
@@ -1917,6 +1928,14 @@
                                 "properties": {
                                     "stage": {
                                         "type": "string"
+                                    },
+                                    "entered_at": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time",
+                                        "description": "Since when it stands there, for a move entered after the fact. A\nstage below the current one is a correction and takes back the\nbooking with it \u2014 see AdvanceLeadStage."
                                     }
                                 },
                                 "required": [
@@ -1939,11 +1958,22 @@
                                         },
                                         "stage": {
                                             "type": "string"
+                                        },
+                                        "enteredAt": {
+                                            "type": "string"
+                                        },
+                                        "lostAt": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         }
                                     },
                                     "required": [
                                         "id",
-                                        "stage"
+                                        "stage",
+                                        "enteredAt",
+                                        "lostAt"
                                     ]
                                 }
                             }
@@ -1951,6 +1981,155 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/leads/{lead}/lost": {
+            "post": {
+                "operationId": "leads.lost",
+                "summary": "T-20's close, on the api surface",
+                "tags": [
+                    "Lead"
+                ],
+                "parameters": [
+                    {
+                        "name": "lead",
+                        "in": "path",
+                        "required": true,
+                        "description": "The lead public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "outcome": {
+                                        "$ref": "#/components/schemas/LeadOutcome"
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "lost_at": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    }
+                                },
+                                "required": [
+                                    "outcome",
+                                    "reason"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "stage": {
+                                            "type": "string"
+                                        },
+                                        "enteredAt": {
+                                            "type": "string"
+                                        },
+                                        "lostAt": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "stage",
+                                        "enteredAt",
+                                        "lostAt"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/leads/{lead}/reopen": {
+            "post": {
+                "operationId": "leads.reopen",
+                "summary": "The correction: a lead closed by mistake stands in its stage again",
+                "tags": [
+                    "Lead"
+                ],
+                "parameters": [
+                    {
+                        "name": "lead",
+                        "in": "path",
+                        "required": true,
+                        "description": "The lead public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "stage": {
+                                            "type": "string"
+                                        },
+                                        "enteredAt": {
+                                            "type": "string"
+                                        },
+                                        "lostAt": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "stage",
+                                        "enteredAt",
+                                        "lostAt"
+                                    ]
+                                }
+                            }
+                        }
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
@@ -2400,6 +2579,234 @@
                 }
             }
         },
+        "/shoots/{shoot}/status": {
+            "post": {
+                "operationId": "shoots.status.update",
+                "tags": [
+                    "Shoot"
+                ],
+                "parameters": [
+                    {
+                        "name": "shoot",
+                        "in": "path",
+                        "required": true,
+                        "description": "The shoot public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "status": {
+                                        "type": "string"
+                                    },
+                                    "entered_at": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    }
+                                },
+                                "required": [
+                                    "status"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "enteredAt": {
+                                            "type": "string"
+                                        },
+                                        "cancelledAt": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "status",
+                                        "enteredAt",
+                                        "cancelledAt"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/shoots/{shoot}/cancel": {
+            "post": {
+                "operationId": "shoots.cancel",
+                "tags": [
+                    "Shoot"
+                ],
+                "parameters": [
+                    {
+                        "name": "shoot",
+                        "in": "path",
+                        "required": true,
+                        "description": "The shoot public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "cancelled_at": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    }
+                                },
+                                "required": [
+                                    "reason"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "enteredAt": {
+                                            "type": "string"
+                                        },
+                                        "cancelledAt": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "status",
+                                        "enteredAt",
+                                        "cancelledAt"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/shoots/{shoot}/uncancel": {
+            "post": {
+                "operationId": "shoots.uncancel",
+                "tags": [
+                    "Shoot"
+                ],
+                "parameters": [
+                    {
+                        "name": "shoot",
+                        "in": "path",
+                        "required": true,
+                        "description": "The shoot public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "enteredAt": {
+                                            "type": "string"
+                                        },
+                                        "cancelledAt": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "status",
+                                        "enteredAt",
+                                        "cancelledAt"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/stripe/webhook": {
             "post": {
                 "operationId": "stripe.webhook",
@@ -2545,6 +2952,20 @@
                         ],
                         "maxLength": 10000
                     },
+                    "captured_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time",
+                        "description": "A day, a moment, or nothing. Never the future: an inquiry that\nhas not arrived yet is a typo, and it would sit at the head of\nevery funnel month until someone found it."
+                    },
+                    "fields": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
                     "referred_by_contact_id": {
                         "type": [
                             "string",
@@ -2577,6 +2998,16 @@
                 "type": "object",
                 "additionalProperties": {},
                 "title": "LazyCollection"
+            },
+            "LeadOutcome": {
+                "type": "string",
+                "description": "How a pursuit ended. `lost_at` carried only \"not booked\" and left the why in free text; T-20's scan needs to tell a finished inquiry from a waiting one, and a client who cancelled from one the studio turned away. Null is open, and open is the only state the stalled scan reminds about.\n",
+                "enum": [
+                    "lost",
+                    "declined",
+                    "closed"
+                ],
+                "title": "LeadOutcome"
             },
             "LeadSource": {
                 "type": "string",

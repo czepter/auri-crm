@@ -187,6 +187,22 @@ it('completes and reopens a task from the worklist', function () {
     expect($task->fresh()->isDone())->toBeFalse();
 });
 
+it('marks a task done on the day it was done, and corrects that day without reopening it', function () {
+    $task = Task::factory()->create();
+
+    $this->post("/aufgaben/{$task->public_id}/erledigt", ['completed_on' => '2026-08-21'])->assertRedirect();
+    expect($task->fresh()->completed_at->toDateString())->toBe('2026-08-21');
+
+    // A date on an already done task is a correction — the toggle would have
+    // reopened it here.
+    $this->post("/aufgaben/{$task->public_id}/erledigt", ['completed_on' => '2026-08-24'])->assertRedirect();
+    expect($task->fresh()->isDone())->toBeTrue()
+        ->and($task->fresh()->completed_at->toDateString())->toBe('2026-08-24');
+
+    $this->post("/aufgaben/{$task->public_id}/erledigt", ['completed_on' => now()->addDay()->toDateString()])
+        ->assertSessionHasErrors('completed_on');
+});
+
 it('never puts an integer identifier into the übersicht', function () {
     $project = Project::factory()->create();
     Job::factory()->for($project)->create();

@@ -7,6 +7,7 @@ use App\Crm\Events\ShootStatusChanged;
 use App\Crm\Models\Shoot;
 use App\Models\AuditLog;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 
@@ -61,23 +62,55 @@ it('writes an audit row naming the transition', function () {
         ->and($row->context['to'])->toBe('booked');
 });
 
-it('refuses a backward transition', function () {
-    $shoot = Shoot::factory()->atStatus(ShootStatus::Delivered)->create();
+it('takes a backward move back, restoring the moment it first stood there', function () {
+    $shoot = Shoot::factory()->atStatus(ShootStatus::Booked, daysAgo: 11)->create();
+    $entered = $shoot->status_entered_at;
 
+    app(AdvanceShootStatus::class)($shoot, stage(ShootStatus::Shot));
     app(AdvanceShootStatus::class)($shoot, stage(ShootStatus::Booked));
-})->throws(DomainException::class);
+
+    expect($shoot->fresh()->status->key)->toBe(ShootStatus::Booked->value)
+        ->and($shoot->fresh()->status_entered_at->diffInSeconds($entered))->toBeLessThan(2)
+        ->and(AuditLog::where('event', 'shoot.status_changed')->latest('id')->first()->context['reverted'])->toBeTrue();
+});
 
 it('leaves nothing behind when a transition is refused', function () {
     $shoot = Shoot::factory()->atStatus(ShootStatus::Delivered)->create();
 
     try {
-        app(AdvanceShootStatus::class)($shoot, stage(ShootStatus::Booked));
+        // The no-op is the move both pipelines still refuse: it would write an
+        // entry timestamp and an audit row that say nothing happened.
+        app(AdvanceShootStatus::class)($shoot, stage(ShootStatus::Delivered));
     } catch (DomainException) {
         // expected
     }
 
     expect($shoot->fresh()->status->key)->toBe(ShootStatus::Delivered->value)
         ->and(AuditLog::where('event', 'shoot.status_changed')->count())->toBe(0);
+});
+
+it('backdates a status entered after the fact', function () {
+    $shoot = Shoot::factory()->atStatus(ShootStatus::Booked)->create();
+
+    app(AdvanceShootStatus::class)($shoot, stage(ShootStatus::Shot), null, CarbonImmutable::parse('2026-07-03 09:00'));
+
+    expect($shoot->fresh()->status_entered_at->toDateString())->toBe('2026-07-03');
+});
+
+it('takes back an absage so the shoot can move again', function () {
+    $shoot = Shoot::factory()->atStatus(ShootStatus::Booked)->create();
+
+    app(AdvanceShootStatus::class)->cancel($shoot, 'Termin geplatzt');
+    expect($shoot->fresh()->isCancelled())->toBeTrue();
+
+    app(AdvanceShootStatus::class)->uncancel($shoot);
+
+    expect($shoot->fresh()->isCancelled())->toBeFalse()
+        ->and($shoot->fresh()->cancelled_reason)->toBeNull()
+        ->and($shoot->fresh()->status->key)->toBe(ShootStatus::Booked->value);
+
+    app(AdvanceShootStatus::class)($shoot, stage(ShootStatus::Shot));
+    expect($shoot->fresh()->status->key)->toBe(ShootStatus::Shot->value);
 });
 
 it('cancels a shoot without changing the status it died in', function () {

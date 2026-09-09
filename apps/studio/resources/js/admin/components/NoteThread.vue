@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useForm, usePage } from "@inertiajs/vue3";
+import { DatePicker } from "@/ui/date-picker";
 import { Textarea } from "@/ui/textarea";
 import { dayWithWeekday } from "@/admin/lib/dates";
 
@@ -27,7 +28,9 @@ function timeOf(iso: string | null) {
         : "";
 }
 
-const note = useForm({ body: "" });
+// Empty is the moment it is written. Filled when the call it records
+// happened earlier — the thread sorts on it.
+const note = useForm({ body: "", occurred_at: "" });
 
 function send() {
     if (!note.body.trim()) return;
@@ -119,6 +122,16 @@ function send() {
                     </svg>
                 </button>
             </div>
+            <details class="mt-1.5">
+                <summary
+                    class="w-fit cursor-pointer text-[11.5px] text-ink-2 marker:text-ink-2"
+                >{{ $t('project.advanced') }}</summary>
+                <label class="mt-1.5 flex items-center gap-2 text-[11.5px] text-ink-2">
+                    {{ $t('project.noteOccurredAt') }}
+                    <DatePicker v-model="note.occurred_at" size="sm" />
+                </label>
+            </details>
+
             <p
                 v-if="note.errors.body"
                 class="mt-1.5 text-[11.5px] leading-[1.45] text-destructive"

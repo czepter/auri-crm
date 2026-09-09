@@ -45,9 +45,6 @@ class AbsenceController extends Controller
             'staff' => $canManageCrew
                 ? StaffProfileData::collect(User::query()->orderBy('name')->get())
                 : [],
-            'categories' => collect(AbsenceCategory::cases())
-                ->map(fn (AbsenceCategory $category) => ['value' => $category->value, 'label' => $category->label()])
-                ->all(),
         ]);
     }
 
@@ -56,10 +53,9 @@ class AbsenceController extends Controller
         $viewer = auth('staff')->user();
 
         $validated = $request->validate([
-            // The public id, never the key. Absent entirely for the ordinary
-            // case: recording your own time away names nobody.
+            // The public id, never the key. Optional: a caller that names
+            // nobody is recording their own time away.
             'user' => ['nullable', 'string', Rule::exists('users', 'public_id')],
-            'category' => ['required', Rule::enum(AbsenceCategory::class)],
             'starts_on' => ['required', 'date'],
             'ends_on' => ['required', 'date', 'after_or_equal:starts_on'],
         ]);
@@ -73,7 +69,7 @@ class AbsenceController extends Controller
 
         $absence = Absence::create([
             'user_id' => $subject->id,
-            'category' => $validated['category'],
+            'category' => AbsenceCategory::Unavailable,
             'starts_on' => $validated['starts_on'],
             'ends_on' => $validated['ends_on'],
         ]);
@@ -81,7 +77,7 @@ class AbsenceController extends Controller
         AuditLogger::record(
             event: 'absence.created',
             actor: $viewer,
-            context: ['user_id' => $subject->public_id, 'category' => $validated['category']],
+            context: ['user_id' => $subject->public_id],
             subject: $absence->public_id,
         );
 
@@ -93,7 +89,6 @@ class AbsenceController extends Controller
         $this->authorize('update', $absence);
 
         $validated = $request->validate([
-            'category' => ['required', Rule::enum(AbsenceCategory::class)],
             'starts_on' => ['required', 'date'],
             'ends_on' => ['required', 'date', 'after_or_equal:starts_on'],
         ]);

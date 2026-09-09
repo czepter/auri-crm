@@ -6,12 +6,15 @@ use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\ProjectFieldType;
 use App\Crm\Enums\ProjectType;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Events\LeadCaptured;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
+use App\Crm\Models\ProjectField;
+use App\Crm\Models\ProjectType as ProjectTypeModel;
 use App\Crm\Models\Shoot;
 use App\Models\AuditLog;
 use App\Models\User;
@@ -208,6 +211,11 @@ it('renders the capture page with its options and no integer ids', function () {
     expect($props['types'])->toHaveCount(3)
         ->and($props['sources'])->toHaveCount(5)
         ->and($props['channels'])->toHaveCount(4)
+        // Die drei Vorschlagslisten hinter „Sonstige" und die Felder des Typs:
+        // beide füllt das Formular ohne zweite Anfrage, beide fallen sonst
+        // stumm leer aus.
+        ->and($props['presets'])->toHaveKeys(['type', 'source', 'channel'])
+        ->and($props['fieldsByType'])->toHaveKey(ProjectType::Wedding->value)
         ->and(integerIdPaths($props))->toBe([]);
 });
 
@@ -315,4 +323,41 @@ it('keeps the detail behind Sonstige and drops it when the case changes', functi
     expect($project->fresh()->type_other)->toBeNull()
         ->and($lead->fresh()->source_other)->toBeNull()
         ->and($lead->fresh()->captured_via_other)->toBe('Brief');
+});
+
+it('backdates the capture to the day the inquiry actually arrived', function () {
+    $this->actingAs($this->staff, 'staff')
+        ->post('/anfragen', payload(['captured_at' => '2026-05-02']))
+        ->assertRedirect('/anfragen');
+
+    expect(Lead::sole()->captured_at->toDateString())->toBe('2026-05-02');
+});
+
+it('captures now when no date is given, and refuses a future one', function () {
+    $this->actingAs($this->staff, 'staff')->post('/anfragen', payload());
+
+    expect(Lead::sole()->captured_at->isToday())->toBeTrue();
+
+    $this->actingAs($this->staff, 'staff')
+        ->post('/anfragen', payload(['captured_at' => now()->addDay()->toDateString()]))
+        ->assertSessionHasErrors('captured_at');
+});
+
+it('writes the type own fields captured with the inquiry', function () {
+    $wedding = ProjectTypeModel::query()->where('key', ProjectType::Wedding->value)->sole();
+
+    ProjectField::create([
+        'project_type_id' => $wedding->id,
+        'key' => 'gaeste',
+        'label' => 'Gäste',
+        'type' => ProjectFieldType::Number,
+        'unit' => 'Personen',
+        'sort_order' => 0,
+    ]);
+
+    $this->actingAs($this->staff, 'staff')
+        ->post('/anfragen', payload(['fields' => ['gaeste' => 80]]))
+        ->assertRedirect('/anfragen');
+
+    expect(Project::sole()->field_values)->toBe(['gaeste' => 80]);
 });

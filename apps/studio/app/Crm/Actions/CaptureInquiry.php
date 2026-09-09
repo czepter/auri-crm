@@ -37,6 +37,7 @@ class CaptureInquiry
     public function __construct(
         private readonly PortalSettings $portal,
         private readonly CrmVocabulary $stages,
+        private readonly WriteProjectFieldValues $writeFields,
     ) {}
 
     public function __invoke(CaptureInquiryData $data, ?User $actor): Project
@@ -91,8 +92,18 @@ class CaptureInquiry
                 'captured_via' => $data->captured_via,
                 'captured_via_other' => $data->captured_via_other,
                 'captured_by_id' => $actor?->id,
+                'captured_at' => $data->captured_at ?? now(),
                 'referred_by_contact_id' => $referrer?->id,
             ]);
+
+            // C-25: was dieser Typ über den Namen hinaus verlangt. Durch den
+            // einen Schreiber, damit die Erfassung denselben Definitionen
+            // gehorcht wie Projektbildschirm und API — „required" bleibt hier
+            // ungeprüft, was die Entscheidung jener Action für genau diesen
+            // Moment ist.
+            if ($data->fields !== []) {
+                ($this->writeFields)($project, $data->fields, $actor);
+            }
 
             // Exactly one shoot, and it is the primary one. Mockup 03 collects
             // a single main date; further shoots are added on the project

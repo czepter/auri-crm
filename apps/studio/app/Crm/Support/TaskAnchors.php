@@ -175,8 +175,12 @@ final class TaskAnchors
                 : 'shoot:'.$log->subject.':'.$log->context['to'];
 
             // First entry wins: a correction that walks the funnel back and
-            // forward again must not move a deadline that already passed.
-            $dates[$key] ??= $log->created_at->startOfDay();
+            // forward again must not move a deadline that already passed. A
+            // move entered after the fact carries the day it happened on;
+            // without that the deadline would hang off the day it was typed.
+            $dates[$key] ??= (isset($log->context['entered_at'])
+                ? CarbonImmutable::parse($log->context['entered_at'])
+                : $log->created_at)->startOfDay();
         }
 
         // Where the ledger has nothing — a record created straight into its
@@ -185,7 +189,7 @@ final class TaskAnchors
 
         if ($lead !== null) {
             $dates['stage:'.$lead->stage->key] ??= ($lead->stage_entered_at ?? $lead->created_at)->toImmutable()->startOfDay();
-            $dates['stage:'.$this->stages->anchored(StagePipeline::Lead, StageAnchor::Entry)?->key] ??= $lead->created_at->toImmutable()->startOfDay();
+            $dates['stage:'.$this->stages->anchored(StagePipeline::Lead, StageAnchor::Entry)?->key] ??= $lead->captured_at->toImmutable()->startOfDay();
         }
 
         foreach ($project->shoots as $shoot) {

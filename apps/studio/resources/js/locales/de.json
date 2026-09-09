@@ -17,6 +17,9 @@
     "signInTitle": "Anmelden",
     "email": "E-Mail",
     "password": "Passwort",
+    "remember": "Angemeldet bleiben",
+    "showPassword": "Passwort anzeigen",
+    "hidePassword": "Passwort verbergen",
     "mfaTitle": "Bestätigung in zwei Schritten",
     "mfaCode": "6-stelliger Code",
     "mfaConfirm": "Bestätigen",
@@ -61,7 +64,9 @@
     "addPerson": "+ Person",
     "submitAndNext": "Anlegen und nächste",
     "conflictBooked": "Gebucht — {project}{venue} ›",
-    "otherDetail": "Details"
+    "otherDetail": "Details",
+    "advanced": "Erweitert",
+    "capturedAt": "Anfragedatum"
   },
   "board": {
     "title": "Anfragen",
@@ -93,6 +98,7 @@
   },
   "contacts": {
     "title": "Kontakte",
+    "create": "Neuer Kontakt",
     "name": "Name",
     "email": "E-Mail",
     "phone": "Telefon",
@@ -231,6 +237,10 @@
     "notes": "Notizen",
     "notesInternalOnly": "Nur intern",
     "notePlaceholder": "Notiz schreiben …",
+    "noteOccurredAt": "Datum",
+    "advanced": "Erweitert",
+    "taskCompletedOn": "Erledigt am",
+    "uncancel": "Absage zurücknehmen",
     "noteEdit": "bearbeiten",
     "noteDelete": "löschen",
     "portalStatus": "Portal",
@@ -352,6 +362,7 @@
     "revoke": "Adresse zurückziehen",
     "viewMonth": "Monat",
     "viewList": "Liste",
+    "toProjects": "Zu den Projekten",
     "more": "+{count} weitere",
     "feedUrl": "Abo-Adresse",
     "colDate": "Termin",
@@ -450,6 +461,7 @@
     "nextShoot": "nächstes Shooting",
     "openPoints": "1 von {all} Punkten offen | {count} von {all} Punkten offen",
     "inquiries": "Neue Anfragen",
+    "inquiriesEmpty": "Keine Anfragen.",
     "toBoard": "Board",
     "done": "Erledigt",
     "nothingDue": "Nichts offen.",
@@ -466,6 +478,7 @@
     "away": "{name} abwesend",
     "dateDoubled": "{date} doppelt",
     "galleries": "Nach der Lieferung",
+    "galleriesEmpty": "Keine Galerien.",
     "nothingDueNext": "Nächster Termin: {what} am {date}",
     "payments": "Zahlungen"
   },
@@ -503,8 +516,6 @@
   "absences": {
     "title": "Abwesenheiten",
     "person": "Person",
-    "myself": "Ich selbst",
-    "category": "Art",
     "startsOn": "Von",
     "endsOn": "Bis",
     "add": "Abwesenheit eintragen",
@@ -567,7 +578,7 @@
     "pickable": "Wählbar",
     "stageAtLeast": "mindestens",
     "stagePercentOff": "{percent} % — muss 100 ergeben",
-    "stageMinimumsOver": "Mindestbeträge sind höher als das kleinste Angebot von {amount}",
+    "stageMinimumsCollapse": "Unter {amount} fällt alles auf die erste Stufe",
     "spanMinNote": "{hours} Stunden, nichts dazu",
     "spanPreselectedNote": "{hours} Stunden, {blocks} Bausteine",
     "spanMaxNote": "{hours} Stunden, alle Bausteine",
@@ -799,9 +810,6 @@
     "widerrufIncludedLabel": "In Verträgen aufnehmen",
     "widerrufTextLabel": "Text",
     "mailTitle": "E-Mail",
-    "mailSenderLabel": "Absender",
-    "mailFromNameLabel": "Absendername",
-    "mailFromAddressLabel": "Absenderadresse",
     "mailReplyLabel": "Antwort & Blindkopie",
     "mailReplyToLabel": "Antwort-an",
     "mailBccLabel": "Blindkopie",
@@ -847,7 +855,9 @@
     "previewMailReplyTo": "Antwort an",
     "groupGalleries": "Galerien",
     "navGalleryDefaults": "Standardwerte",
-    "navGalleryPresets": "Vorlagen"
+    "navGalleryPresets": "Vorlagen",
+    "mailSenderFromEnv": "Serverkonfiguration",
+    "mailSenderReset": "Zurücksetzen"
   },
   "notifications": {
     "title": "Benachrichtigungen",
@@ -1392,6 +1402,7 @@
       "angenommen": "Angenommen"
     },
     "said": "Was sie schreiben",
+    "reopen": "Wieder öffnen",
     "noText": "Kein Text",
     "noReach": "Keine Kontaktdaten",
     "dates": "Termine",
@@ -1584,5 +1595,20 @@
     "select": "Vorlage wählen",
     "more": "{count} weitere",
     "kindLabel": "Art"
+  },
+  "help": {
+    "art": {
+      "aufgabe": "Aufgabe",
+      "referenz": "Referenz"
+    },
+    "close": "Schließen",
+    "group": {
+      "aufgaben": "Aufgaben",
+      "referenz": "Referenz"
+    },
+    "loadFailed": "Artikel nicht geladen.",
+    "open": "Hilfe",
+    "retry": "Erneut versuchen",
+    "title": "Hilfe"
   }
 }

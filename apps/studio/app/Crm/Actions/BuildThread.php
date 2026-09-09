@@ -24,7 +24,7 @@ class BuildThread
 
         $notes = $project->notes->map(fn (InternalNote $note) => new ThreadEntryData(
             key: "note-{$note->public_id}",
-            at: $note->created_at->toIso8601String(),
+            at: $note->happenedAt()->toIso8601String(),
             body: $note->body,
             // I-03: a note written through the api surface has no staff author.
             author: $note->author?->name ?? 'API',

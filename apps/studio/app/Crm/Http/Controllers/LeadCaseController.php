@@ -89,8 +89,10 @@ class LeadCaseController extends Controller
                 'stageLabel' => $lead->stage->name,
                 'inquiryText' => $lead->inquiry_text,
                 'capturedVia' => $lead->capturedViaLabel(),
-                'capturedAt' => $lead->created_at->toIso8601String(),
+                'capturedAt' => $lead->captured_at->toIso8601String(),
                 'booked' => $project->job()->exists(),
+                'lostReason' => $lead->lost_reason,
+                'outcomeLabel' => $lead->outcome?->label(),
             ],
             // The contact column stands beside the quote, not small underneath
             // it: the phone number is the reason the screen is open.

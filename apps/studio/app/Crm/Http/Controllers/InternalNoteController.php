@@ -23,7 +23,7 @@ class InternalNoteController extends Controller
 
         $project->notes()->create([
             'author_id' => auth('staff')->id(),
-            'body' => $this->validated($request),
+            ...$this->validated($request),
         ]);
 
         return back();
@@ -33,7 +33,7 @@ class InternalNoteController extends Controller
     {
         $this->authorize('update', $note);
 
-        $note->update(['body' => $this->validated($request)]);
+        $note->update($this->validated($request));
 
         return back();
     }
@@ -47,10 +47,16 @@ class InternalNoteController extends Controller
         return back();
     }
 
-    private function validated(Request $request): string
+    /**
+     * @return array{body: string, occurred_at?: string}
+     */
+    private function validated(Request $request): array
     {
         return $request->validate([
             'body' => ['required', 'string', 'max:5000'],
-        ])['body'];
+            // A call from last week, written up today. Never the future: the
+            // thread is a record, not a calendar.
+            'occurred_at' => ['nullable', 'date', 'before_or_equal:now'],
+        ]);
     }
 }

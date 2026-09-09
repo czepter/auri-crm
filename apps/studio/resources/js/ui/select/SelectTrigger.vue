@@ -10,11 +10,10 @@ import { inputVariants } from "@/ui/input"
 
 const props = defineProps<SelectTriggerProps & {
   size?: InputVariants["size"]
-  variant?: InputVariants["variant"]
   class?: HTMLAttributes["class"]
 }>()
 
-const delegatedProps = reactiveOmit(props, "class", "size", "variant")
+const delegatedProps = reactiveOmit(props, "class", "size")
 const forwarded = useForwardProps(delegatedProps)
 </script>
 
@@ -28,7 +27,7 @@ const forwarded = useForwardProps(delegatedProps)
     data-slot="select-trigger"
     v-bind="forwarded"
     :class="cn(
-      inputVariants({ size, variant }),
+      inputVariants({ size }),
       'flex cursor-pointer items-center justify-between gap-2 text-left',
       'data-[placeholder]:text-faint data-[state=open]:border-ring',
       '[&>span]:min-w-0 [&>span]:truncate',

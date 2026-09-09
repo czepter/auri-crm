@@ -13,6 +13,8 @@ import ProjectShell from '@/admin/components/ProjectShell.vue'
 import TaskCreateDialog from '@/admin/components/TaskCreateDialog.vue'
 import Section from '@/ui/page/Section.vue'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { DatePicker } from '@/ui/date-picker'
+import { Label } from '@/ui/label'
 import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
 
 const props = defineProps<{
@@ -55,8 +57,13 @@ const groups = computed(() => [
   { key: 'project.tasksUndated', rows: open.value.filter((task) => task.dueOn === null) },
 ])
 
-function complete(row: App.Crm.Data.TaskRowData) {
-  router.post(`/aufgaben/${row.id}/erledigt`, {}, { preserveScroll: true })
+// Ohne Tag ist es jetzt. Mit Tag ist es eine Aussage über einen anderen —
+// die Route hakt dann ab statt umzuschalten, sonst öffnete das Nachtragen
+// eines Datums die Aufgabe wieder.
+function complete(row: App.Crm.Data.TaskRowData, on: string | null = null) {
+  if (on !== null && on === row.completedOn) return
+
+  router.post(`/aufgaben/${row.id}/erledigt`, { completed_on: on }, { preserveScroll: true })
 }
 
 function assign(row: App.Crm.Data.TaskRowData, value: string) {
@@ -174,9 +181,14 @@ function reopen(row: App.Crm.Data.TaskRowData) {
               </span>
               <span class="text-[13.5px] leading-[1.47] text-ink-2">{{ row.title }}</span>
               <span v-if="row.shootLabel" class="text-[11.5px] text-faint">{{ row.shootLabel }}</span>
-              <span class="ml-auto text-[12.5px] whitespace-nowrap text-ink-2 tabular-nums">{{
-                dayWithWeekday(row.completedOn)
-              }}</span>
+              <Label class="sr-only" :for="`done-${row.id}`">{{ $t('project.taskCompletedOn') }}</Label>
+              <DatePicker
+                :id="`done-${row.id}`"
+                class="ml-auto w-[132px]"
+                :model-value="row.completedOn ?? ''"
+                size="sm"
+                @update:model-value="(value: string) => value && complete(row, value)"
+              />
               <button
                 class="cursor-pointer text-[12.5px] whitespace-nowrap text-[var(--accent)]"
                 type="button"

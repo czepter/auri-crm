@@ -52,6 +52,21 @@ return [
         'url' => env('GALLERY_URL', 'http://localhost:4321'),
     ],
 
+    // Die anderen zwei Surfaces, wie sie von außen erreichbar sind. Der
+    // Admin-Container kennt nur seine eigene APP_URL; für die Hilfeartikel
+    // zum Anfrageformular und zur MCP-Verbindung ist das der falsche Host.
+    // Fallback auf APP_URL für den Einzelhost-Betrieb, den die Testsuite
+    // fährt — dieselbe Form wie config/portal.php. `?:` statt eines
+    // env()-Defaults, weil .env.example beide Schluessel leer mitbringt und
+    // ein leerer String den Default nie ausloest.
+    'api' => [
+        'url' => rtrim((string) (env('API_URL') ?: env('APP_URL', 'http://localhost')), '/'),
+    ],
+
+    'mcp' => [
+        'url' => rtrim((string) (env('MCP_URL') ?: env('APP_URL', 'http://localhost')), '/'),
+    ],
+
     // M-05: verifies App\Payments\Http\Controllers\StripeWebhookController's
     // inbound deliveries. One deployment-wide value, the same shape as every
     // credential above it on this file — not a studio-editable pair like

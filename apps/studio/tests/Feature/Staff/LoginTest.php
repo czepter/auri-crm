@@ -3,7 +3,9 @@
 use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
+use PragmaRX\Google2FA\Google2FA;
 
 uses(RefreshDatabase::class);
 
@@ -25,6 +27,48 @@ it('sends a user with confirmed mfa to the challenge without starting a session'
         ->assertRedirect('/auth/mfa');
 
     $this->assertGuest('staff');
+});
+
+it('keeps a remembered session alive past the browser', function () {
+    $user = User::factory()->create(['email' => 'owner@studio.test', 'password' => 'correct-horse']);
+
+    $this->post('/login', [
+        'email' => 'owner@studio.test',
+        'password' => 'correct-horse',
+        'remember' => true,
+    ])->assertRedirect('/')->assertCookie(Auth::guard('staff')->getRecallerName());
+
+    $this->assertAuthenticatedAs($user, 'staff');
+});
+
+it('does not remember a session nobody asked to remember', function () {
+    User::factory()->create(['email' => 'owner@studio.test', 'password' => 'correct-horse']);
+
+    $this->post('/login', ['email' => 'owner@studio.test', 'password' => 'correct-horse'])
+        ->assertCookieMissing(Auth::guard('staff')->getRecallerName());
+});
+
+// Die Wahl fällt am Passwort, die Anmeldung erst am Code — dazwischen liegt
+// eine Weiterleitung, auf der sie verloren gehen kann.
+it('carries the remember choice across the mfa step', function () {
+    $secret = (new Google2FA)->generateSecretKey();
+    $user = User::factory()->withMfa()->create([
+        'email' => 'owner@studio.test',
+        'password' => 'correct-horse',
+        'mfa_secret' => $secret,
+    ]);
+
+    $this->post('/login', [
+        'email' => 'owner@studio.test',
+        'password' => 'correct-horse',
+        'remember' => true,
+    ])->assertRedirect('/auth/mfa');
+
+    $this->post('/auth/mfa', ['code' => (new Google2FA)->getCurrentOtp($secret)])
+        ->assertRedirect('/')
+        ->assertCookie(Auth::guard('staff')->getRecallerName());
+
+    $this->assertAuthenticatedAs($user, 'staff');
 });
 
 it('returns an identical error for a wrong password and an unknown account', function () {

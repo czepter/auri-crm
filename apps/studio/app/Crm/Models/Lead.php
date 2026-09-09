@@ -48,6 +48,7 @@ class Lead extends Model
         'captured_via',
         'captured_via_other',
         'captured_by_id',
+        'captured_at',
         'referred_by_contact_id',
     ];
 
@@ -57,6 +58,7 @@ class Lead extends Model
             'source' => LeadSource::class,
             'captured_via' => CaptureChannel::class,
             'stage_entered_at' => 'immutable_datetime',
+            'captured_at' => 'immutable_datetime',
             'lost_at' => 'immutable_datetime',
             'outcome' => LeadOutcome::class,
             'stalled_reminded_at' => 'immutable_datetime',

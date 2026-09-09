@@ -41,6 +41,7 @@ use App\Gallery\Http\Controllers\GalleryPublicationController;
 use App\Gallery\Http\Controllers\GalleryRecordController;
 use App\Gallery\Http\Controllers\GallerySetController;
 use App\Gallery\Models\Gallery;
+use App\Help\Http\Controllers\HelpController;
 use App\Http\Controllers\Staff\AbsenceController;
 use App\Http\Controllers\Staff\DashboardController;
 use App\Http\Controllers\Staff\DevLoginController;
@@ -183,6 +184,7 @@ Route::middleware('audience:staff')->group(function () {
         // binds "suche" as a contact public id and answers 404.
         Route::get('/kontakte/suche', ContactSearchController::class)->name('contacts.search');
         Route::get('/kontakte', [ContactController::class, 'index'])->name('contacts.index');
+        Route::post('/kontakte', [ContactController::class, 'store'])->name('contacts.store');
         Route::get('/kontakte/{contact}', [ContactController::class, 'edit'])->name('contacts.edit');
         Route::patch('/kontakte/{contact}', [ContactController::class, 'update'])->name('contacts.update');
         // P-09 (#228). This contact's departures from the studio's portal
@@ -268,6 +270,13 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/team/einladungen', [InvitationController::class, 'store'])->name('staff.invite');
         Route::delete('/team/einladungen/{invitation}', [InvitationController::class, 'destroy'])
             ->name('staff.invitation.destroy');
+
+        // Suche und Artikel-JSON vor dem Platzhalter registriert, sonst
+        // schluckt /hilfe/{slug} beide.
+        Route::get('/hilfe', [HelpController::class, 'index'])->name('help.index');
+        Route::get('/hilfe/suche', [HelpController::class, 'search'])->name('help.search');
+        Route::get('/hilfe/artikel/{slug}', [HelpController::class, 'article'])->name('help.article');
+        Route::get('/hilfe/{slug}', [HelpController::class, 'show'])->name('help.show');
 
         // E-12. Everything that arrived and did not thread itself, and the
         // addresses the studio hands out. Rotation posts here but is
@@ -472,6 +481,8 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/anfragen/{lead}', [LeadCaseController::class, 'update'])->name('leads.update');
         Route::post('/anfragen/{lead}/schliessen', [LeadStageController::class, 'close'])
             ->name('leads.close');
+        Route::post('/anfragen/{lead}/wieder-oeffnen', [LeadStageController::class, 'reopen'])
+            ->name('leads.reopen');
         Route::post('/anfragen/{lead}/stufe', [LeadStageController::class, 'update'])
             ->name('leads.stage.update');
 
@@ -719,6 +730,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('shoots.advance');
         Route::post('/shootings/{shoot}/absage', [ShootController::class, 'cancel'])
             ->name('shoots.cancel');
+        Route::post('/shootings/{shoot}/absage-zuruecknehmen', [ShootController::class, 'uncancel'])
+            ->name('shoots.uncancel');
         Route::post('/shootings/{shoot}/haupttermin', [ShootController::class, 'designatePrimary'])
             ->name('shoots.primary');
 

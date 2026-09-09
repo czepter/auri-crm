@@ -8,6 +8,7 @@ import {
     DropdownMenuTrigger,
 } from "@/ui/dropdown-menu";
 import CommandPalette from "@/admin/components/CommandPalette.vue";
+import HelpButton from "@/ui/page/HelpButton.vue";
 
 const props = defineProps<{ active: string }>();
 
@@ -227,6 +228,8 @@ const items = computed(() =>
                     >
                 </button>
 
+                <HelpButton />
+
                 <template v-for="item in items" :key="item.key ?? item.group">
                     <template v-if="item.group">
                         <div class="h-4.5 max-[640px]:hidden" />
@@ -296,6 +299,9 @@ const items = computed(() =>
                     <DropdownMenuContent side="top" class="w-[190px]">
                         <DropdownMenuItem as-child>
                             <Link href="/profil">{{ $t("profile.nav") }}</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem as-child>
+                            <Link href="/hilfe">{{ $t("help.title") }}</Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem @select="router.post('/logout')">
                             {{ $t("common.signOut") }}

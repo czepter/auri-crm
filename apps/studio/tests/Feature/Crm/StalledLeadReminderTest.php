@@ -100,3 +100,22 @@ it('closes an inquiry from the board with its outcome', function () {
     expect($lead->fresh()->outcome)->toBe(LeadOutcome::Declined)
         ->and($lead->fresh()->isLost())->toBeTrue();
 });
+
+it('reopens an inquiry closed by mistake, from its own screen', function () {
+    $lead = Lead::factory()->atStage(LeadStage::Contacted, 2)->create();
+    $staff = staffMember();
+
+    $this->actingAs($staff, 'staff')
+        ->post("/anfragen/{$lead->public_id}/schliessen", [
+            'outcome' => LeadOutcome::Declined->value,
+            'reason' => 'Termin belegt',
+        ]);
+
+    $this->actingAs($staff, 'staff')
+        ->post("/anfragen/{$lead->public_id}/wieder-oeffnen")
+        ->assertRedirect();
+
+    expect($lead->fresh()->isLost())->toBeFalse()
+        ->and($lead->fresh()->outcome)->toBeNull()
+        ->and($lead->fresh()->stage->key)->toBe(LeadStage::Contacted->value);
+});

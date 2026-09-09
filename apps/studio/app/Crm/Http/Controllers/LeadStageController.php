@@ -8,6 +8,7 @@ use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
 use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
+use Carbon\CarbonImmutable;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,10 +26,18 @@ class LeadStageController extends Controller
                 'required',
                 Rule::exists('stages', 'key')->where('pipeline', StagePipeline::Lead->value)->where('is_active', true),
             ],
+            // Seit wann die Anfrage dort steht — für Stufen, die erst später
+            // nachgetragen werden. Leer heißt jetzt.
+            'entered_at' => ['nullable', 'date', 'before_or_equal:now'],
         ]);
 
         try {
-            $advance($lead, $stages->byKey(StagePipeline::Lead, $validated['stage']), auth('staff')->user());
+            $advance(
+                $lead,
+                $stages->byKey(StagePipeline::Lead, $validated['stage']),
+                auth('staff')->user(),
+                isset($validated['entered_at']) ? CarbonImmutable::parse($validated['entered_at']) : null,
+            );
         } catch (DomainException $e) {
             // A rejected transition is a validation failure to the studio, not
             // a 500 — the board renders it beside the card they clicked.
@@ -64,5 +73,19 @@ class LeadStageController extends Controller
         }
 
         return redirect('/anfragen');
+    }
+
+    /** Das Gegenstück zu close(): eine irrtümlich geschlossene Anfrage steht wieder in ihrer Stufe. */
+    public function reopen(Lead $lead, AdvanceLeadStage $advance): RedirectResponse
+    {
+        $this->authorize('update', $lead);
+
+        try {
+            $advance->reopen($lead, auth('staff')->user());
+        } catch (DomainException $e) {
+            throw ValidationException::withMessages(['outcome' => $e->getMessage()]);
+        }
+
+        return back();
     }
 }

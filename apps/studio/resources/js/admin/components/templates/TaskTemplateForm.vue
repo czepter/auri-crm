@@ -116,11 +116,13 @@ function remove() {
     </div>
 
     <div class="mt-6 flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0">
-      <Button type="submit" :disabled="!form.isDirty || form.processing" :style="!form.isDirty ? 'opacity:.4' : undefined">
-        {{ $t('taskTemplates.save') }}
-      </Button>
-      <span v-if="form.isDirty" class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">{{ $t('settings.unsaved') }}</span>
-      <Button type="button" variant="outline" @click="remove">{{ $t('taskTemplates.delete') }}</Button>
+      <template v-if="form.isDirty">
+        <Button type="submit" :disabled="form.processing">
+          {{ $t('taskTemplates.save') }}
+        </Button>
+        <span class="flex-none rounded-[var(--r-sm)] bg-due-bg px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-due">{{ $t('settings.unsaved') }}</span>
+      </template>
+      <Button class="ml-auto" type="button" variant="outline" @click="remove">{{ $t('taskTemplates.delete') }}</Button>
     </div>
   </form>
 </template>
