@@ -25,7 +25,6 @@ use App\Crm\Models\Task;
 use App\Crm\Models\TaskTemplate;
 use App\Crm\Support\CrmVocabulary;
 use App\Documents\Models\DocumentTemplate;
-use App\Gallery\Listeners\RecomputeGalleryBalanceSettled;
 use App\Gallery\Models\Gallery;
 use App\Integration\Listeners\DispatchWebhookNotifications;
 use App\Notifications\Listeners\NotifyStudioOfDomainEvent;
@@ -218,11 +217,6 @@ class AppServiceProvider extends ServiceProvider
         // BookProject the manual button calls — see the class docblock.
         Event::listen(ContractSigned::class, [BookProjectOnContractAndDeposit::class, 'handleContractSigned']);
         Event::listen(InstallmentPaid::class, [BookProjectOnContractAndDeposit::class, 'handleInstallmentPaid']);
-
-        // G-05: keeps Gallery::$balance_settled current. Inert beyond that
-        // write — nothing gates on it yet, since delivery/download flows are
-        // future stories.
-        Event::listen(InstallmentPaid::class, RecomputeGalleryBalanceSettled::class);
 
         // I-04: wraps each domain event for NotificationService rather than
         // handing WebhookTransport the event directly — see that listener's
