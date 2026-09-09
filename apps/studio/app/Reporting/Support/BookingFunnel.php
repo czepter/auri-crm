@@ -145,7 +145,7 @@ class BookingFunnel
             ->select('outcome', 'lost_reason', DB::raw('count(*) as count'))
             ->whereNotNull('outcome')
             ->whereNotNull('lost_reason')
-            ->whereBetween('created_at', [$from, $to])
+            ->whereBetween('captured_at', [$from, $to])
             ->groupBy('outcome', 'lost_reason')
             ->orderByDesc('count')
             ->get()
