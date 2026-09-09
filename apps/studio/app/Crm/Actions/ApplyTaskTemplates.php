@@ -13,6 +13,7 @@ use App\Crm\Models\TaskTemplate;
 use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\TaskAnchors;
 use App\Settings\Support\StudioSettingsResolver;
+use App\Support\SilentWrite;
 use Carbon\CarbonImmutable;
 
 /**
@@ -50,6 +51,14 @@ class ApplyTaskTemplates
 
     public function forStage(Project $project, StagePipeline $pipeline, string $stage): void
     {
+        // The one suppression that outlives its own request: these tasks
+        // carry due dates, a backfilled project's are already years past,
+        // and RemindDueTasks mails the client about a client task on the
+        // next 06:30 run — long after the silent write ended.
+        if (SilentWrite::active()) {
+            return;
+        }
+
         $templates = TaskTemplate::query()
             ->active()
             ->forStage($project->type?->key ?? '', $pipeline, $stage)
