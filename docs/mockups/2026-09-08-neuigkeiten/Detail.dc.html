@@ -1,0 +1,213 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+  <style>
+    body { margin:0; background:#FFFFFF; color:#151A22;
+           font:400 13px/1.47 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.006em;
+           -webkit-font-smoothing:antialiased; }
+    * { box-sizing:border-box; }
+    a { color:#151A22; text-decoration:none; }
+    svg { flex:none; fill:none; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+    .item { display:flex; align-items:center; gap:9px; margin-bottom:1px; padding:6px 10px;
+            border-radius:8px; font:400 13px/1.47 'Hanken Grotesk', system-ui, sans-serif;
+            letter-spacing:-.01em; color:#151A22; text-decoration:none; }
+    .item:hover { background:#F5F7F8; }
+    .item svg { width:17px; height:17px; stroke:#626B78; }
+    .item.on { background:#F0F3F5; font-weight:600; }
+    .item.on svg { stroke:#151A22; }
+    .item .ct { margin-left:auto; font-size:11.5px; font-variant-numeric:tabular-nums; color:#626B78; }
+    .ver { display:flex; align-items:center; gap:7px; margin-bottom:6px; padding:6px 10px; border-radius:8px;
+           font:400 11.5px/1 'Hanken Grotesk', system-ui, sans-serif; font-variant-numeric:tabular-nums;
+           color:#626B78; text-decoration:none; }
+    .ver:hover { background:#F5F7F8; color:#151A22; }
+    .ver.on { background:#F0F3F5; color:#151A22; font-weight:600; }
+    .chip { display:inline-flex; align-items:center; flex:none; padding:3px 8px; border-radius:12px;
+            font:600 10px/1.5 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:.04em; text-transform:uppercase; }
+    .grp { margin-top:30px; }
+    .grp h2 { margin:0 0 4px; display:flex; align-items:center; gap:10px;
+              font:600 15px/1.2 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.02em; }
+    .grp .n { font:500 12px/1 'Hanken Grotesk', system-ui, sans-serif; color:#626B78;
+              font-variant-numeric:tabular-nums; }
+    .chg { margin:0 -10px; padding:9px 10px; box-shadow:inset 0 1px 0 #F0F0F2;
+           display:flex; gap:10px; align-items:baseline; cursor:pointer; }
+    .chg:hover { background:#F5F7F8; }
+    .chg .t { flex:1; min-width:0; font:400 13px/1.47 'Hanken Grotesk', system-ui, sans-serif; }
+    .chg .mk { flex:none; width:14px; height:14px; align-self:center; stroke:#CFD6DB; }
+    .desc { margin:0 -10px; padding:2px 10px 12px 34px; white-space:pre-line;
+            font:400 12.5px/1.6 'Hanken Grotesk', system-ui, sans-serif; color:#626B78; }
+    .fbtn { appearance:none; cursor:pointer; flex:none; border:1px solid #CFD6DB; background:#FFFFFF;
+            border-radius:6px; padding:5px 11px; color:#626B78;
+            font:600 10.5px/1.4 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:.04em; text-transform:uppercase; }
+    .fbtn:hover { border-color:#96A0AD; color:#151A22; }
+    .fbtn.on { background:#151A22; border-color:#151A22; color:#FFFFFF; }
+    .back { display:inline-flex; align-items:center; gap:6px; font:500 12.5px/1 'Hanken Grotesk', system-ui, sans-serif; color:#626B78; }
+    .back:hover { color:#151A22; }
+  </style>
+</helmet>
+
+<div style="display:flex; min-height:1240px; background:#FFFFFF">
+
+  <nav style="width:214px; flex:none; display:flex; flex-direction:column; padding:18px 12px">
+    <a href="#" style="display:flex; align-items:center; margin-bottom:1px; padding:0 10px 22px; font:600 17px/1 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.024em; color:#151A22">Nordlicht</a>
+
+    <button type="button" style="display:flex; align-items:center; gap:9px; width:100%; margin-bottom:16px; padding:6px 10px; border:0; border-radius:8px; background:#F5F7F8; cursor:pointer; text-align:left; font:400 13px/1.47 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.01em; color:#626B78">
+      <svg viewBox="0 0 24 24" style="width:17px; height:17px; stroke:#626B78"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+      Suchen
+      <kbd style="margin-left:auto; font:500 11px/1 'Hanken Grotesk', system-ui, sans-serif; font-variant-numeric:tabular-nums; color:#626B78">⌘K</kbd>
+    </button>
+
+    <a href="#" class="item"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>Übersicht</a>
+    <a href="#" class="item"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8v8M13 8v5M18 8v10"/></svg>Anfragen<span class="ct">7</span></a>
+    <a href="#" class="item"><svg viewBox="0 0 24 24"><path d="M4 8h16v12H4z"/><path d="M9 8V5h6v3"/><path d="M4 13h16"/></svg>Projekte<span class="ct">12</span></a>
+    <a href="#" class="item"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="13" height="13" rx="2"/><path d="M8 21h11a2 2 0 0 0 2-2V8"/></svg>Galerien</a>
+    <a href="#" class="item"><svg viewBox="0 0 24 24"><path d="M6 3h12v18H6z"/><circle cx="12" cy="10" r="2.4"/><path d="M8.7 17c.6-1.7 1.8-2.6 3.3-2.6s2.7.9 3.3 2.6"/><path d="M6 7H3.5M6 12H3.5M6 17H3.5"/></svg>Kontakte</a>
+    <a href="#" class="item"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>Kalender</a>
+    <a href="#" class="item"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M8 14h3M13 14h3M8 17h3"/></svg>Abwesenheiten</a>
+    <a href="#" class="item"><svg viewBox="0 0 24 24"><path d="M18 16v-5a6 6 0 10-12 0v5l-1.5 2.5h15L18 16z"/><path d="M10 19.5a2 2 0 004 0"/></svg>Benachrichtigungen<span class="ct">3</span></a>
+    <a href="#" class="item"><svg viewBox="0 0 24 24"><path d="M3 6.5h18v11H3z"/><path d="m3 7.5 9 6 9-6"/></svg>Posteingang</a>
+
+    <div style="height:18px"></div>
+    <div style="padding:0 10px 6px; font:400 10.5px/1.4 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:.06em; text-transform:uppercase; color:#626B78">Studio</div>
+
+    <a href="#" class="item"><svg viewBox="0 0 24 24"><path d="M21 8.5v7l-9 4.5-9-4.5v-7L12 4z"/><path d="M3 8.5 12 13l9-4.5M12 13v7"/></svg>Pakete</a>
+    <a href="#" class="item"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="12" height="16" rx="2"/><path d="M8 8h4M8 12h4M19 7v12a2 2 0 0 1-2 2H8"/></svg>Vorlagen</a>
+    <a href="#" class="item"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><path d="M16.5 5.5a3.2 3.2 0 010 5.6M17.5 14.8c2 .7 3.5 2.6 3.5 5.2"/></svg>Team</a>
+    <a href="#" class="item"><svg viewBox="0 0 24 24"><path d="M3.5 20h17"/><path d="M7 20v-6M12 20V6M17 20v-9"/></svg>Auswertungen</a>
+    <a href="#" class="item"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="8" cy="18" r="2"/></svg>Einstellungen</a>
+
+    <div style="margin-top:auto">
+      <a href="#" class="ver on"><span>v0.9.1</span><sc-if value="{{update}}" hint-placeholder-val="{{true}}"><span style="width:6px; height:6px; flex:none; border-radius:50%; background:#8A6212"></span></sc-if></a>
+
+    <div style="display:flex; align-items:center; gap:8px; padding:10px; border-radius:8px; box-shadow:inset 0 1px 0 #E2E7EB; font:500 12.5px/1 'Hanken Grotesk', system-ui, sans-serif">
+      <span style="display:flex; width:24px; height:24px; flex:none; align-items:center; justify-content:center; border-radius:50%; background:#F0F0F2; font:600 10px/1 'Hanken Grotesk', system-ui, sans-serif; color:#626B78">CZ</span>
+      <span>Christian Zepter</span>
+      <svg viewBox="0 0 24 24" style="width:16px; height:16px; margin-left:auto; stroke:#626B78; stroke-width:1.75"><path d="m8 10 4-4 4 4M8 14l4 4 4-4"/></svg>
+    </div>
+    </div>
+  </nav>
+
+  <main style="flex:1; min-width:0; max-width:1180px">
+
+    <div style="padding:22px 32px 0">
+      <a href="#" class="back"><svg viewBox="0 0 24 24" style="width:14px; height:14px; stroke:currentColor"><path d="M15 6l-6 6 6 6"/></svg>Neuigkeiten</a>
+      <div style="display:flex; align-items:baseline; gap:12px; margin-top:10px">
+        <h1 style="margin:0; font:600 32px/1.08 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.032em">0.9.1</h1>
+        <span style="font:400 13px/1 'Hanken Grotesk', system-ui, sans-serif; color:#626B78; font-variant-numeric:tabular-nums">6. Sep. 2026</span>
+        <span class="chip" style="background:#EDF3EE; color:#3F6B4A">Installiert</span>
+      </div>
+      <div style="margin-top:14px; font:600 18px/1.3 'Hanken Grotesk', system-ui, sans-serif; letter-spacing:-.022em">Angebote nach Stunden, Erinnerungen von selbst</div>
+      <p style="margin:12px 0 0; max-width:620px; font:400 13px/1.6 'Hanken Grotesk', system-ui, sans-serif; color:#626B78">Ein Angebot kann jetzt ein Stundenregler mit Bausteinen sein, den der Kunde im Portal selbst einstellt. Offene Aufgaben, unbeantwortete Anfragen und überfällige Raten erinnern in wachsenden Abständen, wahlweise als Tagesüberblick.</p>
+      <p style="margin:12px 0 0; max-width:620px; font:400 13px/1.6 'Hanken Grotesk', system-ui, sans-serif; color:#626B78">Dazu ein eigenes Mail-Layout mit zwei Absenderrollen und eine neue Farb- und Schriftrichtung: kühles Petrol und Hanken Grotesk statt Rost-Orange.</p>
+    </div>
+
+    <div style="padding:20px 32px 0">
+      <img src="0.9.1-angebot-regler.jpg" alt="Angebot mit Stundenregler im Portal" style="display:block; width:560px; border-radius:12px; border:1px solid #E2E7EB">
+    </div>
+
+    <div style="display:flex; gap:8px; padding:24px 32px 0">
+      <button type="button" class="fbtn {{f.alleOn}}" onClick="{{f.alle}}">Alles</button>
+      <sc-for list="{{f.knoepfe}}" as="k" hint-placeholder-count="2">
+        <button type="button" class="fbtn {{k.on}}" onClick="{{k.pick}}">{{k.label}}</button>
+      </sc-for>
+    </div>
+
+    <div style="padding:0 32px 60px">
+      <sc-for list="{{sections}}" as="s" hint-placeholder-count="2">
+        <div class="grp">
+          <h2><span class="chip" style="background:{{s.bg}}; color:{{s.fg}}">{{s.label}}</span><span class="n">{{s.anzahl}}</span></h2>
+          <sc-for list="{{s.zeilen}}" as="c" hint-placeholder-count="6">
+            <div>
+              <div class="chg" onClick="{{c.toggle}}">
+                <span class="t">{{c.titel}}</span>
+                <svg class="mk" viewBox="0 0 24 24" style="fill:none; stroke-width:1.75"><path d="{{c.pfeil}}"/></svg>
+              </div>
+              <sc-if value="{{c.offen}}" hint-placeholder-val="{{true}}">
+                <div class="desc">{{c.text}}</div>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+
+  </main>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1440,"height":1240}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { filter: 'alle', offen: {} };
+  }
+
+  renderVals() {
+    // Titel und Beschreibungen stehen so in release-log/releases/0.9.1.json.
+    const sections = [
+      {
+        key: "new", label: "Neu", bg: "#EDF3EE", fg: "#3F6B4A",
+        alle: [
+          { titel: "Angebot als Stundenregler", text: "Ein Angebot muss nicht mehr eine feste Positionsliste sein. Es kann stattdessen auf einem Stundensatz stehen: der Kunde zieht im Portal den Regler auf die Stundenzahl, die er möchte, und wählt dazu Bausteine aus. Der Preis rechnet mit.\n\nIm Studio wird das eingerichtet — Stundensatz, Spannen und die Tabelle der Bausteine, jeder mit Bild und Beschreibung.\n\nBestehende Angebote bleiben unverändert Positionslisten; ohne Stundensatz greift der Regler gar nicht erst.\n\nErst die Annahme legt die Summe fest, zusammen mit der gewählten Stundenzahl und der Auswahl. Danach gilt für Board, PDF und Zahlungsplan wieder genau das, was vorher galt." },
+          { titel: "Erinnerungen für Studio, Crew und Kunden", text: "Offene Aufgaben, unbeantwortete Anfragen und überfällige Raten erinnern jetzt von selbst, in wachsenden Abständen statt täglich in gleicher Lautstärke.\n\nStudio und Kunde zählen dabei getrennt: der Kunde bekommt seine erste Erinnerung später und seltener. Das Studio darf früher erfahren, was der Kunde erst danach liest.\n\nDazu ein Tagesüberblick als eine Nachricht statt vieler einzelner. Ob jemand einzelne Meldungen, eine Zusammenfassung oder den Tagesüberblick möchte, ist jetzt eine gespeicherte Wahl und keine Ableitung aus \"Mail aus, In-App an\".\n\nAutomatisierungsregeln erreichen jetzt auch das Studio und die eingeteilte Crew, nicht nur den Kunden, und es gibt vier neue Zeitpunkte, an die sich eine Regel hängen kann. Die Platzhalter sind dieselben wie in den Dokumentvorlagen; ein unbekanntes Feld bleibt sichtbar stehen, statt den Satz stillschweigend zu leeren.\n\nAufgaben bekommen eine studioweite Ansicht unter /aufgaben. Jemandem eine Aufgabe zuzuweisen ändert wenig, solange niemand sie über alle Projekte hinweg sieht." },
+          { titel: "Anfrage auf dem Board schließen", text: "Eine Anfrage ließ sich abschließen — nur gab es dafür keine Bedienung. Über das Kontextmenü der Karte wird sie jetzt geschlossen, mit Ausgang und Grund in einem Dialog." },
+          { titel: "E-Mails aus einem Guss", text: "Die Mails standen bisher auf Laravels Standardvorlage. Sie haben jetzt ein eigenes Layout mit zwei Absenderrollen: die Mail des Produkts an das Studio und die Mail des Studios an seine Kunden tragen jeweils die richtige Marke im Kopf.\n\nNeu dazu: eine Willkommensmail bei der Einrichtung, eine Nachricht, wenn das Studio startklar ist, und nach zwei Tagen eine Erinnerung an eine unfertige Einrichtung.\n\nDie Adresse des Inhabers wird beim Einrichten bestätigt, per Link oder mit einem Code.\n\nDabei behoben, jeweils sichtbar in jeder betroffenen Mail: Fußzeilen fehlten vollständig, Überschriften standen als \"# \" im Text, Fettung als Sternchen und der Abmeldelink als toter Text statt als Link. Die Hilfszeile unter jeder Schaltfläche stand auf Englisch, neun Schaltflächen zeigten auf einen unvollständigen Pfad, den kein Mailprogramm auflösen kann, und jede Mail trug zwei Absenderzeilen übereinander. Die Einladung an Mitarbeiter kündigte weiterhin eine Pflicht zur Zwei-Faktor-Bestätigung an, die längst freiwillig ist." },
+          { titel: "Kühles Petrol statt Rost-Orange", text: "Der rostorange Akzent und das Schriftpaar Instrument waren das übliche Klischee für eine maschinell entworfene Oberfläche.\n\nDie neutrale Skala wird kühles Blaugrau, der Akzent Petrol. Hanken Grotesk ersetzt Instrument als einzige Familie für Titel und Text; ein eigenes Serif-Display gibt es nicht mehr. Dokument-PDF und Vorschau ziehen die Hausschrift mit.\n\nDie dunkle Galerie behält bewusst ihren eigenen Akzent — sie war nicht Teil dieser Richtung." },
+          { titel: "Einrichtung auf zwei Schritte", text: "Fünf der sechs Schritte bestätigten nur Voreinstellungen. Übrig bleibt, was niemand raten kann: die Rechtsidentität und der Umsatzsteuermodus — die einzige Voreinstellung, die aktiv falsch sein kann.\n\nSteuernummer, USt-IdNr. und Registerangaben fallen erst mit der ersten Rechnung an. Die Auswahl der Startvorlagen macht der Abschluss selbst, samt \"später abschließen\" — ohne Vorlagen lässt sich nichts ausstellen." },
+          { titel: "Rechnung verlangt die Steuernummer", text: "§ 14 UStG verlangt Steuernummer oder USt-IdNr. Seit der Einrichtungsassistent nicht mehr danach fragt, ist das Ausstellen der Moment, an dem die Angabe fällig wird.\n\nGeprüft wird, bevor eine Nummer gezogen wird: eine vergebene Nummer für ein Dokument, das sich nicht ausstellen lässt, risse eine Lücke in die Rechnungsfolge." },
+        ],
+      },
+      {
+        key: "fixed", label: "Behoben", bg: "#F0F3F5", fg: "#626B78",
+        alle: [
+          { titel: "KI-Assistent erreichte die Schnittstelle nicht", text: "Jeder Werkzeugaufruf lief ohne Anmeldung gegen die Schnittstelle, bekam die Weiterleitung zur Anmeldeseite und damit HTML statt einer Antwort. Nach außen sah das aus wie \"die Schnittstelle meldet einen Fehler ohne Meldung\".\n\nDer Zugang aus der laufenden Sitzung lag bereit und wurde nie verwendet. Jetzt baut jeder Aufruf seine Verbindung daraus." },
+          { titel: "Angebotsmail verwies auf den falschen Host", text: "Der Link zum Angebot und der Abmeldelink zeigten auf den Studio-Host, obwohl beide Adressen nur das Portal bedient. Betroffen war jede Angebotsmail, sowohl der sofortige Versand als auch der, der wegen einer Ruhezeit später herausging." },
+          { titel: "Download-Link in der Fertigmeldung lief nie ab", text: "Die Meldung \"Archiv fertig\" enthielt einen unbefristeten Link auf die Download-Seite — anders als die Links auf die einzelnen Archivteile, die nach 24 Stunden ablaufen. Eine weitergeleitete oder abgefangene Kopie funktionierte damit dauerhaft.\n\nDer Link gilt jetzt sieben Tage. Am Archiv selbst ändert sich nichts; ein veraltetes wird auf der Download-Seite weiterhin neu gebaut." },
+          { titel: "Ereignisregeln ließen sich nicht speichern", text: "Eine Automatisierungsregel, die auf ein Ereignis hört, war über ihre eigene Fläche nicht speicherbar: die Prüfung verlangte Anker und Abstand, die eine Ereignisregel gerade nicht haben darf." },
+        ],
+      }
+    ];
+
+    const filter = this.state.filter;
+    const pfeilZu = 'M9 6l6 6-6 6';
+    const pfeilAuf = 'M6 9l6 6 6-6';
+
+    return {
+      update: true,
+      f: {
+        alle: () => this.setState({ filter: 'alle' }),
+        alleOn: filter === 'alle' ? 'on' : '',
+        knoepfe: sections.map((s) => ({
+          label: s.label,
+          on: filter === s.key ? 'on' : '',
+          pick: () => this.setState({ filter: s.key }),
+        })),
+      },
+      sections: sections
+        .filter((s) => filter === 'alle' || filter === s.key)
+        .map((s) => ({
+          ...s,
+          anzahl: s.alle.length,
+          zeilen: s.alle.map((c, i) => {
+            const id = s.key + i;
+            const offen = Boolean(this.state.offen[id]) && c.text.length > 0;
+            return {
+              ...c,
+              offen,
+              pfeil: offen ? pfeilAuf : pfeilZu,
+              toggle: () => this.setState({ offen: { ...this.state.offen, [id]: !this.state.offen[id] } }),
+            };
+          }),
+        })),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -130,12 +130,16 @@
 @keyframes nl-overlay-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes nl-panel-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
-[data-slot="dialog-overlay"][data-state="open"] { animation: nl-overlay-in .12s ease-out; }
+[data-slot="dialog-overlay"][data-state="open"],
+[data-slot="alert-dialog-overlay"][data-state="open"] { animation: nl-overlay-in .12s ease-out; }
 [data-slot="dialog-panel"][data-state="open"],
+[data-slot="alert-dialog-panel"][data-state="open"],
 [data-slot="popover-panel"][data-state="open"] { animation: nl-panel-in .12s ease-out; }
 
 @media (prefers-reduced-motion: reduce) {
   [data-slot="dialog-overlay"][data-state="open"],
+  [data-slot="alert-dialog-overlay"][data-state="open"],
   [data-slot="dialog-panel"][data-state="open"],
+  [data-slot="alert-dialog-panel"][data-state="open"],
   [data-slot="popover-panel"][data-state="open"] { animation: none; }
 }

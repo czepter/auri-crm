@@ -17,6 +17,7 @@ const palette = ref<InstanceType<typeof CommandPalette> | null>(null);
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const nav = computed(() => page.props.nav);
+const release = computed(() => page.props.release);
 
 // Initials, since users carries no avatar column — the same fallback the crew
 // stack uses, for the same reason.
@@ -276,12 +277,34 @@ const items = computed(() =>
                     </Link>
                 </template>
 
+                <!-- Die laufende Version, und der Punkt daneben, wenn
+             release-log eine hoehere kennt. Sie ist zugleich der Weg zu den
+             Neuigkeiten: ein eigener Nav-Eintrag stand neben
+             "Benachrichtigungen" und hiess im Deutschen fast dasselbe.
+             mt-auto sitzt hier statt am Konto darunter, damit beide zusammen
+             am Fuss der Leiste stehen. -->
+                <div v-if="release" class="mt-auto max-[1080px]:hidden">
+                    <Link
+                        class="mb-1.5 flex items-center gap-[7px] rounded-lg px-2.5 py-1.5 text-[11.5px] leading-none tabular-nums text-ink-2 no-underline transition-colors duration-[120ms] ease-out hover:bg-sunk hover:text-foreground"
+                        :class="props.active === 'neuigkeiten' && 'bg-sunk-2 font-semibold text-foreground'"
+                        href="/neuigkeiten"
+                    >
+                        v{{ release.installed }}
+                        <span
+                            v-if="release.updateAvailable"
+                            class="size-1.5 flex-none rounded-full bg-due"
+                            :title="$t('releases.available')"
+                        />
+                    </Link>
+                </div>
+
                 <!-- The effective style here is the cascade of both sheets: crm.css
              set the box and the size, tokens.css the weight and the flex
              centring inside the avatar. -->
                 <DropdownMenu>
                     <DropdownMenuTrigger
-                        class="mt-auto flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent p-2.5 text-left text-[12.5px] leading-none font-medium text-foreground transition-colors duration-[120ms] ease-out hover:bg-sunk data-[state=open]:bg-sunk max-[1080px]:hidden"
+                        :class="release ? undefined : 'mt-auto'"
+                        class="flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent p-2.5 text-left text-[12.5px] leading-none font-medium text-foreground transition-colors duration-[120ms] ease-out hover:bg-sunk data-[state=open]:bg-sunk max-[1080px]:hidden"
                     >
                         <span
                             class="flex size-6 flex-none items-center justify-center rounded-full bg-[#F0F0F2] text-[10px] font-semibold text-ink-2"

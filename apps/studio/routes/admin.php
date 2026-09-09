@@ -64,6 +64,7 @@ use App\Media\Http\Controllers\UploadPrecheckController;
 use App\Payments\Http\Controllers\PaymentInstallmentController;
 use App\Payments\Http\Controllers\PaymentPlanController;
 use App\Quotes\Http\Controllers\QuoteController;
+use App\Releases\Http\Controllers\ReleaseController;
 use App\Reporting\Http\Controllers\ReportController;
 use App\Settings\Http\Controllers\GallerySettingsController;
 use App\Settings\Http\Controllers\NotificationSettingsController;
@@ -253,6 +254,13 @@ Route::middleware('audience:staff')->group(function () {
             ->name('notifications.index');
         Route::post('/benachrichtigungen/gelesen', [NotificationController::class, 'markRead'])
             ->name('notifications.read');
+
+        // Was in welcher Version geliefert wurde. Ungated wie das Profil
+        // darunter: alle laufen denselben Build.
+        Route::get('/neuigkeiten', [ReleaseController::class, 'index'])->name('releases.index');
+        Route::get('/neuigkeiten/{version}', [ReleaseController::class, 'show'])
+            ->where('version', '[0-9]+\.[0-9]+\.[0-9]+')
+            ->name('releases.show');
 
         // The person, not the studio — /einstellungen is the studio's, this
         // is the account whoever is signed in holds. Ungated: everybody with

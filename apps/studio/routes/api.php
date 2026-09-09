@@ -199,6 +199,12 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'ide
     ->post('/leads', [LeadController::class, 'store'])
     ->name('api.leads.store');
 
+// Ahead of the {lead} routes below only for readability — `bulk` is a static
+// segment and could not be matched as a public id anyway.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
+    ->post('/leads/bulk', [LeadController::class, 'storeBulk'])
+    ->name('api.leads.bulk.store');
+
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
     ->post('/leads/{lead:public_id}/stage', [LeadController::class, 'advanceStage'])
     ->name('api.leads.stage.update');

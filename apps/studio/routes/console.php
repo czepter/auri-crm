@@ -47,3 +47,8 @@ Schedule::command('notifications:send-digests')->dailyAt('07:30')->timezone($stu
 // the three-condition guard. 09:00 so it lands with the rest of the morning
 // mail, not overnight.
 Schedule::command('notifications:remind-onboarding')->dailyAt('09:00')->timezone($studioTimezone);
+
+// Die Versionsliste aus release-log. Nachts, weil ein Release von Hand
+// geschnitten wird und der Punkt in der Seitenleiste ein paar Stunden später
+// früh genug steht. Der Screen liest nur den Cache, den dieser Lauf schreibt.
+Schedule::command('releases:fetch')->dailyAt('04:00')->timezone($studioTimezone);

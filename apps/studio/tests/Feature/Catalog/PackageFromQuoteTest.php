@@ -52,6 +52,29 @@ it('keeps a line without a price as an included service', function () {
     expect($package->items->first()->unit_price)->toBeNull();
 });
 
+it('carries the slider and the payment stages back into the catalogue', function () {
+    $quote = Quote::factory()->create([
+        'hourly_rate' => 25000,
+        'min_hours' => 4,
+        'max_hours' => 10,
+        'images_per_hour' => 40,
+        'hours' => 6,
+    ]);
+    QuoteItem::factory()->for($quote)->create(['title' => 'Reportage', 'quantity' => 1, 'unit_price' => 189000]);
+    $quote->paymentStages()->create(['percent' => 30, 'label' => 'Anzahlung', 'minimum' => 50000, 'sort_order' => 0]);
+    $quote->paymentStages()->create(['percent' => 70, 'label' => 'Restzahlung', 'sort_order' => 1]);
+
+    $package = app(CreatePackageFromQuote::class)($quote->fresh(), 'Hochzeit Basis');
+
+    expect($package->hourly_rate)->toBe(25000)
+        ->and($package->min_hours)->toBe(4)
+        ->and($package->max_hours)->toBe(10)
+        ->and($package->images_per_hour)->toBe(40)
+        ->and($package->hours)->toBe(6)
+        ->and($package->paymentStages->pluck('label')->all())->toBe(['Anzahlung', 'Restzahlung'])
+        ->and($package->paymentStages->first()->minimum)->toBe(50000);
+});
+
 it('saves a quote as a package over the route, and logs where it came from', function () {
     $user = User::factory()->withMfa()->create();
     $quote = Quote::factory()->create();

@@ -13,6 +13,7 @@ use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Engagement\Models\Message;
 use App\Engagement\Models\Thread;
+use App\Enums\StaffRole;
 use App\Gallery\Models\Gallery;
 use App\Models\Absence;
 use App\Models\User;
@@ -347,6 +348,27 @@ it('carries the newest inquiries with their occasion and source', function () {
     expect($rows)->toHaveCount(1)
         ->and($rows[0]['id'])->toBe($lead->project->public_id)
         ->and($rows[0]['type'])->toBe($lead->project->type->name);
+});
+
+it('leaves a booked inquiry out of the new ones, like every other open-lead count', function () {
+    $booked = leadAtStage(LeadStage::QuoteAccepted);
+    Job::factory()->for($booked->project)->create();
+
+    expect(props('/')['newLeads'])->toHaveCount(0)
+        ->and(props('/')['pipelineStages'])->toBe([]);
+});
+
+it('counts only what the viewer may open on the list behind the number', function () {
+    leadAtStage(LeadStage::New);
+    Quote::factory()->for(Project::factory()->create())->create(['status' => QuoteStatus::Sent, 'total' => 250_00]);
+
+    $this->actingAs(staffMember(StaffRole::Assistant), 'staff');
+
+    $props = props('/');
+
+    expect($props['newLeads'])->toHaveCount(0)
+        ->and($props['pipelineStages'])->toBe([])
+        ->and($props['pipeline'])->toBe(0);
 });
 
 // The card reads the primary shoot and the latest quote, which the panel's own

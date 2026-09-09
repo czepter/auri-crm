@@ -2,6 +2,7 @@
 
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
+use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Gallery\Actions\ConsumeGalleryEmailVerification;
 use App\Gallery\Models\Gallery;
@@ -17,6 +18,9 @@ use App\Media\Enums\ZipBuildStatus;
 use App\Media\Jobs\BuildZip;
 use App\Media\Models\Asset;
 use App\Media\Models\ZipBuild;
+use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Models\PaymentInstallment;
+use App\Payments\Models\PaymentPlan;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
@@ -153,6 +157,31 @@ it('takes the address without a code when the studio asks for no proof', functio
 
     expect(props("/galerien/{$gallery->public_id}/download")['step'])->toBe('ready')
         ->and(GalleryGuest::sole()->email)->toBe('anna@example.test');
+});
+
+// ---------- the balance gate (G-05) ----------
+
+it('withholds the download while the studio ties it to an unpaid invoice', function () {
+    $project = Project::factory()->create();
+    $plan = PaymentPlan::factory()->for(Job::factory()->for($project)->create())->create();
+    $installment = PaymentInstallment::factory()->for($plan, 'plan')->create();
+    $gallery = Gallery::factory()->for($project)->create(['requires_settled_balance' => true]);
+
+    expect(props("/galerien/{$gallery->public_id}/download")['step'])->toBe('balance');
+
+    $installment->update(['status' => PaymentInstallmentStatus::Paid]);
+
+    expect(props("/galerien/{$gallery->public_id}/download")['step'])->toBe('email');
+});
+
+it('leaves the download alone when the studio does not tie it to the invoice', function () {
+    $project = Project::factory()->create();
+    PaymentInstallment::factory()
+        ->for(PaymentPlan::factory()->for(Job::factory()->for($project)->create())->create(), 'plan')
+        ->create();
+    $gallery = Gallery::factory()->for($project)->create(['requires_settled_balance' => false]);
+
+    expect(props("/galerien/{$gallery->public_id}/download")['step'])->toBe('email');
 });
 
 // ---------- the download PIN gate (mockup 11) ----------

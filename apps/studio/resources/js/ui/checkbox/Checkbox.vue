@@ -32,9 +32,10 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       'disabled:cursor-not-allowed disabled:opacity-50',
       props.class,
     )"
+    v-slot="{ state }"
   >
     <CheckboxIndicator class="flex size-full items-center justify-center text-current">
-      <Minus v-if="props.modelValue === 'indeterminate'" class="size-3" />
+      <Minus v-if="state === 'indeterminate'" class="size-3" />
       <Check v-else class="size-3" />
     </CheckboxIndicator>
   </CheckboxRoot>

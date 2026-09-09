@@ -24,10 +24,6 @@ function submit() {
 
 <template>
   <AuthLayout :title="$t('reset.newTitle')">
-      <!-- Stated up front: this changes the password and nothing else. The
-           second factor is still required to get in. -->
-      <p class="mb-6 text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('reset.newHint') }}</p>
-
       <form @submit.prevent="submit">
         <p v-if="form.errors.email" class="mb-4 mt-1.5 flex items-center rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[12.5px] leading-[1.3] font-medium text-destructive">
           {{ form.errors.email }}

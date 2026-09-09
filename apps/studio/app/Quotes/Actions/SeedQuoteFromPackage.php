@@ -24,6 +24,12 @@ class SeedQuoteFromPackage
                 ->all()
         );
 
+        // Q-11's shares and Q-08's slider travel the same dead way the lines
+        // do: copied out, no id, no reference back.
+        $quote->paymentStages()->createMany($package->copyPaymentStages());
+
+        $quote->update($package->only('hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours'));
+
         $quote->recalculateTotal();
 
         return $quote;

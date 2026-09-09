@@ -83,6 +83,17 @@ it('counts a lead lost without a reason in the funnel and leaves it out of the b
         ]);
 });
 
+it('keys the loss breakdown on capture, like every other panel of the funnel', function () {
+    Lead::factory()->lost()->create([
+        'captured_at' => now()->subMonths(2),
+        'stage' => LeadStage::New,
+    ]);
+
+    $reasons = BookingFunnel::lostReasons(now()->subMonths(3), now()->subMonth());
+
+    expect($reasons)->toHaveCount(1);
+});
+
 it('labels each source from the enum rather than echoing the column', function () {
     Lead::factory()->create(['source' => LeadSource::Referral, 'stage' => LeadStage::New]);
 

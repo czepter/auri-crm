@@ -8,6 +8,7 @@ use App\Notifications\Jobs\DeferredNotification;
 use App\Notifications\Support\NotificationPreferences;
 use App\Notifications\Support\QuietHours;
 use App\Support\AuditLogger;
+use App\Support\SilentWrite;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notification;
 
@@ -45,6 +46,20 @@ class NotificationService
 
     public function send(mixed $notifiable, Notification $notification): void
     {
+        // Ahead of the Transactional exemption, which every other check here
+        // sits behind: a backfilled contract's ContractSigned mail is exactly
+        // as transactional as a live one and exactly as unwanted, because the
+        // contract was signed last spring.
+        if (SilentWrite::active()) {
+            AuditLogger::record(
+                event: 'notification.silenced',
+                context: ['notification' => $notification::class],
+                subject: $notifiable instanceof Model ? ($notifiable->public_id ?? null) : null,
+            );
+
+            return;
+        }
+
         $channels = $notification->via($notifiable);
         $transactional = $notification instanceof Transactional;
 

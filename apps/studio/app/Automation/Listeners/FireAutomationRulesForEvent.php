@@ -6,6 +6,7 @@ use App\Automation\Actions\FireAutomationRule;
 use App\Automation\Models\AutomationRule;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Support\SilentWrite;
 use Carbon\CarbonImmutable;
 use ReflectionObject;
 use ReflectionProperty;
@@ -35,6 +36,13 @@ class FireAutomationRulesForEvent
         // skip the query for anything that isn't one of this app's own
         // classes before touching the database.
         if (! str_starts_with($eventName, 'App\\')) {
+            return;
+        }
+
+        // Before FireAutomationRule, not inside it: that action claims an
+        // AutomationRun row before it sends, and a run marked Sent whose
+        // notification the guard above dropped is a history that lies.
+        if (SilentWrite::active()) {
             return;
         }
 

@@ -128,6 +128,13 @@ ENV APP_ENV=production \
 # config/sentry.php reads it once at boot. The CI workflow supplies the commit.
 ARG SENTRY_RELEASE=""
 ENV SENTRY_RELEASE=$SENTRY_RELEASE
+
+# Baked for the same reason, and it has to be: docker-compose.coolify.yml pins
+# an image tag, so the version the app names and the image the stack pulls are
+# the same artefact and cannot drift. The default is what a local `docker build`
+# gets.
+ARG APP_VERSION="dev"
+ENV APP_VERSION=$APP_VERSION
 EXPOSE 8080
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=30s --retries=6 \

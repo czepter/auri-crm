@@ -16,7 +16,7 @@ import { registerWriteTools } from './write.js'
 // annotation is set.
 
 function fakeApiClient(data: unknown = { id: 'fake_public_id' }) {
-  const answer = async (_path: string, _options: { headers?: Record<string, string> }) => ({
+  const answer = async (_path: string, _options: { headers?: Record<string, string>; body?: unknown }) => ({
     data,
     error: undefined,
     response: new Response(),
@@ -63,6 +63,7 @@ describe('registerWriteTools', () => {
       'advance_shoot_status',
       'cancel_shoot',
       'capture_lead',
+      'capture_leads_bulk',
       'close_lead',
       'reopen_lead',
       'set_project_fields',
@@ -129,6 +130,87 @@ describe('registerWriteTools', () => {
     const [path, options] = post.mock.calls[0]
     expect(path).toBe('/projects/{project}/notes')
     expect(options.headers?.['Idempotency-Key']).toBeTruthy()
+  })
+
+  it('captures a whole batch behind a single confirmation, silent unless told otherwise', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient, true)
+    clients.push(client)
+
+    const elicited = vi.fn(async () => ({ action: 'accept' as const, content: { confirm: true } }))
+    client.setRequestHandler(ElicitRequestSchema, elicited)
+
+    const leads = Array.from({ length: 12 }, (_, i) => ({
+      contact_name: `Kundin ${i}`,
+      project_name: `Auftrag ${i}`,
+      type: 'portrait',
+      source: 'referral',
+      captured_via: 'phone',
+    }))
+
+    await client.callTool({ name: 'capture_leads_bulk', arguments: { leads } })
+
+    expect(elicited).toHaveBeenCalledTimes(1)
+    expect(post).toHaveBeenCalledTimes(1)
+    const [path, options] = post.mock.calls[0]
+    expect(path).toBe('/leads/bulk')
+    expect((options.body as { leads: unknown[] }).leads).toHaveLength(12)
+    expect(options.headers?.['X-Silent-Write']).toBe('1')
+  })
+
+  it('lets a bulk caller opt back into notifications', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient, true)
+    clients.push(client)
+
+    client.setRequestHandler(ElicitRequestSchema, async () => ({ action: 'accept', content: { confirm: true } }))
+
+    await client.callTool({
+      name: 'capture_leads_bulk',
+      arguments: {
+        leads: [{ contact_name: 'Nina Voss', project_name: 'Voss', type: 'portrait', source: 'referral', captured_via: 'phone' }],
+        silent: false,
+      },
+    })
+
+    expect(post.mock.calls[0][1].headers?.['X-Silent-Write']).toBeUndefined()
+  })
+
+  it('writes nothing when the human declines a batch', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient, true)
+    clients.push(client)
+
+    client.setRequestHandler(ElicitRequestSchema, async () => ({ action: 'decline' }))
+
+    const result = await client.callTool({
+      name: 'capture_leads_bulk',
+      arguments: {
+        leads: [{ contact_name: 'Nina Voss', project_name: 'Voss', type: 'portrait', source: 'referral', captured_via: 'phone' }],
+      },
+    })
+
+    expect(post).not.toHaveBeenCalled()
+    expect(JSON.stringify(result.content)).toContain('Not confirmed')
+  })
+
+  it('sends X-Silent-Write only when the caller asked for silence, and never in the body', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient, true)
+    clients.push(client)
+
+    client.setRequestHandler(ElicitRequestSchema, async () => ({ action: 'accept', content: { confirm: true } }))
+
+    const lead = { contact_name: 'Nina Voss', project_name: 'Voss', type: 'portrait', source: 'referral', captured_via: 'phone' }
+
+    await client.callTool({ name: 'capture_lead', arguments: lead })
+    await client.callTool({ name: 'capture_lead', arguments: { ...lead, silent: true } })
+
+    expect(post.mock.calls[0][1].headers?.['X-Silent-Write']).toBeUndefined()
+    expect(post.mock.calls[1][1].headers?.['X-Silent-Write']).toBe('1')
+    // The server reads the header; `silent` reaching the payload would be a
+    // stray key in a validated request body.
+    expect(post.mock.calls[1][1].body).not.toHaveProperty('silent')
   })
 
   it('set_project_fields PATCHes the values behind the same confirmation gate', async () => {

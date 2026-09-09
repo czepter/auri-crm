@@ -62,6 +62,13 @@ services:
       MAIL_MAILER: smtp
       MAIL_HOST: mailpit
       MAIL_PORT: 1025
+      # E-12: without a domain InboundAddress::configured() holds the whole
+      # inbound path inert, so neither the inbox screen nor the
+      # /mail/eingang webhook can be exercised in this stack. IMAP stays
+      # unset: mailpit speaks SMTP and HTTP, it is no mailbox to poll — the
+      # webhook adapter is the local way in.
+      MAIL_INBOUND_DOMAIN: ${MAIL_INBOUND_DOMAIN:-inbound.localhost}
+      MAIL_INBOUND_SIGNING_SECRET: ${MAIL_INBOUND_SIGNING_SECRET:-local-inbound-secret}
     ports:
       # Published so the Playwright suite on the host can reach `artisan serve`
       # running inside this container. The host port is a variable because
@@ -131,6 +138,10 @@ services:
       MAIL_MAILER: smtp
       MAIL_HOST: mailpit
       MAIL_PORT: 1025
+      # E-12: IngestInboundMessage runs on this container's supervisors and
+      # mints reply addresses under the domain.
+      MAIL_INBOUND_DOMAIN: ${MAIL_INBOUND_DOMAIN:-inbound.localhost}
+      MAIL_INBOUND_SIGNING_SECRET: ${MAIL_INBOUND_SIGNING_SECRET:-local-inbound-secret}
     command: php artisan horizon
     depends_on:
       postgres:

@@ -15,6 +15,7 @@ use App\Http\Middleware\EnsureNoStaffExists;
 use App\Http\Middleware\EnsurePortalCapability;
 use App\Http\Middleware\EnsurePortalMaintenanceClosure;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\MarkSilentWrite;
 use App\Http\Middleware\RequireStudioOnboarding;
 use App\Integration\Console\Commands\CreateApiTokenCommand;
 use App\Integration\Console\Commands\CreateWebhookEndpointCommand;
@@ -112,6 +113,10 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             HandleInertiaRequests::class,
+        ]);
+
+        $middleware->api(append: [
+            MarkSilentWrite::class,
         ]);
 
         $middleware->redirectGuestsTo('/login');

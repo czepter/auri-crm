@@ -13,6 +13,7 @@ use App\Crm\Models\TaskTemplate;
 use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\TaskAnchors;
 use App\Settings\Support\StudioSettingsResolver;
+use App\Support\SilentWrite;
 use Carbon\CarbonImmutable;
 
 /**
@@ -50,6 +51,14 @@ class ApplyTaskTemplates
 
     public function forStage(Project $project, StagePipeline $pipeline, string $stage): void
     {
+        // The one suppression that outlives its own request: these tasks
+        // carry due dates, a backfilled project's are already years past,
+        // and RemindDueTasks mails the client about a client task on the
+        // next 06:30 run — long after the silent write ended.
+        if (SilentWrite::active()) {
+            return;
+        }
+
         $templates = TaskTemplate::query()
             ->active()
             ->forStage($project->type?->key ?? '', $pipeline, $stage)
@@ -131,21 +140,33 @@ class ApplyTaskTemplates
 
     private function applyOne(Project $project, ?Shoot $shoot, TaskTemplate $template, string $anchor): Task
     {
-        // updateOrCreate rather than create: re-applying must not duplicate,
-        // and must not silently reset a due date somebody moved by hand — so
-        // only the columns the template owns are written on the way in.
-        return $project->tasks()->updateOrCreate(
+        $task = $project->tasks()->firstOrNew(
             ['task_template_id' => $template->id, 'shoot_id' => $shoot?->id],
-            [
-                'title' => $template->title,
-                'audience' => $template->audience,
-                'due_on' => $this->anchors->dueOn($project, $anchor, $template->day_offset)?->format('Y-m-d'),
-                // The offset the template counted is kept, not spent: a shoot
-                // that moves takes its tasks along, and a template applied to
-                // a dateless shoot gets its day the moment one is entered.
-                'due_anchor' => $anchor,
-                'due_offset_days' => $template->day_offset,
-            ],
         );
+
+        $task->fill([
+            'audience' => $template->audience,
+            // The offset the template counted is kept, not spent: a shoot
+            // that moves takes its tasks along, and a template applied to
+            // a dateless shoot gets its day the moment one is entered.
+            'due_anchor' => $anchor,
+            'due_offset_days' => $template->day_offset,
+        ]);
+
+        // Title and day are the task's own once it exists. Re-entering a
+        // stage is ordinary — a mis-drop on the board, a correction going
+        // backwards — and must not overwrite a renamed task or a day
+        // somebody moved. A moved anchor still moves the day, through
+        // RescheduleAnchoredTasks.
+        if (! $task->exists) {
+            $task->fill([
+                'title' => $template->title,
+                'due_on' => $this->anchors->dueOn($project, $anchor, $template->day_offset)?->format('Y-m-d'),
+            ]);
+        }
+
+        $task->save();
+
+        return $task;
     }
 }

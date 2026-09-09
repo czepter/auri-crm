@@ -86,6 +86,23 @@ it('shows every absence to a role with ManageCrew', function () {
     expect($rows)->toHaveCount(2);
 });
 
+it('holds that rule on the calendar and the week beside it', function () {
+    $nina = staffMember(StaffRole::SecondShooter);
+    $mia = staffMember(StaffRole::Photographer);
+
+    Absence::factory()->for($mia)->create([
+        'starts_on' => now()->addDay()->toDateString(),
+        'ends_on' => now()->addDays(2)->toDateString(),
+    ]);
+
+    $this->actingAs($nina, 'staff');
+
+    $entries = collect(props('/kalender')['days'])->pluck('entries')->flatten(1);
+
+    expect($entries->where('kind', 'away'))->toBeEmpty()
+        ->and(collect(props('/')['week'])->where('away', true))->toBeEmpty();
+});
+
 it('refuses a second shooter editing somebody else\'s absence', function () {
     $nina = staffMember(StaffRole::SecondShooter);
     $mia = staffMember(StaffRole::Photographer);

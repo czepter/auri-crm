@@ -17,6 +17,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Version
+    |--------------------------------------------------------------------------
+    |
+    | The image bakes this at build time from the release tag (docker/app/
+    | Dockerfile). Laravel dropped its own `version` key, and this one carries
+    | a different meaning anyway: it is the string the version screen shows and
+    | compares against release-log's `latest`. The leading `v` goes so both
+    | sides are plain semver — only in front of a digit, or a branch build off
+    | `vnext` would name itself `next`.
+    |
+    | A branch build reads `dev`, and `dev` is not a version: `version_compare`
+    | sorts it BELOW every number, so anything comparing this against a
+    | `latest` has to require semver here first or a dev build claims to be out
+    | of date.
+    |
+    | `?:` rather than env()'s own default: a build arg that arrives empty sets
+    | the variable to the empty string, and env() hands that back untouched.
+    |
+    */
+
+    'version' => preg_replace('/^v(?=\d)/', '', env('APP_VERSION') ?: 'dev'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

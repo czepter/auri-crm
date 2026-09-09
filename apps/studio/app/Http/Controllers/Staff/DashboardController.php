@@ -84,16 +84,16 @@ class DashboardController extends Controller
             'inquiries' => $inquiries($viewer),
             'payments' => $payments($viewer),
             'galleries' => $afterDelivery($viewer),
-            'newLeads' => $this->newLeads(),
-            'pipeline' => $this->pipeline(),
+            'newLeads' => $this->newLeads($viewer),
+            'pipeline' => $this->pipeline($viewer),
             // The proof under Pipeline: one dot per open lead, carrying its
             // own stage so the screen can shade it. The stage travels rather
             // than a colour — which shade a stage gets is the sheet's
             // business, not this method's.
-            'pipelineStages' => $this->pipelineStages(),
-            'overdue' => $this->overdue(),
+            'pipelineStages' => $this->pipelineStages($viewer),
+            'overdue' => $this->overdue($viewer),
             'quotes' => QuoteAcceptanceRate::countsForTrailingYear(),
-            'unanswered' => auth('staff')->user()?->role->allows(Capability::ManageMessages) ? $this->unanswered() : 0,
+            'unanswered' => auth('staff')->user()?->role->allows(Capability::ManageMessages) ? $this->unanswered($viewer) : 0,
         ]);
     }
 
@@ -104,11 +104,15 @@ class DashboardController extends Controller
      *
      * @return list<string>
      */
-    private function pipelineStages(): array
+    private function pipelineStages(User $viewer): array
     {
         $order = app(CrmVocabulary::class)->ordered(StagePipeline::Lead)->pluck('key')->all();
 
-        return Lead::query()->open()->pluck('stage')
+        return Lead::query()
+            ->open()
+            ->unbooked()
+            ->whereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id'))
+            ->pluck('stage')
             ->map(fn (?Stage $stage) => $stage?->key)
             ->sortBy(fn (string $stage) => array_search($stage, $order, true))
             ->values()
@@ -174,6 +178,7 @@ class DashboardController extends Controller
 
         $absences = Absence::query()
             ->with('user')
+            ->visibleTo($viewer)
             ->whereDate('ends_on', '>=', now()->toDateString())
             ->whereDate('starts_on', '<=', $until->toDateString())
             ->get()
@@ -227,11 +232,13 @@ class DashboardController extends Controller
      * from where. Their date conflicts ride along on the card, because a
      * doubled date is a mark on the row that has it.
      */
-    private function newLeads()
+    private function newLeads(User $viewer)
     {
         return LeadCardData::collect(
             Lead::query()
                 ->open()
+                ->unbooked()
+                ->whereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id'))
                 ->with(['project.contacts', 'project.shoots', 'project.primaryShoot', 'project.latestQuote'])
                 ->latest()
                 ->limit(3)
@@ -246,10 +253,11 @@ class DashboardController extends Controller
      * to a revenue number, superseded and expired are gone. Minor units all
      * the way to the browser, formatted once on the screen.
      */
-    private function pipeline(): int
+    private function pipeline(User $viewer): int
     {
         return (int) Quote::query()
             ->whereIn('status', [QuoteStatus::Draft, QuoteStatus::Sent])
+            ->whereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id'))
             ->sum('total');
     }
 
@@ -261,18 +269,24 @@ class DashboardController extends Controller
      *
      * @return array{total: int, open: int, all: int, sinceDays: int|null}
      */
-    private function overdue(): array
+    private function overdue(User $viewer): array
     {
+        $mine = fn ($query) => $query->whereHas(
+            'plan.job',
+            fn ($query) => $query->whereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id')),
+        );
+
         $late = PaymentInstallment::query()
             ->where('status', PaymentInstallmentStatus::Scheduled)
-            ->whereDate('due_on', '<', now()->toDateString());
+            ->whereDate('due_on', '<', now()->toDateString())
+            ->tap($mine);
 
         $oldest = (clone $late)->orderBy('due_on')->value('due_on');
 
         return [
             'total' => (int) (clone $late)->sum('amount'),
             'open' => (clone $late)->count(),
-            'all' => PaymentInstallment::query()->count(),
+            'all' => PaymentInstallment::query()->tap($mine)->count(),
             'sinceDays' => $oldest === null ? null : (int) $oldest->diffInDays(now()),
         ];
     }
@@ -293,9 +307,12 @@ class DashboardController extends Controller
      * closed on the client's own last message is finished, not owed, and must
      * not show here while the Posteingang files it under erledigt.
      */
-    private function unanswered(): int
+    private function unanswered(User $viewer): int
     {
         return Thread::query()
+            ->where(fn ($query) => $query
+                ->whereNull('project_id')
+                ->orWhereIn('project_id', Project::query()->visibleTo($viewer)->select('projects.id')))
             ->whereHas('latestMessage', fn ($query) => $query->whereNotNull('contact_id'))
             ->whereDoesntHave('latestMessage', fn ($query) => $query->whereColumn('messages.id', 'threads.closed_message_id'))
             ->count();

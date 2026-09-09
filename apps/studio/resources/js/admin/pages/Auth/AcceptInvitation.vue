@@ -50,10 +50,6 @@ function submit() {
             required />
         </Field>
 
-        <!-- Said before they meet it, because an authenticator app arriving
-             unannounced is where people abandon a setup link. -->
-        <p class="mb-4 text-[11.5px] leading-[1.45] font-normal text-faint">{{ $t('invite.mfaNext') }}</p>
-
         <Button type="submit" class="w-full justify-center" :disabled="form.processing">
           {{ $t('invite.submit') }}
         </Button>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dayWithWeekday, daysUntil, isoDate, relativeDate, shiftDate } from './dates'
+import { dayWithWeekday, daysUntil, isoDate, monthDate, relativeDate, shiftDate } from './dates'
 
 describe('shiftDate', () => {
   it('adds weeks as days', () => {
@@ -60,5 +60,15 @@ describe('dayWithWeekday', () => {
     expect(dayWithWeekday(null)).toBe('—')
     expect(dayWithWeekday(null, null)).toBeNull()
     expect(dayWithWeekday(undefined, '')).toBe('')
+  })
+})
+
+describe('monthDate', () => {
+  it('schreibt Tag, Monat und Jahr aus', () => {
+    expect(monthDate('2026-09-08')).toBe('8. Sept. 2026')
+  })
+
+  it('bleibt leer ohne Datum', () => {
+    expect(monthDate(null)).toBe('')
   })
 })

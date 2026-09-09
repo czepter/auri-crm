@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Combobox, ComboboxContent, ComboboxInput, ComboboxItem } from '@/ui/combobox'
+import { Combobox, ComboboxAnchor, ComboboxContent, ComboboxInput, ComboboxItem } from '@/ui/combobox'
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -155,10 +155,12 @@ function choose(field: Field, option: string) {
             class="max-w-[280px]"
             ignore-filter
           >
-            <ComboboxInput
-              :model-value="display(field)"
-              @update:model-value="term[field.key] = String($event)"
-            />
+            <ComboboxAnchor>
+              <ComboboxInput
+                :model-value="display(field)"
+                @update:model-value="term[field.key] = String($event)"
+              />
+            </ComboboxAnchor>
             <ComboboxContent v-if="choices(field).length">
               <ComboboxItem
                 v-for="option in choices(field)"

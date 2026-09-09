@@ -15,7 +15,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
 <template>
   <AlertDialogPortal>
     <AlertDialogOverlay
-      data-slot="dialog-overlay"
+      data-slot="alert-dialog-overlay"
       class="fixed inset-0 z-50 bg-[rgb(20_16_14_/_0.30)]"
     />
     <!-- Narrower than a form dialog and with no close affordance in the
@@ -23,7 +23,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
          also blocks Escape-to-dismiss here, which is the point — the
          difference between this and Dialog is that it must be answered. -->
     <AlertDialogContent
-      data-slot="dialog-panel"
+      data-slot="alert-dialog-panel"
       v-bind="forwarded"
       :class="cn(
         'fixed left-1/2 top-1/2 z-50 flex w-[calc(100vw-2*var(--s5))] max-w-[416px]',

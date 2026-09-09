@@ -10,7 +10,6 @@ const props = defineProps<{ class?: HTMLAttributes["class"] }>()
     data-slot="alert-dialog-footer"
     :class="cn(
       'flex items-center gap-[var(--s4)] px-[var(--s5)] pb-[var(--s5)]',
-      '[&>[data-slot=button]]:ml-0',
       props.class,
     )"
   >

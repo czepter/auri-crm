@@ -15,6 +15,7 @@ use Carbon\CarbonImmutable;
 use DomainException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -40,6 +41,61 @@ class LeadController extends Controller
             'project' => ['id' => $project->public_id, 'name' => $project->name],
             'lead' => ['id' => $lead->public_id, 'stage' => $lead->stage->key, 'source' => $lead->source->value],
         ], 201);
+    }
+
+    /**
+     * The same capture, once per row, behind one confirmation.
+     *
+     * A studio moving years of history onto this app is the caller, and 200
+     * elicitations is not a review, it is a reflex.
+     *
+     * One transaction, for the reason CommitHistoricalImport gives: a run
+     * that wrote 140 rows and refused the 141st leaves nothing to tell the
+     * imported rows from the ones that never landed, and a second attempt
+     * duplicates whatever the first one kept.
+     *
+     * Rows are validated one at a time rather than through one `leads.*`
+     * rule set: contact_name is `required_without:contact_id`, and under a
+     * wildcard that reference resolves against the top level, never the
+     * sibling in the same row.
+     *
+     * Every row is checked before the first one is written, because the
+     * transaction only takes back the database: CaptureInquiry dispatches
+     * LeadCaptured, the studio's mail about it is out of the building
+     * immediately, and a rollback cannot recall it. Refusing the batch
+     * before anything is captured is what keeps that mail from naming a
+     * lead nobody can open.
+     */
+    public function storeBulk(Request $request, CaptureInquiry $capture): JsonResponse
+    {
+        $request->validate(['leads' => ['required', 'array', 'min:1', 'max:500']]);
+
+        $rows = [];
+
+        foreach ($request->input('leads') as $index => $row) {
+            try {
+                $rows[] = CaptureInquiryData::validateAndCreate($row);
+            } catch (ValidationException $e) {
+                throw ValidationException::withMessages(
+                    collect($e->errors())
+                        ->mapWithKeys(fn (array $messages, string $field) => ["leads.{$index}.{$field}" => $messages])
+                        ->all(),
+                );
+            }
+        }
+
+        $actor = $this->actor($request);
+
+        $captured = DB::transaction(fn () => array_map(function (CaptureInquiryData $data) use ($capture, $actor) {
+            $project = $capture($data, $actor);
+
+            return [
+                'project' => ['id' => $project->public_id, 'name' => $project->name],
+                'lead' => ['id' => $project->lead->public_id, 'stage' => $project->lead->stage->key],
+            ];
+        }, $rows));
+
+        return response()->json(['captured' => count($captured), 'leads' => $captured], 201);
     }
 
     public function advanceStage(Request $request, Lead $lead, AdvanceLeadStage $advance, CrmVocabulary $stages): JsonResponse

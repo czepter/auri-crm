@@ -50,3 +50,10 @@ export function dayWithWeekday(iso: string | null | undefined, fallback: string 
     ? new Date(iso).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' })
     : fallback
 }
+
+/** "8. Sep. 2026" — das Datum eines Releases, wo der Wochentag nichts sagt. */
+export function monthDate(iso: string | null | undefined): string {
+  return iso
+    ? new Date(iso).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' })
+    : ''
+}
