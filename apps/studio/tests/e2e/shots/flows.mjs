@@ -273,7 +273,7 @@ await flow('mfa-enroll', async () => {
   const p = await fresh.newPage()
   await visit(p, `${ADMIN}/login`)
   await p.getByLabel('E-Mail').fill('e2e-basic@studio.test')
-  await p.getByLabel('Passwort').fill('correct-horse')
+  await p.getByLabel('Passwort', { exact: true }).fill('correct-horse')
   await p.getByRole('button', { name: 'Anmelden' }).click()
   await settle(p, 900)
   await visit(p, `${ADMIN}/auth/mfa/enroll`)

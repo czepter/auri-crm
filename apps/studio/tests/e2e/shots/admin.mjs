@@ -27,7 +27,7 @@ await buttonStates(page, 'admin/auth', 'login')
 
 // filled + validation-error states of the same form
 await page.getByLabel('E-Mail').fill('falsch@studio.test')
-await page.getByLabel('Passwort').fill('nichtdaspasswort')
+await page.getByLabel('Passwort', { exact: true }).fill('nichtdaspasswort')
 await shot(page, 'admin/auth', 'login--filled')
 await page.getByRole('button', { name: 'Anmelden' }).click()
 await settle(page)
@@ -44,7 +44,7 @@ await shot(page, 'admin/auth', 'passwort-vergessen--abgeschickt')
 // The MFA challenge, reached with the seeded e2e account (password known).
 await visit(page, `${ADMIN}/login`)
 await page.getByLabel('E-Mail').fill('e2e-mfa@studio.test')
-await page.getByLabel('Passwort').fill('correct-horse')
+await page.getByLabel('Passwort', { exact: true }).fill('correct-horse')
 await page.getByRole('button', { name: 'Anmelden' }).click()
 await settle(page)
 await shot(page, 'admin/auth', 'mfa-challenge')
