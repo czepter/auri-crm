@@ -61,6 +61,7 @@ class CalendarController extends Controller
 
         $absences = Absence::query()
             ->with('user')
+            ->visibleTo($user)
             ->whereDate('ends_on', '>=', $from->toDateString())
             ->whereDate('starts_on', '<=', $to->toDateString())
             ->get();
