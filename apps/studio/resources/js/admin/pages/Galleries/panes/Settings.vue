@@ -172,8 +172,8 @@ function day(iso: string | null) {
         </button>
       </InputGroup>
       <p v-if="general.errors.slug" class="text-[11.5px] leading-[1.45] text-destructive">{{ general.errors.slug }}</p>
-      <!-- The one fact nobody could derive from a text field: changing
-           the address does not break a link already in an inbox. -->
+      <!-- The one fact nobody could derive from a text field: there is no
+           slug history, so a link already in an inbox stops resolving. -->
       <p class="text-[11.5px] leading-[1.45] text-faint">{{ $t('galleryRecord.slugHint') }}</p>
     </div>
 

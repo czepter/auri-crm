@@ -21,7 +21,7 @@ return [
 
     // Said the same way whether or not the address has an account.
     'reset_sent' => 'Falls ein Konto zu dieser Adresse gehört, ist die E-Mail unterwegs.',
-    'reset_done' => 'Passwort geändert. Jetzt anmelden — die Bestätigung in zwei Schritten bleibt erforderlich.',
+    'reset_done' => 'Passwort geändert. Jetzt anmelden.',
     'password' => 'Das angegebene Passwort ist nicht korrekt.',
     'throttle' => 'Zu viele Anmeldeversuche. Bitte in :seconds Sekunden erneut versuchen.',
 

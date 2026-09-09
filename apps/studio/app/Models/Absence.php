@@ -5,7 +5,9 @@ namespace App\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Enums\AbsenceCategory;
+use App\Enums\Capability;
 use Database\Factories\AbsenceFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -33,6 +35,21 @@ class Absence extends Model
             'starts_on' => 'immutable_date',
             'ends_on' => 'immutable_date',
         ];
+    }
+
+    /**
+     * The rows AbsencePolicy would let this user open: their own, and
+     * everyone's with ManageCrew. Every screen that lists absences reads
+     * through here — a filter on the absence screen while the calendar
+     * beside it names the same people is no rule.
+     */
+    public function scopeVisibleTo(Builder $query, User $user): void
+    {
+        if ($user->role->allows(Capability::ManageCrew)) {
+            return;
+        }
+
+        $query->where('user_id', $user->id);
     }
 
     public function user(): BelongsTo

@@ -102,6 +102,22 @@ it('applies twice without duplicating a task', function () {
     expect(Task::count())->toBe(1);
 });
 
+it('keeps a day and a title moved by hand when the stage runs again', function () {
+    $project = Project::factory()->create();
+    Shoot::factory()->for($project)->on('2026-06-14')->create();
+    TaskTemplate::factory()->offset(-1)->create(['title' => 'Crew-Briefing verschicken']);
+
+    app(ApplyTaskTemplates::class)($project);
+    Task::sole()->update(['title' => 'Briefing mit Nina', 'due_on' => '2026-06-01']);
+
+    app(ApplyTaskTemplates::class)($project);
+
+    $task = Task::sole();
+
+    expect($task->title)->toBe('Briefing mit Nina')
+        ->and($task->due_on->format('Y-m-d'))->toBe('2026-06-01');
+});
+
 it('produces each template against the correct shoot when a project is booked', function () {
     // The story's acceptance, through the real trigger.
     $project = Project::factory()->create();

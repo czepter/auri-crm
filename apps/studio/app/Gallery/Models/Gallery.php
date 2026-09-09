@@ -47,7 +47,7 @@ class Gallery extends Model
 
     protected $fillable = [
         'project_id', 'shoot_id', 'title', 'slug', 'design',
-        'requires_settled_balance', 'balance_settled',
+        'requires_settled_balance',
         'is_external', 'external_url', 'expires_at',
         'downloads_enabled', 'lists_enabled', 'comments_enabled',
         'event_date', 'cover_asset_id', 'cover_focal_x', 'cover_focal_y',
@@ -55,7 +55,6 @@ class Gallery extends Model
 
     protected $attributes = [
         'requires_settled_balance' => false,
-        'balance_settled' => false,
         'is_external' => false,
         'downloads_enabled' => true,
         'lists_enabled' => true,
@@ -78,7 +77,6 @@ class Gallery extends Model
             'downloads_enabled' => 'boolean',
             'lists_enabled' => 'boolean',
             'comments_enabled' => 'boolean',
-            'balance_settled' => 'boolean',
             'is_external' => 'boolean',
             // C-17 (#253): recoverable, because both values are handed to
             // guests anyway and a studio that cannot look one up locks out
@@ -98,16 +96,32 @@ class Gallery extends Model
         return $this->belongsTo(Project::class);
     }
 
+    /**
+     * G-05: the studio ties this gallery's delivery to its invoice, and the
+     * invoice is not paid. The images stay visible — what is withheld is the
+     * archive, which is what the record screen's own flag says.
+     *
+     * Asked of the project at the moment it is decided. The cached column
+     * this used to read was written by an event listener, so a gallery
+     * created after the last instalment cleared kept its `false` default
+     * for ever, with no further InstallmentPaid coming to correct it.
+     */
+    public function balanceBlocksDownload(): bool
+    {
+        return $this->requires_settled_balance && ! ($this->project?->balanceSettled() ?? false);
+    }
+
     public function shoot(): BelongsTo
     {
         return $this->belongsTo(Shoot::class);
     }
 
     /**
-     * The seam that lets a slug change without ever breaking a link already
-     * sitting in a guest's inbox: a `{gallery}` segment resolves by slug OR
-     * public_id, here and only here, so admin, portal and api routes all
-     * agree without each one carrying its own lookup.
+     * A `{gallery}` segment resolves by slug OR public_id, here and only
+     * here, so admin, portal and api routes all agree without each one
+     * carrying its own lookup. No slug history: a link sent under a slug
+     * that was later changed stops resolving, which is what the address
+     * field says on the settings pane.
      */
     public function resolveRouteBinding($value, $field = null): ?self
     {
@@ -122,8 +136,8 @@ class Gallery extends Model
     /**
      * apps/gallery's own address for this gallery — a separate host from
      * the studio this model lives on (config('services.gallery.url')). The
-     * slug wins once set; public_id keeps resolving for ever, so an
-     * already-sent link never breaks.
+     * slug wins once set; public_id keeps resolving for ever, so a link
+     * sent before a slug existed never breaks.
      */
     public function publicUrl(): string
     {

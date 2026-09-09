@@ -33,7 +33,7 @@ class AbsenceController extends Controller
 
         $absences = Absence::query()
             ->with('user')
-            ->when(! $canManageCrew, fn ($query) => $query->where('user_id', $viewer->id))
+            ->visibleTo($viewer)
             ->orderBy('starts_on')
             ->get();
 
