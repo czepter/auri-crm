@@ -5,7 +5,7 @@ import { ChevronLeft } from "lucide-vue-next"
 import { reactiveOmit } from "@vueuse/core"
 import { CalendarPrev, useForwardProps } from "reka-ui"
 import { cn } from "@/lib/utils"
-import { buttonVariants } from '@/ui/button'
+import { buttonVariants } from "@/ui/button"
 
 const props = defineProps<CalendarPrevProps & { class?: HTMLAttributes["class"] }>()
 

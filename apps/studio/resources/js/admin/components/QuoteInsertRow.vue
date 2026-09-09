@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import type { QuoteRow } from '@/admin/components/QuoteTable.vue'
 import { insertOptions, itemRow, packageRows } from '@/admin/lib/insert'
-import { Combobox, ComboboxContent, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxLabel } from '@/ui/combobox'
+import { Combobox, ComboboxAnchor, ComboboxContent, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxLabel } from '@/ui/combobox'
 
 const props = defineProps<{
   packages: App.Catalog.Data.PackageData[]
@@ -42,7 +42,9 @@ function choose(kind: string, id: string) {
   <!-- ignore-filter: gefiltert wird in insertOptions(), damit Rangfolge und die
        Gruppe "Neu" prüfbar bleiben statt in der Bibliothek zu stecken. -->
   <Combobox ignore-filter>
-    <ComboboxInput v-model="term" :placeholder="$t('quotes.insert')" />
+    <ComboboxAnchor>
+      <ComboboxInput v-model="term" :placeholder="$t('quotes.insert')" />
+    </ComboboxAnchor>
     <ComboboxContent v-if="options.length">
       <ComboboxGroup v-for="group in groups" :key="group.key">
         <ComboboxLabel>{{ $t(`quotes.${group.key}`) }}</ComboboxLabel>
