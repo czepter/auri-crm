@@ -5,6 +5,7 @@ namespace App\Catalog\Actions;
 use App\Catalog\Models\Package;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
+use App\Quotes\Models\QuotePaymentStage;
 
 /**
  * The way back from SeedQuoteFromPackage. It lives here rather than in Quotes
@@ -20,7 +21,21 @@ class CreatePackageFromQuote
 {
     public function __invoke(Quote $quote, string $name): Package
     {
-        $package = Package::create(['name' => $name]);
+        $package = Package::create([
+            'name' => $name,
+            // Q-08's slider is what the studio offers, not what this
+            // negotiation settled on, so it belongs in the catalogue.
+            ...$quote->only('hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours'),
+        ]);
+
+        $package->paymentStages()->createMany(
+            $quote->paymentStages->map(fn (QuotePaymentStage $stage) => [
+                'percent' => $stage->percent,
+                'label' => $stage->label,
+                'minimum' => $stage->minimum,
+                'sort_order' => $stage->sort_order,
+            ])->all()
+        );
 
         $package->items()->createMany(
             $quote->items->values()->map(fn (QuoteItem $item, int $index) => [
@@ -32,6 +47,6 @@ class CreatePackageFromQuote
             ])->all()
         );
 
-        return $package->load('items');
+        return $package->load('items', 'paymentStages');
     }
 }

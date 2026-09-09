@@ -139,6 +139,31 @@ it('leaves a quote already seeded from a package untouched when the package is e
         ->and($quote->items->sole()->title)->not->toBe('Retitled');
 });
 
+it('seeds the slider and the payment stages along with the items', function () {
+    $package = Package::factory()->create([
+        'hourly_rate' => 25000,
+        'min_hours' => 4,
+        'max_hours' => 10,
+        'images_per_hour' => 40,
+        'hours' => 6,
+    ]);
+    $package->paymentStages()->create(['percent' => 30, 'label' => 'Anzahlung', 'minimum' => 50000, 'sort_order' => 0]);
+    $package->paymentStages()->create(['percent' => 70, 'label' => 'Restzahlung', 'sort_order' => 1]);
+    $quote = Quote::factory()->create();
+
+    app(SeedQuoteFromPackage::class)($quote, $package);
+
+    $quote->refresh();
+
+    expect($quote->hourly_rate)->toBe(25000)
+        ->and($quote->min_hours)->toBe(4)
+        ->and($quote->max_hours)->toBe(10)
+        ->and($quote->images_per_hour)->toBe(40)
+        ->and($quote->hours)->toBe(6)
+        ->and($quote->paymentStages->pluck('label')->all())->toBe(['Anzahlung', 'Restzahlung'])
+        ->and($quote->paymentStages->first()->minimum)->toBe(50000);
+});
+
 it('seeds nothing from a package with no items, and totals zero', function () {
     $package = Package::factory()->create();
     $quote = Quote::factory()->create();
