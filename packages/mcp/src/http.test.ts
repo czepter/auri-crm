@@ -152,6 +152,53 @@ describe('createAuthenticatedRequestListener', () => {
     await new Promise<void>((resolve) => server.close(() => resolve()))
   })
 
+  // claude.ai posts MCP-Protocol-Version: 2026-07-28, past anything SDK
+  // 1.30.0 knows, and the transport answers every post after initialize
+  // with 400 "Unsupported protocol version".
+  it('accepts a request announcing a protocol version newer than the SDK', async () => {
+    vi.stubGlobal(
+      'fetch',
+      mockTokenInfoFetch(
+        () => new Response(JSON.stringify({ clientId: 'usr_abc', scopes: ['manage_leads'] }), { status: 200 }),
+      ),
+    )
+
+    const headers = {
+      Authorization: 'Bearer good-token',
+      'Content-Type': 'application/json',
+      Accept: 'application/json, text/event-stream',
+    }
+    const handshake = await fetch(`http://127.0.0.1:${port}/mcp`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2026-07-28',
+          capabilities: {},
+          clientInfo: { name: 'future-client', version: '0.0.1' },
+        },
+      }),
+    })
+    const sessionId = handshake.headers.get('mcp-session-id')
+    expect(sessionId).toBeTruthy()
+
+    const response = await fetch(`http://127.0.0.1:${port}/mcp`, {
+      method: 'POST',
+      headers: {
+        ...headers,
+        'mcp-session-id': sessionId as string,
+        'MCP-Protocol-Version': '2026-07-28',
+      },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }),
+    })
+
+    expect(response.status).toBe(200)
+    void response.body?.cancel()
+  })
+
   // A shared transport answers this second handshake with 400 "Server
   // already initialized" — claude.ai reports that as a connect error right
   // after the OAuth flow it just completed.
