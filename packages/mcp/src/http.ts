@@ -5,6 +5,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 
 import { extractBearerToken, verifyBearerToken, type McpAuthInfo } from './httpAuth.js'
+import { captureTransportError } from './observability.js'
 import { createMcpServer } from './server.js'
 
 declare module 'node:http' {
@@ -59,7 +60,10 @@ export type TransportResolver = (req: IncomingMessage) => Promise<StreamableHTTP
  * container booted, which is what claude.ai reports as a server error right
  * after a successful OAuth flow.
  */
-export function sessionTransports(serverFactory: () => McpServer = createMcpServer): TransportResolver {
+export function sessionTransports(
+  serverFactory: () => McpServer = createMcpServer,
+  onError: (error: Error) => void = captureTransportError,
+): TransportResolver {
   const sessions = new Map<string, StreamableHTTPServerTransport>()
 
   return async (req) => {
@@ -75,6 +79,7 @@ export function sessionTransports(serverFactory: () => McpServer = createMcpServ
     transport.onclose = () => {
       if (transport.sessionId) sessions.delete(transport.sessionId)
     }
+    transport.onerror = onError
 
     await serverFactory().connect(transport)
     return transport

@@ -4,7 +4,10 @@ import { createServer as createHttpServer } from 'node:http'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 
 import { createAuthenticatedRequestListener, sessionTransports } from './http.js'
+import { captureTransportError, initObservability } from './observability.js'
 import { createMcpServer } from './server.js'
+
+initObservability()
 
 /**
  * Transport picked at boot, not baked in: stdio for local clients (Claude
@@ -22,7 +25,9 @@ if (useHttp) {
 }
 
 async function startStdio(): Promise<void> {
-  await createMcpServer().connect(new StdioServerTransport())
+  const transport = new StdioServerTransport()
+  transport.onerror = captureTransportError
+  await createMcpServer().connect(transport)
 }
 
 async function startHttp(): Promise<void> {

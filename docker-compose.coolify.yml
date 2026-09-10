@@ -179,6 +179,11 @@ services:
       MCP_PUBLIC_URL: ${SERVICE_FQDN_MCP}
       OAUTH_ISSUER_URL: ${SERVICE_FQDN_ADMIN}
       CRM_API_BASE_URL: http://api:8080/api
+      # F-11: a protocol error here never throws — the SDK answers it with a
+      # 400 body and calls onerror — so this DSN is the only way a rejected
+      # handshake is ever seen. The healthcheck below cannot see one: it reads
+      # the metadata document, which is served in front of the whole gate.
+      SENTRY_DSN: ${MCP_SENTRY_DSN}
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/.well-known/oauth-protected-resource').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
       interval: 10s

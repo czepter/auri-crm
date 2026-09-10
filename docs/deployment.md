@@ -106,6 +106,7 @@ are not:
 | `STRIPE_WEBHOOK_SECRET` | From the Stripe dashboard's webhook endpoint |
 | `STUDIO_SENTRY_DSN` | The GlitchTip project for the Laravel surfaces — leave empty and the SDK stays fully inert |
 | `GALLERY_SENTRY_DSN` | The GlitchTip project for the Astro gallery — same |
+| `MCP_SENTRY_DSN` | The GlitchTip project for the MCP transport — same |
 | `POSTGRES_DB`, `AWS_BUCKET` | Optional; both default to `studio` |
 
 Five domains are assigned by Coolify, one per web-facing service: `admin`,

@@ -116,6 +116,42 @@ describe('createAuthenticatedRequestListener', () => {
     expect(client.getServerVersion()).toEqual({ name: 'studio-mcp', version: '0.0.1' })
   })
 
+  // The failure mode that made N-04's shared transport invisible for a whole
+  // release: the SDK answers a rejected handshake with a 400 body and a call
+  // to `onerror`, so nothing throws and nothing reaches GlitchTip on its own.
+  it('reports a transport-level protocol error to the error handler', async () => {
+    vi.stubGlobal(
+      'fetch',
+      mockTokenInfoFetch(
+        () => new Response(JSON.stringify({ clientId: 'usr_abc', scopes: ['manage_leads'] }), { status: 200 }),
+      ),
+    )
+
+    const errors: Error[] = []
+    const server = createHttpServer(
+      createAuthenticatedRequestListener(
+        sessionTransports(createMcpServer, (error) => errors.push(error)),
+        'http://crm.test/api',
+      ),
+    )
+    await new Promise<void>((resolve) => server.listen(0, resolve))
+    const errorPort = (server.address() as AddressInfo).port
+
+    await fetch(`http://127.0.0.1:${errorPort}/mcp`, {
+      method: 'POST',
+      headers: {
+        Authorization: 'Bearer good-token',
+        'Content-Type': 'application/json',
+        Accept: 'application/json, text/event-stream',
+      },
+      body: 'not json',
+    })
+
+    expect(errors.map((error) => error.message)).toEqual(['Parse error: Invalid JSON'])
+
+    await new Promise<void>((resolve) => server.close(() => resolve()))
+  })
+
   // A shared transport answers this second handshake with 400 "Server
   // already initialized" — claude.ai reports that as a connect error right
   // after the OAuth flow it just completed.
