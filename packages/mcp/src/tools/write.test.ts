@@ -23,8 +23,14 @@ function fakeApiClient(data: unknown = { id: 'fake_public_id' }) {
 
   const post = vi.fn(answer)
   const patch = vi.fn(answer)
+  // A 204 and no body, the way DELETE /projects/{project} answers.
+  const del = vi.fn(async (_path: string, _options: { headers?: Record<string, string> }) => ({
+    data: undefined,
+    error: undefined,
+    response: new Response(null, { status: 204 }),
+  }))
 
-  return { post, patch, client: { POST: post, PATCH: patch } as unknown as ApiClient }
+  return { post, patch, del, client: { POST: post, PATCH: patch, DELETE: del } as unknown as ApiClient }
 }
 
 async function connectedPair(apiClient: ApiClient) {
@@ -62,6 +68,7 @@ describe('registerWriteTools', () => {
       'capture_leads_bulk',
       'close_lead',
       'create_shoot',
+      'delete_project',
       'reopen_lead',
       'set_project_fields',
       'uncancel_shoot',
@@ -88,7 +95,14 @@ describe('registerWriteTools', () => {
         .filter((tool) => tool.annotations?.destructiveHint === true)
         .map((tool) => tool.name)
         .sort(),
-    ).toEqual(['advance_lead_stage', 'advance_shoot_status', 'cancel_shoot', 'close_lead', 'set_project_fields'])
+    ).toEqual([
+      'advance_lead_stage',
+      'advance_shoot_status',
+      'cancel_shoot',
+      'close_lead',
+      'delete_project',
+      'set_project_fields',
+    ])
   })
 
   it('calls the API with an Idempotency-Key header', async () => {
@@ -266,6 +280,24 @@ describe('registerWriteTools', () => {
       params: { path: { projectType: 'type_public_id' } },
       body: { label: 'Location-Art', type: 'select', options: ['Scheune', 'Schloss'], allow_new_options: true },
     })
+  })
+
+  // #352. The 204 is the part worth pinning: every other write tool answers
+  // with JSON.stringify(data), and this one has no data to stringify.
+  it('delete_project sends DELETE with the project as a path param and answers a bodyless 204', async () => {
+    const { del, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    const result = await client.callTool({ name: 'delete_project', arguments: { project: 'project_public_id' } })
+
+    const [path, options] = del.mock.calls[0]
+
+    expect(path).toBe('/projects/{project}')
+    expect(options).toMatchObject({ params: { path: { project: 'project_public_id' } } })
+    expect(options.headers?.['Idempotency-Key']).toBeTruthy()
+    expect(result.isError).toBeFalsy()
+    expect(result.content).toEqual([{ type: 'text', text: 'Deleted project project_public_id.' }])
   })
 
   // N-04: NoInternalIdsTest's invariant ("no integer identifier in any JSON

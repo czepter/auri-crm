@@ -46,6 +46,15 @@ const shootSchema = z.object({
   updatedAt: z.string(),
 })
 
+/** What GET /projects/{project} alone returns — see ProjectDetailReadData. */
+const projectDetailSchema = projectSchema.extend({
+  lead: z
+    .object({ stage: z.string(), source: z.string(), capturedAt: z.string(), lostAt: z.string().nullable() })
+    .nullable(),
+  contacts: z.array(contactSchema.extend({ role: z.string() })),
+  shoots: z.array(shootSchema),
+})
+
 const projectFieldSchema = z.object({
   id: z.string(),
   key: z.string(),
@@ -102,9 +111,9 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
     {
       title: 'Search contacts',
       description:
-        "Lists contacts on the CRM's api surface. I-02's GET /api/contacts has no server-side name/email search — only cursor pagination and a `since` staleness filter — so passing `query` here filters client-side over the one page returned, not the whole contact list. ponytail: page-local filter, add server-side search on /api/contacts if a studio's contact list outgrows one page. Every id is a public_id, never a row's internal integer id.",
+        "Lists contacts on the CRM's api surface, or searches them by name or email with `query` — the search runs over the whole contact list on the server, not the page this call returns. Every id is a public_id, never a row's internal integer id.",
       inputSchema: {
-        query: z.string().optional().describe('Case-insensitive substring match against name or email, applied to the fetched page only.'),
+        query: z.string().optional().describe('Case-insensitive substring match against name or email.'),
         cursor: z.string().optional().describe("Opaque cursor from a previous call's nextCursor."),
         since: z.string().optional().describe('ISO 8601 datetime — only contacts updated at or after this instant.'),
       },
@@ -116,27 +125,21 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
     async ({ query, cursor, since }, extra) => {
       const client = clientFor(extra.authInfo?.token)
 
-      // '/contacts' documents no query parameters at all (see the module
-      // doc comment) even though `cursor`/`since` both work at runtime —
-      // Scramble never sees them because CrmReadController validates them
-      // inside its shared private page() helper, not the contacts() action
-      // Scramble actually inspects. Cast past the contract's `never` rather
-      // than widen it for every route on this surface.
-      const { data, error } = await client.GET('/contacts', { params: { query: { cursor, since } as never } })
+      // `cursor`/`since` both work at runtime but the contract documents
+      // neither: CrmReadController validates them inside its shared private
+      // page() helper, not the contacts() action Scramble inspects. Built as
+      // a variable for the reason shoots_in_date_range below gives — a
+      // literal would be rejected for those two excess keys.
+      const queryParams = { query, cursor, since }
+      const { data, error } = await client.GET('/contacts', { params: { query: queryParams } })
       if (error) {
         return errorResult(error)
       }
 
-      let contacts = data.data as unknown as z.infer<typeof contactSchema>[]
-      if (query) {
-        const needle = query.toLowerCase()
-        contacts = contacts.filter(
-          (contact) =>
-            contact.name.toLowerCase().includes(needle) || (contact.email?.toLowerCase().includes(needle) ?? false),
-        )
-      }
-
-      return jsonResult({ contacts, nextCursor: data.meta.next_cursor })
+      return jsonResult({
+        contacts: data.data as unknown as z.infer<typeof contactSchema>[],
+        nextCursor: data.meta.next_cursor,
+      })
     },
   )
 
@@ -145,12 +148,12 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
     {
       title: 'Get a project',
       description:
-        "Gets a single project by its public_id — N-02's addition to I-02's api surface, which previously only had a project index, never a single-resource read.",
+        "Gets a single project by its public_id, with its lead, its contacts and their roles, and its shoots — enough to verify a capture or an import without a second call. Internal notes are not part of it; they need their own scope. The project index returns the lean shape instead.",
       inputSchema: {
         publicId: z.string().describe("The project's public_id, never its internal integer id."),
       },
       outputSchema: {
-        project: projectSchema,
+        project: projectDetailSchema,
       },
     },
     async ({ publicId }, extra) => {
@@ -161,7 +164,7 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
         return errorResult(error)
       }
 
-      return jsonResult({ project: data.data as unknown as z.infer<typeof projectSchema> })
+      return jsonResult({ project: data.data as unknown as z.infer<typeof projectDetailSchema> })
     },
   )
 
