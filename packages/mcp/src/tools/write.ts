@@ -9,19 +9,22 @@ import { idempotencyKeyFor } from '../idempotency.js'
  * N-03: the MCP server's write tools, each a thin call onto one of I-03's
  * (and C-25's) idempotent api-surface endpoints (see routes/api.php) via the
  * generated openapi-fetch client — no DB access, no second copy of the
- * funnel's rules. OQ-8 (#94) decided these ship at all, on the condition
- * that "explicit confirmation is the floor": every handler below elicits an
- * explicit accept from the human in the loop, over MCP's own
- * `elicitation/create` request, before it ever calls the API. Declining,
- * cancelling or a client that doesn't support elicitation at all all fail
- * closed — no confirmation means no write.
+ * funnel's rules.
  *
- * `annotations.destructiveHint`/`readOnlyHint`/`idempotentHint` are set too,
- * for clients that gate on tool annotations rather than (or in addition to)
- * elicitation — the spec is explicit that these are hints only, never a
- * substitute for the actual confirmation step.
- */
-export function registerWriteTools(server: McpServer, clientFor: ApiClientFactory): void {
+ * OQ-8 (#94) made "explicit confirmation is the floor" a condition of these
+ * shipping at all, and N-03 built that floor here, out of an
+ * `elicitation/create` round trip before every API call. That was the wrong
+ * place for it: the spec puts the confirmation prompt on the client
+ * ("Clients SHOULD prompt for user confirmation on sensitive operations",
+ * server/tools § Security Considerations), and elicitation is how a server
+ * asks for *missing information*, not a yes/no gate on an action. Neither
+ * Claude.ai nor Claude Code implements it, so the gate failed closed on
+ * every write from either — the floor was a wall.
+ *
+ * So confirmation lives in the client now, and `annotations` below is what
+ * it gates on: `readOnlyHint` false throughout, `destructiveHint` true
+ * wherever a call overwrites existing state.
+ */export function registerWriteTools(server: McpServer, clientFor: ApiClientFactory): void {
   registerCaptureLead(server, clientFor)
   registerCaptureLeadsBulk(server, clientFor)
   registerAdvanceLeadStage(server, clientFor)
@@ -91,9 +94,6 @@ function registerCaptureLead(server: McpServer, clientFor: ApiClientFactory): vo
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     async ({ silent, ...args }, extra) => {
-      const declined = await requireConfirmation(server, `Capture a new lead: "${args.project_name}"?`)
-      if (declined) return declined
-
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads', {
         body: args,
         headers: writeHeaders('capture_lead', extra, silent),
@@ -105,11 +105,7 @@ function registerCaptureLead(server: McpServer, clientFor: ApiClientFactory): vo
 }
 
 /**
- * The import tool. One elicitation for the whole batch rather than one per
- * record — the confirmation floor N-03 sets is a human deciding, and a human
- * asked 200 times decides once and clicks 199 more.
- *
- * `silent` defaults to true here, the opposite of every other write tool: a
+ * The import tool. `silent` defaults to true here, the opposite of every other write tool: a
  * batch of leads is history being entered, and the people in it heard about
  * their enquiry when they made it.
  */
@@ -130,14 +126,6 @@ function registerCaptureLeadsBulk(server: McpServer, clientFor: ApiClientFactory
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     async ({ leads, silent }, extra) => {
-      const names = leads.slice(0, 5).map((lead) => lead.project_name)
-      const rest = leads.length > names.length ? `\n… and ${leads.length - names.length} more` : ''
-      const declined = await requireConfirmation(
-        server,
-        `Capture ${leads.length} leads${silent ? ' silently' : ', notifying the studio for each'}?\n\n${names.join('\n')}${rest}`,
-      )
-      if (declined) return declined
-
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads/bulk', {
         body: { leads } as never,
         headers: writeHeaders('capture_leads_bulk', extra, silent),
@@ -170,9 +158,6 @@ function registerAdvanceLeadStage(server: McpServer, clientFor: ApiClientFactory
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     async ({ lead, stage, entered_at: enteredAt, silent }, extra) => {
-      const declined = await requireConfirmation(server, `Advance lead ${lead} to stage "${stage}"?`)
-      if (declined) return declined
-
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads/{lead}/stage', {
         params: { path: { lead } },
         body: { stage, entered_at: enteredAt } as never,
@@ -201,9 +186,6 @@ function registerCloseLead(server: McpServer, clientFor: ApiClientFactory): void
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     },
     async ({ lead, outcome, reason, lost_at: lostAt, silent }, extra) => {
-      const declined = await requireConfirmation(server, `Close lead ${lead} as "${outcome}"?\n\n${reason}`)
-      if (declined) return declined
-
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads/{lead}/lost', {
         params: { path: { lead } },
         body: { outcome, reason, lost_at: lostAt } as never,
@@ -229,9 +211,6 @@ function registerReopenLead(server: McpServer, clientFor: ApiClientFactory): voi
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
     async ({ lead, silent }, extra) => {
-      const declined = await requireConfirmation(server, `Reopen lead ${lead}?`)
-      if (declined) return declined
-
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads/{lead}/reopen', {
         params: { path: { lead } },
         headers: writeHeaders('reopen_lead', extra, silent),
@@ -258,9 +237,6 @@ function registerAdvanceShootStatus(server: McpServer, clientFor: ApiClientFacto
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     async ({ shoot, status, entered_at: enteredAt, silent }, extra) => {
-      const declined = await requireConfirmation(server, `Move shoot ${shoot} to status "${status}"?`)
-      if (declined) return declined
-
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/shoots/{shoot}/status', {
         params: { path: { shoot } },
         body: { status, entered_at: enteredAt } as never,
@@ -288,9 +264,6 @@ function registerCancelShoot(server: McpServer, clientFor: ApiClientFactory): vo
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     },
     async ({ shoot, reason, cancelled_at: cancelledAt, silent }, extra) => {
-      const declined = await requireConfirmation(server, `Cancel shoot ${shoot}?\n\n${reason}`)
-      if (declined) return declined
-
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/shoots/{shoot}/cancel', {
         params: { path: { shoot } },
         body: { reason, cancelled_at: cancelledAt } as never,
@@ -316,9 +289,6 @@ function registerUncancelShoot(server: McpServer, clientFor: ApiClientFactory): 
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
     async ({ shoot, silent }, extra) => {
-      const declined = await requireConfirmation(server, `Uncancel shoot ${shoot}?`)
-      if (declined) return declined
-
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/shoots/{shoot}/uncancel', {
         params: { path: { shoot } },
         headers: writeHeaders('uncancel_shoot', extra, silent),
@@ -347,9 +317,6 @@ function registerAddInternalNote(server: McpServer, clientFor: ApiClientFactory)
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     async ({ project, body, occurred_at, silent }, extra) => {
-      const declined = await requireConfirmation(server, `Add this note to project ${project}?\n\n${body}`)
-      if (declined) return declined
-
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/notes', {
         params: { path: { project } },
         body: { body, occurred_at } as never,
@@ -380,9 +347,6 @@ function registerSetProjectFields(server: McpServer, clientFor: ApiClientFactory
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     async ({ project, fields, silent }, extra) => {
-      const declined = await requireConfirmation(server, `Write these details to project ${project}?\n\n${JSON.stringify(fields, null, 2)}`)
-      if (declined) return declined
-
       // Scramble reads the `array` rule as `string[]` (see tools.ts's module
       // doc comment on why this surface's generated payloads are only
       // trustworthy for paths and params).
@@ -417,9 +381,6 @@ function registerAddProjectField(server: McpServer, clientFor: ApiClientFactory)
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     async ({ project_type: projectType, silent, ...field }, extra) => {
-      const declined = await requireConfirmation(server, `Add the field "${field.label}" (${field.type}) to this project type?`)
-      if (declined) return declined
-
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/project-types/{projectType}/fields', {
         params: { path: { projectType } },
         body: field,
@@ -429,44 +390,6 @@ function registerAddProjectField(server: McpServer, clientFor: ApiClientFactory)
       return apiResult(data, error)
     },
   )
-}
-
-/**
- * The confirmation step itself: an `elicitation/create` request asking the
- * human in the loop to accept or decline, in plain terms, before any API
- * call happens. Returns a `CallToolResult` explaining the outcome when the
- * write should NOT proceed — declined, cancelled, or a client that never
- * declared the `elicitation` capability at all, which the SDK's own
- * `Server.elicitInput` rejects outright rather than silently skipping. All
- * three fail closed here: no confirmation, no write. Returns `undefined`
- * only when the human explicitly accepted.
- */
-async function requireConfirmation(server: McpServer, message: string): Promise<CallToolResult | undefined> {
-  let result
-  try {
-    result = await server.server.elicitInput({
-      message,
-      requestedSchema: {
-        type: 'object',
-        properties: {
-          confirm: { type: 'boolean', title: 'Confirm', description: 'Yes to proceed with this write.' },
-        },
-        required: ['confirm'],
-      },
-    })
-  } catch {
-    return {
-      content: [
-        { type: 'text', text: 'This client does not support confirmation — no write was made.' },
-      ],
-    }
-  }
-
-  if (result.action === 'accept' && result.content?.confirm === true) {
-    return undefined
-  }
-
-  return { content: [{ type: 'text', text: 'Not confirmed — no write was made.' }] }
 }
 
 function apiResult(data: unknown, error: unknown): CallToolResult {
