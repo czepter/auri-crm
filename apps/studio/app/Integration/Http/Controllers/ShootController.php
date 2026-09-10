@@ -3,10 +3,13 @@
 namespace App\Integration\Http\Controllers;
 
 use App\Crm\Actions\AdvanceShootStatus;
+use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\StagePipeline;
+use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Http\Controllers\Controller;
+use App\Integration\Data\ShootReadData;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use DomainException;
@@ -24,6 +27,34 @@ use Illuminate\Validation\ValidationException;
  */
 class ShootController extends Controller
 {
+    /**
+     * A second shooting day on a project that already has one. CaptureInquiry
+     * makes exactly one shoot and marks it primary; a wedding split over two
+     * days — Trauung on one, Feier on another — has no way to reach the
+     * second from here otherwise.
+     *
+     * Mirrors App\Crm\Http\Controllers\ShootController::store: the same
+     * rules, the same nullable date, and the model's own defaults for status,
+     * is_primary and sort_order — the primary one is already taken.
+     */
+    public function store(Request $request, Project $project): JsonResponse
+    {
+        $validated = $request->validate([
+            'kind' => ['required', Rule::enum(ShootKind::class)],
+            'label' => ['nullable', 'string', 'max:255'],
+            'date' => ['nullable', 'date'],
+            'call_time' => ['nullable', 'date_format:H:i'],
+            'end_time' => ['nullable', 'date_format:H:i', 'after:call_time'],
+            'venue_name' => ['nullable', 'string', 'max:255'],
+            'venue_city' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $shoot = $project->shoots()->create($validated);
+        $shoot->setRelation('project', $project);
+
+        return response()->json(['data' => ShootReadData::fromModel($shoot)], 201);
+    }
+
     public function advance(Request $request, Shoot $shoot, AdvanceShootStatus $advance, CrmVocabulary $stages): JsonResponse
     {
         $validated = $request->validate([

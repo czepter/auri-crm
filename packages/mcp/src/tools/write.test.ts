@@ -61,6 +61,7 @@ describe('registerWriteTools', () => {
       'capture_lead',
       'capture_leads_bulk',
       'close_lead',
+      'create_shoot',
       'reopen_lead',
       'set_project_fields',
       'uncancel_shoot',
@@ -201,6 +202,27 @@ describe('registerWriteTools', () => {
     // The server reads the header; `silent` reaching the payload would be a
     // stray key in a validated request body.
     expect(post.mock.calls[1][1].body).not.toHaveProperty('silent')
+  })
+
+  it('create_shoot POSTs a second shooting day onto the project', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({
+      name: 'create_shoot',
+      arguments: { project: 'project_public_id', kind: 'reception', label: 'Feier', date: '2019-07-06', silent: true },
+    })
+
+    const [path, options] = post.mock.calls[0]
+
+    expect(path).toBe('/projects/{project}/shoots')
+    expect(options).toMatchObject({
+      params: { path: { project: 'project_public_id' } },
+      body: { kind: 'reception', label: 'Feier', date: '2019-07-06' },
+    })
+    expect(options.body).not.toHaveProperty('project')
+    expect(options.headers?.['X-Silent-Write']).toBe('1')
   })
 
   it('set_project_fields PATCHes the values', async () => {
