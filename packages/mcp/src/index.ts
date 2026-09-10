@@ -1,11 +1,9 @@
 #!/usr/bin/env node
-import { randomUUID } from 'node:crypto'
 import { createServer as createHttpServer } from 'node:http'
 
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 
-import { createAuthenticatedRequestListener } from './http.js'
+import { createAuthenticatedRequestListener, sessionTransports } from './http.js'
 import { createMcpServer } from './server.js'
 
 /**
@@ -28,11 +26,9 @@ async function startStdio(): Promise<void> {
 }
 
 async function startHttp(): Promise<void> {
-  const httpTransport = new StreamableHTTPServerTransport({ sessionIdGenerator: () => randomUUID() })
-  await createMcpServer().connect(httpTransport)
-
   // N-04: every request needs a bearer token the CRM's own /oauth/token-info
-  // accepts before it reaches the MCP session at all — see http.ts.
+  // accepts before it reaches the MCP session at all — see http.ts, which
+  // also owns the session-to-transport map.
   const port = Number(process.env.PORT ?? 3000)
-  createHttpServer(createAuthenticatedRequestListener(httpTransport)).listen(port)
+  createHttpServer(createAuthenticatedRequestListener(sessionTransports())).listen(port)
 }

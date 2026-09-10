@@ -1,14 +1,12 @@
-import { randomUUID } from 'node:crypto'
 import { createServer as createHttpServer } from 'node:http'
 import type { AddressInfo } from 'node:net'
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js'
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { ApiClient } from './client.js'
-import { createAuthenticatedRequestListener } from './http.js'
+import { createAuthenticatedRequestListener, sessionTransports } from './http.js'
 import { createMcpServer } from './server.js'
 
 // N-04's acceptance bar: the HTTP transport validates an incoming bearer
@@ -38,10 +36,7 @@ describe('createAuthenticatedRequestListener', () => {
   let port: number
 
   beforeEach(async () => {
-    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: () => randomUUID() })
-    await createMcpServer().connect(transport)
-
-    httpServer = createHttpServer(createAuthenticatedRequestListener(transport, 'http://crm.test/api'))
+    httpServer = createHttpServer(createAuthenticatedRequestListener(sessionTransports(), 'http://crm.test/api'))
     await new Promise<void>((resolve) => httpServer.listen(0, resolve))
     port = (httpServer.address() as AddressInfo).port
   })
@@ -120,6 +115,30 @@ describe('createAuthenticatedRequestListener', () => {
 
     expect(client.getServerVersion()).toEqual({ name: 'studio-mcp', version: '0.0.1' })
   })
+
+  // A shared transport answers this second handshake with 400 "Server
+  // already initialized" — claude.ai reports that as a connect error right
+  // after the OAuth flow it just completed.
+  it('completes a second handshake against the same running process', async () => {
+    vi.stubGlobal(
+      'fetch',
+      mockTokenInfoFetch(
+        () => new Response(JSON.stringify({ clientId: 'usr_abc', scopes: ['manage_leads'] }), { status: 200 }),
+      ),
+    )
+
+    for (const name of ['first-client', 'second-client']) {
+      const client = new Client({ name, version: '0.0.1' })
+      clients.push(client)
+      await client.connect(
+        new StreamableHTTPClientTransport(new URL(`http://127.0.0.1:${port}/mcp`), {
+          requestInit: { headers: { Authorization: 'Bearer good-token' } },
+        }),
+      )
+
+      expect(client.getServerVersion()).toEqual({ name: 'studio-mcp', version: '0.0.1' })
+    }
+  })
 })
 
 // Its own server pair, outside the describe above: this one hands
@@ -134,13 +153,15 @@ it('builds the api client with the bearer that opened the session', async () => 
   )
 
   const seen: (string | undefined)[] = []
-  const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: () => randomUUID() })
-  await createMcpServer((token) => {
-    seen.push(token)
-    return { GET: async () => ({ data: { data: [] } }) } as unknown as ApiClient
-  }).connect(transport)
+  const serverFactory = () =>
+    createMcpServer((token) => {
+      seen.push(token)
+      return { GET: async () => ({ data: { data: [] } }) } as unknown as ApiClient
+    })
 
-  const httpServer = createHttpServer(createAuthenticatedRequestListener(transport, 'http://crm.test/api'))
+  const httpServer = createHttpServer(
+    createAuthenticatedRequestListener(sessionTransports(serverFactory), 'http://crm.test/api'),
+  )
   await new Promise<void>((resolve) => httpServer.listen(0, resolve))
   const port = (httpServer.address() as AddressInfo).port
 

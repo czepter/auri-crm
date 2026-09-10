@@ -1,8 +1,11 @@
+import { randomUUID } from 'node:crypto'
 import type { IncomingMessage, RequestListener, ServerResponse } from 'node:http'
 
-import type { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 
 import { extractBearerToken, verifyBearerToken, type McpAuthInfo } from './httpAuth.js'
+import { createMcpServer } from './server.js'
 
 declare module 'node:http' {
   interface IncomingMessage {
@@ -46,6 +49,38 @@ function resourceMetadata(): Record<string, unknown> {
   }
 }
 
+export type TransportResolver = (req: IncomingMessage) => Promise<StreamableHTTPServerTransport | null>
+
+/**
+ * One transport and one McpServer per session, not one for the whole
+ * process: a StreamableHTTPServerTransport holds a single session's state,
+ * so a shared instance answers the second client's initialize with 400
+ * "Server already initialized" — every connect after the first since the
+ * container booted, which is what claude.ai reports as a server error right
+ * after a successful OAuth flow.
+ */
+export function sessionTransports(serverFactory: () => McpServer = createMcpServer): TransportResolver {
+  const sessions = new Map<string, StreamableHTTPServerTransport>()
+
+  return async (req) => {
+    const sessionId = req.headers['mcp-session-id']
+    if (typeof sessionId === 'string') return sessions.get(sessionId) ?? null
+
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => randomUUID(),
+      onsessioninitialized: (id) => {
+        sessions.set(id, transport)
+      },
+    })
+    transport.onclose = () => {
+      if (transport.sessionId) sessions.delete(transport.sessionId)
+    }
+
+    await serverFactory().connect(transport)
+    return transport
+  }
+}
+
 /**
  * N-04: the HTTP transport's own gate, in front of `transport.handleRequest`
  * — every request needs a bearer token the CRM accepts before it ever
@@ -60,7 +95,7 @@ function resourceMetadata(): Record<string, unknown> {
  * gating it behind a token would close the only door in.
  */
 export function createAuthenticatedRequestListener(
-  transport: StreamableHTTPServerTransport,
+  transportFor: TransportResolver,
   baseUrl?: string,
 ): RequestListener {
   return async (req: IncomingMessage, res: ServerResponse) => {
@@ -87,6 +122,14 @@ export function createAuthenticatedRequestListener(
     }
 
     req.auth = auth
+
+    const transport = await transportFor(req)
+    if (!transport) {
+      res.writeHead(404, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ error: 'session_not_found' }))
+      return
+    }
+
     void transport.handleRequest(req, res)
   }
 }
