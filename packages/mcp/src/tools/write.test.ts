@@ -106,6 +106,48 @@ describe('registerWriteTools', () => {
     expect(options.headers?.['Idempotency-Key']).toBeTruthy()
   })
 
+  // The bug this catches shipped green: idempotency.test.ts asserted the key
+  // varies with the MCP request id, and every write tool asserted only that
+  // an Idempotency-Key header exists. Nothing put two calls through a client
+  // and compared them — so a key that never varied read as covered.
+  it('gives two different writes two different Idempotency-Keys', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({ name: 'advance_lead_stage', arguments: { lead: 'lead_abc', stage: 'contacted', entered_at: '2018-10-29' } })
+    await client.callTool({ name: 'advance_lead_stage', arguments: { lead: 'lead_abc', stage: 'booked', entered_at: '2018-12-03' } })
+
+    expect(post).toHaveBeenCalledTimes(2)
+    expect(post.mock.calls[0][1].headers?.['Idempotency-Key']).not.toBe(post.mock.calls[1][1].headers?.['Idempotency-Key'])
+  })
+
+  it('gives a retry of the same write the same Idempotency-Key', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    const note = { project: 'project_public_id', body: 'Gegenlicht ab 20 Uhr.' }
+
+    await client.callTool({ name: 'add_internal_note', arguments: note })
+    await client.callTool({ name: 'add_internal_note', arguments: { ...note } })
+
+    expect(post.mock.calls[0][1].headers?.['Idempotency-Key']).toBe(post.mock.calls[1][1].headers?.['Idempotency-Key'])
+  })
+
+  it('separates two writes that differ only in silent', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    const lead = { contact_name: 'Nina Voss', project_name: 'Voss', type: 'portrait', source: 'referral', captured_via: 'phone' }
+
+    await client.callTool({ name: 'capture_lead', arguments: lead })
+    await client.callTool({ name: 'capture_lead', arguments: { ...lead, silent: true } })
+
+    expect(post.mock.calls[0][1].headers?.['Idempotency-Key']).not.toBe(post.mock.calls[1][1].headers?.['Idempotency-Key'])
+  })
+
   it('captures a whole batch in one call, silent unless told otherwise', async () => {
     const { post, client: apiClient } = fakeApiClient()
     const { client } = await connectedPair(apiClient)

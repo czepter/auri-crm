@@ -130,6 +130,20 @@ it('gets a single project by its public_id', function () {
     expect(integerIdPaths($body))->toBe([]);
 });
 
+// A project with nothing set encodes `fields` from an empty PHP array, and
+// `[]` is not the map every caller is told to expect — the MCP surface
+// refuses the whole response over it. json() reads `{}` and `[]` alike, so
+// the shape has to be asserted on the raw body.
+it('encodes project fields as an object even when the project has none', function () {
+    $project = Project::factory()->create(['field_values' => []]);
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
+        ->getJson("/api/projects/{$project->public_id}")
+        ->assertOk()->getContent();
+
+    expect($body)->toContain('"fields":{}');
+});
+
 it('refuses a single project to a token that does not hold ViewAllProjects', function () {
     $project = Project::factory()->create();
 
