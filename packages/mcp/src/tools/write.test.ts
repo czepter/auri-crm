@@ -149,6 +149,32 @@ describe('registerWriteTools', () => {
     expect(post.mock.calls[0][1].headers?.['Idempotency-Key']).not.toBe(post.mock.calls[1][1].headers?.['Idempotency-Key'])
   })
 
+  // #346/#351: the type key is the studio's own vocabulary, not a fixed
+  // three, and source_other is where a platform lead names its platform.
+  it('carries a studio-defined type key and source_other into the body, single and bulk', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    const lead = {
+      contact_name: 'Nina Voss',
+      project_name: 'Voss — Firmenfeier',
+      type: 'event',
+      source: 'other',
+      source_other: 'Hochzeitsportal',
+      captured_via: 'phone',
+    }
+
+    await client.callTool({ name: 'capture_lead', arguments: lead })
+    await client.callTool({ name: 'capture_leads_bulk', arguments: { leads: [lead] } })
+
+    expect(post.mock.calls[0][1].body).toMatchObject({ type: 'event', source_other: 'Hochzeitsportal' })
+    expect((post.mock.calls[1][1].body as { leads: Record<string, unknown>[] }).leads[0]).toMatchObject({
+      type: 'event',
+      source_other: 'Hochzeitsportal',
+    })
+  })
+
   it('captures a whole batch in one call, silent unless told otherwise', async () => {
     const { post, client: apiClient } = fakeApiClient()
     const { client } = await connectedPair(apiClient)

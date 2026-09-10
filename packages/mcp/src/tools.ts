@@ -4,10 +4,10 @@ import { z } from 'zod'
 import type { ApiClientFactory } from './client.js'
 
 /**
- * N-02: the read tools that give an assistant the four questions I-02's
- * routes alone can't answer — search, get-one, a date range, and a funnel
- * summary. Every one hands back the same shape the matching *ReadData class
- * already returns on the `api` surface — public_id only, never a row's
+ * N-02: the read tools that give an assistant the questions I-02's routes
+ * alone can't answer — search, get-one, a date range, the funnel summary and
+ * the leads behind it. Every one hands back the same shape the matching
+ * *ReadData class already returns on the `api` surface — public_id only, never a row's
  * internal integer id (apps/studio/app/Integration/Data/*.php).
  *
  * These schemas are typed by hand rather than off `src/generated/
@@ -44,6 +44,18 @@ const shootSchema = z.object({
   date: z.string().nullable(),
   status: z.string(),
   cancelledAt: z.string().nullable(),
+  updatedAt: z.string(),
+})
+
+const leadSchema = z.object({
+  id: z.string(),
+  projectId: z.string(),
+  source: z.string(),
+  sourceOther: z.string().nullable(),
+  stage: z.string(),
+  isLost: z.boolean(),
+  capturedAt: z.string(),
+  lostAt: z.string().nullable(),
   updatedAt: z.string(),
 })
 
@@ -224,6 +236,42 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
 
       return jsonResult({
         shoots: data.data as unknown as z.infer<typeof shootSchema>[],
+        nextCursor: data.meta.next_cursor,
+      })
+    },
+  )
+
+  server.registerTool(
+    'list_leads',
+    {
+      title: 'List leads',
+      description:
+        "The rows behind `pipeline_snapshot`: which leads stand in a stage, which were closed, which came in over a window. `closed` left out returns both open and closed leads; a closed one keeps the stage it was closed in, so `stage` and `closed` narrow independently. `sourceOther` carries the platform behind source 'other'.",
+      inputSchema: {
+        stage: z.string().optional().describe('A lead stage key, e.g. "quote_sent" — see pipeline_snapshot for the studio\'s own stages.'),
+        closed: z.boolean().optional().describe('true for lost and declined leads only, false for the ones still in play.'),
+        captured_from: z.string().optional().describe('Inclusive start date the inquiry arrived on, YYYY-MM-DD.'),
+        captured_to: z.string().optional().describe('Inclusive end date the inquiry arrived on, YYYY-MM-DD.'),
+        cursor: z.string().optional().describe("Opaque cursor from a previous call's nextCursor."),
+      },
+      outputSchema: {
+        leads: z.array(leadSchema),
+        nextCursor: z.string().nullable(),
+      },
+    },
+    async ({ stage, closed, captured_from: capturedFrom, captured_to: capturedTo, cursor }, extra) => {
+      const client = clientFor(extra.authInfo?.token)
+
+      // '/leads' documents no query parameters — same Scramble blind spot as
+      // '/contacts' above, and the same cast past the contract's `never`.
+      const query = { stage, closed, captured_from: capturedFrom, captured_to: capturedTo, cursor } as never
+      const { data, error } = await client.GET('/leads', { params: { query } })
+      if (error) {
+        return errorResult(error)
+      }
+
+      return jsonResult({
+        leads: data.data as unknown as z.infer<typeof leadSchema>[],
         nextCursor: data.meta.next_cursor,
       })
     },

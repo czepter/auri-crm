@@ -18,8 +18,11 @@ class LeadReadData extends Data
         public string $id,
         public string $projectId,
         public string $source,
+        public ?string $sourceOther,
         public string $stage,
         public bool $isLost,
+        public string $capturedAt,
+        public ?string $lostAt,
         public string $updatedAt,
     ) {}
 
@@ -30,8 +33,11 @@ class LeadReadData extends Data
             id: $lead->public_id,
             projectId: $lead->project->public_id,
             source: $lead->source->value,
+            sourceOther: $lead->source_other,
             stage: $lead->stage->key,
             isLost: $lead->isLost(),
+            capturedAt: $lead->captured_at->toIso8601String(),
+            lostAt: $lead->lost_at?->toIso8601String(),
             updatedAt: $lead->updated_at->toIso8601String(),
         );
     }
