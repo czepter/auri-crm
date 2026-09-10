@@ -11,6 +11,10 @@ on:
     branches: [main, dev]
     paths:
       - 'apps/**'
+      # docker/mcp/Dockerfile builds packages/mcp and copies
+      # packages/contracts, so a change there is a changed image with no
+      # file under apps/ or docker/ to show for it.
+      - 'packages/**'
       - 'docker/**'
       - 'package.json'
       - 'pnpm-lock.yaml'
