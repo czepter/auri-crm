@@ -223,6 +223,10 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'ide
 // ViewAllProjects: ShootPolicy::update already routes there, and a token that
 // may see every project must not thereby move one through delivery.
 Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
+    ->post('/projects/{project:public_id}/shoots', [ShootController::class, 'store'])
+    ->name('api.projects.shoots.store');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
     ->post('/shoots/{shoot:public_id}/status', [ShootController::class, 'advance'])
     ->name('api.shoots.status.update');
 

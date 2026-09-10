@@ -30,6 +30,7 @@ import { idempotencyKeyFor } from '../idempotency.js'
   registerAdvanceLeadStage(server, clientFor)
   registerCloseLead(server, clientFor)
   registerReopenLead(server, clientFor)
+  registerCreateShoot(server, clientFor)
   registerAdvanceShootStatus(server, clientFor)
   registerCancelShoot(server, clientFor)
   registerUncancelShoot(server, clientFor)
@@ -216,6 +217,45 @@ function registerReopenLead(server: McpServer, clientFor: ApiClientFactory): voi
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads/{lead}/reopen', {
         params: { path: { lead } },
         headers: writeHeaders('reopen_lead', { lead }, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+const shootKindEnum = ['engagement', 'wedding', 'reception', 'portrait', 'other'] as const
+
+/**
+ * A second shooting day on a project that already has one. `capture_lead`
+ * makes exactly one shoot out of its `date`, so a wedding split over two days
+ * — Trauung on one, Feier on another — could not be entered from here at all.
+ */
+function registerCreateShoot(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'create_shoot',
+    {
+      title: 'Create a shoot',
+      description:
+        'Add a shooting day to a project. The first one already exists — capture_lead makes it out of the inquiry date — so this is the second and every one after it: the Feier of a wedding split across two days, an Engagement-Shooting ahead of it, a second portrait session. Leave `date` empty for a day that is agreed but not dated.',
+      inputSchema: {
+        project: z.string().describe('The project public id'),
+        kind: z.enum(shootKindEnum),
+        label: z.string().max(255).nullish().describe('What this day is called on the project screen, where the kind alone is ambiguous'),
+        date: z.string().nullish().describe('YYYY-MM-DD'),
+        call_time: z.string().nullish().describe('HH:MM'),
+        end_time: z.string().nullish().describe('HH:MM, after call_time'),
+        venue_name: z.string().max(255).nullish(),
+        venue_city: z.string().max(255).nullish(),
+        ...silentField,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ project, silent, ...shoot }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/shoots', {
+        params: { path: { project } },
+        body: shoot as never,
+        headers: writeHeaders('create_shoot', { project, ...shoot }, silent),
       })
 
       return apiResult(data, error)
