@@ -591,7 +591,7 @@ id: string,
 name: string,
 type: string,
 portalVisible: boolean,
-fields: Array<any>,
+fields: object,
 updatedAt: string,
 };
 export type ProjectTypeReadData = {

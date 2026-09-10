@@ -1,6 +1,8 @@
 <?php
 
+use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\ShootStatus;
+use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Enums\Capability;
 use App\Integration\Models\ApiToken;
@@ -11,6 +13,42 @@ uses(RefreshDatabase::class);
 
 beforeEach(function () {
     useSurface(Surface::API);
+});
+
+// A wedding split over two days is one project with two shoots, and
+// CaptureInquiry only ever makes the first one.
+it('adds a second shooting day to a project', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
+    $project = Project::factory()->create();
+
+    $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'shoot-1')
+        ->postJson("/api/projects/{$project->public_id}/shoots", [
+            'kind' => ShootKind::Reception->value,
+            'label' => 'Feier',
+            'date' => '2019-07-06',
+        ]);
+
+    $response->assertCreated();
+
+    expect($response->json('data.kind'))->toBe(ShootKind::Reception->value)
+        ->and($response->json('data.date'))->toBe('2019-07-06')
+        ->and($response->json('data.projectId'))->toBe($project->public_id)
+        ->and($response->json('data.status'))->toBe(ShootStatus::Requested->value)
+        ->and(integerIdPaths($response->json()))->toBe([]);
+
+    // The one CaptureInquiry made stays the primary; a later day is not it.
+    expect($project->shoots()->latest('id')->first()->is_primary)->toBeFalse();
+});
+
+it('refuses a shoot to a token that does not hold ManageShoots', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
+    $project = Project::factory()->create();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'shoot-forbidden')
+        ->postJson("/api/projects/{$project->public_id}/shoots", ['kind' => ShootKind::Reception->value])
+        ->assertForbidden();
 });
 
 it('moves a shoot through the pipeline and back, reusing AdvanceShootStatus', function () {

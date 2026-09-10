@@ -2640,6 +2640,111 @@
                 }
             }
         },
+        "/projects/{project}/shoots": {
+            "post": {
+                "operationId": "projects.shoots.store",
+                "description": "Mirrors App\\Crm\\Http\\Controllers\\ShootController::store: the same\nrules, the same nullable date, and the model's own defaults for status,\nis_primary and sort_order \u2014 the primary one is already taken.",
+                "summary": "A second shooting day on a project that already has one. CaptureInquiry\nmakes exactly one shoot and marks it primary; a wedding split over two\ndays \u2014 Trauung on one, Feier on another \u2014 has no way to reach the\nsecond from here otherwise",
+                "tags": [
+                    "Shoot"
+                ],
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "kind": {
+                                        "$ref": "#/components/schemas/ShootKind"
+                                    },
+                                    "label": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    },
+                                    "date": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    },
+                                    "call_time": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "end_time": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "venue_name": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    },
+                                    "venue_city": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    }
+                                },
+                                "required": [
+                                    "kind"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ShootReadData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/shoots/{shoot}/status": {
             "post": {
                 "operationId": "shoots.status.update",
@@ -3110,6 +3215,23 @@
                 "type": "object",
                 "additionalProperties": {},
                 "title": "ProjectTypeReadData"
+            },
+            "ShootKind": {
+                "type": "string",
+                "description": "What kind of occasion a shoot is. Finer-grained than ProjectType: one wedding project routinely holds an engagement shoot, the wedding day and the reception, separated by as much as a year.\n",
+                "enum": [
+                    "engagement",
+                    "wedding",
+                    "reception",
+                    "portrait",
+                    "other"
+                ],
+                "title": "ShootKind"
+            },
+            "ShootReadData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "ShootReadData"
             }
         },
         "responses": {

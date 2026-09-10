@@ -30,6 +30,7 @@ import { idempotencyKeyFor } from '../idempotency.js'
   registerAdvanceLeadStage(server, clientFor)
   registerCloseLead(server, clientFor)
   registerReopenLead(server, clientFor)
+  registerCreateShoot(server, clientFor)
   registerAdvanceShootStatus(server, clientFor)
   registerCancelShoot(server, clientFor)
   registerUncancelShoot(server, clientFor)
@@ -51,9 +52,11 @@ const silentField = {
     .describe('For entering history that already happened: no mail, no in-app notice, no webhook, and no follow-up tasks. Use it for every write of a record from before this studio moved onto the app.'),
 }
 
-function writeHeaders(tool: string, extra: Parameters<typeof idempotencyKeyFor>[1], silent: boolean | null | undefined): Record<string, string> {
+function writeHeaders(tool: string, payload: Record<string, unknown>, silent: boolean | null | undefined): Record<string, string> {
   return {
-    'Idempotency-Key': idempotencyKeyFor(tool, extra),
+    // `silent` decides whether mail, tasks and webhooks fire, so it is part
+    // of what makes two writes the same write.
+    'Idempotency-Key': idempotencyKeyFor(tool, { ...payload, silent: silent === true }),
     ...(silent ? { 'X-Silent-Write': '1' } : {}),
   }
 }
@@ -96,7 +99,7 @@ function registerCaptureLead(server: McpServer, clientFor: ApiClientFactory): vo
     async ({ silent, ...args }, extra) => {
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads', {
         body: args,
-        headers: writeHeaders('capture_lead', extra, silent),
+        headers: writeHeaders('capture_lead', args, silent),
       })
 
       return apiResult(data, error)
@@ -128,7 +131,7 @@ function registerCaptureLeadsBulk(server: McpServer, clientFor: ApiClientFactory
     async ({ leads, silent }, extra) => {
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads/bulk', {
         body: { leads } as never,
-        headers: writeHeaders('capture_leads_bulk', extra, silent),
+        headers: writeHeaders('capture_leads_bulk', { leads }, silent),
       })
 
       return apiResult(data, error)
@@ -161,7 +164,7 @@ function registerAdvanceLeadStage(server: McpServer, clientFor: ApiClientFactory
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads/{lead}/stage', {
         params: { path: { lead } },
         body: { stage, entered_at: enteredAt } as never,
-        headers: writeHeaders('advance_lead_stage', extra, silent),
+        headers: writeHeaders('advance_lead_stage', { lead, stage, entered_at: enteredAt }, silent),
       })
 
       return apiResult(data, error)
@@ -189,7 +192,7 @@ function registerCloseLead(server: McpServer, clientFor: ApiClientFactory): void
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads/{lead}/lost', {
         params: { path: { lead } },
         body: { outcome, reason, lost_at: lostAt } as never,
-        headers: writeHeaders('close_lead', extra, silent),
+        headers: writeHeaders('close_lead', { lead, outcome, reason, lost_at: lostAt }, silent),
       })
 
       return apiResult(data, error)
@@ -213,7 +216,46 @@ function registerReopenLead(server: McpServer, clientFor: ApiClientFactory): voi
     async ({ lead, silent }, extra) => {
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads/{lead}/reopen', {
         params: { path: { lead } },
-        headers: writeHeaders('reopen_lead', extra, silent),
+        headers: writeHeaders('reopen_lead', { lead }, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+const shootKindEnum = ['engagement', 'wedding', 'reception', 'portrait', 'other'] as const
+
+/**
+ * A second shooting day on a project that already has one. `capture_lead`
+ * makes exactly one shoot out of its `date`, so a wedding split over two days
+ * — Trauung on one, Feier on another — could not be entered from here at all.
+ */
+function registerCreateShoot(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'create_shoot',
+    {
+      title: 'Create a shoot',
+      description:
+        'Add a shooting day to a project. The first one already exists — capture_lead makes it out of the inquiry date — so this is the second and every one after it: the Feier of a wedding split across two days, an Engagement-Shooting ahead of it, a second portrait session. Leave `date` empty for a day that is agreed but not dated.',
+      inputSchema: {
+        project: z.string().describe('The project public id'),
+        kind: z.enum(shootKindEnum),
+        label: z.string().max(255).nullish().describe('What this day is called on the project screen, where the kind alone is ambiguous'),
+        date: z.string().nullish().describe('YYYY-MM-DD'),
+        call_time: z.string().nullish().describe('HH:MM'),
+        end_time: z.string().nullish().describe('HH:MM, after call_time'),
+        venue_name: z.string().max(255).nullish(),
+        venue_city: z.string().max(255).nullish(),
+        ...silentField,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ project, silent, ...shoot }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/shoots', {
+        params: { path: { project } },
+        body: shoot as never,
+        headers: writeHeaders('create_shoot', { project, ...shoot }, silent),
       })
 
       return apiResult(data, error)
@@ -240,7 +282,7 @@ function registerAdvanceShootStatus(server: McpServer, clientFor: ApiClientFacto
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/shoots/{shoot}/status', {
         params: { path: { shoot } },
         body: { status, entered_at: enteredAt } as never,
-        headers: writeHeaders('advance_shoot_status', extra, silent),
+        headers: writeHeaders('advance_shoot_status', { shoot, status, entered_at: enteredAt }, silent),
       })
 
       return apiResult(data, error)
@@ -267,7 +309,7 @@ function registerCancelShoot(server: McpServer, clientFor: ApiClientFactory): vo
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/shoots/{shoot}/cancel', {
         params: { path: { shoot } },
         body: { reason, cancelled_at: cancelledAt } as never,
-        headers: writeHeaders('cancel_shoot', extra, silent),
+        headers: writeHeaders('cancel_shoot', { shoot, reason, cancelled_at: cancelledAt }, silent),
       })
 
       return apiResult(data, error)
@@ -291,7 +333,7 @@ function registerUncancelShoot(server: McpServer, clientFor: ApiClientFactory): 
     async ({ shoot, silent }, extra) => {
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/shoots/{shoot}/uncancel', {
         params: { path: { shoot } },
-        headers: writeHeaders('uncancel_shoot', extra, silent),
+        headers: writeHeaders('uncancel_shoot', { shoot }, silent),
       })
 
       return apiResult(data, error)
@@ -320,7 +362,7 @@ function registerAddInternalNote(server: McpServer, clientFor: ApiClientFactory)
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/notes', {
         params: { path: { project } },
         body: { body, occurred_at } as never,
-        headers: writeHeaders('add_internal_note', extra, silent),
+        headers: writeHeaders('add_internal_note', { project, body, occurred_at }, silent),
       })
 
       return apiResult(data, error)
@@ -353,7 +395,7 @@ function registerSetProjectFields(server: McpServer, clientFor: ApiClientFactory
       const { data, error } = await clientFor(extra.authInfo?.token).PATCH('/projects/{project}/fields', {
         params: { path: { project } },
         body: { fields } as never,
-        headers: writeHeaders('set_project_fields', extra, silent),
+        headers: writeHeaders('set_project_fields', { project, fields }, silent),
       })
 
       return apiResult(data, error)
@@ -384,7 +426,7 @@ function registerAddProjectField(server: McpServer, clientFor: ApiClientFactory)
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/project-types/{projectType}/fields', {
         params: { path: { projectType } },
         body: field,
-        headers: writeHeaders('add_project_field', extra, silent),
+        headers: writeHeaders('add_project_field', { projectType, ...field }, silent),
       })
 
       return apiResult(data, error)
