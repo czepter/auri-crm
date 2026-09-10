@@ -62,7 +62,6 @@ function writeHeaders(tool: string, payload: Record<string, unknown>, silent: bo
 }
 
 const leadSourceEnum = ['referral', 'website', 'instagram', 'wedding_fair', 'other'] as const
-const projectTypeEnum = ['wedding', 'portrait', 'other'] as const
 const captureChannelEnum = ['phone', 'email', 'in_person', 'other'] as const
 const leadStageEnum = ['new', 'contacted', 'quote_sent', 'quote_accepted', 'contract_sent', 'booked'] as const
 const leadOutcomeEnum = ['lost', 'declined'] as const
@@ -74,8 +73,9 @@ const leadFields = {
   contact_phone: z.string().max(64).nullish(),
   partner_name: z.string().max(255).nullish(),
   project_name: z.string().max(255),
-  type: z.enum(projectTypeEnum),
+  type: z.string().describe('The project type key — see list_project_types. A studio defines its own, so this is not a fixed list.'),
   source: z.enum(leadSourceEnum),
+  source_other: z.string().max(120).nullish().describe("What 'other' actually was, e.g. the platform the inquiry came from. Only kept beside source: other."),
   captured_via: z.enum(captureChannelEnum),
   date: z.string().nullish().describe('YYYY-MM-DD'),
   inquiry_text: z.string().max(10000).nullish(),

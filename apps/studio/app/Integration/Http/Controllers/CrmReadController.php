@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\CursorPaginator;
+use Illuminate\Validation\Rule;
 use Spatie\LaravelData\Data;
 
 /**
@@ -61,9 +62,32 @@ class CrmReadController extends Controller
         return response()->json(['data' => ProjectReadData::fromModel($project)]);
     }
 
+    /**
+     * #349: `closed` rather than a stage key for the end of the funnel — a
+     * closed lead keeps the stage it died in, so the two are independent
+     * questions. Absent, both open and closed leads come back.
+     */
     public function leads(Request $request): JsonResponse
     {
-        return $this->page(Lead::query()->with('project:id,public_id'), $request, LeadReadData::class);
+        $filters = $request->validate([
+            'stage' => ['sometimes', Rule::exists('stages', 'key')->where('pipeline', StagePipeline::Lead->value)],
+            // Strings, not `boolean`: that rule refuses the literal "false"
+            // every http client writes into a query string.
+            'closed' => ['sometimes', 'in:true,false'],
+            'captured_from' => ['sometimes', 'date'],
+            'captured_to' => ['sometimes', 'date', 'after_or_equal:captured_from'],
+        ]);
+
+        $query = Lead::query()
+            ->with('project:id,public_id')
+            ->when($filters['stage'] ?? null, fn (Builder $q, string $stage) => $q->where('stage', $stage))
+            ->when($request->has('closed'), fn (Builder $q) => $request->boolean('closed')
+                ? $q->whereNotNull('outcome')
+                : $q->open())
+            ->when($filters['captured_from'] ?? null, fn (Builder $q, string $from) => $q->whereDate('captured_at', '>=', $from))
+            ->when($filters['captured_to'] ?? null, fn (Builder $q, string $to) => $q->whereDate('captured_at', '<=', $to));
+
+        return $this->page($query, $request, LeadReadData::class);
     }
 
     /**

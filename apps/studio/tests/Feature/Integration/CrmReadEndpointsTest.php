@@ -1,5 +1,6 @@
 <?php
 
+use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Job;
@@ -114,6 +115,71 @@ it('carries a lead\'s project as the project\'s own public_id', function () {
 
     expect($body['data'][0]['id'])->toBe($lead->public_id);
     expect($body['data'][0]['projectId'])->toBe($project->public_id);
+});
+
+// #349: GET /api/leads?stage=&closed=&captured_from=&captured_to=
+
+it('filters leads by stage', function () {
+    $wanted = Lead::factory()->atStage(LeadStage::QuoteSent)->create();
+    Lead::factory()->atStage(LeadStage::New)->create();
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ManageLeads))
+        ->getJson('/api/leads?stage=quote_sent')
+        ->assertOk()->json();
+
+    expect(collect($body['data'])->pluck('id')->all())->toBe([$wanted->public_id]);
+});
+
+it('filters leads by whether they are closed, keeping the stage they died in', function () {
+    $open = Lead::factory()->atStage(LeadStage::QuoteSent)->create();
+    $closed = Lead::factory()->atStage(LeadStage::QuoteSent)->lost()->create();
+
+    $header = bearerFor(Capability::ManageLeads);
+
+    $stillIn = $this->withHeader('Authorization', $header)->getJson('/api/leads?closed=false')->assertOk()->json();
+    $done = $this->withHeader('Authorization', $header)->getJson('/api/leads?stage=quote_sent&closed=true')->assertOk()->json();
+
+    expect(collect($stillIn['data'])->pluck('id')->all())->toBe([$open->public_id]);
+    expect(collect($done['data'])->pluck('id')->all())->toBe([$closed->public_id]);
+});
+
+it('filters leads to the window they were captured in', function () {
+    $inWindow = Lead::factory()->create(['captured_at' => '2026-03-15 09:00:00']);
+    Lead::factory()->create(['captured_at' => '2026-02-28 09:00:00']);
+    Lead::factory()->create(['captured_at' => '2026-04-01 09:00:00']);
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ManageLeads))
+        ->getJson('/api/leads?captured_from=2026-03-01&captured_to=2026-03-31')
+        ->assertOk()->json();
+
+    expect(collect($body['data'])->pluck('id')->all())->toBe([$inWindow->public_id]);
+});
+
+it('rejects a lead capture window where captured_to precedes captured_from', function () {
+    $this->withHeader('Authorization', bearerFor(Capability::ManageLeads))
+        ->getJson('/api/leads?captured_from=2026-03-31&captured_to=2026-03-01')
+        ->assertStatus(422);
+});
+
+it('rejects a lead stage filter that is not a stage', function () {
+    $this->withHeader('Authorization', bearerFor(Capability::ManageLeads))
+        ->getJson('/api/leads?stage=verschickt')
+        ->assertStatus(422);
+});
+
+it('carries a lead\'s source detail, capture moment and close moment', function () {
+    $lead = Lead::factory()->lost()->create([
+        'source' => LeadSource::Other,
+        'source_other' => 'Hochzeitsportal',
+        'captured_at' => '2026-03-15 09:00:00',
+    ]);
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ManageLeads))
+        ->getJson('/api/leads')->assertOk()->json();
+
+    expect($body['data'][0]['sourceOther'])->toBe('Hochzeitsportal');
+    expect($body['data'][0]['capturedAt'])->toBe($lead->captured_at->toIso8601String());
+    expect($body['data'][0]['lostAt'])->toBe($lead->lost_at->toIso8601String());
 });
 
 // N-02: GET /api/projects/{project:public_id} — the single-resource read

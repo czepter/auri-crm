@@ -572,8 +572,11 @@ export type LeadReadData = {
 id: string,
 projectId: string,
 source: string,
+sourceOther: string | null,
 stage: string,
 isLost: boolean,
+capturedAt: string,
+lostAt: string | null,
 updatedAt: string,
 };
 export type ProjectFieldReadData = {

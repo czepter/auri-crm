@@ -90,6 +90,7 @@ describe('read tools', () => {
     expect(tools.map((tool) => tool.name).sort()).toEqual(
       expect.arrayContaining([
         'get_project',
+        'list_leads',
         'list_project_types',
         'pipeline_snapshot',
         'search_contacts',
@@ -211,6 +212,37 @@ describe('read tools', () => {
       shoots: [
         { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', status: 'requested', updatedAt: '2026-01-01T00:00:00Z' },
       ],
+      nextCursor: null,
+    })
+    expect(integerIdPaths(result.structuredContent)).toEqual([])
+  })
+
+  it('list_leads wraps GET /leads with its filters and carries sourceOther through', async () => {
+    let requestedQuery: string | null = null
+
+    const client = await connectedClient({
+      '/api/leads': (url) => {
+        requestedQuery = url.search
+        return jsonResponse({
+          data: [
+            { id: 'led_1', projectId: 'prj_meier', source: 'other', sourceOther: 'Hochzeitsportal', stage: 'quote_sent', isLost: false, capturedAt: '2026-03-02T09:00:00Z', lostAt: null, updatedAt: '2026-03-02T09:00:00Z' },
+          ],
+          meta: { path: '/leads', per_page: 25, next_cursor: null, next_page_url: null, prev_cursor: null, prev_page_url: null },
+        })
+      },
+    })
+
+    const result = await client.callTool({
+      name: 'list_leads',
+      arguments: { stage: 'quote_sent', closed: false, captured_from: '2026-03-01', captured_to: '2026-03-31' },
+    })
+
+    expect(requestedQuery).toContain('stage=quote_sent')
+    expect(requestedQuery).toContain('closed=false')
+    expect(requestedQuery).toContain('captured_from=2026-03-01')
+    expect(requestedQuery).toContain('captured_to=2026-03-31')
+    expect(result.structuredContent).toEqual({
+      leads: [{ id: 'led_1', projectId: 'prj_meier', source: 'other', sourceOther: 'Hochzeitsportal', stage: 'quote_sent', isLost: false, capturedAt: '2026-03-02T09:00:00Z', lostAt: null, updatedAt: '2026-03-02T09:00:00Z' }],
       nextCursor: null,
     })
     expect(integerIdPaths(result.structuredContent)).toEqual([])
