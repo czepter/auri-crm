@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
+    "@sentry/node": "^10.69.0",
     "openapi-fetch": "^0.17.0",
     "zod": "^4.4.3"
   },
