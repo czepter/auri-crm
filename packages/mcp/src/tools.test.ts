@@ -124,54 +124,58 @@ describe('read tools', () => {
     expect(integerIdPaths(result.structuredContent)).toEqual([])
   })
 
-  it('search_contacts filters the fetched page client-side by name or email', async () => {
+  // #353: the search is the server's, so the tool has to hand the term over
+  // rather than sieve the one page it was given back.
+  it('search_contacts sends its query term to the server and returns the page as it comes', async () => {
+    let requestedQuery: string | null = null
+
     const client = await connectedClient({
-      '/api/contacts': () =>
-        jsonResponse({
+      '/api/contacts': (url) => {
+        requestedQuery = url.search
+        return jsonResponse({
           data: [
             { id: 'ctc_alice', name: 'Alice Example', email: 'alice@example.com', phone: null, updatedAt: '2026-01-01T00:00:00Z' },
-            { id: 'ctc_bob', name: 'Bob Example', email: 'bob@example.com', phone: null, updatedAt: '2026-01-02T00:00:00Z' },
           ],
           meta: { path: '/contacts', per_page: 25, next_cursor: null, next_page_url: null, prev_cursor: null, prev_page_url: null },
-        }),
+        })
+      },
     })
 
     const result = await client.callTool({ name: 'search_contacts', arguments: { query: 'alice' } })
 
+    expect(requestedQuery).toContain('query=alice')
     expect(result.structuredContent).toEqual({
       contacts: [{ id: 'ctc_alice', name: 'Alice Example', email: 'alice@example.com', phone: null, updatedAt: '2026-01-01T00:00:00Z' }],
       nextCursor: null,
     })
   })
 
-  it('get_project wraps GET /projects/{project} by public_id', async () => {
-    const client = await connectedClient({
-      '/api/projects/prj_meier': () =>
-        jsonResponse({
-          data: {
-            id: 'prj_meier',
-            name: 'Meier Hochzeit',
-            type: 'wedding',
-            portalVisible: true,
-            fields: { gaeste: 120 },
-            updatedAt: '2026-01-01T00:00:00Z',
-          },
-        }),
-    })
+  // #350: the lead, the contacts and the shoots come with it — a payload
+  // that only validates against the richer output schema, so a get_project
+  // that fell back to the index shape would fail here rather than pass.
+  it('get_project wraps GET /projects/{project} by public_id, with lead, contacts and shoots', async () => {
+    const detail = {
+      id: 'prj_meier',
+      name: 'Meier Hochzeit',
+      type: 'wedding',
+      portalVisible: true,
+      fields: { gaeste: 120 },
+      updatedAt: '2026-01-01T00:00:00Z',
+      lead: { stage: 'booked', source: 'referral', capturedAt: '2025-11-02T09:00:00Z', lostAt: null },
+      contacts: [
+        { id: 'ctc_meier', name: 'Lena Meier', email: 'lena@example.com', phone: null, role: 'primary', updatedAt: '2026-01-01T00:00:00Z' },
+      ],
+      shoots: [
+        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-06-20', status: 'requested', updatedAt: '2026-01-01T00:00:00Z' },
+      ],
+    }
+
+    const client = await connectedClient({ '/api/projects/prj_meier': () => jsonResponse({ data: detail }) })
 
     const result = await client.callTool({ name: 'get_project', arguments: { publicId: 'prj_meier' } })
 
     expect(result.isError).toBeFalsy()
-    expect(result.structuredContent).toEqual({
-      project: {
-        id: 'prj_meier',
-        name: 'Meier Hochzeit',
-        type: 'wedding',
-        portalVisible: true,
-        fields: { gaeste: 120 },
-        updatedAt: '2026-01-01T00:00:00Z',
-      },
-    })
+    expect(result.structuredContent).toEqual({ project: detail })
     expect(integerIdPaths(result.structuredContent)).toEqual([])
   })
 

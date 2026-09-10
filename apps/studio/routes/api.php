@@ -18,6 +18,7 @@ use App\Integration\Http\Controllers\CrmReadController;
 use App\Integration\Http\Controllers\InternalNoteController;
 use App\Integration\Http\Controllers\LeadController;
 use App\Integration\Http\Controllers\OAuthTokenInfoController;
+use App\Integration\Http\Controllers\ProjectController;
 use App\Integration\Http\Controllers\ProjectFieldController;
 use App\Integration\Http\Controllers\ShootController;
 use App\Payments\Http\Controllers\StripeWebhookController;
@@ -237,6 +238,13 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'id
 Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
     ->post('/shoots/{shoot:public_id}/uncancel', [ShootController::class, 'uncancel'])
     ->name('api.shoots.uncancel');
+
+// Taking an import back — see ProjectController. ManageLeads, the scope that
+// created the project through leads.store: whoever may capture a run may undo
+// it, and no narrower capability exists for "may delete" (I-01).
+Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
+    ->delete('/projects/{project:public_id}', [ProjectController::class, 'destroy'])
+    ->name('api.projects.destroy');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'idempotent'])
     ->post('/projects/{project:public_id}/notes', [InternalNoteController::class, 'store'])

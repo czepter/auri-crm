@@ -37,6 +37,7 @@ import { idempotencyKeyFor } from '../idempotency.js'
   registerAddInternalNote(server, clientFor)
   registerSetProjectFields(server, clientFor)
   registerAddProjectField(server, clientFor)
+  registerDeleteProject(server, clientFor)
 }
 
 /**
@@ -430,6 +431,39 @@ function registerAddProjectField(server: McpServer, clientFor: ApiClientFactory)
       })
 
       return apiResult(data, error)
+    },
+  )
+}
+
+/**
+ * No delete_lead beside this: a lead is born with its project and means
+ * nothing without it, so the project is the unit that goes.
+ */
+function registerDeleteProject(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'delete_project',
+    {
+      title: 'Delete a project',
+      description:
+        'Deletes a project together with its lead, its shoots, its internal notes and its links to contacts. The contacts themselves stay. Refused while a job, a quote, a contract or a gallery hangs off the project — past that point the project is a record of an agreement, and removing it is a decision for a screen rather than a tool. There is no undo.',
+      inputSchema: {
+        project: z.string().describe('The project public id'),
+        ...silentField,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ project, silent }, extra) => {
+      const { error } = await clientFor(extra.authInfo?.token).DELETE('/projects/{project}', {
+        params: { path: { project } },
+        headers: writeHeaders('delete_project', { project }, silent),
+      })
+
+      // 204, so there is no body to hand back the way every other write tool
+      // does — apiResult() would stringify `undefined` into a content block
+      // with no text at all.
+      return error !== undefined
+        ? apiResult(undefined, error)
+        : { content: [{ type: 'text', text: `Deleted project ${project}.` }] }
     },
   )
 }

@@ -14,6 +14,7 @@ use App\Http\Controllers\Controller;
 use App\Integration\Data\ContactReadData;
 use App\Integration\Data\JobReadData;
 use App\Integration\Data\LeadReadData;
+use App\Integration\Data\ProjectDetailReadData;
 use App\Integration\Data\ProjectReadData;
 use App\Integration\Data\ShootReadData;
 use Illuminate\Database\Eloquent\Builder;
@@ -42,7 +43,16 @@ class CrmReadController extends Controller
 {
     public function contacts(Request $request): JsonResponse
     {
-        return $this->page(Contact::query(), $request, ContactReadData::class);
+        $term = $request->validate(['query' => ['sometimes', 'string', 'max:255']])['query'] ?? null;
+
+        // ilike, not like: on Postgres like is case-sensitive, and a search
+        // that misses "Steffens" when the caller sends "steff" is the same
+        // duplicate ContactSearchController's typeahead exists to prevent.
+        $query = Contact::query()->when($term, fn (Builder $q, string $term) => $q->where(
+            fn (Builder $match) => $match->where('name', 'ilike', "%{$term}%")->orWhere('email', 'ilike', "%{$term}%")
+        ));
+
+        return $this->page($query, $request, ContactReadData::class);
     }
 
     public function projects(Request $request): JsonResponse
@@ -59,7 +69,7 @@ class CrmReadController extends Controller
      */
     public function project(Project $project): JsonResponse
     {
-        return response()->json(['data' => ProjectReadData::fromModel($project)]);
+        return response()->json(['data' => ProjectDetailReadData::fromModel($project)]);
     }
 
     /**

@@ -579,6 +579,25 @@ capturedAt: string,
 lostAt: string | null,
 updatedAt: string,
 };
+export type ProjectContactReadData = {
+id: string,
+name: string,
+email: string | null,
+phone: string | null,
+role: string,
+updatedAt: string,
+};
+export type ProjectDetailReadData = {
+id: string,
+name: string,
+type: string,
+portalVisible: boolean,
+fields: object,
+updatedAt: string,
+lead: App.Integration.Data.ProjectLeadReadData | null,
+contacts: App.Integration.Data.ProjectContactReadData[],
+shoots: App.Integration.Data.ShootReadData[],
+};
 export type ProjectFieldReadData = {
 id: string,
 key: string,
@@ -588,6 +607,12 @@ options: string[],
 unit: string | null,
 required: boolean,
 allowNewOptions: boolean,
+};
+export type ProjectLeadReadData = {
+stage: string,
+source: string,
+capturedAt: string,
+lostAt: string | null,
 };
 export type ProjectReadData = {
 id: string,

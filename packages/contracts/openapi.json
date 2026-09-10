@@ -367,6 +367,16 @@
                 "tags": [
                     "CrmRead"
                 ],
+                "parameters": [
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 255
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "",
@@ -435,6 +445,9 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -879,7 +892,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/components/schemas/ProjectReadData"
+                                            "$ref": "#/components/schemas/ProjectDetailReadData"
                                         }
                                     },
                                     "required": [
@@ -888,6 +901,34 @@
                                 }
                             }
                         }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "projects.destroy",
+                "tags": [
+                    "Project"
+                ],
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
@@ -3202,6 +3243,11 @@
                 "type": "object",
                 "additionalProperties": {},
                 "title": "PaginatedDataCollection"
+            },
+            "ProjectDetailReadData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "ProjectDetailReadData"
             },
             "ProjectFieldType": {
                 "type": "string",
