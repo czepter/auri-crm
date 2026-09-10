@@ -36,9 +36,15 @@ RUN corepack enable && pnpm install --frozen-lockfile --prod --filter @studio/mc
 
 COPY --from=build /build/packages/mcp/dist packages/mcp/dist
 
+# Baked, like docker/gallery/Dockerfile's: the release is a property of the
+# image, and src/observability.ts reads it once at process start.
+ARG SENTRY_RELEASE=""
+
 ENV PORT=3000 \
     NODE_ENV=production \
-    MCP_TRANSPORT=http
+    MCP_TRANSPORT=http \
+    SENTRY_ENVIRONMENT=production \
+    SENTRY_RELEASE=$SENTRY_RELEASE
 EXPOSE 3000
 
 USER node
