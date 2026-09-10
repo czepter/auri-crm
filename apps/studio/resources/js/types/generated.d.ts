@@ -609,6 +609,7 @@ kind: string,
 label: string | null,
 date: string | null,
 status: string,
+cancelledAt: string | null,
 updatedAt: string,
 };
 }

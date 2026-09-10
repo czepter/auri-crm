@@ -175,6 +175,29 @@ it('filters shoots to a date range', function () {
     expect($ids->all())->toBe([$inRange->public_id]);
 });
 
+it('filters shoots by cancelled, and keeps both without it', function () {
+    $open = Shoot::factory()->create(['date' => '2026-03-15']);
+    $cancelled = Shoot::factory()->cancelled('Termin abgesagt')->create(['date' => '2026-03-16']);
+
+    $ids = function (string $query) {
+        return collect(
+            $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
+                ->getJson("/api/shoots{$query}")
+                ->assertOk()->json('data')
+        )->pluck('id')->all();
+    };
+
+    expect($ids('?cancelled=false'))->toBe([$open->public_id])
+        ->and($ids('?cancelled=true'))->toBe([$cancelled->public_id])
+        ->and($ids(''))->toBe([$open->public_id, $cancelled->public_id]);
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
+        ->getJson('/api/shoots?cancelled=true')
+        ->assertOk()->json('data');
+
+    expect($body[0]['cancelledAt'])->not->toBeNull();
+});
+
 it('rejects a shoots date range where to precedes from', function () {
     $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
         ->getJson('/api/shoots?from=2026-03-31&to=2026-03-01')

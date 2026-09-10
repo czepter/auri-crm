@@ -193,7 +193,7 @@ describe('read tools', () => {
         requestedQuery = url.search
         return jsonResponse({
           data: [
-            { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', status: 'requested', updatedAt: '2026-01-01T00:00:00Z' },
+            { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', status: 'requested', cancelledAt: null, updatedAt: '2026-01-01T00:00:00Z' },
           ],
           meta: { path: '/shoots', per_page: 25, next_cursor: null, next_page_url: null, prev_cursor: null, prev_page_url: null },
         })
@@ -207,13 +207,43 @@ describe('read tools', () => {
 
     expect(requestedQuery).toContain('from=2026-03-01')
     expect(requestedQuery).toContain('to=2026-03-31')
+    expect(requestedQuery).toContain('cancelled=false')
     expect(result.structuredContent).toEqual({
       shoots: [
-        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', status: 'requested', updatedAt: '2026-01-01T00:00:00Z' },
+        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', status: 'requested', cancelledAt: null, updatedAt: '2026-01-01T00:00:00Z' },
       ],
       nextCursor: null,
     })
     expect(integerIdPaths(result.structuredContent)).toEqual([])
+  })
+
+  it('shoots_in_date_range drops the cancelled filter for include_cancelled', async () => {
+    let requestedQuery: string | null = null
+
+    const client = await connectedClient({
+      '/api/shoots': (url) => {
+        requestedQuery = url.search
+        return jsonResponse({
+          data: [
+            { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', status: 'requested', cancelledAt: '2026-02-01T00:00:00Z', updatedAt: '2026-02-01T00:00:00Z' },
+          ],
+          meta: { path: '/shoots', per_page: 25, next_cursor: null, next_page_url: null, prev_cursor: null, prev_page_url: null },
+        })
+      },
+    })
+
+    const result = await client.callTool({
+      name: 'shoots_in_date_range',
+      arguments: { from: '2026-03-01', to: '2026-03-31', include_cancelled: true },
+    })
+
+    expect(requestedQuery).not.toContain('cancelled=')
+    expect(result.structuredContent).toEqual({
+      shoots: [
+        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', status: 'requested', cancelledAt: '2026-02-01T00:00:00Z', updatedAt: '2026-02-01T00:00:00Z' },
+      ],
+      nextCursor: null,
+    })
   })
 
   it('list_project_types wraps GET /project-types with the fields of each type', async () => {

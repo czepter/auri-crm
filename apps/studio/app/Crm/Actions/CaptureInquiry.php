@@ -82,17 +82,19 @@ class CaptureInquiry
                 ? null
                 : Contact::query()->where('public_id', $data->referred_by_contact_id)->first();
 
+            $capturedAt = $data->captured_at ?? now();
+
             $lead = Lead::create([
                 'project_id' => $project->id,
                 'source' => $data->source,
                 'source_other' => $data->source_other,
                 'stage' => $this->stages->anchored(StagePipeline::Lead, StageAnchor::Entry),
-                'stage_entered_at' => now(),
+                'stage_entered_at' => $capturedAt,
                 'inquiry_text' => $data->inquiry_text,
                 'captured_via' => $data->captured_via,
                 'captured_via_other' => $data->captured_via_other,
                 'captured_by_id' => $actor?->id,
-                'captured_at' => $data->captured_at ?? now(),
+                'captured_at' => $capturedAt,
                 'referred_by_contact_id' => $referrer?->id,
             ]);
 
@@ -113,6 +115,7 @@ class CaptureInquiry
                 'kind' => $this->kindFor($data->type),
                 'date' => $data->date,
                 'status' => $this->stages->anchored(StagePipeline::Project, StageAnchor::Entry),
+                'status_entered_at' => $capturedAt,
                 'is_primary' => true,
                 'sort_order' => 0,
             ]);

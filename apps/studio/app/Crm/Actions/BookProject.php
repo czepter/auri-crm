@@ -12,6 +12,7 @@ use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
 use App\Models\User;
 use App\Support\AuditLogger;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -48,6 +49,7 @@ class BookProject
         Project $project,
         ?User $actor = null,
         BookedVia $via = BookedVia::Manual,
+        ?CarbonInterface $at = null,
     ): ?Job {
         // Idempotency guards job creation, not the trigger. P-05b adds a second
         // entry point, and two triggers racing on one project is a live failure
@@ -58,10 +60,10 @@ class BookProject
 
         $booked = $this->stages->anchored(StagePipeline::Project, StageAnchor::Booked);
 
-        $job = DB::transaction(function () use ($project, $actor, $via, $booked) {
+        $job = DB::transaction(function () use ($project, $actor, $via, $booked, $at) {
             $job = Job::create([
                 'project_id' => $project->id,
-                'booked_at' => now(),
+                'booked_at' => $at ?? now(),
                 'booked_by_id' => $actor?->id,
                 'booked_via' => $via,
             ]);
@@ -71,7 +73,7 @@ class BookProject
                 // undo delivered work, and the action would reject the
                 // backwards move anyway.
                 ->filter(fn (Shoot $shoot) => $booked !== null && $shoot->status->canTransitionTo($booked))
-                ->each(fn (Shoot $shoot) => ($this->advance)($shoot, $booked, $actor));
+                ->each(fn (Shoot $shoot) => ($this->advance)($shoot, $booked, $actor, $at));
 
             AuditLogger::record(
                 event: 'project.booked',

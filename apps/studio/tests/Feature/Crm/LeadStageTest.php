@@ -6,6 +6,7 @@ use App\Crm\Events\LeadLost;
 use App\Crm\Events\LeadStageChanged;
 use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
+use App\Crm\Models\Shoot;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Payments\Models\PaymentPlan;
@@ -124,6 +125,21 @@ it('books the project when the lead reaches gebucht', function () {
     app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), User::factory()->create());
 
     expect($lead->project->job()->exists())->toBeTrue();
+});
+
+it('backdates the booking and its shoots with the stage move', function () {
+    $lead = Lead::factory()->atStage(LeadStage::ContractSent)->create();
+    $shoot = Shoot::factory()->for($lead->project)->create();
+
+    app(AdvanceLeadStage::class)(
+        $lead,
+        stage(LeadStage::Booked),
+        User::factory()->create(),
+        CarbonImmutable::parse('2026-05-02 10:00'),
+    );
+
+    expect($lead->project->job->booked_at->toDateString())->toBe('2026-05-02')
+        ->and($shoot->fresh()->status_entered_at->toDateString())->toBe('2026-05-02');
 });
 
 it('leaves an existing job alone when the stage catches up', function () {

@@ -333,6 +333,15 @@ it('backdates the capture to the day the inquiry actually arrived', function () 
     expect(Lead::sole()->captured_at->toDateString())->toBe('2026-05-02');
 });
 
+it('backdates the stage and the shoot status with the capture', function () {
+    $this->actingAs($this->staff, 'staff')
+        ->post('/anfragen', payload(['captured_at' => '2026-05-02']))
+        ->assertRedirect('/anfragen');
+
+    expect(Lead::sole()->stage_entered_at->toDateString())->toBe('2026-05-02')
+        ->and(Shoot::sole()->status_entered_at->toDateString())->toBe('2026-05-02');
+});
+
 it('captures now when no date is given, and refuses a future one', function () {
     $this->actingAs($this->staff, 'staff')->post('/anfragen', payload());
 

@@ -43,6 +43,7 @@ const shootSchema = z.object({
   label: z.string().nullable(),
   date: z.string().nullable(),
   status: z.string(),
+  cancelledAt: z.string().nullable(),
   updatedAt: z.string(),
 })
 
@@ -197,13 +198,17 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
         from: z.string().describe('Inclusive start date, YYYY-MM-DD.'),
         to: z.string().describe('Inclusive end date, YYYY-MM-DD.'),
         cursor: z.string().optional().describe("Opaque cursor from a previous call's nextCursor."),
+        include_cancelled: z
+          .boolean()
+          .optional()
+          .describe('Keep cancelled shoots in the result. Off by default: an absage frees the date.'),
       },
       outputSchema: {
         shoots: z.array(shootSchema),
         nextCursor: z.string().nullable(),
       },
     },
-    async ({ from, to, cursor }, extra) => {
+    async ({ from, to, cursor, include_cancelled }, extra) => {
       const client = clientFor(extra.authInfo?.token)
 
       // Built as a variable rather than an inline literal: structural typing
@@ -211,7 +216,7 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
       // passed straight into a typed slot) accepts the extra `cursor` key
       // here, since /shoots's documented query type — unlike /contacts's —
       // is a real (if incomplete) object rather than `never`.
-      const queryParams = { from, to, cursor }
+      const queryParams = { from, to, cursor, ...(include_cancelled ? {} : { cancelled: 'false' as const }) }
       const { data, error } = await client.GET('/shoots', { params: { query: queryParams } })
       if (error) {
         return errorResult(error)

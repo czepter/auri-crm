@@ -686,6 +686,17 @@
                             "type": "string",
                             "format": "date-time"
                         }
+                    },
+                    {
+                        "name": "cancelled",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "true",
+                                "false"
+                            ]
+                        }
                     }
                 ],
                 "responses": {

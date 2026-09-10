@@ -78,12 +78,21 @@ class CrmReadController extends Controller
         $range = $request->validate([
             'from' => ['sometimes', 'date'],
             'to' => ['sometimes', 'date', 'after_or_equal:from'],
+            'cancelled' => ['sometimes', 'in:true,false'],
         ]);
+
+        // Omitted leaves cancelled shoots in: a `since=` poller that has seen
+        // a shoot must still see its absage, so the filter is opt-in on both
+        // sides rather than a default the caller cannot notice. Strings
+        // because this is a query string — Laravel's `boolean` rule rejects
+        // the literal "false" every http client writes for it.
+        $cancelled = array_key_exists('cancelled', $range) ? $request->boolean('cancelled') : null;
 
         $query = Shoot::query()
             ->with('project:id,public_id')
             ->when($range['from'] ?? null, fn (Builder $q, string $from) => $q->whereDate('date', '>=', $from))
-            ->when($range['to'] ?? null, fn (Builder $q, string $to) => $q->whereDate('date', '<=', $to));
+            ->when($range['to'] ?? null, fn (Builder $q, string $to) => $q->whereDate('date', '<=', $to))
+            ->when($cancelled !== null, fn (Builder $q) => $cancelled ? $q->whereNotNull('cancelled_at') : $q->uncancelled());
 
         return $this->page($query, $request, ShootReadData::class);
     }
