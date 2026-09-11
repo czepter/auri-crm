@@ -94,10 +94,21 @@ class ProjectController extends Controller
             ->sortBy(fn (Project $project) => $project->primaryShoot?->date?->toDateString() ?? '9999-99-99')
             ->values();
 
+        $vocabulary = app(CrmVocabulary::class);
+        $booked = $vocabulary->anchored(StagePipeline::Project, StageAnchor::Booked)?->sort_order ?? 0;
+        $delivered = $vocabulary->anchored(StagePipeline::Project, StageAnchor::Delivered)?->sort_order ?? PHP_INT_MAX;
+
         return Inertia::render('Projects/Index', [
             'projects' => ProjectRowData::collect(
                 $projects->map(fn (Project $project) => ProjectRowData::fromProject($project, $this->position))
             ),
+            // #364: the filter pills and the board's columns, in the studio's
+            // own order and names — from the booking to the delivery, since
+            // before it a project is an inquiry and after it an archive.
+            'stages' => $vocabulary->ordered(StagePipeline::Project)
+                ->filter(fn (Stage $stage) => $stage->is_active && $stage->sort_order >= $booked && $stage->sort_order <= $delivered)
+                ->map(fn (Stage $stage) => ['key' => $stage->key, 'name' => $stage->name, 'phase' => $vocabulary->phase($stage)])
+                ->values(),
             'stageSettings' => app(StageSettingsPayload::class)(),
             'workflow' => Inertia::optional(function () {
                 if (! request()->user('staff')->can('viewAny', TaskTemplate::class)) {

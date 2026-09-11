@@ -383,7 +383,17 @@
     "searchPlaceholder": "Projekt suchen",
     "empty": "Keine Projekte.",
     "openTasks": "Offene Aufgaben",
-    "openTasksOf": "{open} von {total}"
+    "openTasksOf": "{open} von {total}",
+    "viewList": "Liste",
+    "viewBoard": "Board",
+    "running": "Laufend",
+    "all": "Alle",
+    "reset": "Filter zurücksetzen",
+    "phase": {
+      "upcoming": "Anstehend",
+      "editing": "In Bearbeitung",
+      "delivered": "Geliefert"
+    }
   },
   "calendar": {
     "title": "Kalender",
@@ -391,6 +401,15 @@
     "revoke": "Adresse zurückziehen",
     "viewMonth": "Monat",
     "viewList": "Liste",
+    "viewSeason": "Saison",
+    "earlier": "Früher",
+    "later": "Später",
+    "weekdays": "Wochentage",
+    "booked": "{count} gebucht",
+    "free": "Frei",
+    "away": "Abwesend",
+    "double": "Doppelt belegt",
+    "thisWeek": "Diese Woche",
     "toProjects": "Zu den Projekten",
     "more": "+{count} weitere",
     "feedUrl": "Abo-Adresse",

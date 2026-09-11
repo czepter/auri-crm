@@ -69,6 +69,24 @@ class CrmVocabulary
         );
     }
 
+    /**
+     * Where a project stage sits for the screens that group by it: before the
+     * shoot, between shoot and delivery, or delivered. Read off the anchors,
+     * because the studio renames and reorders the stages themselves.
+     *
+     * @return 'upcoming'|'editing'|'delivered'
+     */
+    public function phase(Stage $stage): string
+    {
+        $from = fn (StageAnchor $anchor) => $this->anchored(StagePipeline::Project, $anchor)?->sort_order ?? PHP_INT_MAX;
+
+        return match (true) {
+            $stage->sort_order >= $from(StageAnchor::Delivered) => 'delivered',
+            $stage->sort_order >= $from(StageAnchor::Shot) => 'editing',
+            default => 'upcoming',
+        };
+    }
+
     /** @return Collection<int, Stage> */
     private function all(): Collection
     {

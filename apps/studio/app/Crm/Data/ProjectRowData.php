@@ -3,7 +3,9 @@
 namespace App\Crm\Data;
 
 use App\Crm\Actions\DeriveProjectPosition;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Project;
+use App\Crm\Support\CrmVocabulary;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -26,6 +28,8 @@ class ProjectRowData extends Data
         public ?string $date,
         public ?string $venue,
         public string $position,
+        public ?string $positionKey,
+        public string $phase,
         public ?string $contact,
         public int $openTasks,
         public int $taskCount,
@@ -34,13 +38,18 @@ class ProjectRowData extends Data
     public static function fromProject(Project $project, DeriveProjectPosition $position): self
     {
         $shoot = $project->primaryShoot;
+        $at = $position($project);
+        $vocabulary = app(CrmVocabulary::class);
+        $stage = $at->source === 'shoot' ? $vocabulary->byKey(StagePipeline::Project, (string) $at->value) : null;
 
         return new self(
             id: $project->public_id,
             name: $project->name,
             date: $shoot?->date?->format('Y-m-d'),
             venue: $shoot?->venue(),
-            position: $position($project)->label,
+            position: $at->label,
+            positionKey: $stage?->key,
+            phase: $stage ? $vocabulary->phase($stage) : 'upcoming',
             contact: $project->primaryContact()?->name,
             openTasks: (int) ($project->open_tasks_count ?? 0),
             taskCount: (int) ($project->tasks_count ?? 0),
