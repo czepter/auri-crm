@@ -37,7 +37,7 @@ function day(iso: string | null) {
     <ProjectShell :header="header" active="galleries">
       <Section :title="$t('galleries.title')">
         <template #actions>
-          <Button :as="Link" variant="outline" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
+          <Button :as="Link" variant="outline" :href="`/galerien/neu?projekt=${header.id}`">{{ $t('galleries.create') }}</Button>
         </template>
 
         <div
@@ -77,7 +77,7 @@ function day(iso: string | null) {
             </em>
           </div>
           <span class="min-w-0 flex-1 text-[13px] leading-[1.3] font-semibold tracking-[-0.01em]">{{ shoot.label ?? shoot.kind }}</span>
-          <Button :as="Link" variant="outline" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
+          <Button :as="Link" variant="outline" :href="`/galerien/neu?projekt=${header.id}&shooting=${shoot.id}`">{{ $t('galleries.create') }}</Button>
         </div>
       </Section>
     </ProjectShell>

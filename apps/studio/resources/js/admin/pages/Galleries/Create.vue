@@ -15,6 +15,8 @@ import { NONE, fromOption, toOption } from '@/lib/select'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
 const props = defineProps<{
+  project: App.Crm.Data.ProjectSuggestionData | null
+  shootId: string | null
   presets: App.Gallery.Data.GalleryPresetData[]
   studioDefaults: {
     downloads: boolean
@@ -29,7 +31,7 @@ const props = defineProps<{
 const MODES = ['internal', 'external']
 
 const mode = ref('internal')
-const project = ref<App.Crm.Data.ProjectSuggestionData | null>(null)
+const project = ref<App.Crm.Data.ProjectSuggestionData | null>(props.project)
 // G-16: womit eine neue Galerie anfängt. Die Standard-Vorlage steht schon
 // gewählt da, statt dass jeder sie aus der Liste sucht.
 const presetId = ref(props.presets.find((row) => row.isDefault)?.id ?? '')
@@ -68,6 +70,7 @@ function submit() {
     .transform((data) => ({
       ...data,
       project_id: project.value?.id ?? null,
+      shoot_id: project.value?.id === props.project?.id ? props.shootId : null,
       is_external: mode.value === 'external',
       ...(mode.value === 'external'
         ? {
