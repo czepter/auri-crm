@@ -66,6 +66,18 @@ it('lets the owner book', function () {
     expect($project->fresh()->job)->not->toBeNull();
 });
 
+it('refuses to book a lost project', function () {
+    $project = Project::factory()->create();
+    Shoot::factory()->for($project)->create();
+    Lead::factory()->for($project)->lost()->create();
+
+    $this->actingAs(staff(StaffRole::Owner), 'staff')
+        ->post("/auftraege/{$project->public_id}/buchung")
+        ->assertForbidden();
+
+    expect($project->fresh()->job)->toBeNull();
+});
+
 it('opens the funnel to every staff role', function (StaffRole $role) {
     // Moving a lead is ordinary studio work and it is reversible. The control
     // on it is the audit trail, not a gate: locking it would mean whoever just
