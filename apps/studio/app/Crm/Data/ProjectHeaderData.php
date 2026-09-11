@@ -68,7 +68,8 @@ class ProjectHeaderData extends Data
         public array $history,
     ) {}
 
-    public static function fromProject(Project $project, ProjectPositionData $position): self
+    /** @param  bool  $queue  false where the page brings its own left pane */
+    public static function fromProject(Project $project, ProjectPositionData $position, bool $queue = true): self
     {
         $user = auth('staff')->user();
 
@@ -111,7 +112,7 @@ class ProjectHeaderData extends Data
             // Fragebögen both sit between Shootings and Angebot, matching
             // mockup 04's own tab order (mockups/_shared/layout.js's
             // PROJECT_TABS).
-            tabs: [
+            tabs: $project->job === null && $project->lead !== null ? self::leadTabs($project) : [
                 ['key' => 'overview', 'label' => 'project.overview', 'href' => "/auftraege/{$project->public_id}", 'count' => null, 'countTo' => null, 'children' => []],
                 ...($project->lead ? [['key' => 'lead', 'label' => 'project.lead', 'href' => "/anfragen/{$project->lead->public_id}", 'count' => null, 'countTo' => null, 'children' => []]] : []),
                 ['key' => 'shoots', 'label' => 'project.shoots', 'href' => "/auftraege/{$project->public_id}/shootings", 'count' => null, 'countTo' => null, 'children' => []],
@@ -123,7 +124,7 @@ class ProjectHeaderData extends Data
                 ['key' => 'contract', 'label' => 'project.contract', 'href' => "/auftraege/{$project->public_id}/vertrag", 'count' => self::unsignedContracts($project), 'countTo' => null, 'children' => []],
             ],
             track: app(ReadStageTrack::class)($position),
-            queue: $user === null ? [] : app(OpenProjects::class)->queue($user, $project),
+            queue: $user === null || ! $queue ? [] : app(OpenProjects::class)->queue($user, $project),
             people: $project->contacts->map(ProjectPersonData::fromContact(...))->all(),
             paymentPlan: $project->job?->paymentPlan
                 ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments'))
@@ -135,6 +136,22 @@ class ProjectHeaderData extends Data
             ])->all(),
             history: app(BuildThread::class)($project),
         );
+    }
+
+    /**
+     * Before the booking the record is an inquiry: shootings, tasks, forms and
+     * the contract have nothing to hold yet, and its screens live under
+     * /anfragen.
+     */
+    private static function leadTabs(Project $project): array
+    {
+        $case = "/anfragen/{$project->lead->public_id}";
+
+        return [
+            ['key' => 'overview', 'label' => 'project.overview', 'href' => $case, 'count' => null, 'countTo' => null, 'children' => []],
+            ['key' => 'quotes', 'label' => 'project.quotes', 'href' => "{$case}/angebot", 'count' => $project->quotes()->where('status', QuoteStatus::Sent)->count(), 'countTo' => null, 'children' => []],
+            ['key' => 'messages', 'label' => 'project.messages', 'href' => "{$case}/nachrichten", 'count' => self::waitingThreads($project), 'countTo' => null, 'children' => []],
+        ];
     }
 
     /**
