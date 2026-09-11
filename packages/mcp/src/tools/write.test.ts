@@ -60,6 +60,7 @@ describe('registerWriteTools', () => {
 
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       'add_internal_note',
+      'add_project_contact',
       'add_project_field',
       'advance_lead_stage',
       'advance_shoot_status',
@@ -161,6 +162,17 @@ describe('registerWriteTools', () => {
     await client.callTool({ name: 'capture_lead', arguments: { ...lead, silent: true } })
 
     expect(post.mock.calls[0][1].headers?.['Idempotency-Key']).not.toBe(post.mock.calls[1][1].headers?.['Idempotency-Key'])
+  })
+
+  it('adds a contact to a project by path, the person as body', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({ name: 'add_project_contact', arguments: { project: 'p1', name: 'Friedrich Rüffer', role: 'partner' } })
+
+    expect(post.mock.calls[0][0]).toBe('/projects/{project}/contacts')
+    expect(post.mock.calls[0][1]).toMatchObject({ params: { path: { project: 'p1' } }, body: { name: 'Friedrich Rüffer', role: 'partner' } })
   })
 
   // The partner used to travel as partner_name, which the api surface never
