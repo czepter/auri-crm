@@ -67,6 +67,16 @@ return [
         'url' => rtrim((string) (env('MCP_URL') ?: env('APP_URL', 'http://localhost')), '/'),
     ],
 
+    // #357: der Mercure-Hub im Admin-Container. `url` ist, wohin jeder
+    // Container publiziert, `public_url`, wo der Browser zuhört. `?: null`
+    // aus demselben Grund wie oben; ohne `url` publiziert nichts.
+    'mercure' => [
+        'url' => env('MERCURE_URL') ?: null,
+        'public_url' => env('MERCURE_PUBLIC_URL') ?: '/.well-known/mercure',
+        'publisher_key' => env('MERCURE_PUBLISHER_JWT_KEY') ?: null,
+        'subscriber_key' => env('MERCURE_SUBSCRIBER_JWT_KEY') ?: null,
+    ],
+
     // M-05: verifies App\Payments\Http\Controllers\StripeWebhookController's
     // inbound deliveries. One deployment-wide value, the same shape as every
     // credential above it on this file — not a studio-editable pair like

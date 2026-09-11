@@ -11,6 +11,7 @@ use App\Media\Models\MultipartUpload;
 use App\Media\Support\ExifFields;
 use App\Media\Support\LibvipsDerivativePipeline;
 use App\Media\Support\PerceptualHash;
+use App\Support\LiveUpdate;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -116,6 +117,8 @@ class IngestCompletedUpload
             if (! $stillRunning && $upload->gallery !== null) {
                 ($this->ensureCover)($upload->gallery);
             }
+
+            LiveUpdate::publish();
         }
     }
 

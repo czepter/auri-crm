@@ -7,6 +7,7 @@ use App\Crm\Models\CrewAssignment;
 use App\Crm\Models\Shoot;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -34,6 +35,8 @@ class CrewController extends Controller
             ['role' => $validated['role']],
         );
 
+        LiveUpdate::publish();
+
         return back();
     }
 
@@ -42,6 +45,8 @@ class CrewController extends Controller
         $this->authorize('assignCrew', $assignment->shoot);
 
         $assignment->delete();
+
+        LiveUpdate::publish();
 
         return back();
     }

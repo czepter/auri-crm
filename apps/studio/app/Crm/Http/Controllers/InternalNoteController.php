@@ -5,6 +5,7 @@ namespace App\Crm\Http\Controllers;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -26,6 +27,8 @@ class InternalNoteController extends Controller
             ...$this->validated($request),
         ]);
 
+        LiveUpdate::publish();
+
         return back();
     }
 
@@ -35,6 +38,8 @@ class InternalNoteController extends Controller
 
         $note->update($this->validated($request));
 
+        LiveUpdate::publish();
+
         return back();
     }
 
@@ -43,6 +48,8 @@ class InternalNoteController extends Controller
         $this->authorize('update', $note);
 
         $note->delete();
+
+        LiveUpdate::publish();
 
         return back();
     }

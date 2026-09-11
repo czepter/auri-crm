@@ -1,7 +1,8 @@
 import { createApp, h, type DefineComponent } from 'vue'
-import { createInertiaApp } from '@inertiajs/vue3'
+import { createInertiaApp, router } from '@inertiajs/vue3'
 import { createI18n } from 'vue-i18n'
 import de from '../locales/de.json'
+import { followLiveUpdates } from './lib/liveReload'
 import '../../css/admin.css'
 
 // German is the only locale. The catalog exists so a second one would be a
@@ -30,6 +31,8 @@ const i18n = createI18n({
 // runtime.
 const pages = import.meta.glob<{ default: DefineComponent }>('./pages/**/*.vue')
 
+router.on('navigate', (event) => followLiveUpdates(event.detail.page.props.live))
+
 createInertiaApp({
   title: (title) => (title ? `${title} · Studio` : 'Studio'),
   resolve: (name) => {
@@ -42,6 +45,8 @@ createInertiaApp({
     return page().then((module) => module.default)
   },
   setup({ el, App, props, plugin }) {
+    followLiveUpdates(props.initialPage.props.live)
+
     createApp({ render: () => h(App, props) })
       .use(plugin)
       .use(i18n)

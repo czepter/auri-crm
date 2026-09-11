@@ -4,6 +4,7 @@ namespace App\Integration\Http\Controllers;
 
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
+use App\Support\LiveUpdate;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
@@ -42,6 +43,8 @@ class ProjectController extends Controller
         }
 
         $project->delete();
+
+        LiveUpdate::publish();
 
         return response()->noContent();
     }
