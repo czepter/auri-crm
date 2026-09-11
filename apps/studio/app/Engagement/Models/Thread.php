@@ -84,7 +84,9 @@ class Thread extends Model
      */
     public function latestMessage(): HasOne
     {
-        return $this->hasOne(Message::class)->latestOfMany();
+        // By when it was said, not by insertion: RecordMessage writes lines in
+        // after the fact, and an old one must not become the newest.
+        return $this->hasOne(Message::class)->latestOfMany('created_at');
     }
 
     public function participants(): HasMany

@@ -4,6 +4,7 @@ namespace App\Engagement\Http\Controllers;
 
 use App\Crm\Models\Project;
 use App\Engagement\Actions\PostMessage;
+use App\Engagement\Actions\RecordMessage;
 use App\Engagement\Models\Message;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
@@ -34,6 +35,30 @@ class ThreadController extends Controller
             auth('staff')->user(),
             $validated['body'],
             $validated['scheduled_for'] === null ? null : Carbon::parse($validated['scheduled_for']),
+        );
+
+        return back();
+    }
+
+    /** What the client said somewhere else, written in afterwards — see RecordMessage. */
+    public function record(Request $request, Project $project, RecordMessage $record): RedirectResponse
+    {
+        $this->authorize('manageMessages', $project);
+
+        $validated = $request->validate([
+            'body' => ['required', 'string', 'max:5000'],
+            'sent_at' => ['nullable', 'date', 'before_or_equal:now'],
+        ]);
+
+        $contact = $record->contact($project, null);
+
+        abort_if($contact === null, 422);
+
+        $record(
+            $project,
+            $contact,
+            $validated['body'],
+            isset($validated['sent_at']) ? Carbon::parse($validated['sent_at']) : now(),
         );
 
         return back();

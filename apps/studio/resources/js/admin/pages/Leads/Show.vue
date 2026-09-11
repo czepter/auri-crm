@@ -6,7 +6,9 @@ import CaseSection from "@/admin/components/CaseSection.vue";
 import LeadQueue from "@/admin/components/LeadQueue.vue";
 import NoteThread from "@/admin/components/NoteThread.vue";
 import QuoteSummary from "@/admin/components/QuoteSummary.vue";
+import MessageThread from "@/admin/components/MessageThread.vue";
 import RailHistory from "@/admin/components/RailHistory.vue";
+import StageTrack from "@/admin/components/StageTrack.vue";
 import ShootFields from "@/admin/components/ShootFields.vue";
 import ShootRow from "@/admin/components/ShootRow.vue";
 import { Button } from "@/ui/button";
@@ -58,7 +60,33 @@ const props = defineProps<{
     week: { date: string; what: string; projectId: string }[];
     conflicts: App.Crm.Data.DateConflictData[];
     stages: { value: string; label: string }[];
+    tab: "overview" | "messages";
+    track: { key: string; label: string; pipeline: string; state: string }[];
+    conversation: App.Engagement.Data.ThreadData | null;
+    canManageMessages: boolean;
 }>();
+
+const tabs = computed(() => [
+    { key: "overview", label: "project.overview", href: `/anfragen/${props.lead.id}`, count: null },
+    {
+        key: "messages",
+        label: "project.messages",
+        href: `/anfragen/${props.lead.id}/nachrichten`,
+        count: props.conversation?.messages.length || null,
+    },
+]);
+
+// The inquiry is the conversation's first line, written before there was a
+// thread to hold it.
+const inquiry = computed(() =>
+    props.lead.inquiryText === null
+        ? null
+        : {
+              author: (props.people.find((person) => person.role === "primary") ?? props.people[0])?.name ?? "",
+              at: props.lead.capturedAt,
+              body: props.lead.inquiryText,
+          },
+);
 
 // ↑↓ walks the queue without leaving the screen. Response time is the lever:
 // eight days of silence happen when every step costs a page load. The pane
@@ -348,6 +376,23 @@ const due = computed(() => {
                     </div>
                 </div>
 
+                <StageTrack class="mt-4" :steps="track" />
+
+                <nav class="mt-[18px] flex gap-[18px] overflow-x-auto text-[13px] shadow-[inset_0_-1px_0_var(--rule)]">
+                    <Link
+                        v-for="item in tabs"
+                        :key="item.key"
+                        :href="item.href"
+                        class="pb-2 whitespace-nowrap no-underline"
+                        :class="item.key === tab
+                            ? 'font-semibold text-foreground shadow-[inset_0_-2px_0_var(--ink)]'
+                            : 'text-ink-2 hover:text-foreground'"
+                        :aria-current="item.key === tab ? 'page' : undefined"
+                    >
+                        {{ $t(item.label) }}<span v-if="item.count" class="ml-1 text-[11.5px]">{{ item.count }}</span>
+                    </Link>
+                </nav>
+
                 <AlertDialog v-model:open="closing">
                     <AlertDialogContent>
                         <AlertDialogHeader>
@@ -402,7 +447,8 @@ const due = computed(() => {
                     </button>
                 </div>
 
-                <CaseSection :title="$t('lead.said')">
+                <template v-if="tab === 'overview'">
+                <CaseSection :title="$t('project.lead')">
                     <!-- The inquiry text beside the contact details: the phone number
                          is the reason the screen is open, so it does not stand small
                          under the quote. -->
@@ -634,6 +680,16 @@ const due = computed(() => {
                     <NoteThread
                         :entries="thread.filter((entry) => !entry.system)"
                         :action="`/auftraege/${lead.projectId}/notizen`"
+                    />
+                </CaseSection>
+                </template>
+
+                <CaseSection v-else :title="$t('project.history')">
+                    <MessageThread
+                        :project-id="lead.projectId"
+                        :thread="conversation"
+                        :can-manage="canManageMessages"
+                        :inquiry="inquiry"
                     />
                 </CaseSection>
             </main>

@@ -5,7 +5,9 @@ namespace App\Crm\Http\Controllers;
 use App\Catalog\Models\Package;
 use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\CheckDateAvailability;
+use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Actions\OpenLeads;
+use App\Crm\Actions\ReadStageTrack;
 use App\Crm\Data\ProjectPersonData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
@@ -18,6 +20,7 @@ use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Support\CrmVocabulary;
+use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
 use App\Quotes\Data\QuoteData;
 use App\Quotes\Enums\QuoteStatus;
@@ -61,7 +64,7 @@ class LeadCaseController extends Controller
         private readonly StudioSettingsResolver $settings,
     ) {}
 
-    public function show(Lead $lead): Response
+    public function show(Lead $lead, string $tab = 'overview'): Response
     {
         $project = $lead->project;
 
@@ -75,8 +78,13 @@ class LeadCaseController extends Controller
 
         $project->load(['contacts', 'shoots.crew.user', 'tasks.project', 'tasks.assignee', 'notes.author', 'latestQuote.items']);
         $primary = $project->primaryShoot;
+        $conversation = $project->latestThread()->with('messages.contact', 'messages.author')->first();
 
         return Inertia::render('Leads/Show', [
+            'tab' => $tab,
+            'track' => app(ReadStageTrack::class)(app(DeriveProjectPosition::class)($project)),
+            'conversation' => $conversation === null ? null : ThreadData::fromModel($conversation),
+            'canManageMessages' => auth('staff')->user()->can('manageMessages', $project),
             'queue' => $this->leads->queue($lead),
             'lead' => [
                 'id' => $lead->public_id,

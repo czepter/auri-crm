@@ -2471,6 +2471,83 @@
                 }
             }
         },
+        "/projects/{project}/messages": {
+            "post": {
+                "operationId": "projects.messages.store",
+                "tags": [
+                    "Message"
+                ],
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "from": {
+                                        "type": "string",
+                                        "enum": [
+                                            "client",
+                                            "studio"
+                                        ]
+                                    },
+                                    "body": {
+                                        "type": "string",
+                                        "maxLength": 5000
+                                    },
+                                    "sent_at": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    },
+                                    "contact": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "from",
+                                    "body"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "`MessageData`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MessageData"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/oauth/token-info": {
             "get": {
                 "operationId": "oauth.token-info",
@@ -3588,6 +3665,11 @@
                     "other"
                 ],
                 "title": "LeadSource"
+            },
+            "MessageData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "MessageData"
             },
             "PaginatedDataCollection": {
                 "type": "object",

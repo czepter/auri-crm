@@ -60,6 +60,7 @@ describe('registerWriteTools', () => {
 
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       'add_internal_note',
+      'add_message',
       'add_project_contact',
       'add_project_field',
       'advance_lead_stage',

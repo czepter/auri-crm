@@ -38,6 +38,7 @@ import { idempotencyKeyFor } from '../idempotency.js'
   registerAddInternalNote(server, clientFor)
   registerUpdateInternalNote(server, clientFor)
   registerDeleteInternalNote(server, clientFor)
+  registerAddMessage(server, clientFor)
   registerAddProjectContact(server, clientFor)
   registerSetProjectFields(server, clientFor)
   registerAddProjectField(server, clientFor)
@@ -396,6 +397,35 @@ function registerAddInternalNote(server: McpServer, clientFor: ApiClientFactory)
         params: { path: { project } },
         body: { body, occurred_at } as never,
         headers: writeHeaders('add_internal_note', { project, body, occurred_at }, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerAddMessage(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'add_message',
+    {
+      title: 'Add message',
+      description:
+        "Write a line of the conversation between client and studio into a project after the fact: a mail, call or chat that happened outside the app. It shows on the project's and the inquiry's Nachrichten tab. Nothing is sent to anyone. Use this, not add_internal_note, for what client and studio said to each other.",
+      inputSchema: {
+        project: z.string().describe('The project public id'),
+        from: z.enum(['client', 'studio']).describe("client: the project's main contact, or `contact`. studio: the signed-in staff member."),
+        body: z.string().max(5000),
+        sent_at: z.string().nullish().describe('When it was said. ISO 8601, never in the future. Defaults to now.'),
+        contact: z.string().nullish().describe('Contact public id, for from: client when it was not the main contact'),
+        ...silentField,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ project, from, body, sent_at, contact, silent }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/messages', {
+        params: { path: { project } },
+        body: { from, body, sent_at, contact } as never,
+        headers: writeHeaders('add_message', { project, from, body, sent_at, contact }, silent),
       })
 
       return apiResult(data, error)

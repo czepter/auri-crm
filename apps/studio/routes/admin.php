@@ -487,6 +487,9 @@ Route::middleware('audience:staff')->group(function () {
         // C-10 (#245): editing is a state of the view, so it posts back to
         // the same case rather than to a screen of its own.
         Route::patch('/anfragen/{lead}', [LeadCaseController::class, 'update'])->name('leads.update');
+        Route::get('/anfragen/{lead}/nachrichten', [LeadCaseController::class, 'show'])
+            ->defaults('tab', 'messages')
+            ->name('leads.messages');
         Route::post('/anfragen/{lead}/schliessen', [LeadStageController::class, 'close'])
             ->name('leads.close');
         Route::post('/anfragen/{lead}/wieder-oeffnen', [LeadStageController::class, 'reopen'])
@@ -529,6 +532,10 @@ Route::middleware('audience:staff')->group(function () {
             ->name('projects.messages');
         Route::post('/auftraege/{project}/nachrichten', [ThreadController::class, 'reply'])
             ->name('threads.reply');
+        // What the client said elsewhere, written in afterwards. Nothing is
+        // sent, so it originates nothing either — see RecordMessage.
+        Route::post('/auftraege/{project}/nachrichten/nachtrag', [ThreadController::class, 'record'])
+            ->name('threads.record');
         // E-13: cancel one that has not gone out yet.
         Route::delete('/auftraege/{project}/nachrichten/{message}', [ThreadController::class, 'cancel'])
             ->name('threads.cancel');

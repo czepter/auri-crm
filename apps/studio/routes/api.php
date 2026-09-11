@@ -17,6 +17,7 @@ use App\Integration\Http\Controllers\ContactController;
 use App\Integration\Http\Controllers\CrmReadController;
 use App\Integration\Http\Controllers\InternalNoteController;
 use App\Integration\Http\Controllers\LeadController;
+use App\Integration\Http\Controllers\MessageController;
 use App\Integration\Http\Controllers\OAuthTokenInfoController;
 use App\Integration\Http\Controllers\ProjectContactController;
 use App\Integration\Http\Controllers\ProjectController;
@@ -266,6 +267,11 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'ide
 Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'idempotent'])
     ->delete('/notes/{note:public_id}', [InternalNoteController::class, 'destroy'])
     ->name('api.notes.destroy');
+
+// ManageMessages, the capability the admin reply already requires.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageMessages->value, 'idempotent'])
+    ->post('/projects/{project:public_id}/messages', [MessageController::class, 'store'])
+    ->name('api.projects.messages.store');
 
 // ManageLeads, the scope leads.store already attaches contacts under.
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
