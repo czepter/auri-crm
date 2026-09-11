@@ -211,9 +211,42 @@ function openMenu(event: MouseEvent, card: Card) {
     menu.value = { card, x: event.clientX, y: event.clientY };
 }
 
-const groupRows = computed(() =>
-    props.groups.filter((group) => group.rows.length),
+const query = ref("");
+const stage = ref<string | null>(null);
+
+const pills = computed(() =>
+    props.columns
+        .map((column) => ({
+            key: column.stage,
+            name: column.label,
+            count: props.groups
+                .flatMap((group) => group.rows)
+                .filter((card) => card.stage === column.stage).length,
+        }))
+        .filter((option) => option.count > 0),
 );
+
+function pick(key: string) {
+    stage.value = stage.value === key ? null : key;
+}
+
+const groupRows = computed(() => {
+    const needle = query.value.trim().toLocaleLowerCase("de");
+
+    return props.groups
+        .map((group) => ({
+            ...group,
+            rows: group.rows.filter(
+                (card) =>
+                    (!stage.value || card.stage === stage.value) &&
+                    (!needle ||
+                        `${card.names} ${card.venue ?? ""}`
+                            .toLocaleLowerCase("de")
+                            .includes(needle)),
+            ),
+        }))
+        .filter((group) => group.rows.length);
+});
 
 /* crm.css .stufe s.s2 … s.s5 — the stage dot darkens toward the decision and
    goes warm at the one that still needs an answer. */
@@ -237,10 +270,10 @@ const workflowAllowed = computed(() =>
                 <PageHead :title="$t('board.title')">
                     <ChoiceGroup
                         v-model="view"
-                        class="ml-auto"
+                        class="ml-3"
                         :options="[
-                            { value: 'board', label: $t('board.viewBoard') },
                             { value: 'liste', label: $t('board.viewList') },
+                            { value: 'board', label: $t('board.viewBoard') },
                         ]"
                         variant="segmented"
                         @update:model-value="choose"
@@ -248,6 +281,7 @@ const workflowAllowed = computed(() =>
 
                     <Button
                         v-if="stageSettings"
+                        class="ml-auto"
                         variant="pill-muted"
                         type="button"
                         @click="stagesOpen = true"
@@ -255,7 +289,12 @@ const workflowAllowed = computed(() =>
                         {{ $t("stages.entry") }}
                     </Button>
 
-                    <Button :as="Link" variant="pill" href="/anfragen/neu">
+                    <Button
+                        :as="Link"
+                        :class="!stageSettings && 'ml-auto'"
+                        variant="pill"
+                        href="/anfragen/neu"
+                    >
                         {{ $t("board.create") }}
                     </Button>
                 </PageHead>
@@ -376,7 +415,25 @@ const workflowAllowed = computed(() =>
 
                 <!-- List — grouped by who owes the next move, not by stage. A board
              shows where something stands, a table shows what is next. -->
-                <Table v-else>
+                <template v-else>
+                <div class="flex flex-wrap items-center gap-4 px-8 pt-4.5">
+                    <div class="flex flex-wrap gap-1.5">
+                        <button
+                            v-for="option in pills"
+                            :key="option.key"
+                            class="flex cursor-pointer items-center gap-1.5 rounded-[var(--r-pill)] px-3 py-1.5 text-[12.5px]"
+                            :class="stage === option.key ? 'bg-foreground text-paper' : 'bg-sunk text-foreground'"
+                            type="button"
+                            :aria-pressed="stage === option.key"
+                            @click="pick(option.key)"
+                        >
+                            {{ option.name }}<span class="text-[11.5px] tabular-nums opacity-60">{{ option.count }}</span>
+                        </button>
+                    </div>
+                    <Input v-model="query" class="ml-auto h-8 w-60" type="search" :placeholder="$t('board.searchPlaceholder')" />
+                </div>
+
+                <Table>
                     <thead>
                         <tr>
                             <TableHead>{{ $t("board.colInquiry") }}</TableHead>
@@ -454,6 +511,7 @@ const workflowAllowed = computed(() =>
                         </template>
                     </tbody>
                 </Table>
+                </template>
 
                 <div
                     v-if="menu"
