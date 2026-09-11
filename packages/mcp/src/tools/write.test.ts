@@ -70,9 +70,11 @@ describe('registerWriteTools', () => {
       'capture_lead',
       'capture_leads_bulk',
       'close_lead',
+      'create_package',
       'create_quote',
       'create_shoot',
       'delete_internal_note',
+      'delete_package',
       'delete_project',
       'reopen_lead',
       'revise_quote',
@@ -81,6 +83,7 @@ describe('registerWriteTools', () => {
       'uncancel_shoot',
       'update_internal_note',
       'update_lead',
+      'update_package',
       'update_quote',
     ])
   })
@@ -112,12 +115,14 @@ describe('registerWriteTools', () => {
       'cancel_shoot',
       'close_lead',
       'delete_internal_note',
+      'delete_package',
       'delete_project',
       'revise_quote',
       'send_quote',
       'set_project_fields',
       'update_internal_note',
       'update_lead',
+      'update_package',
       'update_quote',
     ])
   })
@@ -136,6 +141,21 @@ describe('registerWriteTools', () => {
       params: { path: { project: 'p1' } },
       body: { package: 'pkg_1', items, stages, hourly_rate: 25000 },
     })
+  })
+
+  it('creates, updates and deletes a package by its id', async () => {
+    const { post, patch, del, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({ name: 'create_package', arguments: { name: 'Reportage 2', items: [{ title: 'Zehn Stunden', quantity: 1, unit_price: 179000 }] } })
+    await client.callTool({ name: 'update_package', arguments: { package: 'pkg_1', is_active: false } })
+    const deleted = await client.callTool({ name: 'delete_package', arguments: { package: 'pkg_1' } })
+
+    expect(post.mock.calls[0][0]).toBe('/packages')
+    expect(patch.mock.calls[0]).toMatchObject(['/packages/{package}', { params: { path: { package: 'pkg_1' } }, body: { is_active: false } }])
+    expect(del.mock.calls[0][0]).toBe('/packages/{package}')
+    expect(JSON.stringify(deleted.content)).toContain('Deleted package pkg_1.')
   })
 
   it('calls the API with an Idempotency-Key header', async () => {

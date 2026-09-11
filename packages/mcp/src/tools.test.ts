@@ -323,6 +323,7 @@ describe('read tools', () => {
       id: 'pkg_reportage',
       name: 'Reportage 2',
       description: null,
+      isActive: true,
       items: [{ id: 'pit_1', title: 'Reportage 10 Stunden', description: null, quantity: 1, unitPrice: 179000 }],
     }
 

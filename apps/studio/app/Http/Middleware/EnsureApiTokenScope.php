@@ -27,16 +27,20 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class EnsureApiTokenScope
 {
-    public function handle(Request $request, Closure $next, string $capability): Response
+    /** Several capabilities are an any-of: a route two kinds of token reach for two different reasons. */
+    public function handle(Request $request, Closure $next, string ...$capabilities): Response
     {
-        $required = Capability::tryFrom($capability)
-            ?? throw new InvalidArgumentException("Unknown capability scope \"{$capability}\".");
+        $required = array_map(
+            fn (string $capability) => Capability::tryFrom($capability)
+                ?? throw new InvalidArgumentException("Unknown capability scope \"{$capability}\"."),
+            $capabilities,
+        );
 
         $principal = $request->user('api');
 
         $allowed = match (true) {
-            $principal instanceof ApiToken => $principal->allows($required),
-            $principal instanceof User => $principal->tokenCan($required->value),
+            $principal instanceof ApiToken => collect($required)->contains(fn (Capability $c) => $principal->allows($c)),
+            $principal instanceof User => collect($required)->contains(fn (Capability $c) => $principal->tokenCan($c->value)),
             default => false,
         };
 

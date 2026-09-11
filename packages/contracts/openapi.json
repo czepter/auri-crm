@@ -2655,6 +2655,312 @@
                 }
             }
         },
+        "/packages": {
+            "get": {
+                "operationId": "packages.index",
+                "tags": [
+                    "Package"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "packages.store",
+                "tags": [
+                    "Package"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/SavePackage"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "maxLength": 255
+                                            },
+                                            "description": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 2000
+                                            },
+                                            "is_active": {
+                                                "type": "boolean"
+                                            },
+                                            "items": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "title": {
+                                                            "type": "string",
+                                                            "maxLength": 255
+                                                        },
+                                                        "description": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "maxLength": 2000
+                                                        },
+                                                        "quantity": {
+                                                            "type": "integer",
+                                                            "minimum": 1
+                                                        },
+                                                        "unit_price": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "minimum": 0
+                                                        },
+                                                        "id": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's contracts included."
+                                                        },
+                                                        "selectable": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "selected": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "outcome": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "maxLength": 255
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "title",
+                                                        "quantity"
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        "required": [
+                                            "name"
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PackageData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/packages/{package}": {
+            "patch": {
+                "operationId": "packages.update",
+                "tags": [
+                    "Package"
+                ],
+                "parameters": [
+                    {
+                        "name": "package",
+                        "in": "path",
+                        "required": true,
+                        "description": "The package public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/SavePackage"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "maxLength": 255
+                                            },
+                                            "description": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 2000
+                                            },
+                                            "is_active": {
+                                                "type": "boolean"
+                                            },
+                                            "items": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "title": {
+                                                            "type": "string",
+                                                            "maxLength": 255
+                                                        },
+                                                        "description": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "maxLength": 2000
+                                                        },
+                                                        "quantity": {
+                                                            "type": "integer",
+                                                            "minimum": 1
+                                                        },
+                                                        "unit_price": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "minimum": 0
+                                                        },
+                                                        "id": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's contracts included."
+                                                        },
+                                                        "selectable": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "selected": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "outcome": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "maxLength": 255
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "title",
+                                                        "quantity"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PackageData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "packages.destroy",
+                "summary": "Nothing built from a package references it \u2014 a quote takes a dead copy\nof the lines (Package::copyItems()) \u2014 so this removes the package and\nits own rows and touches nothing else. Deactivating instead keeps it\noff the list new quotes start from without removing it",
+                "tags": [
+                    "Package"
+                ],
+                "parameters": [
+                    {
+                        "name": "package",
+                        "in": "path",
+                        "required": true,
+                        "description": "The package public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/projects/{project}/contacts": {
             "post": {
                 "operationId": "projects.contacts.store",
@@ -3108,38 +3414,6 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
-                    }
-                }
-            }
-        },
-        "/packages": {
-            "get": {
-                "operationId": "packages.index",
-                "summary": "What create_quote's `package` can start from: the active ones, as the board's picker offers them",
-                "tags": [
-                    "Quote"
-                ],
-                "responses": {
-                    "200": {
-                        "description": "",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -4375,6 +4649,11 @@
                 "additionalProperties": {},
                 "title": "MessageData"
             },
+            "PackageData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "PackageData"
+            },
             "PaginatedDataCollection": {
                 "type": "object",
                 "additionalProperties": {},
@@ -4413,6 +4692,84 @@
                 "type": "object",
                 "additionalProperties": {},
                 "title": "QuoteData"
+            },
+            "SavePackage": {
+                "type": "object",
+                "description": "The package editor's save, shared by the board (App\\Catalog\\Http\\\nControllers\\PackageController) and the api surface.\n\nWholesale replace of the lines rather than a diffed sync: no id anywhere\nelse references an item row \u2014 see Package::copyItems() \u2014 so there is no\nforeign key a delete-and-recreate could orphan.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "title": {
+                                    "type": "string",
+                                    "maxLength": 255
+                                },
+                                "description": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 2000
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "unit_price": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "minimum": 0
+                                },
+                                "id": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's contracts included."
+                                },
+                                "selectable": {
+                                    "type": "boolean"
+                                },
+                                "selected": {
+                                    "type": "boolean"
+                                },
+                                "outcome": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                }
+                            },
+                            "required": [
+                                "title",
+                                "quantity"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "title": "SavePackage"
             },
             "ShootKind": {
                 "type": "string",

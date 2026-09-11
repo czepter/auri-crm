@@ -48,6 +48,9 @@ import { idempotencyKeyFor } from '../idempotency.js'
   registerSendQuote(server, clientFor)
   registerReviseQuote(server, clientFor)
   registerAcceptQuote(server, clientFor)
+  registerCreatePackage(server, clientFor)
+  registerUpdatePackage(server, clientFor)
+  registerDeletePackage(server, clientFor)
 }
 
 /**
@@ -779,6 +782,95 @@ function registerAcceptQuote(server: McpServer, clientFor: ApiClientFactory): vo
       })
 
       return apiResult(data, error)
+    },
+  )
+}
+
+const packageFields = {
+  name: z.string().max(255),
+  description: z.string().max(2000).nullish(),
+  is_active: z.boolean().optional().describe('False hides it from what a new quote can start from, leaving existing quotes alone'),
+  items: z
+    .array(
+      z.object({
+        id: z.string().nullish().describe('The existing line id, to keep its picture'),
+        title: z.string().max(255),
+        description: z.string().max(2000).nullish(),
+        quantity: z.number().int().min(1),
+        unit_price: z.number().int().min(0).nullish().describe('Cents. Null makes it an included service.'),
+      }),
+    )
+    .optional()
+    .describe('Every line of the package, in order. Replaces all lines when given.'),
+}
+
+function registerCreatePackage(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'create_package',
+    {
+      title: 'Create a package',
+      description: 'Add a package to the catalogue new quotes can start from. Amounts are in cents: 1.790 € is 179000.',
+      inputSchema: { ...packageFields, ...silentField },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ silent, ...pkg }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/packages', {
+        body: pkg as never,
+        headers: writeHeaders('create_package', pkg, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerUpdatePackage(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'update_package',
+    {
+      title: 'Update a package',
+      description:
+        'Change a package. Only the fields given change; `items`, when given, replaces every line. Quotes already made from it keep what they copied. list_packages shows the current catalogue.',
+      inputSchema: {
+        package: z.string().describe('The package public id'),
+        ...packageFields,
+        name: packageFields.name.optional(),
+        ...silentField,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ package: id, silent, ...fields }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).PATCH('/packages/{package}', {
+        params: { path: { package: id } },
+        body: fields as never,
+        headers: writeHeaders('update_package', { package: id, ...fields }, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerDeletePackage(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'delete_package',
+    {
+      title: 'Delete a package',
+      description:
+        'Remove a package from the catalogue. Quotes made from it are untouched — they carry their own copy of the lines. There is no undo; update_package with is_active false only hides it instead.',
+      inputSchema: { package: z.string().describe('The package public id'), ...silentField },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ package: id, silent }, extra) => {
+      const { error } = await clientFor(extra.authInfo?.token).DELETE('/packages/{package}', {
+        params: { path: { package: id } },
+        headers: writeHeaders('delete_package', { package: id }, silent),
+      })
+
+      // 204, no body — see delete_project.
+      return error !== undefined
+        ? apiResult(undefined, error)
+        : { content: [{ type: 'text', text: `Deleted package ${id}.` }] }
     },
   )
 }
