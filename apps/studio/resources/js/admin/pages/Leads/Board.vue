@@ -140,11 +140,15 @@ function reset() {
 // The move to "Gebucht" is the booking (AdvanceLeadStage): the job is
 // written, the shoots go to booked and the card leaves this board for
 // /projekte. Every other move is a stage correction and asks nothing.
+// Kept apart from the open state: AlertDialogAction closes the dialog before
+// its @click runs, so an id cleared on close is already null in book().
 const booking = ref<string | null>(null);
+const confirmingBook = ref(false);
 
 function move(leadId: string, stage: string) {
     if (stage === "booked") {
         booking.value = leadId;
+        confirmingBook.value = true;
 
         return;
     }
@@ -162,12 +166,12 @@ function book() {
         { stage: "booked" },
         { preserveScroll: true },
     );
-    booking.value = null;
 }
 
 // T-20: schliessen mit dem Ausgang. Bis hierhin liess sich eine Anfrage
 // ueberhaupt nicht abschliessen — markLost() hatte keinen Aufrufer.
 const closing = ref<string | null>(null);
+const confirmingClose = ref(false);
 const closeForm = useForm({ outcome: "lost", reason: "" });
 
 function closeLead() {
@@ -175,7 +179,6 @@ function closeLead() {
         preserveScroll: true,
         onSuccess: () => {
             closeForm.reset();
-            closing.value = null;
         },
     });
 }
@@ -477,20 +480,13 @@ const workflowAllowed = computed(() =>
 
                     <div
                         class="mt-1 cursor-pointer rounded-lg border-t border-rule px-[9px] py-1.5 text-[12.5px] hover:bg-sunk"
-                        @click="closing = menu!.card.leadId; menu = null"
+                        @click="closing = menu!.card.leadId; confirmingClose = true; menu = null"
                     >
                         {{ $t("board.close") }}
                     </div>
                 </div>
 
-                <AlertDialog
-                    :open="closing !== null"
-                    @update:open="
-                        (open: boolean) => {
-                            if (!open) closing = null;
-                        }
-                    "
-                >
+                <AlertDialog v-model:open="confirmingClose">
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>{{
@@ -530,14 +526,7 @@ const workflowAllowed = computed(() =>
                     </AlertDialogContent>
                 </AlertDialog>
 
-                <AlertDialog
-                    :open="booking !== null"
-                    @update:open="
-                        (open: boolean) => {
-                            if (!open) booking = null;
-                        }
-                    "
-                >
+                <AlertDialog v-model:open="confirmingBook">
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>{{
