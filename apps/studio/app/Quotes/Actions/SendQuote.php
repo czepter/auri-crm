@@ -11,6 +11,7 @@ use App\Quotes\Models\Quote;
 use App\Quotes\Notifications\QuoteSent;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
+use Carbon\CarbonInterface;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
@@ -30,13 +31,14 @@ class SendQuote
         private readonly NotificationService $notifications,
     ) {}
 
-    public function __invoke(Quote $quote, ?User $actor = null): Quote
+    /** $at: when it went out, for a quote entered after the fact. */
+    public function __invoke(Quote $quote, ?User $actor = null, ?CarbonInterface $at = null): Quote
     {
         if ($quote->status !== QuoteStatus::Draft) {
             throw new DomainException("Quote {$quote->public_id} is already {$quote->status->value} and cannot be sent.");
         }
 
-        DB::transaction(function () use ($quote, $actor) {
+        DB::transaction(function () use ($quote, $actor, $at) {
             // snapshotVat() first, while the row still reads draft in the
             // database: Quote::booted()'s guard only starts refusing writes
             // once status itself is already sent/superseded there, so this
@@ -52,7 +54,7 @@ class SendQuote
 
             $quote->update([
                 'status' => QuoteStatus::Sent,
-                'sent_at' => now(),
+                'sent_at' => $at ?? now(),
                 'number' => $allocation['number'],
             ]);
 
@@ -62,6 +64,7 @@ class SendQuote
                 context: ['project' => $quote->project->public_id, 'number' => $allocation['number']],
                 subject: $quote->public_id,
                 projectId: $quote->project_id,
+                occurredAt: $at,
             );
         });
 

@@ -59,6 +59,7 @@ describe('registerWriteTools', () => {
     const { tools } = await client.listTools()
 
     expect(tools.map((tool) => tool.name).sort()).toEqual([
+      'accept_quote',
       'add_internal_note',
       'add_message',
       'add_project_contact',
@@ -69,14 +70,18 @@ describe('registerWriteTools', () => {
       'capture_lead',
       'capture_leads_bulk',
       'close_lead',
+      'create_quote',
       'create_shoot',
       'delete_internal_note',
       'delete_project',
       'reopen_lead',
+      'revise_quote',
+      'send_quote',
       'set_project_fields',
       'uncancel_shoot',
       'update_internal_note',
       'update_lead',
+      'update_quote',
     ])
   })
 
@@ -101,16 +106,36 @@ describe('registerWriteTools', () => {
         .map((tool) => tool.name)
         .sort(),
     ).toEqual([
+      'accept_quote',
       'advance_lead_stage',
       'advance_shoot_status',
       'cancel_shoot',
       'close_lead',
       'delete_internal_note',
       'delete_project',
+      'revise_quote',
+      'send_quote',
       'set_project_fields',
       'update_internal_note',
       'update_lead',
+      'update_quote',
     ])
+  })
+
+  it('creates a quote on its project with the lines as body', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    const items = [{ title: 'Reportage 2', quantity: 1, unit_price: 179000 }]
+    const stages = [{ percent: 30, label: 'Anzahlung' }]
+    await client.callTool({ name: 'create_quote', arguments: { project: 'p1', package: 'pkg_1', items, stages, hourly_rate: 25000 } })
+
+    expect(post.mock.calls[0][0]).toBe('/projects/{project}/quotes')
+    expect(post.mock.calls[0][1]).toMatchObject({
+      params: { path: { project: 'p1' } },
+      body: { package: 'pkg_1', items, stages, hourly_rate: 25000 },
+    })
   })
 
   it('calls the API with an Idempotency-Key header', async () => {

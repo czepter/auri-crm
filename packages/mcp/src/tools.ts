@@ -84,6 +84,44 @@ const projectDetailSchema = projectSchema.extend({
     .nullable(),
   contacts: z.array(contactSchema.extend({ role: z.string() })),
   shoots: z.array(shootSchema),
+  // QuoteData, amounts in cents.
+  quotes: z.array(
+    z.object({
+      id: z.string(),
+      status: z.string(),
+      number: z.string().nullable(),
+      validUntil: z.string().nullable(),
+      sentAt: z.string().nullable(),
+      total: z.number(),
+      net: z.number(),
+      items: z.array(
+        z.object({
+          id: z.string(),
+          title: z.string(),
+          description: z.string().nullable(),
+          quantity: z.number(),
+          unitPrice: z.number().nullable(),
+          netTotal: z.number(),
+        }),
+      ),
+    }),
+  ),
+})
+
+/** PackageData — see list_packages. */
+const packageSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  items: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      description: z.string().nullable(),
+      quantity: z.number(),
+      unitPrice: z.number().nullable(),
+    }),
+  ),
 })
 
 const projectFieldSchema = z.object({
@@ -179,7 +217,7 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
     {
       title: 'Get a project',
       description:
-        "Gets a single project by its public_id, with its lead (including its inquiry text), its contacts and their roles, and its shoots — enough to verify a capture or an import without a second call. Internal notes are not part of it; they need their own scope. The project index returns the lean shape instead.",
+        "Gets a single project by its public_id, with its lead (including its inquiry text), its contacts and their roles, its shoots and its quotes — enough to verify a capture or an import without a second call. Internal notes are not part of it; they need their own scope. The project index returns the lean shape instead.",
       inputSchema: {
         publicId: z.string().describe("The project's public_id, never its internal integer id."),
       },
@@ -251,6 +289,26 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
       }
 
       return jsonResult({ types: data.data as unknown as z.infer<typeof projectTypeSchema>[] })
+    },
+  )
+
+  server.registerTool(
+    'list_packages',
+    {
+      title: 'List packages',
+      description: "The studio's active packages with their lines, amounts in cents. The id is what create_quote's `package` takes.",
+      inputSchema: {},
+      outputSchema: {
+        packages: z.array(packageSchema),
+      },
+    },
+    async (_args, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).GET('/packages')
+      if (error) {
+        return errorResult(error)
+      }
+
+      return jsonResult({ packages: data.data as unknown as z.infer<typeof packageSchema>[] })
     },
   )
 

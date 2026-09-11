@@ -22,6 +22,7 @@ use App\Integration\Http\Controllers\OAuthTokenInfoController;
 use App\Integration\Http\Controllers\ProjectContactController;
 use App\Integration\Http\Controllers\ProjectController;
 use App\Integration\Http\Controllers\ProjectFieldController;
+use App\Integration\Http\Controllers\QuoteController;
 use App\Integration\Http\Controllers\ShootController;
 use App\Payments\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -248,6 +249,19 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'id
 Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
     ->post('/shoots/{shoot:public_id}/uncancel', [ShootController::class, 'uncancel'])
     ->name('api.shoots.uncancel');
+
+// ManageQuotes, the capability QuotePolicy's manageQuotes already routes to.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageQuotes->value])
+    ->get('/packages', [QuoteController::class, 'packages'])
+    ->name('api.packages.index');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageQuotes->value, 'idempotent'])->group(function () {
+    Route::post('/projects/{project:public_id}/quotes', [QuoteController::class, 'store'])->name('api.projects.quotes.store');
+    Route::patch('/quotes/{quote:public_id}', [QuoteController::class, 'update'])->name('api.quotes.update');
+    Route::post('/quotes/{quote:public_id}/send', [QuoteController::class, 'send'])->name('api.quotes.send');
+    Route::post('/quotes/{quote:public_id}/revise', [QuoteController::class, 'revise'])->name('api.quotes.revise');
+    Route::post('/quotes/{quote:public_id}/accept', [QuoteController::class, 'accept'])->name('api.quotes.accept');
+});
 
 // Taking an import back — see ProjectController. ManageLeads, the scope that
 // created the project through leads.store: whoever may capture a run may undo

@@ -4,6 +4,7 @@ namespace App\Integration\Data;
 
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Quotes\Data\QuoteData;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -32,11 +33,13 @@ class ProjectDetailReadData extends Data
         public array $contacts,
         /** @var list<ShootReadData> */
         public array $shoots,
+        /** @var list<QuoteData> */
+        public array $quotes,
     ) {}
 
     public static function fromModel(Project $project): self
     {
-        $project->loadMissing(['lead', 'contacts', 'shoots']);
+        $project->loadMissing(['lead', 'contacts', 'shoots', 'quotes.items', 'quotes.paymentStages', 'quotes.predecessor']);
 
         return new self(
             id: $project->public_id,
@@ -51,6 +54,7 @@ class ProjectDetailReadData extends Data
             shoots: $project->shoots
                 ->map(fn (Shoot $shoot) => ShootReadData::fromModel($shoot->setRelation('project', $project)))
                 ->all(),
+            quotes: $project->quotes->map(QuoteData::fromModel(...))->all(),
         );
     }
 }

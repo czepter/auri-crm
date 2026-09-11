@@ -10,6 +10,7 @@ use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Quotes\Support\QuoteRange;
 use App\Support\AuditLogger;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -40,13 +41,16 @@ class AcceptQuote
 
     /**
      * @param  list<string>  $selectedItemIds  public_ids of the blocks the client switched on
+     * @param  ?string  $ip  null when staff record a yes given by mail or phone
+     * @param  ?CarbonInterface  $at  when the yes was given, for one entered after the fact
      */
     public function __invoke(
         Quote $quote,
         Contact $contact,
-        string $ip,
+        ?string $ip,
         ?int $hours = null,
         array $selectedItemIds = [],
+        ?CarbonInterface $at = null,
     ): Quote {
         if ($quote->status === QuoteStatus::Accepted) {
             return $quote;
@@ -56,7 +60,7 @@ class AcceptQuote
             throw ValidationException::withMessages(['quote' => __('portal.quote_superseded')]);
         }
 
-        $expired = $quote->valid_until !== null && $quote->valid_until->copy()->endOfDay()->isPast();
+        $expired = $quote->valid_until !== null && $quote->valid_until->copy()->endOfDay()->lt($at ?? now());
 
         if ($quote->status !== QuoteStatus::Sent || $expired) {
             throw ValidationException::withMessages(['quote' => __('portal.quote_not_valid')]);
@@ -66,10 +70,10 @@ class AcceptQuote
             ? $this->configuration($quote, $hours, $selectedItemIds)
             : [];
 
-        DB::transaction(function () use ($quote, $contact, $ip, $configuration) {
+        DB::transaction(function () use ($quote, $contact, $ip, $configuration, $at) {
             $quote->update([
                 'status' => QuoteStatus::Accepted,
-                'accepted_at' => now(),
+                'accepted_at' => $at ?? now(),
                 'accepted_ip' => $ip,
                 'accepted_by_contact_id' => $contact->id,
                 ...$configuration['quote'] ?? [],
@@ -90,6 +94,7 @@ class AcceptQuote
                 context: ['project' => $quote->project->public_id, 'contact' => $contact->public_id],
                 subject: $quote->public_id,
                 projectId: $quote->project_id,
+                occurredAt: $at,
             );
         });
 
