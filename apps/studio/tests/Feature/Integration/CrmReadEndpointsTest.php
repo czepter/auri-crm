@@ -238,7 +238,12 @@ it('carries the lead, the contacts with their roles, and the shoots', function (
         'source' => LeadSource::Referral,
         'inquiry_text' => 'Standesamt Jena, Juni.',
     ]);
-    $shoot = Shoot::factory()->for($project)->create();
+    $shoot = Shoot::factory()->for($project)->create([
+        'call_time' => '14:30',
+        'end_time' => '23:00',
+        'venue_name' => 'Standesamt',
+        'venue_city' => 'Jena',
+    ]);
 
     $body = $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
         ->getJson("/api/projects/{$project->public_id}")
@@ -249,8 +254,20 @@ it('carries the lead, the contacts with their roles, and the shoots', function (
         'source' => 'referral',
         'sourceOther' => null,
         'inquiryText' => 'Standesamt Jena, Juni.',
+        'capturedVia' => $lead->captured_via->value,
+        'capturedViaOther' => null,
         'capturedAt' => $lead->captured_at->toIso8601String(),
+        'stageEnteredAt' => $lead->stage_entered_at?->toIso8601String(),
+        'outcome' => null,
+        'lostReason' => null,
         'lostAt' => null,
+    ]);
+    expect($body['shoots'][0])->toMatchArray([
+        'callTime' => '14:30',
+        'endTime' => '23:00',
+        'venueName' => 'Standesamt',
+        'venueCity' => 'Jena',
+        'cancelledReason' => null,
     ]);
     expect($body['contacts'])->toHaveCount(1);
     expect($body['contacts'][0]['id'])->toBe($contact->public_id);

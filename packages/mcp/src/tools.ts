@@ -42,8 +42,13 @@ const shootSchema = z.object({
   kind: z.string(),
   label: z.string().nullable(),
   date: z.string().nullable(),
+  callTime: z.string().nullable(),
+  endTime: z.string().nullable(),
+  venueName: z.string().nullable(),
+  venueCity: z.string().nullable(),
   status: z.string(),
   cancelledAt: z.string().nullable(),
+  cancelledReason: z.string().nullable(),
   updatedAt: z.string(),
 })
 
@@ -61,13 +66,19 @@ const leadSchema = z.object({
 
 /** What GET /projects/{project} alone returns — see ProjectDetailReadData. */
 const projectDetailSchema = projectSchema.extend({
+  typeOther: z.string().nullable(),
   lead: z
     .object({
       stage: z.string(),
       source: z.string(),
       sourceOther: z.string().nullable(),
       inquiryText: z.string().nullable(),
+      capturedVia: z.string(),
+      capturedViaOther: z.string().nullable(),
       capturedAt: z.string(),
+      stageEnteredAt: z.string().nullable(),
+      outcome: z.string().nullable(),
+      lostReason: z.string().nullable(),
       lostAt: z.string().nullable(),
     })
     .nullable(),
