@@ -1,7 +1,10 @@
 <?php
 
+use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
+use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
+use App\Crm\Models\InternalNote;
 use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
@@ -99,6 +102,35 @@ it('filters out rows updated before the since timestamp', function () {
     expect($ids)->not->toContain($old->public_id);
 });
 
+// #353: the contact search runs on the server, over every row rather than
+// the page a caller happens to be holding.
+
+it('searches contacts by name or email, case-insensitively', function () {
+    $byName = Contact::factory()->create(['name' => 'Steffens', 'email' => 'post@example.test']);
+    $byEmail = Contact::factory()->create(['name' => 'Kowalski', 'email' => 'STEFF@example.test']);
+    Contact::factory()->create(['name' => 'Meier', 'email' => 'meier@example.test']);
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ManageContacts))
+        ->getJson('/api/contacts?query=steff')
+        ->assertOk()->json();
+
+    expect(collect($body['data'])->pluck('id')->sort()->values()->all())
+        ->toBe(collect([$byName->public_id, $byEmail->public_id])->sort()->values()->all());
+});
+
+// The search the page-local filter could never do: the match is on the last
+// page, so a filter over the first page returns nothing at all.
+it('finds a contact that the first page does not contain', function () {
+    Contact::factory()->count(30)->create(['name' => 'Meier']);
+    $needle = Contact::factory()->create(['name' => 'Steffens']);
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ManageContacts))
+        ->getJson('/api/contacts?query=steffens')
+        ->assertOk()->json();
+
+    expect(collect($body['data'])->pluck('id')->all())->toBe([$needle->public_id]);
+});
+
 it('rejects a since value that is not a valid date', function () {
     $this->withHeader('Authorization', bearerFor(Capability::ManageContacts))
         ->getJson('/api/contacts?since=not-a-date')
@@ -116,6 +148,71 @@ it('carries a lead\'s project as the project\'s own public_id', function () {
     expect($body['data'][0]['projectId'])->toBe($project->public_id);
 });
 
+// #349: GET /api/leads?stage=&closed=&captured_from=&captured_to=
+
+it('filters leads by stage', function () {
+    $wanted = Lead::factory()->atStage(LeadStage::QuoteSent)->create();
+    Lead::factory()->atStage(LeadStage::New)->create();
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ManageLeads))
+        ->getJson('/api/leads?stage=quote_sent')
+        ->assertOk()->json();
+
+    expect(collect($body['data'])->pluck('id')->all())->toBe([$wanted->public_id]);
+});
+
+it('filters leads by whether they are closed, keeping the stage they died in', function () {
+    $open = Lead::factory()->atStage(LeadStage::QuoteSent)->create();
+    $closed = Lead::factory()->atStage(LeadStage::QuoteSent)->lost()->create();
+
+    $header = bearerFor(Capability::ManageLeads);
+
+    $stillIn = $this->withHeader('Authorization', $header)->getJson('/api/leads?closed=false')->assertOk()->json();
+    $done = $this->withHeader('Authorization', $header)->getJson('/api/leads?stage=quote_sent&closed=true')->assertOk()->json();
+
+    expect(collect($stillIn['data'])->pluck('id')->all())->toBe([$open->public_id]);
+    expect(collect($done['data'])->pluck('id')->all())->toBe([$closed->public_id]);
+});
+
+it('filters leads to the window they were captured in', function () {
+    $inWindow = Lead::factory()->create(['captured_at' => '2026-03-15 09:00:00']);
+    Lead::factory()->create(['captured_at' => '2026-02-28 09:00:00']);
+    Lead::factory()->create(['captured_at' => '2026-04-01 09:00:00']);
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ManageLeads))
+        ->getJson('/api/leads?captured_from=2026-03-01&captured_to=2026-03-31')
+        ->assertOk()->json();
+
+    expect(collect($body['data'])->pluck('id')->all())->toBe([$inWindow->public_id]);
+});
+
+it('rejects a lead capture window where captured_to precedes captured_from', function () {
+    $this->withHeader('Authorization', bearerFor(Capability::ManageLeads))
+        ->getJson('/api/leads?captured_from=2026-03-31&captured_to=2026-03-01')
+        ->assertStatus(422);
+});
+
+it('rejects a lead stage filter that is not a stage', function () {
+    $this->withHeader('Authorization', bearerFor(Capability::ManageLeads))
+        ->getJson('/api/leads?stage=verschickt')
+        ->assertStatus(422);
+});
+
+it('carries a lead\'s source detail, capture moment and close moment', function () {
+    $lead = Lead::factory()->lost()->create([
+        'source' => LeadSource::Other,
+        'source_other' => 'Hochzeitsportal',
+        'captured_at' => '2026-03-15 09:00:00',
+    ]);
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ManageLeads))
+        ->getJson('/api/leads')->assertOk()->json();
+
+    expect($body['data'][0]['sourceOther'])->toBe('Hochzeitsportal');
+    expect($body['data'][0]['capturedAt'])->toBe($lead->captured_at->toIso8601String());
+    expect($body['data'][0]['lostAt'])->toBe($lead->lost_at->toIso8601String());
+});
+
 // N-02: GET /api/projects/{project:public_id} — the single-resource read
 // the index alone can't answer.
 
@@ -128,6 +225,83 @@ it('gets a single project by its public_id', function () {
 
     expect($body['data']['id'])->toBe($project->public_id);
     expect(integerIdPaths($body))->toBe([]);
+});
+
+// #350: what the index deliberately does not carry — enough to verify a
+// capture without three more calls.
+
+it('carries the lead, the contacts with their roles, and the shoots', function () {
+    $project = Project::factory()->create();
+    $contact = Contact::factory()->create(['name' => 'Lena Meier']);
+    $project->attachContact($contact, ProjectContactRole::Primary);
+    $lead = Lead::factory()->for($project)->atStage(LeadStage::Booked)->create(['source' => LeadSource::Referral]);
+    $shoot = Shoot::factory()->for($project)->create();
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
+        ->getJson("/api/projects/{$project->public_id}")
+        ->assertOk()->json('data');
+
+    expect($body['lead'])->toBe([
+        'stage' => 'booked',
+        'source' => 'referral',
+        'sourceOther' => null,
+        'capturedAt' => $lead->captured_at->toIso8601String(),
+        'lostAt' => null,
+    ]);
+    expect($body['contacts'])->toHaveCount(1);
+    expect($body['contacts'][0]['id'])->toBe($contact->public_id);
+    expect($body['contacts'][0]['role'])->toBe('primary');
+    expect(collect($body['shoots'])->pluck('id')->all())->toBe([$shoot->public_id]);
+    expect(integerIdPaths($body))->toBe([]);
+});
+
+it('leaves a project without a lead with a null lead rather than an absent one', function () {
+    $project = Project::factory()->create();
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
+        ->getJson("/api/projects/{$project->public_id}")
+        ->assertOk()->json('data');
+
+    expect($body)->toHaveKey('lead');
+    expect($body['lead'])->toBeNull();
+});
+
+// Notes hang off ManageNotes. A token holding ViewAllProjects reaching them
+// through the project read is exactly the leak this endpoint must not be.
+it('never carries internal notes', function () {
+    $project = Project::factory()->create();
+    InternalNote::factory()->for($project)->create(['body' => 'Zahlt bar, Vater ist schwierig.']);
+
+    $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
+        ->getJson("/api/projects/{$project->public_id}")
+        ->assertOk()
+        ->assertDontSee('Vater ist schwierig');
+});
+
+// The lean index is the other half of #350's decision: growing the payload
+// there is the contact join on every row this split exists to avoid.
+it('keeps the project index lean', function () {
+    $project = Project::factory()->create();
+    $project->attachContact(Contact::factory()->create(), ProjectContactRole::Primary);
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
+        ->getJson('/api/projects')->assertOk()->json();
+
+    expect(array_keys($body['data'][0]))->toBe(['id', 'name', 'type', 'portalVisible', 'fields', 'updatedAt']);
+});
+
+// A project with nothing set encodes `fields` from an empty PHP array, and
+// `[]` is not the map every caller is told to expect — the MCP surface
+// refuses the whole response over it. json() reads `{}` and `[]` alike, so
+// the shape has to be asserted on the raw body.
+it('encodes project fields as an object even when the project has none', function () {
+    $project = Project::factory()->create(['field_values' => []]);
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
+        ->getJson("/api/projects/{$project->public_id}")
+        ->assertOk()->getContent();
+
+    expect($body)->toContain('"fields":{}');
 });
 
 it('refuses a single project to a token that does not hold ViewAllProjects', function () {
@@ -159,6 +333,29 @@ it('filters shoots to a date range', function () {
     $ids = collect($body['data'])->pluck('id');
 
     expect($ids->all())->toBe([$inRange->public_id]);
+});
+
+it('filters shoots by cancelled, and keeps both without it', function () {
+    $open = Shoot::factory()->create(['date' => '2026-03-15']);
+    $cancelled = Shoot::factory()->cancelled('Termin abgesagt')->create(['date' => '2026-03-16']);
+
+    $ids = function (string $query) {
+        return collect(
+            $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
+                ->getJson("/api/shoots{$query}")
+                ->assertOk()->json('data')
+        )->pluck('id')->all();
+    };
+
+    expect($ids('?cancelled=false'))->toBe([$open->public_id])
+        ->and($ids('?cancelled=true'))->toBe([$cancelled->public_id])
+        ->and($ids(''))->toBe([$open->public_id, $cancelled->public_id]);
+
+    $body = $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
+        ->getJson('/api/shoots?cancelled=true')
+        ->assertOk()->json('data');
+
+    expect($body[0]['cancelledAt'])->not->toBeNull();
 });
 
 it('rejects a shoots date range where to precedes from', function () {

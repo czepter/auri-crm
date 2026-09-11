@@ -35,9 +35,11 @@ class ProjectPolicy
         return $project->isCrewedBy($user);
     }
 
+    /** A closed pursuit is not bookable again until it is reopened. */
     public function book(User $user, Project $project): bool
     {
-        return $user->role->allows(Capability::BookProject);
+        return $user->role->allows(Capability::BookProject)
+            && ! ($project->lead?->isLost() ?? false);
     }
 
     public function manageShoots(User $user, Project $project): bool

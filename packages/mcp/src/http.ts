@@ -3,6 +3,7 @@ import type { IncomingMessage, RequestListener, ServerResponse } from 'node:http
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
+import { SUPPORTED_PROTOCOL_VERSIONS } from '@modelcontextprotocol/sdk/types.js'
 
 import { extractBearerToken, verifyBearerToken, type McpAuthInfo } from './httpAuth.js'
 import { captureTransportError } from './observability.js'
@@ -87,6 +88,29 @@ export function sessionTransports(
 }
 
 /**
+ * A client that announces a protocol version this SDK has never heard of
+ * (claude.ai sends 2026-07-28; 1.30.0 stops at 2025-11-25) gets a 400 on
+ * every post after initialize, so the session dies mid-handshake. The spec
+ * says the header carries the version *negotiated* at initialize, and the
+ * transport falls back to exactly that when the header is absent — so
+ * dropping it restores the version both sides already agreed on. Delete
+ * this once the SDK lists the version in the error.
+ */
+function dropUnknownProtocolVersion(req: IncomingMessage): void {
+  const version = req.headers['mcp-protocol-version']
+
+  if (typeof version !== 'string' || SUPPORTED_PROTOCOL_VERSIONS.includes(version)) return
+
+  delete req.headers['mcp-protocol-version']
+
+  // The transport reads the request through @hono/node-server, which builds
+  // its web Request from rawHeaders and never looks at the parsed map.
+  for (let i = req.rawHeaders.length - 2; i >= 0; i -= 2) {
+    if (req.rawHeaders[i].toLowerCase() === 'mcp-protocol-version') req.rawHeaders.splice(i, 2)
+  }
+}
+
+/**
  * N-04: the HTTP transport's own gate, in front of `transport.handleRequest`
  * — every request needs a bearer token the CRM accepts before it ever
  * reaches the MCP session (initialize included; a stolen or fabricated
@@ -127,6 +151,7 @@ export function createAuthenticatedRequestListener(
     }
 
     req.auth = auth
+    dropUnknownProtocolVersion(req)
 
     const transport = await transportFor(req)
     if (!transport) {

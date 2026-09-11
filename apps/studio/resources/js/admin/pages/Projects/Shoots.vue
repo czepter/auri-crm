@@ -26,6 +26,7 @@ const props = defineProps<{
 const adding = ref(false)
 const form = useForm({
   kind: 'portrait',
+  entered_at: '',
   label: '',
   date: '',
   call_time: '',
@@ -259,6 +260,15 @@ const TONE: Record<string, string> = {
                     <Label for="venue_city">{{ $t('project.venueCity') }}</Label>
                     <Input id="venue_city" v-model="form.venue_city" type="text" />
                   </div>
+
+                  <details class="col-span-2">
+                    <summary class="w-fit cursor-pointer text-[11.5px] text-ink-2 marker:text-ink-2">{{ $t('project.advanced') }}</summary>
+                    <div class="mt-1.5 flex min-w-0 flex-col gap-1.5">
+                      <Label for="entered_at">{{ $t('project.shootEnteredAt') }}</Label>
+                      <DatePicker id="entered_at" v-model="form.entered_at" />
+                      <p v-if="form.errors.entered_at" class="text-[11.5px] leading-[1.45] text-destructive">{{ form.errors.entered_at }}</p>
+                    </div>
+                  </details>
 
                 </form>
               </DialogBody>

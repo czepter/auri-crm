@@ -9,6 +9,7 @@ import BandCell from "@/admin/components/BandCell.vue";
 import BandValue from "@/admin/components/BandValue.vue";
 import LineItems from "@/admin/components/LineItems.vue";
 import NoteThread from "@/admin/components/NoteThread.vue";
+import RailHistory from "@/admin/components/RailHistory.vue";
 import ShootFields from "@/admin/components/ShootFields.vue";
 import ShootRow from "@/admin/components/ShootRow.vue";
 import { Input } from "@/ui/input";
@@ -85,12 +86,6 @@ const open = computed(() => props.tasks.filter((task) => !task.isDone));
 const done = computed(() => props.tasks.filter((task) => task.isDone));
 const overdue = computed(() => open.value.filter((task) => task.isOverdue).length);
 const showDone = ref(false);
-
-// The trace runs oldest first (BuildThread); the rail reads it the other way
-// and keeps the first entry, because where the project came from stays the
-// one line that does not scroll out.
-const recent = computed(() => props.thread.slice(-4).reverse());
-const origin = computed(() => (props.thread.length > 4 ? props.thread[0] : null));
 
 // C-12 (#248): the same answer #245 gives for the inquiry — one save for the
 // whole state, and the head stays put, so the two screens behave alike.
@@ -245,32 +240,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         />
                     </RailSection>
 
-                    <!-- Der Verlauf steht am Fuß der Rail: er wird gelesen, wenn die
-                         Gruppen darüber eine Frage offen lassen. -->
-                    <div v-if="thread.length" class="mt-7 border-t border-line-hover pt-3">
-                        <h3
-                            class="m-0 mb-[7px] text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2"
-                        >
-                            {{ $t("project.history") }}
-                        </h3>
-                        <div
-                            v-for="entry in recent"
-                            :key="entry.key"
-                            class="flex gap-2.5 py-1 text-[11.5px] leading-[1.47]"
-                        >
-                            <span class="w-[74px] flex-none text-ink-2">{{ entry.at ? day(entry.at) : "" }}</span>
-                            <span class="min-w-0 flex-1">{{ entry.body }}</span>
-                            <span v-if="entry.author" class="text-ink-2">{{ entry.author }}</span>
-                        </div>
-                        <template v-if="origin">
-                            <div class="py-0.5 text-[11.5px] leading-[1.47] text-faint">⋯</div>
-                            <div class="flex gap-2.5 py-1 text-[11.5px] leading-[1.47]">
-                                <span class="w-[74px] flex-none text-ink-2">{{ origin.at ? day(origin.at) : "" }}</span>
-                                <span class="min-w-0 flex-1">{{ origin.body }}</span>
-                                <span v-if="origin.author" class="text-ink-2">{{ origin.author }}</span>
-                            </div>
-                        </template>
-                    </div>
+                    <RailHistory :entries="thread" />
                 </Rail>
             </template>
 
@@ -543,7 +513,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
 
                     <Section :title="$t('lead.notes')">
                         <NoteThread
-                            :entries="thread"
+                            :entries="thread.filter((entry) => !entry.system)"
                             :action="`/auftraege/${header.id}/notizen`"
                         />
                     </Section>

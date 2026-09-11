@@ -18,6 +18,8 @@ use App\Integration\Http\Controllers\CrmReadController;
 use App\Integration\Http\Controllers\InternalNoteController;
 use App\Integration\Http\Controllers\LeadController;
 use App\Integration\Http\Controllers\OAuthTokenInfoController;
+use App\Integration\Http\Controllers\ProjectContactController;
+use App\Integration\Http\Controllers\ProjectController;
 use App\Integration\Http\Controllers\ProjectFieldController;
 use App\Integration\Http\Controllers\ShootController;
 use App\Payments\Http\Controllers\StripeWebhookController;
@@ -223,6 +225,10 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'ide
 // ViewAllProjects: ShootPolicy::update already routes there, and a token that
 // may see every project must not thereby move one through delivery.
 Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
+    ->post('/projects/{project:public_id}/shoots', [ShootController::class, 'store'])
+    ->name('api.projects.shoots.store');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
     ->post('/shoots/{shoot:public_id}/status', [ShootController::class, 'advance'])
     ->name('api.shoots.status.update');
 
@@ -234,9 +240,21 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'id
     ->post('/shoots/{shoot:public_id}/uncancel', [ShootController::class, 'uncancel'])
     ->name('api.shoots.uncancel');
 
+// Taking an import back — see ProjectController. ManageLeads, the scope that
+// created the project through leads.store: whoever may capture a run may undo
+// it, and no narrower capability exists for "may delete" (I-01).
+Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
+    ->delete('/projects/{project:public_id}', [ProjectController::class, 'destroy'])
+    ->name('api.projects.destroy');
+
 Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'idempotent'])
     ->post('/projects/{project:public_id}/notes', [InternalNoteController::class, 'store'])
     ->name('api.projects.notes.store');
+
+// ManageLeads, the scope leads.store already attaches contacts under.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
+    ->post('/projects/{project:public_id}/contacts', [ProjectContactController::class, 'store'])
+    ->name('api.projects.contacts.store');
 
 // C-25: what a project of a given type can carry, and the values it does.
 // Reading the definitions is ViewAllProjects, the same scope the project

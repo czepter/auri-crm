@@ -1,19 +1,18 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { ElicitRequestSchema } from '@modelcontextprotocol/sdk/types.js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import type { ApiClient } from '../client.js'
 import { registerWriteTools } from './write.js'
 
-// N-03's acceptance bar (issue #91): "no write tool executes without an
-// explicit confirmation step, and a repeated call with the same idempotency
-// key does not double-write." The idempotency-key half is covered by
-// idempotency.test.ts; this file drives the tools end to end over a real
-// MCP client/server pair (InMemoryTransport, no network) to prove the
-// confirmation gate actually blocks the API call, not just that an
-// annotation is set.
+// N-03's acceptance bar (issue #91), as OQ-8/#94 now reads it: the write
+// tools carry the annotations a client gates its confirmation prompt on, and
+// a repeated call with the same idempotency key does not double-write. The
+// idempotency-key half is covered by idempotency.test.ts; this file drives
+// the tools end to end over a real MCP client/server pair (InMemoryTransport,
+// no network) to prove each one reaches the API endpoint it claims, with the
+// path segments as params and `silent` as a header.
 
 function fakeApiClient(data: unknown = { id: 'fake_public_id' }) {
   const answer = async (_path: string, _options: { headers?: Record<string, string>; body?: unknown }) => ({
@@ -24,18 +23,21 @@ function fakeApiClient(data: unknown = { id: 'fake_public_id' }) {
 
   const post = vi.fn(answer)
   const patch = vi.fn(answer)
+  // A 204 and no body, the way DELETE /projects/{project} answers.
+  const del = vi.fn(async (_path: string, _options: { headers?: Record<string, string> }) => ({
+    data: undefined,
+    error: undefined,
+    response: new Response(null, { status: 204 }),
+  }))
 
-  return { post, patch, client: { POST: post, PATCH: patch } as unknown as ApiClient }
+  return { post, patch, del, client: { POST: post, PATCH: patch, DELETE: del } as unknown as ApiClient }
 }
 
-async function connectedPair(apiClient: ApiClient, elicitationSupported: boolean) {
+async function connectedPair(apiClient: ApiClient) {
   const server = new McpServer({ name: 'studio-mcp', version: '0.0.1' })
   registerWriteTools(server, () => apiClient)
 
-  const client = new Client(
-    { name: 'test-client', version: '0.0.1' },
-    { capabilities: elicitationSupported ? { elicitation: { form: {} } } : {} },
-  )
+  const client = new Client({ name: 'test-client', version: '0.0.1' }, { capabilities: {} })
 
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
   await Promise.all([client.connect(clientTransport), server.connect(serverTransport)])
@@ -51,13 +53,14 @@ describe('registerWriteTools', () => {
   })
 
   it('registers exactly the write tools', async () => {
-    const { client } = await connectedPair(fakeApiClient().client, true)
+    const { client } = await connectedPair(fakeApiClient().client)
     clients.push(client)
 
     const { tools } = await client.listTools()
 
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       'add_internal_note',
+      'add_project_contact',
       'add_project_field',
       'advance_lead_stage',
       'advance_shoot_status',
@@ -65,61 +68,48 @@ describe('registerWriteTools', () => {
       'capture_lead',
       'capture_leads_bulk',
       'close_lead',
+      'create_shoot',
+      'delete_project',
       'reopen_lead',
       'set_project_fields',
       'uncancel_shoot',
     ])
   })
 
-  it('marks every write tool as non-read-only, with a destructive/idempotent hint set', async () => {
-    const { client } = await connectedPair(fakeApiClient().client, true)
+  // Since OQ-8's floor moved into the client, these annotations are the only
+  // thing a client has to gate its confirmation prompt on. A tool that
+  // overwrites existing state and does not say so gets written without being
+  // asked about.
+  it('marks every write tool as non-read-only, naming the ones that overwrite state', async () => {
+    const { client } = await connectedPair(fakeApiClient().client)
     clients.push(client)
 
     const { tools } = await client.listTools()
 
     for (const tool of tools) {
       expect(tool.annotations?.readOnlyHint, `${tool.name} must not be readOnlyHint: true`).toBe(false)
-      expect(tool.annotations?.destructiveHint, `${tool.name} needs destructiveHint set`).toBeDefined()
       expect(tool.annotations?.idempotentHint, `${tool.name} needs idempotentHint set`).toBeDefined()
     }
+
+    expect(
+      tools
+        .filter((tool) => tool.annotations?.destructiveHint === true)
+        .map((tool) => tool.name)
+        .sort(),
+    ).toEqual([
+      'advance_lead_stage',
+      'advance_shoot_status',
+      'cancel_shoot',
+      'close_lead',
+      'delete_project',
+      'set_project_fields',
+    ])
   })
 
-  it('does not call the API when the human declines confirmation', async () => {
+  it('calls the API with an Idempotency-Key header', async () => {
     const { post, client: apiClient } = fakeApiClient()
-    const { client } = await connectedPair(apiClient, true)
+    const { client } = await connectedPair(apiClient)
     clients.push(client)
-
-    client.setRequestHandler(ElicitRequestSchema, async () => ({ action: 'decline' }))
-
-    const result = await client.callTool({
-      name: 'add_internal_note',
-      arguments: { project: 'project_public_id', body: 'a note' },
-    })
-
-    expect(post).not.toHaveBeenCalled()
-    expect(JSON.stringify(result.content)).toContain('Not confirmed')
-  })
-
-  it('does not call the API when a client cannot elicit confirmation at all', async () => {
-    const { post, client: apiClient } = fakeApiClient()
-    const { client } = await connectedPair(apiClient, false)
-    clients.push(client)
-
-    const result = await client.callTool({
-      name: 'add_internal_note',
-      arguments: { project: 'project_public_id', body: 'a note' },
-    })
-
-    expect(post).not.toHaveBeenCalled()
-    expect(JSON.stringify(result.content)).toContain('does not support confirmation')
-  })
-
-  it('calls the API with an Idempotency-Key header once the human accepts', async () => {
-    const { post, client: apiClient } = fakeApiClient()
-    const { client } = await connectedPair(apiClient, true)
-    clients.push(client)
-
-    client.setRequestHandler(ElicitRequestSchema, async () => ({ action: 'accept', content: { confirm: true } }))
 
     await client.callTool({
       name: 'add_internal_note',
@@ -132,13 +122,106 @@ describe('registerWriteTools', () => {
     expect(options.headers?.['Idempotency-Key']).toBeTruthy()
   })
 
-  it('captures a whole batch behind a single confirmation, silent unless told otherwise', async () => {
+  // The bug this catches shipped green: idempotency.test.ts asserted the key
+  // varies with the MCP request id, and every write tool asserted only that
+  // an Idempotency-Key header exists. Nothing put two calls through a client
+  // and compared them — so a key that never varied read as covered.
+  it('gives two different writes two different Idempotency-Keys', async () => {
     const { post, client: apiClient } = fakeApiClient()
-    const { client } = await connectedPair(apiClient, true)
+    const { client } = await connectedPair(apiClient)
     clients.push(client)
 
-    const elicited = vi.fn(async () => ({ action: 'accept' as const, content: { confirm: true } }))
-    client.setRequestHandler(ElicitRequestSchema, elicited)
+    await client.callTool({ name: 'advance_lead_stage', arguments: { lead: 'lead_abc', stage: 'contacted', entered_at: '2018-10-29' } })
+    await client.callTool({ name: 'advance_lead_stage', arguments: { lead: 'lead_abc', stage: 'booked', entered_at: '2018-12-03' } })
+
+    expect(post).toHaveBeenCalledTimes(2)
+    expect(post.mock.calls[0][1].headers?.['Idempotency-Key']).not.toBe(post.mock.calls[1][1].headers?.['Idempotency-Key'])
+  })
+
+  it('gives a retry of the same write the same Idempotency-Key', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    const note = { project: 'project_public_id', body: 'Gegenlicht ab 20 Uhr.' }
+
+    await client.callTool({ name: 'add_internal_note', arguments: note })
+    await client.callTool({ name: 'add_internal_note', arguments: { ...note } })
+
+    expect(post.mock.calls[0][1].headers?.['Idempotency-Key']).toBe(post.mock.calls[1][1].headers?.['Idempotency-Key'])
+  })
+
+  it('separates two writes that differ only in silent', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    const lead = { contact_name: 'Nina Voss', project_name: 'Voss', type: 'portrait', source: 'referral', captured_via: 'phone' }
+
+    await client.callTool({ name: 'capture_lead', arguments: lead })
+    await client.callTool({ name: 'capture_lead', arguments: { ...lead, silent: true } })
+
+    expect(post.mock.calls[0][1].headers?.['Idempotency-Key']).not.toBe(post.mock.calls[1][1].headers?.['Idempotency-Key'])
+  })
+
+  it('adds a contact to a project by path, the person as body', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({ name: 'add_project_contact', arguments: { project: 'p1', name: 'Friedrich Rüffer', role: 'partner' } })
+
+    expect(post.mock.calls[0][0]).toBe('/projects/{project}/contacts')
+    expect(post.mock.calls[0][1]).toMatchObject({ params: { path: { project: 'p1' } }, body: { name: 'Friedrich Rüffer', role: 'partner' } })
+  })
+
+  // The partner used to travel as partner_name, which the api surface never
+  // read: the second person of a wedding couple was dropped without an error.
+  it('carries everyone on the inquiry as people, single and bulk', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    const people = [{ name: 'Manuel', email: 'manuel@example.test' }]
+    const lead = { contact_name: 'Viktoria Böser', project_name: 'Hochzeit', type: 'wedding', source: 'website', captured_via: 'email', people }
+
+    await client.callTool({ name: 'capture_lead', arguments: lead })
+    await client.callTool({ name: 'capture_leads_bulk', arguments: { leads: [lead] } })
+
+    expect(post.mock.calls[0][1].body).toMatchObject({ people })
+    expect((post.mock.calls[1][1].body as { leads: Record<string, unknown>[] }).leads[0]).toMatchObject({ people })
+  })
+
+  // #346/#351: the type key is the studio's own vocabulary, not a fixed
+  // three, and source_other is where a platform lead names its platform.
+  it('carries a studio-defined type key and source_other into the body, single and bulk', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    const lead = {
+      contact_name: 'Nina Voss',
+      project_name: 'Voss — Firmenfeier',
+      type: 'event',
+      source: 'other',
+      source_other: 'Hochzeitsportal',
+      captured_via: 'phone',
+    }
+
+    await client.callTool({ name: 'capture_lead', arguments: lead })
+    await client.callTool({ name: 'capture_leads_bulk', arguments: { leads: [lead] } })
+
+    expect(post.mock.calls[0][1].body).toMatchObject({ type: 'event', source_other: 'Hochzeitsportal' })
+    expect((post.mock.calls[1][1].body as { leads: Record<string, unknown>[] }).leads[0]).toMatchObject({
+      type: 'event',
+      source_other: 'Hochzeitsportal',
+    })
+  })
+
+  it('captures a whole batch in one call, silent unless told otherwise', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
 
     const leads = Array.from({ length: 12 }, (_, i) => ({
       contact_name: `Kundin ${i}`,
@@ -150,7 +233,6 @@ describe('registerWriteTools', () => {
 
     await client.callTool({ name: 'capture_leads_bulk', arguments: { leads } })
 
-    expect(elicited).toHaveBeenCalledTimes(1)
     expect(post).toHaveBeenCalledTimes(1)
     const [path, options] = post.mock.calls[0]
     expect(path).toBe('/leads/bulk')
@@ -160,10 +242,8 @@ describe('registerWriteTools', () => {
 
   it('lets a bulk caller opt back into notifications', async () => {
     const { post, client: apiClient } = fakeApiClient()
-    const { client } = await connectedPair(apiClient, true)
+    const { client } = await connectedPair(apiClient)
     clients.push(client)
-
-    client.setRequestHandler(ElicitRequestSchema, async () => ({ action: 'accept', content: { confirm: true } }))
 
     await client.callTool({
       name: 'capture_leads_bulk',
@@ -176,30 +256,10 @@ describe('registerWriteTools', () => {
     expect(post.mock.calls[0][1].headers?.['X-Silent-Write']).toBeUndefined()
   })
 
-  it('writes nothing when the human declines a batch', async () => {
-    const { post, client: apiClient } = fakeApiClient()
-    const { client } = await connectedPair(apiClient, true)
-    clients.push(client)
-
-    client.setRequestHandler(ElicitRequestSchema, async () => ({ action: 'decline' }))
-
-    const result = await client.callTool({
-      name: 'capture_leads_bulk',
-      arguments: {
-        leads: [{ contact_name: 'Nina Voss', project_name: 'Voss', type: 'portrait', source: 'referral', captured_via: 'phone' }],
-      },
-    })
-
-    expect(post).not.toHaveBeenCalled()
-    expect(JSON.stringify(result.content)).toContain('Not confirmed')
-  })
-
   it('sends X-Silent-Write only when the caller asked for silence, and never in the body', async () => {
     const { post, client: apiClient } = fakeApiClient()
-    const { client } = await connectedPair(apiClient, true)
+    const { client } = await connectedPair(apiClient)
     clients.push(client)
-
-    client.setRequestHandler(ElicitRequestSchema, async () => ({ action: 'accept', content: { confirm: true } }))
 
     const lead = { contact_name: 'Nina Voss', project_name: 'Voss', type: 'portrait', source: 'referral', captured_via: 'phone' }
 
@@ -213,22 +273,31 @@ describe('registerWriteTools', () => {
     expect(post.mock.calls[1][1].body).not.toHaveProperty('silent')
   })
 
-  it('set_project_fields PATCHes the values behind the same confirmation gate', async () => {
-    const { patch, client: apiClient } = fakeApiClient()
-    const { client } = await connectedPair(apiClient, true)
+  it('create_shoot POSTs a second shooting day onto the project', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
     clients.push(client)
 
-    client.setRequestHandler(ElicitRequestSchema, async () => ({ action: 'decline' }))
-
-    const declining = await client.callTool({
-      name: 'set_project_fields',
-      arguments: { project: 'project_public_id', fields: { gaeste: 120 } },
+    await client.callTool({
+      name: 'create_shoot',
+      arguments: { project: 'project_public_id', kind: 'reception', label: 'Feier', date: '2019-07-06', silent: true },
     })
 
-    expect(patch).not.toHaveBeenCalled()
-    expect(JSON.stringify(declining.content)).toContain('Not confirmed')
+    const [path, options] = post.mock.calls[0]
 
-    client.setRequestHandler(ElicitRequestSchema, async () => ({ action: 'accept', content: { confirm: true } }))
+    expect(path).toBe('/projects/{project}/shoots')
+    expect(options).toMatchObject({
+      params: { path: { project: 'project_public_id' } },
+      body: { kind: 'reception', label: 'Feier', date: '2019-07-06' },
+    })
+    expect(options.body).not.toHaveProperty('project')
+    expect(options.headers?.['X-Silent-Write']).toBe('1')
+  })
+
+  it('set_project_fields PATCHes the values', async () => {
+    const { patch, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
 
     await client.callTool({
       name: 'set_project_fields',
@@ -244,10 +313,8 @@ describe('registerWriteTools', () => {
 
   it('add_project_field POSTs one definition onto the type', async () => {
     const { post, client: apiClient } = fakeApiClient()
-    const { client } = await connectedPair(apiClient, true)
+    const { client } = await connectedPair(apiClient)
     clients.push(client)
-
-    client.setRequestHandler(ElicitRequestSchema, async () => ({ action: 'accept', content: { confirm: true } }))
 
     await client.callTool({
       name: 'add_project_field',
@@ -270,6 +337,24 @@ describe('registerWriteTools', () => {
     })
   })
 
+  // #352. The 204 is the part worth pinning: every other write tool answers
+  // with JSON.stringify(data), and this one has no data to stringify.
+  it('delete_project sends DELETE with the project as a path param and answers a bodyless 204', async () => {
+    const { del, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    const result = await client.callTool({ name: 'delete_project', arguments: { project: 'project_public_id' } })
+
+    const [path, options] = del.mock.calls[0]
+
+    expect(path).toBe('/projects/{project}')
+    expect(options).toMatchObject({ params: { path: { project: 'project_public_id' } } })
+    expect(options.headers?.['Idempotency-Key']).toBeTruthy()
+    expect(result.isError).toBeFalsy()
+    expect(result.content).toEqual([{ type: 'text', text: 'Deleted project project_public_id.' }])
+  })
+
   // N-04: NoInternalIdsTest's invariant ("no integer identifier in any JSON
   // body") extended onto the one JSON surface apps/studio's Pest suite can
   // never reach directly — a Node process's own tool result. A write tool's
@@ -281,9 +366,8 @@ describe('registerWriteTools', () => {
   // usual `{ id: 'fake_public_id' }` stand-in.
   describe('never puts an integer identifier into a write tool\'s result', () => {
     async function toolResult(apiClient: ApiClient, name: string, args: Record<string, unknown>) {
-      const { client } = await connectedPair(apiClient, true)
+      const { client } = await connectedPair(apiClient)
       clients.push(client)
-      client.setRequestHandler(ElicitRequestSchema, async () => ({ action: 'accept', content: { confirm: true } }))
 
       const result = await client.callTool({ name, arguments: args })
       const [content] = result.content as { type: 'text'; text: string }[]

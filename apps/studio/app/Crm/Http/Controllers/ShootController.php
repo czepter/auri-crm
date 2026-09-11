@@ -14,6 +14,7 @@ use Carbon\CarbonImmutable;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -33,9 +34,10 @@ class ShootController extends Controller
             'end_time' => ['nullable', 'date_format:H:i', 'after:call_time'],
             'venue_name' => ['nullable', 'string', 'max:255'],
             'venue_city' => ['nullable', 'string', 'max:255'],
+            'entered_at' => ['nullable', 'date', 'before_or_equal:now'],
         ]);
 
-        $project->shoots()->create($validated);
+        $project->shoots()->create(Arr::except($validated, 'entered_at') + array_filter(['status_entered_at' => $validated['entered_at'] ?? null]));
 
         return back();
     }

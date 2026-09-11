@@ -6,6 +6,7 @@ import CaseSection from "@/admin/components/CaseSection.vue";
 import LeadQueue from "@/admin/components/LeadQueue.vue";
 import NoteThread from "@/admin/components/NoteThread.vue";
 import QuoteSummary from "@/admin/components/QuoteSummary.vue";
+import RailHistory from "@/admin/components/RailHistory.vue";
 import ShootFields from "@/admin/components/ShootFields.vue";
 import ShootRow from "@/admin/components/ShootRow.vue";
 import { Button } from "@/ui/button";
@@ -236,6 +237,8 @@ const due = computed(() => {
                             }}</span>
                         </div>
                     </RailSection>
+
+                    <RailHistory :entries="thread" />
                 </Rail>
             </template>
 
@@ -539,7 +542,7 @@ const due = computed(() => {
 
                 <CaseSection :title="$t('lead.notes')">
                     <NoteThread
-                        :entries="thread"
+                        :entries="thread.filter((entry) => !entry.system)"
                         :action="`/auftraege/${lead.projectId}/notizen`"
                     />
                 </CaseSection>

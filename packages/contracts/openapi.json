@@ -367,6 +367,16 @@
                 "tags": [
                     "CrmRead"
                 ],
+                "parameters": [
+                    {
+                        "name": "query",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 255
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "",
@@ -435,6 +445,9 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             }
@@ -520,8 +533,46 @@
         "/leads": {
             "get": {
                 "operationId": "leads.index",
+                "summary": "`closed` rather than a stage key for the end of the funnel \u2014 a\nclosed lead keeps the stage it died in, so the two are independent\nquestions. Absent, both open and closed leads come back",
                 "tags": [
                     "CrmRead"
+                ],
+                "parameters": [
+                    {
+                        "name": "stage",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "closed",
+                        "in": "query",
+                        "description": "Strings, not `boolean`: that rule refuses the literal \"false\"\nevery http client writes into a query string.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "true",
+                                "false"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "captured_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "captured_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    }
                 ],
                 "responses": {
                     "200": {
@@ -591,6 +642,9 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             },
@@ -685,6 +739,17 @@
                         "schema": {
                             "type": "string",
                             "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "cancelled",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "true",
+                                "false"
+                            ]
                         }
                     }
                 ],
@@ -868,7 +933,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/components/schemas/ProjectReadData"
+                                            "$ref": "#/components/schemas/ProjectDetailReadData"
                                         }
                                     },
                                     "required": [
@@ -877,6 +942,31 @@
                                 }
                             }
                         }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "projects.destroy",
+                "tags": [
+                    "Project"
+                ],
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
@@ -1905,8 +1995,8 @@
         "/leads/bulk": {
             "post": {
                 "operationId": "leads.bulk.store",
-                "description": "A studio moving years of history onto this app is the caller, and 200\nelicitations is not a review, it is a reflex.\n\nOne transaction, for the reason CommitHistoricalImport gives: a run\nthat wrote 140 rows and refused the 141st leaves nothing to tell the\nimported rows from the ones that never landed, and a second attempt\nduplicates whatever the first one kept.\n\nRows are validated one at a time rather than through one `leads.*`\nrule set: contact_name is `required_without:contact_id`, and under a\nwildcard that reference resolves against the top level, never the\nsibling in the same row.\n\nEvery row is checked before the first one is written, because the\ntransaction only takes back the database: CaptureInquiry dispatches\nLeadCaptured, the studio's mail about it is out of the building\nimmediately, and a rollback cannot recall it. Refusing the batch\nbefore anything is captured is what keeps that mail from naming a\nlead nobody can open.",
-                "summary": "The same capture, once per row, behind one confirmation",
+                "description": "One transaction, for the reason CommitHistoricalImport gives: a run\nthat wrote 140 rows and refused the 141st leaves nothing to tell the\nimported rows from the ones that never landed, and a second attempt\nduplicates whatever the first one kept.\n\nRows are validated one at a time rather than through one `leads.*`\nrule set: contact_name is `required_without:contact_id`, and under a\nwildcard that reference resolves against the top level, never the\nsibling in the same row.\n\nEvery row is checked before the first one is written, because the\ntransaction only takes back the database: CaptureInquiry dispatches\nLeadCaptured, the studio's mail about it is out of the building\nimmediately, and a rollback cannot recall it. Refusing the batch\nbefore anything is captured is what keeps that mail from naming a\nlead nobody can open.",
+                "summary": "The same capture, once per row",
                 "tags": [
                     "Lead"
                 ],
@@ -2305,6 +2395,128 @@
                 }
             }
         },
+        "/projects/{project}/contacts": {
+            "post": {
+                "operationId": "projects.contacts.store",
+                "tags": [
+                    "ProjectContact"
+                ],
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "contact_id": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "minLength": 24,
+                                        "maxLength": 24
+                                    },
+                                    "name": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    },
+                                    "email": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "email",
+                                        "maxLength": 255
+                                    },
+                                    "phone": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 64
+                                    },
+                                    "role": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "description": "A wedding has many people attached with different roles: the couple books, a parent may pay, a planner needs the timeline. Modelling one Project with many typed contacts \u2014 rather than a Client with a date field \u2014 is what lets portrait and wedding work share a schema (vision \u00a73.1).\n",
+                                        "enum": [
+                                            "partner",
+                                            "payer",
+                                            "planner",
+                                            "vendor",
+                                            null
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "email": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "phone": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "role": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "email",
+                                        "phone",
+                                        "role"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/project-types": {
             "get": {
                 "operationId": "project-types.index",
@@ -2636,6 +2848,118 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/projects/{project}/shoots": {
+            "post": {
+                "operationId": "projects.shoots.store",
+                "description": "Mirrors App\\Crm\\Http\\Controllers\\ShootController::store: the same\nrules, the same nullable date, and the model's own defaults for status,\nis_primary and sort_order \u2014 the primary one is already taken.",
+                "summary": "A second shooting day on a project that already has one. CaptureInquiry\nmakes exactly one shoot and marks it primary; a wedding split over two\ndays \u2014 Trauung on one, Feier on another \u2014 has no way to reach the\nsecond from here otherwise",
+                "tags": [
+                    "Shoot"
+                ],
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "kind": {
+                                        "$ref": "#/components/schemas/ShootKind"
+                                    },
+                                    "label": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    },
+                                    "date": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    },
+                                    "call_time": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "end_time": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "venue_name": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    },
+                                    "venue_city": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    },
+                                    "entered_at": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    }
+                                },
+                                "required": [
+                                    "kind"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ShootReadData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
                     }
                 }
             }
@@ -3087,6 +3411,11 @@
                 "additionalProperties": {},
                 "title": "PaginatedDataCollection"
             },
+            "ProjectDetailReadData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "ProjectDetailReadData"
+            },
             "ProjectFieldType": {
                 "type": "string",
                 "description": "C-25: what a studio may ask of a project of one type. Deliberately not FormFieldType \u2014 the questionnaire knows files, name lists and group photos, a project field does not, and the two vocabularies are meant to grow apart.\n",
@@ -3110,6 +3439,23 @@
                 "type": "object",
                 "additionalProperties": {},
                 "title": "ProjectTypeReadData"
+            },
+            "ShootKind": {
+                "type": "string",
+                "description": "What kind of occasion a shoot is. Finer-grained than ProjectType: one wedding project routinely holds an engagement shoot, the wedding day and the reception, separated by as much as a year.\n",
+                "enum": [
+                    "engagement",
+                    "wedding",
+                    "reception",
+                    "portrait",
+                    "other"
+                ],
+                "title": "ShootKind"
+            },
+            "ShootReadData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "ShootReadData"
             }
         },
         "responses": {

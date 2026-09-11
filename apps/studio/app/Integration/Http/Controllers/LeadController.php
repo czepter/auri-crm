@@ -44,10 +44,7 @@ class LeadController extends Controller
     }
 
     /**
-     * The same capture, once per row, behind one confirmation.
-     *
-     * A studio moving years of history onto this app is the caller, and 200
-     * elicitations is not a review, it is a reflex.
+     * The same capture, once per row.
      *
      * One transaction, for the reason CommitHistoricalImport gives: a run
      * that wrote 140 rows and refused the 141st leaves nothing to tell the

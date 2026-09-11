@@ -20,6 +20,15 @@ it('returns a project\'s events newest first', function () {
         ->and($activity[0]['event'])->toBe('contract.signed');
 });
 
+it('dates a backdated event when it happened, not when it was typed', function () {
+    $this->freezeTime();
+    $project = Project::factory()->create();
+
+    AuditLogger::record('lead.lost', null, [], null, $project->id, occurredAt: now()->subWeek());
+
+    expect(ProjectActivity::for($project)[0]['at'])->toBe(now()->subWeek()->toIso8601String());
+});
+
 it('drops an event with no label rather than showing its key', function () {
     $project = Project::factory()->create();
 
