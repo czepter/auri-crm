@@ -88,7 +88,7 @@ function submit() {
        das Formular die Liste bei jedem Öffnen weg. -->
   <Dialog v-model:open="open">
     <DialogTrigger as-child>
-      <Button class="ml-auto" variant="outline" type="button">
+      <Button class="ml-auto" variant="pill-muted" type="button">
         <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         {{ $t('project.taskAdd') }}
       </Button>
