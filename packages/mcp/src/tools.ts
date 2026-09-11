@@ -113,6 +113,7 @@ const packageSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string().nullable(),
+  isActive: z.boolean(),
   items: z.array(
     z.object({
       id: z.string(),
@@ -296,7 +297,8 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
     'list_packages',
     {
       title: 'List packages',
-      description: "The studio's active packages with their lines, amounts in cents. The id is what create_quote's `package` takes.",
+      description:
+        "The studio's packages with their lines, amounts in cents. The id is what create_quote's `package` and update_package take. `isActive` false means the package is hidden from what a new quote can start from.",
       inputSchema: {},
       outputSchema: {
         packages: z.array(packageSchema),

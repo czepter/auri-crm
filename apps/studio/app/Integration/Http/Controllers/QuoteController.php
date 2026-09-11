@@ -2,7 +2,6 @@
 
 namespace App\Integration\Http\Controllers;
 
-use App\Catalog\Data\PackageData;
 use App\Catalog\Models\Package;
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
@@ -36,14 +35,6 @@ use Illuminate\Validation\ValidationException;
  */
 class QuoteController extends Controller
 {
-    /** What create_quote's `package` can start from: the active ones, as the board's picker offers them. */
-    public function packages(): JsonResponse
-    {
-        $packages = Package::active()->with('items')->orderBy('name')->get();
-
-        return response()->json(['data' => $packages->map(PackageData::fromModel(...))->all()]);
-    }
-
     public function store(Request $request, Project $project, UpdateQuote $save, SeedQuoteFromPackage $seed, StudioSettingsResolver $settings): JsonResponse
     {
         $validated = $request->validate([
