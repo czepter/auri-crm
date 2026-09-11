@@ -6,6 +6,7 @@ use App\Crm\Events\LeadLost;
 use App\Crm\Events\LeadStageChanged;
 use App\Crm\Models\Job;
 use App\Crm\Models\Lead;
+use App\Crm\Models\Shoot;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Payments\Models\PaymentPlan;
@@ -126,6 +127,21 @@ it('books the project when the lead reaches gebucht', function () {
     expect($lead->project->job()->exists())->toBeTrue();
 });
 
+it('backdates the booking and its shoots with the stage move', function () {
+    $lead = Lead::factory()->atStage(LeadStage::ContractSent)->create();
+    $shoot = Shoot::factory()->for($lead->project)->create();
+
+    app(AdvanceLeadStage::class)(
+        $lead,
+        stage(LeadStage::Booked),
+        User::factory()->create(),
+        CarbonImmutable::parse('2026-05-02 10:00'),
+    );
+
+    expect($lead->project->job->booked_at->toDateString())->toBe('2026-05-02')
+        ->and($shoot->fresh()->status_entered_at->toDateString())->toBe('2026-05-02');
+});
+
 it('leaves an existing job alone when the stage catches up', function () {
     $lead = Lead::factory()->atStage(LeadStage::ContractSent)->create();
     $job = Job::factory()->for($lead->project)->create();
@@ -172,6 +188,25 @@ it('takes the booking back when the won stage is taken back', function () {
         ->and(AuditLog::where('event', 'project.unbooked')->count())->toBe(1);
 });
 
+it('dates a backdated unbooking when it happened', function () {
+    $lead = Lead::factory()->atStage(LeadStage::ContractSent)->create();
+    Shoot::factory()->for($lead->project)->create();
+    $actor = User::factory()->create();
+
+    app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), $actor);
+    app(AdvanceLeadStage::class)($lead->fresh(), stage(LeadStage::ContractSent), $actor, CarbonImmutable::parse('2026-05-02 10:00'));
+
+    $dates = AuditLog::whereIn('event', ['project.unbooked', 'shoot.status_changed'])
+        ->where('context->reverted', true)
+        ->get()
+        ->map(fn (AuditLog $log) => substr($log->context['occurred_at'] ?? '', 0, 10))
+        ->unique()
+        ->values()
+        ->all();
+
+    expect($dates)->toBe(['2026-05-02']);
+});
+
 it('refuses to take the booking back once a payment plan hangs off it', function () {
     $lead = Lead::factory()->create();
     $actor = User::factory()->create();
@@ -184,6 +219,23 @@ it('refuses to take the booking back once a payment plan hangs off it', function
 
     expect(Job::count())->toBe(1)
         ->and($lead->fresh()->stage->key)->toBe(LeadStage::Booked->value);
+});
+
+it('cancels the open shoots of a lost project and leaves an earlier absage alone', function () {
+    $lead = Lead::factory()->create();
+    $open = Shoot::factory()->for($lead->project)->create();
+    $earlier = Shoot::factory()->for($lead->project)->create(['cancelled_at' => now()->subWeek(), 'cancelled_reason' => 'Regen']);
+
+    app(AdvanceLeadStage::class)->markLost($lead, 'Budget', lostAt: CarbonImmutable::parse('2026-05-02 10:00'));
+
+    expect($open->fresh()->cancelled_at->toDateString())->toBe('2026-05-02')
+        ->and($open->fresh()->cancelled_reason)->toBe('Budget')
+        ->and($earlier->fresh()->cancelled_reason)->toBe('Regen');
+
+    app(AdvanceLeadStage::class)->reopen($lead);
+
+    expect($open->fresh()->isCancelled())->toBeFalse()
+        ->and($earlier->fresh()->isCancelled())->toBeTrue();
 });
 
 it('reopens a lead that was closed by mistake', function () {

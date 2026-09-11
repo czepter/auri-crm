@@ -11,6 +11,7 @@ use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\StageHistory;
 use App\Models\User;
 use App\Support\AuditLogger;
+use Carbon\CarbonInterface;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
@@ -35,7 +36,7 @@ class UnbookProject
     public function __construct(private readonly CrmVocabulary $stages) {}
 
     /** Null when there was no booking to take back — the no-op writes nothing. */
-    public function __invoke(Project $project, ?User $actor = null): ?Job
+    public function __invoke(Project $project, ?User $actor = null, ?CarbonInterface $at = null): ?Job
     {
         $job = $project->job;
 
@@ -60,12 +61,12 @@ class UnbookProject
         $booked = $this->stages->anchored(StagePipeline::Project, StageAnchor::Booked);
         $entry = $this->stages->anchored(StagePipeline::Project, StageAnchor::Entry);
 
-        DB::transaction(function () use ($project, $actor, $job, $booked, $entry) {
+        DB::transaction(function () use ($project, $actor, $job, $booked, $entry, $at) {
             // Only the shoots the booking itself moved. One that has since been
             // delivered stands on its own history and is left where it is.
             $project->shoots()->uncancelled()->get()
                 ->filter(fn (Shoot $shoot) => $booked !== null && $shoot->status->is($booked))
-                ->each(function (Shoot $shoot) use ($booked, $entry, $actor) {
+                ->each(function (Shoot $shoot) use ($booked, $entry, $actor, $at) {
                     // Where the booking found it. Absent a trail — a shoot
                     // created straight into booked — the pipeline's entry.
                     $before = StageHistory::cameFrom('shoot.status_changed', $shoot->public_id, $shoot->status->key);
@@ -89,6 +90,7 @@ class UnbookProject
                         ],
                         subject: $shoot->public_id,
                         projectId: $shoot->project_id,
+                        occurredAt: $at,
                     );
                 });
 
@@ -98,6 +100,7 @@ class UnbookProject
                 context: ['job' => $job->public_id, 'booked_at' => $job->booked_at->toIso8601String()],
                 subject: $project->public_id,
                 projectId: $project->id,
+                occurredAt: $at,
             );
 
             $job->delete();

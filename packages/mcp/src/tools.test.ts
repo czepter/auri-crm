@@ -90,6 +90,7 @@ describe('read tools', () => {
     expect(tools.map((tool) => tool.name).sort()).toEqual(
       expect.arrayContaining([
         'get_project',
+        'list_leads',
         'list_project_types',
         'pipeline_snapshot',
         'search_contacts',
@@ -123,54 +124,58 @@ describe('read tools', () => {
     expect(integerIdPaths(result.structuredContent)).toEqual([])
   })
 
-  it('search_contacts filters the fetched page client-side by name or email', async () => {
+  // #353: the search is the server's, so the tool has to hand the term over
+  // rather than sieve the one page it was given back.
+  it('search_contacts sends its query term to the server and returns the page as it comes', async () => {
+    let requestedQuery: string | null = null
+
     const client = await connectedClient({
-      '/api/contacts': () =>
-        jsonResponse({
+      '/api/contacts': (url) => {
+        requestedQuery = url.search
+        return jsonResponse({
           data: [
             { id: 'ctc_alice', name: 'Alice Example', email: 'alice@example.com', phone: null, updatedAt: '2026-01-01T00:00:00Z' },
-            { id: 'ctc_bob', name: 'Bob Example', email: 'bob@example.com', phone: null, updatedAt: '2026-01-02T00:00:00Z' },
           ],
           meta: { path: '/contacts', per_page: 25, next_cursor: null, next_page_url: null, prev_cursor: null, prev_page_url: null },
-        }),
+        })
+      },
     })
 
     const result = await client.callTool({ name: 'search_contacts', arguments: { query: 'alice' } })
 
+    expect(requestedQuery).toContain('query=alice')
     expect(result.structuredContent).toEqual({
       contacts: [{ id: 'ctc_alice', name: 'Alice Example', email: 'alice@example.com', phone: null, updatedAt: '2026-01-01T00:00:00Z' }],
       nextCursor: null,
     })
   })
 
-  it('get_project wraps GET /projects/{project} by public_id', async () => {
-    const client = await connectedClient({
-      '/api/projects/prj_meier': () =>
-        jsonResponse({
-          data: {
-            id: 'prj_meier',
-            name: 'Meier Hochzeit',
-            type: 'wedding',
-            portalVisible: true,
-            fields: { gaeste: 120 },
-            updatedAt: '2026-01-01T00:00:00Z',
-          },
-        }),
-    })
+  // #350: the lead, the contacts and the shoots come with it — a payload
+  // that only validates against the richer output schema, so a get_project
+  // that fell back to the index shape would fail here rather than pass.
+  it('get_project wraps GET /projects/{project} by public_id, with lead, contacts and shoots', async () => {
+    const detail = {
+      id: 'prj_meier',
+      name: 'Meier Hochzeit',
+      type: 'wedding',
+      portalVisible: true,
+      fields: { gaeste: 120 },
+      updatedAt: '2026-01-01T00:00:00Z',
+      lead: { stage: 'booked', source: 'referral', sourceOther: null, capturedAt: '2025-11-02T09:00:00Z', lostAt: null },
+      contacts: [
+        { id: 'ctc_meier', name: 'Lena Meier', email: 'lena@example.com', phone: null, role: 'primary', updatedAt: '2026-01-01T00:00:00Z' },
+      ],
+      shoots: [
+        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-06-20', status: 'requested', cancelledAt: null, updatedAt: '2026-01-01T00:00:00Z' },
+      ],
+    }
+
+    const client = await connectedClient({ '/api/projects/prj_meier': () => jsonResponse({ data: detail }) })
 
     const result = await client.callTool({ name: 'get_project', arguments: { publicId: 'prj_meier' } })
 
     expect(result.isError).toBeFalsy()
-    expect(result.structuredContent).toEqual({
-      project: {
-        id: 'prj_meier',
-        name: 'Meier Hochzeit',
-        type: 'wedding',
-        portalVisible: true,
-        fields: { gaeste: 120 },
-        updatedAt: '2026-01-01T00:00:00Z',
-      },
-    })
+    expect(result.structuredContent).toEqual({ project: detail })
     expect(integerIdPaths(result.structuredContent)).toEqual([])
   })
 
@@ -193,7 +198,7 @@ describe('read tools', () => {
         requestedQuery = url.search
         return jsonResponse({
           data: [
-            { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', status: 'requested', updatedAt: '2026-01-01T00:00:00Z' },
+            { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', status: 'requested', cancelledAt: null, updatedAt: '2026-01-01T00:00:00Z' },
           ],
           meta: { path: '/shoots', per_page: 25, next_cursor: null, next_page_url: null, prev_cursor: null, prev_page_url: null },
         })
@@ -207,10 +212,71 @@ describe('read tools', () => {
 
     expect(requestedQuery).toContain('from=2026-03-01')
     expect(requestedQuery).toContain('to=2026-03-31')
+    expect(requestedQuery).toContain('cancelled=false')
     expect(result.structuredContent).toEqual({
       shoots: [
-        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', status: 'requested', updatedAt: '2026-01-01T00:00:00Z' },
+        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', status: 'requested', cancelledAt: null, updatedAt: '2026-01-01T00:00:00Z' },
       ],
+      nextCursor: null,
+    })
+    expect(integerIdPaths(result.structuredContent)).toEqual([])
+  })
+
+  it('shoots_in_date_range drops the cancelled filter for include_cancelled', async () => {
+    let requestedQuery: string | null = null
+
+    const client = await connectedClient({
+      '/api/shoots': (url) => {
+        requestedQuery = url.search
+        return jsonResponse({
+          data: [
+            { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', status: 'requested', cancelledAt: '2026-02-01T00:00:00Z', updatedAt: '2026-02-01T00:00:00Z' },
+          ],
+          meta: { path: '/shoots', per_page: 25, next_cursor: null, next_page_url: null, prev_cursor: null, prev_page_url: null },
+        })
+      },
+    })
+
+    const result = await client.callTool({
+      name: 'shoots_in_date_range',
+      arguments: { from: '2026-03-01', to: '2026-03-31', include_cancelled: true },
+    })
+
+    expect(requestedQuery).not.toContain('cancelled=')
+    expect(result.structuredContent).toEqual({
+      shoots: [
+        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', status: 'requested', cancelledAt: '2026-02-01T00:00:00Z', updatedAt: '2026-02-01T00:00:00Z' },
+      ],
+      nextCursor: null,
+    })
+  })
+
+  it('list_leads wraps GET /leads with its filters and carries sourceOther through', async () => {
+    let requestedQuery: string | null = null
+
+    const client = await connectedClient({
+      '/api/leads': (url) => {
+        requestedQuery = url.search
+        return jsonResponse({
+          data: [
+            { id: 'led_1', projectId: 'prj_meier', source: 'other', sourceOther: 'Hochzeitsportal', stage: 'quote_sent', isLost: false, capturedAt: '2026-03-02T09:00:00Z', lostAt: null, updatedAt: '2026-03-02T09:00:00Z' },
+          ],
+          meta: { path: '/leads', per_page: 25, next_cursor: null, next_page_url: null, prev_cursor: null, prev_page_url: null },
+        })
+      },
+    })
+
+    const result = await client.callTool({
+      name: 'list_leads',
+      arguments: { stage: 'quote_sent', closed: false, captured_from: '2026-03-01', captured_to: '2026-03-31' },
+    })
+
+    expect(requestedQuery).toContain('stage=quote_sent')
+    expect(requestedQuery).toContain('closed=false')
+    expect(requestedQuery).toContain('captured_from=2026-03-01')
+    expect(requestedQuery).toContain('captured_to=2026-03-31')
+    expect(result.structuredContent).toEqual({
+      leads: [{ id: 'led_1', projectId: 'prj_meier', source: 'other', sourceOther: 'Hochzeitsportal', stage: 'quote_sent', isLost: false, capturedAt: '2026-03-02T09:00:00Z', lostAt: null, updatedAt: '2026-03-02T09:00:00Z' }],
       nextCursor: null,
     })
     expect(integerIdPaths(result.structuredContent)).toEqual([])

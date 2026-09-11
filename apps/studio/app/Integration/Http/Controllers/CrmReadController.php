@@ -14,12 +14,14 @@ use App\Http\Controllers\Controller;
 use App\Integration\Data\ContactReadData;
 use App\Integration\Data\JobReadData;
 use App\Integration\Data\LeadReadData;
+use App\Integration\Data\ProjectDetailReadData;
 use App\Integration\Data\ProjectReadData;
 use App\Integration\Data\ShootReadData;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\CursorPaginator;
+use Illuminate\Validation\Rule;
 use Spatie\LaravelData\Data;
 
 /**
@@ -41,7 +43,16 @@ class CrmReadController extends Controller
 {
     public function contacts(Request $request): JsonResponse
     {
-        return $this->page(Contact::query(), $request, ContactReadData::class);
+        $term = $request->validate(['query' => ['sometimes', 'string', 'max:255']])['query'] ?? null;
+
+        // ilike, not like: on Postgres like is case-sensitive, and a search
+        // that misses "Steffens" when the caller sends "steff" is the same
+        // duplicate ContactSearchController's typeahead exists to prevent.
+        $query = Contact::query()->when($term, fn (Builder $q, string $term) => $q->where(
+            fn (Builder $match) => $match->where('name', 'ilike', "%{$term}%")->orWhere('email', 'ilike', "%{$term}%")
+        ));
+
+        return $this->page($query, $request, ContactReadData::class);
     }
 
     public function projects(Request $request): JsonResponse
@@ -58,12 +69,35 @@ class CrmReadController extends Controller
      */
     public function project(Project $project): JsonResponse
     {
-        return response()->json(['data' => ProjectReadData::fromModel($project)]);
+        return response()->json(['data' => ProjectDetailReadData::fromModel($project)]);
     }
 
+    /**
+     * `closed` rather than a stage key for the end of the funnel — a
+     * closed lead keeps the stage it died in, so the two are independent
+     * questions. Absent, both open and closed leads come back.
+     */
     public function leads(Request $request): JsonResponse
     {
-        return $this->page(Lead::query()->with('project:id,public_id'), $request, LeadReadData::class);
+        $filters = $request->validate([
+            'stage' => ['sometimes', Rule::exists('stages', 'key')->where('pipeline', StagePipeline::Lead->value)],
+            // Strings, not `boolean`: that rule refuses the literal "false"
+            // every http client writes into a query string.
+            'closed' => ['sometimes', 'in:true,false'],
+            'captured_from' => ['sometimes', 'date'],
+            'captured_to' => ['sometimes', 'date', 'after_or_equal:captured_from'],
+        ]);
+
+        $query = Lead::query()
+            ->with('project:id,public_id')
+            ->when($filters['stage'] ?? null, fn (Builder $q, string $stage) => $q->where('stage', $stage))
+            ->when($request->has('closed'), fn (Builder $q) => $request->boolean('closed')
+                ? $q->whereNotNull('outcome')
+                : $q->open())
+            ->when($filters['captured_from'] ?? null, fn (Builder $q, string $from) => $q->whereDate('captured_at', '>=', $from))
+            ->when($filters['captured_to'] ?? null, fn (Builder $q, string $to) => $q->whereDate('captured_at', '<=', $to));
+
+        return $this->page($query, $request, LeadReadData::class);
     }
 
     /**
@@ -78,12 +112,21 @@ class CrmReadController extends Controller
         $range = $request->validate([
             'from' => ['sometimes', 'date'],
             'to' => ['sometimes', 'date', 'after_or_equal:from'],
+            'cancelled' => ['sometimes', 'in:true,false'],
         ]);
+
+        // Omitted leaves cancelled shoots in: a `since=` poller that has seen
+        // a shoot must still see its absage, so the filter is opt-in on both
+        // sides rather than a default the caller cannot notice. Strings
+        // because this is a query string — Laravel's `boolean` rule rejects
+        // the literal "false" every http client writes for it.
+        $cancelled = array_key_exists('cancelled', $range) ? $request->boolean('cancelled') : null;
 
         $query = Shoot::query()
             ->with('project:id,public_id')
             ->when($range['from'] ?? null, fn (Builder $q, string $from) => $q->whereDate('date', '>=', $from))
-            ->when($range['to'] ?? null, fn (Builder $q, string $to) => $q->whereDate('date', '<=', $to));
+            ->when($range['to'] ?? null, fn (Builder $q, string $to) => $q->whereDate('date', '<=', $to))
+            ->when($cancelled !== null, fn (Builder $q) => $cancelled ? $q->whereNotNull('cancelled_at') : $q->uncancelled());
 
         return $this->page($query, $request, ShootReadData::class);
     }
