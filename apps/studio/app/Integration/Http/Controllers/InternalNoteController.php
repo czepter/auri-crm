@@ -5,6 +5,7 @@ namespace App\Integration\Http\Controllers;
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\LiveUpdate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -34,6 +35,8 @@ class InternalNoteController extends Controller
             'body' => $validated['body'],
             'occurred_at' => $validated['occurred_at'] ?? null,
         ]);
+
+        LiveUpdate::publish();
 
         return response()->json([
             'id' => $note->public_id,

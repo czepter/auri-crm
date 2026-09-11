@@ -10,6 +10,7 @@ use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\GotenbergClient;
+use App\Support\LiveUpdate;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -69,6 +70,7 @@ class EnsureContractArtifact
             $pdf = $this->gotenberg->htmlToPdf($html);
         } catch (Throwable $e) {
             $contract->update(['status' => ContractStatus::Failed, 'error' => $e->getMessage()]);
+            LiveUpdate::publish();
 
             throw $e;
         }
@@ -82,6 +84,8 @@ class EnsureContractArtifact
             'rendered_at' => now(),
             'error' => null,
         ]);
+
+        LiveUpdate::publish();
 
         return $contract;
     }

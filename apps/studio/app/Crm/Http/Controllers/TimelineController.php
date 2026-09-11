@@ -7,6 +7,7 @@ use App\Crm\Models\TimelineEntry;
 use App\Crm\Support\TimelineCalendar;
 use App\Http\Controllers\Controller;
 use App\Support\GotenbergClient;
+use App\Support\LiveUpdate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
@@ -34,6 +35,8 @@ class TimelineController extends Controller
 
         $shoot->timeline()->create($validated);
 
+        LiveUpdate::publish();
+
         return back();
     }
 
@@ -42,6 +45,8 @@ class TimelineController extends Controller
         $this->authorize('update', $entry->shoot);
 
         $entry->delete();
+
+        LiveUpdate::publish();
 
         return back();
     }

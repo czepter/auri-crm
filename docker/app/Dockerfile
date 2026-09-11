@@ -76,6 +76,7 @@ WORKDIR /app
 COPY --from=vendor /app .
 COPY --from=assets /build/apps/studio/public/build ./public/build
 COPY docker/app/entrypoint.sh /usr/local/bin/app-entrypoint
+COPY docker/app/mercure.caddy /etc/frankenphp/mercure.caddy
 
 # /data and /config are Caddy's state directories in the FrankenPHP image; an
 # unprivileged server still has to be able to write them.
@@ -121,7 +122,8 @@ ENV APP_ENV=production \
     MAIL_MAILER=smtp \
     MAIL_FROM_NAME=Studio \
     SENTRY_ENVIRONMENT=production \
-    GOTENBERG_URL=http://gotenberg:3000
+    GOTENBERG_URL=http://gotenberg:3000 \
+    MERCURE_URL=http://admin:8080/.well-known/mercure
 
 # F-11: baked rather than passed per deploy, because the release is a property
 # of the image — GlitchTip needs it to say which build an error came from, and

@@ -1,0 +1,7 @@
+# #357: imported by the admin service alone, through
+# CADDY_SERVER_EXTRA_DIRECTIVES in docker-compose.coolify.yml. No `anonymous`:
+# a subscriber needs the cookie App\Support\LiveUpdate mints for signed-in staff.
+mercure {
+	publisher_jwt {env.MERCURE_PUBLISHER_JWT_KEY}
+	subscriber_jwt {env.MERCURE_SUBSCRIBER_JWT_KEY}
+}

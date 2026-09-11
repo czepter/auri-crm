@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
@@ -99,30 +99,6 @@ function chipClass(state: string): string {
 function day(value: string | null): string {
   return dayWithWeekday(value, '') ?? ''
 }
-
-// The request that triggers a render returns immediately — this is the screen
-// reacting to completion on a later request. Polls only while a render is
-// actually in flight.
-let timer: ReturnType<typeof setInterval> | undefined
-
-function clearPoll() {
-  if (timer) clearInterval(timer)
-  timer = undefined
-}
-
-watch(
-  () => props.contract?.status,
-  (status) => {
-    clearPoll()
-
-    if (status !== 'pending') return
-
-    timer = setInterval(() => router.reload({ only: ['contract', 'versions'] }), 2000)
-  },
-  { immediate: true },
-)
-
-onBeforeUnmount(clearPoll)
 </script>
 
 <template>

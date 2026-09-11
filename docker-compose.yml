@@ -69,6 +69,13 @@ services:
       # webhook adapter is the local way in.
       MAIL_INBOUND_DOMAIN: ${MAIL_INBOUND_DOMAIN:-inbound.localhost}
       MAIL_INBOUND_SIGNING_SECRET: ${MAIL_INBOUND_SIGNING_SECRET:-local-inbound-secret}
+      # #357: the `mercure` service below. The browser reaches it on its own
+      # port, which is why the public URL is absolute here and a bare path in
+      # a deploy, where the admin container serves the hub itself.
+      MERCURE_URL: http://mercure/.well-known/mercure
+      MERCURE_PUBLIC_URL: http://localhost:${MERCURE_PORT:-3001}/.well-known/mercure
+      MERCURE_PUBLISHER_JWT_KEY: local-mercure-publisher-key
+      MERCURE_SUBSCRIBER_JWT_KEY: local-mercure-subscriber-key
     ports:
       # Published so the Playwright suite on the host can reach `artisan serve`
       # running inside this container. The host port is a variable because
@@ -142,6 +149,9 @@ services:
       # mints reply addresses under the domain.
       MAIL_INBOUND_DOMAIN: ${MAIL_INBOUND_DOMAIN:-inbound.localhost}
       MAIL_INBOUND_SIGNING_SECRET: ${MAIL_INBOUND_SIGNING_SECRET:-local-inbound-secret}
+      # #357: renders and ingests finish here, and an open tab should see them.
+      MERCURE_URL: http://mercure/.well-known/mercure
+      MERCURE_PUBLISHER_JWT_KEY: local-mercure-publisher-key
     command: php artisan horizon
     depends_on:
       postgres:
@@ -289,6 +299,20 @@ services:
       interval: 2s
       timeout: 3s
       retries: 30
+
+  # #357: the hub a deploy runs inside the admin container
+  # (docker/app/mercure.caddy). Locally the surfaces run `artisan serve`,
+  # which carries none, so it stands alone.
+  mercure:
+    image: dunglas/mercure:v0.21
+    environment:
+      SERVER_NAME: ":80"
+      MERCURE_PUBLISHER_JWT_KEY: local-mercure-publisher-key
+      MERCURE_SUBSCRIBER_JWT_KEY: local-mercure-subscriber-key
+      # The admin screen is another origin here, one port over.
+      MERCURE_EXTRA_DIRECTIVES: cors_origins http://localhost:${APP_PORT:-8000}
+    ports:
+      - "127.0.0.1:${MERCURE_PORT:-3001}:80"
 
   # F-11: self-hosted GlitchTip — Sentry-protocol-compatible error tracking
   # (sentry/sentry-laravel, config/sentry.php) on our own Postgres rather
