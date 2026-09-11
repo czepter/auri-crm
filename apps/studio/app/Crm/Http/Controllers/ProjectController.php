@@ -26,6 +26,7 @@ use App\Crm\Enums\CrewRole;
 use App\Crm\Enums\FormFieldType;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Project;
@@ -182,6 +183,14 @@ class ProjectController extends Controller
             'source' => $project->lead?->source->value,
             'sourceOther' => $project->lead?->source_other,
             'sourceLabel' => $project->lead?->sourceLabel(),
+            'inquiry' => $project->lead === null ? null : [
+                'text' => $project->lead->inquiry_text,
+                'typeLabel' => $project->typeLabel(),
+                'sourceLabel' => $project->lead->sourceLabel(),
+                'capturedVia' => $project->lead->capturedViaLabel(),
+                'capturedAt' => $project->lead->captured_at->toIso8601String(),
+            ],
+            'stalled' => $this->stalled($project),
             'galleries' => $project->galleries()->get()->map(fn ($gallery) => [
                 'id' => $gallery->public_id,
                 'title' => $gallery->title,
@@ -471,6 +480,26 @@ class ProjectController extends Controller
         );
 
         return back();
+    }
+
+    /**
+     * The shooting day that passed without its status moving, and the step
+     * that closes it. The queue lists the case; the overview offers the step.
+     */
+    private function stalled(Project $project): ?array
+    {
+        $shoot = $project->job()->exists() ? $this->position->stalled($project->shoots()->get()) : null;
+        $shot = app(CrmVocabulary::class)->anchored(StagePipeline::Project, StageAnchor::Shot);
+
+        return $shoot === null || $shot === null ? null : [
+            'shootId' => $shoot->public_id,
+            'label' => $shoot->label ?? $project->name,
+            'date' => $shoot->date->format('Y-m-d'),
+            'days' => (int) $shoot->date->copy()->startOfDay()->diffInDays(today()),
+            'status' => $shoot->status->name,
+            'since' => $shoot->status_entered_at?->format('Y-m-d'),
+            'next' => ['key' => $shot->key, 'label' => $shot->name],
+        ];
     }
 
     private function header(Project $project): ProjectHeaderData

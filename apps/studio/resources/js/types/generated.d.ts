@@ -309,6 +309,16 @@ count: number | null,
 reorderable: boolean,
 }[],
 }[],
+track: {
+key: string,
+label: string,
+pipeline: string,
+state: string,
+}[],
+queue: {
+key: string,
+rows: App.Crm.Data.ProjectQueueRowData[],
+}[],
 };
 export type ProjectPersonData = {
 id: string,
@@ -321,6 +331,15 @@ export type ProjectPositionData = {
 source: string,
 value: string | null,
 label: string,
+};
+export type ProjectQueueRowData = {
+id: string,
+name: string,
+date: string | null,
+stage: string,
+reason: string | null,
+days: number | null,
+open: boolean,
 };
 export type ProjectRowData = {
 id: string,

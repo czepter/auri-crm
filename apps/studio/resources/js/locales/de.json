@@ -170,7 +170,24 @@
     "openedOn": "geöffnet am {date}",
     "notOpened": "noch nicht geöffnet"
   },
+  "projectQueue": {
+    "due": "Handlungsbedarf",
+    "days": "vor 1 Tag | vor {count} Tagen",
+    "group": {
+      "haengt": "Hängt",
+      "woche": "Diese Woche",
+      "bearbeitung": "In Bearbeitung",
+      "spaeter": "Später"
+    },
+    "reason": {
+      "status": "Noch {stage}",
+      "payment": "Rate überfällig"
+    }
+  },
   "project": {
+    "trackProject": "Projekt",
+    "stalledStatus": "Status {stage} seit {date}",
+    "quoteAdd": "Angebot anlegen",
     "overview": "Übersicht",
     "lead": "Anfrage",
     "more": "Weitere Aktionen",
