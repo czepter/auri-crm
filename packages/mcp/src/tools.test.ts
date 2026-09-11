@@ -161,7 +161,7 @@ describe('read tools', () => {
       portalVisible: true,
       fields: { gaeste: 120 },
       updatedAt: '2026-01-01T00:00:00Z',
-      lead: { stage: 'booked', source: 'referral', sourceOther: null, capturedAt: '2025-11-02T09:00:00Z', lostAt: null },
+      lead: { stage: 'booked', source: 'referral', sourceOther: null, inquiryText: 'Standesamt Jena, Juni.', capturedAt: '2025-11-02T09:00:00Z', lostAt: null },
       contacts: [
         { id: 'ctc_meier', name: 'Lena Meier', email: 'lena@example.com', phone: null, role: 'primary', updatedAt: '2026-01-01T00:00:00Z' },
       ],

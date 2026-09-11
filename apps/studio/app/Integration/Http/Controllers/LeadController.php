@@ -124,6 +124,21 @@ class LeadController extends Controller
         return $this->state($lead);
     }
 
+    /** #361: a capture's inquiry text was write-once on this surface. */
+    public function update(Request $request, Lead $lead): JsonResponse
+    {
+        $validated = $request->validate([
+            'inquiry_text' => ['present', 'nullable', 'string', 'max:10000'],
+        ]);
+
+        $lead->update($validated);
+
+        return response()->json([
+            'id' => $lead->public_id,
+            'inquiryText' => $lead->inquiry_text,
+        ]);
+    }
+
     /** T-20's close, on the api surface. */
     public function markLost(Request $request, Lead $lead, AdvanceLeadStage $advance): JsonResponse
     {

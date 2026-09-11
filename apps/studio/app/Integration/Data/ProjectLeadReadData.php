@@ -18,6 +18,7 @@ class ProjectLeadReadData extends Data
         public string $stage,
         public string $source,
         public ?string $sourceOther,
+        public ?string $inquiryText,
         public string $capturedAt,
         public ?string $lostAt,
     ) {}
@@ -28,6 +29,7 @@ class ProjectLeadReadData extends Data
             stage: $lead->stage->key,
             source: $lead->source->value,
             sourceOther: $lead->source_other,
+            inquiryText: $lead->inquiry_text,
             capturedAt: $lead->captured_at->toIso8601String(),
             lostAt: $lead->lost_at?->toIso8601String(),
         );

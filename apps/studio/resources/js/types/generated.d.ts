@@ -612,6 +612,7 @@ export type ProjectLeadReadData = {
 stage: string,
 source: string,
 sourceOther: string | null,
+inquiryText: string | null,
 capturedAt: string,
 lostAt: string | null,
 };

@@ -73,6 +73,7 @@ describe('registerWriteTools', () => {
       'reopen_lead',
       'set_project_fields',
       'uncancel_shoot',
+      'update_lead',
     ])
   })
 
@@ -103,6 +104,7 @@ describe('registerWriteTools', () => {
       'close_lead',
       'delete_project',
       'set_project_fields',
+      'update_lead',
     ])
   })
 

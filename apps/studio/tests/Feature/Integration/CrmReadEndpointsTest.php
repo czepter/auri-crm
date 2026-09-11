@@ -234,7 +234,10 @@ it('carries the lead, the contacts with their roles, and the shoots', function (
     $project = Project::factory()->create();
     $contact = Contact::factory()->create(['name' => 'Lena Meier']);
     $project->attachContact($contact, ProjectContactRole::Primary);
-    $lead = Lead::factory()->for($project)->atStage(LeadStage::Booked)->create(['source' => LeadSource::Referral]);
+    $lead = Lead::factory()->for($project)->atStage(LeadStage::Booked)->create([
+        'source' => LeadSource::Referral,
+        'inquiry_text' => 'Standesamt Jena, Juni.',
+    ]);
     $shoot = Shoot::factory()->for($project)->create();
 
     $body = $this->withHeader('Authorization', bearerFor(Capability::ViewAllProjects))
@@ -245,6 +248,7 @@ it('carries the lead, the contacts with their roles, and the shoots', function (
         'stage' => 'booked',
         'source' => 'referral',
         'sourceOther' => null,
+        'inquiryText' => 'Standesamt Jena, Juni.',
         'capturedAt' => $lead->captured_at->toIso8601String(),
         'lostAt' => null,
     ]);

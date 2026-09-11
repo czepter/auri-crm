@@ -28,6 +28,7 @@ import { idempotencyKeyFor } from '../idempotency.js'
   registerCaptureLead(server, clientFor)
   registerCaptureLeadsBulk(server, clientFor)
   registerAdvanceLeadStage(server, clientFor)
+  registerUpdateLead(server, clientFor)
   registerCloseLead(server, clientFor)
   registerReopenLead(server, clientFor)
   registerCreateShoot(server, clientFor)
@@ -170,6 +171,30 @@ function registerAdvanceLeadStage(server: McpServer, clientFor: ApiClientFactory
         params: { path: { lead } },
         body: { stage, entered_at: enteredAt } as never,
         headers: writeHeaders('advance_lead_stage', { lead, stage, entered_at: enteredAt }, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerUpdateLead(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'update_lead',
+    {
+      title: 'Update lead',
+      description: "Replace a lead's inquiry text, the one written at capture. get_project shows the current one.",
+      inputSchema: {
+        lead: z.string().describe('The lead public id'),
+        inquiry_text: z.string().max(10000).nullable(),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ lead, inquiry_text: inquiryText }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).PATCH('/leads/{lead}', {
+        params: { path: { lead } },
+        body: { inquiry_text: inquiryText } as never,
+        headers: writeHeaders('update_lead', { lead, inquiry_text: inquiryText }, undefined),
       })
 
       return apiResult(data, error)
