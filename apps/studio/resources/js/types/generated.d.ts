@@ -633,6 +633,7 @@ updatedAt: string,
 lead: App.Integration.Data.ProjectLeadReadData | null,
 contacts: App.Integration.Data.ProjectContactReadData[],
 shoots: App.Integration.Data.ShootReadData[],
+quotes: App.Quotes.Data.QuoteData[],
 };
 export type ProjectFieldReadData = {
 id: string,
