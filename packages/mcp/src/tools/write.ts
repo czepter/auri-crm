@@ -35,6 +35,7 @@ import { idempotencyKeyFor } from '../idempotency.js'
   registerCancelShoot(server, clientFor)
   registerUncancelShoot(server, clientFor)
   registerAddInternalNote(server, clientFor)
+  registerAddProjectContact(server, clientFor)
   registerSetProjectFields(server, clientFor)
   registerAddProjectField(server, clientFor)
   registerDeleteProject(server, clientFor)
@@ -72,7 +73,10 @@ const leadFields = {
   contact_name: z.string().max(255).nullish(),
   contact_email: z.string().email().max(255).nullish(),
   contact_phone: z.string().max(64).nullish(),
-  partner_name: z.string().max(255).nullish(),
+  people: z
+    .array(z.object({ name: z.string().max(255), email: z.string().email().max(255).nullish(), phone: z.string().max(64).nullish() }))
+    .optional()
+    .describe('Everyone on the inquiry besides the contact — the partner of a wedding couple. Each becomes a contact of their own on the project.'),
   project_name: z.string().max(255),
   type: z.string().describe('The project type key — see list_project_types. A studio defines its own, so this is not a fixed list.'),
   source: z.enum(leadSourceEnum),
@@ -372,7 +376,38 @@ function registerAddInternalNote(server: McpServer, clientFor: ApiClientFactory)
   )
 }
 
-const projectFieldTypeEnum = ['text', 'textarea', 'number', 'select', 'tags', 'date', 'boolean'] as const
+function registerAddProjectContact(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'add_project_contact',
+    {
+      title: 'Add project contact',
+      description:
+        'Attach a person to an existing project: the partner of a couple, a payer, a planner. Pass contact_id for someone on file (see search_contacts), or name with email and phone; an email already on file reuses that contact. The primary contact is set at capture and cannot be added here.',
+      inputSchema: {
+        project: z.string().describe('The project public id'),
+        contact_id: z.string().length(24).nullish().describe('CUID2 of an existing contact'),
+        name: z.string().max(255).nullish(),
+        email: z.string().email().max(255).nullish(),
+        phone: z.string().max(64).nullish(),
+        role: z.enum(['partner', 'payer', 'planner', 'vendor']).nullish().describe('Defaults to partner'),
+        ...silentField,
+      },
+      // Attaching the same person in the same role twice leaves one link.
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ project, silent, ...person }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/contacts', {
+        params: { path: { project } },
+        body: person as never,
+        headers: writeHeaders('add_project_contact', { project, ...person }, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+const projectFieldTypeEnum =['text', 'textarea', 'number', 'select', 'tags', 'date', 'boolean'] as const
 
 function registerSetProjectFields(server: McpServer, clientFor: ApiClientFactory): void {
   server.registerTool(

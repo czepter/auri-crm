@@ -60,6 +60,7 @@ describe('registerWriteTools', () => {
 
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       'add_internal_note',
+      'add_project_contact',
       'add_project_field',
       'advance_lead_stage',
       'advance_shoot_status',
@@ -161,6 +162,34 @@ describe('registerWriteTools', () => {
     await client.callTool({ name: 'capture_lead', arguments: { ...lead, silent: true } })
 
     expect(post.mock.calls[0][1].headers?.['Idempotency-Key']).not.toBe(post.mock.calls[1][1].headers?.['Idempotency-Key'])
+  })
+
+  it('adds a contact to a project by path, the person as body', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({ name: 'add_project_contact', arguments: { project: 'p1', name: 'Friedrich Rüffer', role: 'partner' } })
+
+    expect(post.mock.calls[0][0]).toBe('/projects/{project}/contacts')
+    expect(post.mock.calls[0][1]).toMatchObject({ params: { path: { project: 'p1' } }, body: { name: 'Friedrich Rüffer', role: 'partner' } })
+  })
+
+  // The partner used to travel as partner_name, which the api surface never
+  // read: the second person of a wedding couple was dropped without an error.
+  it('carries everyone on the inquiry as people, single and bulk', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    const people = [{ name: 'Manuel', email: 'manuel@example.test' }]
+    const lead = { contact_name: 'Viktoria Böser', project_name: 'Hochzeit', type: 'wedding', source: 'website', captured_via: 'email', people }
+
+    await client.callTool({ name: 'capture_lead', arguments: lead })
+    await client.callTool({ name: 'capture_leads_bulk', arguments: { leads: [lead] } })
+
+    expect(post.mock.calls[0][1].body).toMatchObject({ people })
+    expect((post.mock.calls[1][1].body as { leads: Record<string, unknown>[] }).leads[0]).toMatchObject({ people })
   })
 
   // #346/#351: the type key is the studio's own vocabulary, not a fixed

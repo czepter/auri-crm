@@ -9,6 +9,7 @@ use App\Help\Support\HelpIndex;
 use App\Portal\Support\PortalSettings;
 use App\Releases\Support\ReleaseLog;
 use App\Settings\Support\StudioSettingsResolver;
+use App\Support\LiveUpdate;
 use App\Support\RecordVisit;
 use App\Support\Surface;
 use Illuminate\Http\Request;
@@ -88,6 +89,10 @@ class HandleInertiaRequests extends Middleware
             // passed per page, because the palette is chrome and opens over
             // whatever screen is up. Lazy for the same reason as the counts.
             'recent' => $user === null ? null : fn () => RecordVisit::recent(),
+            // #357: where this tab listens for changes. Eager rather than a
+            // closure: it queues the hub's cookie, and a partial reload that
+            // does not ask for this prop still has to refresh that.
+            'live' => $user !== null && Surface::current() === Surface::ADMIN ? LiveUpdate::subscribe() : null,
             // Welcher Hilfeartikel zu diesem Screen gehört — null bis zwei,
             // Aufgabe zuerst. Aufgelöst aus dem gecachten Index, also ohne
             // Dateizugriff; der Artikeltext kommt erst beim Aufklappen und

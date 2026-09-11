@@ -16,6 +16,9 @@ class AuditLogger
     /** Keys kept as evidence of shape but masked. */
     private const REDACTED = ['email'];
 
+    /** Audited on every api call, reads included — no change an open tab could show. */
+    private const NOT_A_CHANGE = ['api_token.call', 'api_token.rate_limited'];
+
     public static function record(
         string $event,
         ?User $actor = null,
@@ -29,7 +32,7 @@ class AuditLogger
         // stays honest about when it was typed — and carries when it happened.
         ?CarbonInterface $occurredAt = null,
     ): AuditLog {
-        return AuditLog::create([
+        $log = AuditLog::create([
             'event' => $event,
             'actor_id' => $actor?->id,
             'project_id' => $projectId,
@@ -41,6 +44,13 @@ class AuditLogger
             'ip_address' => Request::ip(),
             'user_agent' => substr((string) Request::userAgent(), 0, 500),
         ]);
+
+        // #357: an audited change is one some open tab may be showing.
+        if (! in_array($event, self::NOT_A_CHANGE, true)) {
+            LiveUpdate::publish();
+        }
+
+        return $log;
     }
 
     /**

@@ -119,6 +119,9 @@ return Application::configure(basePath: dirname(__DIR__))
             MarkSilentWrite::class,
         ]);
 
+        // #357: the Mercure hub reads this one, not Laravel.
+        $middleware->encryptCookies(except: ['mercureAuthorization']);
+
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo('/');
 

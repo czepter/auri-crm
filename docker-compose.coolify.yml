@@ -37,6 +37,12 @@ services:
       MAIL_INBOUND_IMAP_FOLDER: ${MAIL_INBOUND_IMAP_FOLDER:-INBOX}
       MAIL_INBOUND_SIGNING_SECRET: ${MAIL_INBOUND_SIGNING_SECRET}
       RELEASE_LOG_URL: ${RELEASE_LOG_URL:-https://uew53y9iuh4kievlxtcshuyc.coolify3.czpt.de}
+      # #357: this container carries the Mercure hub (docker/app/mercure.caddy);
+      # every other studio container publishes to it at MERCURE_URL, which the
+      # image bakes.
+      CADDY_SERVER_EXTRA_DIRECTIVES: import /etc/frankenphp/mercure.caddy
+      MERCURE_PUBLISHER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCUREPUB}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCURESUB}
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/up"]
       interval: 10s
@@ -59,6 +65,7 @@ services:
     environment:
       SERVICE_FQDN_PORTAL_8080:
       APP_SURFACE: portal
+      MERCURE_PUBLISHER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCUREPUB}
       APP_URL: ${SERVICE_FQDN_PORTAL}
       APP_KEY: ${SERVICE_REALBASE64_APPKEY}
       SENTRY_LARAVEL_DSN: ${STUDIO_SENTRY_DSN}
@@ -108,6 +115,7 @@ services:
       AWS_ACCESS_KEY_ID: ${SERVICE_PASSWORD_RUSTFSKEY}
       AWS_SECRET_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSSECRET}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      MERCURE_PUBLISHER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCUREPUB}
       # This surface raises notifications of its own — PublicInquiryController
       # -> LeadCaptured -> InquiryReceived is the studio's only word that a
       # lead arrived, and the Stripe webhook above raises InstallmentPaid the
@@ -220,6 +228,7 @@ services:
       # send, and APP_URL above is the studio — config/portal.php's fallback
       # would aim them at the wrong surface.
       PORTAL_URL: ${SERVICE_FQDN_PORTAL}
+      MERCURE_PUBLISHER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCUREPUB}
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
@@ -294,6 +303,7 @@ services:
       MAIL_INBOUND_IMAP_FOLDER: ${MAIL_INBOUND_IMAP_FOLDER:-INBOX}
       MAIL_INBOUND_SIGNING_SECRET: ${MAIL_INBOUND_SIGNING_SECRET}
       RELEASE_LOG_URL: ${RELEASE_LOG_URL:-https://uew53y9iuh4kievlxtcshuyc.coolify3.czpt.de}
+      MERCURE_PUBLISHER_JWT_KEY: ${SERVICE_PASSWORD_64_MERCUREPUB}
     depends_on:
       postgres:
         condition: service_healthy

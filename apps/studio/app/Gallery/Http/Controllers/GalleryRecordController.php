@@ -23,6 +23,7 @@ use App\Media\Models\Asset;
 use App\Media\Models\DownloadEvent;
 use App\Media\Models\MultipartUpload;
 use App\Media\Models\ZipBuild;
+use App\Support\LiveUpdate;
 use App\Support\RecordVisit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -409,6 +410,8 @@ class GalleryRecordController extends Controller
         if ($fields !== []) {
             $gallery->update($fields);
         }
+
+        LiveUpdate::publish();
 
         return back();
     }

@@ -267,31 +267,9 @@ watch(transferring, (on) => (on ? window.addEventListener('beforeunload', guardU
 // reloading, and the running transfer dies with this component.
 const stopInertiaGuard = router.on('before', () => (transferring.value ? window.confirm(t('media.leaveWhileUploading')) : true))
 
-// Nothing pushes ingest completion to the browser — a still-transferring or
-// still-queued upload only becomes a visible picture once this reloads and
-// asks again. 5s: fast enough that the studio sees a picture land shortly
-// after G-03 concludes it, slow enough not to hammer the page on a gallery
-// with hundreds queued. Stops the moment nothing is pending — no polling a
-// gallery that has nothing left to wait for.
-let pollTimer: ReturnType<typeof setInterval> | null = null
-
-watch(
-  () => props.pendingUploads.length > 0,
-  (hasPending) => {
-    if (hasPending && pollTimer === null) {
-      pollTimer = setInterval(() => router.reload({ only: ['assets', 'sets', 'pendingUploads', 'failedAssets'] }), 5000)
-    } else if (!hasPending && pollTimer !== null) {
-      clearInterval(pollTimer)
-      pollTimer = null
-    }
-  },
-  { immediate: true },
-)
-
 onUnmounted(() => {
   window.removeEventListener('beforeunload', guardUnload)
   stopInertiaGuard()
-  if (pollTimer !== null) clearInterval(pollTimer)
 })
 </script>
 

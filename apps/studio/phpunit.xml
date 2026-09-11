@@ -51,6 +51,11 @@
         -->
         <env name="DB_DATABASE" value="studio_test" force="true"/>
         <server name="DB_DATABASE" value="studio_test" force="true"/>
+        <!-- #357: forced for the same reason as DB_DATABASE — the php service
+             sets it, and a suite that publishes to the dev hub counts one
+             request too many wherever it fakes Http. -->
+        <env name="MERCURE_URL" value="" force="true"/>
+        <server name="MERCURE_URL" value="" force="true"/>
         <env name="APP_SURFACE" value="admin"/>
     </php>
 </phpunit>
