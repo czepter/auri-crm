@@ -1910,6 +1910,50 @@
             }
         },
         "/projects/{project}/notes": {
+            "get": {
+                "operationId": "projects.notes.index",
+                "summary": "Oldest first, on when it happened \u2014 the order the admin thread reads in",
+                "tags": [
+                    "InternalNote"
+                ],
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
             "post": {
                 "operationId": "projects.notes.store",
                 "tags": [
@@ -1926,32 +1970,6 @@
                         }
                     }
                 ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "body": {
-                                        "type": "string",
-                                        "maxLength": 5000
-                                    },
-                                    "occurred_at": {
-                                        "type": [
-                                            "string",
-                                            "null"
-                                        ],
-                                        "format": "date-time"
-                                    }
-                                },
-                                "required": [
-                                    "body"
-                                ]
-                            }
-                        }
-                    }
-                },
                 "responses": {
                     "201": {
                         "description": "",
@@ -1966,6 +1984,12 @@
                                         "body": {
                                             "type": "string"
                                         },
+                                        "author": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
                                         "writtenAt": {
                                             "type": "string"
                                         },
@@ -1976,6 +2000,7 @@
                                     "required": [
                                         "id",
                                         "body",
+                                        "author",
                                         "writtenAt",
                                         "occurredAt"
                                     ]
@@ -1983,8 +2008,91 @@
                             }
                         }
                     },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/notes/{note}": {
+            "patch": {
+                "operationId": "notes.update",
+                "tags": [
+                    "InternalNote"
+                ],
+                "parameters": [
+                    {
+                        "name": "note",
+                        "in": "path",
+                        "required": true,
+                        "description": "The note public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "body": {
+                                            "type": "string"
+                                        },
+                                        "author": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "writtenAt": {
+                                            "type": "string"
+                                        },
+                                        "occurredAt": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "body",
+                                        "author",
+                                        "writtenAt",
+                                        "occurredAt"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "notes.destroy",
+                "tags": [
+                    "InternalNote"
+                ],
+                "parameters": [
+                    {
+                        "name": "note",
+                        "in": "path",
+                        "required": true,
+                        "description": "The note public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"

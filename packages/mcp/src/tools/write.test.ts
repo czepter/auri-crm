@@ -69,10 +69,12 @@ describe('registerWriteTools', () => {
       'capture_leads_bulk',
       'close_lead',
       'create_shoot',
+      'delete_internal_note',
       'delete_project',
       'reopen_lead',
       'set_project_fields',
       'uncancel_shoot',
+      'update_internal_note',
       'update_lead',
     ])
   })
@@ -102,8 +104,10 @@ describe('registerWriteTools', () => {
       'advance_shoot_status',
       'cancel_shoot',
       'close_lead',
+      'delete_internal_note',
       'delete_project',
       'set_project_fields',
+      'update_internal_note',
       'update_lead',
     ])
   })

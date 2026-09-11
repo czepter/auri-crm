@@ -1,6 +1,15 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { useForm, usePage } from "@inertiajs/vue3";
+import { computed, ref } from "vue";
+import { router, useForm, usePage } from "@inertiajs/vue3";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/ui/alert-dialog";
 import { DatePicker } from "@/ui/date-picker";
 import { Textarea } from "@/ui/textarea";
 import { dayWithWeekday } from "@/admin/lib/dates";
@@ -40,6 +49,33 @@ function send() {
         onSuccess: () => note.reset(),
     });
 }
+
+const editing = ref<string | null>(null);
+const edit = useForm({ body: "" });
+
+function startEdit(entry: App.Crm.Data.ThreadEntryData) {
+    edit.clearErrors();
+    edit.body = entry.body;
+    editing.value = entry.note;
+}
+
+function save() {
+    if (!edit.body.trim()) return;
+
+    edit.patch(`/notizen/${editing.value}`, {
+        preserveScroll: true,
+        onSuccess: () => (editing.value = null),
+    });
+}
+
+const deleting = ref<string | null>(null);
+
+function destroy() {
+    router.delete(`/notizen/${deleting.value}`, {
+        preserveScroll: true,
+        onFinish: () => (deleting.value = null),
+    });
+}
 </script>
 
 <template>
@@ -65,7 +101,68 @@ function send() {
                     }}<span v-if="entry.author"> — {{ entry.author }}</span>
                 </p>
 
-                <div v-else class="flex" :class="entry.author === me && 'justify-end'">
+                <div v-else-if="editing !== null && editing === entry.note">
+                    <div
+                        class="flex items-end gap-2 rounded-[16px] bg-sunk-2 py-1.5 pr-1.5 pl-3.5 shadow-[inset_0_0_0_2px_var(--accent)]"
+                    >
+                        <Textarea
+                            v-model="edit.body"
+                            rows="1"
+                            autofocus
+                            class="field-sizing-content max-h-40 min-h-0 resize-none rounded-none border-0 bg-transparent p-0 py-[5px] text-[13.5px] leading-[1.45] tracking-[-0.01em] hover:border-transparent focus:border-transparent"
+                            @keydown.enter.exact.prevent="save"
+                            @keydown.esc="editing = null"
+                        />
+                        <button
+                            type="button"
+                            :aria-label="$t('common.cancel')"
+                            class="grid size-[30px] flex-none cursor-pointer place-items-center rounded-full border-0 bg-paper text-ink-2 transition-colors duration-[120ms] ease-out hover:text-foreground"
+                            @click="editing = null"
+                        >
+                            <svg
+                                viewBox="0 0 16 16"
+                                class="size-[15px]"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                                stroke-linecap="round"
+                            >
+                                <path d="M4 4l8 8M12 4l-8 8" />
+                            </svg>
+                        </button>
+                        <button
+                            type="button"
+                            :aria-label="$t('common.save')"
+                            :disabled="!edit.body.trim() || edit.processing"
+                            class="grid size-[30px] flex-none cursor-pointer place-items-center rounded-full border-0 bg-action text-white transition-[filter,opacity] duration-[120ms] ease-out hover:brightness-[1.08] disabled:cursor-default disabled:opacity-35"
+                            @click="save"
+                        >
+                            <svg
+                                viewBox="0 0 16 16"
+                                class="size-[15px]"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.7"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="M3 8.5l3.2 3L13 4.5" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p
+                        v-if="edit.errors.body"
+                        class="mt-1.5 text-[11.5px] leading-[1.45] text-destructive"
+                    >
+                        {{ edit.errors.body }}
+                    </p>
+                </div>
+
+                <div
+                    v-else
+                    class="group flex flex-col gap-1"
+                    :class="entry.author === me ? 'items-end' : 'items-start'"
+                >
                     <div
                         class="max-w-[78%] px-3 py-2"
                         :class="
@@ -86,9 +183,39 @@ function send() {
                             :class="entry.author === me ? 'text-white/65' : 'text-ink-2'"
                         >{{ timeOf(entry.at) }}</span>
                     </div>
+                    <div
+                        v-if="entry.note"
+                        class="flex gap-3 px-1 opacity-0 transition-opacity duration-[120ms] group-hover:opacity-100 focus-within:opacity-100"
+                    >
+                        <button
+                            type="button"
+                            class="cursor-pointer border-0 bg-transparent p-0 text-[11.5px] leading-none font-medium text-ink-2 hover:text-foreground"
+                            @click="startEdit(entry)"
+                        >{{ $t('project.noteEdit') }}</button>
+                        <button
+                            type="button"
+                            class="cursor-pointer border-0 bg-transparent p-0 text-[11.5px] leading-none font-medium text-ink-2 hover:text-foreground"
+                            @click="deleting = entry.note"
+                        >{{ $t('project.noteDelete') }}</button>
+                    </div>
                 </div>
             </template>
         </div>
+
+        <AlertDialog
+            :open="deleting !== null"
+            @update:open="(open: boolean) => open || (deleting = null)"
+        >
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>{{ $t('project.noteDeleteTitle') }}</AlertDialogTitle>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogAction class="bg-destructive" @click="destroy">{{ $t('common.delete') }}</AlertDialogAction>
+                    <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
 
         <!-- Sticky, because the thread grows and the field one writes into is
              the one part of it that may never scroll away. -->

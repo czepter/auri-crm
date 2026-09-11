@@ -251,6 +251,7 @@
     "uncancel": "Absage zurücknehmen",
     "noteEdit": "bearbeiten",
     "noteDelete": "löschen",
+    "noteDeleteTitle": "Notiz löschen?",
     "portalStatus": "Portal",
     "portalVisible": "Sichtbar",
     "portalHidden": "Ausgeblendet",

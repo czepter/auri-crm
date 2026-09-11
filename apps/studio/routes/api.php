@@ -180,6 +180,10 @@ Route::middleware('audience:api')->group(function () {
     Route::middleware('scope:'.Capability::ViewAllProjects->value)
         ->get('/projects/{project:public_id}', [CrmReadController::class, 'project'])
         ->name('api.projects.show');
+    // ManageNotes, not ViewAllProjects: notes stay out of the project read.
+    Route::middleware('scope:'.Capability::ManageNotes->value)
+        ->get('/projects/{project:public_id}/notes', [InternalNoteController::class, 'index'])
+        ->name('api.projects.notes.index');
     Route::middleware('scope:'.Capability::ManageLeads->value)
         ->get('/pipeline-snapshot', [CrmReadController::class, 'pipelineSnapshot'])
         ->name('api.pipeline-snapshot');
@@ -254,6 +258,14 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'ide
 Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'idempotent'])
     ->post('/projects/{project:public_id}/notes', [InternalNoteController::class, 'store'])
     ->name('api.projects.notes.store');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'idempotent'])
+    ->patch('/notes/{note:public_id}', [InternalNoteController::class, 'update'])
+    ->name('api.notes.update');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'idempotent'])
+    ->delete('/notes/{note:public_id}', [InternalNoteController::class, 'destroy'])
+    ->name('api.notes.destroy');
 
 // ManageLeads, the scope leads.store already attaches contacts under.
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])

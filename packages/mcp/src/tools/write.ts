@@ -36,6 +36,8 @@ import { idempotencyKeyFor } from '../idempotency.js'
   registerCancelShoot(server, clientFor)
   registerUncancelShoot(server, clientFor)
   registerAddInternalNote(server, clientFor)
+  registerUpdateInternalNote(server, clientFor)
+  registerDeleteInternalNote(server, clientFor)
   registerAddProjectContact(server, clientFor)
   registerSetProjectFields(server, clientFor)
   registerAddProjectField(server, clientFor)
@@ -397,6 +399,61 @@ function registerAddInternalNote(server: McpServer, clientFor: ApiClientFactory)
       })
 
       return apiResult(data, error)
+    },
+  )
+}
+
+function registerUpdateInternalNote(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'update_internal_note',
+    {
+      title: 'Update internal note',
+      description: 'Replace the body of an internal note, by the id add_internal_note returned. occurred_at is kept unless given.',
+      inputSchema: {
+        note: z.string().describe('The note public id'),
+        body: z.string().max(5000),
+        occurred_at: z
+          .string()
+          .nullish()
+          .describe('When what the note is about happened. ISO 8601 or YYYY-MM-DD, never in the future.'),
+        ...silentField,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ note, body, occurred_at, silent }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).PATCH('/notes/{note}', {
+        params: { path: { note } },
+        body: { body, occurred_at } as never,
+        headers: writeHeaders('update_internal_note', { note, body, occurred_at }, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerDeleteInternalNote(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'delete_internal_note',
+    {
+      title: 'Delete internal note',
+      description: 'Delete an internal note, by the id add_internal_note returned. There is no undo.',
+      inputSchema: {
+        note: z.string().describe('The note public id'),
+        ...silentField,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ note, silent }, extra) => {
+      const { error } = await clientFor(extra.authInfo?.token).DELETE('/notes/{note}', {
+        params: { path: { note } },
+        headers: writeHeaders('delete_internal_note', { note }, silent),
+      })
+
+      // 204, no body — see delete_project.
+      return error !== undefined
+        ? apiResult(undefined, error)
+        : { content: [{ type: 'text', text: `Deleted note ${note}.` }] }
     },
   )
 }

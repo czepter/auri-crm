@@ -413,6 +413,7 @@ at: string | null,
 body: string,
 author: string | null,
 system: boolean,
+note: string | null,
 };
 export type TimelineEntryData = {
 id: string,

@@ -200,6 +200,39 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
   )
 
   server.registerTool(
+    'list_internal_notes',
+    {
+      title: 'List internal notes',
+      description:
+        "Lists a project's staff-only internal notes, oldest first by when they happened. The ids are what update_internal_note and delete_internal_note take.",
+      inputSchema: {
+        publicId: z.string().describe("The project's public_id, never its internal integer id."),
+      },
+      outputSchema: {
+        notes: z.array(
+          z.object({
+            id: z.string(),
+            body: z.string(),
+            author: z.string().nullable(),
+            writtenAt: z.string(),
+            occurredAt: z.string(),
+          }),
+        ),
+      },
+    },
+    async ({ publicId }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).GET('/projects/{project}/notes', {
+        params: { path: { project: publicId } },
+      })
+      if (error) {
+        return errorResult(error)
+      }
+
+      return jsonResult({ notes: data.data })
+    },
+  )
+
+  server.registerTool(
     'list_project_types',
     {
       title: 'List project types',

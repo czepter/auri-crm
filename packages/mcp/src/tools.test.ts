@@ -90,6 +90,7 @@ describe('read tools', () => {
     expect(tools.map((tool) => tool.name).sort()).toEqual(
       expect.arrayContaining([
         'get_project',
+        'list_internal_notes',
         'list_leads',
         'list_project_types',
         'pipeline_snapshot',
