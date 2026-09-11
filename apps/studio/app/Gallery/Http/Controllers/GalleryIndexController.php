@@ -2,6 +2,7 @@
 
 namespace App\Gallery\Http\Controllers;
 
+use App\Crm\Data\ProjectSuggestionData;
 use App\Crm\Models\Project;
 use App\Enums\Capability;
 use App\Gallery\Data\GalleryPresetData;
@@ -61,11 +62,20 @@ class GalleryIndexController extends Controller
         ]);
     }
 
-    public function create(StudioSettingsResolver $settings): Response
+    public function create(Request $request, StudioSettingsResolver $settings): Response
     {
         $this->authorize('create', Gallery::class);
 
+        $project = $request->filled('projekt')
+            ? Project::query()
+                ->visibleTo(auth('staff')->user())
+                ->where('public_id', $request->query('projekt'))
+                ->first()
+            : null;
+
         return Inertia::render('Galleries/Create', [
+            'project' => $project ? ProjectSuggestionData::fromModel($project) : null,
+            'shootId' => $project?->shoots()->where('public_id', $request->query('shooting'))->value('public_id'),
             'presets' => GalleryPresetData::collect(GalleryPreset::query()->orderBy('name')->get()),
             // Die unterste Stufe der Geburtskette; die beiden darüber reichen
             // Vorlage und Projektvorschlag nach.
@@ -89,6 +99,7 @@ class GalleryIndexController extends Controller
             // sieht, ist kein Ziel. findByPublicId lieferte auf einen
             // Tippfehler null und damit still eine projektlose Galerie.
             'project_id' => ['nullable', 'string', Rule::exists('projects', 'public_id')],
+            'shoot_id' => ['nullable', 'string'],
             'title' => ['required', 'string', 'max:200'],
             'is_external' => ['required', 'boolean'],
             'external_url' => ['nullable', 'url', 'max:2000', 'required_if:is_external,true'],
@@ -108,8 +119,11 @@ class GalleryIndexController extends Controller
                 ->firstOrFail();
 
         $gallery = Gallery::create([
-            ...Arr::except($validated, ['project_id']),
+            ...Arr::except($validated, ['project_id', 'shoot_id']),
             'project_id' => $project?->id,
+            'shoot_id' => isset($validated['shoot_id'])
+                ? $project?->shoots()->where('public_id', $validated['shoot_id'])->value('id')
+                : null,
         ]);
 
         AuditLogger::record(
