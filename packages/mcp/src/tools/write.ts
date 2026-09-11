@@ -72,7 +72,10 @@ const leadFields = {
   contact_name: z.string().max(255).nullish(),
   contact_email: z.string().email().max(255).nullish(),
   contact_phone: z.string().max(64).nullish(),
-  partner_name: z.string().max(255).nullish(),
+  people: z
+    .array(z.object({ name: z.string().max(255), email: z.string().email().max(255).nullish(), phone: z.string().max(64).nullish() }))
+    .optional()
+    .describe('Everyone on the inquiry besides the contact — the partner of a wedding couple. Each becomes a contact of their own on the project.'),
   project_name: z.string().max(255),
   type: z.string().describe('The project type key — see list_project_types. A studio defines its own, so this is not a fixed list.'),
   source: z.enum(leadSourceEnum),
