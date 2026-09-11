@@ -194,6 +194,16 @@ it('mints a preview link for an owner and refuses everyone else', function () {
     expect(ClientAccess::query()->whereNotNull('preview_by_id')->count())->toBe(1);
 });
 
+it('gives a bare portal host a scheme', function () {
+    $_ENV['PORTAL_URL'] = $_SERVER['PORTAL_URL'] = 'meine.example.de';
+
+    try {
+        expect((require config_path('portal.php'))['url'])->toBe('https://meine.example.de');
+    } finally {
+        unset($_ENV['PORTAL_URL'], $_SERVER['PORTAL_URL']);
+    }
+});
+
 it('never renders a live preview credential into the page', function () {
     useSurface(Surface::ADMIN);
 
