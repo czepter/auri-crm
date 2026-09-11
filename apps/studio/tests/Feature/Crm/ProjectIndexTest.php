@@ -1,9 +1,12 @@
 <?php
 
 use App\Crm\Enums\ShootStatus;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\Stage;
+use App\Crm\Support\CrmVocabulary;
 use App\Enums\StaffRole;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -49,6 +52,30 @@ it('reads the position off the same rule the project screen does', function () {
         ->create(['status' => ShootStatus::Booked]);
 
     expect(projectRows()[0]['position'])->toBe(ShootStatus::Booked->label());
+});
+
+// #364: the list groups by where the work stands.
+it('files each stage under its phase', function (ShootStatus $status, string $phase) {
+    $project = bookedProject();
+    Shoot::factory()->for($project)->primary()->on('2026-06-14')->atStatus($status)->create();
+
+    expect(projectRows()[0])->toMatchArray(['positionKey' => $status->value, 'phase' => $phase]);
+})->with([
+    [ShootStatus::Prep, 'upcoming'],
+    [ShootStatus::Culling, 'editing'],
+    [ShootStatus::Delivered, 'delivered'],
+]);
+
+// A studio renames its stages, so the phase comes off the anchor, never off
+// the name.
+it('keeps a renamed stage in its phase', function () {
+    Stage::query()->where('pipeline', StagePipeline::Project->value)->where('key', 'culling')->update(['name' => 'Sichtung']);
+    app(CrmVocabulary::class)->forget();
+
+    $project = bookedProject();
+    Shoot::factory()->for($project)->primary()->on('2026-06-14')->atStatus(ShootStatus::Culling)->create();
+
+    expect(projectRows()[0])->toMatchArray(['position' => 'Sichtung', 'phase' => 'editing']);
 });
 
 // An inquiry is the same record before its Job exists — it belongs on the

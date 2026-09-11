@@ -8,6 +8,7 @@ use App\Crm\Data\ShootData;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Support\CrmVocabulary;
 use App\Crm\Support\ShootCalendar;
 use App\Http\Controllers\Controller;
 use App\Models\Absence;
@@ -38,7 +39,7 @@ class CalendarController extends Controller
      * widest block above the working area; it lives under
      * /einstellungen/kalender now.
      */
-    public function index(Request $request): InertiaResponse
+    public function index(Request $request, CrmVocabulary $vocabulary): InertiaResponse
     {
         $user = auth('staff')->user();
         $month = $this->month($request);
@@ -126,7 +127,54 @@ class CalendarController extends Controller
                 ->filter(fn (Shoot $shoot) => $shoot->crew->contains('user_id', $user->id))
                 ->pluck('public_id')
                 ->values(),
+            'season' => Inertia::optional(fn () => $this->season($user, $vocabulary)),
         ]);
+    }
+
+    /**
+     * #365: every dated shoot and every absence, not one month of them — the
+     * season view answers "how full is June next year", which no single
+     * month can. Holds stay out: a requested shoot is an inquiry, and a lost
+     * one would sit on its Saturday for good.
+     *
+     * @return array{shoots: list<array<string, string>>, away: list<array<string, string|null>>}
+     */
+    private function season(User $user, CrmVocabulary $vocabulary): array
+    {
+        $shoots = Shoot::query()
+            ->with('project')
+            ->whereIn('shoots.project_id', Project::query()->visibleTo($user)->select('projects.id'))
+            ->uncancelled()
+            ->whereNotNull('date')
+            ->orderBy('date')
+            ->get()
+            ->filter(fn (Shoot $shoot) => $shoot->status !== null && $shoot->status->anchor !== StageAnchor::Entry);
+
+        return [
+            'shoots' => $shoots->map(fn (Shoot $shoot) => [
+                'date' => $shoot->date->toDateString(),
+                'name' => $shoot->project->name,
+                'projectId' => $shoot->project->public_id,
+                'status' => $shoot->status->name,
+                'phase' => $vocabulary->phase($shoot->status),
+            ])->values()->all(),
+            'away' => [
+                ...Absence::query()->with('user')->visibleTo($user)->get()
+                    ->map(fn (Absence $absence) => [
+                        'from' => $absence->starts_on->toDateString(),
+                        'to' => $absence->ends_on->toDateString(),
+                        'what' => $absence->user->name,
+                        'who' => $absence->category->label(),
+                    ])->all(),
+                ...StudioClosure::query()->get()
+                    ->map(fn (StudioClosure $closure) => [
+                        'from' => $closure->starts_on->toDateString(),
+                        'to' => $closure->ends_on->toDateString(),
+                        'what' => $closure->label,
+                        'who' => null,
+                    ])->all(),
+            ],
+        ];
     }
 
     /**

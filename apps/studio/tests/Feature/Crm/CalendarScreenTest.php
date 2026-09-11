@@ -106,6 +106,28 @@ it('carries an absence and a studio closure as all-day lines', function () {
         ->and($days['2026-02-21']['entries'][0])->toMatchArray(['kind' => 'away', 'what' => 'Betriebsferien']);
 });
 
+// #365: the season is every year a studio has, so it travels only when the
+// season view asks for it — and a hold is an inquiry, not a booked day.
+it('sends the season on request, without holds', function () {
+    $project = Project::factory()->create(['name' => 'Meier & Kowalski']);
+    Shoot::factory()->for($project)->on('2019-06-15')->atStatus(ShootStatus::Delivered)->create();
+    Shoot::factory()->for($project)->on('2027-05-15')->atStatus(ShootStatus::Requested)->create();
+    Absence::factory()->create(['starts_on' => '2026-07-27', 'ends_on' => '2026-08-07']);
+
+    expect(props('/kalender'))->not->toHaveKey('season');
+
+    $season = test()->get('/kalender', [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => (string) \Inertia\Inertia::getVersion(),
+        'X-Inertia-Partial-Component' => 'Kalender',
+        'X-Inertia-Partial-Data' => 'season',
+    ])->assertOk()->json('props.season');
+
+    expect($season['shoots'])->toHaveCount(1)
+        ->and($season['shoots'][0])->toMatchArray(['date' => '2019-06-15', 'name' => 'Meier & Kowalski', 'phase' => 'delivered'])
+        ->and($season['away'][0])->toMatchArray(['from' => '2026-07-27', 'to' => '2026-08-07']);
+});
+
 // The subscription secret was the widest block over the working area. It is a
 // credential, and it belongs in the settings.
 it('keeps the feed url off the calendar and puts it under the settings', function () {
