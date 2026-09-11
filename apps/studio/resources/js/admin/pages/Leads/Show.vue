@@ -19,6 +19,8 @@ import Rail from "@/ui/page/Rail.vue";
 import RailSection from "@/ui/page/RailSection.vue";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import { Textarea } from "@/ui/textarea";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/admin/lib/money";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
 
@@ -55,6 +57,7 @@ const props = defineProps<{
     presets: { type: string[]; source: string[] };
     week: { date: string; what: string; projectId: string }[];
     conflicts: App.Crm.Data.DateConflictData[];
+    stages: { value: string; label: string }[];
 }>();
 
 // ↑↓ walks the queue without leaving the screen. Response time is the lever:
@@ -138,6 +141,37 @@ const edit = useForm({
 
 function reopen() {
     router.post(`/anfragen/${props.lead.id}/wieder-oeffnen`, {}, { preserveScroll: true });
+}
+
+// Same rule as the board: "booked" writes the job, so it asks first.
+const booking = ref(false);
+
+function move(stage: string) {
+    if (stage === "booked") {
+        booking.value = true;
+
+        return;
+    }
+
+    router.post(`/anfragen/${props.lead.id}/stufe`, { stage }, { preserveScroll: true });
+}
+
+function book() {
+    router.post(`/anfragen/${props.lead.id}/stufe`, { stage: "booked" }, { preserveScroll: true });
+    booking.value = false;
+}
+
+const closing = ref(false);
+const closeForm = useForm({ outcome: "lost", reason: "" });
+
+function close() {
+    closeForm.post(`/anfragen/${props.lead.id}/schliessen`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            closing.value = false;
+            closeForm.reset();
+        },
+    });
 }
 
 function save() {
@@ -288,8 +322,71 @@ const due = computed(() => {
                         <Button :as="Link" variant="pill" :href="due.href">{{
                             $t(due.label)
                         }}</Button>
+                        <DropdownMenu v-if="!lead.outcomeLabel && !lead.booked">
+                            <DropdownMenuTrigger
+                                class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2"
+                                :aria-label="$t('project.more')"
+                            >
+                                <svg class="size-4 fill-current" viewBox="0 0 24 24">
+                                    <circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" />
+                                </svg>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" class="w-[208px]">
+                                <DropdownMenuItem
+                                    v-for="stage in stages"
+                                    :key="stage.value"
+                                    :disabled="stage.value === lead.stage"
+                                    @select="move(stage.value)"
+                                >
+                                    {{ stage.label }}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem class="border-t border-rule" @select="closing = true">
+                                    {{ $t("project.closeMenu") }}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
+
+                <AlertDialog v-model:open="closing">
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>{{ $t("board.closeTitle") }}</AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <Field v-slot="{ id }" :label="$t('board.outcome')">
+                            <Select v-model="closeForm.outcome">
+                                <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="lost">{{ $t("board.outcomeLost") }}</SelectItem>
+                                    <SelectItem value="declined">{{ $t("board.outcomeDeclined") }}</SelectItem>
+                                    <SelectItem value="closed">{{ $t("board.outcomeClosed") }}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </Field>
+                        <Field v-slot="{ id }" :label="$t('board.closeReason')" :error="closeForm.errors.reason">
+                            <Input :id="id" v-model="closeForm.reason" type="text" />
+                        </Field>
+                        <AlertDialogFooter>
+                            <AlertDialogAction :disabled="!closeForm.reason || closeForm.processing" @click.prevent="close">
+                                {{ $t("board.close") }}
+                            </AlertDialogAction>
+                            <AlertDialogCancel>{{ $t("common.cancel") }}</AlertDialogCancel>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+                <AlertDialog v-model:open="booking">
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>{{ $t("board.bookTitle") }}</AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <p>{{ $t("board.bookConsequence") }}</p>
+                        <AlertDialogFooter>
+                            <AlertDialogAction @click="book">{{ $t("board.book") }}</AlertDialogAction>
+                            <AlertDialogCancel>{{ $t("common.cancel") }}</AlertDialogCancel>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
 
                 <div
                     v-if="lead.outcomeLabel"

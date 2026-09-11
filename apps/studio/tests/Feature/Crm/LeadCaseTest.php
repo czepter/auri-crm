@@ -44,6 +44,17 @@ it('groups the queue by working state, not by funnel stage', function () {
         ->and($groups['unbeantwortet']['rows'][0]['open'])->toBeTrue();
 });
 
+it('offers the stages to move to and lands back on the case', function () {
+    $lead = caseFor();
+
+    expect(collect(props("/anfragen/{$lead->public_id}")['stages'])->pluck('value'))
+        ->toContain('quote_sent');
+
+    $this->from("/anfragen/{$lead->public_id}")
+        ->post("/anfragen/{$lead->public_id}/stufe", ['stage' => 'quote_sent'])
+        ->assertRedirect("/anfragen/{$lead->public_id}");
+});
+
 it('carries what they wrote, who they are and when they want it', function () {
     $lead = caseFor();
     $lead->project->attachContact(

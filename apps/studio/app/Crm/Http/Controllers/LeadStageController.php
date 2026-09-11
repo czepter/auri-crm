@@ -44,7 +44,7 @@ class LeadStageController extends Controller
             throw ValidationException::withMessages(['stage' => $e->getMessage()]);
         }
 
-        return redirect('/anfragen');
+        return back(fallback: '/anfragen');
     }
 
     /**
