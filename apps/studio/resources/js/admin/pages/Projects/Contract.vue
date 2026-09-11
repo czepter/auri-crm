@@ -145,12 +145,12 @@ function day(value: string | null): string {
               <span v-else class="text-[11px] text-faint">{{ $t('project.contractSignerPending') }}</span>
 
               <div v-if="header.canManageContracts && !entry.signedAt" class="flex gap-2">
-                <button type="button" class="text-[11px] text-ink-2 underline" @click="remind(entry.id)">
+                <Button variant="outline" type="button" @click="remind(entry.id)">
                   {{ $t('project.contractRemind') }}
-                </button>
-                <button type="button" class="text-[11px] text-ink-2 underline" @click="removeSigner(entry.id)">
+                </Button>
+                <Button variant="outline" type="button" @click="removeSigner(entry.id)">
                   {{ $t('common.remove') }}
-                </button>
+                </Button>
               </div>
             </li>
           </ul>

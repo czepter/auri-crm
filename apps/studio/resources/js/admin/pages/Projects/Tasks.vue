@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/ui/button'
 /*
  * Alle Aufgaben eines Auftrags, nach Fälligkeit gruppiert: was überfällig ist,
  * was diese Woche dran ist, was später kommt, und was an einem Ereignis hängt,
@@ -189,13 +190,9 @@ function reopen(row: App.Crm.Data.TaskRowData) {
                 size="sm"
                 @update:model-value="(value: string) => value && complete(row, value)"
               />
-              <button
-                class="cursor-pointer text-[12.5px] whitespace-nowrap text-[var(--accent)]"
-                type="button"
-                @click="reopen(row)"
-              >
+              <Button variant="outline" type="button" @click="reopen(row)">
                 {{ $t('project.taskReopen') }}
-              </button>
+              </Button>
             </div>
           </div>
         </div>

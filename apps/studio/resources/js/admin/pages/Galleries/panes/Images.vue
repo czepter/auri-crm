@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/ui/button'
 import { computed, onUnmounted, ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
@@ -388,9 +389,9 @@ onUnmounted(() => {
         <div v-for="asset in failedAssets" :key="asset.publicId" class="flex items-center gap-2.5 border-t border-border p-2.5 text-[12.5px] first:border-t-0">
           <span class="font-medium text-foreground">{{ asset.filename }}</span>
           <span class="text-ink-2">{{ asset.error }}</span>
-          <button class="ml-auto cursor-pointer border-0 bg-transparent text-[12.5px] text-faint" type="button" @click="retryFailed(asset.publicId)">
+          <Button class="ml-auto" variant="outline" type="button" @click="retryFailed(asset.publicId)">
             {{ $t('media.retryProcessing') }}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

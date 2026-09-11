@@ -443,13 +443,9 @@ const due = computed(() => {
                     class="mt-2.5 flex items-center gap-3 rounded-[7px] bg-late-bg py-[7px] pr-[9px] pl-[11px] text-[12.5px] leading-[1.3] font-medium text-destructive"
                 >
                     {{ lead.outcomeLabel }} — {{ lead.lostReason }}
-                    <button
-                        class="ml-auto cursor-pointer whitespace-nowrap text-[var(--accent)]"
-                        type="button"
-                        @click="reopen"
-                    >
+                    <Button class="ml-auto" variant="outline" type="button" @click="reopen">
                         {{ $t('lead.reopen') }}
-                    </button>
+                    </Button>
                 </div>
 
                 <template v-if="tab === 'overview'">

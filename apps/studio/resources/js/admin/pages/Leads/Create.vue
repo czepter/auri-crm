@@ -183,13 +183,9 @@ function submit() {
               </Field>
             </div>
 
-            <button
-              class="mt-2 cursor-pointer rounded-[var(--r-pill)] border-0 bg-sunk px-[11px] py-[5px] text-[12px] leading-[1.4] font-normal text-ink-2 hover:bg-sunk-2 [&_b]:font-semibold [&_b]:text-foreground"
-              type="button"
-              @click="addPerson"
-            >
+            <Button class="mt-2 self-start" variant="outline" type="button" @click="addPerson">
               {{ $t('leads.addPerson') }}
-            </button>
+            </Button>
           </div>
 
           <div class="mb-5">

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/ui/button'
 import { computed, ref, watch } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
@@ -167,9 +168,9 @@ function confirmRemove() {
         <Input v-model="draft" class="h-6 text-[12.5px]" type="text" autofocus @blur="commitCreate" @keyup.enter="commitCreate" @keyup.esc="adding = false" />
         <p v-if="error?.id === 'new'" class="mt-1 text-[11px] text-destructive">{{ error.message }}</p>
       </div>
-      <button v-else class="cursor-pointer border-0 bg-transparent px-2 py-[5px] text-left text-[12px] text-action" type="button" @click="startAdd">
+      <Button v-else class="self-start" variant="outline" type="button" @click="startAdd">
         {{ $t('galleryRecord.addSet') }}
-      </button>
+      </Button>
     </template>
   </RecordNav>
 

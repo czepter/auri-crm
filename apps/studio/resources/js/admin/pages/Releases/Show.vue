@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from "@/ui/button"
 import { computed, ref } from "vue"
 import { Link } from "@inertiajs/vue3"
 import AdminLayout from "@/admin/layouts/AdminLayout.vue"
@@ -101,32 +102,24 @@ function toggle(key: string, index: number) {
                 </div>
 
                 <div class="flex gap-2 px-8 pt-6 max-[640px]:px-5">
-                    <button
-                        class="flex-none cursor-pointer rounded-[6px] border px-[11px] py-[5px] text-[10.5px] leading-[1.4] font-semibold tracking-[0.04em] uppercase"
-                        :class="
-                            filter === null
-                                ? 'border-foreground bg-foreground text-background'
-                                : 'border-line-hover bg-background text-ink-2 hover:border-faint hover:text-foreground'
-                        "
+                    <Button
+                        variant="outline"
+                        :class="filter === null && 'border-foreground bg-foreground text-background hover:border-foreground'"
                         type="button"
                         @click="filter = null"
                     >
                         {{ $t("releases.filterAll") }}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                         v-for="section in release.sections"
                         :key="section.key"
-                        class="flex-none cursor-pointer rounded-[6px] border px-[11px] py-[5px] text-[10.5px] leading-[1.4] font-semibold tracking-[0.04em] uppercase"
-                        :class="
-                            filter === section.key
-                                ? 'border-foreground bg-foreground text-background'
-                                : 'border-line-hover bg-background text-ink-2 hover:border-faint hover:text-foreground'
-                        "
+                        variant="outline"
+                        :class="filter === section.key && 'border-foreground bg-foreground text-background hover:border-foreground'"
                         type="button"
                         @click="filter = section.key"
                     >
                         {{ $t(sectionLabel(section.key) ?? "", 2) }}
-                    </button>
+                    </Button>
                 </div>
 
                 <div class="px-8 pb-15 max-[640px]:px-5">

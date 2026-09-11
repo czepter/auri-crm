@@ -194,9 +194,9 @@ function chipClass(status: string): string {
             <div class="mt-6 flex items-center gap-3">
               <Switch id="sw-rule-active" v-model="form.is_active" />
               <label class="text-[13px]" for="sw-rule-active">{{ $t('automations.active') }}</label>
-              <button class="ml-auto cursor-pointer text-[12.5px] text-ink-2 underline" type="button" @click="remove">
+              <Button class="ml-auto" variant="outline" type="button" @click="remove">
                 {{ $t('common.remove') }}
-              </button>
+              </Button>
             </div>
           </form>
 

@@ -16,6 +16,7 @@
  */
 import { computed } from 'vue'
 import { formatEuros } from '@/admin/lib/money'
+import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 
 export type SliderRow = {
@@ -203,10 +204,10 @@ const GRID = 'grid grid-cols-[44px_minmax(0,1fr)_200px_100px_130px] items-center
           <button class="cursor-pointer text-[13px] text-ink-2" type="button" :aria-label="$t('common.remove')" @click="removeRow(row)">×</button>
         </div>
 
-        <button class="mt-3 flex cursor-pointer items-center gap-2.5 border-t border-rule pt-3 text-[13px] text-ink-2" type="button" @click="addRow(false)">
-          <svg class="size-[15px]" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+        <Button class="mt-3" variant="outline" type="button" @click="addRow(false)">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
           {{ $t('quotes.addIncluded') }}
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -247,10 +248,10 @@ const GRID = 'grid grid-cols-[44px_minmax(0,1fr)_200px_100px_130px] items-center
           </div>
         </div>
 
-        <button class="mt-3 flex cursor-pointer items-center gap-2.5 border-t border-rule pt-3 text-[13px] text-ink-2" type="button" @click="addRow(true)">
-          <svg class="size-[15px]" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+        <Button class="mt-3" variant="outline" type="button" @click="addRow(true)">
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
           {{ $t('quotes.addBlock') }}
-        </button>
+        </Button>
       </div>
     </div>
 
@@ -280,10 +281,10 @@ const GRID = 'grid grid-cols-[44px_minmax(0,1fr)_200px_100px_130px] items-center
         </div>
 
         <div class="mt-3.5 flex flex-wrap items-center gap-4">
-          <button class="flex cursor-pointer items-center gap-2.5 text-[13px] text-ink-2" type="button" @click="addStage">
-            <svg class="size-[15px]" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+          <Button variant="outline" type="button" @click="addStage">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
             {{ $t('quotes.addStage') }}
-          </button>
+          </Button>
           <span class="text-[13px] tabular-nums" :class="stagesInvalid ? 'font-semibold text-destructive' : 'text-ink-2'">
             <template v-if="percentSum !== 100">{{ $t('quotes.stagePercentOff', { percent: percentSum }) }}</template>
             <template v-else-if="minimumSum > span.min">{{ $t('quotes.stageMinimumsCollapse', { amount: formatEuros(minimumSum) }) }}</template>

@@ -8,7 +8,7 @@ export { default as Button } from "./Button.vue"
  * than redesigned:
  *
  *   default → tokens.css .btn      the filled, warm-accent button
- *   outline → admin-extra.css .abtn  the small stroked row action
+ *   outline → the stroked sibling of `pill`, same size so the two can share a row
  *   ghost   → tokens.css .txtbtn   the quiet inline action
  *
  * `tone` is the modifier those rules already carried as a second class —
@@ -38,7 +38,7 @@ export const buttonVariants = cva(
         default:
           "ml-auto rounded-md border-0 bg-action px-[14px] py-[9px] text-[13px] font-semibold leading-none text-action-foreground [&_svg]:size-[15px]",
         outline:
-          "flex-none rounded-[6px] border border-line-hover bg-background px-[9px] py-[3px] text-[10.5px] font-semibold leading-[1.4] text-muted-foreground hover:border-faint hover:text-foreground [&_svg]:size-[13px]",
+          "flex-none gap-1.5 rounded-[var(--r-pill)] border border-line-hover bg-background px-3.5 py-[5px] text-[12.5px] font-medium tracking-[-0.01em] whitespace-nowrap text-foreground transition-colors duration-[.12s] ease-out hover:border-faint [&_svg]:size-[13px]",
         ghost:
           "border-0 bg-transparent px-0 py-[9px] text-[13px] font-medium leading-none text-muted-foreground hover:text-foreground [&_svg]:size-[15px] [&_svg]:opacity-80",
         /*
