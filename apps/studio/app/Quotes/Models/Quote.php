@@ -25,7 +25,7 @@ use RuntimeException;
  * What a project is offered, priced line by line, in minor units throughout.
  *
  * Draft is mutable in place. Q-06's SendQuote is the only writer that ever
- * moves a quote past it — sent_at, number and the Q-04/Q-03 snapshot columns
+ * moves a quote past it — sent_at and the Q-04/Q-03 snapshot columns
  * all land in that one transaction — and from the moment status reads sent,
  * booted()'s guard below refuses every further write except the two
  * transitions Q-06 and Q-07 make from there: sent -> superseded
