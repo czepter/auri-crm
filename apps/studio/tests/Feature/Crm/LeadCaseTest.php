@@ -102,6 +102,13 @@ it('shows the week around the requested day, and says so when it is free', funct
         ->and($week[0]['projectId'])->toBe($other->public_id);
 });
 
+it('sends an unbooked project to its inquiry', function () {
+    $lead = caseFor();
+
+    $this->get("/auftraege/{$lead->project->public_id}")
+        ->assertRedirect("/anfragen/{$lead->public_id}");
+});
+
 // C-10 (#245): editing is a state of the view, so it posts back to the same
 // case. What it changes is the case's own fields.
 it('saves occasion, source, text and the people from the case itself', function () {

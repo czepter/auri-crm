@@ -113,9 +113,16 @@ class ProjectController extends Controller
         ]);
     }
 
-    public function show(Project $project, TaskAnchors $anchors): Response
+    public function show(Project $project, TaskAnchors $anchors): Response|RedirectResponse
     {
         $this->authorize('view', $project);
+
+        // Same rule as index(): an unbooked project is an inquiry, and its
+        // screen is the case. Every /auftraege link lands right without
+        // knowing the phase.
+        if ($project->lead !== null && ! $project->job()->exists()) {
+            return redirect("/anfragen/{$project->lead->public_id}");
+        }
 
         // C-03 (#237): an inquiry and a project are the same record in two
         // phases, so the palette names it by the phase it is in.

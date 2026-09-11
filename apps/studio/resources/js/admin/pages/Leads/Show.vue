@@ -246,10 +246,15 @@ const due = computed(() => {
               label: "lead.sendContract",
               href: `/auftraege/${props.lead.projectId}/vertrag`,
           }
-        : {
-              label: "lead.openProject",
-              href: `/auftraege/${props.lead.projectId}`,
-          };
+        : props.lead.booked
+          ? {
+                label: "lead.openProject",
+                href: `/auftraege/${props.lead.projectId}`,
+            }
+          : {
+                label: "lead.openQuote",
+                href: `/auftraege/${props.lead.projectId}/angebote`,
+            };
 });
 </script>
 

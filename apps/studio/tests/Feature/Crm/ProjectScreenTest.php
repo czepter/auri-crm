@@ -137,7 +137,7 @@ it('agrees with the board about an unbooked project', function () {
     Lead::factory()->for($this->project)->atStage(LeadStage::QuoteAccepted)->create();
     Shoot::factory()->for($this->project)->primary()->create();
 
-    $position = props("/auftraege/{$this->project->public_id}")['header']['position'];
+    $position = props("/auftraege/{$this->project->public_id}/shootings")['header']['position'];
 
     expect($position['label'])->toBe('Angebot angenommen')
         ->and($position['source'])->toBe('lead');
@@ -146,7 +146,7 @@ it('agrees with the board about an unbooked project', function () {
 it('reads the lead stage in the header when no uncancelled shoot exists', function () {
     Lead::factory()->for($this->project)->atStage(LeadStage::QuoteSent)->create();
 
-    expect(props("/auftraege/{$this->project->public_id}")['header']['position']['label'])
+    expect(props("/auftraege/{$this->project->public_id}/shootings")['header']['position']['label'])
         ->toBe('Angebot');
 });
 
@@ -313,7 +313,7 @@ it('keeps a booked project and offers no delete', function () {
 
 it('links the inquiry and closes it from the project', function () {
     $lead = Lead::factory()->for($this->project)->create();
-    $screen = "/auftraege/{$this->project->public_id}";
+    $screen = "/auftraege/{$this->project->public_id}/shootings";
 
     expect(array_column(props($screen)['header']['tabs'], 'href', 'key')['lead'])->toBe("/anfragen/{$lead->public_id}");
 
