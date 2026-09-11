@@ -9,6 +9,7 @@ use App\Crm\Actions\OpenLeads;
 use App\Crm\Data\ProjectPersonData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
+use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
@@ -88,7 +89,9 @@ class LeadCaseController extends Controller
                 'stage' => $lead->stage->key,
                 'stageLabel' => $lead->stage->name,
                 'inquiryText' => $lead->inquiry_text,
-                'capturedVia' => $lead->capturedViaLabel(),
+                'capturedVia' => $lead->captured_via === CaptureChannel::Other && $lead->captured_via_other === null
+                    ? null
+                    : $lead->capturedViaLabel(),
                 'capturedAt' => $lead->captured_at->toIso8601String(),
                 'booked' => $project->job()->exists(),
                 'lostReason' => $lead->lost_reason,

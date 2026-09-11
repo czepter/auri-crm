@@ -67,7 +67,7 @@ const groups = computed(() => {
 })
 
 function shortDate(date: string | null) {
-  return date ? new Date(date).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' }) : '—'
+  return date ? new Date(date).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
 }
 </script>
 

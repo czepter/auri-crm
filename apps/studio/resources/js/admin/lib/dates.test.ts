@@ -52,8 +52,8 @@ describe('relativeDate', () => {
 })
 
 describe('dayWithWeekday', () => {
-  it('reads weekday, day and month', () => {
-    expect(dayWithWeekday('2026-06-14')).toBe('So., 14.06.')
+  it('reads weekday, day, month and year', () => {
+    expect(dayWithWeekday('2026-06-14')).toBe('So., 14.06.2026')
   })
 
   it('carries the placeholder the screen asked for when there is no date', () => {

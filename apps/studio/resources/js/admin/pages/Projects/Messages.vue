@@ -16,7 +16,7 @@ const props = defineProps<{
 }>()
 
 function longDateTime(iso: string) {
-  return new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 const reply = useForm({ body: '', scheduled_for: '' })
@@ -49,7 +49,7 @@ function cancelScheduled(messageId: string) {
 }
 
 function scheduledLabel(iso: string) {
-  return new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 </script>
 

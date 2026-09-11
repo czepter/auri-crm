@@ -417,15 +417,8 @@ const due = computed(() => {
                             <div
                                 class="mt-[15px] pt-[11px] text-[12.5px] leading-[1.35] text-ink-2 shadow-[inset_0_1px_0_var(--rule)] [&>b]:block [&>b]:text-[13px] [&>b]:leading-[1.35] [&>b]:font-semibold [&>b]:tracking-[-0.012em] [&>b]:text-foreground"
                             >
-                                <b>{{ lead.capturedVia ?? lead.sourceLabel }}</b>
-                                {{
-                                    new Date(lead.capturedAt).toLocaleString("de-DE", {
-                                        day: "2-digit",
-                                        month: "2-digit",
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                    })
-                                }}
+                                <b>{{ lead.capturedVia ?? $t("leads.capturedAt") }}</b>
+                                {{ day(lead.capturedAt) }}
                             </div>
                         </div>
                     </div>

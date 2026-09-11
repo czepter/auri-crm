@@ -89,7 +89,7 @@ class ReadAfterDeliveryColumn
                 projectId: $gallery->project->public_id,
                 who: $gallery->project->name,
                 what: 'Galerie läuft',
-                emphasis: 'am '.$gallery->expires_at->format('d.m.').' ab',
+                emphasis: 'am '.$gallery->expires_at->format('d.m.Y').' ab',
                 whatTail: null,
                 action: RowActionData::link('Album anbieten', "/galerien/{$gallery->public_id}"),
             ));

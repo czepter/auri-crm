@@ -1,5 +1,6 @@
 <?php
 
+use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
@@ -313,6 +314,18 @@ it('links a queue row to the case it stands for', function () {
     expect($row['id'])->toBe($lead->public_id);
 
     test()->actingAs(test()->staff, 'staff')->get("/anfragen/{$row['id']}")->assertOk();
+});
+
+it('leaves a bare "Sonstige" channel off the case', function () {
+    $lead = leadOn('2026-06-14');
+    $channel = fn () => test()->actingAs(test()->staff, 'staff')
+        ->get("/anfragen/{$lead->public_id}")->viewData('page')['props']['lead']['capturedVia'];
+
+    $lead->forceFill(['captured_via' => CaptureChannel::Other, 'captured_via_other' => null])->save();
+    expect($channel())->toBeNull();
+
+    $lead->forceFill(['captured_via_other' => 'Messe'])->save();
+    expect($channel())->toBe('Sonstige — Messe');
 });
 
 it('names the primary contact first in the queue as well as on the card', function () {
