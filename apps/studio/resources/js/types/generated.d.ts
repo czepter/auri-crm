@@ -611,6 +611,7 @@ allowNewOptions: boolean,
 export type ProjectLeadReadData = {
 stage: string,
 source: string,
+sourceOther: string | null,
 capturedAt: string,
 lostAt: string | null,
 };

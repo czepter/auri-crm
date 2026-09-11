@@ -73,7 +73,7 @@ class CrmReadController extends Controller
     }
 
     /**
-     * #349: `closed` rather than a stage key for the end of the funnel — a
+     * `closed` rather than a stage key for the end of the funnel — a
      * closed lead keeps the stage it died in, so the two are independent
      * questions. Absent, both open and closed leads come back.
      */

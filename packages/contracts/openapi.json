@@ -533,8 +533,46 @@
         "/leads": {
             "get": {
                 "operationId": "leads.index",
+                "summary": "`closed` rather than a stage key for the end of the funnel \u2014 a\nclosed lead keeps the stage it died in, so the two are independent\nquestions. Absent, both open and closed leads come back",
                 "tags": [
                     "CrmRead"
+                ],
+                "parameters": [
+                    {
+                        "name": "stage",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "closed",
+                        "in": "query",
+                        "description": "Strings, not `boolean`: that rule refuses the literal \"false\"\nevery http client writes into a query string.",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "true",
+                                "false"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "captured_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    },
+                    {
+                        "name": "captured_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    }
                 ],
                 "responses": {
                     "200": {
@@ -604,6 +642,9 @@
                                 }
                             }
                         }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     }
                 }
             },
@@ -926,9 +967,6 @@
                 "responses": {
                     "204": {
                         "description": "No content"
-                    },
-                    "422": {
-                        "$ref": "#/components/responses/ValidationException"
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
