@@ -4,13 +4,10 @@ import { Link, router, useForm } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/alert";
 import { Button } from "@/ui/button";
-import { Checkbox } from "@/ui/checkbox";
-import { Label } from "@/ui/label";
 import BandCell from "@/admin/components/BandCell.vue";
 import BandValue from "@/admin/components/BandValue.vue";
 import LineItems from "@/admin/components/LineItems.vue";
 import NoteThread from "@/admin/components/NoteThread.vue";
-import RailHistory from "@/admin/components/RailHistory.vue";
 import ShootFields from "@/admin/components/ShootFields.vue";
 import ShootRow from "@/admin/components/ShootRow.vue";
 import { Input } from "@/ui/input";
@@ -19,8 +16,6 @@ import ProjectFields from "@/admin/components/ProjectFields.vue";
 import type { ProjectFieldValues } from "@/admin/components/ProjectFields.vue";
 import ProjectShell from "@/admin/components/ProjectShell.vue";
 import TaskCreateDialog from "@/admin/components/TaskCreateDialog.vue";
-import Rail from "@/ui/page/Rail.vue";
-import RailItem from "@/ui/page/RailItem.vue";
 import RailSection from "@/ui/page/RailSection.vue";
 import Section from "@/ui/page/Section.vue";
 import { formatEurosRounded } from "@/admin/lib/money";
@@ -32,7 +27,6 @@ type ProjectFieldDefinition = InstanceType<typeof ProjectFields>["$props"]["fiel
 const props = defineProps<{
     header: App.Crm.Data.ProjectHeaderData;
     shoots: App.Crm.Data.ShootData[];
-    paymentPlan: App.Payments.Data.PaymentPlanData | null;
     thread: App.Crm.Data.ThreadEntryData[];
     tasks: App.Crm.Data.TaskRowData[];
     shootOptions: { value: string; label: string }[];
@@ -55,7 +49,6 @@ const props = defineProps<{
     people: App.Crm.Data.ProjectPersonData[];
     fields: ProjectFieldDefinition[];
     fieldValues: ProjectFieldValues;
-    galleries: { id: string; title: string | null; expiresAt: string | null }[];
     stages: { value: string; label: string }[];
     sources: { value: string; label: string }[];
     roles: { value: string; label: string }[];
@@ -89,14 +82,6 @@ function advanceStalled() {
         `/shootings/${props.stalled?.shootId}/status`,
         { status: props.stalled?.next.key },
         { preserveScroll: true },
-    );
-}
-
-function toggleReminders(value: boolean | 'indeterminate') {
-    router.patch(
-        `/zahlungsplaene/${props.paymentPlan?.id}/erinnerungen`,
-        { client_reminders_enabled: value === true },
-        { preserveScroll: true }
     );
 }
 
@@ -170,8 +155,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
 <template>
     <AdminLayout active="projekte">
         <ProjectShell :header="header" active="overview">
-            <template #rail>
-                <Rail>
+            <template #people>
                     <RailSection :title="$t('lead.people')">
                         <div
                             v-for="(person, index) in people"
@@ -228,45 +212,6 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             <option v-for="value in presets.source" :key="value" :value="value" />
                         </datalist>
                     </RailSection>
-
-                    <RailSection v-if="paymentPlan" :title="$t('dashboard.payments')">
-                        <div
-                            v-for="instalment in paymentPlan.installments"
-                            :key="instalment.id"
-                            class="flex gap-2.5 py-[5px] text-[12.5px] leading-[1.47]"
-                        >
-                            <span class="w-[74px] flex-none text-ink-2">{{ day(instalment.dueOn) }}</span>
-                            <span>{{ euro(instalment.amount) }}</span>
-                        </div>
-
-                        <div class="mt-2 flex items-center gap-2">
-                            <Checkbox
-                                id="cb-plan-reminders"
-                                :model-value="paymentPlan.clientRemindersEnabled"
-                                @update:model-value="toggleReminders"
-                            />
-                            <Label variant="inline" for="cb-plan-reminders">{{
-                                $t("payments.clientReminders")
-                            }}</Label>
-                        </div>
-                    </RailSection>
-
-                    <RailSection v-if="galleries.length" :title="$t('contacts.galleries')">
-                        <RailItem
-                            v-for="gallery in galleries"
-                            :key="gallery.id"
-                            :title="gallery.title ?? '—'"
-                            :href="`/galerien/${gallery.id}`"
-                            :meta="
-                                gallery.expiresAt
-                                    ? $t('contacts.expiresOn', { date: day(gallery.expiresAt) })
-                                    : null
-                            "
-                        />
-                    </RailSection>
-
-                    <RailHistory :entries="thread" />
-                </Rail>
             </template>
 
             <template #title>

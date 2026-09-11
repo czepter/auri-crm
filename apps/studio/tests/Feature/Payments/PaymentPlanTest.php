@@ -391,7 +391,7 @@ it('sends the payment plan to the overview screen as integer minor units, never 
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
         ->get("/auftraege/{$job->project->public_id}")
         ->assertOk()
-        ->viewData('page')['props'];
+        ->viewData('page')['props']['header'];
 
     expect($props['paymentPlan']['total'])->toBeInt()
         ->and($props['paymentPlan']['openTotal'])->toBeInt();

@@ -319,6 +319,14 @@ queue: {
 key: string,
 rows: App.Crm.Data.ProjectQueueRowData[],
 }[],
+people: App.Crm.Data.ProjectPersonData[],
+paymentPlan: App.Payments.Data.PaymentPlanData | null,
+galleries: {
+id: string,
+title: string | null,
+expiresAt: string | null,
+}[],
+history: App.Crm.Data.ThreadEntryData[],
 };
 export type ProjectPersonData = {
 id: string,
