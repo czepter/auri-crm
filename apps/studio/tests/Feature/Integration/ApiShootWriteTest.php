@@ -41,6 +41,22 @@ it('adds a second shooting day to a project', function () {
     expect($project->shoots()->latest('id')->first()->is_primary)->toBeFalse();
 });
 
+it('backdates a shooting day entered after the fact', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
+    $project = Project::factory()->create();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'shoot-backdated')
+        ->postJson("/api/projects/{$project->public_id}/shoots", [
+            'kind' => ShootKind::Reception->value,
+            'date' => '2019-07-06',
+            'entered_at' => '2018-12-03',
+        ])
+        ->assertCreated();
+
+    expect($project->shoots()->latest('id')->first()->status_entered_at->toDateString())->toBe('2018-12-03');
+});
+
 it('refuses a shoot to a token that does not hold ManageShoots', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
     $project = Project::factory()->create();

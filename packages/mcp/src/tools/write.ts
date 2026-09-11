@@ -248,6 +248,7 @@ function registerCreateShoot(server: McpServer, clientFor: ApiClientFactory): vo
         end_time: z.string().nullish().describe('HH:MM, after call_time'),
         venue_name: z.string().max(255).nullish(),
         venue_city: z.string().max(255).nullish(),
+        entered_at: z.string().nullish().describe('Since when it stands in its first status, for a day entered after the fact. Never in the future.'),
         ...silentField,
       },
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },

@@ -55,7 +55,7 @@ class AdvanceLeadStage
         // board and the project list each show what the other one denies.
         // Throws when the booking has a payment plan — see UnbookProject.
         if ($backwards && $from->anchor === StageAnchor::Won) {
-            ($this->unbook)($lead->project, $actor ?? auth('staff')->user());
+            ($this->unbook)($lead->project, $actor ?? auth('staff')->user(), $enteredAt);
         }
 
         // A correction restores the moment the lead first entered the stage it

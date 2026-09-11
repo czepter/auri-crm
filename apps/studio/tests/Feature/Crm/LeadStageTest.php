@@ -188,6 +188,25 @@ it('takes the booking back when the won stage is taken back', function () {
         ->and(AuditLog::where('event', 'project.unbooked')->count())->toBe(1);
 });
 
+it('dates a backdated unbooking when it happened', function () {
+    $lead = Lead::factory()->atStage(LeadStage::ContractSent)->create();
+    Shoot::factory()->for($lead->project)->create();
+    $actor = User::factory()->create();
+
+    app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), $actor);
+    app(AdvanceLeadStage::class)($lead->fresh(), stage(LeadStage::ContractSent), $actor, CarbonImmutable::parse('2026-05-02 10:00'));
+
+    $dates = AuditLog::whereIn('event', ['project.unbooked', 'shoot.status_changed'])
+        ->where('context->reverted', true)
+        ->get()
+        ->map(fn (AuditLog $log) => substr($log->context['occurred_at'] ?? '', 0, 10))
+        ->unique()
+        ->values()
+        ->all();
+
+    expect($dates)->toBe(['2026-05-02']);
+});
+
 it('refuses to take the booking back once a payment plan hangs off it', function () {
     $lead = Lead::factory()->create();
     $actor = User::factory()->create();
