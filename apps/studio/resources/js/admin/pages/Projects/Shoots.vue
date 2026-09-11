@@ -21,6 +21,7 @@ const props = defineProps<{
   shoots: App.Crm.Data.ShootData[]
   crewAvailability: Record<string, App.Crm.Data.CrewCandidateData[]>
   crewRoles: { value: string; label: string }[]
+  soloStudio: boolean
 }>()
 
 const adding = ref(false)
@@ -307,7 +308,7 @@ const TONE: Record<string, string> = {
                   {{ [shoot.venue, shoot.callTime && `${shoot.callTime}–${shoot.endTime ?? ''}`].filter(Boolean).join(' · ') || '—' }}
                 </span>
               </div>
-              <CrewStack :crew="shoot.crew" />
+              <CrewStack v-if="!soloStudio" :crew="shoot.crew" />
               <span :class="['flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase', TONE[chipClass(shoot, header.position.value)]]">
                 {{ shoot.statusLabel }}
               </span>
@@ -321,7 +322,7 @@ const TONE: Record<string, string> = {
             </div>
 
             <template v-else>
-              <Section :title="$t('project.crew')">
+              <Section v-if="!soloStudio" :title="$t('project.crew')">
                 <template #actions>
                   <Button v-if="header.canManageCrew" type="button" variant="outline" @click="openAssign(shoot)">
                     <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
