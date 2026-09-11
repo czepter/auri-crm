@@ -4,8 +4,6 @@ namespace App\Quotes\Actions;
 
 use App\Models\User;
 use App\Notifications\NotificationService;
-use App\Numbering\Actions\AllocateDocumentNumber;
-use App\Numbering\Enums\DocumentType;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Notifications\QuoteSent;
@@ -15,17 +13,17 @@ use DomainException;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The state change this whole sprint hangs off, and the first caller of two
- * pieces that shipped standalone: Q-04's Quote::snapshotVat() and T-04's
- * AllocateDocumentNumber. Freezes the amounts Q-03's recalculateTotal()
- * already resolved by doing nothing more to them — Quote's own booted()
- * guard is what makes that freeze real from here on, not a second copy of
- * the numbers taken here.
+ * The state change this whole sprint hangs off, and the first caller of
+ * Q-04's Quote::snapshotVat(). Freezes the amounts Q-03's
+ * recalculateTotal() already resolved by doing nothing more to them —
+ * Quote's own booted() guard is what makes that freeze real from here on,
+ * not a second copy of the numbers taken here. T-04's AllocateDocumentNumber
+ * runs at creation now (QuoteController::store()), not here — a quote's
+ * number is immutable once set.
  */
 class SendQuote
 {
     public function __construct(
-        private readonly AllocateDocumentNumber $allocate,
         private readonly StudioSettingsResolver $settings,
         private readonly NotificationService $notifications,
     ) {}
@@ -44,22 +42,15 @@ class SendQuote
             // unchanged from inside here — see that method's docblock.
             $quote->snapshotVat($this->settings);
 
-            // AllocateDocumentNumber's own docblock expects its caller to
-            // hold the transaction: a failed send this way rolls the number
-            // back with everything else it touched, so an abandoned send
-            // never burns one.
-            $allocation = ($this->allocate)(documentType: DocumentType::Quote);
-
             $quote->update([
                 'status' => QuoteStatus::Sent,
                 'sent_at' => now(),
-                'number' => $allocation['number'],
             ]);
 
             AuditLogger::record(
                 event: 'quote.sent',
                 actor: $actor,
-                context: ['project' => $quote->project->public_id, 'number' => $allocation['number']],
+                context: ['project' => $quote->project->public_id, 'number' => $quote->number],
                 subject: $quote->public_id,
                 projectId: $quote->project_id,
             );

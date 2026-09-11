@@ -7,6 +7,8 @@ use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
+use App\Numbering\Actions\AllocateDocumentNumber;
+use App\Numbering\Enums\DocumentType;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Actions\SendQuote;
@@ -19,6 +21,7 @@ use App\Support\AuditLogger;
 use Carbon\CarbonInterval;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -28,7 +31,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuoteController extends Controller
 {
-    public function store(Request $request, Project $project, SeedQuoteFromPackage $seed, StudioSettingsResolver $settings): RedirectResponse
+    public function store(Request $request, Project $project, SeedQuoteFromPackage $seed, StudioSettingsResolver $settings, AllocateDocumentNumber $allocate): RedirectResponse
     {
         $this->authorize('manageQuotes', $project);
 
@@ -57,11 +60,16 @@ class QuoteController extends Controller
                 ->where('status', QuoteStatus::Accepted)->firstOrFail()
             : null;
 
-        $quote = $project->quotes()->create([
-            'valid_until' => $validUntil,
-            'is_addendum' => $predecessor !== null,
-            'predecessor_id' => $predecessor?->id,
-        ]);
+        $quote = DB::transaction(function () use ($project, $validUntil, $predecessor, $allocate) {
+            $allocation = ($allocate)(documentType: DocumentType::Quote);
+
+            return $project->quotes()->create([
+                'valid_until' => $validUntil,
+                'is_addendum' => $predecessor !== null,
+                'predecessor_id' => $predecessor?->id,
+                'number' => $allocation['number'],
+            ]);
+        });
 
         if (! empty($validated['package'])) {
             $package = Package::active()->where('public_id', $validated['package'])->firstOrFail();

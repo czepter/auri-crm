@@ -682,8 +682,8 @@ describe('Q-06: sending a quote', function () {
         Cache::store('redis')->flush();
     });
 
-    it('allocates a number, snapshots VAT, sets sent_at, and freezes the already-computed amounts', function () {
-        $quote = Quote::factory()->create();
+    it('snapshots VAT, sets sent_at, and freezes the already-allocated number and computed amounts', function () {
+        $quote = Quote::factory()->create(['number' => 'AN-2026-1']);
         QuoteItem::factory()->for($quote)->create(['quantity' => 1, 'unit_price' => 453782]);
         $quote->recalculateTotal();
 
@@ -691,21 +691,21 @@ describe('Q-06: sending a quote', function () {
 
         expect($sent->status)->toBe(QuoteStatus::Sent)
             ->and($sent->sent_at)->not->toBeNull()
-            ->and($sent->number)->toBe('AN-'.now('UTC')->year.'-1')
+            ->and($sent->number)->toBe('AN-2026-1')
             ->and($sent->vat_mode)->toBe('standard')
             ->and($sent->vat_rate)->toBe(1900)
             ->and($sent->net)->toBe(453782);
     });
 
-    it('draws the number from T-04\'s existing allocator sequence, incrementing across separate sends', function () {
-        $first = Quote::factory()->create();
-        $second = Quote::factory()->create();
+    it('leaves each quote\'s own number untouched, independent across separate sends', function () {
+        $first = Quote::factory()->create(['number' => 'AN-2026-1']);
+        $second = Quote::factory()->create(['number' => 'AN-2026-2']);
 
         app(SendQuote::class)($first);
         app(SendQuote::class)($second);
 
-        expect($first->fresh()->number)->toBe('AN-'.now('UTC')->year.'-1')
-            ->and($second->fresh()->number)->toBe('AN-'.now('UTC')->year.'-2');
+        expect($first->fresh()->number)->toBe('AN-2026-1')
+            ->and($second->fresh()->number)->toBe('AN-2026-2');
     });
 
     it('refuses to send a quote that is already sent or superseded', function (QuoteStatus $status) {
