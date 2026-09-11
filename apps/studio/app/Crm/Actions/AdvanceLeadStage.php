@@ -93,7 +93,7 @@ class AdvanceLeadStage
         // other one is missing. Idempotent: BookProject writes nothing when a
         // Job already exists (the contract-and-deposit path got there first).
         if ($next->anchor === StageAnchor::Won) {
-            ($this->book)($lead->project, $actor ?? auth('staff')->user());
+            ($this->book)($lead->project, $actor ?? auth('staff')->user(), at: $entered);
         }
 
         LeadStageChanged::dispatch($lead, $from, $next);

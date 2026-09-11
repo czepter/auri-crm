@@ -37,6 +37,7 @@ import { idempotencyKeyFor } from '../idempotency.js'
   registerAddInternalNote(server, clientFor)
   registerSetProjectFields(server, clientFor)
   registerAddProjectField(server, clientFor)
+  registerDeleteProject(server, clientFor)
 }
 
 /**
@@ -62,7 +63,6 @@ function writeHeaders(tool: string, payload: Record<string, unknown>, silent: bo
 }
 
 const leadSourceEnum = ['referral', 'website', 'instagram', 'wedding_fair', 'other'] as const
-const projectTypeEnum = ['wedding', 'portrait', 'other'] as const
 const captureChannelEnum = ['phone', 'email', 'in_person', 'other'] as const
 const leadStageEnum = ['new', 'contacted', 'quote_sent', 'quote_accepted', 'contract_sent', 'booked'] as const
 const leadOutcomeEnum = ['lost', 'declined'] as const
@@ -74,8 +74,9 @@ const leadFields = {
   contact_phone: z.string().max(64).nullish(),
   partner_name: z.string().max(255).nullish(),
   project_name: z.string().max(255),
-  type: z.enum(projectTypeEnum),
+  type: z.string().describe('The project type key — see list_project_types. A studio defines its own, so this is not a fixed list.'),
   source: z.enum(leadSourceEnum),
+  source_other: z.string().max(120).nullish().describe("What 'other' actually was, e.g. the platform the inquiry came from. Only kept beside source: other."),
   captured_via: z.enum(captureChannelEnum),
   date: z.string().nullish().describe('YYYY-MM-DD'),
   inquiry_text: z.string().max(10000).nullish(),
@@ -430,6 +431,39 @@ function registerAddProjectField(server: McpServer, clientFor: ApiClientFactory)
       })
 
       return apiResult(data, error)
+    },
+  )
+}
+
+/**
+ * No delete_lead beside this: a lead is born with its project and means
+ * nothing without it, so the project is the unit that goes.
+ */
+function registerDeleteProject(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'delete_project',
+    {
+      title: 'Delete a project',
+      description:
+        'Deletes a project together with its lead, its shoots, its internal notes and its links to contacts. The contacts themselves stay. Refused while a job, a quote, a contract or a gallery hangs off the project — past that point the project is a record of an agreement, and removing it is a decision for a screen rather than a tool. There is no undo.',
+      inputSchema: {
+        project: z.string().describe('The project public id'),
+        ...silentField,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ project, silent }, extra) => {
+      const { error } = await clientFor(extra.authInfo?.token).DELETE('/projects/{project}', {
+        params: { path: { project } },
+        headers: writeHeaders('delete_project', { project }, silent),
+      })
+
+      // 204, so there is no body to hand back the way every other write tool
+      // does — apiResult() would stringify `undefined` into a content block
+      // with no text at all.
+      return error !== undefined
+        ? apiResult(undefined, error)
+        : { content: [{ type: 'text', text: `Deleted project ${project}.` }] }
     },
   )
 }

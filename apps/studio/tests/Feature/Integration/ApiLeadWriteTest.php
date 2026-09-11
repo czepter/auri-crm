@@ -40,6 +40,26 @@ it('captures a lead, reusing CaptureInquiry exactly like the admin capture form'
     expect(integerIdPaths($response->json()))->toBe([]);
 });
 
+// #351: a platform lead names its platform — LeadSource stays countable and
+// the name lands in source_other.
+it('carries source_other onto the lead when the source is other', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'lead-source-other')
+        ->postJson('/api/leads', [
+            'contact_name' => 'Nina Voss',
+            'project_name' => 'Voss — Firmenfeier',
+            'type' => 'portrait',
+            'source' => 'other',
+            'source_other' => 'Hochzeitsportal',
+            'captured_via' => 'phone',
+        ])
+        ->assertCreated();
+
+    expect(Lead::first()->source_other)->toBe('Hochzeitsportal');
+});
+
 it('refuses to capture a lead without the manage_leads scope', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageContacts)->create();
 

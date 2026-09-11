@@ -21,6 +21,7 @@ class ShootReadData extends Data
         public ?string $label,
         public ?string $date,
         public string $status,
+        public ?string $cancelledAt,
         public string $updatedAt,
     ) {}
 
@@ -34,6 +35,7 @@ class ShootReadData extends Data
             label: $shoot->label,
             date: $shoot->date?->format('Y-m-d'),
             status: $shoot->status->key,
+            cancelledAt: $shoot->cancelled_at?->toIso8601String(),
             updatedAt: $shoot->updated_at->toIso8601String(),
         );
     }
