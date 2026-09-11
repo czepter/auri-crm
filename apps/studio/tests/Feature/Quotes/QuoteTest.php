@@ -280,6 +280,7 @@ it('replaces a draft quote\'s items wholesale on update, recalculates the total,
 
     $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", [
         'valid_until' => '2027-01-15',
+        'pricing_mode' => 'classic',
         'items' => [
             ['title' => 'Hochzeitsreportage', 'description' => null, 'quantity' => 1, 'unit_price' => 440000],
             ['title' => 'Enthaltene Leistung', 'description' => null, 'quantity' => 1, 'unit_price' => null],
@@ -1005,7 +1006,7 @@ it('writes one quote.updated for a burst of autosaves, and one again after the w
     $user = quoteOwner();
     $quote = Quote::factory()->create();
 
-    $payload = ['items' => [['title' => 'Reportage', 'description' => null, 'quantity' => 1, 'unit_price' => 440000]]];
+    $payload = ['pricing_mode' => 'classic', 'items' => [['title' => 'Reportage', 'description' => null, 'quantity' => 1, 'unit_price' => 440000]]];
 
     $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", $payload);
     $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", $payload);
@@ -1023,7 +1024,7 @@ it('does not let one quote\'s autosave suppress another quote\'s entry', functio
     $first = Quote::factory()->create();
     $second = Quote::factory()->create();
 
-    $payload = ['items' => [['title' => 'Reportage', 'description' => null, 'quantity' => 1, 'unit_price' => 440000]]];
+    $payload = ['pricing_mode' => 'classic', 'items' => [['title' => 'Reportage', 'description' => null, 'quantity' => 1, 'unit_price' => 440000]]];
 
     $this->actingAs($user, 'staff')->patch("/angebote/{$first->public_id}", $payload);
     $this->actingAs($user, 'staff')->patch("/angebote/{$second->public_id}", $payload);
@@ -1066,8 +1067,8 @@ it('remembers a flagged line, and remembers it only once across quotes', functio
     $second = Quote::factory()->create();
     $line = ['title' => 'Zweitfotograf', 'description' => 'Zweite Kamera', 'quantity' => 1, 'unit_price' => 49000, 'remember' => true];
 
-    $this->actingAs(quoteOwner(), 'staff')->patch("/angebote/{$first->public_id}", ['items' => [$line]]);
-    $this->actingAs(quoteOwner(), 'staff')->patch("/angebote/{$second->public_id}", ['items' => [$line]]);
+    $this->actingAs(quoteOwner(), 'staff')->patch("/angebote/{$first->public_id}", ['pricing_mode' => 'classic', 'items' => [$line]]);
+    $this->actingAs(quoteOwner(), 'staff')->patch("/angebote/{$second->public_id}", ['pricing_mode' => 'classic', 'items' => [$line]]);
 
     $item = CatalogItem::sole();
 
@@ -1081,6 +1082,7 @@ it('updates the remembered price and description, and never the quantity', funct
     CatalogItem::create(['title' => 'Zweitfotograf', 'description' => null, 'unit_price' => 49000]);
 
     $this->actingAs(quoteOwner(), 'staff')->patch("/angebote/{$quote->public_id}", [
+        'pricing_mode' => 'classic',
         'items' => [['title' => 'Zweitfotograf', 'description' => 'Ganztags', 'quantity' => 3, 'unit_price' => 52000, 'remember' => true]],
     ]);
 
@@ -1096,6 +1098,7 @@ it('forgets a line whose flag is taken away', function () {
     CatalogItem::create(['title' => 'Zweitfotograf', 'unit_price' => 49000]);
 
     $this->actingAs(quoteOwner(), 'staff')->patch("/angebote/{$quote->public_id}", [
+        'pricing_mode' => 'classic',
         'items' => [['title' => 'Zweitfotograf', 'description' => null, 'quantity' => 1, 'unit_price' => 49000, 'remember' => false]],
     ]);
 
@@ -1107,6 +1110,7 @@ it('leaves the library alone when no line carries the flag at all', function () 
     CatalogItem::create(['title' => 'Zweitfotograf', 'unit_price' => 49000]);
 
     $this->actingAs(quoteOwner(), 'staff')->patch("/angebote/{$quote->public_id}", [
+        'pricing_mode' => 'classic',
         'items' => [['title' => 'Reportage', 'description' => null, 'quantity' => 1, 'unit_price' => 189000]],
     ]);
 

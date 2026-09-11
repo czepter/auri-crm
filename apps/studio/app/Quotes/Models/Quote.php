@@ -8,6 +8,7 @@ use App\Concerns\HasPublicId;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Quotes\Enums\DiscountType;
+use App\Quotes\Enums\PricingMode;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Support\DiscountCalculator;
 use App\Settings\Support\StudioSettingsResolver;
@@ -38,7 +39,7 @@ class Quote extends Model
     use HasHourlyPricing;
     use HasPublicId;
 
-    protected $fillable = ['project_id', 'predecessor_id', 'is_addendum', 'status', 'intro', 'outro', 'currency', 'valid_until', 'sent_at', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours'];
+    protected $fillable = ['project_id', 'predecessor_id', 'is_addendum', 'status', 'pricing_mode', 'intro', 'outro', 'currency', 'valid_until', 'sent_at', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours'];
 
     // Mirrors every column default in memory (the same reason Project's own
     // $attributes gives for portal_visible): without net and discount_amount
@@ -46,12 +47,13 @@ class Quote extends Model
     // reloaded, even though the row itself already holds the column
     // defaults — and Q-06's SendQuote can run against a quote that was never
     // re-fetched after creation.
-    protected $attributes = ['status' => 'draft', 'currency' => 'EUR', 'total' => 0, 'discount_amount' => 0, 'net' => 0];
+    protected $attributes = ['status' => 'draft', 'pricing_mode' => 'classic', 'currency' => 'EUR', 'total' => 0, 'discount_amount' => 0, 'net' => 0];
 
     protected function casts(): array
     {
         return [
             'status' => QuoteStatus::class,
+            'pricing_mode' => PricingMode::class,
             'valid_until' => 'date',
             'sent_at' => 'immutable_datetime',
             'accepted_at' => 'immutable_datetime',

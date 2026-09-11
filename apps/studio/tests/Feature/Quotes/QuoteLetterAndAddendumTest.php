@@ -38,6 +38,7 @@ it('stores the letter through the quote patch', function () {
 
     $this->actingAs(letterOwner(), 'staff')
         ->patch("/angebote/{$quote->public_id}", [
+            'pricing_mode' => 'classic',
             'intro' => 'Hallo {{ contact.name }},',
             'outro' => 'Bis bald.',
             'items' => [],

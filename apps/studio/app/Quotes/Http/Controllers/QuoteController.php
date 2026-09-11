@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Actions\SendQuote;
+use App\Quotes\Enums\PricingMode;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
@@ -90,6 +91,7 @@ class QuoteController extends Controller
 
         $validated = $request->validate([
             'valid_until' => ['nullable', 'date'],
+            'pricing_mode' => ['required', Rule::enum(PricingMode::class)],
             'intro' => ['nullable', 'string', 'max:5000'],
             'outro' => ['nullable', 'string', 'max:5000'],
             'discount_type' => ['nullable', 'in:percentage,amount', 'required_with:discount_value'],
@@ -133,6 +135,7 @@ class QuoteController extends Controller
 
         $quote->update([
             'valid_until' => $validated['valid_until'] ?? null,
+            'pricing_mode' => $validated['pricing_mode'],
             'intro' => $validated['intro'] ?? null,
             'outro' => $validated['outro'] ?? null,
             'discount_type' => $validated['discount_type'] ?? null,
