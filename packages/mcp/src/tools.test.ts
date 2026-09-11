@@ -90,6 +90,7 @@ describe('read tools', () => {
     expect(tools.map((tool) => tool.name).sort()).toEqual(
       expect.arrayContaining([
         'get_project',
+        'list_internal_notes',
         'list_leads',
         'list_project_types',
         'pipeline_snapshot',
@@ -158,15 +159,16 @@ describe('read tools', () => {
       id: 'prj_meier',
       name: 'Meier Hochzeit',
       type: 'wedding',
+      typeOther: null,
       portalVisible: true,
       fields: { gaeste: 120 },
       updatedAt: '2026-01-01T00:00:00Z',
-      lead: { stage: 'booked', source: 'referral', sourceOther: null, capturedAt: '2025-11-02T09:00:00Z', lostAt: null },
+      lead: { stage: 'booked', source: 'referral', sourceOther: null, inquiryText: 'Standesamt Jena, Juni.', capturedVia: 'email', capturedViaOther: null, capturedAt: '2025-11-02T09:00:00Z', stageEnteredAt: null, outcome: null, lostReason: null, lostAt: null },
       contacts: [
         { id: 'ctc_meier', name: 'Lena Meier', email: 'lena@example.com', phone: null, role: 'primary', updatedAt: '2026-01-01T00:00:00Z' },
       ],
       shoots: [
-        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-06-20', status: 'requested', cancelledAt: null, updatedAt: '2026-01-01T00:00:00Z' },
+        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-06-20', callTime: null, endTime: null, venueName: null, venueCity: null, status: 'requested', cancelledAt: null, cancelledReason: null, updatedAt: '2026-01-01T00:00:00Z' },
       ],
     }
 
@@ -198,7 +200,7 @@ describe('read tools', () => {
         requestedQuery = url.search
         return jsonResponse({
           data: [
-            { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', status: 'requested', cancelledAt: null, updatedAt: '2026-01-01T00:00:00Z' },
+            { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', callTime: null, endTime: null, venueName: null, venueCity: null, status: 'requested', cancelledAt: null, cancelledReason: null, updatedAt: '2026-01-01T00:00:00Z' },
           ],
           meta: { path: '/shoots', per_page: 25, next_cursor: null, next_page_url: null, prev_cursor: null, prev_page_url: null },
         })
@@ -215,7 +217,7 @@ describe('read tools', () => {
     expect(requestedQuery).toContain('cancelled=false')
     expect(result.structuredContent).toEqual({
       shoots: [
-        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', status: 'requested', cancelledAt: null, updatedAt: '2026-01-01T00:00:00Z' },
+        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', callTime: null, endTime: null, venueName: null, venueCity: null, status: 'requested', cancelledAt: null, cancelledReason: null, updatedAt: '2026-01-01T00:00:00Z' },
       ],
       nextCursor: null,
     })
@@ -230,7 +232,7 @@ describe('read tools', () => {
         requestedQuery = url.search
         return jsonResponse({
           data: [
-            { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', status: 'requested', cancelledAt: '2026-02-01T00:00:00Z', updatedAt: '2026-02-01T00:00:00Z' },
+            { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', callTime: null, endTime: null, venueName: null, venueCity: null, status: 'requested', cancelledAt: '2026-02-01T00:00:00Z', cancelledReason: null, updatedAt: '2026-02-01T00:00:00Z' },
           ],
           meta: { path: '/shoots', per_page: 25, next_cursor: null, next_page_url: null, prev_cursor: null, prev_page_url: null },
         })
@@ -245,7 +247,7 @@ describe('read tools', () => {
     expect(requestedQuery).not.toContain('cancelled=')
     expect(result.structuredContent).toEqual({
       shoots: [
-        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', status: 'requested', cancelledAt: '2026-02-01T00:00:00Z', updatedAt: '2026-02-01T00:00:00Z' },
+        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', callTime: null, endTime: null, venueName: null, venueCity: null, status: 'requested', cancelledAt: '2026-02-01T00:00:00Z', cancelledReason: null, updatedAt: '2026-02-01T00:00:00Z' },
       ],
       nextCursor: null,
     })

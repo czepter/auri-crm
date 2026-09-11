@@ -3,6 +3,8 @@
 namespace App\Crm\Data;
 
 use App\Contracts\Enums\ContractStatus;
+use App\Crm\Actions\OpenProjects;
+use App\Crm\Actions\ReadStageTrack;
 use App\Crm\Models\Project;
 use App\Quotes\Enums\QuoteStatus;
 use Spatie\LaravelData\Data;
@@ -20,7 +22,10 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 #[TypeScript]
 class ProjectHeaderData extends Data
 {
-    /** @param  list<array{key: string, label: string, href: string, count: int|null, countTo: int|null, children: list<array{key: string, label: string, translate: bool, href: string, count: int|null, reorderable: bool}>}>  $tabs */
+    /** @param  list<array{key: string, label: string, href: string, count: int|null, countTo: int|null, children: list<array{key: string, label: string, translate: bool, href: string, count: int|null, reorderable: bool}>}>  $tabs
+     * @param  list<array{key: string, label: string, pipeline: string, state: string}>  $track
+     * @param  list<array{key: string, rows: list<ProjectQueueRowData>}>  $queue
+     */
     public function __construct(
         public string $id,
         public string $name,
@@ -44,7 +49,14 @@ class ProjectHeaderData extends Data
         public bool $canManageContracts,
         public bool $canManagePaymentPlan,
         public bool $canManageForms,
+        public ?string $leadId,
+        public ?string $outcomeLabel,
+        public ?string $lostReason,
+        public bool $canClose,
+        public bool $canDelete,
         public array $tabs,
+        public array $track,
+        public array $queue,
     ) {}
 
     public static function fromProject(Project $project, ProjectPositionData $position): self
@@ -72,6 +84,11 @@ class ProjectHeaderData extends Data
             canManageContracts: $user?->can('manageContracts', $project) ?? false,
             canManagePaymentPlan: $user?->can('managePaymentPlan', $project) ?? false,
             canManageForms: $user?->can('manageForms', $project) ?? false,
+            leadId: $project->lead?->public_id,
+            outcomeLabel: $project->lead?->outcome?->label(),
+            lostReason: $project->lead?->lost_reason,
+            canClose: $project->lead !== null && ($user?->can('update', $project->lead) ?? false),
+            canDelete: ($user?->can('delete', $project) ?? false) && $project->deletionBlockers()->isEmpty(),
             // Galerien (G-05, already in P3) appends a line here on the
             // sprint it lands. Zahlungen (M-03) does not: mockup
             // 04-auftrag's own comment keeps it and Aufgaben as "previews,
@@ -87,6 +104,7 @@ class ProjectHeaderData extends Data
             // PROJECT_TABS).
             tabs: [
                 ['key' => 'overview', 'label' => 'project.overview', 'href' => "/auftraege/{$project->public_id}", 'count' => null, 'countTo' => null, 'children' => []],
+                ...($project->lead ? [['key' => 'lead', 'label' => 'project.lead', 'href' => "/anfragen/{$project->lead->public_id}", 'count' => null, 'countTo' => null, 'children' => []]] : []),
                 ['key' => 'shoots', 'label' => 'project.shoots', 'href' => "/auftraege/{$project->public_id}/shootings", 'count' => null, 'countTo' => null, 'children' => []],
                 ['key' => 'tasks', 'label' => 'project.tasks', 'href' => "/auftraege/{$project->public_id}/aufgaben", 'count' => $project->tasks()->whereNull('completed_at')->count(), 'countTo' => $project->tasks()->count(), 'children' => []],
                 ['key' => 'galleries', 'label' => 'contacts.galleries', 'href' => "/auftraege/{$project->public_id}/galerien", 'count' => $project->galleries()->count(), 'countTo' => null, 'children' => []],
@@ -95,6 +113,8 @@ class ProjectHeaderData extends Data
                 ['key' => 'quotes', 'label' => 'project.quotes', 'href' => "/auftraege/{$project->public_id}/angebote", 'count' => $project->quotes()->where('status', QuoteStatus::Sent)->count(), 'countTo' => null, 'children' => []],
                 ['key' => 'contract', 'label' => 'project.contract', 'href' => "/auftraege/{$project->public_id}/vertrag", 'count' => self::unsignedContracts($project), 'countTo' => null, 'children' => []],
             ],
+            track: app(ReadStageTrack::class)($position),
+            queue: $user === null ? [] : app(OpenProjects::class)->queue($user, $project),
         );
     }
 

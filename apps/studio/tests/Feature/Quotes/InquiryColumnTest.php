@@ -71,7 +71,7 @@ it('rows a silent quote once the reminders are exhausted', function () {
     expect($rows)->toHaveCount(1)
         ->and($rows->first()->who)->toBe('Reuter & Sölter')
         ->and($rows->first()->what)->toBe('Angebot still,')
-        ->and($rows->first()->emphasis)->toBe('läuft '.$quote->valid_until->format('d.m.').' ab')
+        ->and($rows->first()->emphasis)->toBe('läuft '.$quote->valid_until->format('d.m.Y').' ab')
         ->and($rows->first()->whatTail)->toContain('2× erinnert')
         ->and($rows->first()->action->kind)->toBe('tel')
         ->and($rows->first()->action->target)->toBe('tel:+49401234567')

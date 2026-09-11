@@ -17,6 +17,7 @@ use App\Integration\Http\Controllers\ContactController;
 use App\Integration\Http\Controllers\CrmReadController;
 use App\Integration\Http\Controllers\InternalNoteController;
 use App\Integration\Http\Controllers\LeadController;
+use App\Integration\Http\Controllers\MessageController;
 use App\Integration\Http\Controllers\OAuthTokenInfoController;
 use App\Integration\Http\Controllers\ProjectContactController;
 use App\Integration\Http\Controllers\ProjectController;
@@ -180,6 +181,10 @@ Route::middleware('audience:api')->group(function () {
     Route::middleware('scope:'.Capability::ViewAllProjects->value)
         ->get('/projects/{project:public_id}', [CrmReadController::class, 'project'])
         ->name('api.projects.show');
+    // ManageNotes, not ViewAllProjects: notes stay out of the project read.
+    Route::middleware('scope:'.Capability::ManageNotes->value)
+        ->get('/projects/{project:public_id}/notes', [InternalNoteController::class, 'index'])
+        ->name('api.projects.notes.index');
     Route::middleware('scope:'.Capability::ManageLeads->value)
         ->get('/pipeline-snapshot', [CrmReadController::class, 'pipelineSnapshot'])
         ->name('api.pipeline-snapshot');
@@ -210,6 +215,10 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'ide
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
     ->post('/leads/{lead:public_id}/stage', [LeadController::class, 'advanceStage'])
     ->name('api.leads.stage.update');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
+    ->patch('/leads/{lead:public_id}', [LeadController::class, 'update'])
+    ->name('api.leads.update');
 
 // Closing a lead and taking that back are the same authority as moving it:
 // all three write Lead columns nobody but AdvanceLeadStage writes.
@@ -250,6 +259,19 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'ide
 Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'idempotent'])
     ->post('/projects/{project:public_id}/notes', [InternalNoteController::class, 'store'])
     ->name('api.projects.notes.store');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'idempotent'])
+    ->patch('/notes/{note:public_id}', [InternalNoteController::class, 'update'])
+    ->name('api.notes.update');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'idempotent'])
+    ->delete('/notes/{note:public_id}', [InternalNoteController::class, 'destroy'])
+    ->name('api.notes.destroy');
+
+// ManageMessages, the capability the admin reply already requires.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageMessages->value, 'idempotent'])
+    ->post('/projects/{project:public_id}/messages', [MessageController::class, 'store'])
+    ->name('api.projects.messages.store');
 
 // ManageLeads, the scope leads.store already attaches contacts under.
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])

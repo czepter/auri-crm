@@ -5,7 +5,6 @@ namespace App\Integration\Http\Controllers;
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
 use App\Support\LiveUpdate;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 
@@ -25,17 +24,8 @@ class ProjectController extends Controller
 {
     public function destroy(Project $project): Response
     {
-        $blocking = collect([
-            'job' => $project->job(),
-            'quote' => $project->quotes(),
-            'contract' => $project->contracts(),
-            'gallery' => $project->galleries(),
-        ])->filter(fn (Relation $relation) => $relation->exists())->keys();
+        $blocking = $project->deletionBlockers();
 
-        // Each of these is a record of something agreed with a client, and a
-        // payment plan hangs off the job. Past that line the project is no
-        // longer an import artifact and deleting it is a decision for a
-        // screen, not a token.
         if ($blocking->isNotEmpty()) {
             throw ValidationException::withMessages([
                 'project' => 'The project has a '.$blocking->join(', ', ' and ').' and cannot be deleted.',

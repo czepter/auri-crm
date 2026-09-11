@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import CalendarSeason from '@/admin/components/CalendarSeason.vue'
 import Page from '@/ui/page/Page.vue'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
@@ -17,9 +18,17 @@ const props = defineProps<{
   shoots: App.Crm.Data.ShootData[]
   projects: Record<string, { id: string; name: string }>
   mine: string[]
+  season?: InstanceType<typeof CalendarSeason>['$props']['season']
 }>()
 
 const view = ref('monat')
+const seasonLabel = ref('')
+
+// Every year of shoots is more than a month view should carry on each visit,
+// so the season comes along only once somebody opens it.
+watch(view, (next) => {
+  if (next === 'saison' && !props.season) router.reload({ only: ['season'] })
+})
 
 // Three lines, then a count. The frame is six week rows and it has to stay
 // six: a wedding with four shoots on one day would otherwise push the rest of
@@ -67,7 +76,7 @@ const groups = computed(() => {
 })
 
 function shortDate(date: string | null) {
-  return date ? new Date(date).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' }) : '—'
+  return date ? new Date(date).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' }) : '—'
 }
 </script>
 
@@ -75,19 +84,21 @@ function shortDate(date: string | null) {
   <AdminLayout active="kalender">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <PageHead :kicker="label" :title="$t('calendar.title')">
+        <PageHead :kicker="view === 'saison' ? seasonLabel : label" :title="$t('calendar.title')">
           <ChoiceGroup
             v-model="view"
             class="ml-auto"
             :options="[
               { value: 'monat', label: $t('calendar.viewMonth') },
               { value: 'liste', label: $t('calendar.viewList') },
+              { value: 'saison', label: $t('calendar.viewSeason') },
             ]"
             variant="segmented"
           />
 
           <Button
             v-for="step in ([['←', previous], ['→', next]] as const)"
+            v-show="view !== 'saison'"
             :key="step[0]"
             type="button"
             variant="pill-muted"
@@ -147,6 +158,10 @@ function shortDate(date: string | null) {
             </span>
           </div>
         </div>
+
+        <template v-else-if="view === 'saison'">
+          <CalendarSeason v-if="season" :season="season" @range="seasonLabel = $event" />
+        </template>
 
         <Table v-else>
           <thead>

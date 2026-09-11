@@ -137,7 +137,7 @@ it('agrees with the board about an unbooked project', function () {
     Lead::factory()->for($this->project)->atStage(LeadStage::QuoteAccepted)->create();
     Shoot::factory()->for($this->project)->primary()->create();
 
-    $position = props("/auftraege/{$this->project->public_id}")['header']['position'];
+    $position = props("/auftraege/{$this->project->public_id}/shootings")['header']['position'];
 
     expect($position['label'])->toBe('Angebot angenommen')
         ->and($position['source'])->toBe('lead');
@@ -146,7 +146,7 @@ it('agrees with the board about an unbooked project', function () {
 it('reads the lead stage in the header when no uncancelled shoot exists', function () {
     Lead::factory()->for($this->project)->atStage(LeadStage::QuoteSent)->create();
 
-    expect(props("/auftraege/{$this->project->public_id}")['header']['position']['label'])
+    expect(props("/auftraege/{$this->project->public_id}/shootings")['header']['position']['label'])
         ->toBe('Angebot');
 });
 
@@ -291,6 +291,37 @@ it('books the project from the screen', function () {
 
     expect($this->project->fresh()->job)->not->toBeNull()
         ->and($this->project->shoots()->sole()->status->key)->toBe(ShootStatus::Booked->value);
+});
+
+it('deletes a project nothing agreed hangs off', function () {
+    Lead::factory()->for($this->project)->create();
+
+    $this->delete("/auftraege/{$this->project->public_id}")->assertRedirect('/projekte');
+
+    expect(Project::count())->toBe(0)->and(Lead::count())->toBe(0);
+});
+
+it('keeps a booked project and offers no delete', function () {
+    Job::factory()->for($this->project)->create();
+
+    expect(props("/auftraege/{$this->project->public_id}")['header']['canDelete'])->toBeFalse();
+
+    $this->delete("/auftraege/{$this->project->public_id}")->assertSessionHasErrors('project');
+
+    expect(Project::count())->toBe(1);
+});
+
+it('links the inquiry and closes it from the project', function () {
+    $lead = Lead::factory()->for($this->project)->create();
+    $screen = "/auftraege/{$this->project->public_id}/shootings";
+
+    expect(array_column(props($screen)['header']['tabs'], 'href', 'key')['lead'])->toBe("/anfragen/{$lead->public_id}");
+
+    $this->from($screen)
+        ->post("/anfragen/{$lead->public_id}/schliessen", ['outcome' => 'lost', 'reason' => 'Anderen Fotografen gebucht'])
+        ->assertRedirect($screen);
+
+    expect(props($screen)['header']['outcomeLabel'])->toBe('Verloren');
 });
 
 it('leaves an already booked project alone when the button is pressed twice', function () {

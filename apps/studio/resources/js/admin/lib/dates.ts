@@ -42,12 +42,12 @@ export function relativeDate(iso: string, locale: string, from = new Date()): st
 }
 
 /**
- * "Mo., 14.06." — die Datumsspalte der Fallschirme und der Unterhaltung. Ohne Datum
+ * "Mo., 14.06.2026" — die Datumsspalte der Fallschirme und der Unterhaltung. Ohne Datum
  * steht der Platzhalter, den der Schirm dort führt.
  */
 export function dayWithWeekday(iso: string | null | undefined, fallback: string | null = '—'): string | null {
   return iso
-    ? new Date(iso).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit' })
+    ? new Date(iso).toLocaleDateString('de-DE', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' })
     : fallback
 }
 

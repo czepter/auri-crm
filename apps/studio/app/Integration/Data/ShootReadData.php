@@ -20,8 +20,13 @@ class ShootReadData extends Data
         public string $kind,
         public ?string $label,
         public ?string $date,
+        public ?string $callTime,
+        public ?string $endTime,
+        public ?string $venueName,
+        public ?string $venueCity,
         public string $status,
         public ?string $cancelledAt,
+        public ?string $cancelledReason,
         public string $updatedAt,
     ) {}
 
@@ -34,8 +39,13 @@ class ShootReadData extends Data
             kind: $shoot->kind->value,
             label: $shoot->label,
             date: $shoot->date?->format('Y-m-d'),
+            callTime: $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
+            endTime: $shoot->end_time === null ? null : substr((string) $shoot->end_time, 0, 5),
+            venueName: $shoot->venue_name,
+            venueCity: $shoot->venue_city,
             status: $shoot->status->key,
             cancelledAt: $shoot->cancelled_at?->toIso8601String(),
+            cancelledReason: $shoot->cancelled_reason,
             updatedAt: $shoot->updated_at->toIso8601String(),
         );
     }

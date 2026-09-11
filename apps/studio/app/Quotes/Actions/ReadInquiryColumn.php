@@ -83,7 +83,7 @@ class ReadInquiryColumn
                     projectId: $quote->project->public_id,
                     who: $quote->project->name,
                     what: $this->worth($quote).' still,',
-                    emphasis: 'läuft '.$quote->valid_until->format('d.m.').' ab',
+                    emphasis: 'läuft '.$quote->valid_until->format('d.m.Y').' ab',
                     whatTail: sprintf('· %d× erinnert, keine Reaktion', $nudges),
                     action: RowActionData::tel('Anrufen', $quote->project->primaryContact()?->phone),
                     hot: true,
@@ -155,7 +155,7 @@ class ReadInquiryColumn
             ->map(fn (Quote $quote) => new DomainRowData(
                 projectId: $quote->project->public_id,
                 who: $quote->project->name,
-                what: 'angenommen '.$quote->accepted_at?->format('d.m.').' —',
+                what: 'angenommen '.$quote->accepted_at?->format('d.m.Y').' —',
                 emphasis: 'Vertrag fehlt',
                 whatTail: null,
                 action: RowActionData::link(

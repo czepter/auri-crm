@@ -50,7 +50,9 @@ class ReadProjectScreen
             'nextDate' => [
                 'value' => $project->shoots()->uncancelled()->whereNotNull('date')
                     ->whereDate('date', '>=', now()->toDateString())
-                    ->orderBy('date')->value('date')?->format('Y-m-d'),
+                    ->orderBy('date')->value('date')?->format('Y-m-d')
+                    // All of them behind us: the day that was, not a dash.
+                    ?? $project->primaryShoot?->date?->format('Y-m-d'),
                 'proof' => null,
             ],
             'value' => [

@@ -3,8 +3,11 @@
 namespace App\Crm\Actions;
 
 use App\Crm\Data\ProjectPositionData;
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
+use App\Crm\Support\CrmVocabulary;
 use Illuminate\Support\Collection;
 
 /**
@@ -81,6 +84,24 @@ class DeriveProjectPosition
         return $shoots
             ->reject(fn (Shoot $shoot) => $shoot->isCancelled())
             ->sortBy(fn (Shoot $shoot) => $shoot->status->sort_order)
+            ->first();
+    }
+
+    /**
+     * A shooting day behind us whose status still says it lies ahead. The
+     * status moves by hand, so this is how a project stalls without anyone
+     * seeing it.
+     *
+     * @param  Collection<int, Shoot>  $shoots
+     */
+    public function stalled(Collection $shoots): ?Shoot
+    {
+        $shot = app(CrmVocabulary::class)->anchored(StagePipeline::Project, StageAnchor::Shot)?->sort_order;
+
+        return $shot === null ? null : $shoots
+            ->reject(fn (Shoot $shoot) => $shoot->isCancelled() || $shoot->date === null)
+            ->filter(fn (Shoot $shoot) => $shoot->date->lt(today()) && $shoot->status->sort_order < $shot)
+            ->sortBy('date')
             ->first();
     }
 }

@@ -29,6 +29,7 @@ class BuildThread
             // I-03: a note written through the api surface has no staff author.
             author: $note->author?->name ?? 'API',
             system: false,
+            note: $note->public_id,
         ));
 
         $events = collect(ProjectActivity::for($project))

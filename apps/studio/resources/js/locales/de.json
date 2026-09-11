@@ -6,6 +6,7 @@
     "signOut": "Abmelden",
     "search": "Suchen",
     "remove": "Entfernen",
+    "delete": "Löschen",
     "close": "Schließen",
     "calendar": "Kalender",
     "unitMinutes": "Min.",
@@ -169,8 +170,31 @@
     "openedOn": "geöffnet am {date}",
     "notOpened": "noch nicht geöffnet"
   },
+  "projectQueue": {
+    "due": "Handlungsbedarf",
+    "days": "vor 1 Tag | vor {count} Tagen",
+    "group": {
+      "haengt": "Hängt",
+      "woche": "Diese Woche",
+      "bearbeitung": "In Bearbeitung",
+      "spaeter": "Später"
+    },
+    "reason": {
+      "status": "Noch {stage}",
+      "payment": "Rate überfällig"
+    }
+  },
   "project": {
+    "trackProject": "Projekt",
+    "stalledStatus": "Status {stage} seit {date}",
+    "quoteAdd": "Angebot anlegen",
     "overview": "Übersicht",
+    "lead": "Anfrage",
+    "more": "Weitere Aktionen",
+    "closeMenu": "Schließen …",
+    "closeTitle": "Projekt schließen",
+    "deleteMenu": "Löschen …",
+    "deleteTitle": "Projekt löschen?",
     "kicker": "Projekt · {type}",
     "kickerLead": "Anfrage · {type}",
     "mainDate": "Haupttermin {date}",
@@ -244,6 +268,7 @@
     "uncancel": "Absage zurücknehmen",
     "noteEdit": "bearbeiten",
     "noteDelete": "löschen",
+    "noteDeleteTitle": "Notiz löschen?",
     "portalStatus": "Portal",
     "portalVisible": "Sichtbar",
     "portalHidden": "Ausgeblendet",
@@ -262,7 +287,6 @@
     "contractDownload": "PDF herunterladen",
     "contractPending": "Wird gerade erstellt …",
     "messagesSubject": "Thema: {subject}",
-    "messagesEmpty": "Keine Nachrichten.",
     "messagesReplyPlaceholder": "Antwort schreiben …",
     "messagesTemplateBroken": "Vorlage „{name}“ nutzt unbekannte Felder: {fields}",
     "messagesSchedule": "Später senden",
@@ -270,6 +294,10 @@
     "messagesScheduledFor": "Geht raus am {when}",
     "messagesCancelScheduled": "Abbrechen",
     "messagesSend": "Senden",
+    "messagesReply": "Antworten",
+    "messagesRecord": "Kunde schrieb",
+    "messagesRecordSave": "Nachtragen",
+    "messagesSentAt": "Geschrieben am",
     "openAmount": "Offen",
     "portal": "Portal",
     "instalments": "1 Rate | {count} Raten",
@@ -355,7 +383,17 @@
     "searchPlaceholder": "Projekt suchen",
     "empty": "Keine Projekte.",
     "openTasks": "Offene Aufgaben",
-    "openTasksOf": "{open} von {total}"
+    "openTasksOf": "{open} von {total}",
+    "viewList": "Liste",
+    "viewBoard": "Board",
+    "running": "Laufend",
+    "all": "Alle",
+    "reset": "Filter zurücksetzen",
+    "phase": {
+      "upcoming": "Anstehend",
+      "editing": "In Bearbeitung",
+      "delivered": "Geliefert"
+    }
   },
   "calendar": {
     "title": "Kalender",
@@ -363,6 +401,15 @@
     "revoke": "Adresse zurückziehen",
     "viewMonth": "Monat",
     "viewList": "Liste",
+    "viewSeason": "Saison",
+    "earlier": "Früher",
+    "later": "Später",
+    "weekdays": "Wochentage",
+    "booked": "{count} gebucht",
+    "free": "Frei",
+    "away": "Abwesend",
+    "double": "Doppelt belegt",
+    "thisWeek": "Diese Woche",
     "toProjects": "Zu den Projekten",
     "more": "+{count} weitere",
     "feedUrl": "Abo-Adresse",
@@ -1412,7 +1459,6 @@
       "angebot": "Angebot draußen",
       "angenommen": "Angenommen"
     },
-    "said": "Was sie schreiben",
     "reopen": "Wieder öffnen",
     "noText": "Kein Text",
     "noReach": "Keine Kontaktdaten",
@@ -1427,6 +1473,7 @@
     "writeQuote": "Angebot schreiben",
     "sendContract": "Vertrag senden",
     "openProject": "Zum Projekt",
+    "openQuote": "Zum Angebot",
     "edit": "Bearbeiten",
     "notePlaceholder": "Notiz",
     "addNote": "Notiz sichern",

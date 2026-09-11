@@ -28,6 +28,7 @@ import { idempotencyKeyFor } from '../idempotency.js'
   registerCaptureLead(server, clientFor)
   registerCaptureLeadsBulk(server, clientFor)
   registerAdvanceLeadStage(server, clientFor)
+  registerUpdateLead(server, clientFor)
   registerCloseLead(server, clientFor)
   registerReopenLead(server, clientFor)
   registerCreateShoot(server, clientFor)
@@ -35,6 +36,9 @@ import { idempotencyKeyFor } from '../idempotency.js'
   registerCancelShoot(server, clientFor)
   registerUncancelShoot(server, clientFor)
   registerAddInternalNote(server, clientFor)
+  registerUpdateInternalNote(server, clientFor)
+  registerDeleteInternalNote(server, clientFor)
+  registerAddMessage(server, clientFor)
   registerAddProjectContact(server, clientFor)
   registerSetProjectFields(server, clientFor)
   registerAddProjectField(server, clientFor)
@@ -170,6 +174,30 @@ function registerAdvanceLeadStage(server: McpServer, clientFor: ApiClientFactory
         params: { path: { lead } },
         body: { stage, entered_at: enteredAt } as never,
         headers: writeHeaders('advance_lead_stage', { lead, stage, entered_at: enteredAt }, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerUpdateLead(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'update_lead',
+    {
+      title: 'Update lead',
+      description: "Replace a lead's inquiry text, the one written at capture. get_project shows the current one.",
+      inputSchema: {
+        lead: z.string().describe('The lead public id'),
+        inquiry_text: z.string().max(10000).nullable(),
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ lead, inquiry_text: inquiryText }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).PATCH('/leads/{lead}', {
+        params: { path: { lead } },
+        body: { inquiry_text: inquiryText } as never,
+        headers: writeHeaders('update_lead', { lead, inquiry_text: inquiryText }, undefined),
       })
 
       return apiResult(data, error)
@@ -372,6 +400,90 @@ function registerAddInternalNote(server: McpServer, clientFor: ApiClientFactory)
       })
 
       return apiResult(data, error)
+    },
+  )
+}
+
+function registerAddMessage(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'add_message',
+    {
+      title: 'Add message',
+      description:
+        "Write a line of the conversation between client and studio into a project after the fact: a mail, call or chat that happened outside the app. It shows on the project's and the inquiry's Nachrichten tab. Nothing is sent to anyone. Use this, not add_internal_note, for what client and studio said to each other.",
+      inputSchema: {
+        project: z.string().describe('The project public id'),
+        from: z.enum(['client', 'studio']).describe("client: the project's main contact, or `contact`. studio: the signed-in staff member."),
+        body: z.string().max(5000),
+        sent_at: z.string().nullish().describe('When it was said. ISO 8601, never in the future. Defaults to now.'),
+        contact: z.string().nullish().describe('Contact public id, for from: client when it was not the main contact'),
+        ...silentField,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ project, from, body, sent_at, contact, silent }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/messages', {
+        params: { path: { project } },
+        body: { from, body, sent_at, contact } as never,
+        headers: writeHeaders('add_message', { project, from, body, sent_at, contact }, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerUpdateInternalNote(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'update_internal_note',
+    {
+      title: 'Update internal note',
+      description: 'Replace the body of an internal note, by the id add_internal_note returned. occurred_at is kept unless given.',
+      inputSchema: {
+        note: z.string().describe('The note public id'),
+        body: z.string().max(5000),
+        occurred_at: z
+          .string()
+          .nullish()
+          .describe('When what the note is about happened. ISO 8601 or YYYY-MM-DD, never in the future.'),
+        ...silentField,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ note, body, occurred_at, silent }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).PATCH('/notes/{note}', {
+        params: { path: { note } },
+        body: { body, occurred_at } as never,
+        headers: writeHeaders('update_internal_note', { note, body, occurred_at }, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerDeleteInternalNote(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'delete_internal_note',
+    {
+      title: 'Delete internal note',
+      description: 'Delete an internal note, by the id add_internal_note returned. There is no undo.',
+      inputSchema: {
+        note: z.string().describe('The note public id'),
+        ...silentField,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ note, silent }, extra) => {
+      const { error } = await clientFor(extra.authInfo?.token).DELETE('/notes/{note}', {
+        params: { path: { note } },
+        headers: writeHeaders('delete_internal_note', { note }, silent),
+      })
+
+      // 204, no body — see delete_project.
+      return error !== undefined
+        ? apiResult(undefined, error)
+        : { content: [{ type: 'text', text: `Deleted note ${note}.` }] }
     },
   )
 }

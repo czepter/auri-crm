@@ -3,10 +3,9 @@
  * cannot drift into showing the same shoot two different ways.
  */
 
-/** "22.03." — the mockup's date column reads day and month, year implied. */
 export function dayAndMonth(date: string | null): string | null {
   return date
-    ? new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' })
+    ? new Date(date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' })
     : null
 }
 

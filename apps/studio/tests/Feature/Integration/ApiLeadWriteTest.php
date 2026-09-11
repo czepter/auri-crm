@@ -175,3 +175,17 @@ it('refuses to close a lead without the manage_leads scope', function () {
 
     expect($lead->fresh()->isLost())->toBeFalse();
 });
+
+it('rewrites a lead\'s inquiry text after capture', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
+    $lead = Lead::factory()->create(['inquiry_text' => 'Tippfehlr']);
+
+    $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'inquiry-1')
+        ->patchJson("/api/leads/{$lead->public_id}", ['inquiry_text' => 'Tippfehler'])
+        ->assertOk();
+
+    expect($lead->fresh()->inquiry_text)->toBe('Tippfehler')
+        ->and($response->json('inquiryText'))->toBe('Tippfehler')
+        ->and(integerIdPaths($response->json()))->toBe([]);
+});

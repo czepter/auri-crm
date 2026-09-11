@@ -5,16 +5,22 @@ namespace App\Crm\Http\Controllers;
 use App\Catalog\Models\Package;
 use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\CheckDateAvailability;
+use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Actions\OpenLeads;
+use App\Crm\Actions\ReadStageTrack;
 use App\Crm\Data\ProjectPersonData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
+use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
+use App\Crm\Models\Stage;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Support\CrmVocabulary;
+use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
 use App\Quotes\Data\QuoteData;
 use App\Quotes\Enums\QuoteStatus;
@@ -58,7 +64,7 @@ class LeadCaseController extends Controller
         private readonly StudioSettingsResolver $settings,
     ) {}
 
-    public function show(Lead $lead): Response
+    public function show(Lead $lead, string $tab = 'overview'): Response
     {
         $project = $lead->project;
 
@@ -72,8 +78,13 @@ class LeadCaseController extends Controller
 
         $project->load(['contacts', 'shoots.crew.user', 'tasks.project', 'tasks.assignee', 'notes.author', 'latestQuote.items']);
         $primary = $project->primaryShoot;
+        $conversation = $project->latestThread()->with('messages.contact', 'messages.author')->first();
 
         return Inertia::render('Leads/Show', [
+            'tab' => $tab,
+            'track' => app(ReadStageTrack::class)(app(DeriveProjectPosition::class)($project)),
+            'conversation' => $conversation === null ? null : ThreadData::fromModel($conversation),
+            'canManageMessages' => auth('staff')->user()->can('manageMessages', $project),
             'queue' => $this->leads->queue($lead),
             'lead' => [
                 'id' => $lead->public_id,
@@ -88,7 +99,9 @@ class LeadCaseController extends Controller
                 'stage' => $lead->stage->key,
                 'stageLabel' => $lead->stage->name,
                 'inquiryText' => $lead->inquiry_text,
-                'capturedVia' => $lead->capturedViaLabel(),
+                'capturedVia' => $lead->captured_via === CaptureChannel::Other && $lead->captured_via_other === null
+                    ? null
+                    : $lead->capturedViaLabel(),
                 'capturedAt' => $lead->captured_at->toIso8601String(),
                 'booked' => $project->job()->exists(),
                 'lostReason' => $lead->lost_reason,
@@ -145,6 +158,9 @@ class LeadCaseController extends Controller
             ],
             'week' => $this->week($project, $primary?->date?->format('Y-m-d')),
             'conflicts' => $this->availability->forDate($primary?->date?->format('Y-m-d'), $project),
+            'stages' => app(CrmVocabulary::class)->ordered(StagePipeline::Lead)
+                ->filter(fn (Stage $stage) => $stage->is_active)
+                ->map(fn (Stage $stage) => ['value' => $stage->key, 'label' => $stage->name])->values()->all(),
         ]);
     }
 

@@ -19,5 +19,7 @@ class ThreadEntryData extends Data
         public string $body,
         public ?string $author,
         public bool $system,
+        // The note's public id, what edit and delete address; null on the rest.
+        public ?string $note = null,
     ) {}
 }

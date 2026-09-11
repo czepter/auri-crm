@@ -26,6 +26,7 @@ use App\Crm\Enums\CrewRole;
 use App\Crm\Enums\FormFieldType;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Project;
@@ -46,11 +47,13 @@ use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Data\QuoteData;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
+use App\Support\LiveUpdate;
 use App\Support\RecordVisit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -91,10 +94,21 @@ class ProjectController extends Controller
             ->sortBy(fn (Project $project) => $project->primaryShoot?->date?->toDateString() ?? '9999-99-99')
             ->values();
 
+        $vocabulary = app(CrmVocabulary::class);
+        $booked = $vocabulary->anchored(StagePipeline::Project, StageAnchor::Booked)?->sort_order ?? 0;
+        $delivered = $vocabulary->anchored(StagePipeline::Project, StageAnchor::Delivered)?->sort_order ?? PHP_INT_MAX;
+
         return Inertia::render('Projects/Index', [
             'projects' => ProjectRowData::collect(
                 $projects->map(fn (Project $project) => ProjectRowData::fromProject($project, $this->position))
             ),
+            // #364: the filter pills and the board's columns, in the studio's
+            // own order and names — from the booking to the delivery, since
+            // before it a project is an inquiry and after it an archive.
+            'stages' => $vocabulary->ordered(StagePipeline::Project)
+                ->filter(fn (Stage $stage) => $stage->is_active && $stage->sort_order >= $booked && $stage->sort_order <= $delivered)
+                ->map(fn (Stage $stage) => ['key' => $stage->key, 'name' => $stage->name, 'phase' => $vocabulary->phase($stage)])
+                ->values(),
             'stageSettings' => app(StageSettingsPayload::class)(),
             'workflow' => Inertia::optional(function () {
                 if (! request()->user('staff')->can('viewAny', TaskTemplate::class)) {
@@ -110,9 +124,16 @@ class ProjectController extends Controller
         ]);
     }
 
-    public function show(Project $project, TaskAnchors $anchors): Response
+    public function show(Project $project, TaskAnchors $anchors): Response|RedirectResponse
     {
         $this->authorize('view', $project);
+
+        // Same rule as index(): an unbooked project is an inquiry, and its
+        // screen is the case. Every /auftraege link lands right without
+        // knowing the phase.
+        if ($project->lead !== null && ! $project->job()->exists()) {
+            return redirect("/anfragen/{$project->lead->public_id}");
+        }
 
         // C-03 (#237): an inquiry and a project are the same record in two
         // phases, so the palette names it by the phase it is in.
@@ -180,6 +201,14 @@ class ProjectController extends Controller
             'source' => $project->lead?->source->value,
             'sourceOther' => $project->lead?->source_other,
             'sourceLabel' => $project->lead?->sourceLabel(),
+            'inquiry' => $project->lead === null ? null : [
+                'text' => $project->lead->inquiry_text,
+                'typeLabel' => $project->typeLabel(),
+                'sourceLabel' => $project->lead->sourceLabel(),
+                'capturedVia' => $project->lead->capturedViaLabel(),
+                'capturedAt' => $project->lead->captured_at->toIso8601String(),
+            ],
+            'stalled' => $this->stalled($project),
             'galleries' => $project->galleries()->get()->map(fn ($gallery) => [
                 'id' => $gallery->public_id,
                 'title' => $gallery->title,
@@ -434,6 +463,21 @@ class ProjectController extends Controller
         return back();
     }
 
+    public function destroy(Project $project): RedirectResponse
+    {
+        $this->authorize('delete', $project);
+
+        if ($project->deletionBlockers()->isNotEmpty()) {
+            throw ValidationException::withMessages(['project' => 'Projekt trägt Auftrag, Angebot, Vertrag oder Galerie. Schließen statt löschen.']);
+        }
+
+        $project->delete();
+
+        LiveUpdate::publish();
+
+        return redirect('/projekte');
+    }
+
     /**
      * Hide or show one project in the portal. Scoped to this project alone —
      * every contact on it, and every other project any of them is on, is
@@ -454,6 +498,26 @@ class ProjectController extends Controller
         );
 
         return back();
+    }
+
+    /**
+     * The shooting day that passed without its status moving, and the step
+     * that closes it. The queue lists the case; the overview offers the step.
+     */
+    private function stalled(Project $project): ?array
+    {
+        $shoot = $project->job()->exists() ? $this->position->stalled($project->shoots()->get()) : null;
+        $shot = app(CrmVocabulary::class)->anchored(StagePipeline::Project, StageAnchor::Shot);
+
+        return $shoot === null || $shot === null ? null : [
+            'shootId' => $shoot->public_id,
+            'label' => $shoot->label ?? $project->name,
+            'date' => $shoot->date->format('Y-m-d'),
+            'days' => (int) $shoot->date->copy()->startOfDay()->diffInDays(today()),
+            'status' => $shoot->status->name,
+            'since' => $shoot->status_entered_at?->format('Y-m-d'),
+            'next' => ['key' => $shot->key, 'label' => $shot->name],
+        ];
     }
 
     private function header(Project $project): ProjectHeaderData

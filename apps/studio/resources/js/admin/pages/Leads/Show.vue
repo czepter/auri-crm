@@ -6,7 +6,9 @@ import CaseSection from "@/admin/components/CaseSection.vue";
 import LeadQueue from "@/admin/components/LeadQueue.vue";
 import NoteThread from "@/admin/components/NoteThread.vue";
 import QuoteSummary from "@/admin/components/QuoteSummary.vue";
+import MessageThread from "@/admin/components/MessageThread.vue";
 import RailHistory from "@/admin/components/RailHistory.vue";
+import StageTrack from "@/admin/components/StageTrack.vue";
 import ShootFields from "@/admin/components/ShootFields.vue";
 import ShootRow from "@/admin/components/ShootRow.vue";
 import { Button } from "@/ui/button";
@@ -19,6 +21,8 @@ import Rail from "@/ui/page/Rail.vue";
 import RailSection from "@/ui/page/RailSection.vue";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import { Textarea } from "@/ui/textarea";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/admin/lib/money";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
 
@@ -55,7 +59,34 @@ const props = defineProps<{
     presets: { type: string[]; source: string[] };
     week: { date: string; what: string; projectId: string }[];
     conflicts: App.Crm.Data.DateConflictData[];
+    stages: { value: string; label: string }[];
+    tab: "overview" | "messages";
+    track: { key: string; label: string; pipeline: string; state: string }[];
+    conversation: App.Engagement.Data.ThreadData | null;
+    canManageMessages: boolean;
 }>();
+
+const tabs = computed(() => [
+    { key: "overview", label: "project.overview", href: `/anfragen/${props.lead.id}`, count: null },
+    {
+        key: "messages",
+        label: "project.messages",
+        href: `/anfragen/${props.lead.id}/nachrichten`,
+        count: props.conversation?.messages.length || null,
+    },
+]);
+
+// The inquiry is the conversation's first line, written before there was a
+// thread to hold it.
+const inquiry = computed(() =>
+    props.lead.inquiryText === null
+        ? null
+        : {
+              author: (props.people.find((person) => person.role === "primary") ?? props.people[0])?.name ?? "",
+              at: props.lead.capturedAt,
+              body: props.lead.inquiryText,
+          },
+);
 
 // ↑↓ walks the queue without leaving the screen. Response time is the lever:
 // eight days of silence happen when every step costs a page load. The pane
@@ -140,6 +171,37 @@ function reopen() {
     router.post(`/anfragen/${props.lead.id}/wieder-oeffnen`, {}, { preserveScroll: true });
 }
 
+// Same rule as the board: "booked" writes the job, so it asks first.
+const booking = ref(false);
+
+function move(stage: string) {
+    if (stage === "booked") {
+        booking.value = true;
+
+        return;
+    }
+
+    router.post(`/anfragen/${props.lead.id}/stufe`, { stage }, { preserveScroll: true });
+}
+
+function book() {
+    router.post(`/anfragen/${props.lead.id}/stufe`, { stage: "booked" }, { preserveScroll: true });
+    booking.value = false;
+}
+
+const closing = ref(false);
+const closeForm = useForm({ outcome: "lost", reason: "" });
+
+function close() {
+    closeForm.post(`/anfragen/${props.lead.id}/schliessen`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            closing.value = false;
+            closeForm.reset();
+        },
+    });
+}
+
 function save() {
     edit.transform((data) => ({
         ...data,
@@ -184,10 +246,15 @@ const due = computed(() => {
               label: "lead.sendContract",
               href: `/auftraege/${props.lead.projectId}/vertrag`,
           }
-        : {
-              label: "lead.openProject",
-              href: `/auftraege/${props.lead.projectId}`,
-          };
+        : props.lead.booked
+          ? {
+                label: "lead.openProject",
+                href: `/auftraege/${props.lead.projectId}`,
+            }
+          : {
+                label: "lead.openQuote",
+                href: `/auftraege/${props.lead.projectId}/angebote`,
+            };
 });
 </script>
 
@@ -288,8 +355,88 @@ const due = computed(() => {
                         <Button :as="Link" variant="pill" :href="due.href">{{
                             $t(due.label)
                         }}</Button>
+                        <DropdownMenu v-if="!lead.outcomeLabel && !lead.booked">
+                            <DropdownMenuTrigger
+                                class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2"
+                                :aria-label="$t('project.more')"
+                            >
+                                <svg class="size-4 fill-current" viewBox="0 0 24 24">
+                                    <circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" />
+                                </svg>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" class="w-[208px]">
+                                <DropdownMenuItem
+                                    v-for="stage in stages"
+                                    :key="stage.value"
+                                    :disabled="stage.value === lead.stage"
+                                    @select="move(stage.value)"
+                                >
+                                    {{ stage.label }}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem class="border-t border-rule" @select="closing = true">
+                                    {{ $t("project.closeMenu") }}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
+
+                <StageTrack class="mt-4" :steps="track" />
+
+                <nav class="mt-[18px] flex gap-[18px] overflow-x-auto text-[13px] shadow-[inset_0_-1px_0_var(--rule)]">
+                    <Link
+                        v-for="item in tabs"
+                        :key="item.key"
+                        :href="item.href"
+                        class="pb-2 whitespace-nowrap no-underline"
+                        :class="item.key === tab
+                            ? 'font-semibold text-foreground shadow-[inset_0_-2px_0_var(--ink)]'
+                            : 'text-ink-2 hover:text-foreground'"
+                        :aria-current="item.key === tab ? 'page' : undefined"
+                    >
+                        {{ $t(item.label) }}<span v-if="item.count" class="ml-1 text-[11.5px]">{{ item.count }}</span>
+                    </Link>
+                </nav>
+
+                <AlertDialog v-model:open="closing">
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>{{ $t("board.closeTitle") }}</AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <Field v-slot="{ id }" :label="$t('board.outcome')">
+                            <Select v-model="closeForm.outcome">
+                                <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="lost">{{ $t("board.outcomeLost") }}</SelectItem>
+                                    <SelectItem value="declined">{{ $t("board.outcomeDeclined") }}</SelectItem>
+                                    <SelectItem value="closed">{{ $t("board.outcomeClosed") }}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </Field>
+                        <Field v-slot="{ id }" :label="$t('board.closeReason')" :error="closeForm.errors.reason">
+                            <Input :id="id" v-model="closeForm.reason" type="text" />
+                        </Field>
+                        <AlertDialogFooter>
+                            <AlertDialogAction :disabled="!closeForm.reason || closeForm.processing" @click.prevent="close">
+                                {{ $t("board.close") }}
+                            </AlertDialogAction>
+                            <AlertDialogCancel>{{ $t("common.cancel") }}</AlertDialogCancel>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+
+                <AlertDialog v-model:open="booking">
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>{{ $t("board.bookTitle") }}</AlertDialogTitle>
+                        </AlertDialogHeader>
+                        <p>{{ $t("board.bookConsequence") }}</p>
+                        <AlertDialogFooter>
+                            <AlertDialogAction @click="book">{{ $t("board.book") }}</AlertDialogAction>
+                            <AlertDialogCancel>{{ $t("common.cancel") }}</AlertDialogCancel>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
 
                 <div
                     v-if="lead.outcomeLabel"
@@ -305,7 +452,8 @@ const due = computed(() => {
                     </button>
                 </div>
 
-                <CaseSection :title="$t('lead.said')">
+                <template v-if="tab === 'overview'">
+                <CaseSection :title="$t('project.lead')">
                     <!-- The inquiry text beside the contact details: the phone number
                          is the reason the screen is open, so it does not stand small
                          under the quote. -->
@@ -417,15 +565,8 @@ const due = computed(() => {
                             <div
                                 class="mt-[15px] pt-[11px] text-[12.5px] leading-[1.35] text-ink-2 shadow-[inset_0_1px_0_var(--rule)] [&>b]:block [&>b]:text-[13px] [&>b]:leading-[1.35] [&>b]:font-semibold [&>b]:tracking-[-0.012em] [&>b]:text-foreground"
                             >
-                                <b>{{ lead.capturedVia ?? lead.sourceLabel }}</b>
-                                {{
-                                    new Date(lead.capturedAt).toLocaleString("de-DE", {
-                                        day: "2-digit",
-                                        month: "2-digit",
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                    })
-                                }}
+                                <b>{{ lead.capturedVia ?? $t("leads.capturedAt") }}</b>
+                                {{ day(lead.capturedAt) }}
                             </div>
                         </div>
                     </div>
@@ -544,6 +685,16 @@ const due = computed(() => {
                     <NoteThread
                         :entries="thread.filter((entry) => !entry.system)"
                         :action="`/auftraege/${lead.projectId}/notizen`"
+                    />
+                </CaseSection>
+                </template>
+
+                <CaseSection v-else :title="$t('project.history')">
+                    <MessageThread
+                        :project-id="lead.projectId"
+                        :thread="conversation"
+                        :can-manage="canManageMessages"
+                        :inquiry="inquiry"
                     />
                 </CaseSection>
             </main>

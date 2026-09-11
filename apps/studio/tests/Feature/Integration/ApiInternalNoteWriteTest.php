@@ -6,6 +6,7 @@ use App\Crm\Models\Project;
 use App\Enums\Capability;
 use App\Integration\Models\ApiToken;
 use App\Support\Surface;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -36,6 +37,62 @@ it('renders an api-authored note with an authorless label on the admin project s
     $note = InternalNote::factory()->for($project)->create(['author_id' => null]);
 
     expect(InternalNoteData::fromNote($note)->author)->toBe('API');
+});
+
+it('lists a project\'s notes in the order they happened', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageNotes)->create();
+    $project = Project::factory()->create();
+    $late = InternalNote::factory()->for($project)->create(['body' => 'Später']);
+    $early = InternalNote::factory()->for($project)->create(['body' => 'Früher', 'occurred_at' => now()->subWeek()]);
+    InternalNote::factory()->create();
+
+    $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->getJson("/api/projects/{$project->public_id}/notes")
+        ->assertOk();
+
+    expect($response->json('data.*.id'))->toBe([$early->public_id, $late->public_id])
+        ->and(integerIdPaths($response->json()))->toBe([]);
+});
+
+it('stores an occurred_at with an offset as the same instant', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageNotes)->create();
+    $project = Project::factory()->create();
+    $input = '2026-06-25T18:32:00+02:00';
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'note-offset')
+        ->postJson("/api/projects/{$project->public_id}/notes", ['body' => 'Anruf', 'occurred_at' => $input])
+        ->assertCreated();
+
+    expect(InternalNote::sole()->occurred_at->equalTo(Carbon::parse($input)))->toBeTrue();
+});
+
+it('rewrites a note and keeps its author', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageNotes)->create();
+    $note = InternalNote::factory()->create(['body' => 'M\\u00f6glicherweise']);
+    $author = $note->author_id;
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'note-edit')
+        ->patchJson("/api/notes/{$note->public_id}", ['body' => 'Möglicherweise'])
+        ->assertOk()
+        ->assertJson(['id' => $note->public_id, 'body' => 'Möglicherweise']);
+
+    expect($note->fresh())
+        ->body->toBe('Möglicherweise')
+        ->author_id->toBe($author);
+});
+
+it('deletes a note', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageNotes)->create();
+    $note = InternalNote::factory()->create();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'note-delete')
+        ->deleteJson("/api/notes/{$note->public_id}")
+        ->assertNoContent();
+
+    expect(InternalNote::count())->toBe(0);
 });
 
 it('refuses to add a note without the manage_notes scope', function () {

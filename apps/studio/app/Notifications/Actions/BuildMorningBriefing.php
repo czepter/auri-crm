@@ -110,7 +110,7 @@ class BuildMorningBriefing
             ->get()
             ->reject(fn (Task $task) => $task->isBlocked())
             ->filter(fn (Task $task) => $this->audience->forTask($task)->contains('id', $user->id))
-            ->map(fn (Task $task) => "{$task->project->name} — {$task->title} ({$task->due_on->format('d.m.')})")
+            ->map(fn (Task $task) => "{$task->project->name} — {$task->title} ({$task->due_on->format('d.m.Y')})")
             ->values()
             ->all();
     }

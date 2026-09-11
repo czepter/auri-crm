@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { Link, router, useForm } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
+import { Alert, AlertDescription, AlertTitle } from "@/ui/alert";
 import { Button } from "@/ui/button";
 import { Checkbox } from "@/ui/checkbox";
 import { Label } from "@/ui/label";
@@ -63,7 +64,33 @@ const props = defineProps<{
     source: string | null;
     sourceOther: string | null;
     sourceLabel: string | null;
+    inquiry: {
+        text: string | null;
+        typeLabel: string;
+        sourceLabel: string | null;
+        capturedVia: string | null;
+        capturedAt: string;
+    } | null;
+    stalled: {
+        shootId: string;
+        label: string;
+        date: string;
+        days: number;
+        status: string;
+        since: string | null;
+        next: { key: string; label: string };
+    } | null;
 }>();
+
+const galleriesHref = computed(() => props.header.tabs.find((tab) => tab.key === "galleries")?.href);
+
+function advanceStalled() {
+    router.post(
+        `/shootings/${props.stalled?.shootId}/status`,
+        { status: props.stalled?.next.key },
+        { preserveScroll: true },
+    );
+}
 
 function toggleReminders(value: boolean | 'indeterminate') {
     router.patch(
@@ -174,11 +201,10 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         </div>
                     </RailSection>
 
-                    <!-- Die Quelle gehört zur Anfrage, nicht zu den Kennzahlen der
-                         Arbeit — im Band stand sie als Beleg unter dem Stand, den sie
-                         nicht belegt. -->
-                    <RailSection v-if="sourceLabel || editing" :title="$t('leads.source')">
-                        <Select v-if="editing" v-model="edit.source">
+                    <!-- Gelesen wird die Quelle im Abschnitt Anfrage; hier steht nur
+                         das Feld, mit dem sie sich ändern lässt. -->
+                    <RailSection v-if="editing" :title="$t('leads.source')">
+                        <Select v-model="edit.source">
                             <SelectTrigger><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem
@@ -190,7 +216,6 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 </SelectItem>
                             </SelectContent>
                         </Select>
-                        <span v-else class="text-[12.5px] leading-[1.47]">{{ sourceLabel }}</span>
 
                         <Input
                             v-if="editing && edit.source === 'other'"
@@ -252,7 +277,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                     type="text"
                 />
                 <h1 v-else class="m-0 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]">
-                    {{ header.names }}
+                    {{ header.name }}
                 </h1>
             </template>
 
@@ -283,12 +308,49 @@ function complete(row: App.Crm.Data.TaskRowData) {
                 >
             </template>
 
-                    <!-- Master data across, six values on one line, each with its proof
-                         underneath — not a phase tile that a seventh phase would break. -->
+                    <Section v-if="inquiry" :title="$t('project.lead')">
+                        <div class="flex max-[1080px]:flex-col max-[1080px]:gap-3">
+                            <p class="m-0 max-w-[58ch] min-w-0 flex-1 text-[14px] leading-[1.5] tracking-[-0.008em] whitespace-pre-line">
+                                {{ inquiry.text ?? $t("lead.noText") }}
+                            </p>
+                            <div
+                                class="w-[238px] flex-none pl-[22px] text-[12.5px] leading-[1.35] text-ink-2 shadow-[inset_1px_0_0_var(--rule)] max-[1080px]:w-auto max-[1080px]:pl-0 max-[1080px]:shadow-none [&_b]:block [&_b]:text-[13px] [&_b]:font-semibold [&_b]:tracking-[-0.012em] [&_b]:text-foreground"
+                            >
+                                <div><b>{{ inquiry.typeLabel }}</b>{{ inquiry.sourceLabel }}</div>
+                                <div class="mt-[11px] pt-[11px] shadow-[inset_0_1px_0_var(--rule)]">
+                                    <b>{{ inquiry.capturedVia ?? $t("leads.capturedAt") }}</b>{{ day(inquiry.capturedAt) }}
+                                </div>
+                            </div>
+                        </div>
+                    </Section>
+
+                    <Alert
+                        v-if="stalled"
+                        class="mt-6 flex items-center gap-4 border-0 bg-[var(--due-bg)] px-4 py-3.5"
+                    >
+                        <div class="min-w-0">
+                            <AlertTitle class="text-[14px] font-semibold text-[var(--due)]">
+                                {{ stalled.label }} {{ $t("projectQueue.days", stalled.days) }}
+                            </AlertTitle>
+                            <AlertDescription class="text-[12.5px] text-ink-2">
+                                {{ day(stalled.date) }} ·
+                                {{ $t("project.stalledStatus", { stage: stalled.status, date: day(stalled.since) }) }}
+                            </AlertDescription>
+                        </div>
+                        <div v-if="header.canManageShoots" class="ml-auto flex flex-none items-center gap-2">
+                            <Button variant="pill" type="button" @click="advanceStalled">{{ stalled.next.label }}</Button>
+                            <Button v-if="galleriesHref" variant="outline" as-child>
+                                <Link :href="galleriesHref">{{ $t("galleries.create") }}</Link>
+                            </Button>
+                        </div>
+                    </Alert>
+
+                    <!-- Master data across, each value with its proof underneath.
+                         Where the project stands is the track in the head; the
+                         stage stays here only as the field that changes it. -->
                     <div class="mt-5 mb-5 flex">
-                        <BandCell :label="$t('project.position')">
+                        <BandCell v-if="editing && stage" :label="$t('project.position')">
                             <Select
-                                v-if="editing && stage"
                                 v-model="edit.stage"
                             >
                                 <SelectTrigger class="mt-[5px] max-w-[820px]"><SelectValue /></SelectTrigger>
@@ -302,7 +364,6 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
-                            <BandValue v-else plain>{{ figures.phase.value ?? "—" }}</BandValue>
                         </BandCell>
 
                         <BandCell
@@ -315,10 +376,15 @@ function complete(row: App.Crm.Data.TaskRowData) {
 
                         <BandCell :label="$t('board.colValue')" :sub="figures.value.proof">
                             <template v-if="editing" #derived> · {{ $t("project.fromScope") }}</template>
-                            <BandValue>{{ euro(figures.value.value) }}</BandValue>
+                            <BandValue v-if="figures.value.value !== null">{{ euro(figures.value.value) }}</BandValue>
+                            <Button v-else-if="header.canManageQuotes" class="mt-[5px]" variant="outline" as-child>
+                                <Link :href="`/auftraege/${header.id}/angebote`">{{ $t("project.quoteAdd") }}</Link>
+                            </Button>
+                            <BandValue v-else>—</BandValue>
                         </BandCell>
 
                         <BandCell
+                            v-if="figures.open.value !== null"
                             :label="$t('project.openAmount')"
                             :sub="
                                 figures.open.proof
