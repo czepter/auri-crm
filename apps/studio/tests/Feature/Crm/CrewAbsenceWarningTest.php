@@ -73,3 +73,15 @@ it('does not warn about an absence belonging to somebody not crewed on the shoot
 
     expect($shoots[0]['crewConflicts'])->toBe([]);
 });
+
+it('flags a studio with a single user so the shoot hides its crew', function () {
+    $owner = staffMember(StaffRole::Owner);
+    $project = Project::factory()->create();
+    $this->actingAs($owner, 'staff');
+
+    expect(props("/auftraege/{$project->public_id}/shootings")['soloStudio'])->toBeTrue();
+
+    User::factory()->create();
+
+    expect(props("/auftraege/{$project->public_id}/shootings")['soloStudio'])->toBeFalse();
+});
