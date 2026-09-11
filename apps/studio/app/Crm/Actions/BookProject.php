@@ -81,6 +81,7 @@ class BookProject
                 context: ['via' => $via->value, 'job' => $job->public_id],
                 subject: $project->public_id,
                 projectId: $project->id,
+                occurredAt: $at,
             );
 
             return $job;

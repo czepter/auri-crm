@@ -85,6 +85,7 @@ class AdvanceLeadStage
             ],
             subject: $lead->public_id,
             projectId: $lead->project_id,
+            occurredAt: $enteredAt,
         );
 
         // "Gebucht" is the booking, not a label for one. Without this the
@@ -127,6 +128,7 @@ class AdvanceLeadStage
             context: ['stage' => $lead->stage->key, 'reason' => $reason, 'outcome' => $outcome->value],
             subject: $lead->public_id,
             projectId: $lead->project_id,
+            occurredAt: $lostAt,
         );
 
         LeadLost::dispatch($lead, $reason);

@@ -65,6 +65,7 @@ class AdvanceShootStatus
             ],
             subject: $shoot->public_id,
             projectId: $shoot->project_id,
+            occurredAt: $enteredAt,
         );
 
         ShootStatusChanged::dispatch($shoot, $from, $next);
@@ -92,6 +93,7 @@ class AdvanceShootStatus
             context: ['status' => $shoot->status->key, 'reason' => $reason],
             subject: $shoot->public_id,
             projectId: $shoot->project_id,
+            occurredAt: $cancelledAt,
         );
 
         ShootCancelled::dispatch($shoot, $reason);

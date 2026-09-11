@@ -31,7 +31,7 @@ class ProjectActivity
             ->map(fn (AuditLog $log) => [
                 'event' => $log->event,
                 'label' => __("activity.{$log->event}"),
-                'at' => $log->created_at->toIso8601String(),
+                'at' => $log->context['occurred_at'] ?? $log->created_at->toIso8601String(),
                 'actorName' => $log->actor?->name,
             ])
             ->values()
