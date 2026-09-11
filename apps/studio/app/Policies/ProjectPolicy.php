@@ -42,6 +42,12 @@ class ProjectPolicy
             && ! ($project->lead?->isLost() ?? false);
     }
 
+    /** The capability that captures an inquiry may take it back, as on the API. */
+    public function delete(User $user, Project $project): bool
+    {
+        return $user->role->allows(Capability::ManageLeads) && $this->view($user, $project);
+    }
+
     public function manageShoots(User $user, Project $project): bool
     {
         return $user->role->allows(Capability::ManageShoots) && $this->view($user, $project);

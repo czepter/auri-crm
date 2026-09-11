@@ -44,6 +44,11 @@ class ProjectHeaderData extends Data
         public bool $canManageContracts,
         public bool $canManagePaymentPlan,
         public bool $canManageForms,
+        public ?string $leadId,
+        public ?string $outcomeLabel,
+        public ?string $lostReason,
+        public bool $canClose,
+        public bool $canDelete,
         public array $tabs,
     ) {}
 
@@ -72,6 +77,11 @@ class ProjectHeaderData extends Data
             canManageContracts: $user?->can('manageContracts', $project) ?? false,
             canManagePaymentPlan: $user?->can('managePaymentPlan', $project) ?? false,
             canManageForms: $user?->can('manageForms', $project) ?? false,
+            leadId: $project->lead?->public_id,
+            outcomeLabel: $project->lead?->outcome?->label(),
+            lostReason: $project->lead?->lost_reason,
+            canClose: $project->lead !== null && ($user?->can('update', $project->lead) ?? false),
+            canDelete: ($user?->can('delete', $project) ?? false) && $project->deletionBlockers()->isEmpty(),
             // Galerien (G-05, already in P3) appends a line here on the
             // sprint it lands. Zahlungen (M-03) does not: mockup
             // 04-auftrag's own comment keeps it and Aufgaben as "previews,
@@ -87,6 +97,7 @@ class ProjectHeaderData extends Data
             // PROJECT_TABS).
             tabs: [
                 ['key' => 'overview', 'label' => 'project.overview', 'href' => "/auftraege/{$project->public_id}", 'count' => null, 'countTo' => null, 'children' => []],
+                ...($project->lead ? [['key' => 'lead', 'label' => 'project.lead', 'href' => "/anfragen/{$project->lead->public_id}", 'count' => null, 'countTo' => null, 'children' => []]] : []),
                 ['key' => 'shoots', 'label' => 'project.shoots', 'href' => "/auftraege/{$project->public_id}/shootings", 'count' => null, 'countTo' => null, 'children' => []],
                 ['key' => 'tasks', 'label' => 'project.tasks', 'href' => "/auftraege/{$project->public_id}/aufgaben", 'count' => $project->tasks()->whereNull('completed_at')->count(), 'countTo' => $project->tasks()->count(), 'children' => []],
                 ['key' => 'galleries', 'label' => 'contacts.galleries', 'href' => "/auftraege/{$project->public_id}/galerien", 'count' => $project->galleries()->count(), 'countTo' => null, 'children' => []],

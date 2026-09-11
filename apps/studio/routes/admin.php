@@ -514,6 +514,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('projects.tasks');
         Route::get('/auftraege/{project}/galerien', [ProjectController::class, 'galleries'])
             ->name('projects.galleries');
+        Route::delete('/auftraege/{project}', [ProjectController::class, 'destroy'])
+            ->name('projects.destroy');
         Route::post('/auftraege/{project}/buchung', [ProjectController::class, 'book'])
             ->name('projects.book');
         Route::post('/auftraege/{project}/portal-sichtbarkeit', [ProjectController::class, 'togglePortalVisibility'])

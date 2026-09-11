@@ -25,6 +25,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Visus\Cuid2\Cuid2;
 
@@ -176,6 +178,23 @@ class Project extends Model
     public function quotes(): HasMany
     {
         return $this->hasMany(Quote::class)->latest();
+    }
+
+    /**
+     * Each of these is a record of something agreed with a client, and a
+     * payment plan hangs off the job. Past that line the project is no longer
+     * something to take back; it gets closed instead.
+     *
+     * @return Collection<int, string>
+     */
+    public function deletionBlockers(): Collection
+    {
+        return collect([
+            'job' => $this->job(),
+            'quote' => $this->quotes(),
+            'contract' => $this->contracts(),
+            'gallery' => $this->galleries(),
+        ])->filter(fn (Relation $relation) => $relation->exists())->keys();
     }
 
     /** Every questionnaire personalised for this project (E-02), newest first. */

@@ -46,11 +46,13 @@ use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Data\QuoteData;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
+use App\Support\LiveUpdate;
 use App\Support\RecordVisit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -432,6 +434,21 @@ class ProjectController extends Controller
         $book($project, auth('staff')->user());
 
         return back();
+    }
+
+    public function destroy(Project $project): RedirectResponse
+    {
+        $this->authorize('delete', $project);
+
+        if ($project->deletionBlockers()->isNotEmpty()) {
+            throw ValidationException::withMessages(['project' => 'Projekt trägt Auftrag, Angebot, Vertrag oder Galerie. Schließen statt löschen.']);
+        }
+
+        $project->delete();
+
+        LiveUpdate::publish();
+
+        return redirect('/projekte');
     }
 
     /**

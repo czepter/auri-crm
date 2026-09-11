@@ -72,7 +72,7 @@ class LeadStageController extends Controller
             throw ValidationException::withMessages(['outcome' => $e->getMessage()]);
         }
 
-        return redirect('/anfragen');
+        return back(fallback: '/anfragen');
     }
 
     /** Das Gegenstück zu close(): eine irrtümlich geschlossene Anfrage steht wieder in ihrer Stufe. */
