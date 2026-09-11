@@ -6,17 +6,20 @@ const props = defineProps<{
     entries: App.Crm.Data.ThreadEntryData[];
 }>();
 
+// Notes have their own thread on the page; the rail is what the system recorded.
+const events = computed(() => props.entries.filter((entry) => entry.system));
+
 // The trace runs oldest first (BuildThread); the rail reads it the other way
 // and keeps the first entry, because where the project came from stays the
 // one line that does not scroll out.
-const recent = computed(() => props.entries.slice(-4).reverse());
-const origin = computed(() => (props.entries.length > 4 ? props.entries[0] : null));
+const recent = computed(() => events.value.slice(-4).reverse());
+const origin = computed(() => (events.value.length > 4 ? events.value[0] : null));
 </script>
 
 <template>
     <!-- Der Verlauf steht am Fuß der Rail: er wird gelesen, wenn die
          Gruppen darüber eine Frage offen lassen. -->
-    <div v-if="entries.length" class="mt-7 border-t border-line-hover pt-3">
+    <div v-if="events.length" class="mt-7 border-t border-line-hover pt-3">
         <h3
             class="m-0 mb-[7px] text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2"
         >
