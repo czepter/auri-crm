@@ -211,6 +211,10 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'ide
     ->post('/leads/{lead:public_id}/stage', [LeadController::class, 'advanceStage'])
     ->name('api.leads.stage.update');
 
+Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
+    ->patch('/leads/{lead:public_id}', [LeadController::class, 'update'])
+    ->name('api.leads.update');
+
 // Closing a lead and taking that back are the same authority as moving it:
 // all three write Lead columns nobody but AdvanceLeadStage writes.
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])

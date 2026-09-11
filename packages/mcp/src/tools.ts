@@ -42,8 +42,13 @@ const shootSchema = z.object({
   kind: z.string(),
   label: z.string().nullable(),
   date: z.string().nullable(),
+  callTime: z.string().nullable(),
+  endTime: z.string().nullable(),
+  venueName: z.string().nullable(),
+  venueCity: z.string().nullable(),
   status: z.string(),
   cancelledAt: z.string().nullable(),
+  cancelledReason: z.string().nullable(),
   updatedAt: z.string(),
 })
 
@@ -61,8 +66,21 @@ const leadSchema = z.object({
 
 /** What GET /projects/{project} alone returns — see ProjectDetailReadData. */
 const projectDetailSchema = projectSchema.extend({
+  typeOther: z.string().nullable(),
   lead: z
-    .object({ stage: z.string(), source: z.string(), sourceOther: z.string().nullable(), capturedAt: z.string(), lostAt: z.string().nullable() })
+    .object({
+      stage: z.string(),
+      source: z.string(),
+      sourceOther: z.string().nullable(),
+      inquiryText: z.string().nullable(),
+      capturedVia: z.string(),
+      capturedViaOther: z.string().nullable(),
+      capturedAt: z.string(),
+      stageEnteredAt: z.string().nullable(),
+      outcome: z.string().nullable(),
+      lostReason: z.string().nullable(),
+      lostAt: z.string().nullable(),
+    })
     .nullable(),
   contacts: z.array(contactSchema.extend({ role: z.string() })),
   shoots: z.array(shootSchema),
@@ -161,7 +179,7 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
     {
       title: 'Get a project',
       description:
-        "Gets a single project by its public_id, with its lead, its contacts and their roles, and its shoots — enough to verify a capture or an import without a second call. Internal notes are not part of it; they need their own scope. The project index returns the lean shape instead.",
+        "Gets a single project by its public_id, with its lead (including its inquiry text), its contacts and their roles, and its shoots — enough to verify a capture or an import without a second call. Internal notes are not part of it; they need their own scope. The project index returns the lean shape instead.",
       inputSchema: {
         publicId: z.string().describe("The project's public_id, never its internal integer id."),
       },
