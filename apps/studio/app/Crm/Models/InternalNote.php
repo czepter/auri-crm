@@ -35,6 +35,14 @@ class InternalNote extends Model
         return ['occurred_at' => 'immutable_datetime'];
     }
 
+    /** The storage format carries no offset; without the shift 18:32+02:00 reads back as 18:32 UTC. */
+    public function fromDateTime($value)
+    {
+        return empty($value) ? $value : $this->asDateTime($value)
+            ->setTimezone(config('app.timezone'))
+            ->format($this->getDateFormat());
+    }
+
     /** What the note is about happened then; absent it, when it was written. */
     public function happenedAt(): CarbonInterface
     {

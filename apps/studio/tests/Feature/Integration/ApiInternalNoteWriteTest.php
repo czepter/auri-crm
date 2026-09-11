@@ -6,6 +6,7 @@ use App\Crm\Models\Project;
 use App\Enums\Capability;
 use App\Integration\Models\ApiToken;
 use App\Support\Surface;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -51,6 +52,19 @@ it('lists a project\'s notes in the order they happened', function () {
 
     expect($response->json('data.*.id'))->toBe([$early->public_id, $late->public_id])
         ->and(integerIdPaths($response->json()))->toBe([]);
+});
+
+it('stores an occurred_at with an offset as the same instant', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageNotes)->create();
+    $project = Project::factory()->create();
+    $input = '2026-06-25T18:32:00+02:00';
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'note-offset')
+        ->postJson("/api/projects/{$project->public_id}/notes", ['body' => 'Anruf', 'occurred_at' => $input])
+        ->assertCreated();
+
+    expect(InternalNote::sole()->occurred_at->equalTo(Carbon::parse($input)))->toBeTrue();
 });
 
 it('rewrites a note and keeps its author', function () {
