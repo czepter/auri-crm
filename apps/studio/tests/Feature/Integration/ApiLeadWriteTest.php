@@ -40,6 +40,30 @@ it('captures a lead, reusing CaptureInquiry exactly like the admin capture form'
     expect(integerIdPaths($response->json()))->toBe([]);
 });
 
+// A wedding inquiry is often written by the partner, and the answer goes to
+// both: the second person must arrive as a contact of their own.
+it('adds everyone on the inquiry as a contact of the project', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'lead-people')
+        ->postJson('/api/leads', [
+            'contact_name' => 'Viktoria Böser',
+            'contact_email' => 'viktoria@example.test',
+            'people' => [['name' => 'Manuel', 'email' => 'manuel@example.test']],
+            'project_name' => 'Hochzeit Viktoria Böser & Manuel',
+            'type' => 'wedding',
+            'source' => 'website',
+            'captured_via' => 'email',
+        ])
+        ->assertCreated();
+
+    expect(Project::first()->contacts->pluck('email', 'name')->all())->toBe([
+        'Viktoria Böser' => 'viktoria@example.test',
+        'Manuel' => 'manuel@example.test',
+    ]);
+});
+
 // #351: a platform lead names its platform — LeadSource stays countable and
 // the name lands in source_other.
 it('carries source_other onto the lead when the source is other', function () {
