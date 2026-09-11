@@ -58,6 +58,11 @@ class QuoteData extends Data
         public ?int $rangeMax = null,
         /** @var list<array{id: string, percent: int, label: string, minimum: int}> */
         public array $paymentStages = [],
+        public ?string $recipientContact = null,
+        public ?string $recipientName = null,
+        public ?string $recipientStreet = null,
+        public ?string $recipientPostcode = null,
+        public ?string $recipientCity = null,
     ) {}
 
     public static function fromModel(Quote $quote): self
@@ -102,6 +107,11 @@ class QuoteData extends Data
                 'label' => $stage->label,
                 'minimum' => $stage->minimum,
             ])->all(),
+            recipientContact: $quote->recipientContact?->public_id,
+            recipientName: $quote->recipientContact?->name,
+            recipientStreet: $quote->recipient_street,
+            recipientPostcode: $quote->recipient_postcode,
+            recipientCity: $quote->recipient_city,
         );
     }
 }

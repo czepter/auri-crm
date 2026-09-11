@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
 use App\Quotes\Actions\RenderQuotePdf;
+use App\Quotes\Actions\ResolveQuoteRecipient;
 use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Actions\SendQuote;
 use App\Quotes\Enums\PricingMode;
@@ -31,7 +32,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuoteController extends Controller
 {
-    public function store(Request $request, Project $project, SeedQuoteFromPackage $seed, StudioSettingsResolver $settings, AllocateDocumentNumber $allocate): RedirectResponse
+    public function store(Request $request, Project $project, SeedQuoteFromPackage $seed, StudioSettingsResolver $settings, AllocateDocumentNumber $allocate, ResolveQuoteRecipient $resolveRecipient): RedirectResponse
     {
         $this->authorize('manageQuotes', $project);
 
@@ -60,14 +61,19 @@ class QuoteController extends Controller
                 ->where('status', QuoteStatus::Accepted)->firstOrFail()
             : null;
 
-        $quote = DB::transaction(function () use ($project, $validUntil, $predecessor, $allocate) {
+        $quote = DB::transaction(function () use ($project, $validUntil, $predecessor, $allocate, $resolveRecipient) {
             $allocation = ($allocate)(documentType: DocumentType::Quote);
+            $recipient = ($resolveRecipient)($project);
 
             return $project->quotes()->create([
                 'valid_until' => $validUntil,
                 'is_addendum' => $predecessor !== null,
                 'predecessor_id' => $predecessor?->id,
                 'number' => $allocation['number'],
+                'recipient_contact_id' => $recipient?->id,
+                'recipient_street' => $recipient?->street,
+                'recipient_postcode' => $recipient?->postcode,
+                'recipient_city' => $recipient?->city,
             ]);
         });
 
@@ -100,6 +106,10 @@ class QuoteController extends Controller
         $validated = $request->validate([
             'valid_until' => ['nullable', 'date'],
             'pricing_mode' => ['required', Rule::enum(PricingMode::class)],
+            'recipient_contact' => ['nullable', 'string'],
+            'recipient_street' => ['nullable', 'string', 'max:255'],
+            'recipient_postcode' => ['nullable', 'string', 'max:32'],
+            'recipient_city' => ['nullable', 'string', 'max:255'],
             'intro' => ['nullable', 'string', 'max:5000'],
             'outro' => ['nullable', 'string', 'max:5000'],
             'discount_type' => ['nullable', 'in:percentage,amount', 'required_with:discount_value'],
@@ -141,9 +151,25 @@ class QuoteController extends Controller
             abort(403);
         }
 
+        $recipient = ! empty($validated['recipient_contact'])
+            ? $quote->project->contacts()->where('contacts.public_id', $validated['recipient_contact'])->first()
+            : null;
+
+        if ($recipient !== null && blank($recipient->street) && blank($recipient->postcode) && blank($recipient->city)) {
+            $recipient->update([
+                'street' => $validated['recipient_street'] ?? null,
+                'postcode' => $validated['recipient_postcode'] ?? null,
+                'city' => $validated['recipient_city'] ?? null,
+            ]);
+        }
+
         $quote->update([
             'valid_until' => $validated['valid_until'] ?? null,
             'pricing_mode' => $validated['pricing_mode'],
+            'recipient_contact_id' => $recipient?->id,
+            'recipient_street' => $validated['recipient_street'] ?? null,
+            'recipient_postcode' => $validated['recipient_postcode'] ?? null,
+            'recipient_city' => $validated['recipient_city'] ?? null,
             'intro' => $validated['intro'] ?? null,
             'outro' => $validated['outro'] ?? null,
             'discount_type' => $validated['discount_type'] ?? null,
