@@ -16,6 +16,7 @@ use App\Http\Controllers\HealthController;
 use App\Integration\Http\Controllers\ContactController;
 use App\Integration\Http\Controllers\CrmReadController;
 use App\Integration\Http\Controllers\InternalNoteController;
+use App\Integration\Http\Controllers\ProjectContactController;
 use App\Integration\Http\Controllers\LeadController;
 use App\Integration\Http\Controllers\OAuthTokenInfoController;
 use App\Integration\Http\Controllers\ProjectController;
@@ -249,6 +250,11 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'ide
 Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'idempotent'])
     ->post('/projects/{project:public_id}/notes', [InternalNoteController::class, 'store'])
     ->name('api.projects.notes.store');
+
+// ManageLeads, the scope leads.store already attaches contacts under.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
+    ->post('/projects/{project:public_id}/contacts', [ProjectContactController::class, 'store'])
+    ->name('api.projects.contacts.store');
 
 // C-25: what a project of a given type can carry, and the values it does.
 // Reading the definitions is ViewAllProjects, the same scope the project
