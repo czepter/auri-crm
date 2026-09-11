@@ -21,9 +21,11 @@ class LiveUpdate
     public static function publish(): void
     {
         $url = config('services.mercure.url');
+        $key = config('services.mercure.publisher_key');
 
-        // Unset in the test suite and on a stack without a hub.
-        if ($url === null) {
+        // Unset in the test suite and on a stack without a hub. The image bakes
+        // the url, so only the key tells whether this deploy has one.
+        if ($url === null || $key === null) {
             return;
         }
 
@@ -32,7 +34,7 @@ class LiveUpdate
         // happened, but it gets reported.
         DB::afterCommit(fn () => rescue(fn () => Http::connectTimeout(1)
             ->timeout(2)
-            ->withToken(self::token('publish', config('services.mercure.publisher_key')))
+            ->withToken(self::token('publish', $key))
             ->asForm()
             ->post($url, ['topic' => self::topic(), 'data' => '{}'])
             ->throw()));
