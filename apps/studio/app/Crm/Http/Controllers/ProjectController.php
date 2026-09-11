@@ -2,10 +2,6 @@
 
 namespace App\Crm\Http\Controllers;
 
-use App\Catalog\Data\CatalogItemData;
-use App\Catalog\Data\PackageData;
-use App\Catalog\Models\CatalogItem;
-use App\Catalog\Models\Package;
 use App\Crm\Actions\AdvanceLeadStage;
 use App\Crm\Actions\BookProject;
 use App\Crm\Actions\BuildThread;
@@ -43,8 +39,7 @@ use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Payments\Data\PaymentPlanData;
-use App\Quotes\Data\QuoteData;
+use App\Quotes\Actions\ReadQuoteWorkspace;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use App\Support\LiveUpdate;
@@ -376,17 +371,7 @@ class ProjectController extends Controller
 
         return Inertia::render('Projects/Quotes', [
             'header' => $this->header($project),
-            'quotes' => QuoteData::collect(
-                $project->quotes()->with(['items', 'predecessor', 'paymentStages'])->get()
-            ),
-            'paymentPlan' => $project->job?->paymentPlan
-                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments'))
-                : null,
-            // Beide Listen als Prop statt als Suchendpunkt: ein Studio führt
-            // zweistellige Mengen, gefiltert wird in der Suchzeile selbst.
-            'packages' => PackageData::collect(Package::active()->with('items')->orderBy('name')->get()),
-            'catalogItems' => CatalogItemData::collect(CatalogItem::query()->orderBy('title')->get()),
-            'canManageCatalog' => $request->user('staff')?->can('create', Package::class) ?? false,
+            ...app(ReadQuoteWorkspace::class)($project, $request->user('staff')),
         ]);
     }
 

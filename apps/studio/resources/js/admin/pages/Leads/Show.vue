@@ -6,6 +6,7 @@ import CaseSection from "@/admin/components/CaseSection.vue";
 import LeadQueue from "@/admin/components/LeadQueue.vue";
 import NoteThread from "@/admin/components/NoteThread.vue";
 import QuoteSummary from "@/admin/components/QuoteSummary.vue";
+import QuoteWorkspace from "@/admin/components/QuoteWorkspace.vue";
 import MessageThread from "@/admin/components/MessageThread.vue";
 import RailHistory from "@/admin/components/RailHistory.vue";
 import StageTrack from "@/admin/components/StageTrack.vue";
@@ -60,14 +61,26 @@ const props = defineProps<{
     week: { date: string; what: string; projectId: string }[];
     conflicts: App.Crm.Data.DateConflictData[];
     stages: { value: string; label: string }[];
-    tab: "overview" | "messages";
+    tab: "overview" | "quote" | "messages";
     track: { key: string; label: string; pipeline: string; state: string }[];
     conversation: App.Engagement.Data.ThreadData | null;
     canManageMessages: boolean;
+    workspace: {
+        quotes: App.Quotes.Data.QuoteData[];
+        packages: App.Catalog.Data.PackageData[];
+        catalogItems: App.Catalog.Data.CatalogItemData[];
+        canManageCatalog: boolean;
+        paymentPlan: App.Payments.Data.PaymentPlanData | null;
+        canManageQuotes: boolean;
+        canManagePaymentPlan: boolean;
+    } | null;
 }>();
+
+const quoteTab = computed(() => `/anfragen/${props.lead.id}/angebot`);
 
 const tabs = computed(() => [
     { key: "overview", label: "project.overview", href: `/anfragen/${props.lead.id}`, count: null },
+    { key: "quote", label: "project.quotes", href: quoteTab.value, count: null },
     {
         key: "messages",
         label: "project.messages",
@@ -234,11 +247,19 @@ function addTask() {
 
 // Exactly one filled button, and it moves with the action that is due.
 const due = computed(() => {
-    if (props.quote === null) {
+    if (props.lead.booked) {
         return {
-            label: "lead.writeQuote",
-            href: `/auftraege/${props.lead.projectId}/angebote`,
+            label: "lead.openProject",
+            href: `/auftraege/${props.lead.projectId}`,
         };
+    }
+
+    // On its own tab the button writes the quote; everywhere else it leads
+    // there.
+    if (props.quote === null) {
+        return props.tab === "quote"
+            ? { label: "lead.writeQuote", create: true }
+            : { label: "lead.writeQuote", href: quoteTab.value };
     }
 
     return props.lead.stage === "quote_accepted"
@@ -246,16 +267,15 @@ const due = computed(() => {
               label: "lead.sendContract",
               href: `/auftraege/${props.lead.projectId}/vertrag`,
           }
-        : props.lead.booked
-          ? {
-                label: "lead.openProject",
-                href: `/auftraege/${props.lead.projectId}`,
-            }
-          : {
-                label: "lead.openQuote",
-                href: `/auftraege/${props.lead.projectId}/angebote`,
-            };
+        : {
+              label: "lead.openQuote",
+              href: quoteTab.value,
+          };
 });
+
+function writeQuote() {
+    router.post(`/auftraege/${props.lead.projectId}/angebote`, {}, { preserveScroll: true });
+}
 </script>
 
 <template>
@@ -352,7 +372,10 @@ const due = computed(() => {
                             href="#"
                             @click.prevent="editing = true"
                         >{{ $t("lead.edit") }}</a>
-                        <Button :as="Link" variant="pill" :href="due.href">{{
+                        <Button v-if="due.create" variant="pill" type="button" @click="writeQuote">{{
+                            $t(due.label)
+                        }}</Button>
+                        <Button v-else :as="Link" variant="pill" :href="due.href">{{
                             $t(due.label)
                         }}</Button>
                         <DropdownMenu v-if="!lead.outcomeLabel && !lead.booked">
@@ -684,6 +707,13 @@ const due = computed(() => {
                     />
                 </CaseSection>
                 </template>
+
+                <QuoteWorkspace
+                    v-else-if="tab === 'quote' && workspace"
+                    v-bind="workspace"
+                    :project-id="lead.projectId"
+                    :only="['workspace']"
+                />
 
                 <CaseSection v-else :title="$t('project.history')">
                     <MessageThread

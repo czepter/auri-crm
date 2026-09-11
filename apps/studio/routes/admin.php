@@ -490,6 +490,9 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/anfragen/{lead}/nachrichten', [LeadCaseController::class, 'show'])
             ->defaults('tab', 'messages')
             ->name('leads.messages');
+        Route::get('/anfragen/{lead}/angebot', [LeadCaseController::class, 'show'])
+            ->defaults('tab', 'quote')
+            ->name('leads.quote');
         Route::post('/anfragen/{lead}/schliessen', [LeadStageController::class, 'close'])
             ->name('leads.close');
         Route::post('/anfragen/{lead}/wieder-oeffnen', [LeadStageController::class, 'reopen'])
