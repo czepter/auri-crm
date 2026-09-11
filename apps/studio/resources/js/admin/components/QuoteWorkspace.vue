@@ -41,6 +41,14 @@ type Draft = {
   // Q-14: derselbe Entwurf traegt beide Welten. hourlyRate leer heisst
   // Positionstabelle, und dann ruehrt nichts hier unten etwas an.
   slider: SliderDraft
+  // Kein Feld im Editor bedient diese fünf — sie reisen nur mit, damit ein
+  // Autosave sie nicht durch ihr Fehlen im Payload leerräumt.
+  recipientContact: string | null
+  recipientStreet: string | null
+  recipientPostcode: string | null
+  recipientCity: string | null
+  timeTitle: string | null
+  timeDescription: string | null
 }
 
 function draftOf(quote: App.Quotes.Data.QuoteData): Draft {
@@ -49,6 +57,12 @@ function draftOf(quote: App.Quotes.Data.QuoteData): Draft {
     discount: formatDiscount(quote.discountType, quote.discountValue),
     intro: quote.intro ?? '',
     outro: quote.outro ?? '',
+    recipientContact: quote.recipientContact,
+    recipientStreet: quote.recipientStreet,
+    recipientPostcode: quote.recipientPostcode,
+    recipientCity: quote.recipientCity,
+    timeTitle: quote.timeTitle,
+    timeDescription: quote.timeDescription,
     rows: quote.items.map((item) => ({
       title: item.title,
       description: item.description ?? '',
@@ -119,74 +133,79 @@ function saveAsPackage(quoteId: string) {
 }
 
 const save = debounced((quoteId: string) => {
-  const draft = drafts[quoteId]
-  const quoteDiscount = parseDiscount(draft.discount)
-  const rate = eurosToCents(draft.slider.hourlyRate)
-
-  if (rate !== null) {
-    router.patch(`/angebote/${quoteId}`, sliderPayload(draft), {
-      preserveScroll: true,
-      preserveState: true,
-      only: props.only,
-    })
-
-    return
-  }
-
-  router.patch(
-    `/angebote/${quoteId}`,
-    {
-      valid_until: draft.validUntil || null,
-      intro: draft.intro || null,
-      outro: draft.outro || null,
-      discount_type: quoteDiscount.type || null,
-      discount_value: quoteDiscount.value,
-      items: draft.rows.map((row) => {
-        const discount = parseDiscount(row.discount)
-
-        return {
-          title: row.title,
-          description: row.description || null,
-          quantity: row.quantity,
-          unit_price: eurosToCents(row.unitPrice),
-          discount_type: discount.type || null,
-          discount_value: discount.value,
-          // Ohne die Faehigkeit geht der Schluessel gar nicht erst mit, damit
-          // der Waechter im Controller nicht ohne Anlass greift.
-          ...(props.canManageCatalog ? { remember: row.remember } : {}),
-        }
-      }),
-    },
+  router.patch(`/angebote/${quoteId}`, payload(drafts[quoteId]), {
     // Die Zeile, in der getippt wird, überlebt die Antwort; zurück kommen nur
     // die serverseitig gerechneten Summen.
-    { preserveScroll: true, preserveState: true, only: props.only },
-  )
+    preserveScroll: true,
+    preserveState: true,
+    only: props.only,
+  })
 }, 600)
 
 /**
- * Q-14: dieselbe Route, andere Felder. Die id geht mit, weil der Controller
- * das Bild einer Zeile daran wiederfindet — der Pfad selbst kommt nie aus
- * dem Formular.
+ * Q-14: eine Route, ein Payload. Der Stundensatz entscheidet, aus welcher
+ * Zeilenliste die Positionen kommen; pricing_mode, Empfänger und Zeitzeile
+ * reisen in beiden Fällen mit, sonst räumt ein Autosave sie durch ihr
+ * Fehlen leer. Die id einer Regler-Zeile geht mit, weil der Controller das
+ * Bild daran wiederfindet — der Pfad selbst kommt nie aus dem Formular.
  */
-function sliderPayload(draft: Draft) {
+function payload(draft: Draft) {
+  const quoteDiscount = parseDiscount(draft.discount)
+  const rate = eurosToCents(draft.slider.hourlyRate)
+
+  const items =
+    rate !== null
+      ? draft.slider.rows.map((row) => ({
+          id: row.id,
+          title: row.title,
+          description: null,
+          quantity: 1,
+          unit_price: eurosToCents(row.unitPrice),
+          discount_type: null,
+          discount_value: null,
+          selectable: row.selectable,
+          selected: row.selected,
+          outcome: row.outcome || null,
+          // Ohne die Faehigkeit geht der Schluessel gar nicht erst mit, damit
+          // der Waechter im Controller nicht ohne Anlass greift.
+          ...(props.canManageCatalog ? { remember: false } : {}),
+        }))
+      : draft.rows.map((row) => {
+          const discount = parseDiscount(row.discount)
+
+          return {
+            title: row.title,
+            description: row.description || null,
+            quantity: row.quantity,
+            unit_price: eurosToCents(row.unitPrice),
+            discount_type: discount.type || null,
+            discount_value: discount.value,
+            selectable: false,
+            selected: false,
+            outcome: null,
+            ...(props.canManageCatalog ? { remember: row.remember } : {}),
+          }
+        })
+
   return {
+    pricing_mode: rate !== null ? 'choice' : 'classic',
     valid_until: draft.validUntil || null,
+    recipient_contact: draft.recipientContact,
+    recipient_street: draft.recipientStreet,
+    recipient_postcode: draft.recipientPostcode,
+    recipient_city: draft.recipientCity,
     intro: draft.intro || null,
     outro: draft.outro || null,
-    hourly_rate: eurosToCents(draft.slider.hourlyRate),
+    discount_type: quoteDiscount.type || null,
+    discount_value: quoteDiscount.value,
+    hourly_rate: rate,
     min_hours: draft.slider.minHours,
     max_hours: draft.slider.maxHours,
     images_per_hour: draft.slider.imagesPerHour,
     hours: draft.slider.hours,
-    items: draft.slider.rows.map((row) => ({
-      id: row.id,
-      title: row.title,
-      quantity: 1,
-      unit_price: eurosToCents(row.unitPrice),
-      outcome: row.outcome || null,
-      selectable: row.selectable,
-      selected: row.selected,
-    })),
+    time_title: draft.timeTitle,
+    time_description: draft.timeDescription,
+    items,
     stages: draft.slider.stages.map((stage) => ({
       percent: stage.percent,
       label: stage.label,

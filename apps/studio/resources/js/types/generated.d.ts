@@ -764,6 +764,7 @@ isAddendum: boolean,
 predecessorNumber: string | null,
 status: string,
 statusLabel: string,
+pricingMode: string,
 currency: string,
 validUntil: string | null,
 number: string | null,
@@ -785,6 +786,8 @@ minHours: number | null,
 maxHours: number | null,
 imagesPerHour: number | null,
 hours: number | null,
+timeTitle: string | null,
+timeDescription: string | null,
 rangeMin: number | null,
 rangeMax: number | null,
 paymentStages: {
@@ -793,6 +796,11 @@ percent: number,
 label: string,
 minimum: number,
 }[],
+recipientContact: string | null,
+recipientName: string | null,
+recipientStreet: string | null,
+recipientPostcode: string | null,
+recipientCity: string | null,
 };
 export type QuoteItemData = {
 id: string,
@@ -814,6 +822,7 @@ hasImage: boolean,
 }
 namespace Enums {
 export type DiscountType = 'percentage' | 'amount';
+export type PricingMode = 'classic' | 'choice';
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'superseded' | 'expired';
 }
 }
