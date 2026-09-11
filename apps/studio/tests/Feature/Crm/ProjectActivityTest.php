@@ -29,6 +29,22 @@ it('dates a backdated event when it happened, not when it was typed', function (
     expect(ProjectActivity::for($project)[0]['at'])->toBe(now()->subWeek()->toIso8601String());
 });
 
+it('names the status a shoot moved to', function () {
+    $project = Project::factory()->create();
+
+    AuditLogger::record('shoot.status_changed', null, ['from' => 'booked', 'to' => 'editing'], null, $project->id);
+
+    expect(ProjectActivity::for($project)[0]['label'])->toBe('Shooting-Status: Bearbeitung');
+});
+
+it('names the phase a lead moved to', function () {
+    $project = Project::factory()->create();
+
+    AuditLogger::record('lead.stage_changed', null, ['from' => 'new', 'to' => 'quote_sent'], null, $project->id);
+
+    expect(ProjectActivity::for($project)[0]['label'])->toBe('Phase: Angebot');
+});
+
 it('drops an event with no label rather than showing its key', function () {
     $project = Project::factory()->create();
 
