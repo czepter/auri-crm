@@ -7,6 +7,7 @@ use App\Crm\Enums\StageAnchor;
 use App\Crm\Events\LeadLost;
 use App\Crm\Events\LeadStageChanged;
 use App\Crm\Models\Lead;
+use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Models\User;
 use App\Crm\Support\StageHistory;
@@ -27,6 +28,7 @@ class AdvanceLeadStage
     public function __construct(
         private readonly BookProject $book,
         private readonly UnbookProject $unbook,
+        private readonly AdvanceShootStatus $shoots,
     ) {}
 
     /**
@@ -116,11 +118,18 @@ class AdvanceLeadStage
         // The stage is deliberately left alone. Which stage a lead died in is
         // the number the funnel is measured on, and overwriting it here would
         // make every lost lead look identical in hindsight.
+        $lostAt ??= now();
+
         $lead->forceFill([
-            'lost_at' => $lostAt ?? now(),
+            'lost_at' => $lostAt,
             'lost_reason' => $reason,
             'outcome' => $outcome,
         ])->save();
+
+        // A lost project shoots nothing, and a date left standing on it still
+        // reads as taken in the calendar and the range query.
+        $lead->project->shoots()->uncancelled()->get()
+            ->each(fn (Shoot $shoot) => $this->shoots->cancel($shoot, $reason, $actor, $lostAt));
 
         AuditLogger::record(
             event: 'lead.lost',
@@ -150,6 +159,15 @@ class AdvanceLeadStage
         }
 
         $reason = $lead->lost_reason;
+
+        // ponytail: the close's own absagen are told apart by moment and
+        // reason, so a shoot cancelled separately stays cancelled. Store the
+        // cause on the shoot if the two ever coincide.
+        $lead->project->shoots()
+            ->where('cancelled_at', $lead->lost_at)
+            ->where('cancelled_reason', $reason)
+            ->get()
+            ->each(fn (Shoot $shoot) => $this->shoots->uncancel($shoot, $actor));
 
         $lead->forceFill([
             'lost_at' => null,

@@ -179,7 +179,7 @@ function registerCloseLead(server: McpServer, clientFor: ApiClientFactory): void
     {
       title: 'Close lead',
       description:
-        "End the pursuit. `lost` is the client's decision, `declined` the studio's — the two are counted apart, so pick the one that happened. The stage is left alone: which stage a lead died in is what the funnel is measured on. Reversible with reopen_lead.",
+        "End the pursuit. `lost` is the client's decision, `declined` the studio's — the two are counted apart, so pick the one that happened. The stage is left alone: which stage a lead died in is what the funnel is measured on. Its open shoots are cancelled with it. Reversible with reopen_lead, which takes those absagen back too.",
       inputSchema: {
         lead: z.string().describe('The lead public id'),
         outcome: z.enum(leadOutcomeEnum),

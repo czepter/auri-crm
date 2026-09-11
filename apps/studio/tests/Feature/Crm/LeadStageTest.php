@@ -202,6 +202,23 @@ it('refuses to take the booking back once a payment plan hangs off it', function
         ->and($lead->fresh()->stage->key)->toBe(LeadStage::Booked->value);
 });
 
+it('cancels the open shoots of a lost project and leaves an earlier absage alone', function () {
+    $lead = Lead::factory()->create();
+    $open = Shoot::factory()->for($lead->project)->create();
+    $earlier = Shoot::factory()->for($lead->project)->create(['cancelled_at' => now()->subWeek(), 'cancelled_reason' => 'Regen']);
+
+    app(AdvanceLeadStage::class)->markLost($lead, 'Budget', lostAt: CarbonImmutable::parse('2026-05-02 10:00'));
+
+    expect($open->fresh()->cancelled_at->toDateString())->toBe('2026-05-02')
+        ->and($open->fresh()->cancelled_reason)->toBe('Budget')
+        ->and($earlier->fresh()->cancelled_reason)->toBe('Regen');
+
+    app(AdvanceLeadStage::class)->reopen($lead);
+
+    expect($open->fresh()->isCancelled())->toBeFalse()
+        ->and($earlier->fresh()->isCancelled())->toBeTrue();
+});
+
 it('reopens a lead that was closed by mistake', function () {
     $lead = Lead::factory()->create();
 
