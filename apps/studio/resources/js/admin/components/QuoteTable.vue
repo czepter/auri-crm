@@ -9,6 +9,7 @@ import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 
 export type QuoteRow = {
+  id?: string
   title: string
   description: string
   quantity: number

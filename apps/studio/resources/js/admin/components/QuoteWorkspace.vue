@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
-import QuoteTable, { type QuoteRow } from '@/admin/components/QuoteTable.vue'
-import QuoteSliderEditor, { type SliderDraft } from '@/admin/components/QuoteSliderEditor.vue'
+import QuoteTable from '@/admin/components/QuoteTable.vue'
+import QuoteSliderEditor from '@/admin/components/QuoteSliderEditor.vue'
 import ValidUntilField from '@/admin/components/ValidUntilField.vue'
 import Section from '@/ui/page/Section.vue'
 import { debounced } from '@/admin/lib/autosave'
-import { basisPointsToPercent, centsToEuros, eurosToCents, formatDiscount, formatEuros, parseDiscount } from '@/admin/lib/money'
+import { buildQuotePayload, type QuoteDraft } from '@/admin/components/quote/quotePayload'
+import { basisPointsToPercent, centsToEuros, eurosToCents, formatDiscount, formatEuros } from '@/admin/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
@@ -32,26 +33,7 @@ const props = withDefaults(
   { only: () => ['quotes'] },
 )
 
-type Draft = {
-  validUntil: string
-  discount: string
-  intro: string
-  outro: string
-  rows: QuoteRow[]
-  // Q-14: derselbe Entwurf traegt beide Welten. hourlyRate leer heisst
-  // Positionstabelle, und dann ruehrt nichts hier unten etwas an.
-  slider: SliderDraft
-  // Kein Feld im Editor bedient diese fünf — sie reisen nur mit, damit ein
-  // Autosave sie nicht durch ihr Fehlen im Payload leerräumt.
-  recipientContact: string | null
-  recipientStreet: string | null
-  recipientPostcode: string | null
-  recipientCity: string | null
-  timeTitle: string | null
-  timeDescription: string | null
-}
-
-function draftOf(quote: App.Quotes.Data.QuoteData): Draft {
+function draftOf(quote: App.Quotes.Data.QuoteData): QuoteDraft {
   return {
     validUntil: quote.validUntil ?? '',
     discount: formatDiscount(quote.discountType, quote.discountValue),
@@ -64,6 +46,7 @@ function draftOf(quote: App.Quotes.Data.QuoteData): Draft {
     timeTitle: quote.timeTitle,
     timeDescription: quote.timeDescription,
     rows: quote.items.map((item) => ({
+      id: item.id,
       title: item.title,
       description: item.description ?? '',
       quantity: item.quantity,
@@ -99,7 +82,7 @@ function draftOf(quote: App.Quotes.Data.QuoteData): Draft {
 
 // Keyed by quote id and filled on demand rather than built once at setup: a
 // partial reload that adds a quote used to leave the map behind.
-const drafts = reactive<Record<string, Draft>>({})
+const drafts = reactive<Record<string, QuoteDraft>>({})
 
 watch(
   () => props.quotes,
@@ -133,7 +116,9 @@ function saveAsPackage(quoteId: string) {
 }
 
 const save = debounced((quoteId: string) => {
-  router.patch(`/angebote/${quoteId}`, payload(drafts[quoteId]), {
+  const payload = buildQuotePayload(drafts[quoteId], { canManageCatalog: props.canManageCatalog })
+
+  router.patch(`/angebote/${quoteId}`, payload, {
     // Die Zeile, in der getippt wird, überlebt die Antwort; zurück kommen nur
     // die serverseitig gerechneten Summen.
     preserveScroll: true,
@@ -141,78 +126,6 @@ const save = debounced((quoteId: string) => {
     only: props.only,
   })
 }, 600)
-
-/**
- * Q-14: eine Route, ein Payload. Der Stundensatz entscheidet, aus welcher
- * Zeilenliste die Positionen kommen; pricing_mode, Empfänger und Zeitzeile
- * reisen in beiden Fällen mit, sonst räumt ein Autosave sie durch ihr
- * Fehlen leer. Die id einer Regler-Zeile geht mit, weil der Controller das
- * Bild daran wiederfindet — der Pfad selbst kommt nie aus dem Formular.
- */
-function payload(draft: Draft) {
-  const quoteDiscount = parseDiscount(draft.discount)
-  const rate = eurosToCents(draft.slider.hourlyRate)
-
-  const items =
-    rate !== null
-      ? draft.slider.rows.map((row) => ({
-          id: row.id,
-          title: row.title,
-          description: null,
-          quantity: 1,
-          unit_price: eurosToCents(row.unitPrice),
-          discount_type: null,
-          discount_value: null,
-          selectable: row.selectable,
-          selected: row.selected,
-          outcome: row.outcome || null,
-          // Ohne die Faehigkeit geht der Schluessel gar nicht erst mit, damit
-          // der Waechter im Controller nicht ohne Anlass greift.
-          ...(props.canManageCatalog ? { remember: false } : {}),
-        }))
-      : draft.rows.map((row) => {
-          const discount = parseDiscount(row.discount)
-
-          return {
-            title: row.title,
-            description: row.description || null,
-            quantity: row.quantity,
-            unit_price: eurosToCents(row.unitPrice),
-            discount_type: discount.type || null,
-            discount_value: discount.value,
-            selectable: false,
-            selected: false,
-            outcome: null,
-            ...(props.canManageCatalog ? { remember: row.remember } : {}),
-          }
-        })
-
-  return {
-    pricing_mode: rate !== null ? 'choice' : 'classic',
-    valid_until: draft.validUntil || null,
-    recipient_contact: draft.recipientContact,
-    recipient_street: draft.recipientStreet,
-    recipient_postcode: draft.recipientPostcode,
-    recipient_city: draft.recipientCity,
-    intro: draft.intro || null,
-    outro: draft.outro || null,
-    discount_type: quoteDiscount.type || null,
-    discount_value: quoteDiscount.value,
-    hourly_rate: rate,
-    min_hours: draft.slider.minHours,
-    max_hours: draft.slider.maxHours,
-    images_per_hour: draft.slider.imagesPerHour,
-    hours: draft.slider.hours,
-    time_title: draft.timeTitle,
-    time_description: draft.timeDescription,
-    items,
-    stages: draft.slider.stages.map((stage) => ({
-      percent: stage.percent,
-      label: stage.label,
-      minimum: eurosToCents(stage.minimum) ?? 0,
-    })),
-  }
-}
 
 function create() {
   router.post(`/auftraege/${props.projectId}/angebote`, {}, { preserveScroll: true })
