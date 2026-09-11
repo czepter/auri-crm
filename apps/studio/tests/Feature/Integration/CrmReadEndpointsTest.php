@@ -244,6 +244,7 @@ it('carries the lead, the contacts with their roles, and the shoots', function (
     expect($body['lead'])->toBe([
         'stage' => 'booked',
         'source' => 'referral',
+        'sourceOther' => null,
         'capturedAt' => $lead->captured_at->toIso8601String(),
         'lostAt' => null,
     ]);

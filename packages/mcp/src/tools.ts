@@ -62,7 +62,7 @@ const leadSchema = z.object({
 /** What GET /projects/{project} alone returns — see ProjectDetailReadData. */
 const projectDetailSchema = projectSchema.extend({
   lead: z
-    .object({ stage: z.string(), source: z.string(), capturedAt: z.string(), lostAt: z.string().nullable() })
+    .object({ stage: z.string(), source: z.string(), sourceOther: z.string().nullable(), capturedAt: z.string(), lostAt: z.string().nullable() })
     .nullable(),
   contacts: z.array(contactSchema.extend({ role: z.string() })),
   shoots: z.array(shootSchema),
