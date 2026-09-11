@@ -17,6 +17,7 @@ use App\Crm\Support\CrmVocabulary;
 use App\Models\User;
 use App\Portal\Support\PortalSettings;
 use App\Support\AuditLogger;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -126,6 +127,7 @@ class CaptureInquiry
                 context: ['source' => $data->source->value, 'via' => $data->captured_via->value],
                 subject: $lead->public_id,
                 projectId: $lead->project_id,
+                occurredAt: $data->captured_at === null ? null : CarbonImmutable::parse($data->captured_at),
             );
 
             LeadCaptured::dispatch($lead);

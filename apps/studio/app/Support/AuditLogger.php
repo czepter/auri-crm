@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\AuditLog;
 use App\Models\User;
+use Carbon\CarbonInterface;
 use Carbon\CarbonInterval;
 use Illuminate\Support\Facades\Request;
 
@@ -24,13 +25,19 @@ class AuditLogger
         // AuditLog belongs to no module, so importing a Crm model here would
         // hang the shared layer off a domain one.
         ?int $projectId = null,
+        // A backdated move keeps created_at as the write time — the trail
+        // stays honest about when it was typed — and carries when it happened.
+        ?CarbonInterface $occurredAt = null,
     ): AuditLog {
         return AuditLog::create([
             'event' => $event,
             'actor_id' => $actor?->id,
             'project_id' => $projectId,
             'subject' => $subject,
-            'context' => self::sanitize($context),
+            'context' => self::sanitize([
+                ...$context,
+                ...$occurredAt ? ['occurred_at' => $occurredAt->toIso8601String()] : [],
+            ]),
             'ip_address' => Request::ip(),
             'user_agent' => substr((string) Request::userAgent(), 0, 500),
         ]);
