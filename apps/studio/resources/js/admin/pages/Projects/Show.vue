@@ -252,7 +252,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                     type="text"
                 />
                 <h1 v-else class="m-0 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]">
-                    {{ header.names }}
+                    {{ header.name }}
                 </h1>
             </template>
 

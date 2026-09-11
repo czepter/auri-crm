@@ -68,7 +68,7 @@ function destroy() {
       <div class="sticky top-0 z-[5] mt-0.5 flex items-center gap-3 bg-paper">
         <slot name="title">
           <h1 class="m-0 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]">
-            {{ header.names }}
+            {{ header.name }}
           </h1>
         </slot>
 
