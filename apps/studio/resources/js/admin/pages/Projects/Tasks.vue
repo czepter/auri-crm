@@ -100,7 +100,7 @@ function reopen(row: App.Crm.Data.TaskRowData) {
             </SelectContent>
           </Select>
 
-          <Select v-model="assignee">
+          <Select v-if="!$page.props.soloStudio" v-model="assignee">
             <SelectTrigger class="w-44"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{{ $t('project.tasksAllAssignees') }}</SelectItem>
@@ -142,8 +142,8 @@ function reopen(row: App.Crm.Data.TaskRowData) {
             }}</span>
             <!-- Zugewiesen steht als Name; ohne Zuweisung steht die Auswahl,
                  die sie setzt — eine leere Spalte übernimmt niemand. -->
-            <span v-if="row.assigneeName" class="text-[11.5px] text-ink-2">{{ row.assigneeName }}</span>
-            <Select v-else :model-value="'none'" @update:model-value="(value) => assign(row, String(value))">
+            <span v-if="!$page.props.soloStudio && row.assigneeName" class="text-[11.5px] text-ink-2">{{ row.assigneeName }}</span>
+            <Select v-else-if="!$page.props.soloStudio" :model-value="'none'" @update:model-value="(value) => assign(row, String(value))">
               <SelectTrigger class="h-6 w-36 text-[11.5px]"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">{{ $t('project.taskUnassigned') }}</SelectItem>

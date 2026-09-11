@@ -33,6 +33,11 @@ class User extends Authenticatable
     use HasPublicId;
     use Notifiable;
 
+    public static function soloStudio(): bool
+    {
+        return static::query()->count() === 1;
+    }
+
     /**
      * The MFA columns are fillable so factory states and seeders can set them.
      * They are never mass-assigned from request input: every controller that

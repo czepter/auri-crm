@@ -169,7 +169,7 @@ function shortDate(date: string | null) {
               <TableHead>{{ $t('calendar.colDate') }}</TableHead>
               <TableHead>{{ $t('calendar.colWhat') }}</TableHead>
               <TableHead>{{ $t('calendar.colVenue') }}</TableHead>
-              <TableHead>{{ $t('calendar.colCrew') }}</TableHead>
+              <TableHead v-if="!$page.props.soloStudio">{{ $t('calendar.colCrew') }}</TableHead>
               <TableHead>{{ $t('calendar.colStatus') }}</TableHead>
             </tr>
           </thead>
@@ -196,7 +196,7 @@ function shortDate(date: string | null) {
                   <Link :href="`/auftraege/${projects[shoot.id].id}`">{{ projects[shoot.id].name }}</Link>
                 </TableCell>
                 <TableCell tone="muted">{{ shoot.venue ?? '—' }}</TableCell>
-                <TableCell tone="muted">{{ shoot.crew.map((member) => member.name).join(', ') || '—' }}</TableCell>
+                <TableCell v-if="!$page.props.soloStudio" tone="muted">{{ shoot.crew.map((member) => member.name).join(', ') || '—' }}</TableCell>
                 <TableCell :class="mine.includes(shoot.id) && 'text-action'">{{ shoot.statusLabel }}</TableCell>
               </TableRow>
             </template>

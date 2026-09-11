@@ -10,6 +10,7 @@ declare module '@inertiajs/core' {
       live: string | null
       flash: { status: string | null; secret: string | null }
       portalPreview: boolean
+      soloStudio: boolean
       brand: string
     }
   }

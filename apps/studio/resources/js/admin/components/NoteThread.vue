@@ -98,7 +98,7 @@ function destroy() {
                     class="px-4 py-0.5 text-center text-[11.5px] leading-[1.45] text-ink-2"
                 >
                     {{ entry.body
-                    }}<span v-if="entry.author"> — {{ entry.author }}</span>
+                    }}<span v-if="entry.author && !($page.props.soloStudio && entry.author === me)"> — {{ entry.author }}</span>
                 </p>
 
                 <div v-else-if="editing !== null && editing === entry.note">

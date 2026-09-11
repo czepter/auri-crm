@@ -407,7 +407,7 @@ function complete(task: App.Crm.Data.TaskRowData) {
                                 class="text-[13px] font-medium tracking-[-0.01em]"
                                 :class="entry.away && 'font-normal text-ink-2'"
                             >
-                                {{ entry.away ? $t("dashboard.away", { name: entry.what }) : entry.what }}
+                                {{ entry.away ? ($page.props.soloStudio ? $t("calendar.away") : $t("dashboard.away", { name: entry.what })) : entry.what }}
                             </component>
                         </div>
                     </Panel>
