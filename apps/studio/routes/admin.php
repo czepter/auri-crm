@@ -491,7 +491,7 @@ Route::middleware('audience:staff')->group(function () {
             ->defaults('tab', 'messages')
             ->name('leads.messages');
         Route::get('/anfragen/{lead}/angebot', [LeadCaseController::class, 'show'])
-            ->defaults('tab', 'quote')
+            ->defaults('tab', 'quotes')
             ->name('leads.quote');
         Route::post('/anfragen/{lead}/schliessen', [LeadStageController::class, 'close'])
             ->name('leads.close');

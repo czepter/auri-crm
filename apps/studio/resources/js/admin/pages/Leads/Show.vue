@@ -8,8 +8,8 @@ import NoteThread from "@/admin/components/NoteThread.vue";
 import QuoteSummary from "@/admin/components/QuoteSummary.vue";
 import QuoteWorkspace from "@/admin/components/QuoteWorkspace.vue";
 import MessageThread from "@/admin/components/MessageThread.vue";
+import ProjectShell from "@/admin/components/ProjectShell.vue";
 import RailHistory from "@/admin/components/RailHistory.vue";
-import StageTrack from "@/admin/components/StageTrack.vue";
 import ShootFields from "@/admin/components/ShootFields.vue";
 import ShootRow from "@/admin/components/ShootRow.vue";
 import { Button } from "@/ui/button";
@@ -17,12 +17,11 @@ import { ChoiceGroup } from "@/ui/choice-group";
 import { DatePicker } from "@/ui/date-picker";
 import { Field } from "@/ui/field";
 import { Input } from "@/ui/input";
-import Page from "@/ui/page/Page.vue";
 import Rail from "@/ui/page/Rail.vue";
 import RailSection from "@/ui/page/RailSection.vue";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import { Textarea } from "@/ui/textarea";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/ui/dropdown-menu";
+import { DropdownMenuItem } from "@/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui/alert-dialog";
 import { formatEurosRounded } from "@/admin/lib/money";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
@@ -61,33 +60,22 @@ const props = defineProps<{
     week: { date: string; what: string; projectId: string }[];
     conflicts: App.Crm.Data.DateConflictData[];
     stages: { value: string; label: string }[];
-    tab: "overview" | "quote" | "messages";
-    track: { key: string; label: string; pipeline: string; state: string }[];
+    tab: "overview" | "quotes" | "messages";
+    header: App.Crm.Data.ProjectHeaderData;
     conversation: App.Engagement.Data.ThreadData | null;
-    canManageMessages: boolean;
     workspace: {
         quotes: App.Quotes.Data.QuoteData[];
         packages: App.Catalog.Data.PackageData[];
         catalogItems: App.Catalog.Data.CatalogItemData[];
         canManageCatalog: boolean;
         paymentPlan: App.Payments.Data.PaymentPlanData | null;
-        canManageQuotes: boolean;
-        canManagePaymentPlan: boolean;
     } | null;
 }>();
 
 const quoteTab = computed(() => `/anfragen/${props.lead.id}/angebot`);
 
-const tabs = computed(() => [
-    { key: "overview", label: "project.overview", href: `/anfragen/${props.lead.id}`, count: null },
-    { key: "quote", label: "project.quotes", href: quoteTab.value, count: null },
-    {
-        key: "messages",
-        label: "project.messages",
-        href: `/anfragen/${props.lead.id}/nachrichten`,
-        count: props.conversation?.messages.length || null,
-    },
-]);
+// Once booked, the case is the project's Anfrage tab.
+const active = computed(() => (props.lead.booked && props.tab === "overview" ? "lead" : props.tab));
 
 // The inquiry is the conversation's first line, written before there was a
 // thread to hold it.
@@ -180,10 +168,6 @@ const edit = useForm({
           })),
 });
 
-function reopen() {
-    router.post(`/anfragen/${props.lead.id}/wieder-oeffnen`, {}, { preserveScroll: true });
-}
-
 // Same rule as the board: "booked" writes the job, so it asks first.
 const booking = ref(false);
 
@@ -200,19 +184,6 @@ function move(stage: string) {
 function book() {
     router.post(`/anfragen/${props.lead.id}/stufe`, { stage: "booked" }, { preserveScroll: true });
     booking.value = false;
-}
-
-const closing = ref(false);
-const closeForm = useForm({ outcome: "lost", reason: "" });
-
-function close() {
-    closeForm.post(`/anfragen/${props.lead.id}/schliessen`, {
-        preserveScroll: true,
-        onSuccess: () => {
-            closing.value = false;
-            closeForm.reset();
-        },
-    });
 }
 
 function save() {
@@ -257,7 +228,7 @@ const due = computed(() => {
     // On its own tab the button writes the quote; everywhere else it leads
     // there.
     if (props.quote === null) {
-        return props.tab === "quote"
+        return props.tab === "quotes"
             ? { label: "lead.writeQuote", create: true }
             : { label: "lead.writeQuote", href: quoteTab.value };
     }
@@ -280,7 +251,7 @@ function writeQuote() {
 
 <template>
     <AdminLayout active="anfragen">
-        <Page>
+        <ProjectShell :header="header" :active="active">
             <!-- Grouped by working state, not by the six funnel stages: six stages
                  are the view of the funnel, three groups the view of the day. -->
             <template #left>
@@ -289,8 +260,8 @@ function writeQuote() {
 
             <!-- The trace: what lies around the requested day. A date is answered
                  by what is already on it. -->
-            <template #right>
-                <Rail data-tokens>
+            <template #rail>
+                <Rail>
                     <RailSection :title="$t('lead.week')">
                         <template v-if="week.length">
                             <Link
@@ -329,147 +300,55 @@ function writeQuote() {
                 </Rail>
             </template>
 
-            <main data-tokens class="min-w-0 flex-1 overflow-y-auto px-[26px] pt-4 pb-5">
-                <!-- Opened from the palette, the phase is the one word that is
-                     missing, so the breadcrumb carries it. -->
-                <div
-                    class="text-[11.5px] leading-[1.47] text-ink-2 [&_kbd]:ml-[3px] [&_kbd]:rounded-[5px] [&_kbd]:bg-sunk-2 [&_kbd]:px-1.5 [&_kbd]:py-0.5 [&_kbd]:text-[11px] [&_kbd]:leading-none [&_kbd]:font-medium"
-                >
-                    <Link href="/anfragen">{{ $t("board.title") }}</Link> ·
-                    {{ lead.stageLabel }} <kbd>↑</kbd><kbd>↓</kbd>
-                </div>
-
-                <!-- The head carries identity. No phase line: it stood in full twenty
-                     pixels further down anyway. -->
-                <div class="sticky top-0 z-[5] mt-[5px] flex items-start gap-3.5 bg-paper">
-                    <div>
-                        <h1
-                            class="m-0 mt-0.5 text-[25px] leading-[1.08] font-semibold tracking-[-0.032em]"
-                        >
-                            {{ lead.name }}
-                        </h1>
-                    </div>
-
-                    <div v-if="editing" class="ml-auto flex items-center gap-2">
-                        <a
-                            class="text-[12.5px] leading-[1.47] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
-                            href="#"
-                            @click.prevent="editing = false"
-                        >{{ $t("common.cancel") }}</a>
-                        <Button
-                            variant="pill"
-                            type="button"
-                            :disabled="edit.processing"
-                            @click="save"
-                        >
-                            {{ $t("common.save") }}
-                        </Button>
-                    </div>
-
-                    <div v-else class="ml-auto flex items-center gap-2">
-                        <a
-                            class="text-[12.5px] leading-[1.47] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
-                            href="#"
-                            @click.prevent="editing = true"
-                        >{{ $t("lead.edit") }}</a>
-                        <Button v-if="due.create" variant="pill" type="button" @click="writeQuote">{{
-                            $t(due.label)
-                        }}</Button>
-                        <Button v-else :as="Link" variant="pill" :href="due.href">{{
-                            $t(due.label)
-                        }}</Button>
-                        <DropdownMenu v-if="!lead.outcomeLabel && !lead.booked">
-                            <DropdownMenuTrigger
-                                class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2"
-                                :aria-label="$t('project.more')"
-                            >
-                                <svg class="size-4 fill-current" viewBox="0 0 24 24">
-                                    <circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" />
-                                </svg>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" class="w-[208px]">
-                                <DropdownMenuItem
-                                    v-for="stage in stages"
-                                    :key="stage.value"
-                                    :disabled="stage.value === lead.stage"
-                                    @select="move(stage.value)"
-                                >
-                                    {{ stage.label }}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem class="border-t border-rule" @select="closing = true">
-                                    {{ $t("project.closeMenu") }}
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                </div>
-
-                <StageTrack class="mt-4" :steps="track" />
-
-                <nav class="mt-[18px] flex gap-[18px] overflow-x-auto text-[13px] shadow-[inset_0_-1px_0_var(--rule)]">
-                    <Link
-                        v-for="item in tabs"
-                        :key="item.key"
-                        :href="item.href"
-                        class="pb-2 whitespace-nowrap no-underline"
-                        :class="item.key === tab
-                            ? 'font-semibold text-foreground shadow-[inset_0_-2px_0_var(--ink)]'
-                            : 'text-ink-2 hover:text-foreground'"
-                        :aria-current="item.key === tab ? 'page' : undefined"
-                    >
-                        {{ $t(item.label) }}<span v-if="item.count" class="ml-1 text-[11.5px]">{{ item.count }}</span>
-                    </Link>
-                </nav>
-
-                <AlertDialog v-model:open="closing">
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>{{ $t("board.closeTitle") }}</AlertDialogTitle>
-                        </AlertDialogHeader>
-                        <Field v-slot="{ id }" :label="$t('board.outcome')">
-                            <Select v-model="closeForm.outcome">
-                                <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="lost">{{ $t("board.outcomeLost") }}</SelectItem>
-                                    <SelectItem value="declined">{{ $t("board.outcomeDeclined") }}</SelectItem>
-                                    <SelectItem value="closed">{{ $t("board.outcomeClosed") }}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </Field>
-                        <Field v-slot="{ id }" :label="$t('board.closeReason')" :error="closeForm.errors.reason">
-                            <Input :id="id" v-model="closeForm.reason" type="text" />
-                        </Field>
-                        <AlertDialogFooter>
-                            <AlertDialogAction :disabled="!closeForm.reason || closeForm.processing" @click.prevent="close">
-                                {{ $t("board.close") }}
-                            </AlertDialogAction>
-                            <AlertDialogCancel>{{ $t("common.cancel") }}</AlertDialogCancel>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-
-                <AlertDialog v-model:open="booking">
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>{{ $t("board.bookTitle") }}</AlertDialogTitle>
-                        </AlertDialogHeader>
-                        <p>{{ $t("board.bookConsequence") }}</p>
-                        <AlertDialogFooter>
-                            <AlertDialogAction @click="book">{{ $t("board.book") }}</AlertDialogAction>
-                            <AlertDialogCancel>{{ $t("common.cancel") }}</AlertDialogCancel>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-
-                <div
-                    v-if="lead.outcomeLabel"
-                    class="mt-2.5 flex items-center gap-3 rounded-[7px] bg-late-bg py-[7px] pr-[9px] pl-[11px] text-[12.5px] leading-[1.3] font-medium text-destructive"
-                >
-                    {{ lead.outcomeLabel }} — {{ lead.lostReason }}
-                    <Button class="ml-auto" variant="outline" type="button" @click="reopen">
-                        {{ $t('lead.reopen') }}
+            <template #actions>
+                <template v-if="editing">
+                    <a
+                        class="text-[12.5px] leading-[1.47] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+                        href="#"
+                        @click.prevent="editing = false"
+                    >{{ $t("common.cancel") }}</a>
+                    <Button variant="pill" type="button" :disabled="edit.processing" @click="save">
+                        {{ $t("common.save") }}
                     </Button>
-                </div>
+                </template>
+                <template v-else>
+                    <a
+                        class="text-[12.5px] leading-[1.47] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+                        href="#"
+                        @click.prevent="editing = true"
+                    >{{ $t("lead.edit") }}</a>
+                    <Button v-if="due.create" variant="pill" type="button" @click="writeQuote">{{
+                        $t(due.label)
+                    }}</Button>
+                    <Button v-else :as="Link" variant="pill" :href="due.href">{{
+                        $t(due.label)
+                    }}</Button>
+                </template>
+            </template>
+
+            <template v-if="!lead.outcomeLabel && !lead.booked" #menu>
+                <DropdownMenuItem
+                    v-for="stage in stages"
+                    :key="stage.value"
+                    :disabled="stage.value === lead.stage"
+                    @select="move(stage.value)"
+                >
+                    {{ stage.label }}
+                </DropdownMenuItem>
+            </template>
+
+            <AlertDialog v-model:open="booking">
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{{ $t("board.bookTitle") }}</AlertDialogTitle>
+                    </AlertDialogHeader>
+                    <p>{{ $t("board.bookConsequence") }}</p>
+                    <AlertDialogFooter>
+                        <AlertDialogAction @click="book">{{ $t("board.book") }}</AlertDialogAction>
+                        <AlertDialogCancel>{{ $t("common.cancel") }}</AlertDialogCancel>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
                 <template v-if="tab === 'overview'">
                 <CaseSection :title="$t('project.lead')">
@@ -709,9 +588,11 @@ function writeQuote() {
                 </template>
 
                 <QuoteWorkspace
-                    v-else-if="tab === 'quote' && workspace"
+                    v-else-if="tab === 'quotes' && workspace"
                     v-bind="workspace"
                     :project-id="lead.projectId"
+                    :can-manage-quotes="header.canManageQuotes"
+                    :can-manage-payment-plan="header.canManagePaymentPlan"
                     :only="['workspace']"
                 />
 
@@ -719,11 +600,10 @@ function writeQuote() {
                     <MessageThread
                         :project-id="lead.projectId"
                         :thread="conversation"
-                        :can-manage="canManageMessages"
+                        :can-manage="header.canManageMessages"
                         :inquiry="inquiry"
                     />
                 </CaseSection>
-            </main>
-        </Page>
+        </ProjectShell>
     </AdminLayout>
 </template>

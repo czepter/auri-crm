@@ -68,7 +68,9 @@ function destroy() {
 <template>
   <Page data-tokens>
     <template #left>
-      <ProjectQueue :groups="header.queue" />
+      <slot name="left">
+        <ProjectQueue :groups="header.queue" />
+      </slot>
     </template>
 
     <template #right>
@@ -127,7 +129,8 @@ function destroy() {
           <div class="ml-auto flex items-center gap-2">
             <slot name="actions" />
 
-            <AlertDialog v-if="!header.isBooked && header.canBook">
+            <!-- A page with a stage menu books through it. -->
+            <AlertDialog v-if="!header.isBooked && header.canBook && !$slots.menu">
               <AlertDialogTrigger as-child>
                 <Button variant="pill" type="button">{{ $t('project.book') }}</Button>
               </AlertDialogTrigger>
@@ -142,7 +145,7 @@ function destroy() {
               </AlertDialogContent>
             </AlertDialog>
 
-            <DropdownMenu v-if="(header.canClose && !header.outcomeLabel) || header.canDelete">
+            <DropdownMenu v-if="$slots.menu || (header.canClose && !header.outcomeLabel) || header.canDelete">
               <DropdownMenuTrigger
                 class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2"
                 :aria-label="$t('project.more')"
@@ -151,8 +154,13 @@ function destroy() {
                   <circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" />
                 </svg>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" class="w-[200px]">
-                <DropdownMenuItem v-if="header.canClose && !header.outcomeLabel" @select="closing = true">
+              <DropdownMenuContent align="end" class="w-[208px]">
+                <slot name="menu" />
+                <DropdownMenuItem
+                  v-if="header.canClose && !header.outcomeLabel"
+                  :class="{ 'border-t border-rule': $slots.menu }"
+                  @select="closing = true"
+                >
                   {{ $t('project.closeMenu') }}
                 </DropdownMenuItem>
                 <DropdownMenuItem v-if="header.canDelete" class="text-destructive" @select="deleting = true">

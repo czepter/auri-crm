@@ -7,7 +7,7 @@ use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\CheckDateAvailability;
 use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Actions\OpenLeads;
-use App\Crm\Actions\ReadStageTrack;
+use App\Crm\Data\ProjectHeaderData;
 use App\Crm\Data\ProjectPersonData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
@@ -77,20 +77,15 @@ class LeadCaseController extends Controller
             $project->name,
         );
 
-        $project->load(['contacts', 'shoots.crew.user', 'tasks.project', 'tasks.assignee', 'notes.author', 'latestQuote.items']);
+        $project->load(['contacts', 'shoots.crew.user', 'primaryShoot', 'job', 'tasks.project', 'tasks.assignee', 'notes.author', 'latestQuote.items']);
         $primary = $project->primaryShoot;
         $conversation = $project->latestThread()->with('messages.contact', 'messages.author')->first();
 
         return Inertia::render('Leads/Show', [
             'tab' => $tab,
-            'track' => app(ReadStageTrack::class)(app(DeriveProjectPosition::class)($project)),
+            'header' => ProjectHeaderData::fromProject($project, app(DeriveProjectPosition::class)($project), queue: false),
             'conversation' => $conversation === null ? null : ThreadData::fromModel($conversation),
-            'canManageMessages' => auth('staff')->user()->can('manageMessages', $project),
-            'workspace' => $tab !== 'quote' ? null : [
-                ...app(ReadQuoteWorkspace::class)($project, auth('staff')->user()),
-                'canManageQuotes' => auth('staff')->user()->can('manageQuotes', $project),
-                'canManagePaymentPlan' => auth('staff')->user()->can('managePaymentPlan', $project),
-            ],
+            'workspace' => $tab !== 'quotes' ? null : app(ReadQuoteWorkspace::class)($project, auth('staff')->user()),
             'queue' => $this->leads->queue($lead),
             'lead' => [
                 'id' => $lead->public_id,
