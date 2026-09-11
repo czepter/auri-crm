@@ -25,7 +25,7 @@ defineProps<{ shoot: App.Crm.Data.ShootData }>();
             <span v-if="shoot.venue" class="text-[12px] leading-[1.47] text-ink-2">
                 · {{ shoot.venue }}</span>
         </span>
-        <span class="w-[118px] flex-none text-right text-[12px] leading-[1.47] text-ink-2">{{
+        <span v-if="!$page.props.soloStudio" class="w-[118px] flex-none text-right text-[12px] leading-[1.47] text-ink-2">{{
             shoot.crew.map((member) => member.name).join(", ") || "—"
         }}</span>
     </div>

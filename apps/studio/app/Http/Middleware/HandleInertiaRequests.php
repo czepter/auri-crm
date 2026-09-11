@@ -6,6 +6,7 @@ use App\Crm\Actions\OpenLeads;
 use App\Crm\Models\Project;
 use App\Data\StaffProfileData;
 use App\Help\Support\HelpIndex;
+use App\Models\User;
 use App\Portal\Support\PortalSettings;
 use App\Releases\Support\ReleaseLog;
 use App\Settings\Support\StudioSettingsResolver;
@@ -50,6 +51,8 @@ class HandleInertiaRequests extends Middleware
             // client sees. Every portal screen wears the banner, so it is
             // shared rather than passed per page.
             'portalPreview' => $request->session()->get('portal_preview') === true,
+            // Crew, assignees and bylines name the only person there is.
+            'soloStudio' => fn () => $user !== null && User::soloStudio(),
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
                 // P-06 (#225): a freshly set gallery secret, readable exactly

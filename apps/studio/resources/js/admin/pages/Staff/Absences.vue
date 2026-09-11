@@ -113,7 +113,7 @@ function add() {
             :key="absence.id"
             class="flex items-center gap-3 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
           >
-            <span class="w-44 flex-none text-[13.5px] leading-[1.35] font-semibold tracking-[-0.015em]">{{ absence.userName }}</span>
+            <span v-if="!$page.props.soloStudio" class="w-44 flex-none text-[13.5px] leading-[1.35] font-semibold tracking-[-0.015em]">{{ absence.userName }}</span>
 
             <!-- Whose absence it is decides whether the row is a reading or a
                  control: the dates are editable where the account may manage

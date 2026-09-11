@@ -126,7 +126,8 @@ class FireAutomationRule
 
         return match ($rule->recipient_type) {
             AutomationRecipient::Client => collect(array_filter([$project->primaryContact()])),
-            AutomationRecipient::Crew => User::query()
+            // Alone in the studio nobody gets assigned; the one person is the crew.
+            AutomationRecipient::Crew => User::soloStudio() ? $this->audience->forProject($project) : User::query()
                 ->whereIn('id', CrewAssignment::query()
                     ->whereIn('shoot_id', $project->shoots()->select('id'))
                     ->select('user_id'))

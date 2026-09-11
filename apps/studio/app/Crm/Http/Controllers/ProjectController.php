@@ -299,7 +299,6 @@ class ProjectController extends Controller
             // Wer an dem Tag kann, nicht nur wer existiert: frei, abwesend
             // oder auf einem anderen Shooting.
             'crewAvailability' => $crew->forProject($project),
-            'soloStudio' => User::query()->count() === 1,
             'crewRoles' => collect(CrewRole::cases())
                 ->map(fn (CrewRole $role) => ['value' => $role->value, 'label' => $role->label()])
                 ->all(),

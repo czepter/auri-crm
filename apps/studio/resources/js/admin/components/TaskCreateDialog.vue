@@ -131,7 +131,7 @@ function submit() {
             </Select>
           </Field>
 
-          <Field v-slot="{ id }" :label="$t('project.taskAssignee')">
+          <Field v-if="!$page.props.soloStudio" v-slot="{ id }" :label="$t('project.taskAssignee')">
             <Select v-model="form.assignee">
               <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
               <SelectContent>

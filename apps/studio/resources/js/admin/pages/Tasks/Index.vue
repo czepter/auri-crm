@@ -20,9 +20,10 @@ const props = defineProps<{
   staffOptions: { value: string; label: string }[]
 }>()
 
-const TABS = ['mine', 'all', 'done'] as const
+const solo = usePage().props.soloStudio
+const TABS = solo ? (['all', 'done'] as const) : (['mine', 'all', 'done'] as const)
 
-const tab = ref<(typeof TABS)[number]>('mine')
+const tab = ref<'mine' | 'all' | 'done'>(solo ? 'all' : 'mine')
 const me = computed(() => (usePage().props.auth as { user: { id: string } | null }).user?.id ?? '')
 
 const shown = computed(() =>
@@ -103,14 +104,14 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
                 <span class="block truncate text-[12px] text-ink-2">{{ task.projectName }}</span>
               </span>
 
-              <span v-if="task.assigneeName" class="flex w-44 flex-none items-center gap-2">
+              <span v-if="!solo && task.assigneeName" class="flex w-44 flex-none items-center gap-2">
                 <span
                   class="flex size-[22px] items-center justify-center rounded-full bg-sunk-2 text-[10px] font-semibold"
                 >{{ initials(task.assigneeName) }}</span>
                 <span class="truncate text-[12.5px]">{{ firstName(task.assigneeName) }}</span>
               </span>
               <Select
-                v-else
+                v-else-if="!solo"
                 :model-value="'none'"
                 class="w-44 flex-none"
                 @update:model-value="(value) => assign(task, String(value))"

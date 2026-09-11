@@ -73,6 +73,7 @@ class CalendarController extends Controller
             ->get();
 
         $days = [];
+        $solo = User::soloStudio();
 
         for ($day = $from; $day <= $to; $day = $day->addDay()) {
             $date = $day->toDateString();
@@ -87,7 +88,7 @@ class CalendarController extends Controller
                             kind: $shoot->status?->anchor === StageAnchor::Entry ? 'hold' : 'shoot',
                             time: $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
                             what: $shoot->project->name,
-                            who: $shoot->crew->map(fn ($assignment) => $assignment->user->name)->join(', ') ?: null,
+                            who: $solo ? null : ($shoot->crew->map(fn ($assignment) => $assignment->user->name)->join(', ') ?: null),
                             projectId: $shoot->project->public_id,
                         ))->values()->all(),
                     ...$absences->filter(fn (Absence $absence) => $absence->coversDate($date))
@@ -217,11 +218,10 @@ class CalendarController extends Controller
 
         abort_if($user === null, 404);
 
+        // Alone in the studio nobody gets assigned, so every shoot is theirs.
         $shoots = Shoot::query()
-            ->join('crew_assignments', 'crew_assignments.shoot_id', '=', 'shoots.id')
-            ->select('shoots.*')
             ->with(['project', 'crew.user'])
-            ->where('crew_assignments.user_id', $user->id)
+            ->unless(User::soloStudio(), fn ($query) => $query->whereHas('crew', fn ($crew) => $crew->where('user_id', $user->id)))
             ->whereNotNull('date')
             ->orderBy('date')
             ->get();
