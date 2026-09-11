@@ -122,13 +122,14 @@ class QuoteController extends Controller
             'items.*.discount_type' => ['nullable', 'in:percentage,amount', 'required_with:items.*.discount_value'],
             'items.*.discount_value' => ['nullable', 'integer', 'min:1', 'required_with:items.*.discount_type'],
             'items.*.remember' => ['boolean'],
-            // Q-08/Q-09/Q-11: der Reglerteil. hourly_rate null laesst alles
-            // unten so laufen, wie es vorher lief.
-            'hourly_rate' => ['nullable', 'integer', 'min:0'],
-            'min_hours' => ['nullable', 'integer', 'min:0', 'max:2000'],
-            'max_hours' => ['nullable', 'integer', 'min:0', 'max:2000'],
-            'images_per_hour' => ['nullable', 'integer', 'min:0', 'max:2000'],
-            'hours' => ['nullable', 'integer', 'min:0', 'max:2000'],
+            // Q-08/Q-09/Q-11: der Reglerteil, Pflicht nur im Modus choice.
+            'hourly_rate' => ['nullable', 'integer', 'min:1', 'required_if:pricing_mode,choice'],
+            'min_hours' => ['nullable', 'integer', 'min:1', 'max:2000', 'required_if:pricing_mode,choice'],
+            'max_hours' => ['nullable', 'integer', 'min:1', 'max:2000', 'required_if:pricing_mode,choice', 'gte:min_hours'],
+            'images_per_hour' => ['nullable', 'integer', 'min:1', 'max:2000'],
+            'hours' => ['nullable', 'integer', 'min:1', 'max:2000', 'gte:min_hours', 'lte:max_hours'],
+            'time_title' => ['nullable', 'string', 'max:255'],
+            'time_description' => ['nullable', 'string', 'max:255'],
             // `id`, nie der Pfad: das Portal liefert dieses Bild an den
             // Kunden aus, und ein aus einem Formular uebernommener Pfad
             // waere das Lesen jeder Datei auf dem Disk — die Vertraege
@@ -179,6 +180,8 @@ class QuoteController extends Controller
             'max_hours' => $validated['max_hours'] ?? null,
             'images_per_hour' => $validated['images_per_hour'] ?? null,
             'hours' => $validated['hours'] ?? null,
+            'time_title' => $validated['time_title'] ?? null,
+            'time_description' => $validated['time_description'] ?? null,
         ]);
 
         // Vor dem Loeschen gelesen: die Zeilen tragen die einzigen Pfade,

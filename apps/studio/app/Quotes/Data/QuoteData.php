@@ -52,6 +52,8 @@ class QuoteData extends Data
         public ?int $maxHours = null,
         public ?int $imagesPerHour = null,
         public ?int $hours = null,
+        public ?string $timeTitle = null,
+        public ?string $timeDescription = null,
         // Q-15: vor der Zusage hat ein Regler-Angebot keinen Betrag, sondern
         // einen Bereich — berechnet, nie gespeichert.
         public ?int $rangeMin = null,
@@ -99,6 +101,8 @@ class QuoteData extends Data
             maxHours: $quote->max_hours,
             imagesPerHour: $quote->images_per_hour,
             hours: $quote->hours,
+            timeTitle: $quote->time_title,
+            timeDescription: $quote->time_description,
             rangeMin: $quote->hasSlider() ? QuoteRange::min($quote) : null,
             rangeMax: $quote->hasSlider() ? QuoteRange::max($quote) : null,
             paymentStages: $quote->paymentStages->map(fn ($stage) => [
