@@ -146,12 +146,6 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Show', [
             'header' => $this->header($project),
             'shoots' => ShootData::collect($this->shootsOf($project)),
-            // Absent until CreatePaymentPlan writes one — "a project without
-            // a Job has no plan" (M-03), and neither does a booked Job before
-            // anyone has created its plan.
-            'paymentPlan' => $project->job?->paymentPlan
-                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments'))
-                : null,
             // Open first and by due date, then the done ones: a card whose top
             // row is something already finished buries the work.
             'tasks' => TaskRowData::collect(
@@ -209,11 +203,6 @@ class ProjectController extends Controller
                 'capturedAt' => $project->lead->captured_at->toIso8601String(),
             ],
             'stalled' => $this->stalled($project),
-            'galleries' => $project->galleries()->get()->map(fn ($gallery) => [
-                'id' => $gallery->public_id,
-                'title' => $gallery->title,
-                'expiresAt' => $gallery->expires_at?->format('Y-m-d'),
-            ])->all(),
         ]);
     }
 

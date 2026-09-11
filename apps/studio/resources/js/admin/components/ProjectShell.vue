@@ -4,7 +4,15 @@ import { Link, router, useForm } from '@inertiajs/vue3'
 import Page from '@/ui/page/Page.vue'
 import ProjectQueue from '@/admin/components/ProjectQueue.vue'
 import StageTrack from '@/admin/components/StageTrack.vue'
+import RailHistory from '@/admin/components/RailHistory.vue'
+import Rail from '@/ui/page/Rail.vue'
+import RailItem from '@/ui/page/RailItem.vue'
+import RailSection from '@/ui/page/RailSection.vue'
+import { formatEurosRounded } from '@/admin/lib/money'
+import { dayWithWeekday as day } from '@/admin/lib/dates'
 import { Button } from '@/ui/button'
+import { Checkbox } from '@/ui/checkbox'
+import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -44,6 +52,14 @@ function reopen() {
   router.post(`/anfragen/${props.header.leadId}/wieder-oeffnen`, {}, { preserveScroll: true })
 }
 
+function toggleReminders(value: boolean | 'indeterminate') {
+  router.patch(
+    `/zahlungsplaene/${props.header.paymentPlan?.id}/erinnerungen`,
+    { client_reminders_enabled: value === true },
+    { preserveScroll: true },
+  )
+}
+
 function destroy() {
   router.delete(`/auftraege/${props.header.id}`)
 }
@@ -55,8 +71,43 @@ function destroy() {
       <ProjectQueue :groups="header.queue" />
     </template>
 
-    <template v-if="$slots.rail" #right>
-      <slot name="rail" />
+    <template #right>
+      <slot name="rail">
+        <Rail>
+          <slot name="people">
+            <RailSection :title="$t('lead.people')">
+              <div v-for="person in header.people" :key="person.id" class="flex items-center gap-2 py-[5px] text-[12.5px] leading-[1.47]">
+                <Link :href="`/kontakte/${person.id}`">{{ person.name }}</Link>
+                <span class="ml-auto text-[11.5px] leading-[1.47] text-[#3F6B4A]">{{ $t(`contacts.role.${person.role}`) }}</span>
+              </div>
+            </RailSection>
+          </slot>
+
+          <RailSection v-if="header.paymentPlan" :title="$t('dashboard.payments')">
+            <div v-for="instalment in header.paymentPlan.installments" :key="instalment.id" class="flex gap-2.5 py-[5px] text-[12.5px] leading-[1.47]">
+              <span class="w-[74px] flex-none text-ink-2">{{ day(instalment.dueOn) }}</span>
+              <span>{{ formatEurosRounded(Number(instalment.amount)) }}</span>
+            </div>
+
+            <div class="mt-2 flex items-center gap-2">
+              <Checkbox id="cb-plan-reminders" :model-value="header.paymentPlan.clientRemindersEnabled" @update:model-value="toggleReminders" />
+              <Label variant="inline" for="cb-plan-reminders">{{ $t('payments.clientReminders') }}</Label>
+            </div>
+          </RailSection>
+
+          <RailSection v-if="header.galleries.length" :title="$t('contacts.galleries')">
+            <RailItem
+              v-for="gallery in header.galleries"
+              :key="gallery.id"
+              :title="gallery.title ?? '—'"
+              :href="`/galerien/${gallery.id}`"
+              :meta="gallery.expiresAt ? $t('contacts.expiresOn', { date: day(gallery.expiresAt) }) : null"
+            />
+          </RailSection>
+
+          <RailHistory :entries="header.history" />
+        </Rail>
+      </slot>
     </template>
 
     <div class="min-w-0 flex-1 px-[26px] pt-5 pb-7 max-[640px]:px-5">

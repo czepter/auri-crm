@@ -3,9 +3,11 @@
 namespace App\Crm\Data;
 
 use App\Contracts\Enums\ContractStatus;
+use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\OpenProjects;
 use App\Crm\Actions\ReadStageTrack;
 use App\Crm\Models\Project;
+use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Enums\QuoteStatus;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -25,6 +27,9 @@ class ProjectHeaderData extends Data
     /** @param  list<array{key: string, label: string, href: string, count: int|null, countTo: int|null, children: list<array{key: string, label: string, translate: bool, href: string, count: int|null, reorderable: bool}>}>  $tabs
      * @param  list<array{key: string, label: string, pipeline: string, state: string}>  $track
      * @param  list<array{key: string, rows: list<ProjectQueueRowData>}>  $queue
+     * @param  list<ProjectPersonData>  $people
+     * @param  list<array{id: string, title: string|null, expiresAt: string|null}>  $galleries
+     * @param  list<ThreadEntryData>  $history
      */
     public function __construct(
         public string $id,
@@ -57,6 +62,10 @@ class ProjectHeaderData extends Data
         public array $tabs,
         public array $track,
         public array $queue,
+        public array $people,
+        public ?PaymentPlanData $paymentPlan,
+        public array $galleries,
+        public array $history,
     ) {}
 
     public static function fromProject(Project $project, ProjectPositionData $position): self
@@ -115,6 +124,16 @@ class ProjectHeaderData extends Data
             ],
             track: app(ReadStageTrack::class)($position),
             queue: $user === null ? [] : app(OpenProjects::class)->queue($user, $project),
+            people: $project->contacts->map(ProjectPersonData::fromContact(...))->all(),
+            paymentPlan: $project->job?->paymentPlan
+                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments'))
+                : null,
+            galleries: $project->galleries()->get()->map(fn ($gallery) => [
+                'id' => $gallery->public_id,
+                'title' => $gallery->title,
+                'expiresAt' => $gallery->expires_at?->format('Y-m-d'),
+            ])->all(),
+            history: app(BuildThread::class)($project),
         );
     }
 

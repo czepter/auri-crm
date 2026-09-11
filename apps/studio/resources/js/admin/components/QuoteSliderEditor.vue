@@ -201,7 +201,7 @@ const GRID = 'grid grid-cols-[44px_minmax(0,1fr)_200px_100px_130px] items-center
 
         <div v-for="row in included" :key="row.id ?? included.indexOf(row)" class="flex items-center gap-3 border-t border-rule py-[9px]">
           <Input v-model="row.title" class="flex-1" type="text" :placeholder="$t('quotes.itemTitle')" @blur="emit('change')" />
-          <button class="cursor-pointer text-[13px] text-ink-2" type="button" :aria-label="$t('common.remove')" @click="removeRow(row)">×</button>
+          <button class="cursor-pointer text-[13px] text-ink-2" type="button" tabindex="-1" :aria-label="$t('common.remove')" @click="removeRow(row)">×</button>
         </div>
 
         <Button class="mt-3" variant="outline" type="button" @click="addRow(false)">
@@ -242,9 +242,10 @@ const GRID = 'grid grid-cols-[44px_minmax(0,1fr)_200px_100px_130px] items-center
               class="inline-flex cursor-pointer rounded-[12px] px-2.5 py-[5px] text-[11.5px] leading-none"
               :class="row.selected ? 'bg-[var(--accent-bg)] font-semibold text-[var(--accent)]' : 'border border-border text-ink-2'"
               type="button"
+              tabindex="-1"
               @click="row.selected = !row.selected; emit('change')"
             >{{ row.selected ? $t('quotes.preselected') : $t('quotes.pickable') }}</button>
-            <button class="ml-auto cursor-pointer text-[13px] text-ink-2" type="button" :aria-label="$t('common.remove')" @click="removeRow(row)">×</button>
+            <button class="ml-auto cursor-pointer text-[13px] text-ink-2" type="button" tabindex="-1" :aria-label="$t('common.remove')" @click="removeRow(row)">×</button>
           </div>
         </div>
 
@@ -277,7 +278,7 @@ const GRID = 'grid grid-cols-[44px_minmax(0,1fr)_200px_100px_130px] items-center
             class="text-[13px] tabular-nums"
             :class="amounts[index] > share(stage.percent) ? 'font-semibold text-[var(--accent)]' : 'text-ink-2'"
           >{{ formatEuros(amounts[index]) }}</span>
-          <button class="ml-auto cursor-pointer text-[13px] text-ink-2" type="button" :aria-label="$t('common.remove')" @click="removeStage(index)">×</button>
+          <button class="ml-auto cursor-pointer text-[13px] text-ink-2" type="button" tabindex="-1" :aria-label="$t('common.remove')" @click="removeStage(index)">×</button>
         </div>
 
         <div class="mt-3.5 flex flex-wrap items-center gap-4">

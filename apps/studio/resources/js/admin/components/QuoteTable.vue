@@ -189,7 +189,7 @@ defineExpose({ subtotal })
       />
       <span v-else />
 
-      <Button variant="ghost" tone="accent" type="button" :aria-label="$t('common.remove')" @click="removeRow(index)">
+      <Button variant="ghost" tone="accent" type="button" tabindex="-1" :aria-label="$t('common.remove')" @click="removeRow(index)">
         ×
       </Button>
     </div>
