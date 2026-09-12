@@ -634,6 +634,7 @@
     "items": "Positionen",
     "itemTitle": "Titel",
     "itemDescription": "Beschreibung",
+    "itemOutcome": "Was der Kunde liest",
     "itemQuantity": "Menge",
     "itemPrice": "Preis (€)",
     "itemPriceHint": "Leer = inklusive.",
@@ -677,7 +678,9 @@
     "modeChoice": "Auswahl",
     "sendOptions": "Weitere Versandoptionen",
     "copyLink": "Link kopieren",
-    "markSent": "Versendet"
+    "markSent": "Versendet",
+    "moveUp": "Nach oben",
+    "moveDown": "Nach unten"
   },
   "automations": {
     "title": "Automationen",

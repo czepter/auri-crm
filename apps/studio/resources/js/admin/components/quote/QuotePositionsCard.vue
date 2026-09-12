@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { QuoteDraft, QuoteRow, SliderRow } from './quotePayload'
+import type { PricingMode, QuoteDraft, QuoteRow } from './quotePayload'
+import { quoteRowToLine } from './quotePayload'
 import { applyDiscount, subtotal } from './quoteTotals'
 import { eurosToCents, formatEuros, parseDiscount } from '@/admin/lib/money'
+import { moveRow } from '@/admin/lib/rows'
 import QuoteInsertRow from '@/admin/components/QuoteInsertRow.vue'
 import QuotePositionRow from './QuotePositionRow.vue'
 import { Input } from '@/ui/input'
 
 const props = defineProps<{
-  mode: 'classic' | 'choice'
+  mode: PricingMode
   quoteId: string
   canManageCatalog: boolean
   packages: App.Catalog.Data.PackageData[]
@@ -38,58 +40,32 @@ const includedImages = computed(() =>
 )
 
 function insert(rows: QuoteRow[]) {
-  if (props.mode === 'classic') {
-    draft.value.rows = [...draft.value.rows, ...rows]
-  } else {
-    draft.value.slider.rows = [
-      ...draft.value.slider.rows,
-      ...rows.map(
-        (row): SliderRow => ({
-          title: row.title,
-          outcome: row.description,
-          unitPrice: row.unitPrice,
-          selectable: true,
-          selected: false,
-          hasImage: false,
-        }),
-      ),
-    ]
-  }
-
+  draft.value.rows = [...draft.value.rows, ...rows]
   emit('change')
 }
 
 function remove(index: number) {
-  if (props.mode === 'classic') {
-    draft.value.rows = draft.value.rows.filter((_, i) => i !== index)
-  } else {
-    draft.value.slider.rows = draft.value.slider.rows.filter((_, i) => i !== index)
-  }
-
+  draft.value.rows = draft.value.rows.filter((_, i) => i !== index)
   openIndex.value = null
   emit('change')
 }
 
-function lineInput(row: QuoteRow) {
-  const discount = parseDiscount(row.discount)
+function move(from: number, to: number) {
+  const next = moveRow(draft.value.rows, from, to)
 
-  return {
-    quantity: row.quantity,
-    unitPrice: eurosToCents(row.unitPrice) ?? 0,
-    discountType: discount.type || null,
-    discountValue: discount.type === 'percentage' && discount.value !== null ? discount.value / 100 : discount.value,
+  if (next !== draft.value.rows) {
+    draft.value.rows = next
+    openIndex.value = openIndex.value === from ? to : openIndex.value
+
+    emit('change')
   }
 }
 
 const chargedRows = computed(() =>
-  props.mode === 'classic'
-    ? draft.value.rows.map(lineInput)
-    : draft.value.slider.rows
-        .filter((row) => !row.selectable || row.selected)
-        .map((row) => ({ quantity: 1, unitPrice: eurosToCents(row.unitPrice) ?? 0, discountType: null, discountValue: null })),
+  props.mode === 'classic' ? draft.value.rows : draft.value.rows.filter((row) => !row.selectable || row.selected),
 )
 
-const quoteSubtotal = computed(() => subtotal(chargedRows.value, props.mode === 'choice' ? timeTotal.value : 0))
+const quoteSubtotal = computed(() => subtotal(chargedRows.value.map(quoteRowToLine), props.mode === 'choice' ? timeTotal.value : 0))
 
 const quoteDiscount = computed(() => parseDiscount(draft.value.discount))
 
@@ -119,16 +95,20 @@ const total = computed(() =>
     </div>
 
     <QuotePositionRow
-      v-for="(row, index) in mode === 'classic' ? draft.rows : draft.slider.rows"
+      v-for="(row, index) in draft.rows"
       :key="row.id ?? index"
       :mode="mode"
       :quote-id="quoteId"
       :can-manage-catalog="canManageCatalog"
       :row="row"
       :open="isOpen(index)"
+      :is-first="index === 0"
+      :is-last="index === draft.rows.length - 1"
       @update:open="(value) => setOpen(index, value)"
       @change="emit('change')"
       @remove="remove(index)"
+      @move-up="move(index, index - 1)"
+      @move-down="move(index, index + 1)"
     />
 
     <div class="flex items-baseline gap-3 pl-1">

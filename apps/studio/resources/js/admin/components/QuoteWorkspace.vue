@@ -33,6 +33,7 @@ const props = withDefaults(
 
 function draftOf(quote: App.Quotes.Data.QuoteData): QuoteDraft {
   return {
+    pricingMode: quote.pricingMode as QuoteDraft['pricingMode'],
     validUntil: quote.validUntil ?? '',
     discount: formatDiscount(quote.discountType, quote.discountValue),
     intro: quote.intro ?? '',
@@ -43,6 +44,8 @@ function draftOf(quote: App.Quotes.Data.QuoteData): QuoteDraft {
     recipientCity: quote.recipientCity,
     timeTitle: quote.timeTitle,
     timeDescription: quote.timeDescription,
+    // Eine Liste für beide Modi (§4.2): Menge und Rabatt gelten überall,
+    // "Im Portal" ist nur in Auswahl bedienbar, aber jede Zeile trägt es.
     rows: quote.items.map((item) => ({
       id: item.id,
       title: item.title,
@@ -50,6 +53,10 @@ function draftOf(quote: App.Quotes.Data.QuoteData): QuoteDraft {
       quantity: item.quantity,
       unitPrice: centsToEuros(item.unitPrice),
       discount: formatDiscount(item.discountType, item.discountValue),
+      selectable: item.selectable,
+      selected: item.selected,
+      outcome: item.outcome ?? '',
+      hasImage: item.hasImage,
       // Abgeleitet statt gespeichert: gemerkt heisst, die Bibliothek führt
       // diesen Titel.
       remember: props.catalogItems.some((entry) => entry.title === item.title),
@@ -60,15 +67,6 @@ function draftOf(quote: App.Quotes.Data.QuoteData): QuoteDraft {
       maxHours: quote.maxHours,
       imagesPerHour: quote.imagesPerHour,
       hours: quote.hours,
-      rows: quote.items.map((item) => ({
-        id: item.id,
-        title: item.title,
-        outcome: item.outcome ?? '',
-        unitPrice: centsToEuros(item.unitPrice),
-        selectable: item.selectable,
-        selected: item.selected,
-        hasImage: item.hasImage,
-      })),
       stages: quote.paymentStages.map((stage) => ({
         percent: stage.percent,
         label: stage.label,

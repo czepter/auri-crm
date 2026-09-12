@@ -1,5 +1,8 @@
 import { eurosToCents, parseDiscount } from '@/admin/lib/money'
 
+export type PricingMode = 'classic' | 'choice'
+
+/** A position is the same thing in both modes (spec §4.2/§4.3) — one shape, one list. */
 export type QuoteRow = {
   id?: string
   title: string
@@ -7,17 +10,11 @@ export type QuoteRow = {
   quantity: number
   unitPrice: string
   discount: string
-  remember: boolean
-}
-
-export type SliderRow = {
-  id?: string
-  title: string
-  outcome: string
-  unitPrice: string
   selectable: boolean
   selected: boolean
+  outcome: string
   hasImage: boolean
+  remember: boolean
 }
 
 export type StageRow = { percent: number; label: string; minimum: string }
@@ -28,18 +25,16 @@ export type SliderDraft = {
   maxHours: number | null
   imagesPerHour: number | null
   hours: number | null
-  rows: SliderRow[]
   stages: StageRow[]
 }
 
 export type QuoteDraft = {
+  pricingMode: PricingMode
   validUntil: string
   discount: string
   intro: string
   outro: string
   rows: QuoteRow[]
-  // Q-14: derselbe Entwurf traegt beide Welten. hourlyRate leer heisst
-  // Positionstabelle, und dann ruehrt nichts hier unten etwas an.
   slider: SliderDraft
   // Kein Feld im Editor bedient diese fünf — sie reisen nur mit, damit ein
   // Autosave sie nicht durch ihr Fehlen im Payload leerräumt.
@@ -56,54 +51,53 @@ export type QuotePayloadOptions = {
 }
 
 /**
- * Q-14: eine Route, ein Payload. Der Stundensatz entscheidet, aus welcher
- * Zeilenliste die Positionen kommen; pricing_mode, Empfänger und Zeitzeile
- * reisen in beiden Fällen mit, sonst räumt ein Autosave sie durch ihr
- * Fehlen leer. Die id einer Zeile geht in beiden Modi mit, weil der
- * Controller das Bild einer Regler-Zeile daran wiederfindet — der Pfad
- * selbst kommt nie aus dem Formular.
+ * A row into `quoteTotals`' cents-and-plain-percent shape — the one place
+ * that conversion happens, so the totals card, the time card's range tiles
+ * and the payload builder can't drift apart on how a row is priced.
+ */
+export function quoteRowToLine(row: Pick<QuoteRow, 'quantity' | 'unitPrice' | 'discount' | 'selectable'>) {
+  const discount = parseDiscount(row.discount)
+
+  return {
+    quantity: row.quantity,
+    unitPrice: eurosToCents(row.unitPrice) ?? 0,
+    discountType: discount.type || null,
+    discountValue: discount.type === 'percentage' && discount.value !== null ? discount.value / 100 : discount.value,
+    selectable: row.selectable,
+  }
+}
+
+/**
+ * Eine Route, ein Payload, eine Zeilenliste für beide Modi. `pricing_mode`
+ * kommt aus dem Feld, das der Umschalter setzt — nicht aus dem Stundensatz,
+ * sonst verliert ein Auswahlangebot ohne Stundensatz seine Positionen bei
+ * jeder Autospeicherung.
  */
 export function buildQuotePayload(draft: QuoteDraft, options: QuotePayloadOptions) {
   const quoteDiscount = parseDiscount(draft.discount)
-  const rate = eurosToCents(draft.slider.hourlyRate)
 
-  const items =
-    rate !== null
-      ? draft.slider.rows.map((row) => ({
-          id: row.id,
-          title: row.title,
-          description: null,
-          quantity: 1,
-          unit_price: eurosToCents(row.unitPrice),
-          discount_type: null,
-          discount_value: null,
-          selectable: row.selectable,
-          selected: row.selected,
-          outcome: row.outcome || null,
-          // Ohne die Faehigkeit geht der Schluessel gar nicht erst mit, damit
-          // der Waechter im Controller nicht ohne Anlass greift.
-          ...(options.canManageCatalog ? { remember: false } : {}),
-        }))
-      : draft.rows.map((row) => {
-          const discount = parseDiscount(row.discount)
+  const items = draft.rows.map((row) => {
+    const discount = parseDiscount(row.discount)
 
-          return {
-            id: row.id,
-            title: row.title,
-            description: row.description || null,
-            quantity: row.quantity,
-            unit_price: eurosToCents(row.unitPrice),
-            discount_type: discount.type || null,
-            discount_value: discount.value,
-            selectable: false,
-            selected: false,
-            outcome: null,
-            ...(options.canManageCatalog ? { remember: row.remember } : {}),
-          }
-        })
+    return {
+      id: row.id,
+      title: row.title,
+      description: row.description || null,
+      quantity: row.quantity,
+      unit_price: eurosToCents(row.unitPrice),
+      discount_type: discount.type || null,
+      discount_value: discount.value,
+      selectable: row.selectable,
+      selected: row.selected,
+      outcome: row.outcome || null,
+      // Ohne die Faehigkeit geht der Schluessel gar nicht erst mit, damit
+      // der Waechter im Controller nicht ohne Anlass greift.
+      ...(options.canManageCatalog ? { remember: row.remember } : {}),
+    }
+  })
 
   return {
-    pricing_mode: rate !== null ? 'choice' : 'classic',
+    pricing_mode: draft.pricingMode,
     valid_until: draft.validUntil || null,
     recipient_contact: draft.recipientContact,
     recipient_street: draft.recipientStreet,
@@ -113,7 +107,7 @@ export function buildQuotePayload(draft: QuoteDraft, options: QuotePayloadOption
     outro: draft.outro || null,
     discount_type: quoteDiscount.type || null,
     discount_value: quoteDiscount.value,
-    hourly_rate: rate,
+    hourly_rate: eurosToCents(draft.slider.hourlyRate),
     min_hours: draft.slider.minHours,
     max_hours: draft.slider.maxHours,
     images_per_hour: draft.slider.imagesPerHour,

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { QuoteDraft } from './quotePayload'
+import type { PricingMode, QuoteDraft } from './quotePayload'
+import { quoteRowToLine } from './quotePayload'
 import { subtotal } from './quoteTotals'
-import { eurosToCents, formatEuros, parseDiscount } from '@/admin/lib/money'
+import { eurosToCents, formatEuros } from '@/admin/lib/money'
 import { monthDate } from '@/admin/lib/dates'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Textarea } from '@/ui/textarea'
@@ -26,18 +27,9 @@ const draft = defineModel<QuoteDraft>({ required: true })
 const emit = defineEmits<{ change: [] }>()
 const { t } = useI18n()
 
-// Kein eigenes Feld auf dem Entwurf: klassisch oder Auswahl bleibt weiter
-// daran erkennbar, ob ein Stundensatz steht (Q-14). Der Umschalter macht das
-// nur zu einer bewussten Entscheidung statt einem Nebeneffekt des Tippens.
-const mode = ref<'classic' | 'choice'>(eurosToCents(draft.value.slider.hourlyRate) ? 'choice' : 'classic')
-
 function setMode(value: string) {
-  mode.value = value as 'classic' | 'choice'
-
-  if (mode.value === 'classic') {
-    draft.value.slider.hourlyRate = ''
-    emit('change')
-  }
+  draft.value.pricingMode = value as PricingMode
+  emit('change')
 }
 
 const open = reactive({
@@ -72,31 +64,16 @@ const timeSummary = computed(() =>
     .join(' · '),
 )
 
-function lineInput(row: { quantity: number; unitPrice: string; discount: string }) {
-  const discount = parseDiscount(row.discount)
-
-  return {
-    quantity: row.quantity,
-    unitPrice: eurosToCents(row.unitPrice) ?? 0,
-    discountType: discount.type || null,
-    discountValue: discount.type === 'percentage' && discount.value !== null ? discount.value / 100 : discount.value,
-  }
-}
-
 const positionsTotal = computed(() => {
-  if (mode.value === 'classic') {
-    return subtotal(draft.value.rows.map(lineInput), 0)
-  }
-
+  const charged =
+    draft.value.pricingMode === 'classic' ? draft.value.rows : draft.value.rows.filter((row) => !row.selectable || row.selected)
   const hours = draft.value.slider.hours ?? draft.value.slider.minHours ?? 0
-  const rows = draft.value.slider.rows
-    .filter((row) => !row.selectable || row.selected)
-    .map((row) => ({ quantity: 1, unitPrice: eurosToCents(row.unitPrice) ?? 0, discountType: null, discountValue: null }))
+  const timeTotal = draft.value.pricingMode === 'choice' ? hours * rate.value : 0
 
-  return subtotal(rows, hours * rate.value)
+  return subtotal(charged.map(quoteRowToLine), timeTotal)
 })
 
-const positionsCount = computed(() => (mode.value === 'classic' ? draft.value.rows.length : draft.value.slider.rows.length))
+const positionsCount = computed(() => draft.value.rows.length)
 
 const positionsSummary = computed(() => `${t('quotes.positionCount', positionsCount.value)} · ${formatEuros(positionsTotal.value)}`)
 
@@ -117,7 +94,7 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
   <div class="mx-auto flex w-fit max-w-full gap-6">
     <div class="flex w-[720px] max-w-full flex-col gap-3">
       <ChoiceGroup
-        :model-value="mode"
+        :model-value="draft.pricingMode"
         :options="[
           { value: 'classic', label: $t('quotes.modeClassic') },
           { value: 'choice', label: $t('quotes.modeChoice') },
@@ -138,11 +115,12 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
         />
       </QuoteCard>
 
-      <QuoteCard v-if="mode === 'choice'" v-model:open="open.time" :title="$t('quotes.time')" :summary="timeSummary">
+      <QuoteCard v-if="draft.pricingMode === 'choice'" v-model:open="open.time" :title="$t('quotes.time')" :summary="timeSummary">
         <QuoteTimeCard
           v-model:time-title="draft.timeTitle"
           v-model:time-description="draft.timeDescription"
           v-model:slider="draft.slider"
+          :rows="draft.rows"
           @change="emit('change')"
         />
       </QuoteCard>
@@ -150,7 +128,7 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
       <QuoteCard v-model:open="open.positions" :title="$t('quotes.items')" :summary="positionsSummary">
         <QuotePositionsCard
           v-model="draft"
-          :mode="mode"
+          :mode="draft.pricingMode"
           :quote-id="quoteId"
           :can-manage-catalog="canManageCatalog"
           :packages="packages"

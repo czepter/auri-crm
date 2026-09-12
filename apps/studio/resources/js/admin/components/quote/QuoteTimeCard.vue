@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue'
-import type { SliderDraft } from './quotePayload'
+import type { QuoteRow, SliderDraft } from './quotePayload'
+import { quoteRowToLine } from './quotePayload'
 import { span } from './quoteTotals'
 import { eurosToCents, formatEuros } from '@/admin/lib/money'
 import { Input } from '@/ui/input'
@@ -8,6 +9,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
 
+const props = defineProps<{ rows: QuoteRow[] }>()
 const timeTitle = defineModel<string | null>('timeTitle', { required: true })
 const timeDescription = defineModel<string | null>('timeDescription', { required: true })
 const slider = defineModel<SliderDraft>('slider', { required: true })
@@ -49,17 +51,9 @@ const hoursOutOfRange = computed(
 )
 const imagesPerHourInvalid = computed(() => slider.value.imagesPerHour !== null && slider.value.imagesPerHour < 1)
 
-const spanRows = computed(() =>
-  slider.value.rows.map((row) => ({
-    quantity: 1,
-    unitPrice: eurosToCents(row.unitPrice) ?? 0,
-    discountType: null,
-    discountValue: null,
-    selectable: row.selectable,
-  })),
-)
+const spanRows = computed(() => props.rows.map(quoteRowToLine))
 
-const selectedRows = computed(() => spanRows.value.filter((row, index) => !row.selectable || slider.value.rows[index].selected))
+const selectedRows = computed(() => spanRows.value.filter((row, index) => !row.selectable || props.rows[index].selected))
 
 const tiles = computed(() => ({
   min: span(spanRows.value, slider.value.minHours ?? 0, rate.value, false),

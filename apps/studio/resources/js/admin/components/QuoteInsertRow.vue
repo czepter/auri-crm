@@ -31,7 +31,7 @@ function choose(kind: string, id: string) {
     const item = props.catalogItems.find((entry) => entry.id === id)
     emit('insert', item ? [itemRow(item)] : [])
   } else {
-    emit('insert', [{ title: term.value.trim(), description: '', quantity: 1, unitPrice: '', discount: '', remember: false }])
+    emit('insert', [{ title: term.value.trim(), description: '', quantity: 1, unitPrice: '', discount: '', selectable: false, selected: false, outcome: '', hasImage: false, remember: false }])
   }
 
   term.value = ''

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { buildQuotePayload, type QuoteDraft } from './quotePayload'
 
-function baseDraft(): QuoteDraft {
+function baseDraft(pricingMode: QuoteDraft['pricingMode']): QuoteDraft {
   return {
+    pricingMode,
     validUntil: '2026-10-01',
     discount: '',
     intro: '',
@@ -14,7 +15,6 @@ function baseDraft(): QuoteDraft {
       maxHours: null,
       imagesPerHour: null,
       hours: null,
-      rows: [],
       stages: [
         { percent: 30, label: 'Bei der Zusage', minimum: '500' },
         { percent: 70, label: 'Am Termin', minimum: '' },
@@ -30,7 +30,7 @@ function baseDraft(): QuoteDraft {
 }
 
 function classicDraft(): QuoteDraft {
-  const draft = baseDraft()
+  const draft = baseDraft('classic')
 
   draft.rows = [
     {
@@ -40,6 +40,10 @@ function classicDraft(): QuoteDraft {
       quantity: 2,
       unitPrice: '690,00',
       discount: '10%',
+      selectable: false,
+      selected: false,
+      outcome: '',
+      hasImage: false,
       remember: true,
     },
   ]
@@ -48,21 +52,25 @@ function classicDraft(): QuoteDraft {
 }
 
 function choiceDraft(): QuoteDraft {
-  const draft = baseDraft()
+  const draft = baseDraft('choice')
 
   draft.slider.hourlyRate = '250,00'
   draft.slider.minHours = 3
   draft.slider.maxHours = 12
   draft.slider.hours = 5
-  draft.slider.rows = [
+  draft.rows = [
     {
       id: 'item-2',
       title: 'Reportage',
-      outcome: 'Digitale Bilder',
-      unitPrice: '0,00',
+      description: '',
+      quantity: 2,
+      unitPrice: '690,00',
+      discount: '10%',
       selectable: true,
       selected: false,
+      outcome: 'Digitale Bilder',
       hasImage: false,
+      remember: false,
     },
   ]
 
@@ -76,10 +84,20 @@ describe('buildQuotePayload', () => {
     expect(payload.pricing_mode).toBe('classic')
   })
 
-  it('markiert den Regler-Entwurf als choice', () => {
+  it('markiert den Auswahl-Entwurf als choice', () => {
     const payload = buildQuotePayload(choiceDraft(), { canManageCatalog: false })
 
     expect(payload.pricing_mode).toBe('choice')
+  })
+
+  it('liest den Modus aus dem Feld, nicht aus dem Stundensatz', () => {
+    const draft = choiceDraft()
+    draft.slider.hourlyRate = ''
+
+    const payload = buildQuotePayload(draft, { canManageCatalog: false })
+
+    expect(payload.pricing_mode).toBe('choice')
+    expect(payload.items).toHaveLength(1)
   })
 
   it.each([
@@ -104,6 +122,9 @@ describe('buildQuotePayload', () => {
     ]) {
       expect(item).toHaveProperty(key)
     }
+
+    expect(item.quantity).toBe(2)
+    expect(item.discount_type).toBe('percentage')
   })
 
   it.each([
