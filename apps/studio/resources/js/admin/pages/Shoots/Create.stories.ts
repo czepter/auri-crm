@@ -20,7 +20,6 @@ const meta = {
       { value: 'portrait', label: 'Portrait' },
       { value: 'other', label: 'Sonstige' },
     ],
-    conflicts: [{ label: 'Gebucht — Hochzeit Rahn · Gut Basthorst ›', href: '/auftraege/p-rahn/shootings' }],
   },
 } satisfies Meta<typeof Create>
 
@@ -28,7 +27,7 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 /** Aus der Übersicht geöffnet: erst wenn Projekt oder Anfrage gewählt ist, kommt der Rest. */
-export const Auswahl: Story = { args: { project: null, conflicts: [] } }
+export const Auswahl: Story = { args: { project: null } }
 
-/** An einer Anfrage, deren Datum schon gebucht ist. */
+/** An einer Anfrage gewählt, bereit für Art, Tag und Ort. */
 export const AnAnfrage: Story = {}

@@ -32,4 +32,6 @@ return [
     'shoot.primary_designated' => 'Haupttermin festgelegt',
     'shoot.cancelled' => 'Shooting abgesagt',
     'form_instance.created' => 'Fragebogen angelegt',
+    // Not an audit event: ReadStudioActivity reads it from GalleryView.
+    'gallery.viewed' => 'Galerie geöffnet',
 ];

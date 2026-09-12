@@ -16,13 +16,33 @@ const row = (
   ...rest,
 })
 
+const task = (id: string, projectId: string, projectName: string, title: string, dueOn: string, isOverdue: boolean): App.Crm.Data.TaskRowData => ({
+  id,
+  projectId,
+  projectName,
+  title,
+  dueOn,
+  isOverdue,
+  isDone: false,
+  shootId: null,
+  shootLabel: null,
+  audience: 'studio',
+  audienceLabel: 'Studio',
+  isBlocked: false,
+  blockedBy: null,
+  completedOn: null,
+  dueAnchorLabel: null,
+  assigneeId: 'u1',
+  assigneeName: 'Christian Zepter',
+})
+
 const meta = {
   title: 'Bildschirme/Übersicht',
   component: Uebersicht,
   parameters: { layout: 'fullscreen', url: '/' },
   args: {
     today: '2026-09-22',
-    range: '30',
+    range: 'year',
     entries: [
       { date: '2026-10-06', time: '11:00', what: 'Standesamt Ahrens', where: 'Ahrens, Sophie & Tim', away: false, href: '/auftraege/p-ahrens/shootings' },
       { date: '2026-10-17', time: '13:30', what: 'Hochzeit Petersen', where: 'Gut Basthorst', away: false, href: '/auftraege/p-petersen/shootings' },
@@ -31,18 +51,20 @@ const meta = {
       { date: '2026-11-21', time: '12:00', what: 'Hochzeit Timm', where: 'Ratzeburg', away: false, href: '/auftraege/p-timm/shootings' },
       { date: '2026-12-11', time: '09:00', what: 'Firmenporträts Kessler', where: 'Lübeck', away: false, href: '/auftraege/p-kessler/shootings' },
     ],
-    pipeline: { total: 0, priorYear: 820000 },
+    pipeline: { total: 0, priorYear: null },
     payments: { open: 1240000, overdue: 0, overdueInstalments: 0, instalments: 12, overdueSinceDays: null, nextDueOn: '2026-10-05', nextAmount: 120000 },
     quotes: { sent: 9, accepted: 5, priorSent: 11, priorAccepted: 4 },
-    shoots: { lastTwelveMonths: 19, priorYear: 24 },
+    shoots: { count: 19, priorYear: 24 },
     activity: [
-      { text: '1.200 € von Ahrens eingegangen', when: 'vor 2 Stunden', fresh: true },
-      { text: 'Voss hat die Galerie geöffnet · 312 Bilder', when: 'gestern, 21:40', fresh: false },
-      { text: 'Angebot an Timm verschickt · 2.800 €', when: 'Freitag', fresh: false },
-      { text: 'Petersen hat den Vertrag unterschrieben', when: 'Donnerstag', fresh: false },
-      { text: 'Galerie Lembcke geliefert · 248 Bilder', when: '15.09.', fresh: false },
-      { text: 'Anfrage Brandt beantwortet', when: '12.09.', fresh: false },
+      { text: 'Ahrens, Sophie & Tim · Zahlung erhalten', when: 'heute, 09:14', fresh: true },
+      { text: 'Voss, Katharina & Jan · Galerie geöffnet', when: 'gestern', fresh: false },
+      { text: 'Timm, Merle · Angebot gesendet', when: 'Freitag', fresh: false },
+      { text: 'Petersen, Ann-Kathrin · Vertrag unterschrieben', when: 'Donnerstag', fresh: false },
+      { text: 'Lembcke, Pia · Projekt gebucht', when: '15.09.', fresh: false },
+      { text: 'Brandt, Familie · Anfrage eingegangen', when: '12.09.', fresh: false },
     ],
+    tasks: [],
+    openTasks: 0,
     todo: [],
     quotesOut: [
       row('Petersen, Ann-Kathrin', 'Verschickt vor', {
@@ -78,21 +100,24 @@ export const VollerTag: Story = {
       { date: '2026-09-19', time: '11:00', what: 'Standesamt Ahrens', where: 'Lübeck', away: false, href: '/auftraege/p-ahrens/shootings' },
       { date: '2026-09-21', time: '17:00', what: 'Paarshooting Voss', where: 'Travemünde', away: false, href: '/auftraege/p-voss/shootings' },
     ],
-    pipeline: { total: 1278000, priorYear: 940000 },
+    pipeline: { total: 1278000, priorYear: null },
     payments: { open: 1330000, overdue: 85200, overdueInstalments: 1, instalments: 3, overdueSinceDays: 11, nextDueOn: null, nextAmount: null },
     activity: [
-      { text: 'Rahn hat den Ablauf bestätigt', when: 'heute, 08:40', fresh: true },
-      { text: 'Söhnke hat angefragt · 13.09. doppelt', when: 'gestern, 16:40', fresh: true },
-      { text: 'Voss hat die Galerie geöffnet · 312 Bilder', when: 'Donnerstag', fresh: false },
-      { text: 'Brandt hat angefragt · Trauung 12.06.2027', when: '08.09.', fresh: false },
-      { text: 'Erinnerung an Ahrens verschickt · 852 €', when: '07.09.', fresh: false },
-      { text: 'Galerie Lembcke geliefert · 248 Bilder', when: '05.09.', fresh: false },
+      { text: 'Rahn, Marie & Jonas · Zahlung erhalten', when: 'heute, 08:40', fresh: true },
+      { text: 'Söhnke, Britta & Nils · Anfrage eingegangen', when: 'gestern, 16:40', fresh: true },
+      { text: 'Voss, Katharina & Jan · Galerie geöffnet', when: 'Donnerstag', fresh: false },
+      { text: 'Brandt, Familie · Anfrage eingegangen', when: '08.09.', fresh: false },
+      { text: 'Ahrens, Sophie & Tim · Angebot angenommen', when: '07.09.', fresh: false },
+      { text: 'Lembcke, Pia · Galerie geöffnet', when: '05.09.', fresh: false },
     ],
+    tasks: [
+      task('t-1', 'p-rahn', 'Rahn, Marie & Jonas', 'Ablaufplan schicken', '2026-09-10', true),
+      task('t-2', 'p-petersen', 'Petersen, Ann-Kathrin', 'Galerie freigeben', '2026-09-16', false),
+    ],
+    openTasks: 6,
     todo: [
-      row('Rahn, Marie & Jonas', 'Ablaufplan schicken ·', { emphasis: '10.09.', action: { label: 'Erledigt', kind: 'task', target: '/aufgaben' } }),
-      row('Familie Brandt', 'Anfrage seit', { emphasis: '4 Tagen', action: { label: 'Angebot schreiben', kind: 'quote', target: '/angebote/neu' } }),
-      row('Ahrens, Sophie & Tim', 'Restzahlung seit', { emphasis: '11 Tagen', action: { label: 'Erinnern', kind: 'payment', target: '/auftraege/p-ahrens/zahlungen' } }),
-      row('Petersen, Ann-Kathrin', 'Galerie freigeben · 16.09.', { action: { label: 'Erledigt', kind: 'task', target: '/aufgaben' } }),
+      row('Familie Brandt', 'Anfrage seit', { emphasis: '4 Tagen', action: { label: 'Angebot schreiben', kind: 'link', target: '/angebote/neu?projekt=p-brandt' } }),
+      row('Ahrens, Sophie & Tim', 'Stripe mahnt', { emphasis: 'seit 11 Tagen', whatTail: ' · 852 €', action: { label: 'Anrufen', kind: 'tel', target: 'tel:+49451123456' } }),
     ],
     galleries: [
       row('Voss, Katharina & Jan', 'Auswahl offen', { whatTail: ' · 312 Bilder' }),
@@ -101,7 +126,7 @@ export const VollerTag: Story = {
   },
 }
 
-/** Der erste Morgen: keine Termine, keine Historie, der Verlauf kennt nur das Konto. */
+/** Der erste Morgen: keine Termine, keine Historie, kein Verlauf. */
 export const Tag1: Story = {
   args: {
     today: '2026-09-14',
@@ -109,8 +134,10 @@ export const Tag1: Story = {
     pipeline: { total: 0, priorYear: null },
     payments: { open: 0, overdue: 0, overdueInstalments: 0, instalments: 0, overdueSinceDays: null, nextDueOn: null, nextAmount: null },
     quotes: { sent: 0, accepted: 0, priorSent: null, priorAccepted: null },
-    shoots: { lastTwelveMonths: 0, priorYear: null },
-    activity: [{ text: 'Konto angelegt', when: 'heute, 08:12', fresh: false }],
+    shoots: { count: 0, priorYear: null },
+    activity: [],
+    tasks: [],
+    openTasks: 0,
     todo: [],
     quotesOut: [],
     galleries: [],

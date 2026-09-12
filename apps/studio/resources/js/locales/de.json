@@ -546,7 +546,8 @@
     "open": "offen",
     "overdue": "überfällig",
     "shoots": "Shootings",
-    "inTwelveMonths": "in 12 Monaten",
+    "range30Past": "letzte 30 Tage",
+    "range90Past": "letzte 90 Tage",
     "priorYear": "Vorjahr {value}",
     "overdueNote": "{open} von {all} Raten · seit {days} Tagen",
     "nextInstalment": "nächste Rate {date} · {amount}"

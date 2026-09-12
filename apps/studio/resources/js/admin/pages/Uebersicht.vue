@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { Link } from "@inertiajs/vue3";
+import { Link, router } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import Page from "@/ui/page/Page.vue";
@@ -35,8 +35,10 @@ const props = defineProps<{
         nextAmount: number | null;
     };
     quotes: { sent: number; accepted: number; priorSent: number | null; priorAccepted: number | null };
-    shoots: { lastTwelveMonths: number; priorYear: number | null };
+    shoots: { count: number; priorYear: number | null };
     activity: Activity[];
+    tasks: App.Crm.Data.TaskRowData[];
+    openTasks: number;
     todo: App.Crm.Data.DomainRowData[];
     quotesOut: App.Crm.Data.DomainRowData[];
     galleries: App.Crm.Data.DomainRowData[];
@@ -124,18 +126,55 @@ const figures = computed(() => {
         {
             key: "shoots",
             label: t("dashboard.shoots"),
-            value: String(shoots.lastTwelveMonths),
-            unit: shoots.lastTwelveMonths ? t("dashboard.inTwelveMonths") : null,
+            value: String(shoots.count),
+            unit: shoots.count ? t(PAST[props.range]) : null,
             warn: false,
             note: shoots.priorYear === null ? null : t("dashboard.priorYear", { value: shoots.priorYear }),
         },
     ];
 });
 
+const PAST = { "30": "dashboard.range30Past", "90": "dashboard.range90Past", year: "dashboard.lastTwelveMonths" } as const;
+
+type FooterRow = {
+    key: string;
+    who: string;
+    href: string;
+    what: string;
+    emphasis: string | null;
+    whatTail: string | null;
+    action: App.Crm.Data.RowActionData | null;
+    task: App.Crm.Data.TaskRowData | null;
+};
+
+function fromTask(task: App.Crm.Data.TaskRowData): FooterRow {
+    return {
+        key: `task:${task.id}`,
+        who: task.projectName,
+        href: `/auftraege/${task.projectId}`,
+        what: task.title,
+        emphasis: task.isOverdue && task.dueOn ? dayOf(task.dueOn) : null,
+        whatTail: !task.isOverdue && task.dueOn ? ` · ${dayOf(task.dueOn)}` : null,
+        action: null,
+        task,
+    };
+}
+
+function fromRow(row: App.Crm.Data.DomainRowData): FooterRow {
+    return { key: `row:${row.projectId}:${row.what}`, who: row.who, href: `/auftraege/${row.projectId}`, what: row.what, emphasis: row.emphasis, whatTail: row.whatTail, action: row.action, task: null };
+}
+
 // Unten links steht, was heute zu tun ist; ist nichts zu tun, die Angebote,
 // auf die ein Kunde antworten muss.
-const footerRows = computed(() => (props.todo.length ? props.todo : props.quotesOut));
+const owes = computed(() => props.tasks.length > 0 || props.todo.length > 0);
+const footerRows = computed(() =>
+    owes.value ? [...props.tasks.map(fromTask), ...props.todo.map(fromRow)].slice(0, 4) : props.quotesOut.slice(0, 4).map(fromRow),
+);
 const hasFooter = computed(() => footerRows.value.length > 0 || props.galleries.length > 0);
+
+function complete(task: App.Crm.Data.TaskRowData) {
+    router.post(`/aufgaben/${task.id}/erledigt`, {}, { preserveScroll: true });
+}
 
 const PRIMARY = [
     { label: "create.lead", href: "/anfragen/neu", icon: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8v8M13 8v5M18 8v10"/>' },
@@ -263,17 +302,17 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                     <Panel
                         v-if="footerRows.length"
                         class="col-span-2 row-start-3"
-                        :title="todo.length ? $t('dashboard.todo') : $t('dashboard.quotesOut')"
-                        :count="footerRows.length"
+                        :title="owes ? $t('dashboard.todo') : $t('dashboard.quotesOut')"
+                        :count="owes ? openTasks + todo.length : quotesOut.length"
                     >
-                        <template v-if="todo.length" #action>
+                        <template v-if="owes" #action>
                             <Link class="ml-auto text-[11.5px] text-ink-2 no-underline" href="/aufgaben">{{ $t("dashboard.allTasks") }}</Link>
                         </template>
 
-                        <div v-for="(row, index) in footerRows.slice(0, 4)" :key="`${row.projectId}${row.what}`" class="flex items-center gap-3 py-2" :class="ROW">
+                        <div v-for="(row, index) in footerRows" :key="row.key" class="flex items-center gap-3 py-2" :class="ROW">
                             <Link
                                 class="w-[186px] flex-none truncate text-[13.5px] font-semibold tracking-[-0.015em] text-foreground no-underline"
-                                :href="`/auftraege/${row.projectId}`"
+                                :href="row.href"
                             >
                                 {{ row.who }}
                             </Link>
@@ -283,6 +322,9 @@ const ROW = "shadow-[inset_0_1px_0_var(--rule)] first:shadow-none";
                             </span>
                             <Button v-if="row.action" :as="Link" :variant="index === 0 ? 'pill' : 'pill-muted'" :href="row.action.target">
                                 {{ row.action.label }}
+                            </Button>
+                            <Button v-else-if="row.task" type="button" :variant="index === 0 ? 'pill' : 'pill-muted'" @click="complete(row.task)">
+                                {{ $t("dashboard.done") }}
                             </Button>
                         </div>
                     </Panel>

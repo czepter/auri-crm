@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import type { QuoteContact } from '@/admin/components/quote/quotePayload'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
@@ -21,6 +21,14 @@ const props = defineProps<{
 
 const project = ref(props.project)
 
+// Die Wahl steht in der Adresse: das Anlegen am Projekt kehrt mit back()
+// hierher zurück und findet den Entwurf nur so wieder.
+watch(project, (chosen) => {
+  router.get('/angebote/neu', chosen ? { projekt: chosen.id } : {}, { preserveState: true, replace: true })
+})
+
+const drafts = computed(() => props.quotes.filter((quote) => quote.status === 'draft'))
+
 // Der Entwurf entsteht am gewählten Projekt; ab da ist es derselbe Editor
 // wie im Angebotsreiter, nicht ein zweiter.
 function create() {
@@ -41,16 +49,16 @@ function create() {
             <ProjectTypeahead :id="id" v-model="project" />
           </Field>
 
-          <Button v-if="project && !quotes.length" class="mt-4 ml-0" type="button" @click="create">
+          <Button v-if="project && !drafts.length" class="mt-4 ml-0" type="button" @click="create">
             {{ $t('quotes.create') }}
           </Button>
 
-          <div v-if="project && quotes.length" class="mt-5">
+          <div v-if="project && drafts.length" class="mt-5">
             <QuoteWorkspace
               :project-id="project.id"
               :can-manage-quotes="true"
               :can-manage-payment-plan="false"
-              :quotes="quotes"
+              :quotes="drafts"
               :packages="packages"
               :catalog-items="catalogItems"
               :contacts="contacts"

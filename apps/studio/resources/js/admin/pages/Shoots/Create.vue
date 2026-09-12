@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { Link, useForm } from '@inertiajs/vue3'
+import { ref, watch } from 'vue'
+import { useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import ConflictNote from '@/admin/components/ConflictNote.vue'
 import ProjectTypeahead from '@/admin/components/ProjectTypeahead.vue'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
@@ -15,7 +16,6 @@ import { TimePicker } from '@/ui/time-picker'
 const props = defineProps<{
   project: App.Crm.Data.ProjectSuggestionData | null
   kinds: { value: string; label: string }[]
-  conflicts: { label: string; href: string }[]
 }>()
 
 const project = ref(props.project)
@@ -30,9 +30,25 @@ const form = useForm({
   venue_city: '',
 })
 
+// Wie bei der Erfassung einer Anfrage: der Tag wird geprüft, sobald er steht.
+const conflicts = ref<App.Crm.Data.DateConflictData[]>([])
+
+watch(
+  () => form.date,
+  async (date) => {
+    if (!date) {
+      conflicts.value = []
+      return
+    }
+
+    const response = await fetch(`/verfuegbarkeit?datum=${date}`, { headers: { Accept: 'application/json' } })
+    conflicts.value = (await response.json()).conflicts
+  },
+)
+
 function submit() {
   if (project.value) {
-    form.post(`/auftraege/${project.value.id}/shootings`)
+    form.transform((data) => ({ ...data, wizard: true })).post(`/auftraege/${project.value.id}/shootings`)
   }
 }
 </script>
@@ -59,14 +75,7 @@ function submit() {
 
             <Field v-slot="{ id }" :label="$t('project.shootDate')">
               <DatePicker :id="id" v-model="form.date" />
-              <Link
-                v-for="conflict in conflicts"
-                :key="conflict.href"
-                class="flex items-center self-start rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[11.5px] leading-[1.3] font-medium text-action no-underline hover:underline"
-                :href="conflict.href"
-              >
-                {{ conflict.label }}
-              </Link>
+              <ConflictNote :conflicts="conflicts" />
             </Field>
 
             <div class="grid grid-cols-2 gap-4">

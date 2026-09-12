@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
@@ -24,11 +24,15 @@ const props = defineProps<{
 
 const project = ref(props.project)
 
+watch(project, (chosen) => {
+  router.get('/frageboegen/neu', chosen ? { projekt: chosen.id } : {}, { preserveState: true, replace: true })
+})
+
 // Eine Vorlage wählen legt den Fragebogen an und kopiert ihre Fragen; was
 // danach geändert wird, ändert nur diese Kopie.
 function start(template: string) {
   if (project.value) {
-    router.post(`/auftraege/${project.value.id}/frageboegen`, { template: template || null })
+    router.post(`/auftraege/${project.value.id}/frageboegen`, { template: template || null, wizard: true })
   }
 }
 

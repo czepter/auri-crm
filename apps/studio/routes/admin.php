@@ -630,6 +630,11 @@ Route::middleware('audience:staff')->group(function () {
         // wie /pakete/neu über /pakete/{package}.
         Route::get('/galerien/neu', [GalleryIndexController::class, 'create'])->name('galleries.create');
         Route::post('/galerien', [GalleryIndexController::class, 'store'])->name('galleries.store');
+        // Die Anlege-Wizards der Übersicht: erst Projekt oder Anfrage, dann der
+        // Editor, den das Projekt schon hat. Angelegt wird weiter am Projekt.
+        Route::get('/shootings/neu', [ShootController::class, 'create'])->name('shoots.wizard');
+        Route::get('/angebote/neu', [QuoteController::class, 'create'])->name('quotes.wizard');
+        Route::get('/frageboegen/neu', [FormInstanceController::class, 'create'])->name('form-instances.wizard');
         // Bereich, Set und Einstellungsabschnitt stehen im Pfad, nicht in
         // einem ref(): sonst wirft jedes Neuladen den Menschen zurueck auf
         // Bilder/Alle und die Zurueck-Taste verlaesst die Galerie. Das
