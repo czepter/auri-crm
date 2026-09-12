@@ -3453,6 +3453,37 @@
                                                 ],
                                                 "format": "date-time"
                                             },
+                                            "pricing_mode": {
+                                                "description": "Der Editor schickt den Modus immer; die api-Oberflaeche kennt\nihn nicht und laesst das Angebot dann, wie es steht.",
+                                                "$ref": "#/components/schemas/PricingMode"
+                                            },
+                                            "recipient_contact": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "recipient_street": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
+                                            },
+                                            "recipient_postcode": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 32
+                                            },
+                                            "recipient_city": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
+                                            },
                                             "intro": {
                                                 "type": [
                                                     "string",
@@ -3562,15 +3593,15 @@
                                                     "integer",
                                                     "null"
                                                 ],
-                                                "description": "Q-08/Q-09/Q-11: der Reglerteil. hourly_rate null laesst alles\nunten so laufen, wie es vorher lief.",
-                                                "minimum": 0
+                                                "description": "Q-08/Q-09/Q-11: der Reglerteil, Pflicht nur im Modus choice.",
+                                                "minimum": 1
                                             },
                                             "min_hours": {
                                                 "type": [
                                                     "integer",
                                                     "null"
                                                 ],
-                                                "minimum": 0,
+                                                "minimum": 1,
                                                 "maximum": 2000
                                             },
                                             "max_hours": {
@@ -3578,7 +3609,7 @@
                                                     "integer",
                                                     "null"
                                                 ],
-                                                "minimum": 0,
+                                                "minimum": 1,
                                                 "maximum": 2000
                                             },
                                             "images_per_hour": {
@@ -3586,7 +3617,7 @@
                                                     "integer",
                                                     "null"
                                                 ],
-                                                "minimum": 0,
+                                                "minimum": 1,
                                                 "maximum": 2000
                                             },
                                             "hours": {
@@ -3594,8 +3625,22 @@
                                                     "integer",
                                                     "null"
                                                 ],
-                                                "minimum": 0,
+                                                "minimum": 1,
                                                 "maximum": 2000
+                                            },
+                                            "time_title": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
+                                            },
+                                            "time_description": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
                                             },
                                             "stages": {
                                                 "type": "array",
@@ -3701,6 +3746,37 @@
                                                 ],
                                                 "format": "date-time"
                                             },
+                                            "pricing_mode": {
+                                                "description": "Der Editor schickt den Modus immer; die api-Oberflaeche kennt\nihn nicht und laesst das Angebot dann, wie es steht.",
+                                                "$ref": "#/components/schemas/PricingMode"
+                                            },
+                                            "recipient_contact": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "recipient_street": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
+                                            },
+                                            "recipient_postcode": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 32
+                                            },
+                                            "recipient_city": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
+                                            },
                                             "intro": {
                                                 "type": [
                                                     "string",
@@ -3810,15 +3886,15 @@
                                                     "integer",
                                                     "null"
                                                 ],
-                                                "description": "Q-08/Q-09/Q-11: der Reglerteil. hourly_rate null laesst alles\nunten so laufen, wie es vorher lief.",
-                                                "minimum": 0
+                                                "description": "Q-08/Q-09/Q-11: der Reglerteil, Pflicht nur im Modus choice.",
+                                                "minimum": 1
                                             },
                                             "min_hours": {
                                                 "type": [
                                                     "integer",
                                                     "null"
                                                 ],
-                                                "minimum": 0,
+                                                "minimum": 1,
                                                 "maximum": 2000
                                             },
                                             "max_hours": {
@@ -3826,7 +3902,7 @@
                                                     "integer",
                                                     "null"
                                                 ],
-                                                "minimum": 0,
+                                                "minimum": 1,
                                                 "maximum": 2000
                                             },
                                             "images_per_hour": {
@@ -3834,7 +3910,7 @@
                                                     "integer",
                                                     "null"
                                                 ],
-                                                "minimum": 0,
+                                                "minimum": 1,
                                                 "maximum": 2000
                                             },
                                             "hours": {
@@ -3842,8 +3918,22 @@
                                                     "integer",
                                                     "null"
                                                 ],
-                                                "minimum": 0,
+                                                "minimum": 1,
                                                 "maximum": 2000
+                                            },
+                                            "time_title": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
+                                            },
+                                            "time_description": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
                                             },
                                             "stages": {
                                                 "type": "array",
@@ -4463,7 +4553,7 @@
             },
             "CaptureInquiryData": {
                 "type": "object",
-                "description": "The capture form's payload. Six fields the studio fills plus the contact\nblock, matching mockup 03 \u2014 venue, guest count, further shoots and package\nare deliberately absent and belong to the project screen.\n\nNo #[TypeScript]: this is request input, and the frontend builds it rather\nthan receiving it.",
+                "description": "The capture form's payload. Six fields the studio fills plus the contact\nblock, matching mockup 03 \u2014 guest count, further shoots and package are\ndeliberately absent and belong to the project screen; the venue of the\nfirst shoot is asked for here.\n\nNo #[TypeScript]: this is request input, and the frontend builds it rather\nthan receiving it.",
                 "properties": {
                     "contact_id": {
                         "type": [
@@ -4568,6 +4658,32 @@
                         "format": "date",
                         "description": "Nullable and never checked against existing bookings. The\navailability warning is advisory by design \u2014 see\nCheckDateAvailability."
                     },
+                    "call_time": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "end_time": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "venue_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "venue_city": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
                     "inquiry_text": {
                         "type": [
                             "string",
@@ -4658,6 +4774,14 @@
                 "type": "object",
                 "additionalProperties": {},
                 "title": "PaginatedDataCollection"
+            },
+            "PricingMode": {
+                "type": "string",
+                "enum": [
+                    "classic",
+                    "choice"
+                ],
+                "title": "PricingMode"
             },
             "ProjectDetailReadData": {
                 "type": "object",
@@ -4799,6 +4923,37 @@
                         ],
                         "format": "date-time"
                     },
+                    "pricing_mode": {
+                        "description": "Der Editor schickt den Modus immer; die api-Oberflaeche kennt\nihn nicht und laesst das Angebot dann, wie es steht.",
+                        "$ref": "#/components/schemas/PricingMode"
+                    },
+                    "recipient_contact": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "recipient_street": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "recipient_postcode": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 32
+                    },
+                    "recipient_city": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
                     "intro": {
                         "type": [
                             "string",
@@ -4908,15 +5063,15 @@
                             "integer",
                             "null"
                         ],
-                        "description": "Q-08/Q-09/Q-11: der Reglerteil. hourly_rate null laesst alles\nunten so laufen, wie es vorher lief.",
-                        "minimum": 0
+                        "description": "Q-08/Q-09/Q-11: der Reglerteil, Pflicht nur im Modus choice.",
+                        "minimum": 1
                     },
                     "min_hours": {
                         "type": [
                             "integer",
                             "null"
                         ],
-                        "minimum": 0,
+                        "minimum": 1,
                         "maximum": 2000
                     },
                     "max_hours": {
@@ -4924,7 +5079,7 @@
                             "integer",
                             "null"
                         ],
-                        "minimum": 0,
+                        "minimum": 1,
                         "maximum": 2000
                     },
                     "images_per_hour": {
@@ -4932,7 +5087,7 @@
                             "integer",
                             "null"
                         ],
-                        "minimum": 0,
+                        "minimum": 1,
                         "maximum": 2000
                     },
                     "hours": {
@@ -4940,8 +5095,22 @@
                             "integer",
                             "null"
                         ],
-                        "minimum": 0,
+                        "minimum": 1,
                         "maximum": 2000
+                    },
+                    "time_title": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "time_description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
                     },
                     "stages": {
                         "type": "array",
