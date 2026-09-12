@@ -143,6 +143,14 @@ function send(quoteId: string) {
   router.post(`/angebote/${quoteId}/versenden`, {}, { preserveScroll: true })
 }
 
+function markSent(quoteId: string) {
+  router.post(`/angebote/${quoteId}/versendet`, {}, { preserveScroll: true })
+}
+
+function copyLink(portalUrl: string) {
+  navigator.clipboard?.writeText(portalUrl)
+}
+
 /** draft/sent/accepted/superseded/expired -> the mockup's own three chip states (tokens.css). */
 function chipClass(status: string): string {
   return ({ sent: 'now', accepted: 'done' } as Record<string, string>)[status] ?? 'next'
@@ -198,7 +206,7 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
 
       <div class="ml-auto flex items-center gap-1.5">
         <Button as="a" variant="outline" :href="`/angebote/${quote.id}/pdf`" target="_blank">
-          {{ $t('quotes.pdf') }}
+          {{ $t('quotes.download') }}
         </Button>
 
         <Button
@@ -254,7 +262,7 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
 
         <div v-if="canManageQuotes && quote.status === 'draft'" class="flex">
           <Button type="button" variant="pill" class="rounded-r-none" @click="send(quote.id)">
-            {{ $t('quotes.send') }}
+            {{ $t('quotes.sendByMail') }}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -264,8 +272,10 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
               <svg class="size-3.5 fill-current" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem disabled>{{ $t('quotes.copyLink') }}</DropdownMenuItem>
-              <DropdownMenuItem disabled>{{ $t('quotes.markSent') }}</DropdownMenuItem>
+              <DropdownMenuItem :disabled="!quote.portalUrl" @select="copyLink(quote.portalUrl!)">
+                {{ $t('quotes.copyLink') }}
+              </DropdownMenuItem>
+              <DropdownMenuItem @select="markSent(quote.id)">{{ $t('quotes.markSent') }}</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

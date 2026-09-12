@@ -125,6 +125,10 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
         <QuoteRecipientCard
           :quote-id="quoteId"
           :recipient-name="quote.recipientName"
+          :recipient-contact-id="quote.recipientContact"
+          :contact-street="quote.recipientContactStreet"
+          :contact-postcode="quote.recipientContactPostcode"
+          :contact-city="quote.recipientContactCity"
           v-model:street="draft.recipientStreet"
           v-model:postcode="draft.recipientPostcode"
           v-model:city="draft.recipientCity"

@@ -321,6 +321,26 @@ class QuoteController extends Controller
     }
 
     /**
+     * Schreibt die Anschrift des Angebots in den Kontakt zurück, ohne
+     * Request-Body: eine ausgefüllte, aber noch nicht gespeicherte
+     * Formularzeile darf den Kontakt nie überschreiben.
+     */
+    public function adoptRecipient(Quote $quote): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+
+        abort_if($quote->recipient_contact_id === null, 404);
+
+        $quote->recipientContact->update([
+            'street' => $quote->recipient_street,
+            'postcode' => $quote->recipient_postcode,
+            'city' => $quote->recipient_city,
+        ]);
+
+        return back();
+    }
+
+    /**
      * Das Häkchen ist keine Spalte auf quote_items, sondern die Frage "gibt es
      * einen Katalogeintrag mit diesem Titel". Eine Zeile ohne den Schlüssel
      * stellt die Frage nicht und lässt die Bibliothek unberührt.

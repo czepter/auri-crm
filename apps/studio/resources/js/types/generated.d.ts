@@ -801,6 +801,10 @@ recipientName: string | null,
 recipientStreet: string | null,
 recipientPostcode: string | null,
 recipientCity: string | null,
+recipientContactStreet: string | null,
+recipientContactPostcode: string | null,
+recipientContactCity: string | null,
+portalUrl: string | null,
 };
 export type QuoteItemData = {
 id: string,

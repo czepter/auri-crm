@@ -65,6 +65,15 @@ class QuoteData extends Data
         public ?string $recipientStreet = null,
         public ?string $recipientPostcode = null,
         public ?string $recipientCity = null,
+        // Dieselbe eigene Anschrift, wie sie am Kontakt steht — der Vergleich
+        // gegen recipient* oben entscheidet, ob "Beim Kontakt speichern"
+        // etwas zu tun hätte.
+        public ?string $recipientContactStreet = null,
+        public ?string $recipientContactPostcode = null,
+        public ?string $recipientContactCity = null,
+        // Wie in App\Quotes\Notifications\QuoteSent: config('portal.url') und
+        // nur, wenn der Kunde das Portal überhaupt sehen darf.
+        public ?string $portalUrl = null,
     ) {}
 
     public static function fromModel(Quote $quote): self
@@ -116,6 +125,12 @@ class QuoteData extends Data
             recipientStreet: $quote->recipient_street,
             recipientPostcode: $quote->recipient_postcode,
             recipientCity: $quote->recipient_city,
+            recipientContactStreet: $quote->recipientContact?->street,
+            recipientContactPostcode: $quote->recipientContact?->postcode,
+            recipientContactCity: $quote->recipientContact?->city,
+            portalUrl: $quote->project->portal_visible
+                ? config('portal.url')."/projekte/{$quote->project->public_id}/angebot"
+                : null,
         );
     }
 }

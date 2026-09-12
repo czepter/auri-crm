@@ -74,3 +74,29 @@ it('laesst eine abweichende Anschrift am Kontakt unberuehrt', function () {
     expect($contact->fresh()->street)->toBe('Elbchaussee 88')
         ->and($quote->fresh()->recipient_street)->toBe('Hafenstraße 12');
 });
+
+it('uebernimmt die Anschrift auf Knopfdruck in den Kontakt', function () {
+    [$user, $project] = studioWithProject();
+
+    $contact = Contact::factory()->create(['street' => 'Elbchaussee 88', 'postcode' => '22763', 'city' => 'Hamburg']);
+    $project->attachContact($contact, ProjectContactRole::Primary);
+
+    $quote = Quote::factory()->for($project)->create([
+        'recipient_contact_id' => $contact->id,
+        'recipient_street' => 'Hafenstraße 12',
+        'recipient_postcode' => '20459',
+        'recipient_city' => 'Hamburg',
+    ]);
+
+    $this->actingAs($user, 'staff')->post("/angebote/{$quote->public_id}/empfaenger-uebernehmen")->assertRedirect();
+
+    expect($contact->fresh()->street)->toBe('Hafenstraße 12');
+});
+
+it('lehnt die Anschriftsuebernahme ohne Empfaengerkontakt ab', function () {
+    [$user, $project] = studioWithProject();
+
+    $quote = Quote::factory()->for($project)->create(['recipient_contact_id' => null]);
+
+    $this->actingAs($user, 'staff')->post("/angebote/{$quote->public_id}/empfaenger-uebernehmen")->assertNotFound();
+});
