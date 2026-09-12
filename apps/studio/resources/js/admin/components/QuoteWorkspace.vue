@@ -325,7 +325,7 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
           </span>
         </span>
         <span class="w-[110px] flex-none text-right font-semibold tabular-nums">
-          {{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.lineTotal) }}
+          {{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.netTotal) }}
         </span>
       </div>
 

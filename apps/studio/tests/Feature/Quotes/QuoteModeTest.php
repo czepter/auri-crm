@@ -3,6 +3,7 @@
 use App\Catalog\Models\Package;
 use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Enums\PricingMode;
+use App\Quotes\Data\QuoteItemData;
 use App\Quotes\Models\Quote;
 use App\Quotes\Support\QuoteRange;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -68,6 +69,8 @@ it('speichert Menge und Rabatt auch im Auswahlmodus', function () {
     expect($item->quantity)->toBe(2)
         ->and($item->discount_value)->toBe(10)
         ->and($item->discountedLineTotal())->toBe(137_862)
+        // Die Zeilensumme, die Adminansicht und Portal drucken.
+        ->and(QuoteItemData::fromModel($item)->netTotal)->toBe(137_862)
         ->and(QuoteRange::preselected($fresh))->toBe(125_000)
         ->and(QuoteRange::max($fresh))->toBe(437_862)
         ->and($quote->fresh()->paymentStages()->count())->toBe(2);
