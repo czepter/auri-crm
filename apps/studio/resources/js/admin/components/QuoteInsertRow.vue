@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { QuoteRow } from '@/admin/components/QuoteTable.vue'
+import type { QuoteRow } from '@/admin/components/quote/quotePayload'
 import { insertOptions, itemRow, packageRows } from '@/admin/lib/insert'
 import { Combobox, ComboboxAnchor, ComboboxContent, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxLabel } from '@/ui/combobox'
 

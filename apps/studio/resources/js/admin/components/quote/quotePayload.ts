@@ -1,6 +1,36 @@
-import type { QuoteRow } from '@/admin/components/QuoteTable.vue'
-import type { SliderDraft } from '@/admin/components/QuoteSliderEditor.vue'
 import { eurosToCents, parseDiscount } from '@/admin/lib/money'
+
+export type QuoteRow = {
+  id?: string
+  title: string
+  description: string
+  quantity: number
+  unitPrice: string
+  discount: string
+  remember: boolean
+}
+
+export type SliderRow = {
+  id?: string
+  title: string
+  outcome: string
+  unitPrice: string
+  selectable: boolean
+  selected: boolean
+  hasImage: boolean
+}
+
+export type StageRow = { percent: number; label: string; minimum: string }
+
+export type SliderDraft = {
+  hourlyRate: string
+  minHours: number | null
+  maxHours: number | null
+  imagesPerHour: number | null
+  hours: number | null
+  rows: SliderRow[]
+  stages: StageRow[]
+}
 
 export type QuoteDraft = {
   validUntil: string

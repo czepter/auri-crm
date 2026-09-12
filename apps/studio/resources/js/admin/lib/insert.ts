@@ -1,4 +1,4 @@
-import type { QuoteRow } from '@/admin/components/QuoteTable.vue'
+import type { QuoteRow } from '@/admin/components/quote/quotePayload'
 import { centsToEuros, formatEurosRounded } from '@/admin/lib/money'
 
 export type InsertOption = {

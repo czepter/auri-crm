@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
-import QuoteTable from '@/admin/components/QuoteTable.vue'
-import QuoteSliderEditor from '@/admin/components/QuoteSliderEditor.vue'
-import ValidUntilField from '@/admin/components/ValidUntilField.vue'
+import QuoteEditor from '@/admin/components/quote/QuoteEditor.vue'
 import Section from '@/ui/page/Section.vue'
 import { debounced } from '@/admin/lib/autosave'
 import { buildQuotePayload, type QuoteDraft } from '@/admin/components/quote/quotePayload'
@@ -11,10 +9,10 @@ import { basisPointsToPercent, centsToEuros, eurosToCents, formatDiscount, forma
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
-import { Textarea } from '@/ui/textarea'
 import { DatePicker } from '@/ui/date-picker'
 import { Label } from '@/ui/label'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 
 const props = withDefaults(
   defineProps<{
@@ -256,14 +254,23 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
           </DialogContent>
         </Dialog>
 
-        <Button
-          v-if="canManageQuotes && quote.status === 'draft'"
-          type="button"
-          variant="pill"
-          @click="send(quote.id)"
-        >
-          {{ $t('quotes.send') }}
-        </Button>
+        <div v-if="canManageQuotes && quote.status === 'draft'" class="flex">
+          <Button type="button" variant="pill" class="rounded-r-none" @click="send(quote.id)">
+            {{ $t('quotes.send') }}
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              class="flex items-center rounded-r-[var(--r-pill)] border-l border-white/20 bg-foreground px-2 text-paper"
+              :aria-label="$t('quotes.sendOptions')"
+            >
+              <svg class="size-3.5 fill-current" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem disabled>{{ $t('quotes.copyLink') }}</DropdownMenuItem>
+              <DropdownMenuItem disabled>{{ $t('quotes.markSent') }}</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </template>
 
@@ -273,50 +280,15 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
          wrong or bypassed. Ein Entwurf ist die Tabelle; erst ab Versendet
          tritt das gelesene Dokument an ihre Stelle. -->
     <template v-if="canManageQuotes && quote.status === 'draft' && drafts[quote.id]">
-      <!-- Q-14: der Stundensatz ist die Weiche. Leer bleibt die Tabelle
-           stehen, die vor dieser Runde hier stand. -->
-      <QuoteSliderEditor
-        v-model="drafts[quote.id].slider"
+      <QuoteEditor
+        v-model="drafts[quote.id]"
         :quote-id="quote.id"
-        @change="save(quote.id)"
-      />
-
-      <QuoteTable
-        v-if="!drafts[quote.id].slider.hourlyRate"
-        class="mt-8"
-        v-model="drafts[quote.id].rows"
+        :quote="quote"
         :can-manage-catalog="canManageCatalog"
         :packages="packages"
         :catalog-items="catalogItems"
         @change="save(quote.id)"
       />
-
-      <div class="mt-4 grid grid-cols-2 gap-x-5 gap-y-4">
-        <ValidUntilField
-          :id="`quote-valid-${quote.id}`"
-          v-model="drafts[quote.id].validUntil"
-          @blur.capture="save(quote.id)"
-        />
-        <div class="flex min-w-0 flex-col gap-1.5">
-          <Label :for="`quote-discount-${quote.id}`">{{ $t('quotes.discount') }}</Label>
-          <Input
-            :id="`quote-discount-${quote.id}`"
-            v-model="drafts[quote.id].discount"
-            class="tabular-nums"
-            type="text"
-            inputmode="decimal"
-            @blur="save(quote.id)"
-          />
-        </div>
-        <div class="col-span-2 flex min-w-0 flex-col gap-1.5">
-          <Label :for="`quote-intro-${quote.id}`">{{ $t('quotes.intro') }}</Label>
-          <Textarea :id="`quote-intro-${quote.id}`" v-model="drafts[quote.id].intro" rows="3" @blur="save(quote.id)" />
-        </div>
-        <div class="col-span-2 flex min-w-0 flex-col gap-1.5">
-          <Label :for="`quote-outro-${quote.id}`">{{ $t('quotes.outro') }}</Label>
-          <Textarea :id="`quote-outro-${quote.id}`" v-model="drafts[quote.id].outro" rows="3" @blur="save(quote.id)" />
-        </div>
-      </div>
     </template>
 
     <template v-else>
