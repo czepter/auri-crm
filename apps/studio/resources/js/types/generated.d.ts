@@ -365,6 +365,7 @@ export type ProjectSuggestionData = {
 id: string,
 name: string,
 contactName: string | null,
+isBooked: boolean,
 galleryDefaults: {
 downloads: boolean | null,
 lists: boolean | null,

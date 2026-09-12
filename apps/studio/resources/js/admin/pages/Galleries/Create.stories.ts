@@ -32,6 +32,7 @@ const project: App.Crm.Data.ProjectSuggestionData = {
   id: 'p-rahn',
   name: 'Hochzeit Rahn',
   contactName: 'Jana Rahn',
+  isBooked: true,
   galleryDefaults: { downloads: true, lists: true, comments: null },
 }
 
