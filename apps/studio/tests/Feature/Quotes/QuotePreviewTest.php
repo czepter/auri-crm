@@ -1,22 +1,14 @@
 <?php
 
-use App\Crm\Models\Project;
-use App\Models\User;
+use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Models\Contact;
 use App\Quotes\Models\Quote;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-function studioWithProjectForPreview(): array
-{
-    $user = User::factory()->withMfa()->create();
-    $project = Project::factory()->create();
-
-    return [$user, $project];
-}
-
 it('rendert die Vorschau als HTML', function () {
-    [$user, $project] = studioWithProjectForPreview();
+    [$user, $project] = studioWithProject();
     $quote = Quote::factory()->for($project)->create(['time_title' => 'Hochzeitsreportage']);
 
     $this->actingAs($user, 'staff')
@@ -27,14 +19,14 @@ it('rendert die Vorschau als HTML', function () {
 });
 
 it('haelt Fremde von der Vorschau fern', function () {
-    [, $project] = studioWithProjectForPreview();
+    [, $project] = studioWithProject();
     $quote = Quote::factory()->for($project)->create();
 
     $this->post("/angebote/{$quote->public_id}/vorschau")->assertRedirect('/login');
 });
 
 it('speichert beim Vorschau-Rendern nichts', function () {
-    [$user, $project] = studioWithProjectForPreview();
+    [$user, $project] = studioWithProject();
     $quote = Quote::factory()->for($project)->create(['intro' => 'Original']);
     $updatedAt = $quote->updated_at;
 
@@ -51,4 +43,23 @@ it('speichert beim Vorschau-Rendern nichts', function () {
     expect($quote->items()->count())->toBe(0);
     expect($quote->paymentStages()->count())->toBe(0);
     expect($quote->updated_at)->toEqual($updatedAt);
+});
+
+it('zeigt Empfaenger und Anschrift im Blatt', function () {
+    [$user, $project] = studioWithProject();
+    $contact = Contact::factory()->create(['name' => 'Lena Meier']);
+    $project->attachContact($contact, ProjectContactRole::Payer);
+
+    $quote = Quote::factory()->for($project)->create(['recipient_contact_id' => $contact->id]);
+
+    $this->actingAs($user, 'staff')
+        ->post("/angebote/{$quote->public_id}/vorschau", [
+            'recipient_street' => 'Elbchaussee 88',
+            'recipient_postcode' => '22763',
+            'recipient_city' => 'Hamburg',
+        ])
+        ->assertOk()
+        ->assertSee('Lena Meier')
+        ->assertSee('Elbchaussee 88')
+        ->assertSee('22763 Hamburg');
 });

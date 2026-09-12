@@ -3,6 +3,7 @@
 namespace App\Quotes\Actions;
 
 use App\Catalog\Models\Package;
+use App\Quotes\Enums\PricingMode;
 use App\Quotes\Models\Quote;
 
 /**
@@ -28,7 +29,12 @@ class SeedQuoteFromPackage
         // do: copied out, no id, no reference back.
         $quote->paymentStages()->createMany($package->copyPaymentStages());
 
-        $quote->update($package->only('hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours'));
+        // §4.1: der Modus reist mit dem Satz, sonst steht ein klassisches
+        // Angebot mit Regler da — im Editor die eine Art, im PDF die andere.
+        $quote->update([
+            ...$package->only('hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours'),
+            'pricing_mode' => $package->hourly_rate === null ? PricingMode::Classic : PricingMode::Choice,
+        ]);
 
         $quote->recalculateTotal();
 

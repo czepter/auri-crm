@@ -48,8 +48,8 @@ const fixed = computed(() => props.quote.items.filter((item) => !item.isIncluded
 const total = computed(
   () =>
     hours.value * (props.quote.hourlyRate ?? 0) +
-    fixed.value.reduce((sum, item) => sum + item.lineTotal, 0) +
-    blocks.value.filter((item) => chosen.value.has(item.id)).reduce((sum, item) => sum + item.lineTotal, 0)
+    fixed.value.reduce((sum, item) => sum + item.netTotal, 0) +
+    blocks.value.filter((item) => chosen.value.has(item.id)).reduce((sum, item) => sum + item.netTotal, 0)
 )
 
 const stages = computed(() =>
@@ -75,10 +75,10 @@ const timeDetail = computed(() =>
 const breakdown = computed(() => [
   { label: props.quote.timeTitle ?? t('quotes.hoursCount', hours.value), amount: hours.value * (props.quote.hourlyRate ?? 0), lead: true },
   ...(props.quote.timeTitle ? [{ label: timeDetail.value, amount: null, lead: false }] : []),
-  ...fixed.value.map((item) => ({ label: item.title, amount: item.lineTotal, lead: false })),
+  ...fixed.value.map((item) => ({ label: item.title, amount: item.netTotal, lead: false })),
   ...(props.quote.timeTitle ? [] : [{ label: t('quotes.editedImages', { count: images.value }), amount: null, lead: false }]),
   ...included.value.map((item) => ({ label: item.outcome ?? item.title, amount: null, lead: false })),
-  ...blocks.value.filter((item) => chosen.value.has(item.id)).map((item) => ({ label: item.title, amount: item.lineTotal, lead: false })),
+  ...blocks.value.filter((item) => chosen.value.has(item.id)).map((item) => ({ label: item.title, amount: item.netTotal, lead: false })),
 ])
 
 function toggle(item: Item) {
@@ -207,7 +207,7 @@ function accept() {
             <span
               class="mt-2.5 block text-[13px] leading-none font-semibold tabular-nums"
               :class="chosen.has(item.id) ? 'text-[var(--accent)]' : 'text-muted-foreground'"
-            >+ {{ formatEuros(item.lineTotal) }}</span>
+            >+ {{ formatEuros(item.netTotal) }}</span>
           </span>
         </button>
       </div>

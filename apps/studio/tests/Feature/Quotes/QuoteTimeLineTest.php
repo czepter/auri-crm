@@ -1,22 +1,13 @@
 <?php
 
-use App\Crm\Models\Project;
-use App\Models\User;
+use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Models\Quote;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-function studioWithProjectForTimeLine(): array
-{
-    $user = User::factory()->withMfa()->create();
-    $project = Project::factory()->create();
-
-    return [$user, $project];
-}
-
 it('weist eine Vorauswahl ausserhalb der Spanne zurueck', function () {
-    [$user, $project] = studioWithProjectForTimeLine();
+    [$user, $project] = studioWithProject();
     $quote = Quote::factory()->for($project)->create();
 
     $this->actingAs($user, 'staff')
@@ -33,7 +24,7 @@ it('weist eine Vorauswahl ausserhalb der Spanne zurueck', function () {
 });
 
 it('weist max_hours unter min_hours zurueck', function () {
-    [$user, $project] = studioWithProjectForTimeLine();
+    [$user, $project] = studioWithProject();
     $quote = Quote::factory()->for($project)->create();
 
     $this->actingAs($user, 'staff')
@@ -49,7 +40,7 @@ it('weist max_hours unter min_hours zurueck', function () {
 });
 
 it('schreibt Titel und Stunden ins PDF', function () {
-    [, $project] = studioWithProjectForTimeLine();
+    [, $project] = studioWithProject();
 
     $quote = Quote::factory()->for($project)->create([
         'pricing_mode' => 'choice',
@@ -62,7 +53,7 @@ it('schreibt Titel und Stunden ins PDF', function () {
         'time_description' => 'Trauung, Empfang, Paarshooting',
     ]);
 
-    $html = app(App\Quotes\Actions\RenderQuotePdf::class)->html($quote);
+    $html = app(RenderQuotePdf::class)->html($quote);
 
     expect($html)->toContain('Hochzeitsreportage')
         ->and($html)->toContain('8 Stunden')
@@ -70,7 +61,7 @@ it('schreibt Titel und Stunden ins PDF', function () {
 });
 
 it('speichert Titel und Beschreibung der Zeitzeile', function () {
-    [$user, $project] = studioWithProjectForTimeLine();
+    [$user, $project] = studioWithProject();
     $quote = Quote::factory()->for($project)->create();
 
     $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", [

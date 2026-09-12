@@ -148,7 +148,7 @@ class RenderQuotePdf
 
             $html .= $this->row(
                 e($item->title).($item->outcome === null ? '' : '<br><small>'.e($item->outcome).'</small>'),
-                $item->isIncluded() ? 'enthalten' : $this->money($item->lineTotal()),
+                $item->isIncluded() ? 'enthalten' : $this->money($item->discountedLineTotal()),
             );
         }
 

@@ -154,34 +154,55 @@ class QuoteController extends Controller
             abort(403);
         }
 
-        $recipient = ! empty($validated['recipient_contact'])
-            ? $quote->project->contacts()->where('contacts.public_id', $validated['recipient_contact'])->first()
-            : null;
+        $recipientFields = [];
 
-        if ($recipient !== null && blank($recipient->street) && blank($recipient->postcode) && blank($recipient->city)) {
-            $recipient->update([
-                'street' => $validated['recipient_street'] ?? null,
-                'postcode' => $validated['recipient_postcode'] ?? null,
-                'city' => $validated['recipient_city'] ?? null,
-            ]);
+        if (array_key_exists('recipient_contact', $validated)) {
+            $recipient = ! empty($validated['recipient_contact'])
+                ? $quote->project->contacts()->where('contacts.public_id', $validated['recipient_contact'])->first()
+                : null;
+
+            if ($recipient !== null && blank($recipient->street) && blank($recipient->postcode) && blank($recipient->city)) {
+                $recipient->update([
+                    'street' => $validated['recipient_street'] ?? null,
+                    'postcode' => $validated['recipient_postcode'] ?? null,
+                    'city' => $validated['recipient_city'] ?? null,
+                ]);
+            }
+
+            $recipientFields = [
+                // Ein vom Projekt geloester Kontakt findet sich hier nicht
+                // mehr — den Empfaenger des Angebots kostet das nichts.
+                'recipient_contact_id' => empty($validated['recipient_contact'])
+                    ? null
+                    : ($recipient?->id ?? $quote->recipient_contact_id),
+                'recipient_street' => $validated['recipient_street'] ?? null,
+                'recipient_postcode' => $validated['recipient_postcode'] ?? null,
+                'recipient_city' => $validated['recipient_city'] ?? null,
+            ];
         }
+
+        // §4.1: der Modus ist der Schalter, nicht der Stundensatz. Bleibt ein
+        // Satz am klassischen Angebot stehen, rendern PDF, Vorschau und Portal
+        // einen Regler, den der Editor nicht zeigt.
+        $slider = $validated['pricing_mode'] === PricingMode::Classic->value
+            ? array_fill_keys(['hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours'], null)
+            : [
+                'hourly_rate' => $validated['hourly_rate'] ?? null,
+                'min_hours' => $validated['min_hours'] ?? null,
+                'max_hours' => $validated['max_hours'] ?? null,
+                'images_per_hour' => $validated['images_per_hour'] ?? null,
+                'hours' => $validated['hours'] ?? null,
+            ];
 
         $quote->update([
             'valid_until' => $validated['valid_until'] ?? null,
             'pricing_mode' => $validated['pricing_mode'],
-            'recipient_contact_id' => $recipient?->id,
-            'recipient_street' => $validated['recipient_street'] ?? null,
-            'recipient_postcode' => $validated['recipient_postcode'] ?? null,
-            'recipient_city' => $validated['recipient_city'] ?? null,
+            ...$recipientFields,
             'intro' => $validated['intro'] ?? null,
             'outro' => $validated['outro'] ?? null,
             'discount_type' => $validated['discount_type'] ?? null,
             'discount_value' => $validated['discount_value'] ?? null,
-            'hourly_rate' => $validated['hourly_rate'] ?? null,
-            'min_hours' => $validated['min_hours'] ?? null,
-            'max_hours' => $validated['max_hours'] ?? null,
-            'images_per_hour' => $validated['images_per_hour'] ?? null,
-            'hours' => $validated['hours'] ?? null,
+            ...$slider,
             'time_title' => $validated['time_title'] ?? null,
             'time_description' => $validated['time_description'] ?? null,
         ]);
@@ -390,6 +411,9 @@ class QuoteController extends Controller
 
         $validated = $request->validate([
             'pricing_mode' => ['nullable', Rule::enum(PricingMode::class)],
+            'recipient_street' => ['nullable', 'string', 'max:255'],
+            'recipient_postcode' => ['nullable', 'string', 'max:32'],
+            'recipient_city' => ['nullable', 'string', 'max:255'],
             'intro' => ['nullable', 'string', 'max:5000'],
             'outro' => ['nullable', 'string', 'max:5000'],
             'discount_type' => ['nullable', 'in:percentage,amount'],
@@ -419,8 +443,14 @@ class QuoteController extends Controller
 
         $preview = new Quote(['project_id' => $quote->project_id]);
         $preview->setRelation('project', $quote->project);
+        // Der Name steht am Kontakt, nicht am Formular; die Anschrift kommt
+        // aus dem Entwurf, damit das Blatt dem Feld folgt.
+        $preview->setRelation('recipientContact', $quote->recipientContact);
         $preview->fill([
             'pricing_mode' => $validated['pricing_mode'] ?? PricingMode::Classic->value,
+            'recipient_street' => $validated['recipient_street'] ?? null,
+            'recipient_postcode' => $validated['recipient_postcode'] ?? null,
+            'recipient_city' => $validated['recipient_city'] ?? null,
             'intro' => $validated['intro'] ?? null,
             'outro' => $validated['outro'] ?? null,
             'discount_type' => $validated['discount_type'] ?? null,

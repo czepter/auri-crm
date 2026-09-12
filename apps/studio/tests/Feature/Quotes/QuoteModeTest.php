@@ -1,9 +1,10 @@
 <?php
 
-use App\Crm\Models\Project;
-use App\Models\User;
+use App\Catalog\Models\Package;
+use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Enums\PricingMode;
 use App\Quotes\Models\Quote;
+use App\Quotes\Support\QuoteRange;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -15,8 +16,7 @@ it('legt ein Angebot klassisch an', function () {
 });
 
 it('nimmt den Modus vom Formular entgegen', function () {
-    $user = User::factory()->withMfa()->create();
-    $project = Project::factory()->create();
+    [$user, $project] = studioWithProject();
 
     $quote = Quote::factory()->for($project)->create();
 
@@ -36,8 +36,7 @@ it('nimmt den Modus vom Formular entgegen', function () {
 });
 
 it('speichert Menge und Rabatt auch im Auswahlmodus', function () {
-    $user = User::factory()->withMfa()->create();
-    $project = Project::factory()->create();
+    [$user, $project] = studioWithProject();
     $quote = Quote::factory()->for($project)->create();
 
     $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", [
@@ -63,7 +62,62 @@ it('speichert Menge und Rabatt auch im Auswahlmodus', function () {
 
     $item = $quote->fresh()->items()->first();
 
+    // 2 x 690 € abzueglich 0,1 % Zeilenrabatt, plus 5 h x 250 €.
+    $fresh = $quote->fresh('items');
+
     expect($item->quantity)->toBe(2)
         ->and($item->discount_value)->toBe(10)
+        ->and($item->discountedLineTotal())->toBe(137_862)
+        ->and(QuoteRange::preselected($fresh))->toBe(125_000)
+        ->and(QuoteRange::max($fresh))->toBe(437_862)
         ->and($quote->fresh()->paymentStages()->count())->toBe(2);
+});
+
+it('raeumt die Reglerspalten beim Umschalten auf klassisch', function () {
+    [$user, $project] = studioWithProject();
+    $quote = Quote::factory()->slider()->create(['project_id' => $project->id]);
+
+    $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", [
+        'pricing_mode' => 'classic',
+        'items' => [['title' => 'Shooting', 'quantity' => 1, 'unit_price' => 90000]],
+        'stages' => [],
+    ])->assertRedirect();
+
+    $quote->refresh();
+
+    expect($quote->hourly_rate)->toBeNull()
+        ->and($quote->min_hours)->toBeNull()
+        ->and($quote->max_hours)->toBeNull()
+        ->and($quote->images_per_hour)->toBeNull()
+        ->and($quote->hours)->toBeNull()
+        ->and($quote->hasSlider())->toBeFalse()
+        ->and($quote->total)->toBe(90000);
+});
+
+it('uebernimmt den Modus aus dem Paket', function () {
+    $withRate = Package::factory()->create(['hourly_rate' => 25000, 'min_hours' => 4, 'max_hours' => 10]);
+    $withoutRate = Package::factory()->create(['hourly_rate' => null]);
+
+    $choice = Quote::factory()->create();
+    app(SeedQuoteFromPackage::class)($choice, $withRate);
+
+    $classic = Quote::factory()->create();
+    app(SeedQuoteFromPackage::class)($classic, $withoutRate);
+
+    expect($choice->fresh()->pricing_mode)->toBe(PricingMode::Choice)
+        ->and($classic->fresh()->pricing_mode)->toBe(PricingMode::Classic);
+});
+
+it('rechnet die Spanne mit dem Zeilenrabatt', function () {
+    $quote = Quote::factory()->slider()->create(['hourly_rate' => 0, 'min_hours' => 1, 'max_hours' => 1, 'hours' => 1]);
+
+    $quote->items()->createMany([
+        ['title' => 'Anfahrt', 'quantity' => 1, 'unit_price' => 50000, 'discount_type' => 'percentage', 'discount_value' => 1000, 'sort_order' => 0],
+        ['title' => 'Album', 'quantity' => 2, 'unit_price' => 50000, 'discount_type' => 'amount', 'discount_value' => 10000, 'sort_order' => 1, 'selectable' => true],
+    ]);
+
+    $quote = $quote->fresh('items');
+
+    expect(QuoteRange::min($quote))->toBe(45000)
+        ->and(QuoteRange::max($quote))->toBe(135000);
 });

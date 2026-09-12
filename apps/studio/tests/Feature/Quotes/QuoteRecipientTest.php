@@ -2,20 +2,11 @@
 
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
-use App\Crm\Models\Project;
-use App\Models\User;
+use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Models\Quote;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
-
-function studioWithProject(): array
-{
-    $user = User::factory()->withMfa()->create();
-    $project = Project::factory()->create();
-
-    return [$user, $project];
-}
 
 it('belegt den Empfaenger mit dem Zahler vor', function () {
     [$user, $project] = studioWithProject();
@@ -114,10 +105,33 @@ it('druckt die Anschrift des Angebots, nicht die des Kontakts', function () {
         'recipient_city' => 'Hamburg',
     ]);
 
-    $html = app(App\Quotes\Actions\RenderQuotePdf::class)->html($quote);
+    $html = app(RenderQuotePdf::class)->html($quote);
 
     expect($html)->toContain('Ursula Meier')
         ->and($html)->toContain('Hafenstraße 12')
         ->and($html)->toContain('20459 Hamburg')
         ->and($html)->not->toContain('Elbchaussee 88');
+});
+
+it('behaelt den Empfaenger, wenn das Formular ihn nicht mitschickt', function () {
+    [$user, $project] = studioWithProject();
+
+    $contact = Contact::factory()->create(['street' => 'Elbchaussee 88', 'postcode' => '22763', 'city' => 'Hamburg']);
+    $project->attachContact($contact, ProjectContactRole::Payer);
+
+    $quote = Quote::factory()->for($project)->create([
+        'recipient_contact_id' => $contact->id,
+        'recipient_street' => 'Elbchaussee 88',
+        'recipient_postcode' => '22763',
+        'recipient_city' => 'Hamburg',
+    ]);
+
+    $this->actingAs($user, 'staff')
+        ->patch("/angebote/{$quote->public_id}", ['pricing_mode' => 'classic', 'items' => [], 'stages' => []])
+        ->assertRedirect();
+
+    $quote->refresh();
+
+    expect($quote->recipient_contact_id)->toBe($contact->id)
+        ->and($quote->recipient_street)->toBe('Elbchaussee 88');
 });
