@@ -1,7 +1,7 @@
 # Angebot: zwei Modi und ein neuer Editor — design
 
 **Date:** 2026-09-12
-**Status:** design. Der Entwurf liegt als Design-Canvas („Angebot · Klassisch / Auswahl"), die Umsetzung steht in `docs/superpowers/plans/2026-09-12-angebot-modi-und-editor.md`.
+**Status:** umgesetzt (2026-09-12). Der Entwurf liegt als Design-Canvas („Angebot · Klassisch / Auswahl"), die Umsetzung steht in `docs/superpowers/plans/2026-09-12-angebot-modi-und-editor.md`.
 **Baut auf:** `2026-09-06-angebot-regler-design.md` (Regler, Bausteine, Stufen)
 
 ---
