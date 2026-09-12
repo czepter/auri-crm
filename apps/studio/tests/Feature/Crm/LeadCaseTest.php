@@ -180,27 +180,25 @@ it('moves the shoot while it is an inquiry', function () {
         ->and($shoot->fresh()->venue_name)->toBe('Hof Eggers');
 });
 
-// From booked, date and place are contract content. Refused rather than
-// silently dropped: a save that reports success and changes nothing is worse
-// than one that says no.
-it('refuses to move a shoot once the project is booked', function () {
+// Eine Verschiebung ist der häufigste Vorgang überhaupt. Sie war bis hierher
+// ein 422, sobald gebucht war — das Datum stand dann als Vertragsinhalt fest
+// und ließ sich nur auf einem anderen Bildschirm ändern.
+it('moves a shoot after the project is booked', function () {
     $lead = caseFor();
     Job::factory()->for($lead->project)->create();
 
     test()->patch("/anfragen/{$lead->public_id}", [
-        'type' => 'wedding',
-        'source' => $lead->source->value,
         'shoots' => [[
             'id' => $lead->project->primaryShoot->public_id,
             'date' => '2026-09-12',
-            'venue_name' => null,
+            'venue_name' => 'Hof Eggers',
             'venue_city' => null,
             'call_time' => null,
             'end_time' => null,
         ]],
-    ])->assertStatus(422);
+    ])->assertRedirect();
 
-    expect($lead->project->primaryShoot->fresh()->date->format('Y-m-d'))->toBe('2026-09-05');
+    expect($lead->project->primaryShoot->fresh()->date->format('Y-m-d'))->toBe('2026-09-12');
 });
 
 // --- The quote block carries every version, not only the current one ----
