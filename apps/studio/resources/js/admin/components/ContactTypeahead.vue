@@ -120,11 +120,5 @@ const ROW = [
         </Button>
       </div>
     </div>
-
-    <!-- text-ink-2 and the 12px are crm.css's own .form .hint, which is the
-         only place this component is used. -->
-    <p class="mt-1.5 pt-1.5 text-[12px] leading-[1.45] font-normal text-ink-2">
-      {{ $t('leads.contactSearchHint') }}
-    </p>
   </div>
 </template>

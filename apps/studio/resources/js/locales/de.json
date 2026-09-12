@@ -45,13 +45,11 @@
     "createTitle": "Anfrage erfassen",
     "contact": "Kontakt",
     "contactChange": "ändern",
-    "contactSearchHint": "Erst suchen, sonst entsteht ein zweiter Kontakt für dieselbe Person.",
     "contactCreate": "„{term}“ als neuen Kontakt anlegen",
     "contactProjects": "{count}. Projekt",
     "name": "Name",
     "email": "E-Mail",
     "phone": "Telefon",
-    "noEmailHint": "Ohne E-Mail: kein Portal-Zugang, keine Eingangsbestätigung.",
     "projectName": "Projektname",
     "type": "Typ",
     "source": "Quelle",
@@ -67,7 +65,7 @@
     "conflictBooked": "Gebucht — {project}{venue} ›",
     "otherDetail": "Details",
     "advanced": "Erweitert",
-    "capturedAt": "Anfragedatum"
+    "capturedAt": "Eingegangen"
   },
   "board": {
     "title": "Anfragen",
