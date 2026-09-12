@@ -1,18 +1,20 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3'
+import { Link, useForm } from '@inertiajs/vue3'
 import { computed, ref, watch } from 'vue'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
-import PageHead from '@/ui/page/PageHead.vue'
+import Card from '@/ui/page/Card.vue'
 import ContactTypeahead from '@/admin/components/ContactTypeahead.vue'
 import ConflictNote from '@/admin/components/ConflictNote.vue'
 import ProjectFields from '@/admin/components/ProjectFields.vue'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
+import { TimePicker } from '@/ui/time-picker'
 import { Input } from '@/ui/input'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Field } from '@/ui/field'
 import { Textarea } from '@/ui/textarea'
+import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
 
 type Option = { value: string; label: string }
 
@@ -57,6 +59,10 @@ const form = useForm({
   captured_via: props.channels[0].value,
   captured_via_other: '',
   date: '',
+  call_time: '',
+  end_time: '',
+  venue_name: '',
+  venue_city: '',
   inquiry_text: '',
   // Empty is now. Filled only when the call happened before this form was
   // opened — the funnel is counted on it, so today's default cannot be a
@@ -119,6 +125,13 @@ function addPerson() {
   form.people.push({ name: '', email: '', phone: '' })
 }
 
+// Zwei gerahmte Datumsfelder nebeneinander sind der Weg, auf dem der
+// Haupttermin im Eingangsdatum landet: solange niemand das Eingangsdatum
+// ändert, steht es als Text da.
+const backdating = ref(false)
+
+const capturedAtLabel = computed(() => dayWithWeekday(form.captured_at || isoDate(new Date())))
+
 // Capture rarely happens singly, so the second button comes back here with
 // an empty form instead of opening the case that was just created.
 const again = ref(false)
@@ -130,6 +143,7 @@ function submit() {
         form.reset()
         contact.value = null
         creating.value = false
+        backdating.value = false
         again.value = false
       }
     },
@@ -144,51 +158,58 @@ function submit() {
   <AdminLayout active="anfragen">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <PageHead :kicker="$t('leads.createKicker')" :title="$t('leads.createTitle')" />
+        <div class="px-8 pt-[22px] max-[640px]:px-5 max-[640px]:pt-4">
+          <div class="text-[11px] tracking-[0.05em] uppercase text-ink-2">
+            <Link href="/anfragen">{{ $t('board.title') }}</Link>
+          </div>
+          <h1 class="m-0 mt-0.5 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]">
+            {{ $t('leads.createTitle') }}
+          </h1>
+        </div>
 
-        <form class="max-w-[820px] px-8 pt-7 pb-8" @submit.prevent="submit">
-          <div class="mb-5">
-            <Field :label="$t('leads.contact')" :error="form.errors.contact_name">
+        <form class="flex max-w-[820px] flex-col gap-3 px-8 pt-5 pb-8 max-[640px]:px-5" @submit.prevent="submit">
+          <Card :title="$t('leads.contact')">
+            <Field :error="form.errors.contact_name">
               <ContactTypeahead v-model="contact" @create-new="startCreating" />
             </Field>
-          </div>
 
-          <div v-if="creating" class="mb-5">
-            <div class="flex gap-3 [&+&]:mt-3 [&>*]:min-w-[148px] [&>*]:flex-1">
-              <Field v-slot="{ id }" :label="$t('leads.name')">
-                <Input
-                  :id="id"
-                  v-model="form.contact_name"
-                  type="text"
-                  @input="proposeProjectName"
-                />
-              </Field>
-              <Field v-slot="{ id }" :label="$t('leads.email')">
-                <Input :id="id" v-model="form.contact_email" type="email" />
-              </Field>
-              <Field v-slot="{ id }" :label="$t('leads.phone')">
-                <Input :id="id" v-model="form.contact_phone" type="tel" />
-              </Field>
+            <div v-if="creating" class="mt-3">
+              <div class="flex gap-3 [&+&]:mt-3 [&>*]:min-w-[148px] [&>*]:flex-1">
+                <Field v-slot="{ id }" :label="$t('leads.name')">
+                  <Input
+                    :id="id"
+                    v-model="form.contact_name"
+                    type="text"
+                    @input="proposeProjectName"
+                  />
+                </Field>
+                <Field v-slot="{ id }" :label="$t('leads.email')">
+                  <Input :id="id" v-model="form.contact_email" type="email" />
+                </Field>
+                <Field v-slot="{ id }" :label="$t('leads.phone')">
+                  <Input :id="id" v-model="form.contact_phone" type="tel" />
+                </Field>
+              </div>
+
+              <div v-for="(person, index) in form.people" :key="index" class="flex gap-3 [&+&]:mt-3 [&>*]:min-w-[148px] [&>*]:flex-1">
+                <Field v-slot="{ id }" :label="$t('leads.name')">
+                  <Input :id="id" v-model="person.name" type="text" />
+                </Field>
+                <Field v-slot="{ id }" :label="$t('leads.email')">
+                  <Input :id="id" v-model="person.email" type="email" />
+                </Field>
+                <Field v-slot="{ id }" :label="$t('leads.phone')">
+                  <Input :id="id" v-model="person.phone" type="tel" />
+                </Field>
+              </div>
+
+              <Button class="mt-2 self-start" variant="outline" type="button" @click="addPerson">
+                {{ $t('leads.addPerson') }}
+              </Button>
             </div>
+          </Card>
 
-            <div v-for="(person, index) in form.people" :key="index" class="flex gap-3 [&+&]:mt-3 [&>*]:min-w-[148px] [&>*]:flex-1">
-              <Field v-slot="{ id }" :label="$t('leads.name')">
-                <Input :id="id" v-model="person.name" type="text" />
-              </Field>
-              <Field v-slot="{ id }" :label="$t('leads.email')">
-                <Input :id="id" v-model="person.email" type="email" />
-              </Field>
-              <Field v-slot="{ id }" :label="$t('leads.phone')">
-                <Input :id="id" v-model="person.phone" type="tel" />
-              </Field>
-            </div>
-
-            <Button class="mt-2 self-start" variant="outline" type="button" @click="addPerson">
-              {{ $t('leads.addPerson') }}
-            </Button>
-          </div>
-
-          <div class="mb-5">
+          <Card :title="$t('project.lead')">
             <Field v-slot="{ id }" :label="$t('leads.projectName')" :error="form.errors.project_name">
               <Input
                 :id="id"
@@ -197,13 +218,12 @@ function submit() {
                 @input="nameTouched = true"
               />
             </Field>
-          </div>
 
-          <div class="mb-5">
             <!-- Button rows instead of dropdowns: three to five values are hit
                  faster than a menu is opened. -->
             <ChoiceGroup
               v-model="form.type"
+              class="mt-4"
               :label="$t('leads.type')"
               :options="types"
               variant="segmented"
@@ -214,10 +234,9 @@ function submit() {
               v-if="form.type === CATCH_ALL"
               v-slot="{ id }"
               class="mt-2 max-w-[320px]"
-              :label="$t('leads.otherDetail')"
               :error="form.errors.type_other"
             >
-              <Input :id="id" v-model="form.type_other" type="text" list="type-presets" />
+              <Input :id="id" v-model="form.type_other" type="text" :aria-label="$t('leads.type')" list="type-presets" />
               <datalist id="type-presets">
                 <option v-for="value in presets.type" :key="value" :value="value" />
               </datalist>
@@ -235,10 +254,9 @@ function submit() {
               v-if="form.source === CATCH_ALL"
               v-slot="{ id }"
               class="mt-2 max-w-[320px]"
-              :label="$t('leads.otherDetail')"
               :error="form.errors.source_other"
             >
-              <Input :id="id" v-model="form.source_other" type="text" list="source-presets" />
+              <Input :id="id" v-model="form.source_other" type="text" :aria-label="$t('leads.source')" list="source-presets" />
               <datalist id="source-presets">
                 <option v-for="value in presets.source" :key="value" :value="value" />
               </datalist>
@@ -258,57 +276,82 @@ function submit() {
               v-if="form.captured_via === CATCH_ALL"
               v-slot="{ id }"
               class="mt-2 max-w-[320px]"
-              :label="$t('leads.otherDetail')"
               :error="form.errors.captured_via_other"
             >
-              <Input :id="id" v-model="form.captured_via_other" type="text" list="channel-presets" />
+              <Input :id="id" v-model="form.captured_via_other" type="text" :aria-label="$t('leads.capturedVia')" list="channel-presets" />
               <datalist id="channel-presets">
                 <option v-for="value in presets.channel" :key="value" :value="value" />
               </datalist>
             </Field>
 
-          </div>
-
-          <!-- The main date is the field the whole intake hangs off
-               (Shoot.is_primary, vision §3.1), so it is the one control that
-               gets extra weight. Typed as TT.MM.JJJJ or picked from the
-               calendar — both reach the same ISO day. -->
-          <div class="mb-5">
-            <Field v-slot="{ id }" :label="$t('leads.mainDate')">
-              <DatePicker :id="id" v-model="form.date" size="lead" />
-              <ConflictNote :conflicts="conflicts" />
+            <Field
+              v-if="backdating"
+              v-slot="{ id }"
+              class="mt-4 max-w-[220px]"
+              :label="$t('leads.capturedAt')"
+              :error="form.errors.captured_at"
+            >
+              <DatePicker :id="id" v-model="form.captured_at" />
             </Field>
-          </div>
 
-          <div class="mb-5">
-            <Field v-slot="{ id }" :label="$t('leads.inquiryText')">
+            <div v-else class="mt-4">
+              <div class="text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">
+                {{ $t('leads.capturedAt') }}
+              </div>
+              <div class="mt-1.5 flex items-center gap-2.5 text-[13.5px] leading-[1.35]">
+                {{ capturedAtLabel }}
+                <a
+                  class="text-[12.5px] tracking-[-0.01em] text-action no-underline hover:underline"
+                  href="#"
+                  @click.prevent="backdating = true"
+                >{{ $t('common.edit') }}</a>
+              </div>
+            </div>
+
+            <!-- C-25: was dieser Typ über den Namen hinaus mitbringt. Die
+                 Felder gab es im Modell längst, nur nicht bei der Erfassung. -->
+            <ProjectFields
+              v-if="typeFields.length"
+              v-model="form.fields"
+              class="mt-4"
+              editing
+              :errors="form.errors"
+              :fields="typeFields"
+            />
+
+            <div class="mt-4 flex items-end gap-3 max-[640px]:flex-wrap">
+              <Field v-slot="{ id }" class="w-[280px] flex-none" :label="$t('leads.mainDate')">
+                <DatePicker :id="id" v-model="form.date" />
+              </Field>
+              <div class="min-w-0 flex-1">
+                <ConflictNote :conflicts="conflicts" />
+              </div>
+            </div>
+
+            <div class="mt-3 flex gap-3">
+              <Field v-slot="{ id }" :label="$t('project.callTime')" :error="form.errors.call_time">
+                <TimePicker :id="id" v-model="form.call_time" />
+              </Field>
+              <Field v-slot="{ id }" :label="$t('project.endTime')" :error="form.errors.end_time">
+                <TimePicker :id="id" v-model="form.end_time" />
+              </Field>
+            </div>
+
+            <div class="mt-3 flex gap-3 [&>*]:min-w-[148px] [&>*]:flex-1">
+              <Field v-slot="{ id }" :label="$t('project.venueName')" :error="form.errors.venue_name">
+                <Input :id="id" v-model="form.venue_name" type="text" />
+              </Field>
+              <Field v-slot="{ id }" :label="$t('project.venueCity')" :error="form.errors.venue_city">
+                <Input :id="id" v-model="form.venue_city" type="text" />
+              </Field>
+            </div>
+
+            <Field v-slot="{ id }" class="mt-4" :label="$t('leads.inquiryText')">
               <Textarea :id="id" v-model="form.inquiry_text" rows="8" />
             </Field>
-          </div>
+          </Card>
 
-          <details class="mb-5">
-            <summary
-              class="w-fit cursor-pointer text-[12.5px] tracking-[-0.01em] text-ink-2 marker:text-ink-2"
-            >{{ $t('leads.advanced') }}</summary>
-
-            <div class="mt-3 flex flex-col gap-5">
-              <Field v-slot="{ id }" class="max-w-[220px]" :label="$t('leads.capturedAt')" :error="form.errors.captured_at">
-                <DatePicker :id="id" v-model="form.captured_at" />
-              </Field>
-
-              <!-- C-25: was dieser Typ über den Namen hinaus mitbringt. Die
-                   Felder gab es im Modell längst, nur nicht bei der Erfassung. -->
-              <ProjectFields
-                v-if="typeFields.length"
-                v-model="form.fields"
-                editing
-                :errors="form.errors"
-                :fields="typeFields"
-              />
-            </div>
-          </details>
-
-          <div class="mt-5 flex items-center gap-3 pt-4 shadow-[inset_0_1px_0_var(--rule)] [&>button:last-child]:ml-auto">
+          <div class="mt-2 flex items-center gap-3 pt-4 shadow-[inset_0_1px_0_var(--rule)] [&>button:last-child]:ml-auto">
             <a
               class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
               href="/anfragen"

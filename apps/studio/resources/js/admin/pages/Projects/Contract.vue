@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Link, router, useForm } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
 import DocumentEditor from '@/admin/components/DocumentEditor.vue'
 import DocumentPreviewPane from '@/admin/components/DocumentPreviewPane.vue'
+import Card from '@/ui/page/Card.vue'
 import Rail from '@/ui/page/Rail.vue'
 import Section from '@/ui/page/Section.vue'
 import { Button } from '@/ui/button'
@@ -26,6 +28,8 @@ const props = defineProps<{
   palette: PaletteEntry[]
   mergeFields: { path: string; sample: string }[]
 }>()
+
+const { t } = useI18n()
 
 const generate = useForm({ template: props.templates[0]?.value ?? '' })
 const signer = useForm({ contact: '' })
@@ -52,6 +56,16 @@ const samples = computed(() =>
 const previewProject = ref<string | null>(props.header.id)
 
 const signed = computed(() => props.versions.find((version) => version.state === 'valid' && version.signers.some((s) => s.signedAt)))
+
+const documentSummary = computed(() =>
+  props.contract === null
+    ? null
+    : [
+        `${props.contract.templateName} · v${props.contract.templateVersion}`,
+        t('project.contractVersionLabel', { version: props.contract.version }),
+        props.contract.stateLabel,
+      ].join(' · '),
+)
 
 const saving = ref(false)
 
@@ -104,26 +118,6 @@ function day(value: string | null): string {
 <template>
   <AdminLayout active="anfragen">
     <ProjectShell :header="header" active="contract">
-      <template v-if="contract" #actions>
-        <span class="text-[11.5px] text-ink-2">{{ contract.templateName }} · v{{ contract.templateVersion }}</span>
-        <span :class="['chip', chipClass(contract.state)]">
-          {{ $t('project.contractVersionLabel', { version: contract.version }) }} · {{ contract.stateLabel }}
-        </span>
-
-        <Button v-if="contract.downloadUrl" as="a" variant="outline" :href="contract.downloadUrl" download>
-          {{ $t('project.contractDownload') }}
-        </Button>
-
-        <template v-if="header.canManageContracts">
-          <Button variant="outline" type="button" :disabled="saving" @click="save">
-            {{ $t('project.contractSave') }}
-          </Button>
-          <Button v-if="contract.state === 'draft'" variant="pill" type="button" @click="send">
-            {{ $t('project.contractSend') }}
-          </Button>
-        </template>
-      </template>
-
       <template #rail>
         <Rail v-if="contract">
           <h3 class="m-0 text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">
@@ -199,7 +193,22 @@ function day(value: string | null): string {
         </Rail>
       </template>
 
-      <template v-if="contract">
+      <Card v-if="contract" :title="$t('project.contract')" :summary="documentSummary">
+        <template #action>
+          <Button v-if="contract.downloadUrl" as="a" variant="outline" :href="contract.downloadUrl" download @click.stop>
+            {{ $t('project.contractDownload') }}
+          </Button>
+
+          <template v-if="header.canManageContracts">
+            <Button variant="outline" type="button" :disabled="saving" @click.stop="save">
+              {{ $t('project.contractSave') }}
+            </Button>
+            <Button v-if="contract.state === 'draft'" variant="pill" type="button" @click.stop="send">
+              {{ $t('project.contractSend') }}
+            </Button>
+          </template>
+        </template>
+
         <p v-if="signed && contract.state === 'draft'" class="text-[11.5px] leading-[1.45] text-faint">
           {{ $t('project.contractHoldsUntilSent', { version: signed.version }) }}
         </p>
@@ -232,7 +241,7 @@ function day(value: string | null): string {
             </Select>
           </DocumentPreviewPane>
         </div>
-      </template>
+      </Card>
 
       <Section v-else :title="$t('project.contract')">
         <p

@@ -1,20 +1,23 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
-import CrewStack from '@/admin/components/CrewStack.vue'
-import { chipClass, dayAndMonth, weekday } from '@/admin/lib/shoots'
+import { chipClass } from '@/admin/lib/shoots'
+import { dayWithWeekday } from '@/admin/lib/dates'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
-import Section from '@/ui/page/Section.vue'
+import Card from '@/ui/page/Card.vue'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { TimePicker } from '@/ui/time-picker'
 import { Checkbox } from '@/ui/checkbox'
 import { Label } from '@/ui/label'
 import { Textarea } from '@/ui/textarea'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
@@ -71,6 +74,30 @@ const kinds = [
 ]
 
 const today = new Date().toISOString().slice(0, 10)
+
+function kindLabel(kind: string) {
+  return kinds.find((entry) => entry.value === kind)?.label ?? kind
+}
+
+function metrics(shoot: App.Crm.Data.ShootData) {
+  return [
+    { label: 'project.shootKind', value: kindLabel(shoot.kind) },
+    { label: 'project.callTime', value: shoot.callTime ?? '—' },
+    { label: 'project.endTime', value: shoot.endTime ?? '—' },
+    { label: 'project.venueName', value: shoot.venue ?? '—' },
+  ]
+}
+
+// Ort und Stand stehen schon in der Kennzahlenreihe und im Chip daneben;
+// zugeklappt fehlt nur, wann und mit wem.
+function summary(shoot: App.Crm.Data.ShootData) {
+  return [
+    dayWithWeekday(shoot.date, null) ?? t('board.openDate'),
+    shoot.crew.map((member) => member.name).join(', ') || null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+}
 
 const filter = ref<'all' | 'upcoming' | 'cancelled'>('all')
 
@@ -180,27 +207,13 @@ const TONE: Record<string, string> = {
 <template>
   <AdminLayout active="anfragen">
     <ProjectShell :header="header" active="shoots">
-        <div class="mb-4 flex items-center gap-2.5">
-          <div class="inline-flex gap-0.5 rounded-full bg-sunk-2 p-0.5">
-            <button
-              v-for="tab in filters"
-              :key="tab.key"
-              type="button"
-              class="rounded-full px-2.5 py-1 text-[11.5px] leading-none text-ink-2"
-              :class="filter === tab.key && 'bg-paper font-semibold text-foreground'"
-              @click="filter = tab.key"
-            >
-              {{ $t(tab.label) }} {{ tab.count }}
-            </button>
-          </div>
-
-          <!-- Adding an occasion is a discrete act against a list you are reading:
-               inline, the form pushed every existing shoot down the page and the
-               list you were comparing against scrolled out of sight. -->
-          <Dialog v-if="header.canManageShoots" v-model:open="adding">
+        <!-- Adding an occasion is a discrete act against a list you are reading:
+             inline, the form pushed every existing shoot down the page and the
+             list you were comparing against scrolled out of sight. -->
+        <template v-if="header.canManageShoots" #actions>
+          <Dialog v-model:open="adding">
             <DialogTrigger as-child>
-              <Button type="button" class="ml-auto">
-                <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+              <Button variant="pill" type="button">
                 {{ $t('project.addShoot') }}
               </Button>
             </DialogTrigger>
@@ -284,37 +297,42 @@ const TONE: Record<string, string> = {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+        </template>
+
+        <div class="mb-3 inline-flex gap-0.5 rounded-full bg-sunk-2 p-0.5">
+          <button
+            v-for="tab in filters"
+            :key="tab.key"
+            type="button"
+            class="rounded-full px-2.5 py-1 text-[11.5px] leading-none text-ink-2"
+            :class="filter === tab.key && 'bg-paper font-semibold text-foreground'"
+            @click="filter = tab.key"
+          >
+            {{ $t(tab.label) }} {{ tab.count }}
+          </button>
         </div>
 
         <!-- Depth behind the Shootings tab: every occasion in full. Only open
              shoots carry editable weight; a cancelled one keeps the status it died
              in and gains no controls back. -->
         <div class="flex flex-col gap-1.5">
-          <section
+          <Card
             v-for="shoot in visible"
             :key="shoot.id"
-            class="rounded-md border border-border p-2.5 [&>section]:mt-5"
-            :class="{ open: !shoot.isCancelled && shoot.isPrimary, cancelled: shoot.isCancelled }"
+            :title="shoot.label ?? kindLabel(shoot.kind)"
+            :summary="summary(shoot)"
+            :default-open="shoot.date === null || shoot.date >= today"
           >
-            <div class="flex items-center gap-2.5">
-              <div class="w-[54px] flex-none text-[12px] leading-[1.2] font-semibold tabular-nums [&_em]:mt-0.5 [&_em]:block [&_em]:text-[10.5px] [&_em]:leading-[1.3] [&_em]:font-normal [&_em]:not-italic [&_em]:text-faint">
-                {{ dayAndMonth(shoot.date) ?? '—' }}
-                <em>{{ weekday(shoot.date) ?? $t('board.openDate') }}</em>
-              </div>
-              <div class="min-w-0 flex-1 text-[13px] leading-[1.3] font-semibold tracking-[-0.01em]">
-                {{ shoot.label ?? shoot.kind }}
-                <span v-if="shoot.isPrimary" class="ml-1.5 inline-block align-[1px] text-[9px] leading-[1.5] font-semibold tracking-[0.08em] uppercase text-foreground">{{ $t('project.primary') }}</span>
-                <span class="mt-0.5 block text-[11.5px] leading-[1.35] font-normal tracking-normal text-muted-foreground">
-                  {{ [shoot.venue, shoot.callTime && `${shoot.callTime}–${shoot.endTime ?? ''}`].filter(Boolean).join(' · ') || '—' }}
-                </span>
-              </div>
-              <CrewStack v-if="!soloStudio" :crew="shoot.crew" />
-              <span :class="['flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase', TONE[chipClass(shoot, header.position.value)]]">
+            <template #action>
+              <span v-if="shoot.isPrimary" class="text-[9px] leading-[1.5] font-semibold tracking-[0.08em] uppercase text-foreground">
+                {{ $t('project.primary') }}
+              </span>
+              <span :class="['rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase', TONE[chipClass(shoot, header.position.value)]]">
                 {{ shoot.statusLabel }}
               </span>
-            </div>
+            </template>
 
-            <div v-if="shoot.isCancelled" class="mt-1.5 flex items-center gap-3 rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[12.5px] leading-[1.3] font-medium text-destructive">
+            <div v-if="shoot.isCancelled" class="flex items-center gap-3 rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[12.5px] leading-[1.3] font-medium text-destructive">
               {{ $t('project.cancelled', { reason: shoot.cancelledReason }) }}
               <Button v-if="header.canManageShoots" class="ml-auto" variant="outline" type="button" @click="uncancel(shoot)">
                 {{ $t('project.uncancel') }}
@@ -322,23 +340,23 @@ const TONE: Record<string, string> = {
             </div>
 
             <template v-else>
-              <Section v-if="!soloStudio" :title="$t('project.crew')">
-                <template #actions>
-                  <Button v-if="header.canManageCrew" type="button" variant="outline" @click="openAssign(shoot)">
-                    <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
-                    {{ $t('project.crew') }}
-                  </Button>
-                </template>
+              <div class="grid grid-cols-4 gap-[18px] max-[640px]:grid-cols-2">
+                <div v-for="metric in metrics(shoot)" :key="metric.label">
+                  <div class="text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t(metric.label) }}</div>
+                  <div class="mt-1.5 text-[13.5px] leading-[1.35]">{{ metric.value }}</div>
+                </div>
+              </div>
 
-                <div class="flex flex-col gap-1">
-                  <div v-for="member in shoot.crew" :key="member.id" class="flex items-center gap-2.5 py-1">
-                    <span class="flex size-[22px] flex-none items-center justify-center rounded-full bg-sunk-2 text-[9.5px] leading-none font-semibold text-ink-2">{{ member.initials }}</span>
-                    <span class="min-w-0 flex-1 text-[12.5px] leading-[1.35]">{{ member.name }}</span>
-                    <span class="text-[11.5px] leading-[1.35] text-ink-2">{{ member.roleLabel }}</span>
-                    <Button v-if="header.canManageCrew" type="button" variant="ghost" @click="unassign(member)">
-                      {{ $t('project.unassign') }}
-                    </Button>
-                  </div>
+              <div v-if="!soloStudio" class="mt-4 pt-3 shadow-[inset_0_1px_0_var(--rule)]">
+                <div class="text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('project.crew') }}</div>
+
+                <div v-for="member in shoot.crew" :key="member.id" class="mt-1.5 flex items-center gap-2.5">
+                  <span class="flex size-[22px] flex-none items-center justify-center rounded-full bg-sunk-2 text-[9.5px] leading-none font-semibold text-ink-2">{{ member.initials }}</span>
+                  <span class="min-w-0 flex-1 text-[12.5px] leading-[1.35]">{{ member.name }}</span>
+                  <span class="text-[11.5px] leading-[1.35] text-ink-2">{{ member.roleLabel }}</span>
+                  <Button v-if="header.canManageCrew" type="button" variant="ghost" @click="unassign(member)">
+                    {{ $t('project.unassign') }}
+                  </Button>
                 </div>
 
                 <!-- T-10: CheckDateAvailability's third source, already narrowed by
@@ -349,29 +367,40 @@ const TONE: Record<string, string> = {
                 <div
                   v-for="conflict in shoot.crewConflicts"
                   :key="conflict.personId ?? undefined"
-                  class="mt-2 flex items-center gap-1.5 text-[11.5px] leading-[1.35] font-medium text-due"
+                  class="mt-2 text-[11.5px] leading-[1.35] font-medium text-due"
                 >
                   {{ $t('project.crewAbsence', { label: conflict.label }) }}
                 </div>
-              </Section>
 
-              <Section v-if="shoot.date || shoot.timeline.length" :title="$t('project.timeline')">
-                <template #actions>
-                  <Button v-if="header.canManageShoots" type="button" variant="outline" @click="toggleTimelineEdit(shoot)">
-                    {{ $t(editingTimeline === shoot.id ? 'project.timelineDone' : 'project.timelineEdit') }}
-                  </Button>
-                  <Button as="a" variant="outline" :href="shoot.pdfUrl" download>{{ $t('project.timelinePdf') }}</Button>
-                  <Button as="a" variant="outline" :href="shoot.icsUrl" download>{{ $t('project.timelineIcs') }}</Button>
-                </template>
+                <Button v-if="header.canManageCrew" class="mt-2.5" type="button" variant="outline" @click="openAssign(shoot)">
+                  <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+                  {{ $t('project.assignCrew') }}
+                </Button>
+              </div>
 
-                <div v-for="entry in shoot.timeline" :key="entry.id" class="flex gap-3 py-1.5 text-[12.5px] leading-[1.35]"
-                  :class="entry.isTransit && 'text-ink-2 italic'">
+              <div v-if="shoot.date || shoot.timeline.length" class="mt-4 pt-3 shadow-[inset_0_1px_0_var(--rule)]">
+                <div class="text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('project.timeline') }}</div>
+
+                <div
+                  v-for="entry in shoot.timeline"
+                  :key="entry.id"
+                  class="flex gap-3 py-1.5 text-[12.5px] leading-[1.35]"
+                  :class="entry.isTransit && 'text-ink-2 italic'"
+                >
                   <span class="w-[52px] flex-none tabular-nums text-ink-2">{{ entry.time }}</span>
                   <span class="min-w-0 flex-1">
                     {{ entry.title }}
                     <span v-if="entry.location" class="ml-1.5 text-ink-2">{{ entry.location }}</span>
                     <span v-if="entry.note" class="ml-1.5 text-faint">{{ entry.note }}</span>
                   </span>
+                  <Button
+                    v-if="editingTimeline === shoot.id && header.canManageShoots"
+                    type="button"
+                    variant="ghost"
+                    @click="removeTimelineEntry(entry)"
+                  >
+                    {{ $t('project.timelineRemove') }}
+                  </Button>
                 </div>
 
                 <form
@@ -404,24 +433,23 @@ const TONE: Record<string, string> = {
                     <Label variant="inline" for="tl-transit">{{ $t('project.timelineTransit') }}</Label>
                   </div>
 
-                  <div class="col-span-full flex items-center gap-4 [&_[data-slot=button][data-variant=default]]:ml-0">
+                  <div class="col-span-full [&_[data-slot=button][data-variant=default]]:ml-0">
                     <Button type="submit" :disabled="timelineForm.processing">
                       {{ $t('common.save') }}
                     </Button>
                   </div>
                 </form>
 
-                <div v-if="editingTimeline === shoot.id && header.canManageShoots" class="mt-4 flex flex-col gap-2">
-                  <div v-for="entry in shoot.timeline" :key="entry.id" class="flex items-center gap-4">
-                    <span>{{ entry.time }} · {{ entry.title }}</span>
-                    <Button type="button" variant="outline" tone="accent" class="ml-auto" @click="removeTimelineEntry(entry)">
-                      {{ $t('project.timelineRemove') }}
-                    </Button>
-                  </div>
+                <div class="mt-2.5 flex items-center gap-2">
+                  <Button v-if="header.canManageShoots" type="button" variant="outline" @click="toggleTimelineEdit(shoot)">
+                    {{ $t(editingTimeline === shoot.id ? 'project.timelineDone' : 'project.timelineEdit') }}
+                  </Button>
+                  <Button as="a" variant="outline" :href="shoot.pdfUrl" download>{{ $t('project.timelinePdf') }}</Button>
+                  <Button as="a" variant="outline" :href="shoot.icsUrl" download>{{ $t('project.timelineIcs') }}</Button>
                 </div>
-              </Section>
+              </div>
 
-              <div v-if="header.canManageShoots" class="mt-5 flex items-center gap-2.5 [&_[data-slot=button][data-variant=default]]:ml-0">
+              <div v-if="header.canManageShoots" class="mt-4 flex items-center gap-2.5 pt-3 shadow-[inset_0_1px_0_var(--rule)] [&_[data-slot=button][data-variant=default]]:ml-0">
                 <!-- A menu of actions, not a field: nothing stores what was
                      picked, so model-value is pinned to '' and the control falls
                      straight back to its own name. -->
@@ -449,8 +477,7 @@ const TONE: Record<string, string> = {
                 </Button>
               </div>
             </template>
-          </section>
-
+          </Card>
         </div>
 
         <!-- One dialog for the whole list rather than one per row: only one shoot

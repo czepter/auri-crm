@@ -16,10 +16,11 @@ use App\Crm\Http\Controllers\InquiryCaptureController;
 use App\Crm\Http\Controllers\InternalNoteController;
 use App\Crm\Http\Controllers\LeadBoardController;
 use App\Crm\Http\Controllers\LeadCaseController;
+use App\Crm\Http\Controllers\LeadContactController;
 use App\Crm\Http\Controllers\LeadStageController;
+use App\Crm\Http\Controllers\PaletteSearchController;
 use App\Crm\Http\Controllers\ProjectController;
 use App\Crm\Http\Controllers\ProjectFieldController;
-use App\Crm\Http\Controllers\PaletteSearchController;
 use App\Crm\Http\Controllers\ProjectSearchController;
 use App\Crm\Http\Controllers\ProjectTypeController;
 use App\Crm\Http\Controllers\ShootController;
@@ -495,6 +496,13 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/anfragen/{lead}/angebot', [LeadCaseController::class, 'show'])
             ->defaults('tab', 'quotes')
             ->name('leads.quote');
+        // Wer sonst noch am Fall hängt. Bis hierher gab es das nur auf der
+        // API-Oberfläche, und die schmale Spalte auf dem Bildschirm konnte
+        // keinen Zeileneditor tragen.
+        Route::post('/anfragen/{lead}/kontakte', [LeadContactController::class, 'store'])
+            ->name('leads.contacts.store');
+        Route::delete('/anfragen/{lead}/kontakte/{contact}', [LeadContactController::class, 'destroy'])
+            ->name('leads.contacts.destroy');
         Route::post('/anfragen/{lead}/schliessen', [LeadStageController::class, 'close'])
             ->name('leads.close');
         Route::post('/anfragen/{lead}/wieder-oeffnen', [LeadStageController::class, 'reopen'])
@@ -748,6 +756,8 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::post('/auftraege/{project}/shootings', [ShootController::class, 'store'])
             ->name('shoots.store');
+        Route::delete('/shootings/{shoot}', [ShootController::class, 'destroy'])
+            ->name('shoots.destroy');
         Route::post('/shootings/{shoot}/status', [ShootController::class, 'advance'])
             ->name('shoots.advance');
         Route::post('/shootings/{shoot}/absage', [ShootController::class, 'cancel'])

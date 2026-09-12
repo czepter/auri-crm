@@ -370,3 +370,36 @@ it('writes the type own fields captured with the inquiry', function () {
 
     expect(Project::sole()->field_values)->toBe(['gaeste' => 80]);
 });
+
+it('puts times and venue on the primary shoot the capture creates', function () {
+    $this->actingAs($this->staff, 'staff')
+        ->post('/anfragen', payload([
+            'call_time' => '13:00',
+            'end_time' => '22:30',
+            'venue_name' => 'Gut Basthorst',
+            'venue_city' => 'Basthorst',
+        ]))
+        ->assertRedirect('/anfragen');
+
+    $shoot = Shoot::sole();
+
+    expect($shoot->is_primary)->toBeTrue()
+        ->and($shoot->date->format('Y-m-d'))->toBe('2026-06-14')
+        ->and($shoot->call_time)->toStartWith('13:00')
+        ->and($shoot->end_time)->toStartWith('22:30')
+        ->and($shoot->venue_name)->toBe('Gut Basthorst')
+        ->and($shoot->venue_city)->toBe('Basthorst');
+});
+
+it('saves without times and venue', function () {
+    $this->actingAs($this->staff, 'staff')
+        ->post('/anfragen', payload())
+        ->assertRedirect('/anfragen');
+
+    $shoot = Shoot::sole();
+
+    expect($shoot->call_time)->toBeNull()
+        ->and($shoot->end_time)->toBeNull()
+        ->and($shoot->venue_name)->toBeNull()
+        ->and($shoot->venue_city)->toBeNull();
+});

@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
-import Section from '@/ui/page/Section.vue'
+import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
 import { dayAndMonth, weekday } from '@/admin/lib/shoots'
 
@@ -27,6 +27,12 @@ const withoutGallery = computed(() => {
   return props.shoots.filter((shoot) => !shoot.isCancelled && !taken.has(shoot.id))
 })
 
+const gallerySummary = computed(() => props.galleries.map((gallery) => gallery.title ?? '—').join(', '))
+
+const missingSummary = computed(() =>
+  withoutGallery.value.map((shoot) => shoot.label ?? shoot.kind).join(', ')
+)
+
 function day(iso: string | null) {
   return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : null
 }
@@ -35,51 +41,57 @@ function day(iso: string | null) {
 <template>
   <AdminLayout active="anfragen">
     <ProjectShell :header="header" active="galleries">
-      <Section :title="$t('galleries.title')">
-        <template #actions>
-          <Button :as="Link" variant="outline" :href="`/galerien/neu?projekt=${header.id}`">{{ $t('galleries.create') }}</Button>
-        </template>
+      <template #actions>
+        <Button :as="Link" variant="pill" :href="`/galerien/neu?projekt=${header.id}`">{{ $t('galleries.create') }}</Button>
+      </template>
 
-        <div
-          v-for="gallery in galleries"
-          :key="gallery.id"
-          class="flex items-baseline gap-2.5 py-2.5"
-        >
-          <div class="min-w-0 flex-1">
-            <Link :href="`/galerien/${gallery.id}`" class="text-[13px] leading-[1.3] font-semibold tracking-[-0.01em]">
-              {{ gallery.title ?? '—' }}
-            </Link>
-            <span class="mt-0.5 block text-[11.5px] leading-[1.35] text-muted-foreground">
-              {{
-                [
-                  $t('project.galleryImages', { count: gallery.assetCount }),
-                  gallery.version ? $t('galleryRecord.version', { version: gallery.version }) : null,
-                  gallery.expiresAt ? $t('project.galleryExpires', { date: day(gallery.expiresAt) }) : $t('project.galleryNoExpiry'),
-                  gallery.inPortal ? $t('project.galleryInPortal') : $t('project.galleryNotInPortal'),
-                ].filter(Boolean).join(' · ')
-              }}
+      <div class="flex flex-col gap-3">
+        <Card :title="$t('galleries.title')" :summary="gallerySummary">
+          <div
+            v-for="gallery in galleries"
+            :key="gallery.id"
+            class="flex items-baseline gap-2.5 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+          >
+            <div class="min-w-0 flex-1">
+              <Link :href="`/galerien/${gallery.id}`" class="text-[13px] leading-[1.3] font-semibold tracking-[-0.01em]">
+                {{ gallery.title ?? '—' }}
+              </Link>
+              <span class="mt-0.5 block text-[11.5px] leading-[1.35] text-muted-foreground">
+                {{
+                  [
+                    $t('project.galleryImages', { count: gallery.assetCount }),
+                    gallery.version ? $t('galleryRecord.version', { version: gallery.version }) : null,
+                    gallery.expiresAt ? $t('project.galleryExpires', { date: day(gallery.expiresAt) }) : $t('project.galleryNoExpiry'),
+                    gallery.inPortal ? $t('project.galleryInPortal') : $t('project.galleryNotInPortal'),
+                  ].filter(Boolean).join(' · ')
+                }}
+              </span>
+            </div>
+            <span :class="['flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase', TONE[gallery.state]]">
+              {{ $t(`project.galleryState.${gallery.state}`) }}
             </span>
           </div>
-          <span :class="['flex-none rounded-[var(--r-sm)] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase', TONE[gallery.state]]">
-            {{ $t(`project.galleryState.${gallery.state}`) }}
-          </span>
-        </div>
-      </Section>
+        </Card>
 
-      <!-- Der Platz für das Shooting, das noch keine Galerie hat: kein leerer
-           Text, sondern der Knopf, der sie anlegt. -->
-      <Section v-if="withoutGallery.length" :title="$t('project.galleriesMissing')">
-        <div v-for="shoot in withoutGallery" :key="shoot.id" class="flex items-center gap-2.5 py-2.5">
-          <div class="w-[54px] flex-none text-[12px] leading-[1.2] font-semibold tabular-nums">
-            {{ dayAndMonth(shoot.date) ?? '—' }}
-            <em class="mt-0.5 block text-[10.5px] leading-[1.3] font-normal not-italic text-faint">
-              {{ weekday(shoot.date) ?? $t('board.openDate') }}
-            </em>
+        <!-- Der Platz für das Shooting, das noch keine Galerie hat: kein leerer
+             Text, sondern der Knopf, der sie anlegt. -->
+        <Card v-if="withoutGallery.length" :title="$t('project.galleriesMissing')" :summary="missingSummary">
+          <div
+            v-for="shoot in withoutGallery"
+            :key="shoot.id"
+            class="flex items-center gap-2.5 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+          >
+            <div class="w-[54px] flex-none text-[12px] leading-[1.2] font-semibold tabular-nums">
+              {{ dayAndMonth(shoot.date) ?? '—' }}
+              <em class="mt-0.5 block text-[10.5px] leading-[1.3] font-normal not-italic text-faint">
+                {{ weekday(shoot.date) ?? $t('board.openDate') }}
+              </em>
+            </div>
+            <span class="min-w-0 flex-1 text-[13px] leading-[1.3] font-semibold tracking-[-0.01em]">{{ shoot.label ?? shoot.kind }}</span>
+            <Button :as="Link" variant="outline" :href="`/galerien/neu?projekt=${header.id}&shooting=${shoot.id}`">{{ $t('galleries.create') }}</Button>
           </div>
-          <span class="min-w-0 flex-1 text-[13px] leading-[1.3] font-semibold tracking-[-0.01em]">{{ shoot.label ?? shoot.kind }}</span>
-          <Button :as="Link" variant="outline" :href="`/galerien/neu?projekt=${header.id}&shooting=${shoot.id}`">{{ $t('galleries.create') }}</Button>
-        </div>
-      </Section>
+        </Card>
+      </div>
     </ProjectShell>
   </AdminLayout>
 </template>

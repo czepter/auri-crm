@@ -8,15 +8,18 @@ import { Button } from '@/ui/button'
  * überfällig, weil eine Frist ohne Tag keine ist.
  */
 import { computed, ref } from 'vue'
-import { router, usePage } from '@inertiajs/vue3'
+import { router, useForm, usePage } from '@inertiajs/vue3'
+import TaskCreateDialog from '@/admin/components/TaskCreateDialog.vue'
+import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
-import TaskCreateDialog from '@/admin/components/TaskCreateDialog.vue'
-import Section from '@/ui/page/Section.vue'
+import Card from '@/ui/page/Card.vue'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { DatePicker } from '@/ui/date-picker'
 import { Label } from '@/ui/label'
 import { dayWithWeekday, isoDate } from '@/admin/lib/dates'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
@@ -29,7 +32,6 @@ const props = defineProps<{
 const shoot = ref('all')
 const audience = ref('all')
 const assignee = ref('all')
-const showDone = ref(false)
 
 const me = computed(() => (usePage().props.auth as { user: { id: string } | null }).user?.id ?? '')
 
@@ -58,6 +60,28 @@ const groups = computed(() => [
   { key: 'project.tasksUndated', rows: open.value.filter((task) => task.dueOn === null) },
 ])
 
+const openSummary = computed(() => {
+  const late = open.value.filter((task) => task.isOverdue).length
+
+  return [
+    t('project.tasksOpen', { count: open.value.length }),
+    late === 0 ? null : t('project.tasksOverdue', late),
+  ]
+    .filter(Boolean)
+    .join(' · ')
+})
+
+const doneSummary = computed(() => done.value.map((task) => task.title).join(', '))
+
+const form = useForm({ title: '', audience: 'internal', due_on: '' })
+
+function add() {
+  form.post(`/auftraege/${props.header.id}/aufgaben`, {
+    preserveScroll: true,
+    onSuccess: () => form.reset(),
+  })
+}
+
 // Ohne Tag ist es jetzt. Mit Tag ist es eine Aussage über einen anderen —
 // die Route hakt dann ab statt umzuschalten, sonst öffnete das Nachtragen
 // eines Datums die Aufgabe wieder.
@@ -79,124 +103,148 @@ function reopen(row: App.Crm.Data.TaskRowData) {
 <template>
   <AdminLayout active="anfragen">
     <ProjectShell :header="header" active="tasks">
-      <Section :title="$t('project.tasks')">
-        <template #actions>
-          <Select v-model="shoot">
-            <SelectTrigger class="w-44"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{{ $t('project.tasksAllShoots') }}</SelectItem>
-              <SelectItem v-for="option in shootOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select v-model="audience">
-            <SelectTrigger class="w-40"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{{ $t('project.tasksAllAudiences') }}</SelectItem>
-              <SelectItem value="internal">{{ $t('lead.audienceInternal') }}</SelectItem>
-              <SelectItem value="client">{{ $t('lead.audienceClient') }}</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select v-if="!$page.props.soloStudio" v-model="assignee">
-            <SelectTrigger class="w-44"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{{ $t('project.tasksAllAssignees') }}</SelectItem>
-              <SelectItem value="mine">{{ $t('project.tasksMine') }}</SelectItem>
-              <SelectItem v-for="option in staffOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-
-          <TaskCreateDialog
-            v-if="header.canManageTasks"
-            :project-id="header.id"
-            :shoot-options="shootOptions"
-            :staff-options="staffOptions"
-            :anchors="anchors"
-          />
-        </template>
-
-        <p v-if="open.length === 0" class="py-2 text-[13px] text-ink-2">{{ $t('project.noTasks') }}</p>
-
-        <template v-for="group in groups" :key="group.key">
-          <div v-if="group.rows.length" class="mt-[18px] mb-1 text-[10.5px] font-semibold tracking-[0.07em] uppercase text-ink-2">
-            {{ $t(group.key) }}
-          </div>
-
-          <div v-for="row in group.rows" :key="row.id" class="flex items-center gap-3.5 py-[9px]">
-            <button
-              class="size-[15px] flex-none rounded-[5px] bg-sunk-2"
-              type="button"
-              :aria-label="$t('project.taskComplete')"
-              @click="complete(row)"
-            />
-            <span class="text-[13.5px] leading-[1.47]">{{ row.title }}</span>
-            <span class="text-[10.5px] tracking-[0.05em] uppercase text-ink-2">{{ row.audienceLabel }}</span>
-            <span v-if="row.shootLabel" class="text-[11.5px] text-faint">{{ row.shootLabel }}</span>
-            <span v-if="row.isBlocked" class="text-[11.5px] text-faint">{{
-              $t('project.taskBlockedBy', { title: row.blockedBy })
-            }}</span>
-            <!-- Zugewiesen steht als Name; ohne Zuweisung steht die Auswahl,
-                 die sie setzt — eine leere Spalte übernimmt niemand. -->
-            <span v-if="!$page.props.soloStudio && row.assigneeName" class="text-[11.5px] text-ink-2">{{ row.assigneeName }}</span>
-            <Select v-else-if="!$page.props.soloStudio" :model-value="'none'" @update:model-value="(value) => assign(row, String(value))">
-              <SelectTrigger class="h-6 w-36 text-[11.5px]"><SelectValue /></SelectTrigger>
+      <div class="flex flex-col gap-3">
+        <Card :title="$t('project.tasks')" :summary="openSummary">
+          <div class="mb-3 flex flex-wrap items-center gap-2.5">
+            <Select v-model="shoot">
+              <SelectTrigger class="w-44"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">{{ $t('project.taskUnassigned') }}</SelectItem>
+                <SelectItem value="all">{{ $t('project.tasksAllShoots') }}</SelectItem>
+                <SelectItem v-for="option in shootOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select v-model="audience">
+              <SelectTrigger class="w-40"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{{ $t('project.tasksAllAudiences') }}</SelectItem>
+                <SelectItem value="internal">{{ $t('lead.audienceInternal') }}</SelectItem>
+                <SelectItem value="client">{{ $t('lead.audienceClient') }}</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select v-if="!$page.props.soloStudio" v-model="assignee">
+              <SelectTrigger class="w-44"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{{ $t('project.tasksAllAssignees') }}</SelectItem>
+                <SelectItem value="mine">{{ $t('project.tasksMine') }}</SelectItem>
                 <SelectItem v-for="option in staffOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
                 </SelectItem>
               </SelectContent>
             </Select>
-            <span
-              class="ml-auto text-[12.5px] whitespace-nowrap tabular-nums"
-              :class="row.isOverdue ? 'text-destructive' : 'text-ink-2'"
-            >{{ row.dueOn ? dayWithWeekday(row.dueOn) : row.dueAnchorLabel }}</span>
           </div>
-        </template>
+
+          <!-- Eine Box: Titel oben, Fälligkeit und Zielgruppe in der Fußzeile
+               darin, der Knopf unten rechts. -->
+          <form
+            v-if="header.canManageTasks"
+            class="flex flex-col rounded-md border border-rule focus-within:border-ring"
+            @submit.prevent="add"
+          >
+            <input
+              v-model="form.title"
+              class="border-0 bg-transparent px-3.5 pt-3 pb-1.5 text-[13px] outline-none"
+              type="text"
+              :placeholder="$t('lead.taskTitle')"
+            >
+            <div class="flex items-center gap-4 px-3 pt-1 pb-2.5">
+              <DatePicker v-model="form.due_on" class="w-[150px] [&_input]:h-8 [&_input]:border-0 [&_input]:bg-transparent [&_input]:px-0" />
+              <Select v-model="form.audience">
+                <SelectTrigger class="h-8 w-[110px] border-0 bg-transparent px-0 text-ink-2"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="internal">{{ $t('lead.audienceInternal') }}</SelectItem>
+                  <SelectItem value="client">{{ $t('lead.audienceClient') }}</SelectItem>
+                </SelectContent>
+              </Select>
+              <!-- Anker, Shooting und Zuständigkeit passen nicht in die
+                   Fußzeile und sind der seltenere Fall: sie bleiben im Dialog,
+                   der sie schon kann. -->
+              <TaskCreateDialog
+                :project-id="header.id"
+                :anchors="anchors"
+                :shoot-options="shootOptions"
+                :staff-options="staffOptions"
+              />
+              <Button class="ml-1" variant="pill" type="submit" :disabled="!form.title || form.processing">
+                {{ $t('lead.addTask') }}
+              </Button>
+            </div>
+          </form>
+
+          <template v-for="group in groups" :key="group.key">
+            <div v-if="group.rows.length" class="mt-[18px] mb-1 text-[10.5px] font-semibold tracking-[0.07em] uppercase text-ink-2">
+              {{ $t(group.key) }}
+            </div>
+
+            <div v-for="row in group.rows" :key="row.id" class="flex items-center gap-3.5 py-[9px]">
+              <button
+                class="size-[15px] flex-none rounded-[5px] bg-sunk-2"
+                type="button"
+                :aria-label="$t('project.taskComplete')"
+                @click="complete(row)"
+              />
+              <span class="text-[13.5px] leading-[1.47]">{{ row.title }}</span>
+              <span class="text-[10.5px] tracking-[0.05em] uppercase text-ink-2">{{ row.audienceLabel }}</span>
+              <span v-if="row.shootLabel" class="text-[11.5px] text-faint">{{ row.shootLabel }}</span>
+              <span v-if="row.isBlocked" class="text-[11.5px] text-faint">{{
+                $t('project.taskBlockedBy', { title: row.blockedBy })
+              }}</span>
+              <!-- Zugewiesen steht als Name; ohne Zuweisung steht die Auswahl,
+                   die sie setzt — eine leere Spalte übernimmt niemand. -->
+              <span v-if="!$page.props.soloStudio && row.assigneeName" class="text-[11.5px] text-ink-2">{{ row.assigneeName }}</span>
+              <Select v-else-if="!$page.props.soloStudio" :model-value="'none'" @update:model-value="(value) => assign(row, String(value))">
+                <SelectTrigger class="h-6 w-36 text-[11.5px]"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">{{ $t('project.taskUnassigned') }}</SelectItem>
+                  <SelectItem v-for="option in staffOptions" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <span
+                class="ml-auto text-[12.5px] whitespace-nowrap tabular-nums"
+                :class="row.isOverdue ? 'text-destructive' : 'text-ink-2'"
+              >{{ row.dueOn ? dayWithWeekday(row.dueOn) : row.dueAnchorLabel }}</span>
+            </div>
+          </template>
+        </Card>
 
         <!-- Erledigtes verschwand bisher ganz. Es steht hier, zusammengefaltet,
              mit dem Tag der Erledigung — das ist die Spur, nach der man sucht. -->
-        <div v-if="done.length" class="mt-6 border-t border-rule pt-3">
-          <button
-            class="flex w-full cursor-pointer items-center gap-2 text-[10.5px] font-semibold tracking-[0.07em] uppercase text-ink-2"
-            type="button"
-            @click="showDone = !showDone"
-          >
-            {{ $t('project.tasksDone', { count: done.length }) }}
-          </button>
-
-          <div v-if="showDone">
-            <div v-for="row in done" :key="row.id" class="flex items-center gap-3.5 py-[9px]">
-              <span class="flex size-[15px] flex-none items-center justify-center rounded-[5px] bg-ok-bg text-ok">
-                <svg
-                  class="size-[9px] fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:3]"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M4 12l5 5L20 6" />
-                </svg>
-              </span>
-              <span class="text-[13.5px] leading-[1.47] text-ink-2">{{ row.title }}</span>
-              <span v-if="row.shootLabel" class="text-[11.5px] text-faint">{{ row.shootLabel }}</span>
-              <Label class="sr-only" :for="`done-${row.id}`">{{ $t('project.taskCompletedOn') }}</Label>
-              <DatePicker
-                :id="`done-${row.id}`"
-                class="ml-auto w-[132px]"
-                :model-value="row.completedOn ?? ''"
-                size="sm"
-                @update:model-value="(value: string) => value && complete(row, value)"
-              />
-              <Button variant="outline" type="button" @click="reopen(row)">
-                {{ $t('project.taskReopen') }}
-              </Button>
-            </div>
+        <Card
+          v-if="done.length"
+          :title="$t('project.tasksDone', { count: done.length })"
+          :summary="doneSummary"
+          :default-open="false"
+        >
+          <div v-for="row in done" :key="row.id" class="flex items-center gap-3.5 py-[9px]">
+            <span class="flex size-[15px] flex-none items-center justify-center rounded-[5px] bg-ok-bg text-ok">
+              <svg
+                class="size-[9px] fill-none stroke-current [stroke-linecap:round] [stroke-linejoin:round] [stroke-width:3]"
+                viewBox="0 0 24 24"
+              >
+                <path d="M4 12l5 5L20 6" />
+              </svg>
+            </span>
+            <span class="text-[13.5px] leading-[1.47] text-ink-2">{{ row.title }}</span>
+            <span v-if="row.shootLabel" class="text-[11.5px] text-faint">{{ row.shootLabel }}</span>
+            <Label class="sr-only" :for="`done-${row.id}`">{{ $t('project.taskCompletedOn') }}</Label>
+            <DatePicker
+              :id="`done-${row.id}`"
+              class="ml-auto w-[132px]"
+              :model-value="row.completedOn ?? ''"
+              size="sm"
+              @update:model-value="(value: string) => value && complete(row, value)"
+            />
+            <Button variant="outline" type="button" @click="reopen(row)">
+              {{ $t('project.taskReopen') }}
+            </Button>
           </div>
-        </div>
-      </Section>
+        </Card>
+      </div>
     </ProjectShell>
   </AdminLayout>
 </template>

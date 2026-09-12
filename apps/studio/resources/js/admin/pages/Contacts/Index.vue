@@ -61,7 +61,6 @@ function day(iso: string) {
                     <Label :for="id">{{ $t('contacts.phone') }} <em>{{ $t('settings.optional') }}</em></Label>
                     <Input :id v-model="newForm.phone" type="tel" />
                   </Field>
-                  <span class="col-span-full text-[11.5px] leading-[1.45] text-faint">{{ $t('leads.noEmailHint') }}</span>
                 </form>
               </DialogBody>
 
