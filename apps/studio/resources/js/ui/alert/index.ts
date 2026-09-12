@@ -11,8 +11,10 @@ export const alertVariants = cva(
     variants: {
       variant: {
         default: "bg-card text-card-foreground",
+        /* The bg-* group is one group to tailwind-merge, so the icon has to
+           arrive as an arbitrary property or the fill drops it. */
         destructive:
-          "text-destructive bg-card [&>svg]:text-current *:data-[slot=alert-description]:text-destructive/90",
+          "flex items-center gap-3 rounded-[7px] border-0 bg-late-bg [background-image:var(--background-image-icon-alert)] bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[12.5px] leading-[1.3] font-medium text-destructive *:data-[slot=alert-description]:text-destructive/90",
       },
     },
     defaultVariants: {
