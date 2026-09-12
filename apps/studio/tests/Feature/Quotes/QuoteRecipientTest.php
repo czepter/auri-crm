@@ -100,3 +100,24 @@ it('lehnt die Anschriftsuebernahme ohne Empfaengerkontakt ab', function () {
 
     $this->actingAs($user, 'staff')->post("/angebote/{$quote->public_id}/empfaenger-uebernehmen")->assertNotFound();
 });
+
+it('druckt die Anschrift des Angebots, nicht die des Kontakts', function () {
+    [, $project] = studioWithProject();
+
+    $contact = Contact::factory()->create(['name' => 'Ursula Meier', 'street' => 'Elbchaussee 88', 'postcode' => '22763', 'city' => 'Hamburg']);
+    $project->attachContact($contact, ProjectContactRole::Payer);
+
+    $quote = Quote::factory()->for($project)->create([
+        'recipient_contact_id' => $contact->id,
+        'recipient_street' => 'Hafenstraße 12',
+        'recipient_postcode' => '20459',
+        'recipient_city' => 'Hamburg',
+    ]);
+
+    $html = app(App\Quotes\Actions\RenderQuotePdf::class)->html($quote);
+
+    expect($html)->toContain('Ursula Meier')
+        ->and($html)->toContain('Hafenstraße 12')
+        ->and($html)->toContain('20459 Hamburg')
+        ->and($html)->not->toContain('Elbchaussee 88');
+});

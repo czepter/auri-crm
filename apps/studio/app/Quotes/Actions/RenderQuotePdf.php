@@ -52,12 +52,41 @@ class RenderQuotePdf
             ->orderBy('id')
             ->first();
 
-        $body = MergeFieldResolver::resolve($template?->body ?? '', $data)
+        $body = $this->recipient($quote)
+            .MergeFieldResolver::resolve($template?->body ?? '', $data)
             .$this->letter($quote->intro, $data)
             .$this->items($quote)
             .$this->letter($quote->outro, $data);
 
         return $this->renderer->wrap(DocumentTemplateType::Quote, $body, $this->settings);
+    }
+
+    /**
+     * Name kommt aus der Kontakt-Relation (das Angebot speichert ihn nicht),
+     * Straße/PLZ/Ort aus den eigenen Spalten des Angebots — ein Umzug nach
+     * dem Versenden darf das verschickte Dokument nicht mehr ändern.
+     */
+    private function recipient(Quote $quote): string
+    {
+        $name = $quote->recipientContact?->name;
+
+        if ($name === null) {
+            return '';
+        }
+
+        $lines = [e($name)];
+
+        if ($quote->recipient_street !== null) {
+            $lines[] = e($quote->recipient_street);
+        }
+
+        $cityLine = trim(($quote->recipient_postcode ?? '').' '.($quote->recipient_city ?? ''));
+
+        if ($cityLine !== '') {
+            $lines[] = e($cityLine);
+        }
+
+        return '<p>'.implode('<br>', $lines).'</p>';
     }
 
     /** Freitext, kein HTML: escaped, Absätze bleiben Absätze. */
