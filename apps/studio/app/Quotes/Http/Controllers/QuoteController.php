@@ -14,13 +14,11 @@ use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Actions\ResolveQuoteRecipient;
 use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Actions\SendQuote;
-use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\PricingMode;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Quotes\Models\QuotePaymentStage;
-use App\Quotes\Support\DiscountCalculator;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterval;
@@ -428,7 +426,7 @@ class QuoteController extends Controller
                 'selected' => $item['selected'] ?? false,
                 'outcome' => $item['outcome'] ?? null,
             ]);
-            $quoteItem->discount_amount = DiscountCalculator::resolve($quoteItem->lineTotal(), $quoteItem->discount_type, $quoteItem->discount_value);
+            $quoteItem->discount_amount = $quoteItem->resolveDiscountAmount();
 
             return $quoteItem;
         });
@@ -440,16 +438,8 @@ class QuoteController extends Controller
             'minimum' => $stage['minimum'] ?? 0,
         ])));
 
-        $subtotal = $items->sum(fn (QuoteItem $item) => $item->discountedLineTotal());
-        $discountAmount = DiscountCalculator::resolve($subtotal, $preview->discount_type, $preview->discount_value);
-        $preview->total = $items->sum(fn (QuoteItem $item) => $item->lineTotal());
-        $preview->discount_amount = $discountAmount;
-        $preview->net = $subtotal - $discountAmount;
-
-        $preview->vat_mode = $settings->vatMode();
-        $preview->vat_rate = $settings->effectiveVatRate();
-        $preview->vat_note = $preview->vat_mode === 'small_business' ? $settings->vatNote() : null;
-        $preview->vat_amount = DiscountCalculator::resolve($preview->net, DiscountType::Percentage, $preview->vat_rate);
+        $preview->fill(Quote::computeTotals($items, $preview->discount_type, $preview->discount_value));
+        $preview->fill(Quote::computeVat($preview->net, $settings));
 
         return response($render->html($preview), 200, ['Content-Type' => 'text/html']);
     }

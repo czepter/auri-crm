@@ -22,6 +22,7 @@ it('rendert die Vorschau als HTML', function () {
     $this->actingAs($user, 'staff')
         ->post("/angebote/{$quote->public_id}/vorschau", ['intro' => 'Liebe Lena,'])
         ->assertOk()
+        ->assertHeader('Content-Type', 'text/html; charset=utf-8')
         ->assertSee('Liebe Lena,', escape: false);
 });
 
@@ -35,10 +36,19 @@ it('haelt Fremde von der Vorschau fern', function () {
 it('speichert beim Vorschau-Rendern nichts', function () {
     [$user, $project] = studioWithProjectForPreview();
     $quote = Quote::factory()->for($project)->create(['intro' => 'Original']);
+    $updatedAt = $quote->updated_at;
 
     $this->actingAs($user, 'staff')
-        ->post("/angebote/{$quote->public_id}/vorschau", ['intro' => 'Geaendert'])
+        ->post("/angebote/{$quote->public_id}/vorschau", [
+            'intro' => 'Geaendert',
+            'items' => [['title' => 'Shooting', 'quantity' => 1, 'unit_price' => 10000]],
+            'stages' => [['percent' => 100, 'label' => 'Gesamt']],
+        ])
         ->assertOk();
 
-    expect($quote->fresh()->intro)->toBe('Original');
+    $quote->refresh();
+    expect($quote->intro)->toBe('Original');
+    expect($quote->items()->count())->toBe(0);
+    expect($quote->paymentStages()->count())->toBe(0);
+    expect($quote->updated_at)->toEqual($updatedAt);
 });
