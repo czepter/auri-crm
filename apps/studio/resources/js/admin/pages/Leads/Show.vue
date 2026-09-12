@@ -467,7 +467,7 @@ function writeQuote() {
                         </div>
 
                         <template #edit>
-                            <Field v-slot="{ id }" :label="$t('lead.inquiryText')" :error="anfrage.errors.inquiry_text">
+                            <Field v-slot="{ id }" :label="$t('leads.inquiryText')" :error="anfrage.errors.inquiry_text">
                                 <Textarea :id="id" v-model="anfrage.inquiry_text" rows="6" />
                             </Field>
 

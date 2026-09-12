@@ -99,7 +99,7 @@ function submit() {
                   <div class="mb-4 flex items-center justify-between">
                     <span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('formTemplates.fieldsKick') }}</span>
                     <span class="flex-none rounded-[5px] px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase" :class="form.is_active ? 'bg-ok-bg text-ok' : 'bg-muted text-faint'">
-                      {{ form.is_active ? $t('formTemplates.active') : $t('formTemplates.inactive') }}
+                      {{ form.is_active ? $t('formTemplates.active') : $t('formTemplates.paused') }}
                     </span>
                   </div>
                   <div class="grid grid-cols-2 gap-x-6 gap-y-4">
