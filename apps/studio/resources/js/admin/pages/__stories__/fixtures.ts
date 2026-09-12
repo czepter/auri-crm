@@ -1,3 +1,5 @@
+import type { QuoteContact } from '@/admin/components/quote/quotePayload'
+
 /*
  * Ein Fall für alle Bildschirme: die Hochzeit Rahn als gebuchter Auftrag, die
  * Anfrage Brandt als noch offener Fall. Zwei Datensätze statt einer, weil
@@ -224,7 +226,7 @@ export const conflicts: App.Crm.Data.DateConflictData[] = [
     },
 ]
 
-function quoteItem(
+export function quoteItem(
     item: Partial<App.Quotes.Data.QuoteItemData> & Pick<App.Quotes.Data.QuoteItemData, 'id' | 'title' | 'lineTotal'>,
 ): App.Quotes.Data.QuoteItemData {
     return {
@@ -254,7 +256,7 @@ const brandtItems: App.Quotes.Data.QuoteItemData[] = [
     quoteItem({ id: 'qi-b2', title: 'Fotobuch 30×30', quantity: 1, lineTotal: 48000 }),
 ]
 
-function quoteOf(
+export function quoteOf(
     row: Partial<App.Quotes.Data.QuoteData> & Pick<App.Quotes.Data.QuoteData, 'id' | 'number' | 'net' | 'items'>,
 ): App.Quotes.Data.QuoteData {
     return {
@@ -263,6 +265,8 @@ function quoteOf(
         predecessorNumber: null,
         status: 'sent',
         statusLabel: 'Versendet',
+        pricingMode: 'classic',
+        sentChannel: null,
         currency: 'EUR',
         validUntil: null,
         sentAt: null,
@@ -281,9 +285,16 @@ function quoteOf(
         maxHours: null,
         imagesPerHour: null,
         hours: null,
+        timeTitle: null,
+        timeDescription: null,
         rangeMin: null,
         rangeMax: null,
         paymentStages: [],
+        recipientContact: null,
+        recipientStreet: null,
+        recipientPostcode: null,
+        recipientCity: null,
+        portalUrl: null,
         ...row,
     }
 }
@@ -332,6 +343,11 @@ export const catalogPackages: App.Catalog.Data.PackageData[] = [
     },
 ]
 
+export const contacts: QuoteContact[] = [
+    { id: 'c-brandt', name: 'Katrin Brandt', street: 'Am Burgfeld 4', postcode: '23568', city: 'Lübeck' },
+    { id: 'c-brandt-sven', name: 'Sven Brandt', street: null, postcode: null, city: null },
+]
+
 export const catalogItems: App.Catalog.Data.CatalogItemData[] = [
     { id: 'ci-1', title: 'Zweitfotografin', description: 'ganztägig', unitPrice: 66000 },
     { id: 'ci-2', title: 'Fotobuch 30×30', description: '40 Seiten, Leinen', unitPrice: 48000 },
@@ -343,6 +359,7 @@ export const workspace = {
     quotes: [leadQuote],
     packages: catalogPackages,
     catalogItems,
+    contacts,
     canManageCatalog: true,
     paymentPlan: null,
 }

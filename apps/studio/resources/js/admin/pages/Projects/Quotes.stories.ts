@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import Quotes from './Quotes.vue'
-import { catalogItems, catalogPackages, header, quote } from '../__stories__/fixtures'
+import { catalogItems, catalogPackages, contacts, header, quote } from '../__stories__/fixtures'
 
 /** Die Fassung vor der Zweitfotografin — angenommen wurde die nächste. */
 const ersetzt: App.Quotes.Data.QuoteData = {
@@ -31,6 +31,7 @@ const meta = {
         quotes: [angenommen, ersetzt],
         packages: catalogPackages,
         catalogItems,
+        contacts,
         canManageCatalog: true,
         paymentPlan: null,
     },

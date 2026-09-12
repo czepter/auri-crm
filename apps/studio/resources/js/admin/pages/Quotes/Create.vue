@@ -1,0 +1,65 @@
+<script setup lang="ts">
+import { ref } from 'vue'
+import { router } from '@inertiajs/vue3'
+import type { QuoteContact } from '@/admin/components/quote/quotePayload'
+import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import Page from '@/ui/page/Page.vue'
+import PageHead from '@/ui/page/PageHead.vue'
+import ProjectTypeahead from '@/admin/components/ProjectTypeahead.vue'
+import QuoteWorkspace from '@/admin/components/QuoteWorkspace.vue'
+import { Button } from '@/ui/button'
+import { Field } from '@/ui/field'
+
+const props = defineProps<{
+  project: App.Crm.Data.ProjectSuggestionData | null
+  quotes: App.Quotes.Data.QuoteData[]
+  packages: App.Catalog.Data.PackageData[]
+  catalogItems: App.Catalog.Data.CatalogItemData[]
+  contacts: QuoteContact[]
+  canManageCatalog: boolean
+}>()
+
+const project = ref(props.project)
+
+// Der Entwurf entsteht am gewählten Projekt; ab da ist es derselbe Editor
+// wie im Angebotsreiter, nicht ein zweiter.
+function create() {
+  if (project.value) {
+    router.post(`/auftraege/${project.value.id}/angebote`)
+  }
+}
+</script>
+
+<template>
+  <AdminLayout active="uebersicht">
+    <Page data-tokens wide>
+      <div class="min-w-0 flex-1">
+        <PageHead :kicker="$t('create.kicker')" :title="$t('quotes.create')" />
+
+        <div class="px-8 pt-5 pb-8">
+          <Field v-slot="{ id }" class="max-w-[720px]" :label="$t('create.pick')">
+            <ProjectTypeahead :id="id" v-model="project" />
+          </Field>
+
+          <Button v-if="project && !quotes.length" class="mt-4 ml-0" type="button" @click="create">
+            {{ $t('quotes.create') }}
+          </Button>
+
+          <div v-if="project && quotes.length" class="mt-5">
+            <QuoteWorkspace
+              :project-id="project.id"
+              :can-manage-quotes="true"
+              :can-manage-payment-plan="false"
+              :quotes="quotes"
+              :packages="packages"
+              :catalog-items="catalogItems"
+              :contacts="contacts"
+              :can-manage-catalog="canManageCatalog"
+              :payment-plan="null"
+            />
+          </div>
+        </div>
+      </div>
+    </Page>
+  </AdminLayout>
+</template>
