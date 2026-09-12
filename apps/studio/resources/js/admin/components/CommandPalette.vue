@@ -111,6 +111,7 @@ function when(at: string) {
   <dialog
     ref="dialog"
     class="mx-auto mt-[12vh] mb-auto w-[min(560px,calc(100vw-48px))] rounded-md border-0 bg-paper p-0 text-foreground backdrop:bg-[rgba(29,29,31,0.28)] backdrop:backdrop-blur-[3px]"
+    @click.self="dialog?.close()"
   >
     <!-- upper third: the list grows downward, the eye stays -->
     <Input
