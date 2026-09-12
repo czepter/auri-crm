@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive } from 'vue'
+import { useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import type { PricingMode, QuoteDraft } from './quotePayload'
 import { quoteRowToLine } from './quotePayload'
@@ -42,6 +43,8 @@ const open = reactive({
   terms: false,
   text: false,
 })
+
+const showPreviewColumn = useMediaQuery('(min-width: 1180px)')
 
 const rate = computed(() => eurosToCents(draft.value.slider.hourlyRate) ?? 0)
 
@@ -175,7 +178,7 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
     </div>
 
     <div class="hidden w-[420px] flex-none min-[1180px]:block">
-      <QuotePreviewPane :quote-id="quoteId" :draft="draft" :can-manage-catalog="canManageCatalog" />
+      <QuotePreviewPane v-if="showPreviewColumn" :quote-id="quoteId" :draft="draft" :can-manage-catalog="canManageCatalog" />
     </div>
   </div>
 </template>
