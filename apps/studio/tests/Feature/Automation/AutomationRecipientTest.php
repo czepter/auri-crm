@@ -56,6 +56,7 @@ it('sends a studio rule to the crew of the shoot', function () {
 it('keeps a crew rule silent without a crew and widens a studio rule to everyone', function () {
     Notification::fake();
     $staff = staffMember();
+    staffMember();
 
     shootIn(7);
 
@@ -125,4 +126,19 @@ it('records a run as skipped when the condition does not hold', function () {
 
     expect(AutomationRun::query()->first()->status)->toBe(AutomationRunStatus::Skipped);
     Notification::assertNothingSent();
+});
+
+it('sends a crew rule to the only person in a solo studio', function () {
+    Notification::fake();
+    $owner = staffMember();
+
+    shootIn(7);
+
+    AutomationRule::factory()
+        ->dateOffset(AutomationAnchor::PerShoot, 7, AutomationOffsetDirection::Before)
+        ->create(['recipient_type' => AutomationRecipient::Crew]);
+
+    sweepOn();
+
+    Notification::assertSentTo($owner, AutomationReminder::class);
 });

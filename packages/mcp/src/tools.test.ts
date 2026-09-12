@@ -92,6 +92,7 @@ describe('read tools', () => {
         'get_project',
         'list_internal_notes',
         'list_leads',
+        'list_packages',
         'list_project_types',
         'pipeline_snapshot',
         'search_contacts',
@@ -169,6 +170,9 @@ describe('read tools', () => {
       ],
       shoots: [
         { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-06-20', callTime: null, endTime: null, venueName: null, venueCity: null, status: 'requested', cancelledAt: null, cancelledReason: null, updatedAt: '2026-01-01T00:00:00Z' },
+      ],
+      quotes: [
+        { id: 'quo_1', status: 'draft', number: null, validUntil: '2026-02-01', sentAt: null, total: 179000, net: 179000, items: [{ id: 'qit_1', title: 'Reportage 2', description: null, quantity: 1, unitPrice: 179000, netTotal: 179000 }] },
       ],
     }
 
@@ -312,6 +316,23 @@ describe('read tools', () => {
     expect(result.isError).toBeFalsy()
     expect(result.structuredContent).toEqual({ types: [wedding] })
     expect(integerIdPaths(result.structuredContent)).toEqual([])
+  })
+
+  it('list_packages wraps GET /packages with the lines of each package', async () => {
+    const reportage = {
+      id: 'pkg_reportage',
+      name: 'Reportage 2',
+      description: null,
+      isActive: true,
+      items: [{ id: 'pit_1', title: 'Reportage 10 Stunden', description: null, quantity: 1, unitPrice: 179000 }],
+    }
+
+    const client = await connectedClient({ '/api/packages': () => jsonResponse({ data: [reportage] }) })
+
+    const result = await client.callTool({ name: 'list_packages', arguments: {} })
+
+    expect(result.isError).toBeFalsy()
+    expect(result.structuredContent).toEqual({ packages: [reportage] })
   })
 
   it('pipeline_snapshot wraps GET /pipeline-snapshot', async () => {

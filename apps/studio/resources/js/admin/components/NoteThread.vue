@@ -68,13 +68,13 @@ function save() {
     });
 }
 
+// Kept apart from the open state: AlertDialogAction closes the dialog before
+// its @click runs, so an id cleared on close is already null in destroy().
 const deleting = ref<string | null>(null);
+const confirmingDelete = ref(false);
 
 function destroy() {
-    router.delete(`/notizen/${deleting.value}`, {
-        preserveScroll: true,
-        onFinish: () => (deleting.value = null),
-    });
+    router.delete(`/notizen/${deleting.value}`, { preserveScroll: true });
 }
 </script>
 
@@ -98,7 +98,7 @@ function destroy() {
                     class="px-4 py-0.5 text-center text-[11.5px] leading-[1.45] text-ink-2"
                 >
                     {{ entry.body
-                    }}<span v-if="entry.author"> — {{ entry.author }}</span>
+                    }}<span v-if="entry.author && !($page.props.soloStudio && entry.author === me)"> — {{ entry.author }}</span>
                 </p>
 
                 <div v-else-if="editing !== null && editing === entry.note">
@@ -195,17 +195,14 @@ function destroy() {
                         <button
                             type="button"
                             class="cursor-pointer border-0 bg-transparent p-0 text-[11.5px] leading-none font-medium text-ink-2 hover:text-foreground"
-                            @click="deleting = entry.note"
+                            @click="deleting = entry.note; confirmingDelete = true"
                         >{{ $t('project.noteDelete') }}</button>
                     </div>
                 </div>
             </template>
         </div>
 
-        <AlertDialog
-            :open="deleting !== null"
-            @update:open="(open: boolean) => open || (deleting = null)"
-        >
+        <AlertDialog v-model:open="confirmingDelete">
             <AlertDialogContent>
                 <AlertDialogHeader>
                     <AlertDialogTitle>{{ $t('project.noteDeleteTitle') }}</AlertDialogTitle>

@@ -2,6 +2,7 @@
 
 namespace App\Crm\Support;
 
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Project;
 use App\Models\AuditLog;
 
@@ -21,6 +22,8 @@ class ProjectActivity
 {
     public static function for(Project $project, int $limit = 25): array
     {
+        $stages = app(CrmVocabulary::class);
+
         return AuditLog::query()
             ->where('project_id', $project->id)
             ->with('actor:id,name')
@@ -30,7 +33,13 @@ class ProjectActivity
             ->filter(fn (AuditLog $log) => trans()->has("activity.{$log->event}"))
             ->map(fn (AuditLog $log) => [
                 'event' => $log->event,
-                'label' => __("activity.{$log->event}"),
+                // Without the target, two moves on one day read as one move logged twice.
+                'label' => __("activity.{$log->event}", [
+                    'to' => $stages->byKey(
+                        str_starts_with($log->event, 'lead.') ? StagePipeline::Lead : StagePipeline::Project,
+                        $log->context['to'] ?? '',
+                    )?->name ?? $log->context['to'] ?? '',
+                ]),
                 'at' => $log->context['occurred_at'] ?? $log->created_at->toIso8601String(),
                 'actorName' => $log->actor?->name,
             ])

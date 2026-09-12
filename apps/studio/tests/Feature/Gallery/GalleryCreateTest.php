@@ -1,6 +1,7 @@
 <?php
 
 use App\Crm\Models\Project;
+use App\Crm\Models\Shoot;
 use App\Gallery\Models\Gallery;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -32,6 +33,25 @@ it('creates a gallery and sends the user to its record', function () {
         ->and($gallery->project_id)->toBe($project->id)
         ->and($gallery->lists_enabled)->toBeFalse()
         ->and($gallery->expires_at->toDateString())->toBe('2027-01-31');
+});
+
+it('carries the project and shoot from the project page into the gallery', function () {
+    $project = Project::factory()->create();
+    $shoot = Shoot::factory()->for($project)->create();
+
+    $this->get("/galerien/neu?projekt={$project->public_id}&shooting={$shoot->public_id}")
+        ->assertInertia(fn ($page) => $page
+            ->where('project.id', $project->public_id)
+            ->where('shootId', $shoot->public_id));
+
+    $this->post('/galerien', [
+        'project_id' => $project->public_id,
+        'shoot_id' => $shoot->public_id,
+        'title' => 'Hochzeitstag',
+        'is_external' => false,
+    ]);
+
+    expect(Gallery::sole()->shoot_id)->toBe($shoot->id);
 });
 
 it('creates one without a project', function () {

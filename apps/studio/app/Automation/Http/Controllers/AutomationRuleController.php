@@ -13,6 +13,7 @@ use App\Automation\Models\AutomationRule;
 use App\Concerns\AuthorizesStaffSettings;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -51,7 +52,10 @@ class AutomationRuleController extends Controller
         return Inertia::render('Settings/AutomationRule', [
             'rule' => AutomationRuleData::fromModel($automationRule),
             'anchors' => $this->options(AutomationAnchor::cases()),
-            'recipients' => $this->options(AutomationRecipient::cases()),
+            'recipients' => $this->options(array_values(array_filter(
+                AutomationRecipient::cases(),
+                fn (AutomationRecipient $case) => $case !== AutomationRecipient::Crew || ! User::soloStudio(),
+            ))),
             'conditions' => $this->options(AutomationCondition::cases()),
             // The same vocabulary and the same sample values the document
             // templates show, so a field means one thing in both places.

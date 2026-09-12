@@ -4,7 +4,15 @@ import { Link, router, useForm } from '@inertiajs/vue3'
 import Page from '@/ui/page/Page.vue'
 import ProjectQueue from '@/admin/components/ProjectQueue.vue'
 import StageTrack from '@/admin/components/StageTrack.vue'
+import RailHistory from '@/admin/components/RailHistory.vue'
+import Rail from '@/ui/page/Rail.vue'
+import RailItem from '@/ui/page/RailItem.vue'
+import RailSection from '@/ui/page/RailSection.vue'
+import { formatEurosRounded } from '@/admin/lib/money'
+import { dayWithWeekday as day } from '@/admin/lib/dates'
 import { Button } from '@/ui/button'
+import { Checkbox } from '@/ui/checkbox'
+import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
@@ -44,6 +52,14 @@ function reopen() {
   router.post(`/anfragen/${props.header.leadId}/wieder-oeffnen`, {}, { preserveScroll: true })
 }
 
+function toggleReminders(value: boolean | 'indeterminate') {
+  router.patch(
+    `/zahlungsplaene/${props.header.paymentPlan?.id}/erinnerungen`,
+    { client_reminders_enabled: value === true },
+    { preserveScroll: true },
+  )
+}
+
 function destroy() {
   router.delete(`/auftraege/${props.header.id}`)
 }
@@ -52,11 +68,48 @@ function destroy() {
 <template>
   <Page data-tokens>
     <template #left>
-      <ProjectQueue :groups="header.queue" />
+      <slot name="left">
+        <ProjectQueue :groups="header.queue" />
+      </slot>
     </template>
 
-    <template v-if="$slots.rail" #right>
-      <slot name="rail" />
+    <template #right>
+      <slot name="rail">
+        <Rail>
+          <slot name="people">
+            <RailSection :title="$t('lead.people')">
+              <div v-for="person in header.people" :key="person.id" class="flex items-center gap-2 py-[5px] text-[12.5px] leading-[1.47]">
+                <Link :href="`/kontakte/${person.id}`">{{ person.name }}</Link>
+                <span class="ml-auto text-[11.5px] leading-[1.47] text-[#3F6B4A]">{{ $t(`contacts.role.${person.role}`) }}</span>
+              </div>
+            </RailSection>
+          </slot>
+
+          <RailSection v-if="header.paymentPlan" :title="$t('dashboard.payments')">
+            <div v-for="instalment in header.paymentPlan.installments" :key="instalment.id" class="flex gap-2.5 py-[5px] text-[12.5px] leading-[1.47]">
+              <span class="w-[74px] flex-none text-ink-2">{{ day(instalment.dueOn) }}</span>
+              <span>{{ formatEurosRounded(Number(instalment.amount)) }}</span>
+            </div>
+
+            <div class="mt-2 flex items-center gap-2">
+              <Checkbox id="cb-plan-reminders" :model-value="header.paymentPlan.clientRemindersEnabled" @update:model-value="toggleReminders" />
+              <Label variant="inline" for="cb-plan-reminders">{{ $t('payments.clientReminders') }}</Label>
+            </div>
+          </RailSection>
+
+          <RailSection v-if="header.galleries.length" :title="$t('contacts.galleries')">
+            <RailItem
+              v-for="gallery in header.galleries"
+              :key="gallery.id"
+              :title="gallery.title ?? '—'"
+              :href="`/galerien/${gallery.id}`"
+              :meta="gallery.expiresAt ? $t('contacts.expiresOn', { date: day(gallery.expiresAt) }) : null"
+            />
+          </RailSection>
+
+          <RailHistory :entries="header.history" />
+        </Rail>
+      </slot>
     </template>
 
     <div class="min-w-0 flex-1 px-[26px] pt-5 pb-7 max-[640px]:px-5">
@@ -76,7 +129,8 @@ function destroy() {
           <div class="ml-auto flex items-center gap-2">
             <slot name="actions" />
 
-            <AlertDialog v-if="!header.isBooked && header.canBook">
+            <!-- A page with a stage menu books through it. -->
+            <AlertDialog v-if="!header.isBooked && header.canBook && !$slots.menu">
               <AlertDialogTrigger as-child>
                 <Button variant="pill" type="button">{{ $t('project.book') }}</Button>
               </AlertDialogTrigger>
@@ -91,7 +145,7 @@ function destroy() {
               </AlertDialogContent>
             </AlertDialog>
 
-            <DropdownMenu v-if="(header.canClose && !header.outcomeLabel) || header.canDelete">
+            <DropdownMenu v-if="$slots.menu || (header.canClose && !header.outcomeLabel) || header.canDelete">
               <DropdownMenuTrigger
                 class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2"
                 :aria-label="$t('project.more')"
@@ -100,8 +154,13 @@ function destroy() {
                   <circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" />
                 </svg>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" class="w-[200px]">
-                <DropdownMenuItem v-if="header.canClose && !header.outcomeLabel" @select="closing = true">
+              <DropdownMenuContent align="end" class="w-[208px]">
+                <slot name="menu" />
+                <DropdownMenuItem
+                  v-if="header.canClose && !header.outcomeLabel"
+                  :class="{ 'border-t border-rule': $slots.menu }"
+                  @select="closing = true"
+                >
                   {{ $t('project.closeMenu') }}
                 </DropdownMenuItem>
                 <DropdownMenuItem v-if="header.canDelete" class="text-destructive" @select="deleting = true">
@@ -135,14 +194,9 @@ function destroy() {
         class="mt-2.5 flex items-center gap-3 rounded-[7px] bg-late-bg py-[7px] pr-[9px] pl-[11px] text-[12.5px] leading-[1.3] font-medium text-destructive"
       >
         {{ header.outcomeLabel }} — {{ header.lostReason }}
-        <button
-          v-if="header.canClose"
-          class="ml-auto cursor-pointer whitespace-nowrap text-[var(--accent)]"
-          type="button"
-          @click="reopen"
-        >
+        <Button v-if="header.canClose" class="ml-auto" variant="outline" type="button" @click="reopen">
           {{ $t('lead.reopen') }}
-        </button>
+        </Button>
       </div>
 
       <AlertDialog v-model:open="closing">

@@ -190,3 +190,12 @@ it('ends a shoot that runs past midnight on the next day', function () {
     expect($body)->toContain('DTSTART:20260614T190000Z')
         ->and($body)->toContain('DTEND:20260615T000000Z');
 });
+
+it('carries every dated shoot when the studio has only one person', function () {
+    $owner = User::factory()->create();
+    Shoot::factory()->on('2026-06-14')->create(['label' => 'Unbesetzt']);
+
+    $body = $this->get("/kalender/{$owner->calendarToken()}/shootings.ics")->getContent();
+
+    expect($body)->toContain('Unbesetzt');
+});

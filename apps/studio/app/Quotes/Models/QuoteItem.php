@@ -50,8 +50,18 @@ class QuoteItem extends Model
     protected static function booted(): void
     {
         static::saving(function (self $item) {
-            $item->discount_amount = DiscountCalculator::resolve($item->lineTotal(), $item->discount_type, $item->discount_value);
+            $item->discount_amount = $item->resolveDiscountAmount();
         });
+    }
+
+    /**
+     * The same resolution the saving() hook above applies on write — pulled
+     * out so App\Quotes\Http\Controllers\QuoteController::preview() can put
+     * it on an unsaved item, which the hook never touches.
+     */
+    public function resolveDiscountAmount(): int
+    {
+        return DiscountCalculator::resolve($this->lineTotal(), $this->discount_type, $this->discount_value);
     }
 
     public function quote(): BelongsTo

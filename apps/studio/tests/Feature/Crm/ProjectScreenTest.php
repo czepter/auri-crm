@@ -315,7 +315,7 @@ it('links the inquiry and closes it from the project', function () {
     $lead = Lead::factory()->for($this->project)->create();
     $screen = "/auftraege/{$this->project->public_id}/shootings";
 
-    expect(array_column(props($screen)['header']['tabs'], 'href', 'key')['lead'])->toBe("/anfragen/{$lead->public_id}");
+    expect(array_column(props($screen)['header']['tabs'], 'href', 'key')['overview'])->toBe("/anfragen/{$lead->public_id}");
 
     $this->from($screen)
         ->post("/anfragen/{$lead->public_id}/schliessen", ['outcome' => 'lost', 'reason' => 'Anderen Fotografen gebucht'])

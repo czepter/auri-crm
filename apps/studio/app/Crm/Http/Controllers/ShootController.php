@@ -25,7 +25,10 @@ class ShootController extends Controller
         $this->authorize('manageShoots', $project);
 
         $validated = $request->validate([
-            'kind' => ['required', Rule::enum(ShootKind::class)],
+            // Optional, weil die Anfrage-Seite einen Termin ohne Art anlegt:
+            // dort ist die Art des Projekts die Art des Termins, wie schon
+            // bei der Erfassung. Der Shooting-Tab schickt sie weiterhin.
+            'kind' => ['nullable', Rule::enum(ShootKind::class)],
             'label' => ['nullable', 'string', 'max:255'],
             // Nullable for the same reason the column is: "Ort noch offen"
             // is a real state, and a required date forces staff to invent one.
@@ -37,7 +40,27 @@ class ShootController extends Controller
             'entered_at' => ['nullable', 'date', 'before_or_equal:now'],
         ]);
 
-        $project->shoots()->create(Arr::except($validated, 'entered_at') + array_filter(['status_entered_at' => $validated['entered_at'] ?? null]));
+        $project->shoots()->create(
+            Arr::except($validated, 'entered_at')
+            + ['kind' => $validated['kind'] ?? ShootKind::tryFrom((string) $project->type) ?? ShootKind::Other]
+            + array_filter(['status_entered_at' => $validated['entered_at'] ?? null])
+        );
+
+        return back();
+    }
+
+    /**
+     * Ein Termin, den es nie gab — der zweite, den jemand versehentlich
+     * anlegt. Der Haupttermin bleibt: an ihm hängt, wann das Projekt
+     * stattfindet, und ohne ihn hätte der Fall kein Datum mehr.
+     */
+    public function destroy(Shoot $shoot): RedirectResponse
+    {
+        $this->authorize('manageShoots', $shoot->project);
+
+        abort_if($shoot->is_primary, 422);
+
+        $shoot->delete();
 
         return back();
     }

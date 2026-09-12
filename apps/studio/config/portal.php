@@ -12,6 +12,10 @@
  * Falls back to APP_URL for a single-host setup, which is what the test
  * suite runs as.
  */
+$url = rtrim((string) env('PORTAL_URL', env('APP_URL', 'http://localhost')), '/');
+
+// Coolify's ${SERVICE_FQDN_PORTAL} is the bare host; without a scheme every
+// link composed onto it resolves relative to the page it sits on.
 return [
-    'url' => rtrim((string) env('PORTAL_URL', env('APP_URL', 'http://localhost')), '/'),
+    'url' => preg_match('#^https?://#', $url) ? $url : "https://{$url}",
 ];

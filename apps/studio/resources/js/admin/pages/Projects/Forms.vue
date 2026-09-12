@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { reactive } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
+import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
 import FormFieldsEditor, { type FormFieldRow } from '@/admin/components/FormFieldsEditor.vue'
 import GroupPhotoField from '@/portal/components/GroupPhotoField.vue'
-import Section from '@/ui/page/Section.vue'
-import { dayAndMonth } from '@/admin/lib/shoots'
+import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
+import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
-import { Textarea } from '@/ui/textarea'
 import { Label } from '@/ui/label'
+import { Switch } from '@/ui/switch'
+import { Textarea } from '@/ui/textarea'
 
 const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
@@ -18,6 +20,8 @@ const props = defineProps<{
   formTemplates: { value: string; label: string }[]
   fieldTypes: { value: string; label: string }[]
 }>()
+
+const { t } = useI18n()
 
 // One "seed from" action per template button, plus the blank one — E-02's
 // store() only ever needs the template's public_id (or none at all), so
@@ -34,9 +38,7 @@ function share(id: string, shared: boolean) {
   router.post(`/frageboegen/${id}/freigeben`, { shared }, { preserveScroll: true })
 }
 
-// Which questionnaire is open for editing, at most one at a time: the section
-// reads as answers until someone works on its questions.
-const editing = ref<string | null>(null)
+const editing = reactive<Record<string, boolean>>({})
 
 // One edit form per instance, keyed by its id — the same reason Quotes.vue
 // keeps several drafts independent rather than sharing one form's state.
@@ -74,7 +76,7 @@ function save(instanceId: string) {
     }))
     .patch(`/frageboegen/${instanceId}`, {
       preserveScroll: true,
-      onSuccess: () => (editing.value = null),
+      onSuccess: () => (editing[instanceId] = false),
     })
 }
 
@@ -149,150 +151,147 @@ function answer(fieldId: string) {
   answerForms[fieldId].patch(`/frageboegen-felder/${fieldId}/antwort`, { preserveScroll: true })
 }
 
-function answered(instance: App.Crm.Data.FormInstanceData): number {
-  return instance.fields.filter((field) => field.answeredAt).length
+function summary(instance: App.Crm.Data.FormInstanceData): string {
+  const answered = instance.fields.filter((field) => field.answeredAt).length
+
+  return answered === instance.fields.length && answered > 0
+    ? t('formInstances.complete')
+    : t('formInstances.progress', { answered, total: instance.fields.length })
 }
 </script>
 
 <template>
   <AdminLayout active="anfragen">
     <ProjectShell :header="header" active="forms">
-      <Section v-for="instance in formInstances" :key="instance.id" :title="instance.name">
-        <template #actions>
-          <span
-            v-if="instance.fields.length"
-            :class="[
-              'inline-flex items-center rounded-xl px-[7px] py-0.5 text-[10.5px] leading-[1.5] font-semibold tracking-[0.02em]',
-              answered(instance) === instance.fields.length ? 'bg-ok-bg text-ok' : 'bg-due-bg text-due',
-            ]"
-          >
-            {{ answered(instance) === instance.fields.length
-              ? $t('formInstances.complete')
-              : $t('formInstances.progress', { answered: answered(instance), total: instance.fields.length }) }}
-          </span>
+      <template v-if="header.canManageForms" #actions>
+        <Button
+          v-for="template in formTemplates"
+          :key="template.value"
+          variant="pill"
+          type="button"
+          @click="createFrom(template.value)"
+        >
+          {{ template.label }}
+        </Button>
+        <Button variant="pill" type="button" @click="createFrom('')">
+          {{ $t('formInstances.startBlank') }}
+        </Button>
+      </template>
 
-          <span v-if="instance.sharedAt" class="text-[11.5px] leading-[1.45] text-ink-2">
-            {{ $t('formInstances.sharedAt', { date: new Date(instance.sharedAt).toLocaleDateString('de-DE') }) }}
-          </span>
-          <span v-else-if="instance.sourceTemplateName" class="text-[11.5px] leading-[1.45] text-ink-2">
-            {{ $t('formInstances.seededFrom', { name: instance.sourceTemplateName }) }}
-          </span>
+      <div class="flex flex-col gap-3">
+        <Card
+          v-for="instance in formInstances"
+          :key="instance.id"
+          v-model:editing="editing[instance.id]"
+          :title="instance.name"
+          :summary="summary(instance)"
+          :editable="header.canManageForms"
+          @cancel="editForms[instance.id].reset()"
+          @save="save(instance.id)"
+        >
+          <template #action>
+            <span :class="['chip', instance.sharedAt ? 'done' : 'off']">
+              {{ instance.sharedAt ? $t('formInstances.shared') : $t('formInstances.notShared') }}
+            </span>
+          </template>
 
-          <div v-if="header.canManageForms" class="ml-auto flex flex-wrap gap-1.5">
-            <Button
-              variant="outline"
-              type="button"
-              @click="editing = editing === instance.id ? null : instance.id"
+          <!-- E-03 gilt auch am Telefon: ein unbeantwortetes Feld steht hier
+               als sein Eingabefeld, damit das Studio nachträgt, was im
+               Gespräch kam. -->
+          <div class="grid grid-cols-2 gap-x-[18px] gap-y-4 max-[640px]:grid-cols-1">
+            <Field
+              v-for="field in instance.fields"
+              :key="field.id"
+              v-slot="{ id }"
+              :label="field.label"
+              :wide="field.type === 'group_photos'"
             >
-              {{ editing === instance.id ? $t('formTemplates.done') : $t('formTemplates.edit') }}
-            </Button>
+              <template v-if="field.type === 'file'">
+                <div v-for="file in field.files" :key="file.id" class="flex items-center gap-2.5 text-[13.5px] leading-[1.35]">
+                  <span>{{ file.name }}</span>
+                  <Button v-if="header.canManageForms" variant="ghost" class="text-[12px]" type="button" @click="removeFile(file.id)">
+                    {{ $t('common.remove') }}
+                  </Button>
+                </div>
+                <input
+                  v-if="header.canManageForms"
+                  :id="id"
+                  class="block text-[12.5px] leading-[1.45]"
+                  type="file"
+                  :accept="accept(field)"
+                  @change="uploadTo(field.id, $event)"
+                />
+              </template>
+
+              <ol v-else-if="field.type === 'group_photos' && field.answeredAt" class="flex flex-col gap-0.5">
+                <li v-for="(shot, index) in shotPlan(field)" :key="index" class="flex items-baseline gap-2.5 text-[13.5px] leading-[1.47]">
+                  <span class="w-4 flex-none text-faint">{{ index + 1 }}</span>
+                  <span class="grow">{{ shot.name }}</span>
+                  <span class="flex-none text-[11.5px] text-ink-2">{{ shot.members.join(', ') }}</span>
+                </li>
+              </ol>
+
+              <div
+                v-else-if="field.answeredAt && !header.canManageForms"
+                class="text-[13.5px] leading-[1.47] whitespace-pre-line"
+              >
+                {{ field.currentAnswer }}
+              </div>
+
+              <template v-else-if="header.canManageForms">
+                <GroupPhotoField
+                  v-if="field.type === 'group_photos'"
+                  v-model="answerForms[field.id].value"
+                  :suggestions="field.groupPhotos?.suggestions ?? []"
+                  :minutes-per-group="field.groupPhotos?.minutesPerGroup ?? 2"
+                />
+                <Button
+                  v-if="field.type === 'group_photos'"
+                  class="self-start"
+                  variant="outline"
+                  type="button"
+                  :disabled="answerForms[field.id].processing"
+                  @click="answer(field.id)"
+                >
+                  {{ $t('formInstances.saveAnswer') }}
+                </Button>
+                <Textarea v-else :id="id" v-model="answerForms[field.id].value" rows="2" @change="answer(field.id)" />
+              </template>
+
+              <span v-else class="text-[13.5px] leading-[1.47]">—</span>
+            </Field>
+          </div>
+
+          <template #edit>
+            <Field v-slot="{ id }" class="max-w-[280px]" :label="$t('formInstances.nameField')">
+              <Input :id="id" v-model="editForms[instance.id].name" type="text" maxlength="255" />
+            </Field>
+
+            <div class="mt-4">
+              <FormFieldsEditor v-model="editForms[instance.id].fields" :field-types="fieldTypes" />
+            </div>
+
             <!-- P-03 (#222): sharing is what makes this fillable in the
                  portal. Un-sharing hides the screen and deletes nothing —
                  form_answers is append-only and stays that way. -->
-            <Button variant="outline" type="button" @click="share(instance.id, !instance.sharedAt)">
-              {{ instance.sharedAt ? $t('formInstances.unshare') : $t('formInstances.share') }}
-            </Button>
-          </div>
-        </template>
+            <div class="mt-4 flex items-center gap-2.5 pt-3.5 shadow-[inset_0_1px_0_var(--rule)]">
+              <Switch
+                :id="`share-${instance.id}`"
+                :model-value="Boolean(instance.sharedAt)"
+                @update:model-value="share(instance.id, $event)"
+              />
+              <Label variant="inline" :for="`share-${instance.id}`">{{ $t('formInstances.share') }}</Label>
+            </div>
 
-        <template v-if="header.canManageForms && editing === instance.id">
-          <div class="mb-2.5 flex min-w-0 flex-col gap-1.5">
-            <Label :for="`form-name-${instance.id}`">{{ $t('formInstances.nameField') }}</Label>
-            <Input :id="`form-name-${instance.id}`" v-model="editForms[instance.id].name" type="text" maxlength="255" />
-          </div>
-
-          <FormFieldsEditor v-model="editForms[instance.id].fields" :field-types="fieldTypes" />
-
-          <div class="mt-4 flex items-center gap-4">
-            <Button type="button" :disabled="editForms[instance.id].processing" @click="save(instance.id)">
-              {{ $t('common.save') }}
-            </Button>
             <!-- Eine Frage ohne Titel weist der Server ab. Ohne diese Zeile
                  sah das Speichern aus, als täte es nichts. -->
-            <span
+            <p
               v-if="Object.keys(editForms[instance.id].errors).length"
-              class="text-[11.5px] leading-[1.45] text-destructive"
-            >{{ Object.values(editForms[instance.id].errors)[0] }}</span>
-          </div>
-
-          <div v-for="field in instance.fields" :key="field.id" class="mt-4">
-            <div class="text-[12.5px] leading-[1.35] text-ink-2">{{ field.label }}</div>
-
-            <template v-if="field.type === 'file'">
-              <div v-for="file in field.files" :key="file.id" class="mt-1.5 flex items-center gap-2.5">
-                <span class="text-[13px] leading-[1.4]">{{ file.name }}</span>
-                <Button variant="outline" tone="accent" type="button" @click="removeFile(file.id)">{{ $t('common.remove') }}</Button>
-              </div>
-              <input
-                :id="`file-${field.id}`"
-                class="mt-1.5 block text-[12.5px] leading-[1.45]"
-                type="file"
-                :accept="accept(field)"
-                @change="uploadTo(field.id, $event)"
-              />
-            </template>
-
-            <template v-else>
-              <!-- E-03 gilt auch am Telefon: das Studio schreibt denselben
-                   Plan mit, den das Paar im Portal baut. -->
-              <GroupPhotoField
-                v-if="field.type === 'group_photos'"
-                v-model="answerForms[field.id].value"
-                class="mt-2.5"
-                :suggestions="field.groupPhotos?.suggestions ?? []"
-                :minutes-per-group="field.groupPhotos?.minutesPerGroup ?? 2"
-              />
-              <Textarea v-else v-model="answerForms[field.id].value" rows="2" class="mt-1.5" />
-
-              <div class="mt-1.5 flex items-center gap-4">
-                <Button variant="outline" type="button" :disabled="answerForms[field.id].processing" @click="answer(field.id)">
-                  {{ $t('formInstances.saveAnswer') }}
-                </Button>
-                <span v-if="field.answeredAt" class="text-[11.5px] leading-[1.45] text-faint">
-                  {{ $t('formInstances.answeredAt', { date: new Date(field.answeredAt).toLocaleDateString('de-DE') }) }}
-                </span>
-              </div>
-            </template>
-          </div>
-        </template>
-
-        <template v-else>
-          <div v-for="field in instance.fields" :key="field.id" class="py-[9px]">
-            <div class="flex items-baseline gap-2.5">
-              <span class="text-[12.5px] leading-[1.4] text-ink-2">{{ field.label }}</span>
-              <span v-if="field.answeredAt" class="ml-auto text-[11.5px] leading-[1.45] text-ink-2">{{ dayAndMonth(field.answeredAt) }}</span>
-              <span v-else class="ml-auto text-[11.5px] leading-[1.45] text-faint">{{ $t('formInstances.open') }}</span>
-            </div>
-            <ol v-if="field.type === 'group_photos'" class="mt-0.5 flex flex-col gap-0.5">
-              <li v-for="(shot, index) in shotPlan(field)" :key="index" class="flex items-baseline gap-2.5 text-[13px] leading-[1.47]">
-                <span class="w-4 flex-none text-faint">{{ index + 1 }}</span>
-                <span class="grow">{{ shot.name }}</span>
-                <span class="flex-none text-[11.5px] text-ink-2">{{ shot.members.join(', ') }}</span>
-              </li>
-            </ol>
-            <div v-else-if="field.currentAnswer" class="mt-0.5 text-[13px] leading-[1.47] whitespace-pre-line">{{ field.currentAnswer }}</div>
-            <div v-for="file in field.files" :key="file.id" class="mt-0.5 text-[13px] leading-[1.47]">{{ file.name }}</div>
-          </div>
-        </template>
-      </Section>
-
-      <Section v-if="header.canManageForms" :title="$t('formInstances.create')">
-        <div class="flex flex-wrap gap-1.5">
-          <Button
-            v-for="template in formTemplates"
-            :key="template.value"
-            as="a"
-            href="#"
-            variant="outline"
-            @click.prevent="createFrom(template.value)"
-          >
-            {{ template.label }}
-          </Button>
-          <Button as="a" href="#" variant="outline" tone="accent" @click.prevent="createFrom('')">
-            {{ $t('formInstances.startBlank') }}
-          </Button>
-        </div>
-      </Section>
+              class="mt-2 text-[11.5px] leading-[1.45] text-destructive"
+            >{{ Object.values(editForms[instance.id].errors)[0] }}</p>
+          </template>
+        </Card>
+      </div>
 
       <p v-if="!formInstances.length && !header.canManageForms" class="text-[11.5px] leading-[1.45] text-faint">{{ $t('formInstances.empty') }}</p>
     </ProjectShell>

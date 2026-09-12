@@ -14,7 +14,7 @@
 // (project.booking_attempted).
 return [
     'lead.captured' => 'Anfrage eingegangen',
-    'lead.stage_changed' => 'Phase gewechselt',
+    'lead.stage_changed' => 'Phase: :to',
     'lead.lost' => 'Anfrage verloren',
     'quote.sent' => 'Angebot gesendet',
     'quote.revised' => 'Angebot überarbeitet',
@@ -28,7 +28,7 @@ return [
     'payment_plan.created' => 'Zahlungsplan angelegt',
     'payment_plan.updated' => 'Zahlungsplan geändert',
     'payment_installment.paid' => 'Zahlung erhalten',
-    'shoot.status_changed' => 'Shooting-Status geändert',
+    'shoot.status_changed' => 'Shooting-Status: :to',
     'shoot.primary_designated' => 'Haupttermin festgelegt',
     'shoot.cancelled' => 'Shooting abgesagt',
     'form_instance.created' => 'Fragebogen angelegt',

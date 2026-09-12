@@ -2,10 +2,6 @@
 
 namespace App\Crm\Http\Controllers;
 
-use App\Catalog\Data\CatalogItemData;
-use App\Catalog\Data\PackageData;
-use App\Catalog\Models\CatalogItem;
-use App\Catalog\Models\Package;
 use App\Crm\Actions\AdvanceLeadStage;
 use App\Crm\Actions\BookProject;
 use App\Crm\Actions\BuildThread;
@@ -43,8 +39,7 @@ use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Payments\Data\PaymentPlanData;
-use App\Quotes\Data\QuoteData;
+use App\Quotes\Actions\ReadQuoteWorkspace;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use App\Support\LiveUpdate;
@@ -146,12 +141,6 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Show', [
             'header' => $this->header($project),
             'shoots' => ShootData::collect($this->shootsOf($project)),
-            // Absent until CreatePaymentPlan writes one — "a project without
-            // a Job has no plan" (M-03), and neither does a booked Job before
-            // anyone has created its plan.
-            'paymentPlan' => $project->job?->paymentPlan
-                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments'))
-                : null,
             // Open first and by due date, then the done ones: a card whose top
             // row is something already finished buries the work.
             'tasks' => TaskRowData::collect(
@@ -209,11 +198,6 @@ class ProjectController extends Controller
                 'capturedAt' => $project->lead->captured_at->toIso8601String(),
             ],
             'stalled' => $this->stalled($project),
-            'galleries' => $project->galleries()->get()->map(fn ($gallery) => [
-                'id' => $gallery->public_id,
-                'title' => $gallery->title,
-                'expiresAt' => $gallery->expires_at?->format('Y-m-d'),
-            ])->all(),
         ]);
     }
 
@@ -241,14 +225,18 @@ class ProjectController extends Controller
     ): RedirectResponse {
         $this->authorize('manageShoots', $project);
 
+        // Jede Karte des Bildschirms schickt ihre eigene Teilmenge, seit es
+        // keinen Bearbeiten-Modus über den ganzen Bildschirm mehr gibt: wer die
+        // Termine speichert, hat den Projektnamen nicht in der Hand.
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
             'stage' => ['nullable', Rule::exists('stages', 'key')->where('pipeline', StagePipeline::Lead->value)],
             'source' => ['nullable', Rule::enum(LeadSource::class)],
             'source_other' => ['nullable', 'string', 'max:120'],
             'people' => ['array'],
             'people.*.id' => ['required', 'string', 'size:24'],
-            'people.*.role' => ['required', Rule::enum(ProjectContactRole::class)],
+            // Freitext, wie am Fall: „Trauredner" steht in keiner Aufzählung.
+            'people.*.role' => ['required', 'string', 'max:60'],
             'shoots' => ['array'],
             'shoots.*.id' => ['required', 'string', 'size:24'],
             'shoots.*.date' => ['nullable', 'date_format:Y-m-d'],
@@ -260,7 +248,9 @@ class ProjectController extends Controller
         ]);
 
         DB::transaction(function () use ($project, $validated, $advance, $writeFields) {
-            $project->update(['name' => $validated['name']]);
+            if (array_key_exists('name', $validated)) {
+                $project->update(['name' => $validated['name']]);
+            }
 
             if ($project->lead !== null) {
                 $project->lead->update(array_filter([
@@ -282,7 +272,9 @@ class ProjectController extends Controller
             foreach ($validated['people'] ?? [] as $person) {
                 $contact = $project->contacts()->where('contacts.public_id', $person['id'])->first();
 
-                if ($contact !== null) {
+                // Der Hauptkontakt behält seine Rolle: an ihr hängt der
+                // partielle Unique-Index auf project_contacts.
+                if ($contact !== null && $contact->pivot->role !== ProjectContactRole::Primary->value) {
                     $project->contacts()->updateExistingPivot($contact->id, ['role' => $person['role']]);
                 }
             }
@@ -387,17 +379,7 @@ class ProjectController extends Controller
 
         return Inertia::render('Projects/Quotes', [
             'header' => $this->header($project),
-            'quotes' => QuoteData::collect(
-                $project->quotes()->with(['items', 'predecessor', 'paymentStages'])->get()
-            ),
-            'paymentPlan' => $project->job?->paymentPlan
-                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments'))
-                : null,
-            // Beide Listen als Prop statt als Suchendpunkt: ein Studio führt
-            // zweistellige Mengen, gefiltert wird in der Suchzeile selbst.
-            'packages' => PackageData::collect(Package::active()->with('items')->orderBy('name')->get()),
-            'catalogItems' => CatalogItemData::collect(CatalogItem::query()->orderBy('title')->get()),
-            'canManageCatalog' => $request->user('staff')?->can('create', Package::class) ?? false,
+            ...app(ReadQuoteWorkspace::class)($project, $request->user('staff')),
         ]);
     }
 

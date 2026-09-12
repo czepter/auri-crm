@@ -2655,6 +2655,312 @@
                 }
             }
         },
+        "/packages": {
+            "get": {
+                "operationId": "packages.index",
+                "tags": [
+                    "Package"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "packages.store",
+                "tags": [
+                    "Package"
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/SavePackage"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "maxLength": 255
+                                            },
+                                            "description": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 2000
+                                            },
+                                            "is_active": {
+                                                "type": "boolean"
+                                            },
+                                            "items": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "title": {
+                                                            "type": "string",
+                                                            "maxLength": 255
+                                                        },
+                                                        "description": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "maxLength": 2000
+                                                        },
+                                                        "quantity": {
+                                                            "type": "integer",
+                                                            "minimum": 1
+                                                        },
+                                                        "unit_price": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "minimum": 0
+                                                        },
+                                                        "id": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's contracts included."
+                                                        },
+                                                        "selectable": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "selected": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "outcome": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "maxLength": 255
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "title",
+                                                        "quantity"
+                                                    ]
+                                                }
+                                            }
+                                        },
+                                        "required": [
+                                            "name"
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PackageData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/packages/{package}": {
+            "patch": {
+                "operationId": "packages.update",
+                "tags": [
+                    "Package"
+                ],
+                "parameters": [
+                    {
+                        "name": "package",
+                        "in": "path",
+                        "required": true,
+                        "description": "The package public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/SavePackage"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "maxLength": 255
+                                            },
+                                            "description": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 2000
+                                            },
+                                            "is_active": {
+                                                "type": "boolean"
+                                            },
+                                            "items": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "title": {
+                                                            "type": "string",
+                                                            "maxLength": 255
+                                                        },
+                                                        "description": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "maxLength": 2000
+                                                        },
+                                                        "quantity": {
+                                                            "type": "integer",
+                                                            "minimum": 1
+                                                        },
+                                                        "unit_price": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "minimum": 0
+                                                        },
+                                                        "id": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's contracts included."
+                                                        },
+                                                        "selectable": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "selected": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "outcome": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "maxLength": 255
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "title",
+                                                        "quantity"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PackageData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "packages.destroy",
+                "summary": "Nothing built from a package references it \u2014 a quote takes a dead copy\nof the lines (Package::copyItems()) \u2014 so this removes the package and\nits own rows and touches nothing else. Deactivating instead keeps it\noff the list new quotes start from without removing it",
+                "tags": [
+                    "Package"
+                ],
+                "parameters": [
+                    {
+                        "name": "package",
+                        "in": "path",
+                        "required": true,
+                        "description": "The package public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/projects/{project}/contacts": {
             "post": {
                 "operationId": "projects.contacts.store",
@@ -3112,6 +3418,768 @@
                 }
             }
         },
+        "/projects/{project}/quotes": {
+            "post": {
+                "operationId": "projects.quotes.store",
+                "tags": [
+                    "Quote"
+                ],
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/UpdateQuote"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "valid_until": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "format": "date-time"
+                                            },
+                                            "pricing_mode": {
+                                                "description": "Der Editor schickt den Modus immer; die api-Oberflaeche kennt\nihn nicht und laesst das Angebot dann, wie es steht.",
+                                                "$ref": "#/components/schemas/PricingMode"
+                                            },
+                                            "recipient_contact": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "recipient_street": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
+                                            },
+                                            "recipient_postcode": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 32
+                                            },
+                                            "recipient_city": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
+                                            },
+                                            "intro": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 5000
+                                            },
+                                            "outro": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 5000
+                                            },
+                                            "discount_type": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "enum": [
+                                                    "percentage",
+                                                    "amount",
+                                                    null
+                                                ]
+                                            },
+                                            "discount_value": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "minimum": 1
+                                            },
+                                            "items": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "title": {
+                                                            "type": "string",
+                                                            "maxLength": 255
+                                                        },
+                                                        "description": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "maxLength": 2000
+                                                        },
+                                                        "quantity": {
+                                                            "type": "integer",
+                                                            "minimum": 1
+                                                        },
+                                                        "unit_price": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "minimum": 0
+                                                        },
+                                                        "discount_type": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "enum": [
+                                                                "percentage",
+                                                                "amount",
+                                                                null
+                                                            ]
+                                                        },
+                                                        "discount_value": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "minimum": 1
+                                                        },
+                                                        "id": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "`id`, nie der Pfad: das Portal liefert dieses Bild an den\nKunden aus, und ein aus einem Formular uebernommener Pfad\nwaere das Lesen jeder Datei auf dem Disk \u2014 die Vertraege\neingeschlossen."
+                                                        },
+                                                        "selectable": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "selected": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "outcome": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "maxLength": 255
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "title",
+                                                        "quantity"
+                                                    ]
+                                                }
+                                            },
+                                            "hourly_rate": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "description": "Q-08/Q-09/Q-11: der Reglerteil, Pflicht nur im Modus choice.",
+                                                "minimum": 1
+                                            },
+                                            "min_hours": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "minimum": 1,
+                                                "maximum": 2000
+                                            },
+                                            "max_hours": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "minimum": 1,
+                                                "maximum": 2000
+                                            },
+                                            "images_per_hour": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "minimum": 1,
+                                                "maximum": 2000
+                                            },
+                                            "hours": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "minimum": 1,
+                                                "maximum": 2000
+                                            },
+                                            "time_title": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
+                                            },
+                                            "time_description": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
+                                            },
+                                            "stages": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "percent": {
+                                                            "type": "integer",
+                                                            "minimum": 0,
+                                                            "maximum": 100
+                                                        },
+                                                        "label": {
+                                                            "type": "string",
+                                                            "maxLength": 255
+                                                        },
+                                                        "minimum": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "minimum": 0
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "percent",
+                                                        "label"
+                                                    ]
+                                                }
+                                            },
+                                            "package": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/QuoteData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/quotes/{quote}": {
+            "patch": {
+                "operationId": "quotes.update",
+                "tags": [
+                    "Quote"
+                ],
+                "parameters": [
+                    {
+                        "name": "quote",
+                        "in": "path",
+                        "required": true,
+                        "description": "The quote public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/UpdateQuote"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "valid_until": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "format": "date-time"
+                                            },
+                                            "pricing_mode": {
+                                                "description": "Der Editor schickt den Modus immer; die api-Oberflaeche kennt\nihn nicht und laesst das Angebot dann, wie es steht.",
+                                                "$ref": "#/components/schemas/PricingMode"
+                                            },
+                                            "recipient_contact": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
+                                            "recipient_street": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
+                                            },
+                                            "recipient_postcode": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 32
+                                            },
+                                            "recipient_city": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
+                                            },
+                                            "intro": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 5000
+                                            },
+                                            "outro": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 5000
+                                            },
+                                            "discount_type": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "enum": [
+                                                    "percentage",
+                                                    "amount",
+                                                    null
+                                                ]
+                                            },
+                                            "discount_value": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "minimum": 1
+                                            },
+                                            "items": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "title": {
+                                                            "type": "string",
+                                                            "maxLength": 255
+                                                        },
+                                                        "description": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "maxLength": 2000
+                                                        },
+                                                        "quantity": {
+                                                            "type": "integer",
+                                                            "minimum": 1
+                                                        },
+                                                        "unit_price": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "minimum": 0
+                                                        },
+                                                        "discount_type": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "enum": [
+                                                                "percentage",
+                                                                "amount",
+                                                                null
+                                                            ]
+                                                        },
+                                                        "discount_value": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "minimum": 1
+                                                        },
+                                                        "id": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "description": "`id`, nie der Pfad: das Portal liefert dieses Bild an den\nKunden aus, und ein aus einem Formular uebernommener Pfad\nwaere das Lesen jeder Datei auf dem Disk \u2014 die Vertraege\neingeschlossen."
+                                                        },
+                                                        "selectable": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "selected": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "outcome": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ],
+                                                            "maxLength": 255
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "title",
+                                                        "quantity"
+                                                    ]
+                                                }
+                                            },
+                                            "hourly_rate": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "description": "Q-08/Q-09/Q-11: der Reglerteil, Pflicht nur im Modus choice.",
+                                                "minimum": 1
+                                            },
+                                            "min_hours": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "minimum": 1,
+                                                "maximum": 2000
+                                            },
+                                            "max_hours": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "minimum": 1,
+                                                "maximum": 2000
+                                            },
+                                            "images_per_hour": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "minimum": 1,
+                                                "maximum": 2000
+                                            },
+                                            "hours": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "minimum": 1,
+                                                "maximum": 2000
+                                            },
+                                            "time_title": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
+                                            },
+                                            "time_description": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
+                                            },
+                                            "stages": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "percent": {
+                                                            "type": "integer",
+                                                            "minimum": 0,
+                                                            "maximum": 100
+                                                        },
+                                                        "label": {
+                                                            "type": "string",
+                                                            "maxLength": 255
+                                                        },
+                                                        "minimum": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "minimum": 0
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "percent",
+                                                        "label"
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/QuoteData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/quotes/{quote}/send": {
+            "post": {
+                "operationId": "quotes.send",
+                "tags": [
+                    "Quote"
+                ],
+                "parameters": [
+                    {
+                        "name": "quote",
+                        "in": "path",
+                        "required": true,
+                        "description": "The quote public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "sent_at": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/QuoteData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/quotes/{quote}/revise": {
+            "post": {
+                "operationId": "quotes.revise",
+                "tags": [
+                    "Quote"
+                ],
+                "parameters": [
+                    {
+                        "name": "quote",
+                        "in": "path",
+                        "required": true,
+                        "description": "The quote public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/QuoteData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/quotes/{quote}/accept": {
+            "post": {
+                "operationId": "quotes.accept",
+                "summary": "A yes given by mail or on the phone, recorded by staff for the client",
+                "tags": [
+                    "Quote"
+                ],
+                "parameters": [
+                    {
+                        "name": "quote",
+                        "in": "path",
+                        "required": true,
+                        "description": "The quote public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "contact": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "accepted_at": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    },
+                                    "hours": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ],
+                                        "minimum": 0
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/QuoteData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/projects/{project}/shoots": {
             "post": {
                 "operationId": "projects.shoots.store",
@@ -3485,7 +4553,7 @@
             },
             "CaptureInquiryData": {
                 "type": "object",
-                "description": "The capture form's payload. Six fields the studio fills plus the contact\nblock, matching mockup 03 \u2014 venue, guest count, further shoots and package\nare deliberately absent and belong to the project screen.\n\nNo #[TypeScript]: this is request input, and the frontend builds it rather\nthan receiving it.",
+                "description": "The capture form's payload. Six fields the studio fills plus the contact\nblock, matching mockup 03 \u2014 guest count, further shoots and package are\ndeliberately absent and belong to the project screen; the venue of the\nfirst shoot is asked for here.\n\nNo #[TypeScript]: this is request input, and the frontend builds it rather\nthan receiving it.",
                 "properties": {
                     "contact_id": {
                         "type": [
@@ -3590,6 +4658,32 @@
                         "format": "date",
                         "description": "Nullable and never checked against existing bookings. The\navailability warning is advisory by design \u2014 see\nCheckDateAvailability."
                     },
+                    "call_time": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "end_time": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "venue_name": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "venue_city": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
                     "inquiry_text": {
                         "type": [
                             "string",
@@ -3671,10 +4765,23 @@
                 "additionalProperties": {},
                 "title": "MessageData"
             },
+            "PackageData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "PackageData"
+            },
             "PaginatedDataCollection": {
                 "type": "object",
                 "additionalProperties": {},
                 "title": "PaginatedDataCollection"
+            },
+            "PricingMode": {
+                "type": "string",
+                "enum": [
+                    "classic",
+                    "choice"
+                ],
+                "title": "PricingMode"
             },
             "ProjectDetailReadData": {
                 "type": "object",
@@ -3705,6 +4812,89 @@
                 "additionalProperties": {},
                 "title": "ProjectTypeReadData"
             },
+            "QuoteData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "QuoteData"
+            },
+            "SavePackage": {
+                "type": "object",
+                "description": "The package editor's save, shared by the board (App\\Catalog\\Http\\\nControllers\\PackageController) and the api surface.\n\nWholesale replace of the lines rather than a diffed sync: no id anywhere\nelse references an item row \u2014 see Package::copyItems() \u2014 so there is no\nforeign key a delete-and-recreate could orphan.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 2000
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "title": {
+                                    "type": "string",
+                                    "maxLength": 255
+                                },
+                                "description": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 2000
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "unit_price": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "minimum": 0
+                                },
+                                "id": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "Q-09/Q-10: the block half of a line. `id` is how a picture\nsurvives the wholesale replace below \u2014 never the path itself:\na stored path accepted from a form is a read of any file on\nthe disk, this app's contracts included."
+                                },
+                                "selectable": {
+                                    "type": "boolean"
+                                },
+                                "selected": {
+                                    "type": "boolean"
+                                },
+                                "outcome": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                }
+                            },
+                            "required": [
+                                "title",
+                                "quantity"
+                            ]
+                        }
+                    }
+                },
+                "required": [
+                    "name"
+                ],
+                "title": "SavePackage"
+            },
             "ShootKind": {
                 "type": "string",
                 "description": "What kind of occasion a shoot is. Finer-grained than ProjectType: one wedding project routinely holds an engagement shoot, the wedding day and the reception, separated by as much as a year.\n",
@@ -3721,6 +4911,237 @@
                 "type": "object",
                 "additionalProperties": {},
                 "title": "ShootReadData"
+            },
+            "UpdateQuote": {
+                "type": "object",
+                "description": "The draft editor's save, shared by the board (App\\Quotes\\Http\\Controllers\\\nQuoteController) and the api surface.\n\nWholesale replace rather than a diffed sync, the same shape\nPackageController::update() uses and for the same reason: no id\nanywhere else references a quote item row, so there is no foreign key\na delete-and-recreate could orphan.",
+                "properties": {
+                    "valid_until": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "pricing_mode": {
+                        "description": "Der Editor schickt den Modus immer; die api-Oberflaeche kennt\nihn nicht und laesst das Angebot dann, wie es steht.",
+                        "$ref": "#/components/schemas/PricingMode"
+                    },
+                    "recipient_contact": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "recipient_street": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "recipient_postcode": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 32
+                    },
+                    "recipient_city": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "intro": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 5000
+                    },
+                    "outro": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 5000
+                    },
+                    "discount_type": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "enum": [
+                            "percentage",
+                            "amount",
+                            null
+                        ]
+                    },
+                    "discount_value": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 1
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "title": {
+                                    "type": "string",
+                                    "maxLength": 255
+                                },
+                                "description": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 2000
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "minimum": 1
+                                },
+                                "unit_price": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "minimum": 0
+                                },
+                                "discount_type": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "enum": [
+                                        "percentage",
+                                        "amount",
+                                        null
+                                    ]
+                                },
+                                "discount_value": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "minimum": 1
+                                },
+                                "id": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "description": "`id`, nie der Pfad: das Portal liefert dieses Bild an den\nKunden aus, und ein aus einem Formular uebernommener Pfad\nwaere das Lesen jeder Datei auf dem Disk \u2014 die Vertraege\neingeschlossen."
+                                },
+                                "selectable": {
+                                    "type": "boolean"
+                                },
+                                "selected": {
+                                    "type": "boolean"
+                                },
+                                "outcome": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 255
+                                }
+                            },
+                            "required": [
+                                "title",
+                                "quantity"
+                            ]
+                        }
+                    },
+                    "hourly_rate": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Q-08/Q-09/Q-11: der Reglerteil, Pflicht nur im Modus choice.",
+                        "minimum": 1
+                    },
+                    "min_hours": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 1,
+                        "maximum": 2000
+                    },
+                    "max_hours": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 1,
+                        "maximum": 2000
+                    },
+                    "images_per_hour": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 1,
+                        "maximum": 2000
+                    },
+                    "hours": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 1,
+                        "maximum": 2000
+                    },
+                    "time_title": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "time_description": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "stages": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "percent": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 100
+                                },
+                                "label": {
+                                    "type": "string",
+                                    "maxLength": 255
+                                },
+                                "minimum": {
+                                    "type": [
+                                        "integer",
+                                        "null"
+                                    ],
+                                    "minimum": 0
+                                }
+                            },
+                            "required": [
+                                "percent",
+                                "label"
+                            ]
+                        }
+                    }
+                },
+                "title": "UpdateQuote"
             }
         },
         "responses": {

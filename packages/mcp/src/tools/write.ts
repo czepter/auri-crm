@@ -43,6 +43,14 @@ import { idempotencyKeyFor } from '../idempotency.js'
   registerSetProjectFields(server, clientFor)
   registerAddProjectField(server, clientFor)
   registerDeleteProject(server, clientFor)
+  registerCreateQuote(server, clientFor)
+  registerUpdateQuote(server, clientFor)
+  registerSendQuote(server, clientFor)
+  registerReviseQuote(server, clientFor)
+  registerAcceptQuote(server, clientFor)
+  registerCreatePackage(server, clientFor)
+  registerUpdatePackage(server, clientFor)
+  registerDeletePackage(server, clientFor)
 }
 
 /**
@@ -612,6 +620,257 @@ function registerDeleteProject(server: McpServer, clientFor: ApiClientFactory): 
       return error !== undefined
         ? apiResult(undefined, error)
         : { content: [{ type: 'text', text: `Deleted project ${project}.` }] }
+    },
+  )
+}
+
+const discountTypeEnum = ['percentage', 'amount'] as const
+
+const quoteFields = {
+  valid_until: z.string().nullish().describe('YYYY-MM-DD. Defaults to the studio setting at creation.'),
+  intro: z.string().max(5000).nullish(),
+  outro: z.string().max(5000).nullish(),
+  discount_type: z.enum(discountTypeEnum).nullish(),
+  discount_value: z.number().int().min(1).nullish().describe('Percent, or cents for amount'),
+  items: z
+    .array(
+      z.object({
+        id: z.string().nullish().describe('The existing line id, to keep its picture'),
+        title: z.string().max(255),
+        description: z.string().max(2000).nullish(),
+        quantity: z.number().int().min(1),
+        unit_price: z.number().int().min(0).nullish().describe('Cents. Null makes it an included service.'),
+        discount_type: z.enum(discountTypeEnum).nullish(),
+        discount_value: z.number().int().min(1).nullish(),
+      }),
+    )
+    .optional()
+    .describe('Every line of the quote, in order. Replaces all lines when given.'),
+  hourly_rate: z.number().int().min(0).nullish().describe('Cents per hour. Set it and the client picks the hours in the portal; null for a fixed-price quote.'),
+  min_hours: z.number().int().min(0).nullish(),
+  max_hours: z.number().int().min(0).nullish(),
+  images_per_hour: z.number().int().min(0).nullish(),
+  hours: z.number().int().min(0).nullish().describe('The hours preselected'),
+  stages: z
+    .array(
+      z.object({
+        percent: z.number().int().min(0).max(100),
+        label: z.string().max(255).describe('e.g. Anzahlung'),
+        minimum: z.number().int().min(0).nullish().describe('Cents'),
+      }),
+    )
+    .optional()
+    .describe('The payment plan, in order. Replaces all stages when given.'),
+}
+
+function registerCreateQuote(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'create_quote',
+    {
+      title: 'Create a quote',
+      description:
+        'Start a draft quote (Angebot) on a project. Amounts are in cents: 1.790 € is 179000. Nothing goes to the client; send_quote does that. For a booking already agreed outside the app: create_quote, send_quote with sent_at and silent, then accept_quote.',
+      inputSchema: {
+        project: z.string().describe('The project public id'),
+        package: z.string().nullish().describe('Package public id from list_packages. Its lines, payment plan and hourly rate are copied in; fields given here override them.'),
+        ...quoteFields,
+        ...silentField,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ project, silent, ...quote }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/quotes', {
+        params: { path: { project } },
+        body: quote as never,
+        headers: writeHeaders('create_quote', { project, ...quote }, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerUpdateQuote(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'update_quote',
+    {
+      title: 'Update a quote',
+      description:
+        'Change a draft quote. Only the fields given change; `items`, when given, replaces every line. A sent quote cannot change: revise_quote makes an editable copy. get_project shows the current quotes.',
+      inputSchema: { quote: z.string().describe('The quote public id'), ...quoteFields, ...silentField },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ quote, silent, ...fields }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).PATCH('/quotes/{quote}', {
+        params: { path: { quote } },
+        body: fields as never,
+        headers: writeHeaders('update_quote', { quote, ...fields }, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerSendQuote(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'send_quote',
+    {
+      title: 'Send a quote',
+      description:
+        'Give a draft quote its number and freeze it, then mail it to the project\'s primary contact. With silent no mail goes out: use that, with sent_at, for a quote the client already received outside the app.',
+      inputSchema: {
+        quote: z.string().describe('The quote public id'),
+        sent_at: z.string().nullish().describe('When it went out. Never in the future. Defaults to now.'),
+        ...silentField,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
+    },
+    async ({ quote, sent_at: sentAt, silent }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/quotes/{quote}/send', {
+        params: { path: { quote } },
+        body: { sent_at: sentAt } as never,
+        headers: writeHeaders('send_quote', { quote, sent_at: sentAt }, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerReviseQuote(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'revise_quote',
+    {
+      title: 'Revise a quote',
+      description: 'Replace a sent quote with an editable draft copy of it. The sent one is marked superseded and can no longer be accepted.',
+      inputSchema: { quote: z.string().describe('The public id of the sent quote'), ...silentField },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ quote, silent }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/quotes/{quote}/revise', {
+        params: { path: { quote } },
+        headers: writeHeaders('revise_quote', { quote }, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerAcceptQuote(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'accept_quote',
+    {
+      title: 'Record quote acceptance',
+      description:
+        "Record the client's yes to a sent quote, given by mail, phone or in person. The quote must still be valid at accepted_at. This does not book the project or move the lead; advance_lead_stage does that.",
+      inputSchema: {
+        quote: z.string().describe('The quote public id'),
+        contact: z.string().nullish().describe("Public id of the contact who said yes. Defaults to the project's primary contact."),
+        accepted_at: z.string().nullish().describe('When they said yes. Never in the future. Defaults to now.'),
+        hours: z.number().int().min(0).nullish().describe('Hourly-rate quotes only: the hours agreed'),
+        ...silentField,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ quote, silent, ...acceptance }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/quotes/{quote}/accept', {
+        params: { path: { quote } },
+        body: acceptance as never,
+        headers: writeHeaders('accept_quote', { quote, ...acceptance }, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+const packageFields = {
+  name: z.string().max(255),
+  description: z.string().max(2000).nullish(),
+  is_active: z.boolean().optional().describe('False hides it from what a new quote can start from, leaving existing quotes alone'),
+  items: z
+    .array(
+      z.object({
+        id: z.string().nullish().describe('The existing line id, to keep its picture'),
+        title: z.string().max(255),
+        description: z.string().max(2000).nullish(),
+        quantity: z.number().int().min(1),
+        unit_price: z.number().int().min(0).nullish().describe('Cents. Null makes it an included service.'),
+      }),
+    )
+    .optional()
+    .describe('Every line of the package, in order. Replaces all lines when given.'),
+}
+
+function registerCreatePackage(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'create_package',
+    {
+      title: 'Create a package',
+      description: 'Add a package to the catalogue new quotes can start from. Amounts are in cents: 1.790 € is 179000.',
+      inputSchema: { ...packageFields, ...silentField },
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    },
+    async ({ silent, ...pkg }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).POST('/packages', {
+        body: pkg as never,
+        headers: writeHeaders('create_package', pkg, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerUpdatePackage(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'update_package',
+    {
+      title: 'Update a package',
+      description:
+        'Change a package. Only the fields given change; `items`, when given, replaces every line. Quotes already made from it keep what they copied. list_packages shows the current catalogue.',
+      inputSchema: {
+        package: z.string().describe('The package public id'),
+        ...packageFields,
+        name: packageFields.name.optional(),
+        ...silentField,
+      },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ package: id, silent, ...fields }, extra) => {
+      const { data, error } = await clientFor(extra.authInfo?.token).PATCH('/packages/{package}', {
+        params: { path: { package: id } },
+        body: fields as never,
+        headers: writeHeaders('update_package', { package: id, ...fields }, silent),
+      })
+
+      return apiResult(data, error)
+    },
+  )
+}
+
+function registerDeletePackage(server: McpServer, clientFor: ApiClientFactory): void {
+  server.registerTool(
+    'delete_package',
+    {
+      title: 'Delete a package',
+      description:
+        'Remove a package from the catalogue. Quotes made from it are untouched — they carry their own copy of the lines. There is no undo; update_package with is_active false only hides it instead.',
+      inputSchema: { package: z.string().describe('The package public id'), ...silentField },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ package: id, silent }, extra) => {
+      const { error } = await clientFor(extra.authInfo?.token).DELETE('/packages/{package}', {
+        params: { path: { package: id } },
+        headers: writeHeaders('delete_package', { package: id }, silent),
+      })
+
+      // 204, no body — see delete_project.
+      return error !== undefined
+        ? apiResult(undefined, error)
+        : { content: [{ type: 'text', text: `Deleted package ${id}.` }] }
     },
   )
 }

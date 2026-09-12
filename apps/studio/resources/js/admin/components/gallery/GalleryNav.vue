@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/ui/button'
 import { computed, ref, watch } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
@@ -92,7 +93,10 @@ watch(
   },
 )
 
+// Kept apart from the open state: AlertDialogAction closes the dialog before
+// its @click runs, so a set cleared on close is already null in confirmRemove().
 const removing = ref<{ id: string; name: string } | null>(null)
+const confirmingRemove = ref(false)
 const removeTarget = ref('')
 
 const DELETE_PICTURES = '__delete__'
@@ -104,7 +108,6 @@ function confirmRemove() {
     id: removing.value.id,
     targetSetId: removeTarget.value === DELETE_PICTURES ? null : removeTarget.value,
   })
-  removing.value = null
 }
 </script>
 
@@ -155,7 +158,7 @@ function confirmRemove() {
         <button
           class="hidden cursor-pointer border-0 bg-transparent pr-2 text-[11px] text-faint group-hover:inline"
           type="button"
-          @click.stop="removing = { id: child.key, name: child.label }"
+          @click.stop="removing = { id: child.key, name: child.label }; confirmingRemove = true"
         >
           {{ $t('common.remove') }}
         </button>
@@ -167,13 +170,13 @@ function confirmRemove() {
         <Input v-model="draft" class="h-6 text-[12.5px]" type="text" autofocus @blur="commitCreate" @keyup.enter="commitCreate" @keyup.esc="adding = false" />
         <p v-if="error?.id === 'new'" class="mt-1 text-[11px] text-destructive">{{ error.message }}</p>
       </div>
-      <button v-else class="cursor-pointer border-0 bg-transparent px-2 py-[5px] text-left text-[12px] text-action" type="button" @click="startAdd">
+      <Button v-else class="self-start" variant="outline" type="button" @click="startAdd">
         {{ $t('galleryRecord.addSet') }}
-      </button>
+      </Button>
     </template>
   </RecordNav>
 
-  <AlertDialog :open="removing !== null" @update:open="(open) => { if (!open) removing = null }">
+  <AlertDialog v-model:open="confirmingRemove">
     <AlertDialogContent>
       <AlertDialogHeader>
         <AlertDialogTitle>{{ $t('galleryRecord.removeSet', { name: removing?.name ?? '' }) }}</AlertDialogTitle>

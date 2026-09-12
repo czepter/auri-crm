@@ -118,10 +118,16 @@ class Project extends Model
      * events BelongsToTenant and HasPublicId hook into. This is the one place
      * in the context where the seam columns are filled by hand.
      */
-    public function attachContact(Contact $contact, ProjectContactRole $role): void
+    /**
+     * Die Rolle ist eine Zeichenkette in der Datenbank und darf auch eine
+     * sein: „Trauredner" ist eine Rolle, die niemand in eine Aufzählung
+     * schreiben wird. ProjectContactRole bleibt die Liste der Vorschläge und
+     * der einen Rolle, an der ein Index hängt.
+     */
+    public function attachContact(Contact $contact, ProjectContactRole|string $role): void
     {
         $this->contacts()->attach($contact, [
-            'role' => $role->value,
+            'role' => $role instanceof ProjectContactRole ? $role->value : $role,
             'tenant_id' => config('tenancy.tenant_id'),
             'public_id' => (string) new Cuid2,
         ]);

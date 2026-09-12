@@ -1,4 +1,4 @@
-import type { QuoteRow } from '@/admin/components/QuoteTable.vue'
+import type { QuoteRow } from '@/admin/components/quote/quotePayload'
 import { centsToEuros, formatEurosRounded } from '@/admin/lib/money'
 
 export type InsertOption = {
@@ -63,6 +63,10 @@ export function packageRows(pkg: App.Catalog.Data.PackageData): QuoteRow[] {
     quantity: item.quantity,
     unitPrice: centsToEuros(item.unitPrice),
     discount: '',
+    selectable: item.selectable,
+    selected: item.selected,
+    outcome: item.outcome ?? '',
+    hasImage: item.hasImage,
     remember: false,
   }))
 }
@@ -75,6 +79,10 @@ export function itemRow(item: App.Catalog.Data.CatalogItemData): QuoteRow {
     quantity: 1,
     unitPrice: centsToEuros(item.unitPrice),
     discount: '',
+    selectable: false,
+    selected: false,
+    outcome: '',
+    hasImage: false,
     remember: true,
   }
 }

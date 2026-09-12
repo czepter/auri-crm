@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
 import { helpPanel } from '@/lib/helpPanel'
@@ -24,6 +24,25 @@ const recent = () => (usePage().props.recent as Recent[] | null) ?? []
 
 const frage = ref('')
 const index = ref<HelpEintrag[]>([])
+
+const results = ref<Omit<Recent, 'at'>[]>([])
+let timer: ReturnType<typeof setTimeout> | undefined
+
+watch(frage, (value) => {
+  clearTimeout(timer)
+
+  if (value.trim().length < 2) {
+    results.value = []
+    return
+  }
+
+  timer = setTimeout(async () => {
+    const response = await fetch(`/suche?q=${encodeURIComponent(value)}`, {
+      headers: { Accept: 'application/json' },
+    })
+    results.value = (await response.json()).results
+  }, 250)
+})
 
 function recentGefiltert() {
   if (!frage.value) return recent()
@@ -92,6 +111,7 @@ function when(at: string) {
   <dialog
     ref="dialog"
     class="mx-auto mt-[12vh] mb-auto w-[min(560px,calc(100vw-48px))] rounded-md border-0 bg-paper p-0 text-foreground backdrop:bg-[rgba(29,29,31,0.28)] backdrop:backdrop-blur-[3px]"
+    @click.self="dialog?.close()"
   >
     <!-- upper third: the list grows downward, the eye stays -->
     <Input
@@ -118,6 +138,23 @@ function when(at: string) {
         <span class="text-[14px] font-medium tracking-[-0.014em]">{{ entry.title }}</span>
         <span class="ml-auto text-[11.5px] whitespace-nowrap text-ink-2">{{ when(entry.at) }}</span>
       </a>
+
+      <template v-if="results.length">
+        <div class="px-5.5 pt-3 pb-1 text-[10.5px] tracking-[0.07em] uppercase text-ink-2">
+          {{ $t('palette.results') }}
+        </div>
+        <a
+          v-for="entry in results"
+          :key="entry.href"
+          class="flex items-baseline gap-3 px-5.5 py-2 text-foreground no-underline hover:bg-sunk focus-visible:bg-sunk focus-visible:outline-0"
+          :href="entry.href"
+        >
+          <span class="w-[62px] flex-none text-[10.5px] tracking-[0.05em] uppercase text-ink-2">
+            {{ $t(`palette.kind.${entry.kind}`) }}
+          </span>
+          <span class="text-[14px] font-medium tracking-[-0.014em]">{{ entry.title }}</span>
+        </a>
+      </template>
 
       <template v-if="frage">
         <div class="px-5.5 pt-3 pb-1 text-[10.5px] tracking-[0.07em] uppercase text-ink-2">

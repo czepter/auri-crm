@@ -9,6 +9,7 @@ use App\Support\LiveUpdate;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Http;
 
 uses(RefreshDatabase::class);
@@ -39,6 +40,16 @@ it('publishes to the hub when an entry is audited', function () {
     Http::assertSent(fn (Request $request) => $request->url() === 'http://hub/.well-known/mercure'
         && $request['topic'] === LiveUpdate::topic()
         && liveUpdateClaims(substr($request->header('Authorization')[0], 7), 'publisher-key') === ['publish' => [LiveUpdate::topic()]]);
+});
+
+it('stays silent on a deploy whose hub has no key', function () {
+    config(['services.mercure.publisher_key' => null]);
+    Exceptions::fake();
+
+    AuditLogger::record('lead.stage_changed');
+
+    Http::assertNothingSent();
+    Exceptions::assertNothingReported();
 });
 
 it('publishes when mcp adds a note', function () {

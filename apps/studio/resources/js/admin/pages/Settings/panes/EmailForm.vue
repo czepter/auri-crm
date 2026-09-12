@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Button } from '@/ui/button'
 import { router, useForm } from '@inertiajs/vue3'
 import { Input } from '@/ui/input'
 import { Textarea } from '@/ui/textarea'
@@ -49,14 +50,15 @@ defineExpose({ form, submit })
           <span class="text-[13px] font-medium">{{ settings.mailFromAddress }}</span>
           <span v-if="senderFromEnv.address" class="ml-auto font-mono text-[11px] text-ink-2">MAIL_FROM_ADDRESS</span>
         </div>
-        <button
+        <Button
           v-if="!senderFromEnv.name || !senderFromEnv.address"
-          class="mt-1 cursor-pointer self-start text-[12.5px] text-ink-2 underline"
+          class="mt-1 self-start"
+          variant="outline"
           type="button"
           @click="resetSender"
         >
           {{ $t('settings.mailSenderReset') }}
-        </button>
+        </Button>
       </div>
     </div>
 

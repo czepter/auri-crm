@@ -7,21 +7,23 @@ use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\CheckDateAvailability;
 use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Actions\OpenLeads;
-use App\Crm\Actions\ReadStageTrack;
+use App\Crm\Data\ProjectHeaderData;
 use App\Crm\Data\ProjectPersonData;
 use App\Crm\Data\ShootData;
 use App\Crm\Data\TaskRowData;
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadSource;
+use App\Crm\Enums\ProjectContactRole;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
 use App\Crm\Models\ProjectType;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
-use App\Crm\Enums\StagePipeline;
 use App\Crm\Support\CrmVocabulary;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
+use App\Quotes\Actions\ReadQuoteWorkspace;
 use App\Quotes\Data\QuoteData;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -76,15 +78,15 @@ class LeadCaseController extends Controller
             $project->name,
         );
 
-        $project->load(['contacts', 'shoots.crew.user', 'tasks.project', 'tasks.assignee', 'notes.author', 'latestQuote.items']);
+        $project->load(['contacts', 'shoots.crew.user', 'primaryShoot', 'job', 'tasks.project', 'tasks.assignee', 'notes.author', 'latestQuote.items']);
         $primary = $project->primaryShoot;
         $conversation = $project->latestThread()->with('messages.contact', 'messages.author')->first();
 
         return Inertia::render('Leads/Show', [
             'tab' => $tab,
-            'track' => app(ReadStageTrack::class)(app(DeriveProjectPosition::class)($project)),
+            'header' => ProjectHeaderData::fromProject($project, app(DeriveProjectPosition::class)($project), queue: false),
             'conversation' => $conversation === null ? null : ThreadData::fromModel($conversation),
-            'canManageMessages' => auth('staff')->user()->can('manageMessages', $project),
+            'workspace' => $tab !== 'quotes' ? null : app(ReadQuoteWorkspace::class)($project, auth('staff')->user()),
             'queue' => $this->leads->queue($lead),
             'lead' => [
                 'id' => $lead->public_id,
@@ -188,17 +190,24 @@ class LeadCaseController extends Controller
         // already governs it. No new ability for the same decision.
         $this->authorize('manageShoots', $project);
 
+        // Jede Karte des Falls schickt ihre eigene Teilmenge, seit es keinen
+        // Bearbeiten-Modus über den ganzen Bildschirm mehr gibt: wer die
+        // Kontakte speichert, hat den Anfragetext nicht in der Hand und darf
+        // ihn nicht mitschicken müssen.
         $validated = $request->validate([
-            'type' => ['required', Rule::exists('project_types', 'key')->where('is_active', true)],
+            'type' => ['sometimes', 'required', Rule::exists('project_types', 'key')->where('is_active', true)],
             'type_other' => ['nullable', 'string', 'max:120'],
-            'source' => ['required', Rule::enum(LeadSource::class)],
+            'source' => ['sometimes', 'required', Rule::enum(LeadSource::class)],
             'source_other' => ['nullable', 'string', 'max:120'],
-            'inquiry_text' => ['nullable', 'string', 'max:10000'],
+            'inquiry_text' => ['sometimes', 'nullable', 'string', 'max:10000'],
             'people' => ['array'],
             'people.*.id' => ['required', 'string', 'size:24'],
             'people.*.name' => ['required', 'string', 'max:255'],
             'people.*.email' => ['nullable', 'email', 'max:255'],
             'people.*.phone' => ['nullable', 'string', 'max:64'],
+            // Freitext: „Trauredner" ist eine Rolle, die in keiner Aufzählung
+            // steht. ProjectContactRole bleibt die Liste der Vorschläge.
+            'people.*.role' => ['nullable', 'string', 'max:60'],
             'shoots' => ['array'],
             'shoots.*.id' => ['required', 'string', 'size:24'],
             'shoots.*.date' => ['nullable', 'date_format:Y-m-d'],
@@ -208,34 +217,41 @@ class LeadCaseController extends Controller
             'shoots.*.end_time' => ['nullable', 'date_format:H:i'],
         ]);
 
-        $booked = $project->job()->exists();
-
-        abort_if($booked && ($validated['shoots'] ?? []) !== [], 422);
-
-        DB::transaction(function () use ($project, $lead, $validated, $booked) {
-            $project->update([
-                'type' => $validated['type'],
-                'type_other' => $validated['type_other'] ?? null,
-            ]);
-            $lead->update([
-                'source' => $validated['source'],
-                'source_other' => $validated['source_other'] ?? null,
-                'inquiry_text' => $validated['inquiry_text'] ?? null,
-            ]);
-
-            foreach ($validated['people'] ?? [] as $person) {
-                $project->contacts()
-                    ->where('contacts.public_id', $person['id'])
-                    ->first()
-                    ?->update([
-                        'name' => $person['name'],
-                        'email' => $person['email'] ?? null,
-                        'phone' => $person['phone'] ?? null,
-                    ]);
+        DB::transaction(function () use ($project, $lead, $validated) {
+            // Ein Termin verschiebt sich, auch nachdem gebucht wurde — das ist
+            // der häufigste Vorgang überhaupt und war bis hierher ein 422.
+            if (array_key_exists('type', $validated)) {
+                $project->update([
+                    'type' => $validated['type'],
+                    'type_other' => $validated['type_other'] ?? null,
+                ]);
             }
 
-            if ($booked) {
-                return;
+            $leadFields = array_intersect_key($validated, array_flip(['source', 'source_other', 'inquiry_text']));
+
+            if ($leadFields !== []) {
+                $lead->update($leadFields);
+            }
+
+            foreach ($validated['people'] ?? [] as $person) {
+                $contact = $project->contacts()->where('contacts.public_id', $person['id'])->first();
+
+                if ($contact === null) {
+                    continue;
+                }
+
+                $contact->update([
+                    'name' => $person['name'],
+                    'email' => $person['email'] ?? null,
+                    'phone' => $person['phone'] ?? null,
+                ]);
+
+                // Der Hauptkontakt behält seine Rolle: an ihr hängt der
+                // partielle Unique-Index, und wer bucht, entscheidet die
+                // Erfassung.
+                if (filled($person['role'] ?? null) && $contact->pivot->role !== ProjectContactRole::Primary->value) {
+                    $project->contacts()->updateExistingPivot($contact->id, ['role' => $person['role']]);
+                }
             }
 
             foreach ($validated['shoots'] ?? [] as $row) {

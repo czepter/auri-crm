@@ -3,9 +3,11 @@
 namespace App\Crm\Data;
 
 use App\Contracts\Enums\ContractStatus;
+use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\OpenProjects;
 use App\Crm\Actions\ReadStageTrack;
 use App\Crm\Models\Project;
+use App\Payments\Data\PaymentPlanData;
 use App\Quotes\Enums\QuoteStatus;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -25,6 +27,9 @@ class ProjectHeaderData extends Data
     /** @param  list<array{key: string, label: string, href: string, count: int|null, countTo: int|null, children: list<array{key: string, label: string, translate: bool, href: string, count: int|null, reorderable: bool}>}>  $tabs
      * @param  list<array{key: string, label: string, pipeline: string, state: string}>  $track
      * @param  list<array{key: string, rows: list<ProjectQueueRowData>}>  $queue
+     * @param  list<ProjectPersonData>  $people
+     * @param  list<array{id: string, title: string|null, expiresAt: string|null}>  $galleries
+     * @param  list<ThreadEntryData>  $history
      */
     public function __construct(
         public string $id,
@@ -57,9 +62,14 @@ class ProjectHeaderData extends Data
         public array $tabs,
         public array $track,
         public array $queue,
+        public array $people,
+        public ?PaymentPlanData $paymentPlan,
+        public array $galleries,
+        public array $history,
     ) {}
 
-    public static function fromProject(Project $project, ProjectPositionData $position): self
+    /** @param  bool  $queue  false where the page brings its own left pane */
+    public static function fromProject(Project $project, ProjectPositionData $position, bool $queue = true): self
     {
         $user = auth('staff')->user();
 
@@ -102,7 +112,7 @@ class ProjectHeaderData extends Data
             // Fragebögen both sit between Shootings and Angebot, matching
             // mockup 04's own tab order (mockups/_shared/layout.js's
             // PROJECT_TABS).
-            tabs: [
+            tabs: $project->job === null && $project->lead !== null ? self::leadTabs($project) : [
                 ['key' => 'overview', 'label' => 'project.overview', 'href' => "/auftraege/{$project->public_id}", 'count' => null, 'countTo' => null, 'children' => []],
                 ...($project->lead ? [['key' => 'lead', 'label' => 'project.lead', 'href' => "/anfragen/{$project->lead->public_id}", 'count' => null, 'countTo' => null, 'children' => []]] : []),
                 ['key' => 'shoots', 'label' => 'project.shoots', 'href' => "/auftraege/{$project->public_id}/shootings", 'count' => null, 'countTo' => null, 'children' => []],
@@ -114,8 +124,34 @@ class ProjectHeaderData extends Data
                 ['key' => 'contract', 'label' => 'project.contract', 'href' => "/auftraege/{$project->public_id}/vertrag", 'count' => self::unsignedContracts($project), 'countTo' => null, 'children' => []],
             ],
             track: app(ReadStageTrack::class)($position),
-            queue: $user === null ? [] : app(OpenProjects::class)->queue($user, $project),
+            queue: $user === null || ! $queue ? [] : app(OpenProjects::class)->queue($user, $project),
+            people: $project->contacts->map(ProjectPersonData::fromContact(...))->all(),
+            paymentPlan: $project->job?->paymentPlan
+                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments'))
+                : null,
+            galleries: $project->galleries()->get()->map(fn ($gallery) => [
+                'id' => $gallery->public_id,
+                'title' => $gallery->title,
+                'expiresAt' => $gallery->expires_at?->format('Y-m-d'),
+            ])->all(),
+            history: app(BuildThread::class)($project),
         );
+    }
+
+    /**
+     * Before the booking the record is an inquiry: shootings, tasks, forms and
+     * the contract have nothing to hold yet, and its screens live under
+     * /anfragen.
+     */
+    private static function leadTabs(Project $project): array
+    {
+        $case = "/anfragen/{$project->lead->public_id}";
+
+        return [
+            ['key' => 'overview', 'label' => 'project.overview', 'href' => $case, 'count' => null, 'countTo' => null, 'children' => []],
+            ['key' => 'quotes', 'label' => 'project.quotes', 'href' => "{$case}/angebot", 'count' => $project->quotes()->where('status', QuoteStatus::Sent)->count(), 'countTo' => null, 'children' => []],
+            ['key' => 'messages', 'label' => 'project.messages', 'href' => "{$case}/nachrichten", 'count' => self::waitingThreads($project), 'countTo' => null, 'children' => []],
+        ];
     }
 
     /**

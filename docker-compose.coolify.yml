@@ -403,7 +403,7 @@ services:
       retries: 20
 
   rustfs-init:
-    image: minio/mc:latest
+    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
     restart: "no"
     environment:
       RUSTFS_ACCESS_KEY: ${SERVICE_PASSWORD_RUSTFSKEY}

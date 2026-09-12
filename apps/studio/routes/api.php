@@ -19,9 +19,11 @@ use App\Integration\Http\Controllers\InternalNoteController;
 use App\Integration\Http\Controllers\LeadController;
 use App\Integration\Http\Controllers\MessageController;
 use App\Integration\Http\Controllers\OAuthTokenInfoController;
+use App\Integration\Http\Controllers\PackageController;
 use App\Integration\Http\Controllers\ProjectContactController;
 use App\Integration\Http\Controllers\ProjectController;
 use App\Integration\Http\Controllers\ProjectFieldController;
+use App\Integration\Http\Controllers\QuoteController;
 use App\Integration\Http\Controllers\ShootController;
 use App\Payments\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -248,6 +250,27 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'id
 Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
     ->post('/shoots/{shoot:public_id}/uncancel', [ShootController::class, 'uncancel'])
     ->name('api.shoots.uncancel');
+
+// The catalogue. Reading it is ManageQuotes as well as ManagePackages — a
+// token that may write quotes has to see what a quote can start from —, while
+// writing one is ManagePackages alone, the capability PackagePolicy routes to.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageQuotes->value.','.Capability::ManagePackages->value])
+    ->get('/packages', [PackageController::class, 'index'])
+    ->name('api.packages.index');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManagePackages->value, 'idempotent'])->group(function () {
+    Route::post('/packages', [PackageController::class, 'store'])->name('api.packages.store');
+    Route::patch('/packages/{package:public_id}', [PackageController::class, 'update'])->name('api.packages.update');
+    Route::delete('/packages/{package:public_id}', [PackageController::class, 'destroy'])->name('api.packages.destroy');
+});
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageQuotes->value, 'idempotent'])->group(function () {
+    Route::post('/projects/{project:public_id}/quotes', [QuoteController::class, 'store'])->name('api.projects.quotes.store');
+    Route::patch('/quotes/{quote:public_id}', [QuoteController::class, 'update'])->name('api.quotes.update');
+    Route::post('/quotes/{quote:public_id}/send', [QuoteController::class, 'send'])->name('api.quotes.send');
+    Route::post('/quotes/{quote:public_id}/revise', [QuoteController::class, 'revise'])->name('api.quotes.revise');
+    Route::post('/quotes/{quote:public_id}/accept', [QuoteController::class, 'accept'])->name('api.quotes.accept');
+});
 
 // Taking an import back — see ProjectController. ManageLeads, the scope that
 // created the project through leads.store: whoever may capture a run may undo

@@ -16,7 +16,9 @@ use App\Crm\Http\Controllers\InquiryCaptureController;
 use App\Crm\Http\Controllers\InternalNoteController;
 use App\Crm\Http\Controllers\LeadBoardController;
 use App\Crm\Http\Controllers\LeadCaseController;
+use App\Crm\Http\Controllers\LeadContactController;
 use App\Crm\Http\Controllers\LeadStageController;
+use App\Crm\Http\Controllers\PaletteSearchController;
 use App\Crm\Http\Controllers\ProjectController;
 use App\Crm\Http\Controllers\ProjectFieldController;
 use App\Crm\Http\Controllers\ProjectSearchController;
@@ -184,6 +186,7 @@ Route::middleware('audience:staff')->group(function () {
         // /kontakte/suche stays above any /kontakte/{contact} route, or Laravel
         // binds "suche" as a contact public id and answers 404.
         Route::get('/kontakte/suche', ContactSearchController::class)->name('contacts.search');
+        Route::get('/suche', PaletteSearchController::class)->name('palette.search');
         Route::get('/kontakte', [ContactController::class, 'index'])->name('contacts.index');
         Route::post('/kontakte', [ContactController::class, 'store'])->name('contacts.store');
         Route::get('/kontakte/{contact}', [ContactController::class, 'edit'])->name('contacts.edit');
@@ -490,6 +493,16 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/anfragen/{lead}/nachrichten', [LeadCaseController::class, 'show'])
             ->defaults('tab', 'messages')
             ->name('leads.messages');
+        Route::get('/anfragen/{lead}/angebot', [LeadCaseController::class, 'show'])
+            ->defaults('tab', 'quotes')
+            ->name('leads.quote');
+        // Wer sonst noch am Fall hängt. Bis hierher gab es das nur auf der
+        // API-Oberfläche, und die schmale Spalte auf dem Bildschirm konnte
+        // keinen Zeileneditor tragen.
+        Route::post('/anfragen/{lead}/kontakte', [LeadContactController::class, 'store'])
+            ->name('leads.contacts.store');
+        Route::delete('/anfragen/{lead}/kontakte/{contact}', [LeadContactController::class, 'destroy'])
+            ->name('leads.contacts.destroy');
         Route::post('/anfragen/{lead}/schliessen', [LeadStageController::class, 'close'])
             ->name('leads.close');
         Route::post('/anfragen/{lead}/wieder-oeffnen', [LeadStageController::class, 'reopen'])
@@ -548,7 +561,11 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/angebote/{quote}/positionen/{quoteItem}/bild', [QuoteController::class, 'itemImage'])
             ->name('quotes.items.image');
         Route::patch('/angebote/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
+        Route::post('/angebote/{quote}/vorschau', [QuoteController::class, 'preview'])->name('quotes.preview');
         Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
+        Route::post('/angebote/{quote}/versendet', [QuoteController::class, 'markSent'])->name('quotes.mark-sent');
+        Route::post('/angebote/{quote}/empfaenger-uebernehmen', [QuoteController::class, 'adoptRecipient'])
+            ->name('quotes.adopt-recipient');
         Route::post('/angebote/{quote}/als-paket', [QuoteController::class, 'saveAsPackage'])->name('quotes.saveAsPackage');
         Route::get('/angebote/{quote}/pdf', [QuoteController::class, 'download'])->name('quotes.download');
 
@@ -743,6 +760,8 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::post('/auftraege/{project}/shootings', [ShootController::class, 'store'])
             ->name('shoots.store');
+        Route::delete('/shootings/{shoot}', [ShootController::class, 'destroy'])
+            ->name('shoots.destroy');
         Route::post('/shootings/{shoot}/status', [ShootController::class, 'advance'])
             ->name('shoots.advance');
         Route::post('/shootings/{shoot}/absage', [ShootController::class, 'cancel'])

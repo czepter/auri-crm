@@ -7,17 +7,25 @@ use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
+use App\Numbering\Actions\AllocateDocumentNumber;
+use App\Numbering\Enums\DocumentType;
+use App\Quotes\Actions\MarkQuoteSent;
 use App\Quotes\Actions\RenderQuotePdf;
+use App\Quotes\Actions\ResolveQuoteRecipient;
 use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Actions\SendQuote;
+use App\Quotes\Actions\UpdateQuote;
+use App\Quotes\Enums\PricingMode;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
+use App\Quotes\Models\QuotePaymentStage;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterval;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -27,7 +35,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuoteController extends Controller
 {
-    public function store(Request $request, Project $project, SeedQuoteFromPackage $seed, StudioSettingsResolver $settings): RedirectResponse
+    public function store(Request $request, Project $project, SeedQuoteFromPackage $seed, StudioSettingsResolver $settings, AllocateDocumentNumber $allocate, ResolveQuoteRecipient $resolveRecipient): RedirectResponse
     {
         $this->authorize('manageQuotes', $project);
 
@@ -56,11 +64,21 @@ class QuoteController extends Controller
                 ->where('status', QuoteStatus::Accepted)->firstOrFail()
             : null;
 
-        $quote = $project->quotes()->create([
-            'valid_until' => $validUntil,
-            'is_addendum' => $predecessor !== null,
-            'predecessor_id' => $predecessor?->id,
-        ]);
+        $quote = DB::transaction(function () use ($project, $validUntil, $predecessor, $allocate, $resolveRecipient) {
+            $allocation = ($allocate)(documentType: DocumentType::Quote);
+            $recipient = ($resolveRecipient)($project);
+
+            return $project->quotes()->create([
+                'valid_until' => $validUntil,
+                'is_addendum' => $predecessor !== null,
+                'predecessor_id' => $predecessor?->id,
+                'number' => $allocation['number'],
+                'recipient_contact_id' => $recipient?->id,
+                'recipient_street' => $recipient?->street,
+                'recipient_postcode' => $recipient?->postcode,
+                'recipient_city' => $recipient?->city,
+            ]);
+        });
 
         if (! empty($validated['package'])) {
             $package = Package::active()->where('public_id', $validated['package'])->firstOrFail();
@@ -78,50 +96,11 @@ class QuoteController extends Controller
         return back();
     }
 
-    /**
-     * Wholesale replace rather than a diffed sync, the same shape
-     * PackageController::update() uses and for the same reason: no id
-     * anywhere else references a quote item row, so there is no foreign key
-     * a delete-and-recreate could orphan.
-     */
-    public function update(Request $request, Quote $quote): RedirectResponse
+    public function update(Request $request, Quote $quote, UpdateQuote $save): RedirectResponse
     {
         $this->authorize('manageQuotes', $quote->project);
 
-        $validated = $request->validate([
-            'valid_until' => ['nullable', 'date'],
-            'intro' => ['nullable', 'string', 'max:5000'],
-            'outro' => ['nullable', 'string', 'max:5000'],
-            'discount_type' => ['nullable', 'in:percentage,amount', 'required_with:discount_value'],
-            'discount_value' => ['nullable', 'integer', 'min:1', 'required_with:discount_type'],
-            'items' => ['array'],
-            'items.*.title' => ['required', 'string', 'max:255'],
-            'items.*.description' => ['nullable', 'string', 'max:2000'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
-            'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
-            'items.*.discount_type' => ['nullable', 'in:percentage,amount', 'required_with:items.*.discount_value'],
-            'items.*.discount_value' => ['nullable', 'integer', 'min:1', 'required_with:items.*.discount_type'],
-            'items.*.remember' => ['boolean'],
-            // Q-08/Q-09/Q-11: der Reglerteil. hourly_rate null laesst alles
-            // unten so laufen, wie es vorher lief.
-            'hourly_rate' => ['nullable', 'integer', 'min:0'],
-            'min_hours' => ['nullable', 'integer', 'min:0', 'max:2000'],
-            'max_hours' => ['nullable', 'integer', 'min:0', 'max:2000'],
-            'images_per_hour' => ['nullable', 'integer', 'min:0', 'max:2000'],
-            'hours' => ['nullable', 'integer', 'min:0', 'max:2000'],
-            // `id`, nie der Pfad: das Portal liefert dieses Bild an den
-            // Kunden aus, und ein aus einem Formular uebernommener Pfad
-            // waere das Lesen jeder Datei auf dem Disk — die Vertraege
-            // eingeschlossen.
-            'items.*.id' => ['nullable', 'string'],
-            'items.*.selectable' => ['sometimes', 'boolean'],
-            'items.*.selected' => ['sometimes', 'boolean'],
-            'items.*.outcome' => ['nullable', 'string', 'max:255'],
-            'stages' => ['array'],
-            'stages.*.percent' => ['required', 'integer', 'min:0', 'max:100'],
-            'stages.*.label' => ['required', 'string', 'max:255'],
-            'stages.*.minimum' => ['nullable', 'integer', 'min:0'],
-        ]);
+        $validated = $request->validate([...UpdateQuote::rules(), 'items.*.remember' => ['boolean']]);
 
         // Der Schlüssel kommt nur mit, wenn der Bildschirm das Häkchen
         // gerendert hat. Kommt er trotzdem, ist das kein Bedienschritt, den
@@ -131,64 +110,7 @@ class QuoteController extends Controller
             abort(403);
         }
 
-        $quote->update([
-            'valid_until' => $validated['valid_until'] ?? null,
-            'intro' => $validated['intro'] ?? null,
-            'outro' => $validated['outro'] ?? null,
-            'discount_type' => $validated['discount_type'] ?? null,
-            'discount_value' => $validated['discount_value'] ?? null,
-            'hourly_rate' => $validated['hourly_rate'] ?? null,
-            'min_hours' => $validated['min_hours'] ?? null,
-            'max_hours' => $validated['max_hours'] ?? null,
-            'images_per_hour' => $validated['images_per_hour'] ?? null,
-            'hours' => $validated['hours'] ?? null,
-        ]);
-
-        // Vor dem Loeschen gelesen: die Zeilen tragen die einzigen Pfade,
-        // die dieses Angebot je akzeptiert, und gleich gibt es sie nicht mehr.
-        $images = $quote->items()->whereNotNull('image_path')->pluck('image_path', 'public_id')->all();
-
-        $quote->items()->delete();
-        $quote->items()->createMany(
-            collect($validated['items'] ?? [])
-                ->values()
-                ->map(fn (array $item, int $index) => [
-                    'title' => $item['title'],
-                    'description' => $item['description'] ?? null,
-                    'quantity' => $item['quantity'],
-                    'unit_price' => $item['unit_price'] ?? null,
-                    'sort_order' => $index,
-                    'discount_type' => $item['discount_type'] ?? null,
-                    'discount_value' => $item['discount_value'] ?? null,
-                    'selectable' => $item['selectable'] ?? false,
-                    'selected' => $item['selected'] ?? false,
-                    'outcome' => $item['outcome'] ?? null,
-                    'image_path' => $images[$item['id'] ?? ''] ?? null,
-                ])
-                ->all()
-        );
-
-        // Q-11: dieselbe vollstaendige Ersetzung wie bei den Zeilen. Nichts
-        // haelt einen Fremdschluessel auf eine Stufe.
-        $quote->paymentStages()->delete();
-        $quote->paymentStages()->createMany(
-            collect($validated['stages'] ?? [])
-                ->values()
-                ->map(fn (array $stage, int $index) => [
-                    'percent' => $stage['percent'],
-                    'label' => $stage['label'],
-                    'minimum' => $stage['minimum'] ?? 0,
-                    'sort_order' => $index,
-                ])
-                ->all()
-        );
-
-        // Q-15: ein Regler-Angebot hat vor der Zusage keine Summe, sondern
-        // eine Spanne. AcceptQuote schreibt total; bis dahin wuerde diese
-        // Ableitung eine zweite, falsche Wahrheit hinstellen.
-        if (! $quote->fresh()->hasSlider()) {
-            $quote->recalculateTotal();
-        }
+        $save($quote, $validated);
 
         $this->syncCatalog($validated['items'] ?? []);
 
@@ -265,6 +187,40 @@ class QuoteController extends Controller
     }
 
     /**
+     * T-11: delivered by the studio itself (WhatsApp, their own mail
+     * client) — same MarkQuoteSent state change as send(), channel 'self',
+     * no notification.
+     */
+    public function markSent(Quote $quote, MarkQuoteSent $mark): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+
+        $mark($quote, 'self', auth('staff')->user());
+
+        return back();
+    }
+
+    /**
+     * Schreibt die Anschrift des Angebots in den Kontakt zurück, ohne
+     * Request-Body: eine ausgefüllte, aber noch nicht gespeicherte
+     * Formularzeile darf den Kontakt nie überschreiben.
+     */
+    public function adoptRecipient(Quote $quote): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+
+        abort_if($quote->recipient_contact_id === null, 404);
+
+        $quote->recipientContact->update([
+            'street' => $quote->recipient_street,
+            'postcode' => $quote->recipient_postcode,
+            'city' => $quote->recipient_city,
+        ]);
+
+        return back();
+    }
+
+    /**
      * Das Häkchen ist keine Spalte auf quote_items, sondern die Frage "gibt es
      * einen Katalogeintrag mit diesem Titel". Eine Zeile ohne den Schlüssel
      * stellt die Frage nicht und lässt die Bibliothek unberührt.
@@ -299,5 +255,101 @@ class QuoteController extends Controller
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="'.($quote->number ?? $quote->public_id).'.pdf"',
         ]);
+    }
+
+    /**
+     * Same shape update() validates, on an unsaved copy — every field
+     * optional, since the editor posts here on each debounced keystroke of
+     * a half-filled draft. Nothing here is written: not to $quote, not to
+     * its items or stages, so the live sheet always trails the form and
+     * never the stored row.
+     */
+    public function preview(Request $request, Quote $quote, RenderQuotePdf $render, StudioSettingsResolver $settings): Response
+    {
+        $this->authorize('manageQuotes', $quote->project);
+
+        $validated = $request->validate([
+            'pricing_mode' => ['nullable', Rule::enum(PricingMode::class)],
+            'recipient_street' => ['nullable', 'string', 'max:255'],
+            'recipient_postcode' => ['nullable', 'string', 'max:32'],
+            'recipient_city' => ['nullable', 'string', 'max:255'],
+            'intro' => ['nullable', 'string', 'max:5000'],
+            'outro' => ['nullable', 'string', 'max:5000'],
+            'discount_type' => ['nullable', 'in:percentage,amount'],
+            'discount_value' => ['nullable', 'integer', 'min:1'],
+            'items' => ['array'],
+            'items.*.title' => ['nullable', 'string', 'max:255'],
+            'items.*.description' => ['nullable', 'string', 'max:2000'],
+            'items.*.quantity' => ['nullable', 'integer', 'min:1'],
+            'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
+            'items.*.discount_type' => ['nullable', 'in:percentage,amount'],
+            'items.*.discount_value' => ['nullable', 'integer', 'min:1'],
+            'items.*.selectable' => ['sometimes', 'boolean'],
+            'items.*.selected' => ['sometimes', 'boolean'],
+            'items.*.outcome' => ['nullable', 'string', 'max:255'],
+            'hourly_rate' => ['nullable', 'integer', 'min:1'],
+            'min_hours' => ['nullable', 'integer', 'min:1', 'max:2000'],
+            'max_hours' => ['nullable', 'integer', 'min:1', 'max:2000'],
+            'images_per_hour' => ['nullable', 'integer', 'min:1', 'max:2000'],
+            'hours' => ['nullable', 'integer', 'min:1', 'max:2000'],
+            'time_title' => ['nullable', 'string', 'max:255'],
+            'time_description' => ['nullable', 'string', 'max:255'],
+            'stages' => ['array'],
+            'stages.*.percent' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'stages.*.label' => ['nullable', 'string', 'max:255'],
+            'stages.*.minimum' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $preview = new Quote(['project_id' => $quote->project_id]);
+        $preview->setRelation('project', $quote->project);
+        // Der Name steht am Kontakt, nicht am Formular; die Anschrift kommt
+        // aus dem Entwurf, damit das Blatt dem Feld folgt.
+        $preview->setRelation('recipientContact', $quote->recipientContact);
+        $preview->fill([
+            'pricing_mode' => $validated['pricing_mode'] ?? PricingMode::Classic->value,
+            'recipient_street' => $validated['recipient_street'] ?? null,
+            'recipient_postcode' => $validated['recipient_postcode'] ?? null,
+            'recipient_city' => $validated['recipient_city'] ?? null,
+            'intro' => $validated['intro'] ?? null,
+            'outro' => $validated['outro'] ?? null,
+            'discount_type' => $validated['discount_type'] ?? null,
+            'discount_value' => $validated['discount_value'] ?? null,
+            'hourly_rate' => $validated['hourly_rate'] ?? null,
+            'min_hours' => $validated['min_hours'] ?? null,
+            'max_hours' => $validated['max_hours'] ?? null,
+            'images_per_hour' => $validated['images_per_hour'] ?? null,
+            'hours' => $validated['hours'] ?? null,
+            'time_title' => $validated['time_title'] ?? null,
+            'time_description' => $validated['time_description'] ?? null,
+        ]);
+
+        $items = collect($validated['items'] ?? [])->map(function (array $item) {
+            $quoteItem = new QuoteItem([
+                'title' => $item['title'] ?? '',
+                'description' => $item['description'] ?? null,
+                'quantity' => $item['quantity'] ?? 1,
+                'unit_price' => $item['unit_price'] ?? null,
+                'discount_type' => $item['discount_type'] ?? null,
+                'discount_value' => $item['discount_value'] ?? null,
+                'selectable' => $item['selectable'] ?? false,
+                'selected' => $item['selected'] ?? false,
+                'outcome' => $item['outcome'] ?? null,
+            ]);
+            $quoteItem->discount_amount = $quoteItem->resolveDiscountAmount();
+
+            return $quoteItem;
+        });
+        $preview->setRelation('items', $items);
+
+        $preview->setRelation('paymentStages', collect($validated['stages'] ?? [])->map(fn (array $stage) => new QuotePaymentStage([
+            'percent' => $stage['percent'] ?? 0,
+            'label' => $stage['label'] ?? '',
+            'minimum' => $stage['minimum'] ?? 0,
+        ])));
+
+        $preview->fill(Quote::computeTotals($items, $preview->discount_type, $preview->discount_value));
+        $preview->fill(Quote::computeVat($preview->net, $settings));
+
+        return response($render->html($preview), 200, ['Content-Type' => 'text/html']);
     }
 }
