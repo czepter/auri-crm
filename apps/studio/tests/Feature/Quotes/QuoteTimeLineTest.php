@@ -48,6 +48,27 @@ it('weist max_hours unter min_hours zurueck', function () {
         ->assertSessionHasErrors('max_hours');
 });
 
+it('schreibt Titel und Stunden ins PDF', function () {
+    [, $project] = studioWithProjectForTimeLine();
+
+    $quote = Quote::factory()->for($project)->create([
+        'pricing_mode' => 'choice',
+        'hourly_rate' => 25000,
+        'min_hours' => 3,
+        'max_hours' => 12,
+        'hours' => 8,
+        'images_per_hour' => 40,
+        'time_title' => 'Hochzeitsreportage',
+        'time_description' => 'Trauung, Empfang, Paarshooting',
+    ]);
+
+    $html = app(App\Quotes\Actions\RenderQuotePdf::class)->html($quote);
+
+    expect($html)->toContain('Hochzeitsreportage')
+        ->and($html)->toContain('8 Stunden')
+        ->and($html)->toContain('ca. 320');
+});
+
 it('speichert Titel und Beschreibung der Zeitzeile', function () {
     [$user, $project] = studioWithProjectForTimeLine();
     $quote = Quote::factory()->for($project)->create();

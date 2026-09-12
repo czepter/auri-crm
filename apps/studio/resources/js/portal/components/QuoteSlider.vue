@@ -59,13 +59,24 @@ const stages = computed(() =>
   )
 )
 
+const timeDetail = computed(() =>
+  [
+    props.quote.timeDescription,
+    t('quotes.hoursCount', hours.value),
+    props.quote.imagesPerHour ? t('quotes.approxImages', { count: images.value }) : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+)
+
 // Die Aufstellung sagt, was der Betrag deckt, in der Reihenfolge, in der er
 // entsteht: die Stunden, dann was ohne Aufpreis folgt, dann jeder gewählte
 // Baustein.
 const breakdown = computed(() => [
-  { label: t('quotes.hoursCount', hours.value), amount: hours.value * (props.quote.hourlyRate ?? 0), lead: true },
+  { label: props.quote.timeTitle ?? t('quotes.hoursCount', hours.value), amount: hours.value * (props.quote.hourlyRate ?? 0), lead: true },
+  ...(props.quote.timeTitle ? [{ label: timeDetail.value, amount: null, lead: false }] : []),
   ...fixed.value.map((item) => ({ label: item.title, amount: item.lineTotal, lead: false })),
-  { label: t('quotes.editedImages', { count: images.value }), amount: null, lead: false },
+  ...(props.quote.timeTitle ? [] : [{ label: t('quotes.editedImages', { count: images.value }), amount: null, lead: false }]),
   ...included.value.map((item) => ({ label: item.outcome ?? item.title, amount: null, lead: false })),
   ...blocks.value.filter((item) => chosen.value.has(item.id)).map((item) => ({ label: item.title, amount: item.lineTotal, lead: false })),
 ])
