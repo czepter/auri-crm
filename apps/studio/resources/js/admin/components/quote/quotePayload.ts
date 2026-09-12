@@ -17,6 +17,9 @@ export type QuoteRow = {
   remember: boolean
 }
 
+/** Ein Kontakt des Projekts, wie ihn die Empfaengerkarte waehlt (§4.4). */
+export type QuoteContact = { id: string; name: string; street: string | null; postcode: string | null; city: string | null }
+
 export type StageRow = { percent: number; label: string; minimum: string }
 
 export type SliderDraft = {

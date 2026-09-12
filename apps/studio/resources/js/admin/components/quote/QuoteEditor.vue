@@ -2,7 +2,7 @@
 import { computed, reactive } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
-import type { PricingMode, QuoteDraft } from './quotePayload'
+import type { PricingMode, QuoteContact, QuoteDraft } from './quotePayload'
 import { quoteRowToLine } from './quotePayload'
 import { subtotal } from './quoteTotals'
 import { eurosToCents, formatEuros } from '@/admin/lib/money'
@@ -23,6 +23,7 @@ const props = defineProps<{
   quoteId: string
   quote: App.Quotes.Data.QuoteData
   canManageCatalog: boolean
+  contacts: QuoteContact[]
   packages: App.Catalog.Data.PackageData[]
   catalogItems: App.Catalog.Data.CatalogItemData[]
 }>()
@@ -48,9 +49,11 @@ const showPreviewColumn = useMediaQuery('(min-width: 1180px)')
 
 const rate = computed(() => eurosToCents(draft.value.slider.hourlyRate) ?? 0)
 
+const recipientName = computed(() => props.contacts.find((entry) => entry.id === draft.value.recipientContact)?.name ?? null)
+
 const recipientSummary = computed(() =>
   [
-    props.quote.recipientName,
+    recipientName.value,
     draft.value.recipientStreet,
     [draft.value.recipientPostcode, draft.value.recipientCity].filter(Boolean).join(' '),
   ]
@@ -124,11 +127,11 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
       <QuoteCard v-model:open="open.recipient" :title="$t('quotes.recipient')" :summary="recipientSummary">
         <QuoteRecipientCard
           :quote-id="quoteId"
-          :recipient-name="quote.recipientName"
-          :recipient-contact-id="quote.recipientContact"
-          :contact-street="quote.recipientContactStreet"
-          :contact-postcode="quote.recipientContactPostcode"
-          :contact-city="quote.recipientContactCity"
+          :contacts="contacts"
+          :saved-street="quote.recipientStreet"
+          :saved-postcode="quote.recipientPostcode"
+          :saved-city="quote.recipientCity"
+          v-model:contact="draft.recipientContact"
           v-model:street="draft.recipientStreet"
           v-model:postcode="draft.recipientPostcode"
           v-model:city="draft.recipientCity"

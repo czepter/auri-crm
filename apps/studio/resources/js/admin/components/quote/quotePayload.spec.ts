@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildQuotePayload, type QuoteDraft } from './quotePayload'
+import { buildQuotePayload, quoteRowToLine, type QuoteDraft } from './quotePayload'
 
 function baseDraft(pricingMode: QuoteDraft['pricingMode']): QuoteDraft {
   return {
@@ -150,5 +150,14 @@ describe('buildQuotePayload', () => {
     expect(payload.recipient_city).toBe('Berlin')
     expect(payload.time_title).toBe('Hochzeit')
     expect(payload.time_description).toBe('Trauung und Feier')
+  })
+
+  // Zwei Einheiten für dasselbe Feld: die Zeilenrechnung im Editor arbeitet
+  // in Prozent, die Spalte hinter der Route in Basispunkten.
+  it('rechnet den Zeilenrabatt in Prozent, schickt ihn in Basispunkten', () => {
+    const row = classicDraft().rows[0]
+
+    expect(quoteRowToLine(row).discountValue).toBe(10)
+    expect(buildQuotePayload(classicDraft(), { canManageCatalog: false }).items[0].discount_value).toBe(1000)
   })
 })

@@ -25,6 +25,8 @@ class QuoteData extends Data
         public ?string $validUntil,
         public ?string $number,
         public ?string $sentAt,
+        // §4.6: beide Wege enden im selben Zustand, die Kopfzeile sagt welcher.
+        public ?string $sentChannel,
         public int $total,
         public ?string $discountType,
         public ?int $discountValue,
@@ -45,8 +47,6 @@ class QuoteData extends Data
         public ?string $intro,
         public ?string $outro,
         public array $items,
-        // Q-08: null heisst klassisches Angebot, und jeder Schirm rendert
-        // dann, was er vorher rendert hat.
         public ?int $hourlyRate = null,
         public ?int $minHours = null,
         public ?int $maxHours = null,
@@ -61,16 +61,9 @@ class QuoteData extends Data
         /** @var list<array{id: string, percent: int, label: string, minimum: int}> */
         public array $paymentStages = [],
         public ?string $recipientContact = null,
-        public ?string $recipientName = null,
         public ?string $recipientStreet = null,
         public ?string $recipientPostcode = null,
         public ?string $recipientCity = null,
-        // Dieselbe eigene Anschrift, wie sie am Kontakt steht — der Vergleich
-        // gegen recipient* oben entscheidet, ob "Beim Kontakt speichern"
-        // etwas zu tun hätte.
-        public ?string $recipientContactStreet = null,
-        public ?string $recipientContactPostcode = null,
-        public ?string $recipientContactCity = null,
         // Wie in App\Quotes\Notifications\QuoteSent: config('portal.url') und
         // nur, wenn der Kunde das Portal überhaupt sehen darf.
         public ?string $portalUrl = null,
@@ -93,6 +86,7 @@ class QuoteData extends Data
             validUntil: $quote->valid_until?->format('Y-m-d'),
             number: $quote->number,
             sentAt: $quote->sent_at?->toIso8601String(),
+            sentChannel: $quote->sent_channel,
             total: $quote->total,
             discountType: $quote->discount_type?->value,
             discountValue: $quote->discount_value,
@@ -121,13 +115,9 @@ class QuoteData extends Data
                 'minimum' => $stage->minimum,
             ])->all(),
             recipientContact: $quote->recipientContact?->public_id,
-            recipientName: $quote->recipientContact?->name,
             recipientStreet: $quote->recipient_street,
             recipientPostcode: $quote->recipient_postcode,
             recipientCity: $quote->recipient_city,
-            recipientContactStreet: $quote->recipientContact?->street,
-            recipientContactPostcode: $quote->recipientContact?->postcode,
-            recipientContactCity: $quote->recipientContact?->city,
             portalUrl: $quote->project->portal_visible
                 ? config('portal.url')."/projekte/{$quote->project->public_id}/angebot"
                 : null,

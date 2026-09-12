@@ -4,7 +4,7 @@ import { router, useForm } from '@inertiajs/vue3'
 import QuoteEditor from '@/admin/components/quote/QuoteEditor.vue'
 import Section from '@/ui/page/Section.vue'
 import { debounced } from '@/admin/lib/autosave'
-import { buildQuotePayload, type QuoteDraft } from '@/admin/components/quote/quotePayload'
+import { buildQuotePayload, type QuoteContact, type QuoteDraft } from '@/admin/components/quote/quotePayload'
 import { basisPointsToPercent, centsToEuros, eurosToCents, formatDiscount, formatEuros } from '@/admin/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { Button } from '@/ui/button'
@@ -22,6 +22,7 @@ const props = withDefaults(
     quotes: App.Quotes.Data.QuoteData[]
     packages: App.Catalog.Data.PackageData[]
     catalogItems: App.Catalog.Data.CatalogItemData[]
+    contacts: QuoteContact[]
     canManageCatalog: boolean
     paymentPlan: App.Payments.Data.PaymentPlanData | null
     // The prop a partial reload asks for: the lead screen carries all of this
@@ -111,6 +112,10 @@ function saveAsPackage(quoteId: string) {
   })
 }
 
+// Ohne sie läuft jede weitere Taste in dieselbe 422 und das Getippte ist beim
+// Neuladen weg.
+const saveErrors = reactive<Record<string, string | null>>({})
+
 const save = debounced((quoteId: string) => {
   const payload = buildQuotePayload(drafts[quoteId], { canManageCatalog: props.canManageCatalog })
 
@@ -120,6 +125,8 @@ const save = debounced((quoteId: string) => {
     preserveScroll: true,
     preserveState: true,
     only: props.only,
+    onSuccess: () => (saveErrors[quoteId] = null),
+    onError: (errors) => (saveErrors[quoteId] = Object.values(errors)[0] ?? null),
   })
 }, 600)
 
@@ -183,13 +190,10 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
 </script>
 
 <template>
-  <!-- Depth behind the Angebot & Vertrag tab: only the quote half exists so
-       far — no tax breakdown beyond Q-04's own VAT row, no PDF link,
-       Vertrag card, Nachtrag or payment plan yet (all Q-07 and later). A
-       superseded quote renders in this same loop rather than being hidden
-       or 404ing: Project::quotes() already returns every quote, and this
-       section is what "stays reachable and reads as superseded" means
-       here. -->
+  <!-- Ein ersetztes Angebot rendert in derselben Schleife, statt versteckt zu
+       werden oder zu 404en: Project::quotes() gibt jedes Angebot zurück, und
+       dieser Abschnitt ist, was "bleibt erreichbar und liest sich als
+       ersetzt" hier heisst. -->
   <Section
     v-for="quote in quotes"
     :key="quote.id"
@@ -203,6 +207,9 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
   >
     <template #actions>
       <span :class="['chip', chipClass(quote.status)]">{{ quote.statusLabel }}</span>
+      <span v-if="quote.sentChannel" class="text-[11.5px] text-ink-2">
+        {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}
+      </span>
 
       <div class="ml-auto flex items-center gap-1.5">
         <Button as="a" variant="outline" :href="`/angebote/${quote.id}/pdf`" target="_blank">
@@ -295,8 +302,11 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
         :can-manage-catalog="canManageCatalog"
         :packages="packages"
         :catalog-items="catalogItems"
+        :contacts="contacts"
         @change="save(quote.id)"
       />
+
+      <p v-if="saveErrors[quote.id]" class="mt-2 text-[12px] text-destructive">{{ saveErrors[quote.id] }}</p>
     </template>
 
     <template v-else>
