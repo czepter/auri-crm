@@ -9,11 +9,14 @@ import { monthDate } from '@/admin/lib/dates'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Textarea } from '@/ui/textarea'
 import { Label } from '@/ui/label'
+import { Button } from '@/ui/button'
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import QuoteCard from './QuoteCard.vue'
 import QuoteRecipientCard from './QuoteRecipientCard.vue'
 import QuoteTimeCard from './QuoteTimeCard.vue'
 import QuotePositionsCard from './QuotePositionsCard.vue'
 import QuoteTermsCard from './QuoteTermsCard.vue'
+import QuotePreviewPane from './QuotePreviewPane.vue'
 
 const props = defineProps<{
   quoteId: string
@@ -93,16 +96,27 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
 <template>
   <div class="mx-auto flex w-fit max-w-full gap-6">
     <div class="flex w-[720px] max-w-full flex-col gap-3">
-      <ChoiceGroup
-        :model-value="draft.pricingMode"
-        :options="[
-          { value: 'classic', label: $t('quotes.modeClassic') },
-          { value: 'choice', label: $t('quotes.modeChoice') },
-        ]"
-        variant="segmented"
-        class="self-start"
-        @update:model-value="setMode"
-      />
+      <div class="flex items-center gap-2.5">
+        <ChoiceGroup
+          :model-value="draft.pricingMode"
+          :options="[
+            { value: 'classic', label: $t('quotes.modeClassic') },
+            { value: 'choice', label: $t('quotes.modeChoice') },
+          ]"
+          variant="segmented"
+          @update:model-value="setMode"
+        />
+
+        <Dialog>
+          <DialogTrigger as-child>
+            <Button type="button" variant="outline" class="ml-auto min-[1180px]:hidden">{{ $t('quotes.preview') }}</Button>
+          </DialogTrigger>
+          <DialogContent class="max-w-[860px]">
+            <DialogTitle class="sr-only">{{ $t('quotes.preview') }}</DialogTitle>
+            <QuotePreviewPane :quote-id="quoteId" :draft="draft" :can-manage-catalog="canManageCatalog" />
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <QuoteCard v-model:open="open.recipient" :title="$t('quotes.recipient')" :summary="recipientSummary">
         <QuoteRecipientCard
@@ -160,7 +174,8 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
       </QuoteCard>
     </div>
 
-    <!-- Vorschau folgt in einer späteren Runde — hier steht nur ihr Platz. -->
-    <div class="hidden w-[420px] flex-none min-[1180px]:block" />
+    <div class="hidden w-[420px] flex-none min-[1180px]:block">
+      <QuotePreviewPane :quote-id="quoteId" :draft="draft" :can-manage-catalog="canManageCatalog" />
+    </div>
   </div>
 </template>

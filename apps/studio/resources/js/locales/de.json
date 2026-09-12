@@ -680,7 +680,12 @@
     "copyLink": "Link kopieren",
     "markSent": "Versendet",
     "moveUp": "Nach oben",
-    "moveDown": "Nach unten"
+    "moveDown": "Nach unten",
+    "preview": "Vorschau",
+    "previewFresh": "aktuell",
+    "previewStale": "wird geprüft",
+    "zoomFit": "Seitenbreite",
+    "zoomFull": "100 %"
   },
   "automations": {
     "title": "Automationen",
