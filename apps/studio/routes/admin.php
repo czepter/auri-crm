@@ -561,7 +561,11 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/angebote/{quote}/positionen/{quoteItem}/bild', [QuoteController::class, 'itemImage'])
             ->name('quotes.items.image');
         Route::patch('/angebote/{quote}', [QuoteController::class, 'update'])->name('quotes.update');
+        Route::post('/angebote/{quote}/vorschau', [QuoteController::class, 'preview'])->name('quotes.preview');
         Route::post('/angebote/{quote}/versenden', [QuoteController::class, 'send'])->name('quotes.send');
+        Route::post('/angebote/{quote}/versendet', [QuoteController::class, 'markSent'])->name('quotes.mark-sent');
+        Route::post('/angebote/{quote}/empfaenger-uebernehmen', [QuoteController::class, 'adoptRecipient'])
+            ->name('quotes.adopt-recipient');
         Route::post('/angebote/{quote}/als-paket', [QuoteController::class, 'saveAsPackage'])->name('quotes.saveAsPackage');
         Route::get('/angebote/{quote}/pdf', [QuoteController::class, 'download'])->name('quotes.download');
 

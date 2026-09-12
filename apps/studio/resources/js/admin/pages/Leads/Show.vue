@@ -8,6 +8,7 @@ import LeadQueue from "@/admin/components/LeadQueue.vue";
 import NoteThread from "@/admin/components/NoteThread.vue";
 import QuoteSummary from "@/admin/components/QuoteSummary.vue";
 import QuoteWorkspace from "@/admin/components/QuoteWorkspace.vue";
+import type { QuoteContact } from "@/admin/components/quote/quotePayload";
 import MessageThread from "@/admin/components/MessageThread.vue";
 import ProjectShell from "@/admin/components/ProjectShell.vue";
 import RailHistory from "@/admin/components/RailHistory.vue";
@@ -69,6 +70,7 @@ const props = defineProps<{
         quotes: App.Quotes.Data.QuoteData[];
         packages: App.Catalog.Data.PackageData[];
         catalogItems: App.Catalog.Data.CatalogItemData[];
+        contacts: QuoteContact[];
         canManageCatalog: boolean;
         paymentPlan: App.Payments.Data.PaymentPlanData | null;
     } | null;

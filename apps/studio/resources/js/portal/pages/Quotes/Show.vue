@@ -15,7 +15,7 @@ type QuoteItem = {
   title: string
   description: string | null
   isIncluded: boolean
-  lineTotal: number
+  netTotal: number
 }
 
 type Quote = {
@@ -119,7 +119,7 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
                 {{ item.isIncluded ? $t('quotes.included') : item.description }}
               </div>
             </td>
-            <td>{{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.lineTotal) }}</td>
+            <td>{{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.netTotal) }}</td>
           </tr>
 
           <tr :class="[ROW, '[&>td]:border-t [&>td]:border-border [&>td]:pt-3! [&>td]:font-semibold']">

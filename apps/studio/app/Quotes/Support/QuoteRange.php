@@ -59,11 +59,11 @@ final class QuoteRange
 
         $fixed = $items
             ->reject(fn (QuoteItem $item) => $item->isIncluded() || $item->selectable)
-            ->sum(fn (QuoteItem $item) => $item->lineTotal());
+            ->sum(fn (QuoteItem $item) => $item->discountedLineTotal());
 
         $chosen = self::selectable($quote)
             ->filter(fn (QuoteItem $item) => $selectedItemIds->contains($item->id))
-            ->sum(fn (QuoteItem $item) => $item->lineTotal());
+            ->sum(fn (QuoteItem $item) => $item->discountedLineTotal());
 
         return $hours * ($quote->hourly_rate ?? 0) + $fixed + $chosen;
     }
