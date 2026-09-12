@@ -1,0 +1,31 @@
+import type { Preview } from '@storybook/vue3-vite'
+import { setup } from '@storybook/vue3-vite'
+import { createI18n } from 'vue-i18n'
+import de from '../resources/js/locales/de.json'
+import '../resources/css/admin.css'
+
+/*
+ * Dieselbe Einrichtung wie admin/main.ts, minus Inertia: die Bausteine lesen
+ * ihre Beschriftungen aus demselben Katalog, sonst zeigt der Katalog Schlüssel
+ * statt Wörter. Ein fehlender Schlüssel wirft hier nicht — in einer Story ist
+ * er ein Tippfehler, kein Produktionsfehler.
+ */
+setup((app) => {
+  app.use(
+    createI18n({
+      legacy: false,
+      locale: 'de',
+      fallbackLocale: 'de',
+      messages: { de },
+    }),
+  )
+})
+
+const preview: Preview = {
+  parameters: {
+    layout: 'centered',
+    controls: { expanded: true },
+  },
+}
+
+export default preview
