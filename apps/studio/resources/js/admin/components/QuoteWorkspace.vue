@@ -4,7 +4,7 @@ import { router, useForm } from '@inertiajs/vue3'
 import QuoteTable, { type QuoteRow } from '@/admin/components/QuoteTable.vue'
 import QuoteSliderEditor, { type SliderDraft } from '@/admin/components/QuoteSliderEditor.vue'
 import ValidUntilField from '@/admin/components/ValidUntilField.vue'
-import Section from '@/ui/page/Section.vue'
+import Card from '@/ui/page/Card.vue'
 import { debounced } from '@/admin/lib/autosave'
 import { basisPointsToPercent, centsToEuros, eurosToCents, formatDiscount, formatEuros, parseDiscount } from '@/admin/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
@@ -244,6 +244,13 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
 
   return rows.map((row, index) => ({ ...row, last: index === rows.length - 1 }))
 }
+
+/** Zugeklappt trägt die Karte, was am Ende unter dem Strich steht. */
+function totalOf(quote: App.Quotes.Data.QuoteData): string {
+  const rows = summaryRows(quote)
+
+  return rows[rows.length - 1].value
+}
 </script>
 
 <template>
@@ -254,9 +261,12 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
        or 404ing: Project::quotes() already returns every quote, and this
        section is what "stays reachable and reads as superseded" means
        here. -->
-  <Section
+  <Card
     v-for="quote in quotes"
+    class="mt-3 first:mt-0"
     :key="quote.id"
+    :default-open="quote.status !== 'superseded'"
+    :summary="totalOf(quote)"
     :title="
       quote.isAddendum
         ? $t('quotes.addendumTo', { number: quote.predecessorNumber ?? '' })
@@ -265,11 +275,11 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
           : $t('quotes.title')
     "
   >
-    <template #actions>
+    <template #action>
       <span :class="['chip', chipClass(quote.status)]">{{ quote.statusLabel }}</span>
 
-      <div class="ml-auto flex items-center gap-1.5">
-        <Button as="a" variant="outline" :href="`/angebote/${quote.id}/pdf`" target="_blank">
+      <div class="flex items-center gap-1.5">
+        <Button as="a" variant="outline" :href="`/angebote/${quote.id}/pdf`" target="_blank" @click.stop>
           {{ $t('quotes.pdf') }}
         </Button>
 
@@ -277,14 +287,14 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
           v-if="canManageQuotes && quote.status === 'accepted'"
           type="button"
           variant="outline"
-          @click="addendum(quote.id)"
+          @click.stop="addendum(quote.id)"
         >
           {{ $t('quotes.addendum') }}
         </Button>
 
         <Dialog v-if="canManageQuotes && packageForms[quote.id]">
           <DialogTrigger as-child>
-            <Button variant="outline" type="button">{{ $t('quotes.saveAsPackage') }}</Button>
+            <Button variant="outline" type="button" @click.stop>{{ $t('quotes.saveAsPackage') }}</Button>
           </DialogTrigger>
 
           <DialogContent class="max-w-[420px]">
@@ -328,7 +338,7 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
           v-if="canManageQuotes && quote.status === 'draft'"
           type="button"
           variant="pill"
-          @click="send(quote.id)"
+          @click.stop="send(quote.id)"
         >
           {{ $t('quotes.send') }}
         </Button>
@@ -427,13 +437,14 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
 
       <p v-if="quote.outro" class="mt-3 text-[12.5px] leading-[1.55] whitespace-pre-line">{{ quote.outro }}</p>
     </template>
-  </Section>
+  </Card>
 
-  <Section v-if="paymentPlan || canManagePaymentPlan" :title="$t('payments.title')">
-    <template v-if="paymentPlan" #actions>
-      <span class="text-[12px] text-ink-2">{{ $t('payments.open', { amount: formatEuros(paymentPlan.openTotal) }) }}</span>
-    </template>
-
+  <Card
+    v-if="paymentPlan || canManagePaymentPlan"
+    class="mt-3"
+    :title="$t('payments.title')"
+    :summary="paymentPlan ? $t('payments.open', { amount: formatEuros(paymentPlan.openTotal) }) : null"
+  >
     <div
       v-for="installment in paymentPlan?.installments ?? []"
       :key="installment.id"
@@ -467,9 +478,9 @@ function summaryRows(quote: App.Quotes.Data.QuoteData) {
         {{ planForm.errors.installments }}
       </p>
     </form>
-  </Section>
+  </Card>
 
-  <p v-if="!quotes.length && !canManageQuotes" class="mt-10 text-[11.5px] leading-[1.45] text-faint">
+  <p v-if="!quotes.length && !canManageQuotes" class="mt-3 text-[11.5px] leading-[1.45] text-faint">
     {{ $t('quotes.empty') }}
   </p>
 </template>

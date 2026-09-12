@@ -1113,6 +1113,8 @@
     "saveAnswer": "Antwort speichern",
     "answeredAt": "Beantwortet am {date}",
     "share": "Für Kunden freigeben",
+    "shared": "freigegeben",
+    "notShared": "nicht freigegeben",
     "unshare": "Freigabe zurücknehmen",
     "sharedAt": "Seit {date} für Kunden freigegeben",
     "progress": "{answered} von {total} beantwortet",

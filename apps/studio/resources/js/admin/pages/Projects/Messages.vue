@@ -1,31 +1,35 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import MessageThread from '@/admin/components/MessageThread.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
-import Section from '@/ui/page/Section.vue'
+import Card from '@/ui/page/Card.vue'
+import { dayWithWeekday } from '@/admin/lib/dates'
 
-defineProps<{
+const props = defineProps<{
   header: App.Crm.Data.ProjectHeaderData
   thread: App.Engagement.Data.ThreadData | null
   mailTemplates: App.Documents.Data.MailTemplateData[]
 }>()
+
+const summary = computed(() => {
+  const last = props.thread?.messages.at(-1)
+
+  return [props.thread?.subject, last?.author, dayWithWeekday(last?.sentAt, null)].filter(Boolean).join(' · ')
+})
 </script>
 
 <template>
   <AdminLayout active="anfragen">
     <ProjectShell :header="header" active="messages">
-        <Section :title="$t('project.history')">
-          <template v-if="thread" #actions>
-            <span class="text-[12.5px] leading-[1.47] tracking-[-0.01em]">{{ thread.subject }}</span>
-          </template>
-
-          <MessageThread
-            :project-id="header.id"
-            :thread="thread"
-            :can-manage="header.canManageMessages"
-            :mail-templates="mailTemplates"
-          />
-        </Section>
+      <Card :title="$t('project.history')" :summary="summary">
+        <MessageThread
+          :project-id="header.id"
+          :thread="thread"
+          :can-manage="header.canManageMessages"
+          :mail-templates="mailTemplates"
+        />
+      </Card>
     </ProjectShell>
   </AdminLayout>
 </template>

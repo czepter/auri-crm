@@ -9,8 +9,9 @@ use Spatie\LaravelData\Data;
 
 /**
  * The capture form's payload. Six fields the studio fills plus the contact
- * block, matching mockup 03 — venue, guest count, further shoots and package
- * are deliberately absent and belong to the project screen.
+ * block, matching mockup 03 — guest count, further shoots and package are
+ * deliberately absent and belong to the project screen; the venue of the
+ * first shoot is asked for here.
  *
  * No #[TypeScript]: this is request input, and the frontend builds it rather
  * than receiving it.
@@ -62,6 +63,14 @@ class CaptureInquiryData extends Data
          * @var array<string, mixed>
          */
         public array $fields = [],
+        /**
+         * Times and venue of the first shoot. Defaulted rather than placed
+         * beside `date`, where the required parameters after it stand.
+         */
+        public ?string $call_time = null,
+        public ?string $end_time = null,
+        public ?string $venue_name = null,
+        public ?string $venue_city = null,
     ) {}
 
     public static function rules(): array
@@ -89,6 +98,10 @@ class CaptureInquiryData extends Data
             // availability warning is advisory by design — see
             // CheckDateAvailability.
             'date' => ['nullable', 'date_format:Y-m-d'],
+            'call_time' => ['nullable', 'date_format:H:i'],
+            'end_time' => ['nullable', 'date_format:H:i', 'after:call_time'],
+            'venue_name' => ['nullable', 'string', 'max:255'],
+            'venue_city' => ['nullable', 'string', 'max:255'],
             'inquiry_text' => ['nullable', 'string', 'max:10000'],
 
             // A day, a moment, or nothing. Never the future: an inquiry that

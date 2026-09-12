@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { Link, router, useForm } from "@inertiajs/vue3";
 import AdminLayout from "@/admin/layouts/AdminLayout.vue";
 import { Alert, AlertDescription, AlertTitle } from "@/ui/alert";
@@ -10,13 +11,15 @@ import LineItems from "@/admin/components/LineItems.vue";
 import NoteThread from "@/admin/components/NoteThread.vue";
 import ShootFields from "@/admin/components/ShootFields.vue";
 import ShootRow from "@/admin/components/ShootRow.vue";
+import { Field } from "@/ui/field";
 import { Input } from "@/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
 import ProjectFields from "@/admin/components/ProjectFields.vue";
 import type { ProjectFieldValues } from "@/admin/components/ProjectFields.vue";
 import ProjectShell from "@/admin/components/ProjectShell.vue";
 import TaskCreateDialog from "@/admin/components/TaskCreateDialog.vue";
-import RailSection from "@/ui/page/RailSection.vue";
+import Card from "@/ui/page/Card.vue";
+import { ROLE_SUGGESTIONS, roleLabel } from "@/admin/lib/roles";
 import Section from "@/ui/page/Section.vue";
 import { formatEurosRounded } from "@/admin/lib/money";
 import { dayWithWeekday as day } from "@/admin/lib/dates";
@@ -75,6 +78,8 @@ const props = defineProps<{
     } | null;
 }>();
 
+const { t } = useI18n();
+
 const galleriesHref = computed(() => props.header.tabs.find((tab) => tab.key === "galleries")?.href);
 
 function advanceStalled() {
@@ -99,21 +104,40 @@ const done = computed(() => props.tasks.filter((task) => task.isDone));
 const overdue = computed(() => open.value.filter((task) => task.isOverdue).length);
 const showDone = ref(false);
 
-// C-12 (#248): the same answer #245 gives for the inquiry — one save for the
-// whole state, and the head stays put, so the two screens behave alike.
-const editing = ref(false);
+/*
+ * Jede Karte hält ihr eigenes Formular und schickt ihre eigene Teilmenge an
+ * PATCH /auftraege/{id} — wer die Termine speichert, hat die Eckdaten nicht in
+ * der Hand.
+ */
+const detailsEditing = ref(false);
+const datesEditing = ref(false);
 
-const edit = useForm({
+const details = useForm({
     name: props.header.name,
     stage: props.stage,
     source: props.source,
     source_other: props.sourceOther ?? "",
-    people: props.people.map((person) => ({
-        id: person.id,
-        role: person.role,
-    })),
-    // C-25: die Werte des Projekttyps, im selben Speichern wie Name und Termine.
     fields: { ...props.fieldValues },
+});
+
+// Die Rolle hing am Bearbeiten-Modus der rechten Leiste. Der ist weg, also
+// steht sie hier — Freitext wie am Fall, die bekannten als Vorschlag.
+const kontakteEditing = ref(false);
+
+const kontakte = useForm({
+    people: props.people.map((person) => ({ id: person.id, role: person.role })),
+});
+
+function saveKontakte() {
+    kontakte.patch(`/auftraege/${props.header.id}`, {
+        preserveScroll: true,
+        onSuccess: () => (kontakteEditing.value = false),
+    });
+}
+
+const kontakteSummary = computed(() => props.people.map((person) => person.name).join(", "));
+
+const dates = useForm({
     shoots: props.shoots.map((shoot) => ({
         id: shoot.id,
         date: shoot.date ?? "",
@@ -124,20 +148,61 @@ const edit = useForm({
     })),
 });
 
-function save() {
-    edit.transform((data) => ({
-        ...data,
-        shoots: data.shoots.map((shoot) => ({
-            ...shoot,
-            date: shoot.date === "" ? null : shoot.date,
-            call_time: shoot.call_time === "" ? null : shoot.call_time,
-            end_time: shoot.end_time === "" ? null : shoot.end_time,
-        })),
-    })).patch(`/auftraege/${props.header.id}`, {
+const blank = (value: string) => (value === "" ? null : value);
+
+function saveDetails() {
+    details.patch(`/auftraege/${props.header.id}`, {
         preserveScroll: true,
-        onSuccess: () => (editing.value = false),
+        onSuccess: () => (detailsEditing.value = false),
     });
 }
+
+function saveDates() {
+    dates
+        .transform((data) => ({
+            shoots: data.shoots.map((shoot) => ({
+                ...shoot,
+                date: blank(shoot.date),
+                call_time: blank(shoot.call_time),
+                end_time: blank(shoot.end_time),
+            })),
+        }))
+        .patch(`/auftraege/${props.header.id}`, {
+            preserveScroll: true,
+            onSuccess: () => (datesEditing.value = false),
+        });
+}
+
+// Was eine Karte sagt, wenn sie zu ist.
+const detailsSummary = computed(() =>
+    props.fields
+        .map((field) => [field, props.fieldValues[field.key]] as const)
+        .filter(
+            ([, value]) =>
+                value !== null &&
+                value !== undefined &&
+                value !== "" &&
+                !(Array.isArray(value) && !value.length),
+        )
+        .map(([field, value]) => {
+            if (Array.isArray(value)) return value.join(", ");
+            if (field.type === "boolean") return value ? "Ja" : "Nein";
+            if (field.type === "date") return day(String(value));
+
+            return String(value);
+        })
+        .join(" · "),
+);
+
+const datesSummary = computed(() => props.shoots.map((shoot) => day(shoot.date)).join(", "));
+
+const taskSummary = computed(() =>
+    [`${open.value.length}/${props.tasks.length}`, overdue.value ? t("project.tasksOverdue", overdue.value) : null]
+        .filter(Boolean)
+        .join(" · "),
+);
+
+const notes = computed(() => props.thread.filter((entry) => !entry.system));
 
 function togglePortal() {
     router.post(
@@ -155,104 +220,6 @@ function complete(row: App.Crm.Data.TaskRowData) {
 <template>
     <AdminLayout active="projekte">
         <ProjectShell :header="header" active="overview">
-            <template #people>
-                    <RailSection :title="$t('lead.people')">
-                        <div
-                            v-for="(person, index) in people"
-                            :key="person.id"
-                            class="flex items-center gap-2 py-[5px] text-[12.5px] leading-[1.47]"
-                        >
-                            <Link :href="`/kontakte/${person.id}`">{{ person.name }}</Link>
-                            <Select
-                                v-if="editing"
-                                v-model="edit.people[index].role"
-                            >
-                                <SelectTrigger class="max-w-[820px]"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem
-                                        v-for="option in roles"
-                                        :key="option.value"
-                                        :value="option.value"
-                                    >
-                                        {{ $t(`contacts.role.${option.value}`) }}
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <span
-                                v-else
-                                class="ml-auto text-[11.5px] leading-[1.47] text-[#3F6B4A]"
-                            >{{ $t(`contacts.role.${person.role}`) }}</span>
-                        </div>
-                    </RailSection>
-
-                    <!-- Gelesen wird die Quelle im Abschnitt Anfrage; hier steht nur
-                         das Feld, mit dem sie sich ändern lässt. -->
-                    <RailSection v-if="editing" :title="$t('leads.source')">
-                        <Select v-model="edit.source">
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem
-                                    v-for="option in sources"
-                                    :key="option.value"
-                                    :value="option.value"
-                                >
-                                    {{ option.label }}
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-
-                        <Input
-                            v-if="editing && edit.source === 'other'"
-                            v-model="edit.source_other"
-                            class="mt-1.5"
-                            type="text"
-                            list="source-presets"
-                        />
-                        <datalist id="source-presets">
-                            <option v-for="value in presets.source" :key="value" :value="value" />
-                        </datalist>
-                    </RailSection>
-            </template>
-
-            <template #title>
-                <Input
-                    v-if="editing"
-                    v-model="edit.name"
-                    class="max-w-[820px] text-[22px]"
-                    type="text"
-                />
-                <h1 v-else class="m-0 text-[32px] leading-[1.08] font-semibold tracking-[-0.032em] max-[640px]:text-[25px]">
-                    {{ header.name }}
-                </h1>
-            </template>
-
-            <template #actions>
-                <template v-if="editing">
-                    <a
-                        class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
-                        href="#"
-                        @click.prevent="editing = false"
-                        >{{ $t("common.cancel") }}</a
-                    >
-                    <Button
-                        variant="pill"
-                        type="button"
-                        :disabled="edit.processing"
-                        @click="save"
-                    >
-                        {{ $t("common.save") }}
-                    </Button>
-                </template>
-
-                <a
-                    v-else
-                    class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
-                    href="#"
-                    @click.prevent="editing = true"
-                    >{{ $t("lead.edit") }}</a
-                >
-            </template>
-
                     <Section v-if="inquiry" :title="$t('project.lead')">
                         <div class="flex max-[1080px]:flex-col max-[1080px]:gap-3">
                             <p class="m-0 max-w-[58ch] min-w-0 flex-1 text-[14px] leading-[1.5] tracking-[-0.008em] whitespace-pre-line">
@@ -294,33 +261,14 @@ function complete(row: App.Crm.Data.TaskRowData) {
                          Where the project stands is the track in the head; the
                          stage stays here only as the field that changes it. -->
                     <div class="mt-5 mb-5 flex">
-                        <BandCell v-if="editing && stage" :label="$t('project.position')">
-                            <Select
-                                v-model="edit.stage"
-                            >
-                                <SelectTrigger class="mt-[5px] max-w-[820px]"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem
-                                        v-for="option in stages"
-                                        :key="option.value"
-                                        :value="option.value"
-                                    >
-                                        {{ option.label }}
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </BandCell>
-
                         <BandCell
                             :label="$t('project.mainDateLabel')"
                             :sub="$t('board.shootCount', shoots.length)"
                         >
-                            <template v-if="editing" #derived> · {{ $t("project.fromShoots") }}</template>
                             <BandValue plain>{{ day(figures.nextDate.value) }}</BandValue>
                         </BandCell>
 
                         <BandCell :label="$t('board.colValue')" :sub="figures.value.proof">
-                            <template v-if="editing" #derived> · {{ $t("project.fromScope") }}</template>
                             <BandValue v-if="figures.value.value !== null">{{ euro(figures.value.value) }}</BandValue>
                             <Button v-else-if="header.canManageQuotes" class="mt-[5px]" variant="outline" as-child>
                                 <Link :href="`/auftraege/${header.id}/angebote`">{{ $t("project.quoteAdd") }}</Link>
@@ -337,7 +285,6 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                     : null
                             "
                         >
-                            <template v-if="editing" #derived> · {{ $t("project.fromPayments") }}</template>
                             <BandValue :warn="Number(figures.open.value ?? 0) > 0">{{
                                 euro(figures.open.value)
                             }}</BandValue>
@@ -381,21 +328,135 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         </BandCell>
                     </div>
 
-                    <Section v-if="fields.length" :title="$t('project.details')">
+                    <div class="flex flex-col gap-3">
+                    <Card
+                        v-model:editing="detailsEditing"
+                        :title="$t('project.details')"
+                        :summary="detailsSummary"
+                        editable
+                        @cancel="details.reset()"
+                        @save="saveDetails"
+                    >
                         <ProjectFields
-                            v-model="edit.fields"
-                            :editing="editing"
-                            :errors="edit.errors"
+                            v-model="details.fields"
+                            :editing="false"
+                            :errors="details.errors"
                             :fields="fields"
                         />
-                    </Section>
 
-                    <Section v-if="editing || shoots.length" :title="$t('lead.dates')">
-                        <template v-if="!editing" #actions>
-                            <span class="text-[11.5px] text-ink-2">{{
-                                $t("board.shootCount", shoots.length)
-                            }}</span>
-                            <Button v-if="header.canManageShoots" class="ml-auto" variant="outline" as-child>
+                        <template #edit>
+                            <div class="flex flex-wrap gap-3">
+                                <Field v-slot="{ id }" dense class="min-w-[220px] flex-1" :label="$t('leads.name')" :error="details.errors.name">
+                                    <Input :id="id" v-model="details.name" type="text" />
+                                </Field>
+
+                                <Field v-if="stage" dense class="w-[220px] flex-none" :label="$t('project.position')">
+                                    <Select v-model="details.stage">
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem
+                                                v-for="option in stages"
+                                                :key="option.value"
+                                                :value="option.value"
+                                            >
+                                                {{ option.label }}
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </Field>
+
+                                <Field dense class="w-[220px] flex-none" :label="$t('leads.source')">
+                                    <Select v-model="details.source">
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem
+                                                v-for="option in sources"
+                                                :key="option.value"
+                                                :value="option.value"
+                                            >
+                                                {{ option.label }}
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <Input
+                                        v-if="details.source === 'other'"
+                                        v-model="details.source_other"
+                                        class="mt-1.5"
+                                        type="text"
+                                        list="source-presets"
+                                    />
+                                    <datalist id="source-presets">
+                                        <option v-for="value in presets.source" :key="value" :value="value" />
+                                    </datalist>
+                                </Field>
+                            </div>
+
+                            <ProjectFields
+                                v-model="details.fields"
+                                class="mt-3"
+                                editing
+                                :errors="details.errors"
+                                :fields="fields"
+                            />
+                        </template>
+                    </Card>
+
+                    <Card
+                        v-model:editing="kontakteEditing"
+                        :title="$t('contacts.title')"
+                        :summary="kontakteSummary"
+                        editable
+                        @cancel="kontakte.reset()"
+                        @save="saveKontakte"
+                    >
+                        <div
+                            v-for="person in people"
+                            :key="person.id"
+                            class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                        >
+                            <Link
+                                class="w-[168px] flex-none text-[13px] leading-[1.35] font-semibold tracking-[-0.012em] text-foreground no-underline underline-offset-[3px] hover:underline"
+                                :href="`/kontakte/${person.id}`"
+                            >
+                                {{ person.name }}
+                            </Link>
+                            <span class="rounded-[var(--r-pill)] bg-sunk-2 px-[9px] py-0.5 text-[10.5px] leading-[1.4] tracking-[0.05em] uppercase text-ink-2">
+                                {{ roleLabel(person.role) }}
+                            </span>
+                            <a v-if="person.email" class="text-[12.5px] text-action no-underline hover:underline" :href="`mailto:${person.email}`">{{ person.email }}</a>
+                            <a v-if="person.phone" class="ml-auto text-[12.5px] tabular-nums text-action no-underline hover:underline" :href="`tel:${person.phone}`">{{ person.phone }}</a>
+                        </div>
+
+                        <template #edit>
+                            <datalist id="rollen">
+                                <option v-for="value in ROLE_SUGGESTIONS" :key="value" :value="value" />
+                            </datalist>
+
+                            <div
+                                v-for="(person, index) in kontakte.people"
+                                :key="person.id"
+                                class="flex items-center gap-3 py-2 shadow-[inset_0_1px_0_var(--rule)] first:shadow-none"
+                            >
+                                <span class="w-[168px] flex-none text-[13px] leading-[1.35] font-semibold tracking-[-0.012em]">
+                                    {{ people[index].name }}
+                                </span>
+                                <Field v-slot="{ id }" dense class="w-[168px] flex-none" :label="$t('leads.role')">
+                                    <Input :id="id" v-model="person.role" type="text" list="rollen" />
+                                </Field>
+                            </div>
+                        </template>
+                    </Card>
+
+                    <Card
+                        v-model:editing="datesEditing"
+                        :title="$t('lead.dates')"
+                        :summary="datesSummary"
+                        editable
+                        @cancel="dates.reset()"
+                        @save="saveDates"
+                    >
+                        <template v-if="header.canManageShoots" #action>
+                            <Button variant="outline" as-child>
                                 <Link :href="`/auftraege/${header.id}/shootings`">
                                     <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
                                     {{ $t("project.shootAdd") }}
@@ -403,21 +464,23 @@ function complete(row: App.Crm.Data.TaskRowData) {
                             </Button>
                         </template>
 
-                        <div v-if="editing" class="max-w-[820px]">
-                            <ShootFields
-                                v-for="shoot in edit.shoots"
-                                :key="shoot.id"
-                                :shoot="shoot"
-                            />
-                        </div>
-
-                        <div v-else-if="shoots.length" class="[&>div]:py-[9px] [&>div]:shadow-none">
+                        <div class="[&>div]:py-[9px] [&>div]:shadow-none">
                             <ShootRow v-for="shoot in shoots" :key="shoot.id" :shoot="shoot" />
                         </div>
-                    </Section>
 
-                    <Section :title="$t('project.tasks')">
-                        <template #actions>
+                        <template #edit>
+                            <div class="max-w-[820px]">
+                                <ShootFields
+                                    v-for="shoot in dates.shoots"
+                                    :key="shoot.id"
+                                    :shoot="shoot"
+                                />
+                            </div>
+                        </template>
+                    </Card>
+
+                    <Card :title="$t('project.tasks')" :summary="taskSummary" :default-open="false">
+                        <div class="mb-1.5 flex items-center gap-2.5">
                             <span class="inline-flex gap-0.5 rounded-[var(--r-pill)] bg-sunk-2 p-0.5">
                                 <button
                                     class="cursor-pointer rounded-[var(--r-pill)] px-[11px] py-1 text-[11.5px] leading-none"
@@ -444,7 +507,7 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 :staff-options="staffOptions"
                                 :anchors="anchors ?? []"
                             />
-                        </template>
+                        </div>
 
                         <div
                             v-for="row in showDone ? done : open"
@@ -482,7 +545,8 @@ function complete(row: App.Crm.Data.TaskRowData) {
                                 :class="row.isOverdue && !row.isDone ? 'text-action' : 'text-ink-2'"
                             >{{ row.dueOn ? day(row.dueOn) : "" }}</span>
                         </div>
-                    </Section>
+                    </Card>
+                    </div>
 
                     <!-- The scope as it stands, not a copy of the quote. Nothing is
                          locked: the order changes in conversation and the document lags
@@ -522,12 +586,17 @@ function complete(row: App.Crm.Data.TaskRowData) {
                         </p>
                     </Section>
 
-                    <Section :title="$t('lead.notes')">
+                    <Card
+                        class="mt-10"
+                        :title="$t('lead.notes')"
+                        :summary="`${notes.length}`"
+                        :default-open="false"
+                    >
                         <NoteThread
-                            :entries="thread.filter((entry) => !entry.system)"
+                            :entries="notes"
                             :action="`/auftraege/${header.id}/notizen`"
                         />
-                    </Section>
+                    </Card>
         </ProjectShell>
     </AdminLayout>
 </template>

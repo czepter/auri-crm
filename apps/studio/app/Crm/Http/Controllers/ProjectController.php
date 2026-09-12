@@ -225,14 +225,18 @@ class ProjectController extends Controller
     ): RedirectResponse {
         $this->authorize('manageShoots', $project);
 
+        // Jede Karte des Bildschirms schickt ihre eigene Teilmenge, seit es
+        // keinen Bearbeiten-Modus über den ganzen Bildschirm mehr gibt: wer die
+        // Termine speichert, hat den Projektnamen nicht in der Hand.
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
             'stage' => ['nullable', Rule::exists('stages', 'key')->where('pipeline', StagePipeline::Lead->value)],
             'source' => ['nullable', Rule::enum(LeadSource::class)],
             'source_other' => ['nullable', 'string', 'max:120'],
             'people' => ['array'],
             'people.*.id' => ['required', 'string', 'size:24'],
-            'people.*.role' => ['required', Rule::enum(ProjectContactRole::class)],
+            // Freitext, wie am Fall: „Trauredner" steht in keiner Aufzählung.
+            'people.*.role' => ['required', 'string', 'max:60'],
             'shoots' => ['array'],
             'shoots.*.id' => ['required', 'string', 'size:24'],
             'shoots.*.date' => ['nullable', 'date_format:Y-m-d'],
@@ -244,7 +248,9 @@ class ProjectController extends Controller
         ]);
 
         DB::transaction(function () use ($project, $validated, $advance, $writeFields) {
-            $project->update(['name' => $validated['name']]);
+            if (array_key_exists('name', $validated)) {
+                $project->update(['name' => $validated['name']]);
+            }
 
             if ($project->lead !== null) {
                 $project->lead->update(array_filter([
@@ -266,7 +272,9 @@ class ProjectController extends Controller
             foreach ($validated['people'] ?? [] as $person) {
                 $contact = $project->contacts()->where('contacts.public_id', $person['id'])->first();
 
-                if ($contact !== null) {
+                // Der Hauptkontakt behält seine Rolle: an ihr hängt der
+                // partielle Unique-Index auf project_contacts.
+                if ($contact !== null && $contact->pivot->role !== ProjectContactRole::Primary->value) {
                     $project->contacts()->updateExistingPivot($contact->id, ['role' => $person['role']]);
                 }
             }
