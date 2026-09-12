@@ -1,13 +1,38 @@
 <script setup lang="ts">
 import { Link, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
+import ContactPortalFields from '@/admin/components/ContactPortalFields.vue'
 import Page from '@/ui/page/Page.vue'
 import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 
-const form = useForm({ name: '', email: '', phone: '', street: '', postcode: '', city: '' })
+defineProps<{ portalDefaults: Record<string, string | boolean | null> }>()
+
+// P-09 (#228): '' is Standard, and the sheet's own encoding — the transform
+// below drops it, so a contact is born with only the keys that depart.
+const form = useForm({
+  name: '', email: '', phone: '', street: '', postcode: '', city: '',
+  portal: {
+    portal_visible: '', accept_quotes: '', sign_contracts: '', payment_status: '',
+    messaging_mode: '', gallery_downloads: '', gallery_lists: '', gallery_comments: '',
+    welcome: '',
+  } as Record<string, string>,
+})
+
+function submit() {
+  form
+    .transform((data) => ({
+      ...data,
+      portal: Object.fromEntries(
+        Object.entries(data.portal)
+          .filter(([, value]) => value !== '')
+          .map(([key, value]) => [key, value === '0' || value === '1' ? value === '1' : value]),
+      ),
+    }))
+    .post('/kontakte')
+}
 </script>
 
 <template>
@@ -23,7 +48,7 @@ const form = useForm({ name: '', email: '', phone: '', street: '', postcode: '',
           </h1>
         </div>
 
-        <form class="flex max-w-[820px] flex-col gap-3 px-8 pt-5 pb-8 max-[640px]:px-5" @submit.prevent="form.post('/kontakte')">
+        <form class="flex max-w-[820px] flex-col gap-3 px-8 pt-5 pb-8 max-[640px]:px-5" @submit.prevent="submit">
           <Card :title="$t('contacts.reach')">
             <Field v-slot="{ id }" :label="$t('contacts.name')" :error="form.errors.name">
               <Input :id="id" v-model="form.name" type="text" autofocus />
@@ -52,6 +77,10 @@ const form = useForm({ name: '', email: '', phone: '', street: '', postcode: '',
                 <Input :id="id" v-model="form.city" type="text" autocomplete="address-level2" />
               </Field>
             </div>
+          </Card>
+
+          <Card :title="$t('contacts.portalSection')">
+            <ContactPortalFields :portal="form.portal" :defaults="portalDefaults" />
           </Card>
 
           <div class="mt-2 flex items-center gap-3 pt-4 shadow-[inset_0_1px_0_var(--rule)] [&>button:last-child]:ml-auto">

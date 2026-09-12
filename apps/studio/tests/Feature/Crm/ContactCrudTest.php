@@ -71,6 +71,31 @@ it('creates a contact with the address the screen offers', function () {
         ->city->toBe('Hamburg');
 });
 
+// P-09 (#228): only what departs from the studio's default is stored, and
+// the greeting the model copies in survives beside it.
+it('creates a contact with its portal departures', function () {
+    $this->actingAs($this->staff, 'staff')
+        ->post('/kontakte', [
+            'name' => 'Annika Steffens',
+            'portal' => ['accept_quotes' => false, 'messaging_mode' => 'any'],
+        ])
+        ->assertSessionHasNoErrors();
+
+    $overrides = Contact::firstWhere('name', 'Annika Steffens')->portal_overrides;
+
+    expect($overrides['accept_quotes'])->toBeFalse()
+        ->and($overrides['messaging_mode'])->toBe('any')
+        ->and($overrides)->not->toHaveKey('sign_contracts');
+});
+
+it('refuses a portal value the sheet would refuse too', function () {
+    $this->actingAs($this->staff, 'staff')
+        ->post('/kontakte', ['name' => 'Annika Steffens', 'portal' => ['messaging_mode' => 'alles']])
+        ->assertSessionHasErrors('portal.messaging_mode');
+
+    expect(Contact::where('name', 'Annika Steffens')->exists())->toBeFalse();
+});
+
 it('refuses to create a second contact on an address already on file', function () {
     // The same person enquiring again, and the partial unique index would
     // throw where the form should show a field error.
