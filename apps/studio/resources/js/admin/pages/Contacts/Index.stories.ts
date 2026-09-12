@@ -56,5 +56,5 @@ export const OhneErreichbarkeit: Story = {
   },
 }
 
-/** Ein frisch eingerichtetes Studio: nur der Anlegen-Dialog steht zur Verfügung. */
+/** Ein frisch eingerichtetes Studio: die Tabelle weicht dem Anlegen-Verweis. */
 export const Leer: Story = { args: { contacts: [] } }

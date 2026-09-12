@@ -53,6 +53,13 @@ class ContactController extends Controller
             ->map(ContactRowData::fromContact(...));
     }
 
+    public function create(): Response
+    {
+        $this->authorize('update', new Contact);
+
+        return Inertia::render('Contacts/Create');
+    }
+
     public function edit(Contact $contact, StudioSettingsResolver $settings, PortalSettings $portal): Response
     {
         $this->authorize('update', $contact);
@@ -187,6 +194,9 @@ class ContactController extends Controller
                 Rule::unique('contacts', 'email')->where('tenant_id', config('tenancy.tenant_id')),
             ],
             'phone' => ['nullable', 'string', 'max:64'],
+            'street' => ['nullable', 'string', 'max:255'],
+            'postcode' => ['nullable', 'string', 'max:32'],
+            'city' => ['nullable', 'string', 'max:255'],
         ]);
 
         $contact = Contact::create($validated);

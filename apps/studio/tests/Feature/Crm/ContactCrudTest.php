@@ -55,6 +55,22 @@ it('creates a contact', function () {
     expect(Contact::where('email', 'annika@example.test')->first()?->name)->toBe('Annika Steffens');
 });
 
+it('creates a contact with the address the screen offers', function () {
+    $this->actingAs($this->staff, 'staff')
+        ->post('/kontakte', [
+            'name' => 'Annika Steffens',
+            'street' => 'Museumstraße 4',
+            'postcode' => '22765',
+            'city' => 'Hamburg',
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect(Contact::firstWhere('name', 'Annika Steffens'))
+        ->street->toBe('Museumstraße 4')
+        ->postcode->toBe('22765')
+        ->city->toBe('Hamburg');
+});
+
 it('refuses to create a second contact on an address already on file', function () {
     // The same person enquiring again, and the partial unique index would
     // throw where the form should show a field error.
@@ -121,6 +137,7 @@ it('rejects unauthenticated access to every contact route', function () {
     $contact = Contact::factory()->create();
 
     $this->get('/kontakte')->assertRedirect('/login');
+    $this->get('/kontakte/neu')->assertRedirect('/login');
     $this->get("/kontakte/{$contact->public_id}")->assertRedirect('/login');
     $this->patch("/kontakte/{$contact->public_id}", [])->assertRedirect('/login');
 });

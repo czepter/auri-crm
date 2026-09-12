@@ -187,6 +187,7 @@ Route::middleware('audience:staff')->group(function () {
         // binds "suche" as a contact public id and answers 404.
         Route::get('/kontakte/suche', ContactSearchController::class)->name('contacts.search');
         Route::get('/suche', PaletteSearchController::class)->name('palette.search');
+        Route::get('/kontakte/neu', [ContactController::class, 'create'])->name('contacts.create');
         Route::get('/kontakte', [ContactController::class, 'index'])->name('contacts.index');
         Route::post('/kontakte', [ContactController::class, 'store'])->name('contacts.store');
         Route::get('/kontakte/{contact}', [ContactController::class, 'edit'])->name('contacts.edit');
