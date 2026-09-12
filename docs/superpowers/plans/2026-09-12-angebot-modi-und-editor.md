@@ -958,3 +958,63 @@ Beide Modi im laufenden Studio aufnehmen und unter den Namen oben ablegen.
 git add docs
 git commit -m "docs(quotes): record the new editor"
 ```
+
+---
+
+### Task 12: Die Anschrift steht auf dem Dokument
+
+Nachgetragen während der Umsetzung: Task 3 legt `recipient_street`, `recipient_postcode` und `recipient_city` am Angebot an, aber `RenderQuotePdf` druckt sie nirgends — die Spec verlangt in §4.4 eine Anschrift, die der Brief trägt.
+
+**Files:**
+- Modify: `apps/studio/app/Quotes/Actions/RenderQuotePdf.php`
+- Modify: `apps/studio/app/Documents/Support/DocumentMergeDataBuilder.php`
+- Test: `apps/studio/tests/Feature/Quotes/QuoteRecipientTest.php` (erweitern)
+
+**Interfaces:**
+- Consumes: `Quote->recipient_contact_id`, `recipient_street`, `recipient_postcode`, `recipient_city`; `RenderQuotePdf::html(Quote): string`.
+
+- [ ] **Step 1: Test ergänzen**
+
+```php
+it('druckt die Anschrift des Angebots, nicht die des Kontakts', function () {
+    [$user, $project] = $this->studioWithProjectForRecipient();
+
+    $contact = Contact::factory()->create(['name' => 'Ursula Meier', 'street' => 'Elbchaussee 88', 'postcode' => '22763', 'city' => 'Hamburg']);
+    $project->attachContact($contact, ProjectContactRole::Payer);
+
+    $quote = Quote::factory()->for($project)->create([
+        'recipient_contact_id' => $contact->id,
+        'recipient_street' => 'Hafenstraße 12',
+        'recipient_postcode' => '20459',
+        'recipient_city' => 'Hamburg',
+    ]);
+
+    $html = app(App\Quotes\Actions\RenderQuotePdf::class)->html($quote);
+
+    expect($html)->toContain('Ursula Meier')
+        ->and($html)->toContain('Hafenstraße 12')
+        ->and($html)->toContain('20459 Hamburg')
+        ->and($html)->not->toContain('Elbchaussee 88');
+});
+```
+
+- [ ] **Step 2: Test laufen lassen, Fehlschlag bestätigen**
+
+Run: `docker compose exec -e APP_KEY=base64:$(openssl rand -base64 32) -e REDIS_CLIENT=predis -e APP_SURFACE=admin api php artisan test --filter=QuoteRecipientTest`
+Expected: FAIL, die Anschrift fehlt im Dokument
+
+- [ ] **Step 3: Anschriftenfeld ins Dokument**
+
+Der Empfängerblock steht oben links, über dem Datum: Name, Straße, dann PLZ und Ort in einer Zeile. Die Werte kommen vom Angebot, nicht vom Kontakt — ein Umzug nach dem Versenden ändert das verschickte Dokument nicht. Fehlt die Anschrift am Angebot, bleibt der Block beim Namen.
+
+- [ ] **Step 4: Tests laufen lassen**
+
+Run: `docker compose exec -e APP_KEY=base64:$(openssl rand -base64 32) -e REDIS_CLIENT=predis -e APP_SURFACE=admin api php artisan test --filter="QuoteRecipientTest|QuotePreviewTest|QuoteTimeLineTest"`
+Expected: PASS
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add apps/studio/app/Quotes/Actions/RenderQuotePdf.php apps/studio/app/Documents/Support/DocumentMergeDataBuilder.php apps/studio/tests/Feature/Quotes/QuoteRecipientTest.php
+git commit -m "feat(quotes): print the recipient address"
+```
