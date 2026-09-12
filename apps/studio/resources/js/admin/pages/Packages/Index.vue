@@ -42,7 +42,7 @@ function total(pkg: App.Catalog.Data.PackageData) {
               <h3 class="m-0 text-[15px] leading-[1.2] font-semibold tracking-[-0.018em]">
                 <Link :href="`/pakete/${pkg.id}`">{{ pkg.name }}</Link>
               </h3>
-              <span v-if="!pkg.isActive" class="text-[11.5px] text-ink-2">{{ $t('packages.inactive') }}</span>
+              <span v-if="!pkg.isActive" class="text-[11.5px] text-ink-2">{{ $t('packages.paused') }}</span>
               <span class="ml-auto text-[13px] font-semibold tabular-nums">{{ formatEurosRounded(total(pkg)) }}</span>
             </header>
 

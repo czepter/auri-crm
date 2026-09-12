@@ -1,6 +1,7 @@
 import type { Preview } from '@storybook/vue3-vite'
 import { setup } from '@storybook/vue3-vite'
 import { createI18n } from 'vue-i18n'
+import { setPage } from './inertia'
 import de from '../resources/js/locales/de.json'
 import '../resources/css/admin.css'
 
@@ -22,6 +23,18 @@ setup((app) => {
 })
 
 const preview: Preview = {
+  // Was der Server auf jeden Bildschirm legt, legt hier der Dekorator. Eine
+  // Story ergänzt ihre eigenen Werte über parameters.page.
+  decorators: [
+    (story, context) => {
+      setPage(
+        (context.parameters.page ?? {}) as Record<string, unknown>,
+        (context.parameters.url ?? '/') as string,
+      )
+
+      return story()
+    },
+  ],
   parameters: {
     layout: 'centered',
     controls: { expanded: true },

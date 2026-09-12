@@ -1,4 +1,5 @@
 import type { StorybookConfig } from '@storybook/vue3-vite'
+import { fileURLToPath, URL } from 'node:url'
 
 /*
  * Der Baukasten der Oberfläche, an der laufenden Anwendung vorbei.
@@ -23,6 +24,18 @@ const config: StorybookConfig = {
     options: {},
   },
   viteFinal: async (config) => {
+    // Die Bildschirme lesen ihre Werte über usePage() und schicken über
+    // router — beides hängt an einer laufenden Anwendung. Der Alias zeigt auf
+    // eine Attrappe, damit ein Bildschirm nicht wissen muss, dass er im
+    // Katalog steht.
+    config.resolve = {
+      ...config.resolve,
+      alias: {
+        ...config.resolve?.alias,
+        '@inertiajs/vue3': fileURLToPath(new URL('./inertia.ts', import.meta.url)),
+      },
+    }
+
     config.plugins = (config.plugins ?? []).filter(
       (plugin) => !(plugin && typeof plugin === 'object' && 'name' in plugin && String(plugin.name).startsWith('laravel')),
     )
