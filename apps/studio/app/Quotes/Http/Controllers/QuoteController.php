@@ -14,10 +14,13 @@ use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Actions\ResolveQuoteRecipient;
 use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Actions\SendQuote;
+use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\PricingMode;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
+use App\Quotes\Models\QuotePaymentStage;
+use App\Quotes\Support\DiscountCalculator;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterval;
@@ -354,5 +357,100 @@ class QuoteController extends Controller
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="'.($quote->number ?? $quote->public_id).'.pdf"',
         ]);
+    }
+
+    /**
+     * Same shape update() validates, on an unsaved copy — every field
+     * optional, since the editor posts here on each debounced keystroke of
+     * a half-filled draft. Nothing here is written: not to $quote, not to
+     * its items or stages, so the live sheet always trails the form and
+     * never the stored row.
+     */
+    public function preview(Request $request, Quote $quote, RenderQuotePdf $render, StudioSettingsResolver $settings): Response
+    {
+        $this->authorize('manageQuotes', $quote->project);
+
+        $validated = $request->validate([
+            'pricing_mode' => ['nullable', Rule::enum(PricingMode::class)],
+            'intro' => ['nullable', 'string', 'max:5000'],
+            'outro' => ['nullable', 'string', 'max:5000'],
+            'discount_type' => ['nullable', 'in:percentage,amount'],
+            'discount_value' => ['nullable', 'integer', 'min:1'],
+            'items' => ['array'],
+            'items.*.title' => ['nullable', 'string', 'max:255'],
+            'items.*.description' => ['nullable', 'string', 'max:2000'],
+            'items.*.quantity' => ['nullable', 'integer', 'min:1'],
+            'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
+            'items.*.discount_type' => ['nullable', 'in:percentage,amount'],
+            'items.*.discount_value' => ['nullable', 'integer', 'min:1'],
+            'items.*.selectable' => ['sometimes', 'boolean'],
+            'items.*.selected' => ['sometimes', 'boolean'],
+            'items.*.outcome' => ['nullable', 'string', 'max:255'],
+            'hourly_rate' => ['nullable', 'integer', 'min:1'],
+            'min_hours' => ['nullable', 'integer', 'min:1', 'max:2000'],
+            'max_hours' => ['nullable', 'integer', 'min:1', 'max:2000'],
+            'images_per_hour' => ['nullable', 'integer', 'min:1', 'max:2000'],
+            'hours' => ['nullable', 'integer', 'min:1', 'max:2000'],
+            'time_title' => ['nullable', 'string', 'max:255'],
+            'time_description' => ['nullable', 'string', 'max:255'],
+            'stages' => ['array'],
+            'stages.*.percent' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'stages.*.label' => ['nullable', 'string', 'max:255'],
+            'stages.*.minimum' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $preview = new Quote(['project_id' => $quote->project_id]);
+        $preview->setRelation('project', $quote->project);
+        $preview->fill([
+            'pricing_mode' => $validated['pricing_mode'] ?? PricingMode::Classic->value,
+            'intro' => $validated['intro'] ?? null,
+            'outro' => $validated['outro'] ?? null,
+            'discount_type' => $validated['discount_type'] ?? null,
+            'discount_value' => $validated['discount_value'] ?? null,
+            'hourly_rate' => $validated['hourly_rate'] ?? null,
+            'min_hours' => $validated['min_hours'] ?? null,
+            'max_hours' => $validated['max_hours'] ?? null,
+            'images_per_hour' => $validated['images_per_hour'] ?? null,
+            'hours' => $validated['hours'] ?? null,
+            'time_title' => $validated['time_title'] ?? null,
+            'time_description' => $validated['time_description'] ?? null,
+        ]);
+
+        $items = collect($validated['items'] ?? [])->map(function (array $item) {
+            $quoteItem = new QuoteItem([
+                'title' => $item['title'] ?? '',
+                'description' => $item['description'] ?? null,
+                'quantity' => $item['quantity'] ?? 1,
+                'unit_price' => $item['unit_price'] ?? null,
+                'discount_type' => $item['discount_type'] ?? null,
+                'discount_value' => $item['discount_value'] ?? null,
+                'selectable' => $item['selectable'] ?? false,
+                'selected' => $item['selected'] ?? false,
+                'outcome' => $item['outcome'] ?? null,
+            ]);
+            $quoteItem->discount_amount = DiscountCalculator::resolve($quoteItem->lineTotal(), $quoteItem->discount_type, $quoteItem->discount_value);
+
+            return $quoteItem;
+        });
+        $preview->setRelation('items', $items);
+
+        $preview->setRelation('paymentStages', collect($validated['stages'] ?? [])->map(fn (array $stage) => new QuotePaymentStage([
+            'percent' => $stage['percent'] ?? 0,
+            'label' => $stage['label'] ?? '',
+            'minimum' => $stage['minimum'] ?? 0,
+        ])));
+
+        $subtotal = $items->sum(fn (QuoteItem $item) => $item->discountedLineTotal());
+        $discountAmount = DiscountCalculator::resolve($subtotal, $preview->discount_type, $preview->discount_value);
+        $preview->total = $items->sum(fn (QuoteItem $item) => $item->lineTotal());
+        $preview->discount_amount = $discountAmount;
+        $preview->net = $subtotal - $discountAmount;
+
+        $preview->vat_mode = $settings->vatMode();
+        $preview->vat_rate = $settings->effectiveVatRate();
+        $preview->vat_note = $preview->vat_mode === 'small_business' ? $settings->vatNote() : null;
+        $preview->vat_amount = DiscountCalculator::resolve($preview->net, DiscountType::Percentage, $preview->vat_rate);
+
+        return response($render->html($preview), 200, ['Content-Type' => 'text/html']);
     }
 }
