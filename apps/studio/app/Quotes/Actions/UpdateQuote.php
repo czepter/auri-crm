@@ -2,7 +2,9 @@
 
 namespace App\Quotes\Actions;
 
+use App\Quotes\Enums\PricingMode;
 use App\Quotes\Models\Quote;
+use Illuminate\Validation\Rule;
 
 /**
  * The draft editor's save, shared by the board (App\Quotes\Http\Controllers\
@@ -20,6 +22,13 @@ class UpdateQuote
     {
         return [
             'valid_until' => ['nullable', 'date'],
+            // Der Editor schickt den Modus immer; die api-Oberflaeche kennt
+            // ihn nicht und laesst das Angebot dann, wie es steht.
+            'pricing_mode' => ['sometimes', Rule::enum(PricingMode::class)],
+            'recipient_contact' => ['nullable', 'string'],
+            'recipient_street' => ['nullable', 'string', 'max:255'],
+            'recipient_postcode' => ['nullable', 'string', 'max:32'],
+            'recipient_city' => ['nullable', 'string', 'max:255'],
             'intro' => ['nullable', 'string', 'max:5000'],
             'outro' => ['nullable', 'string', 'max:5000'],
             'discount_type' => ['nullable', 'in:percentage,amount', 'required_with:discount_value'],
@@ -31,13 +40,14 @@ class UpdateQuote
             'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
             'items.*.discount_type' => ['nullable', 'in:percentage,amount', 'required_with:items.*.discount_value'],
             'items.*.discount_value' => ['nullable', 'integer', 'min:1', 'required_with:items.*.discount_type'],
-            // Q-08/Q-09/Q-11: der Reglerteil. hourly_rate null laesst alles
-            // unten so laufen, wie es vorher lief.
-            'hourly_rate' => ['nullable', 'integer', 'min:0'],
-            'min_hours' => ['nullable', 'integer', 'min:0', 'max:2000'],
-            'max_hours' => ['nullable', 'integer', 'min:0', 'max:2000'],
-            'images_per_hour' => ['nullable', 'integer', 'min:0', 'max:2000'],
-            'hours' => ['nullable', 'integer', 'min:0', 'max:2000'],
+            // Q-08/Q-09/Q-11: der Reglerteil, Pflicht nur im Modus choice.
+            'hourly_rate' => ['nullable', 'integer', 'min:1', 'required_if:pricing_mode,choice'],
+            'min_hours' => ['nullable', 'integer', 'min:1', 'max:2000', 'required_if:pricing_mode,choice'],
+            'max_hours' => ['nullable', 'integer', 'min:1', 'max:2000', 'required_if:pricing_mode,choice', 'gte:min_hours'],
+            'images_per_hour' => ['nullable', 'integer', 'min:1', 'max:2000'],
+            'hours' => ['nullable', 'integer', 'min:1', 'max:2000', 'gte:min_hours', 'lte:max_hours'],
+            'time_title' => ['nullable', 'string', 'max:255'],
+            'time_description' => ['nullable', 'string', 'max:255'],
             // `id`, nie der Pfad: das Portal liefert dieses Bild an den
             // Kunden aus, und ein aus einem Formular uebernommener Pfad
             // waere das Lesen jeder Datei auf dem Disk — die Vertraege
@@ -56,17 +66,60 @@ class UpdateQuote
     /** @param  array<string, mixed>  $validated  checked against rules() */
     public function __invoke(Quote $quote, array $validated): void
     {
+        $recipientFields = [];
+
+        if (array_key_exists('recipient_contact', $validated)) {
+            $recipient = ! empty($validated['recipient_contact'])
+                ? $quote->project->contacts()->where('contacts.public_id', $validated['recipient_contact'])->first()
+                : null;
+
+            if ($recipient !== null && blank($recipient->street) && blank($recipient->postcode) && blank($recipient->city)) {
+                $recipient->update([
+                    'street' => $validated['recipient_street'] ?? null,
+                    'postcode' => $validated['recipient_postcode'] ?? null,
+                    'city' => $validated['recipient_city'] ?? null,
+                ]);
+            }
+
+            $recipientFields = [
+                // Ein vom Projekt geloester Kontakt findet sich hier nicht
+                // mehr — den Empfaenger des Angebots kostet das nichts.
+                'recipient_contact_id' => empty($validated['recipient_contact'])
+                    ? null
+                    : ($recipient?->id ?? $quote->recipient_contact_id),
+                'recipient_street' => $validated['recipient_street'] ?? null,
+                'recipient_postcode' => $validated['recipient_postcode'] ?? null,
+                'recipient_city' => $validated['recipient_city'] ?? null,
+            ];
+        }
+
+        // §4.1: der Modus ist der Schalter, nicht der Stundensatz. Bleibt ein
+        // Satz am klassischen Angebot stehen, rendern PDF, Vorschau und Portal
+        // einen Regler, den der Editor nicht zeigt. Geleert wird nur auf
+        // ausdrueckliche Ansage — ein Aufrufer ohne Modus aendert keinen.
+        $mode = $validated['pricing_mode'] ?? $quote->pricing_mode->value;
+
+        $slider = array_key_exists('pricing_mode', $validated) && $mode === PricingMode::Classic->value
+            ? array_fill_keys(['hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours'], null)
+            : [
+                'hourly_rate' => $validated['hourly_rate'] ?? null,
+                'min_hours' => $validated['min_hours'] ?? null,
+                'max_hours' => $validated['max_hours'] ?? null,
+                'images_per_hour' => $validated['images_per_hour'] ?? null,
+                'hours' => $validated['hours'] ?? null,
+            ];
+
         $quote->update([
             'valid_until' => $validated['valid_until'] ?? null,
+            'pricing_mode' => $mode,
+            ...$recipientFields,
             'intro' => $validated['intro'] ?? null,
             'outro' => $validated['outro'] ?? null,
             'discount_type' => $validated['discount_type'] ?? null,
             'discount_value' => $validated['discount_value'] ?? null,
-            'hourly_rate' => $validated['hourly_rate'] ?? null,
-            'min_hours' => $validated['min_hours'] ?? null,
-            'max_hours' => $validated['max_hours'] ?? null,
-            'images_per_hour' => $validated['images_per_hour'] ?? null,
-            'hours' => $validated['hours'] ?? null,
+            ...$slider,
+            'time_title' => $validated['time_title'] ?? null,
+            'time_description' => $validated['time_description'] ?? null,
         ]);
 
         // Vor dem Loeschen gelesen: die Zeilen tragen die einzigen Pfade,

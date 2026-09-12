@@ -1,19 +1,18 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
-import QuoteTable, { type QuoteRow } from '@/admin/components/QuoteTable.vue'
-import QuoteSliderEditor, { type SliderDraft } from '@/admin/components/QuoteSliderEditor.vue'
-import ValidUntilField from '@/admin/components/ValidUntilField.vue'
+import QuoteEditor from '@/admin/components/quote/QuoteEditor.vue'
 import Card from '@/ui/page/Card.vue'
 import { debounced } from '@/admin/lib/autosave'
-import { basisPointsToPercent, centsToEuros, eurosToCents, formatDiscount, formatEuros, parseDiscount } from '@/admin/lib/money'
+import { buildQuotePayload, type QuoteContact, type QuoteDraft } from '@/admin/components/quote/quotePayload'
+import { basisPointsToPercent, centsToEuros, eurosToCents, formatDiscount, formatEuros } from '@/admin/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
-import { Textarea } from '@/ui/textarea'
 import { DatePicker } from '@/ui/date-picker'
 import { Label } from '@/ui/label'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
 
 const props = withDefaults(
   defineProps<{
@@ -23,6 +22,7 @@ const props = withDefaults(
     quotes: App.Quotes.Data.QuoteData[]
     packages: App.Catalog.Data.PackageData[]
     catalogItems: App.Catalog.Data.CatalogItemData[]
+    contacts: QuoteContact[]
     canManageCatalog: boolean
     paymentPlan: App.Payments.Data.PaymentPlanData | null
     // The prop a partial reload asks for: the lead screen carries all of this
@@ -32,29 +32,32 @@ const props = withDefaults(
   { only: () => ['quotes'] },
 )
 
-type Draft = {
-  validUntil: string
-  discount: string
-  intro: string
-  outro: string
-  rows: QuoteRow[]
-  // Q-14: derselbe Entwurf traegt beide Welten. hourlyRate leer heisst
-  // Positionstabelle, und dann ruehrt nichts hier unten etwas an.
-  slider: SliderDraft
-}
-
-function draftOf(quote: App.Quotes.Data.QuoteData): Draft {
+function draftOf(quote: App.Quotes.Data.QuoteData): QuoteDraft {
   return {
+    pricingMode: quote.pricingMode as QuoteDraft['pricingMode'],
     validUntil: quote.validUntil ?? '',
     discount: formatDiscount(quote.discountType, quote.discountValue),
     intro: quote.intro ?? '',
     outro: quote.outro ?? '',
+    recipientContact: quote.recipientContact,
+    recipientStreet: quote.recipientStreet,
+    recipientPostcode: quote.recipientPostcode,
+    recipientCity: quote.recipientCity,
+    timeTitle: quote.timeTitle,
+    timeDescription: quote.timeDescription,
+    // Eine Liste für beide Modi (§4.2): Menge und Rabatt gelten überall,
+    // "Im Portal" ist nur in Auswahl bedienbar, aber jede Zeile trägt es.
     rows: quote.items.map((item) => ({
+      id: item.id,
       title: item.title,
       description: item.description ?? '',
       quantity: item.quantity,
       unitPrice: centsToEuros(item.unitPrice),
       discount: formatDiscount(item.discountType, item.discountValue),
+      selectable: item.selectable,
+      selected: item.selected,
+      outcome: item.outcome ?? '',
+      hasImage: item.hasImage,
       // Abgeleitet statt gespeichert: gemerkt heisst, die Bibliothek führt
       // diesen Titel.
       remember: props.catalogItems.some((entry) => entry.title === item.title),
@@ -65,15 +68,6 @@ function draftOf(quote: App.Quotes.Data.QuoteData): Draft {
       maxHours: quote.maxHours,
       imagesPerHour: quote.imagesPerHour,
       hours: quote.hours,
-      rows: quote.items.map((item) => ({
-        id: item.id,
-        title: item.title,
-        outcome: item.outcome ?? '',
-        unitPrice: centsToEuros(item.unitPrice),
-        selectable: item.selectable,
-        selected: item.selected,
-        hasImage: item.hasImage,
-      })),
       stages: quote.paymentStages.map((stage) => ({
         percent: stage.percent,
         label: stage.label,
@@ -85,7 +79,7 @@ function draftOf(quote: App.Quotes.Data.QuoteData): Draft {
 
 // Keyed by quote id and filled on demand rather than built once at setup: a
 // partial reload that adds a quote used to leave the map behind.
-const drafts = reactive<Record<string, Draft>>({})
+const drafts = reactive<Record<string, QuoteDraft>>({})
 
 watch(
   () => props.quotes,
@@ -118,82 +112,23 @@ function saveAsPackage(quoteId: string) {
   })
 }
 
+// Ohne sie läuft jede weitere Taste in dieselbe 422 und das Getippte ist beim
+// Neuladen weg.
+const saveErrors = reactive<Record<string, string | null>>({})
+
 const save = debounced((quoteId: string) => {
-  const draft = drafts[quoteId]
-  const quoteDiscount = parseDiscount(draft.discount)
-  const rate = eurosToCents(draft.slider.hourlyRate)
+  const payload = buildQuotePayload(drafts[quoteId], { canManageCatalog: props.canManageCatalog })
 
-  if (rate !== null) {
-    router.patch(`/angebote/${quoteId}`, sliderPayload(draft), {
-      preserveScroll: true,
-      preserveState: true,
-      only: props.only,
-    })
-
-    return
-  }
-
-  router.patch(
-    `/angebote/${quoteId}`,
-    {
-      valid_until: draft.validUntil || null,
-      intro: draft.intro || null,
-      outro: draft.outro || null,
-      discount_type: quoteDiscount.type || null,
-      discount_value: quoteDiscount.value,
-      items: draft.rows.map((row) => {
-        const discount = parseDiscount(row.discount)
-
-        return {
-          title: row.title,
-          description: row.description || null,
-          quantity: row.quantity,
-          unit_price: eurosToCents(row.unitPrice),
-          discount_type: discount.type || null,
-          discount_value: discount.value,
-          // Ohne die Faehigkeit geht der Schluessel gar nicht erst mit, damit
-          // der Waechter im Controller nicht ohne Anlass greift.
-          ...(props.canManageCatalog ? { remember: row.remember } : {}),
-        }
-      }),
-    },
+  router.patch(`/angebote/${quoteId}`, payload, {
     // Die Zeile, in der getippt wird, überlebt die Antwort; zurück kommen nur
     // die serverseitig gerechneten Summen.
-    { preserveScroll: true, preserveState: true, only: props.only },
-  )
+    preserveScroll: true,
+    preserveState: true,
+    only: props.only,
+    onSuccess: () => (saveErrors[quoteId] = null),
+    onError: (errors) => (saveErrors[quoteId] = Object.values(errors)[0] ?? null),
+  })
 }, 600)
-
-/**
- * Q-14: dieselbe Route, andere Felder. Die id geht mit, weil der Controller
- * das Bild einer Zeile daran wiederfindet — der Pfad selbst kommt nie aus
- * dem Formular.
- */
-function sliderPayload(draft: Draft) {
-  return {
-    valid_until: draft.validUntil || null,
-    intro: draft.intro || null,
-    outro: draft.outro || null,
-    hourly_rate: eurosToCents(draft.slider.hourlyRate),
-    min_hours: draft.slider.minHours,
-    max_hours: draft.slider.maxHours,
-    images_per_hour: draft.slider.imagesPerHour,
-    hours: draft.slider.hours,
-    items: draft.slider.rows.map((row) => ({
-      id: row.id,
-      title: row.title,
-      quantity: 1,
-      unit_price: eurosToCents(row.unitPrice),
-      outcome: row.outcome || null,
-      selectable: row.selectable,
-      selected: row.selected,
-    })),
-    stages: draft.slider.stages.map((stage) => ({
-      percent: stage.percent,
-      label: stage.label,
-      minimum: eurosToCents(stage.minimum) ?? 0,
-    })),
-  }
-}
 
 function create() {
   router.post(`/auftraege/${props.projectId}/angebote`, {}, { preserveScroll: true })
@@ -213,6 +148,14 @@ function createPlan() {
 
 function send(quoteId: string) {
   router.post(`/angebote/${quoteId}/versenden`, {}, { preserveScroll: true })
+}
+
+function markSent(quoteId: string) {
+  router.post(`/angebote/${quoteId}/versendet`, {}, { preserveScroll: true })
+}
+
+function copyLink(portalUrl: string) {
+  navigator.clipboard?.writeText(portalUrl)
 }
 
 /** draft/sent/accepted/superseded/expired -> the mockup's own three chip states (tokens.css). */
@@ -254,13 +197,10 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
 </script>
 
 <template>
-  <!-- Depth behind the Angebot & Vertrag tab: only the quote half exists so
-       far — no tax breakdown beyond Q-04's own VAT row, no PDF link,
-       Vertrag card, Nachtrag or payment plan yet (all Q-07 and later). A
-       superseded quote renders in this same loop rather than being hidden
-       or 404ing: Project::quotes() already returns every quote, and this
-       section is what "stays reachable and reads as superseded" means
-       here. -->
+  <!-- Ein ersetztes Angebot rendert in derselben Schleife, statt versteckt zu
+       werden oder zu 404en: Project::quotes() gibt jedes Angebot zurück, und
+       dieser Abschnitt ist, was "bleibt erreichbar und liest sich als
+       ersetzt" hier heisst. -->
   <Card
     v-for="quote in quotes"
     class="mt-3 first:mt-0"
@@ -277,10 +217,13 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
   >
     <template #action>
       <span :class="['chip', chipClass(quote.status)]">{{ quote.statusLabel }}</span>
+      <span v-if="quote.sentChannel" class="text-[11.5px] text-ink-2">
+        {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}
+      </span>
 
-      <div class="flex items-center gap-1.5">
+      <div class="ml-auto flex items-center gap-1.5">
         <Button as="a" variant="outline" :href="`/angebote/${quote.id}/pdf`" target="_blank" @click.stop>
-          {{ $t('quotes.pdf') }}
+          {{ $t('quotes.download') }}
         </Button>
 
         <Button
@@ -334,14 +277,26 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
           </DialogContent>
         </Dialog>
 
-        <Button
-          v-if="canManageQuotes && quote.status === 'draft'"
-          type="button"
-          variant="pill"
-          @click.stop="send(quote.id)"
-        >
-          {{ $t('quotes.send') }}
-        </Button>
+        <div v-if="canManageQuotes && quote.status === 'draft'" class="flex">
+          <Button type="button" variant="pill" class="rounded-r-none" @click.stop="send(quote.id)">
+            {{ $t('quotes.sendByMail') }}
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              class="flex items-center rounded-r-[var(--r-pill)] border-l border-white/20 bg-foreground px-2 text-paper"
+              :aria-label="$t('quotes.sendOptions')"
+              @click.stop
+            >
+              <svg class="size-3.5 fill-current" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem :disabled="!quote.portalUrl" @select="copyLink(quote.portalUrl!)">
+                {{ $t('quotes.copyLink') }}
+              </DropdownMenuItem>
+              <DropdownMenuItem @select="markSent(quote.id)">{{ $t('quotes.markSent') }}</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </template>
 
@@ -351,50 +306,18 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
          wrong or bypassed. Ein Entwurf ist die Tabelle; erst ab Versendet
          tritt das gelesene Dokument an ihre Stelle. -->
     <template v-if="canManageQuotes && quote.status === 'draft' && drafts[quote.id]">
-      <!-- Q-14: der Stundensatz ist die Weiche. Leer bleibt die Tabelle
-           stehen, die vor dieser Runde hier stand. -->
-      <QuoteSliderEditor
-        v-model="drafts[quote.id].slider"
+      <QuoteEditor
+        v-model="drafts[quote.id]"
         :quote-id="quote.id"
-        @change="save(quote.id)"
-      />
-
-      <QuoteTable
-        v-if="!drafts[quote.id].slider.hourlyRate"
-        class="mt-8"
-        v-model="drafts[quote.id].rows"
+        :quote="quote"
         :can-manage-catalog="canManageCatalog"
         :packages="packages"
         :catalog-items="catalogItems"
+        :contacts="contacts"
         @change="save(quote.id)"
       />
 
-      <div class="mt-4 grid grid-cols-2 gap-x-5 gap-y-4">
-        <ValidUntilField
-          :id="`quote-valid-${quote.id}`"
-          v-model="drafts[quote.id].validUntil"
-          @blur.capture="save(quote.id)"
-        />
-        <div class="flex min-w-0 flex-col gap-1.5">
-          <Label :for="`quote-discount-${quote.id}`">{{ $t('quotes.discount') }}</Label>
-          <Input
-            :id="`quote-discount-${quote.id}`"
-            v-model="drafts[quote.id].discount"
-            class="tabular-nums"
-            type="text"
-            inputmode="decimal"
-            @blur="save(quote.id)"
-          />
-        </div>
-        <div class="col-span-2 flex min-w-0 flex-col gap-1.5">
-          <Label :for="`quote-intro-${quote.id}`">{{ $t('quotes.intro') }}</Label>
-          <Textarea :id="`quote-intro-${quote.id}`" v-model="drafts[quote.id].intro" rows="3" @blur="save(quote.id)" />
-        </div>
-        <div class="col-span-2 flex min-w-0 flex-col gap-1.5">
-          <Label :for="`quote-outro-${quote.id}`">{{ $t('quotes.outro') }}</Label>
-          <Textarea :id="`quote-outro-${quote.id}`" v-model="drafts[quote.id].outro" rows="3" @blur="save(quote.id)" />
-        </div>
-      </div>
+      <p v-if="saveErrors[quote.id]" class="mt-2 text-[12px] text-destructive">{{ saveErrors[quote.id] }}</p>
     </template>
 
     <template v-else>
@@ -413,7 +336,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
           </span>
         </span>
         <span class="w-[110px] flex-none text-right font-semibold tabular-nums">
-          {{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.lineTotal) }}
+          {{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.netTotal) }}
         </span>
       </div>
 

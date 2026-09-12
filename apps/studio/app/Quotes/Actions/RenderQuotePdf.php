@@ -37,6 +37,11 @@ class RenderQuotePdf
 
     public function __invoke(Quote $quote): string
     {
+        return $this->gotenberg->htmlToPdf($this->html($quote));
+    }
+
+    public function html(Quote $quote): string
+    {
         $project = $quote->project;
         $data = $this->mergeData->fromProject($project, $this->settings);
 
@@ -47,14 +52,41 @@ class RenderQuotePdf
             ->orderBy('id')
             ->first();
 
-        $body = MergeFieldResolver::resolve($template?->body ?? '', $data)
+        $body = $this->recipient($quote)
+            .MergeFieldResolver::resolve($template?->body ?? '', $data)
             .$this->letter($quote->intro, $data)
             .$this->items($quote)
             .$this->letter($quote->outro, $data);
 
-        return $this->gotenberg->htmlToPdf(
-            $this->renderer->wrap(DocumentTemplateType::Quote, $body, $this->settings)
-        );
+        return $this->renderer->wrap(DocumentTemplateType::Quote, $body, $this->settings);
+    }
+
+    /**
+     * Name kommt aus der Kontakt-Relation (das Angebot speichert ihn nicht),
+     * Straße/PLZ/Ort aus den eigenen Spalten des Angebots — ein Umzug nach
+     * dem Versenden darf das verschickte Dokument nicht mehr ändern.
+     */
+    private function recipient(Quote $quote): string
+    {
+        $name = $quote->recipientContact?->name;
+
+        if ($name === null) {
+            return '';
+        }
+
+        $lines = [e($name)];
+
+        if ($quote->recipient_street !== null) {
+            $lines[] = e($quote->recipient_street);
+        }
+
+        $cityLine = trim(($quote->recipient_postcode ?? '').' '.($quote->recipient_city ?? ''));
+
+        if ($cityLine !== '') {
+            $lines[] = e($cityLine);
+        }
+
+        return '<p>'.implode('<br>', $lines).'</p>';
     }
 
     /** Freitext, kein HTML: escaped, Absätze bleiben Absätze. */
@@ -97,9 +129,11 @@ class RenderQuotePdf
         $hours = $quote->hours ?? $quote->min_hours ?? 0;
 
         $html = $accepted
-            ? $this->row(e($hours.' Stunden'), $this->money($hours * $quote->hourly_rate))
+            ? $this->row($this->timeLine($quote, $hours), $this->money($hours * $quote->hourly_rate))
             : $this->row(
-                e(sprintf('%d–%d Stunden', $quote->min_hours ?? 0, $quote->max_hours ?? 0)),
+                $quote->time_title === null
+                    ? e(sprintf('%d–%d Stunden', $quote->min_hours ?? 0, $quote->max_hours ?? 0))
+                    : $this->timeLine($quote, $hours),
                 $this->money($quote->hourly_rate).' je Stunde',
             );
 
@@ -114,13 +148,29 @@ class RenderQuotePdf
 
             $html .= $this->row(
                 e($item->title).($item->outcome === null ? '' : '<br><small>'.e($item->outcome).'</small>'),
-                $item->isIncluded() ? 'enthalten' : $this->money($item->lineTotal()),
+                $item->isIncluded() ? 'enthalten' : $this->money($item->discountedLineTotal()),
             );
         }
 
         return $html.($accepted
             ? $this->row('Gesamt', $this->money($quote->total))
             : $this->row('Spanne', $this->money(QuoteRange::min($quote)).' – '.$this->money(QuoteRange::max($quote))));
+    }
+
+    /** Ohne Titel die alte Zeile; mit Titel dessen Name, darunter Beschreibung, Stunden und Bildschätzung. */
+    private function timeLine(Quote $quote, int $hours): string
+    {
+        if ($quote->time_title === null) {
+            return e($hours.' Stunden');
+        }
+
+        $detail = implode(' · ', array_filter([
+            $quote->time_description,
+            $hours.' Stunden',
+            $quote->images_per_hour ? 'ca. '.($hours * $quote->images_per_hour).' bearbeitete Bilder' : null,
+        ]));
+
+        return e($quote->time_title).($detail === '' ? '' : '<br><small>'.e($detail).'</small>');
     }
 
     /** Dieselben Zeilen, die der Schirm zeigt — Rabatt und USt. nur, wo es sie gibt. */

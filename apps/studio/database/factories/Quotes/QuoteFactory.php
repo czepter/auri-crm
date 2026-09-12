@@ -3,6 +3,7 @@
 namespace Database\Factories\Quotes;
 
 use App\Crm\Models\Project;
+use App\Quotes\Enums\PricingMode;
 use App\Quotes\Models\Quote;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -24,6 +25,7 @@ class QuoteFactory extends Factory
     public function slider(int $rate = 25_000, int $min = 4, int $max = 10): static
     {
         return $this->state(fn () => [
+            'pricing_mode' => PricingMode::Choice,
             'hourly_rate' => $rate,
             'min_hours' => $min,
             'max_hours' => $max,

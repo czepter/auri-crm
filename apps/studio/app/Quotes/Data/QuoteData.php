@@ -20,10 +20,13 @@ class QuoteData extends Data
         public ?string $predecessorNumber,
         public string $status,
         public string $statusLabel,
+        public string $pricingMode,
         public string $currency,
         public ?string $validUntil,
         public ?string $number,
         public ?string $sentAt,
+        // §4.6: beide Wege enden im selben Zustand, die Kopfzeile sagt welcher.
+        public ?string $sentChannel,
         public int $total,
         public ?string $discountType,
         public ?int $discountValue,
@@ -44,19 +47,26 @@ class QuoteData extends Data
         public ?string $intro,
         public ?string $outro,
         public array $items,
-        // Q-08: null heisst klassisches Angebot, und jeder Schirm rendert
-        // dann, was er vorher rendert hat.
         public ?int $hourlyRate = null,
         public ?int $minHours = null,
         public ?int $maxHours = null,
         public ?int $imagesPerHour = null,
         public ?int $hours = null,
+        public ?string $timeTitle = null,
+        public ?string $timeDescription = null,
         // Q-15: vor der Zusage hat ein Regler-Angebot keinen Betrag, sondern
         // einen Bereich — berechnet, nie gespeichert.
         public ?int $rangeMin = null,
         public ?int $rangeMax = null,
         /** @var list<array{id: string, percent: int, label: string, minimum: int}> */
         public array $paymentStages = [],
+        public ?string $recipientContact = null,
+        public ?string $recipientStreet = null,
+        public ?string $recipientPostcode = null,
+        public ?string $recipientCity = null,
+        // Wie in App\Quotes\Notifications\QuoteSent: config('portal.url') und
+        // nur, wenn der Kunde das Portal überhaupt sehen darf.
+        public ?string $portalUrl = null,
     ) {}
 
     public static function fromModel(Quote $quote): self
@@ -71,10 +81,12 @@ class QuoteData extends Data
             predecessorNumber: $quote->predecessor?->number,
             status: $quote->status->value,
             statusLabel: $quote->status->label(),
+            pricingMode: $quote->pricing_mode->value,
             currency: $quote->currency,
             validUntil: $quote->valid_until?->format('Y-m-d'),
             number: $quote->number,
             sentAt: $quote->sent_at?->toIso8601String(),
+            sentChannel: $quote->sent_channel,
             total: $quote->total,
             discountType: $quote->discount_type?->value,
             discountValue: $quote->discount_value,
@@ -92,6 +104,8 @@ class QuoteData extends Data
             maxHours: $quote->max_hours,
             imagesPerHour: $quote->images_per_hour,
             hours: $quote->hours,
+            timeTitle: $quote->time_title,
+            timeDescription: $quote->time_description,
             rangeMin: $quote->hasSlider() ? QuoteRange::min($quote) : null,
             rangeMax: $quote->hasSlider() ? QuoteRange::max($quote) : null,
             paymentStages: $quote->paymentStages->map(fn ($stage) => [
@@ -100,6 +114,13 @@ class QuoteData extends Data
                 'label' => $stage->label,
                 'minimum' => $stage->minimum,
             ])->all(),
+            recipientContact: $quote->recipientContact?->public_id,
+            recipientStreet: $quote->recipient_street,
+            recipientPostcode: $quote->recipient_postcode,
+            recipientCity: $quote->recipient_city,
+            portalUrl: $quote->project->portal_visible
+                ? config('portal.url')."/projekte/{$quote->project->public_id}/angebot"
+                : null,
         );
     }
 }

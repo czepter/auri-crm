@@ -198,6 +198,19 @@ function staffMember(?StaffRole $role = null): User
 }
 
 /**
+ * Ein Studio-Nutzer und ein Projekt — der Aufbau, mit dem jede Angebots-Suite
+ * beginnt. Hier statt in der Datei, die ihn zuerst erklaerte: vier tun das
+ * inzwischen, und eine in einer Testdatei erklaerte Funktion sieht die
+ * naechste nur, wenn Pest sie in der richtigen Reihenfolge laedt.
+ *
+ * @return array{0: User, 1: Project}
+ */
+function studioWithProject(): array
+{
+    return [User::factory()->withMfa()->create(), Project::factory()->create()];
+}
+
+/**
  * A Sanctum plain-text token for anything HasApiTokens — an ApiToken (I-01)
  * or a Contact's own guest token (G-01). Several api-surface suites need one
  * now, and a global function declared inside one test file collides the

@@ -8,6 +8,7 @@ use App\Concerns\HasPublicId;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Quotes\Enums\DiscountType;
+use App\Quotes\Enums\PricingMode;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Support\DiscountCalculator;
 use App\Settings\Support\StudioSettingsResolver;
@@ -24,7 +25,7 @@ use RuntimeException;
  * What a project is offered, priced line by line, in minor units throughout.
  *
  * Draft is mutable in place. Q-06's SendQuote is the only writer that ever
- * moves a quote past it — sent_at, number and the Q-04/Q-03 snapshot columns
+ * moves a quote past it — sent_at and the Q-04/Q-03 snapshot columns
  * all land in that one transaction — and from the moment status reads sent,
  * booted()'s guard below refuses every further write except the two
  * transitions Q-06 and Q-07 make from there: sent -> superseded
@@ -38,7 +39,7 @@ class Quote extends Model
     use HasHourlyPricing;
     use HasPublicId;
 
-    protected $fillable = ['project_id', 'predecessor_id', 'is_addendum', 'status', 'intro', 'outro', 'currency', 'valid_until', 'sent_at', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours'];
+    protected $fillable = ['project_id', 'predecessor_id', 'is_addendum', 'status', 'pricing_mode', 'intro', 'outro', 'currency', 'valid_until', 'sent_at', 'sent_channel', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours', 'time_title', 'time_description', 'recipient_contact_id', 'recipient_street', 'recipient_postcode', 'recipient_city'];
 
     // Mirrors every column default in memory (the same reason Project's own
     // $attributes gives for portal_visible): without net and discount_amount
@@ -46,12 +47,13 @@ class Quote extends Model
     // reloaded, even though the row itself already holds the column
     // defaults — and Q-06's SendQuote can run against a quote that was never
     // re-fetched after creation.
-    protected $attributes = ['status' => 'draft', 'currency' => 'EUR', 'total' => 0, 'discount_amount' => 0, 'net' => 0];
+    protected $attributes = ['status' => 'draft', 'pricing_mode' => 'classic', 'currency' => 'EUR', 'total' => 0, 'discount_amount' => 0, 'net' => 0];
 
     protected function casts(): array
     {
         return [
             'status' => QuoteStatus::class,
+            'pricing_mode' => PricingMode::class,
             'valid_until' => 'date',
             'sent_at' => 'immutable_datetime',
             'accepted_at' => 'immutable_datetime',
@@ -135,10 +137,26 @@ class Quote extends Model
         return $this->belongsTo(Contact::class, 'accepted_by_contact_id');
     }
 
+    public function recipientContact(): BelongsTo
+    {
+        return $this->belongsTo(Contact::class, 'recipient_contact_id');
+    }
+
     /**
      * The only writer of total, discount_amount and net. Sums fresh from the
      * database rather than trusting a possibly-stale relation, so it is safe
      * to call right after items()->createMany().
+     */
+    public function recalculateTotal(): void
+    {
+        $this->update(self::computeTotals($this->items()->get(), $this->discount_type, $this->discount_value));
+    }
+
+    /**
+     * The pure sums recalculateTotal() persists — pulled out so
+     * App\Quotes\Http\Controllers\QuoteController::preview() can run the
+     * same arithmetic on an unsaved quote's request-built items without a
+     * second, drifting copy of it.
      *
      * total stays the gross sum (an included item's line total is zero —
      * QuoteItem::lineTotal() — which is what keeps it out of this sum).
@@ -148,18 +166,21 @@ class Quote extends Model
      * resolves once against that subtotal (DiscountCalculator::resolve()),
      * and net is subtotal minus that single resolved amount — the one
      * rounding this whole computation performs, on the total, not per line.
+     *
+     * @param  iterable<QuoteItem>  $items
+     * @return array{total: int, discount_amount: int, net: int}
      */
-    public function recalculateTotal(): void
+    public static function computeTotals(iterable $items, ?DiscountType $discountType, ?int $discountValue): array
     {
-        $items = $this->items()->get();
+        $items = collect($items);
         $subtotal = $items->sum(fn (QuoteItem $item) => $item->discountedLineTotal());
-        $discountAmount = DiscountCalculator::resolve($subtotal, $this->discount_type, $this->discount_value);
+        $discountAmount = DiscountCalculator::resolve($subtotal, $discountType, $discountValue);
 
-        $this->update([
+        return [
             'total' => $items->sum(fn (QuoteItem $item) => $item->lineTotal()),
             'discount_amount' => $discountAmount,
             'net' => $subtotal - $discountAmount,
-        ]);
+        ];
     }
 
     /**
@@ -174,26 +195,37 @@ class Quote extends Model
      * them straight off the row and never falls through to
      * StudioSettingsResolver again — that is what makes a later change to
      * the tenant's VAT mode alter nothing an already-sent quote renders.
+     */
+    public function snapshotVat(StudioSettingsResolver $settings): void
+    {
+        $this->update(self::computeVat($this->net, $settings));
+    }
+
+    /**
+     * The pure VAT snapshot snapshotVat() persists — see computeTotals()'s
+     * docblock for why this is split out the same way.
      *
      * vat_amount reuses DiscountCalculator::resolve() rather than a second
      * rounding rule: a VAT rate is a percentage of a base exactly like a
      * discount is, round-half-up, computed off net (Q-03's one rounding),
      * never off an unrounded intermediate line.
+     *
+     * @return array{vat_mode: string, vat_rate: int, vat_note: ?string, vat_amount: int}
      */
-    public function snapshotVat(StudioSettingsResolver $settings): void
+    public static function computeVat(int $net, StudioSettingsResolver $settings): array
     {
         $mode = $settings->vatMode();
         $rate = $settings->effectiveVatRate();
 
-        $this->update([
+        return [
             'vat_mode' => $mode,
             'vat_rate' => $rate,
             // Only small_business prints anything — see the mockup and
             // QuoteData: standard shows a computed VAT line instead, so it
             // has no use for the note text.
             'vat_note' => $mode === 'small_business' ? $settings->vatNote() : null,
-            'vat_amount' => DiscountCalculator::resolve($this->net, DiscountType::Percentage, $rate),
-        ]);
+            'vat_amount' => DiscountCalculator::resolve($net, DiscountType::Percentage, $rate),
+        ];
     }
 
     protected static function newFactory(): Factory
