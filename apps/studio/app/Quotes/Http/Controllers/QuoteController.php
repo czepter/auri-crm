@@ -9,6 +9,7 @@ use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
+use App\Quotes\Actions\MarkQuoteSent;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Actions\ResolveQuoteRecipient;
 use App\Quotes\Actions\SeedQuoteFromPackage;
@@ -300,6 +301,20 @@ class QuoteController extends Controller
         $this->authorize('manageQuotes', $quote->project);
 
         $send($quote, auth('staff')->user());
+
+        return back();
+    }
+
+    /**
+     * T-11: delivered by the studio itself (WhatsApp, their own mail
+     * client) — same MarkQuoteSent state change as send(), channel 'self',
+     * no notification.
+     */
+    public function markSent(Quote $quote, MarkQuoteSent $mark): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+
+        $mark($quote, 'self', auth('staff')->user());
 
         return back();
     }
