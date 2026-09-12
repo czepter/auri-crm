@@ -4,6 +4,7 @@ import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import Empty from '@/ui/page/Empty.vue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 import { Button } from '@/ui/button'
 import { groupContacts } from '@/admin/lib/contactQueue'
@@ -35,10 +36,9 @@ function day(iso: string) {
           <Button :as="Link" class="ml-auto" variant="pill" href="/kontakte/neu">{{ $t('contacts.create') }}</Button>
         </PageHead>
 
-        <div v-if="!contacts.length" class="mx-8 mt-7 flex flex-col items-center gap-3 rounded-md border border-dashed border-border px-6 py-9">
-          <span class="text-[12.5px] leading-[1.45] text-ink-2">{{ $t('contacts.empty') }}</span>
+        <Empty v-if="!contacts.length" class="mx-8 mt-7" :text="$t('contacts.empty')">
           <Button :as="Link" variant="pill" href="/kontakte/neu">{{ $t('contacts.create') }}</Button>
-        </div>
+        </Empty>
 
         <Table v-else>
           <thead>

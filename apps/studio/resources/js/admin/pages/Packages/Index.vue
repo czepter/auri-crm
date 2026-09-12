@@ -4,6 +4,7 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import LineItems from '@/admin/components/LineItems.vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import Empty from '@/ui/page/Empty.vue'
 import { Button } from '@/ui/button'
 import { formatEurosRounded } from '@/admin/lib/money'
 
@@ -36,7 +37,11 @@ function total(pkg: App.Catalog.Data.PackageData) {
 
         <!-- C-15 (#251): the line items stand in the list rather than behind a
              click — a package is chosen by what is in it. -->
-        <div v-if="packages.length" class="max-w-[900px] px-8 pt-7 pb-8">
+        <Empty v-if="!packages.length" class="mx-8 mt-7" :text="$t('packages.empty')">
+          <Button :as="Link" variant="pill" href="/pakete/neu">{{ $t('packages.create') }}</Button>
+        </Empty>
+
+        <div v-else class="max-w-[900px] px-8 pt-7 pb-8">
           <div v-for="pkg in packages" :key="pkg.id" class="pt-3.5 pb-4 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
             <header class="mb-2 flex items-baseline gap-2.5">
               <h3 class="m-0 text-[15px] leading-[1.2] font-semibold tracking-[-0.018em]">

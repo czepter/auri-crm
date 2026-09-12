@@ -4,6 +4,7 @@ import { Link, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import Empty from '@/ui/page/Empty.vue'
 import ProjectSettings from '@/admin/components/ProjectSettings.vue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 import { Button } from '@/ui/button'
@@ -212,9 +213,9 @@ function reset() {
           </div>
         </div>
 
-        <Button v-else :as="Link" variant="pill" class="mt-5" href="/anfragen/neu">
-          {{ $t('leads.createKicker') }}
-        </Button>
+        <Empty v-else class="mx-8 mt-7" :text="$t('projects.empty')">
+          <Button :as="Link" variant="pill" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
+        </Empty>
         <ProjectSettings
           v-if="settingsOpen && stageSettings"
           v-bind="stageSettings"

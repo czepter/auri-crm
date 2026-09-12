@@ -4,6 +4,7 @@ import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import Empty from '@/ui/page/Empty.vue'
 import ReportCard from '@/admin/components/ReportCard.vue'
 import ReportKpi from '@/admin/components/ReportKpi.vue'
 import { Button } from '@/ui/button'
@@ -82,9 +83,9 @@ const bookingRate = computed(() =>
           <!-- Nothing on this screen is entered here: every figure comes out of
                the funnel, so a studio without history gets the funnel's own
                control rather than nine cards reporting no data. -->
-          <Button v-if="bare" :as="Link" href="/anfragen/neu" variant="pill">
-            {{ $t('leads.createKicker') }}
-          </Button>
+          <Empty v-if="bare" :text="$t('reports.empty')">
+            <Button :as="Link" href="/anfragen/neu" variant="pill">{{ $t('leads.createKicker') }}</Button>
+          </Empty>
 
           <!-- Same rule as the Übersicht's tiles: a figure with nothing behind it
                is absent, never a zero. A studio with no history reads as empty,

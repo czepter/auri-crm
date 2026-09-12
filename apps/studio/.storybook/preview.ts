@@ -1,7 +1,7 @@
 import type { Preview } from '@storybook/vue3-vite'
 import { setup } from '@storybook/vue3-vite'
 import { createI18n } from 'vue-i18n'
-import { setPage } from './inertia'
+import { setPage, usePage } from './inertia'
 import de from '../resources/js/locales/de.json'
 import '../resources/css/admin.css'
 
@@ -12,6 +12,11 @@ import '../resources/css/admin.css'
  * er ein Tippfehler, kein Produktionsfehler.
  */
 setup((app) => {
+  // Inertias Plugin legt sonst $page an; die Bildschirme lesen es in ihren
+  // Vorlagen, und ohne das hier wirft jede Story, die eine solche Vorlage
+  // rendert.
+  app.config.globalProperties.$page = usePage()
+
   app.use(
     createI18n({
       legacy: false,

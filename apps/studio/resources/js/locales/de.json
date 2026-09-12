@@ -667,6 +667,7 @@
   },
   "automations": {
     "title": "Automationen",
+    "empty": "Keine Regeln.",
     "add": "Regel anlegen",
     "paused": "Pausiert",
     "nextRun": "Nächster Lauf morgen {time}",
@@ -900,6 +901,7 @@
   },
   "notifications": {
     "title": "Benachrichtigungen",
+    "empty": "Keine Benachrichtigungen.",
     "markRead": "Alle gelesen",
     "colEvent": "Ereignis",
     "colWhat": "Was",
@@ -1313,6 +1315,7 @@
   },
   "galleries": {
     "title": "Galerien",
+    "empty": "Keine Galerien.",
     "create": "Galerie anlegen",
     "titleField": "Titel",
     "urlField": "Adresse",

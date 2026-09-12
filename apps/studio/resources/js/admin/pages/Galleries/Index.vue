@@ -4,6 +4,7 @@ import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import Empty from '@/ui/page/Empty.vue'
 import GallerySettings from '@/admin/components/GallerySettings.vue'
 import { Button } from '@/ui/button'
 
@@ -40,7 +41,11 @@ function day(iso: string | null) {
           <Button :as="Link" variant="pill" :class="settings ? undefined : 'ml-auto'" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
         </PageHead>
 
-        <div class="max-w-[900px] px-8 pt-7 pb-8 max-[640px]:px-5">
+        <Empty v-if="!galleries.length" class="mx-8 mt-7 max-[640px]:mx-5" :text="$t('galleries.empty')">
+          <Button :as="Link" variant="pill" href="/galerien/neu">{{ $t('galleries.create') }}</Button>
+        </Empty>
+
+        <div v-else class="max-w-[900px] px-8 pt-7 pb-8 max-[640px]:px-5">
           <div
             v-for="gallery in galleries"
             :key="gallery.id"

@@ -49,3 +49,6 @@ export const EinePerson: Story = {
   parameters: { page: { soloStudio: true } },
   args: { absences: [], staff: [staff[0]] },
 }
+
+/** Ein frisch eingerichtetes Studio: nichts eingetragen. */
+export const Leer: Story = { args: { absences: [] } }

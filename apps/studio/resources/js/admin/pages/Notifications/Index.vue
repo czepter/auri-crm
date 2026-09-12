@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import Empty from '@/ui/page/Empty.vue'
 import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Button } from '@/ui/button'
 import { relativeDate } from '@/admin/lib/dates'
@@ -47,7 +48,9 @@ const unread = computed(() => props.notifications.filter((row) => row.readAt ===
           </Button>
         </PageHead>
 
-        <Table v-if="notifications.length">
+        <Empty v-if="!notifications.length" class="mx-8 mt-7" :text="$t('notifications.empty')" />
+
+        <Table v-else>
           <thead>
             <tr>
               <TableHead>{{ $t('notifications.colEvent') }}</TableHead>

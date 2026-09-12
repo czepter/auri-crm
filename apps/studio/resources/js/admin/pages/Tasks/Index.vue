@@ -11,6 +11,7 @@ import { computed, ref } from 'vue'
 import { router, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
+import Empty from '@/ui/page/Empty.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { daysUntil } from '@/admin/lib/dates'
@@ -83,7 +84,7 @@ function assign(task: App.Crm.Data.TaskRowData, value: string) {
             </button>
           </div>
 
-          <p v-if="shown.length === 0" class="text-[13px] text-ink-2">{{ $t('tasks.empty') }}</p>
+          <Empty v-if="shown.length === 0" :text="$t('tasks.empty')" />
 
           <div v-else class="overflow-hidden rounded-[10px] border border-rule">
             <div

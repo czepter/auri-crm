@@ -89,7 +89,12 @@ const shootAhrens: App.Crm.Data.ShootData = {
 
 // Die Saison liegt hinter dem Umschalter, den nur ein Klick bedient.
 async function oeffneSaison({ canvasElement }: { canvasElement: HTMLElement }) {
-  await userEvent.click(within(canvasElement).getByLabelText('Saison'))
+  await userEvent.click(within(canvasElement).getByText('Saison'))
+}
+
+// Die Liste liegt hinter demselben Umschalter wie die Saison.
+async function oeffneListe({ canvasElement }: { canvasElement: HTMLElement }) {
+  await userEvent.click(within(canvasElement).getByText('Liste'))
 }
 
 const meta = {
@@ -159,3 +164,6 @@ export const SaisonFastLeer: Story = {
   },
   play: oeffneSaison,
 }
+
+/** Ein Monat ohne Termine, in der Liste. */
+export const ListeLeer: Story = { args: { shoots: [] }, play: oeffneListe }

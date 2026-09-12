@@ -8,6 +8,7 @@ import { Link, router } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import Empty from '@/ui/page/Empty.vue'
 import SettingsNav from '@/admin/components/SettingsNav.vue'
 import { Button } from '@/ui/button'
 
@@ -44,7 +45,11 @@ function create() {
             <SettingsNav active="automations" />
 
             <div class="min-w-0 flex-1">
-              <div class="overflow-hidden rounded-[10px] border border-rule">
+              <Empty v-if="!rules.length" :text="$t('automations.empty')">
+                <Button variant="pill" type="button" @click="create">{{ $t('automations.add') }}</Button>
+              </Empty>
+
+              <div v-else class="overflow-hidden rounded-[10px] border border-rule">
                 <Link
                   v-for="rule in rules"
                   :key="rule.id"
@@ -67,7 +72,7 @@ function create() {
                 </Link>
               </div>
 
-              <div class="mt-3 flex gap-8 text-[12px] text-faint">
+              <div v-if="rules.length" class="mt-3 flex gap-8 text-[12px] text-faint">
                 <span>{{ $t('automations.nextRun', { time: '06:30' }) }}</span>
                 <span>{{ $t('automations.timezone', { zone: timezone }) }}</span>
               </div>
