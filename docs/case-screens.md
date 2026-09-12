@@ -137,6 +137,8 @@ wording problem as `capturedAt`, same fix.
 
 ## Plan
 
+The file-level build contract is
+[case-screens-implementation.md](case-screens-implementation.md).
 The work is tracked in [#370](https://github.com/czepter/auri-crm/issues/370);
 the six steps below are its issues.
 
