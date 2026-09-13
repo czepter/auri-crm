@@ -107,10 +107,14 @@ function submit() {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('packages.title')" :title="package.name">
-          <Button variant="pill-muted" class="ml-auto" type="button" @click="toggle">
-            {{ package.isActive ? $t('packages.deactivate') : $t('packages.activate') }}
-          </Button>
-          <Button variant="pill-muted" type="button" @click="duplicate">{{ $t('packages.duplicate') }}</Button>
+          <div class="ml-auto flex items-center gap-2">
+            <Button variant="pill-muted" type="button" @click="toggle">
+              {{ package.isActive ? $t('packages.deactivate') : $t('packages.activate') }}
+            </Button>
+            <Button variant="pill-muted" type="button" @click="duplicate">{{ $t('packages.duplicate') }}</Button>
+            <Button as="a" variant="pill-muted" href="/pakete">{{ $t('common.cancel') }}</Button>
+            <Button variant="pill" type="button" :disabled="form.processing" @click="submit">{{ $t('common.save') }}</Button>
+          </div>
         </PageHead>
 
         <form class="flex items-start gap-8 px-8 pt-7 pb-8" @submit.prevent="submit">
@@ -182,11 +186,6 @@ function submit() {
                 @update:model-value="(v) => (form.portal_requires_date = v === 'date')"
               />
             </div>
-          </div>
-
-          <div class="mt-6 flex items-center gap-4">
-            <Button type="submit" class="ml-0" :disabled="form.processing">{{ $t('common.save') }}</Button>
-            <Button as="a" href="/pakete" variant="ghost">{{ $t('common.cancel') }}</Button>
           </div>
           </div>
 
