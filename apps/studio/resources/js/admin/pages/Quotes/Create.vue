@@ -24,7 +24,15 @@ const project = ref(props.project)
 // Die Wahl steht in der Adresse: das Anlegen am Projekt kehrt mit back()
 // hierher zurück und findet den Entwurf nur so wieder.
 watch(project, (chosen) => {
-  router.get('/angebote/neu', chosen ? { projekt: chosen.id } : {}, { preserveState: true, replace: true })
+  router.get('/angebote/neu', chosen ? { projekt: chosen.id } : {}, {
+    preserveState: true,
+    replace: true,
+    onSuccess: () => {
+      if (chosen && !drafts.value.length) {
+        create()
+      }
+    },
+  })
 })
 
 const drafts = computed(() => props.quotes.filter((quote) => quote.status === 'draft'))
