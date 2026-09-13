@@ -17,7 +17,7 @@ import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogBody, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 
 /*
  * The frame around every project screen: the other projects on the left, the
@@ -225,19 +225,21 @@ function destroy() {
           <AlertDialogHeader>
             <AlertDialogTitle>{{ $t('project.closeTitle') }}</AlertDialogTitle>
           </AlertDialogHeader>
-          <Field v-slot="{ id }" :label="$t('board.outcome')">
-            <Select v-model="closeForm.outcome">
-              <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="lost">{{ $t('board.outcomeLost') }}</SelectItem>
-                <SelectItem value="declined">{{ $t('board.outcomeDeclined') }}</SelectItem>
-                <SelectItem value="closed">{{ $t('board.outcomeClosed') }}</SelectItem>
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field v-slot="{ id }" :label="$t('board.closeReason')" :error="closeForm.errors.reason">
-            <Input :id="id" v-model="closeForm.reason" type="text" />
-          </Field>
+          <AlertDialogBody>
+            <Field v-slot="{ id }" :label="$t('board.outcome')">
+              <Select v-model="closeForm.outcome">
+                <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="lost">{{ $t('board.outcomeLost') }}</SelectItem>
+                  <SelectItem value="declined">{{ $t('board.outcomeDeclined') }}</SelectItem>
+                  <SelectItem value="closed">{{ $t('board.outcomeClosed') }}</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field v-slot="{ id }" :label="$t('board.closeReason')" :error="closeForm.errors.reason">
+              <Input :id="id" v-model="closeForm.reason" type="text" />
+            </Field>
+          </AlertDialogBody>
           <AlertDialogFooter>
             <AlertDialogAction :disabled="!closeForm.reason || closeForm.processing" @click.prevent="close">
               {{ $t('board.close') }}

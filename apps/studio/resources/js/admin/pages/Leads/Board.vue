@@ -16,6 +16,7 @@ import {
 import {
     AlertDialog,
     AlertDialogAction,
+    AlertDialogBody,
     AlertDialogCancel,
     AlertDialogContent,
     AlertDialogFooter,
@@ -552,27 +553,29 @@ const workflowAllowed = computed(() =>
                             }}</AlertDialogTitle>
                         </AlertDialogHeader>
 
-                        <Field v-slot="{ id }" :label="$t('board.outcome')">
-                            <Select
-                                :model-value="closeForm.outcome"
-                                @update:model-value="(value) => (closeForm.outcome = String(value))"
-                            >
-                                <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="lost">{{ $t("board.outcomeLost") }}</SelectItem>
-                                    <SelectItem value="declined">{{ $t("board.outcomeDeclined") }}</SelectItem>
-                                    <SelectItem value="closed">{{ $t("board.outcomeClosed") }}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </Field>
+                        <AlertDialogBody>
+                            <Field v-slot="{ id }" :label="$t('board.outcome')">
+                                <Select
+                                    :model-value="closeForm.outcome"
+                                    @update:model-value="(value) => (closeForm.outcome = String(value))"
+                                >
+                                    <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="lost">{{ $t("board.outcomeLost") }}</SelectItem>
+                                        <SelectItem value="declined">{{ $t("board.outcomeDeclined") }}</SelectItem>
+                                        <SelectItem value="closed">{{ $t("board.outcomeClosed") }}</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </Field>
 
-                        <Field
-                            v-slot="{ id }"
-                            :label="$t('board.closeReason')"
-                            :error="closeForm.errors.reason"
-                        >
-                            <Input :id="id" v-model="closeForm.reason" type="text" />
-                        </Field>
+                            <Field
+                                v-slot="{ id }"
+                                :label="$t('board.closeReason')"
+                                :error="closeForm.errors.reason"
+                            >
+                                <Input :id="id" v-model="closeForm.reason" type="text" />
+                            </Field>
+                        </AlertDialogBody>
 
                         <AlertDialogFooter>
                             <AlertDialogAction
@@ -591,7 +594,9 @@ const workflowAllowed = computed(() =>
                                 $t("board.bookTitle")
                             }}</AlertDialogTitle>
                         </AlertDialogHeader>
-                        <p>{{ $t("board.bookConsequence") }}</p>
+                        <AlertDialogBody>
+                            <p class="m-0">{{ $t("board.bookConsequence") }}</p>
+                        </AlertDialogBody>
                         <AlertDialogFooter>
                             <AlertDialogAction @click="book">{{
                                 $t("board.book")
