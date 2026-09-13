@@ -589,6 +589,9 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/angebote/{quote}/als-paket', [QuoteController::class, 'saveAsPackage'])->name('quotes.saveAsPackage');
         Route::post('/angebote/{quote}/positionen/als-paket', [QuoteController::class, 'saveItemAsPackage'])->name('quotes.saveItemAsPackage');
         Route::get('/angebote/{quote}/pdf', [QuoteController::class, 'download'])->name('quotes.download');
+        Route::post('/angebote/letzte-aktion', [QuoteController::class, 'chooseLastAction'])->name('quotes.last-action');
+        Route::post('/angebote/{quote}/duplizieren', [QuoteController::class, 'duplicate'])->name('quotes.duplicate');
+        Route::delete('/angebote/{quote}', [QuoteController::class, 'destroy'])->name('quotes.destroy');
 
         // E-02: a project's own questionnaires, seeded from a FormTemplate
         // or started blank, then personalised freely — see FormInstance's

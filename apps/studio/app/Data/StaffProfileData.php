@@ -20,6 +20,10 @@ class StaffProfileData extends Data
         public string $email,
         public string $role,
         public bool $mfaConfirmed,
+        // QuoteActions.vue's split button: whichever of download/copy_link/
+        // send_by_mail this person reached for last, so it defaults there
+        // again next time — see the `last_quote_action` migration.
+        public ?string $lastQuoteAction,
     ) {}
 
     public static function fromModel(User $user): self
@@ -30,6 +34,7 @@ class StaffProfileData extends Data
             email: $user->email,
             role: $user->role->value,
             mfaConfirmed: $user->hasConfirmedMfa(),
+            lastQuoteAction: $user->last_quote_action,
         );
     }
 }

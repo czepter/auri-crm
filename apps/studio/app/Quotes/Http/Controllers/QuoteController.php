@@ -12,6 +12,7 @@ use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
+use App\Quotes\Actions\DuplicateQuote;
 use App\Quotes\Actions\MarkQuoteSent;
 use App\Quotes\Actions\ReadQuoteWorkspace;
 use App\Quotes\Actions\RenderQuotePdf;
@@ -76,12 +77,13 @@ class QuoteController extends Controller
         return Inertia::render('Quotes/Show', [
             'projectId' => $quote->project->public_id,
             'projectName' => $quote->project->name,
+            'projectIsBooked' => $quote->project->job !== null,
             'canManageQuotes' => $viewer->can('manageQuotes', $quote->project),
             // The payment plan is the project's, not this one quote's — it
             // stays on the Angebote tab, not in this quote's own capsule.
             'canManagePaymentPlan' => false,
             'paymentPlan' => null,
-            ...Arr::only($workspace($quote->project, $viewer), ['packages', 'catalogItems', 'contacts', 'canManageCatalog']),
+            ...Arr::only($workspace($quote->project, $viewer), ['packages', 'catalogItems', 'contacts', 'canManageCatalog', 'vatSettings']),
             'quotes' => [QuoteData::fromModel($quote)],
             // QuoteData carries the recipient only as a contact id (the
             // editor's own preselect value) — this screen has no editor
@@ -92,7 +94,7 @@ class QuoteController extends Controller
     }
 
     /** The Übersicht's wizard: the project or inquiry first, then the workspace its Angebote tab shows. */
-    public function create(Request $request, ReadQuoteWorkspace $workspace): InertiaResponse
+    public function create(Request $request, ReadQuoteWorkspace $workspace, StudioSettingsResolver $settings): InertiaResponse
     {
         $viewer = $request->user('staff');
         abort_unless($viewer->role->allows(Capability::ManageQuotes), 403);
@@ -105,7 +107,10 @@ class QuoteController extends Controller
             'project' => $project ? ProjectSuggestionData::fromModel($project) : null,
             ...($project
                 ? Arr::except($workspace($project, $viewer), 'paymentPlan')
-                : ['quotes' => [], 'packages' => [], 'catalogItems' => [], 'contacts' => [], 'canManageCatalog' => false]),
+                : [
+                    'quotes' => [], 'packages' => [], 'catalogItems' => [], 'contacts' => [], 'canManageCatalog' => false,
+                    'vatSettings' => ['mode' => $settings->vatMode(), 'rate' => $settings->effectiveVatRate(), 'note' => $settings->vatNote()],
+                ]),
         ]);
     }
 
@@ -302,6 +307,69 @@ class QuoteController extends Controller
         $mark($quote, 'self', auth('staff')->user());
 
         return back();
+    }
+
+    /**
+     * QuoteActions.vue's split button remembers itself here: whichever of
+     * download/copy_link/send_by_mail was reached for last becomes the
+     * default next time, on this user rather than a cookie — the same
+     * reasoning as LeadBoardController::chooseView().
+     */
+    public function chooseLastAction(Request $request): RedirectResponse
+    {
+        $validated = $request->validate(['action' => ['required', 'in:download,copy_link,send_by_mail']]);
+
+        auth('staff')->user()->update(['last_quote_action' => $validated['action']]);
+
+        return back();
+    }
+
+    /**
+     * A new draft on the same project, carrying this quote's positions and
+     * terms — never its history (status, send, vat snapshot, predecessor).
+     * Redirects to the copy itself: duplicating is the first step of
+     * editing it, not a fire-and-forget like markSent.
+     */
+    public function duplicate(Quote $quote, DuplicateQuote $duplicate): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+
+        $copy = $duplicate($quote);
+
+        AuditLogger::record(
+            event: 'quote.duplicated',
+            actor: auth('staff')->user(),
+            context: ['from' => $quote->public_id],
+            subject: $copy->public_id,
+            projectId: $quote->project_id,
+        );
+
+        return redirect("/angebote/{$copy->public_id}");
+    }
+
+    /**
+     * Only a draft — Quote::booted() already refuses to write a sent one
+     * further, and deleting one that a client has already seen would erase
+     * a record they might still hold a copy or a mail of.
+     */
+    public function destroy(Quote $quote): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+        abort_unless($quote->status === QuoteStatus::Draft, 422, 'Nur ein Entwurf lässt sich löschen.');
+
+        $projectId = $quote->project->public_id;
+
+        AuditLogger::record(
+            event: 'quote.deleted',
+            actor: auth('staff')->user(),
+            context: ['number' => $quote->number],
+            subject: $quote->public_id,
+            projectId: $quote->project_id,
+        );
+
+        $quote->delete();
+
+        return redirect("/auftraege/{$projectId}/angebote");
     }
 
     /**
