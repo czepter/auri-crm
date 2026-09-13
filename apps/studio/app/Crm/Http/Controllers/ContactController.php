@@ -38,6 +38,7 @@ class ContactController extends Controller
         'gallery_downloads' => ['nullable', 'boolean'],
         'gallery_lists' => ['nullable', 'boolean'],
         'gallery_comments' => ['nullable', 'boolean'],
+        'offers' => ['nullable', 'boolean'],
         'portal_visible' => ['nullable', 'boolean'],
         'welcome' => ['nullable', 'string', 'max:2000'],
     ];
@@ -53,6 +54,7 @@ class ContactController extends Controller
             'gallery_downloads' => $settings->galleryDownloadsEnabled(),
             'gallery_lists' => $settings->galleryListsEnabled(),
             'gallery_comments' => $settings->galleryCommentsEnabled(),
+            'offers' => $settings->offersEnabled(),
             'welcome' => $settings->portalWelcomeText(),
             'portal_visible' => $portal->projectsVisibleByDefault(),
         ];

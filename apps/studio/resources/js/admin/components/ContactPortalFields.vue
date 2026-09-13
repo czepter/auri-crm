@@ -13,12 +13,13 @@ import { Textarea } from '@/ui/textarea'
  * The record is written in place and the change announced: the sheet saves
  * per switch, the create screen carries the values along to its own submit.
  */
-// The nine keys rather than an index signature: the sheet hands in its whole
+// The ten keys rather than an index signature: the sheet hands in its whole
 // useForm, processing and methods included, which Record<string, string>
 // refuses — a type asking only for what these fields read and write does not.
 type PortalKey =
   | 'portal_visible' | 'accept_quotes' | 'sign_contracts' | 'payment_status'
-  | 'messaging_mode' | 'gallery_downloads' | 'gallery_lists' | 'gallery_comments' | 'welcome'
+  | 'messaging_mode' | 'gallery_downloads' | 'gallery_lists' | 'gallery_comments'
+  | 'offers' | 'welcome'
 
 const props = defineProps<{
   portal: Record<PortalKey, string>
@@ -30,7 +31,7 @@ const emit = defineEmits<{ change: [] }>()
 const { t } = useI18n()
 
 const SWITCHES = ['portal_visible', 'accept_quotes', 'sign_contracts', 'payment_status',
-  'gallery_downloads', 'gallery_lists', 'gallery_comments'] as const
+  'gallery_downloads', 'gallery_lists', 'gallery_comments', 'offers'] as const
 
 type Switch = (typeof SWITCHES)[number]
 

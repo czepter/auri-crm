@@ -47,6 +47,26 @@ it('hides the whole shelf when the studio has not switched it on', function () {
         ->assertNotFound();
 });
 
+// P-09: die Übersteuerung je Kontakt, hier bis ins Portal durchgezogen. Ein
+// Kunde mitten in einer Reklamation soll nichts angeboten bekommen, auch wenn
+// das Studio das Regal offen hat.
+it('hides the shelf from a contact whose own override says no', function () {
+    $contact = Contact::factory()->create(['portal_overrides' => ['offers' => false]]);
+
+    test()->actingAs($contact, 'portal')
+        ->get('/leistungen/'.offered()->public_id)
+        ->assertNotFound();
+});
+
+it('shows the shelf to a contact who overrides a studio default that is off', function () {
+    StudioSettings::query()->update(['portal_offers_enabled' => false]);
+    $contact = Contact::factory()->create(['portal_overrides' => ['offers' => true]]);
+
+    test()->actingAs($contact, 'portal')
+        ->get('/leistungen/'.offered()->public_id)
+        ->assertOk();
+});
+
 it('opens a booking with one primary shoot when the package asks for a date', function () {
     $contact = Contact::factory()->create();
     $package = offered(['name' => 'Paarshooting zum Jahrestag']);

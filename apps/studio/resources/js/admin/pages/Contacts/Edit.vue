@@ -72,6 +72,7 @@ const portal = useForm({
   gallery_downloads: asChoice(props.portalOverrides.gallery_downloads),
   gallery_lists: asChoice(props.portalOverrides.gallery_lists),
   gallery_comments: asChoice(props.portalOverrides.gallery_comments),
+  offers: asChoice(props.portalOverrides.offers),
   welcome: (props.portalOverrides.welcome as string) ?? '',
 })
 
