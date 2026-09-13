@@ -4,6 +4,7 @@ import { basisPointsToPercent, percentToBasisPoints } from '@/admin/lib/money'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Textarea } from '@/ui/textarea'
 import { Checkbox } from '@/ui/checkbox'
+import { RadioGroup, RadioGroupItem } from '@/ui/radio-group'
 import { Label } from '@/ui/label'
 import { Field } from '@/ui/field'
 
@@ -16,6 +17,7 @@ const form = useForm({
   deposit_percentage: basisPointsToPercent(props.settings.depositPercentage),
   widerruf_included: props.settings.widerrufIncluded,
   widerruf_text: props.settings.widerrufText ?? '',
+  quote_layout: props.settings.quoteLayout,
 })
 
 function submit() {
@@ -34,6 +36,38 @@ defineExpose({ form, submit })
 <template>
   <form id="documents-form" @submit.prevent="submit">
     <div class="mt-0">
+      <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.documentsLayoutLabel') }}</div>
+      <div class="mb-6">
+        <RadioGroup
+          name="quotelayout"
+          :model-value="form.quote_layout"
+          @update:model-value="(value) => (form.quote_layout = String(value))"
+        >
+          <div class="flex items-center gap-2.5">
+            <RadioGroupItem id="ql-classic" value="classic" />
+            <Label variant="inline" for="ql-classic">{{ $t('settings.quoteLayoutClassic') }}</Label>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <RadioGroupItem id="ql-minimal" value="minimal" />
+            <Label variant="inline" for="ql-minimal">{{ $t('settings.quoteLayoutMinimal') }}</Label>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <RadioGroupItem id="ql-letter" value="letter" />
+            <Label variant="inline" for="ql-letter">{{ $t('settings.quoteLayoutLetter') }}</Label>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <RadioGroupItem id="ql-header_band" value="header_band" />
+            <Label variant="inline" for="ql-header_band">{{ $t('settings.quoteLayoutHeaderBand') }}</Label>
+          </div>
+          <div class="flex items-center gap-2.5">
+            <RadioGroupItem id="ql-structured" value="structured" />
+            <Label variant="inline" for="ql-structured">{{ $t('settings.quoteLayoutStructured') }}</Label>
+          </div>
+        </RadioGroup>
+      </div>
+    </div>
+
+    <div class="mt-8 first-of-type:mt-6">
       <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('settings.documentsQuoteLabel') }}</div>
       <div class="mb-6">
         <Field

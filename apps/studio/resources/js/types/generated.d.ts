@@ -860,6 +860,7 @@ createdAt: string | null,
 namespace Enums {
 export type DiscountType = 'percentage' | 'amount';
 export type PricingMode = 'classic' | 'choice';
+export type QuoteLayout = 'classic' | 'minimal' | 'letter' | 'header_band' | 'structured';
 export type QuoteStatus = 'draft' | 'sent' | 'accepted' | 'superseded' | 'expired';
 }
 }
@@ -950,6 +951,7 @@ paymentTermDays: number,
 depositPercentage: number,
 widerrufIncluded: boolean,
 widerrufText: string | null,
+quoteLayout: string,
 documentLetterheadHtml: string | null,
 documentFooterHtml: string | null,
 timezone: string,

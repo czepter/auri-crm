@@ -166,6 +166,7 @@ const documentPreview = computed(() => {
     paymentTermDays: documents?.payment_term_days ?? props.settings.paymentTermDays,
     depositPercentage: documents?.deposit_percentage ?? basisPointsToPercent(props.settings.depositPercentage),
     widerrufIncluded: documents?.widerruf_included ?? props.settings.widerrufIncluded,
+    quoteLayout: documents?.quote_layout ?? props.settings.quoteLayout,
   }
 })
 
