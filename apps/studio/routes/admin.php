@@ -233,6 +233,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/pakete', [PackageController::class, 'store'])->name('packages.store');
         Route::get('/pakete/{package}', [PackageController::class, 'edit'])->name('packages.edit');
         Route::patch('/pakete/{package}', [PackageController::class, 'update'])->name('packages.update');
+        Route::delete('/pakete/{package}', [PackageController::class, 'destroy'])->name('packages.destroy');
         Route::post('/pakete/{package}/status', [PackageController::class, 'toggle'])->name('packages.toggle');
         Route::post('/pakete/{package}/duplizieren', [PackageController::class, 'duplicate'])->name('packages.duplicate');
         // Q-10: das Bild der Baustein-Kachel, am Katalogeintrag gepflegt —

@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
+import { EllipsisVertical } from 'lucide-vue-next'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -18,6 +19,8 @@ import { Label } from '@/ui/label'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Switch } from '@/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/ui/alert-dialog'
 
 type Request = {
   id: string
@@ -81,6 +84,12 @@ function duplicate() {
   router.post(`/pakete/${props.package.id}/duplizieren`)
 }
 
+const deleting = ref(false)
+
+function destroy() {
+  router.delete(`/pakete/${props.package.id}`)
+}
+
 // Speichert sofort — der Header-Button. Feldänderungen selbst laufen über
 // `autosave` weiter unten, gebündelt statt bei jedem Tastenanschlag.
 function save() {
@@ -119,14 +128,38 @@ watch(() => form.data(), autosave, { deep: true })
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('packages.title')" :title="package.name">
           <div class="ml-auto flex items-center gap-2">
-            <Button variant="pill-muted" type="button" @click="toggle">
-              {{ package.isActive ? $t('packages.deactivate') : $t('packages.activate') }}
-            </Button>
-            <Button variant="pill-muted" type="button" @click="duplicate">{{ $t('packages.duplicate') }}</Button>
             <Button as="a" variant="pill-muted" href="/pakete">{{ $t('common.cancel') }}</Button>
-            <Button variant="pill" type="button" :disabled="form.processing" @click="save">{{ $t('common.save') }}</Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger as-child>
+                <Button variant="pill-muted" type="button" class="px-2" :aria-label="$t('project.more')">
+                  <EllipsisVertical />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem @select="duplicate">{{ $t('packages.duplicate') }}</DropdownMenuItem>
+                <DropdownMenuItem @select="toggle">
+                  {{ package.isActive ? $t('packages.deactivate') : $t('packages.activate') }}
+                </DropdownMenuItem>
+                <DropdownMenuItem class="text-destructive" @select="deleting = true">
+                  {{ $t('packages.deleteMenu') }}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </PageHead>
+
+        <AlertDialog v-model:open="deleting">
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{{ $t('packages.deleteTitle', { name: package.name }) }}</AlertDialogTitle>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction tone="destructive" @click="destroy">{{ $t('common.delete') }}</AlertDialogAction>
+              <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <form class="flex items-start gap-8 px-8 pt-7 pb-8" @submit.prevent="save">
           <div class="max-w-[640px] min-w-0 flex-1">

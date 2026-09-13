@@ -114,6 +114,28 @@ class PackageController extends Controller
     }
 
     /**
+     * Positionen und Vorschläge fallen per Fremdschlüssel mit (cascadeOnDelete);
+     * eine Anfrage, die von hier ausging, bleibt stehen und verliert nur die
+     * Referenz (leads.package_id ist nullOnDelete, siehe die Migration).
+     */
+    public function destroy(Package $package): RedirectResponse
+    {
+        $this->authorize('delete', $package);
+
+        $name = $package->name;
+        $package->delete();
+
+        AuditLogger::record(
+            event: 'package.deleted',
+            actor: auth('staff')->user(),
+            context: ['name' => $name],
+            subject: $package->public_id,
+        );
+
+        return redirect('/pakete');
+    }
+
+    /**
      * is_active wird übernommen: dupliziert wird, um zu ändern, und die
      * Entscheidung über die Sichtbarkeit trifft man danach. Der Name
      * kollidiert mit nichts — packages trägt keinen Unique-Index darauf —, und

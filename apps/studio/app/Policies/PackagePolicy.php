@@ -32,4 +32,9 @@ class PackagePolicy
     {
         return $user->role->allows(Capability::ManagePackages);
     }
+
+    public function delete(User $user, Package $package): bool
+    {
+        return $user->role->allows(Capability::ManagePackages);
+    }
 }

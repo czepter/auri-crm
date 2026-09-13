@@ -657,6 +657,8 @@
     "itemPriceHint": "Leer = inklusive.",
     "included": "enthalten",
     "duplicate": "Duplizieren",
+    "deleteMenu": "Löschen …",
+    "deleteTitle": "„{name}“ löschen?",
     "priceSummary": "Paketpreis",
     "preview": "Vorschau",
     "selectableCount": "keine wählbar | 1 wählbar | {count} wählbar",

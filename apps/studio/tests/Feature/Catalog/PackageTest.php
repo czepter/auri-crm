@@ -2,6 +2,7 @@
 
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
+use App\Crm\Models\Lead;
 use App\Models\AuditLog;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -204,4 +205,21 @@ it('logs a duplicate as a package creation carrying its source', function () {
     $this->actingAs(staffMember(), 'staff')->post("/pakete/{$original->public_id}/duplizieren");
 
     expect(AuditLog::where('event', 'package.created')->sole()->context['source'])->toBe('duplicate');
+});
+
+it('deletes a package, its items, and logs it — but keeps a lead that started from it', function () {
+    $user = staffMember();
+    $package = Package::factory()->has(PackageItem::factory()->count(2), 'items')->create(['name' => 'Hochzeit Basis']);
+    $lead = Lead::factory()->create(['package_id' => $package->id]);
+
+    $this->actingAs($user, 'staff')
+        ->delete("/pakete/{$package->public_id}")
+        ->assertRedirect('/pakete');
+
+    expect(Package::find($package->id))->toBeNull()
+        ->and(PackageItem::where('package_id', $package->id)->count())->toBe(0)
+        ->and($lead->refresh()->package_id)->toBeNull();
+
+    expect(AuditLog::where('event', 'package.deleted')->where('subject', $package->public_id)->sole()->context['name'])
+        ->toBe('Hochzeit Basis');
 });
