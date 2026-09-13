@@ -58,6 +58,8 @@ portalRequiresDate: boolean,
 projectTypeKey: string | null,
 portalHasImage: boolean,
 price: number | null,
+requestedCount: number,
+bookedCount: number,
 };
 export type PackageItemData = {
 id: string,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3'
+import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -13,10 +13,24 @@ import { ChoiceGroup } from '@/ui/choice-group'
 import { Switch } from '@/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
+type Request = {
+  id: string
+  project: string
+  contact: string
+  requestedOn: string | null
+  date: string | null
+  booked: boolean
+}
+
 const props = defineProps<{
   package: App.Catalog.Data.PackageData
   projectTypes: { key: string; name: string }[]
+  requests: Request[]
 }>()
+
+function day(iso: string) {
+  return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
+}
 
 const form = useForm({
   name: props.package.name,
@@ -40,6 +54,15 @@ const form = useForm({
     }),
   ),
 })
+
+function toggle() {
+  router.post(`/pakete/${props.package.id}/status`, {}, { preserveScroll: true })
+}
+
+// Kein preserveScroll: der Weg endet auf der Bearbeiten-Seite des Duplikats.
+function duplicate() {
+  router.post(`/pakete/${props.package.id}/duplizieren`)
+}
 
 function submit() {
   form
@@ -68,7 +91,12 @@ function submit() {
   <AdminLayout active="pakete">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <PageHead :title="$t('packages.editTitle')" />
+        <PageHead :kicker="$t('packages.title')" :title="package.name">
+          <Button variant="pill-muted" class="ml-auto" type="button" @click="toggle">
+            {{ package.isActive ? $t('packages.deactivate') : $t('packages.activate') }}
+          </Button>
+          <Button variant="pill-muted" type="button" @click="duplicate">{{ $t('packages.duplicate') }}</Button>
+        </PageHead>
 
         <form class="max-w-[640px] px-8 pt-7 pb-8" @submit.prevent="submit">
           <Field id="name" class="mb-6" :label="$t('packages.name')" :error="form.errors.name">
@@ -145,6 +173,29 @@ function submit() {
             <Button as="a" href="/pakete" variant="ghost">{{ $t('common.cancel') }}</Button>
           </div>
         </form>
+
+        <!-- Steht am Paket, nicht in der Übersicht: es beantwortet eine Frage
+             über dieses Paket, keine über alle. -->
+        <section v-if="requests.length" class="max-w-[640px] px-8 pb-8">
+          <div class="mb-2.5 flex items-baseline gap-2.5">
+            <span class="text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.requestsSection') }}</span>
+            <span class="text-[11.5px] text-ink-2">{{ package.requestedCount }} · {{ $t('packages.bookedCount', { count: package.bookedCount }) }}</span>
+          </div>
+          <div
+            v-for="request in requests"
+            :key="request.id"
+            class="flex items-baseline gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+          >
+            <span class="w-[64px] flex-none text-[12px] tabular-nums text-ink-2">{{ request.requestedOn ? day(request.requestedOn) : '—' }}</span>
+            <span class="min-w-0 flex-1 text-[13px]">
+              <a :href="`/projekte/${request.project}`">{{ request.contact }}</a>
+              <span v-if="request.date" class="block text-[12px] text-ink-2">{{ $t('packages.requestDate', { date: day(request.date) }) }}</span>
+            </span>
+            <span class="text-[12.5px]" :class="request.booked ? 'text-action' : 'text-ink-2'">
+              {{ request.booked ? $t('packages.requestBooked') : $t('packages.requestOpen') }}
+            </span>
+          </div>
+        </section>
       </div>
     </Page>
   </AdminLayout>

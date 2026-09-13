@@ -35,6 +35,7 @@ class Lead extends Model
 
     protected $fillable = [
         'project_id',
+        'package_id',
         'source',
         'source_other',
         'stage',

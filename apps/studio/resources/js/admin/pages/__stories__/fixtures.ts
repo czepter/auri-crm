@@ -348,6 +348,8 @@ export const catalogPackages: App.Catalog.Data.PackageData[] = [
         projectTypeKey: null,
         portalHasImage: false,
         price: 300000,
+        requestedCount: 0,
+        bookedCount: 0,
     },
 ]
 

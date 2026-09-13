@@ -69,6 +69,7 @@ class RequestService
 
             $lead = Lead::create([
                 'project_id' => $project->id,
+                'package_id' => $package->id,
                 'source' => $this->sourceFor($contact),
                 'stage' => $this->stages->anchored(StagePipeline::Lead, StageAnchor::Entry),
                 'stage_entered_at' => $now,

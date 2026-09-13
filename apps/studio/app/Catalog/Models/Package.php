@@ -6,6 +6,7 @@ use App\Catalog\Enums\PortalPriceMode;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasHourlyPricing;
 use App\Concerns\HasPublicId;
+use App\Crm\Models\Lead;
 use App\Crm\Models\ProjectType;
 use Database\Factories\Catalog\PackageFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -89,6 +90,17 @@ class Package extends Model
     public function scopePortalOffered(Builder $query): void
     {
         $query->where('portal_offered', true);
+    }
+
+    /**
+     * Die Anfragen aus dem Portal, die von diesem Paket ausgingen. Anders als
+     * ein Angebot hält der Lead einen Fremdschlüssel hierher — er kopiert
+     * aber nichts von hier, sodass eine Änderung am Paket ihn weiterhin nicht
+     * bewegt.
+     */
+    public function leads(): HasMany
+    {
+        return $this->hasMany(Lead::class);
     }
 
     /** Ohne Projekttyp hat eine Portalanfrage keinen Shoot-Kind und keine Felder. */

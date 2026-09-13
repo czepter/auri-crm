@@ -611,7 +611,6 @@
     "title": "Pakete",
     "create": "Neues Paket",
     "createTitle": "Paket anlegen",
-    "editTitle": "Paket bearbeiten",
     "name": "Name",
     "description": "Beschreibung",
     "itemCount": "keine Leistung | 1 Leistung | {count} Leistungen",
@@ -645,7 +644,23 @@
     "projectType": "Anlass",
     "priceExact": "Fester Preis",
     "priceFrom": "Ab-Preis",
-    "priceOnRequest": "Auf Anfrage"
+    "priceOnRequest": "Auf Anfrage",
+    "priceFromValue": "ab {price}",
+    "kicker": "{total} Pakete · {portal} im Portal",
+    "group": {
+      "portal": "Im Portal",
+      "quotes": "Nur für Angebote"
+    },
+    "colPackage": "Paket",
+    "colItems": "Leistungen",
+    "colPrice": "Preis",
+    "colRequest": "Anfrage",
+    "colRequested": "Angefragt",
+    "bookedCount": "{count} gebucht",
+    "requestsSection": "Zuletzt angefragt",
+    "requestDate": "Wunschtermin {date}",
+    "requestBooked": "Gebucht",
+    "requestOpen": "Offen"
   },
   "quotes": {
     "title": "Angebot",

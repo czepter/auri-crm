@@ -116,6 +116,7 @@ it('opens a booking with one primary shoot when the package asks for a date', fu
 
     expect($project->contacts->pluck('id'))->toContain($contact->id)
         ->and($project->portal_visible)->toBeTrue()
+        ->and($project->lead->package_id)->toBe($package->id)
         ->and($shoot->is_primary)->toBeTrue()
         ->and($shoot->venue_name)->toBe('Jenischpark');
 });
