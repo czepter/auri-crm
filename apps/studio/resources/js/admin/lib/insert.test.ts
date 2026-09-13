@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { insertOptions, itemRow, packageRows } from './insert'
+import { insertOptions, itemRow, packageRows, recentOptions } from './insert'
 
 const pkg = (name: string, items: { title: string; unitPrice: number | null; quantity?: number }[]) =>
   ({
@@ -47,6 +47,18 @@ describe('insertOptions', () => {
 
   it('offers nothing at all for an empty term', () => {
     expect(insertOptions('', [pkg('Album-Paket', [])], [item('Fotobuch', 38000)])).toEqual([])
+  })
+})
+
+describe('recentOptions', () => {
+  it('resolves package and item ids in the given order, dropping ones no longer found', () => {
+    const result = recentOptions(
+      ['item:c-Fotobuch', 'package:p-Basis', 'item:c-Gone'],
+      [pkg('Basis', [{ title: 'Reportage', unitPrice: 189000 }])],
+      [item('Fotobuch', 38000)],
+    )
+
+    expect(result.map((option) => option.label)).toEqual(['Fotobuch', 'Basis'])
   })
 })
 

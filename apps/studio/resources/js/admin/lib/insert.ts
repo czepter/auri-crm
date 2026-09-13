@@ -56,6 +56,27 @@ export function insertOptions(
   ]
 }
 
+/** `recentIds` ist "kind:id", jüngste zuerst — so bleibt die Reihenfolge über Pakete und Positionen hinweg erhalten. */
+export function recentOptions(
+  recentIds: string[],
+  packages: App.Catalog.Data.PackageData[],
+  items: App.Catalog.Data.CatalogItemData[],
+): InsertOption[] {
+  return recentIds
+    .map((recentId): InsertOption | null => {
+      const [kind, id] = recentId.split(':')
+
+      if (kind === 'package') {
+        const pkg = packages.find((entry) => entry.id === id)
+        return pkg ? { kind: 'package', id: pkg.id, label: pkg.name, meta: `${pkg.itemCount} · ${formatEurosRounded(packageTotal(pkg))}` } : null
+      }
+
+      const item = items.find((entry) => entry.id === id)
+      return item ? { kind: 'item', id: item.id, label: item.title, meta: item.unitPrice === null ? '' : formatEurosRounded(item.unitPrice) } : null
+    })
+    .filter((option): option is InsertOption => option !== null)
+}
+
 export function packageRows(pkg: App.Catalog.Data.PackageData): QuoteRow[] {
   return pkg.items.map((item) => ({
     title: item.title,

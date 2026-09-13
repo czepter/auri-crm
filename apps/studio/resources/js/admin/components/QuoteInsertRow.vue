@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { QuoteRow } from '@/admin/components/quote/quotePayload'
-import { insertOptions, itemRow, packageRows } from '@/admin/lib/insert'
+import { insertOptions, itemRow, packageRows, recentOptions } from '@/admin/lib/insert'
 import { Combobox, ComboboxAnchor, ComboboxContent, ComboboxGroup, ComboboxInput, ComboboxItem, ComboboxLabel } from '@/ui/combobox'
 
 const props = defineProps<{
@@ -13,23 +13,48 @@ const emit = defineEmits<{ insert: [rows: QuoteRow[]] }>()
 
 const term = ref('')
 
-const options = computed(() => insertOptions(term.value, props.packages, props.catalogItems))
+// Browserlokal statt am Projekt: "zuletzt verwendet" ist eine Gewohnheit der
+// Person am Rechner, kein Attribut des Angebots.
+const RECENT_KEY = 'quotes.recentInserts'
+const MAX_RECENT = 6
 
-const groups = computed(() =>
-  [
-    { key: 'groupPackages', options: options.value.filter((option) => option.kind === 'package') },
-    { key: 'groupItems', options: options.value.filter((option) => option.kind === 'item') },
-    { key: 'groupNew', options: options.value.filter((option) => option.kind === 'new') },
-  ].filter((group) => group.options.length),
-)
+function loadRecent(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]')
+  } catch {
+    return []
+  }
+}
+
+const recentIds = ref<string[]>(loadRecent())
+
+const options = computed(() => term.value.trim()
+  ? insertOptions(term.value, props.packages, props.catalogItems)
+  : recentOptions(recentIds.value, props.packages, props.catalogItems))
+
+const groups = computed(() => term.value.trim()
+  ? [
+      { key: 'groupPackages', options: options.value.filter((option) => option.kind === 'package') },
+      { key: 'groupItems', options: options.value.filter((option) => option.kind === 'item') },
+      { key: 'groupNew', options: options.value.filter((option) => option.kind === 'new') },
+    ].filter((group) => group.options.length)
+  : (options.value.length ? [{ key: 'groupRecent', options: options.value }] : []))
+
+function remember(kind: string, id: string) {
+  const key = `${kind}:${id}`
+  recentIds.value = [key, ...recentIds.value.filter((entry) => entry !== key)].slice(0, MAX_RECENT)
+  localStorage.setItem(RECENT_KEY, JSON.stringify(recentIds.value))
+}
 
 function choose(kind: string, id: string) {
   if (kind === 'package') {
     const pkg = props.packages.find((entry) => entry.id === id)
     emit('insert', pkg ? packageRows(pkg) : [])
+    if (pkg) remember(kind, id)
   } else if (kind === 'item') {
     const item = props.catalogItems.find((entry) => entry.id === id)
     emit('insert', item ? [itemRow(item)] : [])
+    if (item) remember(kind, id)
   } else {
     emit('insert', [{ title: term.value.trim(), description: '', quantity: 1, unitPrice: '', discount: '', selectable: false, selected: false, outcome: '', hasImage: false }])
   }

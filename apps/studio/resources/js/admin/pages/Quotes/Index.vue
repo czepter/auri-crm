@@ -7,6 +7,7 @@ import PageHead from '@/ui/page/PageHead.vue'
 import Empty from '@/ui/page/Empty.vue'
 import { Table, TableCell, TableHead, TableRow } from '@/ui/table'
 import { Input } from '@/ui/input'
+import { Button } from '@/ui/button'
 import { formatEuros } from '@/admin/lib/money'
 
 const props = defineProps<{ quotes: App.Quotes.Data.QuoteRowData[] }>()
@@ -31,11 +32,13 @@ function day(iso: string) {
   <AdminLayout active="angebote">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <PageHead :title="$t('quotesOverview.title')" />
+        <PageHead :title="$t('quotesOverview.title')">
+          <Button :as="Link" variant="pill" class="ml-auto" href="/angebote/neu">{{ $t('quotesOverview.create') }}</Button>
+        </PageHead>
 
         <template v-if="quotes.length">
           <div class="flex px-8 pt-4.5">
-            <Input v-model="query" class="ml-auto h-8 w-64" type="search" :placeholder="$t('quotesOverview.searchPlaceholder')" />
+            <Input v-model="query" class="h-8 w-64" type="search" :placeholder="$t('quotesOverview.searchPlaceholder')" />
           </div>
 
           <Table>
@@ -62,7 +65,9 @@ function day(iso: string) {
           </Table>
         </template>
 
-        <Empty v-else class="mx-8 mt-7" :text="$t('quotesOverview.empty')" />
+        <Empty v-else class="mx-8 mt-7" :text="$t('quotesOverview.empty')">
+          <Button :as="Link" variant="pill" href="/angebote/neu">{{ $t('quotesOverview.create') }}</Button>
+        </Empty>
       </div>
     </Page>
   </AdminLayout>
