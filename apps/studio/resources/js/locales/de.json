@@ -126,6 +126,12 @@
     "dsgvoErase": "Kontakt löschen",
     "dsgvoErased": "Gelöscht am {date}",
     "dsgvoEraseConfirm": "{name} und alle zugehörigen Daten unwiderruflich löschen? Unterzeichnete Verträge und Protokolleinträge bleiben aus gesetzlichen Gründen erhalten.",
+    "tab": {
+      "overview": "Übersicht",
+      "bookings": "Buchungen",
+      "correspondence": "Kommunikation",
+      "portal": "Portal"
+    },
     "portalSection": "Portal",
     "portalInherit": "Standard ({value})",
     "portalOn": "An",

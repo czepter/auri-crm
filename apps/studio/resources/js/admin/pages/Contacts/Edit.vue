@@ -6,8 +6,6 @@ import ContactQueue from '@/admin/components/ContactQueue.vue'
 import ContactPortalFields from '@/admin/components/ContactPortalFields.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
-import Rail from '@/ui/page/Rail.vue'
-import RailSection from '@/ui/page/RailSection.vue'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
@@ -15,6 +13,15 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { formatEurosRounded } from '@/admin/lib/money'
 
 const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? ''
+
+/*
+ * Vier Reiter statt eines langen Blatts. Der Zustand liegt hier und nicht in
+ * der URL: alle vier lesen aus derselben Antwort, ein Wechsel ist keine neue
+ * Frage an den Server.
+ */
+const TABS = ['overview', 'bookings', 'correspondence', 'portal'] as const
+
+const tab = ref<(typeof TABS)[number]>('overview')
 
 const props = defineProps<{
   contacts: App.Crm.Data.ContactRowData[]
@@ -147,177 +154,269 @@ function eraseDsgvoData() {
           </div>
         </PageHead>
 
+        <!-- Formsprache der Galerieverwaltung: Kante unter der Leiste, zwei
+             Pixel unter dem aktiven Eintrag, keine Fläche. -->
+        <div class="flex gap-5 px-8 shadow-[inset_0_-1px_0_var(--rule)]">
+          <button
+            v-for="key in TABS"
+            :key="key"
+            class="cursor-pointer border-0 bg-transparent px-0 pt-2.5 pb-[11px] text-[13px] leading-none"
+            :class="tab === key ? 'font-semibold text-foreground shadow-[inset_0_-2px_0_var(--ink)]' : 'text-ink-2 hover:text-foreground'"
+            type="button"
+            @click="tab = key"
+          >
+            {{ $t(`contacts.tab.${key}`) }}
+          </button>
+        </div>
+
         <div class="px-8 pt-7">
           <div class="max-w-[760px]">
-            <div v-if="!editing" class="mb-7 flex gap-2">
-              <a
-                v-if="contact.phone"
-                class="inline-flex items-center gap-[7px] rounded-full bg-action px-[15px] py-2 text-[13px] text-action-foreground no-underline"
-                :href="`tel:${contact.phone}`"
+            <div v-if="tab === 'overview'">
+              <div v-if="!editing" class="mb-7 flex gap-2">
+                <a
+                  v-if="contact.phone"
+                  class="inline-flex items-center gap-[7px] rounded-full bg-action px-[15px] py-2 text-[13px] text-action-foreground no-underline"
+                  :href="`tel:${contact.phone}`"
+                >
+                  {{ $t('contacts.call') }}
+                </a>
+                <a
+                  v-if="contact.email"
+                  class="inline-flex items-center gap-[7px] rounded-full bg-sunk px-[15px] py-2 text-[13px] text-foreground no-underline hover:bg-sunk-2"
+                  :href="`mailto:${contact.email}`"
+                >
+                  {{ $t('contacts.email') }}
+                </a>
+              </div>
+
+              <!-- Every field the sheet holds, each one named. Empty ones live in
+                   the form, not here: a row reading "—" states nothing the form
+                   does not state better. -->
+              <form v-if="editing" id="contact-form" class="mb-7 flex flex-col gap-4" @submit.prevent="submit">
+                <Field id="c-name" :label="$t('contacts.name')" :error="form.errors.name">
+                  <Input id="c-name" v-model="form.name" type="text" autofocus />
+                </Field>
+                <Field id="c-phone" :label="$t('contacts.phone')" :error="form.errors.phone">
+                  <Input id="c-phone" v-model="form.phone" type="tel" autocomplete="tel" />
+                </Field>
+                <Field id="c-email" :label="$t('contacts.email')" :error="form.errors.email">
+                  <Input id="c-email" v-model="form.email" type="email" autocomplete="email" />
+                </Field>
+                <Field id="c-street" :label="$t('contacts.street')" :error="form.errors.street">
+                  <Input id="c-street" v-model="form.street" type="text" autocomplete="street-address" />
+                </Field>
+                <Field id="c-postcode" :label="$t('contacts.postcode')" :error="form.errors.postcode">
+                  <Input id="c-postcode" v-model="form.postcode" type="text" autocomplete="postal-code" />
+                </Field>
+                <Field id="c-city" :label="$t('contacts.city')" :error="form.errors.city">
+                  <Input id="c-city" v-model="form.city" type="text" autocomplete="address-level2" />
+                </Field>
+              </form>
+
+              <section v-else-if="contact.phone || contact.email || hasAddress" class="mb-7">
+                <h2 class="mt-0 mb-3 text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                  {{ $t('contacts.reach') }}
+                </h2>
+
+                <div v-if="contact.phone" class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
+                  <div>
+                    <div class="text-[15px] leading-none font-semibold tracking-[-0.012em] tabular-nums">{{ contact.phone }}</div>
+                    <div class="mt-px text-[12px] text-ink-2">{{ $t('contacts.phone') }}</div>
+                  </div>
+                </div>
+
+                <div v-if="contact.email" class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
+                  <div>
+                    <div class="text-[15px] leading-none font-semibold tracking-[-0.012em] tabular-nums">{{ contact.email }}</div>
+                    <div class="mt-px text-[12px] text-ink-2">{{ $t('contacts.email') }}</div>
+                  </div>
+                </div>
+
+                <!-- M-06: the address every invoice carries and this screen never
+                     showed. -->
+                <div v-if="hasAddress" class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
+                  <div>
+                    <div class="text-[15px] leading-none font-semibold tracking-[-0.012em] tabular-nums">
+                      {{ [billingAddress.street, [billingAddress.postcode, billingAddress.city].filter(Boolean).join(' ')].filter(Boolean).join(', ') }}
+                    </div>
+                    <div class="mt-px text-[12px] text-ink-2">{{ $t('contacts.address') }}</div>
+                  </div>
+                </div>
+              </section>
+
+              <section v-if="connected.length" class="mb-7">
+                <h2 class="mt-0 mb-3 text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                  {{ $t('contacts.connected') }}
+                </h2>
+
+              <div
+                v-for="person in connected"
+                :key="person.id"
+                class="py-2 shadow-[inset_0_1px_0_#ECECEE] first:shadow-none"
               >
-                {{ $t('contacts.call') }}
-              </a>
-              <a
-                v-if="contact.email"
-                class="inline-flex items-center gap-[7px] rounded-full bg-sunk px-[15px] py-2 text-[13px] text-foreground no-underline hover:bg-sunk-2"
-                :href="`mailto:${contact.email}`"
+                <Link class="text-[12.5px] font-semibold tracking-[-0.012em]" :href="`/kontakte/${person.id}`">
+                  {{ person.name }}
+                </Link>
+                <div v-if="person.role" class="mt-px text-[11.5px] text-ink-2">
+                  {{ $t(`contacts.role.${person.role}`) }}
+                </div>
+              </div>
+              </section>
+              <section v-if="canManageDsgvo" class="mb-7">
+                <h2 class="mt-0 mb-3 text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                  {{ $t('contacts.dsgvo') }}
+                </h2>
+
+              <!-- P-05 (#224): what the client asked for from the portal, beside
+                   the two actions that answer it. -->
+              <div
+                v-for="request in dsgvoRequests"
+                :key="request.id"
+                class="py-2 shadow-[inset_0_1px_0_#ECECEE] first:shadow-none"
               >
-                {{ $t('contacts.email') }}
-              </a>
+                <div class="mt-px text-[11.5px] text-action">
+                  {{ $t(`contacts.dsgvoRequested.${request.kind}`, { date: day(request.requestedAt) }) }}
+                </div>
+              </div>
+
+              <p v-if="dsgvoErasedAt" class="mt-px text-[11.5px] text-ink-2">
+                {{ $t('contacts.dsgvoErased', { date: day(dsgvoErasedAt) }) }}
+              </p>
+              <template v-else>
+                <Button
+                  as="a"
+                  :href="`/kontakte/${contact.id}/dsgvo/export`"
+                  variant="pill-muted"
+                >
+                  {{ $t('contacts.dsgvoExport') }}
+                </Button>
+
+                <AlertDialog>
+                  <AlertDialogTrigger as-child>
+                    <Button class="ml-2" type="button" variant="pill-muted">
+                      {{ $t('contacts.dsgvoErase') }}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{{ $t('contacts.dsgvoEraseConfirm', { name: contact.name }) }}</AlertDialogTitle>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <!-- the accent fill is reserved for the one action here
+                           that cannot be taken back -->
+                      <AlertDialogAction tone="destructive" @click="eraseDsgvoData">
+                        {{ $t('contacts.dsgvoErase') }}
+                      </AlertDialogAction>
+                      <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </template>
+              </section>
             </div>
 
-            <!-- Every field the sheet holds, each one named. Empty ones live in
-                 the form, not here: a row reading "—" states nothing the form
-                 does not state better. -->
-            <form v-if="editing" id="contact-form" class="mb-7 flex flex-col gap-4" @submit.prevent="submit">
-              <Field id="c-name" :label="$t('contacts.name')" :error="form.errors.name">
-                <Input id="c-name" v-model="form.name" type="text" autofocus />
-              </Field>
-              <Field id="c-phone" :label="$t('contacts.phone')" :error="form.errors.phone">
-                <Input id="c-phone" v-model="form.phone" type="tel" autocomplete="tel" />
-              </Field>
-              <Field id="c-email" :label="$t('contacts.email')" :error="form.errors.email">
-                <Input id="c-email" v-model="form.email" type="email" autocomplete="email" />
-              </Field>
-              <Field id="c-street" :label="$t('contacts.street')" :error="form.errors.street">
-                <Input id="c-street" v-model="form.street" type="text" autocomplete="street-address" />
-              </Field>
-              <Field id="c-postcode" :label="$t('contacts.postcode')" :error="form.errors.postcode">
-                <Input id="c-postcode" v-model="form.postcode" type="text" autocomplete="postal-code" />
-              </Field>
-              <Field id="c-city" :label="$t('contacts.city')" :error="form.errors.city">
-                <Input id="c-city" v-model="form.city" type="text" autocomplete="address-level2" />
-              </Field>
-            </form>
-
-            <section v-else-if="contact.phone || contact.email || hasAddress" class="mb-7">
-              <h2 class="mt-0 mb-3 text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
-                {{ $t('contacts.reach') }}
-              </h2>
-
-              <div v-if="contact.phone" class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
-                <div>
-                  <div class="text-[15px] leading-none font-semibold tracking-[-0.012em] tabular-nums">{{ contact.phone }}</div>
-                  <div class="mt-px text-[12px] text-ink-2">{{ $t('contacts.phone') }}</div>
-                </div>
-              </div>
-
-              <div v-if="contact.email" class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
-                <div>
-                  <div class="text-[15px] leading-none font-semibold tracking-[-0.012em] tabular-nums">{{ contact.email }}</div>
-                  <div class="mt-px text-[12px] text-ink-2">{{ $t('contacts.email') }}</div>
-                </div>
-              </div>
-
-              <!-- M-06: the address every invoice carries and this screen never
-                   showed. -->
-              <div v-if="hasAddress" class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
-                <div>
-                  <div class="text-[15px] leading-none font-semibold tracking-[-0.012em] tabular-nums">
-                    {{ [billingAddress.street, [billingAddress.postcode, billingAddress.city].filter(Boolean).join(' ')].filter(Boolean).join(', ') }}
+            <div v-else-if="tab === 'bookings'">
+              <!-- Two sections, never one list: a project is an order with money
+                   and dates, a gallery a delivery with an expiry. -->
+              <section v-if="projects.length" class="mb-7">
+                <h2 class="mt-0 mb-3 text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                  {{ $t('contacts.projects') }}
+                </h2>
+                <div
+                  v-for="project in projects"
+                  :key="project.id"
+                  class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+                >
+                  <div>
+                    <div class="text-[15px] leading-none font-semibold tracking-[-0.012em] tabular-nums">
+                      <Link class="no-underline hover:underline" :href="`/auftraege/${project.id}`">{{ project.name }}</Link>
+                    </div>
+                    <div class="mt-px text-[12px] text-ink-2">
+                      {{ $t(`contacts.role.${project.role}`) }}
+                      <template v-if="project.date"> · {{ day(project.date) }}</template>
+                    </div>
                   </div>
-                  <div class="mt-px text-[12px] text-ink-2">{{ $t('contacts.address') }}</div>
-                </div>
-              </div>
-            </section>
-
-            <!-- Two sections, never one list: a project is an order with money
-                 and dates, a gallery a delivery with an expiry. -->
-            <section v-if="projects.length" class="mb-7">
-              <h2 class="mt-0 mb-3 text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
-                {{ $t('contacts.projects') }}
-              </h2>
-              <div
-                v-for="project in projects"
-                :key="project.id"
-                class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
-              >
-                <div>
-                  <div class="text-[15px] leading-none font-semibold tracking-[-0.012em] tabular-nums">
-                    <Link class="no-underline hover:underline" :href="`/auftraege/${project.id}`">{{ project.name }}</Link>
-                  </div>
-                  <div class="mt-px text-[12px] text-ink-2">
-                    {{ $t(`contacts.role.${project.role}`) }}
-                    <template v-if="project.date"> · {{ day(project.date) }}</template>
-                  </div>
-                </div>
-                <span v-if="project.value" class="ml-auto text-[12.5px] text-ink-2">
-                  {{ formatEurosRounded(project.value) }}
-                </span>
-              </div>
-            </section>
-
-            <section v-if="galleries.length" class="mb-7">
-              <h2 class="mt-0 mb-3 text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
-                {{ $t('contacts.galleries') }}
-              </h2>
-              <div
-                v-for="gallery in galleries"
-                :key="gallery.id"
-                class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
-              >
-                <div>
-                  <div class="text-[15px] leading-none font-semibold tracking-[-0.012em] tabular-nums">
-                    <Link class="no-underline hover:underline" :href="`/galerien/${gallery.id}`">{{ gallery.title ?? '—' }}</Link>
-                  </div>
-                  <div class="mt-px text-[12px] text-ink-2">
-                    {{ $t('contacts.assetCount', gallery.assetCount) }}
-                    ·
-                    {{ gallery.openedOn ? $t('contacts.openedOn', { date: day(gallery.openedOn) }) : $t('contacts.notOpened') }}
-                  </div>
-                </div>
-                <span v-if="gallery.expiresAt" class="ml-auto text-[12.5px] text-ink-2">
-                  {{ $t('contacts.expiresOn', { date: day(gallery.expiresAt) }) }}
-                </span>
-              </div>
-            </section>
-
-            <!-- E-11: what the studio has actually said to this person, across
-                 every project. A thread only ever knows its own project, so this
-                 is the one screen that can answer the question at all. -->
-            <section v-if="correspondence.length" class="mb-7">
-              <h2 class="mt-0 mb-3 text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
-                {{ $t('contacts.correspondence') }}
-              </h2>
-              <div
-                v-for="message in correspondence"
-                :key="message.id"
-                class="py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
-              >
-                <div class="flex items-baseline gap-2.25">
-                  <span class="text-[13px] font-semibold tracking-[-0.012em]">{{ message.author }}</span>
-                  <span class="ml-auto text-[11.5px] tabular-nums text-ink-2">
-                    {{ day(message.sentAt) }}
-                    <template v-if="message.projectName">
-                      ·
-                      <Link class="no-underline hover:underline" :href="`/auftraege/${message.projectId}/nachrichten`">{{ message.projectName }}</Link>
-                    </template>
-                    <template v-if="message.deliveryState === 'failed'"> · {{ $t('contacts.deliveryFailed') }}</template>
+                  <span v-if="project.value" class="ml-auto text-[12.5px] text-ink-2">
+                    {{ formatEurosRounded(project.value) }}
                   </span>
                 </div>
-                <div class="mt-[5px] max-w-[68ch] text-[13.5px] leading-[1.55]">{{ message.body }}</div>
-              </div>
-            </section>
-          </div>
-        </div>
-      </main>
+              </section>
 
-      <template #right>
-        <Rail data-tokens class="w-88">
-          <RailSection :title="$t('contacts.portalSection')">
-            <ContactPortalFields :portal="portal" :defaults="portalDefaults" @change="savePortal" />
-
-            <!-- The access belongs to the portal, under the switches: validity,
-                 a fresh link, withdrawal. -->
-            <div class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
-              <div class="min-w-0 flex-1 text-[13px]">
-                {{ $t('contacts.portalAccess') }}
-                <div class="mt-[3px] text-[12px] text-ink-2">
-                  {{ portalAccessRevokedAt
-                    ? $t('contacts.portalAccessRevoked', { date: day(portalAccessRevokedAt) })
-                    : $t('contacts.portalAccessActive') }}
+              <section v-if="galleries.length" class="mb-7">
+                <h2 class="mt-0 mb-3 text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                  {{ $t('contacts.galleries') }}
+                </h2>
+                <div
+                  v-for="gallery in galleries"
+                  :key="gallery.id"
+                  class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+                >
+                  <div>
+                    <div class="text-[15px] leading-none font-semibold tracking-[-0.012em] tabular-nums">
+                      <Link class="no-underline hover:underline" :href="`/galerien/${gallery.id}`">{{ gallery.title ?? '—' }}</Link>
+                    </div>
+                    <div class="mt-px text-[12px] text-ink-2">
+                      {{ $t('contacts.assetCount', gallery.assetCount) }}
+                      ·
+                      {{ gallery.openedOn ? $t('contacts.openedOn', { date: day(gallery.openedOn) }) : $t('contacts.notOpened') }}
+                    </div>
+                  </div>
+                  <span v-if="gallery.expiresAt" class="ml-auto text-[12.5px] text-ink-2">
+                    {{ $t('contacts.expiresOn', { date: day(gallery.expiresAt) }) }}
+                  </span>
                 </div>
-              </div>
+              </section>
+
+            </div>
+
+            <div v-else-if="tab === 'correspondence'">
+              <!-- E-11: what the studio has actually said to this person, across
+                   every project. A thread only ever knows its own project, so this
+                   is the one screen that can answer the question at all. -->
+              <section v-if="correspondence.length" class="mb-7">
+                <h2 class="mt-0 mb-3 text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                  {{ $t('contacts.correspondence') }}
+                </h2>
+                <div
+                  v-for="message in correspondence"
+                  :key="message.id"
+                  class="py-3 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+                >
+                  <div class="flex items-baseline gap-2.25">
+                    <span class="text-[13px] font-semibold tracking-[-0.012em]">{{ message.author }}</span>
+                    <span class="ml-auto text-[11.5px] tabular-nums text-ink-2">
+                      {{ day(message.sentAt) }}
+                      <template v-if="message.projectName">
+                        ·
+                        <Link class="no-underline hover:underline" :href="`/auftraege/${message.projectId}/nachrichten`">{{ message.projectName }}</Link>
+                      </template>
+                      <template v-if="message.deliveryState === 'failed'"> · {{ $t('contacts.deliveryFailed') }}</template>
+                    </span>
+                  </div>
+                  <div class="mt-[5px] max-w-[68ch] text-[13.5px] leading-[1.55]">{{ message.body }}</div>
+                </div>
+              </section>
+            </div>
+
+            <div v-else-if="tab === 'portal'">
+              <section class="mb-7">
+                <h2 class="mt-0 mb-3 text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                  {{ $t('contacts.portalSection') }}
+                </h2>
+
+              <ContactPortalFields :portal="portal" :defaults="portalDefaults" @change="savePortal" />
+
+              <!-- The access belongs to the portal, under the switches: validity,
+                   a fresh link, withdrawal. -->
+              <div class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
+                <div class="min-w-0 flex-1 text-[13px]">
+                  {{ $t('contacts.portalAccess') }}
+                  <div class="mt-[3px] text-[12px] text-ink-2">
+                    {{ portalAccessRevokedAt
+                      ? $t('contacts.portalAccessRevoked', { date: day(portalAccessRevokedAt) })
+                      : $t('contacts.portalAccessActive') }}
+                  </div>
+                </div>
             </div>
 
             <!-- A plain form, not router.post(): the preview belongs in a
@@ -354,73 +453,12 @@ function eraseDsgvoData() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
-
-          </RailSection>
-
-          <RailSection v-if="connected.length" :title="$t('contacts.connected')">
-            <div
-              v-for="person in connected"
-              :key="person.id"
-              class="py-2 shadow-[inset_0_1px_0_#ECECEE] first:shadow-none"
-            >
-              <Link class="text-[12.5px] font-semibold tracking-[-0.012em]" :href="`/kontakte/${person.id}`">
-                {{ person.name }}
-              </Link>
-              <div v-if="person.role" class="mt-px text-[11.5px] text-ink-2">
-                {{ $t(`contacts.role.${person.role}`) }}
-              </div>
+            </section>
             </div>
-          </RailSection>
+          </div>
+        </div>
+      </main>
 
-          <RailSection v-if="canManageDsgvo" :title="$t('contacts.dsgvo')">
-            <!-- P-05 (#224): what the client asked for from the portal, beside
-                 the two actions that answer it. -->
-            <div
-              v-for="request in dsgvoRequests"
-              :key="request.id"
-              class="py-2 shadow-[inset_0_1px_0_#ECECEE] first:shadow-none"
-            >
-              <div class="mt-px text-[11.5px] text-action">
-                {{ $t(`contacts.dsgvoRequested.${request.kind}`, { date: day(request.requestedAt) }) }}
-              </div>
-            </div>
-
-            <p v-if="dsgvoErasedAt" class="mt-px text-[11.5px] text-ink-2">
-              {{ $t('contacts.dsgvoErased', { date: day(dsgvoErasedAt) }) }}
-            </p>
-            <template v-else>
-              <Button
-                as="a"
-                :href="`/kontakte/${contact.id}/dsgvo/export`"
-                variant="pill-muted"
-              >
-                {{ $t('contacts.dsgvoExport') }}
-              </Button>
-
-              <AlertDialog>
-                <AlertDialogTrigger as-child>
-                  <Button class="ml-2" type="button" variant="pill-muted">
-                    {{ $t('contacts.dsgvoErase') }}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>{{ $t('contacts.dsgvoEraseConfirm', { name: contact.name }) }}</AlertDialogTitle>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <!-- the accent fill is reserved for the one action here
-                         that cannot be taken back -->
-                    <AlertDialogAction tone="destructive" @click="eraseDsgvoData">
-                      {{ $t('contacts.dsgvoErase') }}
-                    </AlertDialogAction>
-                    <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </template>
-          </RailSection>
-        </Rail>
-      </template>
     </Page>
   </AdminLayout>
 </template>
