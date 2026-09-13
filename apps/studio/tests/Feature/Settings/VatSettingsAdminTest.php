@@ -28,12 +28,13 @@ it('updates vat_mode, vat_rate and vat_note, redirects, and audits the owner', f
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
+        ->from('/einstellungen?pane=vat')
         ->patch('/einstellungen/ust', [
             'vat_mode' => 'small_business',
             'vat_rate' => 1900,
             'vat_note' => 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.',
         ])
-        ->assertRedirect('/einstellungen');
+        ->assertRedirect('/einstellungen?pane=vat');
 
     $row = StudioSettings::query()->sole();
 

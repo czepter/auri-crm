@@ -113,7 +113,7 @@ class StudioSettingsController extends Controller
             $settings->setLogo($request->file('logo'), $actor);
         }
 
-        return redirect('/einstellungen');
+        return back();
     }
 
     /**
@@ -198,7 +198,7 @@ class StudioSettingsController extends Controller
         $settings->set('vat_rate', $validated['vat_rate'], $actor);
         $settings->set('vat_note', $validated['vat_note'] ?? null, $actor);
 
-        return redirect('/einstellungen');
+        return back();
     }
 
     /**
@@ -234,7 +234,7 @@ class StudioSettingsController extends Controller
         $settings->set('document_letterhead_html', $validated['document_letterhead_html'] ?? null, $actor);
         $settings->set('document_footer_html', $validated['document_footer_html'] ?? null, $actor);
 
-        return redirect('/einstellungen');
+        return back();
     }
 
     /**
@@ -265,7 +265,7 @@ class StudioSettingsController extends Controller
         $settings->set('locale', $validated['locale'] ?? null, $actor);
         $settings->set('working_days', array_values($validated['working_days']), $actor);
 
-        return redirect('/einstellungen');
+        return back();
     }
 
     /**
@@ -332,9 +332,6 @@ class StudioSettingsController extends Controller
             $settings->set($key, $value, $actor);
         }
 
-        // The pane lives inside this same shell (client-side switching, no
-        // route of its own to GET back to) — same target every other
-        // non-profile pane on this controller redirects to.
-        return redirect('/einstellungen');
+        return back();
     }
 }

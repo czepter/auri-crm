@@ -28,12 +28,13 @@ it('updates timezone, locale and working days, redirects, and audits the owner',
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
+        ->from('/einstellungen?pane=general')
         ->patch('/einstellungen/allgemein', [
             'timezone' => 'Europe/Vienna',
             'locale' => 'de_AT',
             'working_days' => [1, 2, 3, 4, 5],
         ])
-        ->assertRedirect('/einstellungen');
+        ->assertRedirect('/einstellungen?pane=general');
 
     $row = StudioSettings::query()->sole();
 

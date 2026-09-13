@@ -53,6 +53,7 @@ it('updates the display name, redirects, and leaves an audit row naming the owne
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
+        ->from('/einstellungen')
         ->patch('/einstellungen', [
             'display_name' => 'Atelier Nordlicht', 'tax_number' => '22/123/45678',
             ...t07ValidBankFields(),
@@ -66,7 +67,7 @@ it('updates the display name, redirects, and leaves an audit row naming the owne
 it('saves the full legal-entity, brand and bank fieldset in one submit', function () {
     $owner = staffMember(StaffRole::Owner);
 
-    $this->actingAs($owner, 'staff')->patch('/einstellungen', [
+    $this->actingAs($owner, 'staff')->from('/einstellungen')->patch('/einstellungen', [
         'display_name' => 'Atelier Nordlicht',
         'legal_name' => 'Atelier Nordlicht Fotografie GmbH',
         'legal_form' => 'GmbH',
@@ -271,6 +272,7 @@ it('lists Einstellungen in the sidebar only for a role that manages settings', f
 // licensed and self-hosts, and a fifth name would be a font nobody may serve.
 it('stores the chosen font pair and refuses one that is not licensed', function () {
     $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->from('/einstellungen')
         ->patch('/einstellungen', [
             'display_name' => 'Atelier Nordlicht', 'tax_number' => '22/123/45678',
             'font_pair' => 'fraunces', ...t07ValidBankFields(),

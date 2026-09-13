@@ -30,6 +30,7 @@ it('updates the document defaults, redirects, and audits the owner', function ()
     $owner = staffMember(StaffRole::Owner);
 
     $this->actingAs($owner, 'staff')
+        ->from('/einstellungen?pane=documents')
         ->patch('/einstellungen/dokumente', [
             'quote_validity_days' => 30,
             'payment_term_days' => 21,
@@ -39,7 +40,7 @@ it('updates the document defaults, redirects, and audits the owner', function ()
             'document_letterhead_html' => '<header>Nordlicht</header>',
             'document_footer_html' => '<footer>Seite 1</footer>',
         ])
-        ->assertRedirect('/einstellungen');
+        ->assertRedirect('/einstellungen?pane=documents');
 
     $row = StudioSettings::query()->sole();
 
