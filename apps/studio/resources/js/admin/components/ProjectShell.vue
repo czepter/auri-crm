@@ -253,7 +253,7 @@ function destroy() {
             <AlertDialogTitle>{{ $t('project.deleteTitle') }}</AlertDialogTitle>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction class="bg-destructive" @click="destroy">{{ $t('common.delete') }}</AlertDialogAction>
+            <AlertDialogAction tone="destructive" @click="destroy">{{ $t('common.delete') }}</AlertDialogAction>
             <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
