@@ -232,7 +232,7 @@ const total = computed(() =>
     </div>
 
     <div class="flex items-baseline gap-3 pl-1">
-      <div class="max-w-[360px] flex-1">
+      <div class="flex-1">
         <QuoteInsertRow :packages="packages" :catalog-items="catalogItems" @insert="insert" />
       </div>
     </div>

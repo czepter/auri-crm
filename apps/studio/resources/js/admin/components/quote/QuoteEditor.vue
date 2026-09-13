@@ -100,7 +100,7 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
 </script>
 
 <template>
-  <div class="mx-auto flex w-fit max-w-full gap-6">
+  <div class="flex w-fit max-w-full gap-6">
     <div class="flex w-[720px] max-w-full flex-col gap-3">
       <div class="flex items-center gap-2.5">
         <ChoiceGroup
