@@ -6,9 +6,11 @@ use App\Catalog\Actions\SavePackage;
 use App\Catalog\Data\PackageData;
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
+use App\Crm\Models\Lead;
 use App\Crm\Models\ProjectType;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -24,7 +26,7 @@ class PackageController extends Controller
 
         $packages = Package::query()
             ->with('items')
-            ->withCount('items')
+            ->withCount(['items', ...self::requestCounts()])
             ->orderBy('name')
             ->get();
 
@@ -60,6 +62,8 @@ class PackageController extends Controller
     {
         $this->authorize('update', $package);
 
+        $package->loadCount(self::requestCounts());
+
         return Inertia::render('Packages/Edit', [
             'package' => PackageData::fromModel($package),
             // Ohne Projekttyp hat eine Anfrage aus dem Portal keine Form —
@@ -67,6 +71,21 @@ class PackageController extends Controller
             'projectTypes' => ProjectType::query()->active()
                 ->orderBy('sort_order')->orderBy('name')
                 ->get(['key', 'name'])->all(),
+            // Die letzten Anfragen, die von diesem Paket ausgingen. Steht hier
+            // und nicht in der Übersicht: die Frage gilt diesem Paket.
+            'requests' => $package->leads()
+                ->with(['project.contacts', 'project.primaryShoot', 'project.job'])
+                ->orderByDesc('captured_at')
+                ->limit(10)
+                ->get()
+                ->map(fn (Lead $lead) => [
+                    'id' => $lead->public_id,
+                    'project' => $lead->project->public_id,
+                    'contact' => $lead->project->contactNames(),
+                    'requestedOn' => $lead->captured_at?->format('Y-m-d'),
+                    'date' => $lead->project->primaryShoot?->date?->format('Y-m-d'),
+                    'booked' => $lead->project->job !== null,
+                ])->all(),
         ]);
     }
 
@@ -170,4 +189,17 @@ class PackageController extends Controller
         return Storage::disk('local')->response($packageItem->image_path);
     }
 
+    /**
+     * Gebucht heißt: aus dem Vorgang wurde ein Job. Dieselbe Auskunft, die
+     * Lead::scopeUnbooked() umgekehrt gibt.
+     *
+     * @return array<int|string, string|\Closure>
+     */
+    private static function requestCounts(): array
+    {
+        return [
+            'leads as requested_count',
+            'leads as booked_count' => fn (Builder $query) => $query->whereHas('project.job'),
+        ];
+    }
 }

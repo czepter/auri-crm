@@ -13,26 +13,43 @@ import { Textarea } from '@/ui/textarea'
  * The record is written in place and the change announced: the sheet saves
  * per switch, the create screen carries the values along to its own submit.
  */
-// The nine keys rather than an index signature: the sheet hands in its whole
+// The ten keys rather than an index signature: the sheet hands in its whole
 // useForm, processing and methods included, which Record<string, string>
 // refuses — a type asking only for what these fields read and write does not.
 type PortalKey =
   | 'portal_visible' | 'accept_quotes' | 'sign_contracts' | 'payment_status'
-  | 'messaging_mode' | 'gallery_downloads' | 'gallery_lists' | 'gallery_comments' | 'welcome'
+  | 'messaging_mode' | 'gallery_downloads' | 'gallery_lists' | 'gallery_comments'
+  | 'offers' | 'welcome'
 
-const props = defineProps<{
-  portal: Record<PortalKey, string>
-  defaults: Record<string, string | boolean | null>
-}>()
+const props = withDefaults(
+  defineProps<{
+    portal: Record<PortalKey, string>
+    defaults: Record<string, string | boolean | null>
+    group?: Group
+  }>(),
+  { group: 'all' },
+)
 
 const emit = defineEmits<{ change: [] }>()
 
 const { t } = useI18n()
 
-const SWITCHES = ['portal_visible', 'accept_quotes', 'sign_contracts', 'payment_status',
-  'gallery_downloads', 'gallery_lists', 'gallery_comments'] as const
+// Der Reiter am Kontakt stellt die Gruppen als eigene Karten nebeneinander,
+// das Anlegen-Formular hat nur eine Spalte und nimmt alle.
+const GROUPS = {
+  all: ['portal_visible', 'accept_quotes', 'sign_contracts', 'payment_status',
+    'gallery_downloads', 'gallery_lists', 'gallery_comments', 'offers'],
+  permissions: ['accept_quotes', 'sign_contracts', 'payment_status', 'portal_visible'],
+  gallery: ['gallery_downloads', 'gallery_lists', 'gallery_comments'],
+  offers: ['offers'],
+  welcome: [],
+} as const
 
-type Switch = (typeof SWITCHES)[number]
+type Group = keyof typeof GROUPS
+
+type Switch = (typeof GROUPS)['all'][number]
+
+const switches = computed<readonly Switch[]>(() => GROUPS[props.group])
 
 function isOn(key: Switch) {
   return props.portal[key] === '' ? props.defaults[key] === true : props.portal[key] === '1'
@@ -77,7 +94,7 @@ function defaultLabel(key: string) {
        what the switch already shows. What is left is a reset, and only where
        an override actually holds a value. -->
   <div
-    v-for="key in SWITCHES"
+    v-for="key in switches"
     :key="key"
     class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
   >
@@ -105,7 +122,7 @@ function defaultLabel(key: string) {
        rail already spends uppercase on its section headings, and a second one
        under them reads as a third section rather than as the name of the
        control. -->
-  <div class="py-[9px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
+  <div v-if="group === 'all' || group === 'permissions'" class="py-[9px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
     <Label variant="inline" for="portal-messaging">
       {{ $t('contacts.portalKey.messaging_mode') }}
     </Label>
@@ -124,7 +141,7 @@ function defaultLabel(key: string) {
     </Select>
   </div>
 
-  <div class="py-[9px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
+  <div v-if="group === 'all' || group === 'welcome'" class="py-[9px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
     <Label variant="inline" for="portal-welcome">
       {{ $t('contacts.portalKey.welcome') }}
     </Label>

@@ -26,6 +26,8 @@ class PackageData extends Data
         public ?string $projectTypeKey = null,
         public bool $portalHasImage = false,
         public ?int $price = null,
+        public int $requestedCount = 0,
+        public int $bookedCount = 0,
     ) {}
 
     public static function fromModel(Package $package): self
@@ -52,6 +54,10 @@ class PackageData extends Data
             // steht. Aus den Positionen, nicht gespeichert: sonst wären es
             // zwei Wahrheiten.
             price: $items->sum(fn (PackageItem $item) => (int) $item->unit_price * $item->quantity),
+            // Wie oft aus dem Portal angefragt und wie viel davon gebucht.
+            // Wie items_count nur auf der Übersicht gezählt.
+            requestedCount: (int) ($package->requested_count ?? 0),
+            bookedCount: (int) ($package->booked_count ?? 0),
         );
     }
 }

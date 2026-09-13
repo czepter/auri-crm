@@ -6,6 +6,7 @@ import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalLabel from '@/portal/components/PortalLabel.vue'
 import PortalOffers from '@/portal/components/PortalOffers.vue'
+import PortalSuggestion from '@/portal/components/PortalSuggestion.vue'
 import PortalPerson from '@/portal/components/PortalPerson.vue'
 import PortalRow from '@/portal/components/PortalRow.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
@@ -34,6 +35,11 @@ type Document = {
   settled: boolean
 }
 
+type Offers = {
+  suggestion: { service: App.Catalog.Data.PortalServiceData; note: string | null; author: string | null } | null
+  shelf: App.Catalog.Data.PortalServiceData[]
+}
+
 const props = defineProps<{
   contact: { name: string }
   showSwitcher: boolean
@@ -50,7 +56,7 @@ const props = defineProps<{
     questionnaires: { id: string; name: string; count: number; openCount: number }[]
     details: { date: string | null; callTime: string | null; venue: string | null; email: string | null; phone: string | null }
   }
-  offers: App.Catalog.Data.PortalServiceData[]
+  offers: Offers
 }>()
 
 function longDate(iso: string) {
@@ -307,7 +313,9 @@ function documentNote(document: Document) {
         </div>
       </section>
 
-      <PortalOffers :offers="offers" class="mt-[var(--band)]" />
+      <PortalSuggestion v-if="offers.suggestion" :suggestion="offers.suggestion" class="mt-[var(--band)]" />
+
+      <PortalOffers :shelf="offers.shelf" class="mt-[var(--band)]" />
 
       <section v-if="reachable(studio)" class="pt-12">
         <div :class="BAND">

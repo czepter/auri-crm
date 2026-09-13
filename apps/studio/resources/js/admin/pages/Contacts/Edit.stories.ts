@@ -43,6 +43,22 @@ const meta = {
     dsgvoErasedAt: null,
     canManageDsgvo: true,
     dsgvoRequests: [],
+    suggestions: [
+      {
+        id: 's1',
+        package: 'pk-album',
+        name: 'Fotoalbum',
+        note: 'Aus eurer Hochzeitsgalerie würde ich ein Album machen, solange die Reihenfolge des Tages noch sitzt.',
+        author: 'Christian',
+        suggestedOn: '2026-09-04',
+        live: true,
+      },
+    ],
+    offerablePackages: [
+      { id: 'pk-album', name: 'Fotoalbum', price: 68000, priceMode: 'from', requiresDate: false },
+      { id: 'pk-jahrestag', name: 'Paarshooting zum Jahrestag', price: 39000, priceMode: 'exact', requiresDate: true },
+    ],
+    portalLogins: { count: 9, firstAt: '2026-02-14T18:05:00+01:00', lastAt: '2026-09-13T10:40:00+02:00' },
     portalDefaults: PORTAL_DEFAULTS,
     portalOverrides: { gallery_comments: true },
     canPreviewPortal: true,
@@ -65,6 +81,7 @@ export const NurName: Story = {
     galleries: [],
     connected: [],
     portalOverrides: {},
+    portalLogins: { count: 0, firstAt: null, lastAt: null },
   },
 }
 

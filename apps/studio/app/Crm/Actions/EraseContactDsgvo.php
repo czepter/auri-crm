@@ -3,6 +3,7 @@
 namespace App\Crm\Actions;
 
 use App\Automation\Models\AutomationRun;
+use App\Catalog\Models\ServiceSuggestion;
 use App\Contracts\Models\Contract;
 use App\Crm\Models\Contact;
 use App\Crm\Models\InternalNote;
@@ -71,6 +72,10 @@ class EraseContactDsgvo
             }
 
             ClientAccess::where('contact_id', $contact->id)->delete();
+
+            // Der Satz, den jemand über diese Person geschrieben hat, ist
+            // personenbezogen wie jede Notiz zu ihr.
+            ServiceSuggestion::where('contact_id', $contact->id)->delete();
             // By address, not contact_id — GalleryPrereleaseSignup carries
             // no foreign key to a Contact at all (same reasoning as
             // GalleryEmailVerification), so this is the one place erasure

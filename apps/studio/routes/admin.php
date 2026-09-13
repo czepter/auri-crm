@@ -2,6 +2,7 @@
 
 use App\Automation\Http\Controllers\AutomationRuleController;
 use App\Catalog\Http\Controllers\PackageController;
+use App\Catalog\Http\Controllers\ServiceSuggestionController;
 use App\Contracts\Http\Controllers\ContractController;
 use App\Contracts\Http\Controllers\ContractSignerController;
 use App\Crm\Http\Controllers\AvailabilityController;
@@ -202,6 +203,13 @@ Route::middleware('audience:staff')->group(function () {
         // the staff member to it. POST rather than a link in the page: a live
         // credential rendered into a prop is one in a browser history and in
         // a screenshot.
+        // Was das Studio diesem Kunden einzeln vorschlaegt — das Regal
+        // dagegen steht am Paket und gilt fuer alle.
+        Route::post('/kontakte/{contact}/leistungen', [ServiceSuggestionController::class, 'store'])
+            ->name('contacts.suggestions.store');
+        Route::delete('/kontakte/{contact}/leistungen/{serviceSuggestion}', [ServiceSuggestionController::class, 'destroy'])
+            ->name('contacts.suggestions.destroy');
+
         Route::post('/kontakte/{contact}/portal-vorschau', [ContactController::class, 'previewPortal'])
             ->name('contacts.portal.preview');
 

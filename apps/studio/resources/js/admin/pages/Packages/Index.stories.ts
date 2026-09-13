@@ -20,6 +20,8 @@ const GANZTAG: App.Catalog.Data.PackageData = {
   projectTypeKey: 'hochzeit',
   portalHasImage: false,
   price: 426000,
+  requestedCount: 7,
+  bookedCount: 4,
 }
 
 const TRAUUNG: App.Catalog.Data.PackageData = {
@@ -40,6 +42,8 @@ const TRAUUNG: App.Catalog.Data.PackageData = {
   projectTypeKey: null,
   portalHasImage: false,
   price: 348000,
+  requestedCount: 0,
+  bookedCount: 0,
 }
 
 const meta = {
@@ -52,7 +56,7 @@ const meta = {
 export default meta
 type Story = StoryObj<typeof meta>
 
-/** Zwei Pakete mit ihren Positionen, das zweite deaktiviert. */
+/** Beide Gruppen: eins im Portal, eins nur für Angebote und deaktiviert. */
 export const Zwei: Story = {}
 
 /** Ein frisch eingerichtetes Studio hat noch kein Paket. */

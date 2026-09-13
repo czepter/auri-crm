@@ -1,6 +1,8 @@
 <?php
 
 use App\Catalog\Models\Package;
+use App\Catalog\Models\ServiceSuggestion;
+use App\Catalog\Support\PortalOffers;
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\ProjectContactRole;
@@ -47,6 +49,56 @@ it('hides the whole shelf when the studio has not switched it on', function () {
         ->assertNotFound();
 });
 
+// P-09: die Übersteuerung je Kontakt, hier bis ins Portal durchgezogen. Ein
+// Kunde mitten in einer Reklamation soll nichts angeboten bekommen, auch wenn
+// das Studio das Regal offen hat.
+it('hides the shelf from a contact whose own override says no', function () {
+    $contact = Contact::factory()->create(['portal_overrides' => ['offers' => false]]);
+
+    test()->actingAs($contact, 'portal')
+        ->get('/leistungen/'.offered()->public_id)
+        ->assertNotFound();
+});
+
+it('shows the shelf to a contact who overrides a studio default that is off', function () {
+    StudioSettings::query()->update(['portal_offers_enabled' => false]);
+    $contact = Contact::factory()->create(['portal_overrides' => ['offers' => true]]);
+
+    test()->actingAs($contact, 'portal')
+        ->get('/leistungen/'.offered()->public_id)
+        ->assertOk();
+});
+
+// Zweimal dieselbe Leistung auf einem Screen ist keine zweite Gelegenheit.
+it('takes the suggested service out of the shelf', function () {
+    $contact = Contact::factory()->create();
+    $suggested = offered(['name' => 'Fotoalbum']);
+    offered(['name' => 'Wandbild']);
+
+    ServiceSuggestion::create([
+        'contact_id' => $contact->id,
+        'package_id' => $suggested->id,
+        'note' => 'Ein Satz über diesen Kunden.',
+    ]);
+
+    $offers = app(PortalOffers::class)->for($contact);
+
+    expect($offers['suggestion']['service']['name'])->toBe('Fotoalbum')
+        ->and($offers['suggestion']['note'])->toContain('Satz')
+        ->and(collect($offers['shelf'])->pluck('name')->all())->toBe(['Wandbild']);
+});
+
+// Das Studio hat die Leistung zurueckgezogen, nicht den Vorschlag widerrufen.
+it('drops a suggestion whose package left the portal', function () {
+    $contact = Contact::factory()->create();
+    $package = offered();
+    ServiceSuggestion::create(['contact_id' => $contact->id, 'package_id' => $package->id]);
+
+    $package->update(['portal_offered' => false]);
+
+    expect(app(PortalOffers::class)->for($contact)['suggestion'])->toBeNull();
+});
+
 it('opens a booking with one primary shoot when the package asks for a date', function () {
     $contact = Contact::factory()->create();
     $package = offered(['name' => 'Paarshooting zum Jahrestag']);
@@ -64,6 +116,7 @@ it('opens a booking with one primary shoot when the package asks for a date', fu
 
     expect($project->contacts->pluck('id'))->toContain($contact->id)
         ->and($project->portal_visible)->toBeTrue()
+        ->and($project->lead->package_id)->toBe($package->id)
         ->and($shoot->is_primary)->toBeTrue()
         ->and($shoot->venue_name)->toBe('Jenischpark');
 });
@@ -80,6 +133,22 @@ it('opens a booking without a shoot when the package needs no date', function ()
     $project = Project::query()->where('name', 'Fotoalbum')->sole();
 
     expect(Shoot::query()->where('project_id', $project->id)->count())->toBe(0);
+});
+
+// Paketpreise sind netto. Was oben draufkommt, muss dastehen, bevor jemand
+// anfragt — und für einen Kleinunternehmer kommt nichts drauf.
+it('names the tax on top of the price', function () {
+    test()->actingAs(Contact::factory()->create(), 'portal')
+        ->get('/leistungen/'.offered()->public_id)
+        ->assertInertia(fn ($page) => $page->where('vatRate', 1900));
+});
+
+it('names no tax for a Kleinunternehmer', function () {
+    StudioSettings::query()->update(['vat_mode' => 'small_business']);
+
+    test()->actingAs(Contact::factory()->create(), 'portal')
+        ->get('/leistungen/'.offered()->public_id)
+        ->assertInertia(fn ($page) => $page->where('vatRate', null));
 });
 
 it('refuses a request without the date the package asks for', function () {

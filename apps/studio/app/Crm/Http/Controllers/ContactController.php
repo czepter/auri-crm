@@ -2,6 +2,10 @@
 
 namespace App\Crm\Http\Controllers;
 
+use App\Catalog\Data\PackageData;
+use App\Catalog\Enums\PortalPriceMode;
+use App\Catalog\Models\Package;
+use App\Catalog\Models\ServiceSuggestion;
 use App\Crm\Data\ContactRowData;
 use App\Crm\Data\ContactSuggestionData;
 use App\Crm\Models\Contact;
@@ -38,6 +42,7 @@ class ContactController extends Controller
         'gallery_downloads' => ['nullable', 'boolean'],
         'gallery_lists' => ['nullable', 'boolean'],
         'gallery_comments' => ['nullable', 'boolean'],
+        'offers' => ['nullable', 'boolean'],
         'portal_visible' => ['nullable', 'boolean'],
         'welcome' => ['nullable', 'string', 'max:2000'],
     ];
@@ -53,8 +58,27 @@ class ContactController extends Controller
             'gallery_downloads' => $settings->galleryDownloadsEnabled(),
             'gallery_lists' => $settings->galleryListsEnabled(),
             'gallery_comments' => $settings->galleryCommentsEnabled(),
+            'offers' => $settings->offersEnabled(),
             'welcome' => $settings->portalWelcomeText(),
             'portal_visible' => $portal->projectsVisibleByDefault(),
+        ];
+    }
+
+    /** @return array{count: int, firstAt: ?string, lastAt: ?string} */
+    private function portalLogins(Contact $contact): array
+    {
+        $consumed = ClientAccess::query()
+            ->where('contact_id', $contact->id)
+            ->whereNotNull('consumed_at')
+            ->whereNull('preview_by_id')
+            ->orderBy('consumed_at')
+            ->get(['consumed_at'])
+            ->pluck('consumed_at');
+
+        return [
+            'count' => $consumed->count(),
+            'firstAt' => $consumed->first()?->toIso8601String(),
+            'lastAt' => $consumed->last()?->toIso8601String(),
         ];
     }
 
@@ -169,6 +193,38 @@ class ContactController extends Controller
                     'name' => $other->name,
                     'role' => $other->projects->first()?->pivot->role,
                 ])->all(),
+            // Was dieses Studio diesem Kunden einzeln vorgeschlagen hat, und
+            // woraus es waehlen kann. Beides nur aus dem, was im Portal
+            // angeboten wird — ein Vorschlag auf eine zurueckgezogene Leistung
+            // waere einer ins Leere.
+            'suggestions' => ServiceSuggestion::query()
+                ->where('contact_id', $contact->id)
+                ->with(['package', 'suggestedBy'])
+                ->get()
+                ->map(fn (ServiceSuggestion $suggestion) => [
+                    'id' => $suggestion->public_id,
+                    'package' => $suggestion->package->public_id,
+                    'name' => $suggestion->package->name,
+                    'note' => $suggestion->note,
+                    'author' => $suggestion->suggestedBy?->name,
+                    'suggestedOn' => $suggestion->created_at?->format('Y-m-d'),
+                    'live' => $suggestion->package->portal_offered,
+                ])->all(),
+            'offerablePackages' => Package::query()->portalOffered()->orderBy('name')
+                ->with('items')
+                ->get()
+                ->map(fn (Package $package) => [
+                    'id' => $package->public_id,
+                    'name' => $package->name,
+                    'price' => PackageData::fromModel($package)->price,
+                    'priceMode' => ($package->portal_price_mode ?? PortalPriceMode::Exact)->value,
+                    'requiresDate' => $package->portal_requires_date,
+                ])
+                ->all(),
+            // Wann dieser Kunde im Portal war und wie oft. Aus den
+            // eingelösten Links: eine Vorschau des Studios ist kein Besuch
+            // des Kunden und zählt deshalb nicht mit.
+            'portalLogins' => $this->portalLogins($contact),
             'portalAccessRevokedAt' => $contact->portal_access_revoked_at?->toIso8601String(),
             'canRevokePortalAccess' => $user?->can('revokePortalAccess', $contact) ?? false,
             'dsgvoErasedAt' => $contact->dsgvo_erased_at?->toIso8601String(),
