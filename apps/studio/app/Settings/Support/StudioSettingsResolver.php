@@ -65,6 +65,12 @@ class StudioSettingsResolver
         return $this->row()->vat_note;
     }
 
+    /** One of QuoteLayout's five values — see that enum for the closed domain the check constraint also enforces. */
+    public function quoteLayout(): string
+    {
+        return $this->row()->quote_layout;
+    }
+
     /**
      * T-09: the length ShootCalendar gives a shoot whose end_time is unset,
      * replacing the hardcoded addHours(2) that used to sit in that class

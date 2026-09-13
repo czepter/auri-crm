@@ -4,6 +4,9 @@ namespace App\Settings\Http\Controllers;
 
 use App\Concerns\AuthorizesStaffSettings;
 use App\Http\Controllers\Controller;
+use App\Quotes\Actions\RenderQuotePdf;
+use App\Quotes\Enums\QuoteLayout;
+use App\Quotes\Support\SampleQuoteData;
 use App\Settings\Data\StudioSettingsData;
 use App\Settings\Enums\FontPair;
 use App\Settings\Models\StudioSettings;
@@ -11,6 +14,7 @@ use App\Settings\Rules\ValidIban;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -218,6 +222,7 @@ class StudioSettingsController extends Controller
             'deposit_percentage' => ['required', 'integer', 'min:0', 'max:10000'],
             'widerruf_included' => ['required', 'boolean'],
             'widerruf_text' => ['nullable', 'string', 'max:5000'],
+            'quote_layout' => ['required', Rule::enum(QuoteLayout::class)],
             // T-12: the shared PDF shell App\Documents\Support\DocumentRenderer
             // wraps a Contract or Quote's resolved body in — this pane's the
             // one place either is set, rather than pasted into each template.
@@ -231,10 +236,32 @@ class StudioSettingsController extends Controller
         $settings->set('deposit_percentage', $validated['deposit_percentage'], $actor);
         $settings->set('widerruf_included', $validated['widerruf_included'], $actor);
         $settings->set('widerruf_text', $validated['widerruf_text'] ?? null, $actor);
+        $settings->set('quote_layout', $validated['quote_layout'], $actor);
         $settings->set('document_letterhead_html', $validated['document_letterhead_html'] ?? null, $actor);
         $settings->set('document_footer_html', $validated['document_footer_html'] ?? null, $actor);
 
         return back();
+    }
+
+    /**
+     * T-05 follow-up: the Layout radio in the Dokumente pane needs to show
+     * what each of the five App\Quotes\Enums\QuoteLayout cases actually
+     * renders like — with real markup, not the skeleton bars every other
+     * pane's DocumentPreview.vue shows. App\Quotes\Support\SampleQuoteData
+     * never touches the database, so this route needs no project or quote.
+     */
+    public function previewQuoteLayout(Request $request, RenderQuotePdf $render, StudioSettingsResolver $settings): HttpResponse
+    {
+        $this->authorizeSettings();
+
+        $validated = $request->validate([
+            'layout' => ['nullable', Rule::enum(QuoteLayout::class)],
+        ]);
+
+        $layout = isset($validated['layout']) ? QuoteLayout::from($validated['layout']) : null;
+        $sample = SampleQuoteData::build($settings);
+
+        return response($render->html($sample, $layout))->header('Content-Type', 'text/html; charset=utf-8');
     }
 
     /**
