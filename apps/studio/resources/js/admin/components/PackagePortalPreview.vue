@@ -43,7 +43,11 @@ const price = computed(() => {
         </h1>
       </section>
 
-      <div class="grid items-start gap-10 pt-10 min-[900px]:grid-cols-[minmax(0,1fr)_340px] min-[900px]:gap-x-12">
+      <!-- Ein Grid statt zwei Spalten: die Vorschau steckt in einer schmalen
+           Schiene, nicht auf der vollen Portalbreite, und der `min-[900px]`-
+           Umbruch der echten Seite fragt die Fensterbreite, nicht die eigene
+           — er hätte den Preisblock hier immer zu breit gemacht. -->
+      <div class="grid items-start gap-10 pt-10">
         <div>
           <p v-if="description" class="max-w-[54ch] text-[16px] leading-[1.55] text-muted-foreground">{{ description }}</p>
 
