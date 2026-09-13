@@ -144,7 +144,7 @@ class ExportContactDsgvoData
             ] : null,
             'shoots' => $project->shoots->map(fn ($shoot) => [
                 'id' => $shoot->public_id,
-                'kind' => $shoot->kind?->value,
+                'kind' => $shoot->kind,
                 'label' => $shoot->label,
                 'date' => $shoot->date?->toIso8601String(),
                 'venue' => $shoot->venue(),

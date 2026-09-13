@@ -5,7 +5,6 @@ namespace App\Crm\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Crm\Enums\DueAnchor;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Support\TaskAnchors;
@@ -36,7 +35,6 @@ class TaskTemplate extends Model
             'audience' => TaskAudience::class,
             'pipeline' => StagePipeline::class,
             'anchor' => DueAnchor::class,
-            'shoot_kind' => ShootKind::class,
             'is_active' => 'boolean',
         ];
     }
@@ -62,7 +60,7 @@ class TaskTemplate extends Model
     /** Null shoot_kind applies to every occasion. */
     public function appliesTo(Shoot $shoot): bool
     {
-        return $this->shoot_kind === null || $this->shoot_kind === $shoot->kind;
+        return $this->shoot_kind === null || mb_strtolower($this->shoot_kind) === mb_strtolower((string) $shoot->kind);
     }
 
     /**

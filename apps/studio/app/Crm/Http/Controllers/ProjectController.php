@@ -143,6 +143,7 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Show', [
             'header' => $this->header($project),
             'shoots' => ShootData::collect($this->shootsOf($project)),
+            'shootKinds' => Shoot::kindSuggestions(),
             // Open first and by due date, then the done ones: a card whose top
             // row is something already finished buries the work.
             'tasks' => TaskRowData::collect(
@@ -391,7 +392,7 @@ class ProjectController extends Controller
         return $project->shoots()->uncancelled()->get()
             ->map(fn (Shoot $shoot) => [
                 'value' => $shoot->public_id,
-                'label' => $shoot->label ?? $shoot->kind->label(),
+                'label' => $shoot->label ?? $shoot->kind,
             ])
             ->all();
     }
@@ -448,7 +449,7 @@ class ProjectController extends Controller
             'mailTemplates' => DocumentTemplate::query()
                 ->current()
                 ->ofType(DocumentTemplateType::Mail)
-                ->forShootKind($project->primaryShoot?->kind?->value)
+                ->forShootKind($project->primaryShoot?->kind)
                 ->orderBy('name')
                 ->get()
                 ->map(fn (DocumentTemplate $template) => MailTemplateData::fromModel($template, $project, $settings, $mergeData))

@@ -8,7 +8,6 @@ use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Lead;
 use App\Crm\Models\Project;
@@ -64,7 +63,7 @@ class MarketingScreenshotSeeder extends Seeder
 
             Shoot::create([
                 'project_id' => $project->id,
-                'kind' => $type === ProjectType::Wedding ? ShootKind::Wedding : ShootKind::Portrait,
+                'kind' => $type === ProjectType::Wedding ? 'Hochzeitstag' : 'Portrait',
                 'venue_name' => $venue,
                 'venue_city' => $city,
                 'is_primary' => true,
@@ -90,7 +89,7 @@ class MarketingScreenshotSeeder extends Seeder
 
         Shoot::create([
             'project_id' => $project->id,
-            'kind' => ShootKind::Wedding,
+            'kind' => 'Hochzeitstag',
             'date' => '2026-10-17',
             'call_time' => '14:00',
             'venue_name' => 'Gut Basthorst',

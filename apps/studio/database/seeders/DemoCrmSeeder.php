@@ -12,7 +12,6 @@ use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectType;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Enums\TaskAudience;
@@ -117,7 +116,7 @@ class DemoCrmSeeder extends Seeder
 
             Shoot::create([
                 'project_id' => $project->id,
-                'kind' => $projectType === ProjectType::Wedding ? ShootKind::Wedding : ShootKind::Portrait,
+                'kind' => $projectType === ProjectType::Wedding ? 'Hochzeitstag' : 'Portrait',
                 'date' => $date,
                 'venue_name' => $venue,
                 'venue_city' => $city,
@@ -224,7 +223,7 @@ class DemoCrmSeeder extends Seeder
     {
         foreach ([
             ['Ablauf bestätigen', TaskAudience::Client, -14, null],
-            ['Familienliste einholen', TaskAudience::Client, -7, ShootKind::Wedding],
+            ['Familienliste einholen', TaskAudience::Client, -7, 'Hochzeitstag'],
             ['Crew-Briefing verschicken', TaskAudience::Internal, -1, null],
         ] as [$title, $audience, $offset, $kind]) {
             TaskTemplate::updateOrCreate(
@@ -270,7 +269,7 @@ class DemoCrmSeeder extends Seeder
 
         $engagement = Shoot::create([
             'project_id' => $project->id,
-            'kind' => ShootKind::Engagement,
+            'kind' => 'Verlobungsshooting',
             'label' => 'Verlobungsshooting',
             'date' => now()->subDays(140)->format('Y-m-d'),
             'call_time' => '14:00',
@@ -282,7 +281,7 @@ class DemoCrmSeeder extends Seeder
 
         $registry = Shoot::create([
             'project_id' => $project->id,
-            'kind' => ShootKind::Reception,
+            'kind' => 'Feier',
             'label' => 'Standesamt',
             'date' => now()->subDays(37)->format('Y-m-d'),
             'call_time' => '11:00',
@@ -296,7 +295,7 @@ class DemoCrmSeeder extends Seeder
         // real state the screen has to render.
         $afterWedding = Shoot::create([
             'project_id' => $project->id,
-            'kind' => ShootKind::Portrait,
+            'kind' => 'Portrait',
             'label' => 'After-Wedding-Shooting',
             'date' => now()->addDays(26)->format('Y-m-d'),
             'sort_order' => 3,

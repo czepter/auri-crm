@@ -456,7 +456,6 @@ dayOffset: number,
 anchor: string,
 anchorLabel: string,
 shootKind: string | null,
-shootKindLabel: string | null,
 isActive: boolean,
 sortOrder: number,
 };
@@ -489,7 +488,6 @@ export type LeadStage = 'new' | 'contacted' | 'quote_sent' | 'quote_accepted' | 
 export type ProjectContactRole = 'primary' | 'partner' | 'payer' | 'planner' | 'vendor';
 export type ProjectFieldType = 'text' | 'textarea' | 'number' | 'select' | 'tags' | 'date' | 'boolean';
 export type ProjectType = 'wedding' | 'portrait' | 'other';
-export type ShootKind = 'engagement' | 'wedding' | 'reception' | 'portrait' | 'other';
 export type ShootStatus = 'requested' | 'booked' | 'prep' | 'shot' | 'culling' | 'editing' | 'ready' | 'delivered' | 'archived';
 export type StageAnchor = 'entry' | 'quote_sent' | 'quote_accepted' | 'contract_sent' | 'won' | 'booked' | 'shot' | 'ready' | 'delivered' | 'archived';
 export type StageColor = 'grey' | 'red' | 'amber' | 'olive' | 'green' | 'teal' | 'blue' | 'violet';
@@ -527,7 +525,6 @@ version: number,
 type: string,
 typeLabel: string,
 shootKind: string | null,
-shootKindLabel: string | null,
 };
 export type MailTemplateData = {
 id: string,

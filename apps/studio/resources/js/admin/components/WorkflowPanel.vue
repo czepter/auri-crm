@@ -8,7 +8,6 @@ import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTi
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Label } from '@/ui/label'
-import { NONE, fromOption, toOption } from '@/lib/select'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
 type Option = { value: string; label: string }
@@ -20,7 +19,7 @@ const props = defineProps<{
     pipeline: string
     audiences: Option[]
     anchors: Option[]
-    shootKinds: Option[]
+    shootKinds: string[]
     columns: Column[]
   } | null
 }>()
@@ -170,13 +169,10 @@ function meta(template: App.Crm.Data.TaskTemplateData) {
 
             <div class="flex min-w-0 flex-col gap-1.5">
               <Label for="workflow-kind">{{ $t('taskTemplates.shootKindField') }}</Label>
-              <Select :model-value="toOption(form.shoot_kind)" @update:model-value="(value) => (form.shoot_kind = fromOption(value))">
-                <SelectTrigger id="workflow-kind"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem :value="NONE">{{ $t('taskTemplates.shootKindAll') }}</SelectItem>
-                  <SelectItem v-for="kind in workflow.shootKinds" :key="kind.value" :value="kind.value">{{ kind.label }}</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input id="workflow-kind" v-model="form.shoot_kind" type="text" maxlength="255" list="workflow-shoot-kinds" :placeholder="$t('taskTemplates.shootKindAll')" />
+              <datalist id="workflow-shoot-kinds">
+                <option v-for="kind in workflow.shootKinds" :key="kind" :value="kind" />
+              </datalist>
             </div>
 
             <div class="flex min-w-0 flex-col gap-1.5">

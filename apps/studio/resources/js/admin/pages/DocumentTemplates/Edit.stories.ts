@@ -44,8 +44,7 @@ const meta = {
       version: 4,
       type: 'contract',
       typeLabel: 'Vertrag',
-      shootKind: 'wedding',
-      shootKindLabel: 'Trauung',
+      shootKind: 'Hochzeitstag',
     },
   },
 } satisfies Meta<typeof Edit>
@@ -68,7 +67,6 @@ export const AusAltemHtml: Story = {
       type: 'contract',
       typeLabel: 'Vertrag',
       shootKind: null,
-      shootKindLabel: null,
     },
   },
 }

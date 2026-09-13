@@ -7,7 +7,6 @@ import PageHead from '@/ui/page/PageHead.vue'
 import ConflictNote from '@/admin/components/ConflictNote.vue'
 import ProjectTypeahead from '@/admin/components/ProjectTypeahead.vue'
 import { Button } from '@/ui/button'
-import { ChoiceGroup } from '@/ui/choice-group'
 import { DatePicker } from '@/ui/date-picker'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
@@ -15,13 +14,13 @@ import { TimePicker } from '@/ui/time-picker'
 
 const props = defineProps<{
   project: App.Crm.Data.ProjectSuggestionData | null
-  kinds: { value: string; label: string }[]
+  kinds: string[]
 }>()
 
 const project = ref(props.project)
 
 const form = useForm({
-  kind: 'wedding',
+  kind: '',
   label: '',
   date: '',
   call_time: '',
@@ -65,8 +64,11 @@ function submit() {
           </Field>
 
           <template v-if="project">
-            <Field :label="$t('project.shootKind')">
-              <ChoiceGroup v-model="form.kind" :options="kinds" />
+            <Field v-slot="{ id }" :label="$t('project.shootKind')">
+              <Input :id="id" v-model="form.kind" type="text" maxlength="255" list="shoot-kinds" />
+              <datalist id="shoot-kinds">
+                <option v-for="kind in kinds" :key="kind" :value="kind" />
+              </datalist>
             </Field>
 
             <Field v-slot="{ id }" :label="$t('project.shootLabel')">

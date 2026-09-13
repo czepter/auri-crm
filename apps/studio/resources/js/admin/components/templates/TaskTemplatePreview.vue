@@ -2,12 +2,11 @@
 import { useForm, router } from '@inertiajs/vue3'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
+import { Input } from '@/ui/input'
 import { Label } from '@/ui/label'
-import { NONE, fromOption, toOption } from '@/lib/select'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
 const props = defineProps<{
-  shootKinds: { value: string; label: string }[]
+  shootKinds: string[]
   preview: { title: string; dueOn: string | null }[] | null
   previewDate: string | null
   previewShootKind: string | null
@@ -41,16 +40,10 @@ function run() {
 
       <div class="flex min-w-0 flex-col gap-1.5">
         <Label for="preview-kind">{{ $t('taskTemplates.shootKindField') }}</Label>
-        <Select
-          :model-value="toOption(form.preview_shoot_kind)"
-          @update:model-value="(value) => (form.preview_shoot_kind = fromOption(value))"
-        >
-          <SelectTrigger id="preview-kind"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem :value="NONE">{{ $t('taskTemplates.shootKindAll') }}</SelectItem>
-            <SelectItem v-for="kind in shootKinds" :key="kind.value" :value="kind.value">{{ kind.label }}</SelectItem>
-          </SelectContent>
-        </Select>
+        <Input id="preview-kind" v-model="form.preview_shoot_kind" type="text" maxlength="255" list="preview-shoot-kinds" :placeholder="$t('taskTemplates.shootKindAll')" />
+        <datalist id="preview-shoot-kinds">
+          <option v-for="kind in shootKinds" :key="kind" :value="kind" />
+        </datalist>
       </div>
 
       <Button class="[&[data-slot=button][data-variant=default]]:ml-0" type="submit" variant="outline" :disabled="!form.preview_date">

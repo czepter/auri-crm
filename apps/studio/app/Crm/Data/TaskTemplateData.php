@@ -24,7 +24,6 @@ class TaskTemplateData extends Data
         public string $anchor,
         public string $anchorLabel,
         public ?string $shootKind,
-        public ?string $shootKindLabel,
         public bool $isActive,
         public int $sortOrder,
     ) {}
@@ -42,8 +41,7 @@ class TaskTemplateData extends Data
             dayOffset: $template->day_offset,
             anchor: $template->anchor->value,
             anchorLabel: $template->anchor->label(),
-            shootKind: $template->shoot_kind?->value,
-            shootKindLabel: $template->shoot_kind?->label(),
+            shootKind: $template->shoot_kind,
             isActive: $template->is_active,
             sortOrder: $template->sort_order,
         );

@@ -180,7 +180,7 @@ class ProjectController extends Controller
             'venue' => $found->primaryShoot?->venue(),
             'shoots' => $found->shoots->map(fn (Shoot $shoot) => [
                 'id' => $shoot->public_id,
-                'title' => $shoot->label ?? $shoot->kind->label(),
+                'title' => $shoot->label ?? $shoot->kind,
                 'date' => $shoot->date?->format('Y-m-d'),
                 'callTime' => $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),
                 'venue' => $shoot->venue(),

@@ -3,7 +3,6 @@
 namespace App\Crm\Actions;
 
 use App\Crm\Enums\DueAnchor;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Project;
@@ -124,7 +123,7 @@ class ApplyTaskTemplates
      *
      * @return list<array{title: string, dueOn: ?string}>
      */
-    public function preview(CarbonImmutable $date, ?ShootKind $kind = null): array
+    public function preview(CarbonImmutable $date, ?string $kind = null): array
     {
         $shoot = new Shoot(['date' => $date, 'kind' => $kind]);
 

@@ -5,10 +5,10 @@ namespace App\Crm\Actions;
 use App\Crm\Data\TaskTemplateData;
 use App\Crm\Enums\DueAnchor;
 use App\Crm\Enums\HasLabel;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\ProjectType;
+use App\Crm\Models\Shoot;
 use App\Crm\Models\Stage;
 use App\Crm\Models\TaskTemplate;
 use App\Crm\Support\CrmVocabulary;
@@ -39,7 +39,7 @@ class WorkflowColumns
             'pipeline' => $pipeline->value,
             'audiences' => $this->options(TaskAudience::cases()),
             'anchors' => $this->options(DueAnchor::cases()),
-            'shootKinds' => $this->options(ShootKind::cases()),
+            'shootKinds' => Shoot::kindSuggestions(),
             'columns' => $this->vocabulary->ordered($pipeline)
                 ->map(fn (Stage $stage) => [
                     'stage' => $stage->key,

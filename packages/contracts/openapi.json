@@ -4269,7 +4269,8 @@
                                 "type": "object",
                                 "properties": {
                                     "kind": {
-                                        "$ref": "#/components/schemas/ShootKind"
+                                        "type": "string",
+                                        "maxLength": 255
                                     },
                                     "label": {
                                         "type": [
@@ -4989,18 +4990,6 @@
                     "name"
                 ],
                 "title": "SavePackage"
-            },
-            "ShootKind": {
-                "type": "string",
-                "description": "What kind of occasion a shoot is. Finer-grained than ProjectType: one wedding project routinely holds an engagement shoot, the wedding day and the reception, separated by as much as a year.\n",
-                "enum": [
-                    "engagement",
-                    "wedding",
-                    "reception",
-                    "portrait",
-                    "other"
-                ],
-                "title": "ShootKind"
             },
             "ShootReadData": {
                 "type": "object",

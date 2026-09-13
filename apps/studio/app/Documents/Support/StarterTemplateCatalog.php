@@ -2,7 +2,6 @@
 
 namespace App\Documents\Support;
 
-use App\Crm\Enums\ShootKind;
 use App\Documents\Enums\DocumentTemplateType;
 
 /**
@@ -144,7 +143,7 @@ class StarterTemplateCatalog
             'type' => DocumentTemplateType::Quote->value,
             'name' => 'Angebot — Hochzeit',
             'description' => 'Wie das allgemeine Angebot, mit Ablauf am Hochzeitstag und den üblichen enthaltenen Leistungen.',
-            'shootKind' => ShootKind::Wedding->value,
+            'shootKind' => 'Hochzeitstag',
             'blocks' => ['blocks' => [
                 self::header('Angebot {{ project.name }}'),
                 self::paragraph('Guten Tag {{ contact.name }},'),

@@ -6,7 +6,6 @@ import { Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTi
 import { Input } from '@/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Label } from '@/ui/label'
-import { NONE, fromOption, toOption } from '@/lib/select'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 
 type Kind = 'aufgaben' | 'fragebogen' | 'dokumente' | 'galerien'
@@ -15,7 +14,7 @@ const props = defineProps<{
   kinds: Kind[]
   kind: Kind | null
   audiences: { value: string; label: string }[]
-  shootKinds: { value: string; label: string }[]
+  shootKinds: string[]
   projectTypes: { value: string; label: string }[]
 }>()
 
@@ -132,16 +131,10 @@ function submit() {
 
           <div class="flex min-w-0 flex-col gap-1.5">
             <Label for="create-kind-shoot">{{ $t('taskTemplates.shootKindField') }}</Label>
-            <Select
-              :model-value="toOption(task.shoot_kind)"
-              @update:model-value="(value) => (task.shoot_kind = fromOption(value))"
-            >
-              <SelectTrigger id="create-kind-shoot"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem :value="NONE">{{ $t('taskTemplates.shootKindAll') }}</SelectItem>
-                <SelectItem v-for="entry in shootKinds" :key="entry.value" :value="entry.value">{{ entry.label }}</SelectItem>
-              </SelectContent>
-            </Select>
+            <Input id="create-kind-shoot" v-model="task.shoot_kind" type="text" maxlength="255" list="create-shoot-kinds" :placeholder="$t('taskTemplates.shootKindAll')" />
+            <datalist id="create-shoot-kinds">
+              <option v-for="entry in shootKinds" :key="entry" :value="entry" />
+            </datalist>
           </div>
 
           <div class="flex min-w-0 flex-col gap-1.5">

@@ -5,7 +5,6 @@ use App\Contracts\Models\Contract;
 use App\Contracts\Models\ContractSignature;
 use App\Crm\Enums\CrewRole;
 use App\Crm\Enums\LeadStage;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\CrewAssignment;
@@ -152,7 +151,7 @@ it('reads the lead stage in the header when no uncancelled shoot exists', functi
 
 it('adds a shoot to a project', function () {
     $this->post("/auftraege/{$this->project->public_id}/shootings", [
-        'kind' => ShootKind::Engagement->value,
+        'kind' => 'Verlobungsshooting',
         'label' => 'Verlobungsshooting',
         'date' => '2026-03-22',
         'call_time' => '14:00',
@@ -162,7 +161,7 @@ it('adds a shoot to a project', function () {
 
     $shoot = $this->project->shoots()->sole();
 
-    expect($shoot->kind)->toBe(ShootKind::Engagement)
+    expect($shoot->kind)->toBe('Verlobungsshooting')
         ->and($shoot->status->key)->toBe(ShootStatus::Requested->value)
         ->and($shoot->is_primary)->toBeFalse();
 });

@@ -36,7 +36,7 @@ class ShootReadData extends Data
         return new self(
             id: $shoot->public_id,
             projectId: $shoot->project->public_id,
-            kind: $shoot->kind->value,
+            kind: $shoot->kind,
             label: $shoot->label,
             date: $shoot->date?->format('Y-m-d'),
             callTime: $shoot->call_time === null ? null : substr((string) $shoot->call_time, 0, 5),

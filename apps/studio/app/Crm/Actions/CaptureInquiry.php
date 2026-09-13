@@ -4,7 +4,6 @@ namespace App\Crm\Actions;
 
 use App\Crm\Data\CaptureInquiryData;
 use App\Crm\Enums\ProjectContactRole;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Events\LeadCaptured;
@@ -178,17 +177,8 @@ class CaptureInquiry
         ]);
     }
 
-    /**
-     * The opening shoot of a project takes the project's own shape, where the
-     * two share a name. A studio's own type — "Elopement", "Neugeboren" — has
-     * no ShootKind of its own and opens as sonstige; the shoot's kind is
-     * editable on the project screen, and guessing it from the type's name
-     * would be wrong more often than blank is.
-     */
-    private function kindFor(ProjectType|string|null $type): ShootKind
+    private function kindFor(ProjectType|string|null $type): string
     {
-        $key = $type instanceof ProjectType ? $type->key : $type;
-
-        return ShootKind::tryFrom((string) $key) ?? ShootKind::Other;
+        return Shoot::kindFor(is_string($type) ? $this->stages->type($type) : $type);
     }
 }

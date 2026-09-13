@@ -5,7 +5,7 @@ import { header, shoots } from '../__stories__/fixtures'
 const engagement: App.Crm.Data.ShootData = {
     ...shoots[0],
     id: 's-rahn-verlobung',
-    kind: 'engagement',
+    kind: 'Verlobungsshooting',
     label: 'Verlobungsshooting',
     date: '2026-05-30',
     callTime: '17:00',
@@ -49,6 +49,7 @@ const meta = {
             { value: 'assistant', label: 'Assistenz' },
         ],
         soloStudio: false,
+        shootKinds: ['Verlobungsshooting', 'Hochzeitstag'],
     },
 } satisfies Meta<typeof Shoots>
 

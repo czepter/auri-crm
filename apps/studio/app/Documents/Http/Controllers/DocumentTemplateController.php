@@ -2,8 +2,8 @@
 
 namespace App\Documents\Http\Controllers;
 
-use App\Crm\Enums\ShootKind;
 use App\Crm\Models\Project;
+use App\Crm\Models\Shoot;
 use App\Documents\Data\DocumentTemplateData;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
@@ -42,7 +42,7 @@ class DocumentTemplateController extends Controller
 
         return Inertia::render('DocumentTemplates/Create', [
             'types' => $this->typeOptions(),
-            'shootKinds' => $this->shootKindOptions(),
+            'shootKinds' => Shoot::kindSuggestions(),
             // Keyed by type: the create screen's type select changes the palette
             // without a round trip, and there are three small lists in total.
             'palettes' => collect(DocumentTemplateType::cases())
@@ -74,7 +74,7 @@ class DocumentTemplateController extends Controller
                 }
             }],
             'type' => ['required', Rule::enum(DocumentTemplateType::class)],
-            'shoot_kind' => ['nullable', Rule::enum(ShootKind::class)],
+            'shoot_kind' => ['nullable', 'string', 'max:255'],
             'blocks' => ['nullable', 'array'],
             'blocks.blocks' => ['nullable', 'array'],
             'blocks.blocks.*.type' => ['required_with:blocks.blocks', 'string'],
@@ -207,14 +207,6 @@ class DocumentTemplateController extends Controller
     {
         return collect(DocumentTemplateType::cases())
             ->map(fn (DocumentTemplateType $type) => ['value' => $type->value, 'label' => $type->label()])
-            ->all();
-    }
-
-    /** Same shape TaskTemplateController already builds for the identical select. */
-    private function shootKindOptions(): array
-    {
-        return collect(ShootKind::cases())
-            ->map(fn (ShootKind $kind) => ['value' => $kind->value, 'label' => $kind->label()])
             ->all();
     }
 

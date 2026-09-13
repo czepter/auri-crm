@@ -55,7 +55,7 @@ class DateConflictData extends Data
             projectId: $shoot->project->public_id,
             projectName: $shoot->project->name,
             venue: $shoot->venue(),
-            kind: $shoot->kind->label(),
+            kind: $shoot->kind,
             label: null,
             // Read off the shoot the query already loaded, not off the job:
             // `requested` is precisely "somebody asked for this day", and

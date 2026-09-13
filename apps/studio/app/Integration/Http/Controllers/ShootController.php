@@ -3,7 +3,6 @@
 namespace App\Integration\Http\Controllers;
 
 use App\Crm\Actions\AdvanceShootStatus;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -41,7 +40,7 @@ class ShootController extends Controller
     public function store(Request $request, Project $project): JsonResponse
     {
         $validated = $request->validate([
-            'kind' => ['required', Rule::enum(ShootKind::class)],
+            'kind' => ['required', 'string', 'max:255'],
             'label' => ['nullable', 'string', 'max:255'],
             'date' => ['nullable', 'date'],
             'call_time' => ['nullable', 'date_format:H:i'],

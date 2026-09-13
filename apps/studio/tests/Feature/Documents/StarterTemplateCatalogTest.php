@@ -129,7 +129,7 @@ it('offers the wedding quote for weddings and the generic one always', function 
     $quotes = collect(StarterTemplateCatalog::for(DocumentTemplateType::Quote));
 
     expect($quotes->firstWhere('key', 'quote-generic')['shootKind'])->toBeNull()
-        ->and($quotes->firstWhere('key', 'quote-wedding')['shootKind'])->toBe('wedding');
+        ->and($quotes->firstWhere('key', 'quote-wedding')['shootKind'])->toBe('Hochzeitstag');
 });
 
 it('repeats neither the signature nor the legal footer in a mail starter', function () {

@@ -16,7 +16,7 @@ import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/type
 
 const props = defineProps<{
   types: { value: string; label: string }[]
-  shootKinds: { value: string; label: string }[]
+  shootKinds: string[]
   palettes: Record<string, PaletteEntry[]>
   mergeFields: { path: string; sample: string }[]
   starters: Record<string, Starter[]>
@@ -119,16 +119,10 @@ function submit() {
             </div>
             <div v-if="chosen !== null" class="flex min-w-0 flex-col gap-1.5 max-w-[240px]">
               <Label for="shoot_kind">{{ $t('documentTemplates.shootKind') }}</Label>
-              <!-- reka-ui reserves the empty string for "nothing selected", so the
-                   "Beliebig" choice needs the NONE stand-in while the model keeps
-                   storing '' — see resources/js/lib/select.ts. -->
-              <Select :model-value="toOption(form.shoot_kind)" @update:model-value="(value) => (form.shoot_kind = fromOption(value))">
-                <SelectTrigger id="shoot_kind"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem :value="NONE">{{ $t('documentTemplates.shootKindAny') }}</SelectItem>
-                  <SelectItem v-for="kind in shootKinds" :key="kind.value" :value="kind.value">{{ kind.label }}</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input id="shoot_kind" v-model="form.shoot_kind" type="text" maxlength="255" list="shoot-kinds" :placeholder="$t('documentTemplates.shootKindAny')" />
+              <datalist id="shoot-kinds">
+                <option v-for="kind in shootKinds" :key="kind" :value="kind" />
+              </datalist>
             </div>
             <div v-if="chosen !== null" class="flex min-w-0 flex-col gap-1.5 max-w-[240px]">
               <Label for="name">{{ $t('documentTemplates.name') }}</Label>

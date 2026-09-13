@@ -37,7 +37,7 @@ const VERTRAG_STARTER = {
   key: 'wedding-contract',
   name: 'Fotovertrag Hochzeit',
   description: 'Leistungen, Zahlungsplan, Nutzungsrechte, Ausfallstaffel.',
-  shootKind: 'wedding',
+  shootKind: 'Hochzeitstag',
   blocks: {
     blocks: [
       { type: 'header', data: { text: 'Fotovertrag', level: 1 } },
@@ -60,10 +60,7 @@ const meta = {
       { value: 'invoice', label: 'Rechnung' },
       { value: 'mail', label: 'E-Mail' },
     ],
-    shootKinds: [
-      { value: 'wedding', label: 'Trauung' },
-      { value: 'portrait', label: 'Porträt' },
-    ],
+    shootKinds: ['Hochzeitstag', 'Portrait'],
     palettes: { contract: VERTRAG, mail: MAIL },
     mergeFields: MERGE_FIELDS,
     starters: {
@@ -73,7 +70,7 @@ const meta = {
           key: 'portrait-contract',
           name: 'Fotovertrag Porträt',
           description: 'Kurzfassung für Einzeltermine.',
-          shootKind: 'portrait',
+          shootKind: 'Portrait',
           blocks: {
             blocks: [
               { type: 'header', data: { text: 'Fotovertrag', level: 1 } },

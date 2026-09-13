@@ -6,7 +6,6 @@ use App\Catalog\Models\Package;
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\ProjectContactRole;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Events\LeadCaptured;
@@ -80,7 +79,7 @@ class RequestService
             if ($package->portal_requires_date) {
                 Shoot::create([
                     'project_id' => $project->id,
-                    'kind' => ShootKind::tryFrom((string) $package->project_type_key) ?? ShootKind::Other,
+                    'kind' => Shoot::kindFor($package->project_type_key === null ? null : $this->stages->type($package->project_type_key)),
                     'date' => $date,
                     'venue_name' => $venue,
                     'status' => $this->stages->anchored(StagePipeline::Project, StageAnchor::Entry),

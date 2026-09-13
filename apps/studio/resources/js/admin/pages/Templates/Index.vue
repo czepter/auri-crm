@@ -38,7 +38,7 @@ const props = defineProps<{
   documentUse: Record<string, number>
   galleryPresets: App.Gallery.Data.GalleryPresetData[]
   audiences: { value: string; label: string }[]
-  shootKinds: { value: string; label: string }[]
+  shootKinds: string[]
   projectTypes: { value: string; label: string }[]
   selected: string | null
   previewDate: string | null
@@ -62,7 +62,7 @@ const rows = computed<Record<Kind, Row[]>>(() => ({
   aufgaben: props.taskTemplates.map((template) => ({
     id: template.id,
     name: template.title,
-    meta: [template.audienceLabel, template.shootKindLabel ?? t('taskTemplates.shootKindAll'), offset(template.dayOffset)].join(' · '),
+    meta: [template.audienceLabel, template.shootKind ?? t('taskTemplates.shootKindAll'), offset(template.dayOffset)].join(' · '),
     note: '',
     active: template.isActive,
   })),
@@ -77,7 +77,7 @@ const rows = computed<Record<Kind, Row[]>>(() => ({
   dokumente: props.documentTemplates.map((template) => ({
     id: template.id,
     name: template.name,
-    meta: [template.typeLabel, template.shootKindLabel, t('templates.version', { version: template.version })]
+    meta: [template.typeLabel, template.shootKind, t('templates.version', { version: template.version })]
       .filter(Boolean).join(' · '),
     note: t('templates.inUse', { count: props.documentUse[template.id] ?? 0 }),
     active: true,

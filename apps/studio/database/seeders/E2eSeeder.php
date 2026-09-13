@@ -10,7 +10,6 @@ use App\Contracts\Models\ContractSignature;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectFieldType;
 use App\Crm\Enums\ProjectType;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\ShootStatus;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormField;
@@ -203,7 +202,7 @@ class E2eSeeder extends Seeder
 
             Shoot::create([
                 'project_id' => $project->id,
-                'kind' => ShootKind::Wedding,
+                'kind' => 'Hochzeitstag',
                 'date' => '2026-06-14',
                 'venue_name' => 'Gut Basthorst',
                 'venue_city' => 'Basthorst',
@@ -322,7 +321,7 @@ class E2eSeeder extends Seeder
 
         Shoot::create([
             'project_id' => $project->id,
-            'kind' => ShootKind::Wedding,
+            'kind' => 'Hochzeitstag',
             'date' => '2026-09-05',
             'venue_name' => 'Hof Eggers',
             'venue_city' => 'Winsen',

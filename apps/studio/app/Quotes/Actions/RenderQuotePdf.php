@@ -48,7 +48,7 @@ class RenderQuotePdf
         $template = DocumentTemplate::query()
             ->current()
             ->ofType(DocumentTemplateType::Quote)
-            ->forShootKind($project->primaryShoot?->kind?->value)
+            ->forShootKind($project->primaryShoot?->kind)
             ->orderBy('id')
             ->first();
 

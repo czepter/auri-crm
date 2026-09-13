@@ -249,11 +249,11 @@ edited template never touches a PDF already handed to a client.
 
 ## Variants per shoot kind
 
-A template family that needs different wording per `App\Crm\Enums\ShootKind`
+A template family that needs different wording per shoot kind
 (e.g. a wedding contract reading differently from a portrait one) gets its
 own row per kind — `shoot_kind` set — rather than one template full of
 conditionals. `DocumentTemplate::scopeForShootKind()` returns every generic
-(no shoot kind) template plus whichever variant matches; the project contract
+(no shoot kind) template plus whichever variant matches, compared case-insensitively since the kind is free text; the project contract
 tab offers exactly that set, filtered to the project's own primary shoot's
 kind.
 

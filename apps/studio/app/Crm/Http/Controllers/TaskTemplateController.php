@@ -3,7 +3,6 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Crm\Enums\DueAnchor;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Enums\TaskAudience;
@@ -102,7 +101,7 @@ class TaskTemplateController extends Controller
             'stage' => ['required', 'string', new StageOfPipeline($request->input('pipeline'))],
             'day_offset' => ['required', 'integer'],
             'anchor' => ['required', Rule::enum(DueAnchor::class)],
-            'shoot_kind' => ['nullable', Rule::enum(ShootKind::class)],
+            'shoot_kind' => ['nullable', 'string', 'max:255'],
             'is_active' => ['required', 'boolean'],
             'sort_order' => ['required', 'integer', 'min:0'],
         ]);

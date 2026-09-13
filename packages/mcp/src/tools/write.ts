@@ -265,8 +265,6 @@ function registerReopenLead(server: McpServer, clientFor: ApiClientFactory): voi
   )
 }
 
-const shootKindEnum = ['engagement', 'wedding', 'reception', 'portrait', 'other'] as const
-
 /**
  * A second shooting day on a project that already has one. `capture_lead`
  * makes exactly one shoot out of its `date`, so a wedding split over two days
@@ -281,7 +279,7 @@ function registerCreateShoot(server: McpServer, clientFor: ApiClientFactory): vo
         'Add a shooting day to a project. The first one already exists — capture_lead makes it out of the inquiry date — so this is the second and every one after it: the Feier of a wedding split across two days, an Engagement-Shooting ahead of it, a second portrait session. Leave `date` empty for a day that is agreed but not dated.',
       inputSchema: {
         project: z.string().describe('The project public id'),
-        kind: z.enum(shootKindEnum),
+        kind: z.string().max(255),
         label: z.string().max(255).nullish().describe('What this day is called on the project screen, where the kind alone is ambiguous'),
         date: z.string().nullish().describe('YYYY-MM-DD'),
         call_time: z.string().nullish().describe('HH:MM'),

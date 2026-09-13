@@ -47,7 +47,7 @@ final class TaskAnchors
 
             $options[] = [
                 'value' => 'shoot:'.$shoot->public_id,
-                'label' => $shoot->label ?? $shoot->kind->label(),
+                'label' => $shoot->label ?? $shoot->kind,
                 'group' => 'shoot',
                 'on' => $shoot->date?->format('Y-m-d'),
             ];
@@ -62,7 +62,7 @@ final class TaskAnchors
 
                 $options[] = [
                     'value' => $key,
-                    'label' => ($shoot->label ?? $shoot->kind->label()).' · '.$status->name,
+                    'label' => ($shoot->label ?? $shoot->kind).' · '.$status->name,
                     'group' => $day === null ? 'pending' : 'reached',
                     'on' => $day?->format('Y-m-d'),
                 ];
@@ -129,7 +129,7 @@ final class TaskAnchors
             return null;
         }
 
-        $label = $shoot->label ?? $shoot->kind->label();
+        $label = $shoot->label ?? $shoot->kind;
 
         return isset($parts[2])
             ? $label.' · '.(app(CrmVocabulary::class)->byKey(StagePipeline::Project, $parts[2])?->name ?? $parts[2])

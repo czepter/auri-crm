@@ -7,7 +7,6 @@ use App\Automation\Enums\AutomationRunStatus;
 use App\Automation\Models\AutomationRule;
 use App\Automation\Models\AutomationRun;
 use App\Crm\Enums\ProjectContactRole;
-use App\Crm\Enums\ShootKind;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
@@ -30,14 +29,14 @@ it('fires a per-shoot rule once per matching shoot, anchored to that shoot', fun
 
     // Due in 7 days — matches the rule below.
     $engagement = Shoot::factory()->for($project)->create([
-        'kind' => ShootKind::Engagement,
+        'kind' => 'Verlobungsshooting',
         'date' => $today->addDays(7)->toDateString(),
         'is_primary' => false,
     ]);
 
     // Due in 20 days — does not match.
     Shoot::factory()->for($project)->create([
-        'kind' => ShootKind::Wedding,
+        'kind' => 'Hochzeitstag',
         'date' => $today->addDays(20)->toDateString(),
         'is_primary' => true,
     ]);
@@ -69,13 +68,13 @@ it('fires a primary-shoot rule anchored to the project, not the shoot, on a mult
     // The engagement shoot sits 7 days out — a per_shoot rule would catch
     // it, but this rule only watches the primary shoot, 20 days out.
     Shoot::factory()->for($project)->create([
-        'kind' => ShootKind::Engagement,
+        'kind' => 'Verlobungsshooting',
         'date' => $today->addDays(7)->toDateString(),
         'is_primary' => false,
     ]);
 
     $wedding = Shoot::factory()->for($project)->create([
-        'kind' => ShootKind::Wedding,
+        'kind' => 'Hochzeitstag',
         'date' => $today->addDays(20)->toDateString(),
         'is_primary' => true,
     ]);

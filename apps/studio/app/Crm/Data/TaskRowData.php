@@ -61,7 +61,7 @@ class TaskRowData extends Data
             // Which occasion it hangs off, so a project with four shoots can
             // tell its four briefings apart.
             shootId: $task->shoot?->public_id,
-            shootLabel: $task->shoot?->label ?? $task->shoot?->kind->label(),
+            shootLabel: $task->shoot?->label ?? $task->shoot?->kind,
             audience: $task->audience->value,
             audienceLabel: $task->audience->label(),
             completedOn: $task->completed_at?->format('Y-m-d'),

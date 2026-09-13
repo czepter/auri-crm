@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<title>Ablauf · {{ $shoot->label ?? $shoot->kind->label() }}</title>
+<title>Ablauf · {{ $shoot->label ?? $shoot->kind }}</title>
 <style>
     body { font-family: Helvetica, Arial, sans-serif; color: #1a1a1a; margin: 40px; }
     h1 { font-size: 18px; margin: 0 0 4px; letter-spacing: -0.01em; }
@@ -16,7 +16,7 @@
 </style>
 </head>
 <body>
-    <h1>{{ $shoot->label ?? $shoot->kind->label() }}</h1>
+    <h1>{{ $shoot->label ?? $shoot->kind }}</h1>
     <div class="meta">{{ $shoot->project->name }} &middot; {{ $shoot->date->format('d.m.Y') }}</div>
 
     <table>

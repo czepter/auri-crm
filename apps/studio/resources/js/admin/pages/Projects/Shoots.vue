@@ -26,11 +26,12 @@ const props = defineProps<{
   crewAvailability: Record<string, App.Crm.Data.CrewCandidateData[]>
   crewRoles: { value: string; label: string }[]
   soloStudio: boolean
+  shootKinds: string[]
 }>()
 
 const adding = ref(false)
 const form = useForm({
-  kind: 'portrait',
+  kind: '',
   entered_at: '',
   label: '',
   date: '',
@@ -66,23 +67,11 @@ function removeTimelineEntry(entry: App.Crm.Data.TimelineEntryData) {
   router.delete(`/ablauf/${entry.id}`, { preserveScroll: true })
 }
 
-const kinds = [
-  { value: 'engagement', label: 'Verlobung' },
-  { value: 'wedding', label: 'Hochzeit' },
-  { value: 'reception', label: 'Empfang' },
-  { value: 'portrait', label: 'Portrait' },
-  { value: 'other', label: 'Sonstiges' },
-]
-
 const today = new Date().toISOString().slice(0, 10)
-
-function kindLabel(kind: string) {
-  return kinds.find((entry) => entry.value === kind)?.label ?? kind
-}
 
 function metrics(shoot: App.Crm.Data.ShootData) {
   return [
-    { label: 'project.shootKind', value: kindLabel(shoot.kind) },
+    { label: 'project.shootKind', value: shoot.kind },
     { label: 'project.callTime', value: shoot.callTime ?? '—' },
     { label: 'project.endTime', value: shoot.endTime ?? '—' },
     { label: 'project.venueName', value: shoot.venue ?? '—' },
@@ -230,16 +219,10 @@ const TONE: Record<string, string> = {
                 <form id="shoot-create-form" class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-x-6 gap-y-4" @submit.prevent="create">
                   <div class="flex min-w-0 flex-col gap-1.5">
                     <Label for="kind">{{ $t('project.shootKind') }}</Label>
-                    <Select :model-value="form.kind" @update:model-value="(value) => (form.kind = String(value))">
-                      <SelectTrigger id="kind">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem v-for="kind in kinds" :key="kind.value" :value="kind.value">
-                          {{ kind.label }}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Input id="kind" v-model="form.kind" type="text" maxlength="255" list="shoot-kinds" />
+                    <datalist id="shoot-kinds">
+                      <option v-for="kind in shootKinds" :key="kind" :value="kind" />
+                    </datalist>
                   </div>
 
                   <div class="flex min-w-0 flex-col gap-1.5">
@@ -320,7 +303,7 @@ const TONE: Record<string, string> = {
           <Card
             v-for="shoot in visible"
             :key="shoot.id"
-            :title="shoot.label ?? kindLabel(shoot.kind)"
+            :title="shoot.label ?? shoot.kind"
             :summary="summary(shoot)"
             :default-open="shoot.date === null || shoot.date >= today"
           >

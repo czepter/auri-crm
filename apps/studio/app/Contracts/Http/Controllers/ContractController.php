@@ -67,7 +67,7 @@ class ContractController extends Controller
                 (new DeriveProjectPosition)($project),
             ),
             'templates' => DocumentTemplate::current()->ofType(DocumentTemplateType::Contract)
-                ->forShootKind($project->primaryShoot?->kind?->value)
+                ->forShootKind($project->primaryShoot?->kind)
                 ->orderBy('name')->get()
                 ->map(fn (DocumentTemplate $t) => ['value' => $t->public_id, 'label' => "{$t->name} · v{$t->version}"])
                 ->values(),

@@ -75,7 +75,7 @@ class DocumentTemplate extends Model
             $query->whereNull('shoot_kind');
 
             if ($shootKind !== null) {
-                $query->orWhere('shoot_kind', $shootKind);
+                $query->orWhereRaw('lower(shoot_kind) = ?', [mb_strtolower($shootKind)]);
             }
         });
     }
