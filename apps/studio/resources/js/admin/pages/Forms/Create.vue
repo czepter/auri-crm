@@ -25,6 +25,10 @@ const props = defineProps<{
 const project = ref(props.project)
 
 watch(project, (chosen) => {
+  if (chosen && !props.formTemplates.length) {
+    return start('')
+  }
+
   router.get('/frageboegen/neu', chosen ? { projekt: chosen.id } : {}, { preserveState: true, replace: true })
 })
 
