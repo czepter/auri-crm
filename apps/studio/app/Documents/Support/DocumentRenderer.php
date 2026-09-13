@@ -138,48 +138,62 @@ class DocumentRenderer
           .doc-pagebreak { break-after: page; page-break-after: always; }
 
           /* Angebot-Drucklayouts — je ein Block pro App\Quotes\Enums\
-             QuoteLayout-Fall, Referenzmarkup in QuoteLayoutSample.vue. */
+             QuoteLayout-Fall, Referenzmarkup in QuoteLayoutSample.vue. Das
+             Seitenpolster (padding auf dem jeweiligen Wurzel-div) ist hier
+             genau das der Vorlage — ohne das sitzt der Inhalt an der Kante
+             der Vorschau statt auf einem Blatt Papier. */
+          .doc-layout-classic { padding: 48pt 54pt 30pt; }
           .doc-layout-classic .dlc-head { display: flex; justify-content: space-between; align-items: flex-start; }
           .doc-layout-classic .dlc-from { font-size: 8.5pt; color: #6B6B6B; margin-bottom: 6pt; }
-          .doc-layout-classic .dlc-recipient { font-weight: 600; }
+          .doc-layout-classic .dlc-recipient { font-weight: 600; margin-top: 4pt; }
           .doc-layout-classic .dlc-meta { border-collapse: collapse; }
           .doc-layout-classic .dlc-meta td { padding: 2pt 0; font-size: 9pt; }
           .doc-layout-classic .dlc-meta td:first-child { color: #6B6B6B; padding-right: 16pt; }
           .doc-layout-classic .dlc-meta td:last-child { text-align: right; }
           .doc-layout-classic .dlc-title { font-size: 12pt; font-weight: 700; padding-bottom: 8pt; }
+          .doc-layout-classic .doc-table { margin-top: 30pt; }
           .doc-layout-classic .dlc-summary { width: 180pt; margin-left: auto; margin-top: 6pt; }
           .doc-layout-classic .dlc-summary td:last-child { text-align: right; }
           .doc-layout-classic .dlc-total td { border-top: 1pt solid #191919; padding-top: 6pt; font-weight: 700; }
 
-          .doc-layout-minimal .dlm-head { display: flex; justify-content: space-between; font-size: 9pt; color: #6B6B6B; margin-bottom: 10pt; }
-          .doc-layout-minimal .dlm-to { font-size: 9.5pt; color: #6B6B6B; margin-bottom: 12pt; }
-          .doc-layout-minimal .dlm-table { width: 100%; border-collapse: collapse; }
+          .doc-layout-minimal { padding: 60pt 60pt 34pt; max-width: 380pt; margin: 0 auto; }
+          .doc-layout-minimal .dlm-head { display: flex; justify-content: space-between; font-size: 9pt; color: #6B6B6B; margin: 32pt 0 14pt; }
+          .doc-layout-minimal .dlm-to { font-size: 9.5pt; color: #6B6B6B; margin-bottom: 16pt; }
+          .doc-layout-minimal .dlm-table { width: 100%; border-collapse: collapse; margin-top: 20pt; }
           .doc-layout-minimal .dlm-table td { padding: 8pt 0; vertical-align: top; }
+          .doc-layout-minimal .dlm-table tr + tr td { border-top: .75pt solid #F0F0EE; }
           .doc-layout-minimal .dlm-table td:last-child { text-align: right; white-space: nowrap; padding-left: 12pt; }
           .doc-layout-minimal .dlm-desc { font-size: 8.5pt; color: #6B6B6B; }
-          .doc-layout-minimal .dlm-total td { border-top: 1pt solid #191919; font-weight: 600; }
+          .doc-layout-minimal .dlm-total td { border-top: 1pt solid #191919 !important; font-weight: 600; padding-top: 9pt !important; }
           .doc-layout-minimal .dlm-grand { font-weight: 700; }
 
+          .doc-layout-letter { padding: 42pt 54pt 30pt; background: #FFFEFC; }
           .doc-layout-letter .dll-top { display: flex; justify-content: space-between; font-size: 8pt; color: #6B6B6B; }
-          .doc-layout-letter .dll-title { font-family: 'Hanken Grotesk', serif; font-size: 22pt; font-weight: 500; margin: 12pt 0 3pt; }
-          .doc-layout-letter .dll-sub { font-size: 8pt; color: #6B6B6B; margin-bottom: 14pt; }
-          .doc-layout-letter .dll-to { font-size: 9pt; color: #6B6B6B; margin-bottom: 10pt; }
+          .doc-layout-letter .dll-title { font-family: 'Hanken Grotesk', serif; font-size: 22pt; font-weight: 500; margin: 16pt 0 3pt; }
+          .doc-layout-letter .dll-sub { font-size: 8pt; color: #6B6B6B; margin-bottom: 22pt; }
+          .doc-layout-letter .dll-to { font-size: 9pt; color: #6B6B6B; margin-bottom: 16pt; }
+          .doc-layout-letter .doc-table { margin-top: 16pt; }
           .doc-layout-letter .dll-total td { border-top: 1pt solid #191919; font-weight: 700; }
 
-          .doc-layout-header_band .dhb-band { background: #1C6870; color: #fff; padding: 14pt 0; display: flex; justify-content: space-between; align-items: flex-end; margin: 0 0 12pt; }
+          .doc-layout-header_band .dhb-band { background: #1C6870; color: #fff; padding: 20pt 54pt; display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 18pt; }
           .doc-layout-header_band .dhb-band-title { font-size: 14pt; font-weight: 700; text-align: right; }
-          .doc-layout-header_band .dhb-meta-row { display: flex; gap: 14pt; font-size: 8pt; color: #6B6B6B; padding-bottom: 8pt; border-bottom: 0.75pt solid #E9E9E7; margin-bottom: 10pt; }
-          .doc-layout-header_band .dhb-to { margin-bottom: 12pt; }
-          .doc-layout-header_band .dhb-summary { width: 200pt; margin-left: auto; margin-top: 8pt; border: 0.75pt solid #E9E9E7; padding: 8pt 10pt; }
+          .doc-layout-header_band .dhb-body { padding: 0 54pt 30pt; }
+          .doc-layout-header_band .dhb-meta-row { display: flex; gap: 14pt; font-size: 8pt; color: #6B6B6B; padding-bottom: 8pt; border-bottom: 0.75pt solid #E9E9E7; margin-bottom: 14pt; }
+          .doc-layout-header_band .dhb-to { margin-bottom: 16pt; }
+          .doc-layout-header_band .doc-table { margin-top: 16pt; }
+          .doc-layout-header_band .dhb-summary { width: 200pt; margin-left: auto; margin-top: 10pt; border: 0.75pt solid #E9E9E7; padding: 8pt 10pt; }
           .doc-layout-header_band .dhb-summary td:last-child { text-align: right; }
           .doc-layout-header_band .dhb-total td { border-top: 1pt solid #1C6870; font-weight: 700; color: #1C6870; }
 
-          .doc-layout-structured .dst-head { text-align: right; font-size: 12pt; font-weight: 700; margin-bottom: 10pt; }
-          .doc-layout-structured .dst-cards { display: flex; gap: 10pt; margin-bottom: 10pt; }
-          .doc-layout-structured .dst-card { flex: 1; border: 0.75pt solid #DCDAD6; padding: 8pt 10pt; margin-bottom: 8pt; }
+          .doc-layout-structured { padding: 42pt 48pt 24pt; }
+          .doc-layout-structured .dst-head { text-align: right; font-size: 12pt; font-weight: 700; margin-bottom: 14pt; }
+          .doc-layout-structured .dst-cards { display: flex; gap: 10pt; margin-bottom: 12pt; }
+          .doc-layout-structured .dst-card { flex: 1; border: 0.75pt solid #DCDAD6; padding: 8pt 10pt; margin-bottom: 10pt; }
           .doc-layout-structured .dst-label { font-size: 7pt; font-weight: 600; text-transform: uppercase; color: #6B6B6B; margin-bottom: 4pt; }
           .doc-layout-structured .dst-meta-grid { display: grid; grid-template-columns: auto 1fr; gap: 2pt 10pt; font-size: 9pt; }
           .doc-layout-structured .dst-items { padding: 0; }
+          .doc-layout-structured .dst-items .doc-table { margin: 0; }
+          .doc-layout-structured .dst-summary { margin-top: 12pt; }
           .doc-layout-structured .dst-summary td:last-child { text-align: right; }
           .doc-layout-structured .dst-total td { border-top: 1pt solid #191919; font-weight: 700; }
         </style>

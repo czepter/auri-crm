@@ -3,6 +3,9 @@
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Models\Quote;
 use App\Settings\Support\StudioSettingsResolver;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
 
 it('prints the quote number and Gueltig-bis date under the classic layout', function () {
     [$user, $project] = studioWithProject();

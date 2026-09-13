@@ -2,6 +2,9 @@
 
 use App\Quotes\Models\Quote;
 use App\Settings\Support\StudioSettingsResolver;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
 
 it('previews a chosen layout without persisting anything', function () {
     [$user, $project] = studioWithProject();

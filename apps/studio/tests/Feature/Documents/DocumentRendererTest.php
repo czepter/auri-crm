@@ -3,6 +3,9 @@
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Support\DocumentRenderer;
 use App\Settings\Support\StudioSettingsResolver;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
 
 it('ships css for all five quote layout wrappers', function () {
     [$user, $project] = studioWithProject();

@@ -1,6 +1,9 @@
 <?php
 
 use App\Settings\Support\StudioSettingsResolver;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
 
 it('defaults quote_layout to classic', function () {
     [$user, $project] = studioWithProject();
