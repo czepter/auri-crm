@@ -31,7 +31,7 @@ function choose(kind: string, id: string) {
     const item = props.catalogItems.find((entry) => entry.id === id)
     emit('insert', item ? [itemRow(item)] : [])
   } else {
-    emit('insert', [{ title: term.value.trim(), description: '', quantity: 1, unitPrice: '', discount: '', selectable: false, selected: false, outcome: '', hasImage: false, remember: false }])
+    emit('insert', [{ title: term.value.trim(), description: '', quantity: 1, unitPrice: '', discount: '', selectable: false, selected: false, outcome: '', hasImage: false }])
   }
 
   term.value = ''
@@ -41,7 +41,8 @@ function choose(kind: string, id: string) {
 <template>
   <!-- ignore-filter: gefiltert wird in insertOptions(), damit Rangfolge und die
        Gruppe "Neu" prüfbar bleiben statt in der Bibliothek zu stecken. -->
-  <Combobox ignore-filter>
+  <!-- :model-value="null": die Auswahl ist ein Befehl, kein Wert — sonst schreibt Reka "new:new" ins Suchfeld. -->
+  <Combobox ignore-filter :model-value="null">
     <ComboboxAnchor>
       <ComboboxInput v-model="term" :placeholder="$t('quotes.insert')" />
     </ComboboxAnchor>

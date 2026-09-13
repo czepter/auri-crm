@@ -144,7 +144,6 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
           v-model:time-title="draft.timeTitle"
           v-model:time-description="draft.timeDescription"
           v-model:slider="draft.slider"
-          :rows="draft.rows"
           @change="emit('change')"
         />
       </QuoteCard>

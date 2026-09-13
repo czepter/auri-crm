@@ -54,6 +54,7 @@ class QuoteData extends Data
         public ?int $hours = null,
         public ?string $timeTitle = null,
         public ?string $timeDescription = null,
+        public int $timeSortOrder = 0,
         // Q-15: vor der Zusage hat ein Regler-Angebot keinen Betrag, sondern
         // einen Bereich — berechnet, nie gespeichert.
         public ?int $rangeMin = null,
@@ -106,6 +107,7 @@ class QuoteData extends Data
             hours: $quote->hours,
             timeTitle: $quote->time_title,
             timeDescription: $quote->time_description,
+            timeSortOrder: $quote->time_sort_order,
             rangeMin: $quote->hasSlider() ? QuoteRange::min($quote) : null,
             rangeMax: $quote->hasSlider() ? QuoteRange::max($quote) : null,
             paymentStages: $quote->paymentStages->map(fn ($stage) => [

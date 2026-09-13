@@ -14,7 +14,6 @@ export type QuoteRow = {
   selected: boolean
   outcome: string
   hasImage: boolean
-  remember: boolean
 }
 
 /** Ein Kontakt des Projekts, wie ihn die Empfaengerkarte waehlt (§4.4). */
@@ -47,6 +46,7 @@ export type QuoteDraft = {
   recipientCity: string | null
   timeTitle: string | null
   timeDescription: string | null
+  timeSortOrder: number
 }
 
 export type QuotePayloadOptions = {
@@ -93,9 +93,6 @@ export function buildQuotePayload(draft: QuoteDraft, options: QuotePayloadOption
       selectable: row.selectable,
       selected: row.selected,
       outcome: row.outcome || null,
-      // Ohne die Faehigkeit geht der Schluessel gar nicht erst mit, damit
-      // der Waechter im Controller nicht ohne Anlass greift.
-      ...(options.canManageCatalog ? { remember: row.remember } : {}),
     }
   })
 
@@ -117,6 +114,7 @@ export function buildQuotePayload(draft: QuoteDraft, options: QuotePayloadOption
     hours: draft.slider.hours,
     time_title: draft.timeTitle,
     time_description: draft.timeDescription,
+    time_sort_order: draft.timeSortOrder,
     items,
     stages: draft.slider.stages.map((stage) => ({
       percent: stage.percent,

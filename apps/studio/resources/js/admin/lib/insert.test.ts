@@ -62,12 +62,11 @@ describe('packageRows', () => {
     expect(rows.map((row) => row.title)).toEqual(['Reportage', 'Anfahrt'])
     expect(rows[0].unitPrice).toBe('1890.00')
     expect(rows[1].unitPrice).toBe('')
-    expect(rows[0].remember).toBe(false)
   })
 })
 
 describe('itemRow', () => {
-  it('turns a library line into a remembered row of quantity one', () => {
+  it('turns a library line into a row of quantity one', () => {
     expect(itemRow(item('Zweitfotograf', 49000))).toEqual({
       title: 'Zweitfotograf',
       description: '',
@@ -78,7 +77,6 @@ describe('itemRow', () => {
       selected: false,
       outcome: '',
       hasImage: false,
-      remember: true,
     })
   })
 })

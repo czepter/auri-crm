@@ -40,14 +40,16 @@ class UpdateQuote
             'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
             'items.*.discount_type' => ['nullable', 'in:percentage,amount', 'required_with:items.*.discount_value'],
             'items.*.discount_value' => ['nullable', 'integer', 'min:1', 'required_with:items.*.discount_type'],
-            // Q-08/Q-09/Q-11: der Reglerteil, Pflicht nur im Modus choice.
-            'hourly_rate' => ['nullable', 'integer', 'min:1', 'required_if:pricing_mode,choice'],
-            'min_hours' => ['nullable', 'integer', 'min:1', 'max:2000', 'required_if:pricing_mode,choice'],
-            'max_hours' => ['nullable', 'integer', 'min:1', 'max:2000', 'required_if:pricing_mode,choice', 'gte:min_hours'],
+            // Q-08/Q-09/Q-11: der Reglerteil, optional, damit ein Entwurf ohne Stundensatz speichert.
+            'hourly_rate' => ['nullable', 'integer', 'min:1'],
+            'min_hours' => ['nullable', 'integer', 'min:1', 'max:2000'],
+            'max_hours' => ['nullable', 'integer', 'min:1', 'max:2000', 'gte:min_hours'],
             'images_per_hour' => ['nullable', 'integer', 'min:1', 'max:2000'],
             'hours' => ['nullable', 'integer', 'min:1', 'max:2000', 'gte:min_hours', 'lte:max_hours'],
             'time_title' => ['nullable', 'string', 'max:255'],
             'time_description' => ['nullable', 'string', 'max:255'],
+            // Wo die Zeitzeile zwischen den Positionen steht, 0 = vor der ersten.
+            'time_sort_order' => ['nullable', 'integer', 'min:0', 'max:2000'],
             // `id`, nie der Pfad: das Portal liefert dieses Bild an den
             // Kunden aus, und ein aus einem Formular uebernommener Pfad
             // waere das Lesen jeder Datei auf dem Disk — die Vertraege
@@ -120,6 +122,7 @@ class UpdateQuote
             ...$slider,
             'time_title' => $validated['time_title'] ?? null,
             'time_description' => $validated['time_description'] ?? null,
+            'time_sort_order' => $validated['time_sort_order'] ?? $quote->time_sort_order,
         ]);
 
         // Vor dem Loeschen gelesen: die Zeilen tragen die einzigen Pfade,

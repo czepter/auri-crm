@@ -3,6 +3,7 @@
 namespace App\Quotes\Http\Controllers;
 
 use App\Catalog\Actions\CreatePackageFromQuote;
+use App\Catalog\Actions\SavePackage;
 use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
 use App\Crm\Data\ProjectSuggestionData;
@@ -197,6 +198,36 @@ class QuoteController extends Controller
     }
 
     /**
+     * Die Zeile kommt aus dem Entwurf statt per id: eine gerade eingefügte
+     * Position hat bis zum nächsten Laden noch keine.
+     */
+    public function saveItemAsPackage(Request $request, Quote $quote, SavePackage $save): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+        $this->authorize('create', Package::class);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'item' => ['required', 'array'],
+            ...collect(SavePackage::rules())
+                ->filter(fn ($rule, string $key) => str_starts_with($key, 'items.*.') && $key !== 'items.*.id')
+                ->mapWithKeys(fn ($rule, string $key) => [str_replace('items.*.', 'item.', $key) => $rule])
+                ->all(),
+        ]);
+
+        $package = $save(new Package, ['name' => $validated['name'], 'items' => [$validated['item']]]);
+
+        AuditLogger::record(
+            event: 'package.created',
+            actor: auth('staff')->user(),
+            context: ['name' => $package->name, 'source' => 'quote_item'],
+            subject: $package->public_id,
+        );
+
+        return back();
+    }
+
+    /**
      * Q-06's state change: allocates the number, snapshots the VAT and the
      * already-computed amounts, and sends the client mail — all of
      * SendQuote::__invoke(), audit logging included, so nothing repeats here.
@@ -318,6 +349,7 @@ class QuoteController extends Controller
             'hours' => ['nullable', 'integer', 'min:1', 'max:2000'],
             'time_title' => ['nullable', 'string', 'max:255'],
             'time_description' => ['nullable', 'string', 'max:255'],
+            'time_sort_order' => ['nullable', 'integer', 'min:0', 'max:2000'],
             'stages' => ['array'],
             'stages.*.percent' => ['nullable', 'integer', 'min:0', 'max:100'],
             'stages.*.label' => ['nullable', 'string', 'max:255'],
@@ -345,6 +377,7 @@ class QuoteController extends Controller
             'hours' => $validated['hours'] ?? null,
             'time_title' => $validated['time_title'] ?? null,
             'time_description' => $validated['time_description'] ?? null,
+            'time_sort_order' => $validated['time_sort_order'] ?? 0,
         ]);
 
         $items = collect($validated['items'] ?? [])->map(function (array $item) {

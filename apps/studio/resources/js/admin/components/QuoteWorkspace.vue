@@ -11,8 +11,8 @@ import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { DatePicker } from '@/ui/date-picker'
 import { Label } from '@/ui/label'
-import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/ui/dropdown-menu'
+import { useI18n } from 'vue-i18n'
+import QuoteActions from '@/admin/components/quote/QuoteActions.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -32,6 +32,8 @@ const props = withDefaults(
   { only: () => ['quotes'] },
 )
 
+const { t } = useI18n()
+
 function draftOf(quote: App.Quotes.Data.QuoteData): QuoteDraft {
   return {
     pricingMode: quote.pricingMode as QuoteDraft['pricingMode'],
@@ -45,6 +47,7 @@ function draftOf(quote: App.Quotes.Data.QuoteData): QuoteDraft {
     recipientCity: quote.recipientCity,
     timeTitle: quote.timeTitle,
     timeDescription: quote.timeDescription,
+    timeSortOrder: quote.timeSortOrder,
     // Eine Liste für beide Modi (§4.2): Menge und Rabatt gelten überall,
     // "Im Portal" ist nur in Auswahl bedienbar, aber jede Zeile trägt es.
     rows: quote.items.map((item) => ({
@@ -58,9 +61,6 @@ function draftOf(quote: App.Quotes.Data.QuoteData): QuoteDraft {
       selected: item.selected,
       outcome: item.outcome ?? '',
       hasImage: item.hasImage,
-      // Abgeleitet statt gespeichert: gemerkt heisst, die Bibliothek führt
-      // diesen Titel.
-      remember: props.catalogItems.some((entry) => entry.title === item.title),
     })),
     slider: {
       hourlyRate: centsToEuros(quote.hourlyRate),
@@ -93,25 +93,6 @@ watch(
   { immediate: true, deep: false },
 )
 
-const packageForms = reactive<Record<string, ReturnType<typeof useForm<{ name: string }>>>>({})
-
-watch(
-  () => props.quotes,
-  (quotes) => {
-    for (const quote of quotes) {
-      packageForms[quote.id] ??= useForm({ name: '' })
-    }
-  },
-  { immediate: true },
-)
-
-function saveAsPackage(quoteId: string) {
-  packageForms[quoteId].post(`/angebote/${quoteId}/als-paket`, {
-    preserveScroll: true,
-    onSuccess: () => packageForms[quoteId].reset(),
-  })
-}
-
 // Ohne sie läuft jede weitere Taste in dieselbe 422 und das Getippte ist beim
 // Neuladen weg.
 const saveErrors = reactive<Record<string, string | null>>({})
@@ -134,10 +115,6 @@ function create() {
   router.post(`/auftraege/${props.projectId}/angebote`, {}, { preserveScroll: true })
 }
 
-function addendum(quoteId: string) {
-  router.post(`/auftraege/${props.projectId}/angebote`, { addendum_to: quoteId }, { preserveScroll: true })
-}
-
 const planForm = useForm({ total: '', installments: [{ due_on: '' }] })
 
 function createPlan() {
@@ -146,16 +123,12 @@ function createPlan() {
     .post(`/auftraege/${props.projectId}/zahlungsplan`, { preserveScroll: true })
 }
 
-function send(quoteId: string) {
-  router.post(`/angebote/${quoteId}/versenden`, {}, { preserveScroll: true })
-}
+function titleOf(quote: App.Quotes.Data.QuoteData): string {
+  if (quote.isAddendum) {
+    return t('quotes.addendumTo', { number: quote.predecessorNumber ?? '' })
+  }
 
-function markSent(quoteId: string) {
-  router.post(`/angebote/${quoteId}/versendet`, {}, { preserveScroll: true })
-}
-
-function copyLink(portalUrl: string) {
-  navigator.clipboard?.writeText(portalUrl)
+  return quote.number ? `${t('quotes.title')} ${quote.number}` : t('quotes.title')
 }
 
 /** draft/sent/accepted/superseded/expired -> the mockup's own three chip states (tokens.css). */
@@ -201,111 +174,19 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
        werden oder zu 404en: Project::quotes() gibt jedes Angebot zurück, und
        dieser Abschnitt ist, was "bleibt erreichbar und liest sich als
        ersetzt" hier heisst. -->
-  <Card
-    v-for="quote in quotes"
-    class="mt-3 first:mt-0"
-    :key="quote.id"
-    :default-open="quote.status !== 'superseded'"
-    :summary="totalOf(quote)"
-    :title="
-      quote.isAddendum
-        ? $t('quotes.addendumTo', { number: quote.predecessorNumber ?? '' })
-        : quote.number
-          ? `${$t('quotes.title')} ${quote.number}`
-          : $t('quotes.title')
-    "
-  >
-    <template #action>
-      <span :class="['chip', chipClass(quote.status)]">{{ quote.statusLabel }}</span>
-      <span v-if="quote.sentChannel" class="text-[11.5px] text-ink-2">
-        {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}
-      </span>
-
-      <div class="ml-auto flex items-center gap-1.5">
-        <Button as="a" variant="outline" :href="`/angebote/${quote.id}/pdf`" target="_blank" @click.stop>
-          {{ $t('quotes.download') }}
-        </Button>
-
-        <Button
-          v-if="canManageQuotes && quote.status === 'accepted'"
-          type="button"
-          variant="outline"
-          @click.stop="addendum(quote.id)"
-        >
-          {{ $t('quotes.addendum') }}
-        </Button>
-
-        <Dialog v-if="canManageQuotes && packageForms[quote.id]">
-          <DialogTrigger as-child>
-            <Button variant="outline" type="button" @click.stop>{{ $t('quotes.saveAsPackage') }}</Button>
-          </DialogTrigger>
-
-          <DialogContent class="max-w-[420px]">
-            <DialogHeader>
-              <DialogTitle>{{ $t('quotes.saveAsPackage') }}</DialogTitle>
-            </DialogHeader>
-
-            <DialogBody>
-              <form
-                :id="`as-package-${quote.id}`"
-                class="grid grid-cols-2 gap-x-5 gap-y-4"
-                @submit.prevent="saveAsPackage(quote.id)"
-              >
-                <div class="col-span-2 flex min-w-0 flex-col gap-1.5">
-                  <Label :for="`package-name-${quote.id}`">{{ $t('quotes.packageName') }}</Label>
-                  <Input
-                    :id="`package-name-${quote.id}`"
-                    v-model="packageForms[quote.id].name"
-                    type="text"
-                    required
-                  />
-                  <p v-if="packageForms[quote.id].errors.name" class="text-[12px] text-destructive">
-                    {{ packageForms[quote.id].errors.name }}
-                  </p>
-                </div>
-              </form>
-            </DialogBody>
-
-            <DialogFooter>
-              <Button type="submit" :form="`as-package-${quote.id}`" :disabled="packageForms[quote.id].processing">
-                {{ $t('common.save') }}
-              </Button>
-              <DialogClose as-child>
-                <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
-              </DialogClose>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <div v-if="canManageQuotes && quote.status === 'draft'" class="flex">
-          <Button type="button" variant="pill" class="rounded-r-none" @click.stop="send(quote.id)">
-            {{ $t('quotes.sendByMail') }}
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger
-              class="flex items-center rounded-r-[var(--r-pill)] border-l border-white/20 bg-foreground px-2 text-paper"
-              :aria-label="$t('quotes.sendOptions')"
-              @click.stop
-            >
-              <svg class="size-3.5 fill-current" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem :disabled="!quote.portalUrl" @select="copyLink(quote.portalUrl!)">
-                {{ $t('quotes.copyLink') }}
-              </DropdownMenuItem>
-              <DropdownMenuItem @select="markSent(quote.id)">{{ $t('quotes.markSent') }}</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-    </template>
-
+  <template v-for="quote in quotes" :key="quote.id">
     <!-- Editing stays behind canManageQuotes and behind status === 'draft'
          — the UI half of Q-06's immutability rule, Quote::booted()'s guard
          being the half that still holds even if this condition were ever
-         wrong or bypassed. Ein Entwurf ist die Tabelle; erst ab Versendet
-         tritt das gelesene Dokument an ihre Stelle. -->
-    <template v-if="canManageQuotes && quote.status === 'draft' && drafts[quote.id]">
+         wrong or bypassed. Ein Entwurf ist das Werkzeug selbst und steht
+         offen da; erst ab Versendet wird er zur zuklappbaren Karte. -->
+    <section v-if="canManageQuotes && quote.status === 'draft' && drafts[quote.id]" class="mt-3 first:mt-0">
+      <header class="mb-3 flex items-center gap-3">
+        <h2 class="m-0 text-[15px] leading-[1.2] font-semibold tracking-[-0.015em]">{{ titleOf(quote) }}</h2>
+        <span :class="['chip', chipClass(quote.status)]">{{ quote.statusLabel }}</span>
+        <QuoteActions :project-id="projectId" :quote="quote" :can-manage-quotes="canManageQuotes" />
+      </header>
+
       <QuoteEditor
         v-model="drafts[quote.id]"
         :quote-id="quote.id"
@@ -318,9 +199,24 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
       />
 
       <p v-if="saveErrors[quote.id]" class="mt-2 text-[12px] text-destructive">{{ saveErrors[quote.id] }}</p>
+    </section>
+
+  <Card
+    v-else
+    class="mt-3 first:mt-0"
+    :default-open="quote.status !== 'superseded'"
+    :summary="totalOf(quote)"
+    :title="titleOf(quote)"
+  >
+    <template #action>
+      <span :class="['chip', chipClass(quote.status)]">{{ quote.statusLabel }}</span>
+      <span v-if="quote.sentChannel" class="text-[11.5px] text-ink-2">
+        {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}
+      </span>
+
+      <QuoteActions :project-id="projectId" :quote="quote" :can-manage-quotes="canManageQuotes" />
     </template>
 
-    <template v-else>
       <p v-if="quote.intro" class="mb-3 text-[12.5px] leading-[1.55] whitespace-pre-line">{{ quote.intro }}</p>
 
       <div
@@ -359,8 +255,8 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
       </p>
 
       <p v-if="quote.outro" class="mt-3 text-[12.5px] leading-[1.55] whitespace-pre-line">{{ quote.outro }}</p>
-    </template>
   </Card>
+  </template>
 
   <Card
     v-if="paymentPlan || canManagePaymentPlan"

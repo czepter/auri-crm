@@ -793,6 +793,7 @@ imagesPerHour: number | null,
 hours: number | null,
 timeTitle: string | null,
 timeDescription: string | null,
+timeSortOrder: number,
 rangeMin: number | null,
 rangeMax: number | null,
 paymentStages: {

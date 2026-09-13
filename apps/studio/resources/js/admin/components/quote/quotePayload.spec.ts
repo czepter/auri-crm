@@ -26,6 +26,7 @@ function baseDraft(pricingMode: QuoteDraft['pricingMode']): QuoteDraft {
     recipientCity: 'Berlin',
     timeTitle: 'Hochzeit',
     timeDescription: 'Trauung und Feier',
+    timeSortOrder: 0,
   }
 }
 
@@ -44,7 +45,6 @@ function classicDraft(): QuoteDraft {
       selected: false,
       outcome: '',
       hasImage: false,
-      remember: true,
     },
   ]
 
@@ -70,7 +70,6 @@ function choiceDraft(): QuoteDraft {
       selected: false,
       outcome: 'Digitale Bilder',
       hasImage: false,
-      remember: false,
     },
   ]
 
