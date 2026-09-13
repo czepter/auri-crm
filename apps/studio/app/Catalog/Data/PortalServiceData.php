@@ -17,7 +17,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 #[TypeScript]
 class PortalServiceData extends Data
 {
-    /** @param list<string> $includes */
+    /** @param list<PortalServiceItemData> $items */
     public function __construct(
         public string $id,
         public string $name,
@@ -27,7 +27,7 @@ class PortalServiceData extends Data
         public string $priceMode,
         public bool $requiresDate,
         public bool $hasImage,
-        public array $includes,
+        public array $items,
     ) {}
 
     public static function fromModel(Package $package): self
@@ -41,17 +41,18 @@ class PortalServiceData extends Data
             text: $package->portal_text,
             // Auf Anfrage heißt: es steht keine Zahl da. Eine mitgelieferte,
             // die das Frontend verstecken soll, stünde im Netzwerk-Tab.
-            price: $mode === PortalPriceMode::OnRequest ? null : $package->items->sum(
-                fn (PackageItem $item) => (int) $item->unit_price * $item->quantity
-            ),
+            //
+            // Eine wählbare Position zählt nur mit, wenn sie schon
+            // vorausgewählt ist — sonst wäre sie im Preis drin, bevor der
+            // Kunde sie überhaupt gewählt hat (Q-09's Wahlmodus zieht dieselbe
+            // Grenze: chargedRows filtert genauso).
+            price: $mode === PortalPriceMode::OnRequest ? null : $package->items
+                ->filter(fn (PackageItem $item) => ! $item->selectable || $item->selected)
+                ->sum(fn (PackageItem $item) => (int) $item->unit_price * $item->quantity),
             priceMode: $mode->value,
             requiresDate: $package->portal_requires_date,
             hasImage: $package->portal_image_path !== null,
-            // Positionen ohne Preis sind enthaltene Leistungen und stehen
-            // hier gleichrangig: was drin ist, ist drin.
-            includes: $package->items
-                ->map(fn (PackageItem $item) => trim($item->title.($item->description === null ? '' : ' · '.$item->description)))
-                ->all(),
+            items: $package->items->map(PortalServiceItemData::fromModel(...))->all(),
         );
     }
 }

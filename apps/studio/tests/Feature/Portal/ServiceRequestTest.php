@@ -1,6 +1,7 @@
 <?php
 
 use App\Catalog\Models\Package;
+use App\Catalog\Models\PackageItem;
 use App\Catalog\Models\ServiceSuggestion;
 use App\Catalog\Support\PortalOffers;
 use App\Crm\Enums\CaptureChannel;
@@ -149,6 +150,22 @@ it('names no tax for a Kleinunternehmer', function () {
     test()->actingAs(Contact::factory()->create(), 'portal')
         ->get('/leistungen/'.offered()->public_id)
         ->assertInertia(fn ($page) => $page->where('vatRate', null));
+});
+
+it('counts an included and a preselected item in the price, but not an unchosen add-on', function () {
+    $package = offered();
+    PackageItem::factory()->for($package)->create(['title' => 'Fotograf', 'unit_price' => 100000, 'quantity' => 1, 'selectable' => false, 'selected' => false]);
+    PackageItem::factory()->for($package)->create(['title' => 'Album', 'unit_price' => 20000, 'quantity' => 1, 'selectable' => true, 'selected' => true]);
+    PackageItem::factory()->for($package)->create(['title' => 'Zweitfotograf', 'unit_price' => 60000, 'quantity' => 1, 'selectable' => true, 'selected' => false]);
+
+    test()->actingAs(Contact::factory()->create(), 'portal')
+        ->get("/leistungen/{$package->public_id}")
+        ->assertInertia(fn ($page) => $page
+            ->where('service.price', 120000)
+            ->where('service.items.0.addOnPrice', null)
+            ->where('service.items.1.addOnPrice', null)
+            ->where('service.items.2.addOnPrice', 60000)
+        );
 });
 
 it('refuses a request without the date the package asks for', function () {

@@ -9,7 +9,7 @@ import type { PackageItemRow } from '@/admin/lib/packageItem'
 import { lineTotal } from '@/admin/lib/packageItem'
 import { debounced } from '@/admin/lib/autosave'
 import PackageItemsEditor from '@/admin/components/PackageItemsEditor.vue'
-import PackagePortalPreview from '@/admin/components/PackagePortalPreview.vue'
+import PackagePortalPreview, { type PreviewItem } from '@/admin/components/PackagePortalPreview.vue'
 import PackagePriceSummary from '@/admin/components/PackagePriceSummary.vue'
 import { centsToEuros, eurosToCents } from '@/admin/lib/money'
 import { Button } from '@/ui/button'
@@ -66,13 +66,23 @@ const form = useForm({
 
 // Wie App\Catalog\Data\PortalServiceData::fromModel() rechnet — dieselbe
 // Summe, nur aus dem Entwurf statt aus der gespeicherten Zeile, damit die
-// Vorschau vor dem Speichern schon stimmt.
+// Vorschau vor dem Speichern schon stimmt. Eine wählbare, noch nicht
+// vorausgewählte Position zählt nicht mit — sie steht in der Vorschau als
+// eigener Zusatzpreis, nicht im Gesamtbetrag.
 const previewPrice = computed(() =>
-  form.portal_price_mode === 'on_request' ? null : form.items.reduce((sum, item) => sum + lineTotal(item), 0),
+  form.portal_price_mode === 'on_request'
+    ? null
+    : form.items.filter((item) => !item.selectable || item.selected).reduce((sum, item) => sum + lineTotal(item), 0),
 )
 
-const previewIncludes = computed(() =>
-  form.items.map((item) => [item.title, item.description].filter(Boolean).join(' · ')),
+const previewItems = computed<PreviewItem[]>(() =>
+  form.items.map((item) => ({
+    title: item.title,
+    description: item.description,
+    selectable: item.selectable,
+    selected: item.selected,
+    addOnPrice: item.selectable && !item.selected ? lineTotal(item) : null,
+  })),
 )
 
 function toggle() {
@@ -246,7 +256,7 @@ watch(() => form.data(), autosave, { deep: true })
                 :price="previewPrice"
                 :price-mode="form.portal_price_mode"
                 :requires-date="form.portal_requires_date"
-                :includes="previewIncludes"
+                :items="previewItems"
               />
             </div>
           </div>

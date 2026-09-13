@@ -14,6 +14,16 @@ import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
 import { Textarea } from '@/ui/textarea'
 
+type ServiceItem = {
+  title: string
+  description: string | null
+  selectable: boolean
+  selected: boolean
+  // Nur gesetzt, wenn wählbar und noch nicht vorausgewählt — eine enthaltene
+  // oder vorausgewählte Zeile steckt schon in Service.price.
+  addOnPrice: number | null
+}
+
 type Service = {
   id: string
   name: string
@@ -23,7 +33,7 @@ type Service = {
   priceMode: 'exact' | 'from' | 'on_request'
   requiresDate: boolean
   hasImage: boolean
-  includes: string[]
+  items: ServiceItem[]
 }
 
 const props = defineProps<{
@@ -47,6 +57,9 @@ const price = computed(() => {
     ? t('portal.priceFrom', { price: formatEuros(props.service.price) })
     : formatEuros(props.service.price)
 })
+
+const included = computed(() => props.service.items.filter((item) => !item.selectable || item.selected))
+const optional = computed(() => props.service.items.filter((item) => item.selectable && !item.selected))
 
 function submit() {
   form.post(`/leistungen/${props.service.id}/anfragen`, { preserveScroll: true })
@@ -93,15 +106,32 @@ function submit() {
             {{ service.description }}
           </p>
 
-          <section v-if="service.includes.length" class="mt-[var(--band)]">
+          <section v-if="included.length" class="mt-[var(--band)]">
             <PortalLabel class="mb-6">{{ $t('portal.includedTitle') }}</PortalLabel>
             <div class="border-t border-border">
               <p
-                v-for="(line, index) in service.includes"
+                v-for="(item, index) in included"
                 :key="index"
                 class="border-b border-border py-4 text-[15.5px]"
               >
-                {{ line }}
+                {{ [item.title, item.description].filter(Boolean).join(' · ') }}
+              </p>
+            </div>
+          </section>
+
+          <!-- Wählbar und noch nicht vorausgewählt: ein eigener Preis, der
+               nicht in Service.price steckt — sonst könnte der Kunde nicht
+               sehen, was ihn zusätzlich kostet. -->
+          <section v-if="optional.length" class="mt-[var(--band)]">
+            <PortalLabel class="mb-6">{{ $t('portal.optionalTitle') }}</PortalLabel>
+            <div class="border-t border-border">
+              <p
+                v-for="(item, index) in optional"
+                :key="index"
+                class="flex gap-4 border-b border-border py-4 text-[15.5px]"
+              >
+                <span class="flex-1">{{ [item.title, item.description].filter(Boolean).join(' · ') }}</span>
+                <span class="flex-none tabular-nums text-muted-foreground">{{ $t('portal.addOnPrice', { price: formatEuros(item.addOnPrice ?? 0) }) }}</span>
               </p>
             </div>
           </section>

@@ -15,13 +15,15 @@ import { Textarea } from '@/ui/textarea'
 // resources/js/portal/pages/Services/Show.vue, dessen Kopf und Fuß hier
 // fehlen: die Vorschau steckt schon in einem Dialog der Adminoberfläche, sie
 // braucht keine zweite Navigation und keinen zweiten Fußzeilen-Rechtstext.
+export type PreviewItem = { title: string; description: string | null; selectable: boolean; selected: boolean; addOnPrice: number | null }
+
 const props = defineProps<{
   name: string
   description: string | null
   price: number | null
   priceMode: string
   requiresDate: boolean
-  includes: string[]
+  items: PreviewItem[]
   vatRate?: number | null
 }>()
 
@@ -32,6 +34,9 @@ const price = computed(() => {
 
   return props.priceMode === 'from' ? t('portal.priceFrom', { price: formatEuros(props.price) }) : formatEuros(props.price)
 })
+
+const included = computed(() => props.items.filter((item) => !item.selectable || item.selected))
+const optional = computed(() => props.items.filter((item) => item.selectable && !item.selected))
 </script>
 
 <template>
@@ -51,10 +56,22 @@ const price = computed(() => {
         <div>
           <p v-if="description" class="max-w-[54ch] text-[16px] leading-[1.55] text-muted-foreground">{{ description }}</p>
 
-          <section v-if="includes.length" class="mt-10">
+          <section v-if="included.length" class="mt-10">
             <PortalLabel class="mb-5">{{ $t('portal.includedTitle') }}</PortalLabel>
             <div class="border-t border-border">
-              <p v-for="(line, index) in includes" :key="index" class="border-b border-border py-3.5 text-[15px]">{{ line }}</p>
+              <p v-for="(item, index) in included" :key="index" class="border-b border-border py-3.5 text-[15px]">
+                {{ [item.title, item.description].filter(Boolean).join(' · ') }}
+              </p>
+            </div>
+          </section>
+
+          <section v-if="optional.length" class="mt-10">
+            <PortalLabel class="mb-5">{{ $t('portal.optionalTitle') }}</PortalLabel>
+            <div class="border-t border-border">
+              <p v-for="(item, index) in optional" :key="index" class="flex gap-4 border-b border-border py-3.5 text-[15px]">
+                <span class="flex-1">{{ [item.title, item.description].filter(Boolean).join(' · ') }}</span>
+                <span class="flex-none tabular-nums text-muted-foreground">{{ $t('portal.addOnPrice', { price: formatEuros(item.addOnPrice ?? 0) }) }}</span>
+              </p>
             </div>
           </section>
         </div>

@@ -1459,6 +1459,8 @@
     "suggestionTitle": "Vorschlag",
     "offersTitle": "Weitere Leistungen",
     "includedTitle": "Das ist dabei",
+    "optionalTitle": "Optional dazu",
+    "addOnPrice": "+ {price}",
     "requestAppointment": "Termin anfragen",
     "priceFrom": "ab {price}",
     "priceOnRequest": "Auf Anfrage",

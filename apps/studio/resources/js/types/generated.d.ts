@@ -81,7 +81,14 @@ price: number | null,
 priceMode: string,
 requiresDate: boolean,
 hasImage: boolean,
-includes: string[],
+items: App.Catalog.Data.PortalServiceItemData[],
+};
+export type PortalServiceItemData = {
+title: string,
+description: string | null,
+selectable: boolean,
+selected: boolean,
+addOnPrice: number | null,
 };
 }
 namespace Enums {
