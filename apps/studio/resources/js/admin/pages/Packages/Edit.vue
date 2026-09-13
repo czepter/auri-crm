@@ -17,6 +17,8 @@ import { Label } from '@/ui/label'
 import { ChoiceGroup } from '@/ui/choice-group'
 import { Switch } from '@/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
+import Rail from '@/ui/page/Rail.vue'
+import RailSection from '@/ui/page/RailSection.vue'
 
 type Request = {
   id: string
@@ -113,8 +115,7 @@ function submit() {
           <Button variant="pill-muted" type="button" @click="duplicate">{{ $t('packages.duplicate') }}</Button>
         </PageHead>
 
-        <form class="flex items-start gap-8 px-8 pt-7 pb-8" @submit.prevent="submit">
-          <div class="max-w-[640px] min-w-0 flex-1">
+        <form class="max-w-[640px] px-8 pt-7 pb-8" @submit.prevent="submit">
           <Field id="name" class="mb-6" :label="$t('packages.name')" :error="form.errors.name">
             <Input id="name" v-model="form.name" type="text" required />
           </Field>
@@ -188,25 +189,6 @@ function submit() {
             <Button type="submit" class="ml-0" :disabled="form.processing">{{ $t('common.save') }}</Button>
             <Button as="a" href="/pakete" variant="ghost">{{ $t('common.cancel') }}</Button>
           </div>
-          </div>
-
-          <div class="sticky top-7 w-[380px] flex-none">
-            <PackagePriceSummary :items="form.items" />
-
-            <div class="mt-6 overflow-hidden rounded-[10px] border border-border">
-              <div class="border-b border-border px-[26px] py-4 text-[11px] leading-none font-semibold tracking-[0.11em] uppercase text-faint">
-                {{ $t('packages.preview') }}
-              </div>
-              <PackagePortalPreview
-                :name="form.name"
-                :description="form.description || null"
-                :price="previewPrice"
-                :price-mode="form.portal_price_mode"
-                :requires-date="form.portal_requires_date"
-                :includes="previewIncludes"
-              />
-            </div>
-          </div>
         </form>
 
         <!-- Steht am Paket, nicht in der Übersicht: es beantwortet eine Frage
@@ -232,6 +214,25 @@ function submit() {
           </div>
         </section>
       </div>
+
+      <template #right>
+        <Rail>
+          <PackagePriceSummary :items="form.items" />
+
+          <RailSection :title="$t('packages.preview')" class="mt-6">
+            <div class="overflow-hidden rounded-[10px] border border-border">
+              <PackagePortalPreview
+                :name="form.name"
+                :description="form.description || null"
+                :price="previewPrice"
+                :price-mode="form.portal_price_mode"
+                :requires-date="form.portal_requires_date"
+                :includes="previewIncludes"
+              />
+            </div>
+          </RailSection>
+        </Rail>
+      </template>
     </Page>
   </AdminLayout>
 </template>
