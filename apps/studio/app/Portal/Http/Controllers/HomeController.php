@@ -2,6 +2,8 @@
 
 namespace App\Portal\Http\Controllers;
 
+use App\Catalog\Data\PortalServiceData;
+use App\Catalog\Models\Package;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Engagement\Models\Thread;
@@ -69,6 +71,9 @@ class HomeController extends Controller
             'bookings' => $bookings->all(),
             'phaseCounts' => $bookings->countBy('phase')->all(),
             'galleries' => $this->galleries($projects),
+            // Steht im Entwurf unter den Galerien, nicht über dem Offenen:
+            // ein Angebot des Studios ist keine offene Handlung des Kunden.
+            'offers' => $this->offers($contact, $settings),
             'studio' => [
                 'name' => $studio->displayName(),
                 'messagingEnabled' => $settings->messagingEnabled($contact),
@@ -107,6 +112,24 @@ class HomeController extends Controller
             // rectangle, which on paper reads as an image that failed.
             'cover' => $this->cover($project),
         ];
+    }
+
+    /**
+     * Was dieser Kunde über seine Buchungen hinaus anfragen kann. Leer, wenn
+     * das Studio nichts anbietet oder es diesem Kunden nicht zeigt — der
+     * Abschnitt fehlt dann, wie jeder andere ohne Inhalt hier.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function offers(Contact $contact, PortalSettings $settings): array
+    {
+        if (! $settings->offersEnabled($contact)) {
+            return [];
+        }
+
+        return PortalServiceData::collect(
+            Package::query()->portalOffered()->with('items')->orderBy('name')->get()
+        )->toArray();
     }
 
     /** The first asset of this booking's first published gallery, or nothing. */

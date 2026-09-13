@@ -31,6 +31,7 @@ class EnsurePortalCapability
             'sign_contracts' => $settings->signContractsEnabled($contact),
             'payment_status' => $settings->paymentStatusEnabled($contact),
             'messaging' => $settings->messagingEnabled($contact),
+            'offers' => $settings->offersEnabled($contact),
             default => throw new InvalidArgumentException("Unknown portal capability \"{$capability}\"."),
         };
 

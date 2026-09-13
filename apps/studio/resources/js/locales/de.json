@@ -139,6 +139,7 @@
       "gallery_lists": "Galerie-Listen",
       "gallery_comments": "Galerie-Kommentare",
       "portal_visible": "Neue Projekte sichtbar",
+      "offers": "Weitere Leistungen",
       "welcome": "Begrüßung"
     },
     "portalPreview": "Vorschau als Kunde",
@@ -620,7 +621,18 @@
     "itemImage": "Bild",
     "itemPriceHint": "Leer = inklusive.",
     "included": "enthalten",
-    "duplicate": "Duplizieren"
+    "duplicate": "Duplizieren",
+    "portalSection": "Im Portal",
+    "portalOffered": "Allen Bestandskunden anbieten",
+    "portalText": "Kurztext im Portal",
+    "portalPriceMode": "Preisangabe",
+    "portalRequiresDate": "Anfrage",
+    "portalWithDate": "Mit Wunschtermin",
+    "portalWithoutDate": "Ohne Termin",
+    "projectType": "Anlass",
+    "priceExact": "Fester Preis",
+    "priceFrom": "Ab-Preis",
+    "priceOnRequest": "Auf Anfrage"
   },
   "quotes": {
     "title": "Angebot",
@@ -1179,6 +1191,7 @@
     "acceptQuotesEnabledLabel": "Angebote online annehmen",
     "signContractsEnabledLabel": "Verträge online unterschreiben",
     "paymentStatusEnabledLabel": "Zahlungsstatus einsehen",
+    "offersEnabledLabel": "Weitere Leistungen anbieten",
     "welcomeInquiryLabel": "Begrüßung vor der ersten Buchung",
     "welcomeManyLabel": "Begrüßung bei vielen Buchungen",
     "dsgvoSection": "Datenschutz-Anfragen",
@@ -1360,6 +1373,11 @@
     "unsubscribeTitle": "Benachrichtigungen abbestellen",
     "unsubscribeHint": "Keine weiteren Angebots- und Status-Mails mehr erhalten.",
     "unsubscribeConfirm": "Abmelden",
+    "offersTitle": "Weitere Leistungen",
+    "includedTitle": "Das ist dabei",
+    "requestAppointment": "Termin anfragen",
+    "priceFrom": "ab {price}",
+    "priceOnRequest": "Auf Anfrage",
     "unsubscribeDone": "Abgemeldet."
   },
   "galleries": {

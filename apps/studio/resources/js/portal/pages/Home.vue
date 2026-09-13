@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Link } from '@inertiajs/vue3'
 import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
@@ -37,6 +38,18 @@ type Booking = {
   cover: string | null
 }
 
+type Service = {
+  id: string
+  name: string
+  description: string | null
+  text: string | null
+  price: number | null
+  priceMode: 'exact' | 'from' | 'on_request'
+  requiresDate: boolean
+  hasImage: boolean
+  includes: string[]
+}
+
 const props = defineProps<{
   contact: { name: string }
   // T-08: the portal home's own welcome text (studio_settings.portal_welcome_text) —
@@ -46,8 +59,12 @@ const props = defineProps<{
   bookings: Booking[]
   phaseCounts: Partial<Record<Phase, number>>
   galleries: { id: string; title: string | null; count: number; expiresAt: string | null; cover: string | null }[]
+  // Leer, wenn das Studio nichts anbietet oder es diesem Kunden nicht zeigt.
+  offers: Service[]
   studio: Studio
 }>()
+
+const { t } = useI18n()
 
 // P-02: the filter only earns its place once there is a stock to filter. At
 // three bookings it would be decoration.
@@ -86,6 +103,16 @@ function shortDate(iso: string) {
 
 function phaseState(phase: Phase) {
   return phase === 'delivered' ? 'done' : phase === 'open' ? 'open' : 'neutral'
+}
+
+// Auf Anfrage trägt keine Zahl, und es kommt auch keine mit — siehe
+// PortalServiceData.
+function priceLabel(offer: Service) {
+  if (offer.price === null) return t('portal.priceOnRequest')
+
+  return offer.priceMode === 'from'
+    ? t('portal.priceFrom', { price: formatEuros(offer.price) })
+    : formatEuros(offer.price)
 }
 </script>
 
@@ -253,6 +280,40 @@ function phaseState(phase: Phase) {
                   </template>
                 </span>
               </a>
+            </div>
+          </section>
+
+          <!-- Aftersales: was das Studio über die Buchungen hinaus anbietet.
+               Steht unter den Galerien und nicht über dem Offenen — ein
+               Vorschlag des Studios ist keine offene Handlung des Kunden, und
+               die Aktionsfarbe bleibt dem vorbehalten, was er erledigen muss.
+
+               Die Karte trägt eine Haarlinie, die Galeriekarte darüber nicht:
+               ein Bild, das dem Kunden gehört, ist keine Karte — eine
+               Leistung, die er anfragen kann, ist eine. -->
+          <section v-if="offers.length" class="animate-rise [animation-delay:320ms] motion-reduce:animate-none">
+            <PortalLabel>{{ $t('portal.offersTitle') }}</PortalLabel>
+            <div class="mt-6 grid grid-cols-[repeat(auto-fill,minmax(196px,1fr))] gap-4">
+              <Link
+                v-for="offer in offers"
+                :key="offer.id"
+                class="block rounded-md border border-border p-3 text-inherit no-underline transition-colors duration-200 ease-[var(--ease)] hover:bg-sunk"
+                :href="`/leistungen/${offer.id}`"
+              >
+                <span class="block overflow-hidden rounded-[var(--r-sm)] bg-sunk">
+                  <img
+                    v-if="offer.hasImage"
+                    :src="`/leistungen/${offer.id}/bild`"
+                    alt=""
+                    loading="lazy"
+                    class="block h-[130px] w-full object-cover"
+                  />
+                  <span v-else class="block h-[130px]" />
+                </span>
+                <b class="mt-3 block font-serif text-[19px] leading-[1.25] font-normal tracking-[-0.01em]">{{ offer.name }}</b>
+                <span v-if="offer.text" class="block text-[13px] text-muted-foreground">{{ offer.text }}</span>
+                <span class="mt-3 block text-[15px] font-semibold tracking-[-0.01em] tabular-nums">{{ priceLabel(offer) }}</span>
+              </Link>
             </div>
           </section>
         </div>

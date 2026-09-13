@@ -51,6 +51,25 @@ description: string | null,
 isActive: boolean,
 itemCount: number,
 items: App.Catalog.Data.PackageItemData[],
+portalOffered: boolean,
+portalText: string | null,
+portalPriceMode: string,
+portalRequiresDate: boolean,
+projectTypeKey: string | null,
+portalHasImage: boolean,
+price: number | null,
+};
+export type PortalPriceMode = 'exact' | 'from' | 'on_request';
+export type PortalServiceData = {
+id: string,
+name: string,
+description: string | null,
+text: string | null,
+price: number | null,
+priceMode: string,
+requiresDate: boolean,
+hasImage: boolean,
+includes: Array<string>,
 };
 export type PackageItemData = {
 id: string,
@@ -458,7 +477,7 @@ isTransit: boolean,
 }
 namespace Enums {
 export type BookedVia = 'manual' | 'contract';
-export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'web_form' | 'other';
+export type CaptureChannel = 'phone' | 'email' | 'in_person' | 'web_form' | 'portal' | 'other';
 export type CrewRole = 'lead_photographer' | 'second_shooter' | 'assistant';
 export type DueAnchor = 'stage' | 'shoot';
 export type FormFieldType = 'text' | 'short_text' | 'boolean' | 'select' | 'date' | 'time' | 'name_list' | 'group_photos' | 'file';
@@ -873,6 +892,7 @@ agbUrl: string | null,
 acceptQuotesEnabled: boolean,
 signContractsEnabled: boolean,
 paymentStatusEnabled: boolean,
+offersEnabled: boolean,
 messagingMode: string,
 welcomeInquiry: string | null,
 welcomeMany: string | null,

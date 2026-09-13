@@ -615,6 +615,12 @@ class StudioSettingsResolver
         return (string) $this->row()->portal_messaging_mode;
     }
 
+    /** Gates the portal's "Weitere Leistungen" — the shelf a client may ask from. */
+    public function offersEnabled(): bool
+    {
+        return (bool) $this->row()->portal_offers_enabled;
+    }
+
     /** P-09: what a new gallery starts as, so a studio stops setting it per delivery. */
     public function galleryDefaults(): array
     {

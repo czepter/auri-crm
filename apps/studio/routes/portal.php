@@ -18,6 +18,7 @@ use App\Portal\Http\Controllers\PaymentController;
 use App\Portal\Http\Controllers\ProjectController;
 use App\Portal\Http\Controllers\QuestionnaireController;
 use App\Portal\Http\Controllers\QuoteController;
+use App\Portal\Http\Controllers\ServiceController;
 use App\Portal\Http\Controllers\UnsubscribeController;
 use Illuminate\Support\Facades\Route;
 
@@ -126,6 +127,21 @@ Route::middleware('portal.maintenance')->group(function () {
         Route::post('/projekte/{project}/angebot/annehmen', [QuoteController::class, 'accept'])
             ->middleware('portal.capability:accept_quotes')
             ->name('portal.quotes.accept');
+
+        // Aftersales: was das Studio einem Bestandskunden über seine
+        // Buchungen hinaus anbietet, und der eine Klick, der daraus eine
+        // Anfrage macht. Hinter T-08s eigenem Schalter (Vorgabe aus), und
+        // anders als bei accept_quotes hängt hier auch die Ansicht daran —
+        // ein Regal, das ein Studio nicht aufgemacht hat, soll aussehen wie
+        // eine Funktion, die es nicht gibt.
+        Route::middleware('portal.capability:offers')->group(function () {
+            Route::get('/leistungen/{package}', [ServiceController::class, 'show'])
+                ->name('portal.services.show');
+            Route::get('/leistungen/{package}/bild', [ServiceController::class, 'image'])
+                ->name('portal.services.image');
+            Route::post('/leistungen/{package}/anfragen', [ServiceController::class, 'request'])
+                ->name('portal.services.request');
+        });
 
         // P-05 (#224): the account the portal never had. Contact details are
         // editable whatever phase a booking is in — those are the client's
