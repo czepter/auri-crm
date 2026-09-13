@@ -190,7 +190,7 @@ function submit() {
           </div>
           </div>
 
-          <div class="sticky top-7 w-[380px] flex-none">
+          <div class="sticky top-7 min-w-[380px] flex-1">
             <PackagePriceSummary :items="form.items" />
 
             <div class="mt-6 overflow-hidden rounded-[10px] border border-border">
