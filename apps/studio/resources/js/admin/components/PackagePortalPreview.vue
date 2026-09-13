@@ -65,7 +65,7 @@ const price = computed(() => {
             {{ $t('portal.vatNote', { rate: basisPointsToPercent(vatRate) }) }}
           </span>
 
-          <div class="mt-8 grid gap-4">
+          <div class="mt-6 grid gap-4 border-t border-border pt-6">
             <PortalField v-if="requiresDate" :label="$t('portal.preferredDate')">
               <DatePicker model-value="" disabled />
             </PortalField>
