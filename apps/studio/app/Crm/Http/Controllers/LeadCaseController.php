@@ -162,7 +162,7 @@ class LeadCaseController extends Controller
             'conflicts' => $this->availability->forDate($primary?->date?->format('Y-m-d'), $project),
             'stages' => app(CrmVocabulary::class)->ordered(StagePipeline::Lead)
                 ->filter(fn (Stage $stage) => $stage->is_active)
-                ->map(fn (Stage $stage) => ['value' => $stage->key, 'label' => $stage->name])->values()->all(),
+                ->map(fn (Stage $stage) => ['value' => $stage->key, 'label' => $stage->name, 'anchor' => $stage->anchor?->value])->values()->all(),
         ]);
     }
 
