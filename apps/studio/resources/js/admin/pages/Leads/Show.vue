@@ -62,7 +62,7 @@ const props = defineProps<{
     presets: { type: string[]; source: string[] };
     week: { date: string; what: string; projectId: string }[];
     conflicts: App.Crm.Data.DateConflictData[];
-    stages: { value: string; label: string }[];
+    stages: { value: string; label: string; anchor: string | null }[];
     tab: "overview" | "quotes" | "messages";
     header: App.Crm.Data.ProjectHeaderData;
     conversation: App.Engagement.Data.ThreadData | null;
@@ -324,6 +324,15 @@ const due = computed(() => {
         };
     }
 
+    // Stages the studio walks before the quote stage are due one by one: a
+    // fresh inquiry wants an answer, not yet an offer.
+    const at = props.stages.findIndex((stage) => stage.value === props.lead.stage);
+    const quoteAt = props.stages.findIndex((stage) => stage.anchor === "quote_sent");
+
+    if (props.quote === null && at >= 0 && at + 1 < quoteAt) {
+        return { label: props.stages[at + 1].label, stage: props.stages[at + 1].value };
+    }
+
     // On its own tab the button writes the quote; everywhere else it leads
     // there.
     if (props.quote === null) {
@@ -402,7 +411,10 @@ function writeQuote() {
             <!-- Bearbeitet wird je Karte; im Kopf steht nur noch die eine
                  Aktion, die gerade fällig ist. -->
             <template #actions>
-                <Button v-if="due.create" variant="pill" type="button" @click="writeQuote">{{
+                <Button v-if="due.stage" variant="pill" type="button" @click="move(due.stage)">{{
+                    due.label
+                }}</Button>
+                <Button v-else-if="due.create" variant="pill" type="button" @click="writeQuote">{{
                     $t(due.label)
                 }}</Button>
                 <Button v-else :as="Link" variant="pill" :href="due.href">{{

@@ -38,13 +38,13 @@ export const channels: Option[] = [
     { value: 'other', label: 'Sonstige' },
 ]
 
-export const stages: Option[] = [
-    { value: 'new', label: 'Neu' },
-    { value: 'contacted', label: 'Kontaktiert' },
-    { value: 'quote_sent', label: 'Angebot' },
-    { value: 'quote_accepted', label: 'Angebot angenommen' },
-    { value: 'contract_sent', label: 'Vertrag' },
-    { value: 'booked', label: 'Gebucht' },
+export const stages: (Option & { anchor: string | null })[] = [
+    { value: 'new', label: 'Neu', anchor: 'entry' },
+    { value: 'contacted', label: 'Kontaktiert', anchor: null },
+    { value: 'quote_sent', label: 'Angebot', anchor: 'quote_sent' },
+    { value: 'quote_accepted', label: 'Angebot angenommen', anchor: 'quote_accepted' },
+    { value: 'contract_sent', label: 'Vertrag', anchor: 'contract_sent' },
+    { value: 'booked', label: 'Gebucht', anchor: 'won' },
 ]
 
 export const presets = {
