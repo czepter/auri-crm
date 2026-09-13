@@ -19,6 +19,8 @@ use App\Quotes\Actions\ResolveQuoteRecipient;
 use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Actions\SendQuote;
 use App\Quotes\Actions\UpdateQuote;
+use App\Quotes\Data\QuoteData;
+use App\Quotes\Data\QuoteRowData;
 use App\Quotes\Enums\PricingMode;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -42,6 +44,53 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuoteController extends Controller
 {
+    /** Every quote across every project, newest first — the sidebar's own Angebote entry. */
+    public function index(Request $request): InertiaResponse
+    {
+        $viewer = $request->user('staff');
+        abort_unless($viewer->role->allows(Capability::ManageQuotes), 403);
+
+        $quotes = Quote::query()
+            ->whereHas('project', fn ($query) => $query->visibleTo($viewer))
+            ->with(['project.contacts'])
+            ->latest()
+            ->get();
+
+        return Inertia::render('Quotes/Index', [
+            'quotes' => QuoteRowData::collect($quotes->map(QuoteRowData::fromModel(...))),
+        ]);
+    }
+
+    /**
+     * One quote on its own screen, reached from the overview — the same
+     * QuoteWorkspace the project's Angebote tab renders, scoped to just this
+     * quote rather than the project's whole list and its "new quote" tool.
+     */
+    public function show(Request $request, Quote $quote, ReadQuoteWorkspace $workspace): InertiaResponse
+    {
+        $viewer = $request->user('staff');
+        $this->authorize('view', $quote->project);
+
+        $quote->loadMissing(['items', 'predecessor', 'paymentStages', 'project', 'recipientContact']);
+
+        return Inertia::render('Quotes/Show', [
+            'projectId' => $quote->project->public_id,
+            'projectName' => $quote->project->name,
+            'canManageQuotes' => $viewer->can('manageQuotes', $quote->project),
+            // The payment plan is the project's, not this one quote's — it
+            // stays on the Angebote tab, not in this quote's own capsule.
+            'canManagePaymentPlan' => false,
+            'paymentPlan' => null,
+            ...Arr::only($workspace($quote->project, $viewer), ['packages', 'catalogItems', 'contacts', 'canManageCatalog']),
+            'quotes' => [QuoteData::fromModel($quote)],
+            // QuoteData carries the recipient only as a contact id (the
+            // editor's own preselect value) — this screen has no editor
+            // beside it to resolve that id into a name, so it needs the
+            // name itself.
+            'recipientName' => $quote->recipientContact?->name,
+        ]);
+    }
+
     /** The Übersicht's wizard: the project or inquiry first, then the workspace its Angebote tab shows. */
     public function create(Request $request, ReadQuoteWorkspace $workspace): InertiaResponse
     {

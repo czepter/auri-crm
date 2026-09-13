@@ -372,6 +372,16 @@
     "fieldTagAdd": "Tag hinzufügen",
     "fieldTagRemove": "{tag} entfernen"
   },
+  "quotesOverview": {
+    "title": "Angebote",
+    "project": "Projekt",
+    "number": "Nummer",
+    "amount": "Betrag",
+    "status": "Status",
+    "createdAt": "Erstellt",
+    "searchPlaceholder": "Angebot, Projekt oder Kunde suchen",
+    "empty": "Keine Angebote."
+  },
   "projects": {
     "title": "Projekte",
     "name": "Projekt",

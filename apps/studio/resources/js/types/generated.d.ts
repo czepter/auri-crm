@@ -843,6 +843,17 @@ selected: boolean,
 outcome: string | null,
 hasImage: boolean,
 };
+export type QuoteRowData = {
+id: string,
+projectName: string,
+contact: string | null,
+number: string | null,
+status: string,
+statusLabel: string,
+total: number,
+sentAt: string | null,
+createdAt: string | null,
+};
 }
 namespace Enums {
 export type DiscountType = 'percentage' | 'amount';

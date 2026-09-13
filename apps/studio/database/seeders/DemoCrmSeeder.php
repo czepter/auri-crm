@@ -386,12 +386,13 @@ class DemoCrmSeeder extends Seeder
     {
         $project->primaryContact()?->update(['phone' => '+49 40 5550101']);
 
-        Quote::factory()->for($project)->create([
-            'status' => QuoteStatus::Sent,
-            'sent_at' => now()->subDays(9),
-            'valid_until' => now()->addDays(5),
-            'total' => 350000,
-        ]);
+        // Items first, on the still-mutable draft row: Quote::booted()'s guard
+        // refuses total/discount_amount/net once status reads sent, and
+        // recalculateTotal() writes all three.
+        $quote = Quote::factory()->for($project)->create();
+        $quote->items()->create(['title' => 'Hochzeitsreportage Ganztag', 'description' => 'bis 10 Std. am Hochzeitstag, Bearbeitung, Online-Galerie', 'quantity' => 1, 'unit_price' => 350000]);
+        $quote->recalculateTotal();
+        $quote->update(['status' => QuoteStatus::Sent, 'sent_at' => now()->subDays(9), 'valid_until' => now()->addDays(5)]);
 
         $rule = AutomationRule::query()->where('key', 'quote-follow-up')->firstOrFail();
         $fire = app(FireAutomationRule::class);
@@ -406,12 +407,10 @@ class DemoCrmSeeder extends Seeder
     /** Accepted, and nothing has rendered a contract for it yet. */
     private function seedAcceptedQuoteWithoutContract(Project $project): void
     {
-        Quote::factory()->for($project)->create([
-            'status' => QuoteStatus::Accepted,
-            'sent_at' => now()->subDays(10),
-            'accepted_at' => now()->subDays(3),
-            'total' => 420000,
-        ]);
+        $quote = Quote::factory()->for($project)->create();
+        $quote->items()->create(['title' => 'Hochzeitsreportage Ganztag', 'description' => 'bis 10 Std. am Hochzeitstag, Bearbeitung, Online-Galerie', 'quantity' => 1, 'unit_price' => 420000]);
+        $quote->recalculateTotal();
+        $quote->update(['status' => QuoteStatus::Accepted, 'sent_at' => now()->subDays(10), 'accepted_at' => now()->subDays(3)]);
     }
 
     /** Rendered, aged past ReadInquiryColumn::UNSIGNED_AFTER_DAYS, still no signature. */

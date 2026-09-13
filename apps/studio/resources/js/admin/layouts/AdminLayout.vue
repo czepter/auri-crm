@@ -67,6 +67,13 @@ const items = computed(() =>
             icon: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8v8M13 8v5M18 8v10"/>',
         },
         {
+            key: "angebote",
+            label: "Angebote",
+            href: "/angebote",
+            needs: "manage_quotes",
+            icon: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M9.5 13h5M9.5 16h5"/>',
+        },
+        {
             key: "projekte",
             label: "Projekte",
             href: "/projekte",

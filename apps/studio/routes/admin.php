@@ -561,6 +561,10 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/auftraege/{project}/angebote', [ProjectController::class, 'quotes'])
             ->name('projects.quotes');
 
+        // The sidebar's own Angebote entry, between Anfragen and Projekte:
+        // every quote across every project, not one project's tab.
+        Route::get('/angebote', [QuoteController::class, 'index'])->name('quotes.index');
+
         Route::post('/auftraege/{project}/angebote', [QuoteController::class, 'store'])
             ->name('quotes.store');
         Route::get('/angebote/{quote}/positionen/{quoteItem}/bild', [QuoteController::class, 'itemImage'])
@@ -640,6 +644,11 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/shootings/neu', [ShootController::class, 'create'])->name('shoots.wizard');
         Route::get('/angebote/neu', [QuoteController::class, 'create'])->name('quotes.wizard');
         Route::get('/frageboegen/neu', [FormInstanceController::class, 'create'])->name('form-instances.wizard');
+        // /angebote/neu bleibt über /angebote/{quote}, aus demselben Grund
+        // wie /galerien/neu über /galerien/{gallery}. The overview's row
+        // target: this one quote, capsuled, not the project's whole
+        // Angebote tab.
+        Route::get('/angebote/{quote}', [QuoteController::class, 'show'])->name('quotes.show');
         // Bereich, Set und Einstellungsabschnitt stehen im Pfad, nicht in
         // einem ref(): sonst wirft jedes Neuladen den Menschen zurueck auf
         // Bilder/Alle und die Zurueck-Taste verlaesst die Galerie. Das
