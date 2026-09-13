@@ -93,6 +93,29 @@ class QuoteController extends Controller
         ]);
     }
 
+    /**
+     * The compose screen QuoteActions.vue's "Per E-Mail senden" opens into
+     * instead of firing the send off blind — subject and message here ride
+     * along to send() as plain request input, never stored on the quote
+     * itself (Q-06 already freezes everything that is).
+     */
+    public function compose(Request $request, Quote $quote, StudioSettingsResolver $settings): InertiaResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+        abort_unless($quote->status === QuoteStatus::Draft, 404);
+
+        $quote->loadMissing(['items', 'project']);
+        $contact = $quote->project->primaryContact();
+
+        return Inertia::render('Quotes/Send', [
+            'projectId' => $quote->project->public_id,
+            'quote' => QuoteData::fromModel($quote),
+            'studioName' => $settings->displayName() ?? config('app.name'),
+            'recipientName' => $contact?->name ?? '',
+            'recipientEmail' => $contact?->email ?? '',
+        ]);
+    }
+
     /** The Übersicht's wizard: the project or inquiry first, then the workspace its Angebote tab shows. */
     public function create(Request $request, ReadQuoteWorkspace $workspace, StudioSettingsResolver $settings): InertiaResponse
     {
@@ -286,13 +309,21 @@ class QuoteController extends Controller
      * already-computed amounts, and sends the client mail — all of
      * SendQuote::__invoke(), audit logging included, so nothing repeats here.
      */
-    public function send(Quote $quote, SendQuote $send): RedirectResponse
+    public function send(Request $request, Quote $quote, SendQuote $send): RedirectResponse
     {
         $this->authorize('manageQuotes', $quote->project);
 
-        $send($quote, auth('staff')->user());
+        // Both optional: a caller posting straight here without going
+        // through compose() (tests included) sends neither, and SendQuote
+        // falls back to QuoteSent's own defaults exactly as before.
+        $validated = $request->validate([
+            'subject' => ['nullable', 'string', 'max:255'],
+            'message' => ['nullable', 'string'],
+        ]);
 
-        return back();
+        $send($quote, auth('staff')->user(), null, $validated['subject'] ?? null, $validated['message'] ?? null);
+
+        return redirect("/auftraege/{$quote->project->public_id}");
     }
 
     /**

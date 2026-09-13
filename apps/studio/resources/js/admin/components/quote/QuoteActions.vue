@@ -34,7 +34,7 @@ function addendum() {
 }
 
 function send() {
-  router.post(`/angebote/${props.quote.id}/versenden`, {}, { preserveScroll: true })
+  router.visit(`/angebote/${props.quote.id}/senden`)
 }
 
 function markSent() {

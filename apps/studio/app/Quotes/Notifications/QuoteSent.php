@@ -31,7 +31,16 @@ use Illuminate\Support\Number;
  */
 class QuoteSent extends Notification
 {
-    public function __construct(private readonly Quote $quote) {}
+    /**
+     * $customSubject and $customMessage: the compose screen's own fields —
+     * both null on every other caller (markSent's own direct send, the
+     * tests below), which keeps this exactly the mail it was before.
+     */
+    public function __construct(
+        private readonly Quote $quote,
+        private readonly ?string $customSubject = null,
+        private readonly ?string $customMessage = null,
+    ) {}
 
     /** @return list<string> */
     public function via(object $notifiable): array
@@ -41,10 +50,20 @@ class QuoteSent extends Notification
 
     public function toMail(object $notifiable): MailMessage
     {
-        $message = (new MailMessage)
-            ->subject("Ihr Angebot {$this->quote->number}")
-            ->greeting('Hallo,')
-            ->line('Gesamtbetrag: '.Number::currency($this->quote->net / 100, in: 'EUR', locale: 'de'));
+        $message = (new MailMessage)->subject($this->customSubject ?: "Ihr Angebot {$this->quote->number}");
+
+        if ($this->customMessage !== null && trim($this->customMessage) !== '') {
+            // The compose screen's paragraphs, blank-line separated —
+            // already the studio's own greeting, so MailMessage's own
+            // ->greeting() would double it.
+            foreach (preg_split('/\n{2,}/', trim($this->customMessage)) as $paragraph) {
+                $message->line($paragraph);
+            }
+        } else {
+            $message->greeting('Hallo,');
+        }
+
+        $message->line('Gesamtbetrag: '.Number::currency($this->quote->net / 100, in: 'EUR', locale: 'de'));
 
         if ($this->quote->valid_until !== null) {
             $message->line("Das Angebot ist gültig bis {$this->quote->valid_until->format('d.m.Y')}.");
