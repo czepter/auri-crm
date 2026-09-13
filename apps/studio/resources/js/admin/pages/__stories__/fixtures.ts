@@ -425,6 +425,8 @@ export const header: App.Crm.Data.ProjectHeaderData = {
     outcomeLabel: null,
     lostReason: null,
     canClose: true,
+    isCompleted: false,
+    canComplete: true,
     canDelete: false,
     tabs: [
         { key: 'overview', label: 'project.overview', href: `/auftraege/${RAHN}`, count: null, countTo: null, children: [] },
@@ -461,6 +463,8 @@ export const leadHeader: App.Crm.Data.ProjectHeaderData = {
     outcomeLabel: null,
     lostReason: null,
     canClose: true,
+    isCompleted: false,
+    canComplete: false,
     canDelete: true,
     tabs: [
         { key: 'overview', label: 'project.overview', href: `/anfragen/${LEAD}`, count: null, countTo: null, children: [] },
