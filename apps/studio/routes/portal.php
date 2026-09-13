@@ -18,6 +18,7 @@ use App\Portal\Http\Controllers\PaymentController;
 use App\Portal\Http\Controllers\ProjectController;
 use App\Portal\Http\Controllers\QuestionnaireController;
 use App\Portal\Http\Controllers\QuoteController;
+use App\Portal\Http\Controllers\QuoteShareController;
 use App\Portal\Http\Controllers\ServiceController;
 use App\Portal\Http\Controllers\UnsubscribeController;
 use Illuminate\Support\Facades\Route;
@@ -46,6 +47,17 @@ Route::middleware('portal.maintenance')->group(function () {
     // previewing a second client kept seeing the first, and a shared browser
     // showed one client another's portal.
     Route::get('/zugang/{token}', [MagicLinkController::class, 'consume'])->name('portal.access');
+
+    // The "abgespecktes Portal" a quote's share link opens — no session, no
+    // portal_visible, no contact required. share_token in the path is the
+    // whole credential, the same shape as /zugang/{token} above, except this
+    // one is reusable rather than spent on first use (QuoteShareController).
+    Route::get('/angebot/{quote:share_token}/teilen', [QuoteShareController::class, 'show'])
+        ->name('portal.quotes.share.show');
+    Route::get('/angebot/{quote:share_token}/teilen/bild/{item}', [QuoteShareController::class, 'image'])
+        ->name('portal.quotes.share.image');
+    Route::post('/angebot/{quote:share_token}/teilen/annehmen', [QuoteShareController::class, 'accept'])
+        ->name('portal.quotes.share.accept');
 
     Route::middleware('audience:portal')->group(function () {
         Route::post('/abmelden', [MagicLinkController::class, 'destroy'])->name('portal.logout');

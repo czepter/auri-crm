@@ -65,8 +65,11 @@ class QuoteData extends Data
         public ?string $recipientStreet = null,
         public ?string $recipientPostcode = null,
         public ?string $recipientCity = null,
-        // Wie in App\Quotes\Notifications\QuoteSent: config('portal.url') und
-        // nur, wenn der Kunde das Portal überhaupt sehen darf.
+        // Der Freigabe-Link (QuoteShareController) — unabhängig von
+        // portal_visible und ohne Login, share_token ist sein ganzer
+        // Zugriffsschutz. Wie in App\Quotes\Notifications\QuoteSent:
+        // config('portal.url') statt route(), die Route existiert im
+        // Admin-Prozess nicht.
         public ?string $portalUrl = null,
     ) {}
 
@@ -120,9 +123,7 @@ class QuoteData extends Data
             recipientStreet: $quote->recipient_street,
             recipientPostcode: $quote->recipient_postcode,
             recipientCity: $quote->recipient_city,
-            portalUrl: $quote->project->portal_visible
-                ? config('portal.url')."/projekte/{$quote->project->public_id}/angebot"
-                : null,
+            portalUrl: config('portal.url')."/angebot/{$quote->share_token}/teilen",
         );
     }
 }

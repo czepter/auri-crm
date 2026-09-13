@@ -53,6 +53,12 @@ const props = defineProps<{
   quote: Quote | null
   // Q-10: wie viele Schaufensterbilder es gibt. Null heisst kein Raster.
   showcaseCount: number
+  // QuoteShareController's own accept/image routes, for a quote opened
+  // through its share link rather than a portal session — same screen,
+  // different targets. Both default to the session routes every logged-in
+  // contact uses.
+  acceptUrl?: string
+  imageUrlBase?: string
 }>()
 
 const form = useForm({})
@@ -62,7 +68,7 @@ const form = useForm({})
 const rejection = computed(() => (form.errors as Record<string, string>).quote)
 
 function accept() {
-  form.post(`/projekte/${props.project.id}/angebot/annehmen`, { preserveScroll: true })
+  form.post(props.acceptUrl ?? `/projekte/${props.project.id}/angebot/annehmen`, { preserveScroll: true })
 }
 
 
@@ -91,6 +97,8 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
         :project="project"
         :quote="(quote as unknown as App.Quotes.Data.QuoteData)"
         :can-accept="canAccept"
+        :accept-url="acceptUrl"
+        :image-url-base="imageUrlBase"
         :expired="quote.expired"
         :accepted-at="quote.acceptedAt"
         :showcase-count="showcaseCount"

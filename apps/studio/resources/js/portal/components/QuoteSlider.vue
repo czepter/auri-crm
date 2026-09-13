@@ -21,10 +21,17 @@ const props = defineProps<{
   project: { id: string; name: string }
   quote: Quote
   canAccept: boolean
+  // QuoteShareController's own accept/image routes, for a quote opened
+  // through its share link rather than a portal session. Both default to
+  // the session routes every logged-in contact uses.
+  acceptUrl?: string
+  imageUrlBase?: string
   expired: boolean
   acceptedAt: string | null
   showcaseCount: number
 }>()
+
+const imageUrl = (itemId: string) => `${props.imageUrlBase ?? `/projekte/${props.project.id}/angebot`}/bild/${itemId}`
 
 const { t } = useI18n()
 
@@ -96,7 +103,7 @@ function tileImage(index: number) {
 function accept() {
   form
     .transform(() => ({ hours: hours.value, items: [...chosen.value] }))
-    .post(`/projekte/${props.project.id}/angebot/annehmen`, { preserveScroll: true })
+    .post(props.acceptUrl ?? `/projekte/${props.project.id}/angebot/annehmen`, { preserveScroll: true })
 }
 </script>
 
@@ -185,7 +192,7 @@ function accept() {
             <img
               v-if="item.hasImage"
               class="block h-[104px] w-full object-cover"
-              :src="`/projekte/${project.id}/angebot/bild/${item.id}`"
+              :src="imageUrl(item.id)"
               alt=""
               loading="lazy"
             />

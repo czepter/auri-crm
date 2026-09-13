@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
@@ -40,6 +41,11 @@ class Quote extends Model
     use HasPublicId;
 
     protected $fillable = ['project_id', 'predecessor_id', 'is_addendum', 'status', 'pricing_mode', 'intro', 'outro', 'currency', 'valid_until', 'sent_at', 'sent_channel', 'number', 'total', 'discount_type', 'discount_value', 'discount_amount', 'net', 'vat_mode', 'vat_rate', 'vat_note', 'vat_amount', 'accepted_at', 'accepted_ip', 'accepted_by_contact_id', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours', 'time_title', 'time_description', 'time_sort_order', 'recipient_contact_id', 'recipient_street', 'recipient_postcode', 'recipient_city'];
+
+    // The bearer credential QuoteShareController checks — never worth
+    // serialising alongside the rest of the model, the same call
+    // HasPublicId's own $hidden makes for the raw id.
+    protected $hidden = ['share_token'];
 
     // Mirrors every column default in memory (the same reason Project's own
     // $attributes gives for portal_visible): without net and discount_amount
@@ -80,6 +86,14 @@ class Quote extends Model
      */
     protected static function booted(): void
     {
+        // The share link's whole credential (QuoteShareController) — a
+        // separate value from public_id because public_id already leaves the
+        // server toward an authenticated contact elsewhere; this one leaves
+        // toward whoever holds the link, no session required.
+        static::creating(function (self $quote) {
+            $quote->share_token ??= Str::random(40);
+        });
+
         static::updating(function (self $quote) {
             $original = $quote->getRawOriginal('status');
 

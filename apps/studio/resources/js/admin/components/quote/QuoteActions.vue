@@ -91,7 +91,7 @@ function copyLink(portalUrl: string) {
           <svg class="size-3.5 fill-current" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem :disabled="!quote.portalUrl" @select="copyLink(quote.portalUrl!)">
+          <DropdownMenuItem @select="copyLink(quote.portalUrl!)">
             {{ $t('quotes.copyLink') }}
           </DropdownMenuItem>
           <DropdownMenuItem @select="markSent">{{ $t('quotes.markSent') }}</DropdownMenuItem>

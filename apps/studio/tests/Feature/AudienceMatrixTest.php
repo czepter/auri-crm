@@ -123,6 +123,11 @@ const PUBLIC_ROUTES = [
     // credential, same shape as zugang/{token}.
     'portal' => [
         'anmelden', 'zugang/{token}', 'branding/logo', 'impressum', 'abmelden/{contact}',
+        // The quote share link — reusable, unlike zugang/{token} above, but
+        // the same shape otherwise: share_token in the path is the whole
+        // credential, checked by QuoteShareController's own lookup rather
+        // than an `audience:` guard.
+        'angebot/{quote}/teilen', 'angebot/{quote}/teilen/bild/{item}', 'angebot/{quote}/teilen/annehmen',
         // Q-10: das Reglerraster. Oeffentlich aus demselben Grund wie das
         // Logo — Schaufensterbilder laedt der Fotograf hoch, um sie zu
         // zeigen, und das Raster steht, bevor irgendwer angenommen hat. Der
