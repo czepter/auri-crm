@@ -6,6 +6,11 @@ const meta = {
   component: Edit,
   parameters: { layout: 'fullscreen', url: '/pakete/pk1' },
   args: {
+    catalogItems: [
+      { id: 'ci-1', title: 'Editierte Datei extra', description: null, unitPrice: 2500 },
+      { id: 'ci-2', title: 'Drohnenaufnahmen', description: null, unitPrice: 9000 },
+      { id: 'ci-3', title: 'Express-Bearbeitung (48h)', description: null, unitPrice: 6000 },
+    ],
     requests: [
       { id: 'ld-1', project: 'pr-1', contact: 'Viola Neumann & Chris Hagen', requestedOn: '2027-03-02', date: '2027-08-21', booked: false },
       { id: 'ld-2', project: 'pr-2', contact: 'Lea Meier & Jan Kowalski', requestedOn: '2027-02-14', date: '2027-06-06', booked: true },

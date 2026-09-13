@@ -1,143 +1,145 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import { router } from '@inertiajs/vue3'
-import { Button } from '@/ui/button'
-import { Switch } from '@/ui/switch'
-import { Input } from '@/ui/input'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
-import { Field } from '@/ui/field'
-import { Label } from '@/ui/label'
+import type { PackageItemRow } from '@/admin/lib/packageItem'
+import { moveRow } from '@/admin/lib/rows'
+import PackageItemInsertRow from '@/admin/components/PackageItemInsertRow.vue'
+import PackageItemRowComponent from '@/admin/components/PackageItemRow.vue'
 
-export type PackageItemRow = {
-  // Leer bei einer neuen Zeile: das Bild haengt an einer Zeile, die es in
-  // der Datenbank schon gibt, also erst nach dem ersten Speichern.
-  id?: string
-  title: string
-  description: string
-  quantity: number
-  unitPrice: string
-  selectable: boolean
-  selected: boolean
-  outcome: string
-  hasImage: boolean
-}
-
-const props = defineProps<{ packageId?: string }>()
+const props = defineProps<{ packageId?: string; catalogItems: App.Catalog.Data.CatalogItemData[] }>()
 
 // Shared by Create and Edit, so the two forms cannot drift into building a
 // package item two different ways.
 const items = defineModel<PackageItemRow[]>({ required: true })
 
-function addRow() {
-  items.value = [
-    ...items.value,
-    {
-      title: '',
-      description: '',
-      quantity: 1,
-      unitPrice: '',
-      selectable: false,
-      selected: false,
-      outcome: '',
-      hasImage: false,
-    },
-  ]
+// Höchstens eine Karte offen — wie im Angebot.
+const openIndex = ref<number | null>(null)
+
+function isOpen(index: number) {
+  return openIndex.value === index
 }
 
-// Q-10: das Bild liegt am Katalogeintrag, nicht am Angebot. Eigener Weg,
-// weil das Speichern die Zeilen komplett ersetzt — ein Upload muss auf einer
-// Zeile landen, die es jetzt gibt.
-function upload(item: PackageItemRow, event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0]
-
-  if (!file || !item.id || !props.packageId) return
-
-  router.post(
-    `/pakete/${props.packageId}/positionen/${item.id}/bild`,
-    { image: file },
-    { preserveScroll: true, forceFormData: true }
-  )
+function setOpen(index: number, value: boolean) {
+  openIndex.value = value ? index : null
 }
 
-function removeRow(index: number) {
+function insert(row: PackageItemRow) {
+  items.value = [...items.value, row]
+  openIndex.value = items.value.length - 1
+}
+
+function remove(index: number) {
   items.value = items.value.filter((_, i) => i !== index)
+  openIndex.value = null
+}
+
+function move(from: number, to: number) {
+  const next = moveRow(items.value, from, to)
+
+  if (next === items.value) return
+
+  const openRow = openIndex.value === null ? null : items.value[openIndex.value]
+  items.value = next
+  openIndex.value = openRow ? items.value.indexOf(openRow) : null
+}
+
+const dragging = ref<number | null>(null)
+const over = ref<number | null>(null)
+
+// Die Liste zeigt schon beim Ziehen die Reihenfolge nach dem Loslassen; die
+// gezogene Karte steht als Platzhalter an ihrem neuen Platz.
+const displayed = computed(() => (dragging.value === null || over.value === null ? items.value : moveRow(items.value, dragging.value, over.value)))
+
+function at(row: PackageItemRow) {
+  return items.value.indexOf(row)
+}
+
+// Erst nach dem dragstart: Chrome baut das Ziehbild aus der Quelle und bricht
+// ab, wenn sie im selben Tick unsichtbar wird oder zuklappt.
+let pendingDrag: ReturnType<typeof setTimeout> | undefined
+
+function startDrag(position: number) {
+  pendingDrag = setTimeout(() => {
+    openIndex.value = null
+    dragging.value = position
+    over.value = position
+  })
+}
+
+function onDragOver(event: DragEvent, row?: PackageItemRow) {
+  if (dragging.value === null) return
+
+  event.preventDefault()
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+  if (!row || over.value === null) return
+
+  // Gezählt wird in der angezeigten Liste; die ohne Platzhalter hat dieselbe
+  // Reihenfolge, also landet die Karte genau dort.
+  const target = displayed.value.indexOf(row)
+  const box = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const upperHalf = event.clientY < box.top + box.height / 2
+
+  // Erst jenseits der Mitte der Nachbarkarte: sonst schiebt jeder Tausch sie
+  // wieder unter den Zeiger und die Liste springt hin und her.
+  if ((target > over.value && upperHalf) || (target < over.value && !upperHalf)) return
+
+  over.value = target
+}
+
+function onDrop() {
+  if (dragging.value !== null && over.value !== null) move(dragging.value, over.value)
+
+  endDrag()
+}
+
+function endDrag() {
+  clearTimeout(pendingDrag)
+  dragging.value = null
+  over.value = null
+}
+
+// Q-10: das Bild haengt an einer Zeile, die es in der Datenbank schon gibt,
+// also erst nach dem ersten Speichern — siehe PackageItemRow.vue.
+function upload(row: PackageItemRow, file: File) {
+  if (!row.id || !props.packageId) return
+
+  router.post(`/pakete/${props.packageId}/positionen/${row.id}/bild`, { image: file }, { preserveScroll: true, forceFormData: true })
 }
 </script>
 
 <template>
-  <div>
-    <div v-for="(item, index) in items" :key="index" class="mb-6 block rounded-lg border border-border p-2.5">
-      <div class="mb-4 flex items-center justify-between">
-        <span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('packages.itemTitle') }} {{ index + 1 }}</span>
-        <Button variant="outline" tone="accent" type="button" @click="removeRow(index)">{{ $t('common.remove') }}</Button>
-      </div>
-
-      <div class="grid grid-cols-2 gap-x-6 gap-y-4">
-        <Field wide>
-          <Label :for="`item-title-${index}`">{{ $t('packages.itemTitle') }}</Label>
-          <Input :id="`item-title-${index}`" v-model="item.title" type="text" required />
-        </Field>
-        <Field wide>
-          <Label :for="`item-description-${index}`">{{ $t('packages.itemDescription') }}</Label>
-          <Input :id="`item-description-${index}`" v-model="item.description" type="text" />
-        </Field>
-        <Field>
-          <Label :for="`item-quantity-${index}`">{{ $t('packages.itemQuantity') }}</Label>
-          <Input
-            :id="`item-quantity-${index}`"
-            v-model.number="item.quantity"
-            class="tabular-nums"
-            type="number"
-            min="1"
-            required
-          />
-        </Field>
-        <Field wide>
-          <Label :for="`item-outcome-${index}`">{{ $t('packages.itemOutcome') }}</Label>
-          <Input :id="`item-outcome-${index}`" v-model="item.outcome" type="text" />
-        </Field>
-        <Field>
-          <Label :for="`item-price-${index}`">
-            {{ $t('packages.itemPrice') }}
-          </Label>
-          <InputGroup>
-            <InputGroupInput
-              :id="`item-price-${index}`"
-              v-model="item.unitPrice"
-              class="tabular-nums"
-              type="text"
-              inputmode="decimal"
-              :placeholder="$t('packages.itemPriceHint')"
-            />
-            <InputGroupAddon align="inline-end">€</InputGroupAddon>
-          </InputGroup>
-        </Field>
-
-        <Field wide>
-          <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-            <div class="flex items-center gap-2.5">
-              <Switch :id="`item-selectable-${index}`" v-model="item.selectable" />
-              <Label variant="inline" :for="`item-selectable-${index}`">{{ $t('packages.itemSelectable') }}</Label>
-            </div>
-            <div v-if="item.selectable" class="flex items-center gap-2.5">
-              <Switch :id="`item-selected-${index}`" v-model="item.selected" />
-              <Label variant="inline" :for="`item-selected-${index}`">{{ $t('packages.itemSelected') }}</Label>
-            </div>
-
-            <label v-if="item.id && packageId" class="ml-auto flex cursor-pointer items-center gap-2.5">
-              <img
-                v-if="item.hasImage"
-                class="size-10 rounded-[6px] object-cover"
-                :src="`/pakete/${packageId}/positionen/${item.id}/bild`"
-                alt=""
-              />
-              <span class="text-[12.5px] text-[var(--accent)] underline">{{ $t('packages.itemImage') }}</span>
-              <input class="hidden" type="file" accept="image/png,image/jpeg" @change="upload(item, $event)" />
-            </label>
-          </div>
-        </Field>
+  <div class="flex flex-col gap-3">
+    <!-- Die ganze Liste nimmt den Drop an, auch die Lücken zwischen den Karten. -->
+    <div class="flex flex-col gap-3" @dragover="onDragOver($event)" @drop.prevent="onDrop">
+      <div
+        v-for="row in displayed"
+        :key="row.id ?? `row-${items.indexOf(row)}`"
+        data-position
+        class="rounded-[20px]"
+        :class="
+          dragging === null
+            ? ''
+            : row === items[dragging]
+              ? 'bg-[var(--accent-bg)] outline-2 outline-dashed outline-ring [&>*]:invisible'
+              : 'outline-2 outline-offset-2 outline-dashed outline-ring/35'
+        "
+        @dragover.stop="onDragOver($event, row)"
+      >
+        <PackageItemRowComponent
+          :package-id="packageId"
+          :row="row"
+          :open="isOpen(at(row))"
+          @update:open="(value) => setOpen(at(row), value)"
+          @remove="remove(at(row))"
+          @move-up="move(at(row), at(row) - 1)"
+          @move-down="move(at(row), at(row) + 1)"
+          @drag-start="startDrag(at(row))"
+          @drag-end="endDrag"
+          @upload="(file) => upload(row, file)"
+        />
       </div>
     </div>
 
-    <Button variant="outline" type="button" @click="addRow">{{ $t('packages.addItem') }}</Button>
+    <PackageItemInsertRow :catalog-items="catalogItems" @insert="insert" />
   </div>
 </template>

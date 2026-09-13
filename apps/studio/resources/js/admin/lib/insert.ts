@@ -19,7 +19,7 @@ function packageTotal(pkg: App.Catalog.Data.PackageData): number {
   return pkg.items.reduce((sum, item) => sum + (item.unitPrice ?? 0) * item.quantity, 0)
 }
 
-function matched<T>(rows: T[], title: (row: T) => string, needle: string): T[] {
+export function matched<T>(rows: T[], title: (row: T) => string, needle: string): T[] {
   return rows
     .map((row) => ({ row, at: rank(title(row), needle) }))
     .filter((entry) => entry.at !== Number.POSITIVE_INFINITY)

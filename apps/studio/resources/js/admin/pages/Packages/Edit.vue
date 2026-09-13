@@ -3,7 +3,8 @@ import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
-import PackageItemsEditor, { type PackageItemRow } from '@/admin/components/PackageItemsEditor.vue'
+import type { PackageItemRow } from '@/admin/lib/packageItem'
+import PackageItemsEditor from '@/admin/components/PackageItemsEditor.vue'
 import { centsToEuros, eurosToCents } from '@/admin/lib/money'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
@@ -26,6 +27,7 @@ const props = defineProps<{
   package: App.Catalog.Data.PackageData
   projectTypes: { key: string; name: string }[]
   requests: Request[]
+  catalogItems: App.Catalog.Data.CatalogItemData[]
 }>()
 
 function day(iso: string) {
@@ -49,7 +51,6 @@ const form = useForm({
       unitPrice: centsToEuros(item.unitPrice),
       selectable: item.selectable,
       selected: item.selected,
-      outcome: item.outcome ?? '',
       hasImage: item.hasImage,
     }),
   ),
@@ -77,7 +78,6 @@ function submit() {
         unit_price: eurosToCents(item.unitPrice),
         selectable: item.selectable,
         selected: item.selected,
-        outcome: item.outcome || null,
         // Die id, nicht der Pfad: der Controller schlaegt das Bild an der
         // eigenen Zeile nach. Siehe PackageController::imagePathsFor().
         id: item.id,
@@ -108,7 +108,7 @@ function submit() {
 
           <div class="mt-8 first-of-type:mt-6">
             <div class="mb-2.5 text-[12.5px] leading-none font-semibold tracking-[0.02em] uppercase text-faint">{{ $t('packages.items') }}</div>
-            <PackageItemsEditor v-model="form.items" :package-id="package.id" />
+            <PackageItemsEditor v-model="form.items" :package-id="package.id" :catalog-items="catalogItems" />
           </div>
 
           <!-- Ein Paket ist eine Angebotsvorlage. Diese Felder machen daraus

@@ -3,7 +3,9 @@
 namespace App\Catalog\Http\Controllers;
 
 use App\Catalog\Actions\SavePackage;
+use App\Catalog\Data\CatalogItemData;
 use App\Catalog\Data\PackageData;
+use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
 use App\Crm\Models\Lead;
@@ -39,7 +41,9 @@ class PackageController extends Controller
     {
         $this->authorize('create', Package::class);
 
-        return Inertia::render('Packages/Create');
+        return Inertia::render('Packages/Create', [
+            'catalogItems' => self::catalogItems(),
+        ]);
     }
 
     public function store(Request $request, SavePackage $save): RedirectResponse
@@ -66,6 +70,7 @@ class PackageController extends Controller
 
         return Inertia::render('Packages/Edit', [
             'package' => PackageData::fromModel($package),
+            'catalogItems' => self::catalogItems(),
             // Ohne Projekttyp hat eine Anfrage aus dem Portal keine Form —
             // siehe App\Portal\Actions\RequestService.
             'projectTypes' => ProjectType::query()->active()
@@ -187,6 +192,12 @@ class PackageController extends Controller
         abort_unless($packageItem->package_id === $package->id && $packageItem->image_path !== null, 404);
 
         return Storage::disk('local')->response($packageItem->image_path);
+    }
+
+    /** @return CatalogItemData[] */
+    private static function catalogItems()
+    {
+        return CatalogItemData::collect(CatalogItem::query()->orderBy('title')->get());
     }
 
     /**
