@@ -18,7 +18,7 @@ const form = useForm({
     portal_visible: '', accept_quotes: '', sign_contracts: '', payment_status: '',
     messaging_mode: '', gallery_downloads: '', gallery_lists: '', gallery_comments: '',
     welcome: '',
-  } as Record<string, string>,
+  },
 })
 
 function submit() {
