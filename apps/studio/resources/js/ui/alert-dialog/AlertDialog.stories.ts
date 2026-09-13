@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogBody,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -18,6 +19,7 @@ import {
 const parts = {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogBody,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -80,7 +82,7 @@ export const Schliessen: Story = {
           <AlertDialogHeader>
             <AlertDialogTitle>Projekt schließen</AlertDialogTitle>
           </AlertDialogHeader>
-          <div class="flex flex-col gap-4 px-[var(--s5)] pb-[var(--s4)]">
+          <AlertDialogBody>
             <Field label="Ausgang" v-slot="{ id }">
               <Select default-value="lost">
                 <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
@@ -94,7 +96,7 @@ export const Schliessen: Story = {
             <Field label="Grund" v-slot="{ id }">
               <Input :id="id" type="text" default-value="Termin anderweitig vergeben" />
             </Field>
-          </div>
+          </AlertDialogBody>
           <AlertDialogFooter>
             <AlertDialogAction>Schließen</AlertDialogAction>
             <AlertDialogCancel>Abbrechen</AlertDialogCancel>
