@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
-import type { QuoteContact } from '@/admin/components/quote/quotePayload'
+import type { QuoteContact, VatSettings } from '@/admin/components/quote/quotePayload'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
@@ -17,6 +17,7 @@ const props = defineProps<{
   catalogItems: App.Catalog.Data.CatalogItemData[]
   contacts: QuoteContact[]
   canManageCatalog: boolean
+  vatSettings: VatSettings
 }>()
 
 const project = ref(props.project)
@@ -72,6 +73,7 @@ function create() {
               :contacts="contacts"
               :can-manage-catalog="canManageCatalog"
               :payment-plan="null"
+              :vat-settings="vatSettings"
             />
           </div>
         </div>

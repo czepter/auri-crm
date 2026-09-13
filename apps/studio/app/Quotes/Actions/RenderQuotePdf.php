@@ -7,6 +7,7 @@ use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\MergeFieldResolver;
+use App\Payments\Support\PaymentStageSplitter;
 use App\Quotes\Enums\QuoteLayout;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -65,6 +66,7 @@ class RenderQuotePdf
             ? $this->recipient($quote).$templateBody.$this->sliderItems($quote)
             : $this->layoutRenderer($layoutOverride)->render($quote, $data, $templateBody);
 
+        $body .= $this->paymentStages($quote);
         $body .= $this->letter($quote->outro, $data);
 
         return $this->renderer->wrap(DocumentTemplateType::Quote, $body, $this->settings);
@@ -123,6 +125,30 @@ class RenderQuotePdf
         return collect(preg_split('/\n{2,}/', $resolved))
             ->map(fn (string $paragraph) => '<p>'.nl2br(e(trim($paragraph))).'</p>')
             ->implode('');
+    }
+
+    /**
+     * The same split CreatePaymentPlan uses at booking (PaymentStageSplitter),
+     * against the quote's own would-be gross total — so a client reading the
+     * quote sees the same shares the plan eventually charges, not a second
+     * arithmetic invented for the document.
+     */
+    private function paymentStages(Quote $quote): string
+    {
+        if ($quote->paymentStages->isEmpty()) {
+            return '';
+        }
+
+        $base = $quote->hasSlider() ? $quote->total : $quote->net + ($quote->vat_mode === 'standard' ? ($quote->vat_amount ?? 0) : 0);
+        $rows = PaymentStageSplitter::split($base, $quote->paymentStages);
+
+        if ($rows === []) {
+            return '';
+        }
+
+        $body = collect($rows)->map(fn (array $row) => $this->row(e($row['label']), $this->money($row['amount'])))->implode('');
+
+        return '<table class="doc-table"><thead><tr><th colspan="2">Zahlungsplan</th></tr></thead><tbody>'.$body.'</tbody></table>';
     }
 
     private function sliderItems(Quote $quote): string

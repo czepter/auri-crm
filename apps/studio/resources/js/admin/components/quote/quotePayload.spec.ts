@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { buildQuotePayload, quoteRowToLine, type QuoteDraft } from './quotePayload'
+import { buildPreviewQuote, buildQuotePayload, quoteRowToLine, type QuoteDraft, type VatSettings } from './quotePayload'
+
+const STANDARD: VatSettings = { mode: 'standard', rate: 1900, note: null }
+// effectiveVatRate() always zeroes the rate under small_business (see
+// StudioSettingsResolver) — ReadQuoteWorkspace never sends a nonzero one here.
+const SMALL_BUSINESS: VatSettings = { mode: 'small_business', rate: 0, note: 'Kleinunternehmer nach § 19 UStG' }
 
 function baseDraft(pricingMode: QuoteDraft['pricingMode']): QuoteDraft {
   return {
@@ -158,5 +163,58 @@ describe('buildQuotePayload', () => {
 
     expect(quoteRowToLine(row).discountValue).toBe(10)
     expect(buildQuotePayload(classicDraft(), { canManageCatalog: false }).items[0].discount_value).toBe(1000)
+  })
+})
+
+describe('buildPreviewQuote', () => {
+  it('markiert eine leere Preisangabe als enthaltene Leistung, ohne Summe', () => {
+    const draft = classicDraft()
+    draft.rows[0].unitPrice = ''
+
+    const quote = buildPreviewQuote(draft, STANDARD)
+
+    expect(quote.items[0].isIncluded).toBe(true)
+    expect(quote.items[0].netTotal).toBe(0)
+  })
+
+  it('rechnet den Zeilenrabatt in die Zeilensumme ein', () => {
+    // 2 × 690,00 € abzüglich 10 % = 124.200 Cent.
+    const quote = buildPreviewQuote(classicDraft(), STANDARD)
+
+    expect(quote.items[0].netTotal).toBe(124200)
+  })
+
+  it('setzt hourlyRate nur im Auswahl-Modus, damit QuoteSlider statt Tabelle rendert', () => {
+    expect(buildPreviewQuote(classicDraft(), STANDARD).hourlyRate).toBeNull()
+    expect(buildPreviewQuote(choiceDraft(), STANDARD).hourlyRate).toBe(25000)
+  })
+
+  it('zählt im Auswahl-Modus nur die Zeit plus gewählte wählbare Zeilen in die Summe', () => {
+    // 5 Std. × 250,00 € Stundensatz = 125.000 Cent, die wählbare Zeile zählt nur gewählt mit.
+    const draft = choiceDraft()
+    draft.rows[0].selected = false
+
+    expect(buildPreviewQuote(draft, STANDARD).total).toBe(125000)
+
+    draft.rows[0].selected = true
+    expect(buildPreviewQuote(draft, STANDARD).total).toBe(249200)
+  })
+
+  // Q-04 friert vat_mode erst beim Versenden ein; buildPreviewQuote zeigt
+  // bis dahin, was Quote::computeVat() aus den aktuellen Einstellungen
+  // rechnen würde — nie null, auch im Entwurf nicht (siehe QuotePortalPreview.vue).
+  it('rechnet die MwSt aus den aktuellen Studio-Einstellungen, nie aus gefrorenen Spalten', () => {
+    // Netto 124.200 Cent × 19 % gerundet = 23.598 Cent.
+    const standard = buildPreviewQuote(classicDraft(), STANDARD)
+
+    expect(standard.vatMode).toBe('standard')
+    expect(standard.vatAmount).toBe(23598)
+    expect(standard.vatNote).toBeNull()
+
+    const smallBusiness = buildPreviewQuote(classicDraft(), SMALL_BUSINESS)
+
+    expect(smallBusiness.vatMode).toBe('small_business')
+    expect(smallBusiness.vatAmount).toBe(0)
+    expect(smallBusiness.vatNote).toBe('Kleinunternehmer nach § 19 UStG')
   })
 })

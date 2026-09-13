@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3'
-import type { QuoteContact } from '@/admin/components/quote/quotePayload'
+import type { QuoteContact, VatSettings } from '@/admin/components/quote/quotePayload'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
 import QuoteWorkspace from '@/admin/components/QuoteWorkspace.vue'
@@ -14,6 +14,7 @@ const props = defineProps<{
   contacts: QuoteContact[]
   canManageCatalog: boolean
   paymentPlan: App.Payments.Data.PaymentPlanData | null
+  vatSettings: VatSettings
 }>()
 
 function create() {
@@ -41,6 +42,7 @@ function create() {
         :contacts="contacts"
         :can-manage-catalog="canManageCatalog"
         :payment-plan="paymentPlan"
+        :vat-settings="vatSettings"
       />
     </ProjectShell>
   </AdminLayout>

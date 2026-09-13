@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { PricingMode, QuoteDraft, QuoteRow } from './quotePayload'
+import type { PricingMode, QuoteDraft, QuoteRow, VatSettings } from './quotePayload'
 import { quoteRowToLine } from './quotePayload'
-import { applyDiscount, span, subtotal } from './quoteTotals'
-import { eurosToCents, formatEuros, parseDiscount } from '@/admin/lib/money'
+import { applyDiscount, span, subtotal, vatAmount } from './quoteTotals'
+import { basisPointsToPercent, eurosToCents, formatEuros, parseDiscount } from '@/admin/lib/money'
 import { moveRow } from '@/admin/lib/rows'
 import QuoteInsertRow from '@/admin/components/QuoteInsertRow.vue'
 import QuotePositionRow from './QuotePositionRow.vue'
@@ -16,6 +16,7 @@ const props = defineProps<{
   canManageCatalog: boolean
   packages: App.Catalog.Data.PackageData[]
   catalogItems: App.Catalog.Data.CatalogItemData[]
+  vatSettings: VatSettings
 }>()
 
 const draft = defineModel<QuoteDraft>({ required: true })
@@ -171,35 +172,39 @@ const total = computed(() =>
     value: quoteDiscount.value.type === 'percentage' && quoteDiscount.value.value !== null ? quoteDiscount.value.value / 100 : quoteDiscount.value.value,
   }),
 )
+
+// Q-04 friert das erst beim Versenden ein (Quote::computeVat()) — bis dahin
+// zeigt der Builder dieselbe Live-Rechnung aus den aktuellen
+// Studio-Einstellungen, die die Portal-Vorschau daneben auch zeigt.
+const vat = computed(() => vatAmount(total.value, props.vatSettings.rate))
 </script>
 
 <template>
   <div class="flex flex-col gap-3">
-    <!-- Die ganze Liste nimmt den Drop an, auch die Lücken zwischen den Karten. -->
-    <div class="flex flex-col gap-3" @dragover="onDragOver($event)" @drop.prevent="onDrop">
+    <!-- Die ganze Liste nimmt den Drop an, auch die Lücken zwischen den Zeilen. -->
+    <div class="flex flex-col divide-y divide-rule" @dragover="onDragOver($event)" @drop.prevent="onDrop">
     <div
       v-for="entry in displayed"
       :key="entry.kind === 'time' ? 'time' : (entry.row.id ?? `row-${entry.index}`)"
       data-position
-      class="rounded-[20px]"
       :class="
         dragging === null
           ? ''
           : entry === entries[dragging]
-            ? 'bg-[var(--accent-bg)] outline-2 outline-dashed outline-ring [&>*]:invisible'
-            : 'outline-2 outline-offset-2 outline-dashed outline-ring/35'
+            ? 'rounded-[12px] bg-[var(--accent-bg)] outline-2 outline-dashed outline-ring [&>*]:invisible'
+            : 'rounded-[12px] outline-2 outline-offset-2 outline-dashed outline-ring/35'
       "
       @dragover.stop="onDragOver($event, entry)"
     >
       <!-- Rechnet mit dem Regler mit: kein Inhalt zum Aufklappen, nur ein Platz. -->
-      <div v-if="entry.kind === 'time'" class="flex items-center rounded-[20px] border border-border bg-background">
+      <div v-if="entry.kind === 'time'" class="flex items-center">
         <DragHandle
           @drag-start="startDrag(at(entry))"
           @drag-end="endDrag"
           @move-up="move(at(entry), at(entry) - 1)"
           @move-down="move(at(entry), at(entry) + 1)"
         />
-        <div class="flex min-w-0 flex-1 items-center gap-3 px-5 py-4">
+        <div class="flex min-w-0 flex-1 items-center gap-3 py-4 pr-1 pl-5">
           <div class="min-w-0 flex-1">
             <div class="truncate text-[14px] font-semibold tracking-[-0.02em]">{{ draft.timeTitle || $t('quotes.hoursCount', hours) }}</div>
             <div class="mt-0.5 truncate text-[12px] text-ink-2">
@@ -250,6 +255,18 @@ const total = computed(() =>
         <span>{{ $t('quotes.total') }}</span>
         <span class="tabular-nums">{{ formatEuros(total) }}</span>
       </div>
+
+      <template v-if="vatSettings.mode === 'standard'">
+        <div class="flex justify-between text-[12.5px] text-ink-2">
+          <span>{{ $t('quotes.vat', { rate: basisPointsToPercent(vatSettings.rate) }) }}</span>
+          <span class="tabular-nums">{{ formatEuros(vat) }}</span>
+        </div>
+        <div class="flex justify-between border-t border-rule pt-1.5 text-[15px] font-semibold">
+          <span>{{ $t('quotes.total') }}</span>
+          <span class="tabular-nums">{{ formatEuros(total + vat) }}</span>
+        </div>
+      </template>
+      <p v-else-if="vatSettings.note" class="text-[11.5px] leading-[1.45] text-ink-2">{{ vatSettings.note }}</p>
     </div>
 
     <div v-if="mode === 'choice'" class="grid grid-cols-3 gap-3 pt-2">

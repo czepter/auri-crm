@@ -275,9 +275,9 @@ export function quoteOf(
         discountValue: null,
         discountAmount: 0,
         vatMode: 'exempt',
-        vatRate: null,
+        vatRate: 0,
         vatNote: 'Kleinunternehmer nach § 19 UStG',
-        vatAmount: null,
+        vatAmount: 0,
         intro: null,
         outro: null,
         hourlyRate: null,
@@ -372,6 +372,7 @@ export const workspace = {
     contacts,
     canManageCatalog: true,
     paymentPlan: null,
+    vatSettings: { mode: 'standard', rate: 1900, note: null },
 }
 
 /** Der Nachrichtenreiter: ein Thread, auf den die Kundin zuletzt geschrieben hat. */

@@ -4,6 +4,7 @@ namespace App\Quotes\Data;
 
 use App\Quotes\Models\Quote;
 use App\Quotes\Support\QuoteRange;
+use App\Settings\Support\StudioSettingsResolver;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
@@ -32,15 +33,17 @@ class QuoteData extends Data
         public ?int $discountValue,
         public int $discountAmount,
         public int $net,
-        // Q-04: null on every quote until Q-06 sends it and calls
-        // Quote::snapshotVat() — read straight off the quote's own columns,
-        // never re-derived from the tenant's live settings, so this is the
-        // one place the screen has to look regardless of what the studio's
-        // VAT mode is set to right now.
-        public ?string $vatMode,
-        public ?int $vatRate,
+        // Q-04: frozen by Q-06's send onto the quote's own columns — read
+        // straight off the row once populated, so a later change to the
+        // tenant's VAT mode alters nothing an already-sent quote shows.
+        // Never null here, though: a draft has nothing frozen yet, so
+        // fromModel() fills these with what sending it right now would
+        // produce (Quote::computeVat()) — a live preview, not a value this
+        // quote's row carries.
+        public string $vatMode,
+        public int $vatRate,
         public ?string $vatNote,
-        public ?int $vatAmount,
+        public int $vatAmount,
         // Anschreiben, roh mit Merge-Feldern — aufgelöst wird erst beim
         // Rendern (App\Quotes\Actions\RenderQuotePdf), damit der Schirm
         // bearbeitet, was gespeichert ist.
@@ -75,6 +78,12 @@ class QuoteData extends Data
 
     public static function fromModel(Quote $quote): self
     {
+        // Frozen once sent; for a draft, computeVat() gives the screen the
+        // same shape from the tenant's current settings instead of nulls.
+        $vat = $quote->vat_mode !== null
+            ? ['vat_mode' => $quote->vat_mode, 'vat_rate' => $quote->vat_rate, 'vat_note' => $quote->vat_note, 'vat_amount' => $quote->vat_amount]
+            : Quote::computeVat($quote->net, app(StudioSettingsResolver::class));
+
         return new self(
             id: $quote->public_id,
             // The predecessor is a Quote row too, referenced here the same
@@ -96,10 +105,10 @@ class QuoteData extends Data
             discountValue: $quote->discount_value,
             discountAmount: $quote->discount_amount,
             net: $quote->net,
-            vatMode: $quote->vat_mode,
-            vatRate: $quote->vat_rate,
-            vatNote: $quote->vat_note,
-            vatAmount: $quote->vat_amount,
+            vatMode: $vat['vat_mode'],
+            vatRate: $vat['vat_rate'],
+            vatNote: $vat['vat_note'],
+            vatAmount: $vat['vat_amount'],
             intro: $quote->intro,
             outro: $quote->outro,
             items: $quote->items->map(QuoteItemData::fromModel(...))->all(),

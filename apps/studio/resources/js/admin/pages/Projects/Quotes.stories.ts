@@ -34,6 +34,7 @@ const meta = {
         contacts,
         canManageCatalog: true,
         paymentPlan: null,
+        vatSettings: { mode: 'standard', rate: 1900, note: null },
     },
 } satisfies Meta<typeof Quotes>
 

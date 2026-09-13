@@ -8,6 +8,7 @@ import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
 import QuoteSlider from '@/portal/components/QuoteSlider.vue'
+import { splitStages } from '@/portal/lib/paymentStages'
 import { Button } from '@/ui/button'
 
 type QuoteItem = {
@@ -35,6 +36,9 @@ type Quote = {
   vatNote: string | null
   vatAmount: number | null
   items: QuoteItem[]
+  intro: string | null
+  outro: string | null
+  paymentStages: { id: string; percent: number; label: string; minimum: number }[]
   // Display only — see App\Quotes\Actions\AcceptQuote for the re-check that
   // actually gates acceptance. This flag never reaches the accept request.
   expired: boolean
@@ -76,6 +80,19 @@ function accept() {
 // this one is waiting on the client.
 const state = computed(() => (props.quote?.status === 'accepted' ? 'done' : 'open'))
 
+// Choice mode already gets its own breakdown from QuoteSlider's own
+// `stages`; this is the classic-table half of the same split, against the
+// same gross total the table above already prints.
+const stages = computed(() => {
+  const quote = props.quote
+
+  if (!quote) return []
+
+  const gross = quote.net + (quote.vatMode === 'standard' ? (quote.vatAmount ?? 0) : 0)
+
+  return splitStages(gross, quote.paymentStages)
+})
+
 const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1.5] [&>td:last-child]:text-right [&>td:last-child]:tabular-nums [&>td:last-child]:whitespace-nowrap'
 </script>
 
@@ -90,6 +107,11 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
           {{ $t('portal.quoteTitle') }}
         </h1>
       </section>
+
+      <p
+        v-if="quote?.intro"
+        class="animate-rise [animation-delay:190ms] motion-reduce:animate-none mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] whitespace-pre-line"
+      >{{ quote.intro }}</p>
 
       <QuoteSlider
         v-if="quote && quote.hourlyRate !== null"
@@ -123,8 +145,8 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
           <tr v-for="item in quote.items" :key="item.id" :class="[ROW, item.isIncluded && '[&>td]:text-muted-foreground']">
             <td>
               {{ item.title }}
-              <div v-if="item.isIncluded || item.description" class="text-[13px] leading-[1.45] text-muted-foreground">
-                {{ item.isIncluded ? $t('quotes.included') : item.description }}
+              <div v-if="item.description" class="text-[13px] leading-[1.45] text-muted-foreground">
+                {{ item.description }}
               </div>
             </td>
             <td>{{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.netTotal) }}</td>
@@ -159,6 +181,20 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
             </tr>
           </template>
         </table>
+
+        <table v-if="stages.length" class="mt-8 w-full max-w-[420px] border-collapse">
+          <tr :class="[ROW, '[&>td]:border-b-0']">
+            <td colspan="2" class="text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
+              {{ $t('quotes.payment') }}
+            </td>
+          </tr>
+          <tr v-for="stage in stages" :key="stage.label" :class="[ROW, '[&>td]:text-muted-foreground']">
+            <td>{{ stage.label }}</td>
+            <td>{{ formatEuros(stage.amount) }}</td>
+          </tr>
+        </table>
+
+        <p v-if="quote.outro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] whitespace-pre-line">{{ quote.outro }}</p>
 
         <p v-if="quote.status === 'accepted'" class="mt-8 text-[14.5px] text-muted-foreground">
           {{ $t('portal.quoteAccepted', { date: quote.acceptedAt }) }}

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useDebounceFn, useElementSize } from '@vueuse/core'
-import { buildQuotePayload, type QuoteDraft } from './quotePayload'
+import { ChoiceGroup } from '@/ui/choice-group'
+import { buildQuotePayload, type QuoteDraft, type VatSettings } from './quotePayload'
+import QuotePortalPreview from './QuotePortalPreview.vue'
 
 // Server-rendered only — unlike DocumentPreviewPane there is no local instant
 // paint here, that half belongs to Editor.js and has no counterpart on a
@@ -15,7 +17,14 @@ const props = defineProps<{
   quoteId: string
   draft?: QuoteDraft
   canManageCatalog?: boolean
+  // Nur für den Portal-Modus: die Anrede-Zeile, die der Kunde über dem
+  // Angebot sieht (portal/pages/Quotes/Show.vue's project.name), und was
+  // Quote::computeVat() aus den aktuellen Studio-Einstellungen macht.
+  recipientName?: string
+  vatSettings?: VatSettings
 }>()
+
+const mode = ref<'pdf' | 'portal'>('portal')
 
 // A4 at 96 dpi, matching DocumentPreviewPane's own sheet metrics — the same
 // paper RenderQuotePdf sends to Gotenberg.
@@ -109,7 +118,16 @@ if (props.draft) {
   <section class="flex min-w-0 flex-col">
     <div class="flex items-center gap-2.5 border-b border-border pb-2.5">
       <span class="mb-[5px] text-[10px] leading-none font-semibold tracking-[0.09em] uppercase text-faint">{{ $t('quotes.preview') }}</span>
-      <div class="ml-auto flex items-center gap-1.5">
+
+      <ChoiceGroup
+        :model-value="mode"
+        :options="[{ value: 'pdf', label: $t('quotes.previewPdf') }, { value: 'portal', label: $t('quotes.previewPortal') }]"
+        variant="segmented"
+        class="ml-2.5"
+        @update:model-value="(value) => (mode = value as 'pdf' | 'portal')"
+      />
+
+      <div v-if="mode === 'pdf'" class="ml-auto flex items-center gap-1.5">
         <button
           v-for="option in [{ key: 'fit', on: true, label: 'quotes.zoomFit' }, { key: 'full', on: false, label: 'quotes.zoomFull' }]"
           :key="option.key"
@@ -119,7 +137,7 @@ if (props.draft) {
           @click="fit = option.on"
         >{{ $t(option.label) }}</button>
       </div>
-      <span v-if="draft" class="ml-2.5 text-[11px] leading-none" :class="stale ? 'text-due' : 'text-faint'">{{
+      <span v-if="mode === 'pdf' && draft" class="ml-2.5 text-[11px] leading-none" :class="stale ? 'text-due' : 'text-faint'">{{
         stale ? $t('quotes.previewStale') : $t('quotes.previewFresh')
       }}</span>
     </div>
@@ -128,6 +146,7 @@ if (props.draft) {
          trusted script — an empty sandbox keeps a <script> in it from ever
          running with this session's origin. -->
     <div
+      v-if="mode === 'pdf'"
       ref="frame"
       class="mt-6 flex-1 overflow-auto bg-sunk"
       :style="{ height: `${SHEET_HEIGHT * scale + PAD * 2}px`, padding: `${PAD}px` }"
@@ -143,6 +162,16 @@ if (props.draft) {
           transformOrigin: 'top left',
         }"
       ></iframe>
+    </div>
+
+    <div v-else class="mt-6 flex-1 overflow-auto rounded-md border border-border bg-sunk p-4">
+      <QuotePortalPreview
+        v-if="draft && vatSettings"
+        :draft="draft"
+        :project-name="recipientName ?? ''"
+        :vat-settings="vatSettings"
+        class="rounded-[10px]"
+      />
     </div>
   </section>
 </template>

@@ -1,0 +1,114 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { basisPointsToPercent, formatEuros } from '@/admin/lib/money'
+import PortalWrap from '@/portal/components/PortalWrap.vue'
+import QuoteSlider from '@/portal/components/QuoteSlider.vue'
+import { splitStages } from '@/portal/lib/paymentStages'
+import type { QuoteDraft, VatSettings } from './quotePayload'
+import { buildPreviewQuote } from './quotePayload'
+
+// Was ein Kunde unter seinem Teilen-Link sieht — siehe
+// portal/pages/Quotes/Show.vue, dessen Kopf, Fuß und Statuszeile hier fehlen:
+// die Vorschau steckt schon im Editor, sie hat weder eigene Navigation noch
+// einen Entwurfsstatus, den der Kunde nie sieht.
+const props = defineProps<{ draft: QuoteDraft; projectName: string; vatSettings: VatSettings }>()
+
+const quote = computed(() => buildPreviewQuote(props.draft, props.vatSettings))
+
+// Choice-Modus zeigt seine eigene Aufstellung schon in QuoteSlider — das
+// hier ist nur die klassische Tabelle gegen denselben Bruttobetrag.
+const stages = computed(() => {
+  const gross = quote.value.net + (quote.value.vatMode === 'standard' ? quote.value.vatAmount : 0)
+
+  return splitStages(gross, quote.value.paymentStages)
+})
+
+const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1.5] [&>td:last-child]:text-right [&>td:last-child]:tabular-nums [&>td:last-child]:whitespace-nowrap'
+</script>
+
+<template>
+  <div data-tokens data-theme="portal" class="bg-background text-[15px] leading-[1.6] text-foreground">
+    <PortalWrap class="py-10">
+      <section>
+        <p class="mb-4 text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">{{ projectName }}</p>
+        <h1 class="font-serif text-[clamp(32px,20px+1.6vw,44px)] leading-[var(--display-leading)] font-normal tracking-[var(--display-tracking)]">
+          {{ $t('portal.quoteTitle') }}
+        </h1>
+      </section>
+
+      <p v-if="quote.intro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] whitespace-pre-line">{{ quote.intro }}</p>
+
+      <QuoteSlider
+        v-if="quote.hourlyRate !== null"
+        class="mt-10"
+        :project="{ id: 'preview', name: projectName }"
+        :quote="quote"
+        :can-accept="false"
+        :expired="false"
+        :accepted-at="null"
+        :showcase-count="0"
+      />
+
+      <div v-else class="mt-10 max-w-[680px] border-t border-border pt-8">
+        <table class="w-full border-collapse">
+          <tr v-for="item in quote.items" :key="item.id" :class="[ROW, item.isIncluded && '[&>td]:text-muted-foreground']">
+            <td>
+              {{ item.title }}
+              <div v-if="item.description" class="text-[13px] leading-[1.45] text-muted-foreground">
+                {{ item.description }}
+              </div>
+            </td>
+            <td>{{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.netTotal) }}</td>
+          </tr>
+
+          <tr :class="[ROW, '[&>td]:border-t [&>td]:border-border [&>td]:pt-3! [&>td]:font-semibold']">
+            <td>{{ $t('quotes.total') }}</td>
+            <td>{{ formatEuros(quote.total) }}</td>
+          </tr>
+          <template v-if="quote.discountAmount">
+            <tr :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
+              <td>{{ $t('quotes.discount') }}</td>
+              <td>−{{ formatEuros(quote.discountAmount) }}</td>
+            </tr>
+            <tr :class="[ROW, '[&>td]:pt-2! [&>td]:font-serif [&>td]:text-[22px]!']">
+              <td>{{ $t('quotes.net') }}</td>
+              <td>{{ formatEuros(quote.net) }}</td>
+            </tr>
+          </template>
+
+          <tr v-if="quote.vatMode === 'small_business'" :class="[ROW, '[&>td]:py-1! [&>td]:text-[13px]! [&>td]:text-muted-foreground']">
+            <td colspan="2">{{ quote.vatNote }}</td>
+          </tr>
+          <template v-else-if="quote.vatMode === 'standard'">
+            <tr :class="[ROW, '[&>td]:py-1! [&>td]:text-muted-foreground']">
+              <td>{{ $t('quotes.vat', { rate: basisPointsToPercent(quote.vatRate) }) }}</td>
+              <td>{{ formatEuros(quote.vatAmount) }}</td>
+            </tr>
+            <tr :class="[ROW, '[&>td]:pt-2! [&>td]:font-serif [&>td]:text-[22px]!']">
+              <td>{{ $t('quotes.total') }}</td>
+              <td>{{ formatEuros(quote.net + quote.vatAmount) }}</td>
+            </tr>
+          </template>
+        </table>
+
+        <table v-if="stages.length" class="mt-8 w-full max-w-[420px] border-collapse">
+          <tr :class="[ROW, '[&>td]:border-b-0']">
+            <td colspan="2" class="text-[11px] leading-none font-semibold tracking-[0.17em] uppercase text-muted-foreground">
+              {{ $t('quotes.payment') }}
+            </td>
+          </tr>
+          <tr v-for="stage in stages" :key="stage.label" :class="[ROW, '[&>td]:text-muted-foreground']">
+            <td>{{ stage.label }}</td>
+            <td>{{ formatEuros(stage.amount) }}</td>
+          </tr>
+        </table>
+
+        <p v-if="quote.outro" class="mt-8 max-w-[62ch] text-[15.5px] leading-[1.6] whitespace-pre-line">{{ quote.outro }}</p>
+
+        <p v-if="quote.validUntil" class="mt-8 text-[13px] text-muted-foreground">
+          {{ $t('quotes.validUntil') }} {{ quote.validUntil }}
+        </p>
+      </div>
+    </PortalWrap>
+  </div>
+</template>

@@ -2,7 +2,7 @@
 import { computed, reactive } from 'vue'
 import { useMediaQuery } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
-import type { PricingMode, QuoteContact, QuoteDraft } from './quotePayload'
+import type { PricingMode, QuoteContact, QuoteDraft, VatSettings } from './quotePayload'
 import { quoteRowToLine } from './quotePayload'
 import { subtotal } from './quoteTotals'
 import { eurosToCents, formatEuros } from '@/admin/lib/money'
@@ -26,6 +26,7 @@ const props = defineProps<{
   contacts: QuoteContact[]
   packages: App.Catalog.Data.PackageData[]
   catalogItems: App.Catalog.Data.CatalogItemData[]
+  vatSettings: VatSettings
 }>()
 
 const draft = defineModel<QuoteDraft>({ required: true })
@@ -119,7 +120,7 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
           </DialogTrigger>
           <DialogContent class="max-w-[860px]">
             <DialogTitle class="sr-only">{{ $t('quotes.preview') }}</DialogTitle>
-            <QuotePreviewPane :quote-id="quoteId" :draft="draft" :can-manage-catalog="canManageCatalog" />
+            <QuotePreviewPane :quote-id="quoteId" :draft="draft" :can-manage-catalog="canManageCatalog" :recipient-name="recipientName ?? ''" :vat-settings="vatSettings" />
           </DialogContent>
         </Dialog>
       </div>
@@ -156,6 +157,7 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
           :can-manage-catalog="canManageCatalog"
           :packages="packages"
           :catalog-items="catalogItems"
+          :vat-settings="vatSettings"
           @change="emit('change')"
         />
       </QuoteCard>
@@ -183,8 +185,8 @@ const textSummary = computed(() => draft.value.intro.split('\n')[0] ?? '')
       </QuoteCard>
     </div>
 
-    <div class="hidden w-[420px] flex-none min-[1180px]:block">
-      <QuotePreviewPane v-if="showPreviewColumn" :quote-id="quoteId" :draft="draft" :can-manage-catalog="canManageCatalog" />
+    <div class="hidden w-[420px] flex-none min-[1180px]:block min-[1440px]:w-[560px] min-[1700px]:w-[680px]">
+      <QuotePreviewPane v-if="showPreviewColumn" :quote-id="quoteId" :draft="draft" :can-manage-catalog="canManageCatalog" :recipient-name="recipientName ?? ''" :vat-settings="vatSettings" />
     </div>
   </div>
 </template>

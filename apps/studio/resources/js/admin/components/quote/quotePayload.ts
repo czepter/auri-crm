@@ -1,4 +1,5 @@
 import { eurosToCents, parseDiscount } from '@/admin/lib/money'
+import { applyDiscount, lineAmount, subtotal, vatAmount } from './quoteTotals'
 
 export type PricingMode = 'classic' | 'choice'
 
@@ -18,6 +19,9 @@ export type QuoteRow = {
 
 /** Ein Kontakt des Projekts, wie ihn die Empfaengerkarte waehlt (§4.4). */
 export type QuoteContact = { id: string; name: string; street: string | null; postcode: string | null; city: string | null }
+
+/** ReadQuoteWorkspace's own vatSettings — was Quote::computeVat() aus den aktuellen Studio-Einstellungen macht. */
+export type VatSettings = { mode: string; rate: number; note: string | null }
 
 export type StageRow = { percent: number; label: string; minimum: string }
 
@@ -121,5 +125,110 @@ export function buildQuotePayload(draft: QuoteDraft, options: QuotePayloadOption
       label: stage.label,
       minimum: eurosToCents(stage.minimum) ?? 0,
     })),
+  }
+}
+
+/**
+ * Der Entwurf, so wie ihn QuoteSlider und die klassische Tabelle in
+ * portal/pages/Quotes/Show.vue lesen — rein im Browser gerechnet, damit die
+ * Portal-Vorschau bei jeder Änderung sofort mitzieht statt auf einen
+ * Server-Roundtrip zu warten (wie QuotePreviewPane ihn für das PDF macht).
+ */
+export function buildPreviewQuote(draft: QuoteDraft, vat: VatSettings): App.Quotes.Data.QuoteData {
+  const items = draft.rows.map((row, index) => {
+    const unitPrice = eurosToCents(row.unitPrice)
+    const line = quoteRowToLine(row)
+    const lineTotal = unitPrice === null ? 0 : row.quantity * unitPrice
+    const netTotal = unitPrice === null ? 0 : lineAmount(line)
+
+    return {
+      id: row.id ?? `preview-${index}`,
+      title: row.title,
+      description: row.description || null,
+      quantity: row.quantity,
+      unitPrice,
+      isIncluded: unitPrice === null,
+      lineTotal,
+      discountType: line.discountType,
+      discountValue: line.discountValue,
+      discountAmount: lineTotal - netTotal,
+      netTotal,
+      selectable: row.selectable,
+      selected: row.selected,
+      outcome: row.outcome || null,
+      hasImage: row.hasImage,
+    }
+  })
+
+  const rate = eurosToCents(draft.slider.hourlyRate) ?? 0
+  const hours = draft.slider.hours ?? draft.slider.minHours ?? 0
+  const timeTotal = draft.pricingMode === 'choice' ? hours * rate : 0
+
+  const chargedItems = draft.pricingMode === 'classic' ? items : items.filter((item) => !item.selectable || item.selected)
+  const itemsSubtotal = subtotal(
+    chargedItems.map((item) => ({
+      quantity: item.quantity,
+      unitPrice: item.unitPrice ?? 0,
+      discountType: item.discountType as 'percentage' | 'amount' | null,
+      discountValue: item.discountValue,
+    })),
+    timeTotal,
+  )
+
+  const quoteDiscount = parseDiscount(draft.discount)
+  const total = applyDiscount(itemsSubtotal, {
+    type: quoteDiscount.type || null,
+    value: quoteDiscount.type === 'percentage' && quoteDiscount.value !== null ? quoteDiscount.value / 100 : quoteDiscount.value,
+  })
+
+  return {
+    id: 'preview',
+    predecessorId: null,
+    isAddendum: false,
+    predecessorNumber: null,
+    status: 'draft',
+    statusLabel: '',
+    pricingMode: draft.pricingMode,
+    currency: 'EUR',
+    validUntil: draft.validUntil || null,
+    number: null,
+    sentAt: null,
+    sentChannel: null,
+    total,
+    discountType: quoteDiscount.type || null,
+    discountValue: quoteDiscount.value,
+    discountAmount: itemsSubtotal - total,
+    net: total,
+    // Gefroren wird erst beim Versenden (Quote::computeVat()) — bis dahin
+    // rechnet die Vorschau live aus den aktuellen Studio-Einstellungen,
+    // genau wie QuoteData::fromModel() es serverseitig für einen Entwurf tut.
+    vatMode: vat.mode,
+    vatRate: vat.rate,
+    vatNote: vat.mode === 'small_business' ? vat.note : null,
+    vatAmount: vatAmount(total, vat.rate),
+    intro: draft.intro || null,
+    outro: draft.outro || null,
+    items,
+    hourlyRate: draft.pricingMode === 'choice' ? rate : null,
+    minHours: draft.slider.minHours,
+    maxHours: draft.slider.maxHours,
+    imagesPerHour: draft.slider.imagesPerHour,
+    hours: draft.slider.hours,
+    timeTitle: draft.timeTitle,
+    timeDescription: draft.timeDescription,
+    timeSortOrder: draft.timeSortOrder,
+    rangeMin: null,
+    rangeMax: null,
+    paymentStages: draft.slider.stages.map((stage, index) => ({
+      id: `preview-${index}`,
+      percent: stage.percent,
+      label: stage.label,
+      minimum: eurosToCents(stage.minimum) ?? 0,
+    })),
+    recipientContact: draft.recipientContact,
+    recipientStreet: draft.recipientStreet,
+    recipientPostcode: draft.recipientPostcode,
+    recipientCity: draft.recipientCity,
+    portalUrl: null,
   }
 }

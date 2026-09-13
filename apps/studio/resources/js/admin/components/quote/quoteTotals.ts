@@ -40,3 +40,19 @@ export function subtotal(rows: QuoteLineInput[], timeTotal: number): number {
 export function span(rows: QuoteSpanRow[], hours: number, rate: number, withOptional: boolean): number {
   return hours * rate + rows.reduce((sum, row) => (row.selectable && !withOptional ? sum : sum + lineAmount(row)), 0)
 }
+
+/**
+ * Mirrors App\Quotes\Support\DiscountCalculator::resolve() for a percentage
+ * charge rather than a discount — same round-half-up, same [0, base] clamp —
+ * so Quote::computeVat()'s server-side amount and this preview never diverge
+ * by a cent. `rate` is basis points (1900 = 19 %), matching computeVat().
+ */
+export function vatAmount(net: number, rateBasisPoints: number): number {
+  if (net <= 0 || rateBasisPoints <= 0) {
+    return 0
+  }
+
+  const amount = Math.floor((net * rateBasisPoints + 5000) / 10000)
+
+  return Math.max(0, Math.min(amount, net))
+}

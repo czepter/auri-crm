@@ -5,9 +5,10 @@ import QuoteEditor from '@/admin/components/quote/QuoteEditor.vue'
 import QuotePreviewPane from '@/admin/components/quote/QuotePreviewPane.vue'
 import Card from '@/ui/page/Card.vue'
 import { debounced } from '@/admin/lib/autosave'
-import { buildQuotePayload, type QuoteContact, type QuoteDraft } from '@/admin/components/quote/quotePayload'
+import { buildQuotePayload, type QuoteContact, type QuoteDraft, type VatSettings } from '@/admin/components/quote/quotePayload'
 import { basisPointsToPercent, centsToEuros, eurosToCents, formatDiscount, formatEuros } from '@/admin/lib/money'
 import { dayWithWeekday } from '@/admin/lib/dates'
+import { quoteChipClass, quoteTitle } from '@/admin/lib/quoteDisplay'
 import { Button } from '@/ui/button'
 import { Input } from '@/ui/input'
 import { DatePicker } from '@/ui/date-picker'
@@ -26,11 +27,15 @@ const props = withDefaults(
     contacts: QuoteContact[]
     canManageCatalog: boolean
     paymentPlan: App.Payments.Data.PaymentPlanData | null
+    vatSettings: VatSettings
     // The prop a partial reload asks for: the lead screen carries all of this
     // under one key.
     only?: string[]
+    // False on a quote's own page: its PageHead already carries the title,
+    // status and actions this header would repeat.
+    showHeader?: boolean
   }>(),
-  { only: () => ['quotes'] },
+  { only: () => ['quotes'], showHeader: true },
 )
 
 const { t } = useI18n()
@@ -124,19 +129,6 @@ function createPlan() {
     .post(`/auftraege/${props.projectId}/zahlungsplan`, { preserveScroll: true })
 }
 
-function titleOf(quote: App.Quotes.Data.QuoteData): string {
-  if (quote.isAddendum) {
-    return t('quotes.addendumTo', { number: quote.predecessorNumber ?? '' })
-  }
-
-  return quote.number ? `${t('quotes.title')} ${quote.number}` : t('quotes.title')
-}
-
-/** draft/sent/accepted/superseded/expired -> the mockup's own three chip states (tokens.css). */
-function chipClass(status: string): string {
-  return ({ sent: 'now', accepted: 'done' } as Record<string, string>)[status] ?? 'next'
-}
-
 /*
  * Die Summenzeilen als Liste statt als Zweig je Fall: nur so weiss die
  * letzte Zeile, dass sie die letzte ist — im Mockup trägt allein sie die
@@ -182,9 +174,9 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
          wrong or bypassed. Ein Entwurf ist das Werkzeug selbst und steht
          offen da; erst ab Versendet wird er zur zuklappbaren Karte. -->
     <section v-if="canManageQuotes && quote.status === 'draft' && drafts[quote.id]" class="mt-3 first:mt-0">
-      <header class="mb-3 flex items-center gap-3">
-        <h2 class="m-0 text-[15px] leading-[1.2] font-semibold tracking-[-0.015em]">{{ titleOf(quote) }}</h2>
-        <span :class="['chip', chipClass(quote.status)]">{{ quote.statusLabel }}</span>
+      <header v-if="showHeader" class="mb-3 flex items-center gap-3">
+        <h2 class="m-0 text-[15px] leading-[1.2] font-semibold tracking-[-0.015em]">{{ quoteTitle(quote, t) }}</h2>
+        <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
         <QuoteActions :project-id="projectId" :quote="quote" :can-manage-quotes="canManageQuotes" />
       </header>
 
@@ -196,6 +188,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
         :packages="packages"
         :catalog-items="catalogItems"
         :contacts="contacts"
+        :vat-settings="vatSettings"
         @change="save(quote.id)"
       />
 
@@ -207,10 +200,10 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
       class="w-[640px] max-w-full flex-none"
       :default-open="quote.status !== 'superseded'"
       :summary="totalOf(quote)"
-      :title="titleOf(quote)"
+      :title="quoteTitle(quote, t)"
     >
       <template #action>
-        <span :class="['chip', chipClass(quote.status)]">{{ quote.statusLabel }}</span>
+        <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
         <span v-if="quote.sentChannel" class="text-[11.5px] text-ink-2">
           {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}
         </span>
@@ -228,8 +221,8 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
         >
           <span class="flex-1">
             {{ item.title }}
-            <span v-if="item.isIncluded || item.description" class="mt-px block text-[11.5px] text-ink-2">
-              {{ item.isIncluded ? $t('quotes.included') : item.description }}
+            <span v-if="item.description" class="mt-px block text-[11.5px] text-ink-2">
+              {{ item.description }}
             </span>
           </span>
           <span class="w-[110px] flex-none text-right font-semibold tabular-nums">

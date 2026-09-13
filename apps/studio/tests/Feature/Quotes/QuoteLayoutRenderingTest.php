@@ -27,6 +27,38 @@ it('prints the quote number and Gueltig-bis date under the classic layout', func
         ->and($html)->toContain('doc-layout-classic');
 });
 
+it('prints the payment stages split against the gross total, in the same shares PaymentStageSplitter gives the booked plan', function () {
+    [$user, $project] = studioWithProject();
+
+    $quote = Quote::factory()->for($project)->create([
+        'number' => '2026-014',
+        'net' => 50000,
+        'vat_mode' => 'standard',
+        'vat_rate' => 1900,
+        'vat_amount' => 9500,
+    ]);
+    $quote->paymentStages()->create(['percent' => 30, 'label' => 'Anzahlung', 'sort_order' => 0]);
+    $quote->paymentStages()->create(['percent' => 70, 'label' => 'Restzahlung', 'sort_order' => 1]);
+
+    app(StudioSettingsResolver::class)->set('quote_layout', 'classic');
+
+    $html = app(RenderQuotePdf::class)->html($quote->fresh());
+
+    expect($html)->toContain('Zahlungsplan')
+        ->and($html)->toContain('Anzahlung')
+        ->and($html)->toContain('Restzahlung');
+});
+
+it('leaves the payment stages block out entirely when a quote carries none', function () {
+    [$user, $project] = studioWithProject();
+    $quote = Quote::factory()->for($project)->create(['number' => '2026-014']);
+    app(StudioSettingsResolver::class)->set('quote_layout', 'classic');
+
+    $html = app(RenderQuotePdf::class)->html($quote);
+
+    expect($html)->not->toContain('Zahlungsplan');
+});
+
 it('renders the minimal layout without a doc-table', function (): void {
     [$user, $project] = studioWithProject();
     $quote = Quote::factory()->for($project)->create(['number' => '2026-014', 'valid_until' => '2026-09-26']);

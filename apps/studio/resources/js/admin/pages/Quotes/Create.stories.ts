@@ -75,6 +75,7 @@ const meta = {
     catalogItems,
     contacts,
     canManageCatalog: true,
+    vatSettings: { mode: 'standard', rate: 1900, note: null },
   },
 } satisfies Meta<typeof Create>
 
