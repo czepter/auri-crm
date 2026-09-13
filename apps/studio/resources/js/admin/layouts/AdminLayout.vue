@@ -1,12 +1,14 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { Link, router, usePage } from "@inertiajs/vue3";
+import { toast } from "vue-sonner";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/ui/dropdown-menu";
+import { Toaster } from "@/ui/sonner";
 import CommandPalette from "@/admin/components/CommandPalette.vue";
 import HelpButton from "@/ui/page/HelpButton.vue";
 
@@ -15,6 +17,18 @@ const props = defineProps<{ active: string }>();
 const palette = ref<InstanceType<typeof CommandPalette> | null>(null);
 
 const page = usePage();
+
+// The server's own flash (session()->flash('status', ...)) survives exactly
+// one request — watch instead of reading it once, so a redirect that sets it
+// after this layout has already mounted still surfaces it.
+watch(
+    () => page.props.flash?.status,
+    (status) => {
+        if (status) toast.success(status);
+    },
+    { immediate: true },
+);
+
 const user = computed(() => page.props.auth.user);
 const nav = computed(() => page.props.nav);
 const release = computed(() => page.props.release);
@@ -346,5 +360,7 @@ const items = computed(() =>
         <main class="flex min-w-0 flex-1 flex-col pl-12 max-[640px]:order-1">
             <slot />
         </main>
+
+        <Toaster position="bottom-right" rich-colors />
     </div>
 </template>
