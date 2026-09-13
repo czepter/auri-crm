@@ -11,6 +11,14 @@ import { Field } from '@/ui/field'
 const props = defineProps<{ settings: App.Settings.Data.StudioSettingsData }>()
 const emit = defineEmits<{ saved: [] }>()
 
+const QUOTE_LAYOUTS = [
+  { value: 'classic', labelKey: 'settings.quoteLayoutClassic', descKey: 'settings.quoteLayoutClassicDesc' },
+  { value: 'minimal', labelKey: 'settings.quoteLayoutMinimal', descKey: 'settings.quoteLayoutMinimalDesc' },
+  { value: 'letter', labelKey: 'settings.quoteLayoutLetter', descKey: 'settings.quoteLayoutLetterDesc' },
+  { value: 'header_band', labelKey: 'settings.quoteLayoutHeaderBand', descKey: 'settings.quoteLayoutHeaderBandDesc' },
+  { value: 'structured', labelKey: 'settings.quoteLayoutStructured', descKey: 'settings.quoteLayoutStructuredDesc' },
+] as const
+
 const form = useForm({
   quote_validity_days: props.settings.quoteValidityDays,
   payment_term_days: props.settings.paymentTermDays,
@@ -40,29 +48,23 @@ defineExpose({ form, submit })
       <div class="mb-6">
         <RadioGroup
           name="quotelayout"
+          class="grid grid-cols-2 gap-2.5"
           :model-value="form.quote_layout"
           @update:model-value="(value) => (form.quote_layout = String(value))"
         >
-          <div class="flex items-center gap-2.5">
-            <RadioGroupItem id="ql-classic" value="classic" />
-            <Label variant="inline" for="ql-classic">{{ $t('settings.quoteLayoutClassic') }}</Label>
-          </div>
-          <div class="flex items-center gap-2.5">
-            <RadioGroupItem id="ql-minimal" value="minimal" />
-            <Label variant="inline" for="ql-minimal">{{ $t('settings.quoteLayoutMinimal') }}</Label>
-          </div>
-          <div class="flex items-center gap-2.5">
-            <RadioGroupItem id="ql-letter" value="letter" />
-            <Label variant="inline" for="ql-letter">{{ $t('settings.quoteLayoutLetter') }}</Label>
-          </div>
-          <div class="flex items-center gap-2.5">
-            <RadioGroupItem id="ql-header_band" value="header_band" />
-            <Label variant="inline" for="ql-header_band">{{ $t('settings.quoteLayoutHeaderBand') }}</Label>
-          </div>
-          <div class="flex items-center gap-2.5">
-            <RadioGroupItem id="ql-structured" value="structured" />
-            <Label variant="inline" for="ql-structured">{{ $t('settings.quoteLayoutStructured') }}</Label>
-          </div>
+          <!-- The card is the radio: a <label> forwards its click to the
+               button reka renders, so the whole card is the hit area and the
+               dot itself has nothing to draw — same pattern as the Schriftpaar
+               picker in ProfileForm.vue. -->
+          <label
+            v-for="option in QUOTE_LAYOUTS"
+            :key="option.value"
+            class="block cursor-pointer rounded-md bg-muted px-4 pt-4 pb-6 shadow-[inset_0_0_0_1px_transparent] has-[[data-state=checked]]:shadow-[inset_0_0_0_2px_var(--accent)]"
+          >
+            <RadioGroupItem :value="option.value" class="sr-only" />
+            <b class="block text-[18px] leading-tight font-semibold text-foreground">{{ $t(option.labelKey) }}</b>
+            <em class="mt-2 block text-[12.5px] leading-[1.5] font-normal not-italic text-muted-foreground">{{ $t(option.descKey) }}</em>
+          </label>
         </RadioGroup>
       </div>
     </div>
