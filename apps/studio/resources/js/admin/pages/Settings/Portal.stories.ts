@@ -57,6 +57,7 @@ const settings: App.Settings.Data.PortalSettingsData = {
   acceptQuotesEnabled: true,
   signContractsEnabled: true,
   paymentStatusEnabled: true,
+  offersEnabled: true,
   messagingMode: 'booking',
   welcomeInquiry: 'Schön, dass ihr da seid.',
   welcomeMany: null,

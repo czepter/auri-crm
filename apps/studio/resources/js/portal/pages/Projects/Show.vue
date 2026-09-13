@@ -5,6 +5,7 @@ import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalLabel from '@/portal/components/PortalLabel.vue'
+import PortalOffers from '@/portal/components/PortalOffers.vue'
 import PortalPerson from '@/portal/components/PortalPerson.vue'
 import PortalRow from '@/portal/components/PortalRow.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
@@ -49,6 +50,7 @@ const props = defineProps<{
     questionnaires: { id: string; name: string; count: number; openCount: number }[]
     details: { date: string | null; callTime: string | null; venue: string | null; email: string | null; phone: string | null }
   }
+  offers: App.Catalog.Data.PortalServiceData[]
 }>()
 
 function longDate(iso: string) {
@@ -304,6 +306,8 @@ function documentNote(document: Document) {
           </p>
         </div>
       </section>
+
+      <PortalOffers :offers="offers" class="mt-[var(--band)]" />
 
       <section v-if="reachable(studio)" class="pt-12">
         <div :class="BAND">
