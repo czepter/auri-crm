@@ -41,6 +41,7 @@ const settings: App.Settings.Data.StudioSettingsData = {
   mailReplyTo: null,
   mailSignature: null,
   mailBcc: null,
+  mailClientsEnabled: true,
   leadTypePresets: [],
   leadSourcePresets: [],
   leadChannelPresets: [],

@@ -1,15 +1,20 @@
 <?php
 
+use App\Crm\Models\Contact;
 use App\Models\User;
 use App\Notifications\Jobs\SendMailNotification;
 use App\Notifications\Models\InAppNotification;
 use App\Notifications\NotificationService;
 use App\Notifications\Transports\InAppTransport;
+use App\Portal\Notifications\ClientAccessLink;
+use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\AnonymousNotifiable;
+use Illuminate\Notifications\Events\NotificationSent;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification as NotificationFacade;
 use Illuminate\Support\Facades\Queue;
 
@@ -122,6 +127,26 @@ it('queues the framework password-reset mail too, the one send that never reache
     Queue::assertPushedOn('mail', SendMailNotification::class, function (SendMailNotification $job) use ($user) {
         return $job->notifiable->is($user) && $job->notification instanceof ResetPassword;
     });
+});
+
+it('withholds mail to clients while the studio has switched it off, and still mails staff and login links', function () {
+    app(StudioSettingsResolver::class)->set('mail_clients_enabled', false);
+
+    $sent = [];
+    Event::listen(NotificationSent::class, function (NotificationSent $event) use (&$sent) {
+        $sent[] = $event->notification::class;
+    });
+
+    $contact = Contact::factory()->create();
+    app(NotificationService::class)->send($contact, new E07MailOnlyNotification);
+    app(NotificationService::class)->send(NotificationFacade::route('mail', 'lena@example.test'), new E07MailOnlyNotification);
+    app(NotificationService::class)->send(User::factory()->create(), new E07DemoNotification('x'));
+    app(NotificationService::class)->send(
+        NotificationFacade::route('mail', $contact->email),
+        new ClientAccessLink($contact, 'https://example.test/zugang/one', new StudioSettingsResolver),
+    );
+
+    expect($sent)->toBe([E07DemoNotification::class, ClientAccessLink::class]);
 });
 
 it('refuses to write an in-app row for a notifiable with no persisted identity', function () {

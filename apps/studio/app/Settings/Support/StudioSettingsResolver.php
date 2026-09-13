@@ -531,6 +531,12 @@ class StudioSettingsResolver
         return $this->row()->mail_bcc;
     }
 
+    /** Read by App\Notifications\Listeners\WithholdClientMail alone. */
+    public function clientMailEnabled(): bool
+    {
+        return $this->row()->mail_clients_enabled;
+    }
+
     /**
      * E-12: the secret every inbound address is minted from. Null until the
      * studio has one, which is also what makes ingest fall closed into
