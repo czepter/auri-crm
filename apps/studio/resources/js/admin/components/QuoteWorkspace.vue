@@ -202,9 +202,9 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
       <p v-if="saveErrors[quote.id]" class="mt-2 text-[12px] text-destructive">{{ saveErrors[quote.id] }}</p>
     </section>
 
-  <div v-else class="mt-3 flex w-fit max-w-full gap-6 first:mt-0">
+  <div v-else class="mt-3 flex gap-6 first:mt-0">
     <Card
-      class="w-[720px] max-w-full flex-none"
+      class="min-w-0 flex-1"
       :default-open="quote.status !== 'superseded'"
       :summary="totalOf(quote)"
       :title="titleOf(quote)"
