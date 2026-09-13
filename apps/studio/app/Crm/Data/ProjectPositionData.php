@@ -17,7 +17,7 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 class ProjectPositionData extends Data
 {
     public function __construct(
-        /** shoot · lead · lost · none */
+        /** shoot · lead · lost · completed · none */
         public string $source,
         public ?string $value,
         public string $label,

@@ -25,6 +25,8 @@ return [
     'project.fields_changed' => 'Details geändert',
     'project.portal_shown' => 'Portal freigegeben',
     'project.portal_hidden' => 'Portal verborgen',
+    'project.completed' => 'Projekt abgeschlossen',
+    'project.reopened' => 'Projekt wieder geöffnet',
     'payment_plan.created' => 'Zahlungsplan angelegt',
     'payment_plan.updated' => 'Zahlungsplan geändert',
     'payment_installment.paid' => 'Zahlung erhalten',

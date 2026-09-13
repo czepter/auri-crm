@@ -45,5 +45,5 @@ it('shows the inquiry done and the project at its booked step', function () {
     expect($steps->where('state', 'done')->pluck('key')->all())
         ->toBe(['new', 'contacted', 'quote_sent', 'quote_accepted', 'contract_sent'])
         ->and($steps->firstWhere('state', 'current'))->toMatchArray(['key' => 'booked', 'pipeline' => 'project'])
-        ->and($steps->pluck('key')->last())->toBe('delivered');
+        ->and($steps->pluck('key')->last())->toBe('completed');
 });

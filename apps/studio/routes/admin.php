@@ -534,6 +534,10 @@ Route::middleware('audience:staff')->group(function () {
             ->name('projects.destroy');
         Route::post('/auftraege/{project}/buchung', [ProjectController::class, 'book'])
             ->name('projects.book');
+        Route::post('/auftraege/{project}/abschluss', [ProjectController::class, 'complete'])
+            ->name('projects.complete');
+        Route::delete('/auftraege/{project}/abschluss', [ProjectController::class, 'reopen'])
+            ->name('projects.reopen');
         Route::post('/auftraege/{project}/portal-sichtbarkeit', [ProjectController::class, 'togglePortalVisibility'])
             ->name('projects.portal-visibility.toggle');
 

@@ -62,7 +62,14 @@ class Project extends Model
             // C-25: keyed by ProjectField::$key. Written only through
             // WriteProjectFieldValues, which is why it is not fillable.
             'field_values' => 'array',
+            // Written only through CompleteProject.
+            'completed_at' => 'datetime',
         ];
+    }
+
+    public function isCompleted(): bool
+    {
+        return $this->completed_at !== null;
     }
 
     /**

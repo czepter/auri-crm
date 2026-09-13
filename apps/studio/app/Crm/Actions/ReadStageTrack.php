@@ -34,10 +34,11 @@ class ReadStageTrack
                 StagePipeline::Project,
                 fn (Stage $stage) => $stage->sort_order >= ($booked?->sort_order ?? 0) && $stage->sort_order < $archived,
             ))
+            ->push(['key' => 'completed', 'label' => 'Abgeschlossen', 'pipeline' => StagePipeline::Project->value])
             ->values();
 
         [$pipeline, $key] = match ($position->source) {
-            'shoot' => [StagePipeline::Project->value, $position->value],
+            'shoot', 'completed' => [StagePipeline::Project->value, $position->value],
             'lead' => ($this->stages->byKey(StagePipeline::Lead, (string) $position->value)?->sort_order ?? -1) >= $won
                 ? [StagePipeline::Project->value, $booked?->key]
                 : [StagePipeline::Lead->value, $position->value],

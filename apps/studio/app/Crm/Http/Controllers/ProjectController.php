@@ -3,9 +3,11 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Crm\Actions\AdvanceLeadStage;
+use App\Crm\Actions\AdvanceShootStatus;
 use App\Crm\Actions\BookProject;
 use App\Crm\Actions\BuildThread;
 use App\Crm\Actions\CheckDateAvailability;
+use App\Crm\Actions\CompleteProject;
 use App\Crm\Actions\CrewAvailability;
 use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Actions\ReadProjectScreen;
@@ -177,8 +179,10 @@ class ProjectController extends Controller
             'fields' => $project->type?->fields()->active()->get()
                 ->map(StageSettingsPayload::field(...))->values()->all() ?? [],
             'fieldValues' => (object) ($project->field_values ?? []),
-            // C-12 (#248): what the edit state offers as fixed choices.
-            'stages' => app(CrmVocabulary::class)->ordered(StagePipeline::Lead)
+            // C-12 (#248): what the edit state offers as fixed choices. A
+            // booked project stands where its shoots stand, so its Stand
+            // offers their statuses.
+            'stages' => app(CrmVocabulary::class)->ordered($project->job()->exists() ? StagePipeline::Project : StagePipeline::Lead)
                 ->filter(fn (Stage $stage) => $stage->is_active)
                 ->map(fn (Stage $stage) => ['value' => $stage->key, 'label' => $stage->name])->values()->all(),
             'sources' => collect(LeadSource::cases())
@@ -186,7 +190,9 @@ class ProjectController extends Controller
             'roles' => collect(ProjectContactRole::cases())
                 ->map(fn (ProjectContactRole $role) => ['value' => $role->value, 'label' => $role->value])->all(),
             'presets' => ['source' => $this->settings->leadPresets('source')],
-            'stage' => $project->lead?->stage->key,
+            'stage' => $project->job()->exists()
+                ? $this->position->leastAdvanced($project->shoots)?->status->key
+                : $project->lead?->stage->key,
             'source' => $project->lead?->source->value,
             'sourceOther' => $project->lead?->source_other,
             'sourceLabel' => $project->lead?->sourceLabel(),
@@ -230,7 +236,7 @@ class ProjectController extends Controller
         // Termine speichert, hat den Projektnamen nicht in der Hand.
         $validated = $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'stage' => ['nullable', Rule::exists('stages', 'key')->where('pipeline', StagePipeline::Lead->value)],
+            'stage' => ['nullable', Rule::exists('stages', 'key')->where('pipeline', ($project->job()->exists() ? StagePipeline::Project : StagePipeline::Lead)->value)],
             'source' => ['nullable', Rule::enum(LeadSource::class)],
             'source_other' => ['nullable', 'string', 'max:120'],
             'people' => ['array'],
@@ -260,13 +266,30 @@ class ProjectController extends Controller
                 // Through the action, not as a column: it is the only writer
                 // of the stage, and "Gebucht" set here has to book the project
                 // exactly as the board's own move does.
-                $stage = isset($validated['stage'])
+                $stage = isset($validated['stage']) && ! $project->job()->exists()
                     ? app(CrmVocabulary::class)->byKey(StagePipeline::Lead, $validated['stage'])
                     : null;
 
                 if ($stage !== null && ! $stage->is($project->lead->stage)) {
                     $advance($project->lead, $stage, auth('staff')->user());
                 }
+            }
+
+            // A booked project's Stand is its least-advanced shoot, so setting
+            // it moves every open shoot. Only when it changed: the details card
+            // sends the Stand along with every save, and resending the same
+            // value would drag an ahead shoot back to it.
+            $shoots = $project->shoots()->uncancelled()->get();
+
+            if (
+                isset($validated['stage'])
+                && $project->job()->exists()
+                && $validated['stage'] !== $this->position->leastAdvanced($shoots)?->status->key
+            ) {
+                $status = app(CrmVocabulary::class)->byKey(StagePipeline::Project, $validated['stage']);
+
+                $shoots->reject(fn (Shoot $shoot) => $shoot->status->is($status))
+                    ->each(fn (Shoot $shoot) => app(AdvanceShootStatus::class)($shoot, $status, auth('staff')->user()));
             }
 
             foreach ($validated['people'] ?? [] as $person) {
@@ -441,6 +464,32 @@ class ProjectController extends Controller
         // here: two staff members pressing the button is not an error, it is a
         // race, and the second press should leave the screen consistent.
         $book($project, auth('staff')->user());
+
+        return back();
+    }
+
+    public function complete(Project $project, CompleteProject $complete): RedirectResponse
+    {
+        $this->authorize('manageShoots', $project);
+
+        try {
+            $complete($project, auth('staff')->user());
+        } catch (DomainException $e) {
+            throw ValidationException::withMessages(['project' => $e->getMessage()]);
+        }
+
+        return back();
+    }
+
+    public function reopen(Project $project, CompleteProject $complete): RedirectResponse
+    {
+        $this->authorize('manageShoots', $project);
+
+        try {
+            $complete->reopen($project, auth('staff')->user());
+        } catch (DomainException $e) {
+            throw ValidationException::withMessages(['project' => $e->getMessage()]);
+        }
 
         return back();
     }
