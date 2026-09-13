@@ -76,6 +76,24 @@ it('speichert Menge und Rabatt auch im Auswahlmodus', function () {
         ->and($quote->fresh()->paymentStages()->count())->toBe(2);
 });
 
+it('speichert ein Auswahlangebot, bevor ein Stundensatz steht', function () {
+    [$user, $project] = studioWithProject();
+    $quote = Quote::factory()->for($project)->create();
+
+    $this->actingAs($user, 'staff')->patch("/angebote/{$quote->public_id}", [
+        'pricing_mode' => 'choice',
+        'hourly_rate' => null,
+        'min_hours' => null,
+        'max_hours' => null,
+        'hours' => null,
+        'items' => [['title' => 'Fotobox buchen', 'quantity' => 1, 'unit_price' => null]],
+        'stages' => [],
+    ])->assertSessionHasNoErrors();
+
+    expect($quote->fresh()->pricing_mode)->toBe(PricingMode::Choice)
+        ->and($quote->fresh()->items()->pluck('title')->all())->toBe(['Fotobox buchen']);
+});
+
 it('raeumt die Reglerspalten beim Umschalten auf klassisch', function () {
     [$user, $project] = studioWithProject();
     $quote = Quote::factory()->slider()->create(['project_id' => $project->id]);

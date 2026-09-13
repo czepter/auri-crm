@@ -14,7 +14,6 @@ export type QuoteRow = {
   selected: boolean
   outcome: string
   hasImage: boolean
-  remember: boolean
 }
 
 /** Ein Kontakt des Projekts, wie ihn die Empfaengerkarte waehlt (§4.4). */
@@ -93,9 +92,6 @@ export function buildQuotePayload(draft: QuoteDraft, options: QuotePayloadOption
       selectable: row.selectable,
       selected: row.selected,
       outcome: row.outcome || null,
-      // Ohne die Faehigkeit geht der Schluessel gar nicht erst mit, damit
-      // der Waechter im Controller nicht ohne Anlass greift.
-      ...(options.canManageCatalog ? { remember: row.remember } : {}),
     }
   })
 

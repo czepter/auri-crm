@@ -5,9 +5,11 @@ const open = defineModel<boolean>('open', { required: true })
 
 <template>
   <div class="rounded-[20px] border border-border bg-background">
+    <div class="flex items-center">
+    <slot name="handle" />
     <button
       type="button"
-      class="flex w-full cursor-pointer items-center gap-3 px-5 py-4 text-left"
+      class="flex min-w-0 flex-1 cursor-pointer items-center gap-3 px-5 py-4 text-left"
       :aria-expanded="open"
       @click="open = !open"
     >
@@ -21,6 +23,7 @@ const open = defineModel<boolean>('open', { required: true })
         viewBox="0 0 24 24"
       ><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
     </button>
+    </div>
 
     <div v-if="open" class="border-t border-rule px-5 py-4">
       <slot />

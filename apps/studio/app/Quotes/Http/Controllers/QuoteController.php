@@ -3,6 +3,7 @@
 namespace App\Quotes\Http\Controllers;
 
 use App\Catalog\Actions\CreatePackageFromQuote;
+use App\Catalog\Actions\SavePackage;
 use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
 use App\Crm\Data\ProjectSuggestionData;
@@ -190,6 +191,36 @@ class QuoteController extends Controller
             event: 'package.created',
             actor: auth('staff')->user(),
             context: ['name' => $package->name, 'source' => 'quote'],
+            subject: $package->public_id,
+        );
+
+        return back();
+    }
+
+    /**
+     * Die Zeile kommt aus dem Entwurf statt per id: eine gerade eingefügte
+     * Position hat bis zum nächsten Laden noch keine.
+     */
+    public function saveItemAsPackage(Request $request, Quote $quote, SavePackage $save): RedirectResponse
+    {
+        $this->authorize('manageQuotes', $quote->project);
+        $this->authorize('create', Package::class);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'item' => ['required', 'array'],
+            ...collect(SavePackage::rules())
+                ->filter(fn ($rule, string $key) => str_starts_with($key, 'items.*.') && $key !== 'items.*.id')
+                ->mapWithKeys(fn ($rule, string $key) => [str_replace('items.*.', 'item.', $key) => $rule])
+                ->all(),
+        ]);
+
+        $package = $save(new Package, ['name' => $validated['name'], 'items' => [$validated['item']]]);
+
+        AuditLogger::record(
+            event: 'package.created',
+            actor: auth('staff')->user(),
+            context: ['name' => $package->name, 'source' => 'quote_item'],
             subject: $package->public_id,
         );
 

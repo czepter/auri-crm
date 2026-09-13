@@ -44,7 +44,6 @@ function classicDraft(): QuoteDraft {
       selected: false,
       outcome: '',
       hasImage: false,
-      remember: true,
     },
   ]
 
@@ -70,7 +69,6 @@ function choiceDraft(): QuoteDraft {
       selected: false,
       outcome: 'Digitale Bilder',
       hasImage: false,
-      remember: false,
     },
   ]
 

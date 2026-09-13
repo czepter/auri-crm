@@ -67,7 +67,6 @@ export function packageRows(pkg: App.Catalog.Data.PackageData): QuoteRow[] {
     selected: item.selected,
     outcome: item.outcome ?? '',
     hasImage: item.hasImage,
-    remember: false,
   }))
 }
 
@@ -83,6 +82,5 @@ export function itemRow(item: App.Catalog.Data.CatalogItemData): QuoteRow {
     selected: false,
     outcome: '',
     hasImage: false,
-    remember: true,
   }
 }

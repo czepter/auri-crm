@@ -19,7 +19,7 @@ const props = defineProps<{ class?: HTMLAttributes["class"] }>()
   <div
     data-slot="input-group"
     :class="cn(
-      'flex w-full min-w-0 items-center rounded-[var(--r-sm)] border border-input bg-background',
+      'flex w-full min-w-0 items-center rounded-[6px] border border-input bg-background',
       'transition-[border-color] duration-[120ms] ease-out',
       'hover:border-line-hover focus-within:border-ring',
       'has-[input:disabled]:cursor-not-allowed has-[input:disabled]:opacity-50',

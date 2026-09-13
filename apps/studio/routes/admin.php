@@ -572,6 +572,7 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/angebote/{quote}/empfaenger-uebernehmen', [QuoteController::class, 'adoptRecipient'])
             ->name('quotes.adopt-recipient');
         Route::post('/angebote/{quote}/als-paket', [QuoteController::class, 'saveAsPackage'])->name('quotes.saveAsPackage');
+        Route::post('/angebote/{quote}/positionen/als-paket', [QuoteController::class, 'saveItemAsPackage'])->name('quotes.saveItemAsPackage');
         Route::get('/angebote/{quote}/pdf', [QuoteController::class, 'download'])->name('quotes.download');
 
         // E-02: a project's own questionnaires, seeded from a FormTemplate

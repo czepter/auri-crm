@@ -3593,7 +3593,7 @@
                                                     "integer",
                                                     "null"
                                                 ],
-                                                "description": "Q-08/Q-09/Q-11: der Reglerteil, Pflicht nur im Modus choice.",
+                                                "description": "Q-08/Q-09/Q-11: der Reglerteil, optional, damit ein Entwurf ohne Stundensatz speichert.",
                                                 "minimum": 1
                                             },
                                             "min_hours": {
@@ -3886,7 +3886,7 @@
                                                     "integer",
                                                     "null"
                                                 ],
-                                                "description": "Q-08/Q-09/Q-11: der Reglerteil, Pflicht nur im Modus choice.",
+                                                "description": "Q-08/Q-09/Q-11: der Reglerteil, optional, damit ein Entwurf ohne Stundensatz speichert.",
                                                 "minimum": 1
                                             },
                                             "min_hours": {
@@ -5063,7 +5063,7 @@
                             "integer",
                             "null"
                         ],
-                        "description": "Q-08/Q-09/Q-11: der Reglerteil, Pflicht nur im Modus choice.",
+                        "description": "Q-08/Q-09/Q-11: der Reglerteil, optional, damit ein Entwurf ohne Stundensatz speichert.",
                         "minimum": 1
                     },
                     "min_hours": {
