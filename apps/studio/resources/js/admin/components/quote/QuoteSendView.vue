@@ -68,7 +68,7 @@ function send() {
     </header>
 
     <div class="flex min-h-0 flex-1">
-      <div class="flex w-[420px] flex-none flex-col gap-5 overflow-y-auto border-r border-border p-6">
+      <div class="flex w-1/2 flex-none flex-col gap-5 overflow-y-auto border-r border-border p-6">
         <Field :label="$t('quotes.recipient')" dense>
           <div class="flex items-center gap-2.5 rounded-md border border-border px-3 py-2.5">
             <div class="flex size-[26px] flex-none items-center justify-center rounded-full bg-sunk text-[11px] font-semibold text-ink-2">
