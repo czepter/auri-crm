@@ -204,7 +204,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
 
   <div v-else class="mt-3 flex gap-6 first:mt-0">
     <Card
-      class="min-w-0 flex-1"
+      class="w-[640px] max-w-full flex-none"
       :default-open="quote.status !== 'superseded'"
       :summary="totalOf(quote)"
       :title="titleOf(quote)"
@@ -261,7 +261,7 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
     <!-- Same 1180px column threshold QuoteEditor uses for its own preview
          column — QuotePreviewPane carries its own header (label, zoom
          toggle), so no Card wrapper here repeats "Vorschau" above it. -->
-    <div v-if="quote.status !== 'draft'" class="hidden w-[420px] flex-none rounded-md border border-rule bg-background px-[18px] py-[15px] min-[1180px]:block">
+    <div v-if="quote.status !== 'draft'" class="hidden min-w-[420px] flex-1 rounded-md border border-rule bg-background px-[18px] py-[15px] min-[1180px]:block">
       <QuotePreviewPane :quote-id="quote.id" />
     </div>
   </div>
