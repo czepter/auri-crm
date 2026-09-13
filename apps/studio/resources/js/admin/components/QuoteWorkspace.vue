@@ -202,66 +202,68 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
       <p v-if="saveErrors[quote.id]" class="mt-2 text-[12px] text-destructive">{{ saveErrors[quote.id] }}</p>
     </section>
 
-  <Card
-    v-else
-    class="mt-3 first:mt-0"
-    :default-open="quote.status !== 'superseded'"
-    :summary="totalOf(quote)"
-    :title="titleOf(quote)"
-  >
-    <template #action>
-      <span :class="['chip', chipClass(quote.status)]">{{ quote.statusLabel }}</span>
-      <span v-if="quote.sentChannel" class="text-[11.5px] text-ink-2">
-        {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}
-      </span>
+  <div v-else class="mt-3 flex w-fit max-w-full gap-6 first:mt-0">
+    <Card
+      class="w-[720px] max-w-full flex-none"
+      :default-open="quote.status !== 'superseded'"
+      :summary="totalOf(quote)"
+      :title="titleOf(quote)"
+    >
+      <template #action>
+        <span :class="['chip', chipClass(quote.status)]">{{ quote.statusLabel }}</span>
+        <span v-if="quote.sentChannel" class="text-[11.5px] text-ink-2">
+          {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}
+        </span>
 
-      <QuoteActions :project-id="projectId" :quote="quote" :can-manage-quotes="canManageQuotes" />
-    </template>
+        <QuoteActions :project-id="projectId" :quote="quote" :can-manage-quotes="canManageQuotes" />
+      </template>
 
-      <p v-if="quote.intro" class="mb-3 text-[12.5px] leading-[1.55] whitespace-pre-line">{{ quote.intro }}</p>
+        <p v-if="quote.intro" class="mb-3 text-[12.5px] leading-[1.55] whitespace-pre-line">{{ quote.intro }}</p>
 
-      <div
-        v-for="item in quote.items"
-        :key="item.id"
-        class="flex gap-3 py-[9px] text-[13px]"
-        :class="item.isIncluded ? 'text-ink-2' : 'text-foreground'"
-      >
-        <span class="flex-1">
-          {{ item.title }}
-          <span v-if="item.isIncluded || item.description" class="mt-px block text-[11.5px] text-ink-2">
-            {{ item.isIncluded ? $t('quotes.included') : item.description }}
+        <div
+          v-for="item in quote.items"
+          :key="item.id"
+          class="flex gap-3 py-[9px] text-[13px]"
+          :class="item.isIncluded ? 'text-ink-2' : 'text-foreground'"
+        >
+          <span class="flex-1">
+            {{ item.title }}
+            <span v-if="item.isIncluded || item.description" class="mt-px block text-[11.5px] text-ink-2">
+              {{ item.isIncluded ? $t('quotes.included') : item.description }}
+            </span>
           </span>
-        </span>
-        <span class="w-[110px] flex-none text-right font-semibold tabular-nums">
-          {{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.netTotal) }}
-        </span>
-      </div>
+          <span class="w-[110px] flex-none text-right font-semibold tabular-nums">
+            {{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.netTotal) }}
+          </span>
+        </div>
 
-      <div
-        v-for="(row, index) in summaryRows(quote)"
-        :key="`${row.label}-${index}`"
-        class="flex gap-3 py-1.5"
-        :class="row.last ? 'mt-1.5 pt-2.5 font-semibold shadow-[inset_0_1px_0_var(--line)]' : 'text-[12.5px]'"
-      >
-        <span class="flex-1" :class="{ 'text-[13.5px]': row.last }">
-          {{ row.label === 'quotes.vat' ? $t('quotes.vat', { rate: basisPointsToPercent(quote.vatRate) }) : $t(row.label) }}
-        </span>
-        <span class="w-[110px] flex-none text-right tabular-nums" :class="{ 'text-[14px]': row.last }">{{ row.value }}</span>
-      </div>
+        <div
+          v-for="(row, index) in summaryRows(quote)"
+          :key="`${row.label}-${index}`"
+          class="flex gap-3 py-1.5"
+          :class="row.last ? 'mt-1.5 pt-2.5 font-semibold shadow-[inset_0_1px_0_var(--line)]' : 'text-[12.5px]'"
+        >
+          <span class="flex-1" :class="{ 'text-[13.5px]': row.last }">
+            {{ row.label === 'quotes.vat' ? $t('quotes.vat', { rate: basisPointsToPercent(quote.vatRate) }) : $t(row.label) }}
+          </span>
+          <span class="w-[110px] flex-none text-right tabular-nums" :class="{ 'text-[14px]': row.last }">{{ row.value }}</span>
+        </div>
 
-      <!-- Q-04: nur ein bereits versendetes Angebot trägt den §19-Satz —
-           ein Entwurf hat kein vatMode. -->
-      <p v-if="quote.vatMode === 'small_business'" class="mt-1.5 text-[11.5px] leading-[1.45] text-ink-2">
-        {{ quote.vatNote }}
-      </p>
+        <!-- Q-04: nur ein bereits versendetes Angebot trägt den §19-Satz —
+             ein Entwurf hat kein vatMode. -->
+        <p v-if="quote.vatMode === 'small_business'" class="mt-1.5 text-[11.5px] leading-[1.45] text-ink-2">
+          {{ quote.vatNote }}
+        </p>
 
-      <p v-if="quote.outro" class="mt-3 text-[12.5px] leading-[1.55] whitespace-pre-line">{{ quote.outro }}</p>
-  </Card>
+        <p v-if="quote.outro" class="mt-3 text-[12.5px] leading-[1.55] whitespace-pre-line">{{ quote.outro }}</p>
+    </Card>
 
-  <!-- QuotePreviewPane carries its own header (label, zoom toggle) — a
-       second one from Card would just repeat "Vorschau" above it. -->
-  <div v-if="quote.status !== 'draft'" class="mt-3 rounded-md border border-rule bg-background px-[18px] py-[15px]">
-    <QuotePreviewPane :quote-id="quote.id" />
+    <!-- Same 1180px column threshold QuoteEditor uses for its own preview
+         column — QuotePreviewPane carries its own header (label, zoom
+         toggle), so no Card wrapper here repeats "Vorschau" above it. -->
+    <div v-if="quote.status !== 'draft'" class="hidden w-[420px] flex-none rounded-md border border-rule bg-background px-[18px] py-[15px] min-[1180px]:block">
+      <QuotePreviewPane :quote-id="quote.id" />
+    </div>
   </div>
   </template>
 
