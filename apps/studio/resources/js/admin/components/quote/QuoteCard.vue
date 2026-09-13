@@ -1,15 +1,18 @@
 <script setup lang="ts">
-defineProps<{ title: string; summary?: string }>()
+// flat: die Karte steckt schon in einer Karte (Angebotspositionen in
+// "Positionen") — dann keinen zweiten Rahmen, nur die Zeile.
+defineProps<{ title: string; summary?: string; flat?: boolean }>()
 const open = defineModel<boolean>('open', { required: true })
 </script>
 
 <template>
-  <div class="rounded-[20px] border border-border bg-background">
+  <div :class="flat ? '' : 'rounded-[20px] border border-border bg-background'">
     <div class="flex items-center">
     <slot name="handle" />
     <button
       type="button"
-      class="flex min-w-0 flex-1 cursor-pointer items-center gap-3 px-5 py-4 text-left"
+      class="flex min-w-0 flex-1 cursor-pointer items-center gap-3 py-4 text-left"
+      :class="flat ? 'pl-5 pr-1' : 'px-5'"
       :aria-expanded="open"
       @click="open = !open"
     >

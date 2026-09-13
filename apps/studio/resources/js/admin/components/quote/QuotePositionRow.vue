@@ -72,7 +72,7 @@ function saveAsPackage() {
 </script>
 
 <template>
-  <QuoteCard v-model:open="open" :title="row.title || $t('quotes.itemTitle')">
+  <QuoteCard v-model:open="open" flat :title="row.title || $t('quotes.itemTitle')">
     <template #handle>
       <DragHandle @drag-start="emit('dragStart')" @drag-end="emit('dragEnd')" @move-up="emit('moveUp')" @move-down="emit('moveDown')" />
     </template>
