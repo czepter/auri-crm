@@ -362,6 +362,21 @@ class QuoteController extends Controller
     }
 
     /**
+     * The print sheet of a quote as it stands saved — QuotePreviewPane's read
+     * path, for a quote no draft is re-posting on every keystroke (sent,
+     * accepted, superseded). `view` rather than `manageQuotes`: seeing the
+     * sheet a client already has needs no write capability.
+     */
+    public function previewSheet(Quote $quote, RenderQuotePdf $render): Response
+    {
+        $this->authorize('view', $quote->project);
+
+        $quote->loadMissing(['items', 'paymentStages', 'recipientContact', 'project']);
+
+        return response($render->html($quote), 200, ['Content-Type' => 'text/html']);
+    }
+
+    /**
      * Same shape update() validates, on an unsaved copy — every field
      * optional, since the editor posts here on each debounced keystroke of
      * a half-filled draft. Nothing here is written: not to $quote, not to

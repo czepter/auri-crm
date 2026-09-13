@@ -48,3 +48,14 @@ it('shows a single quote on its own screen through the same workspace', function
         ->and($page['props']['canManageQuotes'])->toBeTrue()
         ->and($page['props']['recipientName'])->toBe('Nina Kaltenbach');
 });
+
+// QuotePreviewPane's read path for a finished quote — no draft is re-posting
+// this one, so it fetches the stored sheet over GET instead.
+it('renders the stored print sheet for a sent quote', function () {
+    [$user, $project] = studioWithProject();
+    $quote = Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent]);
+
+    test()->actingAs($user, 'staff')->get("/angebote/{$quote->public_id}/vorschau")
+        ->assertOk()
+        ->assertHeader('Content-Type', 'text/html; charset=UTF-8');
+});

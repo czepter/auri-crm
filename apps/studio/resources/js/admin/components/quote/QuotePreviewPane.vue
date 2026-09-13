@@ -6,10 +6,15 @@ import { buildQuotePayload, type QuoteDraft } from './quotePayload'
 // Server-rendered only — unlike DocumentPreviewPane there is no local instant
 // paint here, that half belongs to Editor.js and has no counterpart on a
 // quote draft.
+//
+// `draft` is only what a draft edits — a sent/accepted/superseded quote has
+// none, and its sheet never changes underneath it (Quote::booted() sees to
+// that), so it fetches the stored quote once over GET instead of re-posting
+// a draft on every keystroke.
 const props = defineProps<{
   quoteId: string
-  draft: QuoteDraft
-  canManageCatalog: boolean
+  draft?: QuoteDraft
+  canManageCatalog?: boolean
 }>()
 
 // A4 at 96 dpi, matching DocumentPreviewPane's own sheet metrics — the same
@@ -50,7 +55,7 @@ let requestId = 0
 const refreshFromServer = useDebounceFn(async () => {
   const id = ++requestId
   const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? ''
-  const body = buildQuotePayload(props.draft, { canManageCatalog: props.canManageCatalog })
+  const body = buildQuotePayload(props.draft as QuoteDraft, { canManageCatalog: props.canManageCatalog ?? false })
 
   try {
     const response = await fetch(`/angebote/${props.quoteId}/vorschau`, {
@@ -77,14 +82,27 @@ const refreshFromServer = useDebounceFn(async () => {
   }
 }, 400)
 
-watch(
-  () => [props.draft, props.canManageCatalog],
-  () => {
-    stale.value = true
-    refreshFromServer()
-  },
-  { deep: true, immediate: true },
-)
+// The stored quote's own sheet, fetched exactly once — nothing to debounce
+// or re-post, since there is no draft here to change it.
+async function loadStoredSheet() {
+  const response = await fetch(`/angebote/${props.quoteId}/vorschau`, { headers: { Accept: 'text/html' } })
+
+  if (response.ok) html.value = await response.text()
+}
+
+if (props.draft) {
+  watch(
+    () => [props.draft, props.canManageCatalog],
+    () => {
+      stale.value = true
+      refreshFromServer()
+    },
+    { deep: true, immediate: true },
+  )
+} else {
+  stale.value = false
+  loadStoredSheet()
+}
 </script>
 
 <template>
@@ -101,7 +119,7 @@ watch(
           @click="fit = option.on"
         >{{ $t(option.label) }}</button>
       </div>
-      <span class="ml-2.5 text-[11px] leading-none" :class="stale ? 'text-due' : 'text-faint'">{{
+      <span v-if="draft" class="ml-2.5 text-[11px] leading-none" :class="stale ? 'text-due' : 'text-faint'">{{
         stale ? $t('quotes.previewStale') : $t('quotes.previewFresh')
       }}</span>
     </div>

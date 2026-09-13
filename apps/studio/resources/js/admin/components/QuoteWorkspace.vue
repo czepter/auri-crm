@@ -2,6 +2,7 @@
 import { reactive, watch } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import QuoteEditor from '@/admin/components/quote/QuoteEditor.vue'
+import QuotePreviewPane from '@/admin/components/quote/QuotePreviewPane.vue'
 import Card from '@/ui/page/Card.vue'
 import { debounced } from '@/admin/lib/autosave'
 import { buildQuotePayload, type QuoteContact, type QuoteDraft } from '@/admin/components/quote/quotePayload'
@@ -256,6 +257,12 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
 
       <p v-if="quote.outro" class="mt-3 text-[12.5px] leading-[1.55] whitespace-pre-line">{{ quote.outro }}</p>
   </Card>
+
+  <!-- QuotePreviewPane carries its own header (label, zoom toggle) — a
+       second one from Card would just repeat "Vorschau" above it. -->
+  <div v-if="quote.status !== 'draft'" class="mt-3 rounded-md border border-rule bg-background px-[18px] py-[15px]">
+    <QuotePreviewPane :quote-id="quote.id" />
+  </div>
   </template>
 
   <Card
