@@ -107,7 +107,10 @@ class PackageController extends Controller
             subject: $package->public_id,
         );
 
-        return redirect('/pakete');
+        // Wie Angebote (QuoteController::update): der Autosave feuert bei
+        // jeder Änderung und würde von einem festen Redirect ins Leere
+        // laufen — zurück auf dieselbe Seite ist, was ein Autosave braucht.
+        return back();
     }
 
     /**

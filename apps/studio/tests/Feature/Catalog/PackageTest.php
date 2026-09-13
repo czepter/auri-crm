@@ -77,7 +77,7 @@ it('replaces a package\'s items wholesale on update, and logs it', function () {
         'items' => [
             ['title' => 'Neue Leistung', 'description' => null, 'quantity' => 2, 'unit_price' => 5000],
         ],
-    ])->assertRedirect('/pakete');
+    ])->assertRedirect();
 
     $package->refresh();
 

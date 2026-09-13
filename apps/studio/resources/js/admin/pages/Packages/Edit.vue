@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import type { PackageItemRow } from '@/admin/lib/packageItem'
 import { lineTotal } from '@/admin/lib/packageItem'
+import { debounced } from '@/admin/lib/autosave'
 import PackageItemsEditor from '@/admin/components/PackageItemsEditor.vue'
 import PackagePortalPreview from '@/admin/components/PackagePortalPreview.vue'
 import PackagePriceSummary from '@/admin/components/PackagePriceSummary.vue'
@@ -80,7 +81,9 @@ function duplicate() {
   router.post(`/pakete/${props.package.id}/duplizieren`)
 }
 
-function submit() {
+// Speichert sofort — der Header-Button. Feldänderungen selbst laufen über
+// `autosave` weiter unten, gebündelt statt bei jedem Tastenanschlag.
+function save() {
   form
     .transform((data) => ({
       ...data,
@@ -98,8 +101,16 @@ function submit() {
         id: item.id,
       })),
     }))
-    .patch(`/pakete/${props.package.id}`)
+    .patch(`/pakete/${props.package.id}`, { preserveScroll: true, preserveState: true, only: ['package'] })
 }
+
+// Wie QuoteWorkspace: gebündelt statt ein Request je Tastaturwechsel.
+const autosave = debounced(save, 600)
+
+// form.data() statt form selbst: ein deep watch auf form träfe auch
+// processing/errors/recentlySuccessful und würde nach jedem Speichern durch
+// deren eigene Änderung noch einmal speichern.
+watch(() => form.data(), autosave, { deep: true })
 </script>
 
 <template>
@@ -113,11 +124,11 @@ function submit() {
             </Button>
             <Button variant="pill-muted" type="button" @click="duplicate">{{ $t('packages.duplicate') }}</Button>
             <Button as="a" variant="pill-muted" href="/pakete">{{ $t('common.cancel') }}</Button>
-            <Button variant="pill" type="button" :disabled="form.processing" @click="submit">{{ $t('common.save') }}</Button>
+            <Button variant="pill" type="button" :disabled="form.processing" @click="save">{{ $t('common.save') }}</Button>
           </div>
         </PageHead>
 
-        <form class="flex items-start gap-8 px-8 pt-7 pb-8" @submit.prevent="submit">
+        <form class="flex items-start gap-8 px-8 pt-7 pb-8" @submit.prevent="save">
           <div class="max-w-[640px] min-w-0 flex-1">
           <Field id="name" class="mb-6" :label="$t('packages.name')" :error="form.errors.name">
             <Input id="name" v-model="form.name" type="text" required />
