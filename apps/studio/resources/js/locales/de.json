@@ -905,6 +905,8 @@
     "mailBccLabel": "Blindkopie",
     "mailSignatureLabel": "Signatur",
     "mailSignatureFieldLabel": "Text",
+    "mailDeliveryLabel": "Versand",
+    "mailClientsEnabledLabel": "E-Mails an Kunden",
     "availabilityTitle": "Verfügbarkeit",
     "durationLabel": "Standarddauer eines Shootings",
     "durationHint": "Minuten. Gilt, solange ein Shooting kein eigenes Ende hat.",

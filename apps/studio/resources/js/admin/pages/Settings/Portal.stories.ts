@@ -41,6 +41,7 @@ const branding: App.Settings.Data.StudioSettingsData = {
   mailReplyTo: 'christian@atelier-nordlicht.de',
   mailSignature: 'Christian Zepter\nAtelier Nordlicht',
   mailBcc: null,
+  mailClientsEnabled: true,
   leadTypePresets: ['Hochzeit', 'Paarshooting', 'Familie'],
   leadSourcePresets: ['Empfehlung', 'Instagram', 'Website'],
   leadChannelPresets: ['E-Mail', 'Telefon', 'Kontaktformular'],
