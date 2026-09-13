@@ -17,7 +17,9 @@ async function search(value: string) {
 }
 
 onMounted(async () => {
-  suggestions.value = await search('')
+  if (!model.value) {
+    suggestions.value = await search('')
+  }
 })
 
 let timer: ReturnType<typeof setTimeout> | undefined
