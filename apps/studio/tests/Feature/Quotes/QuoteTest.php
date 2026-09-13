@@ -806,6 +806,52 @@ describe('Q-06: sending a quote', function () {
 
         expect($quote->fresh()->status)->toBe(QuoteStatus::Sent);
     });
+
+    it('opens the compose screen for a draft quote, carrying the recipient it would mail', function () {
+        $contact = Contact::factory()->create(['name' => 'Lena Brandt', 'email' => 'lena@example.test']);
+        $project = Project::factory()->create();
+        $project->attachContact($contact, ProjectContactRole::Primary);
+        $quote = Quote::factory()->for($project)->create();
+        QuoteItem::factory()->for($quote)->create();
+
+        $this->actingAs(quoteOwner(), 'staff')
+            ->get("/angebote/{$quote->public_id}/senden")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Quotes/Send')
+                ->where('recipientName', 'Lena Brandt')
+                ->where('recipientEmail', 'lena@example.test'));
+    });
+
+    it('refuses the compose screen once a quote is no longer a draft', function () {
+        $quote = Quote::factory()->create(['status' => QuoteStatus::Sent]);
+
+        $this->actingAs(quoteOwner(), 'staff')
+            ->get("/angebote/{$quote->public_id}/senden")
+            ->assertNotFound();
+    });
+
+    it('carries the compose screen\'s subject and message into the mail', function () {
+        Notification::fake();
+
+        $contact = Contact::factory()->create(['email' => 'lena@example.test']);
+        $project = Project::factory()->create();
+        $project->attachContact($contact, ProjectContactRole::Primary);
+        $quote = Quote::factory()->for($project)->create();
+        QuoteItem::factory()->for($quote)->create();
+
+        $this->actingAs(quoteOwner(), 'staff')->post("/angebote/{$quote->public_id}/versenden", [
+            'subject' => 'Euer Angebot ist da',
+            'message' => "Hallo Lena,\n\nvielen Dank für euer Vertrauen.",
+        ]);
+
+        Notification::assertSentTo($contact, function (QuoteSent $notification) use ($contact) {
+            $mail = $notification->toMail($contact);
+
+            return $mail->subject === 'Euer Angebot ist da'
+                && str_contains((string) $mail->render(), 'vielen Dank für euer Vertrauen.');
+        });
+    });
 });
 
 // --- Q-06: a sent quote is immutable at the model level --------------------
