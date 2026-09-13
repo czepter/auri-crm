@@ -45,6 +45,15 @@ function copyLink(portalUrl: string) {
       {{ $t('quotes.download') }}
     </Button>
 
+    <!-- Q-06 sets this the moment a quote is sent; the draft dropdown below
+         had it, but only while canManageQuotes and status === draft — gone
+         from view the moment a quote reads sent, exactly where it matters
+         most. Portal-visibility is the one real gate: no visible link, no
+         page for it to open. -->
+    <Button v-if="quote.portalUrl" type="button" variant="outline" @click.stop="copyLink(quote.portalUrl!)">
+      {{ $t('quotes.copyLink') }}
+    </Button>
+
     <Button v-if="canManageQuotes && quote.status === 'accepted'" type="button" variant="outline" @click.stop="addendum">
       {{ $t('quotes.addendum') }}
     </Button>
@@ -91,9 +100,6 @@ function copyLink(portalUrl: string) {
           <svg class="size-3.5 fill-current" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem @select="copyLink(quote.portalUrl!)">
-            {{ $t('quotes.copyLink') }}
-          </DropdownMenuItem>
           <DropdownMenuItem @select="markSent">{{ $t('quotes.markSent') }}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
