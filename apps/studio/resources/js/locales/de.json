@@ -792,7 +792,6 @@
     "sendPdfNote": "PDF liegt der E-Mail bei.",
     "sendCta": "Angebot ansehen",
     "sendQuestions": "Fragen? Antworten Sie auf diese E-Mail.",
-    "sendCancel": "Abbrechen",
     "sendSubmit": "Senden"
   },
   "automations": {

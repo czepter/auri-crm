@@ -60,11 +60,6 @@ function send() {
       </Button>
 
       <h1 class="m-0 text-[17px] leading-[1.2] font-bold tracking-[-0.02em]">{{ $t('quotes.sendByMail') }}</h1>
-
-      <div class="ml-auto flex items-center gap-2">
-        <Button variant="ghost" type="button" @click="emit('cancel')">{{ $t('quotes.sendCancel') }}</Button>
-        <Button variant="pill" type="button" @click="send">{{ $t('quotes.sendSubmit') }}</Button>
-      </div>
     </header>
 
     <div class="flex min-h-0 flex-1">
@@ -91,9 +86,13 @@ function send() {
           </div>
         </Field>
 
-        <div class="flex items-center gap-2 border-t border-border pt-3 text-[12px] text-faint">
-          <svg class="size-[15px] flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" /></svg>
-          {{ $t('quotes.sendPdfNote') }}
+        <div class="flex items-center gap-4 border-t border-border pt-4">
+          <div class="flex flex-1 items-center gap-2 text-[12px] text-faint">
+            <svg class="size-[15px] flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" /></svg>
+            {{ $t('quotes.sendPdfNote') }}
+          </div>
+
+          <Button variant="pill" type="button" @click="send">{{ $t('quotes.sendSubmit') }}</Button>
         </div>
       </div>
 
