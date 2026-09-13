@@ -20,6 +20,19 @@ export function toIso(text: string): string | null {
   return iso
 }
 
+/**
+ * Setzt beim Tippen reiner Ziffern die Punkte: 16102026 wird 16.10.2026.
+ * Nur solange jeder Punkt hinter zwei Ziffern steht, sonst hat jemand
+ * selbst punktiert (4.6.2026) und das bleibt stehen. Ein Punkt am Ende
+ * passt nicht aufs Muster, damit "16." beim Weitertippen nicht verschwindet.
+ */
+export function withDots(text: string): string {
+  if (!/^(\d{2}\.){0,2}\d+$/.test(text)) return text
+  const digits = text.replaceAll('.', '').slice(0, 8)
+
+  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4)].filter(Boolean).join('.')
+}
+
 /** YYYY-MM-DD als TT.MM.JJJJ. */
 export function toGerman(iso: string): string {
   const [year, month, day] = iso.split('-')
