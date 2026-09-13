@@ -53,7 +53,7 @@ const facts = computed(() => {
 
 <template>
   <AdminLayout active="angebote">
-    <Page data-tokens>
+    <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :title="recipientName ?? projectName" :kicker="projectName" />
 
@@ -64,7 +64,7 @@ const facts = computed(() => {
           </div>
         </dl>
 
-        <div class="mx-8 mt-5 max-w-[640px]">
+        <div class="mx-8 mt-5">
           <QuoteWorkspace
             :project-id="projectId"
             :can-manage-quotes="canManageQuotes"
