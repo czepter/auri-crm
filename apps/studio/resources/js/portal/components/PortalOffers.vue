@@ -15,7 +15,7 @@ import { formatEuros } from '@/admin/lib/money'
  * das dem Kunden gehört, ist keine Karte — eine Leistung, die er anfragen
  * kann, ist eine.
  */
-const props = defineProps<{ offers: App.Catalog.Data.PortalServiceData[] }>()
+const props = defineProps<{ shelf: App.Catalog.Data.PortalServiceData[] }>()
 
 const { t } = useI18n()
 
@@ -31,11 +31,11 @@ function priceLabel(offer: App.Catalog.Data.PortalServiceData) {
 </script>
 
 <template>
-  <section v-if="props.offers.length">
+  <section v-if="props.shelf.length">
     <PortalLabel>{{ $t('portal.offersTitle') }}</PortalLabel>
     <div class="mt-6 grid grid-cols-[repeat(auto-fill,minmax(196px,1fr))] gap-4">
       <Link
-        v-for="offer in props.offers"
+        v-for="offer in props.shelf"
         :key="offer.id"
         class="block rounded-md border border-border p-3 text-inherit no-underline transition-colors duration-200 ease-[var(--ease)] hover:bg-sunk"
         :href="`/leistungen/${offer.id}`"

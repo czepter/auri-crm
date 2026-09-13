@@ -1,6 +1,8 @@
 <?php
 
 use App\Catalog\Models\Package;
+use App\Catalog\Models\ServiceSuggestion;
+use App\Catalog\Support\PortalOffers;
 use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\ProjectContactRole;
@@ -65,6 +67,36 @@ it('shows the shelf to a contact who overrides a studio default that is off', fu
     test()->actingAs($contact, 'portal')
         ->get('/leistungen/'.offered()->public_id)
         ->assertOk();
+});
+
+// Zweimal dieselbe Leistung auf einem Screen ist keine zweite Gelegenheit.
+it('takes the suggested service out of the shelf', function () {
+    $contact = Contact::factory()->create();
+    $suggested = offered(['name' => 'Fotoalbum']);
+    offered(['name' => 'Wandbild']);
+
+    ServiceSuggestion::create([
+        'contact_id' => $contact->id,
+        'package_id' => $suggested->id,
+        'note' => 'Ein Satz über diesen Kunden.',
+    ]);
+
+    $offers = app(PortalOffers::class)->for($contact);
+
+    expect($offers['suggestion']['service']['name'])->toBe('Fotoalbum')
+        ->and($offers['suggestion']['note'])->toContain('Satz')
+        ->and(collect($offers['shelf'])->pluck('name')->all())->toBe(['Wandbild']);
+});
+
+// Das Studio hat die Leistung zurueckgezogen, nicht den Vorschlag widerrufen.
+it('drops a suggestion whose package left the portal', function () {
+    $contact = Contact::factory()->create();
+    $package = offered();
+    ServiceSuggestion::create(['contact_id' => $contact->id, 'package_id' => $package->id]);
+
+    $package->update(['portal_offered' => false]);
+
+    expect(app(PortalOffers::class)->for($contact)['suggestion'])->toBeNull();
 });
 
 it('opens a booking with one primary shoot when the package asks for a date', function () {

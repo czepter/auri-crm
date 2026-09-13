@@ -26,7 +26,14 @@ type Service = {
   includes: string[]
 }
 
-const props = defineProps<{ service: Service; studio: { name: string } }>()
+const props = defineProps<{
+  service: Service
+  // Nur gesetzt, wenn diese Leistung diesem Kunden vorgeschlagen wurde. Aus
+  // dem Regal gegriffen fehlt der Block, und der Screen fängt mit der
+  // Beschreibung an.
+  suggestion: { note: string | null; author: string | null } | null
+  studio: { name: string }
+}>()
 
 const { t } = useI18n()
 
@@ -65,6 +72,22 @@ function submit() {
            Formular auf jeder Scrolltiefe erreichbar bleibt. -->
       <div class="grid items-start gap-12 pt-12 min-[1000px]:grid-cols-[minmax(0,1fr)_372px] min-[1000px]:gap-x-[var(--band)]">
         <div>
+          <!-- Der ganze Satz, den das Studio diesem Kunden geschrieben hat. In
+               der Schiene der Übersicht steht er auf drei Zeilen begrenzt; wer
+               ihm folgt, soll ihn zu Ende lesen können. -->
+          <div v-if="suggestion?.note" class="mb-8 flex items-start gap-4 border-b border-border pb-8">
+            <span
+              v-if="suggestion.author"
+              class="grid h-10 w-10 flex-none place-items-center rounded-full bg-sunk font-serif text-[15px] leading-none text-muted-foreground"
+            >
+              {{ suggestion.author.slice(0, 1) }}
+            </span>
+            <div>
+              <p class="m-0 max-w-[48ch] text-[16px] leading-[1.6]">{{ suggestion.note }}</p>
+              <span v-if="suggestion.author" class="mt-2 block text-[13px] text-muted-foreground">{{ suggestion.author }}</span>
+            </div>
+          </div>
+
           <p v-if="service.description" class="max-w-[54ch] text-[17px] leading-[1.55] text-muted-foreground">
             {{ service.description }}
           </p>

@@ -4,6 +4,7 @@ namespace App\Portal\Http\Controllers;
 
 use App\Catalog\Data\PortalServiceData;
 use App\Catalog\Models\Package;
+use App\Catalog\Support\PortalOffers;
 use App\Http\Controllers\Controller;
 use App\Portal\Actions\RequestService;
 use App\Settings\Support\StudioSettingsResolver;
@@ -29,12 +30,16 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ServiceController extends Controller
 {
-    public function show(Package $package, StudioSettingsResolver $studio): Response
+    public function show(Package $package, StudioSettingsResolver $studio, PortalOffers $offers): Response
     {
         abort_unless($package->portal_offered, 404);
 
         return Inertia::render('Services/Show', [
             'service' => PortalServiceData::fromModel($package->load('items')),
+            // Der ganze Satz, wenn diese Leistung diesem Kunden vorgeschlagen
+            // wurde. In der Schiene der Übersicht steht er auf drei Zeilen
+            // begrenzt; wer ihm folgt, soll ihn zu Ende lesen können.
+            'suggestion' => $offers->noteFor(auth('portal')->user(), $package),
             'studio' => ['name' => $studio->displayName()],
         ]);
     }
