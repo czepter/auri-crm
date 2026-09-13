@@ -29,10 +29,5 @@ const selectableCount = computed(() => props.items.filter((row) => row.selectabl
         <span class="min-w-[72px] flex-none text-right text-[15px] font-medium tabular-nums">{{ formatEuros(lineTotal(row)) }}</span>
       </div>
     </div>
-
-    <div class="flex items-center justify-between border-t border-border p-[26px] text-[19px] font-semibold">
-      <span>{{ $t('packages.priceTotal') }}</span>
-      <span class="tabular-nums">{{ formatEuros(total) }}</span>
-    </div>
   </div>
 </template>
