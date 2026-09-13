@@ -58,6 +58,8 @@ class ProjectHeaderData extends Data
         public ?string $outcomeLabel,
         public ?string $lostReason,
         public bool $canClose,
+        public bool $isCompleted,
+        public bool $canComplete,
         public bool $canDelete,
         public array $tabs,
         public array $track,
@@ -98,6 +100,8 @@ class ProjectHeaderData extends Data
             outcomeLabel: $project->lead?->outcome?->label(),
             lostReason: $project->lead?->lost_reason,
             canClose: $project->lead !== null && ($user?->can('update', $project->lead) ?? false),
+            isCompleted: $project->isCompleted(),
+            canComplete: $project->job !== null && ($user?->can('manageShoots', $project) ?? false),
             canDelete: ($user?->can('delete', $project) ?? false) && $project->deletionBlockers()->isEmpty(),
             // Galerien (G-05, already in P3) appends a line here on the
             // sprint it lands. Zahlungen (M-03) does not: mockup

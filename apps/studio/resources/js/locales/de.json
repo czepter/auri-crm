@@ -192,6 +192,8 @@
     "more": "Weitere Aktionen",
     "closeMenu": "Schließen …",
     "closeTitle": "Projekt schließen",
+    "completeMenu": "Abschließen",
+    "completed": "Abgeschlossen",
     "deleteMenu": "Löschen …",
     "deleteTitle": "Projekt löschen?",
     "kicker": "Projekt · {type}",

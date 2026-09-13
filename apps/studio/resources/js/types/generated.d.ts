@@ -293,6 +293,8 @@ leadId: string | null,
 outcomeLabel: string | null,
 lostReason: string | null,
 canClose: boolean,
+isCompleted: boolean,
+canComplete: boolean,
 canDelete: boolean,
 tabs: {
 key: string,
