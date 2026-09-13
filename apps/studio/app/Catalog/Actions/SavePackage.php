@@ -2,7 +2,9 @@
 
 namespace App\Catalog\Actions;
 
+use App\Catalog\Enums\PortalPriceMode;
 use App\Catalog\Models\Package;
+use Illuminate\Validation\Rule;
 
 /**
  * The package editor's save, shared by the board (App\Catalog\Http\
@@ -21,6 +23,16 @@ class SavePackage
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['sometimes', 'boolean'],
+
+            'portal_offered' => ['sometimes', 'boolean'],
+            'portal_text' => ['nullable', 'string', 'max:255'],
+            'portal_price_mode' => ['sometimes', Rule::enum(PortalPriceMode::class)],
+            'portal_requires_date' => ['sometimes', 'boolean'],
+            'project_type_key' => [
+                'nullable',
+                'required_if_accepted:portal_offered',
+                Rule::exists('project_types', 'key')->where('is_active', true),
+            ],
             'items' => ['array'],
             'items.*.title' => ['required', 'string', 'max:255'],
             'items.*.description' => ['nullable', 'string', 'max:2000'],
@@ -43,7 +55,14 @@ class SavePackage
         $package->fill([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
-            ...array_intersect_key($validated, ['is_active' => true]),
+            ...array_intersect_key($validated, [
+                'is_active' => true,
+                'portal_offered' => true,
+                'portal_text' => true,
+                'portal_price_mode' => true,
+                'portal_requires_date' => true,
+                'project_type_key' => true,
+            ]),
         ])->save();
 
         // Read before the delete below: the rows carry the only paths this

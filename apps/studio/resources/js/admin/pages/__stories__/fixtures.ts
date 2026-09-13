@@ -341,6 +341,13 @@ export const catalogPackages: App.Catalog.Data.PackageData[] = [
             { id: 'pi-1', title: 'Hochzeitsreportage Ganztag', description: 'bis 14 Std. am Hochzeitstag', quantity: 1, unitPrice: 300000, selectable: false, selected: true, outcome: null, hasImage: false },
             { id: 'pi-2', title: 'Online-Galerie', description: null, quantity: 1, unitPrice: 0, selectable: false, selected: true, outcome: null, hasImage: false },
         ],
+        portalOffered: false,
+        portalText: null,
+        portalPriceMode: 'exact',
+        portalRequiresDate: true,
+        projectTypeKey: null,
+        portalHasImage: false,
+        price: 300000,
     },
 ]
 

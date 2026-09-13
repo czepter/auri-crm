@@ -2,14 +2,17 @@
 
 namespace App\Catalog\Models;
 
+use App\Catalog\Enums\PortalPriceMode;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasHourlyPricing;
 use App\Concerns\HasPublicId;
+use App\Crm\Models\ProjectType;
 use Database\Factories\Catalog\PackageFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
@@ -29,13 +32,21 @@ class Package extends Model
     use HasHourlyPricing;
     use HasPublicId;
 
-    protected $fillable = ['name', 'description', 'is_active', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours'];
+    protected $fillable = [
+        'name', 'description', 'is_active', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours',
+        'portal_offered', 'portal_text', 'portal_price_mode', 'portal_requires_date', 'project_type_key',
+    ];
 
-    protected $attributes = ['is_active' => true];
+    protected $attributes = ['is_active' => true, 'portal_offered' => false, 'portal_requires_date' => true];
 
     protected function casts(): array
     {
-        return ['is_active' => 'boolean'];
+        return [
+            'is_active' => 'boolean',
+            'portal_offered' => 'boolean',
+            'portal_requires_date' => 'boolean',
+            'portal_price_mode' => PortalPriceMode::class,
+        ];
     }
 
     public function items(): HasMany
@@ -66,6 +77,24 @@ class Package extends Model
     public function scopeActive(Builder $query): void
     {
         $query->where('is_active', true);
+    }
+
+    /**
+     * Was ein Bestandskunde unter „Weitere Leistungen" sieht. Getrennt von
+     * scopeActive(): stillgelegt heißt „nicht mehr als Angebotsvorlage" und
+     * soll einem Kunden nicht das Portal umbauen — die Zusage von
+     * scopeActive(), dass eine Stilllegung nichts Bestehendes bewegt, gilt
+     * auch für das Portal.
+     */
+    public function scopePortalOffered(Builder $query): void
+    {
+        $query->where('portal_offered', true);
+    }
+
+    /** Ohne Projekttyp hat eine Portalanfrage keinen Shoot-Kind und keine Felder. */
+    public function projectType(): BelongsTo
+    {
+        return $this->belongsTo(ProjectType::class, 'project_type_key', 'key');
     }
 
     /**

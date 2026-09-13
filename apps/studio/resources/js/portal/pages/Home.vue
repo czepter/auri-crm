@@ -5,6 +5,7 @@ import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalLabel from '@/portal/components/PortalLabel.vue'
+import PortalOffers from '@/portal/components/PortalOffers.vue'
 import PortalPerson from '@/portal/components/PortalPerson.vue'
 import PortalRow from '@/portal/components/PortalRow.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
@@ -46,6 +47,8 @@ const props = defineProps<{
   bookings: Booking[]
   phaseCounts: Partial<Record<Phase, number>>
   galleries: { id: string; title: string | null; count: number; expiresAt: string | null; cover: string | null }[]
+  // Leer, wenn das Studio nichts anbietet oder es diesem Kunden nicht zeigt.
+  offers: App.Catalog.Data.PortalServiceData[]
   studio: Studio
 }>()
 
@@ -87,6 +90,7 @@ function shortDate(iso: string) {
 function phaseState(phase: Phase) {
   return phase === 'delivered' ? 'done' : phase === 'open' ? 'open' : 'neutral'
 }
+
 </script>
 
 <template>
@@ -255,6 +259,8 @@ function phaseState(phase: Phase) {
               </a>
             </div>
           </section>
+
+          <PortalOffers :offers="offers" class="animate-rise [animation-delay:320ms] motion-reduce:animate-none" />
         </div>
       </div>
     </PortalWrap>

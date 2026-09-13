@@ -6,6 +6,7 @@ use App\Catalog\Actions\SavePackage;
 use App\Catalog\Data\PackageData;
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
+use App\Crm\Models\ProjectType;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
@@ -61,6 +62,11 @@ class PackageController extends Controller
 
         return Inertia::render('Packages/Edit', [
             'package' => PackageData::fromModel($package),
+            // Ohne Projekttyp hat eine Anfrage aus dem Portal keine Form —
+            // siehe App\Portal\Actions\RequestService.
+            'projectTypes' => ProjectType::query()->active()
+                ->orderBy('sort_order')->orderBy('name')
+                ->get(['key', 'name'])->all(),
         ]);
     }
 

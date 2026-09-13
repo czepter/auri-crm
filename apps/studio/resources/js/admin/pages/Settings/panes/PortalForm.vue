@@ -19,7 +19,7 @@ const emit = defineEmits<{ saved: [] }>()
 // A pane sends only its own fields; the controller's `sometimes` leaves the
 // rest of the row untouched.
 const SECTION_FIELDS: Record<Section, string[]> = {
-  portal: ['portal_maintenance_enabled', 'portal_maintenance_message', 'portal_accept_quotes_enabled', 'portal_sign_contracts_enabled', 'portal_payment_status_enabled', 'portal_messaging_mode'],
+  portal: ['portal_maintenance_enabled', 'portal_maintenance_message', 'portal_accept_quotes_enabled', 'portal_sign_contracts_enabled', 'portal_payment_status_enabled', 'portal_messaging_mode', 'portal_offers_enabled'],
   home: ['portal_welcome_inquiry', 'portal_welcome_text', 'portal_welcome_many', 'portal_contact_phone', 'portal_contact_email', 'portal_contact_response_time'],
   privacy: ['dsgvo_request_recipient', 'dsgvo_request_deadline_days', 'portal_legal_datenschutz_url', 'portal_legal_agb_url'],
 }
@@ -35,6 +35,7 @@ const form = useForm({
   portal_accept_quotes_enabled: props.settings.acceptQuotesEnabled,
   portal_sign_contracts_enabled: props.settings.signContractsEnabled,
   portal_payment_status_enabled: props.settings.paymentStatusEnabled,
+  portal_offers_enabled: props.settings.offersEnabled,
   portal_messaging_mode: props.settings.messagingMode,
   portal_welcome_inquiry: props.settings.welcomeInquiry ?? '',
   portal_welcome_many: props.settings.welcomeMany ?? '',
@@ -196,6 +197,13 @@ defineExpose({ form, submit })
         <div class="flex items-center gap-2.5">
           <Checkbox id="cb-portal-payment-status-enabled" v-model="form.portal_payment_status_enabled" />
           <Label variant="inline" for="cb-portal-payment-status-enabled">{{ $t('portalSettings.paymentStatusEnabledLabel') }}</Label>
+        </div>
+        <div class="flex items-center gap-2.5">
+          <!-- Eigener Schalter und nicht an „Angebote annehmen" gehängt: ein
+               Kunde mitten in einer Reklamation soll nichts angeboten
+               bekommen, darf aber weiter annehmen, was er schon hat. -->
+          <Checkbox id="cb-portal-offers-enabled" v-model="form.portal_offers_enabled" />
+          <Label variant="inline" for="cb-portal-offers-enabled">{{ $t('portalSettings.offersEnabledLabel') }}</Label>
         </div>
       </div>
       <!-- P-04 (#223) made a thread without a booking possible, which is a

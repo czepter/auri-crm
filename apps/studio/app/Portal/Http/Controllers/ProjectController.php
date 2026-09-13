@@ -2,6 +2,7 @@
 
 namespace App\Portal\Http\Controllers;
 
+use App\Catalog\Support\PortalOffers;
 use App\Contracts\Models\Contract;
 use App\Crm\Enums\StageAnchor;
 use App\Crm\Enums\StagePipeline;
@@ -45,7 +46,7 @@ use Inertia\Response;
  */
 class ProjectController extends Controller
 {
-    public function __invoke(string $project, StudioSettingsResolver $studio, PortalSettings $settings): Response
+    public function __invoke(string $project, StudioSettingsResolver $studio, PortalSettings $settings, PortalOffers $offers): Response
     {
         $contact = auth('portal')->user();
 
@@ -67,7 +68,14 @@ class ProjectController extends Controller
 
         return $editable
             ? Inertia::render('Projects/Inquiry', [...$shared, 'project' => $this->inquiry($found)])
-            : Inertia::render('Projects/Show', [...$shared, 'project' => $this->booking($found, $settings)]);
+            : Inertia::render('Projects/Show', [
+                ...$shared,
+                'project' => $this->booking($found, $settings),
+                // Die Übersicht überspringt, wer genau eine Buchung hat —
+                // ohne diese Stelle bliebe „Weitere Leistungen" für den
+                // häufigsten Fall unsichtbar.
+                'offers' => $offers->for(auth('portal')->user()),
+            ]);
     }
 
     /**

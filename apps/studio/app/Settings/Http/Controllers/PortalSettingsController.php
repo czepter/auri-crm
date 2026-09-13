@@ -53,6 +53,7 @@ class PortalSettingsController extends Controller
             'portal_accept_quotes_enabled' => ['sometimes', 'required', 'boolean'],
             'portal_sign_contracts_enabled' => ['sometimes', 'required', 'boolean'],
             'portal_payment_status_enabled' => ['sometimes', 'required', 'boolean'],
+            'portal_offers_enabled' => ['sometimes', 'required', 'boolean'],
             // P-09 (#228): everything Sprint 25's seven portal screens do
             // that T-08's four switches never described.
             'portal_messaging_mode' => ['sometimes', 'required', 'in:off,booking,any'],
