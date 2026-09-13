@@ -133,6 +133,13 @@
       "portal": "Portal"
     },
     "portalSection": "Portal",
+    "suggestionsSection": "Weitere Leistungen",
+    "suggestionPackage": "Leistung",
+    "suggestionNote": "Satz im Portal",
+    "suggest": "Vorschlagen",
+    "suggestionRemove": "Entfernen",
+    "suggestedOn": "seit {date}",
+    "suggestionWithdrawn": "Leistung nicht mehr im Portal",
     "portalInherit": "Standard ({value})",
     "portalOn": "An",
     "portalOff": "Aus",

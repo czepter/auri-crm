@@ -2,6 +2,8 @@
 
 namespace App\Crm\Http\Controllers;
 
+use App\Catalog\Models\Package;
+use App\Catalog\Models\ServiceSuggestion;
 use App\Crm\Data\ContactRowData;
 use App\Crm\Data\ContactSuggestionData;
 use App\Crm\Models\Contact;
@@ -171,6 +173,27 @@ class ContactController extends Controller
                     'name' => $other->name,
                     'role' => $other->projects->first()?->pivot->role,
                 ])->all(),
+            // Was dieses Studio diesem Kunden einzeln vorgeschlagen hat, und
+            // woraus es waehlen kann. Beides nur aus dem, was im Portal
+            // angeboten wird — ein Vorschlag auf eine zurueckgezogene Leistung
+            // waere einer ins Leere.
+            'suggestions' => ServiceSuggestion::query()
+                ->where('contact_id', $contact->id)
+                ->with(['package', 'suggestedBy'])
+                ->get()
+                ->map(fn (ServiceSuggestion $suggestion) => [
+                    'id' => $suggestion->public_id,
+                    'package' => $suggestion->package->public_id,
+                    'name' => $suggestion->package->name,
+                    'note' => $suggestion->note,
+                    'author' => $suggestion->suggestedBy?->name,
+                    'suggestedOn' => $suggestion->created_at?->format('Y-m-d'),
+                    'live' => $suggestion->package->portal_offered,
+                ])->all(),
+            'offerablePackages' => Package::query()->portalOffered()->orderBy('name')
+                ->get(['public_id', 'name'])
+                ->map(fn (Package $package) => ['id' => $package->public_id, 'name' => $package->name])
+                ->all(),
             'portalAccessRevokedAt' => $contact->portal_access_revoked_at?->toIso8601String(),
             'canRevokePortalAccess' => $user?->can('revokePortalAccess', $contact) ?? false,
             'dsgvoErasedAt' => $contact->dsgvo_erased_at?->toIso8601String(),

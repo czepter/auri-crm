@@ -43,6 +43,21 @@ const meta = {
     dsgvoErasedAt: null,
     canManageDsgvo: true,
     dsgvoRequests: [],
+    suggestions: [
+      {
+        id: 's1',
+        package: 'pk-album',
+        name: 'Fotoalbum',
+        note: 'Aus eurer Hochzeitsgalerie würde ich ein Album machen, solange die Reihenfolge des Tages noch sitzt.',
+        author: 'Christian',
+        suggestedOn: '2026-09-04',
+        live: true,
+      },
+    ],
+    offerablePackages: [
+      { id: 'pk-album', name: 'Fotoalbum' },
+      { id: 'pk-jahrestag', name: 'Paarshooting zum Jahrestag' },
+    ],
     portalDefaults: PORTAL_DEFAULTS,
     portalOverrides: { gallery_comments: true },
     canPreviewPortal: true,

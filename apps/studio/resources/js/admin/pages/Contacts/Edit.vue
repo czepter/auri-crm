@@ -9,6 +9,8 @@ import PageHead from '@/ui/page/PageHead.vue'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
+import { Textarea } from '@/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 import { formatEurosRounded } from '@/admin/lib/money'
 
@@ -19,6 +21,30 @@ const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?
  * der URL: alle vier lesen aus derselben Antwort, ein Wechsel ist keine neue
  * Frage an den Server.
  */
+/*
+ * Der einzelne Vorschlag. Das Regal am Paket sieht jeder Bestandskunde
+ * gleich; hier steht, was jemand über diese eine Kundenbeziehung geschrieben
+ * hat. Ein Paket höchstens einmal — der Server macht daraus ein
+ * updateOrCreate, das Formular trägt deshalb auch das Ändern.
+ */
+const suggestion = useForm({ package: '', note: '' })
+
+function editSuggestion(row: { package: string; note: string | null }) {
+  suggestion.package = row.package
+  suggestion.note = row.note ?? ''
+}
+
+function saveSuggestion() {
+  suggestion.post(`/kontakte/${props.contact.id}/leistungen`, {
+    preserveScroll: true,
+    onSuccess: () => suggestion.reset(),
+  })
+}
+
+function removeSuggestion(id: string) {
+  router.delete(`/kontakte/${props.contact.id}/leistungen/${id}`, { preserveScroll: true })
+}
+
 const TABS = ['overview', 'bookings', 'correspondence', 'portal'] as const
 
 const tab = ref<(typeof TABS)[number]>('overview')
@@ -45,6 +71,16 @@ const props = defineProps<{
   portalDefaults: Record<string, string | boolean | null>
   portalOverrides: Record<string, string | boolean>
   canPreviewPortal: boolean
+  suggestions: {
+    id: string
+    package: string
+    name: string
+    note: string | null
+    author: string | null
+    suggestedOn: string | null
+    live: boolean
+  }[]
+  offerablePackages: { id: string; name: string }[]
 }>()
 
 const form = useForm({
@@ -454,6 +490,59 @@ function eraseDsgvoData() {
               </AlertDialogContent>
             </AlertDialog>
             </section>
+
+              <!-- Handarbeit neben dem Regal: eine Leistung, zu der ein Satz
+                   gehört. Der Abschnitt fehlt, solange das Studio nichts im
+                   Portal anbietet — vorschlagen ließe sich dann nichts. -->
+              <section v-if="offerablePackages.length || suggestions.length" class="mb-7">
+                <h2 class="mt-0 mb-3 text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                  {{ $t('contacts.suggestionsSection') }}
+                </h2>
+
+                <div
+                  v-for="row in suggestions"
+                  :key="row.id"
+                  class="py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
+                >
+                  <div class="flex items-center gap-4">
+                    <div class="min-w-0">
+                      <div class="text-[15px] leading-none font-semibold tracking-[-0.012em]">{{ row.name }}</div>
+                      <div class="mt-px text-[12px] text-ink-2">
+                        <template v-if="row.suggestedOn">{{ $t('contacts.suggestedOn', { date: day(row.suggestedOn) }) }}</template>
+                        <template v-if="row.author"> · {{ row.author }}</template>
+                        <template v-if="!row.live"> · {{ $t('contacts.suggestionWithdrawn') }}</template>
+                      </div>
+                    </div>
+                    <span class="ml-auto flex flex-none gap-2">
+                      <Button type="button" variant="pill-muted" @click="editSuggestion(row)">{{ $t('common.edit') }}</Button>
+                      <Button type="button" variant="pill-muted" @click="removeSuggestion(row.id)">{{ $t('contacts.suggestionRemove') }}</Button>
+                    </span>
+                  </div>
+                  <p v-if="row.note" class="mt-2 max-w-[62ch] text-[13.5px] leading-[1.55]">{{ row.note }}</p>
+                </div>
+
+                <form v-if="offerablePackages.length" class="mt-4 flex flex-col gap-3" @submit.prevent="saveSuggestion">
+                  <Field id="s-package" :label="$t('contacts.suggestionPackage')" :error="suggestion.errors.package">
+                    <Select
+                      :model-value="suggestion.package || undefined"
+                      @update:model-value="(v) => (suggestion.package = String(v))"
+                    >
+                      <SelectTrigger id="s-package"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem v-for="one in offerablePackages" :key="one.id" :value="one.id">{{ one.name }}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                  <Field id="s-note" :label="$t('contacts.suggestionNote')" :error="suggestion.errors.note">
+                    <Textarea id="s-note" v-model="suggestion.note" rows="3" />
+                  </Field>
+                  <div>
+                    <Button type="submit" variant="pill" :disabled="!suggestion.package || suggestion.processing">
+                      {{ $t('contacts.suggest') }}
+                    </Button>
+                  </div>
+                </form>
+              </section>
             </div>
           </div>
         </div>

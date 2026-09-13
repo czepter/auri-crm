@@ -2,6 +2,7 @@
 
 namespace App\Crm\Actions;
 
+use App\Catalog\Models\ServiceSuggestion;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Engagement\Models\Message;
@@ -64,6 +65,17 @@ class ExportContactDsgvoData
             // export stays reachable for an already-erased contact — see
             // ContactDsgvoController::export(), which unlike erase() itself
             // carries no such guard), and there is no address left to match.
+            // Was das Studio dieser Person vorgeschlagen hat, samt Satz.
+            'service_suggestions' => ServiceSuggestion::query()
+                ->where('contact_id', $contact->id)
+                ->with('package')
+                ->get()
+                ->map(fn (ServiceSuggestion $suggestion) => [
+                    'id' => $suggestion->public_id,
+                    'package' => $suggestion->package?->name,
+                    'note' => $suggestion->note,
+                    'created_at' => $suggestion->created_at?->toIso8601String(),
+                ])->all(),
             'gallery_prerelease_signups' => $contact->email === null ? [] : GalleryPrereleaseSignup::query()
                 ->where('email', GalleryPrereleaseSignup::normalizeEmail($contact->email))
                 ->with('gallery')
