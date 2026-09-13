@@ -8,7 +8,7 @@ name: Release images
 # on the same commit, and the deploy is a pull.
 on:
   push:
-    branches: [main, dev]
+    branches: [main]
     paths:
       - 'apps/**'
       # docker/mcp/Dockerfile builds packages/mcp and copies
