@@ -1,15 +1,20 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { QuoteContact } from '@/admin/components/quote/quotePayload'
+import { Link } from '@inertiajs/vue3'
+import type { QuoteContact, VatSettings } from '@/admin/components/quote/quotePayload'
+import { quoteChipClass, quoteTitle } from '@/admin/lib/quoteDisplay'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import { Button } from '@/ui/button'
+import QuoteActions from '@/admin/components/quote/QuoteActions.vue'
 import QuoteWorkspace from '@/admin/components/QuoteWorkspace.vue'
 import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   projectId: string
   projectName: string
+  projectIsBooked: boolean
   canManageQuotes: boolean
   canManagePaymentPlan: boolean
   quotes: App.Quotes.Data.QuoteData[]
@@ -19,9 +24,12 @@ const props = defineProps<{
   canManageCatalog: boolean
   paymentPlan: App.Payments.Data.PaymentPlanData | null
   recipientName: string | null
+  vatSettings: VatSettings
 }>()
 
 const { t } = useI18n()
+
+const quote = computed(() => props.quotes[0])
 
 function day(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
@@ -55,7 +63,18 @@ const facts = computed(() => {
   <AdminLayout active="angebote">
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
-        <PageHead :title="recipientName ?? projectName" :kicker="projectName" />
+        <PageHead :title="quoteTitle(quote, t)" :kicker="recipientName ?? projectName">
+          <div class="ml-auto flex items-center gap-3.5">
+            <span :class="['chip', quoteChipClass(quote.status)]">{{ quote.statusLabel }}</span>
+            <span v-if="quote.sentChannel" class="text-[11.5px] text-ink-2">
+              {{ quote.sentChannel === 'mail' ? $t('quotes.sentByMail') : $t('quotes.sentBySelf') }}
+            </span>
+            <Button :as="Link" variant="outline" :href="`/auftraege/${projectId}`">
+              {{ projectIsBooked ? $t('quotes.toProject') : $t('quotes.toLead') }}
+            </Button>
+            <QuoteActions :project-id="projectId" :quote="quote" :can-manage-quotes="canManageQuotes" />
+          </div>
+        </PageHead>
 
         <dl v-if="facts.length" class="mx-8 mt-1 flex flex-wrap gap-x-6 gap-y-1">
           <div v-for="fact in facts" :key="fact.label" class="flex gap-1.5 text-[12.5px]">
@@ -66,6 +85,7 @@ const facts = computed(() => {
 
         <div class="mx-8 mt-5">
           <QuoteWorkspace
+            :show-header="false"
             :project-id="projectId"
             :can-manage-quotes="canManageQuotes"
             :can-manage-payment-plan="canManagePaymentPlan"
@@ -75,6 +95,7 @@ const facts = computed(() => {
             :contacts="contacts"
             :can-manage-catalog="canManageCatalog"
             :payment-plan="paymentPlan"
+            :vat-settings="vatSettings"
           />
         </div>
       </div>
