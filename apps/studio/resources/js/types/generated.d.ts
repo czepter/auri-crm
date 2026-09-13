@@ -59,18 +59,6 @@ projectTypeKey: string | null,
 portalHasImage: boolean,
 price: number | null,
 };
-export type PortalPriceMode = 'exact' | 'from' | 'on_request';
-export type PortalServiceData = {
-id: string,
-name: string,
-description: string | null,
-text: string | null,
-price: number | null,
-priceMode: string,
-requiresDate: boolean,
-hasImage: boolean,
-includes: Array<string>,
-};
 export type PackageItemData = {
 id: string,
 title: string,
@@ -82,6 +70,20 @@ selected: boolean,
 outcome: string | null,
 hasImage: boolean,
 };
+export type PortalServiceData = {
+id: string,
+name: string,
+description: string | null,
+text: string | null,
+price: number | null,
+priceMode: string,
+requiresDate: boolean,
+hasImage: boolean,
+includes: string[],
+};
+}
+namespace Enums {
+export type PortalPriceMode = 'exact' | 'from' | 'on_request';
 }
 }
 namespace Contracts {
