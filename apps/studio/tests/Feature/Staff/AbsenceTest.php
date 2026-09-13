@@ -100,7 +100,7 @@ it('holds that rule on the calendar and the week beside it', function () {
     $entries = collect(props('/kalender')['days'])->pluck('entries')->flatten(1);
 
     expect($entries->where('kind', 'away'))->toBeEmpty()
-        ->and(collect(props('/')['week'])->where('away', true))->toBeEmpty();
+        ->and(collect(props('/')['entries'])->where('away', true))->toBeEmpty();
 });
 
 it('refuses a second shooter editing somebody else\'s absence', function () {

@@ -5,11 +5,14 @@ namespace App\Quotes\Http\Controllers;
 use App\Catalog\Actions\CreatePackageFromQuote;
 use App\Catalog\Models\CatalogItem;
 use App\Catalog\Models\Package;
+use App\Crm\Data\ProjectSuggestionData;
 use App\Crm\Models\Project;
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
 use App\Quotes\Actions\MarkQuoteSent;
+use App\Quotes\Actions\ReadQuoteWorkspace;
 use App\Quotes\Actions\RenderQuotePdf;
 use App\Quotes\Actions\ResolveQuoteRecipient;
 use App\Quotes\Actions\SeedQuoteFromPackage;
@@ -25,16 +28,37 @@ use App\Support\AuditLogger;
 use Carbon\CarbonInterval;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class QuoteController extends Controller
 {
+    /** The Übersicht's wizard: the project or inquiry first, then the workspace its Angebote tab shows. */
+    public function create(Request $request, ReadQuoteWorkspace $workspace): InertiaResponse
+    {
+        $viewer = $request->user('staff');
+        abort_unless($viewer->role->allows(Capability::ManageQuotes), 403);
+
+        $project = $request->filled('projekt')
+            ? Project::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first()
+            : null;
+
+        return Inertia::render('Quotes/Create', [
+            'project' => $project ? ProjectSuggestionData::fromModel($project) : null,
+            ...($project
+                ? Arr::except($workspace($project, $viewer), 'paymentPlan')
+                : ['quotes' => [], 'packages' => [], 'catalogItems' => [], 'contacts' => [], 'canManageCatalog' => false]),
+        ]);
+    }
+
     public function store(Request $request, Project $project, SeedQuoteFromPackage $seed, StudioSettingsResolver $settings, AllocateDocumentNumber $allocate, ResolveQuoteRecipient $resolveRecipient): RedirectResponse
     {
         $this->authorize('manageQuotes', $project);

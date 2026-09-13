@@ -4,6 +4,7 @@ import { router, useForm, usePage } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import Empty from '@/ui/page/Empty.vue'
 import { Button } from '@/ui/button'
 import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
 import { DatePicker } from '@/ui/date-picker'
@@ -107,7 +108,11 @@ function add() {
           </Dialog>
         </PageHead>
 
-        <div v-if="absences.length" class="max-w-[900px] px-8 pt-7 pb-8">
+        <Empty v-if="!absences.length" class="mx-8 mt-7" :text="$t('absences.empty')">
+          <Button variant="pill" type="button" @click="adding = true">{{ $t('absences.add') }}</Button>
+        </Empty>
+
+        <div v-else class="max-w-[900px] px-8 pt-7 pb-8">
           <div
             v-for="absence in absences"
             :key="absence.id"

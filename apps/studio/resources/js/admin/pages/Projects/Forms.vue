@@ -4,7 +4,8 @@ import { router, useForm } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
-import FormFieldsEditor, { type FormFieldRow } from '@/admin/components/FormFieldsEditor.vue'
+import FormFieldsEditor from '@/admin/components/FormFieldsEditor.vue'
+import { toPayload, toRow } from '@/admin/lib/formFields'
 import GroupPhotoField from '@/portal/components/GroupPhotoField.vue'
 import Card from '@/ui/page/Card.vue'
 import { Button } from '@/ui/button'
@@ -47,18 +48,7 @@ const editForms = Object.fromEntries(
     instance.id,
     useForm({
       name: instance.name,
-      fields: instance.fields.map(
-        (field): FormFieldRow => ({
-          label: field.label,
-          type: field.type,
-          required: field.required,
-          optionsText: rowOptionsText(field),
-          fileMaxSize: field.fileMaxSize ?? 10,
-          fileMultiple: field.fileMultiple,
-          helpText: field.groupPhotos?.help ?? '',
-          minutesPerGroup: field.groupPhotos?.minutesPerGroup ?? 2,
-        }),
-      ),
+      fields: instance.fields.map(toRow),
     }),
   ]),
 )
@@ -67,41 +57,12 @@ function save(instanceId: string) {
   editForms[instanceId]
     .transform((data) => ({
       name: data.name,
-      fields: data.fields.map((field: FormFieldRow) => ({
-        label: field.label,
-        type: field.type,
-        required: field.required,
-        options: fieldOptions(field),
-      })),
+      fields: data.fields.map(toPayload),
     }))
     .patch(`/frageboegen/${instanceId}`, {
       preserveScroll: true,
       onSuccess: () => (editing[instanceId] = false),
     })
-}
-
-function rowOptionsText(field: App.Crm.Data.FormInstanceFieldData): string {
-  if (field.type === 'file') return (field.fileFormats ?? []).join('\n')
-  if (field.type === 'group_photos') return (field.groupPhotos?.suggestions ?? []).join('\n')
-
-  return (field.options ?? []).join('\n')
-}
-
-// select stores its choices, file its allowed formats and group_photos its
-// builder configuration in the one options column — see
-// FormFieldType::optionRules().
-function fieldOptions(field: FormFieldRow) {
-  const list = field.optionsText.split('\n').map((o) => o.trim()).filter(Boolean)
-
-  if (field.type === 'file') {
-    return { formats: list, maxSize: field.fileMaxSize ?? 10, multiple: field.fileMultiple ?? false }
-  }
-
-  if (field.type === 'group_photos') {
-    return { help: field.helpText?.trim() || null, suggestions: list, minutesPerGroup: field.minutesPerGroup ?? 2 }
-  }
-
-  return field.type === 'select' ? list : null
 }
 
 // Eine Gruppenfotos-Antwort ist JSON. Das Studio liest sie hier als Liste;

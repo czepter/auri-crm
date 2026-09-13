@@ -20,6 +20,7 @@ use App\Support\AuditLogger;
 use App\Support\RecordVisit;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -28,6 +29,35 @@ use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class ContactController extends Controller
 {
+    /** P-09 (#228): what may depart from the studio's default — on the sheet and at creation. */
+    private const PORTAL_RULES = [
+        'accept_quotes' => ['nullable', 'boolean'],
+        'sign_contracts' => ['nullable', 'boolean'],
+        'payment_status' => ['nullable', 'boolean'],
+        'messaging_mode' => ['nullable', 'in:off,booking,any'],
+        'gallery_downloads' => ['nullable', 'boolean'],
+        'gallery_lists' => ['nullable', 'boolean'],
+        'gallery_comments' => ['nullable', 'boolean'],
+        'portal_visible' => ['nullable', 'boolean'],
+        'welcome' => ['nullable', 'string', 'max:2000'],
+    ];
+
+    /** @return array<string, string|bool|null> */
+    private function portalDefaults(StudioSettingsResolver $settings, PortalSettings $portal): array
+    {
+        return [
+            'accept_quotes' => $settings->acceptQuotesEnabled(),
+            'sign_contracts' => $settings->signContractsEnabled(),
+            'payment_status' => $settings->paymentStatusEnabled(),
+            'messaging_mode' => $settings->messagingMode(),
+            'gallery_downloads' => $settings->galleryDownloadsEnabled(),
+            'gallery_lists' => $settings->galleryListsEnabled(),
+            'gallery_comments' => $settings->galleryCommentsEnabled(),
+            'welcome' => $settings->portalWelcomeText(),
+            'portal_visible' => $portal->projectsVisibleByDefault(),
+        ];
+    }
+
     public function index(): Response
     {
         $this->authorize('viewAny', Contact::class);
@@ -51,6 +81,15 @@ class ContactController extends Controller
             ->orderBy('name')
             ->get()
             ->map(ContactRowData::fromContact(...));
+    }
+
+    public function create(StudioSettingsResolver $settings, PortalSettings $portal): Response
+    {
+        $this->authorize('update', new Contact);
+
+        return Inertia::render('Contacts/Create', [
+            'portalDefaults' => $this->portalDefaults($settings, $portal),
+        ]);
     }
 
     public function edit(Contact $contact, StudioSettingsResolver $settings, PortalSettings $portal): Response
@@ -138,17 +177,7 @@ class ContactController extends Controller
             // and not per project — a venue with forty dates a year is set up
             // once. Each value is three-valued: absent means inherit, which
             // is why the studio's own value travels beside it.
-            'portalDefaults' => [
-                'accept_quotes' => $settings->acceptQuotesEnabled(),
-                'sign_contracts' => $settings->signContractsEnabled(),
-                'payment_status' => $settings->paymentStatusEnabled(),
-                'messaging_mode' => $settings->messagingMode(),
-                'gallery_downloads' => $settings->galleryDownloadsEnabled(),
-                'gallery_lists' => $settings->galleryListsEnabled(),
-                'gallery_comments' => $settings->galleryCommentsEnabled(),
-                'welcome' => $settings->portalWelcomeText(),
-                'portal_visible' => $portal->projectsVisibleByDefault(),
-            ],
+            'portalDefaults' => $this->portalDefaults($settings, $portal),
             'portalOverrides' => (object) ($contact->portal_overrides ?? []),
             // P-09 (#228): may this person open "Vorschau als Kunde"? The
             // link itself is minted on POST, not rendered into the page — a
@@ -187,9 +216,23 @@ class ContactController extends Controller
                 Rule::unique('contacts', 'email')->where('tenant_id', config('tenancy.tenant_id')),
             ],
             'phone' => ['nullable', 'string', 'max:64'],
+            'street' => ['nullable', 'string', 'max:255'],
+            'postcode' => ['nullable', 'string', 'max:32'],
+            'city' => ['nullable', 'string', 'max:255'],
+            'portal' => ['array'],
+            ...collect(self::PORTAL_RULES)->mapWithKeys(fn ($rules, $key) => ["portal.{$key}" => $rules])->all(),
         ]);
 
-        $contact = Contact::create($validated);
+        $overrides = array_filter($validated['portal'] ?? [], fn ($value) => $value !== null && $value !== '');
+
+        $contact = Contact::create(Arr::except($validated, 'portal'));
+
+        // The model's own creating hook writes the studio greeting; these
+        // depart from it, so they are merged onto what it left rather than
+        // replacing it.
+        if ($overrides !== []) {
+            $contact->forceFill(['portal_overrides' => array_merge($contact->portal_overrides ?? [], $overrides)])->save();
+        }
 
         AuditLogger::record(
             event: 'contact.created',
@@ -290,17 +333,7 @@ class ContactController extends Controller
     {
         $this->authorize('update', $contact);
 
-        $validated = $request->validate([
-            'accept_quotes' => ['nullable', 'boolean'],
-            'sign_contracts' => ['nullable', 'boolean'],
-            'payment_status' => ['nullable', 'boolean'],
-            'messaging_mode' => ['nullable', 'in:off,booking,any'],
-            'gallery_downloads' => ['nullable', 'boolean'],
-            'gallery_lists' => ['nullable', 'boolean'],
-            'gallery_comments' => ['nullable', 'boolean'],
-            'portal_visible' => ['nullable', 'boolean'],
-            'welcome' => ['nullable', 'string', 'max:2000'],
-        ]);
+        $validated = $request->validate(self::PORTAL_RULES);
 
         $overrides = array_filter($validated, fn ($value) => $value !== null && $value !== '');
 
