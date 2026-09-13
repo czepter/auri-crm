@@ -317,6 +317,7 @@ class StudioSettingsController extends Controller
             'mail_reply_to' => ['nullable', 'string', 'max:255', 'email'],
             'mail_bcc' => ['nullable', 'string', 'max:255', 'email'],
             'mail_signature' => ['nullable', 'string', 'max:1000'],
+            'mail_clients_enabled' => ['sometimes', 'boolean'],
             'mail_sender_reset' => ['sometimes', 'boolean'],
         ]);
 

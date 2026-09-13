@@ -65,6 +65,7 @@ class StudioSettingsData extends Data
         public ?string $mailReplyTo,
         public ?string $mailSignature,
         public ?string $mailBcc,
+        public bool $mailClientsEnabled,
         /** @var list<string> */
         public array $leadTypePresets,
         /** @var list<string> */
@@ -120,6 +121,7 @@ class StudioSettingsData extends Data
             mailReplyTo: $settings->mailReplyTo(),
             mailSignature: $settings->mailSignature(),
             mailBcc: $settings->mailBcc(),
+            mailClientsEnabled: $settings->clientMailEnabled(),
             leadTypePresets: $settings->leadPresets('type'),
             leadSourcePresets: $settings->leadPresets('source'),
             leadChannelPresets: $settings->leadPresets('channel'),

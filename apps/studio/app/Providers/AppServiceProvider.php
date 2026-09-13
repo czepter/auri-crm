@@ -28,6 +28,7 @@ use App\Documents\Models\DocumentTemplate;
 use App\Gallery\Models\Gallery;
 use App\Integration\Listeners\DispatchWebhookNotifications;
 use App\Notifications\Listeners\NotifyStudioOfDomainEvent;
+use App\Notifications\Listeners\WithholdClientMail;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\NotificationPreferences;
 use App\Notifications\Support\QuietHours;
@@ -58,6 +59,7 @@ use Dedoc\Scramble\Scramble;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Console\ServeCommand;
+use Illuminate\Notifications\Events\NotificationSending;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -235,6 +237,8 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(ContractSigned::class, [NotifyStudioOfDomainEvent::class, 'handleContractSigned']);
         Event::listen(InstallmentPaid::class, [NotifyStudioOfDomainEvent::class, 'handleInstallmentPaid']);
         Event::listen(InstallmentOverdue::class, [NotifyStudioOfDomainEvent::class, 'handleInstallmentOverdue']);
+
+        Event::listen(NotificationSending::class, WithholdClientMail::class);
 
         // E-08: one wildcard subscription rather than one Event::listen()
         // per event class — an AutomationRule's own event_class column is
