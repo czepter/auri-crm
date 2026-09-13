@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main]
   pull_request:
 
 # The default GITHUB_TOKEN grants contents:read only, and dorny/paths-filter
@@ -17,23 +17,18 @@ permissions:
   # actions:read it finds none, never skips, and costs a job to say so.
   actions: read
 
-# Supersede in-flight runs for the same PR/branch. Pushes to the integration
-# branches are never cancelled so every commit there keeps a verdict.
+# Supersede in-flight runs for the same PR/branch. Pushes to main are never
+# cancelled so every commit there keeps a verdict.
 concurrency:
   group: ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # One change is tested up to four times: the pull request into dev, the push
-  # that merge makes on dev, the pull request from dev into main, and that
-  # merge's push on main. The tree is identical across those whenever the base
-  # has not moved in between, and this job is what notices. A moved base, or an
-  # edit to this file, changes the tree and everything runs again.
-  #
-  # Skipping leaves studio/web/e2e reported as skipped, which branch protection
-  # counts as passing — the same thing the `changes` gate below already relies
-  # on.
+  # The pull request and its merge push usually carry the same tree, and this
+  # job is what notices. A moved base, or an edit to this file, changes the
+  # tree and everything runs again.
   already-green:
+    needs: changes
     runs-on: ubuntu-latest
     outputs:
       skip: ${{ steps.probe.outputs.should_skip }}
@@ -81,7 +76,19 @@ jobs:
           esac
           echo "OK: $HEAD -> $BASE"
 
+  # Tests run on the way into main, and on pull requests into dev only once
+  # they are large. A small pull request into dev skips this job, so
+  # already-green and studio/web/e2e skip on their `needs` and report as
+  # skipped, which the required checks on dev count as passing. Expressions
+  # have no arithmetic, hence three comparisons instead of one sum.
+  # ponytail: raw line counts include generated files (openapi.json,
+  # generated.d.ts, pnpm-lock.yaml); tune the thresholds if those trip it.
   changes:
+    if: >-
+      github.event_name == 'push' || github.base_ref == 'main'
+      || github.event.pull_request.changed_files > 15
+      || github.event.pull_request.additions > 300
+      || github.event.pull_request.deletions > 300
     runs-on: ubuntu-latest
     outputs:
       php: ${{ steps.filter.outputs.php }}

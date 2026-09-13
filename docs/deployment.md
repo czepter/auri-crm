@@ -18,8 +18,8 @@ why of any individual line.
 
 `.github/workflows/release-image.yml` builds `docker/app/Dockerfile`,
 `docker/gallery/Dockerfile` and `docker/mcp/Dockerfile` on every push to
-`main` and `dev` that touches `apps/`, `docker/` or the workspace manifests,
-and pushes all three to GHCR:
+`main` that touches `apps/`, `docker/` or the workspace manifests, and pushes
+all three to GHCR:
 
 ```
 ghcr.io/czepter/auri-crm/studio     six services: admin, portal, api, horizon, scheduler, migrate
@@ -43,7 +43,7 @@ Tags per build:
 |---|---|---|
 | `v<version>` | Einem veröffentlichten GitHub-Release | Was `docker-compose.coolify.yml` benennt |
 | `latest` | Ebenfalls nur bei einem Release | Zeigt auf den neuesten Release |
-| `<branch>` | Jedem Push auf den Branch | Einen Branch auf einem Staging-Stack testen |
+| `<branch>` | Push auf `main`, sonst manuell per `workflow_dispatch` | Einen Branch auf einem Staging-Stack testen |
 | `sha-<commit>` | Nie wieder bewegt | Einen konkreten Build benennen |
 
 `latest` und `v<version>` entstehen zusammen und zeigen auf dasselbe Image.
