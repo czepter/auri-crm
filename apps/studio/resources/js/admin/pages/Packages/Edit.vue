@@ -1,12 +1,17 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import { router, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
 import type { PackageItemRow } from '@/admin/lib/packageItem'
+import { lineTotal } from '@/admin/lib/packageItem'
 import PackageItemsEditor from '@/admin/components/PackageItemsEditor.vue'
+import PackagePortalPreview from '@/admin/components/PackagePortalPreview.vue'
+import PackagePriceSummary from '@/admin/components/PackagePriceSummary.vue'
 import { centsToEuros, eurosToCents } from '@/admin/lib/money'
 import { Button } from '@/ui/button'
+import { Dialog, DialogContent } from '@/ui/dialog'
 import { Input } from '@/ui/input'
 import { Field } from '@/ui/field'
 import { Label } from '@/ui/label'
@@ -56,6 +61,19 @@ const form = useForm({
   ),
 })
 
+const previewOpen = ref(false)
+
+// Wie App\Catalog\Data\PortalServiceData::fromModel() rechnet — dieselbe
+// Summe, nur aus dem Entwurf statt aus der gespeicherten Zeile, damit die
+// Vorschau vor dem Speichern schon stimmt.
+const previewPrice = computed(() =>
+  form.portal_price_mode === 'on_request' ? null : form.items.reduce((sum, item) => sum + lineTotal(item), 0),
+)
+
+const previewIncludes = computed(() =>
+  form.items.map((item) => [item.title, item.description].filter(Boolean).join(' · ')),
+)
+
 function toggle() {
   router.post(`/pakete/${props.package.id}/status`, {}, { preserveScroll: true })
 }
@@ -92,13 +110,28 @@ function submit() {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :kicker="$t('packages.title')" :title="package.name">
-          <Button variant="pill-muted" class="ml-auto" type="button" @click="toggle">
+          <Button variant="pill-muted" class="ml-auto" type="button" @click="previewOpen = true">{{ $t('packages.preview') }}</Button>
+          <Button variant="pill-muted" type="button" @click="toggle">
             {{ package.isActive ? $t('packages.deactivate') : $t('packages.activate') }}
           </Button>
           <Button variant="pill-muted" type="button" @click="duplicate">{{ $t('packages.duplicate') }}</Button>
         </PageHead>
 
-        <form class="max-w-[640px] px-8 pt-7 pb-8" @submit.prevent="submit">
+        <Dialog v-model:open="previewOpen">
+          <DialogContent class="max-w-[900px] max-h-[90vh] overflow-y-auto p-0">
+            <PackagePortalPreview
+              :name="form.name"
+              :description="form.description || null"
+              :price="previewPrice"
+              :price-mode="form.portal_price_mode"
+              :requires-date="form.portal_requires_date"
+              :includes="previewIncludes"
+            />
+          </DialogContent>
+        </Dialog>
+
+        <form class="flex items-start gap-8 px-8 pt-7 pb-8" @submit.prevent="submit">
+          <div class="max-w-[640px] min-w-0 flex-1">
           <Field id="name" class="mb-6" :label="$t('packages.name')" :error="form.errors.name">
             <Input id="name" v-model="form.name" type="text" required />
           </Field>
@@ -171,6 +204,11 @@ function submit() {
           <div class="mt-6 flex items-center gap-4">
             <Button type="submit" class="ml-0" :disabled="form.processing">{{ $t('common.save') }}</Button>
             <Button as="a" href="/pakete" variant="ghost">{{ $t('common.cancel') }}</Button>
+          </div>
+          </div>
+
+          <div class="sticky top-7 w-[380px] flex-none">
+            <PackagePriceSummary :items="form.items" />
           </div>
         </form>
 
