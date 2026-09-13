@@ -21,18 +21,18 @@ class SampleQuoteData
 {
     public static function build(StudioSettingsResolver $settings): Quote
     {
-        $project = new Project(['name' => 'Erstkommunion 2026', 'type' => ProjectType::Other]);
-        $contact = new Contact(['name' => 'Pfarrgemeinde St. Johann', 'street' => 'Kirchplatz 3', 'postcode' => '07743', 'city' => 'Jena']);
+        $project = new Project(['name' => 'Musterauftrag', 'type' => ProjectType::Other]);
+        $contact = new Contact(['name' => 'Muster GmbH', 'street' => 'Musterstraße 1', 'postcode' => '12345', 'city' => 'Musterstadt']);
 
         $items = collect([
             new QuoteItem([
-                'title' => 'Reportage Erstkommunion 2026',
-                'description' => 'Begleitung von 2 Erstkommunionterminen, Bereitstellung in 2 Online-Galerien',
+                'title' => 'Fotoreportage',
+                'description' => 'Begleitung von 2 Terminen, Bereitstellung in 2 Online-Galerien',
                 'quantity' => 2,
                 'unit_price' => 25000,
             ]),
             new QuoteItem([
-                'title' => 'Familienfoto-Ergänzung',
+                'title' => 'Zusatzleistung',
                 'description' => 'Zusätzliches Gruppenfoto im Anschluss an den Termin',
                 'quantity' => 1,
                 'unit_price' => null,

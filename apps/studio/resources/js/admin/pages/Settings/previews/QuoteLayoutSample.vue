@@ -18,14 +18,14 @@ defineProps<{
     <div v-if="layout === 'classic'" class="k-a4">
       <div style="display:flex; justify-content:space-between; align-items:flex-start;">
         <div>
-          <div class="k-wordmark">50mm freunde</div>
+          <div class="k-wordmark">Atelier Nordlicht</div>
           <div class="k-wordmark-sub">Christian Zepter — Fotografie</div>
 
           <div class="k-recipient">
-            <div class="from">50mm freunde, Christian Zepter · Am Planetarium 37 · 07743 Jena</div>
-            <div class="name">Pfarrgemeinde St. Johann</div>
-            <div>Kirchplatz 3</div>
-            <div>07743 Jena</div>
+            <div class="from">Atelier Nordlicht, Christian Zepter · Bei den Mühren 7 · 20457 Hamburg</div>
+            <div class="name">Muster GmbH</div>
+            <div>Musterstraße 1</div>
+            <div>12345 Musterstadt</div>
           </div>
         </div>
 
@@ -49,8 +49,8 @@ defineProps<{
         <tbody>
           <tr>
             <td>
-              Reportage Erstkommunion 2026
-              <div class="k-item-desc">Begleitung von 2 Erstkommunionterminen, Bereitstellung in 2 Online-Galerien</div>
+              Fotoreportage
+              <div class="k-item-desc">Begleitung von 2 Terminen, Bereitstellung in 2 Online-Galerien</div>
             </td>
             <td class="num">2</td>
             <td class="num">250,00&nbsp;€</td>
@@ -76,15 +76,15 @@ defineProps<{
       </table>
 
       <div class="k-footer">
-        <strong>50mm freunde, Christian Zepter</strong> · Am Planetarium 37 · 07743 Jena · hi@50mm-freunde.de · 50mm-freunde.de<br>
-        Steuernummer 162/292/11882
+        <strong>Atelier Nordlicht, Christian Zepter</strong> · Bei den Mühren 7 · 20457 Hamburg · hallo@atelier-nordlicht.de · atelier-nordlicht.de<br>
+        Steuernummer 43/123/45678
       </div>
     </div>
 
     <!-- Minimal -->
     <div v-else-if="layout === 'minimal'" class="m-a4">
       <div class="m-content">
-        <div class="m-word">50mm freunde</div>
+        <div class="m-word">Atelier Nordlicht</div>
 
         <div class="m-head">
           <span class="m-num">Angebot 2026-014</span>
@@ -92,14 +92,14 @@ defineProps<{
         </div>
 
         <div class="m-to">
-          für <strong>Pfarrgemeinde St. Johann</strong> · Kirchplatz 3, 07743 Jena
+          für <strong>Muster GmbH</strong> · Musterstraße 1, 12345 Musterstadt
         </div>
 
         <table class="m-table">
           <tr>
             <td>
-              Reportage Erstkommunion 2026 <span class="m-desc" style="display:inline;">· 2 × 250,00&nbsp;€</span>
-              <div class="m-desc">Begleitung von 2 Erstkommunionterminen, Bereitstellung in 2 Online-Galerien</div>
+              Fotoreportage <span class="m-desc" style="display:inline;">· 2 × 250,00&nbsp;€</span>
+              <div class="m-desc">Begleitung von 2 Terminen, Bereitstellung in 2 Online-Galerien</div>
             </td>
             <td>500,00&nbsp;€</td>
           </tr>
@@ -136,26 +136,26 @@ defineProps<{
       </div>
 
       <div class="m-footer">
-        50mm freunde, Christian Zepter — Am Planetarium 37, 07743 Jena — hi@50mm-freunde.de — Steuernummer 162/292/11882
+        Atelier Nordlicht, Christian Zepter — Bei den Mühren 7, 20457 Hamburg — hallo@atelier-nordlicht.de — Steuernummer 43/123/45678
       </div>
     </div>
 
     <!-- Brief -->
     <div v-else-if="layout === 'letter'" class="e-a4">
       <div class="e-top">
-        <span>50mm freunde, Christian Zepter · Am Planetarium 37 · 07743 Jena</span>
-        <span>Jena, 12.09.2026</span>
+        <span>Atelier Nordlicht, Christian Zepter · Bei den Mühren 7 · 20457 Hamburg</span>
+        <span>Hamburg, 12.09.2026</span>
       </div>
 
       <div class="e-title">Angebot</div>
       <div class="e-sub">Nr. 2026-014 · gültig bis 26.09.2026</div>
 
       <div class="e-to">
-        An<br><strong>Pfarrgemeinde St. Johann</strong><br>Kirchplatz 3, 07743 Jena
+        An<br><strong>Muster GmbH</strong><br>Musterstraße 1, 12345 Musterstadt
       </div>
 
       <div class="e-letter" style="margin-top:32px;">
-        <p>vielen Dank für Ihre Anfrage zur Begleitung der Erstkommunion 2026. Ich freue mich, Ihnen folgendes Angebot zusammenzustellen.</p>
+        <p>vielen Dank für Ihre Anfrage. Ich freue mich, Ihnen folgendes Angebot zusammenzustellen.</p>
       </div>
 
       <table class="e-table">
@@ -165,8 +165,8 @@ defineProps<{
         <tbody>
           <tr>
             <td>
-              Reportage Erstkommunion 2026
-              <div class="e-desc">Begleitung von 2 Erstkommunionterminen, Bereitstellung in 2 Online-Galerien à 250,00&nbsp;€</div>
+              Fotoreportage
+              <div class="e-desc">Begleitung von 2 Terminen, Bereitstellung in 2 Online-Galerien à 250,00&nbsp;€</div>
             </td>
             <td class="num">2</td>
             <td class="num">500,00&nbsp;€</td>
@@ -196,14 +196,14 @@ defineProps<{
       </div>
 
       <div class="e-footer">
-        50mm freunde, Christian Zepter · hi@50mm-freunde.de · 50mm-freunde.de · Steuernummer 162/292/11882
+        Atelier Nordlicht, Christian Zepter · hallo@atelier-nordlicht.de · atelier-nordlicht.de · Steuernummer 43/123/45678
       </div>
     </div>
 
     <!-- Kopfband -->
     <div v-else-if="layout === 'header_band'" class="h-a4">
       <div class="h-band">
-        <div class="h-word">50mm freunde</div>
+        <div class="h-word">Atelier Nordlicht</div>
         <div>
           <div class="h-band-title">Angebot</div>
           <div class="h-band-num">Nr. 2026-014</div>
@@ -218,10 +218,10 @@ defineProps<{
         </div>
 
         <div class="h-to">
-          <div class="from">50mm freunde, Christian Zepter · Am Planetarium 37 · 07743 Jena</div>
-          <div class="name">Pfarrgemeinde St. Johann</div>
-          <div>Kirchplatz 3</div>
-          <div>07743 Jena</div>
+          <div class="from">Atelier Nordlicht, Christian Zepter · Bei den Mühren 7 · 20457 Hamburg</div>
+          <div class="name">Muster GmbH</div>
+          <div>Musterstraße 1</div>
+          <div>12345 Musterstadt</div>
         </div>
 
         <table class="h-table">
@@ -231,8 +231,8 @@ defineProps<{
           <tbody>
             <tr>
               <td>
-                Reportage Erstkommunion 2026
-                <div class="h-desc">Begleitung von 2 Erstkommunionterminen, Bereitstellung in 2 Online-Galerien</div>
+                Fotoreportage
+                <div class="h-desc">Begleitung von 2 Terminen, Bereitstellung in 2 Online-Galerien</div>
               </td>
               <td class="num">2</td>
               <td class="num">250,00&nbsp;€</td>
@@ -260,7 +260,7 @@ defineProps<{
         </div>
 
         <div class="h-footer">
-          50mm freunde, Christian Zepter · hi@50mm-freunde.de · 50mm-freunde.de · Steuernummer 162/292/11882
+          Atelier Nordlicht, Christian Zepter · hallo@atelier-nordlicht.de · atelier-nordlicht.de · Steuernummer 43/123/45678
         </div>
       </div>
     </div>
@@ -268,7 +268,7 @@ defineProps<{
     <!-- Struktur -->
     <div v-else-if="layout === 'structured'" class="b-a4">
       <div class="b-head">
-        <div class="b-word">50mm freunde</div>
+        <div class="b-word">Atelier Nordlicht</div>
         <div>
           <div class="b-title">Angebot Nr. 2026-014</div>
         </div>
@@ -277,9 +277,9 @@ defineProps<{
       <div class="b-cards">
         <div class="b-card">
           <div class="b-label">Empfänger</div>
-          <div style="font-weight:600;">Pfarrgemeinde St. Johann</div>
-          <div>Kirchplatz 3</div>
-          <div>07743 Jena</div>
+          <div style="font-weight:600;">Muster GmbH</div>
+          <div>Musterstraße 1</div>
+          <div>12345 Musterstadt</div>
         </div>
         <div class="b-card">
           <div class="b-label">Details</div>
@@ -304,8 +304,8 @@ defineProps<{
           <tbody>
             <tr>
               <td>
-                Reportage Erstkommunion 2026
-                <div class="b-desc">Begleitung von 2 Erstkommunionterminen, Bereitstellung in 2 Online-Galerien</div>
+                Fotoreportage
+                <div class="b-desc">Begleitung von 2 Terminen, Bereitstellung in 2 Online-Galerien</div>
               </td>
               <td class="num">2</td>
               <td class="num">250,00&nbsp;€</td>
@@ -334,8 +334,8 @@ defineProps<{
       </div>
 
       <div class="b-card b-footer-card">
-        50mm freunde, Christian Zepter · Am Planetarium 37 · 07743 Jena · hi@50mm-freunde.de · 50mm-freunde.de<br>
-        Steuernummer 162/292/11882
+        Atelier Nordlicht, Christian Zepter · Bei den Mühren 7 · 20457 Hamburg · hallo@atelier-nordlicht.de · atelier-nordlicht.de<br>
+        Steuernummer 43/123/45678
       </div>
     </div>
   </div>

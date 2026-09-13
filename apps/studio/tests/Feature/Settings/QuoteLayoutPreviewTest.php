@@ -14,7 +14,7 @@ it('previews a chosen layout without persisting anything', function () {
     $response->assertOk();
     expect($response->getContent())
         ->toContain('doc-layout-header_band')
-        ->toContain('Pfarrgemeinde St. Johann');
+        ->toContain('Muster GmbH');
 
     expect(Quote::query()->count())->toBe(0);
 });

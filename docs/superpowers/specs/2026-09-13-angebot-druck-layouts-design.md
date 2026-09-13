@@ -46,7 +46,7 @@ Referenzmarkup liegt versioniert im Repo, nicht nur im Design-Canvas:
 mit den fünf gleichnamigen Storybook-Stories unter „Dokumente/Angebot-Layouts"
 (`QuoteLayoutSample.stories.ts`, `npm run storybook` in `apps/studio` → Klassisch/
 Minimal/Brief/Kopfband/Struktur) — dieselben Beispieldaten wie im
-Entwurf (Pfarrgemeinde St. Johann, 2× Reportage Erstkommunion à 250 €, eine
+Entwurf (fiktive Muster GmbH, 2× Fotoreportage à 250 €, eine
 inklusive Position, 10 % Rabatt, 19 % USt.), exakte HTML-Struktur und CSS,
 A4-Maß (794×1123px). Jede Story ist die Referenz für die gleichnamige
 `QuoteLayoutRenderer`-Implementierung aus §5 — Struktur und Reihenfolge der
@@ -82,7 +82,7 @@ gebraucht wird:
   Karte nebeneinander (2-spaltiges Grid), Positionstabelle mit alternierend
   eingefärbten Zeilen in einer eigenen Karte, Summenblock und Fußzeile
   ebenfalls als Karten. Dichteste der fünf Varianten, am ehesten für
-  B2B-Empfänger wie im Beispiel (Pfarrgemeinde) gedacht.
+  B2B-Empfänger gedacht.
 
 Alle fünf teilen dieselbe Summenkette (Zwischensumme → Rabatt → Netto → USt.
 → Gesamtbetrag) und denselben Fußzeilen-Inhalt (Studioname, Adresse, E-Mail,
