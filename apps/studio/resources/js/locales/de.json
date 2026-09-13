@@ -664,7 +664,6 @@
     "selectableCount": "keine wählbar | 1 wählbar | {count} wählbar",
     "portalSection": "Im Portal",
     "portalOffered": "Allen Bestandskunden anbieten",
-    "portalText": "Kurztext im Portal",
     "portalPriceMode": "Preisangabe",
     "portalRequiresDate": "Anfrage",
     "portalWithDate": "Mit Wunschtermin",
@@ -1461,10 +1460,11 @@
     "includedTitle": "Das ist dabei",
     "optionalTitle": "Optional dazu",
     "addOnPrice": "+ {price}",
+    "totalTitle": "Gesamtpreis",
     "requestAppointment": "Termin anfragen",
     "priceFrom": "ab {price}",
     "priceOnRequest": "Auf Anfrage",
-    "vatNote": "zzgl. {rate} % Umsatzsteuer",
+    "vatNote": "inkl. {rate} % Umsatzsteuer",
     "unsubscribeDone": "Abgemeldet."
   },
   "galleries": {

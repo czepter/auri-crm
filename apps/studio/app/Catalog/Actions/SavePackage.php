@@ -25,7 +25,6 @@ class SavePackage
             'is_active' => ['sometimes', 'boolean'],
 
             'portal_offered' => ['sometimes', 'boolean'],
-            'portal_text' => ['nullable', 'string', 'max:255'],
             'portal_price_mode' => ['sometimes', Rule::enum(PortalPriceMode::class)],
             'portal_requires_date' => ['sometimes', 'boolean'],
             'project_type_key' => [
@@ -58,7 +57,6 @@ class SavePackage
             ...array_intersect_key($validated, [
                 'is_active' => true,
                 'portal_offered' => true,
-                'portal_text' => true,
                 'portal_price_mode' => true,
                 'portal_requires_date' => true,
                 'project_type_key' => true,

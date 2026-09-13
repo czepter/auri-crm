@@ -36,6 +36,7 @@ const props = defineProps<{
   projectTypes: { key: string; name: string }[]
   requests: Request[]
   catalogItems: App.Catalog.Data.CatalogItemData[]
+  vatRate: number | null
 }>()
 
 function day(iso: string) {
@@ -46,7 +47,6 @@ const form = useForm({
   name: props.package.name,
   description: props.package.description ?? '',
   portal_offered: props.package.portalOffered,
-  portal_text: props.package.portalText ?? '',
   portal_price_mode: props.package.portalPriceMode,
   portal_requires_date: props.package.portalRequiresDate,
   project_type_key: props.package.projectTypeKey ?? '',
@@ -106,7 +106,6 @@ function save() {
   form
     .transform((data) => ({
       ...data,
-      portal_text: data.portal_text || null,
       project_type_key: data.project_type_key || null,
       items: data.items.map((item) => ({
         title: item.title,
@@ -142,7 +141,7 @@ watch(() => form.data(), autosave, { deep: true })
 
             <DropdownMenu>
               <DropdownMenuTrigger as-child>
-                <Button variant="pill-muted" type="button" class="px-2" :aria-label="$t('project.more')">
+                <Button variant="ghost" type="button" class="rounded-[6px] px-2 hover:bg-sunk-2" :aria-label="$t('project.more')">
                   <EllipsisVertical />
                 </Button>
               </DropdownMenuTrigger>
@@ -213,10 +212,6 @@ watch(() => form.data(), autosave, { deep: true })
               </Select>
             </Field>
 
-            <Field id="portal-text" class="mt-6" :label="$t('packages.portalText')" :error="form.errors.portal_text">
-              <Input id="portal-text" v-model="form.portal_text" type="text" />
-            </Field>
-
             <div class="mt-6">
               <Label class="mb-2 block">{{ $t('packages.portalPriceMode') }}</Label>
               <ChoiceGroup
@@ -257,6 +252,7 @@ watch(() => form.data(), autosave, { deep: true })
                 :price-mode="form.portal_price_mode"
                 :requires-date="form.portal_requires_date"
                 :items="previewItems"
+                :vat-rate="vatRate"
               />
             </div>
           </div>

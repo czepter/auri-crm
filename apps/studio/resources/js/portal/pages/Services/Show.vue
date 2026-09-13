@@ -8,6 +8,7 @@ import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalLabel from '@/portal/components/PortalLabel.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
+import { vatAmount } from '@/admin/components/quote/quoteTotals'
 import { basisPointsToPercent, formatEuros } from '@/admin/lib/money'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
@@ -28,7 +29,6 @@ type Service = {
   id: string
   name: string
   description: string | null
-  text: string | null
   price: number | null
   priceMode: 'exact' | 'from' | 'on_request'
   requiresDate: boolean
@@ -50,12 +50,19 @@ const { t } = useI18n()
 
 const form = useForm({ date: '', venue: '', text: '' })
 
+// Ein Kunde sieht einen Preis, der schon feststeht — brutto, nicht "zzgl.
+// Umsatzsteuer" wie eine Rechnung an ein anderes Unternehmen. Das gilt B2C
+// wie B2B: das Portal stellt hier aus, es rechnet nicht ab.
+function gross(net: number): number {
+  return props.vatRate ? net + vatAmount(net, props.vatRate) : net
+}
+
 const price = computed(() => {
   if (props.service.price === null) return t('portal.priceOnRequest')
 
-  return props.service.priceMode === 'from'
-    ? t('portal.priceFrom', { price: formatEuros(props.service.price) })
-    : formatEuros(props.service.price)
+  const amount = gross(props.service.price)
+
+  return props.service.priceMode === 'from' ? t('portal.priceFrom', { price: formatEuros(amount) }) : formatEuros(amount)
 })
 
 const included = computed(() => props.service.items.filter((item) => !item.selectable || item.selected))
@@ -131,7 +138,7 @@ function submit() {
                 class="flex gap-4 border-b border-border py-4 text-[15.5px]"
               >
                 <span class="flex-1">{{ [item.title, item.description].filter(Boolean).join(' · ') }}</span>
-                <span class="flex-none tabular-nums text-muted-foreground">{{ $t('portal.addOnPrice', { price: formatEuros(item.addOnPrice ?? 0) }) }}</span>
+                <span class="flex-none tabular-nums text-muted-foreground">{{ $t('portal.addOnPrice', { price: formatEuros(gross(item.addOnPrice ?? 0)) }) }}</span>
               </p>
             </div>
           </section>
@@ -141,6 +148,7 @@ function submit() {
           class="rounded-md border border-line-hover p-6 min-[1000px]:sticky min-[1000px]:top-[92px]"
           @submit.prevent="submit"
         >
+          <PortalLabel class="mb-2">{{ $t('portal.totalTitle') }}</PortalLabel>
           <span class="block text-[28px] leading-none font-semibold tracking-[-0.022em] tabular-nums">{{ price }}</span>
           <span v-if="vatRate && service.price !== null" class="mt-[7px] block text-[13px] text-muted-foreground">
             {{ $t('portal.vatNote', { rate: basisPointsToPercent(vatRate) }) }}

@@ -22,7 +22,6 @@ class PortalServiceData extends Data
         public string $id,
         public string $name,
         public ?string $description,
-        public ?string $text,
         public ?int $price,
         public string $priceMode,
         public bool $requiresDate,
@@ -38,7 +37,6 @@ class PortalServiceData extends Data
             id: $package->public_id,
             name: $package->name,
             description: $package->description,
-            text: $package->portal_text,
             // Auf Anfrage heißt: es steht keine Zahl da. Eine mitgelieferte,
             // die das Frontend verstecken soll, stünde im Netzwerk-Tab.
             //

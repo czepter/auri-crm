@@ -35,7 +35,7 @@ class Package extends Model
 
     protected $fillable = [
         'name', 'description', 'is_active', 'hourly_rate', 'min_hours', 'max_hours', 'images_per_hour', 'hours',
-        'portal_offered', 'portal_text', 'portal_price_mode', 'portal_requires_date', 'project_type_key',
+        'portal_offered', 'portal_price_mode', 'portal_requires_date', 'project_type_key',
     ];
 
     protected $attributes = ['is_active' => true, 'portal_offered' => false, 'portal_requires_date' => true];

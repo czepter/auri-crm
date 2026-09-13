@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import PortalField from '@/portal/components/PortalField.vue'
 import PortalLabel from '@/portal/components/PortalLabel.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
+import { vatAmount } from '@/admin/components/quote/quoteTotals'
 import { basisPointsToPercent, formatEuros } from '@/admin/lib/money'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
@@ -29,10 +30,19 @@ const props = defineProps<{
 
 const { t } = useI18n()
 
+// Ein Kunde sieht einen Preis, der schon feststeht — brutto, nicht "zzgl.
+// Umsatzsteuer" wie eine Rechnung an ein anderes Unternehmen. Das gilt B2C
+// wie B2B: das Portal stellt hier aus, es rechnet nicht ab.
+function gross(net: number): number {
+  return props.vatRate ? net + vatAmount(net, props.vatRate) : net
+}
+
 const price = computed(() => {
   if (props.price === null) return t('portal.priceOnRequest')
 
-  return props.priceMode === 'from' ? t('portal.priceFrom', { price: formatEuros(props.price) }) : formatEuros(props.price)
+  const amount = gross(props.price)
+
+  return props.priceMode === 'from' ? t('portal.priceFrom', { price: formatEuros(amount) }) : formatEuros(amount)
 })
 
 const included = computed(() => props.items.filter((item) => !item.selectable || item.selected))
@@ -70,13 +80,14 @@ const optional = computed(() => props.items.filter((item) => item.selectable && 
             <div class="border-t border-border">
               <p v-for="(item, index) in optional" :key="index" class="flex gap-4 border-b border-border py-3.5 text-[15px]">
                 <span class="flex-1">{{ [item.title, item.description].filter(Boolean).join(' · ') }}</span>
-                <span class="flex-none tabular-nums text-muted-foreground">{{ $t('portal.addOnPrice', { price: formatEuros(item.addOnPrice ?? 0) }) }}</span>
+                <span class="flex-none tabular-nums text-muted-foreground">{{ $t('portal.addOnPrice', { price: formatEuros(gross(item.addOnPrice ?? 0)) }) }}</span>
               </p>
             </div>
           </section>
         </div>
 
         <div>
+          <PortalLabel class="mb-2">{{ $t('portal.totalTitle') }}</PortalLabel>
           <span class="block text-[26px] leading-none font-semibold tracking-[-0.022em] tabular-nums">{{ price }}</span>
           <span v-if="vatRate && props.price !== null" class="mt-[7px] block text-[13px] text-muted-foreground">
             {{ $t('portal.vatNote', { rate: basisPointsToPercent(vatRate) }) }}

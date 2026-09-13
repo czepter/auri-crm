@@ -342,7 +342,6 @@ export const catalogPackages: App.Catalog.Data.PackageData[] = [
             { id: 'pi-2', title: 'Online-Galerie', description: null, quantity: 1, unitPrice: 0, selectable: false, selected: true, outcome: null, hasImage: false },
         ],
         portalOffered: false,
-        portalText: null,
         portalPriceMode: 'exact',
         portalRequiresDate: true,
         projectTypeKey: null,

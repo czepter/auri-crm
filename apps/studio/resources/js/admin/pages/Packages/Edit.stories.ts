@@ -6,6 +6,7 @@ const meta = {
   component: Edit,
   parameters: { layout: 'fullscreen', url: '/pakete/pk1' },
   args: {
+    vatRate: 1900,
     catalogItems: [
       { id: 'ci-1', title: 'Editierte Datei extra', description: null, unitPrice: 2500 },
       { id: 'ci-2', title: 'Drohnenaufnahmen', description: null, unitPrice: 9000 },
@@ -32,7 +33,6 @@ const meta = {
         { id: 'i3', title: 'Album, 30 x 30, 40 Seiten', description: null, quantity: 1, unitPrice: 68000, selectable: true, selected: true, outcome: 'Gedrucktes Album', hasImage: true },
       ],
       portalOffered: true,
-      portalText: '10 Stunden · Zweitfotograf ab dem Empfang',
       portalPriceMode: 'from',
       portalRequiresDate: true,
       projectTypeKey: 'hochzeit',
@@ -55,7 +55,7 @@ export const OhnePositionen: Story = {
   args: {
     package: {
       id: 'pk3', name: 'Trauung und Feier', description: null, isActive: false, itemCount: 0, items: [],
-      portalOffered: false, portalText: null, portalPriceMode: 'exact', portalRequiresDate: true,
+      portalOffered: false, portalPriceMode: 'exact', portalRequiresDate: true,
       projectTypeKey: null, portalHasImage: false, price: 0, requestedCount: 0, bookedCount: 0,
     },
     requests: [],

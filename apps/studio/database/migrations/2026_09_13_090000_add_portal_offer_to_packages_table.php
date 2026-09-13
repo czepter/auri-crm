@@ -26,7 +26,6 @@ return new class extends Migration
     {
         Schema::table('packages', function (Blueprint $table) {
             $table->boolean('portal_offered')->default(false);
-            $table->string('portal_text')->nullable();
             $table->string('portal_price_mode', 16)->default('exact');
             $table->boolean('portal_requires_date')->default(true);
             $table->string('portal_image_path')->nullable();
@@ -41,7 +40,7 @@ return new class extends Migration
         Schema::table('packages', function (Blueprint $table) {
             $table->dropIndex(['tenant_id', 'portal_offered']);
             $table->dropColumn([
-                'portal_offered', 'portal_text', 'portal_price_mode',
+                'portal_offered', 'portal_price_mode',
                 'portal_requires_date', 'portal_image_path', 'project_type_key',
             ]);
         });
