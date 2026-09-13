@@ -22,28 +22,36 @@ class ProjectActivity
 {
     public static function for(Project $project, int $limit = 25): array
     {
-        $stages = app(CrmVocabulary::class);
-
         return AuditLog::query()
             ->where('project_id', $project->id)
             ->with('actor:id,name')
             ->latest('created_at')
             ->limit($limit)
             ->get()
-            ->filter(fn (AuditLog $log) => trans()->has("activity.{$log->event}"))
+            ->filter(fn (AuditLog $log) => self::isShown($log))
             ->map(fn (AuditLog $log) => [
                 'event' => $log->event,
-                // Without the target, two moves on one day read as one move logged twice.
-                'label' => __("activity.{$log->event}", [
-                    'to' => $stages->byKey(
-                        str_starts_with($log->event, 'lead.') ? StagePipeline::Lead : StagePipeline::Project,
-                        $log->context['to'] ?? '',
-                    )?->name ?? $log->context['to'] ?? '',
-                ]),
+                'label' => self::label($log),
                 'at' => $log->context['occurred_at'] ?? $log->created_at->toIso8601String(),
                 'actorName' => $log->actor?->name,
             ])
             ->values()
             ->all();
+    }
+
+    public static function isShown(AuditLog $log): bool
+    {
+        return trans()->has("activity.{$log->event}");
+    }
+
+    public static function label(AuditLog $log): string
+    {
+        // Without the target, two moves on one day read as one move logged twice.
+        return __("activity.{$log->event}", [
+            'to' => app(CrmVocabulary::class)->byKey(
+                str_starts_with($log->event, 'lead.') ? StagePipeline::Lead : StagePipeline::Project,
+                $log->context['to'] ?? '',
+            )?->name ?? $log->context['to'] ?? '',
+        ]);
     }
 }

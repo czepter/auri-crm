@@ -4,11 +4,13 @@ namespace App\Crm\Http\Controllers;
 
 use App\Crm\Actions\AdvanceShootStatus;
 use App\Crm\Actions\DesignatePrimaryShoot;
+use App\Crm\Data\ProjectSuggestionData;
 use App\Crm\Enums\ShootKind;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Crm\Support\CrmVocabulary;
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use Carbon\CarbonImmutable;
 use DomainException;
@@ -17,9 +19,29 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ShootController extends Controller
 {
+    /** The Übersicht's wizard: the project or inquiry first, the shoot is still created on it. */
+    public function create(Request $request): Response
+    {
+        $viewer = $request->user('staff');
+        abort_unless($viewer->role->allows(Capability::ManageShoots), 403);
+
+        $project = $request->filled('projekt')
+            ? Project::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first()
+            : null;
+
+        return Inertia::render('Shoots/Create', [
+            'project' => $project ? ProjectSuggestionData::fromModel($project) : null,
+            'kinds' => collect(ShootKind::cases())
+                ->map(fn (ShootKind $kind) => ['value' => $kind->value, 'label' => $kind->label()])
+                ->all(),
+        ]);
+    }
+
     public function store(Request $request, Project $project): RedirectResponse
     {
         $this->authorize('manageShoots', $project);
@@ -46,7 +68,10 @@ class ShootController extends Controller
             + array_filter(['status_entered_at' => $validated['entered_at'] ?? null])
         );
 
-        return back();
+        // Aus dem Wizard zum neuen Shooting am Projekt, nicht zurück ins leere Formular.
+        return $request->boolean('wizard')
+            ? redirect('/auftraege/'.$project->public_id.'/shootings')
+            : back();
     }
 
     /**

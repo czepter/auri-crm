@@ -26,6 +26,7 @@ class ProjectSearchController extends Controller
 
         $projects = Project::query()
             ->visibleTo(auth('staff')->user())
+            ->with('job')
             ->where('name', 'ilike', "%{$term}%")
             ->orderBy('name')
             ->limit(8)

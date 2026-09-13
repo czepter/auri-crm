@@ -293,6 +293,8 @@ leadId: string | null,
 outcomeLabel: string | null,
 lostReason: string | null,
 canClose: boolean,
+isCompleted: boolean,
+canComplete: boolean,
 canDelete: boolean,
 tabs: {
 key: string,
@@ -365,6 +367,7 @@ export type ProjectSuggestionData = {
 id: string,
 name: string,
 contactName: string | null,
+isBooked: boolean,
 galleryDefaults: {
 downloads: boolean | null,
 lists: boolean | null,

@@ -50,7 +50,7 @@ class QuoteAcceptanceRate
     }
 
     /** @return array{sent: int, accepted: int} */
-    private static function counts(CarbonInterface $from, CarbonInterface $to): array
+    public static function counts(CarbonInterface $from, CarbonInterface $to): array
     {
         $sent = Quote::query()
             ->whereNotNull('sent_at')

@@ -190,7 +190,7 @@ function open(row: Row) {
                   <span
                     v-if="!row.active"
                     class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-faint"
-                  >{{ $t('formTemplates.inactive') }}</span>
+                  >{{ $t('formTemplates.paused') }}</span>
                 </component>
 
                 <Link
@@ -223,7 +223,7 @@ function open(row: Row) {
                 <span
                   v-if="!row.active"
                   class="flex-none rounded-[var(--r-sm)] bg-muted px-2 py-[3px] text-[10px] leading-[1.5] font-semibold tracking-[0.04em] uppercase text-faint"
-                >{{ $t('formTemplates.inactive') }}</span>
+                >{{ $t('formTemplates.paused') }}</span>
               </component>
 
               <p v-if="!matching(rows[kind]).length" class="m-0 text-[12px] leading-[1.45] text-faint">{{ $t('templates.empty') }}</p>

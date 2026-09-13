@@ -7,6 +7,7 @@ import Page from '@/ui/page/Page.vue'
 import { Button } from '@/ui/button'
 import { ChoiceGroup } from '@/ui/choice-group'
 import PageHead from '@/ui/page/PageHead.vue'
+import Empty from '@/ui/page/Empty.vue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 
 const props = defineProps<{
@@ -176,13 +177,12 @@ function shortDate(date: string | null) {
           <tbody>
             <tr v-if="!groups.length">
               <TableCell :colspan="5">
-                <div class="flex flex-col items-center gap-3 rounded-md border border-dashed border-border px-6 py-9">
-                  <span class="text-[12.5px] leading-[1.45] text-ink-2">{{ $t('dashboard.weekEmpty') }}</span>
+                <Empty :text="$t('dashboard.weekEmpty')">
                   <div class="flex items-center gap-2">
                     <Button :as="Link" variant="pill" href="/anfragen/neu">{{ $t('leads.createKicker') }}</Button>
                     <Button :as="Link" variant="pill-muted" href="/projekte">{{ $t('calendar.toProjects') }}</Button>
                   </div>
-                </div>
+                </Empty>
               </TableCell>
             </tr>
 

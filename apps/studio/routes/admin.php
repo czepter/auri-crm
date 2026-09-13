@@ -187,6 +187,7 @@ Route::middleware('audience:staff')->group(function () {
         // binds "suche" as a contact public id and answers 404.
         Route::get('/kontakte/suche', ContactSearchController::class)->name('contacts.search');
         Route::get('/suche', PaletteSearchController::class)->name('palette.search');
+        Route::get('/kontakte/neu', [ContactController::class, 'create'])->name('contacts.create');
         Route::get('/kontakte', [ContactController::class, 'index'])->name('contacts.index');
         Route::post('/kontakte', [ContactController::class, 'store'])->name('contacts.store');
         Route::get('/kontakte/{contact}', [ContactController::class, 'edit'])->name('contacts.edit');
@@ -534,6 +535,10 @@ Route::middleware('audience:staff')->group(function () {
             ->name('projects.destroy');
         Route::post('/auftraege/{project}/buchung', [ProjectController::class, 'book'])
             ->name('projects.book');
+        Route::post('/auftraege/{project}/abschluss', [ProjectController::class, 'complete'])
+            ->name('projects.complete');
+        Route::delete('/auftraege/{project}/abschluss', [ProjectController::class, 'reopen'])
+            ->name('projects.reopen');
         Route::post('/auftraege/{project}/portal-sichtbarkeit', [ProjectController::class, 'togglePortalVisibility'])
             ->name('projects.portal-visibility.toggle');
 
@@ -629,6 +634,11 @@ Route::middleware('audience:staff')->group(function () {
         // wie /pakete/neu über /pakete/{package}.
         Route::get('/galerien/neu', [GalleryIndexController::class, 'create'])->name('galleries.create');
         Route::post('/galerien', [GalleryIndexController::class, 'store'])->name('galleries.store');
+        // Die Anlege-Wizards der Übersicht: erst Projekt oder Anfrage, dann der
+        // Editor, den das Projekt schon hat. Angelegt wird weiter am Projekt.
+        Route::get('/shootings/neu', [ShootController::class, 'create'])->name('shoots.wizard');
+        Route::get('/angebote/neu', [QuoteController::class, 'create'])->name('quotes.wizard');
+        Route::get('/frageboegen/neu', [FormInstanceController::class, 'create'])->name('form-instances.wizard');
         // Bereich, Set und Einstellungsabschnitt stehen im Pfad, nicht in
         // einem ref(): sonst wirft jedes Neuladen den Menschen zurueck auf
         // Bilder/Alle und die Zurueck-Taste verlaesst die Galerie. Das

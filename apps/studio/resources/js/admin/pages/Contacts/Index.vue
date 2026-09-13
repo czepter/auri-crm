@@ -1,15 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { Link, useForm } from '@inertiajs/vue3'
+import { Link } from '@inertiajs/vue3'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import Empty from '@/ui/page/Empty.vue'
 import { Table, TableCell, TableGroupRow, TableHead, TableRow } from '@/ui/table'
 import { Button } from '@/ui/button'
-import { Dialog, DialogBody, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/ui/dialog'
-import { Field } from '@/ui/field'
-import { Input } from '@/ui/input'
-import { Label } from '@/ui/label'
 import { groupContacts } from '@/admin/lib/contactQueue'
 
 const props = defineProps<{ contacts: App.Crm.Data.ContactRowData[] }>()
@@ -17,8 +14,6 @@ const props = defineProps<{ contacts: App.Crm.Data.ContactRowData[] }>()
 // C-15 (#251): grouped by standing, not alphabetically. Who the studio is
 // working with right now is the question this screen is opened with.
 const groups = computed(() => groupContacts(props.contacts))
-
-const newForm = useForm({ name: '', email: '', phone: '' })
 
 function day(iso: string) {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
@@ -38,45 +33,14 @@ function day(iso: string) {
     <Page data-tokens wide>
       <div class="min-w-0 flex-1">
         <PageHead :title="$t('contacts.title')">
-          <Dialog>
-            <DialogTrigger as-child>
-              <Button class="ml-auto" variant="pill" type="button">{{ $t('contacts.create') }}</Button>
-            </DialogTrigger>
-
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{{ $t('contacts.create') }}</DialogTitle>
-              </DialogHeader>
-
-              <DialogBody>
-                <form id="contact-create-form" class="grid grid-cols-2 gap-x-6 gap-y-4" @submit.prevent="newForm.post('/kontakte')">
-                  <Field wide :label="$t('contacts.name')" :error="newForm.errors.name" v-slot="{ id }">
-                    <Input :id v-model="newForm.name" type="text" />
-                  </Field>
-                  <Field :error="newForm.errors.email" v-slot="{ id }">
-                    <Label :for="id">{{ $t('contacts.email') }} <em>{{ $t('settings.optional') }}</em></Label>
-                    <Input :id v-model="newForm.email" type="email" />
-                  </Field>
-                  <Field :error="newForm.errors.phone" v-slot="{ id }">
-                    <Label :for="id">{{ $t('contacts.phone') }} <em>{{ $t('settings.optional') }}</em></Label>
-                    <Input :id v-model="newForm.phone" type="tel" />
-                  </Field>
-                </form>
-              </DialogBody>
-
-              <DialogFooter>
-                <Button type="submit" form="contact-create-form" :disabled="newForm.processing">
-                  {{ $t('contacts.create') }}
-                </Button>
-                <DialogClose as-child>
-                  <Button variant="ghost" type="button">{{ $t('common.cancel') }}</Button>
-                </DialogClose>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button :as="Link" class="ml-auto" variant="pill" href="/kontakte/neu">{{ $t('contacts.create') }}</Button>
         </PageHead>
 
-        <Table v-if="contacts.length">
+        <Empty v-if="!contacts.length" class="mx-8 mt-7" :text="$t('contacts.empty')">
+          <Button :as="Link" variant="pill" href="/kontakte/neu">{{ $t('contacts.create') }}</Button>
+        </Empty>
+
+        <Table v-else>
           <thead>
             <tr>
               <TableHead>{{ $t('contacts.colName') }}</TableHead>
@@ -100,10 +64,6 @@ function day(iso: string) {
             </template>
           </tbody>
         </Table>
-
-        <Button v-else :as="Link" variant="pill" class="mt-5" href="/anfragen/neu">
-          {{ $t('leads.createKicker') }}
-        </Button>
       </div>
     </Page>
   </AdminLayout>

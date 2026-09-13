@@ -6,6 +6,7 @@ import AdminLayout from '@/admin/layouts/AdminLayout.vue'
 import ProjectShell from '@/admin/components/ProjectShell.vue'
 import { chipClass } from '@/admin/lib/shoots'
 import { dayWithWeekday } from '@/admin/lib/dates'
+import { Alert } from '@/ui/alert'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
@@ -332,12 +333,12 @@ const TONE: Record<string, string> = {
               </span>
             </template>
 
-            <div v-if="shoot.isCancelled" class="flex items-center gap-3 rounded-[7px] bg-late-bg bg-icon-alert bg-[length:13px_13px] bg-[position:9px_center] bg-no-repeat py-[7px] pr-[9px] pl-7 text-[12.5px] leading-[1.3] font-medium text-destructive">
+            <Alert v-if="shoot.isCancelled" variant="destructive">
               {{ $t('project.cancelled', { reason: shoot.cancelledReason }) }}
               <Button v-if="header.canManageShoots" class="ml-auto" variant="outline" type="button" @click="uncancel(shoot)">
                 {{ $t('project.uncancel') }}
               </Button>
-            </div>
+            </Alert>
 
             <template v-else>
               <div class="grid grid-cols-4 gap-[18px] max-[640px]:grid-cols-2">

@@ -3,18 +3,23 @@
 namespace App\Crm\Http\Controllers;
 
 use App\Crm\Actions\SeedFormInstanceFromTemplate;
+use App\Crm\Data\FormInstanceData;
+use App\Crm\Data\ProjectSuggestionData;
 use App\Crm\Enums\FormFieldType;
 use App\Crm\Models\FormInstance;
 use App\Crm\Models\FormInstanceField;
 use App\Crm\Models\FormInstanceFile;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\Project;
+use App\Enums\Capability;
 use App\Http\Controllers\Controller;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -26,6 +31,35 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class FormInstanceController extends Controller
 {
+    /**
+     * The Übersicht's wizard: the project or inquiry, then a template, then the
+     * copy to personalise. The copy is named in the address so a reload keeps it.
+     */
+    public function create(Request $request): Response
+    {
+        $viewer = $request->user('staff');
+        abort_unless($viewer->role->allows(Capability::ManageFormTemplates), 403);
+
+        $project = $request->filled('projekt')
+            ? Project::query()->visibleTo($viewer)->where('public_id', $request->query('projekt'))->first()
+            : null;
+
+        $instance = $project && $request->filled('fragebogen')
+            ? $project->formInstances()->where('public_id', $request->query('fragebogen'))->with('fields.currentAnswer')->first()
+            : null;
+
+        return Inertia::render('Forms/Create', [
+            'project' => $project ? ProjectSuggestionData::fromModel($project) : null,
+            'formTemplates' => FormTemplate::active()->orderBy('name')->get()
+                ->map(fn (FormTemplate $template) => ['value' => $template->public_id, 'label' => $template->name])
+                ->all(),
+            'fieldTypes' => collect(FormFieldType::cases())
+                ->map(fn (FormFieldType $type) => ['value' => $type->value, 'label' => $type->label()])
+                ->all(),
+            'instance' => $instance ? FormInstanceData::from($instance) : null,
+        ]);
+    }
+
     public function store(Request $request, Project $project, SeedFormInstanceFromTemplate $seed): RedirectResponse
     {
         $this->authorize('manageForms', $project);
@@ -59,7 +93,9 @@ class FormInstanceController extends Controller
             projectId: $project->id,
         );
 
-        return back();
+        return $request->boolean('wizard')
+            ? redirect('/frageboegen/neu?'.http_build_query(['projekt' => $project->public_id, 'fragebogen' => $instance->public_id]))
+            : back();
     }
 
     /**
