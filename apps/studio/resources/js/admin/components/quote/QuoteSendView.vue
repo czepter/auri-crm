@@ -54,7 +54,7 @@ function send() {
 
 <template>
   <div class="flex h-screen flex-col">
-    <header class="flex h-16 flex-none items-center gap-3.5 border-b border-border px-7">
+    <header class="flex h-16 flex-none items-center gap-3.5 px-7">
       <Button variant="ghost" class="size-8 p-0" type="button" @click="emit('cancel')">
         <svg class="size-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
       </Button>
@@ -68,7 +68,7 @@ function send() {
     </header>
 
     <div class="flex min-h-0 flex-1">
-      <div class="flex w-1/2 flex-none flex-col gap-5 overflow-y-auto border-r border-border p-6">
+      <div class="flex w-1/2 flex-none flex-col gap-5 overflow-y-auto p-6">
         <Field :label="$t('quotes.recipient')" dense>
           <div class="flex items-center gap-2.5 rounded-md border border-border px-3 py-2.5">
             <div class="flex size-[26px] flex-none items-center justify-center rounded-full bg-sunk text-[11px] font-semibold text-ink-2">
@@ -98,12 +98,7 @@ function send() {
       </div>
 
       <div class="flex min-w-0 flex-1 flex-col p-6">
-        <div class="flex flex-none items-center gap-2.5 border-b border-border pb-2.5">
-          <span class="text-[10px] leading-none font-semibold tracking-[0.09em] text-faint uppercase">{{ $t('quotes.preview') }}</span>
-          <span class="text-[12px] text-faint">{{ $t('quotes.sendPreviewHint') }}</span>
-        </div>
-
-        <div class="mt-4 flex flex-1 items-start justify-center overflow-auto rounded-md bg-sunk p-6">
+        <div class="flex flex-1 items-start justify-center overflow-auto rounded-md bg-sunk p-6">
           <div class="w-[520px] flex-none bg-background shadow-[0_18px_40px_-24px_rgba(20,16,14,.28)]">
             <div class="px-10 pt-8 text-center text-[19px] font-bold tracking-[-0.03em]">{{ studioName }}</div>
 
