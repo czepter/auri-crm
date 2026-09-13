@@ -52,6 +52,14 @@ function reopen() {
   router.post(`/anfragen/${props.header.leadId}/wieder-oeffnen`, {}, { preserveScroll: true })
 }
 
+function complete() {
+  router.post(`/auftraege/${props.header.id}/abschluss`, {}, { preserveScroll: true })
+}
+
+function reopenProject() {
+  router.delete(`/auftraege/${props.header.id}/abschluss`, { preserveScroll: true })
+}
+
 function toggleReminders(value: boolean | 'indeterminate') {
   router.patch(
     `/zahlungsplaene/${props.header.paymentPlan?.id}/erinnerungen`,
@@ -145,7 +153,7 @@ function destroy() {
               </AlertDialogContent>
             </AlertDialog>
 
-            <DropdownMenu v-if="$slots.menu || (header.canClose && !header.outcomeLabel) || header.canDelete">
+            <DropdownMenu v-if="$slots.menu || (header.canComplete && !header.isCompleted) || (header.canClose && !header.outcomeLabel) || header.canDelete">
               <DropdownMenuTrigger
                 class="flex size-8 flex-none cursor-pointer items-center justify-center rounded-[var(--r)] bg-sunk-2"
                 :aria-label="$t('project.more')"
@@ -156,6 +164,9 @@ function destroy() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" class="w-[208px]">
                 <slot name="menu" />
+                <DropdownMenuItem v-if="header.canComplete && !header.isCompleted" @select="complete">
+                  {{ $t('project.completeMenu') }}
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   v-if="header.canClose && !header.outcomeLabel"
                   :class="{ 'border-t border-rule': $slots.menu }"
@@ -199,6 +210,16 @@ function destroy() {
         </Button>
       </div>
 
+      <div
+        v-if="header.isCompleted"
+        class="mt-2.5 flex items-center gap-3 rounded-[7px] bg-sunk-2 py-[7px] pr-[9px] pl-[11px] text-[12.5px] leading-[1.3] font-medium"
+      >
+        {{ $t('project.completed') }}
+        <Button v-if="header.canComplete" class="ml-auto" variant="outline" type="button" @click="reopenProject">
+          {{ $t('lead.reopen') }}
+        </Button>
+      </div>
+
       <AlertDialog v-model:open="closing">
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -232,7 +253,7 @@ function destroy() {
             <AlertDialogTitle>{{ $t('project.deleteTitle') }}</AlertDialogTitle>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction class="bg-destructive" @click="destroy">{{ $t('common.delete') }}</AlertDialogAction>
+            <AlertDialogAction tone="destructive" @click="destroy">{{ $t('common.delete') }}</AlertDialogAction>
             <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>

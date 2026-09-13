@@ -49,7 +49,11 @@ class ProjectRowData extends Data
             venue: $shoot?->venue(),
             position: $at->label,
             positionKey: $stage?->key,
-            phase: $stage ? $vocabulary->phase($stage) : 'upcoming',
+            phase: match (true) {
+                $at->source === 'completed' => 'delivered',
+                $stage !== null => $vocabulary->phase($stage),
+                default => 'upcoming',
+            },
             contact: $project->primaryContact()?->name,
             openTasks: (int) ($project->open_tasks_count ?? 0),
             taskCount: (int) ($project->tasks_count ?? 0),
