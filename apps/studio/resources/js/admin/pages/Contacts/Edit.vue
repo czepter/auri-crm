@@ -6,6 +6,8 @@ import ContactQueue from '@/admin/components/ContactQueue.vue'
 import ContactPortalFields from '@/admin/components/ContactPortalFields.vue'
 import Page from '@/ui/page/Page.vue'
 import PageHead from '@/ui/page/PageHead.vue'
+import Panel from '@/admin/components/Panel.vue'
+import Metric from '@/admin/components/Metric.vue'
 import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
@@ -13,6 +15,8 @@ import { Textarea } from '@/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/ui/select'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/ui/alert-dialog'
 import { formatEurosRounded } from '@/admin/lib/money'
+import { useI18n } from 'vue-i18n'
+import { MAX_DOTS, type Tone } from '@/admin/lib/metricDots'
 
 const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? ''
 
@@ -80,8 +84,11 @@ const props = defineProps<{
     suggestedOn: string | null
     live: boolean
   }[]
-  offerablePackages: { id: string; name: string }[]
+  offerablePackages: { id: string; name: string; price: number | null; priceMode: string; requiresDate: boolean }[]
+  portalLogins: { count: number; firstAt: string | null; lastAt: string | null }
 }>()
+
+const { t } = useI18n()
 
 const form = useForm({
   name: props.contact.name,
@@ -136,6 +143,49 @@ function savePortal() {
 
 function day(iso: string | null) {
   return iso ? new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' }) : '—'
+}
+
+function time(iso: string) {
+  return new Date(iso).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+}
+
+function lastSeenDay(iso: string) {
+  const seen = new Date(iso)
+
+  return seen.toDateString() === new Date().toDateString() ? t('contacts.portalToday') : day(iso)
+}
+
+// Was dieser Kunde unter „Weitere Leistungen" vorfindet: das Regal des
+// Studios, und dazu, wo einer hängt, der Satz, den jemand für ihn
+// geschrieben hat. Ein Vorschlag auf eine zurückgezogene Leistung steht
+// unten weiter — sonst verschwände er, ohne entfernt worden zu sein.
+const offerRows = computed(() => {
+  const shelf = props.offerablePackages.map((one) => ({
+    id: one.id,
+    name: one.name,
+    terms: [priceLabel(one), one.requiresDate ? t('packages.portalWithDate') : t('packages.portalWithoutDate')].join(' · '),
+    suggestion: props.suggestions.find((row) => row.package === one.id) ?? null,
+  }))
+
+  const withdrawn = props.suggestions
+    .filter((row) => !row.live)
+    .map((row) => ({ id: row.package, name: row.name, terms: '', suggestion: row }))
+
+  return [...shelf, ...withdrawn]
+})
+
+// Ein Punkt ist eine Anmeldung. Die genaue Zahl steht darunter im Satz, also
+// braucht die Reihe die Überzähligen nicht auch noch anzuschreiben.
+const loginDots = computed<Tone[]>(() => Array(Math.min(props.portalLogins.count, MAX_DOTS)).fill('on'))
+
+function priceLabel(one: { price: number | null; priceMode: string }) {
+  if (one.priceMode === 'on_request') {
+    return t('packages.priceOnRequest')
+  }
+
+  const price = formatEurosRounded(one.price ?? 0)
+
+  return one.priceMode === 'from' ? t('packages.priceFromValue', { price }) : price
 }
 
 // C-18 (#254) wanted every row operable where it stands, without a
@@ -206,7 +256,9 @@ function eraseDsgvoData() {
         </div>
 
         <div class="px-8 pt-7">
-          <div class="max-w-[760px]">
+          <!-- Nur der Portal-Reiter hat eine zweite Spalte und braucht das
+               volle Maß der Fallseite; die übrigen bleiben auf Lesebreite. -->
+          <div :class="tab === 'portal' ? 'max-w-[1100px]' : 'max-w-[760px]'">
             <div v-if="tab === 'overview'">
               <div v-if="!editing" class="mb-7 flex gap-2">
                 <a
@@ -434,115 +486,138 @@ function eraseDsgvoData() {
               </section>
             </div>
 
-            <div v-else-if="tab === 'portal'">
-              <section class="mb-7">
-                <h2 class="mt-0 mb-3 text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
-                  {{ $t('contacts.portalSection') }}
-                </h2>
+            <div v-else-if="tab === 'portal'" class="flex items-start gap-6 max-[1180px]:flex-col">
+              <div class="min-w-0 flex-1 space-y-7">
+                <Panel :title="$t('contacts.portalKey.welcome')">
+                  <ContactPortalFields group="welcome" :portal="portal" :defaults="portalDefaults" @change="savePortal" />
+                </Panel>
 
-              <ContactPortalFields :portal="portal" :defaults="portalDefaults" @change="savePortal" />
+                <Panel :title="$t('contacts.portalPermissions')">
+                  <ContactPortalFields group="permissions" :portal="portal" :defaults="portalDefaults" @change="savePortal" />
+                </Panel>
 
-              <!-- The access belongs to the portal, under the switches: validity,
-                   a fresh link, withdrawal. -->
-              <div class="flex items-center gap-3 py-[9px] shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none">
-                <div class="min-w-0 flex-1 text-[13px]">
-                  {{ $t('contacts.portalAccess') }}
-                  <div class="mt-[3px] text-[12px] text-ink-2">
-                    {{ portalAccessRevokedAt
-                      ? $t('contacts.portalAccessRevoked', { date: day(portalAccessRevokedAt) })
-                      : $t('contacts.portalAccessActive') }}
-                  </div>
-                </div>
-            </div>
+                <Panel :title="$t('contacts.portalGallery')">
+                  <ContactPortalFields group="gallery" :portal="portal" :defaults="portalDefaults" @change="savePortal" />
+                </Panel>
 
-            <!-- A plain form, not router.post(): the preview belongs in a
-                 second tab, and target only works on a real navigation.
-                 Without X-Inertia the controller's Inertia::location is a
-                 302, which the new tab follows to the portal. -->
-            <form
-              v-if="canPreviewPortal"
-              :action="`/kontakte/${contact.id}/portal-vorschau`"
-              method="post"
-              target="_blank"
-            >
-              <input type="hidden" name="_token" :value="csrf">
-              <Button type="submit" variant="pill-muted">
-                {{ $t('contacts.portalPreview') }}
-              </Button>
-            </form>
+                <!-- Jede Leistung eine Zeile, auch die, die alle Kunden sehen: was
+                     dieser Kunde im Portal vorfindet, steht hier einzeln und nicht
+                     als Zahl. Rechts steht, warum sie dort steht. -->
+                <Panel :title="$t('contacts.suggestionsSection')">
+                  <template #action>
+                    <Link class="ml-auto text-[12px] text-action no-underline hover:underline" href="/pakete">
+                      {{ $t('contacts.changeInPackages') }}
+                    </Link>
+                  </template>
 
-            <AlertDialog v-if="canRevokePortalAccess && !portalAccessRevokedAt">
-              <AlertDialogTrigger as-child>
-                <Button type="button" variant="pill-muted">
-                  {{ $t('contacts.revokePortalAccess') }}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>
-                    {{ $t('contacts.revokePortalAccessConfirm', { name: contact.name }) }}
-                  </AlertDialogTitle>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogAction @click="revokePortalAccess">{{ $t('contacts.revokePortalAccess') }}</AlertDialogAction>
-                  <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            </section>
+                  <ContactPortalFields group="offers" :portal="portal" :defaults="portalDefaults" @change="savePortal" />
 
-              <!-- Handarbeit neben dem Regal: eine Leistung, zu der ein Satz
-                   gehört. Der Abschnitt fehlt, solange das Studio nichts im
-                   Portal anbietet — vorschlagen ließe sich dann nichts. -->
-              <section v-if="offerablePackages.length || suggestions.length" class="mb-7">
-                <h2 class="mt-0 mb-3 text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
-                  {{ $t('contacts.suggestionsSection') }}
-                </h2>
-
-                <div
-                  v-for="row in suggestions"
-                  :key="row.id"
-                  class="py-2.5 shadow-[inset_0_1px_0_var(--rule)] first-of-type:shadow-none"
-                >
-                  <div class="flex items-center gap-4">
-                    <div class="min-w-0">
-                      <div class="text-[15px] leading-none font-semibold tracking-[-0.012em]">{{ row.name }}</div>
-                      <div class="mt-px text-[12px] text-ink-2">
-                        <template v-if="row.suggestedOn">{{ $t('contacts.suggestedOn', { date: day(row.suggestedOn) }) }}</template>
-                        <template v-if="row.author"> · {{ row.author }}</template>
-                        <template v-if="!row.live"> · {{ $t('contacts.suggestionWithdrawn') }}</template>
+                  <template v-for="row in offerRows" :key="row.id">
+                    <div class="flex items-center gap-4 py-2.5 shadow-[inset_0_1px_0_#EEEEF0]">
+                      <div class="min-w-0">
+                        <div class="text-[15px] leading-none font-semibold tracking-[-0.012em]">{{ row.name }}</div>
+                        <div class="mt-px text-[12px] text-ink-2">{{ row.terms }}</div>
                       </div>
+                      <span class="ml-auto flex-none text-[12.5px]" :class="row.suggestion ? 'text-action' : 'text-ink-2'">
+                        {{ row.suggestion ? $t('contacts.offerSuggested', { name: contact.name }) : $t('contacts.offerForAll') }}
+                      </span>
                     </div>
-                    <span class="ml-auto flex flex-none gap-2">
-                      <Button type="button" variant="pill-muted" @click="editSuggestion(row)">{{ $t('common.edit') }}</Button>
-                      <Button type="button" variant="pill-muted" @click="removeSuggestion(row.id)">{{ $t('contacts.suggestionRemove') }}</Button>
-                    </span>
-                  </div>
-                  <p v-if="row.note" class="mt-2 max-w-[62ch] text-[13.5px] leading-[1.55]">{{ row.note }}</p>
-                </div>
 
-                <form v-if="offerablePackages.length" class="mt-4 flex flex-col gap-3" @submit.prevent="saveSuggestion">
-                  <Field id="s-package" :label="$t('contacts.suggestionPackage')" :error="suggestion.errors.package">
-                    <Select
-                      :model-value="suggestion.package || undefined"
-                      @update:model-value="(v) => (suggestion.package = String(v))"
-                    >
-                      <SelectTrigger id="s-package"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem v-for="one in offerablePackages" :key="one.id" :value="one.id">{{ one.name }}</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                  <Field id="s-note" :label="$t('contacts.suggestionNote')" :error="suggestion.errors.note">
-                    <Textarea id="s-note" v-model="suggestion.note" rows="3" />
-                  </Field>
-                  <div>
-                    <Button type="submit" variant="pill" :disabled="!suggestion.package || suggestion.processing">
-                      {{ $t('contacts.suggest') }}
-                    </Button>
-                  </div>
-                </form>
-              </section>
+                    <div v-if="row.suggestion" class="flex items-start gap-4 pb-2.5">
+                      <p class="m-0 max-w-[62ch] flex-1 text-[13.5px] leading-[1.55]">
+                        {{ row.suggestion.note }}
+                        <span class="text-[12px] text-ink-2">
+                          <template v-if="row.suggestion.author">{{ row.suggestion.author }}</template>
+                          <template v-if="row.suggestion.suggestedOn"> {{ $t('contacts.suggestedOn', { date: day(row.suggestion.suggestedOn) }) }}</template>
+                          <template v-if="!row.suggestion.live"> · {{ $t('contacts.suggestionWithdrawn') }}</template>
+                        </span>
+                      </p>
+                      <span class="flex flex-none gap-2">
+                        <Button type="button" variant="pill-muted" @click="editSuggestion(row.suggestion)">{{ $t('common.edit') }}</Button>
+                        <Button type="button" variant="pill-muted" @click="removeSuggestion(row.suggestion.id)">{{ $t('contacts.suggestionRemove') }}</Button>
+                      </span>
+                    </div>
+                  </template>
+
+                  <form v-if="offerablePackages.length" class="mt-4 flex flex-col gap-3" @submit.prevent="saveSuggestion">
+                    <Field id="s-package" :label="$t('contacts.suggestionPackage')" :error="suggestion.errors.package">
+                      <Select
+                        :model-value="suggestion.package || undefined"
+                        @update:model-value="(v) => (suggestion.package = String(v))"
+                      >
+                        <SelectTrigger id="s-package"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem v-for="one in offerablePackages" :key="one.id" :value="one.id">{{ one.name }}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    <Field id="s-note" :label="$t('contacts.suggestionNote')" :error="suggestion.errors.note">
+                      <Textarea id="s-note" v-model="suggestion.note" rows="3" />
+                    </Field>
+                    <div>
+                      <Button type="submit" variant="pill" :disabled="!suggestion.package || suggestion.processing">
+                        {{ $t('contacts.suggest') }}
+                      </Button>
+                    </div>
+                  </form>
+                </Panel>
+              </div>
+
+              <!-- Zugang ist Zustand, keine Einstellung: nachsehen, nicht
+                   bedienen. Deshalb rechts und in Karten wie die Übersicht,
+                   nicht in einer grauen Randspalte. -->
+              <aside class="w-[280px] flex-none max-[1180px]:w-full">
+                <h2 class="mt-0 mb-2.5 text-[10.5px] leading-none font-semibold tracking-[0.07em] uppercase text-ink-2">
+                  {{ $t('contacts.portalAccess') }}
+                </h2>
+
+                <Metric
+                  :label="$t('contacts.portalLastSeen')"
+                  :value="portalLogins.lastAt ? lastSeenDay(portalLogins.lastAt) : '—'"
+                  :unit="portalLogins.lastAt ? time(portalLogins.lastAt) : undefined"
+                  :dots="loginDots"
+                >
+                  <p v-if="portalLogins.count">
+                    {{ $t('contacts.portalLoginCount', { count: portalLogins.count, date: day(portalLogins.firstAt) }) }}
+                  </p>
+                  <p v-if="portalAccessRevokedAt">
+                    {{ $t('contacts.portalAccessRevoked', { date: day(portalAccessRevokedAt) }) }}
+                  </p>
+                </Metric>
+
+                <div class="mt-4 flex flex-wrap gap-2">
+                  <!-- A plain form, not router.post(): the preview belongs in a
+                       second tab, and target only works on a real navigation.
+                       Without X-Inertia the controller's Inertia::location is a
+                       302, which the new tab follows to the portal. -->
+                  <form
+                    v-if="canPreviewPortal"
+                    :action="`/kontakte/${contact.id}/portal-vorschau`"
+                    method="post"
+                    target="_blank"
+                  >
+                    <input type="hidden" name="_token" :value="csrf">
+                    <Button type="submit" variant="pill-muted">{{ $t('contacts.portalPreview') }}</Button>
+                  </form>
+
+                  <AlertDialog v-if="canRevokePortalAccess && !portalAccessRevokedAt">
+                    <AlertDialogTrigger as-child>
+                      <Button type="button" variant="pill-muted">{{ $t('contacts.revokePortalAccess') }}</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          {{ $t('contacts.revokePortalAccessConfirm', { name: contact.name }) }}
+                        </AlertDialogTitle>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogAction @click="revokePortalAccess">{{ $t('contacts.revokePortalAccess') }}</AlertDialogAction>
+                        <AlertDialogCancel>{{ $t('common.cancel') }}</AlertDialogCancel>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </aside>
             </div>
           </div>
         </div>

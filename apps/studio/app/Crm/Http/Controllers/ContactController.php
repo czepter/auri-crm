@@ -2,6 +2,8 @@
 
 namespace App\Crm\Http\Controllers;
 
+use App\Catalog\Data\PackageData;
+use App\Catalog\Enums\PortalPriceMode;
 use App\Catalog\Models\Package;
 use App\Catalog\Models\ServiceSuggestion;
 use App\Crm\Data\ContactRowData;
@@ -59,6 +61,24 @@ class ContactController extends Controller
             'offers' => $settings->offersEnabled(),
             'welcome' => $settings->portalWelcomeText(),
             'portal_visible' => $portal->projectsVisibleByDefault(),
+        ];
+    }
+
+    /** @return array{count: int, firstAt: ?string, lastAt: ?string} */
+    private function portalLogins(Contact $contact): array
+    {
+        $consumed = ClientAccess::query()
+            ->where('contact_id', $contact->id)
+            ->whereNotNull('consumed_at')
+            ->whereNull('preview_by_id')
+            ->orderBy('consumed_at')
+            ->get(['consumed_at'])
+            ->pluck('consumed_at');
+
+        return [
+            'count' => $consumed->count(),
+            'firstAt' => $consumed->first()?->toIso8601String(),
+            'lastAt' => $consumed->last()?->toIso8601String(),
         ];
     }
 
@@ -191,9 +211,20 @@ class ContactController extends Controller
                     'live' => $suggestion->package->portal_offered,
                 ])->all(),
             'offerablePackages' => Package::query()->portalOffered()->orderBy('name')
-                ->get(['public_id', 'name'])
-                ->map(fn (Package $package) => ['id' => $package->public_id, 'name' => $package->name])
+                ->with('items')
+                ->get()
+                ->map(fn (Package $package) => [
+                    'id' => $package->public_id,
+                    'name' => $package->name,
+                    'price' => PackageData::fromModel($package)->price,
+                    'priceMode' => ($package->portal_price_mode ?? PortalPriceMode::Exact)->value,
+                    'requiresDate' => $package->portal_requires_date,
+                ])
                 ->all(),
+            // Wann dieser Kunde im Portal war und wie oft. Aus den
+            // eingelösten Links: eine Vorschau des Studios ist kein Besuch
+            // des Kunden und zählt deshalb nicht mit.
+            'portalLogins' => $this->portalLogins($contact),
             'portalAccessRevokedAt' => $contact->portal_access_revoked_at?->toIso8601String(),
             'canRevokePortalAccess' => $user?->can('revokePortalAccess', $contact) ?? false,
             'dsgvoErasedAt' => $contact->dsgvo_erased_at?->toIso8601String(),
