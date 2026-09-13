@@ -2,6 +2,7 @@
 
 namespace App\Quotes\Support;
 
+use App\Crm\Enums\ProjectType;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
 use App\Quotes\Enums\DiscountType;
@@ -20,7 +21,7 @@ class SampleQuoteData
 {
     public static function build(StudioSettingsResolver $settings): Quote
     {
-        $project = new Project(['name' => 'Erstkommunion 2026']);
+        $project = new Project(['name' => 'Erstkommunion 2026', 'type' => ProjectType::Other]);
         $contact = new Contact(['name' => 'Pfarrgemeinde St. Johann', 'street' => 'Kirchplatz 3', 'postcode' => '07743', 'city' => 'Jena']);
 
         $items = collect([
