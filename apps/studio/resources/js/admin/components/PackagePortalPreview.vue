@@ -59,27 +59,29 @@ const price = computed(() => {
           </section>
         </div>
 
-        <div class="rounded-md border border-line-hover p-6">
+        <div>
           <span class="block text-[26px] leading-none font-semibold tracking-[-0.022em] tabular-nums">{{ price }}</span>
           <span v-if="vatRate && props.price !== null" class="mt-[7px] block text-[13px] text-muted-foreground">
             {{ $t('portal.vatNote', { rate: basisPointsToPercent(vatRate) }) }}
           </span>
 
-          <div class="mt-6 grid gap-4 border-t border-border pt-6">
-            <PortalField v-if="requiresDate" :label="$t('portal.preferredDate')">
-              <DatePicker model-value="" disabled />
-            </PortalField>
-            <PortalField v-if="requiresDate" :label="$t('portal.venueName')">
-              <Input type="text" disabled />
-            </PortalField>
-            <PortalField :label="$t('portal.inquiryText')">
-              <Textarea rows="4" disabled />
-            </PortalField>
-          </div>
+          <div class="mt-6 rounded-md border border-line-hover p-6">
+            <div class="grid gap-4">
+              <PortalField v-if="requiresDate" :label="$t('portal.preferredDate')">
+                <DatePicker model-value="" disabled />
+              </PortalField>
+              <PortalField v-if="requiresDate" :label="$t('portal.venueName')">
+                <Input type="text" disabled />
+              </PortalField>
+              <PortalField :label="$t('portal.inquiryText')">
+                <Textarea rows="4" disabled />
+              </PortalField>
+            </div>
 
-          <Button class="mt-6 w-full justify-center" type="button" disabled>
-            {{ requiresDate ? $t('portal.requestAppointment') : $t('portal.request') }}
-          </Button>
+            <Button class="mt-6 w-full justify-center" type="button" disabled>
+              {{ requiresDate ? $t('portal.requestAppointment') : $t('portal.request') }}
+            </Button>
+          </div>
         </div>
       </div>
     </PortalWrap>
