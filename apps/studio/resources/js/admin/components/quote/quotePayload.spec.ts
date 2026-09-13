@@ -26,6 +26,7 @@ function baseDraft(pricingMode: QuoteDraft['pricingMode']): QuoteDraft {
     recipientCity: 'Berlin',
     timeTitle: 'Hochzeit',
     timeDescription: 'Trauung und Feier',
+    timeSortOrder: 0,
   }
 }
 

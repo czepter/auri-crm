@@ -3642,6 +3642,15 @@
                                                 ],
                                                 "maxLength": 255
                                             },
+                                            "time_sort_order": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "description": "Wo die Zeitzeile zwischen den Positionen steht, 0 = vor der ersten.",
+                                                "minimum": 0,
+                                                "maximum": 2000
+                                            },
                                             "stages": {
                                                 "type": "array",
                                                 "items": {
@@ -3934,6 +3943,15 @@
                                                     "null"
                                                 ],
                                                 "maxLength": 255
+                                            },
+                                            "time_sort_order": {
+                                                "type": [
+                                                    "integer",
+                                                    "null"
+                                                ],
+                                                "description": "Wo die Zeitzeile zwischen den Positionen steht, 0 = vor der ersten.",
+                                                "minimum": 0,
+                                                "maximum": 2000
                                             },
                                             "stages": {
                                                 "type": "array",
@@ -5111,6 +5129,15 @@
                             "null"
                         ],
                         "maxLength": 255
+                    },
+                    "time_sort_order": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "Wo die Zeitzeile zwischen den Positionen steht, 0 = vor der ersten.",
+                        "minimum": 0,
+                        "maximum": 2000
                     },
                     "stages": {
                         "type": "array",

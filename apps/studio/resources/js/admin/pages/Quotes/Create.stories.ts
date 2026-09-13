@@ -40,6 +40,7 @@ const auswahl = quoteOf({
   imagesPerHour: 40,
   timeTitle: 'Reportage',
   timeDescription: 'Trauung, Empfang, Paarshooting',
+  timeSortOrder: 0,
   items: [
     quoteItem({ id: 'qi-1', title: 'Galerie mit Download', lineTotal: 0, isIncluded: true }),
     quoteItem({ id: 'qi-2', title: 'Content Creator', lineTotal: 40000, selectable: true, selected: true, outcome: 'Reels und TikToks, hochkant' }),

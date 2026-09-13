@@ -46,6 +46,7 @@ export type QuoteDraft = {
   recipientCity: string | null
   timeTitle: string | null
   timeDescription: string | null
+  timeSortOrder: number
 }
 
 export type QuotePayloadOptions = {
@@ -113,6 +114,7 @@ export function buildQuotePayload(draft: QuoteDraft, options: QuotePayloadOption
     hours: draft.slider.hours,
     time_title: draft.timeTitle,
     time_description: draft.timeDescription,
+    time_sort_order: draft.timeSortOrder,
     items,
     stages: draft.slider.stages.map((stage) => ({
       percent: stage.percent,

@@ -128,7 +128,7 @@ class RenderQuotePdf
         $accepted = $quote->status === QuoteStatus::Accepted;
         $hours = $quote->hours ?? $quote->min_hours ?? 0;
 
-        $html = $accepted
+        $timeRow = $accepted
             ? $this->row($this->timeLine($quote, $hours), $this->money($hours * $quote->hourly_rate))
             : $this->row(
                 $quote->time_title === null
@@ -137,7 +137,14 @@ class RenderQuotePdf
                 $this->money($quote->hourly_rate).' je Stunde',
             );
 
-        foreach ($quote->items as $item) {
+        $html = '';
+        $position = $quote->time_sort_order ?? 0;
+
+        foreach ($quote->items->values() as $index => $item) {
+            if ($index === $position) {
+                $html .= $timeRow;
+            }
+
             // Before the acceptance an optional block is an offer, not a
             // line: it prints with its price and no claim that it is in.
             $chosen = ! $item->selectable || ($accepted && $item->selected);
@@ -150,6 +157,10 @@ class RenderQuotePdf
                 e($item->title).($item->outcome === null ? '' : '<br><small>'.e($item->outcome).'</small>'),
                 $item->isIncluded() ? 'enthalten' : $this->money($item->discountedLineTotal()),
             );
+        }
+
+        if ($position >= $quote->items->count()) {
+            $html .= $timeRow;
         }
 
         return $html.($accepted

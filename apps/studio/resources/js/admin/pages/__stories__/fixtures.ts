@@ -287,6 +287,7 @@ export function quoteOf(
         hours: null,
         timeTitle: null,
         timeDescription: null,
+        timeSortOrder: 0,
         rangeMin: null,
         rangeMax: null,
         paymentStages: [],

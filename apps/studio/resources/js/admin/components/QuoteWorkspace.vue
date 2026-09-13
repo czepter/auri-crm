@@ -47,6 +47,7 @@ function draftOf(quote: App.Quotes.Data.QuoteData): QuoteDraft {
     recipientCity: quote.recipientCity,
     timeTitle: quote.timeTitle,
     timeDescription: quote.timeDescription,
+    timeSortOrder: quote.timeSortOrder,
     // Eine Liste für beide Modi (§4.2): Menge und Rabatt gelten überall,
     // "Im Portal" ist nur in Auswahl bedienbar, aber jede Zeile trägt es.
     rows: quote.items.map((item) => ({

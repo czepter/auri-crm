@@ -8,6 +8,7 @@ import { moveRow } from '@/admin/lib/rows'
 import QuoteInsertRow from '@/admin/components/QuoteInsertRow.vue'
 import QuotePositionRow from './QuotePositionRow.vue'
 import DiscountInput from './DiscountInput.vue'
+import DragHandle from './DragHandle.vue'
 
 const props = defineProps<{
   mode: PricingMode
@@ -39,45 +40,107 @@ const includedImages = computed(() =>
   draft.value.slider.imagesPerHour ? hours.value * draft.value.slider.imagesPerHour : null,
 )
 
+const showTime = computed(() => props.mode === 'choice' && rate.value > 0)
+
+type Entry = { kind: 'time' } | { kind: 'row'; row: QuoteRow; index: number }
+
+// Die Zeitzeile ist keine Position, steht aber zwischen ihnen: timeSortOrder
+// ist ihr Platz in dieser Liste, 0 = vor der ersten Position.
+const entries = computed<Entry[]>(() => {
+  const list: Entry[] = draft.value.rows.map((row, index) => ({ kind: 'row', row, index }))
+
+  if (showTime.value) {
+    list.splice(Math.min(draft.value.timeSortOrder, list.length), 0, { kind: 'time' })
+  }
+
+  return list
+})
+
 function insert(rows: QuoteRow[]) {
   draft.value.rows = [...draft.value.rows, ...rows]
   emit('change')
 }
 
 function remove(index: number) {
+  if (index < draft.value.timeSortOrder) {
+    draft.value.timeSortOrder -= 1
+  }
+
   draft.value.rows = draft.value.rows.filter((_, i) => i !== index)
   openIndex.value = null
   emit('change')
 }
 
 function move(from: number, to: number) {
-  const next = moveRow(draft.value.rows, from, to)
+  const next = moveRow(entries.value, from, to)
 
-  if (next !== draft.value.rows) {
-    draft.value.rows = next
-    openIndex.value = openIndex.value === from ? to : openIndex.value
-
-    emit('change')
+  if (next === entries.value) {
+    return
   }
+
+  const openRow = openIndex.value === null ? null : draft.value.rows[openIndex.value]
+  const time = next.findIndex((entry) => entry.kind === 'time')
+
+  draft.value.rows = next.flatMap((entry) => (entry.kind === 'row' ? [entry.row] : []))
+  if (time !== -1) draft.value.timeSortOrder = time
+  openIndex.value = openRow ? draft.value.rows.indexOf(openRow) : null
+
+  emit('change')
 }
 
 const dragging = ref<number | null>(null)
 const over = ref<number | null>(null)
 
-function onDragOver(event: DragEvent, index: number) {
+// Die Liste zeigt schon beim Ziehen die Reihenfolge nach dem Loslassen; die
+// gezogene Karte steht als Platzhalter an ihrem neuen Platz.
+const displayed = computed(() =>
+  dragging.value === null || over.value === null ? entries.value : moveRow(entries.value, dragging.value, over.value),
+)
+
+function at(entry: Entry) {
+  return entries.value.indexOf(entry)
+}
+
+// Erst nach dem dragstart: Chrome baut das Ziehbild aus der Quelle und bricht
+// ab, wenn sie im selben Tick unsichtbar wird oder zuklappt.
+let pendingDrag: ReturnType<typeof setTimeout> | undefined
+
+function startDrag(position: number) {
+  pendingDrag = setTimeout(() => {
+    openIndex.value = null
+    dragging.value = position
+    over.value = position
+  })
+}
+
+function onDragOver(event: DragEvent, entry?: Entry) {
   if (dragging.value === null) return
 
   event.preventDefault()
-  over.value = index
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
+  if (!entry || over.value === null) return
+
+  // Gezählt wird in der angezeigten Liste; die ohne Platzhalter hat dieselbe
+  // Reihenfolge, also landet die Karte genau dort.
+  const target = displayed.value.indexOf(entry)
+  const box = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const upperHalf = event.clientY < box.top + box.height / 2
+
+  // Erst jenseits der Mitte der Nachbarkarte: sonst schiebt jeder Tausch sie
+  // wieder unter den Zeiger und die Liste springt hin und her.
+  if ((target > over.value && upperHalf) || (target < over.value && !upperHalf)) return
+
+  over.value = target
 }
 
-function onDrop(index: number) {
-  if (dragging.value !== null) move(dragging.value, index)
+function onDrop() {
+  if (dragging.value !== null && over.value !== null) move(dragging.value, over.value)
 
   endDrag()
 }
 
 function endDrag() {
+  clearTimeout(pendingDrag)
   dragging.value = null
   over.value = null
 }
@@ -112,48 +175,60 @@ const total = computed(() =>
 
 <template>
   <div class="flex flex-col gap-3">
-    <!-- Rechnet mit dem Regler mit statt eine eigene Zeile zu sein: es gibt
-         keine Karte, die man dafür öffnen könnte. -->
-    <div v-if="mode === 'choice' && rate" class="flex items-center gap-3 rounded-[16px] border border-dashed border-line px-4 py-3">
-      <div class="min-w-0 flex-1">
-        <div class="truncate text-[13.5px] font-medium">{{ draft.timeTitle || $t('quotes.hoursCount', hours) }}</div>
-        <div class="mt-0.5 truncate text-[12px] text-ink-2">
-          {{ [draft.timeDescription, $t('quotes.hoursCount', hours), includedImages !== null ? $t('quotes.approxImages', { count: includedImages }) : null].filter(Boolean).join(' · ') }}
+    <!-- Die ganze Liste nimmt den Drop an, auch die Lücken zwischen den Karten. -->
+    <div class="flex flex-col gap-3" @dragover="onDragOver($event)" @drop.prevent="onDrop">
+    <div
+      v-for="entry in displayed"
+      :key="entry.kind === 'time' ? 'time' : (entry.row.id ?? `row-${entry.index}`)"
+      data-position
+      class="rounded-[20px]"
+      :class="
+        dragging === null
+          ? ''
+          : entry === entries[dragging]
+            ? 'bg-[var(--accent-bg)] outline-2 outline-dashed outline-ring [&>*]:invisible'
+            : 'outline-2 outline-offset-2 outline-dashed outline-ring/35'
+      "
+      @dragover.stop="onDragOver($event, entry)"
+    >
+      <!-- Rechnet mit dem Regler mit: kein Inhalt zum Aufklappen, nur ein Platz. -->
+      <div v-if="entry.kind === 'time'" class="flex items-center rounded-[20px] border border-border bg-background">
+        <DragHandle
+          @drag-start="startDrag(at(entry))"
+          @drag-end="endDrag"
+          @move-up="move(at(entry), at(entry) - 1)"
+          @move-down="move(at(entry), at(entry) + 1)"
+        />
+        <div class="flex min-w-0 flex-1 items-center gap-3 px-5 py-4">
+          <div class="min-w-0 flex-1">
+            <div class="truncate text-[14px] font-semibold tracking-[-0.02em]">{{ draft.timeTitle || $t('quotes.hoursCount', hours) }}</div>
+            <div class="mt-0.5 truncate text-[12px] text-ink-2">
+              {{ [draft.timeDescription, $t('quotes.hoursCount', hours), includedImages !== null ? $t('quotes.approxImages', { count: includedImages }) : null].filter(Boolean).join(' · ') }}
+            </div>
+          </div>
+          <span class="flex items-center gap-2 text-[12.5px] text-ink-2">
+            <span class="rounded-[10px] bg-sunk-2 px-2 py-0.5 text-[11px] leading-none font-semibold">{{ $t('quotes.automatic') }}</span>
+            <span class="tabular-nums">{{ formatEuros(timeTotal) }}</span>
+          </span>
         </div>
       </div>
-      <span class="flex-none rounded-[10px] bg-sunk-2 px-2 py-0.5 text-[11px] leading-none font-semibold text-ink-2">
-        {{ $t('quotes.automatic') }}
-      </span>
-      <span class="flex-none text-[14px] font-semibold tabular-nums">{{ formatEuros(timeTotal) }}</span>
-    </div>
 
-    <div
-      v-for="(row, index) in draft.rows"
-      :key="row.id ?? index"
-      data-position
-      class="rounded-[20px] transition-opacity"
-      :class="{
-        'opacity-40': dragging === index,
-        'shadow-[0_-3px_0_var(--ring)]': dragging !== null && over === index && dragging > index,
-        'shadow-[0_3px_0_var(--ring)]': dragging !== null && over === index && dragging < index,
-      }"
-      @dragover="onDragOver($event, index)"
-      @drop.prevent="onDrop(index)"
-    >
       <QuotePositionRow
+        v-else
         :mode="mode"
         :quote-id="quoteId"
         :can-manage-catalog="canManageCatalog"
-        :row="row"
-        :open="isOpen(index)"
-        @update:open="(value) => setOpen(index, value)"
+        :row="entry.row"
+        :open="isOpen(entry.index)"
+        @update:open="(value) => setOpen(entry.index, value)"
         @change="emit('change')"
-        @remove="remove(index)"
-        @move-up="move(index, index - 1)"
-        @move-down="move(index, index + 1)"
-        @drag-start="dragging = index"
+        @remove="remove(entry.index)"
+        @move-up="move(at(entry), at(entry) - 1)"
+        @move-down="move(at(entry), at(entry) + 1)"
+        @drag-start="startDrag(at(entry))"
         @drag-end="endDrag"
       />
+    </div>
     </div>
 
     <div class="flex items-baseline gap-3 pl-1">

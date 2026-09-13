@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useForm } from '@inertiajs/vue3'
-import { Ellipsis, GripVertical } from 'lucide-vue-next'
+import { Ellipsis } from 'lucide-vue-next'
 import type { PricingMode, QuoteRow } from './quotePayload'
 import { quoteRowToLine } from './quotePayload'
 import { lineAmount } from './quoteTotals'
@@ -15,6 +15,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/ui/input-group'
 import { Label } from '@/ui/label'
 import QuoteCard from './QuoteCard.vue'
 import DiscountInput from './DiscountInput.vue'
+import DragHandle from './DragHandle.vue'
 
 const props = defineProps<{
   mode: PricingMode
@@ -41,18 +42,6 @@ function setPortalStatus(value: string) {
 }
 
 const amount = computed(() => lineAmount(quoteRowToLine(props.row)))
-
-// Der Griff allein wäre das Ziehbild; gezogen wird die ganze Karte.
-function onDragStart(event: DragEvent) {
-  const card = (event.currentTarget as HTMLElement).closest('[data-position]')
-
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'move'
-    if (card) event.dataTransfer.setDragImage(card, 16, 24)
-  }
-
-  emit('dragStart')
-}
 
 const packageOpen = ref(false)
 const packageForm = useForm({ name: '' })
@@ -85,18 +74,7 @@ function saveAsPackage() {
 <template>
   <QuoteCard v-model:open="open" :title="row.title || $t('quotes.itemTitle')">
     <template #handle>
-      <button
-        type="button"
-        draggable="true"
-        class="-mr-3 ml-2 flex h-8 w-6 flex-none cursor-grab items-center justify-center rounded-[6px] text-faint hover:text-ink-2 active:cursor-grabbing"
-        :aria-label="$t('quotes.move')"
-        @dragstart="onDragStart"
-        @dragend="emit('dragEnd')"
-        @keydown.up.prevent="emit('moveUp')"
-        @keydown.down.prevent="emit('moveDown')"
-      >
-        <GripVertical class="size-4" />
-      </button>
+      <DragHandle @drag-start="emit('dragStart')" @drag-end="emit('dragEnd')" @move-up="emit('moveUp')" @move-down="emit('moveDown')" />
     </template>
 
     <template #summary>

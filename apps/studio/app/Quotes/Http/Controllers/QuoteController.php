@@ -349,6 +349,7 @@ class QuoteController extends Controller
             'hours' => ['nullable', 'integer', 'min:1', 'max:2000'],
             'time_title' => ['nullable', 'string', 'max:255'],
             'time_description' => ['nullable', 'string', 'max:255'],
+            'time_sort_order' => ['nullable', 'integer', 'min:0', 'max:2000'],
             'stages' => ['array'],
             'stages.*.percent' => ['nullable', 'integer', 'min:0', 'max:100'],
             'stages.*.label' => ['nullable', 'string', 'max:255'],
@@ -376,6 +377,7 @@ class QuoteController extends Controller
             'hours' => $validated['hours'] ?? null,
             'time_title' => $validated['time_title'] ?? null,
             'time_description' => $validated['time_description'] ?? null,
+            'time_sort_order' => $validated['time_sort_order'] ?? 0,
         ]);
 
         $items = collect($validated['items'] ?? [])->map(function (array $item) {

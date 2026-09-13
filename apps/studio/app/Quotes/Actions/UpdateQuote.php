@@ -48,6 +48,8 @@ class UpdateQuote
             'hours' => ['nullable', 'integer', 'min:1', 'max:2000', 'gte:min_hours', 'lte:max_hours'],
             'time_title' => ['nullable', 'string', 'max:255'],
             'time_description' => ['nullable', 'string', 'max:255'],
+            // Wo die Zeitzeile zwischen den Positionen steht, 0 = vor der ersten.
+            'time_sort_order' => ['nullable', 'integer', 'min:0', 'max:2000'],
             // `id`, nie der Pfad: das Portal liefert dieses Bild an den
             // Kunden aus, und ein aus einem Formular uebernommener Pfad
             // waere das Lesen jeder Datei auf dem Disk — die Vertraege
@@ -120,6 +122,7 @@ class UpdateQuote
             ...$slider,
             'time_title' => $validated['time_title'] ?? null,
             'time_description' => $validated['time_description'] ?? null,
+            'time_sort_order' => $validated['time_sort_order'] ?? $quote->time_sort_order,
         ]);
 
         // Vor dem Loeschen gelesen: die Zeilen tragen die einzigen Pfade,
