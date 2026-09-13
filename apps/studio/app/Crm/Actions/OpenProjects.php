@@ -42,7 +42,7 @@ class OpenProjects
             ->whereHas('job')
             ->with(['contacts', 'shoots', 'primaryShoot', 'lead', 'job.paymentPlan.installments'])
             ->get()
-            ->reject(fn (Project $project) => $project->lead?->isLost())
+            ->reject(fn (Project $project) => $project->lead?->isLost() || $project->isCompleted())
             ->map(fn (Project $project) => $this->row($project, $open))
             ->filter();
 

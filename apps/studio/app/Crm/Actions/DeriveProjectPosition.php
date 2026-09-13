@@ -46,6 +46,11 @@ class DeriveProjectPosition
             return new ProjectPositionData(source: 'lost', value: 'lost', label: 'Verloren');
         }
 
+        // The studio's word, over whatever the shoots still say.
+        if ($project->isCompleted()) {
+            return new ProjectPositionData(source: 'completed', value: 'completed', label: 'Abgeschlossen');
+        }
+
         if ($project->job()->exists()) {
             $shoot = $this->leastAdvanced($project->shoots()->uncancelled()->get());
 
