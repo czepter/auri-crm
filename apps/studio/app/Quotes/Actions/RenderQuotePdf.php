@@ -7,9 +7,15 @@ use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\MergeFieldResolver;
+use App\Quotes\Enums\QuoteLayout;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Quotes\Models\QuoteItem;
+use App\Quotes\Support\Layouts\ClassicQuoteLayout;
+use App\Quotes\Support\Layouts\HeaderBandQuoteLayout;
+use App\Quotes\Support\Layouts\LetterQuoteLayout;
+use App\Quotes\Support\Layouts\MinimalQuoteLayout;
+use App\Quotes\Support\Layouts\QuoteLayoutRenderer;
+use App\Quotes\Support\Layouts\StructuredQuoteLayout;
 use App\Quotes\Support\QuoteRange;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\GotenbergClient;
@@ -40,7 +46,7 @@ class RenderQuotePdf
         return $this->gotenberg->htmlToPdf($this->html($quote));
     }
 
-    public function html(Quote $quote): string
+    public function html(Quote $quote, ?QuoteLayout $layoutOverride = null): string
     {
         $project = $quote->project;
         $data = $this->mergeData->fromProject($project, $this->settings);
@@ -52,13 +58,29 @@ class RenderQuotePdf
             ->orderBy('id')
             ->first();
 
-        $body = $this->recipient($quote)
-            .MergeFieldResolver::resolve($template?->body ?? '', $data)
-            .$this->letter($quote->intro, $data)
-            .$this->items($quote)
-            .$this->letter($quote->outro, $data);
+        $templateBody = MergeFieldResolver::resolve($template?->body ?? '', $data)
+            .$this->letter($quote->intro, $data);
+
+        $body = $quote->hasSlider()
+            ? $this->recipient($quote).$templateBody.$this->sliderItems($quote)
+            : $this->layoutRenderer($layoutOverride)->render($quote, $data, $templateBody);
+
+        $body .= $this->letter($quote->outro, $data);
 
         return $this->renderer->wrap(DocumentTemplateType::Quote, $body, $this->settings);
+    }
+
+    private function layoutRenderer(?QuoteLayout $override = null): QuoteLayoutRenderer
+    {
+        $layout = $override ?? QuoteLayout::tryFrom($this->settings->quoteLayout()) ?? QuoteLayout::Classic;
+
+        return match ($layout) {
+            QuoteLayout::Classic => new ClassicQuoteLayout,
+            QuoteLayout::Minimal => new MinimalQuoteLayout,
+            QuoteLayout::Letter => new LetterQuoteLayout,
+            QuoteLayout::HeaderBand => new HeaderBandQuoteLayout,
+            QuoteLayout::Structured => new StructuredQuoteLayout,
+        };
     }
 
     /**
@@ -103,18 +125,9 @@ class RenderQuotePdf
             ->implode('');
     }
 
-    private function items(Quote $quote): string
+    private function sliderItems(Quote $quote): string
     {
-        if ($quote->hasSlider()) {
-            return '<table><tbody>'.$this->sliderRows($quote).'</tbody></table>';
-        }
-
-        $rows = $quote->items->map(fn (QuoteItem $item) => $this->row(
-            e($item->title).($item->description === null ? '' : '<br><small>'.e($item->description).'</small>'),
-            $item->isIncluded() ? 'inklusive' : $this->money($item->discountedLineTotal()),
-        ))->implode('');
-
-        return '<table><tbody>'.$rows.$this->summary($quote).'</tbody></table>';
+        return '<table><tbody>'.$this->sliderRows($quote).'</tbody></table>';
     }
 
     /**
@@ -182,24 +195,6 @@ class RenderQuotePdf
         ]));
 
         return e($quote->time_title).($detail === '' ? '' : '<br><small>'.e($detail).'</small>');
-    }
-
-    /** Dieselben Zeilen, die der Schirm zeigt — Rabatt und USt. nur, wo es sie gibt. */
-    private function summary(Quote $quote): string
-    {
-        $html = $this->row('Gesamt', $this->money($quote->total));
-
-        if ($quote->discount_amount > 0) {
-            $html .= $this->row('Rabatt', '−'.$this->money($quote->discount_amount))
-                .$this->row('Netto', $this->money($quote->net));
-        }
-
-        if ($quote->vat_mode === 'standard') {
-            $html .= $this->row('USt. '.rtrim(rtrim(number_format($quote->vat_rate / 100, 2, ',', '.'), '0'), ',').' %', $this->money($quote->vat_amount ?? 0))
-                .$this->row('Gesamtbetrag', $this->money($quote->net + ($quote->vat_amount ?? 0)));
-        }
-
-        return $html;
     }
 
     private function row(string $label, string $value): string
