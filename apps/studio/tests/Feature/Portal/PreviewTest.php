@@ -169,6 +169,15 @@ it('ends a preview without touching the client\'s own sessions', function () {
     expect($contact->fresh()->sessions_valid_from)->toBeNull();
 });
 
+it('lets a preview session sign out', function () {
+    useSurface(Surface::PORTAL);
+
+    test()->get(previewLink(Contact::factory()->create()));
+    test()->post('/abmelden')->assertRedirect('/anmelden');
+
+    expect(auth('portal')->check())->toBeFalse();
+});
+
 // Only somebody who could change these settings anyway may mint one.
 it('mints a preview link for an owner and refuses everyone else', function () {
     useSurface(Surface::ADMIN);

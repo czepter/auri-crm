@@ -61,7 +61,8 @@ class EnsureAudience
         // same check on every write route this surface will ever grow.
         if ($audience === Surface::PORTAL
             && $request->session()->get('portal_preview') === true
-            && ! $request->isMethodSafe()) {
+            && ! $request->isMethodSafe()
+            && ! $request->routeIs('portal.logout')) {
             abort(403, __('portal.preview_is_read_only'));
         }
 
