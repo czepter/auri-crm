@@ -39,7 +39,53 @@ komplex genug, ohne sie zu verfünffachen. Eine Layout-Wahl pro
 Einstieg, eine Auswahl pro Studio statt einer pro Vorlage. Ein sechstes,
 eigenes Layout oder ein Custom-CSS-Editor — nicht angefragt.
 
-## 3. Datenmodell
+## 3. Die fünf Layouts
+
+Entworfen im Design-Canvas dieser Session, mit Beispieldaten (Pfarrgemeinde
+St. Johann, 2× Reportage Erstkommunion à 250 €, eine inklusive Position,
+10 % Rabatt, 19 % USt.):
+[Angebot Vorlagen](https://claude.ai/code/artifact/c6c862ab-3e50-4fac-beca-9badc777ee25)
+— Seite „Vorlagen", Artboards `Main.dc.html`/`Minimal.dc.html`/
+`Editorial.dc.html`/`Header.dc.html`/`Boxed.dc.html`, je eine A4-Seite
+(794×1123px). Jedes Artboard ist die Referenz für die gleichnamige
+`QuoteLayoutRenderer`-Implementierung aus §5 — Struktur und Reihenfolge der
+Elemente dort, nicht nur die Farben, sind das, was die PHP-Klasse nachbaut.
+
+- **`classic`** (`ClassicQuoteLayout`, Artboard „Klassisch"): Absender/Empfänger
+  links, Meta-Box rechts daneben (Angebotsnr., Datum, Gültig bis als
+  Label/Wert-Zeilen). Positionstabelle mit Kopfzeile (Beschreibung, Menge,
+  Einzelpreis, Betrag), `.doc-table`-Rahmen. Summenblock rechtsbündig unter
+  der Tabelle. Kommt der heutigen — nach dem `.doc-table`-Fix geplanten —
+  Optik am nächsten und ist der Fallback für ein leeres `quote_layout`.
+- **`minimal`** (`MinimalQuoteLayout`, Artboard „Minimal"): keine Meta-Box,
+  keine Tabellenlinien. Eine Zeile Angebotsnummer + Gültig-bis-Datum über dem
+  Empfänger, danach eine schmale zweispaltige Liste (Titel+Beschreibung
+  links, Betrag rechts) ohne Rahmen — bewusst dieselbe Anordnung wie
+  `resources/js/portal/pages/Quotes/Show.vue`, damit Kundenportal und Druck
+  gleich aussehen. Menge steht inline im Titel (`2 × 250,00 €`) statt in
+  einer eigenen Spalte.
+- **`letter`** (`LetterQuoteLayout`, Artboard „Brief"): Angebot als
+  Anschreiben — Ort/Datum oben rechts, große Serifen-Überschrift „Angebot",
+  Anrede-Absatz vor der Positionstabelle, Schlussabsatz mit Unterschriftszeile
+  danach. Positionstabelle schlicht, mit Kopfzeile, aber ohne Kartenrahmen.
+- **`header_band`** (`HeaderBandQuoteLayout`, Artboard „Kopfband"): volle
+  Breite Farbfläche oben (Akzentfarbe `--accent`/`#1C6870`) mit Wortmarke und
+  „Angebot Nr. …“; darunter eine Meta-Zeile (Datum · Gültig bis · Kundennr.)
+  vor Empfänger und Tabelle. Tabellenkopf leicht akzentfarben hinterlegt,
+  Summenblock als eigene umrandete Karte, Fußzeile mit dicker Akzentlinie.
+- **`structured`** (`StructuredQuoteLayout`, Artboard „Struktur"):
+  durchgehend Karten mit Rahmen — Empfänger und Meta-Daten je eine eigene
+  Karte nebeneinander (2-spaltiges Grid), Positionstabelle mit alternierend
+  eingefärbten Zeilen in einer eigenen Karte, Summenblock und Fußzeile
+  ebenfalls als Karten. Dichteste der fünf Varianten, am ehesten für
+  B2B-Empfänger wie im Beispiel (Pfarrgemeinde) gedacht.
+
+Alle fünf teilen dieselbe Summenkette (Zwischensumme → Rabatt → Netto → USt.
+→ Gesamtbetrag) und denselben Fußzeilen-Inhalt (Studioname, Adresse, E-Mail,
+Website, Steuernummer) — nur Anordnung und Rahmung unterscheiden sich, wie in
+§6 beschrieben.
+
+## 4. Datenmodell
 
 Neue Spalte auf der Studio-Settings-Tabelle: `quote_layout` (string, default
 `'classic'`), analog zu `vat_mode`. Neues Enum `App\Quotes\Enums\QuoteLayout`:
@@ -60,7 +106,7 @@ gecastet über das Enum, mit `Classic` als Fallback bei `null`/unbekanntem
 Wert — dieselbe Nachsicht, die `vatMode()` heute schon für einen leeren Wert
 zeigt.
 
-## 4. `QuoteLayoutRenderer`
+## 5. `QuoteLayoutRenderer`
 
 ```php
 interface QuoteLayoutRenderer
@@ -96,7 +142,7 @@ Der `sliderRows()`-Zweig bleibt vollständig außerhalb dieser Abstraktion —
 `items()`s bestehendes `if ($quote->hasSlider())` greift weiterhin zuerst,
 unabhängig vom gewählten Layout.
 
-## 5. CSS
+## 6. CSS
 
 `DocumentRenderer::STYLE` bekommt die layoutspezifischen Regeln
 (Kopfband-Farbfläche, Struktur-Kartenrahmen, Brief-Serifenüberschrift) als
@@ -108,7 +154,7 @@ Einstellungen-Vorschau lesen dieselbe Datei, bleiben also pixelgleich, wie es
 der bestehende Kommentar in `DocumentRenderer.php` für Vertrag/Angebot schon
 verspricht.
 
-## 6. Vorschau
+## 7. Vorschau
 
 Neuer Endpunkt `GET /einstellungen/dokumente/angebot-vorschau?layout=classic`
 (staff-authentifiziert, studiogebunden, kein Projekt-/Quote-Bezug nötig).
@@ -127,7 +173,7 @@ Endpunkt mit dem gewählten `layout`-Query-Param abfragt — ohne Debounce, da
 ein Klick kein Tastaturstrom ist. Solange kein Layout aktiv angewählt wurde,
 zeigt die Vorschau das gespeicherte Setting.
 
-## 7. Fehlerfälle & Randfälle
+## 8. Fehlerfälle & Randfälle
 
 Fehlt die Spalte (Migration nicht gelaufen) oder trägt sie einen unbekannten
 Wert: Fallback auf `Classic` — das Layout, das dem heutigen (nach dem
@@ -137,7 +183,7 @@ Angebot nicht sichtbar. Der Vorschau-Endpunkt berührt keine echten
 Projekt-/Kontaktdaten, braucht also keine Quote-scoped Autorisierung — nur
 das normale Staff-Gate der Einstellungen-Routen.
 
-## 8. Tests
+## 9. Tests
 
 Ein Pest-Test pro Layout, der `RenderQuotePdf::html()` gegen ein
 layout-typisches Merkmal prüft (`toContain`-Stil wie
