@@ -1415,6 +1415,7 @@
     "requestAppointment": "Termin anfragen",
     "priceFrom": "ab {price}",
     "priceOnRequest": "Auf Anfrage",
+    "vatNote": "zzgl. {rate} % Umsatzsteuer",
     "unsubscribeDone": "Abgemeldet."
   },
   "galleries": {

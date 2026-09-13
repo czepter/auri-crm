@@ -8,7 +8,7 @@ import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalLabel from '@/portal/components/PortalLabel.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 import PortalWrap from '@/portal/components/PortalWrap.vue'
-import { formatEuros } from '@/admin/lib/money'
+import { basisPointsToPercent, formatEuros } from '@/admin/lib/money'
 import { Button } from '@/ui/button'
 import { DatePicker } from '@/ui/date-picker'
 import { Input } from '@/ui/input'
@@ -32,6 +32,7 @@ const props = defineProps<{
   // dem Regal gegriffen fehlt der Block, und der Screen fängt mit der
   // Beschreibung an.
   suggestion: { note: string | null; author: string | null } | null
+  vatRate: number | null
   studio: { name: string }
 }>()
 
@@ -111,6 +112,9 @@ function submit() {
           @submit.prevent="submit"
         >
           <span class="block text-[28px] leading-none font-semibold tracking-[-0.022em] tabular-nums">{{ price }}</span>
+          <span v-if="vatRate && service.price !== null" class="mt-[7px] block text-[13px] text-muted-foreground">
+            {{ $t('portal.vatNote', { rate: basisPointsToPercent(vatRate) }) }}
+          </span>
 
           <div class="mt-8 grid gap-4">
             <!-- Nur, wenn das Paket danach fragt. Ein Album hat keinen Termin,

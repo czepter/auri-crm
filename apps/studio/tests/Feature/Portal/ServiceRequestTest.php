@@ -135,6 +135,22 @@ it('opens a booking without a shoot when the package needs no date', function ()
     expect(Shoot::query()->where('project_id', $project->id)->count())->toBe(0);
 });
 
+// Paketpreise sind netto. Was oben draufkommt, muss dastehen, bevor jemand
+// anfragt — und für einen Kleinunternehmer kommt nichts drauf.
+it('names the tax on top of the price', function () {
+    test()->actingAs(Contact::factory()->create(), 'portal')
+        ->get('/leistungen/'.offered()->public_id)
+        ->assertInertia(fn ($page) => $page->where('vatRate', 1900));
+});
+
+it('names no tax for a Kleinunternehmer', function () {
+    StudioSettings::query()->update(['vat_mode' => 'small_business']);
+
+    test()->actingAs(Contact::factory()->create(), 'portal')
+        ->get('/leistungen/'.offered()->public_id)
+        ->assertInertia(fn ($page) => $page->where('vatRate', null));
+});
+
 it('refuses a request without the date the package asks for', function () {
     $package = offered();
 

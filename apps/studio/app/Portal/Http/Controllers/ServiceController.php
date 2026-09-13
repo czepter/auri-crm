@@ -40,6 +40,10 @@ class ServiceController extends Controller
             // wurde. In der Schiene der Übersicht steht er auf drei Zeilen
             // begrenzt; wer ihm folgt, soll ihn zu Ende lesen können.
             'suggestion' => $offers->noteFor(auth('portal')->user(), $package),
+            // Paketpreise sind netto — dieselbe Rechnung, die das Angebot
+            // aufmacht. Ein Kleinunternehmer hat keinen Satz, und dann steht
+            // unter dem Preis nichts: der Preis ist der Preis.
+            'vatRate' => $studio->effectiveVatRate() ?: null,
             'studio' => ['name' => $studio->displayName()],
         ]);
     }
