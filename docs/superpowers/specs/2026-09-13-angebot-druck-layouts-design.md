@@ -41,15 +41,19 @@ eigenes Layout oder ein Custom-CSS-Editor — nicht angefragt.
 
 ## 3. Die fünf Layouts
 
-Entworfen im Design-Canvas dieser Session, mit Beispieldaten (Pfarrgemeinde
-St. Johann, 2× Reportage Erstkommunion à 250 €, eine inklusive Position,
-10 % Rabatt, 19 % USt.):
-[Angebot Vorlagen](https://claude.ai/code/artifact/c6c862ab-3e50-4fac-beca-9badc777ee25)
-— Seite „Vorlagen", Artboards `Main.dc.html`/`Minimal.dc.html`/
-`Editorial.dc.html`/`Header.dc.html`/`Boxed.dc.html`, je eine A4-Seite
-(794×1123px). Jedes Artboard ist die Referenz für die gleichnamige
+Referenzmarkup liegt versioniert im Repo, nicht nur im Design-Canvas:
+[`QuoteLayoutSample.vue`](../../../apps/studio/resources/js/admin/pages/Settings/previews/QuoteLayoutSample.vue)
+mit den fünf gleichnamigen Storybook-Stories unter „Dokumente/Angebot-Layouts"
+(`QuoteLayoutSample.stories.ts`, `npm run storybook` in `apps/studio` → Klassisch/
+Minimal/Brief/Kopfband/Struktur) — dieselben Beispieldaten wie im
+Entwurf (Pfarrgemeinde St. Johann, 2× Reportage Erstkommunion à 250 €, eine
+inklusive Position, 10 % Rabatt, 19 % USt.), exakte HTML-Struktur und CSS,
+A4-Maß (794×1123px). Jede Story ist die Referenz für die gleichnamige
 `QuoteLayoutRenderer`-Implementierung aus §5 — Struktur und Reihenfolge der
 Elemente dort, nicht nur die Farben, sind das, was die PHP-Klasse nachbaut.
+Ursprungsentwurf mit denselben fünf Ständen, falls der Canvas noch
+gebraucht wird:
+[Angebot Vorlagen](https://claude.ai/code/artifact/c6c862ab-3e50-4fac-beca-9badc777ee25).
 
 - **`classic`** (`ClassicQuoteLayout`, Artboard „Klassisch"): Absender/Empfänger
   links, Meta-Box rechts daneben (Angebotsnr., Datum, Gültig bis als
