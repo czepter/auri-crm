@@ -787,7 +787,15 @@
     "zoomFit": "Seitenbreite",
     "zoomFull": "100 %",
     "previewPdf": "PDF",
-    "previewPortal": "Portal"
+    "previewPortal": "Portal",
+    "sendSubject": "Betreff",
+    "sendMessage": "Nachricht",
+    "sendPdfNote": "PDF liegt der E-Mail bei.",
+    "sendPreviewHint": "So kommt die E-Mail an",
+    "sendCta": "Angebot ansehen",
+    "sendQuestions": "Fragen? Antworten Sie auf diese E-Mail.",
+    "sendCancel": "Abbrechen",
+    "sendSubmit": "Senden"
   },
   "automations": {
     "title": "Automationen",
