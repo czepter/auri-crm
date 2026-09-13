@@ -76,7 +76,13 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
+    // Coolify's ${SERVICE_FQDN_ADMIN} is the bare host; without a scheme
+    // url() resolves every link relative to localhost (see config/portal.php).
+    'url' => (static function (): string {
+        $url = rtrim((string) env('APP_URL', 'http://localhost'), '/');
+
+        return preg_match('#^https?://#', $url) ? $url : "https://{$url}";
+    })(),
 
     /*
     |--------------------------------------------------------------------------
