@@ -24,9 +24,6 @@ class SavePackage
             'description' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['sometimes', 'boolean'],
 
-            // Was das Paket im Portal ist. Der Projekttyp wird erst dort
-            // verlangt, wo eine Anfrage daraus entstehen kann: ohne ihn hätte
-            // sie kein Shoot-Kind und keine Projektfelder.
             'portal_offered' => ['sometimes', 'boolean'],
             'portal_text' => ['nullable', 'string', 'max:255'],
             'portal_price_mode' => ['sometimes', Rule::enum(PortalPriceMode::class)],

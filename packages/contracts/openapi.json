@@ -2715,6 +2715,28 @@
                                             "is_active": {
                                                 "type": "boolean"
                                             },
+                                            "portal_offered": {
+                                                "type": "boolean"
+                                            },
+                                            "portal_text": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
+                                            },
+                                            "portal_price_mode": {
+                                                "$ref": "#/components/schemas/PortalPriceMode"
+                                            },
+                                            "portal_requires_date": {
+                                                "type": "boolean"
+                                            },
+                                            "project_type_key": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            },
                                             "items": {
                                                 "type": "array",
                                                 "items": {
@@ -2845,6 +2867,28 @@
                                             },
                                             "is_active": {
                                                 "type": "boolean"
+                                            },
+                                            "portal_offered": {
+                                                "type": "boolean"
+                                            },
+                                            "portal_text": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ],
+                                                "maxLength": 255
+                                            },
+                                            "portal_price_mode": {
+                                                "$ref": "#/components/schemas/PortalPriceMode"
+                                            },
+                                            "portal_requires_date": {
+                                                "type": "boolean"
+                                            },
+                                            "project_type_key": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
                                             },
                                             "items": {
                                                 "type": "array",
@@ -4565,6 +4609,7 @@
                     "email",
                     "in_person",
                     "web_form",
+                    "portal",
                     "other"
                 ],
                 "title": "CaptureChannel"
@@ -4793,6 +4838,16 @@
                 "additionalProperties": {},
                 "title": "PaginatedDataCollection"
             },
+            "PortalPriceMode": {
+                "type": "string",
+                "description": "Wie der Preis eines Pakets im Portal steht. Drei F\u00e4lle, weil es drei gibt: ein fester Preis, ein Einstiegspreis f\u00fcr alles mit Menge (Album, Abz\u00fcge), und keiner \u2014 eine Leistung, die ohne Gespr\u00e4ch nicht kalkulierbar ist.\n",
+                "enum": [
+                    "exact",
+                    "from",
+                    "on_request"
+                ],
+                "title": "PortalPriceMode"
+            },
             "PricingMode": {
                 "type": "string",
                 "enum": [
@@ -4852,6 +4907,28 @@
                     },
                     "is_active": {
                         "type": "boolean"
+                    },
+                    "portal_offered": {
+                        "type": "boolean"
+                    },
+                    "portal_text": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "portal_price_mode": {
+                        "$ref": "#/components/schemas/PortalPriceMode"
+                    },
+                    "portal_requires_date": {
+                        "type": "boolean"
+                    },
+                    "project_type_key": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "items": {
                         "type": "array",
