@@ -1696,6 +1696,582 @@
                 }
             }
         },
+        "/galleries": {
+            "get": {
+                "operationId": "galleries.index",
+                "tags": [
+                    "Gallery"
+                ],
+                "parameters": [
+                    {
+                        "name": "since",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "next_cursor": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "next_cursor"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "galleries.store",
+                "tags": [
+                    "Gallery"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "project_id": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "shoot_id": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "maxLength": 200
+                                    },
+                                    "is_external": {
+                                        "type": "boolean"
+                                    },
+                                    "external_url": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "uri",
+                                        "maxLength": 2000
+                                    },
+                                    "expires_at": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    },
+                                    "downloads_enabled": {
+                                        "type": [
+                                            "boolean",
+                                            "null"
+                                        ]
+                                    },
+                                    "lists_enabled": {
+                                        "type": [
+                                            "boolean",
+                                            "null"
+                                        ]
+                                    },
+                                    "comments_enabled": {
+                                        "type": [
+                                            "boolean",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "title",
+                                    "is_external"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/GalleryDetailData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
+        "/gallery-records/{gallery}": {
+            "get": {
+                "operationId": "gallery-records.show",
+                "tags": [
+                    "Gallery"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/GalleryDetailData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "gallery-records.update",
+                "summary": "Expiry and the three feature flags only \u2014 view_password, download_pin and design stay admin-only (#405)",
+                "tags": [
+                    "Gallery"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "expires_at": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    },
+                                    "downloads_enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "lists_enabled": {
+                                        "type": "boolean"
+                                    },
+                                    "comments_enabled": {
+                                        "type": "boolean"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/GalleryDetailData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/gallery-records/{gallery}/favorites": {
+            "get": {
+                "operationId": "gallery-records.favorites",
+                "summary": "The filenames a client favorited in the currently published version \u2014 see GalleryLightroomExportController",
+                "tags": [
+                    "Gallery"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "required": [
+                                                "data"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "minItems": 0,
+                                                    "maxItems": 0,
+                                                    "additionalItems": false
+                                                }
+                                            },
+                                            "required": [
+                                                "data"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/gallery-records/{gallery}/publish": {
+            "post": {
+                "operationId": "gallery-records.publish",
+                "tags": [
+                    "Gallery"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "subject": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    },
+                                    "message": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/GalleryDetailData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/gallery-records/{gallery}/withdraw": {
+            "post": {
+                "operationId": "gallery-records.withdraw",
+                "summary": "Rotates the preview pass with it, same as the admin's own withdraw \u2014 see GalleryPublicationController::destroy()",
+                "tags": [
+                    "Gallery"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/GalleryDetailData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/gallery-records/{gallery}/prerelease/start": {
+            "post": {
+                "operationId": "gallery-records.prerelease.start",
+                "tags": [
+                    "Gallery"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/GalleryDetailData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/gallery-records/{gallery}/prerelease/stop": {
+            "post": {
+                "operationId": "gallery-records.prerelease.stop",
+                "summary": "Deletes every waiting signup with it \u2014 none of them was ever notified, see GalleryPrereleaseController::destroy()",
+                "tags": [
+                    "Gallery"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/GalleryDetailData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/gallery-records/{gallery}/preview-link": {
+            "post": {
+                "operationId": "gallery-records.preview-link",
+                "summary": "Same GalleryPreviewPass as the admin's \"Vorschaulink erzeugen\" \u2014 rotates it, so any earlier link stops working",
+                "tags": [
+                    "Gallery"
+                ],
+                "parameters": [
+                    {
+                        "name": "gallery",
+                        "in": "path",
+                        "required": true,
+                        "description": "The gallery public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "url": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "url"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/galleries/{gallery}/entwurf-bilder/{key}": {
             "get": {
                 "operationId": "galleries.draft-images.show",
@@ -7487,6 +8063,11 @@
                 "type": "object",
                 "additionalProperties": {},
                 "title": "DataCollection"
+            },
+            "GalleryDetailData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "GalleryDetailData"
             },
             "JobReadData": {
                 "type": "object",

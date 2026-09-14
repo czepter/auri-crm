@@ -17,6 +17,7 @@ use App\Integration\Http\Controllers\ContactController;
 use App\Integration\Http\Controllers\ContractController;
 use App\Integration\Http\Controllers\ContractSignerController;
 use App\Integration\Http\Controllers\CrmReadController;
+use App\Integration\Http\Controllers\GalleryController;
 use App\Integration\Http\Controllers\InboxController;
 use App\Integration\Http\Controllers\InternalNoteController;
 use App\Integration\Http\Controllers\LeadController;
@@ -475,4 +476,39 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageContracts->value, 
         ->name('api.contract-signers.destroy');
     Route::post('/contract-signers/{signer:public_id}/remind', [ContractSignerController::class, 'remind'])
         ->name('api.contract-signers.remind');
+});
+
+// #405: the token surface over what GalleryIndexController, GalleryRecord
+// Controller, GalleryPublicationController, GalleryPrereleaseController,
+// GalleryPreviewController and GalleryLightroomExportController already do
+// in the admin. Item routes live under /gallery-records rather than
+// /galleries/{gallery}: that exact pattern is already the guest viewer's
+// GalleryReadController above (no audience guard, `gallery.pass` further
+// down), and a second route on the same method+URI never matches — only
+// the first one registered would ever run. `/galleries` alone (list,
+// create) has no such guest route to collide with.
+//
+// Record edits (get, favorites, create, update) reuse ManageShoots, the
+// same capability GalleryPolicy::manageMedia already routes reading and
+// editing a gallery's draft through. Publishing, withdrawing, pre-release
+// and a preview link reuse ManagePortalAccess, the capability GalleryPolicy
+// ::publish already routes "is this gallery presentable outside the
+// studio" through.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value])->group(function () {
+    Route::get('/galleries', [GalleryController::class, 'index'])->name('api.galleries.index');
+    Route::get('/gallery-records/{gallery:public_id}', [GalleryController::class, 'show'])->name('api.gallery-records.show');
+    Route::get('/gallery-records/{gallery:public_id}/favorites', [GalleryController::class, 'favorites'])->name('api.gallery-records.favorites');
+});
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])->group(function () {
+    Route::post('/galleries', [GalleryController::class, 'store'])->name('api.galleries.store');
+    Route::patch('/gallery-records/{gallery:public_id}', [GalleryController::class, 'update'])->name('api.gallery-records.update');
+});
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManagePortalAccess->value, 'idempotent'])->group(function () {
+    Route::post('/gallery-records/{gallery:public_id}/publish', [GalleryController::class, 'publish'])->name('api.gallery-records.publish');
+    Route::post('/gallery-records/{gallery:public_id}/withdraw', [GalleryController::class, 'withdraw'])->name('api.gallery-records.withdraw');
+    Route::post('/gallery-records/{gallery:public_id}/prerelease/start', [GalleryController::class, 'startPrerelease'])->name('api.gallery-records.prerelease.start');
+    Route::post('/gallery-records/{gallery:public_id}/prerelease/stop', [GalleryController::class, 'stopPrerelease'])->name('api.gallery-records.prerelease.stop');
+    Route::post('/gallery-records/{gallery:public_id}/preview-link', [GalleryController::class, 'previewLink'])->name('api.gallery-records.preview-link');
 });

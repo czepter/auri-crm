@@ -5,6 +5,7 @@ import { registerReadTools } from './tools.js'
 import { registerBookingTaskTools } from './tools/booking-tasks.js'
 import { registerQuoteActionTools } from './tools/quote-actions.js'
 import { registerMessageTools } from './tools/messages.js'
+import { registerGalleryReadTools, registerGalleryWriteTools } from './tools/galleries.js'
 import { registerWriteTools } from './tools/write.js'
 
 /**
@@ -26,5 +27,7 @@ export function createMcpServer(clientFor: ApiClientFactory = apiClientFactory()
   registerBookingTaskTools(server, clientFor)
   registerQuoteActionTools(server, clientFor)
   registerMessageTools(server, clientFor)
+  registerGalleryReadTools(server, clientFor)
+  registerGalleryWriteTools(server, clientFor)
   return server
 }
