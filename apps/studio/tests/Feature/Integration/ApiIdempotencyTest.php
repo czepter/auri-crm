@@ -1,6 +1,7 @@
 <?php
 
 use App\Crm\Models\Contact;
+use App\Crm\Models\Lead;
 use App\Enums\Capability;
 use App\Integration\Models\ApiToken;
 use App\Integration\Models\IdempotencyKey;
@@ -138,4 +139,36 @@ it('409s a second caller racing a still in-flight claim for the same key', funct
         ->assertStatus(409);
 
     expect(Contact::count())->toBe(0);
+});
+
+/**
+ * #395: a claim used to replay forever, so closing a lead, reopening it and
+ * closing it again with the same reason left it open — the third call just
+ * replayed the first response. Once the claim's window has passed, the
+ * same write executes again.
+ */
+it('closes a lead again after the same-key claim from an earlier close has expired', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
+    $lead = Lead::factory()->create();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'close-1')
+        ->postJson("/api/leads/{$lead->public_id}/lost", ['outcome' => 'lost', 'reason' => 'Budget'])
+        ->assertOk();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'reopen-1')
+        ->postJson("/api/leads/{$lead->public_id}/reopen")
+        ->assertOk();
+
+    expect($lead->fresh()->isLost())->toBeFalse();
+
+    $this->travel(IdempotencyKey::WINDOW_HOURS + 1)->hours();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'close-1')
+        ->postJson("/api/leads/{$lead->public_id}/lost", ['outcome' => 'lost', 'reason' => 'Budget'])
+        ->assertOk();
+
+    expect($lead->fresh()->isLost())->toBeTrue();
 });
