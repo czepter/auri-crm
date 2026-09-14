@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "storybook-studio",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "storybook", "--prefix", "apps/studio"],
+      "port": 6006
+    }
+  ]
+}

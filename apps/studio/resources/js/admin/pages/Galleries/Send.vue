@@ -5,9 +5,9 @@ import { toPlainText } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument } from '@/admin/documents/blocks/types'
 
 const props = defineProps<{
-  gallery: { id: string; title: string; assetCount: number }
-  studioName: string
+  gallery: { id: string; title: string }
   recipients: { name: string; email: string }[]
+  mailHtml: string
 }>()
 
 const message: EditorDocument = {
@@ -28,19 +28,11 @@ function send({ subject, message }: { subject: string; message: EditorDocument }
 
 <template>
   <SendByMailView
-    :studio-name="studioName"
     :recipients="recipients"
     :subject="gallery.title"
     :message="message"
-    :cta="$t('sendMail.galleryCta')"
+    :mail-html="mailHtml"
     @cancel="cancel"
     @send="send"
-  >
-    <template #card>
-      <div class="flex items-baseline justify-between px-[18px] py-3.5">
-        <span class="text-[13px] font-semibold">{{ gallery.title }}</span>
-        <span class="text-[11.5px] text-faint">{{ $t('sendMail.imageCount', gallery.assetCount) }}</span>
-      </div>
-    </template>
-  </SendByMailView>
+  />
 </template>

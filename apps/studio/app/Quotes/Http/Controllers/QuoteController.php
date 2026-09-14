@@ -10,6 +10,7 @@ use App\Crm\Data\ProjectSuggestionData;
 use App\Crm\Models\Project;
 use App\Enums\Capability;
 use App\Http\Controllers\Controller;
+use App\Notifications\Support\MailPreview;
 use App\Numbering\Actions\AllocateDocumentNumber;
 use App\Numbering\Enums\DocumentType;
 use App\Quotes\Actions\DuplicateQuote;
@@ -27,6 +28,7 @@ use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
 use App\Quotes\Models\QuotePaymentStage;
+use App\Quotes\Notifications\QuoteSent;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Carbon\CarbonInterval;
@@ -99,7 +101,7 @@ class QuoteController extends Controller
      * along to send() as plain request input, never stored on the quote
      * itself (Q-06 already freezes everything that is).
      */
-    public function compose(Request $request, Quote $quote, StudioSettingsResolver $settings): InertiaResponse
+    public function compose(Request $request, Quote $quote): InertiaResponse
     {
         $this->authorize('manageQuotes', $quote->project);
         abort_unless($quote->status === QuoteStatus::Draft, 404);
@@ -110,9 +112,9 @@ class QuoteController extends Controller
         return Inertia::render('Quotes/Send', [
             'projectId' => $quote->project->public_id,
             'quote' => QuoteData::fromModel($quote),
-            'studioName' => $settings->displayName() ?? config('app.name'),
             'recipientName' => $contact?->name ?? '',
             'recipientEmail' => $contact?->email ?? '',
+            'mailHtml' => MailPreview::html(new QuoteSent($quote, null, MailPreview::MESSAGE), $contact ?? (object) []),
         ]);
     }
 

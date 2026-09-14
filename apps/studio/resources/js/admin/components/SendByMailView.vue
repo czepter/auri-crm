@@ -4,25 +4,24 @@ import { Button } from '@/ui/button'
 import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import DocumentEditor from '@/admin/components/DocumentEditor.vue'
-import { serialize } from '@/admin/documents/blocks/serialize'
+import { toPlainText } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
 
 // Full-screen compose view for every "per E-Mail senden": recipient, subject
-// and message on the left, the email as it will actually render on the right
-// — the split pixieset's own "Share Collection" view uses for a gallery
-// reveal. The message field is Editor.js rather than a plain textarea (an
-// empty palette: no block inserter, just the paragraph tool it ships with by
-// default), so its content already serializes through the same
-// blocks/serialize.ts every other mail body in the app goes through.
-// What differs per document lives in two slots: #card (the document inside
-// the mail) and #note (what travels with it, e.g. a PDF).
+// and message on the left, the mail on the right — the split pixieset's own
+// "Share Collection" view uses. The right side is the notification's own
+// server render (App\Notifications\Support\MailPreview) with its message
+// paragraph swapped for what is being typed, so every line, button and
+// footer the mail class adds shows exactly as it is sent. The message goes
+// out as plain text (toPlainText), which is therefore what it shows too.
+const MESSAGE = '%%NACHRICHT%%'
+
 const props = withDefaults(
   defineProps<{
-    studioName: string
     recipients: { name: string; email: string }[]
     subject: string
     message: EditorDocument
-    cta: string
+    mailHtml: string
     palette?: PaletteEntry[]
     mergeFields?: { path: string; sample: string }[]
   }>(),
@@ -34,7 +33,18 @@ const emit = defineEmits<{ cancel: []; send: [{ subject: string; message: Editor
 const subject = ref(props.subject)
 const message = ref<EditorDocument>(props.message)
 
-const messageHtml = computed(() => serialize(message.value, 'mail'))
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+const previewHtml = computed(() =>
+  props.mailHtml.replace(new RegExp(`(<p[^>]*>)${MESSAGE}</p>`), (_, open: string) =>
+    toPlainText(message.value)
+      .split('\n\n')
+      .map((paragraph) => `${open}${escapeHtml(paragraph)}</p>`)
+      .join(''),
+  ),
+)
 
 function send() {
   emit('send', { subject: subject.value, message: message.value })
@@ -77,49 +87,14 @@ function send() {
           </div>
         </Field>
 
-        <div class="flex items-center gap-4 border-t border-border pt-4">
-          <div class="flex flex-1 items-center gap-2 text-[12px] text-faint">
-            <template v-if="$slots.note">
-              <svg class="size-[15px] flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" /></svg>
-              <slot name="note" />
-            </template>
-          </div>
-
+        <div class="flex justify-end border-t border-border pt-4">
           <Button variant="pill" type="button" @click="send">{{ $t('sendMail.submit') }}</Button>
         </div>
       </div>
 
       <div class="flex min-w-0 flex-1 flex-col p-6">
-        <div class="flex flex-1 items-start justify-center overflow-auto rounded-md bg-sunk p-6">
-          <div class="w-[520px] flex-none bg-background shadow-[0_18px_40px_-24px_rgba(20,16,14,.28)]">
-            <div class="px-10 pt-8 text-center text-[19px] font-bold tracking-[-0.03em]">{{ studioName }}</div>
-
-            <div class="px-10 pt-7 pb-9">
-              <div class="prose-mail text-[14px] leading-[1.6]" v-html="messageHtml" />
-
-              <div v-if="$slots.card" class="mt-6 overflow-hidden rounded-[10px] border border-border">
-                <slot name="card" />
-              </div>
-
-              <a href="#" class="mt-6 inline-block rounded-full bg-action px-[30px] py-3.5 text-[13px] font-semibold text-action-foreground">{{ cta }}</a>
-            </div>
-
-            <div class="border-t border-border px-10 pt-5.5 pb-7.5 text-center">
-              <div class="text-[12px] font-semibold text-ink-2">{{ studioName }}</div>
-              <div class="mt-1.5 text-[11.5px] text-faint">{{ $t('sendMail.questions') }}</div>
-            </div>
-          </div>
-        </div>
+        <iframe :srcdoc="previewHtml" sandbox="" :title="$t('sendMail.preview')" class="min-h-0 flex-1 rounded-md border-0 bg-sunk" />
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.prose-mail :deep(p) {
-  margin: 0 0 0.7em;
-}
-.prose-mail :deep(p:last-child) {
-  margin-bottom: 0;
-}
-</style>

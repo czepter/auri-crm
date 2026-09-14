@@ -17,6 +17,7 @@ use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryView;
 use App\Http\Controllers\Controller;
 use App\Notifications\NotificationService;
+use App\Notifications\Support\MailPreview;
 use App\Portal\Models\ClientAccess;
 use App\Portal\Models\DsgvoRequest;
 use App\Portal\Notifications\PortalAccessInvitation;
@@ -388,8 +389,11 @@ class ContactController extends Controller
 
         return Inertia::render('Contacts/SendPortalAccess', [
             'contactId' => $contact->public_id,
-            'studioName' => $settings->displayName() ?? config('app.name'),
             'recipients' => [['name' => $contact->name, 'email' => $contact->email]],
+            'mailHtml' => MailPreview::html(
+                new PortalAccessInvitation(config('portal.url').'/zugang/…', '', MailPreview::MESSAGE, $settings),
+                $contact,
+            ),
         ]);
     }
 

@@ -85,9 +85,6 @@ type Story = StoryObj<typeof meta>
 /** Aus der Übersicht geöffnet, noch ohne Projekt oder Anfrage. */
 export const Auswahl: Story = { args: { project: null, quotes: [] } }
 
-/** Anfrage gewählt, noch kein Entwurf. */
-export const OhneEntwurf: Story = { args: { quotes: [] } }
-
 /** Der Entwurf im Modus Auswahl: Zeit mit Spanne, Positionen mit Portal-Status. */
 export const ModusAuswahl: Story = {}
 

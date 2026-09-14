@@ -6,9 +6,9 @@ import type { EditorDocument } from '@/admin/documents/blocks/types'
 
 const props = defineProps<{
   projectId: string
-  contract: { id: string; templateName: string }
-  studioName: string
+  contractId: string
   recipients: { name: string; email: string }[]
+  mailHtml: string
 }>()
 
 const message: EditorDocument = {
@@ -23,25 +23,17 @@ function cancel() {
 }
 
 function send({ subject, message }: { subject: string; message: EditorDocument }) {
-  router.post(`/vertraege/${props.contract.id}/versenden`, { subject, message: toPlainText(message) })
+  router.post(`/vertraege/${props.contractId}/versenden`, { subject, message: toPlainText(message) })
 }
 </script>
 
 <template>
   <SendByMailView
-    :studio-name="studioName"
     :recipients="recipients"
     :subject="$t('project.contract')"
     :message="message"
-    :cta="$t('sendMail.contractCta')"
+    :mail-html="mailHtml"
     @cancel="cancel"
     @send="send"
-  >
-    <template #card>
-      <div class="flex items-baseline justify-between px-[18px] py-3.5">
-        <span class="text-[13px] font-semibold">{{ $t('project.contract') }}</span>
-        <span class="text-[11.5px] text-faint">{{ contract.templateName }}</span>
-      </div>
-    </template>
-  </SendByMailView>
+  />
 </template>

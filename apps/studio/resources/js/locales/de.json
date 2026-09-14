@@ -787,21 +787,15 @@
     "zoomFit": "Seitenbreite",
     "zoomFull": "100 %",
     "previewPdf": "PDF",
-    "previewPortal": "Portal",
-    "sendCta": "Angebot ansehen"
+    "previewPortal": "Portal"
   },
   "sendMail": {
     "title": "Per E-Mail senden",
     "recipient": "Empfänger",
     "subject": "Betreff",
     "message": "Nachricht",
-    "pdfNote": "PDF liegt der E-Mail bei.",
-    "questions": "Fragen? Antworten Sie auf diese E-Mail.",
     "submit": "Senden",
-    "galleryCta": "Galerie ansehen",
-    "contractCta": "Vertrag ansehen",
-    "portalCta": "Kundenbereich öffnen",
-    "imageCount": "{count} Bild | {count} Bilder"
+    "preview": "Vorschau"
   },
   "automations": {
     "title": "Automationen",
