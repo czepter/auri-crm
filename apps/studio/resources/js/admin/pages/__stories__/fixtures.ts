@@ -363,17 +363,6 @@ export const catalogItems: App.Catalog.Data.CatalogItemData[] = [
     { id: 'ci-3', title: 'Anreise über 50 km', description: null, unitPrice: 4500 },
 ]
 
-/** Der Angebotsreiter der Anfrage: was QuoteWorkspace unter einem Schlüssel bekommt. */
-export const workspace = {
-    quotes: [leadQuote],
-    packages: catalogPackages,
-    catalogItems,
-    contacts,
-    canManageCatalog: true,
-    paymentPlan: null,
-    vatSettings: { mode: 'standard', rate: 1900, note: null },
-}
-
 /** Der Nachrichtenreiter: ein Thread, auf den die Kundin zuletzt geschrieben hat. */
 export const conversation: App.Engagement.Data.ThreadData = {
     id: 'th-brandt',

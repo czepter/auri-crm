@@ -7,6 +7,7 @@ use App\Concerns\HasHourlyPricing;
 use App\Concerns\HasPublicId;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Project;
+use App\Payments\Support\PaymentStageSplitter;
 use App\Quotes\Enums\DiscountType;
 use App\Quotes\Enums\PricingMode;
 use App\Quotes\Enums\QuoteStatus;
@@ -131,6 +132,19 @@ class Quote extends Model
     public function paymentStages(): HasMany
     {
         return $this->hasMany(QuotePaymentStage::class)->orderBy('sort_order');
+    }
+
+    /**
+     * The stages in euros, against what the client pays in total: the same
+     * split CreatePaymentPlan charges at booking.
+     *
+     * @return list<array{label: string, amount: int}>
+     */
+    public function paymentSplit(): array
+    {
+        $base = $this->hasSlider() ? $this->total : $this->net + ($this->vat_mode === 'standard' ? ($this->vat_amount ?? 0) : 0);
+
+        return PaymentStageSplitter::split($base, $this->paymentStages);
     }
 
     /** The quote this one revises, if any — App\Quotes\Actions\ReviseQuote's own new row. */

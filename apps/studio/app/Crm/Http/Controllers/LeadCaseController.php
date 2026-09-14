@@ -23,7 +23,7 @@ use App\Crm\Models\Stage;
 use App\Crm\Support\CrmVocabulary;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
-use App\Quotes\Actions\ReadQuoteWorkspace;
+use App\Quotes\Actions\ReadQuoteList;
 use App\Quotes\Data\QuoteData;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -86,7 +86,7 @@ class LeadCaseController extends Controller
             'tab' => $tab,
             'header' => ProjectHeaderData::fromProject($project, app(DeriveProjectPosition::class)($project), queue: false),
             'conversation' => $conversation === null ? null : ThreadData::fromModel($conversation),
-            'workspace' => $tab !== 'quotes' ? null : app(ReadQuoteWorkspace::class)($project, auth('staff')->user()),
+            ...($tab === 'quotes' ? app(ReadQuoteList::class)($project) : ['quotes' => [], 'payments' => null]),
             'queue' => $this->leads->queue($lead),
             'lead' => [
                 'id' => $lead->public_id,

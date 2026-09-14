@@ -7,7 +7,6 @@ use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\MergeFieldResolver;
-use App\Payments\Support\PaymentStageSplitter;
 use App\Quotes\Enums\QuoteLayout;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -139,8 +138,7 @@ class RenderQuotePdf
             return '';
         }
 
-        $base = $quote->hasSlider() ? $quote->total : $quote->net + ($quote->vat_mode === 'standard' ? ($quote->vat_amount ?? 0) : 0);
-        $rows = PaymentStageSplitter::split($base, $quote->paymentStages);
+        $rows = $quote->paymentSplit();
 
         if ($rows === []) {
             return '';

@@ -7,8 +7,7 @@ import ContactTypeahead from "@/admin/components/ContactTypeahead.vue";
 import LeadQueue from "@/admin/components/LeadQueue.vue";
 import NoteThread from "@/admin/components/NoteThread.vue";
 import QuoteSummary from "@/admin/components/QuoteSummary.vue";
-import QuoteWorkspace from "@/admin/components/QuoteWorkspace.vue";
-import type { QuoteContact, VatSettings } from "@/admin/components/quote/quotePayload";
+import QuoteList from "@/admin/components/quote/QuoteList.vue";
 import MessageThread from "@/admin/components/MessageThread.vue";
 import ProjectShell from "@/admin/components/ProjectShell.vue";
 import RailHistory from "@/admin/components/RailHistory.vue";
@@ -66,18 +65,12 @@ const props = defineProps<{
     tab: "overview" | "quotes" | "messages";
     header: App.Crm.Data.ProjectHeaderData;
     conversation: App.Engagement.Data.ThreadData | null;
-    workspace: {
-        quotes: App.Quotes.Data.QuoteData[];
-        packages: App.Catalog.Data.PackageData[];
-        catalogItems: App.Catalog.Data.CatalogItemData[];
-        contacts: QuoteContact[];
-        canManageCatalog: boolean;
-        paymentPlan: App.Payments.Data.PaymentPlanData | null;
-        vatSettings: VatSettings;
-    } | null;
+    quotes: App.Quotes.Data.QuoteData[];
+    payments: { number: string | null; rows: { label: string; amount: number }[] } | null;
 }>();
 
 const quoteTab = computed(() => `/anfragen/${props.lead.id}/angebot`);
+const newQuote = computed(() => `/angebote/neu?projekt=${props.lead.projectId}`);
 
 // Once booked, the case is the project's Anfrage tab.
 const active = computed(() => (props.lead.booked && props.tab === "overview" ? "lead" : props.tab));
@@ -334,12 +327,9 @@ const due = computed(() => {
         return { label: props.stages[at + 1].label, stage: props.stages[at + 1].value };
     }
 
-    // On its own tab the button writes the quote; everywhere else it leads
-    // there.
+    // The quote tab carries its own button.
     if (props.quote === null) {
-        return props.tab === "quotes"
-            ? { label: "lead.writeQuote", create: true }
-            : { label: "lead.writeQuote", href: quoteTab.value };
+        return props.tab === "quotes" ? null : { label: "lead.writeQuote", href: newQuote.value };
     }
 
     return props.lead.stage === "quote_accepted"
@@ -347,15 +337,8 @@ const due = computed(() => {
               label: "lead.sendContract",
               href: `/auftraege/${props.lead.projectId}/vertrag`,
           }
-        : {
-              label: "lead.openQuote",
-              href: quoteTab.value,
-          };
+        : null;
 });
-
-function writeQuote() {
-    router.post(`/auftraege/${props.lead.projectId}/angebote`, {}, { preserveScroll: true });
-}
 </script>
 
 <template>
@@ -412,13 +395,10 @@ function writeQuote() {
             <!-- Bearbeitet wird je Karte; im Kopf steht nur noch die eine
                  Aktion, die gerade fällig ist. -->
             <template #actions>
-                <Button v-if="due.stage" variant="pill" type="button" @click="move(due.stage)">{{
+                <Button v-if="due?.stage" variant="pill" type="button" @click="move(due.stage)">{{
                     due.label
                 }}</Button>
-                <Button v-else-if="due.create" variant="pill" type="button" @click="writeQuote">{{
-                    $t(due.label)
-                }}</Button>
-                <Button v-else :as="Link" variant="pill" :href="due.href">{{
+                <Button v-else-if="due" :as="Link" variant="pill" :href="due.href">{{
                     $t(due.label)
                 }}</Button>
             </template>
@@ -651,6 +631,13 @@ function writeQuote() {
                     </Card>
 
                     <Card :title="$t('lead.quote')" :summary="quoteSummary" :default-open="quote !== null">
+                        <template v-if="header.canManageQuotes" #action>
+                            <Link
+                                class="text-[12.5px] tracking-[-0.01em] whitespace-nowrap text-action no-underline hover:underline"
+                                :href="newQuote"
+                            >{{ $t("quotes.create") }}</Link>
+                        </template>
+
                         <QuoteSummary
                             v-if="quote"
                             :quote="quote"
@@ -743,13 +730,12 @@ function writeQuote() {
                 </div>
                 </template>
 
-                <QuoteWorkspace
-                    v-else-if="tab === 'quotes' && workspace"
-                    v-bind="workspace"
+                <QuoteList
+                    v-else-if="tab === 'quotes'"
                     :project-id="lead.projectId"
                     :can-manage-quotes="header.canManageQuotes"
-                    :can-manage-payment-plan="header.canManagePaymentPlan"
-                    :only="['workspace']"
+                    :quotes="quotes"
+                    :payments="payments"
                 />
 
                 <Card v-else :title="$t('project.history')">

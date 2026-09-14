@@ -1188,13 +1188,13 @@ it('refuses to write the library for an actor without the catalog capability', f
 });
 
 it('sends active packages with their items, the library and the catalog permission to the quotes screen', function () {
-    $project = Project::factory()->create();
+    $quote = Quote::factory()->create();
     Package::factory()->has(PackageItem::factory()->count(2), 'items')->create(['name' => 'Hochzeit Basis']);
     Package::factory()->inactive()->create(['name' => 'Alt']);
     CatalogItem::create(['title' => 'Zweitfotograf', 'unit_price' => 49000]);
 
     $props = $this->actingAs(quoteOwner(), 'staff')
-        ->get("/auftraege/{$project->public_id}/angebote")
+        ->get("/angebote/{$quote->public_id}")
         ->assertOk()
         ->viewData('page')['props'];
 

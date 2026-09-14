@@ -41,7 +41,7 @@ use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Engagement\Data\ThreadData;
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Quotes\Actions\ReadQuoteWorkspace;
+use App\Quotes\Actions\ReadQuoteList;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use App\Support\LiveUpdate;
@@ -403,7 +403,7 @@ class ProjectController extends Controller
 
         return Inertia::render('Projects/Quotes', [
             'header' => $this->header($project),
-            ...app(ReadQuoteWorkspace::class)($project, $request->user('staff')),
+            ...app(ReadQuoteList::class)($project),
         ]);
     }
 

@@ -18,7 +18,6 @@ import {
     stages,
     types,
     week,
-    workspace,
 } from '../__stories__/fixtures'
 
 const meta = {
@@ -44,7 +43,8 @@ const meta = {
         conflicts,
         stages,
         conversation,
-        workspace: null,
+        quotes: [],
+        payments: null,
     },
 } satisfies Meta<typeof Show>
 
@@ -54,9 +54,19 @@ type Story = StoryObj<typeof meta>
 /** Angebot draußen, Antwort steht aus. */
 export const Uebersicht: Story = {}
 
-/** Derselbe Fall auf dem Angebotsreiter, mit Katalog und Paketen daneben. */
+/** Derselbe Fall auf dem Angebotsreiter, Zahlungen aus dem Angebot. */
 export const Angebote: Story = {
-    args: { tab: 'quotes', workspace },
+    args: {
+        tab: 'quotes',
+        quotes: [leadQuote],
+        payments: {
+            number: leadQuote.number,
+            rows: [
+                { label: 'Bei der Zusage', amount: 170000 },
+                { label: 'Nach der Galerie', amount: 178000 },
+            ],
+        },
+    },
 }
 
 /** Zuletzt hat die Kundin geschrieben. */
