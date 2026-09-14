@@ -17,6 +17,7 @@ use App\Integration\Http\Controllers\ContactController;
 use App\Integration\Http\Controllers\ContractController;
 use App\Integration\Http\Controllers\ContractSignerController;
 use App\Integration\Http\Controllers\CrmReadController;
+use App\Integration\Http\Controllers\InboxController;
 use App\Integration\Http\Controllers\InternalNoteController;
 use App\Integration\Http\Controllers\LeadController;
 use App\Integration\Http\Controllers\MessageController;
@@ -31,6 +32,7 @@ use App\Integration\Http\Controllers\QuoteController;
 use App\Integration\Http\Controllers\ServiceSuggestionController;
 use App\Integration\Http\Controllers\ShootController;
 use App\Integration\Http\Controllers\TaskController;
+use App\Integration\Http\Controllers\ThreadController;
 use App\Payments\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -355,6 +357,34 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageNotes->value, 'ide
 Route::middleware(['audience:api', 'scope:'.Capability::ManageMessages->value, 'idempotent'])
     ->post('/projects/{project:public_id}/messages', [MessageController::class, 'store'])
     ->name('api.projects.messages.store');
+
+// #404: the send half of E-06/E-13, through the same PostMessage the admin
+// reply and cancel use — see ThreadController (Integration) for why this
+// needs a staff actor where messages.store above does not.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageMessages->value, 'idempotent'])
+    ->post('/projects/{project:public_id}/messages/send', [ThreadController::class, 'reply'])
+    ->name('api.projects.messages.send');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageMessages->value, 'idempotent'])
+    ->delete('/messages/{message:public_id}', [ThreadController::class, 'cancel'])
+    ->name('api.messages.cancel');
+
+// #404: E-12/P-04's inbox actions, through the same Actions the admin
+// Posteingang uses — see InboxController (Integration).
+Route::middleware(['audience:api', 'scope:'.Capability::ManageMessages->value])
+    ->get('/inbox/threads', [InboxController::class, 'index'])
+    ->name('api.inbox.threads.index');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageMessages->value, 'idempotent'])->group(function () {
+    Route::post('/inbox/threads/{thread:public_id}/reply', [InboxController::class, 'reply'])
+        ->name('api.inbox.threads.reply');
+    Route::post('/inbox/threads/{thread:public_id}/close', [InboxController::class, 'close'])
+        ->name('api.inbox.threads.close');
+    Route::post('/inbox/threads/{thread:public_id}/file', [InboxController::class, 'file'])
+        ->name('api.inbox.threads.file');
+    Route::post('/inbox/messages/{inboundMessage:public_id}/attach', [InboxController::class, 'attach'])
+        ->name('api.inbox.messages.attach');
+});
 
 // ManageLeads, the scope leads.store already attaches contacts under.
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
