@@ -26,7 +26,9 @@ use App\Integration\Http\Controllers\PaymentController;
 use App\Integration\Http\Controllers\ProjectContactController;
 use App\Integration\Http\Controllers\ProjectController;
 use App\Integration\Http\Controllers\ProjectFieldController;
+use App\Integration\Http\Controllers\QuoteActionController;
 use App\Integration\Http\Controllers\QuoteController;
+use App\Integration\Http\Controllers\ServiceSuggestionController;
 use App\Integration\Http\Controllers\ShootController;
 use App\Integration\Http\Controllers\TaskController;
 use App\Payments\Http\Controllers\StripeWebhookController;
@@ -301,6 +303,33 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageQuotes->value, 'id
     Route::post('/quotes/{quote:public_id}/send', [QuoteController::class, 'send'])->name('api.quotes.send');
     Route::post('/quotes/{quote:public_id}/revise', [QuoteController::class, 'revise'])->name('api.quotes.revise');
     Route::post('/quotes/{quote:public_id}/accept', [QuoteController::class, 'accept'])->name('api.quotes.accept');
+});
+
+// #403: the admin-only quote actions (addendum, duplicate, delete a draft,
+// mark sent by self, adopt the recipient, save as a package) — same
+// ManageQuotes scope as the group above, since each is a write UpdateQuote's
+// group already gates.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageQuotes->value, 'idempotent'])->group(function () {
+    Route::post('/quotes/{quote:public_id}/addendum', [QuoteActionController::class, 'addendum'])->name('api.quotes.addendum');
+    Route::post('/quotes/{quote:public_id}/duplicate', [QuoteActionController::class, 'duplicate'])->name('api.quotes.duplicate');
+    Route::delete('/quotes/{quote:public_id}', [QuoteActionController::class, 'destroy'])->name('api.quotes.destroy');
+    Route::post('/quotes/{quote:public_id}/mark-sent', [QuoteActionController::class, 'markSent'])->name('api.quotes.mark-sent');
+    Route::post('/quotes/{quote:public_id}/adopt-recipient', [QuoteActionController::class, 'adoptRecipient'])->name('api.quotes.adopt-recipient');
+    Route::post('/quotes/{quote:public_id}/save-as-package', [QuoteActionController::class, 'saveAsPackage'])->name('api.quotes.save-as-package');
+});
+
+// #403: personal service recommendations (App\Catalog\Http\Controllers\
+// ServiceSuggestionController is the admin twin) — ManageContacts, the
+// capability the contact page they live on already requires.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageContacts->value])
+    ->get('/contacts/{contact:public_id}/service-suggestions', [ServiceSuggestionController::class, 'index'])
+    ->name('api.contacts.service-suggestions.index');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageContacts->value, 'idempotent'])->group(function () {
+    Route::post('/contacts/{contact:public_id}/service-suggestions', [ServiceSuggestionController::class, 'store'])
+        ->name('api.contacts.service-suggestions.store');
+    Route::delete('/service-suggestions/{serviceSuggestion:public_id}', [ServiceSuggestionController::class, 'destroy'])
+        ->name('api.service-suggestions.destroy');
 });
 
 // Taking an import back — see ProjectController. ManageLeads, the scope that

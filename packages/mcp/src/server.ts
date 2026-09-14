@@ -3,6 +3,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { apiClientFactory, type ApiClientFactory } from './client.js'
 import { registerReadTools } from './tools.js'
 import { registerBookingTaskTools } from './tools/booking-tasks.js'
+import { registerQuoteActionTools } from './tools/quote-actions.js'
 import { registerWriteTools } from './tools/write.js'
 
 /**
@@ -22,5 +23,6 @@ export function createMcpServer(clientFor: ApiClientFactory = apiClientFactory()
   registerReadTools(server, clientFor)
   registerWriteTools(server, clientFor)
   registerBookingTaskTools(server, clientFor)
+  registerQuoteActionTools(server, clientFor)
   return server
 }

@@ -890,7 +890,7 @@ function registerDeletePackage(server: McpServer, clientFor: ApiClientFactory): 
     {
       title: 'Delete a package',
       description:
-        'Remove a package from the catalogue. Quotes made from it are untouched — they carry their own copy of the lines. There is no undo; update_package with is_active false only hides it instead.',
+        'Remove a package from the catalogue. Quotes made from it are untouched — they carry their own copy of the lines. Any service suggestion offering it is deleted, and any lead that named it keeps its record with the package reference cleared. There is no undo; update_package with is_active false only hides it instead.',
       inputSchema: { package: z.string().describe('The package public id'), ...silentField },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
