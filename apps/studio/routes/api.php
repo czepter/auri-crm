@@ -14,7 +14,9 @@ use App\Gallery\Http\Controllers\GalleryReadController;
 use App\Http\Controllers\GuestIdentityController;
 use App\Http\Controllers\HealthController;
 use App\Integration\Http\Controllers\ContactController;
+use App\Integration\Http\Controllers\CrewController;
 use App\Integration\Http\Controllers\CrmReadController;
+use App\Integration\Http\Controllers\FormInstanceController;
 use App\Integration\Http\Controllers\InternalNoteController;
 use App\Integration\Http\Controllers\LeadController;
 use App\Integration\Http\Controllers\MessageController;
@@ -25,6 +27,9 @@ use App\Integration\Http\Controllers\ProjectController;
 use App\Integration\Http\Controllers\ProjectFieldController;
 use App\Integration\Http\Controllers\QuoteController;
 use App\Integration\Http\Controllers\ShootController;
+use App\Integration\Http\Controllers\ShotListItemController;
+use App\Integration\Http\Controllers\StudioReadController;
+use App\Integration\Http\Controllers\TimelineController;
 use App\Payments\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -319,3 +324,49 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'ide
 Route::middleware(['audience:api', 'scope:'.Capability::ManageSettings->value, 'idempotent'])
     ->post('/project-types/{projectType:public_id}/fields', [ProjectFieldController::class, 'store'])
     ->name('api.project-types.fields.store');
+
+// #406: the studio's own settings, closures, number ranges and staff —
+// reads a token needs to reason about the studio, not act as it.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageSettings->value])->group(function () {
+    Route::get('/studio-settings', [StudioReadController::class, 'settings'])->name('api.studio-settings.show');
+    Route::get('/studio-closures', [StudioReadController::class, 'closures'])->name('api.studio-closures.index');
+    Route::get('/number-ranges', [StudioReadController::class, 'numberRanges'])->name('api.number-ranges.index');
+});
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageCrew->value])->group(function () {
+    Route::get('/staff', [CrewController::class, 'staff'])->name('api.staff.index');
+    Route::get('/shoots/{shoot:public_id}/crew', [CrewController::class, 'index'])->name('api.shoots.crew.index');
+});
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageCrew->value, 'idempotent'])->group(function () {
+    Route::post('/shoots/{shoot:public_id}/crew', [CrewController::class, 'store'])->name('api.shoots.crew.store');
+    Route::delete('/crew/{assignment:public_id}', [CrewController::class, 'destroy'])->name('api.crew.destroy');
+});
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value])->group(function () {
+    Route::get('/shoots/{shoot:public_id}/timeline', [TimelineController::class, 'index'])->name('api.shoots.timeline.index');
+    Route::get('/shoots/{shoot:public_id}/shot-list', [ShotListItemController::class, 'index'])->name('api.shoots.shot-list.index');
+});
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])->group(function () {
+    Route::post('/shoots/{shoot:public_id}/timeline', [TimelineController::class, 'store'])->name('api.shoots.timeline.store');
+    Route::delete('/timeline/{entry:public_id}', [TimelineController::class, 'destroy'])->name('api.timeline.destroy');
+    Route::post('/shoots/{shoot:public_id}/shot-list', [ShotListItemController::class, 'store'])->name('api.shoots.shot-list.store');
+    Route::post('/shot-list/{item:public_id}/check', [ShotListItemController::class, 'check'])->name('api.shot-list.check');
+    Route::delete('/shot-list/{item:public_id}', [ShotListItemController::class, 'destroy'])->name('api.shot-list.destroy');
+});
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageFormTemplates->value])
+    ->get('/projects/{project:public_id}/forms', [FormInstanceController::class, 'index'])
+    ->name('api.projects.forms.index');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageFormTemplates->value, 'idempotent'])->group(function () {
+    Route::post('/projects/{project:public_id}/forms', [FormInstanceController::class, 'store'])->name('api.projects.forms.store');
+    Route::patch('/forms/{formInstance:public_id}', [FormInstanceController::class, 'update'])->name('api.forms.update');
+    Route::post('/forms/{formInstance:public_id}/share', [FormInstanceController::class, 'share'])->name('api.forms.share');
+    Route::post('/form-fields/{formInstanceField:public_id}/answer', [FormInstanceController::class, 'answer'])->name('api.form-fields.answer');
+});
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManagePortalAccess->value, 'idempotent'])
+    ->post('/projects/{project:public_id}/portal-visibility', [ProjectController::class, 'setPortalVisibility'])
+    ->name('api.projects.portal-visibility.update');
