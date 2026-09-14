@@ -22,7 +22,7 @@ beforeEach(function () {
     Mail::fake();
 });
 
-function threadWithClient(): array
+function apiThreadWithClient(): array
 {
     $project = Project::factory()->create();
     $contact = Contact::factory()->create();
@@ -34,7 +34,7 @@ function threadWithClient(): array
 }
 
 it('sends a staff reply through the api surface, requiring a staff actor', function () {
-    [$project] = threadWithClient();
+    [$project] = apiThreadWithClient();
     $staff = staffMember();
 
     $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($staff))
@@ -48,7 +48,7 @@ it('sends a staff reply through the api surface, requiring a staff actor', funct
 });
 
 it('refuses a send from a token no staff member stands behind', function () {
-    [$project] = threadWithClient();
+    [$project] = apiThreadWithClient();
     $token = ApiToken::factory()->withScopes(Capability::ManageMessages)->create();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
@@ -72,7 +72,7 @@ it('refuses to reply on a project with no thread yet', function () {
 
 it('schedules a future send instead of dispatching it immediately', function () {
     Queue::fake();
-    [$project] = threadWithClient();
+    [$project] = apiThreadWithClient();
     $staff = staffMember();
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken($staff))
@@ -89,7 +89,7 @@ it('schedules a future send instead of dispatching it immediately', function () 
 });
 
 it('cancels a scheduled message that has not gone out yet', function () {
-    [$project, $thread] = threadWithClient();
+    [$project, $thread] = apiThreadWithClient();
     $staff = staffMember();
     $message = Message::factory()->for($thread)->fromStaff($staff)->create(['scheduled_for' => now()->addDay()]);
 
@@ -102,7 +102,7 @@ it('cancels a scheduled message that has not gone out yet', function () {
 });
 
 it('refuses to cancel a message that already went out', function () {
-    [$project, $thread] = threadWithClient();
+    [$project, $thread] = apiThreadWithClient();
     $message = Message::factory()->for($thread)->fromStaff()->create(['scheduled_for' => null]);
 
     $this->withHeader('Authorization', 'Bearer '.bearerToken(ApiToken::factory()->withScopes(Capability::ManageMessages)->create()))

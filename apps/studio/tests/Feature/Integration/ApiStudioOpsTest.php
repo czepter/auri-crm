@@ -18,13 +18,13 @@ beforeEach(function () {
     useSurface(Surface::API);
 });
 
-function apiToken(Capability ...$scopes): string
+function opsToken(Capability ...$scopes): string
 {
     return bearerToken(ApiToken::factory()->withScopes(...$scopes)->create());
 }
 
 it('assigns crew, lists it and removes an assignment', function () {
-    $this->withHeader('Authorization', 'Bearer '.apiToken(Capability::ManageCrew));
+    $this->withHeader('Authorization', 'Bearer '.opsToken(Capability::ManageCrew));
     $shoot = Shoot::factory()->create();
     $user = User::factory()->create(['role' => StaffRole::SecondShooter]);
 
@@ -49,7 +49,7 @@ it('assigns crew, lists it and removes an assignment', function () {
 });
 
 it('reads studio settings, closures and number ranges', function () {
-    $this->withHeader('Authorization', 'Bearer '.apiToken(Capability::ManageSettings));
+    $this->withHeader('Authorization', 'Bearer '.opsToken(Capability::ManageSettings));
     StudioClosure::factory()->spanning('2026-12-24', '2026-12-31')->create(['label' => 'Weihnachtspause']);
 
     $this->getJson('/api/studio-settings')->assertOk()->assertJsonStructure(['data' => ['vatMode', 'vatRate', 'quoteValidityDays']]);
@@ -58,7 +58,7 @@ it('reads studio settings, closures and number ranges', function () {
 });
 
 it('creates a form from a template, updates it, shares it and records an answer', function () {
-    $this->withHeader('Authorization', 'Bearer '.apiToken(Capability::ManageFormTemplates));
+    $this->withHeader('Authorization', 'Bearer '.opsToken(Capability::ManageFormTemplates));
     $project = Project::factory()->create();
     $template = FormTemplate::factory()->create();
     $template->fields()->create(['label' => 'Wer kommt?', 'type' => 'text', 'sort_order' => 0]);
@@ -93,7 +93,7 @@ it('creates a form from a template, updates it, shares it and records an answer'
 });
 
 it('adds and removes a shoot timeline entry', function () {
-    $this->withHeader('Authorization', 'Bearer '.apiToken(Capability::ManageShoots));
+    $this->withHeader('Authorization', 'Bearer '.opsToken(Capability::ManageShoots));
     $shoot = Shoot::factory()->create();
 
     $entryId = $this->withHeader('Idempotency-Key', 'timeline-1')
@@ -109,7 +109,7 @@ it('adds and removes a shoot timeline entry', function () {
 });
 
 it('checks a shot list item idempotently rather than toggling it', function () {
-    $this->withHeader('Authorization', 'Bearer '.apiToken(Capability::ManageShoots));
+    $this->withHeader('Authorization', 'Bearer '.opsToken(Capability::ManageShoots));
     $shoot = Shoot::factory()->create();
 
     $itemId = $this->withHeader('Idempotency-Key', 'shot-1')
@@ -130,7 +130,7 @@ it('checks a shot list item idempotently rather than toggling it', function () {
 });
 
 it('sets a project explicit portal visibility rather than toggling it', function () {
-    $this->withHeader('Authorization', 'Bearer '.apiToken(Capability::ManagePortalAccess));
+    $this->withHeader('Authorization', 'Bearer '.opsToken(Capability::ManagePortalAccess));
     $project = Project::factory()->create(['portal_visible' => false]);
 
     $this->withHeader('Idempotency-Key', 'visibility-1')
@@ -148,7 +148,7 @@ it('sets a project explicit portal visibility rather than toggling it', function
 });
 
 it('refuses studio reads to a token without ManageSettings', function () {
-    $this->withHeader('Authorization', 'Bearer '.apiToken(Capability::ManageQuotes));
+    $this->withHeader('Authorization', 'Bearer '.opsToken(Capability::ManageQuotes));
 
     $this->getJson('/api/studio-settings')->assertForbidden();
 });
