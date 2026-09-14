@@ -207,7 +207,6 @@
     }
   },
   "project": {
-    "trackProject": "Projekt",
     "stalledStatus": "Status {stage} seit {date}",
     "quoteAdd": "Angebot anlegen",
     "overview": "Übersicht",
