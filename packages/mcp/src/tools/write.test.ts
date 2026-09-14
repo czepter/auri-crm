@@ -158,6 +158,27 @@ describe('registerWriteTools', () => {
     expect(JSON.stringify(deleted.content)).toContain('Deleted package pkg_1.')
   })
 
+  it('carries the portal fields onto a package', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({
+      name: 'create_package',
+      arguments: {
+        name: 'Reportage 2',
+        portal_offered: true,
+        portal_price_mode: 'from',
+        portal_requires_date: true,
+        project_type_key: 'wedding',
+      },
+    })
+
+    expect(post.mock.calls[0][1]).toMatchObject({
+      body: { portal_offered: true, portal_price_mode: 'from', portal_requires_date: true, project_type_key: 'wedding' },
+    })
+  })
+
   it('calls the API with an Idempotency-Key header', async () => {
     const { post, client: apiClient } = fakeApiClient()
     const { client } = await connectedPair(apiClient)
@@ -270,6 +291,40 @@ describe('registerWriteTools', () => {
     })
   })
 
+  // #398: CaptureInquiryData accepts these; the schema used to drop them.
+  it('carries the first shoot, the type fields and the referral into the body', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    const lead = {
+      contact_name: 'Nina Voss',
+      project_name: 'Voss',
+      type: 'wedding',
+      source: 'referral',
+      captured_via: 'other',
+      captured_via_other: 'WhatsApp',
+      call_time: '10:00',
+      end_time: '18:00',
+      venue_name: 'Hof Eggers',
+      venue_city: 'Winsen',
+      fields: { gaeste: 120 },
+      referred_by_contact_id: 'c'.repeat(24),
+    }
+
+    await client.callTool({ name: 'capture_lead', arguments: lead })
+
+    expect(post.mock.calls[0][1].body).toMatchObject({
+      captured_via_other: 'WhatsApp',
+      call_time: '10:00',
+      end_time: '18:00',
+      venue_name: 'Hof Eggers',
+      venue_city: 'Winsen',
+      fields: { gaeste: 120 },
+      referred_by_contact_id: 'c'.repeat(24),
+    })
+  })
+
   it('captures a whole batch in one call, silent unless told otherwise', async () => {
     const { post, client: apiClient } = fakeApiClient()
     const { client } = await connectedPair(apiClient)
@@ -344,6 +399,56 @@ describe('registerWriteTools', () => {
     })
     expect(options.body).not.toHaveProperty('project')
     expect(options.headers?.['X-Silent-Write']).toBe('1')
+  })
+
+  // #398: `kind` used to be a required enum member; the server now falls
+  // back to the project type when it is left out.
+  it('create_shoot accepts no kind at all', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({
+      name: 'create_shoot',
+      arguments: { project: 'project_public_id', date: '2019-07-06' },
+    })
+
+    expect(post.mock.calls[0][1]).toMatchObject({ body: { date: '2019-07-06' } })
+    expect((post.mock.calls[0][1] as { body: Record<string, unknown> }).body).not.toHaveProperty('kind')
+  })
+
+  // #398: the funnel's own stages, not a fixed six — a studio-defined stage
+  // used to be rejected before the request ever reached the API.
+  it('advance_lead_stage accepts a stage outside the old fixed enum', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({ name: 'advance_lead_stage', arguments: { lead: 'lead_abc', stage: 'follow_up' } })
+
+    expect(post.mock.calls[0][1]).toMatchObject({ body: { stage: 'follow_up' } })
+  })
+
+  // #398: LeadOutcome::Closed exists on the API and was missing here.
+  it('close_lead accepts the closed outcome', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({ name: 'close_lead', arguments: { lead: 'lead_abc', outcome: 'closed', reason: 'Doppelt erfasst' } })
+
+    expect(post.mock.calls[0][1]).toMatchObject({ body: { outcome: 'closed' } })
+  })
+
+  // #398: role is free text on the API, the same as the admin screen.
+  it('add_project_contact accepts a role outside the old fixed enum', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({ name: 'add_project_contact', arguments: { project: 'p1', name: 'Pastor Klein', role: 'Trauredner' } })
+
+    expect(post.mock.calls[0][1]).toMatchObject({ body: { role: 'Trauredner' } })
   })
 
   it('set_project_fields PATCHes the values', async () => {

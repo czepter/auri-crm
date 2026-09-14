@@ -77,8 +77,7 @@ function writeHeaders(tool: string, payload: Record<string, unknown>, silent: bo
 
 const leadSourceEnum = ['referral', 'website', 'instagram', 'wedding_fair', 'other'] as const
 const captureChannelEnum = ['phone', 'email', 'in_person', 'other'] as const
-const leadStageEnum = ['new', 'contacted', 'quote_sent', 'quote_accepted', 'contract_sent', 'booked'] as const
-const leadOutcomeEnum = ['lost', 'declined'] as const
+const leadOutcomeEnum = ['lost', 'declined', 'closed'] as const
 
 const leadFields = {
   contact_id: z.string().length(24).nullish().describe('CUID2 of an existing contact, if reusing one'),
@@ -94,12 +93,20 @@ const leadFields = {
   source: z.enum(leadSourceEnum),
   source_other: z.string().max(120).nullish().describe("What 'other' actually was, e.g. the platform the inquiry came from. Only kept beside source: other."),
   captured_via: z.enum(captureChannelEnum),
+  captured_via_other: z.string().max(120).nullish().describe("What 'other' actually was. Only kept beside captured_via: other."),
   date: z.string().nullish().describe('YYYY-MM-DD'),
   inquiry_text: z.string().max(10000).nullish(),
   captured_at: z
     .string()
     .nullish()
     .describe('When the inquiry reached the studio, for one entered after the fact. ISO 8601 or YYYY-MM-DD, never in the future. Defaults to now.'),
+  type_other: z.string().max(120).nullish().describe("What 'other' actually was. Only kept beside type: other."),
+  referred_by_contact_id: z.string().length(24).nullish().describe('CUID2 of the contact who referred this inquiry, for source: referral'),
+  call_time: z.string().nullish().describe('HH:MM, first shoot'),
+  end_time: z.string().nullish().describe('HH:MM, after call_time'),
+  venue_name: z.string().max(255).nullish(),
+  venue_city: z.string().max(255).nullish(),
+  fields: z.record(z.string(), z.unknown()).optional().describe("The project type's own fields — see list_project_types."),
 }
 
 function registerCaptureLead(server: McpServer, clientFor: ApiClientFactory): void {
@@ -114,8 +121,10 @@ function registerCaptureLead(server: McpServer, clientFor: ApiClientFactory): vo
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     async ({ silent, ...args }, extra) => {
+      // Scramble reads `fields`'s `array` rule as `string[]` — see
+      // set_project_fields's own comment on this surface's generated types.
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads', {
-        body: args,
+        body: args as never,
         headers: writeHeaders('capture_lead', args, silent),
       })
 
@@ -164,7 +173,7 @@ function registerAdvanceLeadStage(server: McpServer, clientFor: ApiClientFactory
       description: "Move a lead to a new stage in the sales funnel (Lead.stage), the same transition the board's drag makes.",
       inputSchema: {
         lead: z.string().describe('The lead public id'),
-        stage: z.enum(leadStageEnum),
+        stage: z.string().describe('The stage key in the sales funnel — see list_leads or pipeline_snapshot'),
         entered_at: z
           .string()
           .nullish()
@@ -219,7 +228,7 @@ function registerCloseLead(server: McpServer, clientFor: ApiClientFactory): void
     {
       title: 'Close lead',
       description:
-        "End the pursuit. `lost` is the client's decision, `declined` the studio's — the two are counted apart, so pick the one that happened. The stage is left alone: which stage a lead died in is what the funnel is measured on. Its open shoots are cancelled with it. Reversible with reopen_lead, which takes those absagen back too.",
+        "End the pursuit. `lost` is the client's decision, `declined` the studio's, `closed` neither — the three are counted apart, so pick the one that happened. The stage is left alone: which stage a lead died in is what the funnel is measured on. Its open shoots are cancelled with it. Reversible with reopen_lead, which takes those absagen back too.",
       inputSchema: {
         lead: z.string().describe('The lead public id'),
         outcome: z.enum(leadOutcomeEnum),
@@ -276,10 +285,10 @@ function registerCreateShoot(server: McpServer, clientFor: ApiClientFactory): vo
     {
       title: 'Create a shoot',
       description:
-        'Add a shooting day to a project. The first one already exists — capture_lead makes it out of the inquiry date — so this is the second and every one after it: the Feier of a wedding split across two days, an Engagement-Shooting ahead of it, a second portrait session. Leave `date` empty for a day that is agreed but not dated.',
+        'Add a shooting day to a project. The first one already exists — capture_lead makes it out of the inquiry date — so this is the second and every one after it: the Feier of a wedding split across two days, an Engagement-Shooting ahead of it, a second portrait session. Leave `date` empty for a day that is agreed but not dated. Leave `kind` empty to take the project type\'s name.',
       inputSchema: {
         project: z.string().describe('The project public id'),
-        kind: z.string().max(255),
+        kind: z.string().max(255).nullish(),
         label: z.string().max(255).nullish().describe('What this day is called on the project screen, where the kind alone is ambiguous'),
         date: z.string().nullish().describe('YYYY-MM-DD'),
         call_time: z.string().nullish().describe('HH:MM'),
@@ -507,11 +516,13 @@ function registerAddProjectContact(server: McpServer, clientFor: ApiClientFactor
         name: z.string().max(255).nullish(),
         email: z.string().email().max(255).nullish(),
         phone: z.string().max(64).nullish(),
-        role: z.enum(['partner', 'payer', 'planner', 'vendor']).nullish().describe('Defaults to partner'),
+        role: z.string().max(60).nullish().describe('Free text, e.g. Trauredner. Defaults to partner.'),
         ...silentField,
       },
-      // Attaching the same person in the same role twice leaves one link.
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+      // Attaching the same person in the same role twice leaves one link —
+      // but without contact_id or an email already on file, a repeat call
+      // makes a new Contact each time, so this is not idempotent overall.
+      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     async ({ project, silent, ...person }, extra) => {
       const { data, error } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/contacts', {
@@ -784,10 +795,16 @@ function registerAcceptQuote(server: McpServer, clientFor: ApiClientFactory): vo
   )
 }
 
+const portalPriceModeEnum = ['exact', 'from', 'on_request'] as const
+
 const packageFields = {
   name: z.string().max(255),
   description: z.string().max(2000).nullish(),
   is_active: z.boolean().optional().describe('False hides it from what a new quote can start from, leaving existing quotes alone'),
+  portal_offered: z.boolean().optional().describe('Offered to the client as a personal recommendation in the portal'),
+  portal_price_mode: z.enum(portalPriceModeEnum).optional().describe('exact: fixed price. from: a starting price. on_request: no price shown.'),
+  portal_requires_date: z.boolean().optional(),
+  project_type_key: z.string().nullish().describe('The project type key — see list_project_types. Required once portal_offered is set.'),
   items: z
     .array(
       z.object({

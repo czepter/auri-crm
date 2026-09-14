@@ -2718,13 +2718,6 @@
                                             "portal_offered": {
                                                 "type": "boolean"
                                             },
-                                            "portal_text": {
-                                                "type": [
-                                                    "string",
-                                                    "null"
-                                                ],
-                                                "maxLength": 255
-                                            },
                                             "portal_price_mode": {
                                                 "$ref": "#/components/schemas/PortalPriceMode"
                                             },
@@ -2870,13 +2863,6 @@
                                             },
                                             "portal_offered": {
                                                 "type": "boolean"
-                                            },
-                                            "portal_text": {
-                                                "type": [
-                                                    "string",
-                                                    "null"
-                                                ],
-                                                "maxLength": 255
                                             },
                                             "portal_price_mode": {
                                                 "$ref": "#/components/schemas/PortalPriceMode"
@@ -3063,14 +3049,7 @@
                                             "string",
                                             "null"
                                         ],
-                                        "description": "A wedding has many people attached with different roles: the couple books, a parent may pay, a planner needs the timeline. Modelling one Project with many typed contacts \u2014 rather than a Client with a date field \u2014 is what lets portrait and wedding work share a schema (vision \u00a73.1).\n",
-                                        "enum": [
-                                            "partner",
-                                            "payer",
-                                            "planner",
-                                            "vendor",
-                                            null
-                                        ]
+                                        "maxLength": 60
                                     }
                                 }
                             }
@@ -4262,14 +4241,17 @@
                     }
                 ],
                 "requestBody": {
-                    "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "type": "object",
                                 "properties": {
                                     "kind": {
-                                        "type": "string",
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "description": "Nullable, like the admin screen's own store \u2014 the project's\ntype names a default (Shoot::kindFor).",
                                         "maxLength": 255
                                     },
                                     "label": {
@@ -4319,10 +4301,7 @@
                                         ],
                                         "format": "date-time"
                                     }
-                                },
-                                "required": [
-                                    "kind"
-                                ]
+                                }
                             }
                         }
                     }
@@ -4911,13 +4890,6 @@
                     },
                     "portal_offered": {
                         "type": "boolean"
-                    },
-                    "portal_text": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "maxLength": 255
                     },
                     "portal_price_mode": {
                         "$ref": "#/components/schemas/PortalPriceMode"

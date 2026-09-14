@@ -40,7 +40,9 @@ class ShootController extends Controller
     public function store(Request $request, Project $project): JsonResponse
     {
         $validated = $request->validate([
-            'kind' => ['required', 'string', 'max:255'],
+            // Nullable, like the admin screen's own store — the project's
+            // type names a default (Shoot::kindFor).
+            'kind' => ['nullable', 'string', 'max:255'],
             'label' => ['nullable', 'string', 'max:255'],
             'date' => ['nullable', 'date'],
             'call_time' => ['nullable', 'date_format:H:i'],
@@ -50,7 +52,11 @@ class ShootController extends Controller
             'entered_at' => ['nullable', 'date', 'before_or_equal:now'],
         ]);
 
-        $shoot = $project->shoots()->create(Arr::except($validated, 'entered_at') + array_filter(['status_entered_at' => $validated['entered_at'] ?? null]));
+        $shoot = $project->shoots()->create(
+            Arr::except($validated, 'entered_at')
+            + ['kind' => $validated['kind'] ?? Shoot::kindFor($project->type)]
+            + array_filter(['status_entered_at' => $validated['entered_at'] ?? null])
+        );
         $shoot->setRelation('project', $project);
 
         return response()->json(['data' => ShootReadData::fromModel($shoot)], 201);
