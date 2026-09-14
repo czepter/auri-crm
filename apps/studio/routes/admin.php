@@ -802,6 +802,11 @@ Route::middleware('audience:staff')->group(function () {
         Route::get('/raten/{installment}/rechnung', [PaymentInstallmentController::class, 'downloadInvoice'])
             ->name('payment-installments.invoice');
 
+        // #408: the only way back out of an issued invoice. See CancelInvoice
+        // for why the number stays where it is.
+        Route::post('/raten/{installment}/storno', [PaymentInstallmentController::class, 'cancelInvoice'])
+            ->name('payment-installments.cancel-invoice');
+
         Route::post('/auftraege/{project}/shootings', [ShootController::class, 'store'])
             ->name('shoots.store');
         Route::delete('/shootings/{shoot}', [ShootController::class, 'destroy'])

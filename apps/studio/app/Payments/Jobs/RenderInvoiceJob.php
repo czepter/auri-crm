@@ -46,6 +46,12 @@ class RenderInvoiceJob implements ShouldQueue
             return;
         }
 
+        // #408: a Storno that beat the render leaves nothing worth producing —
+        // the number is retired and no client is waiting for the document.
+        if ($installment->isCancelled()) {
+            return;
+        }
+
         $template = $installment->invoiceTemplate;
         $project = $installment->plan?->job?->project;
 
