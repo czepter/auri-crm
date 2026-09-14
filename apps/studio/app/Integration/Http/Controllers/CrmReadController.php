@@ -15,6 +15,7 @@ use App\Integration\Data\ContactReadData;
 use App\Integration\Data\JobReadData;
 use App\Integration\Data\LeadReadData;
 use App\Integration\Data\ProjectDetailReadData;
+use App\Integration\Data\ProjectMoneyReadData;
 use App\Integration\Data\ProjectReadData;
 use App\Integration\Data\ShootReadData;
 use Illuminate\Database\Eloquent\Builder;
@@ -70,6 +71,12 @@ class CrmReadController extends Controller
     public function project(Project $project): JsonResponse
     {
         return response()->json(['data' => ProjectDetailReadData::fromModel($project)]);
+    }
+
+    /** #402: the payment plan and contracts ProjectDetailReadData leaves out. */
+    public function money(Project $project): JsonResponse
+    {
+        return response()->json(['data' => ProjectMoneyReadData::fromModel($project)]);
     }
 
     /**

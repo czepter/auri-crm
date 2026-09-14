@@ -687,6 +687,10 @@ outcome: string | null,
 lostReason: string | null,
 lostAt: string | null,
 };
+export type ProjectMoneyReadData = {
+paymentPlan: App.Payments.Data.PaymentPlanData | null,
+contracts: App.Contracts.Data.ContractData[],
+};
 export type ProjectReadData = {
 id: string,
 name: string,

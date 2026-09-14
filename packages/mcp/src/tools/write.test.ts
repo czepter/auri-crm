@@ -60,6 +60,7 @@ describe('registerWriteTools', () => {
 
     expect(tools.map((tool) => tool.name).sort()).toEqual([
       'accept_quote',
+      'add_contract_signer',
       'add_internal_note',
       'add_message',
       'add_project_contact',
@@ -70,20 +71,31 @@ describe('registerWriteTools', () => {
       'capture_lead',
       'capture_leads_bulk',
       'close_lead',
+      'create_contract',
       'create_package',
+      'create_payment_plan',
       'create_quote',
       'create_shoot',
       'delete_internal_note',
       'delete_package',
       'delete_project',
+      'issue_invoice',
+      'record_payment',
+      'remind_contract_signer',
+      'remove_contract_signer',
       'reopen_lead',
       'revise_quote',
+      'send_contract',
       'send_quote',
+      'set_contract_deadline',
+      'set_payment_reminders',
       'set_project_fields',
       'uncancel_shoot',
+      'update_contract',
       'update_internal_note',
       'update_lead',
       'update_package',
+      'update_payment_plan',
       'update_quote',
     ])
   })
@@ -117,12 +129,20 @@ describe('registerWriteTools', () => {
       'delete_internal_note',
       'delete_package',
       'delete_project',
+      'issue_invoice',
+      'record_payment',
+      'remove_contract_signer',
       'revise_quote',
+      'send_contract',
       'send_quote',
+      'set_contract_deadline',
+      'set_payment_reminders',
       'set_project_fields',
+      'update_contract',
       'update_internal_note',
       'update_lead',
       'update_package',
+      'update_payment_plan',
       'update_quote',
     ])
   })
@@ -156,6 +176,59 @@ describe('registerWriteTools', () => {
     expect(patch.mock.calls[0]).toMatchObject(['/packages/{package}', { params: { path: { package: 'pkg_1' } }, body: { is_active: false } }])
     expect(del.mock.calls[0][0]).toBe('/packages/{package}')
     expect(JSON.stringify(deleted.content)).toContain('Deleted package pkg_1.')
+  })
+
+  it('creates a payment plan on a project with due dates as installments', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({
+      name: 'create_payment_plan',
+      arguments: { project: 'p1', total: 200000, installments: [{ due_on: '2026-10-01' }, { due_on: '2026-11-01' }] },
+    })
+
+    expect(post.mock.calls[0][0]).toBe('/projects/{project}/payment-plan')
+    expect(post.mock.calls[0][1]).toMatchObject({
+      params: { path: { project: 'p1' } },
+      body: { total: 200000, installments: [{ due_on: '2026-10-01' }, { due_on: '2026-11-01' }] },
+    })
+  })
+
+  it('records a payment for an installment by its id', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({
+      name: 'record_payment',
+      arguments: { installment: 'inst_1', paid_on: '2026-09-10', method: 'transfer', reference: 'Müller' },
+    })
+
+    expect(post.mock.calls[0][0]).toBe('/payment-installments/{installment}/paid')
+    expect(post.mock.calls[0][1]).toMatchObject({
+      params: { path: { installment: 'inst_1' } },
+      body: { paid_on: '2026-09-10', method: 'transfer', reference: 'Müller' },
+    })
+  })
+
+  it('creates a contract from a template, sends it, and manages a signer', async () => {
+    const { post, patch, del, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({ name: 'create_contract', arguments: { project: 'p1', template: 'tpl_1' } })
+    await client.callTool({ name: 'send_contract', arguments: { contract: 'c1' } })
+    await client.callTool({ name: 'set_contract_deadline', arguments: { contract: 'c1', sign_deadline_on: '2026-12-01' } })
+    await client.callTool({ name: 'add_contract_signer', arguments: { contract: 'c1', contact: 'contact_1' } })
+    const removed = await client.callTool({ name: 'remove_contract_signer', arguments: { signer: 'signer_1' } })
+
+    expect(post.mock.calls[0]).toMatchObject(['/projects/{project}/contracts', { params: { path: { project: 'p1' } }, body: { template: 'tpl_1' } }])
+    expect(post.mock.calls[1]).toMatchObject(['/contracts/{contract}/send', { params: { path: { contract: 'c1' } } }])
+    expect(patch.mock.calls[0]).toMatchObject(['/contracts/{contract}/deadline', { params: { path: { contract: 'c1' } }, body: { sign_deadline_on: '2026-12-01' } }])
+    expect(post.mock.calls[2]).toMatchObject(['/contracts/{contract}/signers', { params: { path: { contract: 'c1' } }, body: { contact: 'contact_1' } }])
+    expect(del.mock.calls[0][0]).toBe('/contract-signers/{signer}')
+    expect(JSON.stringify(removed.content)).toContain('Removed signer signer_1.')
   })
 
   it('calls the API with an Idempotency-Key header', async () => {
