@@ -88,6 +88,16 @@ selectable: boolean,
 selected: boolean,
 addOnPrice: number | null,
 };
+export type ServiceSuggestionData = {
+id: string,
+contact: string,
+package: string,
+packageName: string,
+note: string | null,
+author: string | null,
+suggestedOn: string,
+live: boolean,
+};
 }
 namespace Enums {
 export type PortalPriceMode = 'exact' | 'from' | 'on_request';
@@ -623,6 +633,46 @@ id: string,
 name: string,
 email: string | null,
 phone: string | null,
+street: string | null,
+postcode: string | null,
+city: string | null,
+updatedAt: string,
+};
+export type CrewAssignmentReadData = {
+id: string,
+shootId: string,
+userId: string,
+userName: string,
+role: string,
+};
+export type GalleryDetailData = {
+id: string,
+title: string,
+projectId: string | null,
+currentVersion: number | null,
+draftAssetCount: number,
+status: string,
+updatedAt: string,
+slug: string,
+url: string,
+isExternal: boolean,
+externalUrl: string | null,
+expiresAt: string | null,
+downloadsEnabled: boolean,
+listsEnabled: boolean,
+commentsEnabled: boolean,
+favoriteCount: number,
+downloadCount: number,
+commentCount: number,
+viewCount: number,
+};
+export type GalleryReadData = {
+id: string,
+title: string,
+projectId: string | null,
+currentVersion: number | null,
+draftAssetCount: number,
+status: string,
 updatedAt: string,
 };
 export type JobReadData = {
@@ -635,10 +685,14 @@ updatedAt: string,
 export type LeadReadData = {
 id: string,
 projectId: string,
+projectName: string,
 source: string,
 sourceOther: string | null,
 stage: string,
+stageEnteredAt: string | null,
 isLost: boolean,
+outcome: string | null,
+lostReason: string | null,
 capturedAt: string,
 lostAt: string | null,
 updatedAt: string,
@@ -648,6 +702,9 @@ id: string,
 name: string,
 email: string | null,
 phone: string | null,
+street: string | null,
+postcode: string | null,
+city: string | null,
 role: string,
 updatedAt: string,
 };
@@ -660,6 +717,8 @@ portalVisible: boolean,
 fields: object,
 updatedAt: string,
 lead: App.Integration.Data.ProjectLeadReadData | null,
+job: App.Integration.Data.JobReadData | null,
+openTaskCount: number,
 contacts: App.Integration.Data.ProjectContactReadData[],
 shoots: App.Integration.Data.ShootReadData[],
 quotes: App.Quotes.Data.QuoteData[],
@@ -718,9 +777,28 @@ endTime: string | null,
 venueName: string | null,
 venueCity: string | null,
 status: string,
+isPrimary: boolean,
 cancelledAt: string | null,
 cancelledReason: string | null,
+crew: App.Crm.Data.CrewMemberData[],
 updatedAt: string,
+};
+export type ShotListItemReadData = {
+id: string,
+label: string,
+checkedOff: boolean,
+};
+export type StaffReadData = {
+id: string,
+name: string,
+role: string,
+};
+export type StudioSettingsReadData = {
+vatMode: string,
+vatRate: number,
+quoteValidityDays: number,
+paymentTermDays: number,
+depositPercentage: number,
 };
 export type TaskReadData = {
 id: string,
@@ -735,6 +813,14 @@ dependsOnTaskId: string | null,
 isBlocked: boolean,
 assigneeId: string | null,
 updatedAt: string,
+};
+export type TimelineEntryReadData = {
+id: string,
+time: string,
+title: string,
+location: string | null,
+note: string | null,
+isTransit: boolean,
 };
 }
 namespace Enums {
