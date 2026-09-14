@@ -4,10 +4,12 @@ namespace App\Payments\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Payments\Actions\CancelInvoice;
+use App\Payments\Actions\IssueCreditNote;
 use App\Payments\Actions\IssueInvoice;
 use App\Payments\Actions\MarkInstallmentPaid;
 use App\Payments\Enums\CancellationKind;
 use App\Payments\Enums\SettledVia;
+use App\Payments\Models\CreditNote;
 use App\Payments\Models\PaymentInstallment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -81,6 +83,33 @@ class PaymentInstallmentController extends Controller
         );
 
         return back();
+    }
+
+    /**
+     * #409. The euro amount arrives as the client typed it and is converted
+     * here, the same boundary the payment-plan form already crosses.
+     */
+    public function issueCreditNote(Request $request, PaymentInstallment $installment, IssueCreditNote $issue): RedirectResponse
+    {
+        $this->authorize('managePaymentPlan', $installment->plan->job->project);
+
+        $validated = $request->validate([
+            'amount' => ['required', 'integer', 'min:1'],
+            'reason' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $issue($installment, $validated['amount'], $validated['reason'], auth('staff')->user());
+
+        return back();
+    }
+
+    public function downloadCreditNote(PaymentInstallment $installment, CreditNote $creditNote): StreamedResponse
+    {
+        $this->authorize('managePaymentPlan', $installment->plan->job->project);
+
+        abort_if($creditNote->payment_installment_id !== $installment->id || $creditNote->pdf_path === null, 404);
+
+        return Storage::disk('local')->response($creditNote->pdf_path, "gutschrift-{$creditNote->number}.pdf");
     }
 
     /**

@@ -869,7 +869,13 @@
     "stornoKindCorrection": "Korrektur",
     "stornoKindVoid": "Wegfall",
     "stornoReason": "Grund",
-    "stornoSubmit": "Stornieren"
+    "stornoSubmit": "Stornieren",
+    "creditNote": "Gutschrift",
+    "creditNoteTitle": "Gutschrift ausstellen",
+    "creditNoteAmount": "Betrag",
+    "creditNoteReason": "Grund",
+    "creditNoteSubmit": "Ausstellen",
+    "creditNoteRow": "Gutschrift {number}"
   },
   "documentTemplates": {
     "title": "Dokumentvorlagen",
@@ -1446,6 +1452,7 @@
     "transferReference": "Verwendungszweck",
     "transferReferencePending": "Rechnung folgt.",
     "invoiceDownload": "Rechnung {number}",
+    "creditNoteDownload": "Gutschrift {number}",
     "payNowTitle": "Kartenzahlung",
     "payNowButton": "Jetzt zahlen",
     "payNowSuccess": "Zahlung eingegangen.",

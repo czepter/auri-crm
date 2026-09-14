@@ -16,6 +16,7 @@ import { Label } from '@/ui/label'
 import { useI18n } from 'vue-i18n'
 import QuoteActions from '@/admin/components/quote/QuoteActions.vue'
 import InstallmentStornoDialog from '@/admin/components/InstallmentStornoDialog.vue'
+import CreditNoteDialog from '@/admin/components/CreditNoteDialog.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -280,6 +281,27 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
         v-if="canManagePaymentPlan && installment.status === 'invoiced'"
         :installment-id="installment.id"
       />
+      <CreditNoteDialog
+        v-if="canManagePaymentPlan && installment.status === 'paid'"
+        :installment-id="installment.id"
+        :amount="installment.amount"
+      />
+    </div>
+
+    <div
+      v-for="note in paymentPlan?.installments.flatMap((installment) => installment.creditNotes.map((note) => ({ note, installment }))) ?? []"
+      :key="note.note.id"
+      class="flex items-center gap-3 py-[9px] text-[13px] text-ink-2"
+    >
+      <span class="w-[110px] flex-none">{{ dayWithWeekday(note.note.issuedOn) }}</span>
+      <a
+        v-if="note.note.hasDocument"
+        class="flex-1"
+        :href="`/raten/${note.installment.id}/gutschrift/${note.note.id}`"
+        target="_blank"
+      >{{ $t('payments.creditNoteRow', { number: note.note.number }) }}</a>
+      <span v-else class="flex-1">{{ $t('payments.creditNoteRow', { number: note.note.number }) }}</span>
+      <span class="w-[110px] flex-none text-right tabular-nums">−{{ formatEuros(note.note.amount) }}</span>
     </div>
 
     <form v-if="!paymentPlan && canManagePaymentPlan" class="mt-2 grid grid-cols-2 gap-x-5 gap-y-4" @submit.prevent="createPlan">

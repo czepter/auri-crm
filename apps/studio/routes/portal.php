@@ -228,6 +228,12 @@ Route::middleware('portal.maintenance')->group(function () {
         Route::get('/projekte/{project}/zahlungen/{installment}/rechnung', [PaymentController::class, 'invoice'])
             ->middleware('portal.capability:payment_status')
             ->name('portal.payments.invoice');
+
+        // #409: the Gutschrift, behind the same gate as the invoice it
+        // corrects.
+        Route::get('/projekte/{project}/zahlungen/{installment}/gutschrift/{creditNote}', [PaymentController::class, 'creditNote'])
+            ->middleware('portal.capability:payment_status')
+            ->name('portal.payments.credit-note');
     });
 });
 

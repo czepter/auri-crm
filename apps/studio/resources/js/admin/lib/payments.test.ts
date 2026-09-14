@@ -18,6 +18,7 @@ function installment(overrides: Partial<App.Payments.Data.PaymentInstallmentData
     invoiceNumber: null,
     invoicedOn: null,
     hasInvoiceDocument: false,
+    creditNotes: [],
     ...overrides,
   }
 }

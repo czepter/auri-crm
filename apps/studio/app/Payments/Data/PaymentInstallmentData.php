@@ -3,6 +3,7 @@
 namespace App\Payments\Data;
 
 use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Models\CreditNote;
 use App\Payments\Models\PaymentInstallment;
 use Spatie\LaravelData\Data;
 use Spatie\TypeScriptTransformer\Attributes\TypeScript;
@@ -47,6 +48,11 @@ class PaymentInstallmentData extends Data
         public ?string $invoiceNumber,
         public ?string $invoicedOn,
         public bool $hasInvoiceDocument,
+        // #409: every Gutschrift written against this rate. `hasDocument` is
+        // false between issue and render, for the same reason
+        // hasInvoiceDocument is.
+        /** @var list<array{id: string, number: string, amount: int, issuedOn: string, hasDocument: bool}> */
+        public array $creditNotes,
     ) {}
 
     /**
@@ -73,6 +79,13 @@ class PaymentInstallmentData extends Data
             invoiceNumber: $installment->invoice_number,
             invoicedOn: $installment->invoiced_at?->format('Y-m-d'),
             hasInvoiceDocument: $installment->invoice_path !== null,
+            creditNotes: $installment->creditNotes->map(fn (CreditNote $note) => [
+                'id' => $note->public_id,
+                'number' => $note->number,
+                'amount' => $note->amount,
+                'issuedOn' => $note->issued_at->format('Y-m-d'),
+                'hasDocument' => $note->pdf_path !== null,
+            ])->all(),
         );
     }
 }

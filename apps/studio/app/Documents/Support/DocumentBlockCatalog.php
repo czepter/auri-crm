@@ -26,17 +26,17 @@ class DocumentBlockCatalog
      * @var array<string, array{group: string, label: string, types: list<string>, inline?: bool}>
      */
     private const BLOCKS = [
-        'paragraph' => ['group' => 'text', 'label' => 'Absatz', 'types' => ['contract', 'quote', 'invoice', 'mail']],
-        'header' => ['group' => 'text', 'label' => 'Überschrift', 'types' => ['contract', 'quote', 'invoice', 'mail']],
-        'list' => ['group' => 'text', 'label' => 'Liste', 'types' => ['contract', 'quote', 'invoice', 'mail']],
-        'quote' => ['group' => 'text', 'label' => 'Zitat', 'types' => ['contract', 'quote', 'invoice', 'mail']],
-        'delimiter' => ['group' => 'text', 'label' => 'Trenner', 'types' => ['contract', 'quote', 'invoice', 'mail']],
-        'table' => ['group' => 'layout', 'label' => 'Tabelle', 'types' => ['contract', 'quote', 'invoice', 'mail']],
-        'columns' => ['group' => 'layout', 'label' => '2 Spalten', 'types' => ['contract', 'quote', 'invoice']],
-        'image' => ['group' => 'layout', 'label' => 'Bild', 'types' => ['contract', 'quote', 'invoice', 'mail']],
-        'callout' => ['group' => 'layout', 'label' => 'Hinweis', 'types' => ['contract', 'quote', 'invoice', 'mail']],
-        'spacer' => ['group' => 'layout', 'label' => 'Abstand', 'types' => ['contract', 'quote', 'invoice']],
-        'pagebreak' => ['group' => 'layout', 'label' => 'Seitenumbruch', 'types' => ['contract', 'quote', 'invoice']],
+        'paragraph' => ['group' => 'text', 'label' => 'Absatz', 'types' => ['contract', 'quote', 'invoice', 'credit_note', 'mail']],
+        'header' => ['group' => 'text', 'label' => 'Überschrift', 'types' => ['contract', 'quote', 'invoice', 'credit_note', 'mail']],
+        'list' => ['group' => 'text', 'label' => 'Liste', 'types' => ['contract', 'quote', 'invoice', 'credit_note', 'mail']],
+        'quote' => ['group' => 'text', 'label' => 'Zitat', 'types' => ['contract', 'quote', 'invoice', 'credit_note', 'mail']],
+        'delimiter' => ['group' => 'text', 'label' => 'Trenner', 'types' => ['contract', 'quote', 'invoice', 'credit_note', 'mail']],
+        'table' => ['group' => 'layout', 'label' => 'Tabelle', 'types' => ['contract', 'quote', 'invoice', 'credit_note', 'mail']],
+        'columns' => ['group' => 'layout', 'label' => '2 Spalten', 'types' => ['contract', 'quote', 'invoice', 'credit_note']],
+        'image' => ['group' => 'layout', 'label' => 'Bild', 'types' => ['contract', 'quote', 'invoice', 'credit_note', 'mail']],
+        'callout' => ['group' => 'layout', 'label' => 'Hinweis', 'types' => ['contract', 'quote', 'invoice', 'credit_note', 'mail']],
+        'spacer' => ['group' => 'layout', 'label' => 'Abstand', 'types' => ['contract', 'quote', 'invoice', 'credit_note']],
+        'pagebreak' => ['group' => 'layout', 'label' => 'Seitenumbruch', 'types' => ['contract', 'quote', 'invoice', 'credit_note']],
 
         // Was ein Vertrag über Fließtext hinaus braucht. Die Zeilenbausteine
         // teilen sich ein Werkzeug (resources/js/admin/documents/blocks/
@@ -44,15 +44,15 @@ class DocumentBlockCatalog
         'clause' => ['group' => 'contract', 'label' => 'Klausel', 'types' => ['contract']],
         'signature' => ['group' => 'contract', 'label' => 'Unterschriften', 'types' => ['contract']],
         'checklist' => ['group' => 'contract', 'label' => 'Ankreuzliste', 'types' => ['contract', 'quote']],
-        'finePrint' => ['group' => 'contract', 'label' => 'Kleingedrucktes', 'types' => ['contract', 'quote', 'invoice']],
+        'finePrint' => ['group' => 'contract', 'label' => 'Kleingedrucktes', 'types' => ['contract', 'quote', 'invoice', 'credit_note']],
         'usageRights' => ['group' => 'contract', 'label' => 'Nutzungsrechte', 'types' => ['contract', 'quote']],
         'cancellation' => ['group' => 'contract', 'label' => 'Ausfallstaffel', 'types' => ['contract', 'quote']],
 
-        'lineItems' => ['group' => 'data', 'label' => 'Positionen', 'types' => ['quote', 'invoice']],
-        'paymentPlan' => ['group' => 'data', 'label' => 'Zahlungsplan', 'types' => ['contract', 'quote', 'invoice']],
+        'lineItems' => ['group' => 'data', 'label' => 'Positionen', 'types' => ['quote', 'invoice', 'credit_note']],
+        'paymentPlan' => ['group' => 'data', 'label' => 'Zahlungsplan', 'types' => ['contract', 'quote', 'invoice', 'credit_note']],
         'deliverables' => ['group' => 'data', 'label' => 'Lieferumfang', 'types' => ['contract', 'quote']],
         'schedule' => ['group' => 'data', 'label' => 'Ablaufplan', 'types' => ['contract', 'quote']],
-        'mergeField' => ['group' => 'data', 'label' => 'Feld', 'types' => ['contract', 'quote', 'invoice', 'mail'], 'inline' => true],
+        'mergeField' => ['group' => 'data', 'label' => 'Feld', 'types' => ['contract', 'quote', 'invoice', 'credit_note', 'mail'], 'inline' => true],
     ];
 
     /**

@@ -80,6 +80,22 @@ class MergeFieldVocabulary
         'invoice.vatNote' => 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.',
         'invoice.dueOn' => '29.08.2026',
         'invoice.paymentTerm' => 'Zahlbar bis 29.08.2026 ohne Abzug.',
+        // #409: the same figures with the sign reversed, plus the reference
+        // § 31 Abs. 5 UStDV asks for — a Gutschrift must point "spezifisch
+        // und eindeutig" at the invoice it corrects. No dueOn and no
+        // paymentTerm: nothing is owed on a credit note, it is paid out.
+        'creditNote.number' => 'GS-2026-3',
+        'creditNote.date' => '20.08.2026',
+        'creditNote.servicePeriod' => '14.06.2026',
+        'creditNote.description' => 'Hochzeitsreportage — 1. Rate',
+        'creditNote.reason' => 'Zweite Kamera nicht erbracht',
+        'creditNote.net' => '420,17 €',
+        'creditNote.vatRate' => '19 %',
+        'creditNote.vat' => '79,83 €',
+        'creditNote.gross' => '500,00 €',
+        'creditNote.vatNote' => 'Gemäß § 19 UStG wird keine Umsatzsteuer berechnet.',
+        'creditNote.invoiceNumber' => 'RE-2026-17',
+        'creditNote.invoiceDate' => '15.08.2026',
     ];
 
     /** @return list<string> Every documented dot-path, e.g. "project.name". */
