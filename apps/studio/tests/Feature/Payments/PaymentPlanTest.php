@@ -42,6 +42,21 @@ function signedContractJob(): Job
     return $project->job()->sole();
 }
 
+/** An installment with a number, a rendered PDF and a transfer already against it. */
+function issuedInstallment(PaymentPlan $plan, int $amount): PaymentInstallment
+{
+    return PaymentInstallment::factory()->for($plan, 'plan')->create([
+        'amount' => $amount,
+        'due_on' => '2026-09-01',
+        'sort_order' => 0,
+        'status' => PaymentInstallmentStatus::Paid,
+        'paid_on' => '2026-08-20',
+        'invoice_number' => 'RE-2026-0001',
+        'invoiced_at' => '2026-08-25 10:00:00',
+        'invoice_path' => 'invoices/re-2026-0001.pdf',
+    ]);
+}
+
 // --- PaymentInstallmentSplitter: the deterministic split -----------------
 
 it('splits a total evenly across installments, with any remainder cent landing on the LAST one', function () {
@@ -76,37 +91,6 @@ it('always produces exactly $count amounts summing to exactly $total, across man
         }
         expect(end($amounts))->toBe($base + ($total - $base * $count));
     }
-});
-
-// --- PaymentPlan::isEditable() --------------------------------------------
-
-it('is editable with no installments, or with only scheduled or paid ones', function () {
-    $plan = PaymentPlan::factory()->create(['total' => 0]);
-    expect($plan->isEditable())->toBeTrue();
-
-    $plan->update(['total' => 200]);
-    PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 100, 'status' => PaymentInstallmentStatus::Scheduled, 'sort_order' => 0]);
-    PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 100, 'status' => PaymentInstallmentStatus::Paid, 'sort_order' => 1]);
-
-    expect($plan->fresh()->isEditable())->toBeTrue();
-});
-
-it('stops being editable once its FIRST installment, by sort order, is invoiced', function () {
-    // Nothing in M-03 ever writes this status — the guard is exercised here
-    // directly, defensively, ahead of M-04's real invoicing.
-    $plan = PaymentPlan::factory()->create(['total' => 200]);
-    PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 100, 'status' => PaymentInstallmentStatus::Invoiced, 'sort_order' => 0]);
-    PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 100, 'status' => PaymentInstallmentStatus::Scheduled, 'sort_order' => 1]);
-
-    expect($plan->fresh()->isEditable())->toBeFalse();
-});
-
-it('stays editable when a LATER installment is invoiced but the first is not', function () {
-    $plan = PaymentPlan::factory()->create(['total' => 200]);
-    PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 100, 'status' => PaymentInstallmentStatus::Scheduled, 'sort_order' => 0]);
-    PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 100, 'status' => PaymentInstallmentStatus::Invoiced, 'sort_order' => 1]);
-
-    expect($plan->fresh()->isEditable())->toBeTrue();
 });
 
 // --- CreatePaymentPlan -----------------------------------------------------
@@ -172,7 +156,7 @@ it('refuses a second plan for a job that already has one', function () {
 
 // --- UpdatePaymentPlan: wholesale replace, atomically ----------------------
 
-it('replaces total and installments wholesale, orphaning no old row', function () {
+it('drops an unissued row the payload does not name and creates the ones it adds', function () {
     $plan = PaymentPlan::factory()->create(['total' => 200]);
     $old = PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 200, 'sort_order' => 0]);
 
@@ -203,14 +187,67 @@ it('is a real atomic transaction: the intermediate empty-installments state neve
     expect(fn () => DB::statement('SET CONSTRAINTS ALL IMMEDIATE'))->not->toThrow(QueryException::class);
 });
 
-it('refuses to update a plan once it is no longer editable', function () {
-    $plan = PaymentPlan::factory()->create(['total' => 100]);
-    PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 100, 'status' => PaymentInstallmentStatus::Invoiced, 'sort_order' => 0]);
+it('updates a named row in place, keeping the issued one whole', function () {
+    // The #407 case: the plan reopens after the first installment is paid,
+    // and the next edit must not take its number, its PDF or its payment
+    // with it.
+    $plan = PaymentPlan::factory()->create(['total' => 300]);
+    $issued = issuedInstallment($plan, 100);
+    $later = PaymentInstallment::factory()->for($plan, 'plan')
+        ->create(['amount' => 200, 'due_on' => '2026-10-01', 'sort_order' => 1]);
 
-    app(UpdatePaymentPlan::class)($plan, 200, [
-        ['amount' => 200, 'due_on' => '2026-09-01', 'status' => 'scheduled'],
+    app(UpdatePaymentPlan::class)($plan, 400, [
+        ['public_id' => $issued->public_id, 'amount' => 100, 'due_on' => '2026-09-15', 'status' => 'paid'],
+        ['public_id' => $later->public_id, 'amount' => 300, 'due_on' => '2026-11-01', 'status' => 'scheduled'],
     ]);
-})->throws(HttpException::class);
+
+    $issued->refresh();
+
+    expect($issued->invoice_number)->toBe('RE-2026-0001')
+        ->and($issued->invoice_path)->toBe('invoices/re-2026-0001.pdf')
+        ->and($issued->amount)->toBe(100)
+        ->and($issued->status)->toBe(PaymentInstallmentStatus::Paid)
+        ->and($issued->paid_on->format('Y-m-d'))->toBe('2026-08-20')
+        ->and($issued->due_on->format('Y-m-d'))->toBe('2026-09-15')
+        ->and($later->fresh()->amount)->toBe(300)
+        ->and($plan->fresh()->total)->toBe(400);
+});
+
+it('refuses to change an issued installment\'s amount, whoever writes it', function () {
+    $plan = PaymentPlan::factory()->create(['total' => 100]);
+    $issued = issuedInstallment($plan, 100);
+
+    expect(fn () => $issued->update(['amount' => 200]))->toThrow(HttpException::class)
+        ->and(fn () => $issued->update(['title' => 'Restbetrag']))->toThrow(HttpException::class)
+        ->and($issued->fresh()->amount)->toBe(100);
+});
+
+it('audits a moved due date on an issued installment', function () {
+    $plan = PaymentPlan::factory()->create(['total' => 100]);
+    $issued = issuedInstallment($plan, 100);
+
+    app(UpdatePaymentPlan::class)($plan, 100, [
+        ['public_id' => $issued->public_id, 'amount' => 100, 'due_on' => '2026-12-24', 'status' => 'paid'],
+    ]);
+
+    $row = AuditLog::where('event', 'payments.installment.due_on_changed')->sole();
+
+    expect($row->subject)->toBe($issued->public_id)
+        ->and($row->context['from'])->toBe('2026-09-01')
+        ->and($row->context['to'])->toBe('2026-12-24');
+});
+
+it('refuses to drop an issued installment out of the plan', function () {
+    $plan = PaymentPlan::factory()->create(['total' => 300]);
+    $issued = issuedInstallment($plan, 100);
+    PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 200, 'sort_order' => 1]);
+
+    expect(fn () => app(UpdatePaymentPlan::class)($plan, 200, [
+        ['amount' => 200, 'due_on' => '2026-10-01', 'status' => 'scheduled'],
+    ]))->toThrow(HttpException::class);
+
+    expect($issued->fresh())->not->toBeNull();
+});
 
 it('logs the update', function () {
     $plan = PaymentPlan::factory()->create(['total' => 200]);
@@ -361,6 +398,31 @@ it('updates a plan through the admin screen, rejecting a submission whose instal
 
     expect($plan->fresh()->total)->toBe(300)
         ->and($plan->installments()->sum('amount'))->toBe(300);
+});
+
+it('sums an issued row at its stored amount, and takes no status for it', function () {
+    // The form sends neither an editable amount nor a status for an issued
+    // row, so the plan total is checked against what the invoice says.
+    $project = Project::factory()->create();
+    $job = Job::factory()->for($project)->create();
+    $plan = PaymentPlan::factory()->for($job)->create(['total' => 300]);
+    $issued = issuedInstallment($plan, 100);
+    PaymentInstallment::factory()->for($plan, 'plan')->create(['amount' => 200, 'sort_order' => 1]);
+
+    $this->actingAs(staffMember(StaffRole::Owner), 'staff')
+        ->patch("/zahlungsplaene/{$plan->public_id}", [
+            'total' => 500,
+            'installments' => [
+                ['public_id' => $issued->public_id, 'due_on' => '2026-09-01', 'amount' => 0],
+                ['due_on' => '2026-10-01', 'amount' => 400, 'status' => 'scheduled'],
+            ],
+        ])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    expect($plan->fresh()->total)->toBe(500)
+        ->and($issued->fresh()->status)->toBe(PaymentInstallmentStatus::Paid)
+        ->and($plan->installments()->count())->toBe(2);
 });
 
 it('refuses a role without ManageContracts, and lets one with it through', function (StaffRole $role, int $status) {

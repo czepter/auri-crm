@@ -877,7 +877,6 @@ export type PaymentPlanData = {
 id: string,
 total: number,
 openTotal: number,
-isEditable: boolean,
 reference: string | null,
 clientRemindersEnabled: boolean,
 installments: App.Payments.Data.PaymentInstallmentData[],

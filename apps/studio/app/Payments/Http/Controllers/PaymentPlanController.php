@@ -39,21 +39,26 @@ class PaymentPlanController extends Controller
         $validator = Validator::make($request->all(), [
             'total' => ['required', 'integer', 'min:0'],
             'installments' => ['required', 'array', 'min:1'],
+            // Absent for a row the form has just added; names the row to
+            // update in place for every row that already exists (#407).
+            'installments.*.public_id' => ['nullable', 'string'],
             'installments.*.due_on' => ['required', 'date'],
             'installments.*.amount' => ['required', 'integer', 'min:0'],
-            // 'invoiced' is never a valid submission from this form — nothing
-            // in M-03 reaches it, and PaymentPlan::isEditable() is the guard
-            // that stops editing once something (M-04) does.
-            'installments.*.status' => ['required', 'in:scheduled,paid'],
+            // An issued row keeps the status it has, so the form has none to
+            // send for it; 'invoiced' is never a submission, only an issue.
+            'installments.*.status' => ['nullable', 'in:scheduled,paid'],
         ]);
 
         // A friendly 422 rather than the database's own QueryException — the
         // constraint trigger (2026_08_09_002500) is the backstop this leans
         // on, not the only line of defence, the same two-layer shape
-        // DiscountCalculator's capping backs up quotes_net_check.
-        $validator->after(function ($validator) use ($request) {
+        // DiscountCalculator's capping backs up quotes_net_check. Issued rows
+        // count with their stored amount: that is the figure the update keeps.
+        $validator->after(function ($validator) use ($request, $paymentPlan) {
             $total = (int) $request->input('total');
-            $sum = collect($request->input('installments', []))->sum(fn ($item) => (int) ($item['amount'] ?? 0));
+            $issued = $paymentPlan->installments()->whereNotNull('invoiced_at')->pluck('amount', 'public_id');
+            $sum = collect($request->input('installments', []))
+                ->sum(fn ($item) => (int) ($issued[$item['public_id'] ?? ''] ?? $item['amount'] ?? 0));
 
             if ($sum !== $total) {
                 $validator->errors()->add('installments', "Installments sum to {$sum}, not the plan total of {$total}.");
@@ -69,8 +74,8 @@ class PaymentPlanController extends Controller
 
     /**
      * T-25: reminders for this one client, off. Its own route rather than a
-     * field on update() above, which submits the whole plan and is refused
-     * once anything is paid — a phone call must not need an editable plan.
+     * field on update() above, which submits the whole plan — a phone call
+     * must not need every installment's amount and date to hand.
      */
     public function reminders(Request $request, PaymentPlan $paymentPlan): RedirectResponse
     {
