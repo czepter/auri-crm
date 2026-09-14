@@ -1452,6 +1452,7 @@
     "transferReference": "Verwendungszweck",
     "transferReferencePending": "Rechnung folgt.",
     "invoiceDownload": "Rechnung {number}",
+    "invoiceTitle": "Rechnung {number}",
     "creditNoteDownload": "Gutschrift {number}",
     "payNowTitle": "Kartenzahlung",
     "payNowButton": "Jetzt zahlen",

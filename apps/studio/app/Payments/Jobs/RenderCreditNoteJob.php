@@ -2,12 +2,8 @@
 
 namespace App\Payments\Jobs;
 
-use App\Documents\Enums\DocumentTemplateType;
-use App\Documents\Support\DocumentMergeDataBuilder;
-use App\Documents\Support\DocumentRenderer;
-use App\Documents\Support\MergeFieldResolver;
+use App\Payments\Actions\RenderInvoicePdf;
 use App\Payments\Models\CreditNote;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\GotenbergClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,10 +13,11 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * #409's PDF, the same shape RenderInvoiceJob has: merge fields resolved
- * here, the shared letterhead and footer from DocumentRenderer, the artifact
- * under the tenant's own prefix, and the guard on the artifact rather than on
- * a status — a Gutschrift the client may already hold is never re-rendered.
+ * #409's PDF, the same shape RenderInvoiceJob has: the artifact under the
+ * tenant's own prefix, and the guard on the artifact rather than on a status
+ * — a Gutschrift the client may already hold is never re-rendered. The
+ * document itself comes from RenderInvoicePdf, through the studio's chosen
+ * layout, with negative amounts and the reference line (#419).
  */
 class RenderCreditNoteJob implements ShouldQueue
 {
@@ -28,31 +25,19 @@ class RenderCreditNoteJob implements ShouldQueue
 
     public function __construct(public readonly CreditNote $creditNote) {}
 
-    public function handle(
-        GotenbergClient $gotenberg,
-        StudioSettingsResolver $settings,
-        DocumentMergeDataBuilder $mergeData,
-        DocumentRenderer $renderer,
-    ): void {
+    public function handle(GotenbergClient $gotenberg, RenderInvoicePdf $render): void
+    {
         $creditNote = $this->creditNote->fresh(['template', 'installment.plan.job.project']);
 
         if ($creditNote === null || $creditNote->pdf_path !== null) {
             return;
         }
 
-        $template = $creditNote->template;
-        $project = $creditNote->installment?->plan?->job?->project;
-
-        if ($template === null || $project === null) {
+        if ($creditNote->installment?->plan?->job?->project === null) {
             return;
         }
 
-        $resolved = MergeFieldResolver::resolve(
-            $template->body,
-            $mergeData->fromProject($project, $settings, $creditNote->installment, $creditNote),
-        );
-
-        $pdf = $gotenberg->htmlToPdf($renderer->wrap(DocumentTemplateType::CreditNote, $resolved, $settings));
+        $pdf = $gotenberg->htmlToPdf($render->forCreditNote($creditNote));
 
         $path = "credit-notes/{$creditNote->tenant_id}/{$creditNote->public_id}.pdf";
         Storage::disk('local')->put($path, $pdf);

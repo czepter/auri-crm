@@ -222,6 +222,12 @@ Route::middleware('portal.maintenance')->group(function () {
             ->middleware('portal.capability:payment_status')
             ->name('portal.payments.checkout');
 
+        // #419. The invoice as a page, in the studio's own layout — the PDF
+        // below is the same document to keep rather than to read.
+        Route::get('/projekte/{project}/zahlungen/{installment}', [PaymentController::class, 'show'])
+            ->middleware('portal.capability:payment_status')
+            ->name('portal.payments.invoice-page');
+
         // M-06. The invoice itself, behind the same gate as the screen that
         // links to it — a client who may not see payment status may not
         // download the paperwork behind it either.

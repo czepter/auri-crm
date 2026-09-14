@@ -3,8 +3,6 @@
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentBlockCatalog;
-use App\Documents\Support\DocumentMergeDataBuilder;
-use App\Documents\Support\DocumentRenderer;
 use App\Documents\Support\MergeFieldResolver;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Enums\StaffRole;
@@ -12,6 +10,7 @@ use App\Models\AuditLog;
 use App\Numbering\Enums\DocumentType;
 use App\Numbering\Models\NumberCounter;
 use App\Payments\Actions\IssueInvoice;
+use App\Payments\Actions\RenderInvoicePdf;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Jobs\RenderInvoiceJob;
@@ -249,9 +248,7 @@ it('never re-renders an invoice a client may already hold', function () {
     // A second run of the same job is a no-op, not a second Gotenberg call.
     (new RenderInvoiceJob($installment->fresh()))->handle(
         app(GotenbergClient::class),
-        app(StudioSettingsResolver::class),
-        app(DocumentMergeDataBuilder::class),
-        app(DocumentRenderer::class),
+        app(RenderInvoicePdf::class),
     );
 });
 
