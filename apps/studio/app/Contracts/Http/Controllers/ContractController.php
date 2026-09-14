@@ -20,6 +20,7 @@ use App\Documents\Support\MergeFieldVocabulary;
 use App\Documents\Support\SafeHtml;
 use App\Http\Controllers\Controller;
 use App\Notifications\NotificationService;
+use App\Notifications\Support\MailPreview;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Closure;
@@ -177,13 +178,15 @@ class ContractController extends Controller
 
         abort_unless($contract->state === ContractState::Draft, 404);
 
+        $recipients = $this->recipients($contract);
+
         return Inertia::render('Contracts/Send', [
             'projectId' => $contract->project->public_id,
-            'contract' => ['id' => $contract->public_id, 'templateName' => $contract->template?->name ?? ''],
-            'studioName' => $settings->displayName() ?? config('app.name'),
-            'recipients' => $this->recipients($contract)
+            'contractId' => $contract->public_id,
+            'recipients' => $recipients
                 ->map(fn ($contact) => ['name' => $contact->name, 'email' => $contact->email])
                 ->values(),
+            'mailHtml' => MailPreview::html(new ContractSent($contract, '', MailPreview::MESSAGE, $settings), $recipients->first() ?? (object) []),
         ]);
     }
 

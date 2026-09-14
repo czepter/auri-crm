@@ -6,8 +6,8 @@ import type { EditorDocument } from '@/admin/documents/blocks/types'
 
 const props = defineProps<{
   contactId: string
-  studioName: string
   recipients: { name: string; email: string }[]
+  mailHtml: string
 }>()
 
 const message: EditorDocument = {
@@ -28,11 +28,10 @@ function send({ subject, message }: { subject: string; message: EditorDocument }
 
 <template>
   <SendByMailView
-    :studio-name="studioName"
     :recipients="recipients"
     :subject="$t('contacts.portalAccess')"
     :message="message"
-    :cta="$t('sendMail.portalCta')"
+    :mail-html="mailHtml"
     @cancel="cancel"
     @send="send"
   />

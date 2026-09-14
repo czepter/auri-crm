@@ -67,6 +67,12 @@ class BuildMailTemplatesCommand extends Command
             // Every other source is a fragment embedded inside that layout.
             if ($file->getFilenameWithoutExtension() !== 'layout' && preg_match('/<body[^>]*>(.*)<\/body>/is', $html, $matches)) {
                 $html = trim($matches[1]);
+
+                // The fragment is spliced into the layout's markdown slot, where
+                // a blank line ends an HTML block and an indented line after it
+                // opens a code block: the button arrived as escaped text in a
+                // <pre>. Unindented and without blank lines it stays one block.
+                $html = preg_replace('/^\s+/m', '', $html);
             }
 
             // layout.mjml's slot is the notification's whole markdown body

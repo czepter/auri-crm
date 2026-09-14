@@ -7,6 +7,7 @@ use App\Gallery\Models\Gallery;
 use App\Gallery\Notifications\GalleryPublished;
 use App\Http\Controllers\Controller;
 use App\Notifications\NotificationService;
+use App\Notifications\Support\MailPreview;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
@@ -25,13 +26,9 @@ class GalleryPublicationController extends Controller
         abort_if(blank($contact?->email), 404);
 
         return Inertia::render('Galleries/Send', [
-            'gallery' => [
-                'id' => $gallery->public_id,
-                'title' => $gallery->title ?? '',
-                'assetCount' => $gallery->draftAssets()->count(),
-            ],
-            'studioName' => $settings->displayName() ?? config('app.name'),
+            'gallery' => ['id' => $gallery->public_id, 'title' => $gallery->title ?? ''],
             'recipients' => [['name' => $contact->name, 'email' => $contact->email]],
+            'mailHtml' => MailPreview::html(new GalleryPublished($gallery, '', MailPreview::MESSAGE, $settings), $contact),
         ]);
     }
 

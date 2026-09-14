@@ -1,16 +1,23 @@
 <script setup lang="ts">
 import { router } from '@inertiajs/vue3'
-import QuoteSendView from '@/admin/components/quote/QuoteSendView.vue'
+import SendByMailView from '@/admin/components/SendByMailView.vue'
 import { toPlainText } from '@/admin/documents/blocks/serialize'
 import type { EditorDocument } from '@/admin/documents/blocks/types'
 
 const props = defineProps<{
   projectId: string
   quote: App.Quotes.Data.QuoteData
-  studioName: string
   recipientName: string
   recipientEmail: string
+  mailHtml: string
 }>()
+
+const message: EditorDocument = {
+  blocks: [
+    { type: 'paragraph', data: { text: `Hallo ${props.recipientName},` } },
+    { type: 'paragraph', data: { text: 'vielen Dank für euer Vertrauen — hier euer Angebot.' } },
+  ],
+}
 
 function cancel() {
   router.visit(`/auftraege/${props.projectId}`)
@@ -26,11 +33,11 @@ function send({ subject, message }: { subject: string; message: EditorDocument }
 </script>
 
 <template>
-  <QuoteSendView
-    :quote="quote"
-    :studio-name="studioName"
-    :recipient-name="recipientName"
-    :recipient-email="recipientEmail"
+  <SendByMailView
+    :recipients="[{ name: recipientName, email: recipientEmail }]"
+    :subject="$t('quotes.title')"
+    :message="message"
+    :mail-html="mailHtml"
     @cancel="cancel"
     @send="send"
   />
