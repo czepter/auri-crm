@@ -16,8 +16,7 @@ const meta = {
   parameters: { layout: 'fullscreen' },
   args: {
     studioName: 'Studio Nordlicht',
-    recipientName: 'Lena Brandt',
-    recipientEmail: 'lena.brandt@web.de',
+    recipients: [{ name: 'Lena Brandt', email: 'lena.brandt@web.de' }],
     subject: '',
     message: { blocks: [] },
     cta: '',
@@ -38,7 +37,7 @@ export const Angebot: Story = {
   render: (args) => ({
     components: { QuoteSendView },
     setup: () => ({ args, quote: leadQuote }),
-    template: `<QuoteSendView :quote="quote" :studio-name="args.studioName" :recipient-name="args.recipientName" :recipient-email="args.recipientEmail" />`,
+    template: `<QuoteSendView :quote="quote" :studio-name="args.studioName" :recipient-name="args.recipients[0].name" :recipient-email="args.recipients[0].email" />`,
   }),
 }
 

@@ -215,6 +215,10 @@ Route::middleware('audience:staff')->group(function () {
 
         Route::post('/kontakte/{contact}/portal-zugang/widerruf', [ContactController::class, 'revokePortalAccess'])
             ->name('contacts.portal-access.revoke');
+        Route::get('/kontakte/{contact}/portal-zugang/senden', [ContactController::class, 'composePortalAccess'])
+            ->name('contacts.portal-access.compose');
+        Route::post('/kontakte/{contact}/portal-zugang/versenden', [ContactController::class, 'sendPortalAccess'])
+            ->name('contacts.portal-access.send');
 
         // X-04: DSGVO subject-access export and deletion. Owner-only
         // (Capability::ManageDsgvo) — see ContactDsgvoController's own
@@ -634,6 +638,8 @@ Route::middleware('audience:staff')->group(function () {
             ->name('contracts.update');
         Route::patch('/vertraege/{contract}/frist', [ContractController::class, 'deadline'])
             ->name('contracts.deadline');
+        Route::get('/vertraege/{contract}/senden', [ContractController::class, 'compose'])
+            ->name('contracts.compose');
         Route::post('/vertraege/{contract}/versenden', [ContractController::class, 'send'])
             ->name('contracts.send');
         Route::post('/vertraege/{contract}/unterzeichner', [ContractSignerController::class, 'store'])
@@ -760,6 +766,8 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/galerien/{gallery}/uploads/pruefen', UploadPrecheckController::class)
             ->name('galleries.uploads.precheck');
 
+        Route::get('/galerien/{gallery}/veroeffentlichen', [GalleryPublicationController::class, 'compose'])
+            ->name('galleries.publish.compose');
         Route::post('/galerien/{gallery}/veroeffentlichen', [GalleryPublicationController::class, 'store'])
             ->name('galleries.publish');
         Route::delete('/galerien/{gallery}/veroeffentlichung', [GalleryPublicationController::class, 'destroy'])

@@ -7,6 +7,7 @@ use App\Contracts\Enums\ContractState;
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Jobs\RenderContractJob;
 use App\Contracts\Models\Contract;
+use App\Contracts\Notifications\ContractSent;
 use App\Crm\Actions\DeriveProjectPosition;
 use App\Crm\Data\ProjectHeaderData;
 use App\Crm\Enums\ProjectContactRole;
@@ -18,6 +19,8 @@ use App\Documents\Support\InlineHtmlSanitizer;
 use App\Documents\Support\MergeFieldVocabulary;
 use App\Documents\Support\SafeHtml;
 use App\Http\Controllers\Controller;
+use App\Notifications\NotificationService;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Closure;
 use Illuminate\Http\RedirectResponse;
@@ -168,12 +171,37 @@ class ContractController extends Controller
         return back();
     }
 
-    /** Sending is what makes a Fassung the valid one — see Contract::markSent(). */
-    public function send(Contract $contract): RedirectResponse
+    public function compose(Contract $contract, StudioSettingsResolver $settings): Response
+    {
+        $this->authorize('manageContracts', $contract->project);
+
+        abort_unless($contract->state === ContractState::Draft, 404);
+
+        return Inertia::render('Contracts/Send', [
+            'projectId' => $contract->project->public_id,
+            'contract' => ['id' => $contract->public_id, 'templateName' => $contract->template?->name ?? ''],
+            'studioName' => $settings->displayName() ?? config('app.name'),
+            'recipients' => $this->recipients($contract)
+                ->map(fn ($contact) => ['name' => $contact->name, 'email' => $contact->email])
+                ->values(),
+        ]);
+    }
+
+    /**
+     * Sending is what makes a Fassung the valid one — see Contract::markSent().
+     * Mails every signer only when the compose screen posted a subject; a
+     * Fassung without signers is sent straight from the tab's button.
+     */
+    public function send(Request $request, Contract $contract, NotificationService $notifications, StudioSettingsResolver $settings): RedirectResponse
     {
         $this->authorize('manageContracts', $contract->project);
 
         abort_unless($contract->state === ContractState::Draft, 422);
+
+        $validated = $request->validate([
+            'subject' => ['nullable', 'string', 'max:255'],
+            'message' => ['nullable', 'string'],
+        ]);
 
         $contract->markSent();
 
@@ -189,7 +217,22 @@ class ContractController extends Controller
             projectId: $contract->project_id,
         );
 
-        return back();
+        if (blank($validated['subject'] ?? null)) {
+            return back();
+        }
+
+        foreach ($this->recipients($contract) as $contact) {
+            $notifications->send($contact, new ContractSent($contract, $validated['subject'], $validated['message'] ?? null, $settings));
+        }
+
+        return redirect("/auftraege/{$contract->project->public_id}/vertrag");
+    }
+
+    private function recipients(Contract $contract): Collection
+    {
+        return $contract->signers()->with('contact')->get()
+            ->pluck('contact')
+            ->filter(fn ($contact) => filled($contact?->email));
     }
 
     /**

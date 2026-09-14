@@ -87,6 +87,11 @@ function setDeadline(value: string) {
 }
 
 function send() {
+  if (props.contract!.signers.length) {
+    router.visit(`/vertraege/${props.contract!.id}/senden`)
+    return
+  }
+
   router.post(`/vertraege/${props.contract!.id}/versenden`, {}, { preserveScroll: true })
 }
 

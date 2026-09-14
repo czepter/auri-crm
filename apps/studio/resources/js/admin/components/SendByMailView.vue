@@ -19,8 +19,7 @@ import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/type
 const props = withDefaults(
   defineProps<{
     studioName: string
-    recipientName: string
-    recipientEmail: string
+    recipients: { name: string; email: string }[]
     subject: string
     message: EditorDocument
     cta: string
@@ -55,13 +54,15 @@ function send() {
     <div class="flex min-h-0 flex-1">
       <div class="flex w-1/2 flex-none flex-col gap-5 overflow-y-auto p-6">
         <Field :label="$t('sendMail.recipient')" dense>
-          <div class="flex items-center gap-2.5 rounded-md border border-border px-3 py-2.5">
-            <div class="flex size-[26px] flex-none items-center justify-center rounded-full bg-sunk text-[11px] font-semibold text-ink-2">
-              {{ recipientName.slice(0, 1) }}
-            </div>
-            <div class="min-w-0 flex-1">
-              <div class="text-[13px] font-semibold">{{ recipientName }}</div>
-              <div class="text-[12.5px] text-ink-2">{{ recipientEmail }}</div>
+          <div class="flex flex-col gap-2">
+            <div v-for="recipient in recipients" :key="recipient.email" class="flex items-center gap-2.5 rounded-md border border-border px-3 py-2.5">
+              <div class="flex size-[26px] flex-none items-center justify-center rounded-full bg-sunk text-[11px] font-semibold text-ink-2">
+                {{ recipient.name.slice(0, 1) }}
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="text-[13px] font-semibold">{{ recipient.name }}</div>
+                <div class="text-[12.5px] text-ink-2">{{ recipient.email }}</div>
+              </div>
             </div>
           </div>
         </Field>

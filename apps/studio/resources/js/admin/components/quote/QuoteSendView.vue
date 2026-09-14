@@ -58,8 +58,7 @@ const summaryRows = computed(() => {
 <template>
   <SendByMailView
     :studio-name="studioName"
-    :recipient-name="recipientName"
-    :recipient-email="recipientEmail"
+    :recipients="[{ name: recipientName, email: recipientEmail }]"
     :subject="subject ?? $t('quotes.title')"
     :message="message"
     :cta="$t('quotes.sendCta')"

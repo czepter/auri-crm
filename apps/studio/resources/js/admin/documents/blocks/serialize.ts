@@ -222,6 +222,15 @@ function serializeBlock(block: EditorBlock, profile: SerializeProfile): string {
   }
 }
 
+// The compose screens post plain text: every client mail body is MailMessage
+// lines, not HTML, so inline markup is stripped rather than serialized.
+export function toPlainText(doc: EditorDocument): string {
+  return doc.blocks
+    .map((block) => String(block.data.text ?? '').replace(/<[^>]+>/g, ''))
+    .filter((line) => line !== '')
+    .join('\n\n')
+}
+
 export function serialize(doc: EditorDocument, profile: SerializeProfile): string {
   return (doc.blocks ?? [])
     .map((block) => serializeBlock(block, profile))

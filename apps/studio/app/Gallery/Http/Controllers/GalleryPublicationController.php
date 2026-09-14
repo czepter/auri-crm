@@ -4,15 +4,49 @@ namespace App\Gallery\Http\Controllers;
 
 use App\Gallery\Actions\PublishGallery;
 use App\Gallery\Models\Gallery;
+use App\Gallery\Notifications\GalleryPublished;
 use App\Http\Controllers\Controller;
+use App\Notifications\NotificationService;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class GalleryPublicationController extends Controller
 {
-    public function store(Gallery $gallery, PublishGallery $publish): RedirectResponse
+    public function compose(Gallery $gallery, StudioSettingsResolver $settings): Response
     {
         $this->authorize('publish', $gallery);
+
+        $contact = $gallery->project?->primaryContact();
+
+        abort_if(blank($contact?->email), 404);
+
+        return Inertia::render('Galleries/Send', [
+            'gallery' => [
+                'id' => $gallery->public_id,
+                'title' => $gallery->title ?? '',
+                'assetCount' => $gallery->draftAssets()->count(),
+            ],
+            'studioName' => $settings->displayName() ?? config('app.name'),
+            'recipients' => [['name' => $contact->name, 'email' => $contact->email]],
+        ]);
+    }
+
+    /**
+     * Mails only when the compose screen posted a subject: a gallery without
+     * a primary contact is published straight from Record.vue's button.
+     */
+    public function store(Request $request, Gallery $gallery, PublishGallery $publish, NotificationService $notifications, StudioSettingsResolver $settings): RedirectResponse
+    {
+        $this->authorize('publish', $gallery);
+
+        $validated = $request->validate([
+            'subject' => ['nullable', 'string', 'max:255'],
+            'message' => ['nullable', 'string'],
+        ]);
 
         $version = $publish($gallery);
 
@@ -23,7 +57,15 @@ class GalleryPublicationController extends Controller
             subject: $gallery->public_id,
         );
 
-        return back();
+        $contact = $gallery->project?->primaryContact();
+
+        if (blank($validated['subject'] ?? null) || blank($contact?->email)) {
+            return back();
+        }
+
+        $notifications->send($contact, new GalleryPublished($gallery, $validated['subject'], $validated['message'] ?? null, $settings));
+
+        return redirect("/galerien/{$gallery->public_id}");
     }
 
     public function destroy(Gallery $gallery): RedirectResponse
