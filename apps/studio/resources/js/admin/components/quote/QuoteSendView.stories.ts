@@ -23,3 +23,15 @@ export const Standard: Story = {}
 export const OhneGueltigkeit: Story = {
     args: { quote: { ...leadQuote, validUntil: null } },
 }
+
+/** Regelbesteuertes Studio: die Angebotskarte trägt USt. und Endsumme wie das Angebot selbst. */
+export const MitMehrwertsteuer: Story = {
+    args: {
+        quote: {
+            ...leadQuote,
+            vatMode: 'standard',
+            vatRate: 1900,
+            vatAmount: Math.round(leadQuote.net * 0.19),
+        },
+    },
+}

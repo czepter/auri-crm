@@ -6,7 +6,7 @@ import { Field } from '@/ui/field'
 import { Input } from '@/ui/input'
 import DocumentEditor from '@/admin/components/DocumentEditor.vue'
 import { serialize } from '@/admin/documents/blocks/serialize'
-import { formatEuros } from '@/admin/lib/money'
+import { basisPointsToPercent, formatEuros } from '@/admin/lib/money'
 import { monthDate } from '@/admin/lib/dates'
 import type { EditorDocument, PaletteEntry } from '@/admin/documents/blocks/types'
 
@@ -46,6 +46,29 @@ const message = ref<EditorDocument>(
 )
 
 const messageHtml = computed(() => serialize(message.value, 'mail'))
+
+// QuoteWorkspace.vue's own summaryRows: a draft ends at Gesamt or Netto
+// (vatMode is only set once a quote is sent), a sent one adds discount and
+// USt rows exactly as its capsule does — this card is that same figure, not
+// a second one that can drift from it.
+const summaryRows = computed(() => {
+  const rows = props.quote.discountAmount
+    ? [
+        { label: t('quotes.total'), value: formatEuros(props.quote.total) },
+        { label: t('quotes.discount'), value: `−${formatEuros(props.quote.discountAmount)}` },
+        { label: t('quotes.net'), value: formatEuros(props.quote.net) },
+      ]
+    : [{ label: t('quotes.total'), value: formatEuros(props.quote.total) }]
+
+  if (props.quote.vatMode === 'standard') {
+    rows.push(
+      { label: t('quotes.vat', { rate: basisPointsToPercent(props.quote.vatRate) }), value: formatEuros(props.quote.vatAmount ?? 0) },
+      { label: t('quotes.total'), value: formatEuros(props.quote.net + (props.quote.vatAmount ?? 0)) },
+    )
+  }
+
+  return rows.map((row, index) => ({ ...row, last: index === rows.length - 1 }))
+})
 
 function send() {
   emit('send', { subject: subject.value, message: message.value })
@@ -118,9 +141,14 @@ function send() {
                     <span class="flex-1">{{ item.title }}</span>
                     <span class="font-semibold tabular-nums">{{ item.isIncluded ? $t('quotes.includedPrice') : formatEuros(item.netTotal) }}</span>
                   </div>
-                  <div class="flex gap-2.5 py-3.5 text-[14px] font-semibold">
-                    <span class="flex-1">{{ $t('quotes.total') }}</span>
-                    <span class="tabular-nums">{{ formatEuros(quote.total) }}</span>
+                  <div
+                    v-for="(row, index) in summaryRows"
+                    :key="`${row.label}-${index}`"
+                    class="flex gap-2.5 py-2"
+                    :class="row.last ? 'text-[14px] font-semibold' : 'text-[12.5px]'"
+                  >
+                    <span class="flex-1">{{ row.label }}</span>
+                    <span class="tabular-nums">{{ row.value }}</span>
                   </div>
                 </div>
               </div>
