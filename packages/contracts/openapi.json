@@ -2718,13 +2718,6 @@
                                             "portal_offered": {
                                                 "type": "boolean"
                                             },
-                                            "portal_text": {
-                                                "type": [
-                                                    "string",
-                                                    "null"
-                                                ],
-                                                "maxLength": 255
-                                            },
                                             "portal_price_mode": {
                                                 "$ref": "#/components/schemas/PortalPriceMode"
                                             },
@@ -2870,13 +2863,6 @@
                                             },
                                             "portal_offered": {
                                                 "type": "boolean"
-                                            },
-                                            "portal_text": {
-                                                "type": [
-                                                    "string",
-                                                    "null"
-                                                ],
-                                                "maxLength": 255
                                             },
                                             "portal_price_mode": {
                                                 "$ref": "#/components/schemas/PortalPriceMode"
@@ -4911,13 +4897,6 @@
                     },
                     "portal_offered": {
                         "type": "boolean"
-                    },
-                    "portal_text": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "maxLength": 255
                     },
                     "portal_price_mode": {
                         "$ref": "#/components/schemas/PortalPriceMode"

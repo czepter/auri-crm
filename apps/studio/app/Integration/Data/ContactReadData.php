@@ -18,6 +18,9 @@ class ContactReadData extends Data
         public string $name,
         public ?string $email,
         public ?string $phone,
+        public ?string $street,
+        public ?string $postcode,
+        public ?string $city,
         public string $updatedAt,
     ) {}
 
@@ -28,6 +31,9 @@ class ContactReadData extends Data
             name: $contact->name,
             email: $contact->email,
             phone: $contact->phone,
+            street: $contact->street,
+            postcode: $contact->postcode,
+            city: $contact->city,
             updatedAt: $contact->updated_at->toIso8601String(),
         );
     }

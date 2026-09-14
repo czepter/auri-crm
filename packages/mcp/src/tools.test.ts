@@ -106,8 +106,8 @@ describe('read tools', () => {
       '/api/contacts': () =>
         jsonResponse({
           data: [
-            { id: 'ctc_alice', name: 'Alice Example', email: 'alice@example.com', phone: null, updatedAt: '2026-01-01T00:00:00Z' },
-            { id: 'ctc_bob', name: 'Bob Example', email: 'bob@example.com', phone: null, updatedAt: '2026-01-02T00:00:00Z' },
+            { id: 'ctc_alice', name: 'Alice Example', email: 'alice@example.com', phone: null, street: null, postcode: null, city: null, updatedAt: '2026-01-01T00:00:00Z' },
+            { id: 'ctc_bob', name: 'Bob Example', email: 'bob@example.com', phone: null, street: 'Marktstraße 1', postcode: '07743', city: 'Jena', updatedAt: '2026-01-02T00:00:00Z' },
           ],
           meta: { path: '/contacts', per_page: 25, next_cursor: 'cur_abc', next_page_url: null, prev_cursor: null, prev_page_url: null },
         }),
@@ -118,8 +118,8 @@ describe('read tools', () => {
     expect(result.isError).toBeFalsy()
     expect(result.structuredContent).toEqual({
       contacts: [
-        { id: 'ctc_alice', name: 'Alice Example', email: 'alice@example.com', phone: null, updatedAt: '2026-01-01T00:00:00Z' },
-        { id: 'ctc_bob', name: 'Bob Example', email: 'bob@example.com', phone: null, updatedAt: '2026-01-02T00:00:00Z' },
+        { id: 'ctc_alice', name: 'Alice Example', email: 'alice@example.com', phone: null, street: null, postcode: null, city: null, updatedAt: '2026-01-01T00:00:00Z' },
+        { id: 'ctc_bob', name: 'Bob Example', email: 'bob@example.com', phone: null, street: 'Marktstraße 1', postcode: '07743', city: 'Jena', updatedAt: '2026-01-02T00:00:00Z' },
       ],
       nextCursor: 'cur_abc',
     })
@@ -136,7 +136,7 @@ describe('read tools', () => {
         requestedQuery = url.search
         return jsonResponse({
           data: [
-            { id: 'ctc_alice', name: 'Alice Example', email: 'alice@example.com', phone: null, updatedAt: '2026-01-01T00:00:00Z' },
+            { id: 'ctc_alice', name: 'Alice Example', email: 'alice@example.com', phone: null, street: null, postcode: null, city: null, updatedAt: '2026-01-01T00:00:00Z' },
           ],
           meta: { path: '/contacts', per_page: 25, next_cursor: null, next_page_url: null, prev_cursor: null, prev_page_url: null },
         })
@@ -147,7 +147,7 @@ describe('read tools', () => {
 
     expect(requestedQuery).toContain('query=alice')
     expect(result.structuredContent).toEqual({
-      contacts: [{ id: 'ctc_alice', name: 'Alice Example', email: 'alice@example.com', phone: null, updatedAt: '2026-01-01T00:00:00Z' }],
+      contacts: [{ id: 'ctc_alice', name: 'Alice Example', email: 'alice@example.com', phone: null, street: null, postcode: null, city: null, updatedAt: '2026-01-01T00:00:00Z' }],
       nextCursor: null,
     })
   })
@@ -165,14 +165,23 @@ describe('read tools', () => {
       fields: { gaeste: 120 },
       updatedAt: '2026-01-01T00:00:00Z',
       lead: { stage: 'booked', source: 'referral', sourceOther: null, inquiryText: 'Standesamt Jena, Juni.', capturedVia: 'email', capturedViaOther: null, capturedAt: '2025-11-02T09:00:00Z', stageEnteredAt: null, outcome: null, lostReason: null, lostAt: null },
+      job: { id: 'job_1', projectId: 'prj_meier', bookedAt: '2025-12-01T00:00:00Z', bookedVia: 'manual', updatedAt: '2025-12-01T00:00:00Z' },
+      openTaskCount: 2,
       contacts: [
-        { id: 'ctc_meier', name: 'Lena Meier', email: 'lena@example.com', phone: null, role: 'primary', updatedAt: '2026-01-01T00:00:00Z' },
+        { id: 'ctc_meier', name: 'Lena Meier', email: 'lena@example.com', phone: null, street: null, postcode: null, city: null, role: 'primary', updatedAt: '2026-01-01T00:00:00Z' },
       ],
       shoots: [
-        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-06-20', callTime: null, endTime: null, venueName: null, venueCity: null, status: 'requested', cancelledAt: null, cancelledReason: null, updatedAt: '2026-01-01T00:00:00Z' },
+        {
+          id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-06-20', callTime: null, endTime: null, venueName: null, venueCity: null, status: 'requested', isPrimary: true, cancelledAt: null, cancelledReason: null,
+          crew: [{ id: 'crw_1', userId: 'usr_1', name: 'Sam Fotograf', initials: 'SF', role: 'lead_photographer', roleLabel: 'Hauptfotograf' }],
+          updatedAt: '2026-01-01T00:00:00Z',
+        },
       ],
       quotes: [
-        { id: 'quo_1', status: 'draft', number: null, validUntil: '2026-02-01', sentAt: null, total: 179000, net: 179000, items: [{ id: 'qit_1', title: 'Reportage 2', description: null, quantity: 1, unitPrice: 179000, netTotal: 179000 }] },
+        {
+          id: 'quo_1', isAddendum: false, status: 'draft', pricingMode: 'fixed', number: null, validUntil: '2026-02-01', sentAt: null, total: 179000, discountType: null, discountValue: null, discountAmount: 0, net: 179000, vatMode: 'gross', vatRate: 19, vatNote: null, vatAmount: 0, intro: null, outro: null, hourlyRate: null, minHours: null, maxHours: null, imagesPerHour: null, hours: null, paymentStages: [], recipientContact: null, recipientStreet: null, recipientPostcode: null, recipientCity: null, portalUrl: 'https://portal.example.test/angebot/tok/teilen',
+          items: [{ id: 'qit_1', title: 'Reportage 2', description: null, quantity: 1, unitPrice: 179000, netTotal: 179000, selectable: false, selected: false, outcome: null }],
+        },
       ],
     }
 
@@ -204,7 +213,7 @@ describe('read tools', () => {
         requestedQuery = url.search
         return jsonResponse({
           data: [
-            { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', callTime: null, endTime: null, venueName: null, venueCity: null, status: 'requested', cancelledAt: null, cancelledReason: null, updatedAt: '2026-01-01T00:00:00Z' },
+            { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', callTime: null, endTime: null, venueName: null, venueCity: null, status: 'requested', isPrimary: false, cancelledAt: null, cancelledReason: null, crew: [], updatedAt: '2026-01-01T00:00:00Z' },
           ],
           meta: { path: '/shoots', per_page: 25, next_cursor: null, next_page_url: null, prev_cursor: null, prev_page_url: null },
         })
@@ -221,7 +230,7 @@ describe('read tools', () => {
     expect(requestedQuery).toContain('cancelled=false')
     expect(result.structuredContent).toEqual({
       shoots: [
-        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', callTime: null, endTime: null, venueName: null, venueCity: null, status: 'requested', cancelledAt: null, cancelledReason: null, updatedAt: '2026-01-01T00:00:00Z' },
+        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', callTime: null, endTime: null, venueName: null, venueCity: null, status: 'requested', isPrimary: false, cancelledAt: null, cancelledReason: null, crew: [], updatedAt: '2026-01-01T00:00:00Z' },
       ],
       nextCursor: null,
     })
@@ -236,7 +245,7 @@ describe('read tools', () => {
         requestedQuery = url.search
         return jsonResponse({
           data: [
-            { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', callTime: null, endTime: null, venueName: null, venueCity: null, status: 'requested', cancelledAt: '2026-02-01T00:00:00Z', cancelledReason: null, updatedAt: '2026-02-01T00:00:00Z' },
+            { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', callTime: null, endTime: null, venueName: null, venueCity: null, status: 'requested', isPrimary: false, cancelledAt: '2026-02-01T00:00:00Z', cancelledReason: null, crew: [], updatedAt: '2026-02-01T00:00:00Z' },
           ],
           meta: { path: '/shoots', per_page: 25, next_cursor: null, next_page_url: null, prev_cursor: null, prev_page_url: null },
         })
@@ -251,7 +260,7 @@ describe('read tools', () => {
     expect(requestedQuery).not.toContain('cancelled=')
     expect(result.structuredContent).toEqual({
       shoots: [
-        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', callTime: null, endTime: null, venueName: null, venueCity: null, status: 'requested', cancelledAt: '2026-02-01T00:00:00Z', cancelledReason: null, updatedAt: '2026-02-01T00:00:00Z' },
+        { id: 'sht_1', projectId: 'prj_meier', kind: 'wedding', label: null, date: '2026-03-15', callTime: null, endTime: null, venueName: null, venueCity: null, status: 'requested', isPrimary: false, cancelledAt: '2026-02-01T00:00:00Z', cancelledReason: null, crew: [], updatedAt: '2026-02-01T00:00:00Z' },
       ],
       nextCursor: null,
     })
@@ -265,7 +274,7 @@ describe('read tools', () => {
         requestedQuery = url.search
         return jsonResponse({
           data: [
-            { id: 'led_1', projectId: 'prj_meier', source: 'other', sourceOther: 'Hochzeitsportal', stage: 'quote_sent', isLost: false, capturedAt: '2026-03-02T09:00:00Z', lostAt: null, updatedAt: '2026-03-02T09:00:00Z' },
+            { id: 'led_1', projectId: 'prj_meier', projectName: 'Meier Hochzeit', source: 'other', sourceOther: 'Hochzeitsportal', stage: 'quote_sent', stageEnteredAt: '2026-03-02T09:00:00Z', isLost: false, outcome: null, lostReason: null, capturedAt: '2026-03-02T09:00:00Z', lostAt: null, updatedAt: '2026-03-02T09:00:00Z' },
           ],
           meta: { path: '/leads', per_page: 25, next_cursor: null, next_page_url: null, prev_cursor: null, prev_page_url: null },
         })
@@ -282,7 +291,7 @@ describe('read tools', () => {
     expect(requestedQuery).toContain('captured_from=2026-03-01')
     expect(requestedQuery).toContain('captured_to=2026-03-31')
     expect(result.structuredContent).toEqual({
-      leads: [{ id: 'led_1', projectId: 'prj_meier', source: 'other', sourceOther: 'Hochzeitsportal', stage: 'quote_sent', isLost: false, capturedAt: '2026-03-02T09:00:00Z', lostAt: null, updatedAt: '2026-03-02T09:00:00Z' }],
+      leads: [{ id: 'led_1', projectId: 'prj_meier', projectName: 'Meier Hochzeit', source: 'other', sourceOther: 'Hochzeitsportal', stage: 'quote_sent', stageEnteredAt: '2026-03-02T09:00:00Z', isLost: false, outcome: null, lostReason: null, capturedAt: '2026-03-02T09:00:00Z', lostAt: null, updatedAt: '2026-03-02T09:00:00Z' }],
       nextCursor: null,
     })
     expect(integerIdPaths(result.structuredContent)).toEqual([])
@@ -324,7 +333,10 @@ describe('read tools', () => {
       name: 'Reportage 2',
       description: null,
       isActive: true,
-      items: [{ id: 'pit_1', title: 'Reportage 10 Stunden', description: null, quantity: 1, unitPrice: 179000 }],
+      portalOffered: false,
+      portalPriceMode: 'exact',
+      price: 179000,
+      items: [{ id: 'pit_1', title: 'Reportage 10 Stunden', description: null, quantity: 1, unitPrice: 179000, selectable: false, selected: false, outcome: null }],
     }
 
     const client = await connectedClient({ '/api/packages': () => jsonResponse({ data: [reportage] }) })
