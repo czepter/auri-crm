@@ -59,14 +59,14 @@ import { idempotencyKeyFor } from '../idempotency.js'
  * App\Http\Middleware\MarkSilentWrite): the header is the whole contract
  * this side holds.
  */
-const silentField = {
+export const silentField = {
   silent: z
     .boolean()
     .nullish()
     .describe('For entering history that already happened: no mail, no in-app notice, no webhook, and no follow-up tasks. Use it for every write of a record from before this studio moved onto the app.'),
 }
 
-function writeHeaders(tool: string, payload: Record<string, unknown>, silent: boolean | null | undefined): Record<string, string> {
+export function writeHeaders(tool: string, payload: Record<string, unknown>, silent: boolean | null | undefined): Record<string, string> {
   return {
     // `silent` decides whether mail, tasks and webhooks fire, so it is part
     // of what makes two writes the same write.
@@ -873,7 +873,7 @@ function registerDeletePackage(server: McpServer, clientFor: ApiClientFactory): 
   )
 }
 
-function apiResult(data: unknown, error: unknown): CallToolResult {
+export function apiResult(data: unknown, error: unknown): CallToolResult {
   if (error !== undefined) {
     return { isError: true, content: [{ type: 'text', text: JSON.stringify(error) }] }
   }

@@ -25,6 +25,7 @@ use App\Integration\Http\Controllers\ProjectController;
 use App\Integration\Http\Controllers\ProjectFieldController;
 use App\Integration\Http\Controllers\QuoteController;
 use App\Integration\Http\Controllers\ShootController;
+use App\Integration\Http\Controllers\TaskController;
 use App\Payments\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -319,3 +320,39 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'ide
 Route::middleware(['audience:api', 'scope:'.Capability::ManageSettings->value, 'idempotent'])
     ->post('/project-types/{projectType:public_id}/fields', [ProjectFieldController::class, 'store'])
     ->name('api.project-types.fields.store');
+
+// #401: booking, completion and reopening, mirroring App\Crm\Http\
+// Controllers\ProjectController's own book()/complete()/reopen() — same
+// BookProject and CompleteProject actions, so a token can commit or close a
+// project exactly as staff do from the project screen.
+Route::middleware(['audience:api', 'scope:'.Capability::BookProject->value, 'idempotent'])
+    ->post('/projects/{project:public_id}/book', [ProjectController::class, 'book'])
+    ->name('api.projects.book');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])->group(function () {
+    Route::post('/projects/{project:public_id}/complete', [ProjectController::class, 'complete'])
+        ->name('api.projects.complete');
+    Route::delete('/projects/{project:public_id}/complete', [ProjectController::class, 'reopen'])
+        ->name('api.projects.reopen');
+});
+
+// #401: tasks, mirroring App\Crm\Http\Controllers\TaskController. ManageTasks
+// throughout, the capability that route already authorizes against.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageTasks->value])
+    ->get('/projects/{project:public_id}/tasks', [TaskController::class, 'index'])
+    ->name('api.projects.tasks.index');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageTasks->value, 'idempotent'])->group(function () {
+    Route::post('/projects/{project:public_id}/tasks', [TaskController::class, 'store'])
+        ->name('api.projects.tasks.store');
+    Route::post('/tasks/{task:public_id}/complete', [TaskController::class, 'complete'])
+        ->name('api.tasks.complete');
+    Route::post('/tasks/{task:public_id}/reopen', [TaskController::class, 'reopen'])
+        ->name('api.tasks.reopen');
+    Route::post('/tasks/{task:public_id}/assign', [TaskController::class, 'assign'])
+        ->name('api.tasks.assign');
+    Route::post('/tasks/{task:public_id}/depend', [TaskController::class, 'depend'])
+        ->name('api.tasks.depend');
+    Route::delete('/tasks/{task:public_id}', [TaskController::class, 'destroy'])
+        ->name('api.tasks.destroy');
+});

@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 
 import { apiClientFactory, type ApiClientFactory } from './client.js'
 import { registerReadTools } from './tools.js'
+import { registerBookingTaskTools } from './tools/booking-tasks.js'
 import { registerWriteTools } from './tools/write.js'
 
 /**
@@ -20,5 +21,6 @@ export function createMcpServer(clientFor: ApiClientFactory = apiClientFactory()
   const server = new McpServer({ name: 'studio-mcp', version: '0.0.1' })
   registerReadTools(server, clientFor)
   registerWriteTools(server, clientFor)
+  registerBookingTaskTools(server, clientFor)
   return server
 }

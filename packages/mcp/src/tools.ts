@@ -164,11 +164,11 @@ function apiErrorMessage(error: unknown): string {
   return 'The api surface returned an error with no message.'
 }
 
-function errorResult(error: unknown): { isError: true; content: [{ type: 'text'; text: string }] } {
+export function errorResult(error: unknown): { isError: true; content: [{ type: 'text'; text: string }] } {
   return { isError: true, content: [{ type: 'text', text: apiErrorMessage(error) }] }
 }
 
-function jsonResult<T extends Record<string, unknown>>(structuredContent: T): {
+export function jsonResult<T extends Record<string, unknown>>(structuredContent: T): {
   content: [{ type: 'text'; text: string }]
   structuredContent: T
 } {
