@@ -8,6 +8,7 @@ use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 /**
  * A person added to a project after capture — the partner a migration run
@@ -52,6 +53,22 @@ class ProjectContactController extends Controller
     {
         return $role === ProjectContactRole::Primary->value
             || $role === ProjectContactRole::Primary->label();
+    }
+
+    /**
+     * #400: a secondary contact only, same as the primary refusal on store()
+     * — the primary is decided at capture, the pivot's partial unique index
+     * depends on it staying that way.
+     */
+    public function destroy(Project $project, Contact $contact): Response
+    {
+        $role = $project->contacts()->whereKey($contact->id)->first()?->pivot->role;
+
+        abort_if($role === null || $this->isPrimary($role), 422);
+
+        $project->contacts()->detach($contact->id);
+
+        return response()->noContent();
     }
 
     /**

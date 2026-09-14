@@ -5,6 +5,7 @@ namespace App\Integration\Http\Controllers;
 use App\Crm\Actions\AdvanceLeadStage;
 use App\Crm\Actions\CaptureInquiry;
 use App\Crm\Data\CaptureInquiryData;
+use App\Crm\Enums\CaptureChannel;
 use App\Crm\Enums\LeadOutcome;
 use App\Crm\Enums\StagePipeline;
 use App\Crm\Models\Lead;
@@ -124,11 +125,18 @@ class LeadController extends Controller
         return $this->state($lead);
     }
 
-    /** #361: a capture's inquiry text was write-once on this surface. */
+    /**
+     * #361: a capture's inquiry text was write-once on this surface.
+     * #363: captured_via was too — neither field had a way back after
+     * capture. captured_via_other is cleared by Lead::booted() whenever the
+     * channel itself is not Other, the same as CaptureInquiry leaves it.
+     */
     public function update(Request $request, Lead $lead): JsonResponse
     {
         $validated = $request->validate([
             'inquiry_text' => ['present', 'nullable', 'string', 'max:10000'],
+            'captured_via' => ['sometimes', Rule::enum(CaptureChannel::class)],
+            'captured_via_other' => ['sometimes', 'nullable', 'string', 'max:120'],
         ]);
 
         $lead->update($validated);
@@ -136,6 +144,8 @@ class LeadController extends Controller
         return response()->json([
             'id' => $lead->public_id,
             'inquiryText' => $lead->inquiry_text,
+            'capturedVia' => $lead->captured_via->value,
+            'capturedViaOther' => $lead->captured_via_other,
         ]);
     }
 

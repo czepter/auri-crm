@@ -452,6 +452,142 @@
                 }
             }
         },
+        "/contacts/{contact}": {
+            "patch": {
+                "operationId": "contacts.update",
+                "summary": "#400: the api surface's own version of App\\Crm\\Http\\Controllers\\\nContactController::update(). `sometimes` throughout and update() with\nonly the validated array, so a caller resending name alone never wipes\nthe billing address beside it",
+                "tags": [
+                    "Contact"
+                ],
+                "parameters": [
+                    {
+                        "name": "contact",
+                        "in": "path",
+                        "required": true,
+                        "description": "The contact public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "email": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "email",
+                                        "maxLength": 255
+                                    },
+                                    "phone": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 64
+                                    },
+                                    "street": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    },
+                                    "postcode": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 32
+                                    },
+                                    "city": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "email": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "phone": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "street": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "postcode": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "city": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "email",
+                                        "phone",
+                                        "street",
+                                        "postcode",
+                                        "city"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/projects": {
             "get": {
                 "operationId": "projects.index",
@@ -942,6 +1078,111 @@
                                 }
                             }
                         }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "patch": {
+                "operationId": "projects.update",
+                "summary": "#400: name, type/type_other and lead source, merged rather than\nreplaced \u2014 App\\Crm\\Http\\Controllers\\LeadCaseController::update()\nnulls type_other whenever `type` arrives without it, and the issue is\nexplicit that the api surface must not repeat that: only a key\nactually present in the request is written, so Project::booted()\nremains the only thing that clears type_other, and only when the type\nitself changed to something other than \"Sonstige\"",
+                "tags": [
+                    "Project"
+                ],
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "type": {
+                                        "type": "string"
+                                    },
+                                    "type_other": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 120
+                                    },
+                                    "source": {
+                                        "$ref": "#/components/schemas/LeadSource"
+                                    },
+                                    "source_other": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 120
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "type": {
+                                            "type": "string"
+                                        },
+                                        "typeOther": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        },
+                                        "source": {
+                                            "type": "string"
+                                        },
+                                        "sourceOther": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "name",
+                                        "type",
+                                        "typeOther",
+                                        "source",
+                                        "sourceOther"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
@@ -2250,7 +2491,7 @@
         "/leads/{lead}": {
             "patch": {
                 "operationId": "leads.update",
-                "summary": "#361: a capture's inquiry text was write-once on this surface",
+                "summary": "#361: a capture's inquiry text was write-once on this surface.\n#363: captured_via was too \u2014 neither field had a way back after\ncapture. captured_via_other is cleared by Lead::booted() whenever the\nchannel itself is not Other, the same as CaptureInquiry leaves it",
                 "tags": [
                     "Lead"
                 ],
@@ -2278,6 +2519,16 @@
                                             "null"
                                         ],
                                         "maxLength": 10000
+                                    },
+                                    "captured_via": {
+                                        "$ref": "#/components/schemas/CaptureChannel"
+                                    },
+                                    "captured_via_other": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 120
                                     }
                                 },
                                 "required": [
@@ -2303,11 +2554,22 @@
                                                 "string",
                                                 "null"
                                             ]
+                                        },
+                                        "capturedVia": {
+                                            "type": "string"
+                                        },
+                                        "capturedViaOther": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
                                         }
                                     },
                                     "required": [
                                         "id",
-                                        "inquiryText"
+                                        "inquiryText",
+                                        "capturedVia",
+                                        "capturedViaOther"
                                     ]
                                 }
                             }
@@ -2984,6 +3246,65 @@
                 "responses": {
                     "204": {
                         "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/projects/{project}/contacts/{contact}": {
+            "delete": {
+                "operationId": "projects.contacts.destroy",
+                "summary": "#400: a secondary contact only, same as the primary refusal on store()\n\u2014 the primary is decided at capture, the pivot's partial unique index\ndepends on it staying that way",
+                "tags": [
+                    "ProjectContact"
+                ],
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "contact",
+                        "in": "path",
+                        "required": true,
+                        "description": "The contact public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "422": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
@@ -4333,6 +4654,213 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/shoots/{shoot}": {
+            "patch": {
+                "operationId": "shoots.update",
+                "summary": "#363/#400: the fields that only ever existed on create until now.\n`sometimes` throughout and Arr::only() on the write, so a caller\nresending one field never wipes the rest the way LeadCaseController::\nupdate()'s unconditional venue/time null-out does (#400's own note)",
+                "tags": [
+                    "Shoot"
+                ],
+                "parameters": [
+                    {
+                        "name": "shoot",
+                        "in": "path",
+                        "required": true,
+                        "description": "The shoot public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "kind": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "label": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    },
+                                    "date": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    },
+                                    "call_time": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "end_time": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "venue_name": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    },
+                                    "venue_city": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 255
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ShootReadData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "shoots.destroy",
+                "summary": "#400: an accidental second day. Mirrors App\\Crm\\Http\\Controllers\\ShootController::destroy()",
+                "tags": [
+                    "Shoot"
+                ],
+                "parameters": [
+                    {
+                        "name": "shoot",
+                        "in": "path",
+                        "required": true,
+                        "description": "The shoot public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "422": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/shoots/{shoot}/primary": {
+            "post": {
+                "operationId": "shoots.primary",
+                "summary": "#400: hand the \"Haupttermin\" designation to a different shoot",
+                "tags": [
+                    "Shoot"
+                ],
+                "parameters": [
+                    {
+                        "name": "shoot",
+                        "in": "path",
+                        "required": true,
+                        "description": "The shoot public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string"
+                                        },
+                                        "enteredAt": {
+                                            "type": "string"
+                                        },
+                                        "cancelledAt": {
+                                            "type": [
+                                                "string",
+                                                "null"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "id",
+                                        "status",
+                                        "enteredAt",
+                                        "cancelledAt"
+                                    ]
+                                }
+                            }
+                        }
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"

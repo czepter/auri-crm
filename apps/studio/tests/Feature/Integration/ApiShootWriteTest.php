@@ -121,6 +121,60 @@ it('cancels a shoot and takes the absage back', function () {
     expect($shoot->fresh()->isCancelled())->toBeFalse();
 });
 
+// #363/#400: call_time, venue and label had no way back after create. A
+// caller resending only the date must not null the venue beside it — the
+// same merge LeadCaseController::update()'s admin version fails to hold to.
+it('updates a shoot, leaving fields the request omits untouched', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
+    $shoot = Shoot::factory()->create(['venue_name' => 'Schloss Elmau', 'venue_city' => 'Elmau', 'call_time' => '10:00']);
+
+    $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'shoot-update-1')
+        ->patchJson("/api/shoots/{$shoot->public_id}", ['date' => '2019-08-01']);
+
+    $response->assertOk();
+
+    expect($shoot->fresh()->date->toDateString())->toBe('2019-08-01')
+        ->and($shoot->fresh()->venue_name)->toBe('Schloss Elmau')
+        ->and($shoot->fresh()->call_time)->not->toBeNull()
+        ->and(integerIdPaths($response->json()))->toBe([]);
+});
+
+it('deletes a non-primary shoot but refuses to delete the primary one', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
+    $project = Project::factory()->create();
+    $primary = $project->shoots()->create(['kind' => 'Trauung', 'is_primary' => true]);
+    $extra = $project->shoots()->create(['kind' => 'Feier']);
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'shoot-delete-primary')
+        ->deleteJson("/api/shoots/{$primary->public_id}")
+        ->assertUnprocessable();
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'shoot-delete-extra')
+        ->deleteJson("/api/shoots/{$extra->public_id}")
+        ->assertNoContent();
+
+    expect(Shoot::whereKey($primary->id)->exists())->toBeTrue()
+        ->and(Shoot::whereKey($extra->id)->exists())->toBeFalse();
+});
+
+it('designates a different shoot as primary', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
+    $project = Project::factory()->create();
+    $primary = $project->shoots()->create(['kind' => 'Trauung', 'is_primary' => true]);
+    $extra = $project->shoots()->create(['kind' => 'Feier']);
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'shoot-primary-1')
+        ->postJson("/api/shoots/{$extra->public_id}/primary")
+        ->assertOk();
+
+    expect($primary->fresh()->is_primary)->toBeFalse()
+        ->and($extra->fresh()->is_primary)->toBeTrue();
+});
+
 it('refuses a shoot write to a token that may only read projects', function () {
     $token = ApiToken::factory()->withScopes(Capability::ViewAllProjects)->create();
     $shoot = Shoot::factory()->atStatus(ShootStatus::Booked)->create();

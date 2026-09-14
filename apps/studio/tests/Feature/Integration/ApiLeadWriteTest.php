@@ -189,3 +189,32 @@ it('rewrites a lead\'s inquiry text after capture', function () {
         ->and($response->json('inquiryText'))->toBe('Tippfehler')
         ->and(integerIdPaths($response->json()))->toBe([]);
 });
+
+// #363: captured_via had no way back after capture. captured_via_other rides
+// along, but only survives when the channel is Other — Lead::booted() clears
+// it otherwise, so the request itself has no need to null it explicitly.
+it('corrects a lead\'s capture channel after the fact', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
+    $lead = Lead::factory()->create(['inquiry_text' => 'x', 'captured_via' => 'phone']);
+
+    $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'captured-via-1')
+        ->patchJson("/api/leads/{$lead->public_id}", [
+            'inquiry_text' => 'x',
+            'captured_via' => 'other',
+            'captured_via_other' => 'Hochzeitsmesse-Stand',
+        ])
+        ->assertOk();
+
+    expect($lead->fresh()->captured_via->value)->toBe('other')
+        ->and($lead->fresh()->captured_via_other)->toBe('Hochzeitsmesse-Stand')
+        ->and($response->json('capturedVia'))->toBe('other')
+        ->and(integerIdPaths($response->json()))->toBe([]);
+
+    $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'captured-via-2')
+        ->patchJson("/api/leads/{$lead->public_id}", ['inquiry_text' => 'x', 'captured_via' => 'email'])
+        ->assertOk();
+
+    expect($lead->fresh()->captured_via_other)->toBeNull();
+});

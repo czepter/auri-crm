@@ -39,4 +39,39 @@ class ContactController extends Controller
             'phone' => $contact->phone,
         ], 201);
     }
+
+    /**
+     * #400: the api surface's own version of App\Crm\Http\Controllers\
+     * ContactController::update(). `sometimes` throughout and update() with
+     * only the validated array, so a caller resending name alone never wipes
+     * the billing address beside it.
+     */
+    public function update(Request $request, Contact $contact): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'email' => [
+                'sometimes', 'nullable', 'email', 'max:255',
+                Rule::unique('contacts', 'email')
+                    ->where('tenant_id', config('tenancy.tenant_id'))
+                    ->ignore($contact->id),
+            ],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:64'],
+            'street' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'postcode' => ['sometimes', 'nullable', 'string', 'max:32'],
+            'city' => ['sometimes', 'nullable', 'string', 'max:255'],
+        ]);
+
+        $contact->update($validated);
+
+        return response()->json([
+            'id' => $contact->public_id,
+            'name' => $contact->name,
+            'email' => $contact->email,
+            'phone' => $contact->phone,
+            'street' => $contact->street,
+            'postcode' => $contact->postcode,
+            'city' => $contact->city,
+        ]);
+    }
 }
