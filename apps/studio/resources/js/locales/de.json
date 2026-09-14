@@ -788,12 +788,16 @@
     "zoomFull": "100 %",
     "previewPdf": "PDF",
     "previewPortal": "Portal",
-    "sendSubject": "Betreff",
-    "sendMessage": "Nachricht",
-    "sendPdfNote": "PDF liegt der E-Mail bei.",
-    "sendCta": "Angebot ansehen",
-    "sendQuestions": "Fragen? Antworten Sie auf diese E-Mail.",
-    "sendSubmit": "Senden"
+    "sendCta": "Angebot ansehen"
+  },
+  "sendMail": {
+    "title": "Per E-Mail senden",
+    "recipient": "Empfänger",
+    "subject": "Betreff",
+    "message": "Nachricht",
+    "pdfNote": "PDF liegt der E-Mail bei.",
+    "questions": "Fragen? Antworten Sie auf diese E-Mail.",
+    "submit": "Senden"
   },
   "automations": {
     "title": "Automationen",
