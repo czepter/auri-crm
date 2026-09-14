@@ -102,6 +102,24 @@ it('names the field in a 422 rather than the request', function () {
         ->assertJsonValidationErrors('fields.gaeste');
 });
 
+it('writes one field without tripping a required field it left alone', function () {
+    ProjectField::factory()->create([
+        'project_type_id' => $this->wedding->id,
+        'key' => 'ort',
+        'label' => 'Ort',
+        'required' => true,
+    ]);
+    $token = ApiToken::factory()->withScopes(Capability::ManageLeads)->create();
+    $project = Project::factory()->create(['type' => 'wedding']);
+
+    $this->withHeaders(bearer($token) + ['Idempotency-Key' => 'fields-partial'])
+        ->patchJson("/api/projects/{$project->public_id}/fields", ['fields' => ['gaeste' => 120]])
+        ->assertOk()
+        ->assertJsonPath('data.fields.gaeste', 120);
+
+    expect($project->fresh()->field_values)->toBe(['gaeste' => 120]);
+});
+
 it('refuses to write values without the manage_leads scope', function () {
     $token = ApiToken::factory()->withScopes(Capability::ViewAllProjects)->create();
     $project = Project::factory()->create(['type' => 'wedding']);

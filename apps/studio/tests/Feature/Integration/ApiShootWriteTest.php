@@ -40,6 +40,21 @@ it('adds a second shooting day to a project', function () {
     expect($project->shoots()->latest('id')->first()->is_primary)->toBeFalse();
 });
 
+it('falls back to the project type for a shoot given no kind', function () {
+    $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
+    $project = Project::factory()->create(['type' => 'wedding']);
+
+    $response = $this->withHeader('Authorization', 'Bearer '.bearerToken($token))
+        ->withHeader('Idempotency-Key', 'shoot-no-kind')
+        ->postJson("/api/projects/{$project->public_id}/shoots", [
+            'date' => '2019-07-06',
+        ]);
+
+    $response->assertCreated();
+
+    expect($response->json('data.kind'))->toBe($project->type->name);
+});
+
 it('backdates a shooting day entered after the fact', function () {
     $token = ApiToken::factory()->withScopes(Capability::ManageShoots)->create();
     $project = Project::factory()->create();
