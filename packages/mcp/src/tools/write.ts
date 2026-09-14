@@ -624,8 +624,15 @@ function registerDeleteProject(server: McpServer, clientFor: ApiClientFactory): 
 
 const discountTypeEnum = ['percentage', 'amount'] as const
 
+const pricingModeEnum = ['classic', 'choice'] as const
+
 const quoteFields = {
   valid_until: z.string().nullish().describe('YYYY-MM-DD. Defaults to the studio setting at creation.'),
+  pricing_mode: z.enum(pricingModeEnum).optional().describe('Omit to leave the mode as it stands.'),
+  recipient_contact: z.string().nullish().describe("Contact public id the quote is addressed to. Defaults to the project's payer, else its primary contact."),
+  recipient_street: z.string().max(255).nullish(),
+  recipient_postcode: z.string().max(32).nullish(),
+  recipient_city: z.string().max(255).nullish(),
   intro: z.string().max(5000).nullish(),
   outro: z.string().max(5000).nullish(),
   discount_type: z.enum(discountTypeEnum).nullish(),
@@ -640,15 +647,21 @@ const quoteFields = {
         unit_price: z.number().int().min(0).nullish().describe('Cents. Null makes it an included service.'),
         discount_type: z.enum(discountTypeEnum).nullish(),
         discount_value: z.number().int().min(1).nullish(),
+        selectable: z.boolean().optional().describe('The client can switch this line on or off in the portal'),
+        selected: z.boolean().optional().describe('Only meaningful with selectable: on by default'),
+        outcome: z.string().max(255).nullish(),
       }),
     )
     .optional()
     .describe('Every line of the quote, in order. Replaces all lines when given.'),
-  hourly_rate: z.number().int().min(0).nullish().describe('Cents per hour. Set it and the client picks the hours in the portal; null for a fixed-price quote.'),
-  min_hours: z.number().int().min(0).nullish(),
-  max_hours: z.number().int().min(0).nullish(),
-  images_per_hour: z.number().int().min(0).nullish(),
-  hours: z.number().int().min(0).nullish().describe('The hours preselected'),
+  hourly_rate: z.number().int().min(1).nullish().describe('Cents per hour. Set it and the client picks the hours in the portal; null for a fixed-price quote.'),
+  min_hours: z.number().int().min(1).max(2000).nullish(),
+  max_hours: z.number().int().min(1).max(2000).nullish(),
+  images_per_hour: z.number().int().min(1).max(2000).nullish(),
+  hours: z.number().int().min(1).max(2000).nullish().describe('The hours preselected'),
+  time_title: z.string().max(255).nullish(),
+  time_description: z.string().max(255).nullish(),
+  time_sort_order: z.number().int().min(0).max(2000).nullish().describe('Where the time line stands between the items, 0 = before the first'),
   stages: z
     .array(
       z.object({
@@ -716,7 +729,7 @@ function registerSendQuote(server: McpServer, clientFor: ApiClientFactory): void
     {
       title: 'Send a quote',
       description:
-        'Give a draft quote its number and freeze it, then mail it to the project\'s primary contact. With silent no mail goes out: use that, with sent_at, for a quote the client already received outside the app.',
+        "Freeze a draft quote, then mail it to the project's primary contact. With silent no mail goes out and the quote is marked sent through the studio's own channel instead: use that, with sent_at, for a quote the client already received outside the app.",
       inputSchema: {
         quote: z.string().describe('The quote public id'),
         sent_at: z.string().nullish().describe('When it went out. Never in the future. Defaults to now.'),
@@ -768,6 +781,7 @@ function registerAcceptQuote(server: McpServer, clientFor: ApiClientFactory): vo
         contact: z.string().nullish().describe("Public id of the contact who said yes. Defaults to the project's primary contact."),
         accepted_at: z.string().nullish().describe('When they said yes. Never in the future. Defaults to now.'),
         hours: z.number().int().min(0).nullish().describe('Hourly-rate quotes only: the hours agreed'),
+        items: z.array(z.string()).optional().describe('Hourly-rate quotes only: public ids of the selectable add-on lines the client switched on'),
         ...silentField,
       },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },

@@ -960,6 +960,56 @@ describe('Q-06: revising a sent quote', function () {
             ->and($predecessor->fresh()->status)->toBe(QuoteStatus::Sent);
     });
 
+    // #396: a revision used to carry only valid_until, the discount and a
+    // handful of per-item columns, dropping the hourly slider, the time
+    // line, the recipient and the number every other quote-creating path
+    // sets — the same fields DuplicateQuote already carries fully.
+    it('carries the number, recipient and hourly/time fields DuplicateQuote already carries fully', function () {
+        $contact = Contact::factory()->create();
+        $predecessor = Quote::factory()->create([
+            'status' => QuoteStatus::Sent,
+            'pricing_mode' => 'choice',
+            'hourly_rate' => 15000,
+            'min_hours' => 2,
+            'max_hours' => 8,
+            'images_per_hour' => 20,
+            'hours' => 4,
+            'time_title' => 'Ablauf',
+            'time_description' => 'ab 14 Uhr',
+            'recipient_contact_id' => $contact->id,
+            'recipient_street' => 'Hauptstr. 1',
+            'recipient_postcode' => '10115',
+            'recipient_city' => 'Berlin',
+        ]);
+
+        $revision = app(ReviseQuote::class)($predecessor);
+
+        expect($revision->number)->not->toBeNull()
+            ->and($revision->number)->not->toBe($predecessor->number)
+            ->and($revision->pricing_mode->value)->toBe('choice')
+            ->and($revision->hourly_rate)->toBe(15000)
+            ->and($revision->min_hours)->toBe(2)
+            ->and($revision->max_hours)->toBe(8)
+            ->and($revision->images_per_hour)->toBe(20)
+            ->and($revision->hours)->toBe(4)
+            ->and($revision->time_title)->toBe('Ablauf')
+            ->and($revision->time_description)->toBe('ab 14 Uhr')
+            ->and($revision->recipient_contact_id)->toBe($contact->id)
+            ->and($revision->recipient_street)->toBe('Hauptstr. 1')
+            ->and($revision->recipient_postcode)->toBe('10115')
+            ->and($revision->recipient_city)->toBe('Berlin');
+    });
+
+    // AcceptQuote refuses a lapsed valid_until outright, so a revision that
+    // just copied its predecessor's date could never be accepted.
+    it('gives the revision a fresh valid_until when the predecessor\'s own has lapsed', function () {
+        $predecessor = Quote::factory()->create(['status' => QuoteStatus::Sent, 'valid_until' => '2018-01-01']);
+
+        $revision = app(ReviseQuote::class)($predecessor);
+
+        expect($revision->valid_until->isFuture())->toBeTrue();
+    });
+
     it('refuses to revise a quote that is not sent', function (QuoteStatus $status) {
         $quote = Quote::factory()->create(['status' => $status]);
 

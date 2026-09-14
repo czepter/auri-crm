@@ -3,10 +3,13 @@
 namespace App\Quotes\Actions;
 
 use App\Models\User;
+use App\Numbering\Actions\AllocateDocumentNumber;
+use App\Numbering\Enums\DocumentType;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Events\QuoteRevised;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
+use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +31,11 @@ use Illuminate\Support\Facades\DB;
  */
 class ReviseQuote
 {
+    public function __construct(
+        private readonly AllocateDocumentNumber $allocate,
+        private readonly StudioSettingsResolver $settings,
+    ) {}
+
     public function __invoke(Quote $predecessor, ?User $actor = null): Quote
     {
         if ($predecessor->status !== QuoteStatus::Sent) {
@@ -35,11 +43,36 @@ class ReviseQuote
         }
 
         return DB::transaction(function () use ($predecessor, $actor) {
+            $allocation = ($this->allocate)(documentType: DocumentType::Quote);
+
+            // A predecessor already past its own valid_until would hand the
+            // revision straight into AcceptQuote's expiry check — give it a
+            // fresh one instead of copying a date already in the past.
+            $validUntil = $predecessor->valid_until !== null && $predecessor->valid_until->isPast()
+                ? now()->addDays($this->settings->quoteValidityDays())->toDateString()
+                : $predecessor->valid_until;
+
             $revision = $predecessor->project->quotes()->create([
                 'predecessor_id' => $predecessor->id,
-                'valid_until' => $predecessor->valid_until,
+                'number' => $allocation['number'],
+                'valid_until' => $validUntil,
+                'pricing_mode' => $predecessor->pricing_mode,
+                'intro' => $predecessor->intro,
+                'outro' => $predecessor->outro,
                 'discount_type' => $predecessor->discount_type,
                 'discount_value' => $predecessor->discount_value,
+                'hourly_rate' => $predecessor->hourly_rate,
+                'min_hours' => $predecessor->min_hours,
+                'max_hours' => $predecessor->max_hours,
+                'images_per_hour' => $predecessor->images_per_hour,
+                'hours' => $predecessor->hours,
+                'time_title' => $predecessor->time_title,
+                'time_description' => $predecessor->time_description,
+                'time_sort_order' => $predecessor->time_sort_order,
+                'recipient_contact_id' => $predecessor->recipient_contact_id,
+                'recipient_street' => $predecessor->recipient_street,
+                'recipient_postcode' => $predecessor->recipient_postcode,
+                'recipient_city' => $predecessor->recipient_city,
             ]);
 
             $revision->items()->createMany(
@@ -51,7 +84,15 @@ class ReviseQuote
                     'sort_order' => $item->sort_order,
                     'discount_type' => $item->discount_type,
                     'discount_value' => $item->discount_value,
+                    'selectable' => $item->selectable,
+                    'selected' => $item->selected,
+                    'outcome' => $item->outcome,
+                    'image_path' => $item->image_path,
                 ])->all()
+            );
+
+            $revision->paymentStages()->createMany(
+                $predecessor->paymentStages->map(fn ($stage) => $stage->only(['percent', 'label', 'minimum', 'sort_order']))->all()
             );
 
             $revision->recalculateTotal();

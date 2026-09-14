@@ -6,7 +6,7 @@
     },
     "servers": [
         {
-            "url": "http://localhost:8000/api"
+            "url": "http://localhost:8002/api"
         }
     ],
     "paths": {
@@ -2718,13 +2718,6 @@
                                             "portal_offered": {
                                                 "type": "boolean"
                                             },
-                                            "portal_text": {
-                                                "type": [
-                                                    "string",
-                                                    "null"
-                                                ],
-                                                "maxLength": 255
-                                            },
                                             "portal_price_mode": {
                                                 "$ref": "#/components/schemas/PortalPriceMode"
                                             },
@@ -2870,13 +2863,6 @@
                                             },
                                             "portal_offered": {
                                                 "type": "boolean"
-                                            },
-                                            "portal_text": {
-                                                "type": [
-                                                    "string",
-                                                    "null"
-                                                ],
-                                                "maxLength": 255
                                             },
                                             "portal_price_mode": {
                                                 "$ref": "#/components/schemas/PortalPriceMode"
@@ -4208,6 +4194,12 @@
                                             "null"
                                         ],
                                         "minimum": 0
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
                                     }
                                 }
                             }
@@ -4911,13 +4903,6 @@
                     },
                     "portal_offered": {
                         "type": "boolean"
-                    },
-                    "portal_text": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "maxLength": 255
                     },
                     "portal_price_mode": {
                         "$ref": "#/components/schemas/PortalPriceMode"
