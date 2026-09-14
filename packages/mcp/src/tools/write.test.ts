@@ -70,21 +70,28 @@ describe('registerWriteTools', () => {
       'capture_lead',
       'capture_leads_bulk',
       'close_lead',
+      'create_contact',
       'create_package',
       'create_quote',
       'create_shoot',
       'delete_internal_note',
       'delete_package',
       'delete_project',
+      'delete_shoot',
+      'remove_project_contact',
       'reopen_lead',
       'revise_quote',
       'send_quote',
+      'set_primary_shoot',
       'set_project_fields',
       'uncancel_shoot',
+      'update_contact',
       'update_internal_note',
       'update_lead',
       'update_package',
+      'update_project',
       'update_quote',
+      'update_shoot',
     ])
   })
 
@@ -117,13 +124,19 @@ describe('registerWriteTools', () => {
       'delete_internal_note',
       'delete_package',
       'delete_project',
+      'delete_shoot',
+      'remove_project_contact',
       'revise_quote',
       'send_quote',
+      'set_primary_shoot',
       'set_project_fields',
+      'update_contact',
       'update_internal_note',
       'update_lead',
       'update_package',
+      'update_project',
       'update_quote',
+      'update_shoot',
     ])
   })
 
@@ -156,6 +169,46 @@ describe('registerWriteTools', () => {
     expect(patch.mock.calls[0]).toMatchObject(['/packages/{package}', { params: { path: { package: 'pkg_1' } }, body: { is_active: false } }])
     expect(del.mock.calls[0][0]).toBe('/packages/{package}')
     expect(JSON.stringify(deleted.content)).toContain('Deleted package pkg_1.')
+  })
+
+  it('creates and updates a contact', async () => {
+    const { post, patch, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({ name: 'create_contact', arguments: { name: 'Lena Meier', email: 'lena@example.test' } })
+    await client.callTool({ name: 'update_contact', arguments: { contact: 'contact_1', phone: '0171 1234567' } })
+
+    expect(post.mock.calls[0][0]).toBe('/contacts')
+    expect(patch.mock.calls[0]).toMatchObject(['/contacts/{contact}', { params: { path: { contact: 'contact_1' } }, body: { phone: '0171 1234567' } }])
+  })
+
+  it('updates a project and removes a secondary contact from it', async () => {
+    const { patch, del, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({ name: 'update_project', arguments: { project: 'p1', name: 'Voss — Bewerbung' } })
+    const removed = await client.callTool({ name: 'remove_project_contact', arguments: { project: 'p1', contact: 'contact_1' } })
+
+    expect(patch.mock.calls[0]).toMatchObject(['/projects/{project}', { params: { path: { project: 'p1' } }, body: { name: 'Voss — Bewerbung' } }])
+    expect(del.mock.calls[0][0]).toBe('/projects/{project}/contacts/{contact}')
+    expect(JSON.stringify(removed.content)).toContain('Removed contact contact_1 from project p1.')
+  })
+
+  it('updates, deletes and re-primaries a shoot', async () => {
+    const { patch, post, del, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({ name: 'update_shoot', arguments: { shoot: 'shoot_1', venue_name: 'Schloss Elmau' } })
+    const deleted = await client.callTool({ name: 'delete_shoot', arguments: { shoot: 'shoot_1' } })
+    await client.callTool({ name: 'set_primary_shoot', arguments: { shoot: 'shoot_2' } })
+
+    expect(patch.mock.calls[0]).toMatchObject(['/shoots/{shoot}', { params: { path: { shoot: 'shoot_1' } }, body: { venue_name: 'Schloss Elmau' } }])
+    expect(del.mock.calls[0][0]).toBe('/shoots/{shoot}')
+    expect(JSON.stringify(deleted.content)).toContain('Deleted shoot shoot_1.')
+    expect(post.mock.calls[0]).toMatchObject(['/shoots/{shoot}/primary', { params: { path: { shoot: 'shoot_2' } } }])
   })
 
   it('calls the API with an Idempotency-Key header', async () => {

@@ -200,9 +200,10 @@ Route::middleware('audience:api')->group(function () {
 // controller already makes — see each controller's own doc comment for which
 // one and why an ApiToken can still make it without a staff User to attribute
 // it to.
-Route::middleware(['audience:api', 'scope:'.Capability::ManageContacts->value, 'idempotent'])
-    ->post('/contacts', [ContactController::class, 'store'])
-    ->name('api.contacts.store');
+Route::middleware(['audience:api', 'scope:'.Capability::ManageContacts->value, 'idempotent'])->group(function () {
+    Route::post('/contacts', [ContactController::class, 'store'])->name('api.contacts.store');
+    Route::patch('/contacts/{contact:public_id}', [ContactController::class, 'update'])->name('api.contacts.update');
+});
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
     ->post('/leads', [LeadController::class, 'store'])
@@ -222,6 +223,14 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'ide
     ->patch('/leads/{lead:public_id}', [LeadController::class, 'update'])
     ->name('api.leads.update');
 
+Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
+    ->patch('/projects/{project:public_id}', [ProjectController::class, 'update'])
+    ->name('api.projects.update');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
+    ->delete('/projects/{project:public_id}/contacts/{contact:public_id}', [ProjectContactController::class, 'destroy'])
+    ->name('api.projects.contacts.destroy');
+
 // Closing a lead and taking that back are the same authority as moving it:
 // all three write Lead columns nobody but AdvanceLeadStage writes.
 Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'idempotent'])
@@ -238,6 +247,18 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageLeads->value, 'ide
 Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
     ->post('/projects/{project:public_id}/shoots', [ShootController::class, 'store'])
     ->name('api.projects.shoots.store');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
+    ->patch('/shoots/{shoot:public_id}', [ShootController::class, 'update'])
+    ->name('api.shoots.update');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
+    ->delete('/shoots/{shoot:public_id}', [ShootController::class, 'destroy'])
+    ->name('api.shoots.destroy');
+
+Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
+    ->post('/shoots/{shoot:public_id}/primary', [ShootController::class, 'designatePrimary'])
+    ->name('api.shoots.primary');
 
 Route::middleware(['audience:api', 'scope:'.Capability::ManageShoots->value, 'idempotent'])
     ->post('/shoots/{shoot:public_id}/status', [ShootController::class, 'advance'])

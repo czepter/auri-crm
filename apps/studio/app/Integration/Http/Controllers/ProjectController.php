@@ -2,10 +2,15 @@
 
 namespace App\Integration\Http\Controllers;
 
+use App\Crm\Enums\LeadSource;
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
 use App\Support\LiveUpdate;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -22,6 +27,47 @@ use Illuminate\Validation\ValidationException;
  */
 class ProjectController extends Controller
 {
+    /**
+     * #400: name, type/type_other and lead source, merged rather than
+     * replaced — App\Crm\Http\Controllers\LeadCaseController::update()
+     * nulls type_other whenever `type` arrives without it, and the issue is
+     * explicit that the api surface must not repeat that: only a key
+     * actually present in the request is written, so Project::booted()
+     * remains the only thing that clears type_other, and only when the type
+     * itself changed to something other than "Sonstige".
+     */
+    public function update(Request $request, Project $project): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'type' => ['sometimes', 'required', Rule::exists('project_types', 'key')->where('is_active', true)],
+            'type_other' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'source' => ['sometimes', 'required', Rule::enum(LeadSource::class)],
+            'source_other' => ['sometimes', 'nullable', 'string', 'max:120'],
+        ]);
+
+        $projectFields = Arr::only($validated, ['name', 'type', 'type_other']);
+
+        if ($projectFields !== []) {
+            $project->update($projectFields);
+        }
+
+        $leadFields = Arr::only($validated, ['source', 'source_other']);
+
+        if ($leadFields !== [] && $project->lead !== null) {
+            $project->lead->update($leadFields);
+        }
+
+        return response()->json([
+            'id' => $project->public_id,
+            'name' => $project->name,
+            'type' => $project->type->key,
+            'typeOther' => $project->type_other,
+            'source' => $project->lead?->source->value,
+            'sourceOther' => $project->lead?->source_other,
+        ]);
+    }
+
     public function destroy(Project $project): Response
     {
         $blocking = $project->deletionBlockers();

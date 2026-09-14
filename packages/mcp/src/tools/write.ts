@@ -4,6 +4,7 @@ import { z } from 'zod'
 
 import type { ApiClientFactory } from '../client.js'
 import { idempotencyKeyFor } from '../idempotency.js'
+import { registerCrmEditTools } from './crm-edit.js'
 
 /**
  * N-03: the MCP server's write tools, each a thin call onto one of I-03's
@@ -51,6 +52,7 @@ import { idempotencyKeyFor } from '../idempotency.js'
   registerCreatePackage(server, clientFor)
   registerUpdatePackage(server, clientFor)
   registerDeletePackage(server, clientFor)
+  registerCrmEditTools(server, clientFor)
 }
 
 /**
@@ -59,14 +61,14 @@ import { idempotencyKeyFor } from '../idempotency.js'
  * App\Http\Middleware\MarkSilentWrite): the header is the whole contract
  * this side holds.
  */
-const silentField = {
+export const silentField = {
   silent: z
     .boolean()
     .nullish()
     .describe('For entering history that already happened: no mail, no in-app notice, no webhook, and no follow-up tasks. Use it for every write of a record from before this studio moved onto the app.'),
 }
 
-function writeHeaders(tool: string, payload: Record<string, unknown>, silent: boolean | null | undefined): Record<string, string> {
+export function writeHeaders(tool: string, payload: Record<string, unknown>, silent: boolean | null | undefined): Record<string, string> {
   return {
     // `silent` decides whether mail, tasks and webhooks fire, so it is part
     // of what makes two writes the same write.
@@ -194,18 +196,22 @@ function registerUpdateLead(server: McpServer, clientFor: ApiClientFactory): voi
     'update_lead',
     {
       title: 'Update lead',
-      description: "Replace a lead's inquiry text, the one written at capture. get_project shows the current one.",
+      description:
+        "Replace a lead's inquiry text, the one written at capture, and optionally correct how it arrived. get_project shows the current values.",
       inputSchema: {
         lead: z.string().describe('The lead public id'),
         inquiry_text: z.string().max(10000).nullable(),
+        captured_via: z.enum(captureChannelEnum).optional(),
+        captured_via_other: z.string().max(120).nullish().describe("What 'other' actually was. Only kept beside captured_via: other."),
       },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
-    async ({ lead, inquiry_text: inquiryText }, extra) => {
+    async ({ lead, inquiry_text: inquiryText, captured_via: capturedVia, captured_via_other: capturedViaOther }, extra) => {
+      const body = { inquiry_text: inquiryText, captured_via: capturedVia, captured_via_other: capturedViaOther }
       const { data, error } = await clientFor(extra.authInfo?.token).PATCH('/leads/{lead}', {
         params: { path: { lead } },
-        body: { inquiry_text: inquiryText } as never,
-        headers: writeHeaders('update_lead', { lead, inquiry_text: inquiryText }, undefined),
+        body: body as never,
+        headers: writeHeaders('update_lead', { lead, ...body }, undefined),
       })
 
       return apiResult(data, error)
@@ -873,7 +879,7 @@ function registerDeletePackage(server: McpServer, clientFor: ApiClientFactory): 
   )
 }
 
-function apiResult(data: unknown, error: unknown): CallToolResult {
+export function apiResult(data: unknown, error: unknown): CallToolResult {
   if (error !== undefined) {
     return { isError: true, content: [{ type: 'text', text: JSON.stringify(error) }] }
   }
