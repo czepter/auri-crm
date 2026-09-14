@@ -38,6 +38,7 @@ const settings: App.Settings.Data.StudioSettingsData = {
   depositPercentage: 30,
   widerrufIncluded: true,
   widerrufText: null,
+  quoteLayout: 'classic',
   documentLetterheadHtml: null,
   documentFooterHtml: null,
   timezone: 'Europe/Berlin',
