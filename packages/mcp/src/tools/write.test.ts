@@ -143,6 +143,22 @@ describe('registerWriteTools', () => {
     })
   })
 
+  // #396: the client's chosen add-ons never reached AcceptQuote from here,
+  // so an hourly quote's selectable lines came back deselected on acceptance.
+  it('accept_quote carries the selected add-on ids as items', async () => {
+    const { post, client: apiClient } = fakeApiClient()
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    await client.callTool({ name: 'accept_quote', arguments: { quote: 'quote_1', hours: 6, items: ['item_1', 'item_2'] } })
+
+    expect(post.mock.calls[0][0]).toBe('/quotes/{quote}/accept')
+    expect(post.mock.calls[0][1]).toMatchObject({
+      params: { path: { quote: 'quote_1' } },
+      body: { hours: 6, items: ['item_1', 'item_2'] },
+    })
+  })
+
   it('creates, updates and deletes a package by its id', async () => {
     const { post, patch, del, client: apiClient } = fakeApiClient()
     const { client } = await connectedPair(apiClient)
