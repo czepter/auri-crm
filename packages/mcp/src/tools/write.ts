@@ -5,6 +5,7 @@ import type { ApiClientFactory } from '../client.js'
 import { idempotencyKeyFor } from '../idempotency.js'
 import { apiResult } from '../results.js'
 import { registerCrmEditTools } from './crm-edit.js'
+import { registerMoneyContractsTools } from './money-contracts.js'
 
 /**
  * N-03: the MCP server's write tools, each a thin call onto one of I-03's
@@ -53,6 +54,7 @@ import { registerCrmEditTools } from './crm-edit.js'
   registerUpdatePackage(server, clientFor)
   registerDeletePackage(server, clientFor)
   registerCrmEditTools(server, clientFor)
+  registerMoneyContractsTools(server, clientFor)
 }
 
 /**

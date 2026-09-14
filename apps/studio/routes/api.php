@@ -14,12 +14,15 @@ use App\Gallery\Http\Controllers\GalleryReadController;
 use App\Http\Controllers\GuestIdentityController;
 use App\Http\Controllers\HealthController;
 use App\Integration\Http\Controllers\ContactController;
+use App\Integration\Http\Controllers\ContractController;
+use App\Integration\Http\Controllers\ContractSignerController;
 use App\Integration\Http\Controllers\CrmReadController;
 use App\Integration\Http\Controllers\InternalNoteController;
 use App\Integration\Http\Controllers\LeadController;
 use App\Integration\Http\Controllers\MessageController;
 use App\Integration\Http\Controllers\OAuthTokenInfoController;
 use App\Integration\Http\Controllers\PackageController;
+use App\Integration\Http\Controllers\PaymentController;
 use App\Integration\Http\Controllers\ProjectContactController;
 use App\Integration\Http\Controllers\ProjectController;
 use App\Integration\Http\Controllers\ProjectFieldController;
@@ -191,6 +194,12 @@ Route::middleware('audience:api')->group(function () {
     Route::middleware('scope:'.Capability::ManageLeads->value)
         ->get('/pipeline-snapshot', [CrmReadController::class, 'pipelineSnapshot'])
         ->name('api.pipeline-snapshot');
+    // #402: ManageContracts, the capability managePaymentPlan and
+    // manageContracts already both reuse — the same reasoning that lets one
+    // scope cover the write routes below covers reading them together too.
+    Route::middleware('scope:'.Capability::ManageContracts->value)
+        ->get('/projects/{project:public_id}/money', [CrmReadController::class, 'money'])
+        ->name('api.projects.money');
 });
 
 // I-03: the api surface's first write endpoints — a workflow runner with a
@@ -376,4 +385,35 @@ Route::middleware(['audience:api', 'scope:'.Capability::ManageTasks->value, 'ide
         ->name('api.tasks.depend');
     Route::delete('/tasks/{task:public_id}', [TaskController::class, 'destroy'])
         ->name('api.tasks.destroy');
+});
+
+// #402: payments and contracts, both ManageContracts — see
+// ProjectPolicy::managePaymentPlan() on why a plan shares the contract's own
+// capability rather than a narrower one.
+Route::middleware(['audience:api', 'scope:'.Capability::ManageContracts->value, 'idempotent'])->group(function () {
+    Route::post('/projects/{project:public_id}/payment-plan', [PaymentController::class, 'store'])
+        ->name('api.projects.payment-plan.store');
+    Route::patch('/payment-plans/{paymentPlan:public_id}', [PaymentController::class, 'update'])
+        ->name('api.payment-plans.update');
+    Route::post('/payment-plans/{paymentPlan:public_id}/reminders', [PaymentController::class, 'reminders'])
+        ->name('api.payment-plans.reminders');
+    Route::post('/payment-installments/{installment:public_id}/paid', [PaymentController::class, 'markPaid'])
+        ->name('api.payment-installments.paid');
+    Route::post('/payment-installments/{installment:public_id}/invoice', [PaymentController::class, 'issueInvoice'])
+        ->name('api.payment-installments.invoice');
+
+    Route::post('/projects/{project:public_id}/contracts', [ContractController::class, 'store'])
+        ->name('api.projects.contracts.store');
+    Route::patch('/contracts/{contract:public_id}', [ContractController::class, 'update'])
+        ->name('api.contracts.update');
+    Route::post('/contracts/{contract:public_id}/send', [ContractController::class, 'send'])
+        ->name('api.contracts.send');
+    Route::patch('/contracts/{contract:public_id}/deadline', [ContractController::class, 'deadline'])
+        ->name('api.contracts.deadline');
+    Route::post('/contracts/{contract:public_id}/signers', [ContractSignerController::class, 'store'])
+        ->name('api.contracts.signers.store');
+    Route::delete('/contract-signers/{signer:public_id}', [ContractSignerController::class, 'destroy'])
+        ->name('api.contract-signers.destroy');
+    Route::post('/contract-signers/{signer:public_id}/remind', [ContractSignerController::class, 'remind'])
+        ->name('api.contract-signers.remind');
 });

@@ -207,6 +207,52 @@ const projectTypeSchema = z.object({
   fields: z.array(projectFieldSchema),
 })
 
+/** PaymentInstallmentData — amounts in cents. */
+const paymentInstallmentSchema = z.object({
+  id: z.string(),
+  amount: z.number(),
+  dueOn: z.string(),
+  status: z.string(),
+  label: z.string(),
+  settledVia: z.string().nullable(),
+  paidOn: z.string().nullable(),
+  paymentReference: z.string().nullable(),
+  isLate: z.boolean(),
+  invoiceNumber: z.string().nullable(),
+  invoicedOn: z.string().nullable(),
+  hasInvoiceDocument: z.boolean(),
+})
+
+/** PaymentPlanData — see create_payment_plan. */
+const paymentPlanSchema = z.object({
+  id: z.string(),
+  total: z.number(),
+  openTotal: z.number(),
+  isEditable: z.boolean(),
+  clientRemindersEnabled: z.boolean(),
+  installments: z.array(paymentInstallmentSchema),
+})
+
+/** ContractSignerData. */
+const contractSignerSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  signedAt: z.string().nullable(),
+  remindedAt: z.string().nullable(),
+})
+
+/** ContractData — see create_contract. */
+const contractSchema = z.object({
+  id: z.string(),
+  version: z.number(),
+  state: z.string(),
+  status: z.string(),
+  templateName: z.string(),
+  sentAt: z.string().nullable(),
+  signDeadlineOn: z.string().nullable(),
+  signers: z.array(contractSignerSchema),
+})
+
 const pipelineStageSchema = z.object({
   stage: z.string(),
   label: z.string(),
@@ -276,6 +322,34 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
       }
 
       return jsonResult({ project: data.data as unknown as z.infer<typeof projectDetailSchema> })
+    },
+  )
+
+  server.registerTool(
+    'get_project_money',
+    {
+      title: 'Get a project\'s payments and contracts',
+      description:
+        "#402: what get_project leaves out — the payment plan (null if none exists yet) and every contract Fassung, newest first. Check this before offering create_payment_plan or record_payment: a plan already exists once this returns one.",
+      inputSchema: {
+        publicId: z.string().describe("The project's public_id, never its internal integer id."),
+      },
+      outputSchema: {
+        paymentPlan: paymentPlanSchema.nullable(),
+        contracts: z.array(contractSchema),
+      },
+      annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    async ({ publicId }, extra) => {
+      const client = clientFor(extra.authInfo?.token)
+
+      const { data, error, response } = await client.GET('/projects/{project}/money', { params: { path: { project: publicId } } })
+      if (!response.ok || data === undefined) {
+        return errorResult(error, response)
+      }
+
+      const money = data.data as unknown as { paymentPlan: z.infer<typeof paymentPlanSchema> | null; contracts: z.infer<typeof contractSchema>[] }
+      return jsonResult(money)
     },
   )
 
