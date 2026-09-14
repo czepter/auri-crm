@@ -2,6 +2,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 
 import type { ApiClientFactory } from './client.js'
+import { errorResult, jsonResult } from './results.js'
 
 /**
  * N-02: the read tools that give an assistant the questions I-02's routes
@@ -151,30 +152,6 @@ const pipelineStageSchema = z.object({
   count: z.number(),
 })
 
-/**
- * Every error body on this surface is at least `{ message: string }` —
- * Laravel's own exception-to-JSON shape — so that's the one thing worth
- * lifting into a tool error rather than a thrown exception that would kill
- * the whole server process over one bad call.
- */
-function apiErrorMessage(error: unknown): string {
-  if (error && typeof error === 'object' && 'message' in error && typeof error.message === 'string') {
-    return error.message
-  }
-  return 'The api surface returned an error with no message.'
-}
-
-function errorResult(error: unknown): { isError: true; content: [{ type: 'text'; text: string }] } {
-  return { isError: true, content: [{ type: 'text', text: apiErrorMessage(error) }] }
-}
-
-function jsonResult<T extends Record<string, unknown>>(structuredContent: T): {
-  content: [{ type: 'text'; text: string }]
-  structuredContent: T
-} {
-  return { content: [{ type: 'text', text: JSON.stringify(structuredContent) }], structuredContent }
-}
-
 export function registerReadTools(server: McpServer, clientFor: ApiClientFactory): void {
   server.registerTool(
     'search_contacts',
@@ -201,9 +178,9 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
       // a variable for the reason shoots_in_date_range below gives — a
       // literal would be rejected for those two excess keys.
       const queryParams = { query, cursor, since }
-      const { data, error } = await client.GET('/contacts', { params: { query: queryParams } })
-      if (error) {
-        return errorResult(error)
+      const { data, error, response } = await client.GET('/contacts', { params: { query: queryParams } })
+      if (!response.ok || data === undefined) {
+        return errorResult(error, response)
       }
 
       return jsonResult({
@@ -229,9 +206,9 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
     async ({ publicId }, extra) => {
       const client = clientFor(extra.authInfo?.token)
 
-      const { data, error } = await client.GET('/projects/{project}', { params: { path: { project: publicId } } })
-      if (error) {
-        return errorResult(error)
+      const { data, error, response } = await client.GET('/projects/{project}', { params: { path: { project: publicId } } })
+      if (!response.ok || data === undefined) {
+        return errorResult(error, response)
       }
 
       return jsonResult({ project: data.data as unknown as z.infer<typeof projectDetailSchema> })
@@ -260,11 +237,11 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
       },
     },
     async ({ publicId }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).GET('/projects/{project}/notes', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).GET('/projects/{project}/notes', {
         params: { path: { project: publicId } },
       })
-      if (error) {
-        return errorResult(error)
+      if (!response.ok || data === undefined) {
+        return errorResult(error, response)
       }
 
       return jsonResult({ notes: data.data })
@@ -284,9 +261,9 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
     },
     async (_args, extra) => {
       const client = clientFor(extra.authInfo?.token)
-      const { data, error } = await client.GET('/project-types')
-      if (error) {
-        return errorResult(error)
+      const { data, error, response } = await client.GET('/project-types')
+      if (!response.ok || data === undefined) {
+        return errorResult(error, response)
       }
 
       return jsonResult({ types: data.data as unknown as z.infer<typeof projectTypeSchema>[] })
@@ -305,9 +282,9 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
       },
     },
     async (_args, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).GET('/packages')
-      if (error) {
-        return errorResult(error)
+      const { data, error, response } = await clientFor(extra.authInfo?.token).GET('/packages')
+      if (!response.ok || data === undefined) {
+        return errorResult(error, response)
       }
 
       return jsonResult({ packages: data.data as unknown as z.infer<typeof packageSchema>[] })
@@ -343,9 +320,9 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
       // here, since /shoots's documented query type — unlike /contacts's —
       // is a real (if incomplete) object rather than `never`.
       const queryParams = { from, to, cursor, ...(include_cancelled ? {} : { cancelled: 'false' as const }) }
-      const { data, error } = await client.GET('/shoots', { params: { query: queryParams } })
-      if (error) {
-        return errorResult(error)
+      const { data, error, response } = await client.GET('/shoots', { params: { query: queryParams } })
+      if (!response.ok || data === undefined) {
+        return errorResult(error, response)
       }
 
       return jsonResult({
@@ -379,9 +356,9 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
       // '/leads' documents no query parameters — same Scramble blind spot as
       // '/contacts' above, and the same cast past the contract's `never`.
       const query = { stage, closed, captured_from: capturedFrom, captured_to: capturedTo, cursor } as never
-      const { data, error } = await client.GET('/leads', { params: { query } })
-      if (error) {
-        return errorResult(error)
+      const { data, error, response } = await client.GET('/leads', { params: { query } })
+      if (!response.ok || data === undefined) {
+        return errorResult(error, response)
       }
 
       return jsonResult({
@@ -404,9 +381,9 @@ export function registerReadTools(server: McpServer, clientFor: ApiClientFactory
     },
     async (_args, extra) => {
       const client = clientFor(extra.authInfo?.token)
-      const { data, error } = await client.GET('/pipeline-snapshot')
-      if (error) {
-        return errorResult(error)
+      const { data, error, response } = await client.GET('/pipeline-snapshot')
+      if (!response.ok || data === undefined) {
+        return errorResult(error, response)
       }
 
       return jsonResult({ stages: data.data as unknown as z.infer<typeof pipelineStageSchema>[] })

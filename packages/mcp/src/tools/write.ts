@@ -1,9 +1,9 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import { z } from 'zod'
 
 import type { ApiClientFactory } from '../client.js'
 import { idempotencyKeyFor } from '../idempotency.js'
+import { apiResult } from '../results.js'
 
 /**
  * N-03: the MCP server's write tools, each a thin call onto one of I-03's
@@ -114,12 +114,12 @@ function registerCaptureLead(server: McpServer, clientFor: ApiClientFactory): vo
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     async ({ silent, ...args }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/leads', {
         body: args,
         headers: writeHeaders('capture_lead', args, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -146,12 +146,12 @@ function registerCaptureLeadsBulk(server: McpServer, clientFor: ApiClientFactory
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     async ({ leads, silent }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads/bulk', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/leads/bulk', {
         body: { leads } as never,
         headers: writeHeaders('capture_leads_bulk', { leads }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -178,13 +178,13 @@ function registerAdvanceLeadStage(server: McpServer, clientFor: ApiClientFactory
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     async ({ lead, stage, entered_at: enteredAt, silent }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads/{lead}/stage', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/leads/{lead}/stage', {
         params: { path: { lead } },
         body: { stage, entered_at: enteredAt } as never,
         headers: writeHeaders('advance_lead_stage', { lead, stage, entered_at: enteredAt }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -202,13 +202,13 @@ function registerUpdateLead(server: McpServer, clientFor: ApiClientFactory): voi
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     async ({ lead, inquiry_text: inquiryText }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).PATCH('/leads/{lead}', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).PATCH('/leads/{lead}', {
         params: { path: { lead } },
         body: { inquiry_text: inquiryText } as never,
         headers: writeHeaders('update_lead', { lead, inquiry_text: inquiryText }, undefined),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -230,13 +230,13 @@ function registerCloseLead(server: McpServer, clientFor: ApiClientFactory): void
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     },
     async ({ lead, outcome, reason, lost_at: lostAt, silent }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads/{lead}/lost', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/leads/{lead}/lost', {
         params: { path: { lead } },
         body: { outcome, reason, lost_at: lostAt } as never,
         headers: writeHeaders('close_lead', { lead, outcome, reason, lost_at: lostAt }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -255,12 +255,12 @@ function registerReopenLead(server: McpServer, clientFor: ApiClientFactory): voi
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
     async ({ lead, silent }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/leads/{lead}/reopen', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/leads/{lead}/reopen', {
         params: { path: { lead } },
         headers: writeHeaders('reopen_lead', { lead }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -292,13 +292,13 @@ function registerCreateShoot(server: McpServer, clientFor: ApiClientFactory): vo
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     async ({ project, silent, ...shoot }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/shoots', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/shoots', {
         params: { path: { project } },
         body: shoot as never,
         headers: writeHeaders('create_shoot', { project, ...shoot }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -319,13 +319,13 @@ function registerAdvanceShootStatus(server: McpServer, clientFor: ApiClientFacto
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     async ({ shoot, status, entered_at: enteredAt, silent }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/shoots/{shoot}/status', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/shoots/{shoot}/status', {
         params: { path: { shoot } },
         body: { status, entered_at: enteredAt } as never,
         headers: writeHeaders('advance_shoot_status', { shoot, status, entered_at: enteredAt }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -346,13 +346,13 @@ function registerCancelShoot(server: McpServer, clientFor: ApiClientFactory): vo
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     },
     async ({ shoot, reason, cancelled_at: cancelledAt, silent }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/shoots/{shoot}/cancel', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/shoots/{shoot}/cancel', {
         params: { path: { shoot } },
         body: { reason, cancelled_at: cancelledAt } as never,
         headers: writeHeaders('cancel_shoot', { shoot, reason, cancelled_at: cancelledAt }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -371,12 +371,12 @@ function registerUncancelShoot(server: McpServer, clientFor: ApiClientFactory): 
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
     async ({ shoot, silent }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/shoots/{shoot}/uncancel', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/shoots/{shoot}/uncancel', {
         params: { path: { shoot } },
         headers: writeHeaders('uncancel_shoot', { shoot }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -399,13 +399,13 @@ function registerAddInternalNote(server: McpServer, clientFor: ApiClientFactory)
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     async ({ project, body, occurred_at, silent }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/notes', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/notes', {
         params: { path: { project } },
         body: { body, occurred_at } as never,
         headers: writeHeaders('add_internal_note', { project, body, occurred_at }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -428,13 +428,13 @@ function registerAddMessage(server: McpServer, clientFor: ApiClientFactory): voi
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     async ({ project, from, body, sent_at, contact, silent }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/messages', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/messages', {
         params: { path: { project } },
         body: { from, body, sent_at, contact } as never,
         headers: writeHeaders('add_message', { project, from, body, sent_at, contact }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -457,13 +457,13 @@ function registerUpdateInternalNote(server: McpServer, clientFor: ApiClientFacto
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     async ({ note, body, occurred_at, silent }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).PATCH('/notes/{note}', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).PATCH('/notes/{note}', {
         params: { path: { note } },
         body: { body, occurred_at } as never,
         headers: writeHeaders('update_internal_note', { note, body, occurred_at }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -481,15 +481,13 @@ function registerDeleteInternalNote(server: McpServer, clientFor: ApiClientFacto
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     async ({ note, silent }, extra) => {
-      const { error } = await clientFor(extra.authInfo?.token).DELETE('/notes/{note}', {
+      const { error, response } = await clientFor(extra.authInfo?.token).DELETE('/notes/{note}', {
         params: { path: { note } },
         headers: writeHeaders('delete_internal_note', { note }, silent),
       })
 
       // 204, no body — see delete_project.
-      return error !== undefined
-        ? apiResult(undefined, error)
-        : { content: [{ type: 'text', text: `Deleted note ${note}.` }] }
+      return response.ok ? { content: [{ type: 'text', text: `Deleted note ${note}.` }] } : apiResult(undefined, error, response)
     },
   )
 }
@@ -514,13 +512,13 @@ function registerAddProjectContact(server: McpServer, clientFor: ApiClientFactor
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
     async ({ project, silent, ...person }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/contacts', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/contacts', {
         params: { path: { project } },
         body: person as never,
         headers: writeHeaders('add_project_contact', { project, ...person }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -547,13 +545,13 @@ function registerSetProjectFields(server: McpServer, clientFor: ApiClientFactory
       // Scramble reads the `array` rule as `string[]` (see tools.ts's module
       // doc comment on why this surface's generated payloads are only
       // trustworthy for paths and params).
-      const { data, error } = await clientFor(extra.authInfo?.token).PATCH('/projects/{project}/fields', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).PATCH('/projects/{project}/fields', {
         params: { path: { project } },
         body: { fields } as never,
         headers: writeHeaders('set_project_fields', { project, fields }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -578,13 +576,13 @@ function registerAddProjectField(server: McpServer, clientFor: ApiClientFactory)
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     async ({ project_type: projectType, silent, ...field }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/project-types/{projectType}/fields', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/project-types/{projectType}/fields', {
         params: { path: { projectType } },
         body: field,
         headers: writeHeaders('add_project_field', { projectType, ...field }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -607,7 +605,7 @@ function registerDeleteProject(server: McpServer, clientFor: ApiClientFactory): 
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     async ({ project, silent }, extra) => {
-      const { error } = await clientFor(extra.authInfo?.token).DELETE('/projects/{project}', {
+      const { error, response } = await clientFor(extra.authInfo?.token).DELETE('/projects/{project}', {
         params: { path: { project } },
         headers: writeHeaders('delete_project', { project }, silent),
       })
@@ -615,9 +613,7 @@ function registerDeleteProject(server: McpServer, clientFor: ApiClientFactory): 
       // 204, so there is no body to hand back the way every other write tool
       // does — apiResult() would stringify `undefined` into a content block
       // with no text at all.
-      return error !== undefined
-        ? apiResult(undefined, error)
-        : { content: [{ type: 'text', text: `Deleted project ${project}.` }] }
+      return response.ok ? { content: [{ type: 'text', text: `Deleted project ${project}.` }] } : apiResult(undefined, error, response)
     },
   )
 }
@@ -677,13 +673,13 @@ function registerCreateQuote(server: McpServer, clientFor: ApiClientFactory): vo
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     async ({ project, silent, ...quote }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/quotes', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/projects/{project}/quotes', {
         params: { path: { project } },
         body: quote as never,
         headers: writeHeaders('create_quote', { project, ...quote }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -699,13 +695,13 @@ function registerUpdateQuote(server: McpServer, clientFor: ApiClientFactory): vo
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     async ({ quote, silent, ...fields }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).PATCH('/quotes/{quote}', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).PATCH('/quotes/{quote}', {
         params: { path: { quote } },
         body: fields as never,
         headers: writeHeaders('update_quote', { quote, ...fields }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -725,13 +721,13 @@ function registerSendQuote(server: McpServer, clientFor: ApiClientFactory): void
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
     },
     async ({ quote, sent_at: sentAt, silent }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/quotes/{quote}/send', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/quotes/{quote}/send', {
         params: { path: { quote } },
         body: { sent_at: sentAt } as never,
         headers: writeHeaders('send_quote', { quote, sent_at: sentAt }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -746,12 +742,12 @@ function registerReviseQuote(server: McpServer, clientFor: ApiClientFactory): vo
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
     },
     async ({ quote, silent }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/quotes/{quote}/revise', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/quotes/{quote}/revise', {
         params: { path: { quote } },
         headers: writeHeaders('revise_quote', { quote }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -773,13 +769,13 @@ function registerAcceptQuote(server: McpServer, clientFor: ApiClientFactory): vo
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     async ({ quote, silent, ...acceptance }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/quotes/{quote}/accept', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/quotes/{quote}/accept', {
         params: { path: { quote } },
         body: acceptance as never,
         headers: writeHeaders('accept_quote', { quote, ...acceptance }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -812,12 +808,12 @@ function registerCreatePackage(server: McpServer, clientFor: ApiClientFactory): 
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     },
     async ({ silent, ...pkg }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).POST('/packages', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).POST('/packages', {
         body: pkg as never,
         headers: writeHeaders('create_package', pkg, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -838,13 +834,13 @@ function registerUpdatePackage(server: McpServer, clientFor: ApiClientFactory): 
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     async ({ package: id, silent, ...fields }, extra) => {
-      const { data, error } = await clientFor(extra.authInfo?.token).PATCH('/packages/{package}', {
+      const { data, error, response } = await clientFor(extra.authInfo?.token).PATCH('/packages/{package}', {
         params: { path: { package: id } },
         body: fields as never,
         headers: writeHeaders('update_package', { package: id, ...fields }, silent),
       })
 
-      return apiResult(data, error)
+      return apiResult(data, error, response)
     },
   )
 }
@@ -860,23 +856,13 @@ function registerDeletePackage(server: McpServer, clientFor: ApiClientFactory): 
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
     async ({ package: id, silent }, extra) => {
-      const { error } = await clientFor(extra.authInfo?.token).DELETE('/packages/{package}', {
+      const { error, response } = await clientFor(extra.authInfo?.token).DELETE('/packages/{package}', {
         params: { path: { package: id } },
         headers: writeHeaders('delete_package', { package: id }, silent),
       })
 
       // 204, no body — see delete_project.
-      return error !== undefined
-        ? apiResult(undefined, error)
-        : { content: [{ type: 'text', text: `Deleted package ${id}.` }] }
+      return response.ok ? { content: [{ type: 'text', text: `Deleted package ${id}.` }] } : apiResult(undefined, error, response)
     },
   )
-}
-
-function apiResult(data: unknown, error: unknown): CallToolResult {
-  if (error !== undefined) {
-    return { isError: true, content: [{ type: 'text', text: JSON.stringify(error) }] }
-  }
-
-  return { content: [{ type: 'text', text: JSON.stringify(data) }] }
 }
