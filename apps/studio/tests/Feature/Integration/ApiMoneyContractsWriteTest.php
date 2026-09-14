@@ -13,6 +13,8 @@ use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -76,6 +78,9 @@ it('refuses a paid_on date in the future', function () {
 });
 
 it('creates a contract from a template, sends it, sets a deadline, and manages signers', function () {
+    Storage::fake('local');
+    Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-fake-bytes', 200)]);
+
     $project = Project::factory()->create();
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
