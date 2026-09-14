@@ -6,7 +6,7 @@
     },
     "servers": [
         {
-            "url": "http://localhost:8002/api"
+            "url": "http://localhost:8000/api"
         }
     ],
     "paths": {
@@ -3253,6 +3253,161 @@
                 }
             }
         },
+        "/projects/{project}/book": {
+            "post": {
+                "operationId": "projects.book",
+                "summary": "#401: book/complete/reopen on the api surface, mirroring\nApp\\Crm\\Http\\Controllers\\ProjectController \u2014 the same BookProject and\nCompleteProject actions the admin buttons call, and the same\nalready-booked no-op BookProject itself guards",
+                "tags": [
+                    "Project"
+                ],
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/JobReadData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/projects/{project}/complete": {
+            "post": {
+                "operationId": "projects.complete",
+                "tags": [
+                    "Project"
+                ],
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "completedAt": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "completedAt"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "projects.reopen",
+                "tags": [
+                    "Project"
+                ],
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "completedAt": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "completedAt"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
         "/projects/{project}/contacts/{contact}": {
             "delete": {
                 "operationId": "projects.contacts.destroy",
@@ -5111,6 +5266,424 @@
                     }
                 }
             }
+        },
+        "/projects/{project}/tasks": {
+            "get": {
+                "operationId": "projects.tasks.index",
+                "summary": "`done` narrows to completed or open; omitted returns both, oldest due date first",
+                "tags": [
+                    "Task"
+                ],
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "done",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "true",
+                                "false"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "projects.tasks.store",
+                "tags": [
+                    "Task"
+                ],
+                "parameters": [
+                    {
+                        "name": "project",
+                        "in": "path",
+                        "required": true,
+                        "description": "The project public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "maxLength": 255
+                                    },
+                                    "audience": {
+                                        "$ref": "#/components/schemas/TaskAudience"
+                                    },
+                                    "due_on": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    },
+                                    "anchor": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "offset_days": {
+                                        "type": [
+                                            "integer",
+                                            "null"
+                                        ],
+                                        "minimum": -365,
+                                        "maximum": 365
+                                    },
+                                    "shoot": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "depends_on": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    },
+                                    "assignee": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                },
+                                "required": [
+                                    "title",
+                                    "audience"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TaskReadData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/tasks/{task}/complete": {
+            "post": {
+                "operationId": "tasks.complete",
+                "tags": [
+                    "Task"
+                ],
+                "parameters": [
+                    {
+                        "name": "task",
+                        "in": "path",
+                        "required": true,
+                        "description": "The task public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "completed_on": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "format": "date-time"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TaskReadData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/tasks/{task}/reopen": {
+            "post": {
+                "operationId": "tasks.reopen",
+                "tags": [
+                    "Task"
+                ],
+                "parameters": [
+                    {
+                        "name": "task",
+                        "in": "path",
+                        "required": true,
+                        "description": "The task public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TaskReadData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/tasks/{task}/assign": {
+            "post": {
+                "operationId": "tasks.assign",
+                "tags": [
+                    "Task"
+                ],
+                "parameters": [
+                    {
+                        "name": "task",
+                        "in": "path",
+                        "required": true,
+                        "description": "The task public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "assignee": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TaskReadData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/tasks/{task}/depend": {
+            "post": {
+                "operationId": "tasks.depend",
+                "tags": [
+                    "Task"
+                ],
+                "parameters": [
+                    {
+                        "name": "task",
+                        "in": "path",
+                        "required": true,
+                        "description": "The task public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "depends_on": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TaskReadData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/tasks/{task}": {
+            "delete": {
+                "operationId": "tasks.destroy",
+                "tags": [
+                    "Task"
+                ],
+                "parameters": [
+                    {
+                        "name": "task",
+                        "in": "path",
+                        "required": true,
+                        "description": "The task public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -5310,6 +5883,11 @@
                 "additionalProperties": {},
                 "title": "DataCollection"
             },
+            "JobReadData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "JobReadData"
+            },
             "LazyCollection": {
                 "type": "object",
                 "additionalProperties": {},
@@ -5501,6 +6079,20 @@
                 "type": "object",
                 "additionalProperties": {},
                 "title": "ShootReadData"
+            },
+            "TaskAudience": {
+                "type": "string",
+                "description": "Who a task is about (vision \u00a73.3): work the studio owes itself, or work that needs something from the client. A real field rather than a convention, because the two read differently on every screen that shows them \u2014 \"2\u00d7 erinnert, keine Reaktion\" is only a sentence about a client-facing task.  It never stands in for InternalNote, which is a separate model with no portal-facing route at all. This says who a task concerns; that one is a structural guarantee about what a client can reach.\n",
+                "enum": [
+                    "internal",
+                    "client"
+                ],
+                "title": "TaskAudience"
+            },
+            "TaskReadData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "TaskReadData"
             },
             "UpdateQuote": {
                 "type": "object",

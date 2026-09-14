@@ -718,6 +718,20 @@ cancelledAt: string | null,
 cancelledReason: string | null,
 updatedAt: string,
 };
+export type TaskReadData = {
+id: string,
+projectId: string,
+title: string,
+audience: string,
+dueOn: string | null,
+isDone: boolean,
+completedOn: string | null,
+shootId: string | null,
+dependsOnTaskId: string | null,
+isBlocked: boolean,
+assigneeId: string | null,
+updatedAt: string,
+};
 }
 namespace Enums {
 export type WebhookDeliveryStatus = 'pending' | 'delivered' | 'failed';
