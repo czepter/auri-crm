@@ -17,25 +17,33 @@ class LeadReadData extends Data
     public function __construct(
         public string $id,
         public string $projectId,
+        public string $projectName,
         public string $source,
         public ?string $sourceOther,
         public string $stage,
+        public ?string $stageEnteredAt,
         public bool $isLost,
+        public ?string $outcome,
+        public ?string $lostReason,
         public string $capturedAt,
         public ?string $lostAt,
         public string $updatedAt,
     ) {}
 
-    /** Requires `project:id,public_id` already eager loaded — see CrmReadController. */
+    /** Requires `project:id,public_id,name` already eager loaded — see CrmReadController. */
     public static function fromModel(Lead $lead): self
     {
         return new self(
             id: $lead->public_id,
             projectId: $lead->project->public_id,
+            projectName: $lead->project->name,
             source: $lead->source->value,
             sourceOther: $lead->source_other,
             stage: $lead->stage->key,
+            stageEnteredAt: $lead->stage_entered_at?->toIso8601String(),
             isLost: $lead->isLost(),
+            outcome: $lead->outcome?->value,
+            lostReason: $lead->lost_reason,
             capturedAt: $lead->captured_at->toIso8601String(),
             lostAt: $lead->lost_at?->toIso8601String(),
             updatedAt: $lead->updated_at->toIso8601String(),
