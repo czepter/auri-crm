@@ -42,6 +42,7 @@ const props = withDefaults(defineProps<{
     prerelease: boolean
     isExternal: boolean
     canPublish: boolean
+    canMail: boolean
   }
   siblings?: { id: string; title: string | null; assetCount: number; open: boolean }[]
   presets: App.Gallery.Data.GalleryPresetData[]
@@ -109,6 +110,11 @@ const showPublish = computed(() => props.gallery.canPublish && showPublishRule(p
 const showWithdraw = computed(() => props.gallery.canPublish && showWithdrawRule(publishState.value))
 
 function publish() {
+  if (props.gallery.canMail) {
+    router.visit(`/galerien/${props.gallery.id}/veroeffentlichen`)
+    return
+  }
+
   router.post(`/galerien/${props.gallery.id}/veroeffentlichen`, {}, { preserveScroll: true })
 }
 

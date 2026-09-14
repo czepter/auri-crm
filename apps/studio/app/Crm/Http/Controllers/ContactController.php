@@ -16,8 +16,10 @@ use App\Enums\Capability;
 use App\Gallery\Models\Gallery;
 use App\Gallery\Models\GalleryView;
 use App\Http\Controllers\Controller;
+use App\Notifications\NotificationService;
 use App\Portal\Models\ClientAccess;
 use App\Portal\Models\DsgvoRequest;
+use App\Portal\Notifications\PortalAccessInvitation;
 use App\Portal\Support\PortalSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\AuditLogger;
@@ -227,6 +229,7 @@ class ContactController extends Controller
             'portalLogins' => $this->portalLogins($contact),
             'portalAccessRevokedAt' => $contact->portal_access_revoked_at?->toIso8601String(),
             'canRevokePortalAccess' => $user?->can('revokePortalAccess', $contact) ?? false,
+            'canSendPortalAccess' => filled($contact->email) && ($user?->can('sendPortalAccess', $contact) ?? false),
             'dsgvoErasedAt' => $contact->dsgvo_erased_at?->toIso8601String(),
             'canManageDsgvo' => $user?->can('eraseDsgvoData', $contact) ?? false,
             // P-09 (#228): what the portal does for THIS client. Per contact
@@ -376,6 +379,55 @@ class ContactController extends Controller
         );
 
         return Inertia::location(config('portal.url')."/zugang/{$token}");
+    }
+
+    public function composePortalAccess(Contact $contact, StudioSettingsResolver $settings): Response
+    {
+        $this->authorize('sendPortalAccess', $contact);
+        abort_if($contact->portal_access_revoked_at !== null || blank($contact->email), 404);
+
+        return Inertia::render('Contacts/SendPortalAccess', [
+            'contactId' => $contact->public_id,
+            'studioName' => $settings->displayName() ?? config('app.name'),
+            'recipients' => [['name' => $contact->name, 'email' => $contact->email]],
+        ]);
+    }
+
+    /** The same ClientAccess row a requested link is, only longer-lived — see INVITATION_VALID_FOR_DAYS. */
+    public function sendPortalAccess(Request $request, Contact $contact, StudioSettingsResolver $settings, NotificationService $notifications): RedirectResponse
+    {
+        $this->authorize('sendPortalAccess', $contact);
+        abort_if($contact->portal_access_revoked_at !== null || blank($contact->email), 404);
+
+        $validated = $request->validate([
+            'subject' => ['required', 'string', 'max:255'],
+            'message' => ['nullable', 'string'],
+        ]);
+
+        $token = bin2hex(random_bytes(32));
+
+        ClientAccess::create([
+            'contact_id' => $contact->id,
+            'token_hash' => ClientAccess::hash($token),
+            'expires_at' => now()->addDays(ClientAccess::INVITATION_VALID_FOR_DAYS),
+            'requested_ip' => $request->ip(),
+        ]);
+
+        $notifications->send($contact, new PortalAccessInvitation(
+            config('portal.url')."/zugang/{$token}",
+            $validated['subject'],
+            $validated['message'] ?? null,
+            $settings,
+        ));
+
+        AuditLogger::record(
+            event: 'portal.invitation_issued',
+            actor: auth('staff')->user(),
+            context: ['contact' => $contact->public_id],
+            subject: $contact->public_id,
+        );
+
+        return redirect("/kontakte/{$contact->public_id}");
     }
 
     /**

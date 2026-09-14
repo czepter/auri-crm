@@ -172,6 +172,8 @@ class GalleryRecordController extends Controller
                 // anyway. isExternal lets the menu item hide itself instead.
                 'isExternal' => $gallery->is_external,
                 'canPublish' => auth('staff')->user()->can('publish', $gallery),
+                // Veröffentlichen opens the compose screen only when there is someone to mail.
+                'canMail' => filled($gallery->project?->primaryContact()?->email),
                 'offers' => [
                     'downloads' => $gallery->downloads_enabled,
                     'lists' => $gallery->lists_enabled,

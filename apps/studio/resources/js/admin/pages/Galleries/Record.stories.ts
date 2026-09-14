@@ -20,6 +20,7 @@ const gallery = {
   prerelease: false,
   isExternal: false,
   canPublish: true,
+  canMail: true,
 }
 
 const sets = [

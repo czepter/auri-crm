@@ -69,6 +69,7 @@ const props = defineProps<{
   connected: { id: string; name: string; role: string | null }[]
   portalAccessRevokedAt: string | null
   canRevokePortalAccess: boolean
+  canSendPortalAccess: boolean
   dsgvoErasedAt: string | null
   canManageDsgvo: boolean
   dsgvoRequests: { id: string; kind: string; requestedAt: string }[]
@@ -599,6 +600,15 @@ function eraseDsgvoData() {
                     <input type="hidden" name="_token" :value="csrf">
                     <Button type="submit" variant="pill-muted">{{ $t('contacts.portalPreview') }}</Button>
                   </form>
+
+                  <Button
+                    v-if="canSendPortalAccess && !portalAccessRevokedAt"
+                    type="button"
+                    variant="pill-muted"
+                    @click="router.visit(`/kontakte/${contact.id}/portal-zugang/senden`)"
+                  >
+                    {{ $t('contacts.sendPortalAccess') }}
+                  </Button>
 
                   <AlertDialog v-if="canRevokePortalAccess && !portalAccessRevokedAt">
                     <AlertDialogTrigger as-child>

@@ -40,6 +40,7 @@ const meta = {
     connected: [{ id: 'c2', name: 'Tom Brandt', role: 'partner' }],
     portalAccessRevokedAt: null,
     canRevokePortalAccess: true,
+    canSendPortalAccess: true,
     dsgvoErasedAt: null,
     canManageDsgvo: true,
     dsgvoRequests: [],
