@@ -9,6 +9,7 @@ use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
 use App\Integration\Data\JobReadData;
 use App\Models\User;
+use App\Support\AuditLogger;
 use App\Support\LiveUpdate;
 use DomainException;
 use Illuminate\Http\JsonResponse;
@@ -131,5 +132,29 @@ class ProjectController extends Controller
         $principal = $request->user('api');
 
         return $principal instanceof User ? $principal : null;
+    }
+
+    /**
+     * Mirrors App\Crm\Http\Controllers\ProjectController::togglePortalVisibility,
+     * but takes the value rather than flipping it: a retried toggle after a
+     * dropped response would land on the wrong state, which `idempotent`
+     * (routes/api.php) must never allow.
+     */
+    public function setPortalVisibility(Request $request, Project $project): JsonResponse
+    {
+        $visible = $request->validate(['visible' => ['required', 'boolean']])['visible'];
+
+        $project->update(['portal_visible' => $visible]);
+
+        $principal = $request->user('api');
+
+        AuditLogger::record(
+            event: $visible ? 'project.portal_shown' : 'project.portal_hidden',
+            actor: $principal instanceof User ? $principal : null,
+            subject: $project->public_id,
+            projectId: $project->id,
+        );
+
+        return response()->json(['id' => $project->public_id, 'portalVisible' => $project->portal_visible]);
     }
 }
