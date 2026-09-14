@@ -14,8 +14,8 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * App\Contracts\Enums\ContractStatus used for `failed` — so that M-04 would
  * have somewhere to land without a migration widening this column's domain.
  * M-04 shipped as Stripe Checkout and never used it; M-06's own invoice is
- * what finally writes it, which is also what makes PaymentPlan::isEditable()'s
- * defensive guard load-bearing rather than hypothetical.
+ * what finally writes it. Since #407 the status no longer decides what may
+ * be edited — `invoiced_at` does, on the row itself.
  */
 #[TypeScript]
 enum PaymentInstallmentStatus: string

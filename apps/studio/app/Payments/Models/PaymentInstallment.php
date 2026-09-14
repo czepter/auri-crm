@@ -8,6 +8,7 @@ use App\Documents\Models\DocumentTemplate;
 use App\Payments\Enums\OverdueReason;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Enums\SettledVia;
+use App\Support\AuditLogger;
 use Database\Factories\Payments\PaymentInstallmentFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -50,6 +51,43 @@ class PaymentInstallment extends Model
             'overdue_reason' => OverdueReason::class,
             'invoiced_at' => 'immutable_datetime',
         ];
+    }
+
+    /**
+     * GoBD Rz. 58/107: the issued document's amount and description are fixed.
+     * Here rather than in the writing actions, so a path that grows later
+     * inherits the refusal — the due date stays negotiable and is audited.
+     */
+    protected static function booted(): void
+    {
+        static::updating(function (self $installment) {
+            if ($installment->getOriginal('invoiced_at') === null) {
+                return;
+            }
+
+            abort_if(
+                $installment->isDirty(['amount', 'title']),
+                422,
+                'An issued invoice keeps its amount and description.',
+            );
+        });
+
+        static::updated(function (self $installment) {
+            if (! $installment->isInvoiced() || ! $installment->wasChanged('due_on')) {
+                return;
+            }
+
+            AuditLogger::record(
+                event: 'payments.installment.due_on_changed',
+                actor: auth('staff')->user(),
+                context: [
+                    'from' => $installment->getOriginal('due_on')?->format('Y-m-d'),
+                    'to' => $installment->due_on->format('Y-m-d'),
+                ],
+                subject: $installment->public_id,
+                projectId: $installment->plan?->job?->project_id,
+            );
+        });
     }
 
     public function plan(): BelongsTo
