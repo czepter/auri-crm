@@ -407,6 +407,168 @@ describe('registerWriteTools', () => {
     expect(result.content).toEqual([{ type: 'text', text: 'Deleted project project_public_id.' }])
   })
 
+  // #397: a delete tool used to report success on any response with no
+  // parsed error body — which is what openapi-fetch hands back for a 5xx
+  // that carries no body too (a proxy 502, a throttled response), not only
+  // for a real 204. response.ok, not the presence of `error`, decides now.
+  it('reports isError, not Deleted, when a delete gets an empty-body 5xx', async () => {
+    const del = vi.fn(async () => ({ data: undefined, error: undefined, response: new Response(null, { status: 502 }) }))
+    const apiClient = { POST: vi.fn(), PATCH: vi.fn(), DELETE: del } as unknown as ApiClient
+    const { client } = await connectedPair(apiClient)
+    clients.push(client)
+
+    const result = await client.callTool({ name: 'delete_project', arguments: { project: 'project_public_id' } })
+
+    expect(result.isError).toBe(true)
+    expect(JSON.stringify(result.content)).not.toContain('Deleted')
+    expect(JSON.stringify(result.content)).toContain('502')
+  })
+
+  // The 13 write tools #397 found never called in this file at all.
+  describe('the previously untested write tools', () => {
+    it('update_lead PATCHes the inquiry text', async () => {
+      const { patch, client: apiClient } = fakeApiClient()
+      const { client } = await connectedPair(apiClient)
+      clients.push(client)
+
+      await client.callTool({ name: 'update_lead', arguments: { lead: 'lead_abc', inquiry_text: 'Termin verschoben.' } })
+
+      expect(patch.mock.calls[0]).toMatchObject(['/leads/{lead}', { params: { path: { lead: 'lead_abc' } }, body: { inquiry_text: 'Termin verschoben.' } }])
+    })
+
+    it('close_lead POSTs the outcome and reason', async () => {
+      const { post, client: apiClient } = fakeApiClient()
+      const { client } = await connectedPair(apiClient)
+      clients.push(client)
+
+      await client.callTool({ name: 'close_lead', arguments: { lead: 'lead_abc', outcome: 'lost', reason: 'Zu teuer' } })
+
+      expect(post.mock.calls[0]).toMatchObject(['/leads/{lead}/lost', { params: { path: { lead: 'lead_abc' } }, body: { outcome: 'lost', reason: 'Zu teuer' } }])
+    })
+
+    it('reopen_lead POSTs the lead path only', async () => {
+      const { post, client: apiClient } = fakeApiClient()
+      const { client } = await connectedPair(apiClient)
+      clients.push(client)
+
+      await client.callTool({ name: 'reopen_lead', arguments: { lead: 'lead_abc' } })
+
+      expect(post.mock.calls[0][0]).toBe('/leads/{lead}/reopen')
+      expect(post.mock.calls[0][1]).toMatchObject({ params: { path: { lead: 'lead_abc' } } })
+    })
+
+    it('advance_shoot_status POSTs the new status', async () => {
+      const { post, client: apiClient } = fakeApiClient()
+      const { client } = await connectedPair(apiClient)
+      clients.push(client)
+
+      await client.callTool({ name: 'advance_shoot_status', arguments: { shoot: 'shoot_abc', status: 'delivered' } })
+
+      expect(post.mock.calls[0]).toMatchObject(['/shoots/{shoot}/status', { params: { path: { shoot: 'shoot_abc' } }, body: { status: 'delivered' } }])
+    })
+
+    it('cancel_shoot POSTs the reason', async () => {
+      const { post, client: apiClient } = fakeApiClient()
+      const { client } = await connectedPair(apiClient)
+      clients.push(client)
+
+      await client.callTool({ name: 'cancel_shoot', arguments: { shoot: 'shoot_abc', reason: 'Wetter' } })
+
+      expect(post.mock.calls[0]).toMatchObject(['/shoots/{shoot}/cancel', { params: { path: { shoot: 'shoot_abc' } }, body: { reason: 'Wetter' } }])
+    })
+
+    it('uncancel_shoot POSTs the shoot path only', async () => {
+      const { post, client: apiClient } = fakeApiClient()
+      const { client } = await connectedPair(apiClient)
+      clients.push(client)
+
+      await client.callTool({ name: 'uncancel_shoot', arguments: { shoot: 'shoot_abc' } })
+
+      expect(post.mock.calls[0][0]).toBe('/shoots/{shoot}/uncancel')
+      expect(post.mock.calls[0][1]).toMatchObject({ params: { path: { shoot: 'shoot_abc' } } })
+    })
+
+    it('update_internal_note PATCHes the body', async () => {
+      const { patch, client: apiClient } = fakeApiClient()
+      const { client } = await connectedPair(apiClient)
+      clients.push(client)
+
+      await client.callTool({ name: 'update_internal_note', arguments: { note: 'note_abc', body: 'Geändert.' } })
+
+      expect(patch.mock.calls[0]).toMatchObject(['/notes/{note}', { params: { path: { note: 'note_abc' } }, body: { body: 'Geändert.' } }])
+    })
+
+    it('delete_internal_note DELETEs by id and answers a bodyless 204', async () => {
+      const { del, client: apiClient } = fakeApiClient()
+      const { client } = await connectedPair(apiClient)
+      clients.push(client)
+
+      const result = await client.callTool({ name: 'delete_internal_note', arguments: { note: 'note_abc' } })
+
+      expect(del.mock.calls[0][0]).toBe('/notes/{note}')
+      expect(del.mock.calls[0][1]).toMatchObject({ params: { path: { note: 'note_abc' } } })
+      expect(result.isError).toBeFalsy()
+      expect(result.content).toEqual([{ type: 'text', text: 'Deleted note note_abc.' }])
+    })
+
+    it('add_message POSTs from/body/contact onto the project', async () => {
+      const { post, client: apiClient } = fakeApiClient()
+      const { client } = await connectedPair(apiClient)
+      clients.push(client)
+
+      await client.callTool({ name: 'add_message', arguments: { project: 'project_public_id', from: 'client', body: 'Danke!', contact: 'contact_abc' } })
+
+      expect(post.mock.calls[0]).toMatchObject([
+        '/projects/{project}/messages',
+        { params: { path: { project: 'project_public_id' } }, body: { from: 'client', body: 'Danke!', contact: 'contact_abc' } },
+      ])
+    })
+
+    it('update_quote PATCHes the given fields', async () => {
+      const { patch, client: apiClient } = fakeApiClient()
+      const { client } = await connectedPair(apiClient)
+      clients.push(client)
+
+      await client.callTool({ name: 'update_quote', arguments: { quote: 'quote_abc', intro: 'Neuer Text' } })
+
+      expect(patch.mock.calls[0]).toMatchObject(['/quotes/{quote}', { params: { path: { quote: 'quote_abc' } }, body: { intro: 'Neuer Text' } }])
+    })
+
+    it('send_quote POSTs sent_at', async () => {
+      const { post, client: apiClient } = fakeApiClient()
+      const { client } = await connectedPair(apiClient)
+      clients.push(client)
+
+      await client.callTool({ name: 'send_quote', arguments: { quote: 'quote_abc', sent_at: '2026-09-01' } })
+
+      expect(post.mock.calls[0]).toMatchObject(['/quotes/{quote}/send', { params: { path: { quote: 'quote_abc' } }, body: { sent_at: '2026-09-01' } }])
+    })
+
+    it('revise_quote POSTs the quote path only', async () => {
+      const { post, client: apiClient } = fakeApiClient()
+      const { client } = await connectedPair(apiClient)
+      clients.push(client)
+
+      await client.callTool({ name: 'revise_quote', arguments: { quote: 'quote_abc' } })
+
+      expect(post.mock.calls[0][0]).toBe('/quotes/{quote}/revise')
+      expect(post.mock.calls[0][1]).toMatchObject({ params: { path: { quote: 'quote_abc' } } })
+    })
+
+    it('accept_quote POSTs who said yes and when', async () => {
+      const { post, client: apiClient } = fakeApiClient()
+      const { client } = await connectedPair(apiClient)
+      clients.push(client)
+
+      await client.callTool({ name: 'accept_quote', arguments: { quote: 'quote_abc', contact: 'contact_abc', accepted_at: '2026-09-01' } })
+
+      expect(post.mock.calls[0]).toMatchObject([
+        '/quotes/{quote}/accept',
+        { params: { path: { quote: 'quote_abc' } }, body: { contact: 'contact_abc', accepted_at: '2026-09-01' } },
+      ])
+    })
+  })
+
   // N-04: NoInternalIdsTest's invariant ("no integer identifier in any JSON
   // body") extended onto the one JSON surface apps/studio's Pest suite can
   // never reach directly — a Node process's own tool result. A write tool's
