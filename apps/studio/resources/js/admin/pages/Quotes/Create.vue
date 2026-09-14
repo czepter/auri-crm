@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { router } from '@inertiajs/vue3'
 import type { QuoteContact, VatSettings } from '@/admin/components/quote/quotePayload'
 import AdminLayout from '@/admin/layouts/AdminLayout.vue'
@@ -45,6 +45,14 @@ function create() {
     router.post(`/auftraege/${project.value.id}/angebote`)
   }
 }
+
+// Kommt das Projekt schon aus der Adresse (Anfrage, Auftrag), steht der
+// Entwurf ohne zweiten Klick da.
+onMounted(() => {
+  if (!drafts.value.length) {
+    create()
+  }
+})
 </script>
 
 <template>
