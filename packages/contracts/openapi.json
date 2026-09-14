@@ -2718,13 +2718,6 @@
                                             "portal_offered": {
                                                 "type": "boolean"
                                             },
-                                            "portal_text": {
-                                                "type": [
-                                                    "string",
-                                                    "null"
-                                                ],
-                                                "maxLength": 255
-                                            },
                                             "portal_price_mode": {
                                                 "$ref": "#/components/schemas/PortalPriceMode"
                                             },
@@ -2870,13 +2863,6 @@
                                             },
                                             "portal_offered": {
                                                 "type": "boolean"
-                                            },
-                                            "portal_text": {
-                                                "type": [
-                                                    "string",
-                                                    "null"
-                                                ],
-                                                "maxLength": 255
                                             },
                                             "portal_price_mode": {
                                                 "$ref": "#/components/schemas/PortalPriceMode"
@@ -4058,6 +4044,32 @@
                         "$ref": "#/components/responses/ModelNotFoundException"
                     }
                 }
+            },
+            "delete": {
+                "operationId": "quotes.destroy",
+                "summary": "QuoteController::destroy() \u2014 only a draft; a sent quote may have already reached the client",
+                "tags": [
+                    "QuoteAction"
+                ],
+                "parameters": [
+                    {
+                        "name": "quote",
+                        "in": "path",
+                        "required": true,
+                        "description": "The quote public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
             }
         },
         "/quotes/{quote}/send": {
@@ -4235,6 +4247,395 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/quotes/{quote}/addendum": {
+            "post": {
+                "operationId": "quotes.addendum",
+                "summary": "The admin store()'s `addendum_to` path (CreateQuoteAddendum), for an already-accepted quote",
+                "tags": [
+                    "QuoteAction"
+                ],
+                "parameters": [
+                    {
+                        "name": "quote",
+                        "in": "path",
+                        "required": true,
+                        "description": "The quote public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/QuoteData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/quotes/{quote}/duplicate": {
+            "post": {
+                "operationId": "quotes.duplicate",
+                "summary": "QuoteController::duplicate() \u2014 a new independent draft, never the source's history",
+                "tags": [
+                    "QuoteAction"
+                ],
+                "parameters": [
+                    {
+                        "name": "quote",
+                        "in": "path",
+                        "required": true,
+                        "description": "The quote public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/QuoteData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/quotes/{quote}/mark-sent": {
+            "post": {
+                "operationId": "quotes.mark-sent",
+                "summary": "QuoteController::markSent() \u2014 delivered by the studio itself, channel 'self', no notification",
+                "tags": [
+                    "QuoteAction"
+                ],
+                "parameters": [
+                    {
+                        "name": "quote",
+                        "in": "path",
+                        "required": true,
+                        "description": "The quote public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/QuoteData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/quotes/{quote}/adopt-recipient": {
+            "post": {
+                "operationId": "quotes.adopt-recipient",
+                "summary": "QuoteController::adoptRecipient() \u2014 writes the quote's own address back onto its recipient contact",
+                "tags": [
+                    "QuoteAction"
+                ],
+                "parameters": [
+                    {
+                        "name": "quote",
+                        "in": "path",
+                        "required": true,
+                        "description": "The quote public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/QuoteData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/quotes/{quote}/save-as-package": {
+            "post": {
+                "operationId": "quotes.save-as-package",
+                "summary": "QuoteController::saveAsPackage()/saveItemAsPackage() \u2014 the only way to\nwrite a package's hourly rate and payment plan from the api surface.\n`item`, when given, is one line's public id and only that line is\nsaved (SavePackage, the board's own single-item path); otherwise the\nwhole quote (CreatePackageFromQuote)",
+                "tags": [
+                    "QuoteAction"
+                ],
+                "parameters": [
+                    {
+                        "name": "quote",
+                        "in": "path",
+                        "required": true,
+                        "description": "The quote public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "allOf": [
+                                    {
+                                        "$ref": "#/components/schemas/SavePackage"
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "maxLength": 255
+                                            },
+                                            "item": {
+                                                "type": [
+                                                    "string",
+                                                    "null"
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "name"
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/contacts/{contact}/service-suggestions": {
+            "get": {
+                "operationId": "contacts.service-suggestions.index",
+                "tags": [
+                    "ServiceSuggestion"
+                ],
+                "parameters": [
+                    {
+                        "name": "contact",
+                        "in": "path",
+                        "required": true,
+                        "description": "The contact public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "contacts.service-suggestions.store",
+                "tags": [
+                    "ServiceSuggestion"
+                ],
+                "parameters": [
+                    {
+                        "name": "contact",
+                        "in": "path",
+                        "required": true,
+                        "description": "The contact public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "package": {
+                                        "type": "string"
+                                    },
+                                    "note": {
+                                        "type": [
+                                            "string",
+                                            "null"
+                                        ],
+                                        "maxLength": 2000
+                                    }
+                                },
+                                "required": [
+                                    "package"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ServiceSuggestionData"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    }
+                }
+            }
+        },
+        "/service-suggestions/{serviceSuggestion}": {
+            "delete": {
+                "operationId": "service-suggestions.destroy",
+                "tags": [
+                    "ServiceSuggestion"
+                ],
+                "parameters": [
+                    {
+                        "name": "serviceSuggestion",
+                        "in": "path",
+                        "required": true,
+                        "description": "The service suggestion public id",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No content"
                     },
                     "404": {
                         "$ref": "#/components/responses/ModelNotFoundException"
@@ -4912,13 +5313,6 @@
                     "portal_offered": {
                         "type": "boolean"
                     },
-                    "portal_text": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "maxLength": 255
-                    },
                     "portal_price_mode": {
                         "$ref": "#/components/schemas/PortalPriceMode"
                     },
@@ -4990,6 +5384,11 @@
                     "name"
                 ],
                 "title": "SavePackage"
+            },
+            "ServiceSuggestionData": {
+                "type": "object",
+                "additionalProperties": {},
+                "title": "ServiceSuggestionData"
             },
             "ShootReadData": {
                 "type": "object",
