@@ -211,6 +211,7 @@ class ProjectController extends Controller
                     ->values()->all(),
             ],
             'documents' => $this->documents($found, $settings),
+            'invoices' => $this->invoices($found, $settings),
             'questionnaires' => $this->questionnaires($found),
             'details' => [
                 'date' => $found->primaryShoot?->date?->format('Y-m-d'),
@@ -282,6 +283,32 @@ class ProjectController extends Controller
         }
 
         return $rows;
+    }
+
+    /**
+     * #415: every invoice this project has issued, newest number last — the
+     * client's own copy of the sequence. Behind the same switch the Zahlungen
+     * row is, because both lead into the payment screens.
+     */
+    private function invoices(Project $found, PortalSettings $settings): array
+    {
+        if (! $settings->paymentStatusEnabled(auth('portal')->user())) {
+            return [];
+        }
+
+        return ($found->job?->paymentPlan?->installments ?? collect())
+            ->filter(fn (PaymentInstallment $one) => $one->isInvoiced())
+            ->sortBy('invoice_number')
+            ->map(fn (PaymentInstallment $one) => [
+                'id' => $one->public_id,
+                'number' => $one->invoice_number,
+                'issuedOn' => $one->invoiced_at?->format('Y-m-d'),
+                'amount' => (int) $one->amount,
+                'status' => $one->status->label(),
+                'settled' => $one->status === PaymentInstallmentStatus::Paid,
+            ])
+            ->values()
+            ->all();
     }
 
     private function signedOn(Contract $contract): ?string
