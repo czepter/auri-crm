@@ -2,42 +2,70 @@
 
 namespace App\Payments\Actions;
 
+use App\Payments\Enums\PaymentInstallmentStatus;
+use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
 
 /**
  * The only writer of an existing plan's total and installments, past
- * CreatePaymentPlan's first write. Wholesale replace, the same shape
- * App\Quotes\Http\Controllers\QuoteController::update() uses for quote
- * items: no id outside this plan references an installment row, so a
- * delete-and-recreate orphans nothing.
+ * CreatePaymentPlan's first write.
  *
- * One transaction around the total update, the delete and the recreate —
- * required, not just tidy, because the deferred constraint trigger on
- * payment_installments (2026_08_09_002500) checks at COMMIT. Split across
- * separate auto-committed statements, the delete alone would already violate
- * "installments sum to total" the instant it ran.
+ * Matched by public_id rather than replaced wholesale: an issued installment
+ * carries its number, its PDF and its payment, and a delete-and-recreate
+ * would drop all three (#407). A row the payload does not name is planning
+ * and goes; an issued one cannot go at all, only be stornoed (#408).
+ *
+ * An issued row takes only its due_on and position from the payload — the
+ * amount and title are refused by PaymentInstallment itself.
+ *
+ * One transaction around the total update and the row writes — required, not
+ * just tidy, because the deferred constraint trigger on payment_installments
+ * (2026_08_09_002500) checks at COMMIT, and a total written ahead of the rows
+ * that match it would already violate "installments sum to total".
  */
 class UpdatePaymentPlan
 {
-    /** @param  list<array{amount: int, due_on: string, status: string}>  $installments */
+    /** @param  list<array{public_id?: ?string, amount: int, due_on: string, status?: string}>  $installments */
     public function __invoke(PaymentPlan $plan, int $total, array $installments): PaymentPlan
     {
-        abort_unless($plan->isEditable(), 422, 'This payment plan is no longer editable.');
-
         DB::transaction(function () use ($plan, $total, $installments) {
             $plan->update(['total' => $total]);
 
-            $plan->installments()->delete();
-            $plan->installments()->createMany(
-                collect($installments)->values()->map(fn (array $installment, int $index) => [
-                    'amount' => $installment['amount'],
-                    'due_on' => $installment['due_on'],
-                    'status' => $installment['status'],
-                    'sort_order' => $index,
-                ])->all()
-            );
+            // Pulled, not read: what stays behind once the payload is walked
+            // is exactly the set of rows it no longer names.
+            $existing = $plan->installments()->get()->keyBy('public_id');
+
+            foreach (array_values($installments) as $index => $payload) {
+                $row = $existing->pull($payload['public_id'] ?? '');
+
+                if ($row === null) {
+                    $plan->installments()->create([
+                        'amount' => $payload['amount'],
+                        'due_on' => $payload['due_on'],
+                        'status' => $payload['status'] ?? PaymentInstallmentStatus::Scheduled->value,
+                        'sort_order' => $index,
+                    ]);
+
+                    continue;
+                }
+
+                $row->update($row->isInvoiced()
+                    ? ['due_on' => $payload['due_on'], 'sort_order' => $index]
+                    : [
+                        'amount' => $payload['amount'],
+                        'due_on' => $payload['due_on'],
+                        'status' => $payload['status'] ?? $row->status->value,
+                        'sort_order' => $index,
+                    ]);
+            }
+
+            $existing->each(function (PaymentInstallment $row) {
+                abort_if($row->isInvoiced(), 422, 'An issued installment cannot be removed from the plan.');
+
+                $row->delete();
+            });
 
             AuditLogger::record(
                 event: 'payment_plan.updated',
