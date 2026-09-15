@@ -3,6 +3,7 @@
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
 use App\Contracts\Models\ContractSignature;
+use App\Crm\Actions\ReadProjectScreen;
 use App\Crm\Enums\CrewRole;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ShootStatus;
@@ -499,4 +500,12 @@ it('carries the key figures with the proof under each', function () {
 
     expect($figures)->toHaveKeys(['phase', 'nextDate', 'value', 'open', 'portal'])
         ->and($figures['nextDate']['value'])->toBe(now()->addMonth()->format('Y-m-d'));
+});
+
+it('keeps the main date once it lies behind us', function () {
+    $project = Project::factory()->create();
+    Shoot::factory()->for($project)->primary()->on(now()->subDays(119)->format('Y-m-d'))->create();
+
+    expect(app(ReadProjectScreen::class)->figures($project)['nextDate']['value'])
+        ->toBe(now()->subDays(119)->format('Y-m-d'));
 });
