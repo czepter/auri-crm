@@ -8,11 +8,13 @@
  * Wachsen ist eine Blende und kein Umbau.
  */
 import { computed, ref } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+import { useForm, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import { formatEuros } from '@/admin/lib/money'
 import { splitStages } from '@/portal/lib/paymentStages'
 import { Button } from '@/ui/button'
+import { Checkbox } from '@/ui/checkbox'
+import { Label } from '@/ui/label'
 
 type Item = App.Quotes.Data.QuoteItemData
 type Quote = App.Quotes.Data.QuoteData
@@ -41,8 +43,13 @@ const IMAGES_PER_TILE = 20
 const hours = ref(props.quote.hours ?? props.quote.minHours ?? 0)
 const chosen = ref(new Set(props.quote.items.filter((i) => i.selectable && i.selected).map((i) => i.id)))
 
-const form = useForm({})
-const rejection = computed(() => (form.errors as Record<string, string>).quote ?? (form.errors as Record<string, string>).hours)
+const agbUrl = computed(() => (usePage().props.portalLegal as { agbUrl: string | null } | undefined)?.agbUrl ?? null)
+
+const form = useForm({ terms: false })
+const rejection = computed(() => {
+  const errors = form.errors as Record<string, string>
+  return errors.quote ?? errors.hours ?? errors.terms
+})
 
 const accepted = computed(() => props.quote.status === 'accepted')
 const images = computed(() => hours.value * (props.quote.imagesPerHour ?? 0))
@@ -102,7 +109,7 @@ function tileImage(index: number) {
 
 function accept() {
   form
-    .transform(() => ({ hours: hours.value, items: [...chosen.value] }))
+    .transform((data) => ({ ...data, hours: hours.value, items: [...chosen.value] }))
     .post(props.acceptUrl ?? `/projekte/${props.project.id}/angebot/annehmen`, { preserveScroll: true })
 }
 </script>
@@ -266,16 +273,28 @@ function accept() {
         <p v-if="expired" class="mt-3.5 text-[13.5px] text-destructive">{{ $t('portal.quoteExpired') }}</p>
         <p v-if="rejection" class="mt-3.5 text-[13.5px] text-destructive">{{ rejection }}</p>
 
-        <Button
-          v-if="canAccept"
-          class="mt-3.5 w-full rounded-[var(--r-pill)] py-[17px] text-[15px] font-semibold"
-          variant="portal"
-          type="button"
-          :disabled="form.processing"
-          @click="accept"
-        >
-          {{ $t('portal.quoteAccept') }}
-        </Button>
+        <template v-if="canAccept">
+          <div
+            v-if="agbUrl"
+            class="mt-3.5 flex items-start gap-3 text-[13.5px] leading-[1.5] [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action"
+          >
+            <Checkbox id="slider-terms" v-model="form.terms" required />
+            <Label variant="inline" for="slider-terms">
+              <a :href="agbUrl" target="_blank" rel="noopener" class="underline">{{ $t('portal.footerAgb') }}</a>
+              {{ $t('portal.quoteTerms') }}
+            </Label>
+          </div>
+
+          <Button
+            class="mt-3.5 w-full rounded-[var(--r-pill)] py-[17px] text-[15px] font-semibold"
+            variant="portal"
+            type="button"
+            :disabled="form.processing || (agbUrl !== null && !form.terms)"
+            @click="accept"
+          >
+            {{ $t('portal.quoteAccept') }}
+          </Button>
+        </template>
 
         <p v-if="quote.validUntil" class="mt-4 text-[13px] text-muted-foreground max-lg:hidden">
           {{ $t('quotes.validUntil') }} {{ quote.validUntil }}

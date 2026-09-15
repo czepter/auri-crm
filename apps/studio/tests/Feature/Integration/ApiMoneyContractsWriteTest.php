@@ -1,7 +1,6 @@
 <?php
 
 use App\Contracts\Models\Contract;
-use App\Contracts\Models\ContractSignature;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\Job;
@@ -11,6 +10,8 @@ use App\Enums\Capability;
 use App\Integration\Models\ApiToken;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -23,7 +24,7 @@ beforeEach(function () {
     $this->withHeader('Authorization', 'Bearer '.bearerToken(ApiToken::factory()->withScopes(Capability::ManageContracts)->create()));
 });
 
-it('refuses a payment plan without a signed contract, then creates one once signed', function () {
+it('refuses a payment plan without an accepted quote, then creates one once accepted', function () {
     $job = Job::factory()->create();
 
     $this->withHeader('Idempotency-Key', 'plan-refused')
@@ -33,8 +34,7 @@ it('refuses a payment plan without a signed contract, then creates one once sign
         ])
         ->assertUnprocessable();
 
-    $contract = Contract::factory()->for($job->project)->create();
-    ContractSignature::factory()->for($contract)->create();
+    Quote::factory()->for($job->project)->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now()]);
 
     $response = $this->withHeader('Idempotency-Key', 'plan-1')
         ->postJson("/api/projects/{$job->project->public_id}/payment-plan", [

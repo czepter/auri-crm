@@ -1416,6 +1416,7 @@
     "quoteNone": "Kein Angebot vorhanden.",
     "quoteExpired": "Die Gültigkeit dieses Angebots ist abgelaufen.",
     "quoteAccept": "Angebot annehmen",
+    "quoteTerms": "akzeptiert",
     "quoteAccepted": "Angenommen am {date}.",
     "messagesLinkTitle": "Nachrichten",
     "messagesKicker": "Nachrichten",

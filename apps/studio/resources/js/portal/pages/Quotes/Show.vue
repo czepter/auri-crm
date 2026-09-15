@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useForm } from '@inertiajs/vue3'
+import { useForm, usePage } from '@inertiajs/vue3'
 import { basisPointsToPercent, formatEuros } from '@/admin/lib/money'
 import PortalDot from '@/portal/components/PortalDot.vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
@@ -10,6 +10,8 @@ import PortalWrap from '@/portal/components/PortalWrap.vue'
 import QuoteSlider from '@/portal/components/QuoteSlider.vue'
 import { splitStages } from '@/portal/lib/paymentStages'
 import { Button } from '@/ui/button'
+import { Checkbox } from '@/ui/checkbox'
+import { Label } from '@/ui/label'
 
 type QuoteItem = {
   id: string
@@ -65,11 +67,13 @@ const props = defineProps<{
   imageUrlBase?: string
 }>()
 
-const form = useForm({})
+const agbUrl = computed(() => (usePage().props.portalLegal as { agbUrl: string | null } | undefined)?.agbUrl ?? null)
+
+const form = useForm({ terms: false })
 
 // AcceptQuote's own re-check rejects under a 'quote' key, not a field this
-// empty form ever declares — see App\Quotes\Actions\AcceptQuote.
-const rejection = computed(() => (form.errors as Record<string, string>).quote)
+// form declares — see App\Quotes\Actions\AcceptQuote.
+const rejection = computed(() => (form.errors as Record<string, string>).quote ?? (form.errors as Record<string, string>).terms)
 
 function accept() {
   form.post(props.acceptUrl ?? `/projekte/${props.project.id}/angebot/annehmen`, { preserveScroll: true })
@@ -206,16 +210,28 @@ const ROW = '[&>td]:py-2 [&>td]:align-top [&>td]:text-[14.5px] [&>td]:leading-[1
 
           <!-- T-08: the button is the affordance — it never renders once the
                switch is off, matching the 404 the accept route itself gives. -->
-          <Button
-            v-if="canAccept"
-            class="mt-8"
-            variant="portal"
-            type="button"
-            :disabled="form.processing"
-            @click="accept"
-          >
-            {{ $t('portal.quoteAccept') }}
-          </Button>
+          <template v-if="canAccept">
+            <div
+              v-if="agbUrl"
+              class="mt-8 flex items-start gap-3.5 text-[13.5px] leading-[1.5] [&_[data-slot=checkbox]]:mt-0.5 [&_[data-slot=checkbox]]:size-[17px] [&_[data-slot=checkbox]]:flex-none [&_[data-slot=checkbox][data-state=checked]]:border-action [&_[data-slot=checkbox][data-state=checked]]:bg-action"
+            >
+              <Checkbox id="quote-terms" v-model="form.terms" required />
+              <Label variant="inline" for="quote-terms">
+                <a :href="agbUrl" target="_blank" rel="noopener" class="underline">{{ $t('portal.footerAgb') }}</a>
+                {{ $t('portal.quoteTerms') }}
+              </Label>
+            </div>
+
+            <Button
+              class="mt-8"
+              variant="portal"
+              type="button"
+              :disabled="form.processing || (agbUrl !== null && !form.terms)"
+              @click="accept"
+            >
+              {{ $t('portal.quoteAccept') }}
+            </Button>
+          </template>
         </template>
       </div>
 

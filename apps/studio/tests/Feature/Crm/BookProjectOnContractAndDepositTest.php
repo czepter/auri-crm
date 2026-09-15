@@ -17,6 +17,8 @@ use App\Payments\Enums\SettledVia;
 use App\Payments\Events\InstallmentPaid;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
@@ -58,9 +60,8 @@ it('does nothing when a contract is signed but the first installment is still sc
 });
 
 it('does nothing when the first installment is paid but no contract on the project is signed', function () {
-    // Built directly on factories rather than through CreatePaymentPlan: that
-    // action already refuses a plan without a signed contract (T-07), so this
-    // exercises the listener's OWN check rather than relying on that guard.
+    // Built directly on factories rather than through CreatePaymentPlan, so
+    // this exercises the listener's OWN check rather than that action's guard.
     Event::fake([ProjectBooked::class]);
 
     $plan = PaymentPlan::factory()->create(['total' => 100000]);
@@ -94,10 +95,9 @@ it('does nothing when a non-first installment is paid, even with a signed contra
 // --- Whichever condition arrives second notices the other already holds ----
 
 it('attempts booking when a contract is signed after the deposit was already paid', function () {
-    // Deposit-before-signature is the order CreatePaymentPlan's own guard
-    // rules out for the FIRST contract on a project (a plan requires one
-    // already signed) — but nothing stops a second contract (a reissue) on
-    // an already-deposited project, which is what this constructs directly.
+    // Deposit before signature: a plan needs a Job and an accepted quote,
+    // never a signature, so a deposit can clear before the contract is
+    // signed. This constructs that order directly.
     Event::fake([ProjectBooked::class]);
 
     $job = Job::factory()->create();
@@ -136,6 +136,7 @@ it('yields one job, one ProjectBooked and two distinguishable audit rows when th
 
     // The deposit clears right around the same time — the listener's own
     // trigger, via=contract, actor null.
+    Quote::factory()->for($project)->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now()]);
     $plan = app(CreatePaymentPlan::class)($job, 100000, ['2026-09-01']);
     app(MarkInstallmentPaid::class)($plan->installments->sole(), SettledVia::Transfer, '2026-09-01', null);
 
@@ -176,6 +177,7 @@ it('is a no-op — but still audits the attempt — when the project already has
     $contact = Contact::factory()->create();
     app(SignContract::class)($contract, $contact, 'Lena Meier', '203.0.113.5', 'Mozilla/5.0');
 
+    Quote::factory()->for($project)->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now()]);
     $plan = app(CreatePaymentPlan::class)($existingJob, 100000, ['2026-09-01']);
     app(MarkInstallmentPaid::class)($plan->installments->sole(), SettledVia::Transfer, '2026-09-01', null);
 

@@ -1,6 +1,5 @@
 <?php
 
-use App\Contracts\Models\ContractSignature;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Enums\StaffRole;
@@ -14,6 +13,8 @@ use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Payments\Support\PaymentInstallmentSplitter;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -26,18 +27,13 @@ uses(RefreshDatabase::class);
 // contractProject(), renderedContract() and staffMember() live in tests/Pest.php.
 
 /**
- * A booked project (contractProject() already gives it a Job), with a
- * Contract that has been signed — "a plan is created against a signed
- * contract", the depends-on rule this issue's own text states for M-03.
- * Call Storage::fake('local') before this, same requirement renderedContract()
- * itself carries.
+ * A booked project (contractProject() already gives it a Job) with a quote
+ * the client has accepted — the agreement a plan is created against.
  */
-function signedContractJob(): Job
+function acceptedQuoteJob(): Job
 {
     $project = contractProject();
-    $contract = renderedContract($project);
-    $contact = $project->contacts()->sole();
-    ContractSignature::factory()->for($contract)->for($contact)->create();
+    Quote::factory()->for($project)->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now()]);
 
     return $project->job()->sole();
 }
@@ -97,7 +93,7 @@ it('always produces exactly $count amounts summing to exactly $total, across man
 
 it('creates a plan whose installments sum exactly to the total, split evenly with the remainder on the last', function () {
     Storage::fake('local');
-    $job = signedContractJob();
+    $job = acceptedQuoteJob();
 
     $plan = app(CreatePaymentPlan::class)($job, 1000, ['2026-09-01', '2026-10-01', '2026-11-01']);
 
@@ -112,7 +108,7 @@ it('burns no invoice number on creation — M-06 moved the Verwendungszweck onto
     // carried — a hole in the sequence a Betriebsprüfung asks about. The
     // client now transfers under the issued invoice's own number.
     Storage::fake('local');
-    $job = signedContractJob();
+    $job = acceptedQuoteJob();
 
     $plan = app(CreatePaymentPlan::class)($job, 500, ['2026-09-01']);
 
@@ -122,7 +118,7 @@ it('burns no invoice number on creation — M-06 moved the Verwendungszweck onto
 
 it('logs the creation, naming the job and the total', function () {
     Storage::fake('local');
-    $job = signedContractJob();
+    $job = acceptedQuoteJob();
 
     $plan = app(CreatePaymentPlan::class)($job, 500, ['2026-09-01']);
 
@@ -132,23 +128,22 @@ it('logs the creation, naming the job and the total', function () {
         ->and($row->context['total'])->toBe(500);
 });
 
-it('refuses to create a plan against a project with no signed contract', function () {
-    $job = contractProject()->job()->sole(); // booked, but no contract at all
+it('refuses to create a plan against a project with no quote', function () {
+    $job = contractProject()->job()->sole(); // booked, but nothing offered
 
     app(CreatePaymentPlan::class)($job, 1000, ['2026-09-01']);
 })->throws(HttpException::class);
 
-it('refuses to create a plan against a contract that was rendered but never signed', function () {
-    Storage::fake('local');
+it('refuses to create a plan against a quote that was sent but never accepted', function () {
     $project = contractProject();
-    renderedContract($project); // rendered, no ContractSignature
+    Quote::factory()->for($project)->create(['status' => QuoteStatus::Sent, 'sent_at' => now()]);
 
     app(CreatePaymentPlan::class)($project->job()->sole(), 1000, ['2026-09-01']);
 })->throws(HttpException::class);
 
 it('refuses a second plan for a job that already has one', function () {
     Storage::fake('local');
-    $job = signedContractJob();
+    $job = acceptedQuoteJob();
     app(CreatePaymentPlan::class)($job, 1000, ['2026-09-01']);
 
     app(CreatePaymentPlan::class)($job, 500, ['2026-10-01']);
@@ -337,7 +332,7 @@ it('lets a plan whose installments genuinely sum to its total commit cleanly', f
 
 it('creates a payment plan through the admin screen, split evenly across the due dates given', function () {
     Storage::fake('local');
-    $job = signedContractJob();
+    $job = acceptedQuoteJob();
     $user = staffMember(StaffRole::Owner);
 
     $this->actingAs($user, 'staff')
@@ -427,7 +422,7 @@ it('sums an issued row at its stored amount, and takes no status for it', functi
 
 it('refuses a role without ManageContracts, and lets one with it through', function (StaffRole $role, int $status) {
     Storage::fake('local');
-    $job = signedContractJob();
+    $job = acceptedQuoteJob();
 
     $this->actingAs(staffMember($role), 'staff')
         ->post("/auftraege/{$job->project->public_id}/zahlungsplan", [
@@ -447,7 +442,7 @@ it('refuses a role without ManageContracts, and lets one with it through', funct
 
 it('sends the payment plan to the overview screen as integer minor units, never a float', function () {
     Storage::fake('local');
-    $job = signedContractJob();
+    $job = acceptedQuoteJob();
     app(CreatePaymentPlan::class)($job, 100001, ['2026-09-01', '2026-10-01', '2026-11-01']);
 
     $props = $this->actingAs(staffMember(StaffRole::Owner), 'staff')
@@ -469,7 +464,7 @@ it('sends the payment plan to the overview screen as integer minor units, never 
 
 it('labels installments Anzahlung, N. Rate and Restbetrag by position, mockup 04-auftrag\'s own vocabulary', function () {
     Storage::fake('local');
-    $job = signedContractJob();
+    $job = acceptedQuoteJob();
     $plan = app(CreatePaymentPlan::class)($job, 900, ['2026-09-01', '2026-10-01', '2026-11-01']);
 
     $data = PaymentPlanData::fromModel($plan->load('installments'));

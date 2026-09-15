@@ -9,6 +9,7 @@ use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -85,7 +86,7 @@ class QuoteController extends Controller
      * handed the screen — so a quote invalidated in the gap between the two
      * requests is refused here regardless of what was on screen.
      */
-    public function accept(Request $request, string $project, AcceptQuote $accept): RedirectResponse
+    public function accept(Request $request, string $project, AcceptQuote $accept, StudioSettingsResolver $studio): RedirectResponse
     {
         $contact = auth('portal')->user();
 
@@ -103,7 +104,10 @@ class QuoteController extends Controller
             'hours' => ['nullable', 'integer', 'min:0'],
             'items' => ['array'],
             'items.*' => ['string'],
-        ]);
+            // The acceptance stands in for a contract, so the AGB are part of
+            // it wherever the studio has any.
+            'terms' => Rule::when($studio->legalAgbUrl() !== null, ['accepted']),
+        ], ['terms.accepted' => __('portal.quote_terms_required')]);
 
         $accept(
             $found->latestQuote,

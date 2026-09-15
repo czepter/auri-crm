@@ -11,6 +11,7 @@ use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -53,7 +54,7 @@ class QuoteShareController extends Controller
         return Storage::disk('local')->response($path);
     }
 
-    public function accept(Request $request, Quote $quote, AcceptQuote $accept, PortalSettings $settings): RedirectResponse
+    public function accept(Request $request, Quote $quote, AcceptQuote $accept, PortalSettings $settings, StudioSettingsResolver $studio): RedirectResponse
     {
         $contact = $quote->recipientContact;
 
@@ -64,7 +65,8 @@ class QuoteShareController extends Controller
             'hours' => ['nullable', 'integer', 'min:0'],
             'items' => ['array'],
             'items.*' => ['string'],
-        ]);
+            'terms' => Rule::when($studio->legalAgbUrl() !== null, ['accepted']),
+        ], ['terms.accepted' => __('portal.quote_terms_required')]);
 
         $accept(
             $quote,

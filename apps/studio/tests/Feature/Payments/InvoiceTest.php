@@ -1,6 +1,5 @@
 <?php
 
-use App\Contracts\Models\ContractSignature;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentBlockCatalog;
@@ -19,6 +18,8 @@ use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Jobs\RenderInvoiceJob;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Support\InvoiceFigures;
+use App\Quotes\Enums\QuoteStatus;
+use App\Quotes\Models\Quote;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\GotenbergClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -40,9 +41,7 @@ beforeEach(function () {
 function invoiceablePlan(): PaymentInstallment
 {
     $project = contractProject();
-    $contract = renderedContract($project);
-    $contact = $project->contacts()->sole();
-    ContractSignature::factory()->for($contract)->for($contact)->create();
+    Quote::factory()->for($project)->create(['status' => QuoteStatus::Accepted, 'accepted_at' => now()]);
 
     $plan = app(CreatePaymentPlan::class)($project->job()->sole(), 150_000, ['2026-09-01', '2026-10-01']);
 

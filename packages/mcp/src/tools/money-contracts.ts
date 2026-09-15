@@ -39,7 +39,7 @@ function registerCreatePaymentPlan(server: McpServer, clientFor: ApiClientFactor
     {
       title: 'Create a payment plan',
       description:
-        "Split a booked project's total into installments, due on the dates given. Amounts are in cents: 1.790 € is 179000. Refused unless the project has a Job (book_project) and a signed contract — a plan is created against what the client actually agreed to. Even installments unless the accepted quote carries its own payment stages, in which case those decide the split.",
+        "Split a booked project's total into installments, due on the dates given. Amounts are in cents: 1.790 € is 179000. Refused unless the project has a Job (book_project) and an accepted quote — a plan is created against what the client actually agreed to. Even installments unless the accepted quote carries its own payment stages, in which case those decide the split.",
       inputSchema: {
         project: z.string().describe('The project public id'),
         total: z.number().int().min(0),

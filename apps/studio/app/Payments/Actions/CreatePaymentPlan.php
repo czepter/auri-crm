@@ -8,16 +8,15 @@ use App\Payments\Support\PaymentInstallmentSplitter;
 use App\Payments\Support\PaymentStageSplitter;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
-use App\Quotes\Models\QuotePaymentStage;
 use App\Support\AuditLogger;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * The only writer of payment_plans. M-02's own issue text: "a plan is
- * created against a signed contract" — so this refuses a Job whose Project
- * has no Contract with a signature, the same abort_unless shape
- * App\Contracts\Actions\SignContract uses for its own precondition.
+ * The only writer of payment_plans. A plan is created against what the
+ * client agreed to, and that is the accepted quote — accepted in the portal
+ * with the AGB ticked, or a yes recorded by staff. A signed contract used to
+ * be the precondition; it shut out every studio that signs on paper or
+ * signs nothing at all.
  *
  * One transaction for plan and installments together, same reasoning as
  * BookProject pairing Job creation with its shoots: the deferred constraint
@@ -42,17 +41,16 @@ class CreatePaymentPlan
     public function __invoke(Job $job, int $total, array $dueDates): PaymentPlan
     {
         abort_if($job->paymentPlan()->exists(), 422, 'This job already has a payment plan.');
-        abort_unless(
-            $job->project->contracts()->whereHas('signature')->exists(),
-            422,
-            'A payment plan requires a signed contract.'
-        );
+
+        $quote = $this->acceptedQuoteFor($job);
+
+        abort_if($quote === null, 422, 'A payment plan requires an accepted quote.');
 
         // Q-11: where the accepted quote carries stages, they decide the
         // amounts and their wording; the dates stay this action's own, since
         // a stage has a text and no date. An even split otherwise — that is
         // every plan that exists today.
-        $stages = $this->stagesFor($job);
+        $stages = $quote->paymentStages;
         $rows = $stages->isEmpty()
             ? collect(PaymentInstallmentSplitter::evenly($total, count($dueDates)))
                 ->map(fn (int $amount) => ['amount' => $amount, 'title' => null])
@@ -91,20 +89,16 @@ class CreatePaymentPlan
     }
 
     /**
-     * The accepted quote's stages, if this project has one. Read off the
-     * quote rather than copied onto the Job: the quote is the document the
-     * client agreed to, and it is the only place that answers what was
-     * agreed.
-     *
-     * @return Collection<int, QuotePaymentStage>
+     * Read off the quote rather than copied onto the Job: the quote is the
+     * document the client agreed to, and it is the only place that answers
+     * what was agreed.
      */
-    private function stagesFor(Job $job): Collection
+    private function acceptedQuoteFor(Job $job): ?Quote
     {
         return Quote::query()
             ->where('project_id', $job->project_id)
             ->where('status', QuoteStatus::Accepted)
             ->latest('accepted_at')
-            ->first()
-            ?->paymentStages ?? collect();
+            ->first();
     }
 }
