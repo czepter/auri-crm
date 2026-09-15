@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * One due amount on a PaymentPlan, in minor units — never a float, the same
@@ -107,6 +108,11 @@ class PaymentInstallment extends Model
     public function invoiceTemplate(): BelongsTo
     {
         return $this->belongsTo(DocumentTemplate::class, 'invoice_template_id');
+    }
+
+    public function creditNotes(): HasMany
+    {
+        return $this->hasMany(CreditNote::class)->orderBy('id');
     }
 
     /**

@@ -46,7 +46,7 @@ class PaymentController extends Controller
 
         $found = $contact->visibleProjects()
             ->where('projects.public_id', $project)
-            ->with('job.paymentPlan.installments')
+            ->with('job.paymentPlan.installments.creditNotes')
             ->firstOrFail();
 
         $plan = $found->job?->paymentPlan;
@@ -68,7 +68,7 @@ class PaymentController extends Controller
             'contact' => ['name' => $contact->name],
             'showSwitcher' => $contact->visibleProjects()->count() > 1,
             'project' => ['id' => $found->public_id, 'name' => $found->name],
-            'plan' => $plan === null ? null : PaymentPlanData::fromModel($plan->load('installments')),
+            'plan' => $plan === null ? null : PaymentPlanData::fromModel($plan->load('installments.creditNotes')),
             'stripeEnabled' => $settings->stripeEnabled(),
             'paymentStatus' => in_array($status, ['success', 'cancelled'], true) ? $status : null,
             'bankDetails' => [
@@ -99,5 +99,23 @@ class PaymentController extends Controller
         abort_if($row === null || $row->invoice_path === null, 404);
 
         return Storage::disk('local')->response($row->invoice_path, "rechnung-{$row->invoice_number}.pdf");
+    }
+
+    /** #409, scoped exactly as invoice() is — through the project, never by id alone. */
+    public function creditNote(string $project, string $installment, string $creditNote): StreamedResponse
+    {
+        $contact = auth('portal')->user();
+
+        $found = $contact->visibleProjects()
+            ->where('projects.public_id', $project)
+            ->with('job.paymentPlan.installments.creditNotes')
+            ->firstOrFail();
+
+        $row = $found->job?->paymentPlan?->installments->firstWhere('public_id', $installment);
+        $note = $row?->creditNotes->firstWhere('public_id', $creditNote);
+
+        abort_if($note === null || $note->pdf_path === null, 404);
+
+        return Storage::disk('local')->response($note->pdf_path, "gutschrift-{$note->number}.pdf");
     }
 }

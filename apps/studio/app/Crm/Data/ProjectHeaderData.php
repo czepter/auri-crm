@@ -131,7 +131,7 @@ class ProjectHeaderData extends Data
             queue: $user === null || ! $queue ? [] : app(OpenProjects::class)->queue($user, $project),
             people: $project->contacts->map(ProjectPersonData::fromContact(...))->all(),
             paymentPlan: $project->job?->paymentPlan
-                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments'))
+                ? PaymentPlanData::fromModel($project->job->paymentPlan->load('installments.creditNotes'))
                 : null,
             galleries: $project->galleries()->get()->map(fn ($gallery) => [
                 'id' => $gallery->public_id,

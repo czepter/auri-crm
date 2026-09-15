@@ -552,7 +552,7 @@ unknownFields: string[],
 };
 }
 namespace Enums {
-export type DocumentTemplateType = 'contract' | 'quote' | 'invoice' | 'mail';
+export type DocumentTemplateType = 'contract' | 'quote' | 'invoice' | 'credit_note' | 'mail';
 }
 }
 namespace Engagement {
@@ -850,7 +850,7 @@ export type NotificationMode = 'immediate' | 'briefing' | 'digest' | 'off';
 }
 namespace Numbering {
 namespace Enums {
-export type DocumentType = 'quote' | 'contract' | 'invoice';
+export type DocumentType = 'quote' | 'contract' | 'invoice' | 'credit_note';
 export type NumberRangeResetRule = 'yearly' | 'continuous';
 }
 }
@@ -872,6 +872,13 @@ isLate: boolean,
 invoiceNumber: string | null,
 invoicedOn: string | null,
 hasInvoiceDocument: boolean,
+creditNotes: {
+id: string,
+number: string,
+amount: number,
+issuedOn: string,
+hasDocument: boolean,
+}[],
 };
 export type PaymentPlanData = {
 id: string,

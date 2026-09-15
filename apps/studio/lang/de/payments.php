@@ -10,4 +10,9 @@ return [
     'cancelPaidRefused' => 'Bezahlte Rate: Gutschrift statt Storno',
     'cancelNotInvoiced' => 'Nur eine gestellte Rechnung lässt sich stornieren',
     'cancelledNotIssuable' => 'Stornierte Rate',
+
+    // #409: eine unbezahlte Rechnung wird storniert, nicht gutgeschrieben.
+    'creditNoteNotPaid' => 'Nur eine bezahlte Rate lässt sich gutschreiben',
+    'creditNoteTooLarge' => 'Höchstens :amount € gutschreibbar',
+    'creditNoteNoStripePayment' => 'Keine Stripe-Zahlung zur Rückerstattung',
 ];

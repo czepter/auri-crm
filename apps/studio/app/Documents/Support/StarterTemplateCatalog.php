@@ -106,6 +106,7 @@ class StarterTemplateCatalog
             self::contractWerkvertrag(),
             self::invoiceStandard(),
             self::invoiceSmallBusiness(),
+            self::creditNote(),
             ...self::mails(),
         ];
     }
@@ -278,6 +279,38 @@ class StarterTemplateCatalog
                 self::paragraph('Nach 30 Tagen ab Zugang und Fälligkeit tritt Verzug ein (§ 286 Abs. 3 BGB).'),
                 self::paragraph('{{ studio.bankHolder }}<br>IBAN {{ studio.bankIban }}<br>BIC {{ studio.bankBic }}'),
                 self::paragraph('Bitte geben Sie die Rechnungsnummer {{ invoice.number }} als Verwendungszweck an.'),
+            ]],
+        ];
+    }
+
+    // --- Gutschrift ------------------------------------------------------
+
+    private static function creditNote(): array
+    {
+        return [
+            'key' => 'credit-note',
+            'type' => DocumentTemplateType::CreditNote->value,
+            'name' => 'Gutschrift',
+            'description' => 'Mit dem Bezug auf die Ursprungsrechnung nach § 31 Abs. 5 UStDV. Ausgangspunkt, keine Steuerberatung.',
+            'shootKind' => null,
+            'blocks' => ['blocks' => [
+                self::header('Gutschrift {{ creditNote.number }}'),
+                self::paragraph('{{ contact.name }}<br>{{ contact.street }}<br>{{ contact.postcode }} {{ contact.city }}'),
+                self::table([
+                    ['Gutschriftdatum', '{{ creditNote.date }}'],
+                    ['Leistungszeitraum', '{{ creditNote.servicePeriod }}'],
+                    ['Steuernummer', '{{ studio.taxNumber }}'],
+                    ['USt-IdNr.', '{{ studio.vatId }}'],
+                ]),
+                self::paragraph('Zu Rechnung {{ creditNote.invoiceNumber }} vom {{ creditNote.invoiceDate }}'),
+                self::header('Grund', 3),
+                self::paragraph('{{ creditNote.reason }}'),
+                self::table([
+                    ['Netto', '-{{ creditNote.net }}'],
+                    ['Umsatzsteuer {{ creditNote.vatRate }}', '-{{ creditNote.vat }}'],
+                    ['Gutschriftbetrag', '-{{ creditNote.gross }}'],
+                ], withHeadings: false),
+                self::paragraph('Der Betrag wird auf das uns bekannte Konto erstattet.'),
             ]],
         ];
     }

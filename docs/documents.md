@@ -137,6 +137,33 @@ leaving `{{ invoice.number }}` in a PDF.
 | `invoice.dueOn`      | The installment's due date, `dd.mm.yyyy`. |
 | `invoice.paymentTerm` | "Zahlbar bis {date} ohne Abzug." |
 
+### The credit note block
+
+`creditNote.*` is the same shape one argument further along: `fromProject()`
+takes an optional fourth argument, a `CreditNote`, and every other document
+type gets empty strings. It exists because a Gutschrift (#409) is not an
+invoice with a minus sign — it has its own number range (`DocumentType::CreditNote`,
+prefix `GS`), its own date, and a reference § 31 Abs. 5 UStDV requires.
+
+| Path                     | Value                                      |
+|--------------------------|--------------------------------------------|
+| `creditNote.number`      | The allocated number (`GS-2026-3`), from the `DocumentType::CreditNote` range. |
+| `creditNote.date`        | When `IssueCreditNote` ran, `dd.mm.yyyy`.  |
+| `creditNote.servicePeriod` | The primary shoot's date, as on the invoice. |
+| `creditNote.description` | Project name and the installment's label, as on the invoice. |
+| `creditNote.reason`      | What the studio typed in the Gutschrift dialog. |
+| `creditNote.net`         | Split *backwards* out of the credit note's own amount, not the installment's — a partial Gutschrift states the VAT actually given back. |
+| `creditNote.vatRate`     | The rate of the supply being reversed, not today's. |
+| `creditNote.vat`         | The remainder, so net + VAT is exactly the amount credited. |
+| `creditNote.gross`       | The credit note's `amount`, as a positive figure. The template prints the sign. |
+| `creditNote.vatNote`     | The §19 UStG sentence under the small-business rule; empty otherwise. |
+| `creditNote.invoiceNumber` | The invoice this credits — the reference § 31 Abs. 5 UStDV asks for. |
+| `creditNote.invoiceDate` | That invoice's own date.                   |
+
+No `dueOn` and no `paymentTerm`: nothing is owed on a credit note, it is paid
+out. Where the installment was settled through Stripe, `IssueCreditNote`
+creates the refund in the same transaction that writes the row.
+
 The rate and mode come from the project's **accepted quote** where one exists,
 because Q-04 froze them there at send and that snapshot is what the client
 agreed to — the studio's current setting is only the fallback for a plan with

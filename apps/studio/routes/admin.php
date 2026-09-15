@@ -807,6 +807,12 @@ Route::middleware('audience:staff')->group(function () {
         Route::post('/raten/{installment}/storno', [PaymentInstallmentController::class, 'cancelInvoice'])
             ->name('payment-installments.cancel-invoice');
 
+        // #409: what a paid rate gets instead of a Storno.
+        Route::post('/raten/{installment}/gutschrift', [PaymentInstallmentController::class, 'issueCreditNote'])
+            ->name('payment-installments.issue-credit-note');
+        Route::get('/raten/{installment}/gutschrift/{creditNote}', [PaymentInstallmentController::class, 'downloadCreditNote'])
+            ->name('payment-installments.credit-note');
+
         Route::post('/auftraege/{project}/shootings', [ShootController::class, 'store'])
             ->name('shoots.store');
         Route::delete('/shootings/{shoot}', [ShootController::class, 'destroy'])

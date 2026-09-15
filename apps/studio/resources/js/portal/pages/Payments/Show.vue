@@ -18,6 +18,7 @@ type Installment = {
   label: string
   invoiceNumber: string | null
   hasInvoiceDocument: boolean
+  creditNotes: { id: string; number: string; amount: number; issuedOn: string; hasDocument: boolean }[]
 }
 
 type Plan = {
@@ -127,6 +128,14 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                     :href="`/projekte/${project.id}/zahlungen/${installment.id}/rechnung`"
                     target="_blank"
                   >{{ $t('portal.invoiceDownload', { number: installment.invoiceNumber }) }}</a>
+                  <!-- #409: neben der Rechnung, die sie korrigiert. -->
+                  <a
+                    v-for="note in installment.creditNotes.filter((candidate) => candidate.hasDocument)"
+                    :key="note.id"
+                    class="text-[13px] whitespace-nowrap text-muted-foreground hover:text-foreground"
+                    :href="`/projekte/${project.id}/zahlungen/${installment.id}/gutschrift/${note.id}`"
+                    target="_blank"
+                  >{{ $t('portal.creditNoteDownload', { number: note.number }) }}</a>
                   <Button
                     v-if="stripeEnabled && !['paid', 'cancelled'].includes(installment.status)"
                     variant="portal-chip"
