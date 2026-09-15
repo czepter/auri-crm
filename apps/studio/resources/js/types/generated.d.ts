@@ -825,9 +825,6 @@ note: string | null,
 isTransit: boolean,
 };
 }
-namespace Enums {
-export type WebhookDeliveryStatus = 'pending' | 'delivered' | 'failed';
-}
 }
 namespace Media {
 namespace Data {

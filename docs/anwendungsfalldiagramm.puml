@@ -66,7 +66,6 @@ rectangle "Auri CRM" {
   usecase "Ruhezeit beachten" as UC_Quiet <<Betreuung>>
   usecase "Zusammenfassung senden" as UC_Digest <<Betreuung>>
   usecase "Onboarding-Erinnerung senden" as UC_OnbNudge <<Betreuung>>
-  usecase "Webhook zustellen" as UC_Webhook <<Betreuung>>
 
   usecase "Studio einrichten" as UC_Onboarding <<Verwaltung>>
   usecase "Mitarbeiter einladen" as UC_Invite <<Verwaltung>>
@@ -167,7 +166,6 @@ UC_Pay --> Stripe
 Stripe --> UC_Book
 UC_Notify --> Mail
 Mail --> UC_MailPoll
-UC_Webhook --> Api
 UC_Upload --> S3
 UC_Zip --> S3
 UC_Derivatives --> S3
