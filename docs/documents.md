@@ -136,6 +136,13 @@ leaving `{{ invoice.number }}` in a PDF.
 | `invoice.vatNote`    | The §19 UStG sentence under the small-business rule; empty otherwise. |
 | `invoice.dueOn`      | The installment's due date, `dd.mm.yyyy`. |
 | `invoice.paymentTerm` | "Zahlbar bis {date} ohne Abzug." |
+| `invoice.vatLines`   | #412: a list of `{rate, net, vat}`, one per tax rate, all three formatted. The installment is shared out pro rata over the accepted quote's own rate lines (`Quote::vatLines()`), rounded so the shares sum to the gross exactly. **Not a `{{ }}` placeholder** — a template body cannot loop, so this one entry is read by the layouts (`App\Payments\Support\InvoiceDocument`) and is deliberately absent from `MergeFieldVocabulary`. One rate is the ordinary case and prints the single Umsatzsteuer row the summary chain always had. |
+
+§ 14 Abs. 4 Nr. 7 UStG is why the list exists: the Entgelt has to appear
+"nach Steuersätzen aufgeschlüsselt" where more than one applies — 19 % on the
+reportage and 7 % on the printed book in the same quote. The rate lives on
+`quote_items.vat_rate` (basis points, null meaning the quote's own rate) and
+`package_items` carries it too, so a package brings it along.
 
 ### The credit note block
 

@@ -4,6 +4,7 @@ namespace App\Quotes\Support\Layouts;
 
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
+use App\Quotes\Support\VatLines;
 use Illuminate\Support\Number;
 
 /**
@@ -59,8 +60,11 @@ class MinimalQuoteLayout implements QuoteLayoutRenderer
         }
 
         if ($quote->vat_mode === 'standard') {
-            $rate = rtrim(rtrim(number_format($quote->vat_rate / 100, 2, ',', '.'), '0'), ',');
-            $rows .= '<tr><td>USt. '.$rate.' %</td><td>'.$this->money($quote->vat_amount ?? 0).'</td></tr>';
+            // #412: eine Zeile je Steuersatz — bei einem Satz ist das
+            // genau die eine Zeile, die hier immer stand.
+            foreach ($quote->vatLines() as $line) {
+                $rows .= '<tr><td>USt. '.VatLines::percent($line['rate']).' %</td><td>'.$this->money($line['vat']).'</td></tr>';
+            }
             $rows .= '<tr class="dlm-grand"><td>Gesamtbetrag</td><td>'.$this->money($quote->net + ($quote->vat_amount ?? 0)).'</td></tr>';
         }
 

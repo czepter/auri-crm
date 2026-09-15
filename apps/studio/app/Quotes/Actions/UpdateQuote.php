@@ -40,6 +40,9 @@ class UpdateQuote
             'items.*.unit_price' => ['nullable', 'integer', 'min:0'],
             'items.*.discount_type' => ['nullable', 'in:percentage,amount', 'required_with:items.*.discount_value'],
             'items.*.discount_value' => ['nullable', 'integer', 'min:1', 'required_with:items.*.discount_type'],
+            // #412: Basispunkte, leer = der Satz des Angebots. 0 waere ein
+            // eigener Satz von null Prozent und ist etwas anderes.
+            'items.*.vat_rate' => ['nullable', 'integer', 'min:1', 'max:10000'],
             // Q-08/Q-09/Q-11: der Reglerteil, optional, damit ein Entwurf ohne Stundensatz speichert.
             'hourly_rate' => ['nullable', 'integer', 'min:1'],
             'min_hours' => ['nullable', 'integer', 'min:1', 'max:2000'],
@@ -141,6 +144,7 @@ class UpdateQuote
                     'sort_order' => $index,
                     'discount_type' => $item['discount_type'] ?? null,
                     'discount_value' => $item['discount_value'] ?? null,
+                    'vat_rate' => $item['vat_rate'] ?? null,
                     'selectable' => $item['selectable'] ?? false,
                     'selected' => $item['selected'] ?? false,
                     'outcome' => $item['outcome'] ?? null,

@@ -7,6 +7,7 @@ use App\Payments\Data\PaymentPlanData;
 use App\Payments\Models\CreditNote;
 use App\Payments\Models\PaymentInstallment;
 use App\Payments\Support\InvoiceFigures;
+use App\Quotes\Support\VatLines;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Support\Number;
 
@@ -139,7 +140,7 @@ class DocumentMergeDataBuilder
      * day it arrived instead: § 14 Abs. 4 Nr. 6 UStG asks for the Zeitpunkt
      * der Vereinnahmung in an Abs. 5 case, and the shoot is still ahead.
      *
-     * @return array<string, string>
+     * @return array<string, string|list<array{rate: string, net: string, vat: string}>>
      */
     private function invoice(?PaymentInstallment $installment, Project $project, StudioSettingsResolver $settings): array
     {
@@ -147,7 +148,7 @@ class DocumentMergeDataBuilder
             return array_fill_keys(
                 ['number', 'date', 'servicePeriod', 'description', 'net', 'vatRate', 'vat', 'gross', 'vatNote', 'dueOn', 'paymentTerm'],
                 '',
-            );
+            ) + ['vatLines' => []];
         }
 
         $figures = InvoiceFigures::forInstallment($installment, $settings);
@@ -171,6 +172,14 @@ class DocumentMergeDataBuilder
             'vat' => $this->money($figures->vat),
             'gross' => $this->money($figures->gross),
             'vatNote' => $figures->vatNote ?? '',
+            // #412: structured rather than a `{{ }}` path — a template body
+            // cannot loop, so this is read by the layouts
+            // (App\Payments\Support\InvoiceDocument) and by nothing else.
+            'vatLines' => array_map(fn (array $line) => [
+                'rate' => VatLines::percent($line['rate']).' %',
+                'net' => $this->money($line['net']),
+                'vat' => $this->money($line['vat']),
+            ], $figures->rates),
             'dueOn' => $dueOn,
             'paymentTerm' => $dueOn === '' ? '' : "Zahlbar bis {$dueOn} ohne Abzug.",
         ];

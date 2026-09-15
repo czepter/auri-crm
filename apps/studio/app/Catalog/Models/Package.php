@@ -121,7 +121,7 @@ class Package extends Model
      * referencing — swap the catalogue photo later and a quote already sent
      * keeps the picture it was sent with.
      *
-     * @return list<array{title: string, description: ?string, quantity: int, unit_price: ?int, selectable: bool, selected: bool, outcome: ?string, image_path: ?string}>
+     * @return list<array{title: string, description: ?string, quantity: int, unit_price: ?int, vat_rate: ?int, selectable: bool, selected: bool, outcome: ?string, image_path: ?string}>
      */
     public function copyItems(): array
     {
@@ -130,6 +130,7 @@ class Package extends Model
             'description' => $item->description,
             'quantity' => $item->quantity,
             'unit_price' => $item->unit_price,
+            'vat_rate' => $item->vat_rate,
             'selectable' => $item->selectable,
             'selected' => $item->selected,
             'outcome' => $item->outcome,

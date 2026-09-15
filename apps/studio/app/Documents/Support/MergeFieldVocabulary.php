@@ -12,6 +12,12 @@ use Illuminate\Support\Arr;
  * DocumentMergeDataBuilder::fromProject()'s array shape in sync: a path
  * here with nothing on that side resolves to an empty string forever, and a
  * path on that side with nothing here is undocumented.
+ *
+ * One exception, #412's `invoice.vatLines`: a list, not a string, because
+ * § 14 Abs. 4 Nr. 7 UStG wants a row per tax rate and a template body cannot
+ * loop. It is read by App\Payments\Support\InvoiceDocument and never by a
+ * `{{ }}` placeholder, so it stays out of the map below — see
+ * docs/documents.md.
  */
 class MergeFieldVocabulary
 {
