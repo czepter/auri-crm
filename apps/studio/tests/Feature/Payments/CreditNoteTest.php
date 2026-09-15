@@ -9,10 +9,8 @@ use App\Numbering\Enums\DocumentType;
 use App\Numbering\Models\NumberCounter;
 use App\Payments\Actions\IssueCreditNote;
 use App\Payments\Actions\IssueInvoice;
-use App\Payments\Actions\MarkInstallmentPaid;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\CreditNote;
-use App\Payments\Models\PaymentInstallment;
 use App\Settings\Models\StudioSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\GotenbergClient;
@@ -30,22 +28,6 @@ beforeEach(function () {
 });
 
 afterEach(fn () => ApiRequestor::setHttpClient(null));
-
-/**
- * A paid, invoiced installment — the only state a Gutschrift may be written
- * against. No Bus::fake(): the render jobs dispatch only where a template of
- * their own type exists, so the tests that want one get it.
- */
-function creditableInstallment(SettledVia $via = SettledVia::Transfer, ?string $reference = null): PaymentInstallment
-{
-    Storage::fake('local');
-
-    $installment = invoiceablePlan();
-    app(IssueInvoice::class)($installment);
-    app(MarkInstallmentPaid::class)($installment->fresh(), $via, '2026-09-02', $reference);
-
-    return $installment->fresh();
-}
 
 it('allocates the number from the credit-note range, not the invoice one', function () {
     $installment = creditableInstallment();

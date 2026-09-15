@@ -21,6 +21,9 @@ use App\Media\Enums\MultipartUploadStatus;
 use App\Media\Models\MultipartUpload;
 use App\Models\User;
 use App\Payments\Actions\CreatePaymentPlan;
+use App\Payments\Actions\IssueInvoice;
+use App\Payments\Actions\MarkInstallmentPaid;
+use App\Payments\Enums\SettledVia;
 use App\Payments\Models\PaymentInstallment;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
@@ -426,6 +429,24 @@ function invoiceablePlan(): PaymentInstallment
     $plan = app(CreatePaymentPlan::class)($project->job()->sole(), 150_000, ['2026-09-01', '2026-10-01']);
 
     return $plan->installments()->orderBy('sort_order')->first();
+}
+
+/**
+ * A paid, invoiced installment — the only state a Gutschrift may be written
+ * against. No Bus::fake(): the render jobs dispatch only where a template of
+ * their own type exists, so the tests that want one get it. Moved out of
+ * CreditNoteTest.php once the export suite needed it too, for the reason
+ * invoiceablePlan() above already gives.
+ */
+function creditableInstallment(SettledVia $via = SettledVia::Transfer, ?string $reference = null): PaymentInstallment
+{
+    Storage::fake('local');
+
+    $installment = invoiceablePlan();
+    app(IssueInvoice::class)($installment);
+    app(MarkInstallmentPaid::class)($installment->fresh(), $via, '2026-09-02', $reference);
+
+    return $installment->fresh();
 }
 
 /**
