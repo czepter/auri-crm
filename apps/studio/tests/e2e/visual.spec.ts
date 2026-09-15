@@ -36,14 +36,19 @@ test('Auftrag', async ({ page }) => {
 
 test('Angebot', async ({ page }) => {
   await booking(page)
-  await page.goto(`${page.url()}/angebote`)
+  await page.getByRole('link', { name: /^Angebot\d*$/ }).click()
+  await page.waitForURL(/\/angebote$/)
   await screen(page, 'angebot')
 })
 
 test('Portal-Startseite', async ({ page }) => {
   await page.goto('/kontakte')
   await page.getByRole('link', { name: /E2E Kundin/ }).first().click()
-  await page.getByRole('button', { name: 'Vorschau als Kunde' }).click()
-  await page.waitForURL(`${PORTAL}/`)
-  await screen(page, 'portal-startseite')
+  await page.getByRole('button', { name: 'Portal', exact: true }).click()
+  const [portal] = await Promise.all([
+    page.context().waitForEvent('page'),
+    page.getByRole('button', { name: 'Vorschau als Kunde' }).click(),
+  ])
+  await portal.waitForURL(`${PORTAL}/`)
+  await screen(portal, 'portal-startseite')
 })
