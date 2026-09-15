@@ -40,6 +40,9 @@ enum AutomationAnchor: string implements HasLabel
     case GalleryExpiry = 'gallery_expiry';
     case QuestionnaireDue = 'questionnaire_due';
 
+    /** The day the primary shoot entered the stage anchored Delivered. Fires against its Project. */
+    case Delivered = 'delivered';
+
     public function label(): string
     {
         return match ($this) {
@@ -49,6 +52,7 @@ enum AutomationAnchor: string implements HasLabel
             self::InstallmentDue => 'Rate fällig',
             self::GalleryExpiry => 'Galerie läuft ab',
             self::QuestionnaireDue => 'Kundenaufgabe fällig',
+            self::Delivered => 'Ausgeliefert',
         };
     }
 }

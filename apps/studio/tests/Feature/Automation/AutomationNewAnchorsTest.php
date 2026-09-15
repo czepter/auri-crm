@@ -5,9 +5,11 @@ use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Models\AutomationRule;
+use App\Crm\Enums\ShootStatus;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
+use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
 use App\Gallery\Models\Gallery;
 use App\Payments\Enums\PaymentInstallmentStatus;
@@ -63,6 +65,23 @@ it('warns before a gallery expires', function () use ($today) {
     Gallery::factory()->create(['expires_at' => $today()->addDays(3)->toDateString()]);
 
     studioRule(AutomationAnchor::GalleryExpiry);
+
+    expect(sweep($today()))->toBe(1);
+});
+
+it('counts from the day the primary shoot was delivered', function () use ($today) {
+    staffMember();
+
+    Shoot::factory()->primary()->atStatus(ShootStatus::Delivered)
+        ->create(['status_entered_at' => $today()->subDays(14)]);
+    Shoot::factory()->primary()->atStatus(ShootStatus::Editing)
+        ->create(['status_entered_at' => $today()->subDays(14)]);
+    Shoot::factory()->atStatus(ShootStatus::Delivered)
+        ->create(['status_entered_at' => $today()->subDays(14)]);
+
+    AutomationRule::factory()
+        ->dateOffset(AutomationAnchor::Delivered, 14, AutomationOffsetDirection::After)
+        ->create(['recipient_type' => AutomationRecipient::Studio]);
 
     expect(sweep($today()))->toBe(1);
 });

@@ -28,7 +28,7 @@ statusLabel: string,
 };
 }
 namespace Enums {
-export type AutomationAnchor = 'per_shoot' | 'primary_shoot' | 'quote_validity' | 'installment_due' | 'gallery_expiry' | 'questionnaire_due';
+export type AutomationAnchor = 'per_shoot' | 'primary_shoot' | 'quote_validity' | 'installment_due' | 'gallery_expiry' | 'questionnaire_due' | 'delivered';
 export type AutomationCondition = 'payment_open' | 'questionnaire_open' | 'gallery_unopened';
 export type AutomationOffsetDirection = 'before' | 'after';
 export type AutomationRecipient = 'client' | 'crew' | 'studio';

@@ -5,9 +5,12 @@ namespace App\Automation\Actions;
 use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Models\AutomationRule;
+use App\Crm\Enums\StageAnchor;
+use App\Crm\Enums\StagePipeline;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
+use App\Crm\Support\CrmVocabulary;
 use App\Gallery\Models\Gallery;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Models\PaymentInstallment;
@@ -43,6 +46,7 @@ class SweepDateOffsetAutomationRules
     public function __construct(
         private readonly FireAutomationRule $fire,
         private readonly StudioSettingsResolver $settings,
+        private readonly CrmVocabulary $stages,
     ) {}
 
     public function __invoke(?CarbonImmutable $today = null): int
@@ -108,6 +112,17 @@ class SweepDateOffsetAutomationRules
                 ->whereDate('due_on', $day)
                 ->with('project')
                 ->get();
+        }
+
+        if ($rule->anchor === AutomationAnchor::Delivered) {
+            return Shoot::query()
+                ->uncancelled()
+                ->where('is_primary', true)
+                ->where('status', $this->stages->anchored(StagePipeline::Project, StageAnchor::Delivered)?->key)
+                ->whereDate('status_entered_at', $day)
+                ->with('project')
+                ->get()
+                ->map(fn (Shoot $shoot) => $shoot->project);
         }
 
         if ($rule->anchor === AutomationAnchor::QuoteValidity) {
