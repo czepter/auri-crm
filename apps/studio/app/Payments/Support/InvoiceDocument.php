@@ -18,6 +18,14 @@ use App\Settings\Support\StudioSettingsResolver;
 final class InvoiceDocument
 {
     /**
+     * § 286 Abs. 3 S. 1 BGB: a consumer falls into Verzug 30 days after a due
+     * invoice reaches them only if the invoice said so. #422 put it in both
+     * starters; here it is neither editable nor duplicated, and a Gutschrift —
+     * which has no payment lines at all — never carries it.
+     */
+    public const DEFAULT_NOTICE = 'Nach 30 Tagen ab Zugang und Fälligkeit tritt Verzug ein (§ 286 Abs. 3 BGB).';
+
+    /**
      * @param  list<array{0: string, 1: string}>  $metaRows
      * @param  list<string>  $recipient
      * @param  list<string>  $paymentLines
@@ -47,6 +55,7 @@ final class InvoiceDocument
 
         $payment = array_values(array_filter([
             $invoice['paymentTerm'] ?? '',
+            self::DEFAULT_NOTICE,
             $studio['bankHolder'] ?? '',
             ($studio['bankIban'] ?? '') === '' ? '' : 'IBAN '.$studio['bankIban'],
             ($studio['bankBic'] ?? '') === '' ? '' : 'BIC '.$studio['bankBic'],

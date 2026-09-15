@@ -9,6 +9,7 @@ use App\Payments\Actions\MarkInstallmentPaid;
 use App\Payments\Actions\RenderInvoicePdf;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\CreditNote;
+use App\Payments\Support\InvoiceDocument;
 use App\Quotes\Enums\QuoteLayout;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -93,6 +94,18 @@ it('reads the layout from the same setting the quote reads', function () {
     expect($html)->toContain('doc-layout-header_band');
 });
 
+it('carries the Verzugshinweis once, in every layout', function (QuoteLayout $layout) {
+    $html = app(RenderInvoicePdf::class)->forInstallment(layoutInvoice(), $layout);
+
+    expect(substr_count($html, InvoiceDocument::DEFAULT_NOTICE))->toBe(1);
+})->with([
+    'classic' => QuoteLayout::Classic,
+    'minimal' => QuoteLayout::Minimal,
+    'letter' => QuoteLayout::Letter,
+    'header band' => QuoteLayout::HeaderBand,
+    'structured' => QuoteLayout::Structured,
+]);
+
 it('carries the bank details and the Verwendungszweck without a template block', function () {
     $settings = app(StudioSettingsResolver::class);
     $settings->set('bank_account_holder', 'Atelier Nordlicht', null);
@@ -132,10 +145,12 @@ it('strips the layout blocks from an existing invoice template and keeps the pro
         'body' => '<p>Guten Tag {{ contact.name }},</p>'
             .'<table><tr><td>Netto</td><td>{{ invoice.net }}</td></tr></table>'
             .'<p>{{ studio.bankHolder }}<br>IBAN {{ studio.bankIban }}</p>'
+            .'<p>'.InvoiceDocument::DEFAULT_NOTICE.'</p>'
             .'<p>Vielen Dank für den Auftrag.</p>',
         'blocks' => ['blocks' => [
             ['type' => 'paragraph', 'data' => ['text' => 'Guten Tag {{ contact.name }},']],
             ['type' => 'table', 'data' => ['content' => [['Netto', '{{ invoice.net }}']]]],
+            ['type' => 'paragraph', 'data' => ['text' => InvoiceDocument::DEFAULT_NOTICE]],
             ['type' => 'paragraph', 'data' => ['text' => 'Vielen Dank für den Auftrag.']],
         ]],
     ]);
@@ -149,6 +164,8 @@ it('strips the layout blocks from an existing invoice template and keeps the pro
         ->and($fresh->body)->toContain('Vielen Dank für den Auftrag.')
         ->and($fresh->body)->not->toContain('invoice.net')
         ->and($fresh->body)->not->toContain('studio.bankIban')
+        // #422's sentence is the layout's now; a second copy would print twice.
+        ->and($fresh->body)->not->toContain('tritt Verzug ein')
         ->and($fresh->blocks['blocks'])->toHaveCount(2);
 });
 

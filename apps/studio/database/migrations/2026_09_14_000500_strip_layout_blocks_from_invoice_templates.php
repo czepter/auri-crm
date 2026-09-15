@@ -21,8 +21,14 @@ use Illuminate\Support\Facades\DB;
  */
 return new class extends Migration
 {
-    /** A block goes if it reaches for anything the layout now prints itself. */
-    private const MARKERS = ['invoice.', 'studio.bank', 'creditNote.'];
+    /**
+     * A block goes if it reaches for anything the layout now prints itself.
+     * The Verzugshinweis (#422) is matched by its wording rather than by a
+     * merge path, because it never had one — #419 moved the sentence into
+     * InvoiceDocument::DEFAULT_NOTICE, and a template that kept its own copy
+     * would print it twice.
+     */
+    private const MARKERS = ['invoice.', 'studio.bank', 'creditNote.', 'tritt Verzug ein'];
 
     public function up(): void
     {
