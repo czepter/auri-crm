@@ -21,6 +21,5 @@ final class ImportPlan
         public readonly array $contacts,
         public readonly array $projects,
         public readonly array $jobs,
-        public readonly array $contracts,
     ) {}
 }

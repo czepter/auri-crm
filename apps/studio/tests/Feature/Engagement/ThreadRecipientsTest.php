@@ -8,7 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 uses(RefreshDatabase::class);
 
 it('names exactly the contacts a staff reply would reach', function () {
-    $project = contractProject();
+    $project = bookedContactProject();
     $contact = $project->contacts()->sole();
     $contact->update(['email' => 'lena@example.test', 'name' => 'Lena Meier']);
 
@@ -22,7 +22,7 @@ it('names exactly the contacts a staff reply would reach', function () {
 });
 
 it('leaves out a contact without an address, which no mail could reach', function () {
-    $project = contractProject();
+    $project = bookedContactProject();
     $contact = $project->contacts()->sole();
     $contact->update(['email' => null]);
 

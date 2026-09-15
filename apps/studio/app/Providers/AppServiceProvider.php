@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use App\Automation\Listeners\FireAutomationRulesForEvent;
 use App\Catalog\Models\Package;
-use App\Contracts\Events\ContractSigned;
 use App\Crm\Actions\RescheduleAnchoredTasks;
 use App\Crm\Events\LeadCaptured;
 use App\Crm\Events\LeadStageChanged;
@@ -12,7 +11,6 @@ use App\Crm\Events\ProjectBooked;
 use App\Crm\Events\ShootStatusChanged;
 use App\Crm\Listeners\ApplyTemplatesOnBooking;
 use App\Crm\Listeners\ApplyTemplatesOnStage;
-use App\Crm\Listeners\BookProjectOnContractAndDeposit;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\InternalNote;
@@ -215,18 +213,12 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
-        // P-05b: one listener, two triggers, converging on the same
-        // BookProject the manual button calls — see the class docblock.
-        Event::listen(ContractSigned::class, [BookProjectOnContractAndDeposit::class, 'handleContractSigned']);
-        Event::listen(InstallmentPaid::class, [BookProjectOnContractAndDeposit::class, 'handleInstallmentPaid']);
-
         // I-04: wraps each domain event for NotificationService rather than
         // handing WebhookTransport the event directly — see that listener's
         // own docblock. ShootDelivered and GalleryPublished, the other two
         // events issue #86 names, don't exist as classes yet; wiring them is
         // one Event::listen line here once their own stories land.
         Event::listen(ProjectBooked::class, [DispatchWebhookNotifications::class, 'handleProjectBooked']);
-        Event::listen(ContractSigned::class, [DispatchWebhookNotifications::class, 'handleContractSigned']);
         Event::listen(InstallmentPaid::class, [DispatchWebhookNotifications::class, 'handleInstallmentPaid']);
         Event::listen(InstallmentOverdue::class, [DispatchWebhookNotifications::class, 'handleInstallmentOverdue']);
 
@@ -234,7 +226,6 @@ class AppServiceProvider extends ServiceProvider
         // screen lists have a domain event; the other three call NotifyStudio
         // from their action — see the listener's own docblock.
         Event::listen(LeadCaptured::class, [NotifyStudioOfDomainEvent::class, 'handleLeadCaptured']);
-        Event::listen(ContractSigned::class, [NotifyStudioOfDomainEvent::class, 'handleContractSigned']);
         Event::listen(InstallmentPaid::class, [NotifyStudioOfDomainEvent::class, 'handleInstallmentPaid']);
         Event::listen(InstallmentOverdue::class, [NotifyStudioOfDomainEvent::class, 'handleInstallmentOverdue']);
 

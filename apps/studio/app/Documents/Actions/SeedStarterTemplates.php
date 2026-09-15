@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\DB;
  * this cannot dedupe on provenance. It dedupes on what a studio would actually
  * see as a duplicate: a **current template of the same type with the same
  * name**. Re-entering the wizard step therefore adds nothing, and a studio
- * that renamed its contract gets no second one imposed on it either — their
+ * that renamed its quote gets no second one imposed on it either — their
  * own row wins, and nothing here overwrites it.
  *
  * @return int how many were written

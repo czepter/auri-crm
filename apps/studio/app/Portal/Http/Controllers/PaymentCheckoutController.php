@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
  * M-04: the client's own click, and the only place in the app that ever
  * creates a Stripe object — see App\Payments\Actions\
  * CreateInstallmentCheckoutSession. Asks the same "is this project visible
- * to this contact" question PaymentController and ContractController already
+ * to this contact" question PaymentController and QuoteController already
  * ask, so an installment belonging to a project the contact cannot see is a
  * 404 here exactly as it is absent from the payments screen — never a 403.
  *
@@ -44,8 +44,7 @@ class PaymentCheckoutController extends Controller
         // #418: a settled plan takes no more money.
         abort_if($installment->plan->isSettled(), 404);
 
-        // A literal path, not route(): App\Portal\Http\Controllers\
-        // ContractController's own download link is built the same way — the
+        // A literal path, not route(): the
         // named-route lookup depends on whichever RouteCollection last
         // booted, which the admin/portal surface switch (App\Support\Surface)
         // does not always leave pointed at this surface's own table.

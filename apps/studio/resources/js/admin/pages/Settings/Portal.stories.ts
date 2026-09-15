@@ -56,7 +56,6 @@ const settings: App.Settings.Data.PortalSettingsData = {
   datenschutzUrl: 'https://atelier-nordlicht.de/datenschutz',
   agbUrl: 'https://atelier-nordlicht.de/agb',
   acceptQuotesEnabled: true,
-  signContractsEnabled: true,
   paymentStatusEnabled: true,
   offersEnabled: true,
   messagingMode: 'booking',

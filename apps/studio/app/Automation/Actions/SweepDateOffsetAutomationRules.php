@@ -5,7 +5,6 @@ namespace App\Automation\Actions;
 use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Models\AutomationRule;
-use App\Contracts\Models\Contract;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Shoot;
 use App\Crm\Models\Task;
@@ -78,22 +77,14 @@ class SweepDateOffsetAutomationRules
     {
         $day = $targetDate->toDateString();
 
-        // E-16: four more dates, each with its own "still open" filter — the
-        // same shape uncancelled() gives the shoots below. A paid rate, a
-        // signed contract and a deleted gallery are not reminded about.
+        // E-16: three more dates, each with its own "still open" filter — the
+        // same shape uncancelled() gives the shoots below. A paid rate and a
+        // deleted gallery are not reminded about.
         if ($rule->anchor === AutomationAnchor::InstallmentDue) {
             return PaymentInstallment::query()
                 ->whereIn('status', [PaymentInstallmentStatus::Scheduled, PaymentInstallmentStatus::Invoiced])
                 ->whereDate('due_on', $day)
                 ->with('plan.job.project')
-                ->get();
-        }
-
-        if ($rule->anchor === AutomationAnchor::ContractDeadline) {
-            return Contract::query()
-                ->whereDoesntHave('signers', fn ($signer) => $signer->whereNotNull('signed_at'))
-                ->whereDate('sign_deadline_on', $day)
-                ->with('project')
                 ->get();
         }
 

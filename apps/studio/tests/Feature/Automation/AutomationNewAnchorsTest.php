@@ -5,8 +5,6 @@ use App\Automation\Enums\AutomationAnchor;
 use App\Automation\Enums\AutomationOffsetDirection;
 use App\Automation\Enums\AutomationRecipient;
 use App\Automation\Models\AutomationRule;
-use App\Automation\Models\AutomationRun;
-use App\Contracts\Models\Contract;
 use App\Crm\Enums\TaskAudience;
 use App\Crm\Models\Job;
 use App\Crm\Models\Project;
@@ -57,17 +55,6 @@ it('announces an installment before it falls due', function () use ($today) {
     studioRule(AutomationAnchor::InstallmentDue);
 
     expect(sweep($today()))->toBe(1);
-});
-
-it('nudges before a contract deadline and leaves a signed one alone', function () use ($today) {
-    staffMember();
-
-    Contract::factory()->create(['sign_deadline_on' => $today()->addDays(3)->toDateString()]);
-
-    studioRule(AutomationAnchor::ContractDeadline);
-
-    expect(sweep($today()))->toBe(1)
-        ->and(AutomationRun::query()->count())->toBe(1);
 });
 
 it('warns before a gallery expires', function () use ($today) {

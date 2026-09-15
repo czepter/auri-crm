@@ -5,7 +5,7 @@ import PortalHeader from '@/portal/components/PortalHeader.vue'
 import PortalShell from '@/portal/components/PortalShell.vue'
 
 // § 5 TMG. Reads straight through StudioSettingsResolver's T-02 columns —
-// the same particulars RenderContractJob's `studio.*` merge fields already
+// the same particulars the `studio.*` merge fields already
 // read (docs/documents.md) — never a second, independently-maintained copy.
 // Labels reuse the `settings.*` strings T-02's own admin form already
 // carries (Firmierung, Straße & Hausnummer, ...) rather than a duplicate

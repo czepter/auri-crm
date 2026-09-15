@@ -4,7 +4,6 @@ namespace App\Crm\Actions;
 
 use App\Automation\Models\AutomationRun;
 use App\Catalog\Models\ServiceSuggestion;
-use App\Contracts\Models\Contract;
 use App\Crm\Models\Contact;
 use App\Crm\Models\InternalNote;
 use App\Crm\Models\Job;
@@ -30,19 +29,11 @@ use Illuminate\Support\Facades\Storage;
 /**
  * X-04's write half: erases one Contact and everything reachable from them.
  *
- * The Contact row itself is never dropped. contract_signatures.contact_id
- * and quotes.accepted_by_contact_id both restrictOnDelete a contact who has
- * signed or accepted something (see those migrations' own comments — "a
- * contact who has signed something is not one this app can drop") and the
- * database enforces it, so erasure means scrubbing this row's identifying
- * columns in place, never removing it.
- *
- * The same restrict reaches one level up: contract_signatures.contract_id
- * also restrictOnDelete, so a signed Contract "must stay put, artifact and
- * all" (Contract's own migration comment). That row, its signature and its
- * project shell are the audit trail the law requires here, the same shape
- * App\Models\AuditLog already is elsewhere (F-06) — every other table this
- * contact's projects touch is purged outright, storage objects included.
+ * The Contact row itself is never dropped. quotes.accepted_by_contact_id
+ * restrictOnDelete a contact who has accepted something and the database
+ * enforces it, so erasure means scrubbing this row's identifying columns in
+ * place, never removing it. Every table this contact's projects touch is
+ * purged outright, storage objects included.
  *
  * A project shared with another contact (a partner, a payer, a planner) is
  * never touched beyond this contact's own fingerprints on it — the other
@@ -51,12 +42,9 @@ use Illuminate\Support\Facades\Storage;
  */
 class EraseContactDsgvo
 {
-    /** @return list<string> public_ids of projects retained (in full or in part) for a signed contract's sake */
-    public function __invoke(Contact $contact, User $actor): array
+    public function __invoke(Contact $contact, User $actor): void
     {
-        return DB::transaction(function () use ($contact, $actor) {
-            $retained = [];
-
+        DB::transaction(function () use ($contact, $actor) {
             foreach ($contact->projects()->get() as $project) {
                 $sharedWithSomeoneElse = $project->contacts()->whereKeyNot($contact->id)->exists();
 
@@ -66,9 +54,7 @@ class EraseContactDsgvo
                     continue;
                 }
 
-                if (! $this->purgeSoleContactProject($project)) {
-                    $retained[] = $project->public_id;
-                }
+                $this->purgeSoleContactProject($project);
             }
 
             ClientAccess::where('contact_id', $contact->id)->delete();
@@ -102,17 +88,14 @@ class EraseContactDsgvo
             ])->save();
 
             // The contact's identity survives here only as an already-opaque
-            // public_id (AuditLogger's own convention, e.g. SignContract) —
+            // public_id (AuditLogger's own convention, e.g. AcceptQuote) —
             // no name, email or phone ever reaches an audit row, so nothing
             // above needs redacting for this one to be safe to keep forever.
             AuditLogger::record(
                 event: 'contact.dsgvo_erased',
                 actor: $actor,
-                context: ['retained_projects' => $retained],
                 subject: $contact->public_id,
             );
-
-            return $retained;
         });
     }
 
@@ -133,16 +116,12 @@ class EraseContactDsgvo
      * form instances/fields/answers, tasks, notes, shoots and everything
      * under one (crew, timeline, shot list), the lead, the job and its
      * payment plan, and any automation run anchored to the project or a
-     * shoot of it. An unsigned contract goes with it; a signed one never
-     * does, so it is the one thing left to check afterwards.
-     *
-     * @return bool true if the project row itself was also dropped
+     * shoot of it, then the project row itself.
      */
-    private function purgeSoleContactProject(Project $project): bool
+    private function purgeSoleContactProject(Project $project): void
     {
         $this->purgeStorageObjects($project);
 
-        Contract::where('project_id', $project->id)->whereDoesntHave('signature')->delete();
         Quote::where('project_id', $project->id)->delete();
         Thread::where('project_id', $project->id)->delete();
         Gallery::where('project_id', $project->id)->delete();
@@ -159,23 +138,7 @@ class EraseContactDsgvo
             ->orWhere(fn ($q) => $q->where('anchorable_type', Shoot::class)->whereIn('anchorable_id', $shootIds))
             ->delete();
 
-        if ($project->contracts()->whereHas('signature')->exists()) {
-            // ponytail: a signed contract on an otherwise sole-contact
-            // project keeps the whole project shell, not just the contract —
-            // splitting "this contact's share of the project name" from "the
-            // contract's own legal record" isn't tracked anywhere in this
-            // schema. Upgrade path: give Project a redactable label separate
-            // from the contract's own snapshot, if this edge is ever common
-            // enough to matter.
-            $project->contacts()->detach();
-            $project->update(['name' => '[DSGVO-Löschung]']);
-
-            return false;
-        }
-
         $project->delete();
-
-        return true;
     }
 
     private function purgeStorageObjects(Project $project): void
@@ -198,13 +161,5 @@ class EraseContactDsgvo
                 }
             }
         }
-
-        $local = Storage::disk('local');
-
-        Contract::where('project_id', $project->id)
-            ->whereDoesntHave('signature')
-            ->whereNotNull('artifact_path')
-            ->get()
-            ->each(fn (Contract $contract) => $local->delete($contract->artifact_path));
     }
 }

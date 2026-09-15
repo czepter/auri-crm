@@ -1,6 +1,5 @@
 <?php
 
-use App\Contracts\Models\ContractSignature;
 use App\Crm\Models\Job;
 use App\Payments\Actions\CreatePaymentPlan;
 use App\Quotes\Enums\QuoteStatus;
@@ -14,9 +13,7 @@ beforeEach(fn () => Storage::fake('local'));
 
 function bookedJobWithStages(int $total): Job
 {
-    $project = contractProject();
-    $contract = renderedContract($project);
-    ContractSignature::factory()->for($contract)->for($project->contacts()->sole())->create();
+    $project = bookedContactProject();
 
     $quote = Quote::factory()->create([
         'project_id' => $project->id,

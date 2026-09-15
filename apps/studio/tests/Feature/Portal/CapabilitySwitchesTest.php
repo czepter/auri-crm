@@ -12,7 +12,6 @@ use App\Settings\Models\StudioSettings;
 use App\Support\Surface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -31,59 +30,8 @@ it('defaults every client capability switch to off', function () {
     $row = StudioSettings::query()->sole();
 
     expect($row->portal_accept_quotes_enabled)->toBeFalse()
-        ->and($row->portal_sign_contracts_enabled)->toBeFalse()
         ->and($row->portal_payment_status_enabled)->toBeFalse()
         ->and($row->portal_messaging_mode)->toBe('off');
-});
-
-it('404s the sign-contract route the same way a route that does not exist would, while the switch is off', function () {
-    Storage::fake('local');
-
-    $project = Project::factory()->create(['portal_visible' => true]);
-    renderedContract($project);
-    $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-
-    $missing = $this->actingAs($contact, 'portal')->get('/this-route-does-not-exist-xyz');
-
-    $response = $this->actingAs($contact, 'portal')
-        ->post("/projekte/{$project->public_id}/vertrag/unterschreiben", ['typedName' => 'Lena Meier', 'consent' => true]);
-
-    $response->assertNotFound();
-    expect($response->status())->toBe($missing->status());
-    expect(\App\Contracts\Models\ContractSignature::count())->toBe(0);
-});
-
-it('hides the sign-contract affordance on the contract screen while the switch is off, even though the contract is otherwise signable', function () {
-    Storage::fake('local');
-
-    $project = Project::factory()->create(['portal_visible' => true]);
-    renderedContract($project);
-    $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-
-    $props = $this->actingAs($contact, 'portal')
-        ->get("/projekte/{$project->public_id}/vertrag")
-        ->assertOk()
-        ->viewData('page')['props'];
-
-    expect($props['canSign'])->toBeFalse();
-});
-
-it('signs once the studio switches sign-contracts on', function () {
-    Storage::fake('local');
-    StudioSettings::query()->update(['portal_sign_contracts_enabled' => true]);
-
-    $project = Project::factory()->create(['portal_visible' => true]);
-    renderedContract($project);
-    $contact = Contact::factory()->create();
-    $project->attachContact($contact, ProjectContactRole::Primary);
-
-    $this->actingAs($contact, 'portal')
-        ->post("/projekte/{$project->public_id}/vertrag/unterschreiben", ['typedName' => 'Lena Meier', 'consent' => true])
-        ->assertRedirect();
-
-    expect(\App\Contracts\Models\ContractSignature::count())->toBe(1);
 });
 
 it('404s the payment-status route the same way a route that does not exist would, while the switch is off', function () {

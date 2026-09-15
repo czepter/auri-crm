@@ -1,6 +1,5 @@
 <?php
 
-use App\Contracts\Models\ContractSignature;
 use App\Documents\Support\DocumentMergeDataBuilder;
 use App\Payments\Actions\CancelInvoice;
 use App\Payments\Actions\CreatePaymentPlan;
@@ -41,9 +40,7 @@ beforeEach(function () {
  */
 function planBehindQuote(array $dueDates, int $discountValue = 0, array $slider = []): PaymentPlan
 {
-    $project = contractProject();
-    $contract = renderedContract($project);
-    ContractSignature::factory()->for($contract)->for($project->contacts()->sole())->create();
+    $project = bookedContactProject();
 
     $quote = Quote::factory()->create([
         'project_id' => $project->id,

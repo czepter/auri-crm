@@ -22,7 +22,7 @@ use App\Support\GotenbergClient;
 use Illuminate\Support\Number;
 
 /**
- * Der Weg, den RenderContractJob und RenderInvoiceJob schon gehen: Vorlage,
+ * Der Weg, den RenderInvoiceJob schon geht: Vorlage,
  * MergeFieldResolver, DocumentRenderer, Gotenberg. Was hier dazukommt, ist
  * das, was keine Vorlage tragen kann — die Positionen und die Summen des
  * Angebots selbst, zwischen Einleitung und Schluss.

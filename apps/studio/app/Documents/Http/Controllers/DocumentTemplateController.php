@@ -28,10 +28,9 @@ use Inertia\Response;
 
 /**
  * CRUD over the current version of every template family, across every
- * App\Documents\Enums\DocumentTemplateType — T-12's generalisation of M-01's
- * ContractTemplateController. "Update" never writes to an existing row —
- * see DocumentTemplate::newVersion() — so a Contract already rendered from
- * an older version keeps pointing at a row this controller never touches
+ * App\Documents\Enums\DocumentTemplateType. "Update" never writes to an
+ * existing row — see DocumentTemplate::newVersion() — so a document already
+ * rendered from an older version keeps pointing at a row this controller never touches
  * again.
  */
 class DocumentTemplateController extends Controller

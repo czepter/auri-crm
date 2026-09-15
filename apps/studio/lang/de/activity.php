@@ -19,8 +19,6 @@ return [
     'quote.sent' => 'Angebot gesendet',
     'quote.revised' => 'Angebot überarbeitet',
     'quote.accepted' => 'Angebot angenommen',
-    'contract.render_requested' => 'Vertrag erstellt',
-    'contract.signed' => 'Vertrag unterschrieben',
     'project.booked' => 'Projekt gebucht',
     'project.fields_changed' => 'Details geändert',
     'project.portal_shown' => 'Portal freigegeben',

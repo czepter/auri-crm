@@ -100,7 +100,7 @@ it("appends the studio's signature block as its own line on ClientAccessLink", f
 });
 
 it(
-    "carries the same legal particulars in ClientAccessLink's footer that RenderContractJob's studio.* merge fields read, from one source",
+    "carries the same legal particulars in ClientAccessLink's footer that the studio.* merge fields read, from one source",
     function () {
         $owner = staffMember(StaffRole::Owner);
         $contact = Contact::factory()->create();
@@ -112,7 +112,7 @@ it(
         $settings->set('tax_number', '22/123/45678', $owner);
         $settings->set('vat_id', 'DE284957312', $owner);
 
-        // The one source both this mail footer and RenderContractJob's
+        // The one source both this mail footer and the
         // mergeData() read from — see App\Concerns\AppliesStudioMailIdentity.
         $studio = (new StudioSettingsResolver)->attributes();
 
@@ -158,7 +158,7 @@ it("leaves StaffInvited's mail under the tenant's own address, resolved live at 
 });
 
 it(
-    "carries the same legal particulars in StaffInvited's footer that RenderContractJob's studio.* merge fields read",
+    "carries the same legal particulars in StaffInvited's footer that the studio.* merge fields read",
     function () {
         $owner = staffMember(StaffRole::Owner);
         $invitation = t06Invitation();

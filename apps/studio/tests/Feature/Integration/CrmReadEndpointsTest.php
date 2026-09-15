@@ -496,7 +496,6 @@ it('summarises the lead pipeline as a count per stage, in funnel order', functio
         ['stage' => 'contacted', 'label' => 'Kontaktiert', 'count' => 1],
         ['stage' => 'quote_sent', 'label' => 'Angebot', 'count' => 0],
         ['stage' => 'quote_accepted', 'label' => 'Angebot angenommen', 'count' => 0],
-        ['stage' => 'contract_sent', 'label' => 'Vertrag', 'count' => 0],
         ['stage' => 'booked', 'label' => 'Gebucht', 'count' => 0],
     ]);
 });

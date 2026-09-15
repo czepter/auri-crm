@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Contracts\Models\Contract;
 use App\Crm\Actions\BookProject;
 use App\Crm\Enums\LeadSource;
 use App\Crm\Enums\LeadStage;
@@ -79,7 +78,7 @@ class MarketingScreenshotSeeder extends Seeder
         $this->seedBookedWedding($staff);
     }
 
-    /** Melissa & Jan Ahrens: a booked wedding carried through to an accepted quote, a rendered contract and a payment plan. */
+    /** Melissa & Jan Ahrens: a booked wedding carried through to an accepted quote and a payment plan. */
     private function seedBookedWedding(User $staff): void
     {
         $project = Project::create(['name' => 'Melissa & Jan Ahrens', 'type' => ProjectType::Wedding]);
@@ -120,8 +119,6 @@ class MarketingScreenshotSeeder extends Seeder
             'quantity' => 1,
             'unit_price' => 440000,
         ]);
-
-        Contract::factory()->for($project)->rendered()->create();
 
         // The deferred sum-matches-total constraint on payment_installments
         // only checks at COMMIT, so the plan and its installments have to

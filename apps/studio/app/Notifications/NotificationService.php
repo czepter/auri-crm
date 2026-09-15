@@ -47,9 +47,9 @@ class NotificationService
     public function send(mixed $notifiable, Notification $notification): void
     {
         // Ahead of the Transactional exemption, which every other check here
-        // sits behind: a backfilled contract's ContractSigned mail is exactly
-        // as transactional as a live one and exactly as unwanted, because the
-        // contract was signed last spring.
+        // sits behind: a backfilled installment's InstallmentPaid mail is
+        // exactly as transactional as a live one and exactly as unwanted,
+        // because the money arrived last spring.
         if (SilentWrite::active()) {
             AuditLogger::record(
                 event: 'notification.silenced',

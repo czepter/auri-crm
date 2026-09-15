@@ -4,9 +4,6 @@ namespace Database\Seeders;
 
 use App\Catalog\Models\Package;
 use App\Catalog\Models\PackageItem;
-use App\Contracts\Enums\ContractStatus;
-use App\Contracts\Models\Contract;
-use App\Contracts\Models\ContractSignature;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ProjectFieldType;
 use App\Crm\Enums\ProjectType;
@@ -81,7 +78,6 @@ class E2eSeeder extends Seeder
             'portal_maintenance_enabled' => false,
             'portal_messaging_mode' => 'any',
             'portal_accept_quotes_enabled' => true,
-            'portal_sign_contracts_enabled' => true,
             'portal_payment_status_enabled' => true,
         ]);
         Cache::store('redis')->flush();
@@ -274,8 +270,8 @@ class E2eSeeder extends Seeder
 
     /**
      * The booking the portal's document screens hang off: a quote that was
-     * sent, a contract that was signed, and a payment plan with something
-     * still open on it. None of the three screens renders without its record,
+     * sent and a payment plan with something still open on it. Neither
+     * screen renders without its record,
      * and the inquiry above deliberately has none — that is what makes it an
      * inquiry.
      */
@@ -336,11 +332,6 @@ class E2eSeeder extends Seeder
             'total' => 440000,
         ]);
         QuoteItem::factory()->for($quote)->create();
-
-        $contract = Contract::factory()->for($project)->create([
-            'status' => ContractStatus::Rendered,
-        ]);
-        ContractSignature::factory()->for($contract)->create(['contact_id' => $contact->id]);
 
         $job = Job::factory()->for($project)->create(['booked_by_id' => User::query()->firstOrFail()->id]);
 

@@ -14,7 +14,7 @@ uses(RefreshDatabase::class);
 
 function chainedTasks(): array
 {
-    $project = contractProject();
+    $project = bookedContactProject();
 
     $first = $project->tasks()->create(['title' => 'Vorschau senden', 'audience' => 'internal']);
     $second = $project->tasks()->create([
@@ -97,7 +97,7 @@ it('accepts a dependency that does not close a loop', function () {
 
 it('refuses a dependency on another project\'s task', function () {
     [, , $second] = chainedTasks();
-    // A plain project rather than a second contractProject(): that helper
+    // A plain project rather than a second bookedContactProject(): that helper
     // mints a contact at a fixed address, and C-01's unique index refuses a
     // second one.
     $stranger = Project::factory()->create()->tasks()->create(['title' => 'Fremd', 'audience' => 'internal']);
@@ -127,7 +127,7 @@ it('turns a template chain into a task chain when a project is booked', function
         'depends_on_template_id' => $preview->id,
     ]);
 
-    $project = contractProject();
+    $project = bookedContactProject();
     Shoot::factory()->for($project)->create(['is_primary' => true, 'date' => now()->addMonth()]);
 
     app(ApplyTaskTemplates::class)($project);
@@ -148,7 +148,7 @@ it('never crosses two shoots produced from the same template chain', function ()
         'depends_on_template_id' => $preview->id,
     ]);
 
-    $project = contractProject();
+    $project = bookedContactProject();
     Shoot::factory()->for($project)->create(['is_primary' => true, 'date' => now()->addMonth()]);
     Shoot::factory()->for($project)->create(['is_primary' => false, 'date' => now()->addMonths(2)]);
 

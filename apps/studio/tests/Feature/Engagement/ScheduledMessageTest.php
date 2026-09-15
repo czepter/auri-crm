@@ -16,7 +16,7 @@ uses(RefreshDatabase::class);
 
 function scheduledThread(): Thread
 {
-    $project = contractProject();
+    $project = bookedContactProject();
     $project->contacts()->sole()->update(['email' => 'lena@example.test']);
 
     $thread = Thread::factory()->for($project)->create();

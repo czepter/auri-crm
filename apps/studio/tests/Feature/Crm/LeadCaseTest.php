@@ -34,7 +34,7 @@ function caseFor(LeadStage $stage = LeadStage::New, ?string $date = '2026-09-05'
 it('groups the queue by working state, not by funnel stage', function () {
     $open = caseFor(LeadStage::New);
     caseFor(LeadStage::QuoteSent, '2026-07-11');
-    caseFor(LeadStage::ContractSent, '2026-08-02');
+    caseFor(LeadStage::QuoteAccepted, '2026-08-02');
 
     $groups = collect(props("/anfragen/{$open->public_id}")['queue'])->keyBy('key');
 

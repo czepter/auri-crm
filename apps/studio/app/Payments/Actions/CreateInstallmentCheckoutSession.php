@@ -11,7 +11,7 @@ use Stripe\StripeClient;
  * the client's own "Jetzt zahlen" click (T-07's amendment to this story:
  * "nothing is created in Stripe until the client clicks pay"). Called by
  * App\Portal\Http\Controllers\PaymentCheckoutController, never from a queued
- * job or a plan/contract lifecycle hook.
+ * job or a plan lifecycle hook.
  *
  * A Checkout Session, not an Invoice or a bare PaymentIntent. The acceptance
  * this button needs is "redirect the client to Stripe's hosted payment

@@ -1,7 +1,6 @@
-// Die Bausteine, die ein Vertrag oder ein Angebot braucht und die Editor.js
+// Die Bausteine, die ein Angebot oder eine Rechnung braucht und die Editor.js
 // nicht mitbringt: Zeilentabellen (Positionen, Ablauf, Nutzungsrechte …),
-// Unterschriften, nummerierte Klauseln, Ankreuzlisten, Kleingedrucktes und
-// der Seitenumbruch.
+// Ankreuzlisten, Kleingedrucktes und der Seitenumbruch.
 //
 // Wie customTools.ts: eine Klasse je Baustein, `save()` liefert genau die
 // Form, die serialize.ts liest. Die Tabellen entstehen aus einer Fabrik, weil
@@ -122,123 +121,6 @@ export function rowsTool(spec: RowSpec) {
     save(): { rows: Row[] } {
       return { rows: this.rows }
     }
-  }
-}
-
-/**
- * data: { place: string, parties: Array<{ role: string, name: string }> }
- *
- * Zwei Parteien sind der Normalfall, eine dritte Linie trägt die
- * Erziehungsberechtigten bei einem Minderjährigen vor der Kamera.
- */
-export class SignatureTool {
-  static get toolbox() {
-    return { title: 'Unterschriften', icon: '<b>✎</b>' }
-  }
-
-  static get sanitize() {
-    return { place: INLINE, parties: false }
-  }
-
-  private element: HTMLElement
-  private place: HTMLElement
-  private parties: { role: string; name: string }[]
-
-  constructor({ data }: { data: { place?: string; parties?: { role: string; name: string }[] } }) {
-    this.place = cell('Ort, Datum', data?.place ?? '', 'doc-editable')
-    this.parties = data?.parties?.length
-      ? data.parties.map((party) => ({ ...party }))
-      : [
-          { role: 'Fotograf', name: '' },
-          { role: 'Auftraggeber', name: '' },
-        ]
-
-    this.element = document.createElement('div')
-    this.element.className = 'doc-signature-tool'
-    this.paint()
-  }
-
-  private paint(): void {
-    this.element.replaceChildren(this.place)
-
-    this.parties.forEach((party, index) => {
-      const line = document.createElement('div')
-      line.className = 'doc-rows-line'
-      line.style.gridTemplateColumns = 'minmax(0, 1fr) minmax(0, 1fr) 28px'
-
-      const role = cell('Rolle', party.role, 'doc-editable')
-      role.addEventListener('input', () => {
-        this.parties[index].role = role.textContent ?? ''
-      })
-
-      const name = cell('Name', party.name, 'doc-editable')
-      name.addEventListener('input', () => {
-        this.parties[index].name = name.innerHTML
-      })
-
-      line.append(
-        role,
-        name,
-        button('×', () => {
-          this.parties.splice(index, 1)
-          this.paint()
-        }),
-      )
-
-      this.element.append(line)
-    })
-
-    this.element.append(
-      button('Unterschrift', () => {
-        this.parties.push({ role: '', name: '' })
-        this.paint()
-      }, 'doc-rowbtn doc-rowadd'),
-    )
-  }
-
-  render(): HTMLElement {
-    return this.element
-  }
-
-  save(): { place: string; parties: { role: string; name: string }[] } {
-    return { place: this.place.innerHTML, parties: this.parties }
-  }
-}
-
-/**
- * data: { title: string, text: string }
- *
- * Die Nummer steht nicht in den Daten: sie zählt im Dokument hoch (CSS
- * counter, DocumentRenderer), damit eine eingeschobene Klausel nicht jede
- * folgende von Hand umnummerieren lässt.
- */
-export class ClauseTool {
-  static get toolbox() {
-    return { title: 'Klausel', icon: '<b>§</b>' }
-  }
-
-  static get sanitize() {
-    return { title: INLINE, text: INLINE }
-  }
-
-  private element: HTMLElement
-  private title: HTMLElement
-  private text: HTMLElement
-
-  constructor({ data }: { data: { title?: string; text?: string } }) {
-    this.title = cell('Überschrift', data?.title ?? '', 'doc-editable doc-clause-title')
-    this.text = cell('Text', data?.text ?? '', 'doc-editable')
-    this.element = document.createElement('div')
-    this.element.className = 'doc-clause-tool'
-    this.element.append(this.title, this.text)
-  }
-
-  render(): HTMLElement {
-    return this.element
-  }
-
-  save(): { title: string; text: string } {
-    return { title: this.title.innerHTML, text: this.text.innerHTML }
   }
 }
 

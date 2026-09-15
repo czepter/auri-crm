@@ -94,7 +94,7 @@ class AdvanceLeadStage
         // stage and the Job disagree, and the two lists that read them —
         // /anfragen by stage, /projekte by Job — each show the record the
         // other one is missing. Idempotent: BookProject writes nothing when a
-        // Job already exists (the contract-and-deposit path got there first).
+        // Job already exists.
         if ($next->anchor === StageAnchor::Won) {
             ($this->book)($lead->project, $actor ?? auth('staff')->user(), at: $entered);
         }

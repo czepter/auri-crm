@@ -21,7 +21,6 @@ it('hands every portal setting to the settings screen, every capability switch o
     expect($props['settings'])
         ->toHaveKey('maintenanceEnabled', false)
         ->toHaveKey('acceptQuotesEnabled', false)
-        ->toHaveKey('signContractsEnabled', false)
         ->toHaveKey('paymentStatusEnabled', false)
         ->toHaveKey('messagingMode', 'off');
 });
@@ -37,7 +36,6 @@ it('updates the maintenance switch, its message, the welcome text and the legal 
             'portal_legal_datenschutz_url' => 'https://atelier-nordlicht.de/datenschutz',
             'portal_legal_agb_url' => 'https://atelier-nordlicht.de/agb',
             'portal_accept_quotes_enabled' => false,
-            'portal_sign_contracts_enabled' => true,
             'portal_payment_status_enabled' => true,
             'portal_messaging_mode' => 'booking',
             'dsgvo_request_deadline_days' => 30,
@@ -51,7 +49,6 @@ it('updates the maintenance switch, its message, the welcome text and the legal 
         ->and($row->portal_welcome_text)->toBe('Schön, dass Sie da sind.')
         ->and($row->portal_legal_datenschutz_url)->toBe('https://atelier-nordlicht.de/datenschutz')
         ->and($row->portal_legal_agb_url)->toBe('https://atelier-nordlicht.de/agb')
-        ->and($row->portal_sign_contracts_enabled)->toBeTrue()
         ->and($row->portal_payment_status_enabled)->toBeTrue()
         ->and($row->portal_accept_quotes_enabled)->toBeFalse()
         ->and($row->portal_messaging_mode)->toBe('booking')
@@ -64,7 +61,6 @@ it('rejects a Datenschutz link that is not a URL', function () {
         ->patch('/einstellungen/portal', [
             'portal_maintenance_enabled' => false,
             'portal_accept_quotes_enabled' => false,
-            'portal_sign_contracts_enabled' => false,
             'portal_payment_status_enabled' => false,
             'portal_messaging_mode' => 'off',
             'dsgvo_request_deadline_days' => 30,
@@ -107,7 +103,6 @@ it('leaves the settings a pane does not show untouched', function () {
         ->patch('/einstellungen/portal', [
             'portal_maintenance_enabled' => true,
             'portal_accept_quotes_enabled' => true,
-            'portal_sign_contracts_enabled' => false,
             'portal_payment_status_enabled' => false,
             'portal_messaging_mode' => 'any',
         ])

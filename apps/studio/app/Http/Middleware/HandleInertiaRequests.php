@@ -117,8 +117,7 @@ class HandleInertiaRequests extends Middleware
             // pays for a settings read it has no page for.
             //
             // Paths are hardcoded strings, not route(...) — the same choice
-            // every other portal URL in this codebase already makes (see
-            // ContractController's downloadUrl) rather than the named-route
+            // every other portal URL in this codebase already makes rather than the named-route
             // helper admin controllers use: the portal and admin surfaces
             // register their route names into one process-wide UrlGenerator
             // during the test suite's surface switching, and this surface's

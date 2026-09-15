@@ -27,7 +27,6 @@ const meta = {
     anchors: [
       { value: 'primary_shoot', label: 'Haupttermin' },
       { value: 'installment_due', label: 'Fälligkeit der Rate' },
-      { value: 'contract_deadline', label: 'Frist des Vertrags' },
     ],
     recipients: [
       { value: 'client', label: 'Kunde' },
@@ -36,7 +35,6 @@ const meta = {
     ],
     conditions: [
       { value: 'payment_open', label: 'Zahlung offen' },
-      { value: 'contract_unsigned', label: 'Vertrag nicht unterschrieben' },
     ],
     mergeFields: [
       { path: 'client.firstName', sample: 'Lena' },

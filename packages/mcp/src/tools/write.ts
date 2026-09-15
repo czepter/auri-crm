@@ -5,7 +5,7 @@ import type { ApiClientFactory } from '../client.js'
 import { idempotencyKeyFor } from '../idempotency.js'
 import { apiResult } from '../results.js'
 import { registerCrmEditTools } from './crm-edit.js'
-import { registerMoneyContractsTools } from './money-contracts.js'
+import { registerMoneyTools } from './money.js'
 
 /**
  * N-03: the MCP server's write tools, each a thin call onto one of I-03's
@@ -54,7 +54,7 @@ import { registerMoneyContractsTools } from './money-contracts.js'
   registerUpdatePackage(server, clientFor)
   registerDeletePackage(server, clientFor)
   registerCrmEditTools(server, clientFor)
-  registerMoneyContractsTools(server, clientFor)
+  registerMoneyTools(server, clientFor)
 }
 
 /**
@@ -616,7 +616,7 @@ function registerDeleteProject(server: McpServer, clientFor: ApiClientFactory): 
     {
       title: 'Delete a project',
       description:
-        'Deletes a project together with its lead, its shoots, its internal notes and its links to contacts. The contacts themselves stay. Refused while a job, a quote, a contract or a gallery hangs off the project — past that point the project is a record of an agreement, and removing it is a decision for a screen rather than a tool. There is no undo.',
+        'Deletes a project together with its lead, its shoots, its internal notes and its links to contacts. The contacts themselves stay. Refused while a job, a quote or a gallery hangs off the project — past that point the project is a record of an agreement, and removing it is a decision for a screen rather than a tool. There is no undo.',
       inputSchema: {
         project: z.string().describe('The project public id'),
         ...silentField,

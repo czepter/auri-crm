@@ -24,7 +24,6 @@ it('updates the gallery defaults without touching the portal switches', function
         ->patch('/einstellungen/portal', [
             'portal_maintenance_enabled' => true,
             'portal_accept_quotes_enabled' => true,
-            'portal_sign_contracts_enabled' => false,
             'portal_payment_status_enabled' => false,
             'portal_messaging_mode' => 'any',
         ])->assertRedirect('/einstellungen/portal');

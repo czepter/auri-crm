@@ -88,7 +88,7 @@ function submit() {
         </h1>
       </section>
 
-      <!-- Zwei Spalten ab 1000px, dieselbe Teilung wie beim Vertrag: links,
+      <!-- Zwei Spalten ab 1000px, dieselbe Teilung wie beim Angebot: links,
            was der Kunde liest, rechts, was er tut — mitlaufend, damit das
            Formular auf jeder Scrolltiefe erreichbar bleibt. -->
       <div class="grid items-start gap-12 pt-12 min-[1000px]:grid-cols-[minmax(0,1fr)_372px] min-[1000px]:gap-x-[var(--band)]">

@@ -121,7 +121,7 @@ class StudioSettingsController extends Controller
     }
 
     /**
-     * Serves the one stored logo — the same file RenderContractJob's
+     * Serves the one stored logo — the same file the
      * `studio.logoPath` merge field points at — behind the settings screen's
      * own auth gate rather than a public path a filename could be guessed
      * against. A future portal-branding read (T-08's Impressum) reaches the
@@ -224,7 +224,7 @@ class StudioSettingsController extends Controller
             'widerruf_text' => ['nullable', 'string', 'max:5000'],
             'quote_layout' => ['required', Rule::enum(QuoteLayout::class)],
             // T-12: the shared PDF shell App\Documents\Support\DocumentRenderer
-            // wraps a Contract or Quote's resolved body in — this pane's the
+            // wraps a Quote or Invoice's resolved body in — this pane's the
             // one place either is set, rather than pasted into each template.
             'document_letterhead_html' => ['nullable', 'string', 'max:20000'],
             'document_footer_html' => ['nullable', 'string', 'max:20000'],

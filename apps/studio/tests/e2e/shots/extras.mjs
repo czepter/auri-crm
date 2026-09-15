@@ -99,9 +99,6 @@ await step('downloads', async () => {
   const shoot = tinker(
     `echo App\\Crm\\Models\\Shoot::whereHas('project', fn($q) => $q->where('public_id','${project}'))->firstOrFail()->public_id;`,
   ).split('\n').pop().trim()
-  const contract = tinker(
-    `$c = App\\Contracts\\Models\\Contract::latest('id')->first(); echo $c ? $c->public_id : 'none';`,
-  ).split('\n').pop().trim()
 
   const targets = [
     ['lightroom-export', `/galerien/${gallery}/lightroom-export`],
@@ -110,7 +107,6 @@ await step('downloads', async () => {
     ['dsgvo-export', `/kontakte/${process.env.CONTACT_ID ?? 's12dv5qqupddf6tjdewh800b'}/dsgvo/export`],
     ['horizon', '/horizon'],
   ]
-  if (contract !== 'none') targets.push(['vertrag-pdf', `/vertraege/${contract}/pdf`])
 
   for (const [name, url] of targets) {
     const res = await api.get(url)

@@ -2,7 +2,6 @@
 
 namespace App\Integration\Listeners;
 
-use App\Contracts\Events\ContractSigned;
 use App\Crm\Events\ProjectBooked;
 use App\Notifications\DomainEventOccurred;
 use App\Notifications\NotificationService;
@@ -10,7 +9,7 @@ use App\Payments\Events\InstallmentOverdue;
 use App\Payments\Events\InstallmentPaid;
 
 /**
- * I-04: the only place any of these four domain events is wrapped for
+ * I-04: the only place any of these three domain events is wrapped for
  * NotificationService — see each event's own docblock, which already names
  * this story as their eventual listener. Registered by hand in
  * AppServiceProvider (App\Payments\Events\InstallmentPaid already has two
@@ -29,14 +28,6 @@ class DispatchWebhookNotifications
         $this->notifications->send($event->project, new DomainEventOccurred('ProjectBooked', [
             'project' => $event->project->public_id,
             'job' => $event->job->public_id,
-        ]));
-    }
-
-    public function handleContractSigned(ContractSigned $event): void
-    {
-        $this->notifications->send($event->contract, new DomainEventOccurred('ContractSigned', [
-            'contract' => $event->contract->public_id,
-            'signature' => $event->signature->public_id,
         ]));
     }
 

@@ -13,7 +13,7 @@ uses(RefreshDatabase::class);
 // then refuses to show is how the badge and the screen start disagreeing.
 it('counts the inquiries and the projects the way their lists do', function () {
     $booked = Project::factory()->wedding()->create();
-    Lead::factory()->for($booked)->atStage(LeadStage::ContractSent)->create();
+    Lead::factory()->for($booked)->atStage(LeadStage::QuoteAccepted)->create();
     Job::factory()->for($booked)->create();
 
     $open = Project::factory()->wedding()->create();

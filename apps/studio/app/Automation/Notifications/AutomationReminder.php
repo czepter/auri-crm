@@ -13,7 +13,7 @@ use Illuminate\Notifications\Notification;
  * E-08's one action: the mail/in-app content is the rule's own
  * notification_subject/notification_body. E-15 runs both through
  * Documents' merge fields — the same vocabulary and the same resolver a
- * contract or a quote uses, not a second language — so a studio rule can
+ * quote or an invoice uses, not a second language — so a studio rule can
  * name which shooting it means. An unknown field is left standing as
  * written: a reminder with a visible gap beats no reminder, and the gap
  * shows in the preview. Not Transactional: an automation
