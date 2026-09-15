@@ -16,6 +16,10 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
  * M-04 shipped as Stripe Checkout and never used it; M-06's own invoice is
  * what finally writes it. Since #407 the status no longer decides what may
  * be edited — `invoiced_at` does, on the row itself.
+ *
+ * `cancelled` (#408) is terminal and reachable only from `invoiced`: the row
+ * keeps its number and its PDF, and nothing that chases money — overdue
+ * detection, the reminder ladders, Stripe checkout — looks at it again.
  */
 #[TypeScript]
 enum PaymentInstallmentStatus: string
@@ -23,6 +27,7 @@ enum PaymentInstallmentStatus: string
     case Scheduled = 'scheduled';
     case Paid = 'paid';
     case Invoiced = 'invoiced';
+    case Cancelled = 'cancelled';
     case Partial = 'partial';
 
     public function label(): string
@@ -31,6 +36,7 @@ enum PaymentInstallmentStatus: string
             self::Scheduled => 'Geplant',
             self::Paid => 'Bezahlt',
             self::Invoiced => 'Gestellt',
+            self::Cancelled => 'Storniert',
             self::Partial => 'Teilzahlung',
         };
     }

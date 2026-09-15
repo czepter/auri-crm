@@ -49,6 +49,10 @@ class IssueInvoice
 
     public function __invoke(PaymentInstallment $installment, ?User $actor = null): PaymentInstallment
     {
+        if ($installment->isCancelled()) {
+            throw ValidationException::withMessages(['invoice' => __('payments.cancelledNotIssuable')]);
+        }
+
         if ($installment->isInvoiced()) {
             return $installment;
         }

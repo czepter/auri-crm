@@ -2,6 +2,7 @@
 
 use App\Contracts\Enums\ContractStatus;
 use App\Contracts\Models\Contract;
+use App\Contracts\Models\ContractSignature;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Enums\ShootStatus;
@@ -20,6 +21,8 @@ use App\Gallery\Support\GalleryGuestPass;
 use App\Media\Enums\MultipartUploadStatus;
 use App\Media\Models\MultipartUpload;
 use App\Models\User;
+use App\Payments\Actions\CreatePaymentPlan;
+use App\Payments\Models\PaymentInstallment;
 use App\Settings\Models\StudioSettings;
 use App\Settings\Support\StudioSettingsResolver;
 use App\Support\Surface;
@@ -401,6 +404,23 @@ function confirmedGuest(Gallery $gallery, string $email = 'gast@example.com', st
     ]);
 
     return [$guest, app(GalleryGuestPass::class)->issue($gallery, $guest)];
+}
+
+/**
+ * The first installment of a plan on a booked, signed project — the setup
+ * every invoicing suite starts from. Moved out of InvoiceTest.php once #408
+ * needed it too, for the reason studioWithProject() above already gives.
+ */
+function invoiceablePlan(): PaymentInstallment
+{
+    $project = contractProject();
+    $contract = renderedContract($project);
+    $contact = $project->contacts()->sole();
+    ContractSignature::factory()->for($contract)->for($contact)->create();
+
+    $plan = app(CreatePaymentPlan::class)($project->job()->sole(), 150_000, ['2026-09-01', '2026-10-01']);
+
+    return $plan->installments()->orderBy('sort_order')->first();
 }
 
 /**

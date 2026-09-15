@@ -5,6 +5,7 @@ namespace App\Payments\Models;
 use App\Concerns\BelongsToTenant;
 use App\Concerns\HasPublicId;
 use App\Documents\Models\DocumentTemplate;
+use App\Payments\Enums\CancellationKind;
 use App\Payments\Enums\OverdueReason;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Enums\SettledVia;
@@ -36,6 +37,7 @@ class PaymentInstallment extends Model
         'overdue_reason', 'overdue_reminders_sent', 'client_reminders_sent',
         'stripe_checkout_session_id',
         'invoice_number', 'invoiced_at', 'invoice_path', 'invoice_template_id',
+        'cancelled_at', 'cancellation_kind', 'cancellation_reason',
     ];
 
     protected $attributes = ['status' => PaymentInstallmentStatus::Scheduled, 'sort_order' => 0, 'paid_amount' => 0];
@@ -50,6 +52,8 @@ class PaymentInstallment extends Model
             'overdue_notified_at' => 'immutable_datetime',
             'overdue_reason' => OverdueReason::class,
             'invoiced_at' => 'immutable_datetime',
+            'cancelled_at' => 'immutable_datetime',
+            'cancellation_kind' => CancellationKind::class,
         ];
     }
 
@@ -126,6 +130,11 @@ class PaymentInstallment extends Model
     public function isInvoiced(): bool
     {
         return $this->invoiced_at !== null;
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->cancelled_at !== null;
     }
 
     protected static function newFactory(): Factory

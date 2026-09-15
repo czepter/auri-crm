@@ -1,6 +1,5 @@
 <?php
 
-use App\Contracts\Models\ContractSignature;
 use App\Documents\Enums\DocumentTemplateType;
 use App\Documents\Models\DocumentTemplate;
 use App\Documents\Support\DocumentBlockCatalog;
@@ -12,7 +11,6 @@ use App\Enums\StaffRole;
 use App\Models\AuditLog;
 use App\Numbering\Enums\DocumentType;
 use App\Numbering\Models\NumberCounter;
-use App\Payments\Actions\CreatePaymentPlan;
 use App\Payments\Actions\IssueInvoice;
 use App\Payments\Data\PaymentPlanData;
 use App\Payments\Enums\PaymentInstallmentStatus;
@@ -35,19 +33,8 @@ beforeEach(function () {
     app(StudioSettingsResolver::class)->set('tax_number', '22/123/45678', null);
 });
 
-// contractProject(), renderedContract() and staffMember() live in tests/Pest.php.
-
-function invoiceablePlan(): PaymentInstallment
-{
-    $project = contractProject();
-    $contract = renderedContract($project);
-    $contact = $project->contacts()->sole();
-    ContractSignature::factory()->for($contract)->for($contact)->create();
-
-    $plan = app(CreatePaymentPlan::class)($project->job()->sole(), 150_000, ['2026-09-01', '2026-10-01']);
-
-    return $plan->installments()->orderBy('sort_order')->first();
-}
+// contractProject(), renderedContract(), staffMember() and invoiceablePlan()
+// live in tests/Pest.php.
 
 it('refuses to issue without a Steuernummer or USt-IdNr., drawing no number', function () {
     $settings = app(StudioSettingsResolver::class);

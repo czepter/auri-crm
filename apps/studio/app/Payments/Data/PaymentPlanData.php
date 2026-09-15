@@ -32,7 +32,9 @@ class PaymentPlanData extends Data
     public static function fromModel(PaymentPlan $plan): self
     {
         $installments = $plan->installments;
-        $count = $installments->count();
+        // #408: a cancelled row is paperwork, not a stage of the plan, so it
+        // is not counted — a Storno must not rename the rows around it.
+        $count = $installments->reject->isCancelled()->count();
 
         $items = $installments->values()
             ->map(fn ($installment, int $index) => PaymentInstallmentData::fromModel(
@@ -69,7 +71,11 @@ class PaymentPlanData extends Data
             return $installment->title;
         }
 
-        $siblings = $installment->plan->installments()->orderBy('sort_order')->pluck('id')->all();
+        $siblings = $installment->plan->installments()
+            ->whereNull('cancelled_at')
+            ->orderBy('sort_order')
+            ->pluck('id')
+            ->all();
         $index = array_search($installment->id, $siblings, true);
 
         return self::labelFor($index === false ? 0 : (int) $index, count($siblings));

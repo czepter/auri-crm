@@ -43,7 +43,11 @@ const props = defineProps<{
 // specific installment, never the plan as a whole. The click itself never
 // talks to Stripe; it posts to PaymentCheckoutController, which creates (or
 // reuses) the Checkout Session and sends the browser there.
-const openInstallments = computed(() => props.plan?.installments.filter((installment) => installment.status !== 'paid') ?? [])
+// #408: eine stornierte Rate ist weder offen noch bezahlt — sie bleibt
+// lesbar und fällt aus jedem Betrag und jedem Knopf heraus.
+const openInstallments = computed(
+  () => props.plan?.installments.filter((installment) => !['paid', 'cancelled'].includes(installment.status)) ?? [],
+)
 const payingId = ref<string | null>(null)
 
 // M-06: what a still-open installment should be transferred under. Only
@@ -106,12 +110,12 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
               v-for="installment in plan.installments"
               :key="installment.id"
               :title="installment.label"
-              :state="installment.status === 'paid' ? 'done' : 'open'"
-              :note="installment.status === 'paid'
+              :state="installment.status === 'paid' || installment.status === 'cancelled' ? 'done' : 'open'"
+              :note="installment.status === 'paid' || installment.status === 'cancelled'
                 ? installment.statusLabel
                 : $t('portal.dueOn', { date: longDate(installment.dueOn) })"
               :aside="formatEuros(installment.amount)"
-              :aside-open="installment.status !== 'paid'"
+              :aside-open="!['paid', 'cancelled'].includes(installment.status)"
             >
               <template #action>
                 <span class="flex flex-wrap items-center gap-4">
@@ -125,7 +129,7 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
                     target="_blank"
                   >{{ $t('portal.invoiceDownload', { number: installment.invoiceNumber }) }}</a>
                   <Button
-                    v-if="stripeEnabled && installment.status !== 'paid'"
+                    v-if="stripeEnabled && !['paid', 'cancelled'].includes(installment.status)"
                     variant="portal-chip"
                     type="button"
                     :disabled="payingId === installment.id"

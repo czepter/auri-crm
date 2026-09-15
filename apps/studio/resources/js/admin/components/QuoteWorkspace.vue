@@ -16,6 +16,7 @@ import { Label } from '@/ui/label'
 import { useI18n } from 'vue-i18n'
 import QuoteActions from '@/admin/components/quote/QuoteActions.vue'
 import InstallmentPaidDialog from '@/admin/components/InstallmentPaidDialog.vue'
+import InstallmentStornoDialog from '@/admin/components/InstallmentStornoDialog.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -277,9 +278,13 @@ function totalOf(quote: App.Quotes.Data.QuoteData): string {
       <span class="text-[12px] text-ink-2">{{ installment.statusLabel }}</span>
       <span class="w-[110px] flex-none text-right font-semibold tabular-nums">{{ formatEuros(installment.amount) }}</span>
       <InstallmentPaidDialog
-        v-if="canManagePaymentPlan && installment.remaining > 0"
+        v-if="canManagePaymentPlan && installment.status !== 'cancelled' && installment.remaining > 0"
         :installment-id="installment.id"
         :remaining="installment.remaining"
+      />
+      <InstallmentStornoDialog
+        v-if="canManagePaymentPlan && installment.status === 'invoiced'"
+        :installment-id="installment.id"
       />
     </div>
 

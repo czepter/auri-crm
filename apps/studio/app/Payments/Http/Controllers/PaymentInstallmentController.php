@@ -3,8 +3,10 @@
 namespace App\Payments\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Payments\Actions\CancelInvoice;
 use App\Payments\Actions\IssueInvoice;
 use App\Payments\Actions\MarkInstallmentPaid;
+use App\Payments\Enums\CancellationKind;
 use App\Payments\Enums\SettledVia;
 use App\Payments\Models\PaymentInstallment;
 use Illuminate\Http\RedirectResponse;
@@ -56,6 +58,29 @@ class PaymentInstallmentController extends Controller
         $this->authorize('managePaymentPlan', $installment->plan->job->project);
 
         $issue($installment, auth('staff')->user());
+
+        return back();
+    }
+
+    /**
+     * #408. Same authority again: retiring an invoice is a statement about
+     * money owed, exactly as issuing it was.
+     */
+    public function cancelInvoice(Request $request, PaymentInstallment $installment, CancelInvoice $cancel): RedirectResponse
+    {
+        $this->authorize('managePaymentPlan', $installment->plan->job->project);
+
+        $validated = $request->validate([
+            'kind' => ['required', Rule::enum(CancellationKind::class)],
+            'reason' => ['required', 'string', 'max:1000'],
+        ]);
+
+        $cancel(
+            $installment,
+            CancellationKind::from($validated['kind']),
+            $validated['reason'],
+            auth('staff')->user(),
+        );
 
         return back();
     }
