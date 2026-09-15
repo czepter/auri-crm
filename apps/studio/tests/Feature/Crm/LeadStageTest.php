@@ -1,6 +1,7 @@
 <?php
 
 use App\Crm\Actions\AdvanceLeadStage;
+use App\Crm\Actions\BookProject;
 use App\Crm\Enums\LeadStage;
 use App\Crm\Events\LeadLost;
 use App\Crm\Events\LeadStageChanged;
@@ -219,6 +220,17 @@ it('refuses to take the booking back once a payment plan hangs off it', function
 
     expect(Job::count())->toBe(1)
         ->and($lead->fresh()->stage->key)->toBe(LeadStage::Booked->value);
+});
+
+it('leaves the stage alone when the booking fails', function () {
+    $this->mock(BookProject::class)->shouldReceive('__invoke')->andThrow(new DomainException('Shoot'));
+    $lead = Lead::factory()->atStage(LeadStage::ContractSent)->create();
+
+    expect(fn () => app(AdvanceLeadStage::class)($lead, stage(LeadStage::Booked), User::factory()->create()))
+        ->toThrow(DomainException::class);
+
+    expect($lead->fresh()->stage->key)->toBe(LeadStage::ContractSent->value)
+        ->and(AuditLog::where('event', 'lead.stage_changed')->exists())->toBeFalse();
 });
 
 it('cancels the open shoots of a lost project and leaves an earlier absage alone', function () {
