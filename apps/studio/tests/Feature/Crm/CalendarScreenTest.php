@@ -114,16 +114,14 @@ it('sends the season on request, without holds', function () {
     Shoot::factory()->for($project)->on('2027-05-15')->atStatus(ShootStatus::Requested)->create();
     Absence::factory()->create(['starts_on' => '2026-07-27', 'ends_on' => '2026-08-07']);
 
-    expect(props('/kalender'))->not->toHaveKey('season');
+    expect(props('/kalender'))->toMatchArray(['view' => 'monat', 'season' => null])
+        ->and(props('/kalender?ansicht=woche')['view'])->toBe('monat');
 
-    $season = test()->get('/kalender', [
-        'X-Inertia' => 'true',
-        'X-Inertia-Version' => (string) \Inertia\Inertia::getVersion(),
-        'X-Inertia-Partial-Component' => 'Kalender',
-        'X-Inertia-Partial-Data' => 'season',
-    ])->assertOk()->json('props.season');
+    $props = props('/kalender?ansicht=saison');
+    $season = $props['season'];
 
-    expect($season['shoots'])->toHaveCount(1)
+    expect($props['view'])->toBe('saison')
+        ->and($season['shoots'])->toHaveCount(1)
         ->and($season['shoots'][0])->toMatchArray(['date' => '2019-06-15', 'name' => 'Meier & Kowalski', 'phase' => 'delivered'])
         ->and($season['away'][0])->toMatchArray(['from' => '2026-07-27', 'to' => '2026-08-07']);
 });
