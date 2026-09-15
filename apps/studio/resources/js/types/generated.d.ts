@@ -883,8 +883,9 @@ installments: App.Payments.Data.PaymentInstallmentData[],
 };
 }
 namespace Enums {
+export type CancellationKind = 'correction' | 'void';
 export type OverdueReason = 'due_date_passed' | 'payment_failed';
-export type PaymentInstallmentStatus = 'scheduled' | 'paid' | 'invoiced';
+export type PaymentInstallmentStatus = 'scheduled' | 'paid' | 'invoiced' | 'cancelled';
 export type SettledVia = 'stripe' | 'transfer' | 'manual';
 }
 }

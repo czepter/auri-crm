@@ -862,7 +862,14 @@
     "markPaidSubmit": "Bestätigen",
     "settledVia": "Bezahlt via {method}, am {date}",
     "issueInvoice": "Fällig stellen",
-    "invoiceRendering": "{number} — wird erstellt"
+    "invoiceRendering": "{number} — wird erstellt",
+    "storno": "Storno",
+    "stornoTitle": "Rechnung stornieren",
+    "stornoKind": "Art",
+    "stornoKindCorrection": "Korrektur",
+    "stornoKindVoid": "Wegfall",
+    "stornoReason": "Grund",
+    "stornoSubmit": "Stornieren"
   },
   "documentTemplates": {
     "title": "Dokumentvorlagen",
