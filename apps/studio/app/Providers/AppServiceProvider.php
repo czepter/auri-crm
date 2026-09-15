@@ -13,6 +13,7 @@ use App\Crm\Events\ShootStatusChanged;
 use App\Crm\Listeners\ApplyTemplatesOnBooking;
 use App\Crm\Listeners\ApplyTemplatesOnStage;
 use App\Crm\Listeners\BookProjectOnContractAndDeposit;
+use App\Portal\Listeners\RevealProjectOnBooking;
 use App\Crm\Models\Contact;
 use App\Crm\Models\FormTemplate;
 use App\Crm\Models\InternalNote;
@@ -198,6 +199,7 @@ class AppServiceProvider extends ServiceProvider
         // Registered by hand: auto-discovery only scans app/Listeners, and the
         // CRM keeps its listeners beside the events they answer to.
         Event::listen(ProjectBooked::class, ApplyTemplatesOnBooking::class);
+        Event::listen(ProjectBooked::class, RevealProjectOnBooking::class);
 
         // Every other stage of both pipelines. Booking stays above: it is
         // reachable without a lead stage ever changing.
