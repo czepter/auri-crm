@@ -2,12 +2,8 @@
 
 namespace App\Payments\Jobs;
 
-use App\Documents\Enums\DocumentTemplateType;
-use App\Documents\Support\DocumentMergeDataBuilder;
-use App\Documents\Support\DocumentRenderer;
-use App\Documents\Support\MergeFieldResolver;
+use App\Payments\Actions\RenderInvoicePdf;
 use App\Payments\Models\PaymentInstallment;
-use App\Settings\Support\StudioSettingsResolver;
 use App\Support\GotenbergClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,10 +13,9 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * The invoice PDF, rendered exactly the way RenderContractJob renders a
- * contract: merge fields resolved here rather than in the caller, the shared
- * letterhead and footer from DocumentRenderer rather than baked into the
- * template, and the artifact written under the tenant's own prefix.
+ * Storage and the guards; the document itself is RenderInvoicePdf's, since
+ * #419 moved the § 14 UStG particulars out of the template and into the
+ * studio's chosen layout.
  *
  * Guards on the artifact rather than on a status column. An invoice that
  * already has a PDF is never re-rendered — the client may already hold it,
@@ -34,12 +29,8 @@ class RenderInvoiceJob implements ShouldQueue
 
     public function __construct(public readonly PaymentInstallment $installment) {}
 
-    public function handle(
-        GotenbergClient $gotenberg,
-        StudioSettingsResolver $settings,
-        DocumentMergeDataBuilder $mergeData,
-        DocumentRenderer $renderer,
-    ): void {
+    public function handle(GotenbergClient $gotenberg, RenderInvoicePdf $render): void
+    {
         $installment = $this->installment->fresh(['invoiceTemplate', 'plan.job.project']);
 
         if ($installment === null || ! $installment->isInvoiced() || $installment->invoice_path !== null) {
@@ -52,19 +43,11 @@ class RenderInvoiceJob implements ShouldQueue
             return;
         }
 
-        $template = $installment->invoiceTemplate;
-        $project = $installment->plan?->job?->project;
-
-        if ($template === null || $project === null) {
+        if ($installment->plan?->job?->project === null) {
             return;
         }
 
-        $resolved = MergeFieldResolver::resolve(
-            $template->body,
-            $mergeData->fromProject($project, $settings, $installment),
-        );
-
-        $pdf = $gotenberg->htmlToPdf($renderer->wrap(DocumentTemplateType::Invoice, $resolved, $settings));
+        $pdf = $gotenberg->htmlToPdf($render->forInstallment($installment));
 
         $path = "invoices/{$installment->tenant_id}/{$installment->public_id}.pdf";
         Storage::disk('local')->put($path, $pdf);

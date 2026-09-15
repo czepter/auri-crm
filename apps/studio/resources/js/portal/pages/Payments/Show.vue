@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { router } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
 import { computed, ref } from 'vue'
 import PortalFooter from '@/portal/components/PortalFooter.vue'
 import PortalHeader from '@/portal/components/PortalHeader.vue'
@@ -119,23 +119,13 @@ const BAND = 'max-w-[880px] border-t border-border pt-12'
             >
               <template #action>
                 <span class="flex flex-wrap items-center gap-4">
-                  <!-- M-06: only once the PDF exists. Between issue and render
-                       the number is the transfer reference below, but there is
-                       nothing to download yet. -->
-                  <a
-                    v-if="installment.hasInvoiceDocument"
+                  <!-- #419: auf die Seite, nicht aufs PDF. Erst ab der
+                       Nummer — vorher gibt es keine Rechnung zu zeigen. -->
+                  <Link
+                    v-if="installment.invoiceNumber !== null"
                     class="text-[13px] whitespace-nowrap text-muted-foreground hover:text-foreground"
-                    :href="`/projekte/${project.id}/zahlungen/${installment.id}/rechnung`"
-                    target="_blank"
-                  >{{ $t('portal.invoiceDownload', { number: installment.invoiceNumber }) }}</a>
-                  <!-- #409: neben der Rechnung, die sie korrigiert. -->
-                  <a
-                    v-for="note in installment.creditNotes.filter((candidate) => candidate.hasDocument)"
-                    :key="note.id"
-                    class="text-[13px] whitespace-nowrap text-muted-foreground hover:text-foreground"
-                    :href="`/projekte/${project.id}/zahlungen/${installment.id}/gutschrift/${note.id}`"
-                    target="_blank"
-                  >{{ $t('portal.creditNoteDownload', { number: note.number }) }}</a>
+                    :href="`/projekte/${project.id}/zahlungen/${installment.id}`"
+                  >{{ $t('portal.invoiceDownload', { number: installment.invoiceNumber }) }}</Link>
                   <Button
                     v-if="stripeEnabled && !['paid', 'cancelled'].includes(installment.status)"
                     variant="portal-chip"

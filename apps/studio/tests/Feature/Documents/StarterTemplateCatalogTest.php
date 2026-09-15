@@ -101,13 +101,14 @@ it('marks the legal skeletons as a starting point, and only where the studio rea
     }
 });
 
-it('carries the Verzugshinweis on both invoices', function () {
-    // § 286 Abs. 3 S. 1 BGB: a consumer falls into Verzug 30 days after
-    // the invoice is due and received only if the invoice says so.
+it('leaves the Verzugshinweis to the layout on both invoices', function () {
+    // #419: the sentence is InvoiceDocument::DEFAULT_NOTICE now. A starter
+    // carrying its own copy would print it twice and let a studio edit away a
+    // § 286 Abs. 3 S. 1 BGB precondition.
     foreach (['invoice-standard', 'invoice-small-business'] as $key) {
         $body = StarterBlockSerializer::toHtml(StarterTemplateCatalog::find($key)['blocks']);
 
-        expect($body)->toContain('Nach 30 Tagen ab Zugang und Fälligkeit tritt Verzug ein (§ 286 Abs. 3 BGB).');
+        expect($body)->not->toContain('tritt Verzug ein');
     }
 });
 
