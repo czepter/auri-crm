@@ -123,6 +123,11 @@ class PaymentController extends Controller
                 'hasDocument' => $row->invoice_path !== null,
                 'metaRows' => $document->metaRows,
                 'description' => $document->description,
+                // #411: leer auf einer Anzahlungsrechnung — dann bleibt es
+                // bei der einen Zeile, wie bisher.
+                'lines' => $document->lines,
+                'deposits' => $document->deposits,
+                'totalGross' => $document->totalGross,
                 'summaryRows' => $document->summaryRows(),
                 'vatNote' => $document->vatNote,
                 'paymentLines' => $document->paymentLines,

@@ -52,6 +52,24 @@ final class InvoiceDocument
          * @var list<array{rate: string, net: string, vat: string}>
          */
         public readonly array $vatLines = [],
+        /**
+         * #411: the whole Leistung, line by line, on an Endrechnung — empty
+         * on every Anzahlungsrechnung and on a Gutschrift, which is what
+         * makes the block absent rather than blank.
+         *
+         * @var list<array<string, string>>
+         */
+        public readonly array $lines = [],
+        /**
+         * The Teilentgelte to deduct (§ 14 Abs. 5 S. 2 UStG), each with the
+         * number and date of the invoice that took it.
+         *
+         * @var list<array<string, string>>
+         */
+        public readonly array $deposits = [],
+        public readonly string $totalNet = '',
+        public readonly string $totalVat = '',
+        public readonly string $totalGross = '',
     ) {}
 
     /** @param array<string, mixed> $mergeData */
@@ -89,6 +107,11 @@ final class InvoiceDocument
             paymentLines: $payment,
             reference: null,
             vatLines: $invoice['vatLines'] ?? [],
+            lines: $invoice['lines'] ?? [],
+            deposits: $invoice['deposits'] ?? [],
+            totalNet: $invoice['totalNet'] ?? '',
+            totalVat: $invoice['totalVat'] ?? '',
+            totalGross: $invoice['totalGross'] ?? '',
         );
     }
 

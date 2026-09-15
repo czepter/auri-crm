@@ -35,7 +35,7 @@ class LetterInvoiceLayout implements InvoiceLayoutRenderer
             .$this->reference($document)
             .$templateBody
             .'<table class="doc-table"><thead><tr><th>Beschreibung</th><th class="doc-num">Betrag</th></tr></thead><tbody>'
-            .'<tr><td>'.e($document->description).'</td><td class="doc-num">'.e($document->sign.$document->gross).'</td></tr>'
+            .$this->positionRows($document)
             .$summary
             .'</tbody></table>'
             .$this->vatNote($document)

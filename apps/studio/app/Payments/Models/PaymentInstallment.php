@@ -9,6 +9,7 @@ use App\Payments\Enums\CancellationKind;
 use App\Payments\Enums\OverdueReason;
 use App\Payments\Enums\PaymentInstallmentStatus;
 use App\Payments\Enums\SettledVia;
+use App\Quotes\Models\Quote;
 use App\Support\AuditLogger;
 use Database\Factories\Payments\PaymentInstallmentFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,6 +18,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 /**
  * One due amount on a PaymentPlan, in minor units — never a float, the same
@@ -135,6 +137,56 @@ class PaymentInstallment extends Model
     public function isCancelled(): bool
     {
         return $this->cancelled_at !== null;
+    }
+
+    /**
+     * #411: the Endrechnung — the last live installment of its plan by
+     * sort_order. § 14 Abs. 5 S. 2 UStG binds this one and no other: it shows
+     * the whole supply and deducts the Teilentgelte already taken. A plan with
+     * one installment is an Endrechnung with nothing to deduct. A cancelled
+     * row is not in the running for it, the same way it is out of every other
+     * sum on the plan.
+     */
+    public function isFinal(): bool
+    {
+        return $this->live()->last()?->is($this) ?? false;
+    }
+
+    /**
+     * The Teilentgelte this invoice has to deduct: every live installment
+     * before it that has actually been issued. An unissued one took no
+     * payment and names no invoice to reference.
+     *
+     * @return Collection<int, self>
+     */
+    public function earlierIssued(): Collection
+    {
+        return $this->live()
+            ->filter(fn (self $candidate) => $candidate->sort_order < $this->sort_order && $candidate->isInvoiced())
+            ->values();
+    }
+
+    /**
+     * The accepted quote behind this installment's project, if any — the
+     * source of both the rate (InvoiceFigures) and the lines (#411). A
+     * revision chain (Q-06) leaves at most one row in `accepted`, so this
+     * cannot silently pick between two.
+     */
+    public function acceptedQuote(): ?Quote
+    {
+        return $this->plan?->job?->project?->quotes()
+            ->where('status', 'accepted')
+            ->latest('accepted_at')
+            ->first();
+    }
+
+    /** @return Collection<int, self> */
+    private function live(): Collection
+    {
+        return $this->plan->installments
+            ->reject(fn (self $candidate) => $candidate->isCancelled())
+            ->sortBy('sort_order')
+            ->values();
     }
 
     protected static function newFactory(): Factory
