@@ -405,6 +405,15 @@ it('puts times and venue on the primary shoot the capture creates', function () 
         ->and($shoot->venue_city)->toBe('Basthorst');
 });
 
+it('accepts a shoot ending after midnight', function () {
+    $this->actingAs($this->staff, 'staff')
+        ->post('/anfragen', payload(['call_time' => '14:00', 'end_time' => '01:00']))
+        ->assertSessionHasNoErrors()
+        ->assertRedirect('/anfragen');
+
+    expect(Shoot::sole()->end_time)->toStartWith('01:00');
+});
+
 it('saves without times and venue', function () {
     $this->actingAs($this->staff, 'staff')
         ->post('/anfragen', payload())

@@ -99,7 +99,7 @@ class CaptureInquiryData extends Data
             // CheckDateAvailability.
             'date' => ['nullable', 'date_format:Y-m-d'],
             'call_time' => ['nullable', 'date_format:H:i'],
-            'end_time' => ['nullable', 'date_format:H:i', 'after:call_time'],
+            'end_time' => ['nullable', 'date_format:H:i'],
             'venue_name' => ['nullable', 'string', 'max:255'],
             'venue_city' => ['nullable', 'string', 'max:255'],
             'inquiry_text' => ['nullable', 'string', 'max:10000'],
