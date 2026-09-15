@@ -25,6 +25,7 @@ final class StudioEvents
         'contractSigned' => Studio\ContractSigned::class,
         'questionnaireSubmitted' => Studio\QuestionnaireSubmitted::class,
         'installmentPaid' => Studio\InstallmentPaid::class,
+        'installmentDueSoon' => Studio\InstallmentDueSoon::class,
         'installmentOverdue' => Studio\InstallmentOverdue::class,
         'tasksDue' => Studio\TasksDue::class,
         'leadStalled' => Studio\LeadStalled::class,

@@ -1114,6 +1114,7 @@
       "contractSigned": "Vertrag unterschrieben",
       "questionnaireSubmitted": "Fragebogen ausgefüllt",
       "installmentPaid": "Zahlung eingegangen",
+      "installmentDueSoon": "Rate wird fällig",
     "tasksDue": "Fällige Aufgaben",
     "leadStalled": "Liegengebliebene Anfrage",
     "installmentOverdue": "Zahlungsverzug",
