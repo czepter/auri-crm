@@ -135,6 +135,10 @@ class DocumentMergeDataBuilder
      * field a Betriebsprüfung reads first. A project with no primary shoot
      * yet leaves it empty rather than guessing.
      *
+     * An Anzahlung whose transfer arrived before the paperwork prints the
+     * day it arrived instead: § 14 Abs. 4 Nr. 6 UStG asks for the Zeitpunkt
+     * der Vereinnahmung in an Abs. 5 case, and the shoot is still ahead.
+     *
      * @return array<string, string>
      */
     private function invoice(?PaymentInstallment $installment, Project $project, StudioSettingsResolver $settings): array
@@ -148,11 +152,19 @@ class DocumentMergeDataBuilder
 
         $figures = InvoiceFigures::forInstallment($installment, $settings);
         $dueOn = $installment->due_on?->format('d.m.Y') ?? '';
+        // paid_on is only ever written alongside the paid status, by
+        // MarkInstallmentPaid — its presence is the settlement.
+        $receivedOn = $installment->paid_on !== null
+            && $installment->invoiced_at !== null
+            && $installment->paid_on->lt($installment->invoiced_at)
+                ? $installment->paid_on
+                : null;
 
         return [
             'number' => $installment->invoice_number ?? '',
             'date' => $installment->invoiced_at?->format('d.m.Y') ?? '',
-            'servicePeriod' => $project->shoots()->where('is_primary', true)->first()?->date?->format('d.m.Y') ?? '',
+            'servicePeriod' => $receivedOn?->format('d.m.Y')
+                ?? $project->shoots()->where('is_primary', true)->first()?->date?->format('d.m.Y') ?? '',
             'description' => $project->name.' — '.PaymentPlanData::labelForInstallment($installment),
             'net' => $this->money($figures->net),
             'vatRate' => $figures->ratePercentage(),
