@@ -56,6 +56,21 @@ it('gives a new quote a number and the project\'s payer as recipient, like the a
         ->tap(fn ($response) => expect($response->json('data.number'))->not->toBeNull());
 });
 
+it('switches the slider on when a rate arrives without a mode', function () {
+    $project = Project::factory()->create();
+
+    $id = $this->withHeader('Idempotency-Key', 'rate-no-mode')
+        ->postJson("/api/projects/{$project->public_id}/quotes", ['hourly_rate' => 25_000, 'min_hours' => 4, 'max_hours' => 10, 'hours' => 6])
+        ->assertCreated()
+        ->assertJsonPath('data.pricingMode', 'choice')
+        ->json('data.id');
+
+    $this->withHeader('Idempotency-Key', 'rate-cleared')
+        ->patchJson("/api/quotes/{$id}", ['hourly_rate' => null, 'min_hours' => null, 'max_hours' => null, 'hours' => null])
+        ->assertOk()
+        ->assertJsonPath('data.pricingMode', 'classic');
+});
+
 it('starts a quote from a listed package, keeping its lines under a new intro', function () {
     $package = Package::factory()->create(['name' => 'Reportage 2']);
     $package->items()->create(['title' => 'Reportage 10 Stunden', 'quantity' => 1, 'unit_price' => 179_000]);

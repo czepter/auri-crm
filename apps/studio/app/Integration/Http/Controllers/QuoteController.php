@@ -16,6 +16,7 @@ use App\Quotes\Actions\SeedQuoteFromPackage;
 use App\Quotes\Actions\SendQuote;
 use App\Quotes\Actions\UpdateQuote;
 use App\Quotes\Data\QuoteData;
+use App\Quotes\Enums\PricingMode;
 use App\Quotes\Enums\QuoteStatus;
 use App\Quotes\Models\Quote;
 use App\Quotes\Models\QuoteItem;
@@ -75,11 +76,11 @@ class QuoteController extends Controller
             $seed($quote, Package::active()->where('public_id', $validated['package'])->firstOrFail());
         }
 
-        $save($quote, [
+        $save($quote, $this->withMode([
             ...$this->current($quote->fresh(['items', 'paymentStages'])),
             ...Arr::except($validated, 'package'),
             'valid_until' => $validated['valid_until'] ?? now()->addDays($settings->quoteValidityDays())->toDateString(),
-        ]);
+        ]));
 
         AuditLogger::record(
             event: 'quote.created',
@@ -102,7 +103,7 @@ class QuoteController extends Controller
             ]);
         }
 
-        $save($quote, [...$this->current($quote), ...$validated]);
+        $save($quote, $this->withMode([...$this->current($quote), ...$validated]));
 
         return $this->answer($quote);
     }
@@ -182,6 +183,21 @@ class QuoteController extends Controller
             ])->all(),
             'stages' => $quote->paymentStages->map->only(['percent', 'label', 'minimum'])->all(),
         ];
+    }
+
+    /**
+     * A caller that sends a rate without a mode means the slider, as a
+     * package with a rate does (SeedQuoteFromPackage). A rate left on a
+     * classic quote renders a slider in PDF and portal the editor never shows.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function withMode(array $data): array
+    {
+        $data['pricing_mode'] ??= ($data['hourly_rate'] ?? null) === null ? PricingMode::Classic->value : PricingMode::Choice->value;
+
+        return $data;
     }
 
     private function attempt(callable $act): mixed

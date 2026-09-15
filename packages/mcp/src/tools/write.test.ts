@@ -198,11 +198,11 @@ describe('registerWriteTools', () => {
     clients.push(client)
 
     await client.callTool({ name: 'create_package', arguments: { name: 'Reportage 2', items: [{ title: 'Zehn Stunden', quantity: 1, unit_price: 179000 }] } })
-    await client.callTool({ name: 'update_package', arguments: { package: 'pkg_1', is_active: false } })
+    await client.callTool({ name: 'update_package', arguments: { package: 'pkg_1', is_active: false, items: [{ title: 'Drohne', quantity: 1, selectable: true, outcome: 'Luftbilder' }] } })
     const deleted = await client.callTool({ name: 'delete_package', arguments: { package: 'pkg_1' } })
 
     expect(post.mock.calls[0][0]).toBe('/packages')
-    expect(patch.mock.calls[0]).toMatchObject(['/packages/{package}', { params: { path: { package: 'pkg_1' } }, body: { is_active: false } }])
+    expect(patch.mock.calls[0]).toMatchObject(['/packages/{package}', { params: { path: { package: 'pkg_1' } }, body: { is_active: false, items: [{ selectable: true, outcome: 'Luftbilder' }] } }])
     expect(del.mock.calls[0][0]).toBe('/packages/{package}')
     expect(JSON.stringify(deleted.content)).toContain('Deleted package pkg_1.')
   })

@@ -641,9 +641,17 @@ const discountTypeEnum = ['percentage', 'amount'] as const
 
 const pricingModeEnum = ['classic', 'choice'] as const
 
+// Quote and package lines alike: `items` replaces every line, so a line sent
+// without these loses its add-on state.
+const itemChoiceFields = {
+  selectable: z.boolean().optional().describe('The client can switch this line on or off in the portal'),
+  selected: z.boolean().optional().describe('Only meaningful with selectable: on by default'),
+  outcome: z.string().max(255).nullish(),
+}
+
 const quoteFields = {
   valid_until: z.string().nullish().describe('YYYY-MM-DD. Defaults to the studio setting at creation.'),
-  pricing_mode: z.enum(pricingModeEnum).optional().describe('Omit to leave the mode as it stands.'),
+  pricing_mode: z.enum(pricingModeEnum).optional().describe('Omit and it follows hourly_rate: choice with a rate, classic without.'),
   recipient_contact: z.string().nullish().describe("Contact public id the quote is addressed to. Defaults to the project's payer, else its primary contact."),
   recipient_street: z.string().max(255).nullish(),
   recipient_postcode: z.string().max(32).nullish(),
@@ -662,9 +670,7 @@ const quoteFields = {
         unit_price: z.number().int().min(0).nullish().describe('Cents. Null makes it an included service.'),
         discount_type: z.enum(discountTypeEnum).nullish(),
         discount_value: z.number().int().min(1).nullish(),
-        selectable: z.boolean().optional().describe('The client can switch this line on or off in the portal'),
-        selected: z.boolean().optional().describe('Only meaningful with selectable: on by default'),
-        outcome: z.string().max(255).nullish(),
+        ...itemChoiceFields,
       }),
     )
     .optional()
@@ -831,6 +837,7 @@ const packageFields = {
         description: z.string().max(2000).nullish(),
         quantity: z.number().int().min(1),
         unit_price: z.number().int().min(0).nullish().describe('Cents. Null makes it an included service.'),
+        ...itemChoiceFields,
       }),
     )
     .optional()
