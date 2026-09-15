@@ -18,9 +18,11 @@ import { ChoiceGroup } from "@/ui/choice-group";
 import { DatePicker } from "@/ui/date-picker";
 import { Field } from "@/ui/field";
 import { Input } from "@/ui/input";
+import { Label } from "@/ui/label";
 import Rail from "@/ui/page/Rail.vue";
 import RailSection from "@/ui/page/RailSection.vue";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/ui/select";
+import { Switch } from "@/ui/switch";
 import { Textarea } from "@/ui/textarea";
 import { DropdownMenuItem } from "@/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/ui/alert-dialog";
@@ -295,6 +297,10 @@ function move(stage: string) {
     router.post(`/anfragen/${props.lead.id}/stufe`, { stage }, { preserveScroll: true });
 }
 
+function togglePortal() {
+    router.post(`/auftraege/${props.header.id}/portal-sichtbarkeit`, {}, { preserveScroll: true });
+}
+
 function book() {
     router.post(`/anfragen/${props.lead.id}/stufe`, { stage: "booked" }, { preserveScroll: true });
     booking.value = false;
@@ -506,6 +512,13 @@ const due = computed(() => {
                         @cancel="kontakte.reset()"
                         @save="saveKontakte"
                     >
+                        <template v-if="header.canManagePortalVisibility" #action>
+                            <div class="flex items-center gap-2" @click.stop>
+                                <Label for="lead-portal" variant="inline">{{ $t("project.portal") }}</Label>
+                                <Switch id="lead-portal" :model-value="header.portalVisible" @update:model-value="togglePortal" />
+                            </div>
+                        </template>
+
                         <div
                             v-for="person in people"
                             :key="person.id"
