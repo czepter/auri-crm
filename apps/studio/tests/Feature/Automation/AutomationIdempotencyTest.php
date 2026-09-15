@@ -9,6 +9,7 @@ use App\Automation\Models\AutomationRun;
 use App\Automation\Notifications\AutomationReminder;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
+use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use Carbon\CarbonImmutable;
@@ -51,6 +52,7 @@ it('never re-fires when the daily sweep is re-run for the same day, as a redeplo
     $project = Project::factory()->create();
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
+    Job::factory()->for($project)->create();
     Shoot::factory()->for($project)->create(['date' => $today->addDays(7)->toDateString()]);
 
     AutomationRule::factory()

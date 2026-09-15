@@ -12,6 +12,7 @@ use App\Automation\Notifications\AutomationReminder;
 use App\Crm\Enums\ProjectContactRole;
 use App\Crm\Models\Contact;
 use App\Crm\Models\CrewAssignment;
+use App\Crm\Models\Job;
 use App\Crm\Models\Project;
 use App\Crm\Models\Shoot;
 use App\Models\User;
@@ -23,7 +24,11 @@ uses(RefreshDatabase::class);
 
 function shootIn(int $days, ?Project $project = null): Shoot
 {
-    return Shoot::factory()->for($project ?? Project::factory()->create())->create([
+    $project ??= Project::factory()->create();
+    // The factory's own booker would be a second person in a "solo" studio.
+    Job::factory()->for($project)->create(['booked_by_id' => User::query()->value('id')]);
+
+    return Shoot::factory()->for($project)->create([
         'date' => CarbonImmutable::parse('2026-06-01', 'UTC')->addDays($days)->toDateString(),
     ]);
 }
@@ -73,7 +78,7 @@ it('keeps a crew rule silent without a crew and widens a studio rule to everyone
         ->dateOffset(AutomationAnchor::PrimaryShoot, 7, AutomationOffsetDirection::Before)
         ->create(['recipient_type' => AutomationRecipient::Studio]);
 
-    Shoot::factory()->create([
+    Shoot::factory()->for(Job::factory()->create(['booked_by_id' => $staff->id])->project)->create([
         'date' => CarbonImmutable::parse('2026-06-08', 'UTC')->toDateString(),
         'is_primary' => true,
     ]);

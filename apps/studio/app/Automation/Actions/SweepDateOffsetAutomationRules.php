@@ -123,6 +123,8 @@ class SweepDateOffsetAutomationRules
 
         return Shoot::query()
             ->uncancelled()
+            // An inquiry's requested date is a shoot row too; only a booking has a shooting to remind of.
+            ->whereHas('project.job')
             ->whereDate('date', $targetDate->toDateString())
             ->when($isPrimary, fn ($query) => $query->where('is_primary', true))
             ->with('project')
