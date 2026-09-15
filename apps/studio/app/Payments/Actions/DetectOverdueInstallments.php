@@ -65,6 +65,7 @@ class DetectOverdueInstallments
             ->whereIn('status', PaymentInstallmentStatus::open())
             ->whereNull('overdue_notified_at')
             ->whereDate('due_on', '<', now('UTC')->toDateString())
+            ->onLivePlan()
             ->get();
 
         foreach ($installments as $installment) {

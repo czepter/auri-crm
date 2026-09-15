@@ -794,6 +794,10 @@ Route::middleware('audience:staff')->group(function () {
         Route::patch('/zahlungsplaene/{paymentPlan}/erinnerungen', [PaymentPlanController::class, 'reminders'])
             ->name('payment-plans.reminders');
 
+        // #418: one call closes the plan. See SettlePaymentPlan.
+        Route::post('/zahlungsplaene/{paymentPlan}/abwickeln', [PaymentPlanController::class, 'settle'])
+            ->name('payment-plans.settle');
+
         // T-07's staff action: date, method and reference, recorded once —
         // never a status flipped on its own. See MarkInstallmentPaid.
         Route::post('/raten/{installment}/bezahlt', [PaymentInstallmentController::class, 'markPaid'])

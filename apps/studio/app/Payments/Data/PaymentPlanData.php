@@ -26,6 +26,9 @@ class PaymentPlanData extends Data
         // T-25: der Einzelfall neben dem Studioschalter unter Zahlungen —
         // der eine Kunde, mit dem man gerade telefoniert hat.
         public bool $clientRemindersEnabled,
+        // #418: closed. The dialog is gone once this is set, and so is every
+        // action that would move money on the plan.
+        public ?string $settledOn,
         public array $installments,
     ) {}
 
@@ -56,6 +59,7 @@ class PaymentPlanData extends Data
             openTotal: $openTotal,
             reference: $plan->reference,
             clientRemindersEnabled: $plan->client_reminders_enabled,
+            settledOn: $plan->settled_at?->format('Y-m-d'),
             installments: $items,
         );
     }

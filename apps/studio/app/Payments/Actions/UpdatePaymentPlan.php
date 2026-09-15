@@ -7,6 +7,7 @@ use App\Payments\Models\PaymentInstallment;
 use App\Payments\Models\PaymentPlan;
 use App\Support\AuditLogger;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * The only writer of an existing plan's total and installments, past
@@ -30,6 +31,12 @@ class UpdatePaymentPlan
     /** @param  list<array{public_id?: ?string, amount: int, due_on: string, status?: string}>  $installments */
     public function __invoke(PaymentPlan $plan, int $total, array $installments): PaymentPlan
     {
+        // #418: here rather than in the controller, so no second caller can
+        // edit a plan that was settled.
+        if ($plan->isSettled()) {
+            throw ValidationException::withMessages(['installments' => __('payments.settleAlreadySettled')]);
+        }
+
         DB::transaction(function () use ($plan, $total, $installments) {
             $plan->update(['total' => $total]);
 

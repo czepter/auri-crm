@@ -881,6 +881,12 @@
     "creditNoteReason": "Grund",
     "creditNoteSubmit": "Ausstellen",
     "creditNoteRow": "Gutschrift {number}",
+    "settle": "Zahlungsplan abwickeln",
+    "settleSubmit": "Abwickeln",
+    "settleKeep": "Behalten",
+    "settleCredit": "Gutschrift",
+    "settleDelete": "Löschen",
+    "settleVoid": "Storno",
     "invoice": "Rechnung",
     "invoiceDate": "Rechnungsdatum",
     "invoiceAmount": "Betrag"

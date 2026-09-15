@@ -268,6 +268,17 @@ it('404s the checkout click when Stripe is disabled', function () {
         ->assertNotFound();
 });
 
+// #418: ein abgewickelter Plan nimmt keine Zahlung mehr an.
+it('404s the checkout click on a settled plan', function () {
+    [$project, $contact, $plan, $installment] = m04PlanWithInstallment();
+
+    $plan->forceFill(['settled_at' => now()])->save();
+
+    $this->actingAs($contact, 'portal')
+        ->post("/projekte/{$project->public_id}/zahlungen/{$installment->public_id}/jetzt-zahlen")
+        ->assertNotFound();
+});
+
 it('404s the checkout click for a project the contact is not on', function () {
     [$project, , , $installment] = m04PlanWithInstallment();
     $stranger = Contact::factory()->create();

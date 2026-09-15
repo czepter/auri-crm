@@ -5,6 +5,7 @@ namespace App\Payments\Http\Controllers;
 use App\Crm\Models\Project;
 use App\Http\Controllers\Controller;
 use App\Payments\Actions\CreatePaymentPlan;
+use App\Payments\Actions\SettlePaymentPlan;
 use App\Payments\Actions\UpdatePaymentPlan;
 use App\Payments\Models\PaymentPlan;
 use Illuminate\Http\RedirectResponse;
@@ -70,6 +71,26 @@ class PaymentPlanController extends Controller
         $update($paymentPlan, $validated['total'], $validated['installments']);
 
         return back();
+    }
+
+    /**
+     * #418: the whole plan closed in one call, with one decision per rate
+     * that already has money on it. See SettlePaymentPlan for what each
+     * state becomes.
+     */
+    public function settle(Request $request, PaymentPlan $paymentPlan, SettlePaymentPlan $settle): RedirectResponse
+    {
+        $this->authorize('managePaymentPlan', $paymentPlan->job->project);
+
+        $validated = $request->validate([
+            'decisions' => ['nullable', 'array'],
+            'decisions.*.action' => ['required', 'in:keep,credit'],
+            'decisions.*.amount' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $settle($paymentPlan, $validated['decisions'] ?? [], auth('staff')->user());
+
+        return redirect("/auftraege/{$paymentPlan->job->project->public_id}");
     }
 
     /**
