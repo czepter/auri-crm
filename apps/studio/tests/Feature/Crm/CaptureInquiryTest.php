@@ -289,6 +289,20 @@ it('captures every person on the inquiry with their own reach', function () {
         ->and($partners->firstWhere('name', 'Tim Erdmann')->phone)->toBe('0170 111');
 });
 
+it('reuses a partner already on file by email', function () {
+    $partner = Contact::factory()->create(['name' => 'Ruben Falk', 'email' => 'r.falk@example.test']);
+
+    $this->actingAs($this->staff, 'staff')
+        ->post('/anfragen', payload([
+            'people' => [['name' => 'R. Falk', 'email' => 'r.falk@example.test', 'phone' => null]],
+        ]))
+        ->assertRedirect('/anfragen');
+
+    expect(Contact::where('email', 'r.falk@example.test')->count())->toBe(1)
+        ->and(Project::sole()->contacts()->wherePivot('role', ProjectContactRole::Partner->value)->sole()->id)
+        ->toBe($partner->id);
+});
+
 it('skips a person row left blank', function () {
     test()->actingAs(test()->staff, 'staff')
         ->post('/anfragen', payload(['people' => []]))

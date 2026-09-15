@@ -66,11 +66,7 @@ class CaptureInquiry
                 }
 
                 $project->attachContact(
-                    Contact::create([
-                        'name' => $person['name'],
-                        'email' => $person['email'] ?? null,
-                        'phone' => $person['phone'] ?? null,
-                    ]),
+                    $this->contactFor($person['name'], $person['email'] ?? null, $person['phone'] ?? null),
                     ProjectContactRole::Partner,
                 );
             }
@@ -156,24 +152,29 @@ class CaptureInquiry
             return Contact::query()->where('public_id', $data->contact_id)->firstOrFail();
         }
 
-        $existing = filled($data->contact_email)
-            ? Contact::query()->where('email', $data->contact_email)->first()
+        return $this->contactFor($data->contact_name, $data->contact_email, $data->contact_phone);
+    }
+
+    private function contactFor(?string $name, ?string $email, ?string $phone): Contact
+    {
+        $existing = filled($email)
+            ? Contact::query()->where('email', $email)->first()
             : null;
 
         if ($existing !== null) {
             // A phone number the studio does not have yet is worth keeping;
             // one it already has is not worth overwriting from a form.
-            if (filled($data->contact_phone) && blank($existing->phone)) {
-                $existing->update(['phone' => $data->contact_phone]);
+            if (filled($phone) && blank($existing->phone)) {
+                $existing->update(['phone' => $phone]);
             }
 
             return $existing;
         }
 
         return Contact::create([
-            'name' => $data->contact_name,
-            'email' => $data->contact_email,
-            'phone' => $data->contact_phone,
+            'name' => $name,
+            'email' => $email,
+            'phone' => $phone,
         ]);
     }
 
