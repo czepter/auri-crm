@@ -18,6 +18,7 @@ use App\Models\User;
 use App\Notifications\NotificationService;
 use App\Notifications\Support\StudioAudience;
 use App\Payments\Models\PaymentInstallment;
+use App\Portal\Support\ClientAudience;
 use App\Settings\Support\StudioSettingsResolver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -46,6 +47,7 @@ class FireAutomationRule
         private readonly NotificationService $notifications,
         private readonly StudioSettingsResolver $settings,
         private readonly StudioAudience $audience,
+        private readonly ClientAudience $clients,
         private readonly AutomationConditions $conditions,
         private readonly DocumentMergeDataBuilder $merge,
     ) {}
@@ -124,7 +126,7 @@ class FireAutomationRule
         }
 
         return match ($rule->recipient_type) {
-            AutomationRecipient::Client => collect(array_filter([$project->primaryContact()])),
+            AutomationRecipient::Client => $this->clients->forProject($project),
             // Alone in the studio nobody gets assigned; the one person is the crew.
             AutomationRecipient::Crew => User::soloStudio() ? $this->audience->forProject($project) : User::query()
                 ->whereIn('id', CrewAssignment::query()

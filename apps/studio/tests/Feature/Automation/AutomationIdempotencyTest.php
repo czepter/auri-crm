@@ -26,7 +26,7 @@ uses(RefreshDatabase::class);
 it('fires exactly one AutomationRun when the same rule/anchor/date is processed twice through FireAutomationRule', function () {
     Notification::fake();
 
-    $project = Project::factory()->create();
+    $project = Project::factory()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
     $shoot = Shoot::factory()->for($project)->create();

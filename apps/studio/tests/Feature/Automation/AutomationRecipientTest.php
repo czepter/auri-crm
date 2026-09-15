@@ -133,6 +133,28 @@ it('records a run as skipped when the condition does not hold', function () {
     Notification::assertNothingSent();
 });
 
+// Primary contact whose portal access was revoked: the partner is who the studio still reaches.
+it('addresses the client side the portal reaches, not the bare primary contact', function () {
+    Notification::fake();
+    staffMember();
+
+    $project = Project::factory()->create(['portal_visible' => true]);
+    $revoked = Contact::factory()->create(['portal_access_revoked_at' => now()]);
+    $partner = Contact::factory()->create();
+    $project->attachContact($revoked, ProjectContactRole::Primary);
+    $project->attachContact($partner, ProjectContactRole::Partner);
+    shootIn(7, $project);
+
+    AutomationRule::factory()
+        ->dateOffset(AutomationAnchor::PerShoot, 7, AutomationOffsetDirection::Before)
+        ->create(['recipient_type' => AutomationRecipient::Client]);
+
+    sweepOn();
+
+    Notification::assertSentTo($partner, AutomationReminder::class);
+    Notification::assertNotSentTo($revoked, AutomationReminder::class);
+});
+
 it('sends a crew rule to the only person in a solo studio', function () {
     Notification::fake();
     $owner = staffMember();

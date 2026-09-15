@@ -24,7 +24,7 @@ it('fires a per-shoot rule once per matching shoot, anchored to that shoot', fun
 
     $today = CarbonImmutable::parse('2026-06-01', 'UTC');
 
-    $project = Project::factory()->wedding()->create();
+    $project = Project::factory()->wedding()->create(['portal_visible' => true]);
     $contact = Contact::factory()->create();
     $project->attachContact($contact, ProjectContactRole::Primary);
     Job::factory()->for($project)->create();
