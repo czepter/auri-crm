@@ -27,6 +27,7 @@ const props = defineProps<{
   recipients: Option[]
   conditions: Option[]
   projectTypes: Option[]
+  actions: Option[]
   mergeFields: { path: string; sample: string }[]
   runs: App.Automation.Data.AutomationRunData[]
 }>()
@@ -42,6 +43,7 @@ const form = useForm({
   offset_days: props.rule.offsetDays ?? 0,
   direction: props.rule.direction ?? 'before',
   recipient_type: props.rule.recipient,
+  action: props.rule.action,
   condition: props.rule.condition,
   project_type: props.rule.projectType,
   notification_subject: props.rule.subject,
@@ -144,6 +146,17 @@ function chipClass(status: string): string {
                   <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem v-for="option in recipients" :key="option.value" :value="option.value">
+                      {{ option.label }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <Field v-if="form.recipient_type !== 'client'" v-slot="{ id }" :label="$t('automations.action')">
+                <Select :model-value="form.action" @update:model-value="(v) => (form.action = String(v))">
+                  <SelectTrigger :id="id"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="option in actions" :key="option.value" :value="option.value">
                       {{ option.label }}
                     </SelectItem>
                   </SelectContent>

@@ -19,6 +19,7 @@ anchor: string | null,
 offsetDays: number | null,
 direction: string | null,
 projectType: string | null,
+action: string,
 };
 export type AutomationRunData = {
 id: string,
