@@ -24,7 +24,6 @@ use App\Integration\Console\Commands\RevokeApiTokenCommand;
 use App\Media\Console\Commands\ReapIncompleteMultipartUploads;
 use App\Migration\Console\Commands\CutoverRestoreCommand;
 use App\Migration\Console\Commands\CutoverSnapshotCommand;
-use App\Migration\Console\Commands\ImportHistoricalDataCommand;
 use App\Notifications\Console\Commands\BuildMailTemplatesCommand;
 use App\Notifications\Console\Commands\RemindOnboardingCommand;
 use App\Notifications\Console\Commands\SendStudioDigestsCommand;
@@ -53,7 +52,6 @@ return Application::configure(basePath: dirname(__DIR__))
     // here explicitly; nothing in that directory is auto-discovered.
     ->withCommands([
         DetectOverdueInstallmentsCommand::class,
-        ImportHistoricalDataCommand::class,
         ReapIncompleteMultipartUploads::class,
         ImportLegacyGalleriesCommand::class,
         CutoverSnapshotCommand::class,

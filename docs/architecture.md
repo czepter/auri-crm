@@ -115,7 +115,7 @@ app/Crm/
 | `Engagement` | Message threads between studio and client |
 | `Automation` | Rules that fire on events and on date offsets |
 | `Integration` | The public integration API, API tokens, webhooks |
-| `Migration` | Historical import, cutover snapshot and restore |
+| `Migration` | Cutover snapshot and restore |
 | `Settings` | Studio profile, portal capabilities, document settings |
 
 Only genuinely cross-cutting things stay at the top level: `Http/Middleware`,
@@ -235,5 +235,4 @@ means a rule was crossed, not that a behaviour regressed:
 [queue.md](../apps/studio/docs/queue.md) ·
 [media.md](../apps/studio/docs/media.md) ·
 [database-grants.md](../apps/studio/docs/database-grants.md) ·
-[historical-import.md](../apps/studio/docs/historical-import.md) ·
 [cutover-runbook.md](../apps/studio/docs/cutover-runbook.md)

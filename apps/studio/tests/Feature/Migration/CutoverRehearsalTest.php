@@ -26,7 +26,7 @@ use App\Gallery\Models\Gallery;
  * the first run either way.
  */
 
-it('runs the cutover sequence end to end: snapshot, commit imports, verify, roll back', function () {
+it('runs the cutover sequence end to end: snapshot, commit import, verify, roll back', function () {
     $this->artisan('migrate')->run();
 
     $baseline = [
@@ -46,22 +46,11 @@ it('runs the cutover sequence end to end: snapshot, commit imports, verify, roll
 
     expect(file_exists($snapshotPath))->toBeTrue();
 
-    // 2. X-01: historical CRM data, commit mode.
-    $this->artisan('migration:import-historical-data', [
-        'path' => base_path('tests/Fixtures/migration/clean'),
-        '--commit' => true,
-    ])->assertSuccessful();
+    // 2. A project written after the snapshot, the row the gallery import
+    // hangs its gallery on.
+    $project = Project::factory()->create();
 
-    expect(Contact::count())->toBe($baseline['contacts'] + 2)
-        ->and(Project::count())->toBe($baseline['projects'] + 1)
-        ->and(Job::count())->toBe($baseline['jobs'] + 1)
-        ->and(Contract::count())->toBe($baseline['contracts'] + 1);
-
-    $project = Project::query()->latest('id')->first();
-
-    // 3. X-02: legacy galleries, commit mode (no --dry-run), backfilling the
-    // project X-01 just created — the same shape as a real cutover, where
-    // the gallery import runs against projects the CRM import just made.
+    // 3. X-02: legacy galleries, commit mode (no --dry-run).
     $galleryFile = tempnam(sys_get_temp_dir(), 'cutover-galleries-').'.json';
     file_put_contents($galleryFile, json_encode([
         ['project_public_id' => $project->public_id, 'title' => 'Verlobung', 'assets' => ['a1.jpg']],
@@ -76,7 +65,7 @@ it('runs the cutover sequence end to end: snapshot, commit imports, verify, roll
 
     // 4. Data landed — this is the state a failed cutover would otherwise
     // leave behind, and exactly what the rollback below has to undo.
-    expect(Contact::count())->toBeGreaterThan($baseline['contacts']);
+    expect(Project::count())->toBe($baseline['projects'] + 1);
 
     // 5. Rollback — the runbook's go/no-go failure path.
     $this->artisan('db:cutover-restore', ['path' => $snapshotPath, '--force' => true])

@@ -8,9 +8,8 @@ use Illuminate\Support\Facades\Process;
 /**
  * X-03's rollback point: a pg_dump of the whole database, taken immediately
  * before a cutover import runs in commit mode. docs/cutover-runbook.md calls
- * this right before migration:import-historical-data --commit and
- * gallery:import-legacy --mode=backfill; db:cutover-restore is the other
- * half of the pair and undoes exactly what this captures.
+ * this right before gallery:import-legacy --mode=backfill; db:cutover-restore
+ * is the other half of the pair and undoes exactly what this captures.
  *
  * Custom format (-Fc): it's what pg_restore --clean expects, and the only
  * pg_dump format that's both compressed and restorable table-by-table if a

@@ -103,10 +103,10 @@ class AllocateDocumentNumber
     /**
      * 1 + the highest counter this range has issued for the period, or the
      * range's own starting_counter the first time anything is issued for
-     * it — T-04's whole point: X-01's historical import sets that starting
-     * point, and the first number this system ever issues for the range
-     * picks up from there instead of restarting at 1 under a number a client
-     * already holds.
+     * it — T-04's whole point: the settings screen sets that starting point,
+     * and the first number this system ever issues for the range picks up
+     * from there instead of restarting at 1 under a number a client already
+     * holds.
      */
     private function nextCounter(NumberRange $range, string $tenantId, int $period): int
     {

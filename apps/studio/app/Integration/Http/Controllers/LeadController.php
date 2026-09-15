@@ -47,10 +47,9 @@ class LeadController extends Controller
     /**
      * The same capture, once per row.
      *
-     * One transaction, for the reason CommitHistoricalImport gives: a run
-     * that wrote 140 rows and refused the 141st leaves nothing to tell the
-     * imported rows from the ones that never landed, and a second attempt
-     * duplicates whatever the first one kept.
+     * One transaction: a run that wrote 140 rows and refused the 141st
+     * leaves nothing to tell the captured rows from the ones that never
+     * landed, and a second attempt duplicates whatever the first one kept.
      *
      * Rows are validated one at a time rather than through one `leads.*`
      * rule set: contact_name is `required_without:contact_id`, and under a

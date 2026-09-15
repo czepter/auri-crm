@@ -4,12 +4,12 @@ The runbook, not the migration script, is the deliverable: staff on the
 admin surface have to be able to keep working on the day the switch
 happens, and there has to be a way back if it doesn't.
 
-Nothing in this codebase names the legacy system X-01 and X-02 import from
-— both already treat it as external and unspecified, an intermediate CSV/JSON
-format any export gets converted into first (see docs/historical-import.md
-and `App\Gallery\Actions\ImportLegacyGallery`'s doc comment). This runbook
-follows that: the rollback point below is a snapshot of this app's own
-database, not anything involving the legacy system.
+Nothing in this codebase names the legacy system X-02 imports from — it
+treats it as external and unspecified, an intermediate JSON format any export
+gets converted into first (see `App\Gallery\Actions\ImportLegacyGallery`'s
+doc comment). This runbook follows that: the rollback point below is a
+snapshot of this app's own database, not anything involving the legacy
+system.
 
 All commands run through Docker, per this repo's rule that PHP always does
 (`docker compose run --rm php ...`) — drop the prefix if you're running
@@ -17,10 +17,10 @@ against a host PHP set up the same way tests are.
 
 ## 0. Pre-cutover checklist
 
-- [ ] Legacy data already exported into `contacts.csv` / `projects.csv` /
-      `jobs.csv` / `contracts.csv` (docs/historical-import.md) and a legacy
-      galleries JSON fixture (`App\Gallery\Console\Commands\ImportLegacyGalleriesCommand`'s
-      doc comment for the two record shapes)
+- [ ] Contacts and projects already entered on the admin surface, and the
+      legacy galleries exported into a JSON fixture
+      (`App\Gallery\Console\Commands\ImportLegacyGalleriesCommand`'s doc
+      comment for the two record shapes)
 - [ ] `docker compose up -d` — Postgres, Redis, the worker and Gotenberg are
       healthy (`docker compose ps`)
 - [ ] Enough disk under `storage/app/private/cutover/` for a full database
@@ -30,15 +30,14 @@ against a host PHP set up the same way tests are.
 - [ ] `php artisan list db` shows `db:cutover-snapshot` and
       `db:cutover-restore`
 
-## 1. Dry run both imports
+## 1. Dry run the import
 
 ```sh
-docker compose run --rm php php artisan migration:import-historical-data storage/app/import/legacy
 docker compose run --rm php php artisan gallery:import-legacy storage/app/import/legacy-galleries.json --mode=backfill --dry-run
 docker compose run --rm php php artisan gallery:import-legacy storage/app/import/legacy-galleries-linked.json --mode=link --dry-run
 ```
 
-Read every "cannot map" row X-01 prints and every `error` line X-02 prints.
+Read every `error` line X-02 prints.
 Fix the source export and re-run until the only rows left unmapped are ones
 someone has explicitly decided to drop — not ones nobody has looked at yet.
 This step writes nothing; run it as many times as the source data needs.
@@ -55,18 +54,15 @@ default, `--path=` to choose another). Note that path — §6 needs it.
 `db:cutover-snapshot` refuses to run against a non-Postgres connection
 rather than doing something a `pg_dump` command doesn't understand.
 
-## 3. Commit both imports
+## 3. Commit the import
 
 ```sh
-docker compose run --rm php php artisan migration:import-historical-data storage/app/import/legacy --commit
 docker compose run --rm php php artisan gallery:import-legacy storage/app/import/legacy-galleries.json --mode=backfill
 docker compose run --rm php php artisan gallery:import-legacy storage/app/import/legacy-galleries-linked.json --mode=link
 ```
 
-X-01's whole run — contacts, projects, jobs and contracts together — commits
-in one transaction, so a project whose job fails to import can't leave
-contacts behind with nothing to point at. X-02 is per-record: a bad row is
-reported and skipped without blocking the rest of the file. Compare the commit summary counts against the dry-run
+X-02 is per-record: a bad row is reported and skipped without blocking the
+rest of the file. Compare the commit summary counts against the dry-run
 report from §1 — they should match exactly.
 
 ## 4. Parallel-run window
@@ -100,8 +96,7 @@ against the legacy source; longer if that source is hard to reach):
 
 - [ ] §1's final dry run had zero unresolved unmapped/error rows
 - [ ] §3's commit summary counts match §1's dry-run counts
-- [ ] Spot-checked a sample of imported contacts/projects/contracts/galleries
-      against the legacy source
+- [ ] Spot-checked a sample of imported galleries against the legacy source
 - [ ] Staff can sign in, see their projects and the data they expect, on the
       admin surface
 - [ ] The snapshot from §2 exists and its path is recorded somewhere this
@@ -137,11 +132,10 @@ connection outright.
 There's no production copy of this app anywhere in this sandboxed
 environment to exercise the above against, so
 `tests/Feature/Migration/CutoverRehearsalTest.php` is the stand-in the
-acceptance criterion asks for: it runs §2 (snapshot) → §3 (both imports,
+acceptance criterion asks for: it runs §2 (snapshot) → §3 (the import,
 commit mode, for real — not a dry run) → verifies the data landed → §6
 (restore) → verifies the database is back to exactly the row counts it
 started at, against the real test database through real `pg_dump`/
 `pg_restore` processes, not mocks. It's part of the normal `./vendor/bin/pest`
-run and CI job — a change to either import command or to either cutover
-command that breaks this sequence fails the build before it fails a real
-cutover.
+run and CI job — a change to the import command or to either cutover command
+that breaks this sequence fails the build before it fails a real cutover.
