@@ -139,7 +139,8 @@ class AppServiceProvider extends ServiceProvider
                 // The product mails' footer, here for the same reason brand is
                 // resolved here: one place, rather than the same string copied
                 // into four notification classes.
-                $view->with('mailFooter', 'Fragen: <a href="https://github.com/czepter/auri-crm/issues">github.com/czepter/auri-crm/issues</a>');
+                $address = e(config('mail.support_address'));
+                $view->with('mailFooter', $address ? "Fragen: <a href=\"mailto:{$address}\">{$address}</a>" : null);
 
                 return;
             }

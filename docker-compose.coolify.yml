@@ -23,6 +23,7 @@ services:
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
+      MAIL_SUPPORT_ADDRESS: ${MAIL_SUPPORT_ADDRESS}
       # E-12: the inbox reads config('mail.inbound.domain') to show the
       # catch-all address; unset, InboundAddress::configured() reports none.
       MAIL_INBOUND_DOMAIN: ${MAIL_INBOUND_DOMAIN}
@@ -81,6 +82,7 @@ services:
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
+      MAIL_SUPPORT_ADDRESS: ${MAIL_SUPPORT_ADDRESS}
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/up"]
       interval: 10s
@@ -125,6 +127,7 @@ services:
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
+      MAIL_SUPPORT_ADDRESS: ${MAIL_SUPPORT_ADDRESS}
       # E-12: InboundMailController verifies the webhook against the signing
       # secret, and refuses every delivery without it.
       MAIL_INBOUND_DOMAIN: ${MAIL_INBOUND_DOMAIN}
@@ -232,6 +235,7 @@ services:
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
+      MAIL_SUPPORT_ADDRESS: ${MAIL_SUPPORT_ADDRESS}
       # E-12: IngestInboundMessage runs here, and E-11 takes the domain half
       # of every outgoing Message-ID from the inbound domain.
       MAIL_INBOUND_DOMAIN: ${MAIL_INBOUND_DOMAIN}
@@ -289,6 +293,7 @@ services:
       MAIL_URL: ${MAIL_URL}
       MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
       MAIL_FROM_NAME: ${MAIL_FROM_NAME:-Studio}
+      MAIL_SUPPORT_ADDRESS: ${MAIL_SUPPORT_ADDRESS}
       # E-12: PollInboundMailbox runs on this schedule and needs the IMAP
       # credentials of the catch-all mailbox.
       MAIL_INBOUND_DOMAIN: ${MAIL_INBOUND_DOMAIN}
