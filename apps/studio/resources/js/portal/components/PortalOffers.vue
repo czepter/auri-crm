@@ -51,7 +51,7 @@ function priceLabel(offer: App.Catalog.Data.PortalServiceData) {
           <span v-else class="block h-[130px]" />
         </span>
         <b class="mt-3 block font-serif text-[19px] leading-[1.25] font-normal tracking-[-0.01em]">{{ offer.name }}</b>
-        <span v-if="offer.text" class="block text-[13px] text-muted-foreground">{{ offer.text }}</span>
+        <span v-if="offer.description" class="block text-[13px] text-muted-foreground">{{ offer.description }}</span>
         <span class="mt-3 block text-[15px] font-semibold tracking-[-0.01em] tabular-nums">{{ priceLabel(offer) }}</span>
       </Link>
     </div>

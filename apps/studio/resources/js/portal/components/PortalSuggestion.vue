@@ -72,8 +72,8 @@ function priceLabel(service: Service) {
           <b class="block font-serif text-[18px] leading-[1.2] font-normal tracking-[-0.01em]">
             {{ props.suggestion.service.name }}
           </b>
-          <span v-if="props.suggestion.service.text" class="block text-[13px] text-muted-foreground">
-            {{ props.suggestion.service.text }}
+          <span v-if="props.suggestion.service.description" class="block text-[13px] text-muted-foreground">
+            {{ props.suggestion.service.description }}
           </span>
           <span class="mt-[7px] block text-[14.5px] font-semibold tracking-[-0.01em] tabular-nums">
             {{ priceLabel(props.suggestion.service) }}
